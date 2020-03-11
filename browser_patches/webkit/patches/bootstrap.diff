@@ -1,12 +1,8 @@
 diff --git a/Source/JavaScriptCore/CMakeLists.txt b/Source/JavaScriptCore/CMakeLists.txt
-index 91e427c30c51163edd9f106d42f95e09d02be9c4..b7a591467cea135960be9ac4d8fbaadcdcdcaf5b 100644
+index 91e427c30c51163edd9f106d42f95e09d02be9c4..f39a90341b90299c836c90a9f99518664c9b694c 100644
 --- a/Source/JavaScriptCore/CMakeLists.txt
 +++ b/Source/JavaScriptCore/CMakeLists.txt
-@@ -1144,16 +1144,20 @@ set(JavaScriptCore_INSPECTOR_DOMAINS
-     ${JAVASCRIPTCORE_DIR}/inspector/protocol/Animation.json
-     ${JAVASCRIPTCORE_DIR}/inspector/protocol/ApplicationCache.json
-     ${JAVASCRIPTCORE_DIR}/inspector/protocol/Audit.json
-+    ${JAVASCRIPTCORE_DIR}/inspector/protocol/Browser.json
+@@ -1147,17 +1147,21 @@ set(JavaScriptCore_INSPECTOR_DOMAINS
      ${JAVASCRIPTCORE_DIR}/inspector/protocol/CSS.json
      ${JAVASCRIPTCORE_DIR}/inspector/protocol/Canvas.json
      ${JAVASCRIPTCORE_DIR}/inspector/protocol/Console.json
@@ -23,15 +19,16 @@ index 91e427c30c51163edd9f106d42f95e09d02be9c4..b7a591467cea135960be9ac4d8fbaadc
      ${JAVASCRIPTCORE_DIR}/inspector/protocol/Inspector.json
      ${JAVASCRIPTCORE_DIR}/inspector/protocol/LayerTree.json
      ${JAVASCRIPTCORE_DIR}/inspector/protocol/Network.json
+     ${JAVASCRIPTCORE_DIR}/inspector/protocol/Page.json
++    ${JAVASCRIPTCORE_DIR}/inspector/protocol/Playwright.json
+     ${JAVASCRIPTCORE_DIR}/inspector/protocol/Recording.json
+     ${JAVASCRIPTCORE_DIR}/inspector/protocol/Runtime.json
+     ${JAVASCRIPTCORE_DIR}/inspector/protocol/ScriptProfiler.json
 diff --git a/Source/JavaScriptCore/DerivedSources.make b/Source/JavaScriptCore/DerivedSources.make
-index e2a36fa8764909abfd0e1896d3a9a7c361f1b23a..e3ed01ae7cf8ce68a4fd8308e0ea2819638a78d3 100644
+index e2a36fa8764909abfd0e1896d3a9a7c361f1b23a..dd21211496e57022acb602b07101776228f481b4 100644
 --- a/Source/JavaScriptCore/DerivedSources.make
 +++ b/Source/JavaScriptCore/DerivedSources.make
-@@ -241,16 +241,20 @@ INSPECTOR_DOMAINS := \
-     $(JavaScriptCore)/inspector/protocol/Animation.json \
-     $(JavaScriptCore)/inspector/protocol/ApplicationCache.json \
-     $(JavaScriptCore)/inspector/protocol/Audit.json \
-+    $(JavaScriptCore)/inspector/protocol/Browser.json \
+@@ -244,17 +244,21 @@ INSPECTOR_DOMAINS := \
      $(JavaScriptCore)/inspector/protocol/CSS.json \
      $(JavaScriptCore)/inspector/protocol/Canvas.json \
      $(JavaScriptCore)/inspector/protocol/Console.json \
@@ -48,6 +45,11 @@ index e2a36fa8764909abfd0e1896d3a9a7c361f1b23a..e3ed01ae7cf8ce68a4fd8308e0ea2819
      $(JavaScriptCore)/inspector/protocol/Inspector.json \
      $(JavaScriptCore)/inspector/protocol/LayerTree.json \
      $(JavaScriptCore)/inspector/protocol/Network.json \
+     $(JavaScriptCore)/inspector/protocol/Page.json \
++    $(JavaScriptCore)/inspector/protocol/Playwright.json \
+     $(JavaScriptCore)/inspector/protocol/Recording.json \
+     $(JavaScriptCore)/inspector/protocol/Runtime.json \
+     $(JavaScriptCore)/inspector/protocol/ScriptProfiler.json \
 diff --git a/Source/JavaScriptCore/bindings/ScriptValue.cpp b/Source/JavaScriptCore/bindings/ScriptValue.cpp
 index dece6ac51e3a85b1e094e405effc6203887ddfd4..9bf7519d894eceb06b40d754c4fb7940399eba84 100644
 --- a/Source/JavaScriptCore/bindings/ScriptValue.cpp
@@ -381,223 +383,6 @@ index 1eb7abb2fa21d7a8ec0833160f53e5c523ec4317..7709bcc2ec69aab0589ca1b954db1fb2
  private:
      // FrontendChannel
      FrontendChannel::ConnectionType connectionType() const;
-diff --git a/Source/JavaScriptCore/inspector/protocol/Browser.json b/Source/JavaScriptCore/inspector/protocol/Browser.json
-new file mode 100644
-index 0000000000000000000000000000000000000000..d4f5cbc813facbd8036c0be46304e4a607cbcb79
---- /dev/null
-+++ b/Source/JavaScriptCore/inspector/protocol/Browser.json
-@@ -0,0 +1,211 @@
-+{
-+    "domain": "Browser",
-+    "availability": ["web"],
-+    "types": [
-+        {
-+            "id": "ContextID",
-+            "type": "string",
-+            "description": "Id of Browser context."
-+        },
-+        {
-+            "id": "PageProxyID",
-+            "type": "string",
-+            "description": "Id of WebPageProxy."
-+        },
-+        {
-+            "id": "PageProxyInfo",
-+            "type": "object",
-+            "description": "Tab info object",
-+            "properties": [
-+                { "name": "pageProxyId", "$ref": "PageProxyID" },
-+                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
-+                { "name": "openerId", "$ref": "PageProxyID", "optional": true, "description": "Unique identifier of the opening page. Only set for pages created by window.open()." }
-+            ]
-+        },
-+        {
-+            "id": "CookieSameSitePolicy",
-+            "type": "string",
-+            "enum": ["None", "Lax", "Strict"],
-+            "description": "Same-Site policy of a cookie."
-+        },
-+        {
-+            "id": "Cookie",
-+            "type": "object",
-+            "description": "Cookie object",
-+            "properties": [
-+                { "name": "name", "type": "string", "description": "Cookie name." },
-+                { "name": "value", "type": "string", "description": "Cookie value." },
-+                { "name": "domain", "type": "string", "description": "Cookie domain." },
-+                { "name": "path", "type": "string", "description": "Cookie path." },
-+                { "name": "expires", "type": "number", "description": "Cookie expires." },
-+                { "name": "httpOnly", "type": "boolean", "description": "True if cookie is http-only." },
-+                { "name": "secure", "type": "boolean", "description": "True if cookie is secure." },
-+                { "name": "session", "type": "boolean", "description": "True if cookie is session cookie." },
-+                { "name": "sameSite", "$ref": "CookieSameSitePolicy", "description": "Cookie Same-Site policy." }
-+            ]
-+        },
-+        {
-+            "id": "SetCookieParam",
-+            "type": "object",
-+            "description": "Cookie object",
-+            "properties": [
-+                { "name": "name", "type": "string", "description": "Cookie name." },
-+                { "name": "value", "type": "string", "description": "Cookie value." },
-+                { "name": "domain", "type": "string", "description": "Cookie domain." },
-+                { "name": "path", "type": "string", "description": "Cookie path." },
-+                { "name": "expires", "type": "number", "optional": true, "description": "Cookie expires." },
-+                { "name": "httpOnly", "type": "boolean", "optional": true, "description": "True if cookie is http-only." },
-+                { "name": "secure", "type": "boolean", "optional": true, "description": "True if cookie is secure." },
-+                { "name": "session", "type": "boolean", "optional": true, "description": "True if cookie is session cookie." },
-+                { "name": "sameSite", "$ref": "CookieSameSitePolicy", "optional": true, "description": "Cookie Same-Site policy." }
-+            ]
-+        },
-+        {
-+            "id": "Geolocation",
-+            "type": "object",
-+            "description": "Geolocation",
-+            "properties": [
-+                { "name": "timestamp", "type": "number", "description": "Mock latitude" },
-+                { "name": "latitude", "type": "number", "description": "Mock latitude" },
-+                { "name": "longitude", "type": "number", "description": "Mock longitude" },
-+                { "name": "accuracy", "type": "number", "description": "Mock accuracy" }
-+            ]
-+        }
-+    ],
-+    "commands": [
-+        {
-+            "name": "close",
-+            "async": true,
-+            "description": "Close browser."
-+        },
-+        {
-+            "name": "createContext",
-+            "description": "Creates new ephemeral browser context.",
-+            "returns": [
-+                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." }
-+            ]
-+        },
-+        {
-+            "name": "deleteContext",
-+            "async": true,
-+            "description": "Deletes browser context previously created with createContect. The command will automatically close all pages that use the context.",
-+            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "description": "Identifier of the context to delete." }
-+            ]
-+        },
-+        {
-+            "name": "createPage",
-+            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "JSON Inspector Protocol message (command) to be dispatched on the backend." }
-+            ],
-+            "returns": [
-+                { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." }
-+            ]
-+        },
-+        {
-+            "name": "navigate",
-+            "async": true,
-+            "description": "Navigates current page to the given URL.",
-+            "parameters": [
-+                { "name": "url", "type": "string", "description": "URL to navigate the page to." },
-+                { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
-+                { "name": "frameId", "$ref": "Network.FrameId", "optional": true, "description": "Id of the frame to navigate."},
-+                { "name": "referrer", "type": "string", "optional": true, "description": "Referrer URL." }
-+            ],
-+            "returns": [
-+                { "name": "loaderId", "$ref": "Network.LoaderId", "optional": true, "description": "Identifier of the loader associated with the navigation." }
-+            ]
-+        },
-+        {
-+            "name": "setIgnoreCertificateErrors",
-+            "description": "Change whether all certificate errors should be ignored.",
-+            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." },
-+                { "name": "ignore", "type": "boolean" }
-+            ]
-+        },
-+        {
-+            "name": "getAllCookies",
-+            "description": "Returns all cookies in the given browser context.",
-+            "async": true,
-+            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
-+            ],
-+            "returns": [
-+                { "name": "cookies", "type": "array", "items": { "$ref": "Cookie" }, "description": "Cookies." }
-+            ]
-+        },
-+        {
-+            "name": "setCookies",
-+            "description": "Sets cookies in the given browser context.",
-+            "async": true,
-+            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." },
-+                { "name": "cookies", "type": "array", "items": { "$ref": "SetCookieParam" }, "description": "Cookies." }
-+            ]
-+        },
-+        {
-+            "name": "deleteAllCookies",
-+            "description": "Deletes cookies in the given browser context.",
-+            "async": true,
-+            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
-+            ]
-+        },
-+        {
-+            "name": "setGeolocationOverride",
-+            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." },
-+                { "name": "geolocation", "$ref": "Geolocation", "optional": true, "description": "Geolocation to set, if missing emulates position unavailable." }
-+            ],
-+            "description": "Overrides the geolocation position or error."
-+        },
-+        {
-+            "name": "grantPermissions",
-+            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." },
-+                { "name": "origin", "type": "string" },
-+                { "name": "permissions", "type": "array", "items": { "type": "string" } }
-+            ],
-+            "description": "Overrides the permissions."
-+        },
-+        {
-+            "name": "resetPermissions",
-+            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
-+            ],
-+            "description": "Clears permission overrides."
-+        },
-+        {
-+            "name": "setLanguages",
-+            "description": "Allows to set locale language for context.",
-+            "parameters": [
-+                { "name": "languages", "type": "array", "items": { "type": "string" } },
-+                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
-+            ]
-+        }
-+    ],
-+    "events": [
-+        {
-+            "name": "pageProxyCreated",
-+            "parameters": [
-+                { "name": "pageProxyInfo", "$ref": "PageProxyInfo" }
-+            ]
-+        },
-+        {
-+            "name": "pageProxyDestroyed",
-+            "parameters": [
-+                { "name": "pageProxyId", "$ref": "PageProxyID" }
-+            ]
-+        },
-+        {
-+            "name": "provisionalLoadFailed",
-+            "description": "Fired when provisional load fails.",
-+            "parameters": [
-+                { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
-+                { "name": "loaderId", "$ref": "Network.LoaderId", "description": "Identifier of the loader associated with the navigation." },
-+                { "name": "error", "type": "string", "description": "Localized error string." }
-+            ]
-+        }
-+    ]
-+}
 diff --git a/Source/JavaScriptCore/inspector/protocol/DOM.json b/Source/JavaScriptCore/inspector/protocol/DOM.json
 index 38cb48bedf2b168149ff79423b7fafc1e63ce8b3..e3d044934f5a0dc2331534439daa53116019548f 100644
 --- a/Source/JavaScriptCore/inspector/protocol/DOM.json
@@ -1246,6 +1031,223 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..6aa07fd2ee4e0dff43b151d1cee7497f
          }
      ]
  }
+diff --git a/Source/JavaScriptCore/inspector/protocol/Playwright.json b/Source/JavaScriptCore/inspector/protocol/Playwright.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..612d9f32dc50445747e97f07089b5c2e6713c7a2
+--- /dev/null
++++ b/Source/JavaScriptCore/inspector/protocol/Playwright.json
+@@ -0,0 +1,211 @@
++{
++    "domain": "Playwright",
++    "availability": ["web"],
++    "types": [
++        {
++            "id": "ContextID",
++            "type": "string",
++            "description": "Id of Browser context."
++        },
++        {
++            "id": "PageProxyID",
++            "type": "string",
++            "description": "Id of WebPageProxy."
++        },
++        {
++            "id": "PageProxyInfo",
++            "type": "object",
++            "description": "Tab info object",
++            "properties": [
++                { "name": "pageProxyId", "$ref": "PageProxyID" },
++                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
++                { "name": "openerId", "$ref": "PageProxyID", "optional": true, "description": "Unique identifier of the opening page. Only set for pages created by window.open()." }
++            ]
++        },
++        {
++            "id": "CookieSameSitePolicy",
++            "type": "string",
++            "enum": ["None", "Lax", "Strict"],
++            "description": "Same-Site policy of a cookie."
++        },
++        {
++            "id": "Cookie",
++            "type": "object",
++            "description": "Cookie object",
++            "properties": [
++                { "name": "name", "type": "string", "description": "Cookie name." },
++                { "name": "value", "type": "string", "description": "Cookie value." },
++                { "name": "domain", "type": "string", "description": "Cookie domain." },
++                { "name": "path", "type": "string", "description": "Cookie path." },
++                { "name": "expires", "type": "number", "description": "Cookie expires." },
++                { "name": "httpOnly", "type": "boolean", "description": "True if cookie is http-only." },
++                { "name": "secure", "type": "boolean", "description": "True if cookie is secure." },
++                { "name": "session", "type": "boolean", "description": "True if cookie is session cookie." },
++                { "name": "sameSite", "$ref": "CookieSameSitePolicy", "description": "Cookie Same-Site policy." }
++            ]
++        },
++        {
++            "id": "SetCookieParam",
++            "type": "object",
++            "description": "Cookie object",
++            "properties": [
++                { "name": "name", "type": "string", "description": "Cookie name." },
++                { "name": "value", "type": "string", "description": "Cookie value." },
++                { "name": "domain", "type": "string", "description": "Cookie domain." },
++                { "name": "path", "type": "string", "description": "Cookie path." },
++                { "name": "expires", "type": "number", "optional": true, "description": "Cookie expires." },
++                { "name": "httpOnly", "type": "boolean", "optional": true, "description": "True if cookie is http-only." },
++                { "name": "secure", "type": "boolean", "optional": true, "description": "True if cookie is secure." },
++                { "name": "session", "type": "boolean", "optional": true, "description": "True if cookie is session cookie." },
++                { "name": "sameSite", "$ref": "CookieSameSitePolicy", "optional": true, "description": "Cookie Same-Site policy." }
++            ]
++        },
++        {
++            "id": "Geolocation",
++            "type": "object",
++            "description": "Geolocation",
++            "properties": [
++                { "name": "timestamp", "type": "number", "description": "Mock latitude" },
++                { "name": "latitude", "type": "number", "description": "Mock latitude" },
++                { "name": "longitude", "type": "number", "description": "Mock longitude" },
++                { "name": "accuracy", "type": "number", "description": "Mock accuracy" }
++            ]
++        }
++    ],
++    "commands": [
++        {
++            "name": "close",
++            "async": true,
++            "description": "Close browser."
++        },
++        {
++            "name": "createContext",
++            "description": "Creates new ephemeral browser context.",
++            "returns": [
++                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." }
++            ]
++        },
++        {
++            "name": "deleteContext",
++            "async": true,
++            "description": "Deletes browser context previously created with createContect. The command will automatically close all pages that use the context.",
++            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "description": "Identifier of the context to delete." }
++            ]
++        },
++        {
++            "name": "createPage",
++            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "JSON Inspector Protocol message (command) to be dispatched on the backend." }
++            ],
++            "returns": [
++                { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." }
++            ]
++        },
++        {
++            "name": "navigate",
++            "async": true,
++            "description": "Navigates current page to the given URL.",
++            "parameters": [
++                { "name": "url", "type": "string", "description": "URL to navigate the page to." },
++                { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
++                { "name": "frameId", "$ref": "Network.FrameId", "optional": true, "description": "Id of the frame to navigate."},
++                { "name": "referrer", "type": "string", "optional": true, "description": "Referrer URL." }
++            ],
++            "returns": [
++                { "name": "loaderId", "$ref": "Network.LoaderId", "optional": true, "description": "Identifier of the loader associated with the navigation." }
++            ]
++        },
++        {
++            "name": "setIgnoreCertificateErrors",
++            "description": "Change whether all certificate errors should be ignored.",
++            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." },
++                { "name": "ignore", "type": "boolean" }
++            ]
++        },
++        {
++            "name": "getAllCookies",
++            "description": "Returns all cookies in the given browser context.",
++            "async": true,
++            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
++            ],
++            "returns": [
++                { "name": "cookies", "type": "array", "items": { "$ref": "Cookie" }, "description": "Cookies." }
++            ]
++        },
++        {
++            "name": "setCookies",
++            "description": "Sets cookies in the given browser context.",
++            "async": true,
++            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." },
++                { "name": "cookies", "type": "array", "items": { "$ref": "SetCookieParam" }, "description": "Cookies." }
++            ]
++        },
++        {
++            "name": "deleteAllCookies",
++            "description": "Deletes cookies in the given browser context.",
++            "async": true,
++            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
++            ]
++        },
++        {
++            "name": "setGeolocationOverride",
++            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." },
++                { "name": "geolocation", "$ref": "Geolocation", "optional": true, "description": "Geolocation to set, if missing emulates position unavailable." }
++            ],
++            "description": "Overrides the geolocation position or error."
++        },
++        {
++            "name": "grantPermissions",
++            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." },
++                { "name": "origin", "type": "string" },
++                { "name": "permissions", "type": "array", "items": { "type": "string" } }
++            ],
++            "description": "Overrides the permissions."
++        },
++        {
++            "name": "resetPermissions",
++            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
++            ],
++            "description": "Clears permission overrides."
++        },
++        {
++            "name": "setLanguages",
++            "description": "Allows to set locale language for context.",
++            "parameters": [
++                { "name": "languages", "type": "array", "items": { "type": "string" } },
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
++            ]
++        }
++    ],
++    "events": [
++        {
++            "name": "pageProxyCreated",
++            "parameters": [
++                { "name": "pageProxyInfo", "$ref": "PageProxyInfo" }
++            ]
++        },
++        {
++            "name": "pageProxyDestroyed",
++            "parameters": [
++                { "name": "pageProxyId", "$ref": "PageProxyID" }
++            ]
++        },
++        {
++            "name": "provisionalLoadFailed",
++            "description": "Fired when provisional load fails.",
++            "parameters": [
++                { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
++                { "name": "loaderId", "$ref": "Network.LoaderId", "description": "Identifier of the loader associated with the navigation." },
++                { "name": "error", "type": "string", "description": "Localized error string." }
++            ]
++        }
++    ]
++}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Target.json b/Source/JavaScriptCore/inspector/protocol/Target.json
 index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..bbbabc4e7259088b9404e8cc07eecd6f45077da0 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Target.json
@@ -5312,7 +5314,7 @@ index 963518a05c4ad1a4690048341104022504e04651..e6800b106c40fec6cd80415498a6bddf
      "${WEBKIT_DIR}/UIProcess/linux"
      "${WEBKIT_DIR}/UIProcess/soup"
 diff --git a/Source/WebKit/PlatformWin.cmake b/Source/WebKit/PlatformWin.cmake
-index 5d9628d3180e8b14ce3c1356437c5a86722cd99e..bcae76dc863599acf74c4b2e3f3d49bf67ef8e12 100644
+index 5d9628d3180e8b14ce3c1356437c5a86722cd99e..d8e863111331ac8c47a45128ee116e21ec0765b9 100644
 --- a/Source/WebKit/PlatformWin.cmake
 +++ b/Source/WebKit/PlatformWin.cmake
 @@ -56,8 +56,12 @@ list(APPEND WebKit_SOURCES
@@ -5320,7 +5322,7 @@ index 5d9628d3180e8b14ce3c1356437c5a86722cd99e..bcae76dc863599acf74c4b2e3f3d49bf
      UIProcess/WebsiteData/win/WebsiteDataStoreWin.cpp
  
 +    UIProcess/win/InspectorTargetProxyWin.cpp
-+    UIProcess/win/InspectorBrowserAgentClientWin.cpp
++    UIProcess/win/InspectorPlaywrightAgentClientWin.cpp
      UIProcess/win/PageClientImpl.cpp
      UIProcess/win/WebContextMenuProxyWin.cpp
 +    UIProcess/win/WebPageInspectorEmulationAgentWin.cpp
@@ -5649,7 +5651,7 @@ index 88d53d236cd6d62735f03678a04ca9c198dddacb..b8f8efc57ab00dc5725660c5a8ad56a3
      return WebTouchEvent();
  }
 diff --git a/Source/WebKit/Sources.txt b/Source/WebKit/Sources.txt
-index a5d0be14271f6306f836b8fdbd7d420f295246ea..8cd997ea1d527a14b44f919ab1ae60dabcb7beb7 100644
+index a5d0be14271f6306f836b8fdbd7d420f295246ea..bb0fcfa2ea1d9a84ecee7cbcb8b8f6c27b557ae6 100644
 --- a/Source/WebKit/Sources.txt
 +++ b/Source/WebKit/Sources.txt
 @@ -262,16 +262,21 @@ Shared/WebsiteData/WebsiteData.cpp
@@ -5663,8 +5665,8 @@ index a5d0be14271f6306f836b8fdbd7d420f295246ea..8cd997ea1d527a14b44f919ab1ae60da
  UIProcess/FrameLoadState.cpp
  UIProcess/GeolocationPermissionRequestManagerProxy.cpp
  UIProcess/GeolocationPermissionRequestProxy.cpp
-+UIProcess/InspectorBrowserAgent.cpp
 +UIProcess/InspectorDialogAgent.cpp
++UIProcess/InspectorPlaywrightAgent.cpp
  UIProcess/LegacyGlobalSettings.cpp
  UIProcess/PageLoadState.cpp
  UIProcess/ProcessAssertion.cpp
@@ -5696,7 +5698,7 @@ index da23b0e5d30cc5469ee4d709e1fa8ad13dc80601..ae54ff36c159cbe9dfc015092b426651
  UIProcess/API/Cocoa/_WKContextMenuElementInfo.mm
  UIProcess/API/Cocoa/_WKCustomHeaderFields.mm @no-unify
 diff --git a/Source/WebKit/SourcesGTK.txt b/Source/WebKit/SourcesGTK.txt
-index eba34614fe0fdcee53c1edc4e940c41bbd24027c..dda27075fa5bbbbd0116b2956a7fbe03542bd588 100644
+index eba34614fe0fdcee53c1edc4e940c41bbd24027c..17b592801937088d73ecd8842c48d55f57f0d8d2 100644
 --- a/Source/WebKit/SourcesGTK.txt
 +++ b/Source/WebKit/SourcesGTK.txt
 @@ -130,6 +130,7 @@ UIProcess/API/glib/WebKitAuthenticationRequest.cpp @no-unify
@@ -5711,7 +5713,7 @@ index eba34614fe0fdcee53c1edc4e940c41bbd24027c..dda27075fa5bbbbd0116b2956a7fbe03
  
  UIProcess/cairo/BackingStoreCairo.cpp @no-unify
  
-+UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
++UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
  UIProcess/glib/WebProcessPoolGLib.cpp
  UIProcess/glib/WebProcessProxyGLib.cpp
  UIProcess/glib/WebsiteDataStoreGLib.cpp @no-unify
@@ -5733,7 +5735,7 @@ index eba34614fe0fdcee53c1edc4e940c41bbd24027c..dda27075fa5bbbbd0116b2956a7fbe03
  UIProcess/gtk/WebPasteboardProxyGtk.cpp
  UIProcess/gtk/WebPopupMenuProxyGtk.cpp
 diff --git a/Source/WebKit/SourcesWPE.txt b/Source/WebKit/SourcesWPE.txt
-index 69a52e17a4a8932b5dfc5edfa72b922c18d43082..f859e07168077d10918f954cca699c4e1729cd44 100644
+index 69a52e17a4a8932b5dfc5edfa72b922c18d43082..bc332745c8905414f1c8079c036dadf73902fde4 100644
 --- a/Source/WebKit/SourcesWPE.txt
 +++ b/Source/WebKit/SourcesWPE.txt
 @@ -118,6 +118,7 @@ UIProcess/API/glib/WebKitAuthenticationRequest.cpp @no-unify
@@ -5749,7 +5751,7 @@ index 69a52e17a4a8932b5dfc5edfa72b922c18d43082..f859e07168077d10918f954cca699c4e
  
  UIProcess/geoclue/GeoclueGeolocationProvider.cpp
 -
-+UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
++UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
  UIProcess/glib/WebProcessPoolGLib.cpp
  UIProcess/glib/WebProcessProxyGLib.cpp
  UIProcess/glib/WebsiteDataStoreGLib.cpp @no-unify
@@ -5845,7 +5847,7 @@ index 08f54ff5057f8d04e26adfe2c0e3a472647935e7..8f3ae0f0346514cec926ea7babff40c2
  WK_EXPORT WKApplicationCacheManagerRef WKContextGetApplicationCacheManager(WKContextRef context) WK_C_API_DEPRECATED_WITH_REPLACEMENT(WKWebsiteDataStoreGetDefaultDataStore);
  WK_EXPORT WKCookieManagerRef WKContextGetCookieManager(WKContextRef context) WK_C_API_DEPRECATED;
 diff --git a/Source/WebKit/UIProcess/API/C/WKInspector.cpp b/Source/WebKit/UIProcess/API/C/WKInspector.cpp
-index 39327c5c9230591e4f52e4574c416e36687788f0..c84fe4e5249cfec5d65805868769c99200eb27da 100644
+index 39327c5c9230591e4f52e4574c416e36687788f0..269dc87a6ab35481d2b45bea86fff893a9bddfb2 100644
 --- a/Source/WebKit/UIProcess/API/C/WKInspector.cpp
 +++ b/Source/WebKit/UIProcess/API/C/WKInspector.cpp
 @@ -28,6 +28,11 @@
@@ -5854,7 +5856,7 @@ index 39327c5c9230591e4f52e4574c416e36687788f0..c84fe4e5249cfec5d65805868769c992
  
 +#if PLATFORM(WIN)
 +#include "BrowserInspectorPipe.h"
-+#include "InspectorBrowserAgentClientWin.h"
++#include "InspectorPlaywrightAgentClientWin.h"
 +#endif
 +
  #include "WKAPICast.h"
@@ -5867,7 +5869,7 @@ index 39327c5c9230591e4f52e4574c416e36687788f0..c84fe4e5249cfec5d65805868769c992
 +void WKInspectorInitializeRemoteInspectorPipe(CreatePageCallback createPage, QuitCallback quit)
 +{
 +#if PLATFORM(WIN)
-+    initializeBrowserInspectorPipe(makeUnique<InspectorBrowserAgentClientWin>(createPage, quit));
++    initializeBrowserInspectorPipe(makeUnique<InspectorPlaywrightAgentClientWin>(createPage, quit));
 +#endif
 +}
 +
@@ -6102,7 +6104,7 @@ index 0000000000000000000000000000000000000000..b64d1a6d54ec15a99164294706543cee
 +
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..41604f05e700d40638469c226b54d44ee748bd22
+index 0000000000000000000000000000000000000000..e7143513ea2be8e1cdab5c86a28643fffea626dd
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm
 @@ -0,0 +1,60 @@
@@ -6135,7 +6137,7 @@ index 0000000000000000000000000000000000000000..41604f05e700d40638469c226b54d44e
 +#include "_WKBrowserInspector.h"
 +
 +#include "BrowserInspectorPipe.h"
-+#include "InspectorBrowserAgentClientMac.h"
++#include "InspectorPlaywrightAgentClientMac.h"
 +#include "PageClientImplMac.h"
 +#include "WebKit2Initialize.h"
 +
@@ -6150,7 +6152,7 @@ index 0000000000000000000000000000000000000000..41604f05e700d40638469c226b54d44e
 +#if ENABLE(REMOTE_INSPECTOR)
 +    InitializeWebKit2();
 +    PageClientImpl::setHeadless(headless);
-+    initializeBrowserInspectorPipe(makeUnique<InspectorBrowserAgentClientMac>(delegate));
++    initializeBrowserInspectorPipe(makeUnique<InspectorPlaywrightAgentClientMac>(delegate));
 +#endif
 +}
 +
@@ -6213,7 +6215,7 @@ index 2bdb8b9e7256f22096ebaa5d51959aa52389ca0a..2141d9d17497861a6c711f99306de109
  
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..70081db72e035ca99c0279ab02da5cfed9256c57
+index 0000000000000000000000000000000000000000..1884526cd6ce7d436af6596ab3a45b103031dba1
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp
 @@ -0,0 +1,136 @@
@@ -6246,7 +6248,7 @@ index 0000000000000000000000000000000000000000..70081db72e035ca99c0279ab02da5cfe
 +#include "WebKitBrowserInspector.h"
 +
 +#include "BrowserInspectorPipe.h"
-+#include "InspectorBrowserAgentClientGLib.h"
++#include "InspectorPlaywrightAgentClientGLib.h"
 +#include "WebKitBrowserInspectorPrivate.h"
 +#include "WebKitWebViewPrivate.h"
 +#include <wtf/glib/GRefPtr.h>
@@ -6350,7 +6352,7 @@ index 0000000000000000000000000000000000000000..70081db72e035ca99c0279ab02da5cfe
 +void webkit_browser_inspector_initialize_pipe(GMainLoop* mainLoop)
 +{
 +#if ENABLE(REMOTE_INSPECTOR)
-+    WebKit::initializeBrowserInspectorPipe(makeUnique<WebKit::InspectorBrowserAgentClientGlib>(mainLoop));
++    WebKit::initializeBrowserInspectorPipe(makeUnique<WebKit::InspectorPlaywrightAgentClientGlib>(mainLoop));
 +#endif
 +}
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspectorPrivate.h b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspectorPrivate.h
@@ -6805,7 +6807,7 @@ index 02e258253e47fbf6594c20f743d0faeac8a4eefe..e051fdf396dc65717def6b36168b5538
  #include <wpe/WebKitContextMenuItem.h>
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorController.cpp b/Source/WebKit/UIProcess/BrowserInspectorController.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..5f4c95a9599141c98a1d12f4db12a5fbaf0cfcd7
+index 0000000000000000000000000000000000000000..74b702953a54425bb80090f60b0a321b402e68eb
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorController.cpp
 @@ -0,0 +1,238 @@
@@ -6839,8 +6841,8 @@ index 0000000000000000000000000000000000000000..5f4c95a9599141c98a1d12f4db12a5fb
 +
 +#if ENABLE(REMOTE_INSPECTOR)
 +
-+#include "InspectorBrowserAgent.h"
-+#include "InspectorBrowserAgentClient.h"
++#include "InspectorPlaywrightAgent.h"
++#include "InspectorPlaywrightAgentClient.h"
 +#include "WebPageInspectorController.h"
 +#include "WebPageProxy.h"
 +#include "WebProcessPool.h"
@@ -6918,14 +6920,14 @@ index 0000000000000000000000000000000000000000..5f4c95a9599141c98a1d12f4db12a5fb
 +    WebPageProxy& m_page;
 +};
 +
-+BrowserInspectorController::BrowserInspectorController(std::unique_ptr<InspectorBrowserAgentClient> client)
++BrowserInspectorController::BrowserInspectorController(std::unique_ptr<InspectorPlaywrightAgentClient> client)
 +    : m_frontendChannel(nullptr)
 +    , m_frontendRouter(FrontendRouter::create())
 +    , m_backendDispatcher(BackendDispatcher::create(m_frontendRouter.copyRef()))
 +    , m_browserAgentClient(std::move(client))
 +{
 +    PageProxyIDMap* map = this;
-+    auto browserAgent = makeUnique<InspectorBrowserAgent>(m_frontendRouter, m_backendDispatcher, m_browserAgentClient.get(), *map);
++    auto browserAgent = makeUnique<InspectorPlaywrightAgent>(m_frontendRouter, m_backendDispatcher, m_browserAgentClient.get(), *map);
 +    m_browserAgent = browserAgent.get();
 +    m_agents.append(WTFMove(browserAgent));
 +}
@@ -7004,7 +7006,7 @@ index 0000000000000000000000000000000000000000..5f4c95a9599141c98a1d12f4db12a5fb
 +
 +void BrowserInspectorController::connectToPage(WebPageProxy& page)
 +{
-+    String pageProxyID = InspectorBrowserAgent::toPageProxyIDProtocolString(page);
++    String pageProxyID = InspectorPlaywrightAgent::toPageProxyIDProtocolString(page);
 +    auto pageProxyChannel = makeUnique<PageProxyChannel>(*m_frontendChannel, pageProxyID, page);
 +    page.inspectorController().connectFrontend(*pageProxyChannel);
 +    // Always pause new targets if controlled remotely.
@@ -7024,7 +7026,7 @@ index 0000000000000000000000000000000000000000..5f4c95a9599141c98a1d12f4db12a5fb
 +{
 +    m_browserAgent->willDestroyWebPageProxy(page);
 +
-+    String pageProxyID = InspectorBrowserAgent::toPageProxyIDProtocolString(page);
++    String pageProxyID = InspectorPlaywrightAgent::toPageProxyIDProtocolString(page);
 +    auto it = m_pageProxyChannels.find(pageProxyID);
 +    ASSERT(it != m_pageProxyChannels.end());
 +    it->value->disconnect();
@@ -7049,7 +7051,7 @@ index 0000000000000000000000000000000000000000..5f4c95a9599141c98a1d12f4db12a5fb
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorController.h b/Source/WebKit/UIProcess/BrowserInspectorController.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..a6ee1aaaaee4a42ec7afb409c74d3cc3d8eefcd0
+index 0000000000000000000000000000000000000000..4516c31d02caabbb731f662e96436569daf3eaeb
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorController.h
 @@ -0,0 +1,85 @@
@@ -7082,7 +7084,7 @@ index 0000000000000000000000000000000000000000..a6ee1aaaaee4a42ec7afb409c74d3cc3
 +
 +#if ENABLE(REMOTE_INSPECTOR)
 +
-+#include "InspectorBrowserAgent.h"
++#include "InspectorPlaywrightAgent.h"
 +#include "WebPageInspectorController.h"
 +#include <JavaScriptCore/InspectorAgentRegistry.h>
 +#include <wtf/Forward.h>
@@ -7096,14 +7098,14 @@ index 0000000000000000000000000000000000000000..a6ee1aaaaee4a42ec7afb409c74d3cc3
 +
 +namespace WebKit {
 +
-+class InspectorBrowserAgent;
-+class InspectorBrowserAgentClient;
++class InspectorPlaywrightAgent;
++class InspectorPlaywrightAgentClient;
 +
 +class BrowserInspectorController : private WebPageInspectorControllerObserver, private PageProxyIDMap {
 +    WTF_MAKE_NONCOPYABLE(BrowserInspectorController);
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    BrowserInspectorController(std::unique_ptr<InspectorBrowserAgentClient> client);
++    BrowserInspectorController(std::unique_ptr<InspectorPlaywrightAgentClient> client);
 +    ~BrowserInspectorController();
 +
 +    void connectFrontend(Inspector::FrontendChannel&);
@@ -7129,9 +7131,9 @@ index 0000000000000000000000000000000000000000..a6ee1aaaaee4a42ec7afb409c74d3cc3
 +    Inspector::FrontendChannel* m_frontendChannel { nullptr };
 +    Ref<Inspector::FrontendRouter> m_frontendRouter;
 +    Ref<Inspector::BackendDispatcher> m_backendDispatcher;
-+    std::unique_ptr<InspectorBrowserAgentClient> m_browserAgentClient;
++    std::unique_ptr<InspectorPlaywrightAgentClient> m_browserAgentClient;
 +    Inspector::AgentRegistry m_agents;
-+    InspectorBrowserAgent* m_browserAgent { nullptr };
++    InspectorPlaywrightAgent* m_browserAgent { nullptr };
 +    HashMap<String, std::unique_ptr<PageProxyChannel>> m_pageProxyChannels;
 +};
 +
@@ -7140,7 +7142,7 @@ index 0000000000000000000000000000000000000000..a6ee1aaaaee4a42ec7afb409c74d3cc3
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp b/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..ff2aa2f85ece80f9bf029ca7b54cc42835a253c7
+index 0000000000000000000000000000000000000000..e07123453ecab2611ff4918cec37ee6e744a23a6
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp
 @@ -0,0 +1,57 @@
@@ -7177,15 +7179,15 @@ index 0000000000000000000000000000000000000000..ff2aa2f85ece80f9bf029ca7b54cc428
 +#include "BrowserInspectorController.h"
 +#include "RemoteInspectorPipe.h"
 +#include <wtf/NeverDestroyed.h>
-+#include "InspectorBrowserAgentClient.h"
++#include "InspectorPlaywrightAgentClient.h"
 +
 +namespace WebKit {
 +
-+void initializeBrowserInspectorPipe(std::unique_ptr<InspectorBrowserAgentClient> client)
++void initializeBrowserInspectorPipe(std::unique_ptr<InspectorPlaywrightAgentClient> client)
 +{
 +    class BrowserInspectorPipe {
 +    public:
-+        BrowserInspectorPipe(std::unique_ptr<InspectorBrowserAgentClient> client)
++        BrowserInspectorPipe(std::unique_ptr<InspectorPlaywrightAgentClient> client)
 +            : m_browserInspectorController(std::move(client))
 +            , m_remoteInspectorPipe(m_browserInspectorController)
 +        {
@@ -7203,7 +7205,7 @@ index 0000000000000000000000000000000000000000..ff2aa2f85ece80f9bf029ca7b54cc428
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorPipe.h b/Source/WebKit/UIProcess/BrowserInspectorPipe.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..7dd8ee18d2310935db1a9cb6cbc48b7fb4e24f47
+index 0000000000000000000000000000000000000000..cd66887de171cda7d15a8e4dc6dbff63665dc619
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorPipe.h
 @@ -0,0 +1,38 @@
@@ -7238,9 +7240,9 @@ index 0000000000000000000000000000000000000000..7dd8ee18d2310935db1a9cb6cbc48b7f
 +
 +namespace WebKit {
 +
-+class InspectorBrowserAgentClient;
++class InspectorPlaywrightAgentClient;
 +
-+void initializeBrowserInspectorPipe(std::unique_ptr<InspectorBrowserAgentClient> client);
++void initializeBrowserInspectorPipe(std::unique_ptr<InspectorPlaywrightAgentClient> client);
 +
 +} // namespace WebKit
 +
@@ -7979,784 +7981,6 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..42070f8b1969caa0d00863279fcefe01
  };
  
  } // namespace WebKit
-diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
-new file mode 100644
-index 0000000000000000000000000000000000000000..7992dc1f6542ce5e219acda63d4ebd678c2ebcda
---- /dev/null
-+++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
-@@ -0,0 +1,588 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
-+#include "config.h"
-+#include "InspectorBrowserAgent.h"
-+
-+#if ENABLE(REMOTE_INSPECTOR)
-+
-+#include "APIPageConfiguration.h"
-+#include "InspectorBrowserAgentClient.h"
-+#include "InspectorTargetProxy.h"
-+#include "NetworkProcessMessages.h"
-+#include "NetworkProcessProxy.h"
-+#include "WebGeolocationManagerProxy.h"
-+#include "WebGeolocationPosition.h"
-+#include "WebPageInspectorController.h"
-+#include "WebPageInspectorTarget.h"
-+#include "WebPageProxy.h"
-+#include "WebProcessPool.h"
-+#include "WebProcessProxy.h"
-+#include <WebCore/FrameIdentifier.h>
-+#include <WebCore/GeolocationPositionData.h>
-+#include <WebCore/ProcessIdentifier.h>
-+#include <WebCore/ResourceRequest.h>
-+#include <JavaScriptCore/InspectorFrontendRouter.h>
-+#include <pal/SessionID.h>
-+#include <stdlib.h>
-+#include <wtf/HashMap.h>
-+#include <wtf/HexNumber.h>
-+
-+
-+using namespace Inspector;
-+
-+namespace WebKit {
-+
-+namespace {
-+
-+Inspector::Protocol::Browser::CookieSameSitePolicy cookieSameSitePolicy(WebCore::Cookie::SameSitePolicy policy)
-+{
-+    switch (policy) {
-+    case WebCore::Cookie::SameSitePolicy::None:
-+        return Inspector::Protocol::Browser::CookieSameSitePolicy::None;
-+    case WebCore::Cookie::SameSitePolicy::Lax:
-+        return Inspector::Protocol::Browser::CookieSameSitePolicy::Lax;
-+    case WebCore::Cookie::SameSitePolicy::Strict:
-+        return Inspector::Protocol::Browser::CookieSameSitePolicy::Strict;
-+    }
-+    ASSERT_NOT_REACHED();
-+    return Inspector::Protocol::Browser::CookieSameSitePolicy::None;
-+}
-+
-+Ref<Inspector::Protocol::Browser::Cookie> buildObjectForCookie(const WebCore::Cookie& cookie)
-+{
-+    return Inspector::Protocol::Browser::Cookie::create()
-+        .setName(cookie.name)
-+        .setValue(cookie.value)
-+        .setDomain(cookie.domain)
-+        .setPath(cookie.path)
-+        .setExpires(cookie.expires)
-+        .setHttpOnly(cookie.httpOnly)
-+        .setSecure(cookie.secure)
-+        .setSession(cookie.session)
-+        .setSameSite(cookieSameSitePolicy(cookie.sameSite))
-+        .release();
-+}
-+
-+Ref<Inspector::Protocol::Browser::PageProxyInfo> buildPageProxyInfo(const WebPageProxy& page) {
-+    auto result = Inspector::Protocol::Browser::PageProxyInfo::create()
-+        .setPageProxyId(InspectorBrowserAgent::toPageProxyIDProtocolString(page))
-+        .setBrowserContextId(InspectorBrowserAgent::toBrowserContextIDProtocolString(page.sessionID()))
-+        .release();
-+    auto* opener = page.configuration().relatedPage();
-+    if (opener)
-+        result->setOpenerId(InspectorBrowserAgent::toPageProxyIDProtocolString(*opener));
-+    return result;
-+}
-+
-+}  // namespace
-+
-+Vector<WebPageProxy*> BrowserContext::pages() const {
-+    Vector<WebPageProxy*> pages;
-+    for (auto& process : processPool->processes()) {
-+        for (auto* page : process->pages())
-+            pages.append(page);
-+    }
-+    return pages;
-+}
-+
-+class InspectorBrowserAgent::BrowserContextDeletion {
-+    WTF_MAKE_NONCOPYABLE(BrowserContextDeletion);
-+    WTF_MAKE_FAST_ALLOCATED;
-+public:
-+    BrowserContextDeletion(const BrowserContext& context, size_t numberOfPages, Ref<DeleteContextCallback>&& callback)
-+        : m_browserContext(context)
-+        , m_numberOfPages(numberOfPages)
-+        , m_callback(WTFMove(callback)) { }
-+
-+    void willDestroyPage(const WebPageProxy& page)
-+    {
-+        ASSERT(m_browserContext.dataStore->sessionID() == page.sessionID());
-+        // Check if new pages have been created during the context destruction and
-+        // close all of them if necessary.
-+        if (m_numberOfPages == 1) {
-+            Vector<WebPageProxy*> pages = m_browserContext.pages();
-+            size_t numberOfPages = pages.size();
-+            if (numberOfPages > 1) {
-+                m_numberOfPages = numberOfPages;
-+                for (auto* existingPage : pages) {
-+                    if (existingPage != &page)
-+                        existingPage->closePage();
-+                }
-+            }
-+        }
-+        --m_numberOfPages;
-+        if (m_numberOfPages)
-+            return;
-+        m_callback->sendSuccess();
-+    }
-+
-+    bool isFinished() const { return !m_numberOfPages; }
-+
-+private:
-+    BrowserContext m_browserContext;
-+    size_t m_numberOfPages;
-+    Ref<DeleteContextCallback> m_callback;
-+};
-+
-+
-+InspectorBrowserAgent::InspectorBrowserAgent(Inspector::FrontendRouter& frontendRouter, Inspector::BackendDispatcher& backendDispatcher, InspectorBrowserAgentClient* client, PageProxyIDMap& pageProxyIDMap)
-+    : InspectorAgentBase("Browser"_s)
-+    , m_frontendDispatcher(makeUnique<BrowserFrontendDispatcher>(frontendRouter))
-+    , m_backendDispatcher(BrowserBackendDispatcher::create(backendDispatcher, this))
-+    , m_client(client)
-+    , m_pageProxyIDMap(pageProxyIDMap)
-+{
-+}
-+
-+InspectorBrowserAgent::~InspectorBrowserAgent() = default;
-+
-+void InspectorBrowserAgent::didCreateWebPageProxy(const WebPageProxy& page)
-+{
-+    if (m_isConnected)
-+        m_frontendDispatcher->pageProxyCreated(buildPageProxyInfo(page));
-+}
-+
-+void InspectorBrowserAgent::willDestroyWebPageProxy(const WebPageProxy& page)
-+{
-+    if (!m_isConnected)
-+        return;
-+
-+    m_frontendDispatcher->pageProxyDestroyed(toPageProxyIDProtocolString(page));
-+
-+    auto it = m_browserContextDeletions.find(page.sessionID());
-+    if (it == m_browserContextDeletions.end())
-+        return;
-+
-+    it->value->willDestroyPage(page);
-+    if (it->value->isFinished())
-+        m_browserContextDeletions.remove(it);
-+}
-+
-+void InspectorBrowserAgent::didCreateFrontendAndBackend(FrontendRouter*, BackendDispatcher*)
-+{
-+    m_isConnected = true;
-+}
-+
-+void InspectorBrowserAgent::didFailProvisionalLoad(WebPageProxy& page, uint64_t navigationID, const String& error)
-+{
-+    if (!m_isConnected)
-+        return;
-+
-+    m_frontendDispatcher->provisionalLoadFailed(toPageProxyIDProtocolString(page), String::number(navigationID), error);
-+}
-+
-+void InspectorBrowserAgent::willDestroyFrontendAndBackend(DisconnectReason)
-+{
-+    m_isConnected = false;
-+    m_browserContextDeletions.clear();
-+}
-+
-+void InspectorBrowserAgent::close(Ref<CloseCallback>&& callback)
-+{
-+    Vector<WebPageProxy*> pages;
-+    for (auto& pool : WebProcessPool::allProcessPools()) {
-+        for (auto& process : pool->processes()) {
-+            for (auto* page : process->pages())
-+                pages.append(page);
-+        }
-+    }
-+    for (auto* page : pages)
-+        page->closePage();
-+
-+    if (!WebProcessPool::allProcessPools().size()) {
-+        m_client->closeBrowser();
-+        callback->sendSuccess();
-+        return;
-+    }
-+
-+    WebProcessPool::allProcessPools().first()->syncLocalStorage([this, callback = WTFMove(callback)] () {
-+        if (!callback->isActive())
-+            return;
-+
-+        m_browserContexts.clear();
-+        if (m_client == nullptr) {
-+            callback->sendFailure("no platform delegate to close browser");
-+        } else {
-+            m_client->closeBrowser();
-+            callback->sendSuccess();
-+        }
-+    });
-+
-+}
-+
-+void InspectorBrowserAgent::createContext(ErrorString& errorString, String* browserContextID)
-+{
-+    BrowserContext browserContext = m_client->createBrowserContext(errorString);
-+    if (!errorString.isEmpty())
-+        return;
-+    browserContext.processPool->setPrimaryDataStore(*browserContext.dataStore);
-+    browserContext.processPool->ensureNetworkProcess(browserContext.dataStore.get());
-+    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
-+    *browserContextID = toBrowserContextIDProtocolString(sessionID);
-+    m_browserContexts.set(*browserContextID, browserContext);
-+}
-+
-+void InspectorBrowserAgent::deleteContext(const String& browserContextID, Ref<DeleteContextCallback>&& callback)
-+{
-+    String errorString;
-+    BrowserContext browserContext = lookupBrowserContext(errorString, &browserContextID);
-+    if (!errorString.isEmpty()) {
-+        callback->sendFailure(errorString);
-+        return;
-+    }
-+
-+    Vector<WebPageProxy*> pages = browserContext.pages();
-+    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
-+    m_browserContexts.remove(browserContextID);
-+    if (pages.isEmpty()) {
-+        callback->sendSuccess();
-+    } else {
-+        m_browserContextDeletions.set(sessionID, makeUnique<BrowserContextDeletion>(browserContext, pages.size(), WTFMove(callback)));
-+        for (auto* page : pages)
-+            page->closePage();
-+    }
-+    m_client->deleteBrowserContext(errorString, sessionID);
-+}
-+
-+void InspectorBrowserAgent::createPage(ErrorString& errorString, const String* browserContextID, String* pageProxyID)
-+{
-+    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
-+    if (!errorString.isEmpty())
-+        return;
-+    RefPtr<WebPageProxy> page = m_client->createPage(errorString, browserContext);
-+    if (!page)
-+        return;
-+    page->setPermissionsForAutomation(m_permissions.get(browserContextID ? *browserContextID : ""));
-+    *pageProxyID = toPageProxyIDProtocolString(*page);
-+}
-+
-+WebFrameProxy* InspectorBrowserAgent::frameForID(const String& frameID, String& error)
-+{
-+    size_t dotPos = frameID.find(".");
-+    if (dotPos == notFound) {
-+        error = "Invalid frame id"_s;
-+        return nullptr;
-+    }
-+
-+    if (!frameID.isAllASCII()) {
-+        error = "Invalid frame id"_s;
-+        return nullptr;
-+    }
-+
-+    String processIDString = frameID.left(dotPos);
-+    uint64_t pid = strtoull(processIDString.ascii().data(), 0, 10);
-+    auto processID = makeObjectIdentifier<WebCore::ProcessIdentifierType>(pid);
-+    WebProcessProxy* process = WebProcessProxy::processForIdentifier(processID);
-+    if (!process) {
-+        error = "Cannot find web process for the frame id"_s;
-+        return nullptr;
-+    }
-+
-+    String frameIDString = frameID.substring(dotPos + 1);
-+    uint64_t frameIDNumber = strtoull(frameIDString.ascii().data(), 0, 10);
-+    auto frameIdentifier = makeObjectIdentifier<WebCore::FrameIdentifierType>(frameIDNumber);
-+    WebFrameProxy* frame = process->webFrame(frameIdentifier);
-+    if (!frame) {
-+        error = "Cannot find web frame for the frame id"_s;
-+        return nullptr;
-+    }
-+
-+    return frame;
-+}
-+
-+void InspectorBrowserAgent::navigate(const String& url, const String& pageProxyID, const String* frameID, const String* referrer, Ref<NavigateCallback>&& callback)
-+{
-+    WebPageProxy* page = m_pageProxyIDMap.findPageProxy(pageProxyID);
-+    if (!page) {
-+        callback->sendFailure("Cannot find page proxy with provided 'pageProxyId'"_s);
-+        return;
-+    }
-+
-+    WebCore::ResourceRequest resourceRequest { url };
-+
-+    if (referrer)
-+        resourceRequest.setHTTPReferrer(*referrer);
-+
-+    if (!resourceRequest.url().isValid()) {
-+        callback->sendFailure("Cannot navigate to invalid URL"_s);
-+        return;
-+    }
-+
-+    WebFrameProxy* frame = nullptr;
-+    if (frameID) {
-+        String error;
-+        frame = frameForID(*frameID, error);
-+        if (!frame) {
-+            callback->sendFailure(error);
-+            return;
-+        }
-+
-+        if (frame->page() != page) {
-+            callback->sendFailure("Frame with specified is not from the specified page"_s);
-+            return;
-+        }
-+    }
-+
-+    page->inspectorController().navigate(WTFMove(resourceRequest), frame, [callback = WTFMove(callback)](const String& error, uint64_t navigationID) {
-+        if (!error.isEmpty()) {
-+            callback->sendFailure(error);
-+            return;
-+        }
-+
-+        Optional<String> navigationIDString;
-+        if (navigationID)
-+            navigationIDString = String::number(navigationID);
-+        callback->sendSuccess(navigationIDString);
-+    });
-+}
-+
-+void InspectorBrowserAgent::setIgnoreCertificateErrors(Inspector::ErrorString& errorString, const String* browserContextID, bool ignore)
-+{
-+    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
-+    if (!errorString.isEmpty())
-+        return;
-+    browserContext.processPool->setIgnoreTLSErrors(ignore);
-+}
-+
-+void InspectorBrowserAgent::getAllCookies(const String* browserContextID, Ref<GetAllCookiesCallback>&& callback) {
-+    String errorString;
-+    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
-+    if (!errorString.isEmpty()) {
-+        callback->sendFailure(errorString);
-+        return;
-+    }
-+
-+    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
-+    NetworkProcessProxy* networkProcess = browserContext.processPool->networkProcess();
-+    networkProcess->sendWithAsyncReply(Messages::NetworkProcess::GetAllCookies(sessionID),
-+        [callback = WTFMove(callback)](Vector<WebCore::Cookie> allCookies) {
-+            if (!callback->isActive())
-+                return;
-+            auto cookies = JSON::ArrayOf<Inspector::Protocol::Browser::Cookie>::create();
-+            for (const auto& cookie : allCookies)
-+                cookies->addItem(buildObjectForCookie(cookie));
-+            callback->sendSuccess(WTFMove(cookies));
-+        }, 0);
-+}
-+
-+void InspectorBrowserAgent::setCookies(const String* browserContextID, const JSON::Array& in_cookies, Ref<SetCookiesCallback>&& callback) {
-+    String errorString;
-+    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
-+    if (!errorString.isEmpty()) {
-+        callback->sendFailure(errorString);
-+        return;
-+    }
-+
-+    NetworkProcessProxy* networkProcess = browserContext.processPool->networkProcess();
-+    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
-+
-+    Vector<WebCore::Cookie> cookies;
-+    for (unsigned i = 0; i < in_cookies.length(); ++i) {
-+        RefPtr<JSON::Value> item = in_cookies.get(i);
-+        RefPtr<JSON::Object> obj;
-+        if (!item->asObject(obj)) {
-+            errorString = "Invalid cookie payload format"_s;
-+            return;
-+        }
-+
-+        WebCore::Cookie cookie;
-+        if (!obj->getString("name", cookie.name) ||
-+            !obj->getString("value", cookie.value) ||
-+            !obj->getString("domain", cookie.domain) ||
-+            !obj->getString("path", cookie.path)) {
-+            errorString = "Invalid file payload format"_s;
-+            return;
-+        }
-+
-+        obj->getDouble("expires", cookie.expires);
-+        obj->getBoolean("httpOnly", cookie.httpOnly);
-+        obj->getBoolean("secure", cookie.secure);
-+        obj->getBoolean("session", cookie.session);
-+        String sameSite;
-+        if (obj->getString("sameSite", sameSite)) {
-+            if (sameSite == "None")
-+                cookie.sameSite = WebCore::Cookie::SameSitePolicy::None;
-+            if (sameSite == "Lax")
-+                cookie.sameSite = WebCore::Cookie::SameSitePolicy::Lax;
-+            if (sameSite == "Strict")
-+                cookie.sameSite = WebCore::Cookie::SameSitePolicy::Strict;
-+        }
-+        cookies.append(WTFMove(cookie));
-+    }
-+
-+    networkProcess->sendWithAsyncReply(Messages::NetworkProcess::SetCookies(sessionID, WTFMove(cookies)),
-+        [callback = WTFMove(callback)](bool success) {
-+            if (!callback->isActive())
-+                return;
-+
-+            if (success)
-+                callback->sendSuccess();
-+            else
-+                callback->sendFailure("Internal error: no network storage"_s);
-+            callback->sendSuccess();
-+        }, 0);
-+}
-+
-+void InspectorBrowserAgent::deleteAllCookies(const String* browserContextID, Ref<DeleteAllCookiesCallback>&& callback) {
-+    String errorString;
-+    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
-+    if (!errorString.isEmpty()) {
-+        callback->sendFailure(errorString);
-+        return;
-+    }
-+
-+    NetworkProcessProxy* networkProcess = browserContext.processPool->networkProcess();
-+    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
-+    networkProcess->sendWithAsyncReply(Messages::NetworkProcess::DeleteAllCookies(sessionID),
-+        [callback = WTFMove(callback)](bool success) {
-+            if (!callback->isActive())
-+                return;
-+            if (success)
-+                callback->sendSuccess();
-+            else
-+                callback->sendFailure("Internal error: no network storage"_s);
-+        }, 0);
-+}
-+
-+void InspectorBrowserAgent::grantPermissions(Inspector::ErrorString& errorString, const String* browserContextID, const String& origin, const JSON::Array& values)
-+{
-+    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
-+    if (!errorString.isEmpty())
-+        return;
-+    HashSet<String> set;
-+    for (const auto& value : values) {
-+        String name;
-+        if (!value->asString(name)) {
-+            errorString = "Permission must be a string"_s;
-+            return;
-+        }
-+        set.add(name);
-+    }
-+    String key = browserContextID ? *browserContextID : "";
-+    auto it = m_permissions.add(key, Permissions()).iterator;
-+    it->value.set(origin, WTFMove(set));
-+    Vector<WebPageProxy*> pages;
-+    for (auto& process : browserContext.processPool->processes()) {
-+        for (auto* page : process->pages())
-+            page->setPermissionsForAutomation(it->value);
-+    }
-+}
-+
-+void InspectorBrowserAgent::resetPermissions(Inspector::ErrorString& errorString, const String* browserContextID)
-+{
-+    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
-+    if (!errorString.isEmpty())
-+        return;
-+    m_permissions.clear();
-+    for (auto& process : browserContext.processPool->processes()) {
-+        for (auto* page : process->pages())
-+            page->setPermissionsForAutomation(HashMap<String, HashSet<String>>());
-+    }
-+}
-+
-+void InspectorBrowserAgent::setLanguages(Inspector::ErrorString& errorString, const JSON::Array& languages, const String* browserContextID)
-+{
-+    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
-+    if (!errorString.isEmpty())
-+        return;
-+
-+    Vector<String> items;
-+    for (const auto& value : languages) {
-+        String language;
-+        if (!value->asString(language)) {
-+            errorString = "Language must be a string"_s;
-+            return;
-+        }
-+        items.append(language);
-+    }
-+
-+    browserContext.processPool->setLanguagesForAutomation(WTFMove(items));
-+}
-+
-+void InspectorBrowserAgent::setGeolocationOverride(Inspector::ErrorString& errorString, const String* browserContextID, const JSON::Object* geolocation)
-+{
-+    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
-+    if (!errorString.isEmpty())
-+        return;
-+    auto* geoManager = browserContext.processPool->supplement<WebGeolocationManagerProxy>();
-+    if (!geoManager) {
-+        errorString = "Internal error: geolocation manager is not available.";
-+        return;
-+    }
-+    if (geolocation) {
-+        double timestamp = 0;
-+        double latitude = 0;
-+        double longitude = 0;
-+        double accuracy = 0;
-+        if (!geolocation->getDouble("timestamp", timestamp) ||
-+            !geolocation->getDouble("latitude", latitude) ||
-+            !geolocation->getDouble("longitude", longitude) ||
-+            !geolocation->getDouble("accuracy", accuracy)) {
-+            errorString = "Invalid geolocation format"_s;
-+            return;
-+        }
-+        auto position = WebGeolocationPosition::create(WebCore::GeolocationPositionData(timestamp, latitude, longitude, accuracy));
-+        geoManager->providerDidChangePosition(&position.get());
-+    } else {
-+        geoManager->providerDidFailToDeterminePosition("Position unavailable"_s);
-+    }
-+}
-+
-+String InspectorBrowserAgent::toBrowserContextIDProtocolString(const PAL::SessionID& sessionID)
-+{
-+    StringBuilder builder;
-+    builder.append(hex(sessionID.toUInt64(), 16));
-+    return builder.toString();
-+}
-+
-+String InspectorBrowserAgent::toPageProxyIDProtocolString(const WebPageProxy& page)
-+{
-+    return makeString(page.identifier().toUInt64());
-+}
-+
-+BrowserContext InspectorBrowserAgent::lookupBrowserContext(ErrorString& errorString, const String* browserContextID)
-+{
-+    if (!browserContextID) {
-+        BrowserContext context;
-+        if (!WebProcessPool::allProcessPools().size()) {
-+            errorString = "Browser started with no default context"_s;
-+            return context;
-+        }
-+        auto* pool = WebProcessPool::allProcessPools().first();
-+        context.processPool = pool;
-+        context.dataStore = pool->websiteDataStore();
-+        return context;
-+    }
-+
-+    BrowserContext browserContext = m_browserContexts.get(*browserContextID);
-+    if (!browserContext.processPool)
-+        errorString = "Could not find browser context for given id"_s;
-+    return browserContext;
-+}
-+
-+} // namespace WebKit
-+
-+#endif // ENABLE(REMOTE_INSPECTOR)
-diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.h b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
-new file mode 100644
-index 0000000000000000000000000000000000000000..56ecacafe2d97971880f77913c40ec32393e1997
---- /dev/null
-+++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
-@@ -0,0 +1,116 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
-+#pragma once
-+
-+#if ENABLE(REMOTE_INSPECTOR)
-+
-+#include "InspectorBrowserAgentClient.h"
-+#include <JavaScriptCore/InspectorAgentBase.h>
-+#include <JavaScriptCore/InspectorBackendDispatchers.h>
-+#include <wtf/HashMap.h>
-+#include <pal/SessionID.h>
-+#include <wtf/Forward.h>
-+#include <wtf/Noncopyable.h>
-+
-+namespace Inspector {
-+class BackendDispatcher;
-+class BrowserFrontendDispatcher;
-+class FrontendChannel;
-+class FrontendRouter;
-+}
-+
-+namespace PAL {
-+class SessionID;
-+}
-+
-+namespace WebKit {
-+
-+class NetworkProcess;
-+class WebFrameProxy;
-+class WebProcessPool;
-+
-+class PageProxyIDMap {
-+public:
-+    virtual WebPageProxy* findPageProxy(const String& pageProxyID) = 0;
-+
-+protected:
-+    virtual ~PageProxyIDMap() = default;
-+};
-+
-+class InspectorBrowserAgent final : public Inspector::InspectorAgentBase, public Inspector::BrowserBackendDispatcherHandler {
-+    WTF_MAKE_NONCOPYABLE(InspectorBrowserAgent);
-+    WTF_MAKE_FAST_ALLOCATED;
-+public:
-+    InspectorBrowserAgent(Inspector::FrontendRouter&, Inspector::BackendDispatcher&, InspectorBrowserAgentClient*, PageProxyIDMap&);
-+    ~InspectorBrowserAgent() override;
-+
-+    void didCreateWebPageProxy(const WebPageProxy&);
-+    void willDestroyWebPageProxy(const WebPageProxy&);
-+    void didFailProvisionalLoad(WebPageProxy&, uint64_t navigationID, const String& error);
-+
-+    // InspectorAgentBase
-+    void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) override;
-+    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
-+
-+    // BrowserBackendDispatcherHandler
-+    void close(Ref<CloseCallback>&&) override;
-+    void createContext(Inspector::ErrorString&, String* browserContextID) override;
-+    void deleteContext(const String& browserContextID, Ref<DeleteContextCallback>&& callback) override;
-+    void createPage(Inspector::ErrorString&, const String* browserContextID, String* pageProxyID) override;
-+    void navigate(const String& url, const String& pageProxyID, const String* frameId, const String* referrer, Ref<NavigateCallback>&&) override;
-+    void setIgnoreCertificateErrors(Inspector::ErrorString&, const String* browserContextID, bool ignore) override;
-+
-+    void getAllCookies(const String* browserContextID, Ref<GetAllCookiesCallback>&&) override;
-+    void setCookies(const String* browserContextID, const JSON::Array& in_cookies, Ref<SetCookiesCallback>&&) override;
-+    void deleteAllCookies(const String* browserContextID, Ref<DeleteAllCookiesCallback>&&) override;
-+
-+    void grantPermissions(Inspector::ErrorString&, const String* browserContextID, const String& origin, const JSON::Array& permissions) override;
-+    void resetPermissions(Inspector::ErrorString&, const String* browserContextID) override;
-+    void setGeolocationOverride(Inspector::ErrorString&, const String* browserContextID, const JSON::Object* geolocation) override;
-+    void setLanguages(Inspector::ErrorString&, const JSON::Array& languages, const String* browserContextID) override;
-+
-+    static String toBrowserContextIDProtocolString(const PAL::SessionID&);
-+    static String toPageProxyIDProtocolString(const WebPageProxy&);
-+
-+private:
-+    class BrowserContextDeletion;
-+    BrowserContext lookupBrowserContext(Inspector::ErrorString&, const String* browserContextID);
-+    WebFrameProxy* frameForID(const String& frameID, String& error);
-+
-+    std::unique_ptr<Inspector::BrowserFrontendDispatcher> m_frontendDispatcher;
-+    Ref<Inspector::BrowserBackendDispatcher> m_backendDispatcher;
-+    InspectorBrowserAgentClient* m_client;
-+    PageProxyIDMap& m_pageProxyIDMap;
-+    using Permissions = HashMap<String, HashSet<String>>;
-+    HashMap<String, Permissions> m_permissions;
-+    HashMap<String, BrowserContext> m_browserContexts;
-+    HashMap<PAL::SessionID, std::unique_ptr<BrowserContextDeletion>> m_browserContextDeletions;
-+    bool m_isConnected { false };
-+};
-+
-+} // namespace WebKit
-+
-+#endif // ENABLE(REMOTE_INSPECTOR)
-diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgentClient.h b/Source/WebKit/UIProcess/InspectorBrowserAgentClient.h
-new file mode 100644
-index 0000000000000000000000000000000000000000..199295c91249d0c400589249feaa2ed24ee35f19
---- /dev/null
-+++ b/Source/WebKit/UIProcess/InspectorBrowserAgentClient.h
-@@ -0,0 +1,56 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
-+#pragma once
-+
-+#if ENABLE(REMOTE_INSPECTOR)
-+
-+#include <pal/SessionID.h>
-+#include <wtf/Forward.h>
-+
-+namespace WebKit {
-+
-+class WebsiteDataStore;
-+class WebPageProxy;
-+class WebProcessPool;
-+
-+struct BrowserContext {
-+    Vector<WebPageProxy*> pages() const;
-+    RefPtr<WebsiteDataStore> dataStore;
-+    RefPtr<WebProcessPool> processPool;
-+};
-+
-+class InspectorBrowserAgentClient {
-+public:
-+    virtual ~InspectorBrowserAgentClient() = default;
-+    virtual RefPtr<WebKit::WebPageProxy> createPage(WTF::String& error, const BrowserContext& context) = 0;
-+    virtual void closeBrowser() = 0;
-+    virtual BrowserContext createBrowserContext(WTF::String& error) = 0;
-+    virtual void deleteBrowserContext(WTF::String& error, PAL::SessionID) = 0;
-+};
-+
-+} // namespace WebKit
-+
-+#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorDialogAgent.cpp b/Source/WebKit/UIProcess/InspectorDialogAgent.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..ca5965f9d682c0821a40f0d1d43e5cbeda1353a5
@@ -8925,6 +8149,784 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +};
 +
 +} // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..0d27fc544279261a220d54cec9f4d7ac621850f7
+--- /dev/null
++++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
+@@ -0,0 +1,588 @@
++/*
++ * Copyright (C) 2019 Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "config.h"
++#include "InspectorPlaywrightAgent.h"
++
++#if ENABLE(REMOTE_INSPECTOR)
++
++#include "APIPageConfiguration.h"
++#include "InspectorPlaywrightAgentClient.h"
++#include "InspectorTargetProxy.h"
++#include "NetworkProcessMessages.h"
++#include "NetworkProcessProxy.h"
++#include "WebGeolocationManagerProxy.h"
++#include "WebGeolocationPosition.h"
++#include "WebPageInspectorController.h"
++#include "WebPageInspectorTarget.h"
++#include "WebPageProxy.h"
++#include "WebProcessPool.h"
++#include "WebProcessProxy.h"
++#include <WebCore/FrameIdentifier.h>
++#include <WebCore/GeolocationPositionData.h>
++#include <WebCore/ProcessIdentifier.h>
++#include <WebCore/ResourceRequest.h>
++#include <JavaScriptCore/InspectorFrontendRouter.h>
++#include <pal/SessionID.h>
++#include <stdlib.h>
++#include <wtf/HashMap.h>
++#include <wtf/HexNumber.h>
++
++
++using namespace Inspector;
++
++namespace WebKit {
++
++namespace {
++
++Inspector::Protocol::Playwright::CookieSameSitePolicy cookieSameSitePolicy(WebCore::Cookie::SameSitePolicy policy)
++{
++    switch (policy) {
++    case WebCore::Cookie::SameSitePolicy::None:
++        return Inspector::Protocol::Playwright::CookieSameSitePolicy::None;
++    case WebCore::Cookie::SameSitePolicy::Lax:
++        return Inspector::Protocol::Playwright::CookieSameSitePolicy::Lax;
++    case WebCore::Cookie::SameSitePolicy::Strict:
++        return Inspector::Protocol::Playwright::CookieSameSitePolicy::Strict;
++    }
++    ASSERT_NOT_REACHED();
++    return Inspector::Protocol::Playwright::CookieSameSitePolicy::None;
++}
++
++Ref<Inspector::Protocol::Playwright::Cookie> buildObjectForCookie(const WebCore::Cookie& cookie)
++{
++    return Inspector::Protocol::Playwright::Cookie::create()
++        .setName(cookie.name)
++        .setValue(cookie.value)
++        .setDomain(cookie.domain)
++        .setPath(cookie.path)
++        .setExpires(cookie.expires)
++        .setHttpOnly(cookie.httpOnly)
++        .setSecure(cookie.secure)
++        .setSession(cookie.session)
++        .setSameSite(cookieSameSitePolicy(cookie.sameSite))
++        .release();
++}
++
++Ref<Inspector::Protocol::Playwright::PageProxyInfo> buildPageProxyInfo(const WebPageProxy& page) {
++    auto result = Inspector::Protocol::Playwright::PageProxyInfo::create()
++        .setPageProxyId(InspectorPlaywrightAgent::toPageProxyIDProtocolString(page))
++        .setBrowserContextId(InspectorPlaywrightAgent::toBrowserContextIDProtocolString(page.sessionID()))
++        .release();
++    auto* opener = page.configuration().relatedPage();
++    if (opener)
++        result->setOpenerId(InspectorPlaywrightAgent::toPageProxyIDProtocolString(*opener));
++    return result;
++}
++
++}  // namespace
++
++Vector<WebPageProxy*> BrowserContext::pages() const {
++    Vector<WebPageProxy*> pages;
++    for (auto& process : processPool->processes()) {
++        for (auto* page : process->pages())
++            pages.append(page);
++    }
++    return pages;
++}
++
++class InspectorPlaywrightAgent::BrowserContextDeletion {
++    WTF_MAKE_NONCOPYABLE(BrowserContextDeletion);
++    WTF_MAKE_FAST_ALLOCATED;
++public:
++    BrowserContextDeletion(const BrowserContext& context, size_t numberOfPages, Ref<DeleteContextCallback>&& callback)
++        : m_browserContext(context)
++        , m_numberOfPages(numberOfPages)
++        , m_callback(WTFMove(callback)) { }
++
++    void willDestroyPage(const WebPageProxy& page)
++    {
++        ASSERT(m_browserContext.dataStore->sessionID() == page.sessionID());
++        // Check if new pages have been created during the context destruction and
++        // close all of them if necessary.
++        if (m_numberOfPages == 1) {
++            Vector<WebPageProxy*> pages = m_browserContext.pages();
++            size_t numberOfPages = pages.size();
++            if (numberOfPages > 1) {
++                m_numberOfPages = numberOfPages;
++                for (auto* existingPage : pages) {
++                    if (existingPage != &page)
++                        existingPage->closePage();
++                }
++            }
++        }
++        --m_numberOfPages;
++        if (m_numberOfPages)
++            return;
++        m_callback->sendSuccess();
++    }
++
++    bool isFinished() const { return !m_numberOfPages; }
++
++private:
++    BrowserContext m_browserContext;
++    size_t m_numberOfPages;
++    Ref<DeleteContextCallback> m_callback;
++};
++
++
++InspectorPlaywrightAgent::InspectorPlaywrightAgent(Inspector::FrontendRouter& frontendRouter, Inspector::BackendDispatcher& backendDispatcher, InspectorPlaywrightAgentClient* client, PageProxyIDMap& pageProxyIDMap)
++    : InspectorAgentBase("Playwright"_s)
++    , m_frontendDispatcher(makeUnique<PlaywrightFrontendDispatcher>(frontendRouter))
++    , m_backendDispatcher(PlaywrightBackendDispatcher::create(backendDispatcher, this))
++    , m_client(client)
++    , m_pageProxyIDMap(pageProxyIDMap)
++{
++}
++
++InspectorPlaywrightAgent::~InspectorPlaywrightAgent() = default;
++
++void InspectorPlaywrightAgent::didCreateWebPageProxy(const WebPageProxy& page)
++{
++    if (m_isConnected)
++        m_frontendDispatcher->pageProxyCreated(buildPageProxyInfo(page));
++}
++
++void InspectorPlaywrightAgent::willDestroyWebPageProxy(const WebPageProxy& page)
++{
++    if (!m_isConnected)
++        return;
++
++    m_frontendDispatcher->pageProxyDestroyed(toPageProxyIDProtocolString(page));
++
++    auto it = m_browserContextDeletions.find(page.sessionID());
++    if (it == m_browserContextDeletions.end())
++        return;
++
++    it->value->willDestroyPage(page);
++    if (it->value->isFinished())
++        m_browserContextDeletions.remove(it);
++}
++
++void InspectorPlaywrightAgent::didCreateFrontendAndBackend(FrontendRouter*, BackendDispatcher*)
++{
++    m_isConnected = true;
++}
++
++void InspectorPlaywrightAgent::didFailProvisionalLoad(WebPageProxy& page, uint64_t navigationID, const String& error)
++{
++    if (!m_isConnected)
++        return;
++
++    m_frontendDispatcher->provisionalLoadFailed(toPageProxyIDProtocolString(page), String::number(navigationID), error);
++}
++
++void InspectorPlaywrightAgent::willDestroyFrontendAndBackend(DisconnectReason)
++{
++    m_isConnected = false;
++    m_browserContextDeletions.clear();
++}
++
++void InspectorPlaywrightAgent::close(Ref<CloseCallback>&& callback)
++{
++    Vector<WebPageProxy*> pages;
++    for (auto& pool : WebProcessPool::allProcessPools()) {
++        for (auto& process : pool->processes()) {
++            for (auto* page : process->pages())
++                pages.append(page);
++        }
++    }
++    for (auto* page : pages)
++        page->closePage();
++
++    if (!WebProcessPool::allProcessPools().size()) {
++        m_client->closeBrowser();
++        callback->sendSuccess();
++        return;
++    }
++
++    WebProcessPool::allProcessPools().first()->syncLocalStorage([this, callback = WTFMove(callback)] () {
++        if (!callback->isActive())
++            return;
++
++        m_browserContexts.clear();
++        if (m_client == nullptr) {
++            callback->sendFailure("no platform delegate to close browser");
++        } else {
++            m_client->closeBrowser();
++            callback->sendSuccess();
++        }
++    });
++
++}
++
++void InspectorPlaywrightAgent::createContext(ErrorString& errorString, String* browserContextID)
++{
++    BrowserContext browserContext = m_client->createBrowserContext(errorString);
++    if (!errorString.isEmpty())
++        return;
++    browserContext.processPool->setPrimaryDataStore(*browserContext.dataStore);
++    browserContext.processPool->ensureNetworkProcess(browserContext.dataStore.get());
++    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
++    *browserContextID = toBrowserContextIDProtocolString(sessionID);
++    m_browserContexts.set(*browserContextID, browserContext);
++}
++
++void InspectorPlaywrightAgent::deleteContext(const String& browserContextID, Ref<DeleteContextCallback>&& callback)
++{
++    String errorString;
++    BrowserContext browserContext = lookupBrowserContext(errorString, &browserContextID);
++    if (!errorString.isEmpty()) {
++        callback->sendFailure(errorString);
++        return;
++    }
++
++    Vector<WebPageProxy*> pages = browserContext.pages();
++    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
++    m_browserContexts.remove(browserContextID);
++    if (pages.isEmpty()) {
++        callback->sendSuccess();
++    } else {
++        m_browserContextDeletions.set(sessionID, makeUnique<BrowserContextDeletion>(browserContext, pages.size(), WTFMove(callback)));
++        for (auto* page : pages)
++            page->closePage();
++    }
++    m_client->deleteBrowserContext(errorString, sessionID);
++}
++
++void InspectorPlaywrightAgent::createPage(ErrorString& errorString, const String* browserContextID, String* pageProxyID)
++{
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty())
++        return;
++    RefPtr<WebPageProxy> page = m_client->createPage(errorString, browserContext);
++    if (!page)
++        return;
++    page->setPermissionsForAutomation(m_permissions.get(browserContextID ? *browserContextID : ""));
++    *pageProxyID = toPageProxyIDProtocolString(*page);
++}
++
++WebFrameProxy* InspectorPlaywrightAgent::frameForID(const String& frameID, String& error)
++{
++    size_t dotPos = frameID.find(".");
++    if (dotPos == notFound) {
++        error = "Invalid frame id"_s;
++        return nullptr;
++    }
++
++    if (!frameID.isAllASCII()) {
++        error = "Invalid frame id"_s;
++        return nullptr;
++    }
++
++    String processIDString = frameID.left(dotPos);
++    uint64_t pid = strtoull(processIDString.ascii().data(), 0, 10);
++    auto processID = makeObjectIdentifier<WebCore::ProcessIdentifierType>(pid);
++    WebProcessProxy* process = WebProcessProxy::processForIdentifier(processID);
++    if (!process) {
++        error = "Cannot find web process for the frame id"_s;
++        return nullptr;
++    }
++
++    String frameIDString = frameID.substring(dotPos + 1);
++    uint64_t frameIDNumber = strtoull(frameIDString.ascii().data(), 0, 10);
++    auto frameIdentifier = makeObjectIdentifier<WebCore::FrameIdentifierType>(frameIDNumber);
++    WebFrameProxy* frame = process->webFrame(frameIdentifier);
++    if (!frame) {
++        error = "Cannot find web frame for the frame id"_s;
++        return nullptr;
++    }
++
++    return frame;
++}
++
++void InspectorPlaywrightAgent::navigate(const String& url, const String& pageProxyID, const String* frameID, const String* referrer, Ref<NavigateCallback>&& callback)
++{
++    WebPageProxy* page = m_pageProxyIDMap.findPageProxy(pageProxyID);
++    if (!page) {
++        callback->sendFailure("Cannot find page proxy with provided 'pageProxyId'"_s);
++        return;
++    }
++
++    WebCore::ResourceRequest resourceRequest { url };
++
++    if (referrer)
++        resourceRequest.setHTTPReferrer(*referrer);
++
++    if (!resourceRequest.url().isValid()) {
++        callback->sendFailure("Cannot navigate to invalid URL"_s);
++        return;
++    }
++
++    WebFrameProxy* frame = nullptr;
++    if (frameID) {
++        String error;
++        frame = frameForID(*frameID, error);
++        if (!frame) {
++            callback->sendFailure(error);
++            return;
++        }
++
++        if (frame->page() != page) {
++            callback->sendFailure("Frame with specified is not from the specified page"_s);
++            return;
++        }
++    }
++
++    page->inspectorController().navigate(WTFMove(resourceRequest), frame, [callback = WTFMove(callback)](const String& error, uint64_t navigationID) {
++        if (!error.isEmpty()) {
++            callback->sendFailure(error);
++            return;
++        }
++
++        Optional<String> navigationIDString;
++        if (navigationID)
++            navigationIDString = String::number(navigationID);
++        callback->sendSuccess(navigationIDString);
++    });
++}
++
++void InspectorPlaywrightAgent::setIgnoreCertificateErrors(Inspector::ErrorString& errorString, const String* browserContextID, bool ignore)
++{
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty())
++        return;
++    browserContext.processPool->setIgnoreTLSErrors(ignore);
++}
++
++void InspectorPlaywrightAgent::getAllCookies(const String* browserContextID, Ref<GetAllCookiesCallback>&& callback) {
++    String errorString;
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty()) {
++        callback->sendFailure(errorString);
++        return;
++    }
++
++    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
++    NetworkProcessProxy* networkProcess = browserContext.processPool->networkProcess();
++    networkProcess->sendWithAsyncReply(Messages::NetworkProcess::GetAllCookies(sessionID),
++        [callback = WTFMove(callback)](Vector<WebCore::Cookie> allCookies) {
++            if (!callback->isActive())
++                return;
++            auto cookies = JSON::ArrayOf<Inspector::Protocol::Playwright::Cookie>::create();
++            for (const auto& cookie : allCookies)
++                cookies->addItem(buildObjectForCookie(cookie));
++            callback->sendSuccess(WTFMove(cookies));
++        }, 0);
++}
++
++void InspectorPlaywrightAgent::setCookies(const String* browserContextID, const JSON::Array& in_cookies, Ref<SetCookiesCallback>&& callback) {
++    String errorString;
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty()) {
++        callback->sendFailure(errorString);
++        return;
++    }
++
++    NetworkProcessProxy* networkProcess = browserContext.processPool->networkProcess();
++    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
++
++    Vector<WebCore::Cookie> cookies;
++    for (unsigned i = 0; i < in_cookies.length(); ++i) {
++        RefPtr<JSON::Value> item = in_cookies.get(i);
++        RefPtr<JSON::Object> obj;
++        if (!item->asObject(obj)) {
++            errorString = "Invalid cookie payload format"_s;
++            return;
++        }
++
++        WebCore::Cookie cookie;
++        if (!obj->getString("name", cookie.name) ||
++            !obj->getString("value", cookie.value) ||
++            !obj->getString("domain", cookie.domain) ||
++            !obj->getString("path", cookie.path)) {
++            errorString = "Invalid file payload format"_s;
++            return;
++        }
++
++        obj->getDouble("expires", cookie.expires);
++        obj->getBoolean("httpOnly", cookie.httpOnly);
++        obj->getBoolean("secure", cookie.secure);
++        obj->getBoolean("session", cookie.session);
++        String sameSite;
++        if (obj->getString("sameSite", sameSite)) {
++            if (sameSite == "None")
++                cookie.sameSite = WebCore::Cookie::SameSitePolicy::None;
++            if (sameSite == "Lax")
++                cookie.sameSite = WebCore::Cookie::SameSitePolicy::Lax;
++            if (sameSite == "Strict")
++                cookie.sameSite = WebCore::Cookie::SameSitePolicy::Strict;
++        }
++        cookies.append(WTFMove(cookie));
++    }
++
++    networkProcess->sendWithAsyncReply(Messages::NetworkProcess::SetCookies(sessionID, WTFMove(cookies)),
++        [callback = WTFMove(callback)](bool success) {
++            if (!callback->isActive())
++                return;
++
++            if (success)
++                callback->sendSuccess();
++            else
++                callback->sendFailure("Internal error: no network storage"_s);
++            callback->sendSuccess();
++        }, 0);
++}
++
++void InspectorPlaywrightAgent::deleteAllCookies(const String* browserContextID, Ref<DeleteAllCookiesCallback>&& callback) {
++    String errorString;
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty()) {
++        callback->sendFailure(errorString);
++        return;
++    }
++
++    NetworkProcessProxy* networkProcess = browserContext.processPool->networkProcess();
++    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
++    networkProcess->sendWithAsyncReply(Messages::NetworkProcess::DeleteAllCookies(sessionID),
++        [callback = WTFMove(callback)](bool success) {
++            if (!callback->isActive())
++                return;
++            if (success)
++                callback->sendSuccess();
++            else
++                callback->sendFailure("Internal error: no network storage"_s);
++        }, 0);
++}
++
++void InspectorPlaywrightAgent::grantPermissions(Inspector::ErrorString& errorString, const String* browserContextID, const String& origin, const JSON::Array& values)
++{
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty())
++        return;
++    HashSet<String> set;
++    for (const auto& value : values) {
++        String name;
++        if (!value->asString(name)) {
++            errorString = "Permission must be a string"_s;
++            return;
++        }
++        set.add(name);
++    }
++    String key = browserContextID ? *browserContextID : "";
++    auto it = m_permissions.add(key, Permissions()).iterator;
++    it->value.set(origin, WTFMove(set));
++    Vector<WebPageProxy*> pages;
++    for (auto& process : browserContext.processPool->processes()) {
++        for (auto* page : process->pages())
++            page->setPermissionsForAutomation(it->value);
++    }
++}
++
++void InspectorPlaywrightAgent::resetPermissions(Inspector::ErrorString& errorString, const String* browserContextID)
++{
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty())
++        return;
++    m_permissions.clear();
++    for (auto& process : browserContext.processPool->processes()) {
++        for (auto* page : process->pages())
++            page->setPermissionsForAutomation(HashMap<String, HashSet<String>>());
++    }
++}
++
++void InspectorPlaywrightAgent::setLanguages(Inspector::ErrorString& errorString, const JSON::Array& languages, const String* browserContextID)
++{
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty())
++        return;
++
++    Vector<String> items;
++    for (const auto& value : languages) {
++        String language;
++        if (!value->asString(language)) {
++            errorString = "Language must be a string"_s;
++            return;
++        }
++        items.append(language);
++    }
++
++    browserContext.processPool->setLanguagesForAutomation(WTFMove(items));
++}
++
++void InspectorPlaywrightAgent::setGeolocationOverride(Inspector::ErrorString& errorString, const String* browserContextID, const JSON::Object* geolocation)
++{
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty())
++        return;
++    auto* geoManager = browserContext.processPool->supplement<WebGeolocationManagerProxy>();
++    if (!geoManager) {
++        errorString = "Internal error: geolocation manager is not available.";
++        return;
++    }
++    if (geolocation) {
++        double timestamp = 0;
++        double latitude = 0;
++        double longitude = 0;
++        double accuracy = 0;
++        if (!geolocation->getDouble("timestamp", timestamp) ||
++            !geolocation->getDouble("latitude", latitude) ||
++            !geolocation->getDouble("longitude", longitude) ||
++            !geolocation->getDouble("accuracy", accuracy)) {
++            errorString = "Invalid geolocation format"_s;
++            return;
++        }
++        auto position = WebGeolocationPosition::create(WebCore::GeolocationPositionData(timestamp, latitude, longitude, accuracy));
++        geoManager->providerDidChangePosition(&position.get());
++    } else {
++        geoManager->providerDidFailToDeterminePosition("Position unavailable"_s);
++    }
++}
++
++String InspectorPlaywrightAgent::toBrowserContextIDProtocolString(const PAL::SessionID& sessionID)
++{
++    StringBuilder builder;
++    builder.append(hex(sessionID.toUInt64(), 16));
++    return builder.toString();
++}
++
++String InspectorPlaywrightAgent::toPageProxyIDProtocolString(const WebPageProxy& page)
++{
++    return makeString(page.identifier().toUInt64());
++}
++
++BrowserContext InspectorPlaywrightAgent::lookupBrowserContext(ErrorString& errorString, const String* browserContextID)
++{
++    if (!browserContextID) {
++        BrowserContext context;
++        if (!WebProcessPool::allProcessPools().size()) {
++            errorString = "Browser started with no default context"_s;
++            return context;
++        }
++        auto* pool = WebProcessPool::allProcessPools().first();
++        context.processPool = pool;
++        context.dataStore = pool->websiteDataStore();
++        return context;
++    }
++
++    BrowserContext browserContext = m_browserContexts.get(*browserContextID);
++    if (!browserContext.processPool)
++        errorString = "Could not find browser context for given id"_s;
++    return browserContext;
++}
++
++} // namespace WebKit
++
++#endif // ENABLE(REMOTE_INSPECTOR)
+diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..b908ea9dd75d875e2e26807adef6e4370404e32f
+--- /dev/null
++++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
+@@ -0,0 +1,116 @@
++/*
++ * Copyright (C) 2019 Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#pragma once
++
++#if ENABLE(REMOTE_INSPECTOR)
++
++#include "InspectorPlaywrightAgentClient.h"
++#include <JavaScriptCore/InspectorAgentBase.h>
++#include <JavaScriptCore/InspectorBackendDispatchers.h>
++#include <wtf/HashMap.h>
++#include <pal/SessionID.h>
++#include <wtf/Forward.h>
++#include <wtf/Noncopyable.h>
++
++namespace Inspector {
++class BackendDispatcher;
++class FrontendChannel;
++class FrontendRouter;
++class PlaywrightFrontendDispatcher;
++}
++
++namespace PAL {
++class SessionID;
++}
++
++namespace WebKit {
++
++class NetworkProcess;
++class WebFrameProxy;
++class WebProcessPool;
++
++class PageProxyIDMap {
++public:
++    virtual WebPageProxy* findPageProxy(const String& pageProxyID) = 0;
++
++protected:
++    virtual ~PageProxyIDMap() = default;
++};
++
++class InspectorPlaywrightAgent final : public Inspector::InspectorAgentBase, public Inspector::PlaywrightBackendDispatcherHandler {
++    WTF_MAKE_NONCOPYABLE(InspectorPlaywrightAgent);
++    WTF_MAKE_FAST_ALLOCATED;
++public:
++    InspectorPlaywrightAgent(Inspector::FrontendRouter&, Inspector::BackendDispatcher&, InspectorPlaywrightAgentClient*, PageProxyIDMap&);
++    ~InspectorPlaywrightAgent() override;
++
++    void didCreateWebPageProxy(const WebPageProxy&);
++    void willDestroyWebPageProxy(const WebPageProxy&);
++    void didFailProvisionalLoad(WebPageProxy&, uint64_t navigationID, const String& error);
++
++    // InspectorAgentBase
++    void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) override;
++    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
++
++    // PlaywrightDispatcherHandler
++    void close(Ref<CloseCallback>&&) override;
++    void createContext(Inspector::ErrorString&, String* browserContextID) override;
++    void deleteContext(const String& browserContextID, Ref<DeleteContextCallback>&& callback) override;
++    void createPage(Inspector::ErrorString&, const String* browserContextID, String* pageProxyID) override;
++    void navigate(const String& url, const String& pageProxyID, const String* frameId, const String* referrer, Ref<NavigateCallback>&&) override;
++    void setIgnoreCertificateErrors(Inspector::ErrorString&, const String* browserContextID, bool ignore) override;
++
++    void getAllCookies(const String* browserContextID, Ref<GetAllCookiesCallback>&&) override;
++    void setCookies(const String* browserContextID, const JSON::Array& in_cookies, Ref<SetCookiesCallback>&&) override;
++    void deleteAllCookies(const String* browserContextID, Ref<DeleteAllCookiesCallback>&&) override;
++
++    void grantPermissions(Inspector::ErrorString&, const String* browserContextID, const String& origin, const JSON::Array& permissions) override;
++    void resetPermissions(Inspector::ErrorString&, const String* browserContextID) override;
++    void setGeolocationOverride(Inspector::ErrorString&, const String* browserContextID, const JSON::Object* geolocation) override;
++    void setLanguages(Inspector::ErrorString&, const JSON::Array& languages, const String* browserContextID) override;
++
++    static String toBrowserContextIDProtocolString(const PAL::SessionID&);
++    static String toPageProxyIDProtocolString(const WebPageProxy&);
++
++private:
++    class BrowserContextDeletion;
++    BrowserContext lookupBrowserContext(Inspector::ErrorString&, const String* browserContextID);
++    WebFrameProxy* frameForID(const String& frameID, String& error);
++
++    std::unique_ptr<Inspector::PlaywrightFrontendDispatcher> m_frontendDispatcher;
++    Ref<Inspector::PlaywrightBackendDispatcher> m_backendDispatcher;
++    InspectorPlaywrightAgentClient* m_client;
++    PageProxyIDMap& m_pageProxyIDMap;
++    using Permissions = HashMap<String, HashSet<String>>;
++    HashMap<String, Permissions> m_permissions;
++    HashMap<String, BrowserContext> m_browserContexts;
++    HashMap<PAL::SessionID, std::unique_ptr<BrowserContextDeletion>> m_browserContextDeletions;
++    bool m_isConnected { false };
++};
++
++} // namespace WebKit
++
++#endif // ENABLE(REMOTE_INSPECTOR)
+diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgentClient.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgentClient.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..d2f02082007b41b9e20dc6bb4751743835d60fce
+--- /dev/null
++++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgentClient.h
+@@ -0,0 +1,56 @@
++/*
++ * Copyright (C) 2019 Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#pragma once
++
++#if ENABLE(REMOTE_INSPECTOR)
++
++#include <pal/SessionID.h>
++#include <wtf/Forward.h>
++
++namespace WebKit {
++
++class WebsiteDataStore;
++class WebPageProxy;
++class WebProcessPool;
++
++struct BrowserContext {
++    Vector<WebPageProxy*> pages() const;
++    RefPtr<WebsiteDataStore> dataStore;
++    RefPtr<WebProcessPool> processPool;
++};
++
++class InspectorPlaywrightAgentClient {
++public:
++    virtual ~InspectorPlaywrightAgentClient() = default;
++    virtual RefPtr<WebKit::WebPageProxy> createPage(WTF::String& error, const BrowserContext& context) = 0;
++    virtual void closeBrowser() = 0;
++    virtual BrowserContext createBrowserContext(WTF::String& error) = 0;
++    virtual void deleteBrowserContext(WTF::String& error, PAL::SessionID) = 0;
++};
++
++} // namespace WebKit
++
++#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/Launcher/win/ProcessLauncherWin.cpp b/Source/WebKit/UIProcess/Launcher/win/ProcessLauncherWin.cpp
 index 8a871bf2916d5eab86becf5fde0faed79283d88c..a19a429c4d53edf81c3028c7053265e6c22c171a 100644
 --- a/Source/WebKit/UIProcess/Launcher/win/ProcessLauncherWin.cpp
@@ -10348,11 +10350,11 @@ index 31d29091985f34a65134a2b0e7cb3ace1dae441d..571ceac8a4b291fa6e91eb8b17065c0a
      UpdateNotifyFunction m_updateNotifyFunction;
      RunLoop::Timer<GeoclueGeolocationProvider> m_destroyManagerLaterTimer;
  };
-diff --git a/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
+diff --git a/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..0038b09d06d3d92b885d70bfffa9b111766b3f57
+index 0000000000000000000000000000000000000000..c16ef9d7c0ba6b4aca36b0aad68296505dbacb50
 --- /dev/null
-+++ b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
++++ b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
 @@ -0,0 +1,115 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
@@ -10380,11 +10382,11 @@ index 0000000000000000000000000000000000000000..0038b09d06d3d92b885d70bfffa9b111
 + */
 +
 +#include "config.h"
-+#include "InspectorBrowserAgentClientGLib.h"
++#include "InspectorPlaywrightAgentClientGLib.h"
 +
 +#if ENABLE(REMOTE_INSPECTOR)
 +
-+#include "InspectorBrowserAgent.h"
++#include "InspectorPlaywrightAgent.h"
 +#include "WebKitBrowserInspectorPrivate.h"
 +#include "WebKitWebContextPrivate.h"
 +#include "WebKitWebsiteDataManagerPrivate.h"
@@ -10397,12 +10399,12 @@ index 0000000000000000000000000000000000000000..0038b09d06d3d92b885d70bfffa9b111
 +
 +namespace WebKit {
 +
-+InspectorBrowserAgentClientGlib::InspectorBrowserAgentClientGlib(GMainLoop* mainLoop)
++InspectorPlaywrightAgentClientGlib::InspectorPlaywrightAgentClientGlib(GMainLoop* mainLoop)
 +    : m_mainLoop(mainLoop)
 +{
 +}
 +
-+RefPtr<WebPageProxy> InspectorBrowserAgentClientGlib::createPage(WTF::String& error, const BrowserContext& browserContext)
++RefPtr<WebPageProxy> InspectorPlaywrightAgentClientGlib::createPage(WTF::String& error, const BrowserContext& browserContext)
 +{
 +    auto sessionID = browserContext.dataStore->sessionID();
 +    WebKitWebContext* context = m_idToContext.get(sessionID);
@@ -10427,7 +10429,7 @@ index 0000000000000000000000000000000000000000..0038b09d06d3d92b885d70bfffa9b111
 +    return page;
 +}
 +
-+void InspectorBrowserAgentClientGlib::closeBrowser()
++void InspectorPlaywrightAgentClientGlib::closeBrowser()
 +{
 +    m_idToContext.clear();
 +#if PLATFORM(GTK)
@@ -10445,7 +10447,7 @@ index 0000000000000000000000000000000000000000..0038b09d06d3d92b885d70bfffa9b111
 +    return websiteDataStore.sessionID();
 +}
 +
-+BrowserContext InspectorBrowserAgentClientGlib::createBrowserContext(WTF::String& error)
++BrowserContext InspectorPlaywrightAgentClientGlib::createBrowserContext(WTF::String& error)
 +{
 +    BrowserContext browserContext;
 +    GRefPtr<WebKitWebsiteDataManager> data_manager = adoptGRef(webkit_website_data_manager_new_ephemeral());
@@ -10461,7 +10463,7 @@ index 0000000000000000000000000000000000000000..0038b09d06d3d92b885d70bfffa9b111
 +    return browserContext;
 +}
 +
-+void InspectorBrowserAgentClientGlib::deleteBrowserContext(WTF::String& error, PAL::SessionID sessionID)
++void InspectorPlaywrightAgentClientGlib::deleteBrowserContext(WTF::String& error, PAL::SessionID sessionID)
 +{
 +    m_idToContext.remove(sessionID);
 +}
@@ -10469,11 +10471,11 @@ index 0000000000000000000000000000000000000000..0038b09d06d3d92b885d70bfffa9b111
 +} // namespace WebKit
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
-diff --git a/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.h b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.h
+diff --git a/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.h b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..9e27fe017ffdef1e8aafce69344fd688c732c3b4
+index 0000000000000000000000000000000000000000..4cba2671042d3517e4b8f66e7b2bb780d57aa402
 --- /dev/null
-+++ b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.h
++++ b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.h
 @@ -0,0 +1,59 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
@@ -10504,7 +10506,7 @@ index 0000000000000000000000000000000000000000..9e27fe017ffdef1e8aafce69344fd688
 +
 +#if ENABLE(REMOTE_INSPECTOR)
 +
-+#include "InspectorBrowserAgentClient.h"
++#include "InspectorPlaywrightAgentClient.h"
 +#include "WebKitWebContext.h"
 +#include <wtf/Forward.h>
 +#include <wtf/HashMap.h>
@@ -10513,11 +10515,11 @@ index 0000000000000000000000000000000000000000..9e27fe017ffdef1e8aafce69344fd688
 +
 +namespace WebKit {
 +
-+class InspectorBrowserAgentClientGlib : public InspectorBrowserAgentClient {
++class InspectorPlaywrightAgentClientGlib : public InspectorPlaywrightAgentClient {
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    InspectorBrowserAgentClientGlib(GMainLoop* mainLoop);
-+    ~InspectorBrowserAgentClientGlib() override = default;
++    InspectorPlaywrightAgentClientGlib(GMainLoop* mainLoop);
++    ~InspectorPlaywrightAgentClientGlib() override = default;
 +
 +    RefPtr<WebPageProxy> createPage(WTF::String& error, const BrowserContext&) override;
 +    void closeBrowser() override;
@@ -10785,11 +10787,11 @@ index 82b89cf43f3d903daea3234dc5fc57e749401c81..8df94bc82061eea191598bf0ab0ca1ab
      [m_contentView _didHandleKeyEvent:event.nativeEvent() eventWasHandled:eventWasHandled];
  }
  
-diff --git a/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.h b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.h
+diff --git a/Source/WebKit/UIProcess/mac/InspectorPlaywrightAgentClientMac.h b/Source/WebKit/UIProcess/mac/InspectorPlaywrightAgentClientMac.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..f9e7e5906301bb7add100bba3f88c0c0aef04fd1
+index 0000000000000000000000000000000000000000..b75c2ce5ce9e9da3a33bca41ab548ec7a2f819ed
 --- /dev/null
-+++ b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.h
++++ b/Source/WebKit/UIProcess/mac/InspectorPlaywrightAgentClientMac.h
 @@ -0,0 +1,51 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
@@ -10818,18 +10820,18 @@ index 0000000000000000000000000000000000000000..f9e7e5906301bb7add100bba3f88c0c0
 +
 +#pragma once
 +
-+#include "InspectorBrowserAgentClient.h"
++#include "InspectorPlaywrightAgentClient.h"
 +#include <wtf/Forward.h>
 +
 +OBJC_PROTOCOL(_WKBrowserInspectorDelegate);
 +
 +namespace WebKit {
 +
-+class InspectorBrowserAgentClientMac : public InspectorBrowserAgentClient {
++class InspectorPlaywrightAgentClientMac : public InspectorPlaywrightAgentClient {
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    InspectorBrowserAgentClientMac(_WKBrowserInspectorDelegate* delegate);
-+    ~InspectorBrowserAgentClientMac() override = default;
++    InspectorPlaywrightAgentClientMac(_WKBrowserInspectorDelegate* delegate);
++    ~InspectorPlaywrightAgentClientMac() override = default;
 +
 +    RefPtr<WebPageProxy> createPage(WTF::String& error, const BrowserContext&) override;
 +    void closeBrowser() override;
@@ -10842,11 +10844,11 @@ index 0000000000000000000000000000000000000000..f9e7e5906301bb7add100bba3f88c0c0
 +
 +
 +} // namespace API
-diff --git a/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.mm b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.mm
+diff --git a/Source/WebKit/UIProcess/mac/InspectorPlaywrightAgentClientMac.mm b/Source/WebKit/UIProcess/mac/InspectorPlaywrightAgentClientMac.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..fc40a8a0ee3f88a4f15d5b75f060b00e1126f47b
+index 0000000000000000000000000000000000000000..5db92c0580fd4f216ac86ede56eaac2eabec27da
 --- /dev/null
-+++ b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.mm
++++ b/Source/WebKit/UIProcess/mac/InspectorPlaywrightAgentClientMac.mm
 @@ -0,0 +1,77 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
@@ -10874,7 +10876,7 @@ index 0000000000000000000000000000000000000000..fc40a8a0ee3f88a4f15d5b75f060b00e
 + */
 +
 +#import "config.h"
-+#import "InspectorBrowserAgentClientMac.h"
++#import "InspectorPlaywrightAgentClientMac.h"
 +
 +#import <wtf/RefPtr.h>
 +#import <wtf/text/WTFString.h>
@@ -10889,12 +10891,12 @@ index 0000000000000000000000000000000000000000..fc40a8a0ee3f88a4f15d5b75f060b00e
 +
 +namespace WebKit {
 +
-+InspectorBrowserAgentClientMac::InspectorBrowserAgentClientMac(_WKBrowserInspectorDelegate* delegate)
++InspectorPlaywrightAgentClientMac::InspectorPlaywrightAgentClientMac(_WKBrowserInspectorDelegate* delegate)
 +  : delegate_(delegate)
 +{
 +}
 +
-+RefPtr<WebPageProxy> InspectorBrowserAgentClientMac::createPage(WTF::String& error, const BrowserContext& browserContext)
++RefPtr<WebPageProxy> InspectorPlaywrightAgentClientMac::createPage(WTF::String& error, const BrowserContext& browserContext)
 +{
 +    auto sessionID = browserContext.dataStore->sessionID();
 +    WKWebView *webView = [delegate_ createNewPage:sessionID.toUInt64()];
@@ -10905,12 +10907,12 @@ index 0000000000000000000000000000000000000000..fc40a8a0ee3f88a4f15d5b75f060b00e
 +    return [webView _page].get();
 +}
 +
-+void InspectorBrowserAgentClientMac::closeBrowser()
++void InspectorPlaywrightAgentClientMac::closeBrowser()
 +{
 +    [delegate_ quit];
 +}
 +
-+BrowserContext InspectorBrowserAgentClientMac::createBrowserContext(WTF::String& error)
++BrowserContext InspectorPlaywrightAgentClientMac::createBrowserContext(WTF::String& error)
 +{
 +    _WKBrowserContext* wkBrowserContext = [[delegate_ createBrowserContext] autorelease];
 +    BrowserContext browserContext;
@@ -10919,7 +10921,7 @@ index 0000000000000000000000000000000000000000..fc40a8a0ee3f88a4f15d5b75f060b00e
 +    return browserContext;
 +}
 +
-+void InspectorBrowserAgentClientMac::deleteBrowserContext(WTF::String& error, PAL::SessionID sessionID)
++void InspectorPlaywrightAgentClientMac::deleteBrowserContext(WTF::String& error, PAL::SessionID sessionID)
 +{
 +    [delegate_ deleteBrowserContext:sessionID.toUInt64()];
 +}
@@ -11276,11 +11278,11 @@ index 0000000000000000000000000000000000000000..30e6ae3bdc8c1695189885afae949071
 +}
 +
 +} // namespace WebKit
-diff --git a/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.cpp b/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.cpp
+diff --git a/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.cpp b/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..7406306e47b4f3469db150eef6a71ac30e8f2f7a
+index 0000000000000000000000000000000000000000..544442b75afcba6e121ab202ad32dcdfaf923e2e
 --- /dev/null
-+++ b/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.cpp
++++ b/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.cpp
 @@ -0,0 +1,83 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
@@ -11308,13 +11310,13 @@ index 0000000000000000000000000000000000000000..7406306e47b4f3469db150eef6a71ac3
 + */
 +
 +#include "config.h"
-+#include "InspectorBrowserAgentClientWin.h"
++#include "InspectorPlaywrightAgentClientWin.h"
 +
 +#if ENABLE(REMOTE_INSPECTOR)
 +
 +#include "APIPageConfiguration.h"
 +#include "APIProcessPoolConfiguration.h"
-+#include "InspectorBrowserAgent.h"
++#include "InspectorPlaywrightAgent.h"
 +#include "WebPageProxy.h"
 +#include "WebsiteDataStore.h"
 +#include "WebPreferences.h"
@@ -11328,13 +11330,13 @@ index 0000000000000000000000000000000000000000..7406306e47b4f3469db150eef6a71ac3
 +
 +namespace WebKit {
 +
-+InspectorBrowserAgentClientWin::InspectorBrowserAgentClientWin(CreatePageCallback createPage, QuitCallback quit)
++InspectorPlaywrightAgentClientWin::InspectorPlaywrightAgentClientWin(CreatePageCallback createPage, QuitCallback quit)
 +    : m_createPage(createPage)
 +    , m_quit(quit)
 +{
 +}
 +
-+RefPtr<WebPageProxy> InspectorBrowserAgentClientWin::createPage(WTF::String& error, const BrowserContext& context)
++RefPtr<WebPageProxy> InspectorPlaywrightAgentClientWin::createPage(WTF::String& error, const BrowserContext& context)
 +{
 +    auto conf = API::PageConfiguration::create();
 +    auto prefs = WebPreferences::create(String(), "WebKit2Automation.", "WebKit2Automation.");
@@ -11343,12 +11345,12 @@ index 0000000000000000000000000000000000000000..7406306e47b4f3469db150eef6a71ac3
 +    return toImpl(m_createPage(toAPI(&conf.get())));
 +}
 +
-+void InspectorBrowserAgentClientWin::closeBrowser()
++void InspectorPlaywrightAgentClientWin::closeBrowser()
 +{
 +    m_quit();
 +}
 +
-+BrowserContext InspectorBrowserAgentClientWin::createBrowserContext(WTF::String& error)
++BrowserContext InspectorPlaywrightAgentClientWin::createBrowserContext(WTF::String& error)
 +{
 +    auto config = API::ProcessPoolConfiguration::create();
 +    BrowserContext browserContext;
@@ -11358,18 +11360,18 @@ index 0000000000000000000000000000000000000000..7406306e47b4f3469db150eef6a71ac3
 +    return browserContext;
 +}
 +
-+void InspectorBrowserAgentClientWin::deleteBrowserContext(WTF::String& error, PAL::SessionID sessionID)
++void InspectorPlaywrightAgentClientWin::deleteBrowserContext(WTF::String& error, PAL::SessionID sessionID)
 +{
 +}
 +
 +} // namespace WebKit
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
-diff --git a/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.h b/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.h
+diff --git a/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.h b/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..2311841478469154473c259a4e0c669daf4644f9
+index 0000000000000000000000000000000000000000..2536fe399ef9a5916803954e1f4971a24b7ca4ec
 --- /dev/null
-+++ b/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.h
++++ b/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.h
 @@ -0,0 +1,58 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
@@ -11400,7 +11402,7 @@ index 0000000000000000000000000000000000000000..2311841478469154473c259a4e0c669d
 +
 +#if ENABLE(REMOTE_INSPECTOR)
 +
-+#include "InspectorBrowserAgentClient.h"
++#include "InspectorPlaywrightAgentClient.h"
 +#include <WebKit/WKInspector.h>
 +#include <wtf/Forward.h>
 +#include <wtf/text/StringHash.h>
@@ -11410,11 +11412,11 @@ index 0000000000000000000000000000000000000000..2311841478469154473c259a4e0c669d
 +
 +namespace WebKit {
 +
-+class InspectorBrowserAgentClientWin : public InspectorBrowserAgentClient {
++class InspectorPlaywrightAgentClientWin : public InspectorPlaywrightAgentClient {
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    InspectorBrowserAgentClientWin(CreatePageCallback, QuitCallback);
-+    ~InspectorBrowserAgentClientWin() override = default;
++    InspectorPlaywrightAgentClientWin(CreatePageCallback, QuitCallback);
++    ~InspectorPlaywrightAgentClientWin() override = default;
 +
 +    RefPtr<WebPageProxy> createPage(WTF::String& error, const BrowserContext&) override;
 +    void closeBrowser() override;
@@ -11780,15 +11782,15 @@ index 0000000000000000000000000000000000000000..585fb151f302e4b376c705ed0d0974d5
 + 
 +} // namespace WebKit
 diff --git a/Source/WebKit/WebKit.xcodeproj/project.pbxproj b/Source/WebKit/WebKit.xcodeproj/project.pbxproj
-index 2ccfb65a84a27cfbe765bf75b916c653123f6324..38c585ad7fff7b42b96817fe7292aba01ecfa85e 100644
+index 2ccfb65a84a27cfbe765bf75b916c653123f6324..feccdef9beede7240e26def87bfeb1646f3ebdc3 100644
 --- a/Source/WebKit/WebKit.xcodeproj/project.pbxproj
 +++ b/Source/WebKit/WebKit.xcodeproj/project.pbxproj
 @@ -1731,6 +1731,19 @@
  		CEE4AE2B1A5DCF430002F49B /* UIKitSPI.h in Headers */ = {isa = PBXBuildFile; fileRef = CEE4AE2A1A5DCF430002F49B /* UIKitSPI.h */; };
  		D3B9484711FF4B6500032B39 /* WebPopupMenu.h in Headers */ = {isa = PBXBuildFile; fileRef = D3B9484311FF4B6500032B39 /* WebPopupMenu.h */; };
  		D3B9484911FF4B6500032B39 /* WebSearchPopupMenu.h in Headers */ = {isa = PBXBuildFile; fileRef = D3B9484511FF4B6500032B39 /* WebSearchPopupMenu.h */; };
-+		D71A94322370E025002C4D9E /* InspectorBrowserAgentClientMac.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94302370E025002C4D9E /* InspectorBrowserAgentClientMac.h */; };
-+		D71A94342370E07A002C4D9E /* InspectorBrowserAgentClient.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94332370E07A002C4D9E /* InspectorBrowserAgentClient.h */; };
++		D71A94322370E025002C4D9E /* InspectorPlaywrightAgentClientMac.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94302370E025002C4D9E /* InspectorPlaywrightAgentClientMac.h */; };
++		D71A94342370E07A002C4D9E /* InspectorPlaywrightAgentClient.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94332370E07A002C4D9E /* InspectorPlaywrightAgentClient.h */; };
 +		D71A94382370F032002C4D9E /* BrowserInspectorController.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94372370F032002C4D9E /* BrowserInspectorController.h */; };
 +		D71A943A2370F061002C4D9E /* RemoteInspectorPipe.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94392370F060002C4D9E /* RemoteInspectorPipe.h */; };
 +		D71A94422371F67E002C4D9E /* WebPageInspectorEmulationAgent.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A943F2371F67E002C4D9E /* WebPageInspectorEmulationAgent.h */; };
@@ -11799,7 +11801,7 @@ index 2ccfb65a84a27cfbe765bf75b916c653123f6324..38c585ad7fff7b42b96817fe7292aba0
 +		D79902B1236E9404005D6F7E /* WebPageInspectorEmulationAgentMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = D79902AE236E9404005D6F7E /* WebPageInspectorEmulationAgentMac.mm */; };
 +		D79902B2236E9404005D6F7E /* InspectorTargetProxyMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = D79902AF236E9404005D6F7E /* InspectorTargetProxyMac.mm */; };
 +		D79902B3236E9404005D6F7E /* WebPageInspectorInputAgentMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = D79902B0236E9404005D6F7E /* WebPageInspectorInputAgentMac.mm */; };
-+		D7EB04E72372A73B00F744CE /* InspectorBrowserAgentClientMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = D7EB04E62372A73B00F744CE /* InspectorBrowserAgentClientMac.mm */; };
++		D7EB04E72372A73B00F744CE /* InspectorPlaywrightAgentClientMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = D7EB04E62372A73B00F744CE /* InspectorPlaywrightAgentClientMac.mm */; };
  		DF462E0F23F22F5500EFF35F /* WKHTTPCookieStorePrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = DF462E0E23F22F5300EFF35F /* WKHTTPCookieStorePrivate.h */; settings = {ATTRIBUTES = (Private, ); }; };
  		DF462E1223F338BE00EFF35F /* WKContentWorldPrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = DF462E1123F338AD00EFF35F /* WKContentWorldPrivate.h */; settings = {ATTRIBUTES = (Private, ); }; };
  		E105FE5418D7B9DE008F57A8 /* EditingRange.h in Headers */ = {isa = PBXBuildFile; fileRef = E105FE5318D7B9DE008F57A8 /* EditingRange.h */; };
@@ -11808,8 +11810,8 @@ index 2ccfb65a84a27cfbe765bf75b916c653123f6324..38c585ad7fff7b42b96817fe7292aba0
  		D3B9484411FF4B6500032B39 /* WebSearchPopupMenu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WebSearchPopupMenu.cpp; sourceTree = "<group>"; };
  		D3B9484511FF4B6500032B39 /* WebSearchPopupMenu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebSearchPopupMenu.h; sourceTree = "<group>"; };
 +		D71A942C2370DF81002C4D9E /* WKBrowserInspector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKBrowserInspector.h; sourceTree = "<group>"; };
-+		D71A94302370E025002C4D9E /* InspectorBrowserAgentClientMac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorBrowserAgentClientMac.h; sourceTree = "<group>"; };
-+		D71A94332370E07A002C4D9E /* InspectorBrowserAgentClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorBrowserAgentClient.h; sourceTree = "<group>"; };
++		D71A94302370E025002C4D9E /* InspectorPlaywrightAgentClientMac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorPlaywrightAgentClientMac.h; sourceTree = "<group>"; };
++		D71A94332370E07A002C4D9E /* InspectorPlaywrightAgentClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorPlaywrightAgentClient.h; sourceTree = "<group>"; };
 +		D71A94372370F032002C4D9E /* BrowserInspectorController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BrowserInspectorController.h; sourceTree = "<group>"; };
 +		D71A94392370F060002C4D9E /* RemoteInspectorPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RemoteInspectorPipe.h; sourceTree = "<group>"; };
 +		D71A943F2371F67E002C4D9E /* WebPageInspectorEmulationAgent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebPageInspectorEmulationAgent.h; sourceTree = "<group>"; };
@@ -11820,7 +11822,7 @@ index 2ccfb65a84a27cfbe765bf75b916c653123f6324..38c585ad7fff7b42b96817fe7292aba0
 +		D79902AE236E9404005D6F7E /* WebPageInspectorEmulationAgentMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WebPageInspectorEmulationAgentMac.mm; sourceTree = "<group>"; };
 +		D79902AF236E9404005D6F7E /* InspectorTargetProxyMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = InspectorTargetProxyMac.mm; sourceTree = "<group>"; };
 +		D79902B0236E9404005D6F7E /* WebPageInspectorInputAgentMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WebPageInspectorInputAgentMac.mm; sourceTree = "<group>"; };
-+		D7EB04E62372A73B00F744CE /* InspectorBrowserAgentClientMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = InspectorBrowserAgentClientMac.mm; sourceTree = "<group>"; };
++		D7EB04E62372A73B00F744CE /* InspectorPlaywrightAgentClientMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = InspectorPlaywrightAgentClientMac.mm; sourceTree = "<group>"; };
  		DF462E0E23F22F5300EFF35F /* WKHTTPCookieStorePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKHTTPCookieStorePrivate.h; sourceTree = "<group>"; };
  		DF462E1123F338AD00EFF35F /* WKContentWorldPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKContentWorldPrivate.h; sourceTree = "<group>"; };
  		DF58C6311371AC5800F9A37C /* NativeWebWheelEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NativeWebWheelEvent.h; sourceTree = "<group>"; };
@@ -11842,7 +11844,7 @@ index 2ccfb65a84a27cfbe765bf75b916c653123f6324..38c585ad7fff7b42b96817fe7292aba0
 +				D71A94402371F67E002C4D9E /* WebPageInspectorInputAgent.h */,
 +				D71A94392370F060002C4D9E /* RemoteInspectorPipe.h */,
 +				D71A94372370F032002C4D9E /* BrowserInspectorController.h */,
-+				D71A94332370E07A002C4D9E /* InspectorBrowserAgentClient.h */,
++				D71A94332370E07A002C4D9E /* InspectorPlaywrightAgentClient.h */,
  				BC032DC410F4387C0058C15A /* API */,
  				512F588D12A8836F00629530 /* Authentication */,
  				9955A6E81C79809000EB6A93 /* Automation */,
@@ -11858,8 +11860,8 @@ index 2ccfb65a84a27cfbe765bf75b916c653123f6324..38c585ad7fff7b42b96817fe7292aba0
  		BCCF085C113F3B7500C650C5 /* mac */ = {
  			isa = PBXGroup;
  			children = (
-+				D7EB04E62372A73B00F744CE /* InspectorBrowserAgentClientMac.mm */,
-+				D71A94302370E025002C4D9E /* InspectorBrowserAgentClientMac.h */,
++				D7EB04E62372A73B00F744CE /* InspectorPlaywrightAgentClientMac.mm */,
++				D71A94302370E025002C4D9E /* InspectorPlaywrightAgentClientMac.h */,
 +				D79902AE236E9404005D6F7E /* WebPageInspectorEmulationAgentMac.mm */,
 +				D79902B0236E9404005D6F7E /* WebPageInspectorInputAgentMac.mm */,
 +				D79902AF236E9404005D6F7E /* InspectorTargetProxyMac.mm */,
@@ -11886,7 +11888,7 @@ index 2ccfb65a84a27cfbe765bf75b916c653123f6324..38c585ad7fff7b42b96817fe7292aba0
  				BC06F43A12DBCCFB002D78DE /* GeolocationPermissionRequestProxy.h in Headers */,
  				2DA944A41884E4F000ED86DB /* GestureTypes.h in Headers */,
  				2DA049B8180CCD0A00AAFA9E /* GraphicsLayerCARemote.h in Headers */,
-+				D71A94342370E07A002C4D9E /* InspectorBrowserAgentClient.h in Headers */,
++				D71A94342370E07A002C4D9E /* InspectorPlaywrightAgentClient.h in Headers */,
  				C0CE72AD1247E78D00BC0EC4 /* HandleMessage.h in Headers */,
  				1AC75A1B1B3368270056745B /* HangDetectionDisabler.h in Headers */,
  				57AC8F50217FEED90055438C /* HidConnection.h in Headers */,
@@ -11929,7 +11931,7 @@ index 2ccfb65a84a27cfbe765bf75b916c653123f6324..38c585ad7fff7b42b96817fe7292aba0
  				1AB8A1F818400BB800E9AE69 /* WKPageContextMenuClient.h in Headers */,
  				8372DB251A674C8F00C697C5 /* WKPageDiagnosticLoggingClient.h in Headers */,
  				1AB8A1F418400B8F00E9AE69 /* WKPageFindClient.h in Headers */,
-+				D71A94322370E025002C4D9E /* InspectorBrowserAgentClientMac.h in Headers */,
++				D71A94322370E025002C4D9E /* InspectorPlaywrightAgentClientMac.h in Headers */,
  				1AB8A1F618400B9D00E9AE69 /* WKPageFindMatchesClient.h in Headers */,
  				1AB8A1F018400B0000E9AE69 /* WKPageFormClient.h in Headers */,
  				BC7B633712A45ABA00D174A4 /* WKPageGroup.h in Headers */,
@@ -11953,7 +11955,7 @@ index 2ccfb65a84a27cfbe765bf75b916c653123f6324..38c585ad7fff7b42b96817fe7292aba0
  				1A2D8439127F65D5001EB962 /* NPObjectMessageReceiverMessageReceiver.cpp in Sources */,
  				2D92A792212B6AD400F493FD /* NPObjectProxy.cpp in Sources */,
  				2D92A793212B6AD400F493FD /* NPRemoteObjectMap.cpp in Sources */,
-+				D7EB04E72372A73B00F744CE /* InspectorBrowserAgentClientMac.mm in Sources */,
++				D7EB04E72372A73B00F744CE /* InspectorPlaywrightAgentClientMac.mm in Sources */,
  				2D913447212CF9F000128AFD /* NPRuntimeObjectMap.cpp in Sources */,
  				2D913448212CF9F000128AFD /* NPRuntimeUtilities.cpp in Sources */,
  				2D92A794212B6AD400F493FD /* NPVariantData.cpp in Sources */,
