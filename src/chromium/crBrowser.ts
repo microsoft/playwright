@@ -118,18 +118,18 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     try {
       switch (targetInfo.type) {
         case 'page': {
-          const event = new PageEvent(target.pageOrError());
+          const event = new PageEvent(context, target.pageOrError());
           context.emit(CommonEvents.BrowserContext.Page, event);
           const opener = target.opener();
           if (!opener)
             break;
           const openerPage = await opener.pageOrError();
           if (openerPage instanceof Page && !openerPage.isClosed())
-            openerPage.emit(CommonEvents.Page.Popup, new PageEvent(target.pageOrError()));
+            openerPage.emit(CommonEvents.Page.Popup, new PageEvent(context, target.pageOrError()));
           break;
         }
         case 'background_page': {
-          const event = new PageEvent(target.pageOrError());
+          const event = new PageEvent(context, target.pageOrError());
           context.emit(Events.CRBrowserContext.BackgroundPage, event);
           break;
         }

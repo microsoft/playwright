@@ -128,7 +128,7 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     const ffPage = new FFPage(session, context, opener);
     this._ffPages.set(targetId, ffPage);
 
-    const pageEvent = new PageEvent(ffPage.pageOrError());
+    const pageEvent = new PageEvent(context, ffPage.pageOrError());
     context.emit(Events.BrowserContext.Page, pageEvent);
 
     ffPage.pageOrError().then(() => this._firstPageCallback());

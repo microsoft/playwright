@@ -32,7 +32,6 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
         context.waitForEvent('page').then(pageEvent => pageEvent.page()),
         page.click('a'),
       ]);
-      await popup.waitForLoadState();
       const userAgent = await popup.evaluate(() => window.initialUserAgent);
       const request = await requestPromise;
       await context.close();
@@ -53,7 +52,6 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
         context.waitForEvent('page').then(pageEvent => pageEvent.page()),
         page.click('a'),
       ]);
-      await popup.waitForLoadState();
       await context.close();
       expect(intercepted).toBe(true);
     });
@@ -108,7 +106,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(async e => { const popup = await e.page(); await popup.waitForLoadState(); return popup; }),
+        page.waitForEvent('popup').then(e => e.page()),
         page.evaluate(url => window._popup = window.open(url), server.PREFIX + '/title.html'),
       ]);
       expect(await popup.title()).toBe('Woof-Woof');
@@ -204,6 +202,65 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(popupEvent).toBeTruthy();
       await context.close();
     });
+    it('should resolve page() after initial navigation', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      // First popup navigation is about:blank.
+      const [popupEvent] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.evaluate(() => window.popup = window.open('about:blank')),
+      ]);
+      // Stall the 'load' for second navigation.
+      server.setRoute('/one-style.css', (req, res) => {});
+      await Promise.all([
+        server.waitForRequest('/one-style.css'),
+        page.evaluate(url => window.popup.location.href = url, server.PREFIX + '/one-style.html'),
+      ]);
+      // Second navigation should be committed, but page() should resolve because first navigation is done.
+      const popup = await popupEvent.page();
+      expect(popup).toBeTruthy();
+      await context.close();
+    });
+    it('should resolve page() after load', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      // Stall the 'load' by delaying css.
+      let cssResponse;
+      server.setRoute('/one-style.css', (req, res) => cssResponse = res);
+      const [popupEvent] = await Promise.all([
+        page.waitForEvent('popup'),
+        server.waitForRequest('/one-style.css'),
+        page.evaluate(url => window.popup = window.open(url), server.PREFIX + '/one-style.html'),
+      ]);
+      let resolved = false;
+      const popupPromise = popupEvent.page().then(page => { resolved = true; return page; });
+      expect(resolved).toBe(false);
+      // Round trips!
+      for (let i = 0; i < 5; i++)
+        await page.evaluate('window');
+      expect(resolved).toBe(false);
+      cssResponse.end('');
+      const popup = await popupPromise;
+      expect(resolved).toBe(true);
+      expect(popup.url()).toBe(server.PREFIX + '/one-style.html');
+      await context.close();
+    });
+    it('should respect timeout in page()', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      // Stall the 'load' by delaying css.
+      server.setRoute('/one-style.css', (req, res) => {});
+      const [popupEvent] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.evaluate(url => window.popup = window.open(url), server.PREFIX + '/one-style.html'),
+      ]);
+      const error = await popupEvent.page({ timeout: 1 }).catch(e => e);
+      expect(error.message).toBe('waiting for "load" failed: timeout 1ms exceeded');
+      await context.close();
+    });
     it.fail(FFOX)('should be able to capture alert', async({browser}) => {
       // Firefox:
       // - immediately closes dialog by itself, without protocol call;
@@ -226,7 +283,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       const context = await browser.newContext();
       const page = await context.newPage();
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(e => e.page()),
+        page.waitForEvent('popup').then(e => e.page({ waitUntil: 'commit' })),
         page.evaluate(() => window.__popup = window.open('')),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
@@ -250,7 +307,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel="opener" href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(async e => { const popup = await e.page(); await popup.waitForLoadState(); return popup; }),
+        page.waitForEvent('popup').then(e => e.page()),
         page.click('a'),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
@@ -264,7 +321,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(async e => { const popup = await e.page(); await popup.waitForLoadState(); return popup; }),
+        page.waitForEvent('popup').then(e => e.page()),
         page.$eval('a', a => a.click()),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
@@ -279,7 +336,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(async e => { const popup = await e.page(); await popup.waitForLoadState(); return popup; }),
+        page.waitForEvent('popup').then(e => e.page()),
         page.click('a'),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
@@ -292,7 +349,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(async e => { const popup = await e.page(); await popup.waitForLoadState(); return popup; }),
+        page.waitForEvent('popup').then(e => e.page()),
         page.click('a'),
       ]);
       let badSecondPopup = false;
