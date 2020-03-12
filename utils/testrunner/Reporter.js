@@ -51,7 +51,7 @@ class Reporter {
       console.log('');
       const focusedSuites = this._runner.focusedSuites();
       const focusedTests = this._runner.focusedTests();
-      if (focusedSuites.length) {
+      if (focusedSuites.length || focusedTests.length) {
         console.log('Focused Suites and Tests:');
         for (let i = 0; i < focusedSuites.length; ++i)
           console.log(`  ${i + 1}) ${focusedSuites[i].fullName} (${formatLocation(focusedSuites[i].location)})`);
