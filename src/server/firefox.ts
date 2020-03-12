@@ -62,7 +62,7 @@ export class Firefox implements BrowserType {
 
   async launch(options?: LaunchOptions & { slowMo?: number }): Promise<FFBrowser> {
     if (options && (options as any).userDataDir)
-      throw new Error('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistent` instead');
+      throw new Error('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     const browserServer = await this._launchServer(options, 'local');
     const browser = await platform.connectToWebsocket(browserServer.wsEndpoint()!, transport => {
       return FFBrowser.connect(transport, false, options && options.slowMo);
@@ -77,7 +77,7 @@ export class Firefox implements BrowserType {
     return await this._launchServer(options, 'server', undefined, options && options.port);
   }
 
-  async launchPersistent(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
+  async launchPersistentContext(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
     const { timeout = 30000 } = options || {};
     const browserServer = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await platform.connectToWebsocket(browserServer.wsEndpoint()!, transport => {

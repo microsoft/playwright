@@ -25,10 +25,10 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('launchPersistent()', function() {
+  describe('launchPersistentContext()', function() {
     beforeEach(async state => {
       state.userDataDir = await makeUserDataDir();
-      state.browserContext = await playwright.launchPersistent(state.userDataDir, defaultBrowserOptions);
+      state.browserContext = await playwright.launchPersistentContext(state.userDataDir, defaultBrowserOptions);
       state.page = await state.browserContext.newPage();
     });
     afterEach(async state => {

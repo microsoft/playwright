@@ -79,7 +79,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   describe('extensions', () => {
     it('should return background pages', async() => {
       const userDataDir = await makeUserDataDir();
-      const context = await playwright.launchPersistent(userDataDir, extensionOptions);
+      const context = await playwright.launchPersistentContext(userDataDir, extensionOptions);
       const backgroundPages = await context.backgroundPages();
       let backgroundPage = backgroundPages.length
           ? backgroundPages[0]
