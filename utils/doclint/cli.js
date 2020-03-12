@@ -21,6 +21,8 @@ const Source = require('./Source');
 
 const {spawnSync} = require('child_process');
 
+const os = require('os');
+
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const VERSION = require(path.join(PROJECT_DIR, 'package.json')).version;
 
@@ -46,7 +48,7 @@ async function run() {
     const mdSources = [readme, api, contributing, troubleshooting];
 
     const preprocessor = require('./preprocessor');
-    const browserVersions = getBrowserVersions();
+    const browserVersions = await getBrowserVersions();
     messages.push(...(await preprocessor.runCommands(mdSources, {
       libversion: VERSION,
       chromiumVersion: browserVersions.chromium,
@@ -103,11 +105,33 @@ async function run() {
   process.exit(clearExit ? 0 : 1);
 }
 
-function getBrowserVersions() {
-  const chromiumVersion = spawnSync(playwright.chromium.executablePath(), ['--version']).stdout.toString();
-  const firefoxVersion = spawnSync(playwright.firefox.executablePath(), ['--version']).stdout.toString();
+async function getBrowserVersions() {
+  const [chromium, firefox] = await Promise.all([
+    getChromeVersion(),
+    getFirefoxVersion(),
+  ])
   return {
-    chromium: chromiumVersion.trim().split(' ').pop(),
-    firefox: firefoxVersion.trim().split(' ').pop(),
+    chromium,
+    firefox,
   };
+}
+
+async function getChromeVersion() {
+  if (os.platform() === 'win32' || os.platform() === 'cygwin') {
+    const browser = await playwright.chromium.launch();
+    const page = await browser.newPage();
+    const userAgent = await page.evaluate('navigator.userAgent');
+    const [type] = userAgent.split(' ').filter(str => str.includes('Chrome'));
+    await browser.close();
+    return type.split('/')[1];
+  }
+  const version = spawnSync(playwright.chromium.executablePath(), ['--version'], undefined).stdout.toString();
+  return version.trim().split(' ').pop();
+}
+
+async function getFirefoxVersion() {
+  const isWin = os.platform() === 'win32' || os.platform() === 'cygwin';
+  const out = spawnSync(playwright.firefox.executablePath(), [isWin ? '/version' : '--version'], undefined);
+  const version = out.stdout.toString();
+  return version.trim().split(' ').pop();
 }
