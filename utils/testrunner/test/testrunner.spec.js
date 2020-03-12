@@ -1,12 +1,19 @@
 const {TestRunner} = require('..');
 
+function newTestRunner(options) {
+  return new TestRunner({
+    crashIfTestsAreFocusedOnCI: false,
+    ...options,
+  });
+}
+
 module.exports.addTests = function({testRunner, expect}) {
   const {describe, fdescribe, xdescribe} = testRunner;
   const {it, xit, fit} = testRunner;
 
   describe('TestRunner.it', () => {
     it('should declare a test', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.it('uno', () => {});
       expect(t.tests().length).toBe(1);
       const test = t.tests()[0];
@@ -22,7 +29,7 @@ module.exports.addTests = function({testRunner, expect}) {
 
   describe('TestRunner.xit', () => {
     it('should declare a skipped test', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.xit('uno', () => {});
       expect(t.tests().length).toBe(1);
       const test = t.tests()[0];
@@ -34,7 +41,7 @@ module.exports.addTests = function({testRunner, expect}) {
 
   describe('TestRunner.fit', () => {
     it('should declare a focused test', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.fit('uno', () => {});
       expect(t.tests().length).toBe(1);
       const test = t.tests()[0];
@@ -46,7 +53,7 @@ module.exports.addTests = function({testRunner, expect}) {
 
   describe('TestRunner.describe', () => {
     it('should declare a suite', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.describe('suite', () => {
         t.it('uno', () => {});
       });
@@ -63,7 +70,7 @@ module.exports.addTests = function({testRunner, expect}) {
 
   describe('TestRunner.xdescribe', () => {
     it('should declare a skipped suite', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.xdescribe('suite', () => {
         t.it('uno', () => {});
       });
@@ -73,7 +80,7 @@ module.exports.addTests = function({testRunner, expect}) {
       expect(test.suite.declaredMode).toBe('skip');
     });
     it('focused tests inside a skipped suite are considered skipped', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.xdescribe('suite', () => {
         t.fit('uno', () => {});
       });
@@ -86,7 +93,7 @@ module.exports.addTests = function({testRunner, expect}) {
 
   describe('TestRunner.fdescribe', () => {
     it('should declare a focused suite', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.fdescribe('suite', () => {
         t.it('uno', () => {});
       });
@@ -96,7 +103,7 @@ module.exports.addTests = function({testRunner, expect}) {
       expect(test.suite.declaredMode).toBe('focus');
     });
     it('skipped tests inside a focused suite should stay skipped', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.fdescribe('suite', () => {
         t.xit('uno', () => {});
       });
@@ -107,7 +114,7 @@ module.exports.addTests = function({testRunner, expect}) {
     });
     it('should run all "run" tests inside a focused suite', async() => {
       const log = [];
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.it('uno', () => log.push(1));
       t.fdescribe('suite1', () => {
         t.it('dos', () => log.push(2));
@@ -119,7 +126,7 @@ module.exports.addTests = function({testRunner, expect}) {
     });
     it('should run only "focus" tests inside a focused suite', async() => {
       const log = [];
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.it('uno', () => log.push(1));
       t.fdescribe('suite1', () => {
         t.fit('dos', () => log.push(2));
@@ -131,7 +138,7 @@ module.exports.addTests = function({testRunner, expect}) {
     });
     it('should run both "run" tests in focused suite and non-descendant focus tests', async() => {
       const log = [];
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.it('uno', () => log.push(1));
       t.fdescribe('suite1', () => {
         t.it('dos', () => log.push(2));
@@ -146,7 +153,7 @@ module.exports.addTests = function({testRunner, expect}) {
   describe('TestRunner hooks', () => {
     it('should run all hooks in proper order', async() => {
       const log = [];
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.beforeAll(() => log.push('root:beforeAll'));
       t.beforeEach(() => log.push('root:beforeEach'));
       t.it('uno', () => log.push('test #1'));
@@ -193,7 +200,7 @@ module.exports.addTests = function({testRunner, expect}) {
     });
     it('should have the same state object in hooks and test', async() => {
       const states = [];
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.beforeEach(state => states.push(state));
       t.afterEach(state => states.push(state));
       t.beforeAll(state => states.push(state));
@@ -206,7 +213,7 @@ module.exports.addTests = function({testRunner, expect}) {
     });
     it('should unwind hooks properly when terminated', async() => {
       const log = [];
-      const t = new TestRunner({timeout: 10000});
+      const t = newTestRunner({timeout: 10000});
       t.beforeAll(() => log.push('beforeAll'));
       t.beforeEach(() => log.push('beforeEach'));
       t.afterEach(() => log.push('afterEach'));
@@ -226,14 +233,14 @@ module.exports.addTests = function({testRunner, expect}) {
       ]);
     });
     it('should report as terminated even when hook crashes', async() => {
-      const t = new TestRunner({timeout: 10000});
+      const t = newTestRunner({timeout: 10000});
       t.afterEach(() => { throw new Error('crash!'); });
       t.it('uno', () => { t.terminate(); });
       await t.run();
       expect(t.tests()[0].result).toBe('terminated');
     });
     it('should report as terminated when terminated during hook', async() => {
-      const t = new TestRunner({timeout: 10000});
+      const t = newTestRunner({timeout: 10000});
       t.afterEach(() => { t.terminate(); });
       t.it('uno', () => { });
       await t.run();
@@ -241,7 +248,7 @@ module.exports.addTests = function({testRunner, expect}) {
     });
     it('should unwind hooks properly when crashed', async() => {
       const log = [];
-      const t = new TestRunner({timeout: 10000});
+      const t = newTestRunner({timeout: 10000});
       t.beforeAll(() => log.push('root beforeAll'));
       t.beforeEach(() => log.push('root beforeEach'));
       t.describe('suite', () => {
@@ -274,14 +281,14 @@ module.exports.addTests = function({testRunner, expect}) {
 
   describe('TestRunner.run', () => {
     it('should run a test', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       let ran = false;
       t.it('uno', () => ran = true);
       await t.run();
       expect(ran).toBe(true);
     });
     it('should run tests if some fail', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       const log = [];
       t.it('uno', () => log.push(1));
       t.it('dos', () => { throw new Error('bad'); });
@@ -290,7 +297,7 @@ module.exports.addTests = function({testRunner, expect}) {
       expect(log.join()).toBe('1,3');
     });
     it('should run tests if some timeout', async() => {
-      const t = new TestRunner({timeout: 1});
+      const t = newTestRunner({timeout: 1});
       const log = [];
       t.it('uno', () => log.push(1));
       t.it('dos', async() => new Promise(() => {}));
@@ -300,7 +307,7 @@ module.exports.addTests = function({testRunner, expect}) {
     });
     it('should break on first failure if configured so', async() => {
       const log = [];
-      const t = new TestRunner({breakOnFailure: true});
+      const t = newTestRunner({breakOnFailure: true});
       t.it('test#1', () => log.push('test#1'));
       t.it('test#2', () => log.push('test#2'));
       t.it('test#3', () => { throw new Error('crash'); });
@@ -313,7 +320,7 @@ module.exports.addTests = function({testRunner, expect}) {
     });
     it('should pass a state and a test as a test parameters', async() => {
       const log = [];
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.beforeEach(state => state.FOO = 42);
       t.it('uno', (state, test) => {
         log.push('state.FOO=' + state.FOO);
@@ -323,7 +330,7 @@ module.exports.addTests = function({testRunner, expect}) {
       expect(log.join()).toBe('state.FOO=42,test=uno');
     });
     it('should run async test', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       let ran = false;
       t.it('uno', async() => {
         await new Promise(x => setTimeout(x, 10));
@@ -334,7 +341,7 @@ module.exports.addTests = function({testRunner, expect}) {
     });
     it('should run async tests in order of their declaration', async() => {
       const log = [];
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.it('uno', async() => {
         await new Promise(x => setTimeout(x, 30));
         log.push(1);
@@ -352,14 +359,14 @@ module.exports.addTests = function({testRunner, expect}) {
     });
     it('should run multiple tests', async() => {
       const log = [];
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.it('uno', () => log.push(1));
       t.it('dos', () => log.push(2));
       await t.run();
       expect(log.join()).toBe('1,2');
     });
     it('should NOT run a skipped test', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       let ran = false;
       t.xit('uno', () => ran = true);
       await t.run();
@@ -367,7 +374,7 @@ module.exports.addTests = function({testRunner, expect}) {
     });
     it('should run ONLY non-skipped tests', async() => {
       const log = [];
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.it('uno', () => log.push(1));
       t.xit('dos', () => log.push(2));
       t.it('tres', () => log.push(3));
@@ -376,7 +383,7 @@ module.exports.addTests = function({testRunner, expect}) {
     });
     it('should run ONLY focused tests', async() => {
       const log = [];
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.it('uno', () => log.push(1));
       t.xit('dos', () => log.push(2));
       t.fit('tres', () => log.push(3));
@@ -385,7 +392,7 @@ module.exports.addTests = function({testRunner, expect}) {
     });
     it('should run tests in order of their declaration', async() => {
       const log = [];
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.it('uno', () => log.push(1));
       t.describe('suite1', () => {
         t.it('dos', () => log.push(2));
@@ -399,25 +406,25 @@ module.exports.addTests = function({testRunner, expect}) {
 
   describe('TestRunner.run result', () => {
     it('should return OK if all tests pass', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.it('uno', () => {});
       const result = await t.run();
       expect(result.result).toBe('ok');
     });
     it('should return FAIL if at least one test fails', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.it('uno', () => { throw new Error('woof'); });
       const result = await t.run();
       expect(result.result).toBe('failed');
     });
     it('should return FAIL if at least one test times out', async() => {
-      const t = new TestRunner({timeout: 1});
+      const t = newTestRunner({timeout: 1});
       t.it('uno', async() => new Promise(() => {}));
       const result = await t.run();
       expect(result.result).toBe('failed');
     });
     it('should return TERMINATED if it was terminated', async() => {
-      const t = new TestRunner({timeout: 1});
+      const t = newTestRunner({timeout: 1});
       t.it('uno', async() => new Promise(() => {}));
       const [result] = await Promise.all([
         t.run(),
@@ -426,7 +433,7 @@ module.exports.addTests = function({testRunner, expect}) {
       expect(result.result).toBe('terminated');
     });
     it('should return CRASHED if it crashed', async() => {
-      const t = new TestRunner({timeout: 1});
+      const t = newTestRunner({timeout: 1});
       t.it('uno', async() => new Promise(() => {}));
       t.afterAll(() => { throw new Error('woof');});
       const result = await t.run();
@@ -437,7 +444,7 @@ module.exports.addTests = function({testRunner, expect}) {
   describe('TestRunner parallel', () => {
     it('should run tests in parallel', async() => {
       const log = [];
-      const t = new TestRunner({parallel: 2});
+      const t = newTestRunner({parallel: 2});
       t.it('uno', async state => {
         log.push(`Worker #${state.parallelIndex} Starting: UNO`);
         await Promise.resolve();
@@ -460,17 +467,17 @@ module.exports.addTests = function({testRunner, expect}) {
 
   describe('TestRunner.hasFocusedTestsOrSuites', () => {
     it('should work', () => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.it('uno', () => {});
       expect(t.hasFocusedTestsOrSuites()).toBe(false);
     });
     it('should work #2', () => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.fit('uno', () => {});
       expect(t.hasFocusedTestsOrSuites()).toBe(true);
     });
     it('should work #3', () => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.describe('suite #1', () => {
         t.fdescribe('suite #2', () => {
           t.describe('suite #3', () => {
@@ -484,7 +491,7 @@ module.exports.addTests = function({testRunner, expect}) {
 
   describe('TestRunner.passedTests', () => {
     it('should work', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.it('uno', () => {});
       await t.run();
       expect(t.failedTests().length).toBe(0);
@@ -497,7 +504,7 @@ module.exports.addTests = function({testRunner, expect}) {
 
   describe('TestRunner.failedTests', () => {
     it('should work for both throwing and timeouting tests', async() => {
-      const t = new TestRunner({timeout: 1});
+      const t = newTestRunner({timeout: 1});
       t.it('uno', () => { throw new Error('boo');});
       t.it('dos', () => new Promise(() => {}));
       await t.run();
@@ -509,7 +516,7 @@ module.exports.addTests = function({testRunner, expect}) {
       expect(test2.result).toBe('timedout');
     });
     it('should report crashed tests', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.beforeEach(() => { throw new Error('woof');});
       t.it('uno', () => {});
       await t.run();
@@ -520,7 +527,7 @@ module.exports.addTests = function({testRunner, expect}) {
 
   describe('TestRunner.skippedTests', () => {
     it('should work for both throwing and timeouting tests', async() => {
-      const t = new TestRunner({timeout: 1});
+      const t = newTestRunner({timeout: 1});
       t.xit('uno', () => { throw new Error('boo');});
       await t.run();
       expect(t.skippedTests().length).toBe(1);
@@ -533,37 +540,37 @@ module.exports.addTests = function({testRunner, expect}) {
 
   describe('Test.result', () => {
     it('should return OK', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.it('uno', () => {});
       await t.run();
       expect(t.tests()[0].result).toBe('ok');
     });
     it('should return TIMEDOUT', async() => {
-      const t = new TestRunner({timeout: 1});
+      const t = newTestRunner({timeout: 1});
       t.it('uno', async() => new Promise(() => {}));
       await t.run();
       expect(t.tests()[0].result).toBe('timedout');
     });
     it('should return SKIPPED', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.xit('uno', () => {});
       await t.run();
       expect(t.tests()[0].result).toBe('skipped');
     });
     it('should return FAILED', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.it('uno', async() => Promise.reject('woof'));
       await t.run();
       expect(t.tests()[0].result).toBe('failed');
     });
     it('should return TERMINATED', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.it('uno', async() => t.terminate());
       await t.run();
       expect(t.tests()[0].result).toBe('terminated');
     });
     it('should return CRASHED', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.it('uno', () => {});
       t.afterEach(() => {throw new Error('foo');});
       await t.run();
@@ -574,7 +581,7 @@ module.exports.addTests = function({testRunner, expect}) {
   describe('TestRunner Events', () => {
     it('should emit events in proper order', async() => {
       const log = [];
-      const t = new TestRunner();
+      const t = newTestRunner();
       t.beforeAll(() => log.push('beforeAll'));
       t.beforeEach(() => log.push('beforeEach'));
       t.it('test#1', () => log.push('test#1'));
@@ -598,7 +605,7 @@ module.exports.addTests = function({testRunner, expect}) {
       ]);
     });
     it('should emit finish event with result', async() => {
-      const t = new TestRunner();
+      const t = newTestRunner();
       const [result] = await Promise.all([
         new Promise(x => t.once('finished', x)),
         t.run(),

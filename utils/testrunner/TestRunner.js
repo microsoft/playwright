@@ -442,8 +442,10 @@ class TestRunner extends EventEmitter {
       timeout = 10 * 1000, // Default timeout is 10 seconds.
       parallel = 1,
       breakOnFailure = false,
+      crashIfTestsAreFocusedOnCI = true,
       disableTimeoutWhenInspectorIsEnabled = true,
     } = options;
+    this._crashIfTestsAreFocusedOnCI = crashIfTestsAreFocusedOnCI;
     this._sourceMapSupport = new SourceMapSupport();
     this._rootSuite = new Suite(null, '', TestMode.Run);
     this._currentSuite = this._rootSuite;
@@ -533,7 +535,7 @@ class TestRunner extends EventEmitter {
     this.emit(TestRunner.Events.Started, runnableTests);
 
     const result = {};
-    if (process.env.CI && this.hasFocusedTestsOrSuites()) {
+    if (this._crashIfTestsAreFocusedOnCI && process.env.CI && this.hasFocusedTestsOrSuites()) {
       result.result = TestResult.Crashed;
       result.exitCode = 2;
       result.terminationMessage = '"focused" tests or suites are probitted on CI';
@@ -616,7 +618,7 @@ class TestRunner extends EventEmitter {
   }
 
   hasFocusedTestsOrSuites() {
-    return this.focusedTests().length || this.focusedSuites().length;
+    return !!this.focusedTests().length || !!this.focusedSuites().length;
   }
 
   focusMatchingTests(fullNameRegex) {
