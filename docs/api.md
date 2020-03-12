@@ -4269,7 +4269,7 @@ const { chromium } = require('playwright');
 [Mouse]: #class-mouse "Mouse"
 [Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"
 [Page]: #class-page "Page"
-[PageEvent]: #class-page "PageEvent"
+[PageEvent]: #class-pageevent "PageEvent"
 [Playwright]: #class-playwright "Playwright"
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"
 [RegExp]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp
