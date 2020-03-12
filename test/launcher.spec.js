@@ -43,7 +43,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         let waitError = null;
         const options = Object.assign({}, defaultBrowserOptions, {userDataDir: 'random-path'});
         await playwright.launch(options).catch(e => waitError = e);
-        expect(waitError.message).toContain('launchPersistent');
+        expect(waitError.message).toContain('launchPersistentContext');
       });
       it('should throw if page argument is passed', async() => {
         let waitError = null;
@@ -59,10 +59,10 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       });
     });
 
-    describe('Playwright.launchPersistent', function() {
+    describe('Playwright.launchPersistentContext', function() {
       it('should have default URL when launching browser', async function() {
         const userDataDir = await makeUserDataDir();
-        const browserContext = await playwright.launchPersistent(userDataDir, defaultBrowserOptions);
+        const browserContext = await playwright.launchPersistentContext(userDataDir, defaultBrowserOptions);
         const pages = (await browserContext.pages()).map(page => page.url());
         expect(pages).toEqual(['about:blank']);
         await browserContext.close();
@@ -72,7 +72,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         const userDataDir = await makeUserDataDir();
         const options = Object.assign({}, defaultBrowserOptions);
         options.args = [server.EMPTY_PAGE].concat(options.args || []);
-        const browserContext = await playwright.launchPersistent(userDataDir, options);
+        const browserContext = await playwright.launchPersistentContext(userDataDir, options);
         const pages = await browserContext.pages();
         expect(pages.length).toBe(1);
         const page = pages[0];
@@ -278,11 +278,11 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 
-  describe('Playwright.launchPersistent', function() {
+  describe('Playwright.launchPersistentContext', function() {
     it('userDataDir option', async({server}) => {
       const userDataDir = await makeUserDataDir();
       const options = Object.assign(defaultBrowserOptions);
-      const browserContext = await playwright.launchPersistent(userDataDir, options);
+      const browserContext = await playwright.launchPersistentContext(userDataDir, options);
       // Open a page to make sure its functional.
       await browserContext.newPage();
       expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
@@ -293,20 +293,20 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
     it.fail(FFOX)('userDataDir option should restore state', async({server}) => {
       const userDataDir = await makeUserDataDir();
-      const browserContext = await playwright.launchPersistent(userDataDir, defaultBrowserOptions);
+      const browserContext = await playwright.launchPersistentContext(userDataDir, defaultBrowserOptions);
       const page = await browserContext.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => localStorage.hey = 'hello');
       await browserContext.close();
 
-      const browserContext2 = await playwright.launchPersistent(userDataDir, defaultBrowserOptions);
+      const browserContext2 = await playwright.launchPersistentContext(userDataDir, defaultBrowserOptions);
       const page2 = await browserContext2.newPage();
       await page2.goto(server.EMPTY_PAGE);
       expect(await page2.evaluate(() => localStorage.hey)).toBe('hello');
       await browserContext2.close();
 
       const userDataDir2 = await makeUserDataDir();
-      const browserContext3 = await playwright.launchPersistent(userDataDir2, defaultBrowserOptions);
+      const browserContext3 = await playwright.launchPersistentContext(userDataDir2, defaultBrowserOptions);
       const page3 = await browserContext3.newPage();
       await page3.goto(server.EMPTY_PAGE);
       expect(await page3.evaluate(() => localStorage.hey)).not.toBe('hello');
@@ -319,20 +319,20 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     // See https://github.com/microsoft/playwright/issues/717
     it.fail(FFOX || (WIN && CHROMIUM))('userDataDir option should restore cookies', async({server}) => {
       const userDataDir = await makeUserDataDir();
-      const browserContext = await playwright.launchPersistent(userDataDir, defaultBrowserOptions);
+      const browserContext = await playwright.launchPersistentContext(userDataDir, defaultBrowserOptions);
       const page = await browserContext.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => document.cookie = 'doSomethingOnlyOnce=true; expires=Fri, 31 Dec 9999 23:59:59 GMT');
       await browserContext.close();
 
-      const browserContext2 = await playwright.launchPersistent(userDataDir, defaultBrowserOptions);
+      const browserContext2 = await playwright.launchPersistentContext(userDataDir, defaultBrowserOptions);
       const page2 = await browserContext2.newPage();
       await page2.goto(server.EMPTY_PAGE);
       expect(await page2.evaluate(() => document.cookie)).toBe('doSomethingOnlyOnce=true');
       await browserContext2.close();
 
       const userDataDir2 = await makeUserDataDir();
-      const browserContext3 = await playwright.launchPersistent(userDataDir2, defaultBrowserOptions);
+      const browserContext3 = await playwright.launchPersistentContext(userDataDir2, defaultBrowserOptions);
       const page3 = await browserContext3.newPage();
       await page3.goto(server.EMPTY_PAGE);
       expect(await page3.evaluate(() => localStorage.hey)).not.toBe('doSomethingOnlyOnce=true');

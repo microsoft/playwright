@@ -284,7 +284,7 @@ export class Response {
     return this._finishedPromise;
   }
 
-  buffer(): Promise<platform.BufferType> {
+  body(): Promise<platform.BufferType> {
     if (!this._contentPromise) {
       this._contentPromise = this._finishedPromise.then(async error => {
         if (error)
@@ -296,7 +296,7 @@ export class Response {
   }
 
   async text(): Promise<string> {
-    const content = await this.buffer();
+    const content = await this.body();
     return content.toString('utf8');
   }
 

@@ -192,15 +192,15 @@ Indicates that the browser is connected.
 
 #### browser.newContext([options])
 - `options` <[Object]>
-  - `ignoreHTTPSErrors` <?[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
-  - `bypassCSP` <?[boolean]> Toggles bypassing page's Content-Security-Policy.
-  - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+  - `ignoreHTTPSErrors` <[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+  - `bypassCSP` <[boolean]> Toggles bypassing page's Content-Security-Policy.
+  - `viewport` <[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
     - `width` <[number]> page width in pixels.
     - `height` <[number]> page height in pixels.
     - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
     - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported in Firefox.
-  - `userAgent` <?[string]> Specific user agent to use in this context.
-  - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the context. Defaults to true.
+  - `userAgent` <[string]> Specific user agent to use in this context.
+  - `javaScriptEnabled` <[boolean]> Whether or not to enable or disable JavaScript in the context. Defaults to true.
   - `timezoneId` <?[string]> Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
   - `geolocation` <[Object]>
     - `latitude` <[number]> Latitude between -90 and 90.
@@ -341,10 +341,13 @@ An example of overriding `Math.random` before the page loads:
 ```js
 // preload.js
 Math.random = () => 42;
+```
 
-// In your playwright script, assuming the preload.js file is in same folder
-const preloadFile = fs.readFileSync('./preload.js', 'utf8');
-await browserContext.addInitScript(preloadFile);
+```js
+// In your playwright script, assuming the preload.js file is in same folder.
+await browserContext.addInitScript({
+  path: 'preload.js'
+});
 ```
 
 > **NOTE** The order of evaluation of multiple scripts installed via [browserContext.addInitScript(script[, ...args])](#browsercontextaddinitscriptscript-args) and [page.addInitScript(script[, ...args])](#pageaddinitscriptscript-args) is not defined.
@@ -391,7 +394,7 @@ If URLs are specified, only cookies that affect those URLs are returned.
 
 #### browserContext.exposeFunction(name, playwrightFunction)
 - `name` <[string]> Name of the function on the window object.
-- `playwrightFunction` <[function]> Callback function which will be called in Playwright's context.
+- `playwrightFunction` <[function]> Callback function that will be called in the Playwright's context.
 - returns: <[Promise]>
 
 The method adds a function called `name` on the `window` object of every frame in every page in the context.
@@ -423,36 +426,6 @@ const crypto = require('crypto');
     <div></div>
   `);
   await page.click('button');
-})();
-```
-
-An example of adding a `window.readfile` function to all pages in the context:
-
-```js
-const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
-const fs = require('fs');
-
-(async () => {
-  const browser = await chromium.launch();
-  const context = await browser.newContext();
-  await context.exposeFunction('readfile', async filePath => {
-    return new Promise((resolve, reject) => {
-      fs.readFile(filePath, 'utf8', (err, text) => {
-        if (err)
-          reject(err);
-        else
-          resolve(text);
-      });
-    });
-  });
-  const page = await context.newPage();
-  page.on('console', msg => console.log(msg.text()));
-  await page.evaluate(async () => {
-    // use window.readfile to read contents of a file
-    const content = await window.readfile('/etc/hosts');
-    console.log(content);
-  });
-  await browser.close();
 })();
 ```
 
@@ -551,13 +524,13 @@ The extra HTTP headers will be sent with every request initiated by any page in 
   - `accuracy` <[number]> Optional non-negative accuracy value.
 - returns: <[Promise]>
 
-Sets the page's geolocation. Passing null or undefined emulates position unavailable.
+Sets the contexts's geolocation. Passing null or undefined emulates position unavailable.
 
 ```js
 await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 ```
 
-> **NOTE** Consider using [browserContext.setPermissions](#browsercontextsetpermissions-permissions) to grant permissions for the page to read its geolocation.
+> **NOTE** Consider using [browserContext.setPermissions](#browsercontextsetpermissions-permissions) to grant permissions for the browser context pages to read its geolocation.
 
 #### browserContext.setHTTPCredentials(httpCredentials)
 - `httpCredentials` <?[Object]>
@@ -3346,7 +3319,7 @@ Aborts request. To use this, request interception should be enabled with `page.r
 Exception is immediately thrown if the request interception is not enabled.
 
 #### request.continue([overrides])
-- `overrides` <[Object]> Optional request overwrites, which can be one of the following:
+- `overrides` <[Object]> Optional request overrides, which can be one of the following:
   - `method` <[string]> If set changes the request method (e.g. GET or POST)
   - `postData` <[string]> If set changes the post data of request
   - `headers` <[Object]> If set changes the request HTTP headers. Header values will be converted to a string.
@@ -3370,10 +3343,10 @@ await page.route('**/*', request => {
 - returns: <?[Object]> Object describing request failure, if any
   - `errorText` <[string]> Human-readable error message, e.g. `'net::ERR_FAILED'`.
 
-The method returns `null` unless this request was failed, as reported by
+The method returns `null` unless this request has failed, as reported by
 `requestfailed` event.
 
-Example of logging all failed requests:
+Example of logging of all the failed requests:
 
 ```js
 page.on('requestfailed', request => {
@@ -3473,7 +3446,7 @@ ResourceType will be one of the following: `document`, `stylesheet`, `image`, `m
 [Response] class represents responses which are received by page.
 
 <!-- GEN:toc -->
-- [response.buffer()](#responsebuffer)
+- [response.body()](#responsebody)
 - [response.finished()](#responsefinished)
 - [response.frame()](#responseframe)
 - [response.headers()](#responseheaders)
@@ -3486,11 +3459,11 @@ ResourceType will be one of the following: `document`, `stylesheet`, `image`, `m
 - [response.url()](#responseurl)
 <!-- GEN:stop -->
 
-#### response.buffer()
+#### response.body()
 - returns: <Promise<[Buffer]>> Promise which resolves to a buffer with response body.
 
 #### response.finished()
-- returns: <Promise[?string]> Waits for this response to finish, throws when corresponding request failed.
+- returns: <Promise<?[Error]>> Waits for this response to finish, returns failure error if request failed.
 
 #### response.frame()
 - returns: <[Frame]> A [Frame] that initiated this response.
@@ -3743,7 +3716,7 @@ Closes the browser gracefully and makes sure the process is terminated.
 Kills the browser process.
 
 #### browserServer.process()
-- returns: <?[ChildProcess]> Spawned browser application process.
+- returns: <[ChildProcess]> Spawned browser application process.
 
 #### browserServer.wsEndpoint()
 - returns: <[string]> Browser websocket url.
@@ -3773,15 +3746,15 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 - [browserType.errors](#browsertypeerrors)
 - [browserType.executablePath()](#browsertypeexecutablepath)
 - [browserType.launch([options])](#browsertypelaunchoptions)
-- [browserType.launchPersistent(userDataDir, [options])](#browsertypelaunchpersistentuserdatadir-options)
+- [browserType.launchPersistentContext(userDataDir, [options])](#browsertypelaunchpersistentcontextuserdatadir-options)
 - [browserType.launchServer([options])](#browsertypelaunchserveroptions)
 - [browserType.name()](#browsertypename)
 <!-- GEN:stop -->
 
 #### browserType.connect(options)
 - `options` <[Object]>
-  - `wsEndpoint` <?[string]> A browser websocket endpoint to connect to.
-  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+  - `wsEndpoint` <[string]> A browser websocket endpoint to connect to.
+  - `slowMo` <?[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
 - returns: <[Promise]<[Browser]>>
 
 This methods attaches Playwright to an existing browser instance.
@@ -3842,9 +3815,9 @@ try {
 #### browserType.launch([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
   - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
-  - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, Firefox or WebKit, use at your own risk.
+  - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). Note that Playwright [only works](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, Firefox or WebKit, use at your own risk.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
-  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`browserType.defaultArgs()`](#browsertypedefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. If an array is given, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
@@ -3871,7 +3844,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
 >
 > See [`this article`](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for a description of the differences between Chromium and Chrome. [`This article`](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md) describes some differences for Linux users.
 
-#### browserType.launchPersistent(userDataDir, [options])
+#### browserType.launchPersistentContext(userDataDir, [options])
  - `userDataDir` <[string]> Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
   - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
@@ -3887,7 +3860,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
 - returns: <[Promise]<[BrowserContext]>> Promise which resolves to the browser app instance.
 
-Launches browser instance that uses persistent storage located at `userDataDir`. If `userDataDir` is not specified, temporary folder is created for the persistent storage. That folder is deleted when browser closes.
+Launches browser instance that uses persistent storage located at `userDataDir`.
 
 #### browserType.launchServer([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
@@ -4223,7 +4196,7 @@ const { chromium } = require('playwright');
 (async () => {
   const pathToExtension = require('path').join(__dirname, 'my-extension');
   const userDataDir = '/tmp/test-user-data-dir';
-  const browserContext = await chromium.launchPersistent(userDataDir,{
+  const browserContext = await chromium.launchPersistentContext(userDataDir,{
     headless: false,
     args: [
       `--disable-extensions-except=${pathToExtension}`,

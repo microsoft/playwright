@@ -47,7 +47,7 @@ export interface BrowserType {
   name(): string;
   launch(options?: LaunchOptions & { slowMo?: number }): Promise<Browser>;
   launchServer(options?: LaunchOptions & { port?: number }): Promise<BrowserServer>;
-  launchPersistent(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext>;
+  launchPersistentContext(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext>;
   connect(options: ConnectOptions): Promise<Browser>;
   downloadBrowserIfNeeded(progress?: OnProgressCallback): Promise<void>;
   devices: types.Devices;

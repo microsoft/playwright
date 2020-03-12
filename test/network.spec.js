@@ -180,18 +180,18 @@ module.exports.describe = function({testRunner, expect, MAC, WIN, FFOX, CHROMIUM
     });
   });
 
-  describe('Response.buffer', function() {
+  describe('Response.body', function() {
     it('should work', async({page, server}) => {
       const response = await page.goto(server.PREFIX + '/pptr.png');
       const imageBuffer = fs.readFileSync(path.join(__dirname, 'assets', 'pptr.png'));
-      const responseBuffer = await response.buffer();
+      const responseBuffer = await response.body();
       expect(responseBuffer.equals(imageBuffer)).toBe(true);
     });
     it('should work with compression', async({page, server}) => {
       server.enableGzip('/pptr.png');
       const response = await page.goto(server.PREFIX + '/pptr.png');
       const imageBuffer = fs.readFileSync(path.join(__dirname, 'assets', 'pptr.png'));
-      const responseBuffer = await response.buffer();
+      const responseBuffer = await response.body();
       expect(responseBuffer.equals(imageBuffer)).toBe(true);
     });
   });

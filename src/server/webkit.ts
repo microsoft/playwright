@@ -65,7 +65,7 @@ export class WebKit implements BrowserType {
 
   async launch(options?: LaunchOptions & { slowMo?: number }): Promise<WKBrowser> {
     if (options && (options as any).userDataDir)
-      throw new Error('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistent` instead');
+      throw new Error('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     const { browserServer, transport } = await this._launchServer(options, 'local');
     const browser = await WKBrowser.connect(transport!, options && options.slowMo);
     (browser as any)['__server__'] = browserServer;
@@ -76,7 +76,7 @@ export class WebKit implements BrowserType {
     return (await this._launchServer(options, 'server', undefined, options && options.port)).browserServer;
   }
 
-  async launchPersistent(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
+  async launchPersistentContext(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
     const { timeout = 30000 } = options || {};
     const { transport } = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await WKBrowser.connect(transport!, undefined, true);
