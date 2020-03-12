@@ -12479,7 +12479,7 @@ index d3e08c87f458a079e5061069484899169f1774fd..c7edfdd83591aa8f13282c0582c74ca5
  # there is a strong reason we should support changing the value of the option,
  # and the option is not relevant to any other WebKit ports.
 diff --git a/Source/cmake/OptionsWin.cmake b/Source/cmake/OptionsWin.cmake
-index 705b2ae2bc5d9ee8f52db307efcd0a1efeddd05d..64b7af40e559651560ab7cdb0dbcd8343c3b790b 100644
+index 705b2ae2bc5d9ee8f52db307efcd0a1efeddd05d..36da968822e8c00179aa61920607e7d299b7a662 100644
 --- a/Source/cmake/OptionsWin.cmake
 +++ b/Source/cmake/OptionsWin.cmake
 @@ -7,8 +7,9 @@ add_definitions(-D_WINDOWS -DWINVER=0x601 -D_WIN32_WINNT=0x601)
@@ -12493,7 +12493,7 @@ index 705b2ae2bc5d9ee8f52db307efcd0a1efeddd05d..64b7af40e559651560ab7cdb0dbcd834
      set(ENABLE_WEBKIT OFF)
  endif ()
  
-@@ -93,6 +94,14 @@ if (${WTF_PLATFORM_WIN_CAIRO})
+@@ -93,6 +94,13 @@ if (${WTF_PLATFORM_WIN_CAIRO})
      WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_WEBDRIVER PRIVATE ${ENABLE_EXPERIMENTAL_FEATURES})
      WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_WEB_CRYPTO PRIVATE ${ENABLE_EXPERIMENTAL_FEATURES})
  
@@ -12502,7 +12502,6 @@ index 705b2ae2bc5d9ee8f52db307efcd0a1efeddd05d..64b7af40e559651560ab7cdb0dbcd834
 +    WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_CSS_TRAILING_WORD PRIVATE ON)
 +    WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_DARK_MODE_CSS PRIVATE ON)
 +    WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_DOWNLOAD_ATTRIBUTE PRIVATE ON)
-+    WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_POINTER_EVENTS PRIVATE ON)
 +    WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_TOUCH_EVENTS PRIVATE ON)
 +
      # FIXME: Implement plugin process on Modern WebKit. https://bugs.webkit.org/show_bug.cgi?id=185313
