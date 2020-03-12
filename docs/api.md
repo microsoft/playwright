@@ -3400,7 +3400,7 @@ Whether this request is driving frame's navigation.
 - returns: <[string]> Request's method (GET, POST, etc.)
 
 #### request.postData()
-- returns: <[string]> Request's post body, if any.
+- returns: <?[string]> Request's post body, if any.
 
 #### request.redirectChain()
 - returns: <[Array]<[Request]>>

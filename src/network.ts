@@ -105,7 +105,7 @@ export class Request {
   private _url: string;
   private _resourceType: string;
   private _method: string;
-  private _postData: string | undefined;
+  private _postData: string | null;
   private _headers: Headers;
   private _frame: frames.Frame;
   private _waitForResponsePromise: Promise<Response>;
@@ -115,7 +115,7 @@ export class Request {
   private _interceptionHandled = false;
 
   constructor(delegate: RequestDelegate | null, frame: frames.Frame, redirectChain: Request[], documentId: string | undefined,
-    url: string, resourceType: string, method: string, postData: string | undefined, headers: Headers) {
+    url: string, resourceType: string, method: string, postData: string | null, headers: Headers) {
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     this._delegate = delegate;
     this._frame = frame;
@@ -151,7 +151,7 @@ export class Request {
     return this._method;
   }
 
-  postData(): string | undefined {
+  postData(): string | null {
     return this._postData;
   }
 

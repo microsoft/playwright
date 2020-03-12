@@ -255,7 +255,7 @@ class InterceptableRequest implements network.RequestDelegate {
     this._documentId = documentId;
 
     this.request = new network.Request(allowInterception ? this : null, frame, redirectChain, documentId,
-        event.request.url, (event.type || '').toLowerCase(), event.request.method, event.request.postData, headersObject(event.request.headers));
+        event.request.url, (event.type || '').toLowerCase(), event.request.method, event.request.postData || null, headersObject(event.request.headers));
   }
 
   async continue(overrides: { method?: string; headers?: network.Headers; postData?: string } = {}) {
