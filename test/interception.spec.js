@@ -36,7 +36,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         expect(request.url()).toContain('empty.html');
         expect(request.headers()['user-agent']).toBeTruthy();
         expect(request.method()).toBe('GET');
-        expect(request.postData()).toBe(undefined);
+        expect(request.postData()).toBe(null);
         expect(request.isNavigationRequest()).toBe(true);
         expect(request.resourceType()).toBe('document');
         expect(request.frame() === page.mainFrame()).toBe(true);
@@ -586,7 +586,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         expect(request.url()).toContain('empty.html');
         expect(request.headers()['user-agent']).toBeTruthy();
         expect(request.method()).toBe('GET');
-        expect(request.postData()).toBe(undefined);
+        expect(request.postData()).toBe(null);
         expect(request.isNavigationRequest()).toBe(true);
         expect(request.resourceType()).toBe('document');
         expect(request.frame() === page.mainFrame()).toBe(true);

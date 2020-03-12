@@ -112,7 +112,7 @@ module.exports.describe = function({testRunner, expect, MAC, WIN, FFOX, CHROMIUM
     });
     it('should be |undefined| when there is no post data', async({page, server}) => {
       const response = await page.goto(server.EMPTY_PAGE);
-      expect(response.request().postData()).toBe(undefined);
+      expect(response.request().postData()).toBe(null);
     });
   });
 

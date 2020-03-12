@@ -155,7 +155,7 @@ class InterceptableRequest implements network.RequestDelegate {
       headers[name.toLowerCase()] = value;
 
     this.request = new network.Request(payload.isIntercepted ? this : null, frame, redirectChain, payload.navigationId,
-        payload.url, causeToResourceType[payload.cause] || 'other', payload.method, payload.postData, headers);
+        payload.url, causeToResourceType[payload.cause] || 'other', payload.method, payload.postData || null, headers);
   }
 
   async continue(overrides: { method?: string; headers?: network.Headers; postData?: string }) {
