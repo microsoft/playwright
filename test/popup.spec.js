@@ -283,7 +283,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       const context = await browser.newContext();
       const page = await context.newPage();
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(e => e.page({ waitUntil: 'commit' })),
+        page.waitForEvent('popup').then(e => e.page({ waitUntil: 'nowait' })),
         page.evaluate(() => window.__popup = window.open('')),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);

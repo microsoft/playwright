@@ -921,10 +921,9 @@ Shortcut for [page.mainFrame().addStyleTag(options)](#frameaddstyletagoptions).
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -951,10 +950,9 @@ Shortcut for [page.mainFrame().check(selector[, options])](#framecheckselector-o
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -1010,10 +1008,9 @@ Browser-specific Coverage implementation, only available for Chromium atm. See [
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -1188,10 +1185,9 @@ const fs = require('fs');
 - `selector` <[string]> A selector to query page for.
 - `value` <[string]> Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 - `options` <[Object]>
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -1238,10 +1234,9 @@ Returns frame matching the specified criteria. Either `name` or `url` must be sp
 #### page.goBack([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"> When to consider navigation succeeded, defaults to `load`. Events can be either:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"> When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. If
@@ -1252,10 +1247,9 @@ Navigate to the previous page in history.
 #### page.goForward([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"> When to consider navigation succeeded, defaults to `load`. Events can be either:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"> When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. If
@@ -1267,10 +1261,9 @@ Navigate to the next page in history.
 - `url` <[string]> URL to navigate page to. The url should include scheme, e.g. `https://`.
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"> When to consider navigation succeeded, defaults to `load`. Events can be either:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"> When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
   - `referer` <[string]> Referer header value. If provided it will take preference over the referer header value set by [page.setExtraHTTPHeaders()](#pagesetextrahttpheadersheaders).
@@ -1408,10 +1401,9 @@ The `format` options are:
 - `options` <[Object]>
   - `text` <[string]> If specified, generates an input event with this text.
   - `delay` <[number]> Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -1427,10 +1419,9 @@ If `key` is a single character and no modifier keys besides `Shift` are being he
 #### page.reload([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"> When to consider navigation succeeded, defaults to `load`. Events can be either:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"> When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]<[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
@@ -1489,10 +1480,9 @@ Page routes take precedence over browser context routes (set up with [browserCon
   - `label` <[string]> Matches by `option.label`.
   - `index` <[number]> Matches by the index.
 - `options` <[Object]>
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -1522,7 +1512,7 @@ Shortcut for [page.mainFrame().select()](#frameselectselector-values)
 - `html` <[string]> HTML markup to assign to the page.
 - `options` <[Object]> Parameters which might have the following properties:
   - `timeout` <[number]> Maximum time in milliseconds for resources to load, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2">  When to consider setting markup succeeded, defaults to `load`. Given an array of event strings, setting content is considered to be successful after all events have been fired. Events can be either:
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2">  When to consider setting markup succeeded, defaults to `load`. Given an array of event strings, setting content is considered to be successful after all events have been fired. Events can be either:
     - `'load'` - consider setting content to be finished when the `load` event is fired.
     - `'domcontentloaded'` - consider setting content to be finished when the `DOMContentLoaded` event is fired.
     - `'networkidle0'` - consider setting content to be finished when there are no more than 0 network connections for at least `500` ms.
@@ -1596,10 +1586,9 @@ Shortcut for [page.mainFrame().title()](#frametitle).
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -1620,10 +1609,9 @@ Shortcut for [page.mainFrame().tripleclick(selector[, options])](#frametriplecli
 - `text` <[string]> A text to type into a focused element.
 - `options` <[Object]>
   - `delay` <[number]> Time to wait between key presses in milliseconds. Defaults to 0.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -1649,10 +1637,9 @@ Shortcut for [page.mainFrame().type(selector, text[, options])](#frametypeselect
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -1756,10 +1743,9 @@ Shortcut for [page.mainFrame().waitForFunction(pageFunction[, options[, ...args]
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
   - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2">  When to consider navigation succeeded, defaults to `load`. Events can be either:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2">  When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will resolve with `null`.
@@ -1847,15 +1833,15 @@ Event object passed to the listeners of [`browserContext.on('page')`](#event-pag
 #### pageEvent.page([options])
 - `options` <[Object]>
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"> When to consider the page to be loaded, defaults to `load`. Events can be either:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> When to consider the page to be loaded, defaults to `load`. Events can be either:
+    - `'nowait'` - navigation is committed, new url is displayed in the browser address bar.
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]<[Page]>> Promise which resolves to the created page once it loads, according to `waitUntil` option.
 
-This resolves when the page reaches a required load state, `load` by default. The earliest moment that page is available is when it has committed navigation to the initial url (corresponds to `{waitUntil: 'commit'}` option). For example, when opening a popup with `window.open('http://example.com')`, this method will wait until the network request to "http://example.com" is done and its response has started loading in the popup. Passing different `waitUntil` options will also wait for the particular load state to happen, e.g. default `load` waits until the load event fires.
+This resolves when the page reaches a required load state, `load` by default. The earliest moment that page is available is when it has navigated to the initial url (corresponds to `{waitUntil: 'nowait'}` option). For example, when opening a popup with `window.open('http://example.com')`, this method will wait until the network request to "http://example.com" is done and its response has started loading in the popup. Passing different `waitUntil` options will also wait for the particular load state to happen, e.g. default `load` waits until the load event fires.
 
 ```js
 const [, popup] = await Promise.all([
@@ -2013,10 +1999,9 @@ Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<s
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -2044,10 +2029,9 @@ If there's no element matching `selector`, the method throws an error.
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -2076,10 +2060,9 @@ Gets the full HTML contents of the frame, including the doctype.
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -2154,10 +2137,9 @@ await resultHandle.dispose();
 - `selector` <[string]> A selector to query page for.
 - `value` <[string]> Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 - `options` <[Object]>
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -2193,10 +2175,9 @@ console.log(frame === contentFrame);  // -> true
 - `url` <[string]> URL to navigate frame to. The url should include scheme, e.g. `https://`.
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2">  When to consider navigation succeeded, defaults to `load`. Events can be either:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2">  When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
   - `referer` <[string]> Referer header value. If provided it will take preference over the referer header value set by [page.setExtraHTTPHeaders()](#pagesetextrahttpheadersheaders).
@@ -2257,10 +2238,9 @@ If the name is empty, returns the id attribute instead.
 - `options` <[Object]>
   - `text` <[string]> If specified, generates an input event with this text.
   - `delay` <[number]> Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -2280,10 +2260,9 @@ If `key` is a single character and no modifier keys besides `Shift` are being he
   - `label` <[string]> Matches by `option.label`.
   - `index` <[number]> Matches by the index.
 - `options` <[Object]>
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -2311,10 +2290,9 @@ frame.select('select#colors', { value: 'blue' }, { index: 2 }, 'red');
 - `html` <[string]> HTML markup to assign to the page.
 - `options` <[Object]> Parameters which might have the following properties:
   - `timeout` <[number]> Maximum time in milliseconds for resources to load, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2">  When to consider navigation succeeded, defaults to `load`. Events can be either:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider setting content to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2">  When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider setting content to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider setting content to be finished when the `load` event is fired.
     - `'networkidle0'` - consider setting content to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider setting content to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]>
@@ -2336,10 +2314,9 @@ frame.select('select#colors', { value: 'blue' }, { index: 2 }, 'red');
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -2358,10 +2335,9 @@ Bear in mind that if the first or second click of the `tripleclick()` triggers a
 - `text` <[string]> A text to type into a focused element.
 - `options` <[Object]>
   - `delay` <[number]> Time to wait between key presses in milliseconds. Defaults to 0.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -2385,10 +2361,9 @@ await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a 
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -2471,10 +2446,9 @@ await page.waitForFunction(selector => !!document.querySelector(selector), {}, s
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
   - `url` <[string]|[RegExp]|[Function]> URL string, URL regex pattern or predicate receiving [URL] to match while waiting for the navigation.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2">  When to consider navigation succeeded, defaults to `load`. Events can be either:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2">  When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will resolve with `null`.
@@ -2641,10 +2615,9 @@ This method returns the bounding box of the element (relative to the main frame)
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -2667,10 +2640,9 @@ If element is not already checked, it scrolls it into view if needed, and then u
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -2696,10 +2668,9 @@ If the element is detached from DOM, the method throws an error.
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -2716,10 +2687,9 @@ Bear in mind that if the first click of the `dblclick()` triggers a navigation e
 #### elementHandle.fill(value[, options])
 - `value` <[string]> Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 - `options` <[Object]>
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -2759,10 +2729,9 @@ If the element is detached from DOM, the method throws an error.
 - `options` <[Object]>
   - `text` <[string]> If specified, generates an input event with this text.
   - `delay` <[number]> Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -2800,10 +2769,9 @@ Throws when ```elementHandle``` does not point to an element [connected](https:/
   - `label` <[string]> Matches by `option.label`.
   - `index` <[number]> Matches by the index.
 - `options` <[Object]>
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -2854,10 +2822,9 @@ Sets the value of the file input to these file paths or files. If some of the  `
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -2875,10 +2842,9 @@ Bear in mind that if the first or second click of the `tripleclick()` triggers a
 - `text` <[string]> A text to type into a focused element.
 - `options` <[Object]>
   - `delay` <[number]> Time to wait between key presses in milliseconds. Defaults to 0.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
@@ -2908,10 +2874,9 @@ await elementHandle.press('Enter');
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to `commit` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.

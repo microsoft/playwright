@@ -792,7 +792,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     });
     it('should work for cross-process navigations', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      const waitPromise = page.waitForNavigation({waitUntil: 'commit'});
+      const waitPromise = page.waitForNavigation({waitUntil: 'domcontentloaded'});
       const url = server.CROSS_PROCESS_PREFIX + '/empty.html';
       const gotoPromise = page.goto(url);
       const response = await waitPromise;
@@ -808,37 +808,42 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       const messages = [];
       server.setRoute('/empty.html', async (req, res) => {
         messages.push('route');
-        res.end('done');
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
       });
 
       await page.setContent(`<a href="${server.EMPTY_PAGE}">empty.html</a>`);
 
       await Promise.all([
         page.click('a').then(() => messages.push('click')),
-        page.waitForNavigation({ waitUntil: 'commit' }).then(() => messages.push('waitForNavigation'))
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
       ]);
-      expect(messages.join('|')).toBe('route|waitForNavigation|click');
+      expect(messages.join('|')).toBe('route|domcontentloaded|click|load');
     });
     it('clicking anchor should await cross-process navigation', async({page, server}) => {
       const messages = [];
       server.setRoute('/empty.html', async (req, res) => {
         messages.push('route');
-        res.end('done');
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
       });
 
       await page.setContent(`<a href="${server.CROSS_PROCESS_PREFIX + '/empty.html'}">empty.html</a>`);
 
       await Promise.all([
         page.click('a').then(() => messages.push('click')),
-        page.waitForNavigation({ waitUntil: 'commit' }).then(() => messages.push('waitForNavigation'))
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
       ]);
-      expect(messages.join('|')).toBe('route|waitForNavigation|click');
+      expect(messages.join('|')).toBe('route|domcontentloaded|click|load');
     });
     it('should await form-get on click', async({page, server}) => {
       const messages = [];
       server.setRoute('/empty.html?foo=bar', async (req, res) => {
         messages.push('route');
-        res.end('done');
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
       });
 
       await page.setContent(`
@@ -849,15 +854,17 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
 
       await Promise.all([
         page.click('input[type=submit]').then(() => messages.push('click')),
-        page.waitForNavigation({ waitUntil: 'commit' }).then(() => messages.push('waitForNavigation'))
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
       ]);
-      expect(messages.join('|')).toBe('route|waitForNavigation|click');
+      expect(messages.join('|')).toBe('route|domcontentloaded|click|load');
     });
     it('should await form-post on click', async({page, server}) => {
       const messages = [];
       server.setRoute('/empty.html', async (req, res) => {
         messages.push('route');
-        res.end('done');
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
       });
 
       await page.setContent(`
@@ -868,23 +875,26 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
 
       await Promise.all([
         page.click('input[type=submit]').then(() => messages.push('click')),
-        page.waitForNavigation({ waitUntil: 'commit' }).then(() => messages.push('waitForNavigation'))
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
       ]);
-      expect(messages.join('|')).toBe('route|waitForNavigation|click');
+      expect(messages.join('|')).toBe('route|domcontentloaded|click|load');
     });
     it('assigning location should await navigation', async({page, server}) => {
       const messages = [];
       server.setRoute('/empty.html', async (req, res) => {
         messages.push('route');
-        res.end('done');
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
       });
       await Promise.all([
         page.evaluate(`window.location.href = "${server.EMPTY_PAGE}"`).then(() => messages.push('evaluate')),
-        page.waitForNavigation({ waitUntil: 'commit' }).then(() => messages.push('waitForNavigation')),
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
       ]);
-      expect(messages.join('|')).toBe('route|waitForNavigation|evaluate');
+      expect(messages.join('|')).toBe('route|domcontentloaded|evaluate|load');
     });
-    it.skip(CHROMIUM)('assigning location twice should await navigation', async({page, server}) => {
+    it.fail(CHROMIUM)('assigning location twice should await navigation', async({page, server}) => {
       const messages = [];
       server.setRoute('/empty.html?cancel', async (req, res) => { res.end('done'); });
       server.setRoute('/empty.html?override', async (req, res) => { messages.push('routeoverride'); res.end('done'); });
@@ -899,17 +909,26 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     it('evaluating reload should await navigation', async({page, server}) => {
       const messages = [];
       await page.goto(server.EMPTY_PAGE);
-      server.setRoute('/empty.html', async (req, res) => { messages.push('route'); res.end('done'); });
+      server.setRoute('/empty.html', async (req, res) => {
+        messages.push('route');
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
+      });
 
       await Promise.all([
         page.evaluate(`window.location.reload()`).then(() => messages.push('evaluate')),
-        page.waitForNavigation({ waitUntil: 'commit' }).then(() => messages.push('waitForNavigation')),
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
       ]);
-      expect(messages.join('|')).toBe('route|waitForNavigation|evaluate');
+      expect(messages.join('|')).toBe('route|domcontentloaded|evaluate|load');
     });
     it('should await navigating specified target', async({page, server}) => {
       const messages = [];
-      server.setRoute('/empty.html', async (req, res) => { messages.push('route'); res.end('done'); });
+      server.setRoute('/empty.html', async (req, res) => {
+        messages.push('route');
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
+      });
 
       await page.setContent(`
         <a href="${server.EMPTY_PAGE}" target=target>empty.html</a>
@@ -918,19 +937,42 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       const frame = page.frame({ name: 'target' });
       await Promise.all([
         page.click('a').then(() => messages.push('click')),
-        frame.waitForNavigation({ waitUntil: 'commit' }).then(() => messages.push('waitForNavigation'))
+        frame.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        frame.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
       ]);
       expect(frame.url()).toBe(server.EMPTY_PAGE);
-      expect(messages.join('|')).toBe('route|waitForNavigation|click');
+      expect(messages.join('|')).toBe('route|domcontentloaded|click|load');
     });
-    it('nowait', async({page, server}) => {
+    it('waitUntil: nowait', async({page, server}) => {
       const messages = [];
+      server.setRoute('/empty.html', async (req, res) => {
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
+      });
+
       await page.setContent(`<a href="${server.EMPTY_PAGE}">empty.html</a>`);
       await Promise.all([
         page.click('a', { waitUntil: 'nowait' }).then(() => messages.push('click')),
-        page.waitForNavigation({ waitUntil: 'commit' }).then(() => messages.push('waitForNavigation'))
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
       ]);
-      expect(messages.join('|')).toBe('click|waitForNavigation');
+      expect(messages.join('|')).toBe('click|domcontentloaded|load');
+    });
+    it('waitUntil: load', async({page, server}) => {
+      const messages = [];
+      server.setRoute('/empty.html', async (req, res) => {
+        messages.push('route');
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
+      });
+
+      await page.setContent(`<a href="${server.EMPTY_PAGE}">empty.html</a>`);
+      await Promise.all([
+        page.click('a', { waitUntil: 'load' }).then(() => messages.push('click')),
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
+      ]);
+      expect(messages.join('|')).toBe('route|domcontentloaded|load|click');
     });
   });
 
@@ -975,7 +1017,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       server.setRoute('/one-style.css', (req, res) => response = res);
       await Promise.all([
         server.waitForRequest('/one-style.css'),
-        page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'commit'}),
+        page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'domcontentloaded'}),
       ]);
       const waitPromise = page.mainFrame()._waitForLoadState();
       response.statusCode = 404;
@@ -984,7 +1026,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     });
     it('should respect timeout', async({page, server}) => {
       server.setRoute('/one-style.css', (req, res) => response = res);
-      await page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'commit'});
+      await page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'domcontentloaded'});
       const error = await page.mainFrame()._waitForLoadState({ timeout: 1 }).catch(e => e);
       expect(error.message).toBe('Navigation timeout of 1 ms exceeded');
     });
@@ -995,7 +1037,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     it('should resolve immediately if load state matches', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       server.setRoute('/one-style.css', (req, res) => response = res);
-      await page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'commit'});
+      await page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'domcontentloaded'});
       await page.mainFrame()._waitForLoadState({ waitUntil: 'domcontentloaded' });
     });
     it('should work with pages that have loaded before being connected to', async({page, context, server}) => {

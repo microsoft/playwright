@@ -115,12 +115,12 @@ export class PageEvent {
     return page;
   }
 
-  async page(options: types.NavigateOptions = {}): Promise<Page> {
+  async page(options: types.TimeoutOptions & { waitUntil?: types.LifecycleEvent | 'nowait' } = {}): Promise<Page> {
     const {
       timeout = this._browserContext._timeoutSettings.navigationTimeout(),
       waitUntil = 'load',
     } = options;
-    const lifecyclePromise = this._lifecyclePromises.get(waitUntil);
+    const lifecyclePromise = waitUntil === 'nowait' ? this._pageOrError : this._lifecyclePromises.get(waitUntil);
     if (!lifecyclePromise)
       throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
     const pageOrError = await helper.waitWithTimeout(lifecyclePromise, `"${waitUntil}"`, timeout);
