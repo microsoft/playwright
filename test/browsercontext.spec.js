@@ -506,7 +506,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
     });
     it('should report initialized pages', async({browser, server}) => {
       const context = await browser.newContext();
-      const pagePromise = context.waitForEvent('page').then(e => e.page({ waitUntil: 'commit' }));
+      const pagePromise = context.waitForEvent('page').then(e => e.page({ waitUntil: 'nowait' }));
       context.newPage();
       const newPage = await pagePromise;
       expect(newPage.url()).toBe('about:blank');
@@ -555,7 +555,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       const context = await browser.newContext();
       const events = [];
       context.on('page', async event => {
-        const page = await event.page({ waitUntil: 'commit' });
+        const page = await event.page({ waitUntil: 'nowait' });
         events.push('CREATED: ' + page.url());
         page.on('close', () => events.push('DESTROYED: ' + page.url()));
       });

@@ -98,10 +98,10 @@ export class FrameManager {
     }
   }
 
-  async waitForNavigationsCreatedBy<T>(action: () => Promise<T>, options?: types.NavigatingActionWaitOptions, input?: boolean): Promise<T> {
-    if (options && options.waitUntil === 'nowait')
+  async waitForNavigationsCreatedBy<T>(action: () => Promise<T>, options: types.NavigatingActionWaitOptions = {}, input?: boolean): Promise<T> {
+    if (options.waitUntil === 'nowait')
       return action();
-    const barrier = new PendingNavigationBarrier(options);
+    const barrier = new PendingNavigationBarrier({ waitUntil: 'domcontentloaded', ...options });
     this._pendingNavigationBarriers.add(barrier);
     try {
       const result = await action();
@@ -170,7 +170,6 @@ export class FrameManager {
       return;
     const hasDOMContentLoaded = frame._firedLifecycleEvents.has('domcontentloaded');
     const hasLoad = frame._firedLifecycleEvents.has('load');
-    frame._firedLifecycleEvents.add('commit');
     frame._firedLifecycleEvents.add('domcontentloaded');
     frame._firedLifecycleEvents.add('load');
     for (const watcher of this._lifecycleWatchers)
@@ -196,7 +195,6 @@ export class FrameManager {
 
   clearFrameLifecycle(frame: Frame) {
     frame._firedLifecycleEvents.clear();
-    frame._firedLifecycleEvents.add('commit');
     // Keep the current navigation request if any.
     frame._inflightRequests = new Set(Array.from(frame._inflightRequests).filter(request => request._documentId === frame._lastDocumentId));
     this._stopNetworkIdleTimer(frame, 'networkidle0');
