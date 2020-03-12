@@ -116,6 +116,7 @@ class Suite {
     this.declaredMode = declaredMode;
     /** @type {!Array<(!Test|!Suite)>} */
     this.children = [];
+    this.location = getCallerLocation(__filename);
 
     this.beforeAll = null;
     this.beforeEach = null;
@@ -447,11 +448,10 @@ class TestRunner extends EventEmitter {
     this._rootSuite = new Suite(null, '', TestMode.Run);
     this._currentSuite = this._rootSuite;
     this._tests = [];
+    this._suites = [];
     this._timeout = timeout === 0 ? INFINITE_TIMEOUT : timeout;
     this._parallel = parallel;
     this._breakOnFailure = breakOnFailure;
-
-    this._hasFocusedTestsOrSuites = false;
 
     if (MAJOR_NODEJS_VERSION >= 8 && disableTimeoutWhenInspectorIsEnabled) {
       if (inspector.url()) {
@@ -508,18 +508,17 @@ class TestRunner extends EventEmitter {
     const test = new Test(this._currentSuite, name, callback, mode, timeout);
     this._currentSuite.children.push(test);
     this._tests.push(test);
-    this._hasFocusedTestsOrSuites = this._hasFocusedTestsOrSuites || mode === TestMode.Focus;
     return test;
   }
 
   _addSuite(mode, name, callback, ...args) {
     const oldSuite = this._currentSuite;
     const suite = new Suite(this._currentSuite, name, mode);
+    this._suites.push(suite);
     this._currentSuite.children.push(suite);
     this._currentSuite = suite;
     callback(...args);
     this._currentSuite = oldSuite;
-    this._hasFocusedTestsOrSuites = this._hasFocusedTestsOrSuites || mode === TestMode.Focus;
   }
 
   _addHook(hookName, callback) {
@@ -530,27 +529,34 @@ class TestRunner extends EventEmitter {
 
   async run() {
     let session = this._debuggerLogBreakpointLines.size ? await setLogBreakpoints(this._debuggerLogBreakpointLines) : null;
-    const runnableTests = this._runnableTests();
+    const runnableTests = this.runnableTests();
     this.emit(TestRunner.Events.Started, runnableTests);
-    this._runningPass = new TestPass(this, this._parallel, this._breakOnFailure);
-    const termination = await this._runningPass.run(runnableTests).catch(e => {
-      console.error(e);
-      throw e;
-    });
-    this._runningPass = null;
+
     const result = {};
-    if (termination) {
-      result.result = termination.result;
-      result.exitCode = 130;
-      result.terminationMessage = termination.message;
-      result.terminationError = termination.error;
+    if (process.env.CI && this.hasFocusedTestsOrSuites()) {
+      result.result = TestResult.Crashed;
+      result.exitCode = 2;
+      result.terminationMessage = '"focused" tests or suites are probitted on CI';
     } else {
-      if (this.failedTests().length) {
-        result.result = TestResult.Failed;
-        result.exitCode = 1;
+      this._runningPass = new TestPass(this, this._parallel, this._breakOnFailure);
+      const termination = await this._runningPass.run(runnableTests).catch(e => {
+        console.error(e);
+        throw e;
+      });
+      this._runningPass = null;
+      if (termination) {
+        result.result = termination.result;
+        result.exitCode = 130;
+        result.terminationMessage = termination.message;
+        result.terminationError = termination.error;
       } else {
-        result.result = TestResult.Ok;
-        result.exitCode = 0;
+        if (this.failedTests().length) {
+          result.result = TestResult.Failed;
+          result.exitCode = 1;
+        } else {
+          result.result = TestResult.Ok;
+          result.exitCode = 0;
+        }
       }
     }
     this.emit(TestRunner.Events.Finished, result);
@@ -569,8 +575,8 @@ class TestRunner extends EventEmitter {
     return this._timeout;
   }
 
-  _runnableTests() {
-    if (!this._hasFocusedTestsOrSuites)
+  runnableTests() {
+    if (!this.hasFocusedTestsOrSuites())
       return this._tests;
 
     const tests = [];
@@ -601,8 +607,23 @@ class TestRunner extends EventEmitter {
     return tests.map(t => t.test);
   }
 
+  focusedSuites() {
+    return this._suites.filter(suite => suite.declaredMode === 'focus');
+  }
+
+  focusedTests() {
+    return this._tests.filter(test => test.declaredMode === 'focus');
+  }
+
   hasFocusedTestsOrSuites() {
-    return this._hasFocusedTestsOrSuites;
+    return this.focusedTests().length || this.focusedSuites().length;
+  }
+
+  focusMatchingTests(fullNameRegex) {
+    for (const test of this._tests) {
+      if (fullNameRegex.test(test.fullName))
+        test.declaredMode = 'focus';
+    }
   }
 
   tests() {

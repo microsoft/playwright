@@ -124,9 +124,10 @@ for (const browserConfig of BROWSER_CONFIGS) {
   });
 }
 
-if (process.env.CI && testRunner.hasFocusedTestsOrSuites()) {
-  console.error('ERROR: "focused" tests/suites are prohibited on bots. Remove any "fit"/"fdescribe" declarations.');
-  process.exit(1);
+const filterArgIndex = process.argv.indexOf('--filter');
+if (filterArgIndex !== -1) {
+  const filter = process.argv[filterArgIndex + 1];
+  testRunner.focusMatchingTests(new RegExp(filter, 'i'));
 }
 
 new Reporter(testRunner, {
