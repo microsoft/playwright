@@ -1064,31 +1064,31 @@ Shortcut for [page.mainFrame().dblclick(selector[, options])](#framedblclicksele
 
 ```js
 await page.evaluate(() => matchMedia('screen').matches));
-// → true
+// ? true
 await page.evaluate(() => matchMedia('print').matches));
-// → true
+// ? true
 
 await page.emulateMedia({ media: 'print' });
 await page.evaluate(() => matchMedia('screen').matches));
-// → false
+// ? false
 await page.evaluate(() => matchMedia('print').matches));
-// → true
+// ? true
 
 await page.emulateMedia({});
 await page.evaluate(() => matchMedia('screen').matches));
-// → true
+// ? true
 await page.evaluate(() => matchMedia('print').matches));
-// → true
+// ? true
 ```
 
 ```js
 await page.emulateMedia({ colorScheme: 'dark' }] });
 await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches));
-// → true
+// ? true
 await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches));
-// → false
+// ? false
 await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches));
-// → false
+// ? false
 ```
 
 #### page.evaluate(pageFunction[, ...args])
@@ -3136,7 +3136,7 @@ await page.keyboard.press('KeyA');
 await page.keyboard.up('Shift');
 ```
 
-> **NOTE** On MacOS, keyboard shortcuts like `⌘ A` -> Select All do not work. See [#1313](https://github.com/GoogleChrome/puppeteer/issues/1313)
+> **NOTE** On MacOS, keyboard shortcuts like `? A` -> Select All do not work. See [#1313](https://github.com/GoogleChrome/puppeteer/issues/1313)
 
 <!-- GEN:toc -->
 - [keyboard.down(key[, options])](#keyboarddownkey-options)
@@ -3182,7 +3182,7 @@ Shortcut for [`keyboard.down`](#keyboarddownkey-options) and [`keyboard.up`](#ke
 Dispatches a `keypress` and `input` event. This does not send a `keydown` or `keyup` event.
 
 ```js
-page.keyboard.sendCharacters('嗨');
+page.keyboard.sendCharacters('?');
 ```
 
 > **NOTE** Modifier keys DO NOT effect `keyboard.sendCharacters`. Holding down `Shift` will not type the text in upper case.
@@ -4269,7 +4269,7 @@ const { chromium } = require('playwright');
 [Mouse]: #class-mouse "Mouse"
 [Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"
 [Page]: #class-page "Page"
-[PageEvent]: #class-page "PageEvent"
+[PageEvent]: #class-pageevent "PageEvent"
 [Playwright]: #class-playwright "Playwright"
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"
 [RegExp]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp
