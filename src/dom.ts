@@ -45,7 +45,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     this.frame = frame;
   }
 
-  async _evaluate(returnByValue: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
+  async _evaluate(returnByValue: boolean, waitForNavigations: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
     const needsAdoption = (value: any): boolean => {
       return typeof value === 'object' && value instanceof ElementHandle && value._context !== this;
     };
@@ -54,7 +54,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
       // Only go through asynchronous calls if required.
       return await this.frame._page._frameManager.waitForNavigationsCreatedBy(async () => {
         return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
-      });
+      }, waitForNavigations ? undefined : { waitUntil: 'nowait' });
     }
 
     const toDispose: Promise<ElementHandle>[] = [];
@@ -69,7 +69,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     try {
       result = await this.frame._page._frameManager.waitForNavigationsCreatedBy(async () => {
         return this._delegate.evaluate(this, returnByValue, pageFunction, ...adopted);
-      });
+      }, waitForNavigations ? undefined : { waitUntil: 'nowait' });
     } finally {
       toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
     }
@@ -97,7 +97,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
           ${custom.join(',\n')}
         ])
       `;
-      this._injectedPromise = this.evaluateHandle(source);
+      this._injectedPromise = this._evaluate(false /* returnByValue */, false /* waitForNavigations */, source);
       this._injectedGeneration = selectors._generation;
     }
     return this._injectedPromise;
