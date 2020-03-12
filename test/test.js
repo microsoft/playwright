@@ -138,7 +138,7 @@ new Reporter(testRunner, {
 });
 
 // await utils.initializeFlakinessDashboardIfNeeded(testRunner);
-testRunner.run().then(result => {
+testRunner.run({ totalTimeout: process.env.CI ? 15 * 60 * 1000 : 0 }).then(result => {
   process.exit(result.exitCode);
 });
 

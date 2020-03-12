@@ -125,30 +125,73 @@ class Suite {
   }
 }
 
+class Result {
+  constructor() {
+    this.result = TestResult.Ok;
+    this.exitCode = 0;
+    this.message = '';
+    this.errors = [];
+  }
+
+  setResult(result, message) {
+    if (!this.ok())
+      return;
+    this.result = result;
+    this.message = message || '';
+    if (result === TestResult.Ok)
+      this.exitCode = 0;
+    else if (result === TestResult.Terminated)
+      this.exitCode = 130;
+    else if (result === TestResult.Crashed)
+      this.exitCode = 2;
+    else
+      this.exitCode = 1;
+  }
+
+  addError(message, error, worker) {
+    const data = { message, error, tests: [] };
+    if (worker) {
+      data.workerId = worker._workerId;
+      data.tests = worker._runTests.slice();
+    }
+    this.errors.push(data);
+  }
+
+  ok() {
+    return this.result === TestResult.Ok;
+  }
+}
+
 class TestWorker {
   constructor(testPass, workerId, parallelIndex) {
     this._testPass = testPass;
     this._state = { parallelIndex };
     this._suiteStack = [];
-    this._termination = false;
+    this._terminating = false;
     this._workerId = workerId;
-    this._runningUserCallback = null;
+    this._runningTestCallback = null;
+    this._runningHookCallback = null;
+    this._runTests = [];
   }
 
-  terminate() {
-    this._termination = true;
-    if (this._runningUserCallback)
-      this._runningUserCallback.terminate();
+  terminate(terminateHooks) {
+    this._terminating = true;
+    if (this._runningTestCallback)
+      this._runningTestCallback.terminate();
+    if (terminateHooks && this._runningHookCallback)
+      this._runningHookCallback.terminate();
   }
 
   _markTerminated(test) {
-    if (!this._termination)
+    if (!this._terminating)
       return false;
     test.result = TestResult.Terminated;
     return true;
   }
 
   async runTest(test) {
+    this._runTests.push(test);
+
     if (this._markTerminated(test))
       return;
 
@@ -202,10 +245,10 @@ class TestWorker {
       await this._runHook(test, this._suiteStack[i], 'beforeEach');
 
     if (!test.error && !this._markTerminated(test)) {
-      this._runningUserCallback = test._userCallback;
       await this._testPass._willStartTestBody(this, test);
+      this._runningTestCallback = test._userCallback;
       test.error = await test._userCallback.run(this._state, test);
-      this._runningUserCallback = null;
+      this._runningTestCallback = null;
       if (!test.error)
         test.result = TestResult.Ok;
       else if (test.error === TimeoutError)
@@ -228,10 +271,9 @@ class TestWorker {
       return true;
 
     await this._testPass._willStartHook(this, suite, hook, hookName);
-    // TODO: do we want hooks to be terminatable? Perhaps, only on SIGTERM?
-    this._runningUserCallback = hook;
+    this._runningHookCallback = hook;
     let error = await hook.run(this._state, test);
-    this._runningUserCallback = null;
+    this._runningHookCallback = null;
 
     if (error) {
       const location = `${hook.location.fileName}:${hook.location.lineNumber}:${hook.location.columnNumber}`;
@@ -239,18 +281,19 @@ class TestWorker {
         // Prefer terminated result over any hook failures.
         test.result = error === TerminatedError ? TestResult.Terminated : TestResult.Crashed;
       }
+      let message;
       if (error === TimeoutError) {
-        error = new Error(`${location} - Timeout Exceeded ${hook.timeout}ms while running "${hookName}" in suite "${suite.fullName}"`);
-        error.stack = '';
+        message = `${location} - Timeout Exceeded ${hook.timeout}ms while running "${hookName}" in suite "${suite.fullName}"`;
+        error = null;
       } else if (error === TerminatedError) {
-        error = new Error(`${location} - TERMINATED while running "${hookName}" in suite "${suite.fullName}"`);
-        error.stack = '';
+        message = `${location} - TERMINATED while running "${hookName}" in suite "${suite.fullName}"`;
+        error = null;
       } else {
         if (error.stack)
           await this._testPass._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
-        error.message = `${location} - FAILED while running "${hookName}" in suite "${suite.fullName}": ` + error.message;
+        message = `${location} - FAILED while running "${hookName}" in suite "${suite.fullName}": `;
       }
-      await this._testPass._didFailHook(this, suite, hook, hookName, error);
+      await this._testPass._didFailHook(this, suite, hook, hookName, message, error);
       test.error = error;
       return false;
     }
@@ -271,11 +314,12 @@ class TestPass {
   constructor(runner, parallel, breakOnFailure) {
     this._runner = runner;
     this._workers = [];
-    this._nextWorkerId = 0;
+    this._nextWorkerId = 1;
     this._parallel = parallel;
     this._breakOnFailure = breakOnFailure;
-    this._termination = null;
-    this._hookErrors = [];
+    this._errors = [];
+    this._result = new Result();
+    this._terminating = false;
   }
 
   async run(testList) {
@@ -293,6 +337,7 @@ class TestPass {
       test.result = null;
       test.error = null;
     }
+    this._result = new Result();
 
     const parallel = Math.min(this._parallel, testList.length);
     const workerPromises = [];
@@ -304,13 +349,16 @@ class TestPass {
 
     for (const termination of terminations)
       process.removeListener(termination.event, termination.handler);
-    return this._termination;
+
+    if (this._runner.failedTests().length)
+      this._result.setResult(TestResult.Failed, '');
+    return this._result;
 
     function createTermination(event, result, message) {
       return {
         event,
         message,
-        handler: error => this._terminate(result, message, error)
+        handler: error => this._terminate(result, message, event === 'SIGTERM', event.startsWith('SIG') ? null : error)
       };
     }
   }
@@ -318,7 +366,7 @@ class TestPass {
   async _runWorker(testIndex, testList, parallelIndex) {
     let worker = new TestWorker(this, this._nextWorkerId++, parallelIndex);
     this._workers[parallelIndex] = worker;
-    while (!this._termination) {
+    while (!worker._terminating) {
       let skipped = 0;
       while (skipped < testList.length && testList[testIndex].result !== null) {
         testIndex = (testIndex + 1) % testList.length;
@@ -337,7 +385,8 @@ class TestPass {
         // Something went wrong during test run, let's use a fresh worker.
         await worker.shutdown();
         if (this._breakOnFailure) {
-          await this._terminate(TestResult.Terminated, `Terminating because a test has failed and |testRunner.breakOnFailure| is enabled`, null);
+          const message = `Terminating because a test has failed and |testRunner.breakOnFailure| is enabled`;
+          await this._terminate(TestResult.Terminated, message, false /* force */, null /* error */);
           return;
         }
         worker = new TestWorker(this, this._nextWorkerId++, parallelIndex);
@@ -347,16 +396,16 @@ class TestPass {
     await worker.shutdown();
   }
 
-  async _terminate(result, message, error) {
-    if (this._termination)
-      return false;
-    if (error && error.stack)
-      await this._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
-    this._termination = { result, message, error };
-    this._willTerminate(this._termination);
+  async _terminate(result, message, force, error) {
+    debug('testrunner')(`TERMINATED result = ${result}, message = ${message}`);
     for (const worker of this._workers)
-      worker.terminate();
-    return true;
+      worker.terminate(force /* terminateHooks */);
+    this._result.setResult(result, message);
+    if (error) {
+      if (error.stack)
+        await this._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
+      this._result.addError(message, error);
+    }
   }
 
   async _willStartTest(worker, test) {
@@ -381,19 +430,14 @@ class TestPass {
     debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" started for "${suite.fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
   }
 
-  async _didFailHook(worker, suite, hook, hookName, error) {
+  async _didFailHook(worker, suite, hook, hookName, message, error) {
     debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" FAILED for "${suite.fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
-    this._hookErrors.push(error);
-    // Note: we can skip termination and report all errors in the end.
-    await this._terminate(TestResult.Crashed, error.message, error);
+    this._result.addError(message, error, worker);
+    this._result.setResult(TestResult.Crashed, message);
   }
 
   async _didCompleteHook(worker, suite, hook, hookName) {
     debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" OK for "${suite.fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
-  }
-
-  _willTerminate(termination) {
-    debug('testrunner')(`TERMINTED result = ${termination.result}, message = ${termination.message}`);
   }
 }
 
@@ -529,36 +573,32 @@ class TestRunner extends EventEmitter {
     this._currentSuite[hookName] = hook;
   }
 
-  async run() {
+  async run(options = {}) {
+    const { totalTimeout = 0 } = options;
     let session = this._debuggerLogBreakpointLines.size ? await setLogBreakpoints(this._debuggerLogBreakpointLines) : null;
     const runnableTests = this.runnableTests();
     this.emit(TestRunner.Events.Started, runnableTests);
 
-    const result = {};
+    let result = new Result();
     if (this._crashIfTestsAreFocusedOnCI && process.env.CI && this.hasFocusedTestsOrSuites()) {
-      result.result = TestResult.Crashed;
-      result.exitCode = 2;
-      result.terminationMessage = '"focused" tests or suites are probitted on CI';
+      result.setResult(TestResult.Crashed, '"focused" tests or suites are probitted on CI');
     } else {
-      this._runningPass = new TestPass(this, this._parallel, this._breakOnFailure);
-      const termination = await this._runningPass.run(runnableTests).catch(e => {
-        console.error(e);
-        throw e;
+      let timeoutId;
+      const timeoutPromise = new Promise(resolve => {
+        const timeoutResult = new Result();
+        timeoutResult.setResult(TestResult.Crashed, `Total timeout of ${totalTimeout}ms reached.`);
+        if (totalTimeout)
+          timeoutId = setTimeout(resolve.bind(null, timeoutResult), totalTimeout);
       });
-      this._runningPass = null;
-      if (termination) {
-        result.result = termination.result;
-        result.exitCode = 130;
-        result.terminationMessage = termination.message;
-        result.terminationError = termination.error;
-      } else {
-        if (this.failedTests().length) {
-          result.result = TestResult.Failed;
-          result.exitCode = 1;
-        } else {
-          result.result = TestResult.Ok;
-          result.exitCode = 0;
-        }
+      try {
+        this._runningPass = new TestPass(this, this._parallel, this._breakOnFailure);
+        result = await Promise.race([
+          this._runningPass.run(runnableTests).catch(e => { console.error(e); throw e; }),
+          timeoutPromise,
+        ]);
+        this._runningPass = null;
+      } finally {
+        clearTimeout(timeoutId);
       }
     }
     this.emit(TestRunner.Events.Finished, result);
@@ -570,7 +610,7 @@ class TestRunner extends EventEmitter {
   async terminate() {
     if (!this._runningPass)
       return;
-    await this._runningPass._terminate(TestResult.Terminated, 'Terminated with |TestRunner.terminate()| call', null);
+    await this._runningPass._terminate(TestResult.Terminated, 'Terminated with |TestRunner.terminate()| call', true /* force */, null /* error */);
   }
 
   timeout() {
