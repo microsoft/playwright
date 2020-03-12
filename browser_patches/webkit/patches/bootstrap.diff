@@ -5054,6 +5054,144 @@ index 87930048f4fd18d6098af7de4da25be532df5931..2bb2afcf9473b0d5d97efbe18dd7b814
      Vector<WTF::Function<void(bool)>> m_listeners;
      Timer m_updateStateTimer;
  
+diff --git a/Source/WebCore/platform/network/curl/CookieJarDB.cpp b/Source/WebCore/platform/network/curl/CookieJarDB.cpp
+index 02b0f63388332ff47ca96f962a0a0a413336006e..29f80ea769a72cb4b7b93c11073c337174c83701 100644
+--- a/Source/WebCore/platform/network/curl/CookieJarDB.cpp
++++ b/Source/WebCore/platform/network/curl/CookieJarDB.cpp
+@@ -30,11 +30,13 @@
+ #include "PublicSuffix.h"
+ #include "RegistrableDomain.h"
+ #include "SQLiteFileSystem.h"
++#include <wtf/DateMath.h>
+ #include <wtf/FileSystem.h>
+ #include <wtf/MonotonicTime.h>
+ #include <wtf/Optional.h>
+ #include <wtf/URL.h>
+ #include <wtf/Vector.h>
++#include <wtf/WallTime.h>
+ #include <wtf/text/StringConcatenateNumbers.h>
+ 
+ namespace WebCore {
+@@ -377,7 +379,7 @@ Optional<Vector<Cookie>> CookieJarDB::searchCookies(const URL& firstParty, const
+ 
+     const String sql =
+         "SELECT name, value, domain, path, expires, httponly, secure, session FROM Cookie WHERE "\
+-        "(NOT ((session = 0) AND (datetime(expires, 'unixepoch') < datetime('now')))) "\
++        "(NOT ((session = 0) AND (expires < ?)))"
+         "AND (httponly = COALESCE(NULLIF(?, -1), httponly)) "\
+         "AND (secure = COALESCE(NULLIF(?, -1), secure)) "\
+         "AND (session = COALESCE(NULLIF(?, -1), session)) "\
+@@ -389,15 +391,16 @@ Optional<Vector<Cookie>> CookieJarDB::searchCookies(const URL& firstParty, const
+         return WTF::nullopt;
+ 
+     pstmt->prepare();
+-    pstmt->bindInt(1, httpOnly ? *httpOnly : -1);
+-    pstmt->bindInt(2, secure ? *secure : -1);
+-    pstmt->bindInt(3, session ? *session : -1);
+-    pstmt->bindText(4, requestHost);
++    pstmt->bindInt64(1, WallTime::now().secondsSinceEpoch().milliseconds());
++    pstmt->bindInt(2, httpOnly ? *httpOnly : -1);
++    pstmt->bindInt(3, secure ? *secure : -1);
++    pstmt->bindInt(4, session ? *session : -1);
++    pstmt->bindText(5, requestHost);
+ 
+     if (CookieUtil::isIPAddress(requestHost) || !requestHost.contains('.') || registrableDomain.isEmpty())
+-        pstmt->bindNull(5);
++        pstmt->bindNull(6);
+     else
+-        pstmt->bindText(5, String("*.") + registrableDomain.string());
++        pstmt->bindText(6, String("*.") + registrableDomain.string());
+ 
+     if (!pstmt)
+         return WTF::nullopt;
+@@ -413,7 +416,7 @@ Optional<Vector<Cookie>> CookieJarDB::searchCookies(const URL& firstParty, const
+         String cookieValue = pstmt->getColumnText(1);
+         String cookieDomain = pstmt->getColumnText(2).convertToASCIILowercase();
+         String cookiePath = pstmt->getColumnText(3);
+-        double cookieExpires = (double)pstmt->getColumnInt64(4) * 1000;
++        double cookieExpires = (double)pstmt->getColumnInt64(4);
+         bool cookieHttpOnly = (pstmt->getColumnInt(5) == 1);
+         bool cookieSecure = (pstmt->getColumnInt(6) == 1);
+         bool cookieSession = (pstmt->getColumnInt(7) == 1);
+@@ -434,7 +437,8 @@ Optional<Vector<Cookie>> CookieJarDB::searchCookies(const URL& firstParty, const
+         cookie.value = cookieValue;
+         cookie.domain = cookieDomain;
+         cookie.path = cookiePath;
+-        cookie.expires = cookieExpires;
++        if (cookieExpires)
++          cookie.expires = cookieExpires;
+         cookie.httpOnly = cookieHttpOnly;
+         cookie.secure = cookieSecure;
+         cookie.session = cookieSession;
+@@ -461,7 +465,9 @@ Vector<Cookie> CookieJarDB::getAllCookies()
+         cookie.value = pstmt->getColumnText(1);
+         cookie.domain = pstmt->getColumnText(2).convertToASCIILowercase();
+         cookie.path = pstmt->getColumnText(3);
+-        cookie.expires = (double)pstmt->getColumnInt64(4) * 1000;
++        double cookieExpires = (double)pstmt->getColumnInt64(4);
++        if (cookieExpires)
++          cookie.expires = cookieExpires;
+         cookie.httpOnly = (pstmt->getColumnInt(5) == 1);
+         cookie.secure = (pstmt->getColumnInt(6) == 1);
+         cookie.session = (pstmt->getColumnInt(7) == 1);
+@@ -505,7 +511,7 @@ bool CookieJarDB::canAcceptCookie(const Cookie& cookie, const URL& firstParty, c
+ bool CookieJarDB::setCookie(const Cookie& cookie)
+ {
+     auto expires = cookie.expires.valueOr(0.0);
+-    if (!cookie.session && MonotonicTime::fromRawSeconds(expires) <= MonotonicTime::now())
++    if (!cookie.session && MonotonicTime::fromRawSeconds(expires / WTF::msPerSecond) <= MonotonicTime::now())
+         return deleteCookieInternal(cookie.name, cookie.domain, cookie.path);
+ 
+     auto& statement = preparedStatement(SET_COOKIE_SQL);
+diff --git a/Source/WebCore/platform/network/curl/CookieUtil.cpp b/Source/WebCore/platform/network/curl/CookieUtil.cpp
+index 5d8cefd130891eb042d3b04e2b6f846e3881b7e4..d3cf6e67132fb7c52ef1a03188af0916f1688118 100644
+--- a/Source/WebCore/platform/network/curl/CookieUtil.cpp
++++ b/Source/WebCore/platform/network/curl/CookieUtil.cpp
+@@ -31,6 +31,7 @@
+ 
+ #include <wtf/DateMath.h>
+ #include <wtf/Optional.h>
++#include <wtf/WallTime.h>
+ #include <wtf/text/WTFString.h>
+ 
+ /* This is the maximum line length we accept for a cookie line. RFC 2109
+@@ -79,13 +80,13 @@ bool domainMatch(const String& cookieDomain, const String& host)
+     return false;
+ }
+ 
+-static Optional<double> parseExpires(const char* expires)
++static Optional<double> parseExpiresMS(const char* expires)
+ {
+     double tmp = WTF::parseDateFromNullTerminatedCharacters(expires);
+     if (isnan(tmp))
+         return { };
+ 
+-    return Optional<double> {tmp / WTF::msPerSecond};
++    return Optional<double> {tmp};
+ }
+ 
+ static void parseCookieAttributes(const String& attribute, bool& hasMaxAge, Cookie& result)
+@@ -117,9 +118,9 @@ static void parseCookieAttributes(const String& attribute, bool& hasMaxAge, Cook
+ 
+     } else if (equalIgnoringASCIICase(attributeName, "max-age")) {
+         bool ok;
+-        time_t expiryTime = time(0) + attributeValue.toInt64(&ok);
++        double maxAgeSeconds = attributeValue.toInt64(&ok);
+         if (ok) {
+-            result.expires = (double)expiryTime;
++            result.expires = (WallTime::now().secondsSinceEpoch().value() + maxAgeSeconds) * WTF::msPerSecond;
+             result.session = false;
+ 
+             // If there is a max-age attribute as well as an expires attribute
+@@ -127,7 +128,7 @@ static void parseCookieAttributes(const String& attribute, bool& hasMaxAge, Cook
+             hasMaxAge = true;
+         }
+     } else if (equalIgnoringASCIICase(attributeName, "expires") && !hasMaxAge) {
+-        if (auto expiryTime = parseExpires(attributeValue.utf8().data())) {
++        if (auto expiryTime = parseExpiresMS(attributeValue.utf8().data())) {
+             result.expires = expiryTime.value();
+             result.session = false;
+         }
 diff --git a/Source/WebCore/platform/win/KeyEventWin.cpp b/Source/WebCore/platform/win/KeyEventWin.cpp
 index 44737686187a06a92c408ea60b63a48ac8481334..c754a763688b52e7ddd47493296ef9b0c6adc527 100644
 --- a/Source/WebCore/platform/win/KeyEventWin.cpp
