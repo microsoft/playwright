@@ -31,21 +31,21 @@ const playwright = require('.');
   const protocolGenerator = require('./utils/protocol-types-generator');
   try {
     const chromeRevision = await downloadAndCleanup(playwright.chromium);
-    await protocolGenerator.generateChromiunProtocol(chromeRevision);
+    await protocolGenerator.generateChromiumProtocol(chromeRevision.executablePath);
   } catch (e) {
     console.warn(e.message);
   }
 
   try {
     const firefoxRevision = await downloadAndCleanup(playwright.firefox);
-    await protocolGenerator.generateFirefoxProtocol(firefoxRevision);
+    await protocolGenerator.generateFirefoxProtocol(firefoxRevision.executablePath);
   } catch (e) {
     console.warn(e.message);
   }
 
   try {
     const webkitRevision = await downloadAndCleanup(playwright.webkit);
-    await protocolGenerator.generateWebKitProtocol(webkitRevision);
+    await protocolGenerator.generateWebKitProtocol(webkitRevision.executablePath);
   } catch (e) {
     console.warn(e.message);
   }
