@@ -387,7 +387,7 @@ export class Frame {
 
     disposer.dispose();
 
-    return request ? request._finalRequest._waitForResponse() : null;
+    return request ? request._finalRequest.response() : null;
 
     function throwIfError(error: Error|void): asserts error is void {
       if (!error)
@@ -430,7 +430,7 @@ export class Frame {
     if (error)
       throw error;
 
-    return request ? request._finalRequest._waitForResponse() : null;
+    return request ? request._finalRequest.response() : null;
   }
 
   async _waitForLoadState(options: types.NavigateOptions = {}): Promise<void> {

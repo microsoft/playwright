@@ -108,10 +108,8 @@ export class Request {
   private _postData: string | null;
   private _headers: Headers;
   private _frame: frames.Frame;
-  private _waitForResponsePromise: Promise<Response>;
-  private _waitForResponsePromiseCallback: (value: Response) => void = () => {};
-  private _waitForFinishedPromise: Promise<Response | null>;
-  private _waitForFinishedPromiseCallback: (value: Response | null) => void = () => {};
+  private _waitForResponsePromise: Promise<Response | null>;
+  private _waitForResponsePromiseCallback: (value: Response | null) => void = () => {};
   private _interceptionHandled = false;
 
   constructor(delegate: RequestDelegate | null, frame: frames.Frame, redirectChain: Request[], documentId: string | undefined,
@@ -130,13 +128,12 @@ export class Request {
     this._postData = postData;
     this._headers = headers;
     this._waitForResponsePromise = new Promise(f => this._waitForResponsePromiseCallback = f);
-    this._waitForFinishedPromise = new Promise(f => this._waitForFinishedPromiseCallback = f);
     this._isFavicon = url.endsWith('/favicon.ico');
   }
 
   _setFailureText(failureText: string) {
     this._failureText = failureText;
-    this._waitForFinishedPromiseCallback(null);
+    this._waitForResponsePromiseCallback(null);
   }
 
   url(): string {
@@ -159,22 +156,17 @@ export class Request {
     return this._headers;
   }
 
-  response(): Response | null {
+  response(): Promise<Response | null> {
+    return this._waitForResponsePromise;
+  }
+
+  _existingResponse(): Response | null {
     return this._response;
-  }
-
-  async _waitForFinished(): Promise<Response | null> {
-    return this._waitForFinishedPromise;
-  }
-
-  async _waitForResponse(): Promise<Response> {
-    return await this._waitForResponsePromise;
   }
 
   _setResponse(response: Response) {
     this._response = response;
     this._waitForResponsePromiseCallback(response);
-    response._finishedPromise.then(() => this._waitForFinishedPromiseCallback(response));
   }
 
   frame(): frames.Frame {
