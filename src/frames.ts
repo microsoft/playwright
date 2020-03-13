@@ -635,11 +635,11 @@ export class Frame {
   async setContent(html: string, options?: types.NavigateOptions): Promise<void> {
     const tag = `--playwright--set--content--${this._id}--${++this._setContentCounter}--`;
     const context = await this._utilityContext();
-    const lifecyclePromise = new Promise(resolve => {
+    const lifecyclePromise = new Promise((resolve, reject) => {
       this._page._frameManager._consoleMessageTags.set(tag, () => {
         // Clear lifecycle right after document.open() - see 'tag' below.
         this._page._frameManager.clearFrameLifecycle(this);
-        resolve(this._waitForLoadState(options));
+        this._waitForLoadState(options).then(resolve).catch(reject);
       });
     });
     const contentPromise = context.evaluate((html, tag) => {
