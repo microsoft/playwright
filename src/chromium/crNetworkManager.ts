@@ -241,7 +241,7 @@ export class CRNetworkManager {
   }
 }
 
-class InterceptableRequest implements network.RequestDelegate {
+class InterceptableRequest implements network.RouteDelegate {
   readonly request: network.Request;
   _requestId: string;
   _interceptionId: string | null;

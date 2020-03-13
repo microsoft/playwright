@@ -141,7 +141,7 @@ const causeToResourceType: {[key: string]: string} = {
   TYPE_WEB_MANIFEST: 'manifest',
 };
 
-class InterceptableRequest implements network.RequestDelegate {
+class InterceptableRequest implements network.RouteDelegate {
   readonly request: network.Request;
   _id: string;
   private _session: FFSession;

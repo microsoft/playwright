@@ -39,7 +39,7 @@ const errorReasons: { [reason: string]: string } = {
   'failed': 'General',
 };
 
-export class WKInterceptableRequest implements network.RequestDelegate {
+export class WKInterceptableRequest implements network.RouteDelegate {
   private readonly _session: WKSession;
   readonly request: network.Request;
   readonly _requestId: string;

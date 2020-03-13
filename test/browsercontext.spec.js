@@ -371,8 +371,9 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
     it('should intercept', async({browser, server}) => {
       const context = await browser.newContext();
       let intercepted = false;
-      await context.route('**/empty.html', request => {
+      await context.route('**/empty.html', route => {
         intercepted = true;
+        const request = route.request();
         expect(request.url()).toContain('empty.html');
         expect(request.headers()['user-agent']).toBeTruthy();
         expect(request.method()).toBe('GET');
@@ -381,7 +382,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
         expect(request.resourceType()).toBe('document');
         expect(request.frame() === page.mainFrame()).toBe(true);
         expect(request.frame().url()).toBe('about:blank');
-        request.continue();
+        route.continue();
       });
       const page = await context.newPage();
       const response = await page.goto(server.EMPTY_PAGE);
@@ -391,12 +392,12 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
     });
     it('should yield to page.route', async({browser, server}) => {
       const context = await browser.newContext();
-      await context.route('**/empty.html', request => {
-        request.fulfill({ status: 200, body: 'context' });
+      await context.route('**/empty.html', route => {
+        route.fulfill({ status: 200, body: 'context' });
       });
       const page = await context.newPage();
-      await page.route('**/empty.html', request => {
-        request.fulfill({ status: 200, body: 'page' });
+      await page.route('**/empty.html', route => {
+        route.fulfill({ status: 200, body: 'page' });
       });
       const response = await page.goto(server.EMPTY_PAGE);
       expect(response.ok()).toBe(true);

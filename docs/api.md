@@ -20,6 +20,7 @@
 - [class: Request](#class-request)
 - [class: Response](#class-response)
 - [class: Selectors](#class-selectors)
+- [class: Route](#class-route)
 - [class: TimeoutError](#class-timeouterror)
 - [class: Accessibility](#class-accessibility)
 - [class: Worker](#class-worker)
@@ -456,17 +457,17 @@ Creates a new page in the browser context.
 
 #### browserContext.route(url, handler)
 - `url` <[string]|[RegExp]|[function]\([string]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
-- `handler` <[function]\([Request]\)> handler function to route the request.
-- returns: <[Promise]>.
+- `handler` <[function]\([Route], [Request]\)> handler function to route the request.
+- returns: <[Promise]>
 
-Routing activates the request interception  and enables `request.abort`, `request.continue` and `request.fulfill` methods on the request. This provides the capability to modify network requests that are made by any page in the browser context.
+Routing provides the capability to modify network requests that are made by any page in the browser context.
+Once route is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
 
-Once request interception is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
-An example of a naïve request interceptor that aborts all image requests:
+An example of a naïve handler that aborts all image requests:
 
 ```js
 const context = await browser.newContext();
-await context.route('**/*.{png,jpg,jpeg}', request => request.abort());
+await context.route('**/*.{png,jpg,jpeg}', route => route.abort());
 const page = await context.newPage();
 await page.goto('https://example.com');
 await browser.close();
@@ -476,7 +477,7 @@ or the same snippet using a regex pattern instead:
 
 ```js
 const context = await browser.newContext();
-await context.route(/(\.png$)|(\.jpg$)/, request => request.abort());
+await context.route(/(\.png$)|(\.jpg$)/, route => route.abort());
 const page = await context.newPage();
 await page.goto('https://example.com');
 await browser.close();
@@ -484,7 +485,7 @@ await browser.close();
 
 Page routes (set up with [page.route(url, handler)](#pagerouteurl-handler)) take precedence over browser context routes when request matches both handlers.
 
-> **NOTE** Enabling request interception disables http cache.
+> **NOTE** Enabling routing disables http cache.
 
 #### browserContext.setDefaultNavigationTimeout(timeout)
 - `timeout` <[number]> Maximum navigation time in milliseconds
@@ -783,7 +784,7 @@ const popup = await event.page();
 - <[Request]>
 
 Emitted when a page issues a request. The [request] object is read-only.
-In order to intercept and mutate requests, see `page.route()`.
+In order to intercept and mutate requests, see !!!`page.route()` or `brows.
 
 #### event: 'requestfailed'
 - <[Request]>
@@ -1423,18 +1424,18 @@ If `key` is a single character and no modifier keys besides `Shift` are being he
 
 #### page.route(url, handler)
 - `url` <[string]|[RegExp]|[function]\([string]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
-- `handler` <[function]\([Request]\)> handler function to route the request.
+- `handler` <[function]\([Route], [Request]\)> handler function to route the request.
 - returns: <[Promise]>.
 
-Routing activates the request interception and enables `request.abort`, `request.continue` and
-`request.fulfill` methods on the request.  This provides the capability to modify network requests that are made by a page.
+Routing provides the capability to modify network requests that are made by a page.
 
-Once request interception is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
-An example of a naïve request interceptor that aborts all image requests:
+Once routing is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
+
+An example of a naïve handler that aborts all image requests:
 
 ```js
 const page = await browser.newPage();
-await page.route('**/*.{png,jpg,jpeg}', request => request.abort());
+await page.route('**/*.{png,jpg,jpeg}', route => route.abort());
 await page.goto('https://example.com');
 await browser.close();
 ```
@@ -1443,14 +1444,14 @@ or the same snippet using a regex pattern instead:
 
 ```js
 const page = await browser.newPage();
-await page.route(/(\.png$)|(\.jpg$)/, request => request.abort());
+await page.route(/(\.png$)|(\.jpg$)/, route => route.abort());
 await page.goto('https://example.com');
 await browser.close();
 ```
 
 Page routes take precedence over browser context routes (set up with [browserContext.route(url, handler)](#browsercontextrouteurl-handler)) when request matches both handlers.
 
-> **NOTE** Enabling request interception disables http cache.
+> **NOTE** Enabling rouing disables http cache.
 
 #### page.screenshot([options])
 - `options` <[Object]> Options object which might have the following properties:
@@ -3131,11 +3132,8 @@ If request fails at some point, then instead of `'requestfinished'` event (and p
 If request gets a 'redirect' response, the request is successfully finished with the 'requestfinished' event, and a new request is  issued to a redirected url.
 
 <!-- GEN:toc -->
-- [request.abort([errorCode])](#requestaborterrorcode)
-- [request.continue([overrides])](#requestcontinueoverrides)
 - [request.failure()](#requestfailure)
 - [request.frame()](#requestframe)
-- [request.fulfill(response)](#requestfulfillresponse)
 - [request.headers()](#requestheaders)
 - [request.isNavigationRequest()](#requestisnavigationrequest)
 - [request.method()](#requestmethod)
@@ -3145,50 +3143,6 @@ If request gets a 'redirect' response, the request is successfully finished with
 - [request.response()](#requestresponse)
 - [request.url()](#requesturl)
 <!-- GEN:stop -->
-
-#### request.abort([errorCode])
-- `errorCode` <[string]> Optional error code. Defaults to `failed`, could be
-  one of the following:
-  - `aborted` - An operation was aborted (due to user action)
-  - `accessdenied` - Permission to access a resource, other than the network, was denied
-  - `addressunreachable` - The IP address is unreachable. This usually means
-    that there is no route to the specified host or network.
-  - `blockedbyclient` - The client chose to block the request.
-  - `blockedbyresponse` - The request failed because the response was delivered along with requirements which are not met ('X-Frame-Options' and 'Content-Security-Policy' ancestor checks, for instance).
-  - `connectionaborted` - A connection timed out as a result of not receiving an ACK for data sent.
-  - `connectionclosed` - A connection was closed (corresponding to a TCP FIN).
-  - `connectionfailed` - A connection attempt failed.
-  - `connectionrefused` - A connection attempt was refused.
-  - `connectionreset` - A connection was reset (corresponding to a TCP RST).
-  - `internetdisconnected` - The Internet connection has been lost.
-  - `namenotresolved` - The host name could not be resolved.
-  - `timedout` - An operation timed out.
-  - `failed` - A generic failure occurred.
-- returns: <[Promise]>
-
-Aborts request. To use this, request interception should be enabled with `page.route`.
-Exception is immediately thrown if the request interception is not enabled.
-
-#### request.continue([overrides])
-- `overrides` <[Object]> Optional request overrides, which can be one of the following:
-  - `method` <[string]> If set changes the request method (e.g. GET or POST)
-  - `postData` <[string]> If set changes the post data of request
-  - `headers` <[Object]> If set changes the request HTTP headers. Header values will be converted to a string.
-- returns: <[Promise]>
-
-Continues request with optional request overrides. To use this, request interception should be enabled with `page.route`.
-Exception is immediately thrown if the request interception is not enabled.
-
-```js
-await page.route('**/*', request => {
-  // Override headers
-  const headers = Object.assign({}, request.headers(), {
-    foo: 'bar', // set "foo" header
-    origin: undefined, // remove "origin" header
-  });
-  request.continue({headers});
-});
-```
 
 #### request.failure()
 - returns: <?[Object]> Object describing request failure, if any
@@ -3207,37 +3161,6 @@ page.on('requestfailed', request => {
 
 #### request.frame()
 - returns: <[Frame]> A [Frame] that initiated this request.
-
-#### request.fulfill(response)
-- `response` <[Object]> Response that will fulfill this request
-  - `status` <[number]> Response status code, defaults to `200`.
-  - `headers` <[Object]> Optional response headers. Header values will be converted to a string.
-  - `contentType` <[string]> If set, equals to setting `Content-Type` response header.
-  - `body` <[string]|[Buffer]> Optional response body.
-  - `path` <[string]> Optional file path to respond with. The content type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
-- returns: <[Promise]>
-
-Fulfills request with given response. To use this, request interception should
-be enabled with `page.route`. Exception is thrown if
-request interception is not enabled.
-
-An example of fulfilling all requests with 404 responses:
-
-```js
-await page.route('**/*', request => {
-  request.fulfill({
-    status: 404,
-    contentType: 'text/plain',
-    body: 'Not Found!'
-  });
-});
-```
-
-An example of serving static file:
-
-```js
-await page.route('**/xhr_endpoint', request => request.fulfill({ path: 'mock_data.json' }));
-```
 
 #### request.headers()
 - returns: <[Object]> An object with HTTP headers associated with the request. All header names are lower-case.
@@ -3409,6 +3332,93 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
   await browser.close();
 })();
 ```
+
+
+### class: Route
+
+Whenever a network route is set up with [page.route(url, handler)](#pagerouteurl-handler) or [browserContext.route(url, handler)](#browsercontextrouteurl-handler), the `Route` object allows to handle the route.
+
+<!-- GEN:toc -->
+- [route.abort([errorCode])](#routeaborterrorcode)
+- [route.continue([overrides])](#routecontinueoverrides)
+- [route.fulfill(response)](#routefulfillresponse)
+- [route.request()](#routerequest)
+<!-- GEN:stop -->
+
+#### route.abort([errorCode])
+- `errorCode` <[string]> Optional error code. Defaults to `failed`, could be
+  one of the following:
+  - `aborted` - An operation was aborted (due to user action)
+  - `accessdenied` - Permission to access a resource, other than the network, was denied
+  - `addressunreachable` - The IP address is unreachable. This usually means
+    that there is no route to the specified host or network.
+  - `blockedbyclient` - The client chose to block the request.
+  - `blockedbyresponse` - The request failed because the response was delivered along with requirements which are not met ('X-Frame-Options' and 'Content-Security-Policy' ancestor checks, for instance).
+  - `connectionaborted` - A connection timed out as a result of not receiving an ACK for data sent.
+  - `connectionclosed` - A connection was closed (corresponding to a TCP FIN).
+  - `connectionfailed` - A connection attempt failed.
+  - `connectionrefused` - A connection attempt was refused.
+  - `connectionreset` - A connection was reset (corresponding to a TCP RST).
+  - `internetdisconnected` - The Internet connection has been lost.
+  - `namenotresolved` - The host name could not be resolved.
+  - `timedout` - An operation timed out.
+  - `failed` - A generic failure occurred.
+- returns: <[Promise]>
+
+Aborts the route's request.
+
+#### route.continue([overrides])
+- `overrides` <[Object]> Optional request overrides, which can be one of the following:
+  - `method` <[string]> If set changes the request method (e.g. GET or POST)
+  - `postData` <[string]> If set changes the post data of request
+  - `headers` <[Object]> If set changes the request HTTP headers. Header values will be converted to a string.
+- returns: <[Promise]>
+
+Continues route's request with optional overrides.
+
+```js
+await page.route('**/*', (route, request) => {
+  // Override headers
+  const headers = Object.assign({}, request.headers(), {
+    foo: 'bar', // set "foo" header
+    origin: undefined, // remove "origin" header
+  });
+  route.continue({headers});
+});
+```
+
+#### route.fulfill(response)
+- `response` <[Object]> Response that will fulfill this route's request.
+  - `status` <[number]> Response status code, defaults to `200`.
+  - `headers` <[Object]> Optional response headers. Header values will be converted to a string.
+  - `contentType` <[string]> If set, equals to setting `Content-Type` response header.
+  - `body` <[string]|[Buffer]> Optional response body.
+  - `path` <[string]> Optional file path to respond with. The content type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
+- returns: <[Promise]>
+
+Fulfills route's request with given response.
+
+An example of fulfilling all requests with 404 responses:
+
+```js
+await page.route('**/*', route => {
+  route.fulfill({
+    status: 404,
+    contentType: 'text/plain',
+    body: 'Not Found!'
+  });
+});
+```
+
+An example of serving static file:
+
+```js
+await page.route('**/xhr_endpoint', route => route.fulfill({ path: 'mock_data.json' }));
+```
+
+#### route.request()
+- returns: <[Request]> A request to be routed.
+
 
 ### class: TimeoutError
 
@@ -4052,6 +4062,7 @@ const { chromium } = require('playwright');
 [RegExp]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp
 [Request]: #class-request  "Request"
 [Response]: #class-response  "Response"
+[Route]: #class-route  "Route"
 [Selectors]: #class-selectors  "Selectors"
 [Serializable]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#Description "Serializable"
 [TimeoutError]: #class-timeouterror "TimeoutError"

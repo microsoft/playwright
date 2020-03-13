@@ -32,7 +32,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   describe('Page.route', function() {
     it('should intercept', async({page, server}) => {
       let intercepted = false;
-      await page.route('**/empty.html', request => {
+      await page.route('**/empty.html', (route, request) => {
+        expect(route.request()).toBe(request);
         expect(request.url()).toContain('empty.html');
         expect(request.headers()['user-agent']).toBeTruthy();
         expect(request.method()).toBe('GET');
@@ -41,7 +42,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         expect(request.resourceType()).toBe('document');
         expect(request.frame() === page.mainFrame()).toBe(true);
         expect(request.frame().url()).toBe('about:blank');
-        request.continue();
+        route.continue();
         intercepted = true;
       });
       const response = await page.goto(server.EMPTY_PAGE);
@@ -51,7 +52,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it('should work when POST is redirected with 302', async({page, server}) => {
       server.setRedirect('/rredirect', '/empty.html');
       await page.goto(server.EMPTY_PAGE);
-      await page.route('**/*', request => request.continue());
+      await page.route('**/*', route => route.continue());
       await page.setContent(`
         <form action='/rredirect' method='post'>
           <input type="hidden" id="foo" name="foo" value="FOOBAR">
@@ -65,22 +66,22 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     // @see https://github.com/GoogleChrome/puppeteer/issues/3973
     it('should work when header manipulation headers with redirect', async({page, server}) => {
       server.setRedirect('/rrredirect', '/empty.html');
-      await page.route('**/*', request => {
-        const headers = Object.assign({}, request.headers(), {
+      await page.route('**/*', route => {
+        const headers = Object.assign({}, route.request().headers(), {
           foo: 'bar'
         });
-        request.continue({ headers });
+        route.continue({ headers });
       });
       await page.goto(server.PREFIX + '/rrredirect');
     });
     // @see https://github.com/GoogleChrome/puppeteer/issues/4743
     it('should be able to remove headers', async({page, server}) => {
-      await page.route('**/*', request => {
-        const headers = Object.assign({}, request.headers(), {
+      await page.route('**/*', route => {
+        const headers = Object.assign({}, route.request().headers(), {
           foo: 'bar',
           origin: undefined, // remove "origin" header
         });
-        request.continue({ headers });
+        route.continue({ headers });
       });
 
       const [serverRequest] = await Promise.all([
@@ -92,9 +93,9 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
     it('should contain referer header', async({page, server}) => {
       const requests = [];
-      await page.route('**/*', request => {
-        requests.push(request);
-        request.continue();
+      await page.route('**/*', route => {
+        requests.push(route.request());
+        route.continue();
       });
       await page.goto(server.PREFIX + '/one-style.html');
       expect(requests[1].url()).toContain('/one-style.css');
@@ -106,7 +107,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await context.addCookies([{ url: server.EMPTY_PAGE, name: 'foo', value: 'bar'}]);
 
       // Setup request interception.
-      await page.route('**/*', request => request.continue());
+      await page.route('**/*', route => route.continue());
       const response = await page.reload();
       expect(response.status()).toBe(200);
     });
@@ -114,9 +115,9 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await page.setExtraHTTPHeaders({
         foo: 'bar'
       });
-      await page.route('**/*', request => {
-        expect(request.headers()['foo']).toBe('bar');
-        request.continue();
+      await page.route('**/*', route => {
+        expect(route.request().headers()['foo']).toBe('bar');
+        route.continue();
       });
       const response = await page.goto(server.EMPTY_PAGE);
       expect(response.ok()).toBe(true);
@@ -125,7 +126,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it('should work with redirect inside sync XHR', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       server.setRedirect('/logo.png', '/pptr.png');
-      await page.route('**/*', request => request.continue());
+      await page.route('**/*', route => route.continue());
       const status = await page.evaluate(async() => {
         const request = new XMLHttpRequest();
         request.open('GET', '/logo.png', false);  // `false` makes the request synchronous
@@ -136,15 +137,15 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
     it('should work with custom referer headers', async({page, server}) => {
       await page.setExtraHTTPHeaders({ 'referer': server.EMPTY_PAGE });
-      await page.route('**/*', request => {
-        expect(request.headers()['referer']).toBe(server.EMPTY_PAGE);
-        request.continue();
+      await page.route('**/*', route => {
+        expect(route.request().headers()['referer']).toBe(server.EMPTY_PAGE);
+        route.continue();
       });
       const response = await page.goto(server.EMPTY_PAGE);
       expect(response.ok()).toBe(true);
     });
     it('should be abortable', async({page, server}) => {
-      await page.route(/\.css$/, request => request.abort());
+      await page.route(/\.css$/, route => route.abort());
       let failedRequests = 0;
       page.on('requestfailed', event => ++failedRequests);
       const response = await page.goto(server.PREFIX + '/one-style.html');
@@ -153,7 +154,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(failedRequests).toBe(1);
     });
     it('should be abortable with custom error codes', async({page, server}) => {
-      await page.route('**/*', request => request.abort('internetdisconnected'));
+      await page.route('**/*', route => route.abort('internetdisconnected'));
       let failedRequest = null;
       page.on('requestfailed', request => failedRequest = request);
       await page.goto(server.EMPTY_PAGE).catch(e => {});
@@ -169,7 +170,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await page.setExtraHTTPHeaders({
         referer: 'http://google.com/'
       });
-      await page.route('**/*', request => request.continue());
+      await page.route('**/*', route => route.continue());
       const [request] = await Promise.all([
         server.waitForRequest('/grid.html'),
         page.goto(server.PREFIX + '/grid.html'),
@@ -177,7 +178,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(request.headers['referer']).toBe('http://google.com/');
     });
     it('should fail navigation when aborting main resource', async({page, server}) => {
-      await page.route('**/*', request => request.abort());
+      await page.route('**/*', route => route.abort());
       let error = null;
       await page.goto(server.EMPTY_PAGE).catch(e => error = e);
       expect(error).toBeTruthy();
@@ -190,9 +191,9 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
     it('should work with redirects', async({page, server}) => {
       const requests = [];
-      await page.route('**/*', request => {
-        request.continue();
-        requests.push(request);
+      await page.route('**/*', route => {
+        route.continue();
+        requests.push(route.request());
       });
       server.setRedirect('/non-existing-page.html', '/non-existing-page-2.html');
       server.setRedirect('/non-existing-page-2.html', '/non-existing-page-3.html');
@@ -216,9 +217,9 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
     it('should work with redirects for subresources', async({page, server}) => {
       const requests = [];
-      await page.route('**/*', request => {
-        request.continue();
-        requests.push(request);
+      await page.route('**/*', route => {
+        route.continue();
+        requests.push(route.request());
       });
       server.setRedirect('/one-style.css', '/two-style.css');
       server.setRedirect('/two-style.css', '/three-style.css');
@@ -244,8 +245,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
       let spinner = false;
       // Cancel 2nd request.
-      await page.route('**/*', request => {
-        spinner ? request.abort() : request.continue();
+      await page.route('**/*', route => {
+        spinner ? route.abort() : route.continue();
         spinner = !spinner;
       });
       const results = await page.evaluate(() => Promise.all([
@@ -257,9 +258,9 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
     it('should navigate to dataURL and not fire dataURL requests', async({page, server}) => {
       const requests = [];
-      await page.route('**/*', request => {
-        requests.push(request);
-        request.continue();
+      await page.route('**/*', route => {
+        requests.push(route.request());
+        route.continue();
       });
       const dataURL = 'data:text/html,<div>yo</div>';
       const response = await page.goto(dataURL);
@@ -269,9 +270,9 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it('should be able to fetch dataURL and not fire dataURL requests', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const requests = [];
-      await page.route('**/*', request => {
-        requests.push(request);
-        request.continue();
+      await page.route('**/*', route => {
+        requests.push(route.request());
+        route.continue();
       });
       const dataURL = 'data:text/html,<div>yo</div>';
       const text = await page.evaluate(url => fetch(url).then(r => r.text()), dataURL);
@@ -280,9 +281,9 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
     it('should navigate to URL with hash and and fire requests without hash', async({page, server}) => {
       const requests = [];
-      await page.route('**/*', request => {
-        requests.push(request);
-        request.continue();
+      await page.route('**/*', route => {
+        requests.push(route.request());
+        route.continue();
       });
       const response = await page.goto(server.EMPTY_PAGE + '#hash');
       expect(response.status()).toBe(200);
@@ -293,13 +294,13 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it('should work with encoded server', async({page, server}) => {
       // The requestWillBeSent will report encoded URL, whereas interception will
       // report URL as-is. @see crbug.com/759388
-      await page.route('**/*', request => request.continue());
+      await page.route('**/*', route => route.continue());
       const response = await page.goto(server.PREFIX + '/some nonexisting page');
       expect(response.status()).toBe(404);
     });
     it('should work with badly encoded server', async({page, server}) => {
       server.setRoute('/malformed?rnd=%911', (req, res) => res.end());
-      await page.route('**/*', request => request.continue());
+      await page.route('**/*', route => route.continue());
       const response = await page.goto(server.PREFIX + '/malformed?rnd=%911');
       expect(response.status()).toBe(200);
     });
@@ -307,9 +308,9 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       // The requestWillBeSent will report URL as-is, whereas interception will
       // report encoded URL for stylesheet. @see crbug.com/759388
       const requests = [];
-      await page.route('**/*', request => {
-        request.continue();
-        requests.push(request);
+      await page.route('**/*', route => {
+        route.continue();
+        requests.push(route.request());
       });
       const response = await page.goto(`data:text/html,<link rel="stylesheet" href="${server.PREFIX}/fonts?helvetica|arial"/>`);
       expect(response).toBe(null);
@@ -318,75 +319,40 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
     it('should not throw "Invalid Interception Id" if the request was cancelled', async({page, server}) => {
       await page.setContent('<iframe></iframe>');
-      let request = null;
-      await page.route('**/*', async r => request = r);
+      let route = null;
+      await page.route('**/*', async r => route = r);
       page.$eval('iframe', (frame, url) => frame.src = url, server.EMPTY_PAGE),
       // Wait for request interception.
       await utils.waitEvent(page, 'request');
       // Delete frame to cause request to be canceled.
       await page.$eval('iframe', frame => frame.remove());
       let error = null;
-      await request.continue().catch(e => error = e);
+      await route.continue().catch(e => error = e);
       expect(error).toBe(null);
-    });
-    it('should throw if interception is not enabled', async({browser, server}) => {
-      let error = null;
-      const context = await browser.newContext();
-      const page = await context.newPage();
-      page.on('request', async request => {
-        try {
-          await request.continue();
-        } catch (e) {
-          error = e;
-        }
-      });
-      await page.goto(server.EMPTY_PAGE);
-      expect(error.message).toContain('Request Interception is not enabled');
-      await context.close();
     });
     it('should intercept main resource during cross-process navigation', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       let intercepted = false;
-      await page.route(server.CROSS_PROCESS_PREFIX + '/empty.html', request => {
+      await page.route(server.CROSS_PROCESS_PREFIX + '/empty.html', route => {
         intercepted = true;
-        request.continue();
+        route.continue();
       });
       const response = await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
       expect(response.ok()).toBe(true);
       expect(intercepted).toBe(true);
     });
-    it('should not throw when continued after navigation', async({page, server}) => {
-      await page.route(server.PREFIX + '/one-style.css', () => {});
-      // For some reason, Firefox issues load event with one outstanding request.
-      const firstNavigation = page.goto(server.PREFIX + '/one-style.html', { waitUntil: FFOX ? 'networkidle0' : 'load' }).catch(e => e);
-      const request = await page.waitForRequest(server.PREFIX + '/one-style.css');
-      await page.goto(server.PREFIX + '/empty.html');
-      await firstNavigation;
-      const notAnError = await request.continue().then(() => null).catch(e => e);
-      expect(notAnError).toBe(null);
-    });
-    it('should not throw when continued after cross-process navigation', async({page, server}) => {
-      await page.route(server.PREFIX + '/one-style.css', () => {});
-      // For some reason, Firefox issues load event with one outstanding request.
-      const firstNavigation = page.goto(server.PREFIX + '/one-style.html', { waitUntil: FFOX ? 'networkidle0' : 'load' }).catch(e => e);
-      const request = await page.waitForRequest(server.PREFIX + '/one-style.css');
-      await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
-      await firstNavigation;
-      const notAnError = await request.continue().then(() => null).catch(e => e);
-      expect(notAnError).toBe(null);
-    });
   });
 
   describe('Request.continue', function() {
     it('should work', async({page, server}) => {
-      await page.route('**/*', request => request.continue());
+      await page.route('**/*', route => route.continue());
       await page.goto(server.EMPTY_PAGE);
     });
     it('should amend HTTP headers', async({page, server}) => {
-      await page.route('**/*', request => {
-        const headers = Object.assign({}, request.headers());
+      await page.route('**/*', route => {
+        const headers = Object.assign({}, route.request().headers());
         headers['FOO'] = 'bar';
-        request.continue({ headers });
+        route.continue({ headers });
       });
       await page.goto(server.EMPTY_PAGE);
       const [request] = await Promise.all([
@@ -398,7 +364,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it('should amend method', async({page, server}) => {
       const sRequest = server.waitForRequest('/sleep.zzz');
       await page.goto(server.EMPTY_PAGE);
-      await page.route('**/*', request => request.continue({ method: 'POST' }));
+      await page.route('**/*', route => route.continue({ method: 'POST' }));
       const [request] = await Promise.all([
         server.waitForRequest('/sleep.zzz'),
         page.evaluate(() => fetch('/sleep.zzz'))
@@ -408,14 +374,14 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
     it('should amend method on main request', async({page, server}) => {
       const request = server.waitForRequest('/empty.html');
-      await page.route('**/*', request => request.continue({ method: 'POST' }));
+      await page.route('**/*', route => route.continue({ method: 'POST' }));
       await page.goto(server.EMPTY_PAGE);
       expect((await request).method).toBe('POST');
     });
     it('should amend post data', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await page.route('**/*', request => {
-        request.continue({ postData: 'doggo' });
+      await page.route('**/*', route => {
+        route.continue({ postData: 'doggo' });
       });
       const [serverRequest] = await Promise.all([
         server.waitForRequest('/sleep.zzz'),
@@ -427,8 +393,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   describe('Request.fulfill', function() {
     it('should work', async({page, server}) => {
-      await page.route('**/*', request => {
-        request.fulfill({
+      await page.route('**/*', route => {
+        route.fulfill({
           status: 201,
           headers: {
             foo: 'bar'
@@ -443,8 +409,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
     });
     it('should work with status code 422', async({page, server}) => {
-      await page.route('**/*', request => {
-        request.fulfill({
+      await page.route('**/*', route => {
+        route.fulfill({
           status: 422,
           body: 'Yo, page!'
         });
@@ -455,9 +421,9 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
     });
     it('should allow mocking binary responses', async({page, server}) => {
-      await page.route('**/*', request => {
+      await page.route('**/*', route => {
         const imageBuffer = fs.readFileSync(path.join(__dirname, 'assets', 'pptr.png'));
-        request.fulfill({
+        route.fulfill({
           contentType: 'image/png',
           body: imageBuffer
         });
@@ -472,7 +438,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(await img.screenshot()).toBeGolden('mock-binary-response.png');
     });
     it('should work with file path', async({page, server}) => {
-      await page.route('**/*', request => request.fulfill({ contentType: 'shouldBeIgnored', path: path.join(__dirname, 'assets', 'pptr.png') }));
+      await page.route('**/*', route => route.fulfill({ contentType: 'shouldBeIgnored', path: path.join(__dirname, 'assets', 'pptr.png') }));
       await page.evaluate(PREFIX => {
         const img = document.createElement('img');
         img.src = PREFIX + '/does-not-exist.png';
@@ -483,8 +449,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(await img.screenshot()).toBeGolden('mock-binary-response.png');
     });
     it('should stringify intercepted request response headers', async({page, server}) => {
-      await page.route('**/*', request => {
-        request.fulfill({
+      await page.route('**/*', route => {
+        route.fulfill({
           status: 200,
           headers: {
             'foo': true
@@ -503,9 +469,9 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   describe('Interception vs isNavigationRequest', () => {
     it('should work with request interception', async({page, server}) => {
       const requests = new Map();
-      await page.route('**/*', request => {
-        requests.set(request.url().split('/').pop(), request);
-        request.continue();
+      await page.route('**/*', route => {
+        requests.set(route.request().url().split('/').pop(), route.request());
+        route.continue();
       });
       server.setRedirect('/rrredirect', '/frames/one-frame.html');
       await page.goto(server.PREFIX + '/rrredirect');
@@ -522,7 +488,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const context = await browser.newContext({ ignoreHTTPSErrors: true });
       const page = await context.newPage();
 
-      await page.route('**/*', request => request.continue());
+      await page.route('**/*', route => route.continue());
       const response = await page.goto(httpsServer.EMPTY_PAGE);
       expect(response.status()).toBe(200);
       await context.close();
@@ -538,10 +504,10 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const swResponse = await page.evaluate(() => fetchDummy('foo'));
       expect(swResponse).toBe('responseFromServiceWorker:foo');
 
-      await page.route('**/foo', request => {
-        const slash = request.url().lastIndexOf('/');
-        const name = request.url().substring(slash + 1);
-        request.fulfill({
+      await page.route('**/foo', route => {
+        const slash = route.request().url().lastIndexOf('/');
+        const name = route.request().url().substring(slash + 1);
+        route.fulfill({
           status: 200,
           contentType: 'text/css',
           body: 'responseFromInterception:' + name
@@ -581,8 +547,10 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it('should work with regular expression passed from a different context', async({page, server}) => {
       const ctx = vm.createContext();
       const regexp = vm.runInContext('new RegExp("empty\\.html")', ctx);
+      let intercepted = false;
 
-      await page.route(regexp, request => {
+      await page.route(regexp, (route, request) => {
+        expect(route.request()).toBe(request);
         expect(request.url()).toContain('empty.html');
         expect(request.headers()['user-agent']).toBeTruthy();
         expect(request.method()).toBe('GET');
@@ -591,11 +559,13 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         expect(request.resourceType()).toBe('document');
         expect(request.frame() === page.mainFrame()).toBe(true);
         expect(request.frame().url()).toBe('about:blank');
-        request.continue();
+        route.continue();
+        intercepted = true;
       });
 
       const response = await page.goto(server.EMPTY_PAGE);
       expect(response.ok()).toBe(true);
+      expect(intercepted).toBe(true);
     });
   });
 };

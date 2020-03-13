@@ -51,7 +51,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
       expect(page.frames().length).toBe(2);
     });
     it('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {
-      await page.route('**/*', request => request.continue());
+      await page.route('**/*', route => route.continue());
       await page.goto(server.PREFIX + '/dynamic-oopif.html');
       expect(await countOOPIFs(browser)).toBe(1);
     });
@@ -68,8 +68,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
       const browser = await browserType.launch(headfulOptions);
       const page = await browser.newPage();
       await page.goto(server.EMPTY_PAGE);
-      await page.route('**/*', request => {
-        request.fulfill({body: 'YO, GOOGLE.COM'});
+      await page.route('**/*', route => {
+        route.fulfill({body: 'YO, GOOGLE.COM'});
       });
       await page.evaluate(() => {
         const frame = document.createElement('iframe');

@@ -63,7 +63,7 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: BrowserContextOptions;
-  readonly _routes: { url: types.URLMatch, handler: (request: network.Request) => any }[] = [];
+  readonly _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
   _closed = false;
   private readonly _closePromise: Promise<Error>;
   private _closePromiseFulfill: ((error: Error) => void) | undefined;

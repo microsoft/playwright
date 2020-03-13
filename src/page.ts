@@ -150,7 +150,7 @@ export class Page extends platform.EventEmitter {
   private _workers = new Map<string, Worker>();
   readonly pdf: ((options?: types.PDFOptions) => Promise<platform.BufferType>) | undefined;
   readonly coverage: any;
-  readonly _routes: { url: types.URLMatch, handler: (request: network.Request) => any }[] = [];
+  readonly _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
   _ownedContext: BrowserContext | undefined;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContextBase) {
@@ -419,21 +419,22 @@ export class Page extends platform.EventEmitter {
 
   _requestStarted(request: network.Request) {
     this.emit(Events.Page.Request, request);
-    if (!request._isIntercepted())
+    const route = request._route();
+    if (!route)
       return;
     for (const { url, handler } of this._routes) {
       if (platform.urlMatches(request.url(), url)) {
-        handler(request);
+        handler(route, request);
         return;
       }
     }
     for (const { url, handler } of this._browserContext._routes) {
       if (platform.urlMatches(request.url(), url)) {
-        handler(request);
+        handler(route, request);
         return;
       }
     }
-    request.continue();
+    route.continue();
   }
 
   async screenshot(options?: types.ScreenshotOptions): Promise<platform.BufferType> {
