@@ -189,6 +189,18 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await popup.evaluate(() => !!window.opener)).toBe(true);
       await context.close();
     });
+    it.fail(FFOX)('should work with window features', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup').then(e => e.page()),
+        page.evaluate(() => window.__popup = window.open(window.location.href, 'Title', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=780,height=200,top=0,left=0')),
+      ]);
+      expect(await page.evaluate(() => !!window.opener)).toBe(false);
+      expect(await popup.evaluate(() => !!window.opener)).toBe(true);
+      await context.close();
+    });
     it('should emit for immediately closed popups', async({browser}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
