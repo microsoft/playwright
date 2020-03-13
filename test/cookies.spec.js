@@ -124,7 +124,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       ]);
     });
     it('should get cookies from multiple urls', async({context}) => {
-      await context.setCookies([{
+      await context.addCookies([{
         url: 'https://foo.com',
         name: 'doggo',
         value: 'woofs',
@@ -161,10 +161,10 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     });
   });
 
-  describe('BrowserContext.setCookies', function() {
+  describe('BrowserContext.addCookies', function() {
     it('should work', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await context.setCookies([{
+      await context.addCookies([{
         url: server.EMPTY_PAGE,
         name: 'password',
         value: '123456'
@@ -182,7 +182,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       const cookies = await context.cookies();
       await context.clearCookies();
       expect(await context.cookies()).toEqual([]);
-      await context.setCookies(cookies);
+      await context.addCookies(cookies);
       expect(await context.cookies()).toEqual(cookies);
     });
     it('should send cookie header', async({server, context}) => {
@@ -191,15 +191,15 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         cookie = req.headers.cookie;
         res.end();
       });
-      await context.setCookies([{url: server.EMPTY_PAGE, name: 'cookie', value: 'value'}]);
+      await context.addCookies([{url: server.EMPTY_PAGE, name: 'cookie', value: 'value'}]);
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
       expect(cookie).toBe('cookie=value');
     });
     it('should isolate cookies in browser contexts', async({context, server, browser}) => {
       const anotherContext = await browser.newContext();
-      await context.setCookies([{url: server.EMPTY_PAGE, name: 'isolatecookie', value: 'page1value'}]);
-      await anotherContext.setCookies([{url: server.EMPTY_PAGE, name: 'isolatecookie', value: 'page2value'}]);
+      await context.addCookies([{url: server.EMPTY_PAGE, name: 'isolatecookie', value: 'page1value'}]);
+      await anotherContext.addCookies([{url: server.EMPTY_PAGE, name: 'isolatecookie', value: 'page2value'}]);
 
       const cookies1 = await context.cookies();
       const cookies2 = await anotherContext.cookies();
@@ -261,7 +261,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         cookie = req.headers.cookie || '';
         res.end();
       });
-      await context.setCookies([{url: server.EMPTY_PAGE, name: 'sendcookie', value: 'value'}]);
+      await context.addCookies([{url: server.EMPTY_PAGE, name: 'sendcookie', value: 'value'}]);
       {
         const page = await context.newPage();
         await page.goto(server.EMPTY_PAGE);
@@ -278,7 +278,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     it.slow()('should isolate cookies between launches', async({server}) => {
       const browser1 = await playwright.launch(defaultBrowserOptions);
       const context1 = await browser1.newContext();
-      await context1.setCookies([{url: server.EMPTY_PAGE, name: 'cookie-in-context-1', value: 'value', expires: Date.now() / 1000 + 10000}]);
+      await context1.addCookies([{url: server.EMPTY_PAGE, name: 'cookie-in-context-1', value: 'value', expires: Date.now() / 1000 + 10000}]);
       await browser1.close();
 
       const browser2 = await playwright.launch(defaultBrowserOptions);
@@ -289,7 +289,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     });
     it('should set multiple cookies', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await context.setCookies([{
+      await context.addCookies([{
         url: server.EMPTY_PAGE,
         name: 'multiple-1',
         value: '123456'
@@ -307,7 +307,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       ]);
     });
     it('should have |expires| set to |-1| for session cookies', async({context, server}) => {
-      await context.setCookies([{
+      await context.addCookies([{
         url: server.EMPTY_PAGE,
         name: 'expires',
         value: '123456'
@@ -316,7 +316,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       expect(cookies[0].expires).toBe(-1);
     });
     it('should set cookie with reasonable defaults', async({context, server}) => {
-      await context.setCookies([{
+      await context.addCookies([{
         url: server.EMPTY_PAGE,
         name: 'defaults',
         value: '123456'
@@ -335,7 +335,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     });
     it('should set a cookie with a path', async({context, page, server}) => {
       await page.goto(server.PREFIX + '/grid.html');
-      await context.setCookies([{
+      await context.addCookies([{
         domain: 'localhost',
         path: '/grid.html',
         name: 'gridcookie',
@@ -360,7 +360,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     it('should not set a cookie with blank page URL', async function({context, server}) {
       let error = null;
       try {
-        await context.setCookies([
+        await context.addCookies([
             {url: server.EMPTY_PAGE, name: 'example-cookie', value: 'best'},
             {url: 'about:blank', name: 'example-cookie-blank', value: 'best'}
         ]);
@@ -374,7 +374,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     it('should not set a cookie on a data URL page', async function({context}) {
       let error = null;
       try {
-        await context.setCookies([{url: 'data:,Hello%2C%20World!', name: 'example-cookie', value: 'best'}]);
+        await context.addCookies([{url: 'data:,Hello%2C%20World!', name: 'example-cookie', value: 'best'}]);
       } catch (e) {
         error = e;
       }
@@ -383,7 +383,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     it('should default to setting secure cookie for HTTPS websites', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const SECURE_URL = 'https://example.com';
-      await context.setCookies([{
+      await context.addCookies([{
         url: SECURE_URL,
         name: 'foo',
         value: 'bar',
@@ -394,7 +394,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     it('should be able to set unsecure cookie for HTTP website', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const HTTP_URL = 'http://example.com';
-      await context.setCookies([{
+      await context.addCookies([{
         url: HTTP_URL,
         name: 'foo',
         value: 'bar',
@@ -404,7 +404,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     });
     it('should set a cookie on a different domain', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await context.setCookies([{
+      await context.addCookies([{
         url: 'https://www.example.com',
         name: 'example-cookie',
         value: 'best',
@@ -423,7 +423,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     });
     it('should set cookies from a frame', async({context, page, server}) => {
       await page.goto(server.PREFIX + '/grid.html');
-      await context.setCookies([
+      await context.addCookies([
         {url: server.PREFIX, name: 'localhost-cookie', value: 'best'},
         {url: server.CROSS_PROCESS_PREFIX, name: '127-cookie', value: 'worst'}
       ]);
@@ -467,7 +467,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
   describe('BrowserContext.clearCookies', function() {
     it('should clear cookies', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await context.setCookies([{
+      await context.addCookies([{
         url: server.EMPTY_PAGE,
         name: 'cookie1',
         value: '1'
@@ -480,8 +480,8 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     });
     it('should isolate cookies when clearing', async({context, server, browser}) => {
       const anotherContext = await browser.newContext();
-      await context.setCookies([{url: server.EMPTY_PAGE, name: 'page1cookie', value: 'page1value'}]);
-      await anotherContext.setCookies([{url: server.EMPTY_PAGE, name: 'page2cookie', value: 'page2value'}]);
+      await context.addCookies([{url: server.EMPTY_PAGE, name: 'page1cookie', value: 'page1value'}]);
+      await anotherContext.addCookies([{url: server.EMPTY_PAGE, name: 'page2cookie', value: 'page2value'}]);
 
       expect((await context.cookies()).length).toBe(1);
       expect((await anotherContext.cookies()).length).toBe(1);

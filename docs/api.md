@@ -282,6 +282,7 @@ await context.close();
 <!-- GEN:toc -->
 - [event: 'close'](#event-close)
 - [event: 'page'](#event-page)
+- [browserContext.addCookies(cookies)](#browsercontextaddcookiescookies)
 - [browserContext.addInitScript(script[, ...args])](#browsercontextaddinitscriptscript-args)
 - [browserContext.clearCookies()](#browsercontextclearcookies)
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
@@ -291,7 +292,6 @@ await context.close();
 - [browserContext.newPage()](#browsercontextnewpage)
 - [browserContext.pages()](#browsercontextpages)
 - [browserContext.route(url, handler)](#browsercontextrouteurl-handler)
-- [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
 - [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout)
 - [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout)
 - [browserContext.setExtraHTTPHeaders(headers)](#browsercontextsetextrahttpheadersheaders)
@@ -321,6 +321,23 @@ const [event] = await Promise.all([
   page.click('a[target=_blank]'),
 ]);
 const newPage = await event.page();
+```
+
+#### browserContext.addCookies(cookies)
+- `cookies` <[Array]<[Object]>>
+  - `name` <[string]> **required**
+  - `value` <[string]> **required**
+  - `url` <[string]> either url or domain / path are **required**
+  - `domain` <[string]> either url or domain / path are **required**
+  - `path` <[string]> either url or domain / path are **required**
+  - `expires` <[number]> Unix time in seconds.
+  - `httpOnly` <[boolean]>
+  - `secure` <[boolean]>
+  - `sameSite` <"Strict"|"Lax"|"None">
+- returns: <[Promise]>
+
+```js
+await browserContext.addCookies([cookieObject1, cookieObject2]);
 ```
 
 #### browserContext.addInitScript(script[, ...args])
@@ -471,23 +488,6 @@ await browser.close();
 Page routes (set up with [page.route(url, handler)](#pagerouteurl-handler)) take precedence over browser context routes when request matches both handlers.
 
 > **NOTE** Enabling request interception disables http cache.
-
-#### browserContext.setCookies(cookies)
-- `cookies` <[Array]<[Object]>>
-  - `name` <[string]> **required**
-  - `value` <[string]> **required**
-  - `url` <[string]> either url or domain / path are **required**
-  - `domain` <[string]> either url or domain / path are **required**
-  - `path` <[string]> either url or domain / path are **required**
-  - `expires` <[number]> Unix time in seconds.
-  - `httpOnly` <[boolean]>
-  - `secure` <[boolean]>
-  - `sameSite` <"Strict"|"Lax"|"None">
-- returns: <[Promise]>
-
-```js
-await browserContext.setCookies([cookieObject1, cookieObject2]);
-```
 
 #### browserContext.setDefaultNavigationTimeout(timeout)
 - `timeout` <[number]> Maximum navigation time in milliseconds
@@ -3928,6 +3928,7 @@ const backgroundPage = await backroundPageTarget.page();
 <!-- GEN:toc-extends-BrowserContext -->
 - [event: 'close'](#event-close)
 - [event: 'page'](#event-page)
+- [browserContext.addCookies(cookies)](#browsercontextaddcookiescookies)
 - [browserContext.addInitScript(script[, ...args])](#browsercontextaddinitscriptscript-args)
 - [browserContext.clearCookies()](#browsercontextclearcookies)
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
@@ -3937,7 +3938,6 @@ const backgroundPage = await backroundPageTarget.page();
 - [browserContext.newPage()](#browsercontextnewpage)
 - [browserContext.pages()](#browsercontextpages)
 - [browserContext.route(url, handler)](#browsercontextrouteurl-handler)
-- [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
 - [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout)
 - [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout)
 - [browserContext.setExtraHTTPHeaders(headers)](#browsercontextsetextrahttpheadersheaders)
