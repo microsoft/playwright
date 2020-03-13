@@ -29,7 +29,7 @@ const TMP_FOLDER = path.join(os.tmpdir(), 'pw_tmp_folder-');
 /**
  * @type {TestSuite}
  */
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, WIN}) {
+module.exports.describe = function({testRunner, expect, defaultBrowserOptions, browserType, WIN}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -50,17 +50,17 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it('should throw with remote-debugging-pipe argument', async() => {
       const options = Object.assign({}, defaultBrowserOptions);
       options.args = ['--remote-debugging-pipe'].concat(options.args || []);
-      const error = await playwright.launchServer(options).catch(e => e);
+      const error = await browserType.launchServer(options).catch(e => e);
       expect(error.message).toContain('Playwright manages remote debugging connection itself');
     });
     it('should throw with remote-debugging-port argument', async() => {
       const options = Object.assign({}, defaultBrowserOptions);
       options.args = ['--remote-debugging-port=9222'].concat(options.args || []);
-      const error = await playwright.launchServer(options).catch(e => e);
+      const error = await browserType.launchServer(options).catch(e => e);
       expect(error.message).toContain('Playwright manages remote debugging connection itself');
     });
     it('should open devtools when "devtools: true" option is given', async({server}) => {
-      const browser = await playwright.launch(Object.assign({devtools: true}, headfulOptions));
+      const browser = await browserType.launch(Object.assign({devtools: true}, headfulOptions));
       const context = await browser.newContext();
       const browserSession = await browser.createBrowserSession();
       await browserSession.send('Target.setDiscoverTargets', { discover: true });
@@ -79,7 +79,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   describe('extensions', () => {
     it('should return background pages', async() => {
       const userDataDir = await makeUserDataDir();
-      const context = await playwright.launchPersistentContext(userDataDir, extensionOptions);
+      const context = await browserType.launchPersistentContext(userDataDir, extensionOptions);
       const backgroundPages = await context.backgroundPages();
       let backgroundPage = backgroundPages.length
           ? backgroundPages[0]
@@ -94,7 +94,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   describe('BrowserFetcher', function() {
     it('should download and extract linux binary', async({server}) => {
       const downloadsFolder = await mkdtempAsync(TMP_FOLDER);
-      const browserFetcher = playwright._createBrowserFetcher({
+      const browserFetcher = browserType._createBrowserFetcher({
         platform: 'linux',
         path: downloadsFolder,
         host: server.PREFIX
@@ -123,7 +123,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   describe('BrowserContext', function() {
     it('should not create pages automatically', async function() {
-      const browser = await playwright.launch();
+      const browser = await browserType.launch();
       const browserSession = await browser.createBrowserSession();
       const targets = [];
       browserSession.on('Target.targetCreated', async ({targetInfo}) => {

@@ -21,7 +21,7 @@ const zsSelectorEngineSource = require('../lib/generated/zsSelectorEngineSource'
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIUM, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -355,7 +355,7 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
   describe('zselector', () => {
     beforeAll(async () => {
       try {
-        await selectors.register('z', zsSelectorEngineSource.source);
+        await playwright.selectors.register('z', zsSelectorEngineSource.source);
       } catch (e) {
         if (!e.message.includes('has been already registered'))
           throw e;
@@ -400,28 +400,28 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
 
     it('create', async ({page}) => {
       await page.setContent(`<div>yo</div><div>ya</div><div>ya</div>`);
-      expect(await selectors._createSelector('z', await page.$('div'))).toBe('"yo"');
-      expect(await selectors._createSelector('z', await page.$('div:nth-child(2)'))).toBe('"ya"');
-      expect(await selectors._createSelector('z', await page.$('div:nth-child(3)'))).toBe('"ya"#1');
+      expect(await playwright.selectors._createSelector('z', await page.$('div'))).toBe('"yo"');
+      expect(await playwright.selectors._createSelector('z', await page.$('div:nth-child(2)'))).toBe('"ya"');
+      expect(await playwright.selectors._createSelector('z', await page.$('div:nth-child(3)'))).toBe('"ya"#1');
 
       await page.setContent(`<img alt="foo bar">`);
-      expect(await selectors._createSelector('z', await page.$('img'))).toBe('img[alt="foo bar"]');
+      expect(await playwright.selectors._createSelector('z', await page.$('img'))).toBe('img[alt="foo bar"]');
 
       await page.setContent(`<div>yo<span></span></div><span></span>`);
-      expect(await selectors._createSelector('z', await page.$('span'))).toBe('"yo"~SPAN');
-      expect(await selectors._createSelector('z', await page.$('span:nth-child(2)'))).toBe('SPAN#1');
+      expect(await playwright.selectors._createSelector('z', await page.$('span'))).toBe('"yo"~SPAN');
+      expect(await playwright.selectors._createSelector('z', await page.$('span:nth-child(2)'))).toBe('SPAN#1');
     });
 
     it('children of various display parents', async ({page}) => {
       await page.setContent(`<body><div style='position: fixed;'><span>yo</span></div></body>`);
-      expect(await selectors._createSelector('z', await page.$('span'))).toBe('"yo"');
+      expect(await playwright.selectors._createSelector('z', await page.$('span'))).toBe('"yo"');
 
       await page.setContent(`<div style='position: relative;'><span>yo</span></div>`);
-      expect(await selectors._createSelector('z', await page.$('span'))).toBe('"yo"');
+      expect(await playwright.selectors._createSelector('z', await page.$('span'))).toBe('"yo"');
 
       // "display: none" makes all children text invisible - fallback to tag name.
       await page.setContent(`<div style='display: none;'><span>yo</span></div>`);
-      expect(await selectors._createSelector('z', await page.$('span'))).toBe('SPAN');
+      expect(await playwright.selectors._createSelector('z', await page.$('span'))).toBe('SPAN');
     });
 
     it('boundary', async ({page}) => {
@@ -472,7 +472,7 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
             <div id=target2>hello</div>
           </div>
         </div>`);
-      expect(await selectors._createSelector('z', await page.$('#target'))).toBe('"ya"~"hey"~"hello"');
+      expect(await playwright.selectors._createSelector('z', await page.$('#target'))).toBe('"ya"~"hey"~"hello"');
       expect(await page.$eval(`z="ya"~"hey"~"hello"`, e => e.outerHTML)).toBe('<div id="target">hello</div>');
       expect(await page.$eval(`z="ya"~"hey"~"unique"`, e => e.outerHTML).catch(e => e.message)).toBe('Error: failed to find element matching selector "z="ya"~"hey"~"unique""');
       expect(await page.$$eval(`z="ya" ~ "hey" ~ "hello"`, es => es.map(e => e.outerHTML).join('\n'))).toBe('<div id="target">hello</div>\n<div id="target2">hello</div>');
@@ -515,18 +515,18 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
 
     it('create', async ({page}) => {
       await page.setContent(`<div>yo</div><div>"ya</div><div>ye ye</div>`);
-      expect(await selectors._createSelector('text', await page.$('div'))).toBe('yo');
-      expect(await selectors._createSelector('text', await page.$('div:nth-child(2)'))).toBe('"\\"ya"');
-      expect(await selectors._createSelector('text', await page.$('div:nth-child(3)'))).toBe('"ye ye"');
+      expect(await playwright.selectors._createSelector('text', await page.$('div'))).toBe('yo');
+      expect(await playwright.selectors._createSelector('text', await page.$('div:nth-child(2)'))).toBe('"\\"ya"');
+      expect(await playwright.selectors._createSelector('text', await page.$('div:nth-child(3)'))).toBe('"ye ye"');
 
       await page.setContent(`<div>yo</div><div>yo<div>ya</div>hey</div>`);
-      expect(await selectors._createSelector('text', await page.$('div:nth-child(2)'))).toBe('hey');
+      expect(await playwright.selectors._createSelector('text', await page.$('div:nth-child(2)'))).toBe('hey');
 
       await page.setContent(`<div> yo <div></div>ya</div>`);
-      expect(await selectors._createSelector('text', await page.$('div'))).toBe('yo');
+      expect(await playwright.selectors._createSelector('text', await page.$('div'))).toBe('yo');
 
       await page.setContent(`<div> "yo <div></div>ya</div>`);
-      expect(await selectors._createSelector('text', await page.$('div'))).toBe('" \\"yo "');
+      expect(await playwright.selectors._createSelector('text', await page.$('div'))).toBe('" \\"yo "');
     });
     it('should be case sensitive iff quotes are specified', async({page}) => {
       await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
@@ -548,15 +548,15 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
           return Array.from(root.querySelectorAll(selector));
         }
       });
-      await selectors.register('tag', `(${createTagSelector.toString()})()`);
+      await playwright.selectors.register('tag', `(${createTagSelector.toString()})()`);
       await page.setContent('<div><span></span></div><div></div>');
-      expect(await selectors._createSelector('tag', await page.$('div'))).toBe('DIV');
+      expect(await playwright.selectors._createSelector('tag', await page.$('div'))).toBe('DIV');
       expect(await page.$eval('tag=DIV', e => e.nodeName)).toBe('DIV');
       expect(await page.$eval('tag=SPAN', e => e.nodeName)).toBe('SPAN');
       expect(await page.$$eval('tag=DIV', es => es.length)).toBe(2);
     });
     it('should work with path', async ({page}) => {
-      await selectors.register('foo', { path: path.join(__dirname, 'assets/sectionselectorengine.js') });
+      await playwright.selectors.register('foo', { path: path.join(__dirname, 'assets/sectionselectorengine.js') });
       await page.setContent('<section></section>');
       expect(await page.$eval('foo=whatever', e => e.nodeName)).toBe('SECTION');
     });
@@ -579,17 +579,17 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
         }
       });
 
-      error = await selectors.register('$', createDummySelector).catch(e => e);
+      error = await playwright.selectors.register('$', createDummySelector).catch(e => e);
       expect(error.message).toBe('Selector engine name may only contain [a-zA-Z0-9_] characters');
 
-      await selectors.register('dummy', createDummySelector);
+      await playwright.selectors.register('dummy', createDummySelector);
       expect(await page.$eval('dummy=ignored', e => e.id)).toBe('d1');
       expect(await page.$eval('css=span >> dummy=ignored', e => e.id)).toBe('d2');
 
-      error = await selectors.register('dummy', createDummySelector).catch(e => e);
+      error = await playwright.selectors.register('dummy', createDummySelector).catch(e => e);
       expect(error.message).toBe('"dummy" selector engine has been already registered');
 
-      error = await selectors.register('css', createDummySelector).catch(e => e);
+      error = await playwright.selectors.register('css', createDummySelector).catch(e => e);
       expect(error.message).toBe('"css" is a predefined selector engine');
     });
   });

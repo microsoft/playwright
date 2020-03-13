@@ -17,7 +17,7 @@
 /**
  * @type {ChromiumTestSuite}
  */
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, FFOX, CHROMIUM, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, defaultBrowserOptions, browserType, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -28,7 +28,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   describe('OOPIF', function() {
     beforeAll(async function(state) {
-      state.browser = await playwright.launch(Object.assign({}, defaultBrowserOptions, {
+      state.browser = await browserType.launch(Object.assign({}, defaultBrowserOptions, {
         args: (defaultBrowserOptions.args || []).concat(['--site-per-process']),
       }));
     });
@@ -65,7 +65,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it.fail(true)('should report google.com frame with headful', async({server}) => {
       // TODO: Support OOOPIF. @see https://github.com/GoogleChrome/puppeteer/issues/2548
       // https://google.com is isolated by default in Chromium embedder.
-      const browser = await playwright.launch(headfulOptions);
+      const browser = await browserType.launch(headfulOptions);
       const page = await browser.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.route('**/*', request => {

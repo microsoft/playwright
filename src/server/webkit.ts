@@ -16,9 +16,6 @@
  */
 
 import { BrowserFetcher, OnProgressCallback, BrowserFetcherOptions } from './browserFetcher';
-import { DeviceDescriptors } from '../deviceDescriptors';
-import { TimeoutError } from '../errors';
-import * as types from '../types';
 import { WKBrowser } from '../webkit/wkBrowser';
 import { execSync } from 'child_process';
 import { PipeTransport } from './pipeTransport';
@@ -161,14 +158,6 @@ export class WebKit implements BrowserType {
 
   executablePath(): string {
     return this._resolveExecutablePath().executablePath;
-  }
-
-  get devices(): types.Devices {
-    return DeviceDescriptors;
-  }
-
-  get errors(): { TimeoutError: typeof TimeoutError } {
-    return { TimeoutError };
   }
 
   _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {

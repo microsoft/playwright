@@ -21,14 +21,12 @@ import * as path from 'path';
 import * as util from 'util';
 import { ConnectOptions, LaunchType } from '../browser';
 import { BrowserContext } from '../browserContext';
-import { DeviceDescriptors } from '../deviceDescriptors';
 import { TimeoutError } from '../errors';
 import { Events } from '../events';
 import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
 import { assert, helper } from '../helper';
 import * as platform from '../platform';
-import * as types from '../types';
 import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback } from './browserFetcher';
 import { BrowserServer } from './browserServer';
 import { BrowserArgOptions, BrowserType, LaunchOptions } from './browserType';
@@ -172,14 +170,6 @@ export class Firefox implements BrowserType {
 
   executablePath(): string {
     return this._resolveExecutablePath().executablePath;
-  }
-
-  get devices(): types.Devices {
-    return DeviceDescriptors;
-  }
-
-  get errors(): { TimeoutError: typeof TimeoutError } {
-    return { TimeoutError };
   }
 
   private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {

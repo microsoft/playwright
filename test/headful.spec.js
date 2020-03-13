@@ -19,7 +19,7 @@ const { makeUserDataDir, removeUserDataDir } = require('./utils');
 /**
  * @type {TestSuite}
  */
-module.exports.describe = function({testRunner, expect, playwright, defaultBrowserOptions, FFOX, CHROMIUM, WEBKIT, WIN}) {
+module.exports.describe = function({testRunner, expect, browserType, defaultBrowserOptions, FFOX, CHROMIUM, WEBKIT, WIN}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -34,7 +34,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
   describe('Headful', function() {
     it('should have default url when launching browser', async function() {
       const userDataDir = await makeUserDataDir();
-      const browserContext = await playwright.launchPersistentContext(userDataDir, headfulOptions);
+      const browserContext = await browserType.launchPersistentContext(userDataDir, headfulOptions);
       const pages = (await browserContext.pages()).map(page => page.url());
       expect(pages).toEqual(['about:blank']);
       await browserContext.close();
@@ -44,13 +44,13 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     it.fail((WIN && CHROMIUM) || FFOX)('headless should be able to read cookies written by headful', async({server}) => {
       const userDataDir = await makeUserDataDir();
       // Write a cookie in headful chrome
-      const headfulContext = await playwright.launchPersistentContext(userDataDir, headfulOptions);
+      const headfulContext = await browserType.launchPersistentContext(userDataDir, headfulOptions);
       const headfulPage = await headfulContext.newPage();
       await headfulPage.goto(server.EMPTY_PAGE);
       await headfulPage.evaluate(() => document.cookie = 'foo=true; expires=Fri, 31 Dec 9999 23:59:59 GMT');
       await headfulContext.close();
       // Read the cookie from headless chrome
-      const headlessContext = await playwright.launchPersistentContext(userDataDir, headlessOptions);
+      const headlessContext = await browserType.launchPersistentContext(userDataDir, headlessOptions);
       const headlessPage = await headlessContext.newPage();
       await headlessPage.goto(server.EMPTY_PAGE);
       const cookie = await headlessPage.evaluate(() => document.cookie);
@@ -61,7 +61,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     });
     it.fail(FFOX)('should close browser with beforeunload page', async({server}) => {
       const userDataDir = await makeUserDataDir();
-      const browserContext = await playwright.launchPersistentContext(userDataDir, headfulOptions);
+      const browserContext = await browserType.launchPersistentContext(userDataDir, headfulOptions);
       const page = await browserContext.newPage();
       await page.goto(server.PREFIX + '/beforeunload.html');
       // We have to interact with a page so that 'beforeunload' handlers

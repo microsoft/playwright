@@ -20,7 +20,7 @@ const { makeUserDataDir, removeUserDataDir } = require('./utils');
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions, playwright, WEBKIT }) {
+module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions, browserType, WEBKIT }) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -28,7 +28,7 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
   describe('launchPersistentContext()', function() {
     beforeEach(async state => {
       state.userDataDir = await makeUserDataDir();
-      state.browserContext = await playwright.launchPersistentContext(state.userDataDir, defaultBrowserOptions);
+      state.browserContext = await browserType.launchPersistentContext(state.userDataDir, defaultBrowserOptions);
       state.page = await state.browserContext.newPage();
     });
     afterEach(async state => {

@@ -21,7 +21,7 @@ const {spawn, execSync} = require('child_process');
 /**
  * @type {TestSuite}
  */
-module.exports.describe = function({testRunner, expect, product, playwright, playwrightPath, defaultBrowserOptions, WIN, FFOX, CHROMIUM, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, product, browserType, playwrightPath, defaultBrowserOptions, WIN, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -58,7 +58,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, pla
         browserPid = +match[1];
     });
     res.on('error', (...args) => console.log("ERROR", ...args));
-    const browser = await playwright.connect({ wsEndpoint: await wsEndPointPromise });
+    const browser = await browserType.connect({ wsEndpoint: await wsEndPointPromise });
     const promises = [
       new Promise(resolve => browser.once('disconnected', resolve)),
       new Promise(resolve => res.on('exit', resolve)),
