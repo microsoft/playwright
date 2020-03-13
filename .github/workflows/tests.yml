@@ -127,7 +127,7 @@ jobs:
       with:
         node-version: 10.15
     - run: npm install
-    - run: npm run wtest -- --verbose 2>./webkit-win-testrun.log
+    - run: npm run wtest 2>./webkit-win-testrun.log
       shell: bash
       env:
         DEBUG: "*,-pw:wrapped*"
