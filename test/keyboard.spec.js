@@ -63,12 +63,6 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       await textarea.press('b');
       expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('a');
     });
-    it('ElementHandle.press should support |text| option', async({page, server}) => {
-      await page.goto(server.PREFIX + '/input/textarea.html');
-      const textarea = await page.$('textarea');
-      await textarea.press('a', {text: 'ё'});
-      expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('ё');
-    });
     it('should send a character with sendCharacter', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.focus('textarea');
