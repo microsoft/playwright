@@ -326,6 +326,8 @@ function checkSources(sources, externalDependencies) {
 }
 
 function expandPrefix(name) {
+  if (name === 'CRSession')
+    return 'CDPSession';
   if (name.startsWith('CR'))
     return 'Chromium' + name.substring(2);
   if (name.startsWith('FF'))

@@ -31,7 +31,7 @@ export { Selectors } from './selectors';
 export { CRBrowser as ChromiumBrowser } from './chromium/crBrowser';
 export { CRBrowserContext as ChromiumBrowserContext } from './chromium/crBrowser';
 export { CRCoverage as ChromiumCoverage } from './chromium/crCoverage';
-export { CRSession as ChromiumSession } from './chromium/crConnection';
+export { CRSession as CDPSession } from './chromium/crConnection';
 
 export { FFBrowser as FirefoxBrowser } from './firefox/ffBrowser';
 

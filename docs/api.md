@@ -29,7 +29,7 @@
 - [class: ChromiumBrowser](#class-chromiumbrowser)
 - [class: ChromiumBrowserContext](#class-chromiumbrowsercontext)
 - [class: ChromiumCoverage](#class-chromiumcoverage)
-- [class: ChromiumSession](#class-chromiumsession)
+- [class: CDPSession](#class-cdpsession)
 - [class: FirefoxBrowser](#class-firefoxbrowser)
 - [class: WebKitBrowser](#class-webkitbrowser)
 - [Environment Variables](#environment-variables)
@@ -3742,7 +3742,7 @@ await browser.stopTracing();
 <!-- GEN:stop -->
 
 #### chromiumBrowser.newBrowserCDPSession()
-- returns: <[Promise]<[ChromiumSession]>> Promise that resolves to the newly created browser
+- returns: <[Promise]<[CDPSession]>> Promise that resolves to the newly created browser
 session.
 
 #### chromiumBrowser.startTracing([page, options])
@@ -3815,7 +3815,7 @@ Emitted when new service worker is created in the context.
 
 #### chromiumBrowserContext.newCDPSession(page)
 - `page` <[Page]> Page to create new session for.
-- returns: <[Promise]<[ChromiumSession]>> Promise that resolves to the newly created session.
+- returns: <[Promise]<[CDPSession]>> Promise that resolves to the newly created session.
 
 ### class: ChromiumCoverage
 
@@ -3882,11 +3882,11 @@ const v8toIstanbul = require('v8-to-istanbul');
 > **NOTE** JavaScript Coverage doesn't include anonymous scripts by default. However, scripts with sourceURLs are
 reported.
 
-### class: ChromiumSession
+### class: CDPSession
 
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
 
-The `ChromiumSession` instances are used to talk raw Chrome Devtools Protocol:
+The `CDPSession` instances are used to talk raw Chrome Devtools Protocol:
 - protocol methods can be called with `session.send` method.
 - protocol events can be subscribed to with `session.on` method.
 
@@ -3906,17 +3906,17 @@ await client.send('Animation.setPlaybackRate', {
 ```
 
 <!-- GEN:toc -->
-- [chromiumSession.detach()](#chromiumsessiondetach)
-- [chromiumSession.send(method[, params])](#chromiumsessionsendmethod-params)
+- [cdpSession.detach()](#cdpsessiondetach)
+- [cdpSession.send(method[, params])](#cdpsessionsendmethod-params)
 <!-- GEN:stop -->
 
-#### chromiumSession.detach()
+#### cdpSession.detach()
 - returns: <[Promise]>
 
-Detaches the chromiumSession from the target. Once detached, the chromiumSession object won't emit any events and can't be used
+Detaches the CDPSession from the target. Once detached, the CDPSession object won't emit any events and can't be used
 to send messages.
 
-#### chromiumSession.send(method[, params])
+#### cdpSession.send(method[, params])
 - `method` <[string]> protocol method name
 - `params` <[Object]> Optional method parameters
 - returns: <[Promise]<[Object]>>
@@ -4040,7 +4040,7 @@ const { chromium } = require('playwright');
 [ChromiumBrowser]: #class-chromiumbrowser "ChromiumBrowser"
 [ChromiumBrowserContext]: #class-chromiumbrowsercontext "ChromiumBrowserContext"
 [ChromiumCoverage]: #class-chromiumcoverage "ChromiumCoverage"
-[ChromiumSession]: #class-chromiumsession  "ChromiumSession"
+[CDPSession]: #class-cdpsession  "CDPSession"
 [ConsoleMessage]: #class-consolemessage "ConsoleMessage"
 [Dialog]: #class-dialog "Dialog"
 [ElementHandle]: #class-elementhandle "ElementHandle"
