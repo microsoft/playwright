@@ -122,6 +122,8 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     if (!CRTarget.isPageType(targetInfo.type))
       return;
     const pageEvent = new PageEvent(context, target.pageOrError());
+    for (const barrier of context._pendingSignalBarriers)
+      barrier.addPageEvent(pageEvent);
     target.pageOrError().then(async () => {
       if (targetInfo.type === 'page') {
         this._firstPageCallback();

@@ -1,0 +1,260 @@
+/**
+ * Copyright 2018 Google Inc. All rights reserved.
+ * Modifications copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * @type {PageTestSuite}
+ */
+module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FFOX, CHROMIUM, WEBKIT}) {
+  const {describe, xdescribe, fdescribe} = testRunner;
+  const {it, fit, xit, dit} = testRunner;
+  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+
+  describe('Auto waiting', () => {
+    it('clicking anchor should await navigation', async({page, server}) => {
+      const messages = [];
+      server.setRoute('/empty.html', async (req, res) => {
+        messages.push('route');
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
+      });
+
+      await page.setContent(`<a href="${server.EMPTY_PAGE}">empty.html</a>`);
+
+      await Promise.all([
+        page.click('a').then(() => messages.push('click')),
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
+      ]);
+      expect(messages.join('|')).toBe('route|domcontentloaded|click|load');
+    });
+    it('clicking anchor should await new popup', async function({page, server}) {
+      await page.goto(server.EMPTY_PAGE);
+      await page.setContent('<a target=_blank rel=noopener href="/empty.html">link</a>');
+      const messages = [];
+      await Promise.all([
+        page.waitForEvent('popup').then(() => messages.push('popup')),
+        page.click('a').then(() => messages.push('click')),
+      ]);
+      expect(messages.join('|')).toBe('popup|click');
+    });
+    it('clicking anchor should await cross-process navigation', async({page, server}) => {
+      const messages = [];
+      server.setRoute('/empty.html', async (req, res) => {
+        messages.push('route');
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
+      });
+
+      await page.setContent(`<a href="${server.CROSS_PROCESS_PREFIX + '/empty.html'}">empty.html</a>`);
+
+      await Promise.all([
+        page.click('a').then(() => messages.push('click')),
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
+      ]);
+      expect(messages.join('|')).toBe('route|domcontentloaded|click|load');
+    });
+    it('should await form-get on click', async({page, server}) => {
+      const messages = [];
+      server.setRoute('/empty.html?foo=bar', async (req, res) => {
+        messages.push('route');
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
+      });
+
+      await page.setContent(`
+        <form action="${server.EMPTY_PAGE}" method="get">
+          <input name="foo" value="bar">
+          <input type="submit" value="Submit">
+        </form>`);
+
+      await Promise.all([
+        page.click('input[type=submit]').then(() => messages.push('click')),
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
+      ]);
+      expect(messages.join('|')).toBe('route|domcontentloaded|click|load');
+    });
+    it('should await form-post on click', async({page, server}) => {
+      const messages = [];
+      server.setRoute('/empty.html', async (req, res) => {
+        messages.push('route');
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
+      });
+
+      await page.setContent(`
+        <form action="${server.EMPTY_PAGE}" method="post">
+          <input name="foo" value="bar">
+          <input type="submit" value="Submit">
+        </form>`);
+
+      await Promise.all([
+        page.click('input[type=submit]').then(() => messages.push('click')),
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
+      ]);
+      expect(messages.join('|')).toBe('route|domcontentloaded|click|load');
+    });
+    it('assigning location should await navigation', async({page, server}) => {
+      const messages = [];
+      server.setRoute('/empty.html', async (req, res) => {
+        messages.push('route');
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
+      });
+      await Promise.all([
+        page.evaluate(`window.location.href = "${server.EMPTY_PAGE}"`).then(() => messages.push('evaluate')),
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
+      ]);
+      expect(messages.join('|')).toBe('route|domcontentloaded|evaluate|load');
+    });
+    it.fail(CHROMIUM)('assigning location twice should await navigation', async({page, server}) => {
+      const messages = [];
+      server.setRoute('/empty.html?cancel', async (req, res) => { res.end('done'); });
+      server.setRoute('/empty.html?override', async (req, res) => { messages.push('routeoverride'); res.end('done'); });
+      await Promise.all([
+        page.evaluate(`
+          window.location.href = "${server.EMPTY_PAGE}?cancel";
+          window.location.href = "${server.EMPTY_PAGE}?override";
+        `).then(() => messages.push('evaluate')),
+      ]);
+      expect(messages.join('|')).toBe('routeoverride|evaluate');
+    });
+    it('evaluating reload should await navigation', async({page, server}) => {
+      const messages = [];
+      await page.goto(server.EMPTY_PAGE);
+      server.setRoute('/empty.html', async (req, res) => {
+        messages.push('route');
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
+      });
+
+      await Promise.all([
+        page.evaluate(`window.location.reload()`).then(() => messages.push('evaluate')),
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
+      ]);
+      expect(messages.join('|')).toBe('route|domcontentloaded|evaluate|load');
+    });
+    it('evaluating should await new popup', async function({page, server}) {
+      await page.goto(server.EMPTY_PAGE);
+      const messages = [];
+      await Promise.all([
+        page.waitForEvent('popup').then(() => messages.push('popup')),
+        page.evaluate(() => window._popup = window.open(window.location.href)).then(() => messages.push('evaluate')),
+      ]);
+      expect(messages.join('|')).toBe('popup|evaluate');
+    });
+    it('should await navigating specified target', async({page, server}) => {
+      const messages = [];
+      server.setRoute('/empty.html', async (req, res) => {
+        messages.push('route');
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
+      });
+
+      await page.setContent(`
+        <a href="${server.EMPTY_PAGE}" target=target>empty.html</a>
+        <iframe name=target></iframe>
+      `);
+      const frame = page.frame({ name: 'target' });
+      await Promise.all([
+        page.click('a').then(() => messages.push('click')),
+        frame.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        frame.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
+      ]);
+      expect(frame.url()).toBe(server.EMPTY_PAGE);
+      expect(messages.join('|')).toBe('route|domcontentloaded|click|load');
+    });
+    it('waitUntil: nowait', async({page, server}) => {
+      const messages = [];
+      server.setRoute('/empty.html', async (req, res) => {
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
+      });
+
+      await page.setContent(`<a href="${server.EMPTY_PAGE}">empty.html</a>`);
+      await Promise.all([
+        page.click('a', { waitUntil: 'nowait' }).then(() => messages.push('click')),
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
+      ]);
+      expect(messages.join('|')).toBe('click|domcontentloaded|load');
+    });
+    it('waitUntil: load', async({page, server}) => {
+      const messages = [];
+      server.setRoute('/empty.html', async (req, res) => {
+        messages.push('route');
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<link rel='stylesheet' href='./one-style.css'>`);
+      });
+
+      await page.setContent(`<a href="${server.EMPTY_PAGE}">empty.html</a>`);
+      await Promise.all([
+        page.click('a', { waitUntil: 'load' }).then(() => messages.push('click')),
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+        page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
+      ]);
+      expect(messages.join('|')).toBe('route|domcontentloaded|load|click');
+    });
+  });
+
+  describe('Auto waiting should not hang when', () => {
+    it('clicking on links which do not commit navigation', async({page, server, httpsServer}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await page.setContent(`<a href='${httpsServer.EMPTY_PAGE}'>foobar</a>`);
+      await page.click('a');
+    });
+    it.fail(FFOX)('clicking on download link', async({page, server, httpsServer}) => {
+      await page.setContent(`<a href="${server.PREFIX}/wasm/table2.wasm" download=true>table2.wasm</a>`);
+      await page.click('a');
+    });
+    it('window.stop async', async({page, server, httpsServer}) => {
+      server.setRoute('/empty.html', async (req, res) => {});
+      await page.evaluate((url) => {
+          window.location.href = url;
+          setTimeout(() => window.stop(), 100);
+        }, server.EMPTY_PAGE);
+    });
+    it('window.stop sync', async({page, server, httpsServer}) => {
+      await page.evaluate((url) => {
+          window.location.href = url;
+          window.stop();
+        }, server.EMPTY_PAGE);
+    });
+    it('assigning location to about:blank', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await page.evaluate(`window.location.href = "about:blank";`);
+    });
+    it('assigning location to about:blank after non-about:blank', async({page, server}) => {
+      server.setRoute('/empty.html', async (req, res) => {});
+      await page.evaluate(`
+          window.location.href = "${server.EMPTY_PAGE}";
+          window.location.href = "about:blank";`);
+    });
+    it('window.open and close', async function({page, server}) {
+      await page.goto(server.EMPTY_PAGE);
+      await page.evaluate(() => {
+        const popup = window.open(window.location.href);
+        popup.close();
+      });
+    });
+  });
+};
+

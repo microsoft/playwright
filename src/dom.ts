@@ -52,7 +52,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
 
     if (!args.some(needsAdoption)) {
       // Only go through asynchronous calls if required.
-      return await this.frame._page._frameManager.waitForNavigationsCreatedBy(async () => {
+      return await this.frame._page._frameManager.waitForSignalsCreatedBy(async () => {
         return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
       }, waitForNavigations ? undefined : { waitUntil: 'nowait' });
     }
@@ -67,7 +67,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     }));
     let result;
     try {
-      result = await this.frame._page._frameManager.waitForNavigationsCreatedBy(async () => {
+      result = await this.frame._page._frameManager.waitForSignalsCreatedBy(async () => {
         return this._delegate.evaluate(this, returnByValue, pageFunction, ...adopted);
       }, waitForNavigations ? undefined : { waitUntil: 'nowait' });
     } finally {
@@ -250,7 +250,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (!force)
       await this._waitForHitTargetAt(point, options);
 
-    await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
+    await this._page._frameManager.waitForSignalsCreatedBy(async () => {
       let restoreModifiers: input.Modifier[] | undefined;
       if (options && options.modifiers)
         restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
@@ -289,14 +289,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (option.index !== undefined)
         assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
     }
-    return await this._page._frameManager.waitForNavigationsCreatedBy<string[]>(async () => {
+    return await this._page._frameManager.waitForSignalsCreatedBy<string[]>(async () => {
       return this._evaluateInUtility((injected, node, ...optionsToSelect) => injected.selectOptions(node, optionsToSelect), ...selectOptions);
     }, options);
   }
 
   async fill(value: string, options?: types.NavigatingActionWaitOptions): Promise<void> {
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
-    await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
+    await this._page._frameManager.waitForSignalsCreatedBy(async () => {
       const error = await this._evaluateInUtility((injected, node, value) => injected.fill(node, value), value);
       if (error)
         throw new Error(error);
@@ -333,7 +333,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         filePayloads.push(item);
       }
     }
-    await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
+    await this._page._frameManager.waitForSignalsCreatedBy(async () => {
       await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, filePayloads);
     });
   }
@@ -350,14 +350,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async type(text: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
-    await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
+    await this._page._frameManager.waitForSignalsCreatedBy(async () => {
       await this.focus();
       await this._page.keyboard.type(text, options);
     }, options, true);
   }
 
   async press(key: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
-    await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
+    await this._page._frameManager.waitForSignalsCreatedBy(async () => {
       await this.focus();
       await this._page.keyboard.press(key, options);
     }, options, true);

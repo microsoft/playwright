@@ -22,6 +22,7 @@ import * as platform from './platform';
 import { TimeoutSettings } from './timeoutSettings';
 import * as types from './types';
 import { Events } from './events';
+import { PendingSignalBarrier } from './frames';
 
 export type BrowserContextOptions = {
   viewport?: types.Viewport | null,
@@ -64,6 +65,7 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: BrowserContextOptions;
   readonly _routes: { url: types.URLMatch, handler: (request: network.Request) => any }[] = [];
+  readonly _pendingSignalBarriers = new Set<PendingSignalBarrier>();
   _closed = false;
   private readonly _closePromise: Promise<Error>;
   private _closePromiseFulfill: ((error: Error) => void) | undefined;

@@ -129,6 +129,8 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     this._ffPages.set(targetId, ffPage);
 
     const pageEvent = new PageEvent(context, ffPage.pageOrError());
+    for (const barrier of context._pendingSignalBarriers)
+      barrier.addPageEvent(pageEvent);
     ffPage.pageOrError().then(async () => {
       this._firstPageCallback();
       context.emit(Events.BrowserContext.Page, pageEvent);

@@ -22,7 +22,7 @@ import * as network from './network';
 import { helper, assert, RegisteredListener } from './helper';
 import { TimeoutError } from './errors';
 import { Events } from './events';
-import { Page } from './page';
+import { Page, PageEvent } from './page';
 import { ConsoleMessage } from './console';
 import * as platform from './platform';
 
@@ -49,7 +49,7 @@ export class FrameManager {
   private _mainFrame: Frame;
   readonly _lifecycleWatchers = new Set<() => void>();
   readonly _consoleMessageTags = new Map<string, ConsoleTagHandler>();
-  private _pendingNavigationBarriers = new Set<PendingNavigationBarrier>();
+  readonly _pendingSignalBarriers = new Set<PendingSignalBarrier>();
 
   constructor(page: Page) {
     this._page = page;
@@ -98,11 +98,10 @@ export class FrameManager {
     }
   }
 
-  async waitForNavigationsCreatedBy<T>(action: () => Promise<T>, options: types.NavigatingActionWaitOptions = {}, input?: boolean): Promise<T> {
+  async waitForSignalsCreatedBy<T>(action: () => Promise<T>, options: types.NavigatingActionWaitOptions = {}, input?: boolean): Promise<T> {
     if (options.waitUntil === 'nowait')
       return action();
-    const barrier = new PendingNavigationBarrier({ waitUntil: 'domcontentloaded', ...options });
-    this._pendingNavigationBarriers.add(barrier);
+    const barrier = new PendingSignalBarrier(this._page, { waitUntil: 'domcontentloaded', ...options });
     try {
       const result = await action();
       if (input)
@@ -112,17 +111,17 @@ export class FrameManager {
       await new Promise(platform.makeWaitForNextTask());
       return result;
     } finally {
-      this._pendingNavigationBarriers.delete(barrier);
+      barrier.dispose();
     }
   }
 
   frameWillPotentiallyRequestNavigation() {
-    for (const barrier of this._pendingNavigationBarriers)
+    for (const barrier of this._pendingSignalBarriers)
       barrier.retain();
   }
 
   frameDidPotentiallyRequestNavigation() {
-    for (const barrier of this._pendingNavigationBarriers)
+    for (const barrier of this._pendingSignalBarriers)
       barrier.release();
   }
 
@@ -130,7 +129,7 @@ export class FrameManager {
     const frame = this._frames.get(frameId);
     if (!frame)
       return;
-    for (const barrier of this._pendingNavigationBarriers)
+    for (const barrier of this._pendingSignalBarriers)
       barrier.addFrame(frame);
   }
 
@@ -1070,16 +1069,19 @@ function selectorToString(selector: string, waitFor: 'attached' | 'detached' | '
   return `${label}${selector}`;
 }
 
-class PendingNavigationBarrier {
+export class PendingSignalBarrier {
+  private _page: Page;
   private _frameIds = new Map<string, number>();
   private _options: types.NavigatingActionWaitOptions | undefined;
   private _protectCount = 0;
   private _promise: Promise<void>;
   private _promiseCallback = () => {};
 
-  constructor(options: types.NavigatingActionWaitOptions | undefined) {
+  constructor(page: Page, options: types.NavigatingActionWaitOptions | undefined) {
+    this._page = page;
     this._options = options;
     this._promise = new Promise(f => this._promiseCallback = f);
+    this._install();
     this.retain();
   }
 
@@ -1094,6 +1096,12 @@ class PendingNavigationBarrier {
     this.release();
   }
 
+  async addPageEvent(pageEvent: PageEvent) {
+    this.retain();
+    await pageEvent.page({ waitUntil: 'nowait' }).catch(e => {});
+    this.release();
+  }
+
   retain() {
     ++this._protectCount;
   }
@@ -1101,6 +1109,16 @@ class PendingNavigationBarrier {
   release() {
     --this._protectCount;
     this._maybeResolve();
+  }
+
+  private _install() {
+    this._page._browserContext._pendingSignalBarriers.add(this);
+    this._page._frameManager._pendingSignalBarriers.add(this);
+  }
+
+  dispose() {
+    this._page._browserContext._pendingSignalBarriers.delete(this);
+    this._page._frameManager._pendingSignalBarriers.delete(this);
   }
 
   private async _maybeResolve() {

@@ -120,6 +120,8 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     this._wkPages.set(pageProxyId, wkPage);
 
     const pageEvent = new PageEvent(context, wkPage.pageOrError());
+    for (const barrier of context._pendingSignalBarriers)
+      barrier.addPageEvent(pageEvent);
     wkPage.pageOrError().then(async () => {
       this._firstPageCallback();
       context!.emit(Events.BrowserContext.Page, pageEvent);
