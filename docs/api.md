@@ -1399,7 +1399,6 @@ The `format` options are:
 - `selector` <[string]> A selector of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
 - `key` <[string]> Name of key to press, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.
 - `options` <[Object]>
-  - `text` <[string]> If specified, generates an input event with this text.
   - `delay` <[number]> Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
@@ -2236,7 +2235,6 @@ If the name is empty, returns the id attribute instead.
 - `selector` <[string]> A selector of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
 - `key` <[string]> Name of key to press, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.
 - `options` <[Object]>
-  - `text` <[string]> If specified, generates an input event with this text.
   - `delay` <[number]> Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
@@ -2727,7 +2725,6 @@ If the element is detached from DOM, the method throws an error.
 #### elementHandle.press(key[, options])
 - `key` <[string]> Name of key to press, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.
 - `options` <[Object]>
-  - `text` <[string]> If specified, generates an input event with this text.
   - `delay` <[number]> Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
@@ -3077,22 +3074,20 @@ await page.keyboard.up('Shift');
 > **NOTE** On MacOS, keyboard shortcuts like `⌘ A` -> Select All do not work. See [#1313](https://github.com/GoogleChrome/puppeteer/issues/1313)
 
 <!-- GEN:toc -->
-- [keyboard.down(key[, options])](#keyboarddownkey-options)
+- [keyboard.down(key)](#keyboarddownkey)
 - [keyboard.insertText(text)](#keyboardinserttexttext)
 - [keyboard.press(key[, options])](#keyboardpresskey-options)
 - [keyboard.type(text[, options])](#keyboardtypetext-options)
 - [keyboard.up(key)](#keyboardupkey)
 <!-- GEN:stop -->
 
-#### keyboard.down(key[, options])
+#### keyboard.down(key)
 - `key` <[string]> Name of key to press, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.
-- `options` <[Object]>
-  - `text` <[string]> If specified, generates an input event with this text.
 - returns: <[Promise]>
 
 Dispatches a `keydown` event.
 
-If `key` is a single character and no modifier keys besides `Shift` are being held down, a `keypress`/`input` event will also generated. The `text` option can be specified to force an input event to be generated.
+If `key` is a single character and no modifier keys besides `Shift` are being held down, a `keypress`/`input` event will also generated.
 
 If `key` is a modifier key, `Shift`, `Meta`, `Control`, or `Alt`, subsequent key presses will be sent with that modifier active. To release the modifier key, use [`keyboard.up`](#keyboardupkey).
 
@@ -3115,7 +3110,6 @@ page.keyboard.insertText('嗨');
 #### keyboard.press(key[, options])
 - `key` <[string]> Name of key to press, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.
 - `options` <[Object]>
-  - `text` <[string]> If specified, generates an input event with this text.
   - `delay` <[number]> Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 - returns: <[Promise]>
 

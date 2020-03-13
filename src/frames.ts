@@ -854,7 +854,7 @@ export class Frame {
     handle.dispose();
   }
 
-  async press(selector: string, key: string, options?: { delay?: number, text?: string } & types.NavigatingActionWaitOptions) {
+  async press(selector: string, key: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
     const handle = await this._waitForSelectorInUtilityContext(selector, options);
     await handle.press(key, options);
     handle.dispose();

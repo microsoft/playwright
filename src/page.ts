@@ -492,7 +492,7 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().type(selector, text, options);
   }
 
-  async press(selector: string, key: string, options?: { delay?: number, text?: string } & types.NavigatingActionWaitOptions) {
+  async press(selector: string, key: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
     return this.mainFrame().press(selector, key, options);
   }
 

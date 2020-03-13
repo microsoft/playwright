@@ -59,13 +59,13 @@ export class Keyboard {
     this._raw = raw;
   }
 
-  async down(key: string, options: { text?: string; } = { text: undefined }) {
+  async down(key: string) {
     const description = this._keyDescriptionForString(key);
     const autoRepeat = this._pressedKeys.has(description.code);
     this._pressedKeys.add(description.code);
     if (kModifiers.includes(description.key as Modifier))
       this._pressedModifiers.add(description.key as Modifier);
-    const text = options.text === undefined ? description.text : options.text;
+    const text = description.text;
     await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, text);
   }
 
@@ -143,10 +143,9 @@ export class Keyboard {
     }
   }
 
-  async press(key: string, options: { delay?: number; text?: string; } = {}) {
-    const {delay = null} = options;
-    await this.down(key, options);
-    if (delay)
+  async press(key: string, options: { delay?: number } = {}) {
+    await this.down(key);
+    if (options.delay)
       await new Promise(f => setTimeout(f, options.delay));
     await this.up(key);
   }

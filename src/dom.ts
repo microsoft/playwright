@@ -361,7 +361,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, options, true);
   }
 
-  async press(key: string, options?: { delay?: number, text?: string } & types.NavigatingActionWaitOptions) {
+  async press(key: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       await this.focus();
       await this._page.keyboard.press(key, options);
