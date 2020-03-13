@@ -110,7 +110,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.goto(server.PREFIX + '/input/textarea.html');
       const text = 'This is the text that we are going to try to select. Let\'s see how it goes.';
       await page.fill('textarea', text);
-      await page.tripleclick('textarea');
+      await page.click('textarea', { clickCount: 3 });
       expect(await page.evaluate(() => {
         const textarea = document.querySelector('textarea');
         return textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);

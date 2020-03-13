@@ -273,10 +273,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._performPointerAction(point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
-  tripleclick(options?: MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
-    return this._performPointerAction(point => this._page.mouse.tripleclick(point.x, point.y, options), options);
-  }
-
   async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options?: types.NavigatingActionWaitOptions): Promise<string[]> {
     let vals: string[] | ElementHandle[] | types.SelectOption[];
     if (!Array.isArray(values))

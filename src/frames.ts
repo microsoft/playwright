@@ -817,12 +817,6 @@ export class Frame {
     handle.dispose();
   }
 
-  async tripleclick(selector: string, options?: dom.MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    const handle = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.tripleclick(options);
-    handle.dispose();
-  }
-
   async fill(selector: string, value: string, options?: types.NavigatingActionWaitOptions) {
     const handle = await this._waitForSelectorInUtilityContext(selector, options);
     await handle.fill(value, options);

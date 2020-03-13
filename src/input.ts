@@ -221,70 +221,28 @@ export class Mouse {
   }
 
   async click(x: number, y: number, options: MouseClickOptions = {}) {
-    const {delay = null} = options;
-    if (delay !== null) {
-      await Promise.all([
-        this.move(x, y),
-        this.down(options),
-      ]);
-      await new Promise(f => setTimeout(f, delay));
-      await this.up(options);
+    const { delay = null, clickCount = 1 } = options;
+    if (delay) {
+      this.move(x, y);
+      for (let cc = 1; cc <= clickCount; ++cc) {
+        await this.down({ ...options, clickCount: cc });
+        await new Promise(f => setTimeout(f, delay));
+        await this.up({ ...options, clickCount: cc });
+        if (cc < clickCount)
+          await new Promise(f => setTimeout(f, delay));
+      }
     } else {
-      await Promise.all([
-        this.move(x, y),
-        this.down(options),
-        this.up(options),
-      ]);
+      const promises = [];
+      promises.push(this.move(x, y));
+      for (let cc = 1; cc <= clickCount; ++cc) {
+        promises.push(this.down({ ...options, clickCount: cc }));
+        promises.push(this.up({ ...options, clickCount: cc }));
+      }
+      await Promise.all(promises);
     }
   }
 
   async dblclick(x: number, y: number, options: MouseMultiClickOptions = {}) {
-    const { delay = null } = options;
-    if (delay !== null) {
-      await this.move(x, y);
-      await this.down({ ...options, clickCount: 1 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.up({ ...options, clickCount: 1 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.down({ ...options, clickCount: 2 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.up({ ...options, clickCount: 2 });
-    } else {
-      await Promise.all([
-        this.move(x, y),
-        this.down({ ...options, clickCount: 1 }),
-        this.up({ ...options, clickCount: 1 }),
-        this.down({ ...options, clickCount: 2 }),
-        this.up({ ...options, clickCount: 2 }),
-      ]);
-    }
-  }
-
-  async tripleclick(x: number, y: number, options: MouseMultiClickOptions = {}) {
-    const { delay = null } = options;
-    if (delay !== null) {
-      await this.move(x, y);
-      await this.down({ ...options, clickCount: 1 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.up({ ...options, clickCount: 1 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.down({ ...options, clickCount: 2 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.up({ ...options, clickCount: 2 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.down({ ...options, clickCount: 3 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.up({ ...options, clickCount: 3 });
-    } else {
-      await Promise.all([
-        this.move(x, y),
-        this.down({ ...options, clickCount: 1 }),
-        this.up({ ...options, clickCount: 1 }),
-        this.down({ ...options, clickCount: 2 }),
-        this.up({ ...options, clickCount: 2 }),
-        this.down({ ...options, clickCount: 3 }),
-        this.up({ ...options, clickCount: 3 }),
-      ]);
-    }
+    await this.click(x, y, { ...options, clickCount: 2 });
   }
 }
