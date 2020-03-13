@@ -40,9 +40,9 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     });
     it('should not be visible in context.pages', async({context}) => {
       const newPage = await context.newPage();
-      expect(await context.pages()).toContain(newPage);
+      expect(context.pages()).toContain(newPage);
       await newPage.close();
-      expect(await context.pages()).not.toContain(newPage);
+      expect(context.pages()).not.toContain(newPage);
     });
     it('should run beforeunload if asked for', async({context, server}) => {
       const newPage = await context.newPage();
@@ -226,21 +226,24 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     // @see https://github.com/GoogleChrome/puppeteer/issues/3865
     it('should not throw when there are console messages in detached iframes', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await page.evaluate(async() => {
-        // 1. Create a popup that Playwright is not connected to.
-        const win = window.open(window.location.href, 'Title', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=780,height=200,top=0,left=0');
-        if (window.document.readyState !== 'complete')
-          await new Promise(f => window.addEventListener('load', f));
-        // 2. In this popup, create an iframe that console.logs a message.
-        win.document.body.innerHTML = `<iframe src='/consolelog.html'></iframe>`;
-        const frame = win.document.querySelector('iframe');
-        if (!frame.contentDocument || frame.contentDocument.readyState !== 'complete')
-          await new Promise(f => frame.addEventListener('load', f));
-        // 3. After that, remove the iframe.
-        frame.remove();
-      });
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup').then(e => e.page()),
+        page.evaluate(async() => {
+          // 1. Create a popup that Playwright is not connected to.
+          const win = window.open(window.location.href);
+          if (window.document.readyState !== 'complete')
+            await new Promise(f => window.addEventListener('load', f));
+          // 2. In this popup, create an iframe that console.logs a message.
+          win.document.body.innerHTML = `<iframe src='/consolelog.html'></iframe>`;
+          const frame = win.document.querySelector('iframe');
+          if (!frame.contentDocument || frame.contentDocument.readyState !== 'complete')
+            await new Promise(f => frame.addEventListener('load', f));
+          // 3. After that, remove the iframe.
+          frame.remove();
+        }),
+      ]);
       // 4. Connect to the popup and make sure it doesn't throw.
-      await page.context().pages();
+      expect(await popup.evaluate('1 + 1')).toBe(2);
     });
   });
 

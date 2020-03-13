@@ -1042,19 +1042,13 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     });
     it('should work with pages that have loaded before being connected to', async({page, context, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await page.evaluate(async () => {
-        const child = window.open(document.location.href);
-        while (child.document.readyState !== 'complete' || child.document.location.href === 'about:blank')
-          await new Promise(f => setTimeout(f, 100));
-      });
-      const pages = await context.pages();
-      expect(pages.length).toBe(2);
-      expect(pages[0]).toBe(page);
-      expect(pages[0].url()).toBe(server.EMPTY_PAGE);
-
-      expect(pages[1].url()).toBe(server.EMPTY_PAGE);
-      await pages[1].mainFrame()._waitForLoadState();
-      expect(pages[1].url()).toBe(server.EMPTY_PAGE);
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup').then(e => e.page()),
+        page.evaluate(() => window._popup = window.open(document.location.href)),
+      ]);
+      expect(popup.url()).toBe(server.EMPTY_PAGE);
+      await popup.mainFrame()._waitForLoadState();
+      expect(popup.url()).toBe(server.EMPTY_PAGE);
     });
   });
 

@@ -49,8 +49,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       // Create two incognito contexts.
       const context1 = await browser.newContext();
       const context2 = await browser.newContext();
-      expect((await context1.pages()).length).toBe(0);
-      expect((await context2.pages()).length).toBe(0);
+      expect(context1.pages().length).toBe(0);
+      expect(context2.pages().length).toBe(0);
 
       // Create a page in first incognito context.
       const page1 = await context1.newPage();
@@ -60,8 +60,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
         document.cookie = 'name=page1';
       });
 
-      expect((await context1.pages()).length).toBe(1);
-      expect((await context2.pages()).length).toBe(0);
+      expect(context1.pages().length).toBe(1);
+      expect(context2.pages().length).toBe(0);
 
       // Create a page in second incognito context.
       const page2 = await context2.newPage();
@@ -71,10 +71,10 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
         document.cookie = 'name=page2';
       });
 
-      expect((await context1.pages()).length).toBe(1);
-      expect((await context2.pages()).length).toBe(1);
-      expect((await context1.pages())[0]).toBe(page1);
-      expect((await context2.pages())[0]).toBe(page2);
+      expect(context1.pages().length).toBe(1);
+      expect(context2.pages().length).toBe(1);
+      expect(context1.pages()[0]).toBe(page1);
+      expect(context2.pages()[0]).toBe(page2);
 
       // Make sure pages don't share localstorage or cookies.
       expect(await page1.evaluate(() => localStorage.getItem('name'))).toBe('page1');
@@ -309,7 +309,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       const context = await browser.newContext();
       const page = await context.newPage();
       const second = await context.newPage();
-      const allPages = await context.pages();
+      const allPages = context.pages();
       expect(allPages.length).toBe(2);
       expect(allPages).toContain(page);
       expect(allPages).toContain(second);
@@ -318,10 +318,10 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
     it('should close all belonging pages once closing context', async function({browser}) {
       const context = await browser.newContext();
       await context.newPage();
-      expect((await context.pages()).length).toBe(1);
+      expect(context.pages().length).toBe(1);
 
       await context.close();
-      expect((await context.pages()).length).toBe(0);
+      expect(context.pages().length).toBe(0);
     });
   });
 
@@ -490,7 +490,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(await otherPage.evaluate(() => ['Hello', 'world'].join(' '))).toBe('Hello world');
       expect(await otherPage.$('body')).toBeTruthy();
 
-      let allPages = await context.pages();
+      let allPages = context.pages();
       expect(allPages).toContain(page);
       expect(allPages).toContain(otherPage);
 
@@ -499,7 +499,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       await otherPage.close();
       expect(closeEventReceived).toBeTruthy();
 
-      allPages = await context.pages();
+      allPages = context.pages();
       expect(allPages).toContain(page);
       expect(allPages).not.toContain(otherPage);
       await context.close();
