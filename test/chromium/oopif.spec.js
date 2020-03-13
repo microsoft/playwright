@@ -89,7 +89,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
 };
 
 async function countOOPIFs(browser) {
-  const browserSession = await browser.createBrowserSession();
+  const browserSession = await browser.newBrowserCDPSession();
   const oopifs = [];
   browserSession.on('Target.targetCreated', async ({targetInfo}) => {
     if (targetInfo.type === 'iframe')

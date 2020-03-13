@@ -3721,7 +3721,7 @@ await browser.stopTracing();
 ```
 
 <!-- GEN:toc -->
-- [chromiumBrowser.createBrowserSession()](#chromiumbrowsercreatebrowsersession)
+- [chromiumBrowser.newBrowserCDPSession()](#chromiumbrowsernewbrowsercdpsession)
 - [chromiumBrowser.startTracing([page, options])](#chromiumbrowserstarttracingpage-options)
 - [chromiumBrowser.stopTracing()](#chromiumbrowserstoptracing)
 <!-- GEN:stop -->
@@ -3734,7 +3734,7 @@ await browser.stopTracing();
 - [browser.newPage([options])](#browsernewpageoptions)
 <!-- GEN:stop -->
 
-#### chromiumBrowser.createBrowserSession()
+#### chromiumBrowser.newBrowserCDPSession()
 - returns: <[Promise]<[ChromiumSession]>> Promise that resolves to the newly created browser
 session.
 
@@ -3766,7 +3766,7 @@ const backgroundPage = await backroundPageTarget.page();
 - [event: 'backgroundpage'](#event-backgroundpage)
 - [event: 'serviceworker'](#event-serviceworker)
 - [chromiumBrowserContext.backgroundPages()](#chromiumbrowsercontextbackgroundpages)
-- [chromiumBrowserContext.createSession(page)](#chromiumbrowsercontextcreatesessionpage)
+- [chromiumBrowserContext.newCDPSession(page)](#chromiumbrowsercontextnewcdpsessionpage)
 <!-- GEN:stop -->
 <!-- GEN:toc-extends-BrowserContext -->
 - [event: 'close'](#event-close)
@@ -3806,7 +3806,7 @@ Emitted when new service worker is created in the context.
 #### chromiumBrowserContext.backgroundPages()
 - returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all existing background pages in the context.
 
-#### chromiumBrowserContext.createSession(page)
+#### chromiumBrowserContext.newCDPSession(page)
 - `page` <[Page]> Page to create new session for.
 - returns: <[Promise]<[ChromiumSession]>> Promise that resolves to the newly created session.
 
@@ -3888,7 +3888,7 @@ Useful links:
 - Getting Started with DevTools Protocol: https://github.com/aslushnikov/getting-started-with-cdp/blob/master/README.md
 
 ```js
-const client = await page.context().createSession(page);
+const client = await page.context().newCDPSession(page);
 await client.send('Animation.enable');
 client.on('Animation.animationCreated', () => console.log('Animation created!'));
 const response = await client.send('Animation.getPlaybackRate');
