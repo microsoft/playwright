@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+const path = require('path');
 const {Playwright} = require('playwright-core/lib/server/playwright.js');
 
-module.exports = new Playwright({
-  downloadPath: __dirname,
+const playwright = new Playwright({
   browsers: ['chromium'],
-  respectEnvironmentVariables: true,
 });
+module.exports = playwright;
+
+try {
+  const downloadedBrowsers = require(path.join(__dirname, '.downloaded-browsers.json'));
+  playwright.chromium.setExecutablePath(downloadedBrowsers.crExecutablePath);
+} catch (e) {
+  throw new Error('ERROR: Playwright-Chromium did not download browser');
+}
+
 

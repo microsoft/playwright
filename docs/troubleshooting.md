@@ -164,7 +164,7 @@ done only once per host environment:
 
 ```bash
 # cd to the downloaded instance
-cd <project-dir-path>/node_modules/playwright/.local-chromium/linux-<revision>/chrome-linux/
+cd <project-dir-path>/node_modules/playwright/.local-browsers/chromium-<revision>/
 sudo chown root:root chrome_sandbox
 sudo chmod 4755 chrome_sandbox
 # copy sandbox executable to a shared location

@@ -20,7 +20,7 @@ const playwright = require('..').chromium;
 const https = require('https');
 const SUPPORTER_PLATFORMS = ['linux', 'mac', 'win32', 'win64'];
 
-const fetchers = SUPPORTER_PLATFORMS.map(platform => playwright._createBrowserFetcher({platform}));
+const fetchers = SUPPORTER_PLATFORMS.map(platform => playwright._createBrowserFetcher(platform === 'mac' ? 'mac10.15' : platform));
 
 const colors = {
   reset: '\x1b[0m',

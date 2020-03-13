@@ -15,9 +15,7 @@ jobs:
       - save_cache:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
-            - ./.local-chromium
-            - ./.local-firefox
-            - ./.local-webkit
+            - ./.local-browsers
 
       - run:
           command: |

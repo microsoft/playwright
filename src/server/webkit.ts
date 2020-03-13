@@ -15,17 +15,14 @@
  * limitations under the License.
  */
 
-import { BrowserFetcher, OnProgressCallback, BrowserFetcherOptions } from './browserFetcher';
 import { WKBrowser } from '../webkit/wkBrowser';
-import { execSync } from 'child_process';
 import { PipeTransport } from './pipeTransport';
 import { launchProcess } from './processLauncher';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as platform from '../platform';
-import * as util from 'util';
 import * as os from 'os';
-import { assert, helper } from '../helper';
+import { helper } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
 import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
 import { ConnectionTransport } from '../transport';
@@ -37,27 +34,21 @@ import { Events } from '../events';
 import { BrowserContext } from '../browserContext';
 
 export class WebKit implements BrowserType {
-  private _downloadPath: string;
-  private _downloadHost: string;
-  readonly _revision: string;
+  private _executablePath: (string|undefined);
 
-  constructor(downloadPath: string, downloadHost: (string|undefined), preferredRevision: string) {
-    this._downloadPath = downloadPath;
-    this._downloadHost = downloadHost || 'https://playwright.azureedge.net';
-    this._revision = preferredRevision;
+  constructor() {
+  }
+
+  executablePath(): (string|null) {
+    return this._executablePath || null;
+  }
+
+  setExecutablePath(executablePath: string) {
+    this._executablePath = executablePath;
   }
 
   name() {
     return 'webkit';
-  }
-
-  async downloadBrowserIfNeeded(onProgress?: OnProgressCallback) {
-    const fetcher = this._createBrowserFetcher();
-    const revisionInfo = fetcher.revisionInfo();
-    // Do nothing if the revision is already downloaded.
-    if (revisionInfo.local)
-      return;
-    await fetcher.download(revisionInfo.revision, onProgress);
   }
 
   async launch(options?: LaunchOptions & { slowMo?: number }): Promise<WKBrowser> {
@@ -107,18 +98,14 @@ export class WebKit implements BrowserType {
     else
       webkitArguments.push(...args);
 
-    let webkitExecutable = executablePath;
-    if (!executablePath) {
-      const {missingText, executablePath} = this._resolveExecutablePath();
-      if (missingText)
-        throw new Error(missingText);
-      webkitExecutable = executablePath;
-    }
+    const webkitExecutable = executablePath || this._executablePath;
+    if (!webkitExecutable)
+      throw new Error(`No executable path is specified. Either use "webkit.setExecutablePath()" to set one, or pass "executablePath" option directly.`);
 
     let transport: ConnectionTransport | undefined = undefined;
     let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose } = await launchProcess({
-      executablePath: webkitExecutable!,
+      executablePath: webkitExecutable,
       args: webkitArguments,
       env: { ...env, CURL_COOKIE_JAR_PATH: path.join(userDataDir!, 'cookiejar.db') },
       handleSIGINT,
@@ -156,10 +143,6 @@ export class WebKit implements BrowserType {
     });
   }
 
-  executablePath(): string {
-    return this._resolveExecutablePath().executablePath;
-  }
-
   _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {
     const {
       devtools = false,
@@ -183,66 +166,11 @@ export class WebKit implements BrowserType {
     webkitArguments.push(...args);
     return webkitArguments;
   }
-
-  _createBrowserFetcher(options?: BrowserFetcherOptions): BrowserFetcher {
-    const downloadURLs = {
-      linux: '%s/builds/webkit/%s/minibrowser-gtk-wpe.zip',
-      mac: '%s/builds/webkit/%s/minibrowser-mac-%s.zip',
-      win64: '%s/builds/webkit/%s/minibrowser-win64.zip',
-    };
-
-    const defaultOptions = {
-      path: path.join(this._downloadPath, '.local-webkit'),
-      host: this._downloadHost,
-      platform: (() => {
-        const platform = os.platform();
-        if (platform === 'darwin')
-          return 'mac';
-        if (platform === 'linux')
-          return 'linux';
-        if (platform === 'win32')
-          return 'win64';
-        return platform;
-      })()
-    };
-    options = {
-      ...defaultOptions,
-      ...options,
-    };
-    assert(!!(downloadURLs as any)[options.platform!], 'Unsupported platform: ' + options.platform);
-
-    return new BrowserFetcher(options.path!, options.platform!, this._revision, (platform: string, revision: string) => {
-      return {
-        downloadUrl: (platform === 'mac') ?
-          util.format(downloadURLs[platform], options!.host, revision, getMacVersion()) :
-          util.format((downloadURLs as any)[platform], options!.host, revision),
-        executablePath: platform.startsWith('win') ? 'MiniBrowser.exe' : 'pw_run.sh',
-      };
-    });
-  }
-
-  _resolveExecutablePath(): { executablePath: string; missingText: string | null; } {
-    const browserFetcher = this._createBrowserFetcher();
-    const revisionInfo = browserFetcher.revisionInfo();
-    const missingText = !revisionInfo.local ? `WebKit revision is not downloaded. Run "npm install"` : null;
-    return { executablePath: revisionInfo.executablePath, missingText };
-  }
 }
 
 const mkdtempAsync = platform.promisify(fs.mkdtemp);
 
 const WEBKIT_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_dev_profile-');
-
-let cachedMacVersion: string | undefined = undefined;
-
-function getMacVersion(): string {
-  if (!cachedMacVersion) {
-    const [major, minor] = execSync('sw_vers -productVersion').toString('utf8').trim().split('.');
-    assert(+major === 10 && +minor >= 14, 'Error: unsupported macOS version, macOS 10.14 and newer are supported');
-    cachedMacVersion = major + '.' + minor;
-  }
-  return cachedMacVersion;
-}
 
 class SequenceNumberMixer<V> {
   static _lastSequenceNumber = 1;

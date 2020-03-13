@@ -3,11 +3,10 @@
 /test/output-firefox
 /test/output-webkit
 /test/test-user-data-dir*
-/.local-chromium/
-/.local-firefox/
-/.local-webkit/
+/.local-browsers/
 /.dev_profile*
 .DS_Store
+.downloaded-browsers.json
 *.swp
 *.pyc
 .vscode

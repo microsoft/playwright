@@ -13,36 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+const fs = require('fs');
+const browserFetcher = require('./lib/server/browserFetcher.js');
+const packageJSON = require('./package.json');
 
-async function downloadBrowser(browserType) {
-  const browser = browserType.name();
+async function downloadBrowserWithProgressBar(downloadPath, browser, version = '') {
   let progressBar = null;
   let lastDownloadedBytes = 0;
-  function onProgress(downloadedBytes, totalBytes) {
+  const revision = packageJSON.playwright[`${browser}_revision`];
+  function progress(downloadedBytes, totalBytes) {
     if (!progressBar) {
       const ProgressBar = require('progress');
-      progressBar = new ProgressBar(`Downloading ${browser} ${browserType._revision} - ${toMegabytes(totalBytes)} [:bar] :percent :etas `, {
+      progressBar = new ProgressBar(`Downloading ${browser} r${revision} - ${toMegabytes(totalBytes)} [:bar] :percent :etas `, {
         complete: '=',
         incomplete: ' ',
         width: 20,
         total: totalBytes,
+        host: getFromENV('PLAYWRIGHT_DOWNLOAD_HOST'),
       });
     }
     const delta = downloadedBytes - lastDownloadedBytes;
     lastDownloadedBytes = downloadedBytes;
     progressBar.tick(delta);
   }
-
-  const fetcher = browserType._createBrowserFetcher();
-  const revisionInfo = fetcher.revisionInfo();
-  // Do nothing if the revision is already downloaded.
-  if (revisionInfo.local)
-    return revisionInfo;
-  await browserType.downloadBrowserIfNeeded(onProgress);
-  logPolitely(`${browser} downloaded to ${revisionInfo.folderPath}`);
-  return revisionInfo;
+  const executablePath = await browserFetcher.downloadBrowser({
+    downloadPath,
+    browser,
+    revision,
+    progress,
+  });
+  logPolitely(`${browser} downloaded to ${downloadPath}`);
+  return executablePath;
 }
-
 
 function toMegabytes(bytes) {
   const mb = bytes / 1024 / 1024;
@@ -57,4 +59,11 @@ function logPolitely(toBeLogged) {
     console.log(toBeLogged);
 }
 
-module.exports = {downloadBrowser};
+function getFromENV(name) {
+  let value = process.env[name];
+  value = value || process.env[`npm_config_${name.toLowerCase()}`];
+  value = value || process.env[`npm_package_config_${name.toLowerCase()}`];
+  return value;
+}
+
+module.exports = {downloadBrowserWithProgressBar};

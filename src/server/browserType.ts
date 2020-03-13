@@ -17,7 +17,6 @@
 import { Browser, ConnectOptions } from '../browser';
 import { BrowserContext } from '../browserContext';
 import { BrowserServer } from './browserServer';
-import { OnProgressCallback } from './browserFetcher';
 
 export type BrowserArgOptions = {
   headless?: boolean,
@@ -41,11 +40,11 @@ export type LaunchOptions = BrowserArgOptions & {
 };
 
 export interface BrowserType {
-  executablePath(): string;
+  executablePath(): (string|null);
+  setExecutablePath(executablePath: string): void;
   name(): string;
   launch(options?: LaunchOptions & { slowMo?: number }): Promise<Browser>;
   launchServer(options?: LaunchOptions & { port?: number }): Promise<BrowserServer>;
   launchPersistentContext(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext>;
   connect(options: ConnectOptions): Promise<Browser>;
-  downloadBrowserIfNeeded(progress?: OnProgressCallback): Promise<void>;
 }

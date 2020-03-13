@@ -15,9 +15,17 @@
  */
 const {Playwright} = require('./lib/server/playwright.js');
 
-module.exports = new Playwright({
-  downloadPath: __dirname,
+const playwright = new Playwright({
   browsers: ['webkit', 'chromium', 'firefox'],
-  respectEnvironmentVariables: false,
 });
+
+try {
+  const downloadedBrowsers = require('./.downloaded-browsers.json');
+  playwright.chromium.setExecutablePath(downloadedBrowsers.crExecutablePath);
+  playwright.firefox.setExecutablePath(downloadedBrowsers.ffExecutablePath);
+  playwright.webkit.setExecutablePath(downloadedBrowsers.wkExecutablePath);
+} catch (e) {
+}
+
+module.exports = playwright;
 
