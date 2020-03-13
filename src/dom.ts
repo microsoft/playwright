@@ -306,7 +306,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (error)
         throw new Error(error);
       if (value)
-        await this._page.keyboard.sendCharacters(value);
+        await this._page.keyboard.insertText(value);
       else
         await this._page.keyboard.press('Delete');
     }, options, true);

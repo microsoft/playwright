@@ -126,7 +126,7 @@ export class Keyboard {
     await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location);
   }
 
-  async sendCharacters(text: string) {
+  async insertText(text: string) {
     await this._raw.sendText(text);
   }
 
@@ -138,7 +138,7 @@ export class Keyboard {
       } else {
         if (delay)
           await new Promise(f => setTimeout(f, delay));
-        await this.sendCharacters(char);
+        await this.insertText(char);
       }
     }
   }
