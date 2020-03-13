@@ -35,8 +35,8 @@ module.exports.describe = function({testRunner, expect, browserType, defaultBrow
     it('should have default url when launching browser', async function() {
       const userDataDir = await makeUserDataDir();
       const browserContext = await browserType.launchPersistentContext(userDataDir, headfulOptions);
-      const pages = (await browserContext.pages()).map(page => page.url());
-      expect(pages).toEqual(['about:blank']);
+      const urls = browserContext.pages().map(page => page.url());
+      expect(urls).toEqual(['about:blank']);
       await browserContext.close();
       await removeUserDataDir(userDataDir);
     });

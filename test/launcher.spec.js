@@ -63,8 +63,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       it('should have default URL when launching browser', async function() {
         const userDataDir = await makeUserDataDir();
         const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
-        const pages = (await browserContext.pages()).map(page => page.url());
-        expect(pages).toEqual(['about:blank']);
+        const urls = browserContext.pages().map(page => page.url());
+        expect(urls).toEqual(['about:blank']);
         await browserContext.close();
         await removeUserDataDir(userDataDir);
       });
@@ -73,7 +73,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         const options = Object.assign({}, defaultBrowserOptions);
         options.args = [server.EMPTY_PAGE].concat(options.args || []);
         const browserContext = await browserType.launchPersistentContext(userDataDir, options);
-        const pages = await browserContext.pages();
+        const pages = browserContext.pages();
         expect(pages.length).toBe(1);
         const page = pages[0];
         if (page.url() !== server.EMPTY_PAGE) {
@@ -241,7 +241,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const browserServer = await browserType.launchServer(defaultBrowserOptions);
       const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const browserContext = await browser.newContext();
-      expect((await browserContext.pages()).length).toBe(0);
+      expect(browserContext.pages().length).toBe(0);
       expect(browserServer.wsEndpoint()).not.toBe(null);
       const page = await browserContext.newPage();
       expect(await page.evaluate('11 * 11')).toBe(121);

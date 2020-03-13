@@ -41,7 +41,7 @@ export type BrowserContextOptions = {
 export interface BrowserContext {
   setDefaultNavigationTimeout(timeout: number): void;
   setDefaultTimeout(timeout: number): void;
-  pages(): Promise<Page[]>;
+  pages(): Page[];
   newPage(): Promise<Page>;
   cookies(urls?: string | string[]): Promise<network.NetworkCookie[]>;
   addCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
@@ -74,10 +74,8 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
   }
 
-  abstract _existingPages(): Page[];
-
   _browserClosed() {
-    for (const page of this._existingPages())
+    for (const page of this.pages())
       page._didClose();
     this._didCloseInternal();
   }
@@ -89,7 +87,7 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
   }
 
   // BrowserContext methods.
-  abstract pages(): Promise<Page[]>;
+  abstract pages(): Page[];
   abstract newPage(): Promise<Page>;
   abstract cookies(...urls: string[]): Promise<network.NetworkCookie[]>;
   abstract addCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
@@ -126,8 +124,7 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
 }
 
 export function assertBrowserContextIsNotOwned(context: BrowserContextBase) {
-  const pages = context._existingPages();
-  for (const page of pages) {
+  for (const page of context.pages()) {
     if (page._ownedContext)
       throw new Error('Please use browser.newContext() for multi-page scripts that share the context.');
   }

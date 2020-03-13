@@ -452,10 +452,7 @@ const crypto = require('crypto');
 Creates a new page in the browser context.
 
 #### browserContext.pages()
-- returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all open pages. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using
-[chromiumBrowserContext.backgroundPages()](#chromiumbrowsercontextbackgroundpages).
-
-An array of all pages inside the browser context.
+- returns: <[Array]<[Page]>> All open pages in the context. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using [chromiumBrowserContext.backgroundPages()](#chromiumbrowsercontextbackgroundpages).
 
 #### browserContext.route(url, handler)
 - `url` <[string]|[RegExp]|[function]\([string]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
@@ -3804,7 +3801,7 @@ Emitted when new background page is created in the context.
 Emitted when new service worker is created in the context.
 
 #### chromiumBrowserContext.backgroundPages()
-- returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all existing background pages in the context.
+- returns: <[Array]<[Page]>> All existing background pages in the context.
 
 #### chromiumBrowserContext.newCDPSession(page)
 - `page` <[Page]> Page to create new session for.
@@ -4011,8 +4008,7 @@ const { chromium } = require('playwright');
       `--load-extension=${pathToExtension}`
     ]
   });
-  const backgroundPages = await browserContext.backgroundPages();
-  const backgroundPage = backgroundPages[0];
+  const backgroundPage = browserContext.backgroundPages()[0];
   // Test the background page as you would any other page.
   await browserContext.close();
 })();

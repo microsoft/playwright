@@ -119,7 +119,7 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     ffPage.didClose();
   }
 
-  async _onAttachedToTarget(payload: Protocol.Browser.attachedToTargetPayload) {
+  _onAttachedToTarget(payload: Protocol.Browser.attachedToTargetPayload) {
     const {targetId, browserContextId, openerId, type} = payload.targetInfo;
     assert(type === 'page');
     const context = browserContextId ? this._contexts.get(browserContextId)! : this._defaultContext;
@@ -129,15 +129,15 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     this._ffPages.set(targetId, ffPage);
 
     const pageEvent = new PageEvent(context, ffPage.pageOrError());
-    context.emit(Events.BrowserContext.Page, pageEvent);
-
-    ffPage.pageOrError().then(() => this._firstPageCallback());
-
-    if (!opener)
-      return;
-    const openerPage = await opener.pageOrError();
-    if (openerPage instanceof Page && !openerPage.isClosed())
-      openerPage.emit(Events.Page.Popup, pageEvent);
+    ffPage.pageOrError().then(async () => {
+      this._firstPageCallback();
+      context.emit(Events.BrowserContext.Page, pageEvent);
+      if (!opener)
+        return;
+      const openerPage = await opener.pageOrError();
+      if (openerPage instanceof Page && !openerPage.isClosed())
+        openerPage.emit(Events.Page.Popup, pageEvent);
+    });
   }
 
   async close() {
@@ -182,10 +182,6 @@ export class FFBrowserContext extends BrowserContextBase {
     return Array.from(this._browser._ffPages.values()).filter(ffPage => ffPage._browserContext === this);
   }
 
-  _existingPages(): Page[] {
-    return this._ffPages().map(ffPage => ffPage._initializedPage()).filter(pageOrNull => !!pageOrNull) as Page[];
-  }
-
   setDefaultNavigationTimeout(timeout: number) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
   }
@@ -194,9 +190,8 @@ export class FFBrowserContext extends BrowserContextBase {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async pages(): Promise<Page[]> {
-    const pagesOrErrors = await Promise.all(this._ffPages().map(ffPage => ffPage.pageOrError()));
-    return pagesOrErrors.filter(pageOrError => pageOrError instanceof Page && !pageOrError.isClosed()) as Page[];
+  pages(): Page[] {
+    return this._ffPages().map(ffPage => ffPage._initializedPage()).filter(pageOrNull => !!pageOrNull) as Page[];
   }
 
   async newPage(): Promise<Page> {
@@ -279,7 +274,7 @@ export class FFBrowserContext extends BrowserContextBase {
   }
 
   async exposeFunction(name: string, playwrightFunction: Function): Promise<void> {
-    for (const page of this._existingPages()) {
+    for (const page of this.pages()) {
       if (page._pageBindings.has(name))
         throw new Error(`Function "${name}" has been already registered in one of the pages`);
     }

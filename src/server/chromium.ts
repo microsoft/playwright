@@ -66,15 +66,8 @@ export class Chromium implements BrowserType {
     const { timeout = 30000 } = options || {};
     const { transport } = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await CRBrowser.connect(transport!, true);
-    const browserContext = browser._defaultContext;
-
-    function targets() {
-      return browser._allTargets().filter(target => target.context() === browserContext && target.type() === 'page');
-    }
-    const firstTarget = targets().length ? Promise.resolve() : new Promise(f => browserContext.once('page', f));
-    const firstPage = firstTarget.then(() => targets()[0].pageOrError());
-    await helper.waitWithTimeout(firstPage, 'first page', timeout);
-    return browserContext;
+    await helper.waitWithTimeout(browser._firstPagePromise, 'first page', timeout);
+    return browser._defaultContext;
   }
 
   private async _launchServer(options: LaunchOptions = {}, launchType: LaunchType, userDataDir?: string, port?: number): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport }> {

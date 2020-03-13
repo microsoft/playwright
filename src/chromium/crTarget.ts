@@ -70,6 +70,12 @@ export class CRTarget {
       this._crPage.didClose();
   }
 
+  _initializedPage(): Page | null {
+    if (this._crPage && this._crPage._initialized)
+      return this._crPage.page();
+    return null;
+  }
+
   async pageOrError(): Promise<Page | Error> {
     if (CRTarget.isPageType(this.type()))
       return this._pagePromise!;

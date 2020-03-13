@@ -160,8 +160,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const frameId = await this._page._delegate.getOwnerFrame(this);
     if (!frameId)
       return null;
-    const pages = this._page._browserContext._existingPages();
-    for (const page of pages) {
+    for (const page of this._page._browserContext.pages()) {
       const frame = page._frameManager.frame(frameId);
       if (frame)
         return frame;

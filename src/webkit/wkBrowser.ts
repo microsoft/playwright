@@ -39,7 +39,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   readonly _wkPages = new Map<string, WKPage>();
   private readonly _eventListeners: RegisteredListener[];
 
-  private _firstPageCallback?: () => void;
+  private _firstPageCallback: () => void = () => {};
   private readonly _firstPagePromise: Promise<void>;
 
   static async connect(transport: ConnectionTransport, slowMo: number = 0, attachToDefaultContext: boolean = false): Promise<WKBrowser> {
@@ -119,16 +119,13 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     const wkPage = new WKPage(context, pageProxySession, opener || null);
     this._wkPages.set(pageProxyId, wkPage);
 
-    if (this._firstPageCallback) {
-      this._firstPageCallback();
-      this._firstPageCallback = undefined;
-    }
-
     const pageEvent = new PageEvent(context, wkPage.pageOrError());
-    context.emit(Events.BrowserContext.Page, pageEvent);
-    if (!opener)
-      return;
-    opener.pageOrError().then(openerPage => {
+    wkPage.pageOrError().then(async () => {
+      this._firstPageCallback();
+      context!.emit(Events.BrowserContext.Page, pageEvent);
+      if (!opener)
+        return;
+      const openerPage = await opener.pageOrError();
       if (openerPage instanceof Page && !openerPage.isClosed())
         openerPage.emit(Events.Page.Popup, pageEvent);
     });
@@ -206,14 +203,8 @@ export class WKBrowserContext extends BrowserContextBase {
     return Array.from(this._browser._wkPages.values()).filter(wkPage => wkPage._browserContext === this);
   }
 
-  _existingPages(): Page[] {
+  pages(): Page[] {
     return this._wkPages().map(wkPage => wkPage._initializedPage()).filter(pageOrNull => !!pageOrNull) as Page[];
-  }
-
-  async pages(): Promise<Page[]> {
-    const wkPages = Array.from(this._browser._wkPages.values()).filter(wkPage => wkPage._browserContext === this);
-    const pages = await Promise.all(wkPages.map(wkPage => wkPage.pageOrError()));
-    return pages.filter(page => page instanceof Page && !page.isClosed()) as Page[];
   }
 
   async newPage(): Promise<Page> {
@@ -279,31 +270,31 @@ export class WKBrowserContext extends BrowserContextBase {
 
   async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
     this._options.extraHTTPHeaders = network.verifyHeaders(headers);
-    for (const page of this._existingPages())
+    for (const page of this.pages())
       await (page._delegate as WKPage).updateExtraHTTPHeaders();
   }
 
   async setOffline(offline: boolean): Promise<void> {
     this._options.offline = offline;
-    for (const page of this._existingPages())
+    for (const page of this.pages())
       await (page._delegate as WKPage).updateOffline();
   }
 
   async setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
     this._options.httpCredentials = httpCredentials || undefined;
-    for (const page of this._existingPages())
+    for (const page of this.pages())
       await (page._delegate as WKPage).updateHttpCredentials();
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]) {
     const source = await helper.evaluationScript(script, args);
     this._evaluateOnNewDocumentSources.push(source);
-    for (const page of this._existingPages())
+    for (const page of this.pages())
       await (page._delegate as WKPage)._updateBootstrapScript();
   }
 
   async exposeFunction(name: string, playwrightFunction: Function): Promise<void> {
-    for (const page of this._existingPages()) {
+    for (const page of this.pages()) {
       if (page._pageBindings.has(name))
         throw new Error(`Function "${name}" has been already registered in one of the pages`);
     }
@@ -311,13 +302,13 @@ export class WKBrowserContext extends BrowserContextBase {
       throw new Error(`Function "${name}" has been already registered`);
     const binding = new PageBinding(name, playwrightFunction);
     this._pageBindings.set(name, binding);
-    for (const page of this._existingPages())
+    for (const page of this.pages())
       await (page._delegate as WKPage).exposeBinding(binding);
   }
 
   async route(url: types.URLMatch, handler: network.RouteHandler): Promise<void> {
     this._routes.push({ url, handler });
-    for (const page of this._existingPages())
+    for (const page of this.pages())
       await (page._delegate as WKPage).updateRequestInterception();
   }
 

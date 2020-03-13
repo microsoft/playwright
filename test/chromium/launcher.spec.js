@@ -80,13 +80,13 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
     it('should return background pages', async() => {
       const userDataDir = await makeUserDataDir();
       const context = await browserType.launchPersistentContext(userDataDir, extensionOptions);
-      const backgroundPages = await context.backgroundPages();
+      const backgroundPages = context.backgroundPages();
       let backgroundPage = backgroundPages.length
           ? backgroundPages[0]
           : await context.waitForEvent('backgroundpage').then(event => event.page());
       expect(backgroundPage).toBeTruthy();
-      expect(await context.backgroundPages()).toContain(backgroundPage);
-      expect(await context.pages()).not.toContain(backgroundPage);
+      expect(context.backgroundPages()).toContain(backgroundPage);
+      expect(context.pages()).not.toContain(backgroundPage);
       await removeUserDataDir(userDataDir);
     });
   });

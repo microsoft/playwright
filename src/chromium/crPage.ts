@@ -43,6 +43,7 @@ const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
 export class CRPage implements PageDelegate {
   _client: CRSession;
+  _initialized = false;
   private readonly _page: Page;
   readonly _networkManager: CRNetworkManager;
   private _contextIdToContext = new Map<number, dom.FrameExecutionContext>();
@@ -143,6 +144,7 @@ export class CRPage implements PageDelegate {
       promises.push(this.evaluateOnNewDocument(source));
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
     await Promise.all(promises);
+    this._initialized = true;
   }
 
   didClose() {

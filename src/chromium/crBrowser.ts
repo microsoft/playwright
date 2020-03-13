@@ -38,6 +38,8 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   readonly _defaultContext: CRBrowserContext;
   readonly _contexts = new Map<string, CRBrowserContext>();
   _targets = new Map<string, CRTarget>();
+  readonly _firstPagePromise: Promise<void>;
+  private _firstPageCallback = () => {};
 
   private _tracingRecording = false;
   private _tracingPath: string | null = '';
@@ -83,6 +85,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     this._session.on('Target.targetDestroyed', this._targetDestroyed.bind(this));
     this._session.on('Target.targetInfoChanged', this._targetInfoChanged.bind(this));
     this._session.on('Target.attachedToTarget', this._onAttachedToTarget.bind(this));
+    this._firstPagePromise = new Promise(f => this._firstPageCallback = f);
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
@@ -102,7 +105,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     return createPageInNewContext(this, options);
   }
 
-  async _onAttachedToTarget({targetInfo, sessionId, waitingForDebugger}: Protocol.Target.attachedToTargetPayload) {
+  _onAttachedToTarget({targetInfo, sessionId, waitingForDebugger}: Protocol.Target.attachedToTargetPayload) {
     const session = this._connection.session(sessionId)!;
     if (!CRTarget.isPageType(targetInfo.type)) {
       assert(targetInfo.type === 'service_worker' || targetInfo.type === 'browser' || targetInfo.type === 'other');
@@ -115,29 +118,24 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
       return;
     }
     const { context, target } = this._createTarget(targetInfo, session);
-    try {
-      switch (targetInfo.type) {
-        case 'page': {
-          const event = new PageEvent(context, target.pageOrError());
-          context.emit(CommonEvents.BrowserContext.Page, event);
-          const opener = target.opener();
-          if (!opener)
-            break;
-          const openerPage = await opener.pageOrError();
-          if (openerPage instanceof Page && !openerPage.isClosed())
-            openerPage.emit(CommonEvents.Page.Popup, new PageEvent(context, target.pageOrError()));
-          break;
-        }
-        case 'background_page': {
-          const event = new PageEvent(context, target.pageOrError());
-          context.emit(Events.CRBrowserContext.BackgroundPage, event);
-          break;
-        }
+
+    if (!CRTarget.isPageType(targetInfo.type))
+      return;
+    const pageEvent = new PageEvent(context, target.pageOrError());
+    target.pageOrError().then(async () => {
+      if (targetInfo.type === 'page') {
+        this._firstPageCallback();
+        context.emit(CommonEvents.BrowserContext.Page, pageEvent);
+        const opener = target.opener();
+        if (!opener)
+          return;
+        const openerPage = await opener.pageOrError();
+        if (openerPage instanceof Page && !openerPage.isClosed())
+          openerPage.emit(CommonEvents.Page.Popup, pageEvent);
+      } else if (targetInfo.type === 'background_page') {
+        context.emit(Events.CRBrowserContext.BackgroundPage, pageEvent);
       }
-    } catch (e) {
-      // Do not dispatch the event if initialization failed.
-      debugError(e);
-    }
+    });
   }
 
   async _targetCreated({targetInfo}: Protocol.Target.targetCreatedPayload) {
@@ -174,10 +172,6 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
 
   async _closePage(page: Page) {
     await this._session.send('Target.closeTarget', { targetId: CRTarget.fromPage(page)._targetId });
-  }
-
-  _allTargets(): CRTarget[] {
-    return Array.from(this._targets.values());
   }
 
   async close() {
@@ -268,19 +262,12 @@ export class CRBrowserContext extends BrowserContextBase {
       await this.setHTTPCredentials(this._options.httpCredentials);
   }
 
-  _existingPages(): Page[] {
-    const pages: Page[] = [];
-    for (const target of this._browser._allTargets()) {
-      if (target.context() === this && target._crPage)
-        pages.push(target._crPage.page());
-    }
-    return pages;
+  _targets(): CRTarget[] {
+    return Array.from(this._browser._targets.values()).filter(target => target.context() === this);
   }
 
-  async pages(): Promise<Page[]> {
-    const targets = this._browser._allTargets().filter(target => target.context() === this && target.type() === 'page');
-    const pages = await Promise.all(targets.map(target => target.pageOrError()));
-    return pages.filter(page => (page instanceof Page) && !page.isClosed()) as Page[];
+  pages(): Page[] {
+    return this._targets().filter(target => target.type() === 'page').map(target => target._initializedPage()).filter(pageOrNull => !!pageOrNull) as Page[];
   }
 
   async newPage(): Promise<Page> {
@@ -351,37 +338,37 @@ export class CRBrowserContext extends BrowserContextBase {
     if (geolocation)
       geolocation = verifyGeolocation(geolocation);
     this._options.geolocation = geolocation || undefined;
-    for (const page of this._existingPages())
+    for (const page of this.pages())
       await (page._delegate as CRPage)._client.send('Emulation.setGeolocationOverride', geolocation || {});
   }
 
   async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
     this._options.extraHTTPHeaders = network.verifyHeaders(headers);
-    for (const page of this._existingPages())
+    for (const page of this.pages())
       await (page._delegate as CRPage).updateExtraHTTPHeaders();
   }
 
   async setOffline(offline: boolean): Promise<void> {
     this._options.offline = offline;
-    for (const page of this._existingPages())
+    for (const page of this.pages())
       await (page._delegate as CRPage)._networkManager.setOffline(offline);
   }
 
   async setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
     this._options.httpCredentials = httpCredentials || undefined;
-    for (const page of this._existingPages())
+    for (const page of this.pages())
       await (page._delegate as CRPage)._networkManager.authenticate(httpCredentials);
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]) {
     const source = await helper.evaluationScript(script, args);
     this._evaluateOnNewDocumentSources.push(source);
-    for (const page of this._existingPages())
+    for (const page of this.pages())
       await (page._delegate as CRPage).evaluateOnNewDocument(source);
   }
 
   async exposeFunction(name: string, playwrightFunction: Function): Promise<void> {
-    for (const page of this._existingPages()) {
+    for (const page of this.pages()) {
       if (page._pageBindings.has(name))
         throw new Error(`Function "${name}" has been already registered in one of the pages`);
     }
@@ -389,13 +376,13 @@ export class CRBrowserContext extends BrowserContextBase {
       throw new Error(`Function "${name}" has been already registered`);
     const binding = new PageBinding(name, playwrightFunction);
     this._pageBindings.set(name, binding);
-    for (const page of this._existingPages())
+    for (const page of this.pages())
       await (page._delegate as CRPage).exposeBinding(binding);
   }
 
   async route(url: types.URLMatch, handler: network.RouteHandler): Promise<void> {
     this._routes.push({ url, handler });
-    for (const page of this._existingPages())
+    for (const page of this.pages())
       await (page._delegate as CRPage).updateRequestInterception();
   }
 
@@ -413,10 +400,8 @@ export class CRBrowserContext extends BrowserContextBase {
     this._didCloseInternal();
   }
 
-  async backgroundPages(): Promise<Page[]> {
-    const targets = this._browser._allTargets().filter(target => target.context() === this && target.type() === 'background_page');
-    const pages = await Promise.all(targets.map(target => target.pageOrError()));
-    return pages.filter(page => (page instanceof Page) && !page.isClosed()) as Page[];
+  backgroundPages(): Page[] {
+    return this._targets().filter(target => target.type() === 'background_page').map(target => target._initializedPage()).filter(pageOrNull => !!pageOrNull) as Page[];
   }
 
   async newCDPSession(page: Page): Promise<CRSession> {
