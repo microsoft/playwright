@@ -57,7 +57,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
         res.end('console.log(1);');
       });
 
-      await page.route('*', request => request.continue());
+      await page.route('*', route => route.continue());
       await page.goto(server.PREFIX + '/intervention');
       // Check for feature URL substring rather than https://www.chromestatus.com to
       // make it work with Edgium.

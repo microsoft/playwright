@@ -101,7 +101,7 @@ const { firefox } = require('playwright');
 
 #### Intercept network requests
 
-This code snippet sets up network interception for a WebKit page to log all network requests.
+This code snippet sets up request routing for a WebKit page to log all network requests.
 
 ```js
 const { webkit } = require('playwright');
@@ -112,9 +112,9 @@ const { webkit } = require('playwright');
   const page = await context.newPage();
 
   // Log and continue all network requests
-  page.route('**', request => {
-    console.log(request.url());
-    request.continue();
+  page.route('**', route => {
+    console.log(route.request().url());
+    route.continue();
   });
 
   await page.goto('http://todomvc.com');

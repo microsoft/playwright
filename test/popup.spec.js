@@ -44,8 +44,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="empty.html">link</a>');
       let intercepted = false;
-      await context.route('**/empty.html', request => {
-        request.continue();
+      await context.route('**/empty.html', route => {
+        route.continue();
         intercepted = true;
       });
       const [popup] = await Promise.all([
@@ -143,8 +143,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
       let intercepted = false;
-      await context.route('**/empty.html', request => {
-        request.continue();
+      await context.route('**/empty.html', route => {
+        route.continue();
         intercepted = true;
       });
       await page.evaluate(url => window.__popup = window.open(url), server.EMPTY_PAGE);

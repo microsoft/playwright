@@ -41,8 +41,6 @@ export type SetNetworkCookieParam = {
   sameSite?: 'Strict' | 'Lax' | 'None'
 };
 
-export type RouteHandler = (request: Request) => void;
-
 export function filterCookies(cookies: NetworkCookie[], urls: string | string[] = []): NetworkCookie[] {
   if (!Array.isArray(urls))
     urls = [ urls ];
@@ -95,7 +93,7 @@ function stripFragmentFromUrl(url: string): string {
 export type Headers = { [key: string]: string };
 
 export class Request {
-  private _delegate: RequestDelegate | null;
+  readonly _routeDelegate: RouteDelegate | null;
   private _response: Response | null = null;
   _redirectChain: Request[];
   _finalRequest: Request;
@@ -110,12 +108,11 @@ export class Request {
   private _frame: frames.Frame;
   private _waitForResponsePromise: Promise<Response | null>;
   private _waitForResponsePromiseCallback: (value: Response | null) => void = () => {};
-  private _interceptionHandled = false;
 
-  constructor(delegate: RequestDelegate | null, frame: frames.Frame, redirectChain: Request[], documentId: string | undefined,
+  constructor(routeDelegate: RouteDelegate | null, frame: frames.Frame, redirectChain: Request[], documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: string | null, headers: Headers) {
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
-    this._delegate = delegate;
+    this._routeDelegate = routeDelegate;
     this._frame = frame;
     this._redirectChain = redirectChain;
     this._finalRequest = this;
@@ -189,17 +186,36 @@ export class Request {
     };
   }
 
+  _route(): Route | null {
+    if (!this._routeDelegate)
+      return null;
+    return new Route(this, this._routeDelegate);
+  }
+}
+
+export class Route {
+  private readonly _request: Request;
+  private readonly _delegate: RouteDelegate;
+  private _handled = false;
+
+  constructor(request: Request, delegate: RouteDelegate) {
+    this._request = request;
+    this._delegate = delegate;
+  }
+
+  request(): Request {
+    return this._request;
+  }
+
   async abort(errorCode: string = 'failed') {
-    assert(this._delegate, 'Request Interception is not enabled!');
-    assert(!this._interceptionHandled, 'Request is already handled!');
-    this._interceptionHandled = true;
+    assert(!this._handled, 'Route is already handled!');
+    this._handled = true;
     await this._delegate.abort(errorCode);
   }
 
   async fulfill(response: FulfillResponse & { path?: string }) {
-    assert(this._delegate, 'Request Interception is not enabled!');
-    assert(!this._interceptionHandled, 'Request is already handled!');
-    this._interceptionHandled = true;
+    assert(!this._handled, 'Route is already handled!');
+    this._handled = true;
     if (response.path) {
       response = {
         status: response.status,
@@ -212,15 +228,12 @@ export class Request {
   }
 
   async continue(overrides: { method?: string; headers?: Headers; postData?: string } = {}) {
-    assert(this._delegate, 'Request Interception is not enabled!');
-    assert(!this._interceptionHandled, 'Request is already handled!');
+    assert(!this._handled, 'Route is already handled!');
     await this._delegate.continue(overrides);
   }
-
-  _isIntercepted(): boolean {
-    return !!this._delegate;
-  }
 }
+
+export type RouteHandler = (route: Route, request: Request) => void;
 
 type GetResponseBodyCallback = () => Promise<platform.BufferType>;
 
@@ -313,7 +326,7 @@ export type FulfillResponse = {
   body?: string | platform.BufferType,
 };
 
-export interface RequestDelegate {
+export interface RouteDelegate {
   abort(errorCode: string): Promise<void>;
   fulfill(response: FulfillResponse): Promise<void>;
   continue(overrides: { method?: string; headers?: Headers; postData?: string; }): Promise<void>;
