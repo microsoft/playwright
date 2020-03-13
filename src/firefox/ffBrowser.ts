@@ -224,7 +224,7 @@ export class FFBrowserContext extends BrowserContextBase {
     }), urls);
   }
 
-  async setCookies(cookies: network.SetNetworkCookieParam[]) {
+  async addCookies(cookies: network.SetNetworkCookieParam[]) {
     await this._browser._connection.send('Browser.setCookies', { browserContextId: this._browserContextId || undefined, cookies: network.rewriteCookies(cookies) });
   }
 

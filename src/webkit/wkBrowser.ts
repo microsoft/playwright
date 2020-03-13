@@ -239,7 +239,7 @@ export class WKBrowserContext extends BrowserContextBase {
     }), urls);
   }
 
-  async setCookies(cookies: network.SetNetworkCookieParam[]) {
+  async addCookies(cookies: network.SetNetworkCookieParam[]) {
     const cc = network.rewriteCookies(cookies).map(c => ({
       ...c,
       session: c.expires === -1 || c.expires === undefined,

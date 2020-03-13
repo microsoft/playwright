@@ -53,9 +53,9 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
         sameSite: 'None',
       }]);
     });
-    it('context.setCookies() should work', async({page, server}) => {
+    it('context.addCookies() should work', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await page.context().setCookies([{
+      await page.context().addCookies([{
         url: server.EMPTY_PAGE,
         name: 'username',
         value: 'John Doe'
@@ -74,7 +74,7 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
     });
     it('context.clearCookies() should work', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await page.context().setCookies([{
+      await page.context().addCookies([{
         url: server.EMPTY_PAGE,
         name: 'cookie1',
         value: '1'

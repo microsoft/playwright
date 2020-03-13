@@ -307,7 +307,7 @@ export class CRBrowserContext extends BrowserContextBase {
     }), urls);
   }
 
-  async setCookies(cookies: network.SetNetworkCookieParam[]) {
+  async addCookies(cookies: network.SetNetworkCookieParam[]) {
     await this._browser._session.send('Storage.setCookies', { cookies: network.rewriteCookies(cookies), browserContextId: this._browserContextId || undefined });
   }
 

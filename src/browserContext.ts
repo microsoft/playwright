@@ -44,7 +44,7 @@ export interface BrowserContext {
   pages(): Promise<Page[]>;
   newPage(): Promise<Page>;
   cookies(urls?: string | string[]): Promise<network.NetworkCookie[]>;
-  setCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
+  addCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
   clearCookies(): Promise<void>;
   setPermissions(origin: string, permissions: string[]): Promise<void>;
   clearPermissions(): Promise<void>;
@@ -92,7 +92,7 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
   abstract pages(): Promise<Page[]>;
   abstract newPage(): Promise<Page>;
   abstract cookies(...urls: string[]): Promise<network.NetworkCookie[]>;
-  abstract setCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
+  abstract addCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
   abstract clearCookies(): Promise<void>;
   abstract setPermissions(origin: string, permissions: string[]): Promise<void>;
   abstract clearPermissions(): Promise<void>;

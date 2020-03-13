@@ -103,7 +103,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it('should properly return navigation response when URL has cookies', async({context, page, server}) => {
       // Setup cookie.
       await page.goto(server.EMPTY_PAGE);
-      await context.setCookies([{ url: server.EMPTY_PAGE, name: 'foo', value: 'bar'}]);
+      await context.addCookies([{ url: server.EMPTY_PAGE, name: 'foo', value: 'bar'}]);
 
       // Setup request interception.
       await page.route('**/*', request => request.continue());
