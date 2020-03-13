@@ -3290,7 +3290,7 @@ Contains the request's resource type as it was perceived by the rendering engine
 ResourceType will be one of the following: `document`, `stylesheet`, `image`, `media`, `font`, `script`, `texttrack`, `xhr`, `fetch`, `eventsource`, `websocket`, `manifest`, `other`.
 
 #### request.response()
-- returns: <?[Response]> A matching [Response] object, or `null` if the response has not been received yet.
+- returns: <[Promise]<?[Response]> A matching [Response] object, or `null` if the response was not received due to error.
 
 #### request.url()
 - returns: <[string]> URL of the request.

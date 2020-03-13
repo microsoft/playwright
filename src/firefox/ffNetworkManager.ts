@@ -90,7 +90,7 @@ export class FFNetworkManager {
     const request = this._requests.get(event.requestId);
     if (!request)
       return;
-    const response = request.request.response()!;
+    const response = request.request._existingResponse()!;
     // Keep redirected requests in the map for future reference in redirectChain.
     const isRedirected = response.status() >= 300 && response.status() <= 399;
     if (isRedirected) {
@@ -107,7 +107,7 @@ export class FFNetworkManager {
     if (!request)
       return;
     this._requests.delete(request._id);
-    const response = request.request.response();
+    const response = request.request._existingResponse();
     if (response)
       response._requestFinished();
     request.request._setFailureText(event.errorCode);

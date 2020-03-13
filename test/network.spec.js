@@ -132,7 +132,7 @@ module.exports.describe = function({testRunner, expect, MAC, WIN, FFOX, CHROMIUM
       const response = await page.goto(server.PREFIX + '/foo.html');
       const redirectChain = response.request().redirectChain();
       expect(redirectChain.length).toBe(1);
-      const redirected = redirectChain[0].response();
+      const redirected = await redirectChain[0].response();
       expect(redirected.status()).toBe(302);
       let error = null;
       await redirected.text().catch(e => error = e);
@@ -216,7 +216,7 @@ module.exports.describe = function({testRunner, expect, MAC, WIN, FFOX, CHROMIUM
       expect(requests[0].url()).toBe(server.EMPTY_PAGE);
       expect(requests[0].resourceType()).toBe('document');
       expect(requests[0].method()).toBe('GET');
-      expect(requests[0].response()).toBeTruthy();
+      expect(await requests[0].response()).toBeTruthy();
       expect(requests[0].frame() === page.mainFrame()).toBe(true);
       expect(requests[0].frame().url()).toBe(server.EMPTY_PAGE);
     });
@@ -241,7 +241,7 @@ module.exports.describe = function({testRunner, expect, MAC, WIN, FFOX, CHROMIUM
       await page.goto(server.PREFIX + '/one-style.html');
       expect(failedRequests.length).toBe(1);
       expect(failedRequests[0].url()).toContain('one-style.css');
-      expect(failedRequests[0].response()).toBe(null);
+      expect(await failedRequests[0].response()).toBe(null);
       expect(failedRequests[0].resourceType()).toBe('stylesheet');
       if (CHROMIUM) {
         expect(failedRequests[0].failure().errorText).toBe('net::ERR_INVALID_HTTP_RESPONSE');
@@ -264,7 +264,7 @@ module.exports.describe = function({testRunner, expect, MAC, WIN, FFOX, CHROMIUM
       ]);
       const request = response.request();
       expect(request.url()).toBe(server.EMPTY_PAGE);
-      expect(request.response()).toBeTruthy();
+      expect(await request.response()).toBeTruthy();
       expect(request.frame() === page.mainFrame()).toBe(true);
       expect(request.frame().url()).toBe(server.EMPTY_PAGE);
     });

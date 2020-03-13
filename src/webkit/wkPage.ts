@@ -789,7 +789,7 @@ export class WKPage implements PageDelegate {
 
     // Under certain conditions we never get the Network.responseReceived
     // event from protocol. @see https://crbug.com/883475
-    const response = request.request.response();
+    const response = request.request._existingResponse();
     if (response)
       response._requestFinished();
     this._requestIdToRequest.delete(request._requestId);
@@ -802,7 +802,7 @@ export class WKPage implements PageDelegate {
     // @see https://crbug.com/750469
     if (!request)
       return;
-    const response = request.request.response();
+    const response = request.request._existingResponse();
     if (response)
       response._requestFinished();
     this._requestIdToRequest.delete(request._requestId);

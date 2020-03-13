@@ -314,7 +314,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const response = await page.goto(`data:text/html,<link rel="stylesheet" href="${server.PREFIX}/fonts?helvetica|arial"/>`);
       expect(response).toBe(null);
       expect(requests.length).toBe(1);
-      expect(requests[0].response().status()).toBe(404);
+      expect((await requests[0].response()).status()).toBe(404);
     });
     it('should not throw "Invalid Interception Id" if the request was cancelled', async({page, server}) => {
       await page.setContent('<iframe></iframe>');
