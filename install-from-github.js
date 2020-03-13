@@ -17,6 +17,11 @@
 
  // This file is only run when someone installs via the github repo
 
+const path = require('path');
+const fs = require('fs');
+const util = require('util');
+const rmAsync = util.promisify(require('rimraf'));
+
 try {
   console.log('Building playwright...');
   require('child_process').execSync('npm run build', {
@@ -24,41 +29,51 @@ try {
   });
 } catch (e) {
 }
-const {downloadBrowser} = require('./download-browser');
+
 const playwright = require('.');
+const {downloadBrowser} = require('./download-browser');
+const protocolGenerator = require('./utils/protocol-types-generator');
 
 (async function() {
-  const protocolGenerator = require('./utils/protocol-types-generator');
   try {
-    const chromeRevision = await downloadAndCleanup(playwright.chromium);
-    await protocolGenerator.generateChromiunProtocol(chromeRevision);
+    if (await downloadBrowser(playwright.chromium))
+      await protocolGenerator.generateChromiumProtocol(playwright.chromium.executablePath());
   } catch (e) {
     console.warn(e.message);
   }
 
   try {
-    const firefoxRevision = await downloadAndCleanup(playwright.firefox);
-    await protocolGenerator.generateFirefoxProtocol(firefoxRevision);
+    if (await downloadBrowser(playwright.firefox))
+      await protocolGenerator.generateFirefoxProtocol(playwright.firefox.executablePath());
   } catch (e) {
     console.warn(e.message);
   }
 
   try {
-    const webkitRevision = await downloadAndCleanup(playwright.webkit);
-    await protocolGenerator.generateWebKitProtocol(webkitRevision);
+    if (await downloadBrowser(playwright.webkit))
+      await protocolGenerator.generateWebKitProtocol(playwright.webkit.folderPath());
   } catch (e) {
     console.warn(e.message);
+  }
+
+  // Cleanup stale revisions.
+  const [crDirs, ffDirs, wkDirs] = await Promise.all([
+    readdirAsync(path.join(playwright.chromium.folderPath(), '..')),
+    readdirAsync(path.join(playwright.firefox.folderPath(), '..')),
+    readdirAsync(path.join(playwright.webkit.folderPath(), '..')),
+  ]);
+  const directories = new Set([
+    ...crDirs,
+    ...ffDirs,
+    ...wkDirs,
+  ]);
+  directories.delete(playwright.chromium.folderPath());
+  directories.delete(playwright.firefox.folderPath());
+  directories.delete(playwright.webkit.folderPath());
+  await Promise.all([...directories].map(directory => rmAsync(directory)));
+
+  async function readdirAsync(dirpath) {
+    return fs.promises.readdir(dirpath).then(dirs => dirs.map(dir => path.join(dirpath, dir)));
   }
 })();
 
-async function downloadAndCleanup(browserType) {
-  const revisionInfo = await downloadBrowser(browserType);
-
-  // Remove previous revisions.
-  const fetcher = browserType._createBrowserFetcher();
-  const localRevisions = await fetcher.localRevisions();
-  const cleanupOldVersions = localRevisions.filter(revision => revision !== revisionInfo.revision).map(revision => fetcher.remove(revision));
-  await Promise.all([...cleanupOldVersions]);
-
-  return revisionInfo;
-}

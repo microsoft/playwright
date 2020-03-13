@@ -13,8 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+const fs = require('fs');
+
+const existsAsync = path => fs.promises.access(path).then(() => true, e => false);
 
 async function downloadBrowser(browserType) {
+  if (await existsAsync(browserType.executablePath()))
+    return false;
+
   const browser = browserType.name();
   let progressBar = null;
   let lastDownloadedBytes = 0;
@@ -32,17 +38,10 @@ async function downloadBrowser(browserType) {
     lastDownloadedBytes = downloadedBytes;
     progressBar.tick(delta);
   }
-
-  const fetcher = browserType._createBrowserFetcher();
-  const revisionInfo = fetcher.revisionInfo();
-  // Do nothing if the revision is already downloaded.
-  if (revisionInfo.local)
-    return revisionInfo;
   await browserType.downloadBrowserIfNeeded(onProgress);
-  logPolitely(`${browser} downloaded to ${revisionInfo.folderPath}`);
-  return revisionInfo;
+  logPolitely(`${browser} downloaded to ${browserType.folderPath()}`);
+  return true;
 }
-
 
 function toMegabytes(bytes) {
   const mb = bytes / 1024 / 1024;

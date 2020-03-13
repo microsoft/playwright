@@ -99,7 +99,7 @@ export class Chromium implements BrowserType {
 
     let chromeExecutable = executablePath;
     if (!executablePath) {
-      const {missingText, executablePath} = this._resolveExecutablePath();
+      const {missingText, executablePath} = this._resolvePaths();
       if (missingText)
         throw new Error(missingText);
       chromeExecutable = executablePath;
@@ -154,7 +154,11 @@ export class Chromium implements BrowserType {
   }
 
   executablePath(): string {
-    return this._resolveExecutablePath().executablePath;
+    return this._resolvePaths().executablePath;
+  }
+
+  folderPath(): string {
+    return this._resolvePaths().folderPath;
   }
 
   private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {
@@ -252,11 +256,11 @@ export class Chromium implements BrowserType {
     });
   }
 
-  _resolveExecutablePath(): { executablePath: string; missingText: string | null; } {
+  _resolvePaths(): { folderPath: string; executablePath: string; missingText: string | null; } {
     const browserFetcher = this._createBrowserFetcher();
     const revisionInfo = browserFetcher.revisionInfo();
     const missingText = !revisionInfo.local ? `Chromium revision is not downloaded. Run "npm install"` : null;
-    return { executablePath: revisionInfo.executablePath, missingText };
+    return { executablePath: revisionInfo.executablePath, folderPath: revisionInfo.folderPath, missingText };
   }
 }
 

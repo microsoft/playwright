@@ -109,7 +109,7 @@ export class WebKit implements BrowserType {
 
     let webkitExecutable = executablePath;
     if (!executablePath) {
-      const {missingText, executablePath} = this._resolveExecutablePath();
+      const {missingText, executablePath} = this._resolvePaths();
       if (missingText)
         throw new Error(missingText);
       webkitExecutable = executablePath;
@@ -157,7 +157,11 @@ export class WebKit implements BrowserType {
   }
 
   executablePath(): string {
-    return this._resolveExecutablePath().executablePath;
+    return this._resolvePaths().executablePath;
+  }
+
+  folderPath(): string {
+    return this._resolvePaths().folderPath;
   }
 
   _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {
@@ -221,11 +225,11 @@ export class WebKit implements BrowserType {
     });
   }
 
-  _resolveExecutablePath(): { executablePath: string; missingText: string | null; } {
+  _resolvePaths(): { folderPath: string; executablePath: string; missingText: string | null; } {
     const browserFetcher = this._createBrowserFetcher();
     const revisionInfo = browserFetcher.revisionInfo();
     const missingText = !revisionInfo.local ? `WebKit revision is not downloaded. Run "npm install"` : null;
-    return { executablePath: revisionInfo.executablePath, missingText };
+    return { executablePath: revisionInfo.executablePath, folderPath: revisionInfo.folderPath, missingText };
   }
 }
 

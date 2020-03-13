@@ -118,7 +118,7 @@ export class Firefox implements BrowserType {
 
     let firefoxExecutable = executablePath;
     if (!firefoxExecutable) {
-      const {missingText, executablePath} = this._resolveExecutablePath();
+      const {missingText, executablePath} = this._resolvePaths();
       if (missingText)
         throw new Error(missingText);
       firefoxExecutable = executablePath;
@@ -169,7 +169,11 @@ export class Firefox implements BrowserType {
   }
 
   executablePath(): string {
-    return this._resolveExecutablePath().executablePath;
+    return this._resolvePaths().executablePath;
+  }
+
+  folderPath(): string {
+    return this._resolvePaths().folderPath;
   }
 
   private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {
@@ -248,11 +252,11 @@ export class Firefox implements BrowserType {
     });
   }
 
-  _resolveExecutablePath() {
+  _resolvePaths(): {executablePath: string, folderPath: string, missingText: (string|null)} {
     const browserFetcher = this._createBrowserFetcher();
     const revisionInfo = browserFetcher.revisionInfo();
     const missingText = !revisionInfo.local ? `Firefox revision is not downloaded. Run "npm install"` : null;
-    return { executablePath: revisionInfo.executablePath, missingText };
+    return { executablePath: revisionInfo.executablePath, folderPath: revisionInfo.folderPath, missingText };
   }
 }
 

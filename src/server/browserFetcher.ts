@@ -21,11 +21,8 @@ import * as ProxyAgent from 'https-proxy-agent';
 import * as path from 'path';
 import * as platform from '../platform';
 import { getProxyForUrl } from 'proxy-from-env';
-import * as removeRecursive from 'rimraf';
 import * as URL from 'url';
-import { assert } from '../helper';
 
-const readdirAsync = platform.promisify(fs.readdir.bind(fs));
 const mkdirAsync = platform.promisify(fs.mkdir.bind(fs));
 const unlinkAsync = platform.promisify(fs.unlink.bind(fs));
 const chmodAsync = platform.promisify(fs.chmod.bind(fs));
@@ -89,19 +86,6 @@ export class BrowserFetcher {
     return revisionInfo;
   }
 
-  async localRevisions(): Promise<string[]> {
-    if (!await existsAsync(this._downloadsFolder))
-      return [];
-    const fileNames: string[] = await readdirAsync(this._downloadsFolder);
-    return fileNames.map(fileName => parseFolderPath(fileName)).filter(entry => entry && entry.platform === this._platform).map(entry => entry!.revision);
-  }
-
-  async remove(revision: string = this._preferredRevision) {
-    const folderPath = this._getFolderPath(revision);
-    assert(await existsAsync(folderPath), `Failed to remove: revision ${revision} is not downloaded`);
-    await new Promise(fulfill => removeRecursive(folderPath, fulfill));
-  }
-
   revisionInfo(revision: string = this._preferredRevision): BrowserFetcherRevisionInfo {
     const folderPath = this._getFolderPath(revision);
     const params = this._params(this._platform, revision);
@@ -112,15 +96,6 @@ export class BrowserFetcher {
   _getFolderPath(revision: string): string {
     return path.join(this._downloadsFolder, this._platform + '-' + revision);
   }
-}
-
-function parseFolderPath(folderPath: string): { platform: string; revision: string; } | null {
-  const name = path.basename(folderPath);
-  const splits = name.split('-');
-  if (splits.length !== 2)
-    return null;
-  const [platform, revision] = splits;
-  return {platform, revision};
 }
 
 function downloadFile(url: string, destinationPath: string, progressCallback: OnProgressCallback | undefined): Promise<any> {
