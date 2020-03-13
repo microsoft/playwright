@@ -37,7 +37,6 @@ class Reporter {
     runner.on('finished', this._onFinished.bind(this));
     runner.on('teststarted', this._onTestStarted.bind(this));
     runner.on('testfinished', this._onTestFinished.bind(this));
-    this._workersState = new Map();
   }
 
   _onStarted(runnableTests) {
@@ -62,48 +61,33 @@ class Reporter {
     }
   }
 
-  _printTermination(result, message, error) {
-    console.log(colors.red(`## ${result.toUpperCase()} ##`));
-    console.log('Message:');
-    console.log(`  ${colors.red(message)}`);
-    if (error && error.stack) {
-      console.log('Stack:');
-      console.log(padLines(error.stack, 2));
+  _printFailedResult(result) {
+    console.log(colors.red(`## ${result.result.toUpperCase()} ##`));
+    if (result.message) {
+      console.log('Message:');
+      console.log(`  ${colors.red(result.message)}`);
     }
-    console.log('WORKERS STATE');
-    const workerIds = Array.from(this._workersState.keys());
-    workerIds.sort((a, b) => a - b);
-    for (const workerId of workerIds) {
-      const {isRunning, test} = this._workersState.get(workerId);
-      let description = '';
-      if (isRunning)
-        description = colors.yellow('RUNNING');
-      else if (test.result === 'ok')
-        description = colors.green('OK');
-      else if (test.result === 'skipped')
-        description = colors.yellow('SKIPPED');
-      else if (test.result === 'failed')
-        description = colors.red('FAILED');
-      else if (test.result === 'crashed')
-        description = colors.red('CRASHED');
-      else if (test.result === 'timedout')
-        description = colors.red('TIMEDOUT');
-      else if (test.result === 'terminated')
-        description = colors.magenta('TERMINATED');
-      else
-        description = colors.red('<UNKNOWN>');
-      console.log(`  ${workerId}: [${description}] ${test.fullName} (${formatLocation(test.location)})`);
+
+    for (let i = 0; i < result.errors.length; i++) {
+      const { message, error, workerId, tests } = result.errors[i];
+      console.log(`\n${colors.magenta('NON-TEST ERROR #' + i)}: ${message}`);
+      if (error && error.stack)
+        console.log(padLines(error.stack, 2));
+      const lastTests = tests.slice(tests.length - Math.min(10, tests.length));
+      if (lastTests.length)
+        console.log(`WORKER STATE`);
+      for (let j = 0; j < lastTests.length; j++)
+        this._printVerboseTestResult(j, lastTests[j], workerId);
     }
     console.log('');
     console.log('');
-    process.exitCode = 2;
   }
 
-  _onFinished({result, terminationError, terminationMessage}) {
+  _onFinished(result) {
     this._printTestResults();
-    if (terminationMessage || terminationError)
-      this._printTermination(result, terminationMessage, terminationError);
-    process.exitCode = result === 'ok' ? 0 : 1;
+    if (!result.ok())
+      this._printFailedResult(result);
+    process.exitCode = result.exitCode;
   }
 
   _printTestResults() {
@@ -171,11 +155,9 @@ class Reporter {
   }
 
   _onTestStarted(test, workerId) {
-    this._workersState.set(workerId, {test, isRunning: true});
   }
 
   _onTestFinished(test, workerId) {
-    this._workersState.set(workerId, {test, isRunning: false});
     if (this._verbose) {
       ++this._testCounter;
       this._printVerboseTestResult(this._testCounter, test, workerId);
@@ -240,7 +222,11 @@ class Reporter {
         console.log('');
       } else {
         console.log('  Message:');
-        console.log(`    ${colors.red(test.error.message || test.error)}`);
+        let message = '' + (test.error.message || test.error);
+        if (test.error.stack && message.includes(test.error.stack))
+          message = message.substring(0, message.indexOf(test.error.stack));
+        if (message)
+          console.log(`    ${colors.red(message)}`);
         if (test.error.stack) {
           console.log('  Stack:');
           let stack = test.error.stack;
