@@ -3706,9 +3706,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 <!-- GEN:toc -->
 - [browserType.connect(options)](#browsertypeconnectoptions)
-- [browserType.devices](#browsertypedevices)
 - [browserType.downloadBrowserIfNeeded([progress])](#browsertypedownloadbrowserifneededprogress)
-- [browserType.errors](#browsertypeerrors)
 - [browserType.executablePath()](#browsertypeexecutablepath)
 - [browserType.launch([options])](#browsertypelaunchoptions)
 - [browserType.launchPersistentContext(userDataDir, [options])](#browsertypelaunchpersistentcontextuserdatadir-options)
@@ -3724,55 +3722,11 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 This methods attaches Playwright to an existing browser instance.
 
-#### browserType.devices
-- returns: <[Object]>
-
-Returns a list of devices to be used with [`browser.newContext([options])`](#browsernewcontextoptions) and [`browser.newPage([options])`](#browsernewpageoptions). Actual list of devices can be found in [src/deviceDescriptors.ts](https://github.com/Microsoft/playwright/blob/master/src/deviceDescriptors.ts).
-
-```js
-const { webkit } = require('playwright');
-const iPhone = webkit.devices['iPhone 6'];
-
-(async () => {
-  const browser = await webkit.launch();
-  const context = await browser.newContext({
-    viewport: iPhone.viewport,
-    userAgent: iPhone.userAgent
-  });
-  const page = await context.newPage();
-  await page.goto('https://example.com');
-  // other actions...
-  await browser.close();
-})();
-```
-
 #### browserType.downloadBrowserIfNeeded([progress])
 - `progress` <[function]> If download is initiated, this function is called with two parameters: `downloadedBytes` and `totalBytes`.
 - returns: <[Promise]> promise that resolves when browser is successfully downloaded.
 
 Download browser binary if it is missing.
-
-#### browserType.errors
-- returns: <[Object]>
-  - `TimeoutError` <[function]> A class of [TimeoutError].
-
-Playwright methods might throw errors if they are unable to fulfill a request. For example, [page.waitForSelector(selector[, options])](#pagewaitforelementselector-options)
-might fail if the selector doesn't match any nodes during the given timeframe.
-
-For certain types of errors Playwright uses specific error classes.
-These classes are available via [`browserType.errors`](#browsertypeerrors) or [`playwright.errors`](#playwrighterrors).
-
-An example of handling a timeout error:
-```js
-const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
-try {
-  await page.waitForSelector('.foo');
-} catch (e) {
-  if (e instanceof webkit.errors.TimeoutError) {
-    // Do something if this is a timeout.
-  }
-}
-```
 
 #### browserType.executablePath()
 - returns: <[string]> A path where Playwright expects to find a bundled browser.

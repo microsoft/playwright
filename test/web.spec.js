@@ -17,15 +17,15 @@
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, product, CHROMIUM, FFOX}) {
+module.exports.describe = function({testRunner, expect, defaultBrowserOptions, browserType, product, CHROMIUM, FFOX}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Web SDK', function() {
     beforeAll(async state => {
-      state.controlledBrowserApp = await playwright.launchServer(defaultBrowserOptions);
-      state.hostBrowser = await playwright.launch(defaultBrowserOptions);
+      state.controlledBrowserApp = await browserType.launchServer(defaultBrowserOptions);
+      state.hostBrowser = await browserType.launch(defaultBrowserOptions);
     });
 
     afterAll(async state => {

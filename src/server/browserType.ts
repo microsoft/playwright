@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import * as types from '../types';
-import { TimeoutError } from '../errors';
 import { Browser, ConnectOptions } from '../browser';
 import { BrowserContext } from '../browserContext';
 import { BrowserServer } from './browserServer';
@@ -50,6 +48,4 @@ export interface BrowserType {
   launchPersistentContext(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext>;
   connect(options: ConnectOptions): Promise<Browser>;
   downloadBrowserIfNeeded(progress?: OnProgressCallback): Promise<void>;
-  devices: types.Devices;
-  errors: { TimeoutError: typeof TimeoutError };
 }

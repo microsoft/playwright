@@ -20,7 +20,7 @@ const path = require('path');
 /**
  * @type {ChromiumTestSuite}
  */
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, ASSETS_DIR}) {
+module.exports.describe = function({testRunner, expect, defaultBrowserOptions, browserType, ASSETS_DIR}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -28,7 +28,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   describe('Chromium.startTracing', function() {
     beforeEach(async function(state) {
       state.outputFile = path.join(ASSETS_DIR, `trace-${state.parallelIndex}.json`);
-      state.browser = await playwright.launch(defaultBrowserOptions);
+      state.browser = await browserType.launch(defaultBrowserOptions);
       state.page = await state.browser.newPage();
     });
     afterEach(async function(state) {

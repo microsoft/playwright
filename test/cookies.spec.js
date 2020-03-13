@@ -18,7 +18,7 @@
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, playwright, defaultBrowserOptions, MAC, FFOX, CHROMIUM, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, browserType, defaultBrowserOptions, MAC, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -276,12 +276,12 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       }
     });
     it.slow()('should isolate cookies between launches', async({server}) => {
-      const browser1 = await playwright.launch(defaultBrowserOptions);
+      const browser1 = await browserType.launch(defaultBrowserOptions);
       const context1 = await browser1.newContext();
       await context1.addCookies([{url: server.EMPTY_PAGE, name: 'cookie-in-context-1', value: 'value', expires: Date.now() / 1000 + 10000}]);
       await browser1.close();
 
-      const browser2 = await playwright.launch(defaultBrowserOptions);
+      const browser2 = await browserType.launch(defaultBrowserOptions);
       const context2 = await browser2.newContext();
       const cookies = await context2.cookies();
       expect(cookies.length).toBe(0);

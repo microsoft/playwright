@@ -20,8 +20,6 @@ import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
 import { BrowserFetcher, OnProgressCallback, BrowserFetcherOptions } from '../server/browserFetcher';
-import { DeviceDescriptors } from '../deviceDescriptors';
-import * as types from '../types';
 import { assert, helper } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
 import * as platform from '../platform';
@@ -164,14 +162,6 @@ export class Chromium implements BrowserType {
 
   executablePath(): string {
     return this._resolveExecutablePath().executablePath;
-  }
-
-  get devices(): types.Devices {
-    return DeviceDescriptors;
-  }
-
-  get errors(): { TimeoutError: typeof TimeoutError } {
-    return { TimeoutError };
   }
 
   private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {

@@ -39,8 +39,8 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
   const LINUX = os.platform() === 'linux';
   const WIN = os.platform() === 'win32';
 
-  const playwrightModule = require(playwrightPath);
-  const playwright = playwrightModule[product.toLowerCase()];
+  const playwright = require(playwrightPath);
+  const browserType = playwright[product.toLowerCase()];
 
   const headless = !!valueFromEnv('HEADLESS', true);
   const slowMo = valueFromEnv('SLOW_MO', 0);
@@ -68,7 +68,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
     console.warn(`${YELLOW_COLOR}WARN: running ${product} tests with ${defaultBrowserOptions.executablePath}${RESET_COLOR}`);
   } else {
     // Make sure the `npm install` was run after the chromium roll.
-    if (!fs.existsSync(playwright.executablePath()))
+    if (!fs.existsSync(browserType.executablePath()))
       throw new Error(`Browser is not downloaded. Run 'npm install' and try to re-run tests`);
   }
 
@@ -90,8 +90,8 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
     MAC,
     LINUX,
     WIN,
+    browserType,
     playwright,
-    selectors: playwrightModule.selectors,
     expect,
     defaultBrowserOptions,
     playwrightPath,
@@ -101,7 +101,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
 
   describe('', function() {
     beforeAll(async state => {
-      state.browser = await playwright.launch(defaultBrowserOptions);
+      state.browser = await browserType.launch(defaultBrowserOptions);
       state.browserServer = state.browser.__server__;
     });
 

@@ -23,15 +23,15 @@ const { makeUserDataDir, removeUserDataDir } = require('./utils');
 /**
  * @type {TestSuite}
  */
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, playwrightPath, product, CHROMIUM, FFOX, WEBKIT, WIN}) {
+module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, browserType, playwrightPath, product, CHROMIUM, FFOX, WEBKIT, WIN}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Playwright', function() {
-    describe('Playwright.launch', function() {
+    describe('browserType.launch', function() {
       it('should reject all promises when browser is closed', async() => {
-        const browser = await playwright.launch(defaultBrowserOptions);
+        const browser = await browserType.launch(defaultBrowserOptions);
         const page = await (await browser.newContext()).newPage();
         let error = null;
         const neverResolves = page.evaluate(() => new Promise(r => {})).catch(e => error = e);
@@ -42,27 +42,27 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       it('should throw if userDataDir option is passed', async() => {
         let waitError = null;
         const options = Object.assign({}, defaultBrowserOptions, {userDataDir: 'random-path'});
-        await playwright.launch(options).catch(e => waitError = e);
+        await browserType.launch(options).catch(e => waitError = e);
         expect(waitError.message).toContain('launchPersistentContext');
       });
       it('should throw if page argument is passed', async() => {
         let waitError = null;
         const options = Object.assign({}, defaultBrowserOptions, { args: ['http://example.com'] });
-        await playwright.launch(options).catch(e => waitError = e);
+        await browserType.launch(options).catch(e => waitError = e);
         expect(waitError.message).toContain('can not specify page');
       });
       it('should reject if executable path is invalid', async({server}) => {
         let waitError = null;
         const options = Object.assign({}, defaultBrowserOptions, {executablePath: 'random-invalid-path'});
-        await playwright.launch(options).catch(e => waitError = e);
+        await browserType.launch(options).catch(e => waitError = e);
         expect(waitError.message).toContain('Failed to launch');
       });
     });
 
-    describe('Playwright.launchPersistentContext', function() {
+    describe('browserType.launchPersistentContext', function() {
       it('should have default URL when launching browser', async function() {
         const userDataDir = await makeUserDataDir();
-        const browserContext = await playwright.launchPersistentContext(userDataDir, defaultBrowserOptions);
+        const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
         const pages = (await browserContext.pages()).map(page => page.url());
         expect(pages).toEqual(['about:blank']);
         await browserContext.close();
@@ -72,7 +72,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         const userDataDir = await makeUserDataDir();
         const options = Object.assign({}, defaultBrowserOptions);
         options.args = [server.EMPTY_PAGE].concat(options.args || []);
-        const browserContext = await playwright.launchPersistentContext(userDataDir, options);
+        const browserContext = await browserType.launchPersistentContext(userDataDir, options);
         const pages = await browserContext.pages();
         expect(pages.length).toBe(1);
         const page = pages[0];
@@ -85,14 +85,14 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       });
     });
 
-    describe('Playwright.launchServer', function() {
+    describe('browserType.launchServer', function() {
       it('should return child_process instance', async () => {
-        const browserServer = await playwright.launchServer(defaultBrowserOptions);
+        const browserServer = await browserType.launchServer(defaultBrowserOptions);
         expect(browserServer.process().pid).toBeGreaterThan(0);
         await browserServer.close();
       });
       it('should fire close event', async () => {
-        const browserServer = await playwright.launchServer(defaultBrowserOptions);
+        const browserServer = await browserType.launchServer(defaultBrowserOptions);
         await Promise.all([
           utils.waitEvent(browserServer, 'close'),
           browserServer.close(),
@@ -100,22 +100,22 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       });
     });
 
-    describe('Playwright.executablePath', function() {
+    describe('browserType.executablePath', function() {
       it('should work', async({server}) => {
-        const executablePath = playwright.executablePath();
+        const executablePath = browserType.executablePath();
         expect(fs.existsSync(executablePath)).toBe(true);
         expect(fs.realpathSync(executablePath)).toBe(executablePath);
       });
     });
 
-    describe('Playwright.name', function() {
+    describe('browserType.name', function() {
       it('should work', async({server}) => {
         if (WEBKIT)
-          expect(playwright.name()).toBe('webkit');
+          expect(browserType.name()).toBe('webkit');
         else if (FFOX)
-          expect(playwright.name()).toBe('firefox');
+          expect(browserType.name()).toBe('firefox');
         else if (CHROMIUM)
-          expect(playwright.name()).toBe('chromium');
+          expect(browserType.name()).toBe('chromium');
         else
           throw new Error('Unknown browser');
       });
@@ -137,16 +137,16 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   describe('Browser.isConnected', () => {
     it('should set the browser connected state', async () => {
-      const browserServer = await playwright.launchServer({...defaultBrowserOptions });
-      const remote = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const browserServer = await browserType.launchServer({...defaultBrowserOptions });
+      const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       expect(remote.isConnected()).toBe(true);
       await remote.close();
       expect(remote.isConnected()).toBe(false);
       await browserServer.close();
     });
     it('should throw when used after isConnected returns false', async({server}) => {
-      const browserServer = await playwright.launchServer({...defaultBrowserOptions });
-      const remote = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const browserServer = await browserType.launchServer({...defaultBrowserOptions });
+      const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const page = await remote.newPage();
       await Promise.all([
         browserServer.close(),
@@ -161,8 +161,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   describe('Browser.disconnect', function() {
     it('should reject navigation when browser closes', async({server}) => {
       server.setRoute('/one-style.css', () => {});
-      const browserServer = await playwright.launchServer({...defaultBrowserOptions });
-      const remote = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const browserServer = await browserType.launchServer({...defaultBrowserOptions });
+      const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const page = await remote.newPage();
       const navigationPromise = page.goto(server.PREFIX + '/one-style.html', {timeout: 60000}).catch(e => e);
       await server.waitForRequest('/one-style.css');
@@ -173,8 +173,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
     it('should reject waitForSelector when browser closes', async({server}) => {
       server.setRoute('/empty.html', () => {});
-      const browserServer = await playwright.launchServer({...defaultBrowserOptions });
-      const remote = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const browserServer = await browserType.launchServer({...defaultBrowserOptions });
+      const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const page = await remote.newPage();
       const watchdog = page.waitForSelector('div', { timeout: 60000 }).catch(e => e);
 
@@ -187,8 +187,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await browserServer.close();
     });
     it('should throw if used after disconnect', async({server}) => {
-      const browserServer = await playwright.launchServer({...defaultBrowserOptions });
-      const remote = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const browserServer = await browserType.launchServer({...defaultBrowserOptions });
+      const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const page = await remote.newPage();
       await remote.close();
       const error = await page.evaluate('1 + 1').catch(e => e);
@@ -196,8 +196,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await browserServer.close();
     });
     it('should emit close events on pages and contexts', async({server}) => {
-      const browserServer = await playwright.launchServer({...defaultBrowserOptions });
-      const remote = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const browserServer = await browserType.launchServer({...defaultBrowserOptions });
+      const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const context = await remote.newContext();
       const page = await context.newPage();
       let pageClosed = false;
@@ -212,8 +212,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   describe('Browser.close', function() {
     it('should terminate network waiters', async({server}) => {
-      const browserServer = await playwright.launchServer({...defaultBrowserOptions });
-      const remote = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const browserServer = await browserType.launchServer({...defaultBrowserOptions });
+      const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const newPage = await remote.newPage();
       const results = await Promise.all([
         newPage.waitForRequest(server.EMPTY_PAGE).catch(e => e),
@@ -227,7 +227,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       }
     });
     it('should fire close event for all contexts', async(state, test) => {
-      const browser = await playwright.launch(defaultBrowserOptions);
+      const browser = await browserType.launch(defaultBrowserOptions);
       const context = await browser.newContext();
       let closed = false;
       context.on('close', () => closed = true);
@@ -236,10 +236,10 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 
-  describe('Playwright.launch |webSocket| option', function() {
+  describe('browserType.launch |webSocket| option', function() {
     it('should support the webSocket option', async() => {
-      const browserServer = await playwright.launchServer(defaultBrowserOptions);
-      const browser = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const browserServer = await browserType.launchServer(defaultBrowserOptions);
+      const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const browserContext = await browser.newContext();
       expect((await browserContext.pages()).length).toBe(0);
       expect(browserServer.wsEndpoint()).not.toBe(null);
@@ -249,26 +249,26 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await browserServer.close();
     });
     it('should fire "disconnected" when closing with webSocket', async() => {
-      const browserServer = await playwright.launchServer(defaultBrowserOptions);
-      const browser = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const browserServer = await browserType.launchServer(defaultBrowserOptions);
+      const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const disconnectedEventPromise = new Promise(resolve => browser.once('disconnected', resolve));
       browserServer.kill();
       await disconnectedEventPromise;
     });
   });
 
-  describe('Playwright.connect', function() {
+  describe('browserType.connect', function() {
     it('should be able to reconnect to a browser', async({server}) => {
-      const browserServer = await playwright.launchServer(defaultBrowserOptions);
+      const browserServer = await browserType.launchServer(defaultBrowserOptions);
       {
-        const browser = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+        const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
         const browserContext = await browser.newContext();
         const page = await browserContext.newPage();
         await page.goto(server.EMPTY_PAGE);
         await browser.close();
       }
       {
-        const browser = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+        const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
         const browserContext = await browser.newContext();
         const page = await browserContext.newPage();
         await page.goto(server.EMPTY_PAGE);
@@ -278,11 +278,11 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 
-  describe('Playwright.launchPersistentContext', function() {
+  describe('browserType.launchPersistentContext', function() {
     it('userDataDir option', async({server}) => {
       const userDataDir = await makeUserDataDir();
       const options = Object.assign(defaultBrowserOptions);
-      const browserContext = await playwright.launchPersistentContext(userDataDir, options);
+      const browserContext = await browserType.launchPersistentContext(userDataDir, options);
       // Open a page to make sure its functional.
       await browserContext.newPage();
       expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
@@ -293,20 +293,20 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
     it.fail(FFOX)('userDataDir option should restore state', async({server}) => {
       const userDataDir = await makeUserDataDir();
-      const browserContext = await playwright.launchPersistentContext(userDataDir, defaultBrowserOptions);
+      const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
       const page = await browserContext.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => localStorage.hey = 'hello');
       await browserContext.close();
 
-      const browserContext2 = await playwright.launchPersistentContext(userDataDir, defaultBrowserOptions);
+      const browserContext2 = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
       const page2 = await browserContext2.newPage();
       await page2.goto(server.EMPTY_PAGE);
       expect(await page2.evaluate(() => localStorage.hey)).toBe('hello');
       await browserContext2.close();
 
       const userDataDir2 = await makeUserDataDir();
-      const browserContext3 = await playwright.launchPersistentContext(userDataDir2, defaultBrowserOptions);
+      const browserContext3 = await browserType.launchPersistentContext(userDataDir2, defaultBrowserOptions);
       const page3 = await browserContext3.newPage();
       await page3.goto(server.EMPTY_PAGE);
       expect(await page3.evaluate(() => localStorage.hey)).not.toBe('hello');
@@ -319,20 +319,20 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     // See https://github.com/microsoft/playwright/issues/717
     it.fail(FFOX || (WIN && CHROMIUM))('userDataDir option should restore cookies', async({server}) => {
       const userDataDir = await makeUserDataDir();
-      const browserContext = await playwright.launchPersistentContext(userDataDir, defaultBrowserOptions);
+      const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
       const page = await browserContext.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => document.cookie = 'doSomethingOnlyOnce=true; expires=Fri, 31 Dec 9999 23:59:59 GMT');
       await browserContext.close();
 
-      const browserContext2 = await playwright.launchPersistentContext(userDataDir, defaultBrowserOptions);
+      const browserContext2 = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
       const page2 = await browserContext2.newPage();
       await page2.goto(server.EMPTY_PAGE);
       expect(await page2.evaluate(() => document.cookie)).toBe('doSomethingOnlyOnce=true');
       await browserContext2.close();
 
       const userDataDir2 = await makeUserDataDir();
-      const browserContext3 = await playwright.launchPersistentContext(userDataDir2, defaultBrowserOptions);
+      const browserContext3 = await browserType.launchPersistentContext(userDataDir2, defaultBrowserOptions);
       const page3 = await browserContext3.newPage();
       await page3.goto(server.EMPTY_PAGE);
       expect(await page3.evaluate(() => localStorage.hey)).not.toBe('doSomethingOnlyOnce=true');
