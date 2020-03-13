@@ -982,7 +982,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       await page.setContent(`<a href='${httpsServer.EMPTY_PAGE}'>foobar</a>`);
       await page.click('a');
     });
-    it('clicking on download link', async({page, server, httpsServer}) => {
+    it.fail(FFOX)('clicking on download link', async({page, server, httpsServer}) => {
       await page.setContent(`<a href="${server.PREFIX}/wasm/table2.wasm" download=true>table2.wasm</a>`);
       await page.click('a');
     });

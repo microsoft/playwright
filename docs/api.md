@@ -681,7 +681,6 @@ page.removeListener('request', logRequest);
 - [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
 - [page.setViewportSize(viewportSize)](#pagesetviewportsizeviewportsize)
 - [page.title()](#pagetitle)
-- [page.tripleclick(selector[, options])](#pagetripleclickselector-options)
 - [page.type(selector, text[, options])](#pagetypeselector-text-options)
 - [page.uncheck(selector, [options])](#pageuncheckselector-options)
 - [page.url()](#pageurl)
@@ -1571,38 +1570,6 @@ await page.goto('https://example.com');
 
 Shortcut for [page.mainFrame().title()](#frametitle).
 
-#### page.tripleclick(selector[, options])
-- `selector` <[string]> A selector to search for element to triple click. If there are multiple elements satisfying the selector, the first will be triple clicked.
-- `options` <[Object]>
-  - `button` <"left"|"right"|"middle"> Defaults to `left`.
-  - `delay` <[number]> Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
-  - `offset` <[Object]> A point to triple click relative to the top-left corner of element padding box. If not specified, triple clicks to some visible point of the element.
-    - x <[number]>
-    - y <[number]>
-  - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the triple click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-  - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
-    - is not moving (for example, waits until css transition finishes),
-    - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
-    Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
-    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
-    - `'nowait'` - do not wait.
-  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully triple clicked. The Promise will be rejected if there is no element matching `selector`.
-
-This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to triple click in the center of the element.
-If there's no element matching `selector`, the method throws an error.
-
-Bear in mind that if the first or second click of the `tripleclick()` triggers a navigation event, there will be an exception.
-
-> **NOTE** `page.tripleclick()` dispatches three `click` events and a single `dblclick` event.
-
-Shortcut for [page.mainFrame().tripleclick(selector[, options])](#frametripleclickselector-options).
-
 #### page.type(selector, text[, options])
 - `selector` <[string]> A selector of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
 - `text` <[string]> A text to type into a focused element.
@@ -1917,7 +1884,6 @@ An example of getting text from an iframe element:
 - [frame.selectOption(selector, values[, options])](#frameselectoptionselector-values-options)
 - [frame.setContent(html[, options])](#framesetcontenthtml-options)
 - [frame.title()](#frametitle)
-- [frame.tripleclick(selector[, options])](#frametripleclickselector-options)
 - [frame.type(selector, text[, options])](#frametypeselector-text-options)
 - [frame.uncheck(selector, [options])](#frameuncheckselector-options)
 - [frame.url()](#frameurl)
@@ -2298,36 +2264,6 @@ frame.selectOption('select#colors', { value: 'blue' }, { index: 2 }, 'red');
 #### frame.title()
 - returns: <[Promise]<[string]>> The page's title.
 
-#### frame.tripleclick(selector[, options])
-- `selector` <[string]> A selector to search for element to triple click. If there are multiple elements satisfying the selector, the first will be triple clicked.
-- `options` <[Object]>
-  - `button` <"left"|"right"|"middle"> Defaults to `left`.
-  - `delay` <[number]> Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
-  - `offset` <[Object]> A point to triple click relative to the top-left corner of element padding box. If not specified, triple clicks to some visible point of the element.
-    - x <[number]>
-    - y <[number]>
-  - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the triple click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-  - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
-    - is not moving (for example, waits until css transition finishes),
-    - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
-    Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
-    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
-    - `'nowait'` - do not wait.
-  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully triple clicked. The Promise will be rejected if there is no element matching `selector`.
-
-This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to triple click in the center of the element.
-If there's no element matching `selector`, the method throws an error.
-
-Bear in mind that if the first or second click of the `tripleclick()` triggers a navigation event, there will be an exception.
-
-> **NOTE** `frame.tripleclick()` dispatches three `click` events and a single `dblclick` event.
-
 #### frame.type(selector, text[, options])
 - `selector` <[string]> A selector of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
 - `text` <[string]> A text to type into a focused element.
@@ -2532,7 +2468,6 @@ ElementHandle instances can be used as arguments in [`page.$eval()`](#pageevalse
 - [elementHandle.selectOption(values[, options])](#elementhandleselectoptionvalues-options)
 - [elementHandle.setInputFiles(files)](#elementhandlesetinputfilesfiles)
 - [elementHandle.toString()](#elementhandletostring)
-- [elementHandle.tripleclick([options])](#elementhandletripleclickoptions)
 - [elementHandle.type(text[, options])](#elementhandletypetext-options)
 - [elementHandle.uncheck([options])](#elementhandleuncheckoptions)
 <!-- GEN:stop -->
@@ -2805,35 +2740,6 @@ Sets the value of the file input to these file paths or files. If some of the  `
 
 #### elementHandle.toString()
 - returns: <[string]>
-
-#### elementHandle.tripleclick([options])
-- `options` <[Object]>
-  - `button` <"left"|"right"|"middle"> Defaults to `left`.
-  - `delay` <[number]> Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
-  - `offset` <[Object]> A point to triple click relative to the top-left corner of element padding box. If not specified, triple clicks to some visible point of the element.
-    - x <[number]>
-    - y <[number]>
-  - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the triple click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-  - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
-    - is not moving (for example, waits until css transition finishes),
-    - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
-    Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
-    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
-    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
-    - `'nowait'` - do not wait.
-  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element is successfully triple clicked. Promise gets rejected if the element is detached from DOM.
-
-This method scrolls element into view if needed, and then uses [page.mouse](#pagemouse) to click in the center of the element.
-If the element is detached from DOM, the method throws an error.
-
-Bear in mind that if the first or second click of the `tripleclick()` triggers a navigation event, there will be an exception.
-
-> **NOTE** `elementHandle.tripleclick()` dispatches three `click` events and a single `dblclick` event.
 
 #### elementHandle.type(text[, options])
 - `text` <[string]> A text to type into a focused element.
@@ -3164,7 +3070,6 @@ await page.mouse.up();
 - [mouse.dblclick(x, y[, options])](#mousedblclickx-y-options)
 - [mouse.down([options])](#mousedownoptions)
 - [mouse.move(x, y[, options])](#mousemovex-y-options)
-- [mouse.tripleclick(x, y[, options])](#mousetripleclickx-y-options)
 - [mouse.up([options])](#mouseupoptions)
 <!-- GEN:stop -->
 
@@ -3205,16 +3110,6 @@ Dispatches a `mousedown` event.
 - returns: <[Promise]>
 
 Dispatches a `mousemove` event.
-
-#### mouse.tripleclick(x, y[, options])
-- `x` <[number]>
-- `y` <[number]>
-- `options` <[Object]>
-  - `button` <"left"|"right"|"middle"> Defaults to `left`.
-  - `delay` <[number]> Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
-- returns: <[Promise]>
-
-Shortcut for [`mouse.move`](#mousemovex-y-options), [`mouse.down`](#mousedownoptions), [`mouse.up`](#mouseupoptions), [`mouse.down`](#mousedownoptions), [`mouse.up`](#mouseupoptions), [`mouse.down`](#mousedownoptions) and [`mouse.up`](#mouseupoptions).
 
 #### mouse.up([options])
 - `options` <[Object]>

@@ -468,10 +468,6 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().dblclick(selector, options);
   }
 
-  async tripleclick(selector: string, options?: dom.MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    return this.mainFrame().tripleclick(selector, options);
-  }
-
   async fill(selector: string, value: string, options?: types.NavigatingActionWaitOptions) {
     return this.mainFrame().fill(selector, value, options);
   }
