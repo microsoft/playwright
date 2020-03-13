@@ -72,11 +72,25 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
     it('should send a character with sendCharacter', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.focus('textarea');
-      await page.keyboard.sendCharacters('嗨');
+      await page.keyboard.insertText('嗨');
       expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('嗨');
       await page.evaluate(() => window.addEventListener('keydown', e => e.preventDefault(), true));
-      await page.keyboard.sendCharacters('a');
+      await page.keyboard.insertText('a');
       expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('嗨a');
+    });
+    it('insertText should only emit input event', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      await page.focus('textarea');
+      page.on('console', m => console.log(m.text()));
+      await page.evaluate(() => {
+        window.events = [];
+        document.addEventListener('keydown', e => events.push(e.type));
+        document.addEventListener('keyup', e => events.push(e.type));
+        document.addEventListener('keypress', e => events.push(e.type));
+        document.addEventListener('input', e => events.push(e.type));
+      });
+      await page.keyboard.insertText('hello world');
+      expect(await page.evaluate('window.events')).toEqual(['input']);
     });
     it.fail(FFOX)('should report shiftKey', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/keyboard.html');

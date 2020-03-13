@@ -3051,7 +3051,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 Keyboard provides an api for managing a virtual keyboard. The high level api is [`keyboard.type`](#keyboardtypetext-options), which takes raw characters and generates proper keydown, keypress/input, and keyup events on your page.
 
-For finer control, you can use [`keyboard.down`](#keyboarddownkey-options), [`keyboard.up`](#keyboardupkey), and [`keyboard.sendCharacters`](#keyboardsendcharacterstext) to manually fire events as if they were generated from a real keyboard.
+For finer control, you can use [`keyboard.down`](#keyboarddownkey-options), [`keyboard.up`](#keyboardupkey), and [`keyboard.insertText`](#keyboardsendcharacterstext) to manually fire events as if they were generated from a real keyboard.
 
 An example of holding down `Shift` in order to select and delete some text:
 ```js
@@ -3078,8 +3078,8 @@ await page.keyboard.up('Shift');
 
 <!-- GEN:toc -->
 - [keyboard.down(key[, options])](#keyboarddownkey-options)
+- [keyboard.insertText(text)](#keyboardinserttexttext)
 - [keyboard.press(key[, options])](#keyboardpresskey-options)
-- [keyboard.sendCharacters(text)](#keyboardsendcharacterstext)
 - [keyboard.type(text[, options])](#keyboardtypetext-options)
 - [keyboard.up(key)](#keyboardupkey)
 <!-- GEN:stop -->
@@ -3100,6 +3100,18 @@ After the key is pressed once, subsequent calls to [`keyboard.down`](#keyboarddo
 
 > **NOTE** Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the text in upper case.
 
+#### keyboard.insertText(text)
+- `text` <[string]> Sets input to the specified text value.
+- returns: <[Promise]>
+
+Dispatches only `input` event, does not emit the `keydown`, `keyup` or `keypress` events.
+
+```js
+page.keyboard.insertText('嗨');
+```
+
+> **NOTE** Modifier keys DO NOT effect `keyboard.insertText`. Holding down `Shift` will not type the text in upper case.
+
 #### keyboard.press(key[, options])
 - `key` <[string]> Name of key to press, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.
 - `options` <[Object]>
@@ -3112,18 +3124,6 @@ If `key` is a single character and no modifier keys besides `Shift` are being he
 > **NOTE** Modifier keys DO effect `keyboard.press`. Holding down `Shift` will type the text in upper case.
 
 Shortcut for [`keyboard.down`](#keyboarddownkey-options) and [`keyboard.up`](#keyboardupkey).
-
-#### keyboard.sendCharacters(text)
-- `text` <[string]> Characters to send into the page.
-- returns: <[Promise]>
-
-Dispatches a `keypress` and `input` event. This does not send a `keydown` or `keyup` event.
-
-```js
-page.keyboard.sendCharacters('嗨');
-```
-
-> **NOTE** Modifier keys DO NOT effect `keyboard.sendCharacters`. Holding down `Shift` will not type the text in upper case.
 
 #### keyboard.type(text[, options])
 - `text` <[string]> A text to type into a focused element.
