@@ -48,14 +48,25 @@ class Reporter {
     } else {
       console.log(`Running ${colors.yellow(runnableTests.length)} focused tests out of total ${colors.yellow(allTests.length)} on ${colors.yellow(this._runner.parallel())} worker${this._runner.parallel() > 1 ? 's' : ''}`);
       console.log('');
-      const focusedSuites = this._runner.focusedSuites();
-      const focusedTests = this._runner.focusedTests();
-      if (focusedSuites.length || focusedTests.length) {
+      const focusedSuites = this._runner.focusedSuites().map(suite => ({
+        id: suite.location.filePath + ':' + suite.location.lineNumber + ':' + suite.location.columnNumber,
+        fullName: suite.fullName,
+        location: suite.location,
+      }));
+      const focusedTests = this._runner.focusedTests().map(test => ({
+        id: test.location.filePath + ':' + test.location.lineNumber + ':' + test.location.columnNumber,
+        fullName: test.fullName,
+        location: test.location,
+      }));
+      const focusedEntities = new Map([
+        ...focusedSuites.map(suite => ([suite.id, suite])),
+        ...focusedTests.map(test => ([test.id, test])),
+      ]);
+      if (focusedEntities.size) {
         console.log('Focused Suites and Tests:');
-        for (let i = 0; i < focusedSuites.length; ++i)
-          console.log(`  ${i + 1}) ${focusedSuites[i].fullName} (${formatLocation(focusedSuites[i].location)})`);
-        for (let i = 0; i < focusedTests.length; ++i)
-          console.log(`  ${i + 1 + focusedSuites.length}) ${focusedTests[i].fullName} (${formatLocation(focusedTests[i].location)})`);
+        const entities = [...focusedEntities.values()];
+        for (let i = 0; i < entities.length; ++i)
+          console.log(`  ${i + 1}) ${entities[i].fullName} (${formatLocation(entities[i].location)})`);
         console.log('');
       }
     }
