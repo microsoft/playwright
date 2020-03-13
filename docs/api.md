@@ -674,7 +674,7 @@ page.removeListener('request', logRequest);
 - [page.reload([options])](#pagereloadoptions)
 - [page.route(url, handler)](#pagerouteurl-handler)
 - [page.screenshot([options])](#pagescreenshotoptions)
-- [page.select(selector, values[, options])](#pageselectselector-values-options)
+- [page.selectOption(selector, values[, options])](#pageselectoptionselector-values-options)
 - [page.setContent(html[, options])](#pagesetcontenthtml-options)
 - [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout)
 - [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout)
@@ -1473,7 +1473,7 @@ Page routes take precedence over browser context routes (set up with [browserCon
 
 > **NOTE** Screenshots take at least 1/6 second on Chromium OS X and Chromium Windows. See https://crbug.com/741689 for discussion.
 
-#### page.select(selector, values[, options])
+#### page.selectOption(selector, values[, options])
 - `selector` <[string]> A selector to query frame for.
 - `values` <[string]|[ElementHandle]|[Object]|[Array]<[string]>|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
@@ -1494,19 +1494,19 @@ If there's no `<select>` element matching `selector`, the method throws an error
 
 ```js
 // single selection matching the value
-page.select('select#colors', 'blue');
+page.selectOption('select#colors', 'blue');
 
 // single selection matching both the value and the label
-page.select('select#colors', { value: 'blue', label: 'Blue' });
+page.selectOption('select#colors', { value: 'blue', label: 'Blue' });
 
 // multiple selection
-page.select('select#colors', 'red', 'green', 'blue');
+page.selectOption('select#colors', 'red', 'green', 'blue');
 
 // multiple selection for blue, red and second option
-page.select('select#colors', { value: 'blue' }, { index: 2 }, 'red');
+page.selectOption('select#colors', { value: 'blue' }, { index: 2 }, 'red');
 ```
 
-Shortcut for [page.mainFrame().select()](#frameselectselector-values)
+Shortcut for [page.mainFrame().selectOption()](#frameselectselector-values)
 
 #### page.setContent(html[, options])
 - `html` <[string]> HTML markup to assign to the page.
@@ -1915,7 +1915,7 @@ An example of getting text from an iframe element:
 - [frame.name()](#framename)
 - [frame.parentFrame()](#frameparentframe)
 - [frame.press(selector, key[, options])](#framepressselector-key-options)
-- [frame.select(selector, values[, options])](#frameselectselector-values-options)
+- [frame.selectOption(selector, values[, options])](#frameselectoptionselector-values-options)
 - [frame.setContent(html[, options])](#framesetcontenthtml-options)
 - [frame.title()](#frametitle)
 - [frame.tripleclick(selector[, options])](#frametripleclickselector-options)
@@ -2253,7 +2253,7 @@ If `key` is a single character and no modifier keys besides `Shift` are being he
 
 > **NOTE** Modifier keys DO affect `frame.press`. Holding down `Shift` will type the text in upper case.
 
-#### frame.select(selector, values[, options])
+#### frame.selectOption(selector, values[, options])
 - `selector` <[string]> A selector to query frame for.
 - `values` <[string]|[ElementHandle]|[Object]|[Array]<[string]>|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
@@ -2274,16 +2274,16 @@ If there's no `<select>` element matching `selector`, the method throws an error
 
 ```js
 // single selection matching the value
-frame.select('select#colors', 'blue');
+frame.selectOption('select#colors', 'blue');
 
 // single selection matching both the value and the label
-frame.select('select#colors', { value: 'blue', label: 'Blue' });
+frame.selectOption('select#colors', { value: 'blue', label: 'Blue' });
 
 // multiple selection
-frame.select('select#colors', 'red', 'green', 'blue');
+frame.selectOption('select#colors', 'red', 'green', 'blue');
 
 // multiple selection matching blue, red and second option
-frame.select('select#colors', { value: 'blue' }, { index: 2 }, 'red');
+frame.selectOption('select#colors', { value: 'blue' }, { index: 2 }, 'red');
 ```
 
 #### frame.setContent(html[, options])
@@ -2531,7 +2531,7 @@ ElementHandle instances can be used as arguments in [`page.$eval()`](#pageevalse
 - [elementHandle.press(key[, options])](#elementhandlepresskey-options)
 - [elementHandle.screenshot([options])](#elementhandlescreenshotoptions)
 - [elementHandle.scrollIntoViewIfNeeded()](#elementhandlescrollintoviewifneeded)
-- [elementHandle.select(values[, options])](#elementhandleselectvalues-options)
+- [elementHandle.selectOption(values[, options])](#elementhandleselectoptionvalues-options)
 - [elementHandle.setInputFiles(files)](#elementhandlesetinputfilesfiles)
 - [elementHandle.toString()](#elementhandletostring)
 - [elementHandle.tripleclick([options])](#elementhandletripleclickoptions)
@@ -2763,7 +2763,7 @@ Throws when ```elementHandle``` does not point to an element [connected](https:/
 
 > **NOTE** If javascript is disabled, element is scrolled into view even when already completely visible.
 
-#### elementHandle.select(values[, options])
+#### elementHandle.selectOption(values[, options])
 - `values` <[string]|[ElementHandle]|[Object]|[Array]<[string]>|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
   - `label` <[string]> Matches by `option.label`.
@@ -2783,16 +2783,16 @@ If element is not a `<select>` element, the method throws an error.
 
 ```js
 // single selection matching the value
-handle.select('blue');
+handle.selectOption('blue');
 
 // single selection matching both the value and the label
-handle.select({ value: 'blue', label: 'Blue' });
+handle.selectOption({ value: 'blue', label: 'Blue' });
 
 // multiple selection
-handle.select('red', 'green', 'blue');
+handle.selectOption('red', 'green', 'blue');
 
 // multiple selection for blue, red and second option
-handle.select({ value: 'blue' }, { index: 2 }, 'red');
+handle.selectOption({ value: 'blue' }, { index: 2 }, 'red');
 ```
 
 #### elementHandle.setInputFiles(files)

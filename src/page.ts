@@ -484,8 +484,8 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().hover(selector, options);
   }
 
-  async select(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options?: types.NavigatingActionWaitOptions): Promise<string[]> {
-    return this.mainFrame().select(selector, values, options);
+  async selectOption(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options?: types.NavigatingActionWaitOptions): Promise<string[]> {
+    return this.mainFrame().selectOption(selector, values, options);
   }
 
   async type(selector: string, text: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
