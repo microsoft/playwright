@@ -433,8 +433,8 @@ export class Frame {
     return request ? request._finalRequest.response() : null;
   }
 
-  async _waitForLoadState(options: types.NavigateOptions = {}): Promise<void> {
-    const {timeout = this._page._timeoutSettings.navigationTimeout()} = options;
+  async waitForLoadState(options: types.NavigateOptions = {}): Promise<void> {
+    const { timeout = this._page._timeoutSettings.navigationTimeout() } = options;
     const disposer = new Disposer();
     const error = await Promise.race([
       this._createFrameDestroyedPromise(),
@@ -464,7 +464,7 @@ export class Frame {
     let resolve: (error: {error?: Error, documentId: string}) => void;
     const promise = new Promise<{error?: Error, documentId: string}>(x => resolve = x);
     const watch = (documentId: string, error?: Error) => {
-      if (!error && !platform.urlMatches(this.url(), url))
+      if (!error && !helper.urlMatches(this.url(), url))
         return;
       resolve({error, documentId});
     };
@@ -477,7 +477,7 @@ export class Frame {
     let resolve: () => void;
     const promise = new Promise<void>(x => resolve = x);
     const watch = () => {
-      if (platform.urlMatches(this.url(), url))
+      if (helper.urlMatches(this.url(), url))
         resolve();
     };
     const dispose = () => this._sameDocumentNavigationWatchers.delete(watch);
@@ -639,7 +639,7 @@ export class Frame {
       this._page._frameManager._consoleMessageTags.set(tag, () => {
         // Clear lifecycle right after document.open() - see 'tag' below.
         this._page._frameManager.clearFrameLifecycle(this);
-        this._waitForLoadState(options).then(resolve).catch(reject);
+        this.waitForLoadState(options).then(resolve).catch(reject);
       });
     });
     const contentPromise = context.evaluate((html, tag) => {
