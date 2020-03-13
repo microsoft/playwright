@@ -336,11 +336,9 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().waitForNavigation(options);
   }
 
-  async waitForEvent(event: string, optionsOrPredicate: Function | (types.TimeoutOptions & { predicate?: Function }) = {}): Promise<any> {
-    if (typeof optionsOrPredicate === 'function')
-      optionsOrPredicate = { predicate: optionsOrPredicate };
-    const { timeout = this._timeoutSettings.timeout(), predicate = () => true } = optionsOrPredicate;
-    return helper.waitForEvent(this, event, (...args: any[]) => !!predicate(...args), timeout, this._disconnectedPromise);
+  async waitForEvent(event: string, options: types.TimeoutOptions = {}): Promise<any> {
+    const { timeout = this._timeoutSettings.timeout() } = options;
+    return helper.waitForEvent(this, event, () => true, timeout, this._disconnectedPromise);
   }
 
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: network.Request) => boolean), options: types.TimeoutOptions = {}): Promise<network.Request> {

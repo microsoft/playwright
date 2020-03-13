@@ -271,7 +271,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     it('should work with predicate', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const [request] = await Promise.all([
-        page.waitForEvent('request', request => request.url() === server.PREFIX + '/digits/2.png'),
+        page.waitForRequest(server.PREFIX + '/digits/2.png'),
         page.evaluate(() => {
           fetch('/digits/1.png');
           fetch('/digits/2.png');
@@ -355,7 +355,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     it('should work with predicate', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const [response] = await Promise.all([
-        page.waitForEvent('response', response => response.url() === server.PREFIX + '/digits/2.png'),
+        page.waitForRequest(server.PREFIX + '/digits/2.png'),
         page.evaluate(() => {
           fetch('/digits/1.png');
           fetch('/digits/2.png');

@@ -55,7 +55,7 @@ export interface BrowserContext {
   addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]): Promise<void>;
   exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
   route(url: types.URLMatch, handler: network.RouteHandler): Promise<void>;
-  waitForEvent(event: string, optionsOrPredicate?: Function | (types.TimeoutOptions & { predicate?: Function })): Promise<any>;
+  waitForEvent(event: string, options?: types.TimeoutOptions): Promise<any>;
   close(): Promise<void>;
 }
 
@@ -111,15 +111,10 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async waitForEvent(event: string, optionsOrPredicate?: Function | (types.TimeoutOptions & { predicate?: Function })): Promise<any> {
-    if (!optionsOrPredicate)
-      optionsOrPredicate = {};
-    if (typeof optionsOrPredicate === 'function')
-      optionsOrPredicate = { predicate: optionsOrPredicate };
-    const { timeout = this._timeoutSettings.timeout(), predicate = () => true } = optionsOrPredicate;
-
+  async waitForEvent(event: string, options: types.TimeoutOptions = {}): Promise<any> {
+    const { timeout = this._timeoutSettings.timeout() } = options;
     const abortPromise = (event === Events.BrowserContext.Close) ? new Promise<Error>(() => { }) : this._closePromise;
-    return helper.waitForEvent(this, event, (...args: any[]) => !!predicate(...args), timeout, abortPromise);
+    return helper.waitForEvent(this, event, () => true, timeout, abortPromise);
   }
 }
 

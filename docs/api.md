@@ -299,7 +299,7 @@ await context.close();
 - [browserContext.setHTTPCredentials(httpCredentials)](#browsercontextsethttpcredentialshttpcredentials)
 - [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
 - [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
-- [browserContext.waitForEvent(event[, optionsOrPredicate])](#browsercontextwaitforeventevent-optionsorpredicate)
+- [browserContext.waitForEvent(event[, options])](#browsercontextwaitforeventevent-options)
 <!-- GEN:stop -->
 
 #### event: 'close'
@@ -564,10 +564,9 @@ To disable authentication, pass `null`.
     - `'payment-handler'`
 - returns: <[Promise]>
 
-#### browserContext.waitForEvent(event[, optionsOrPredicate])
+#### browserContext.waitForEvent(event[, options])
 - `event` <[string]> Event name, same one would pass into `browserContext.on(event)`.
-- `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object.
-  - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
+- `options` <[Object]>
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
 - returns: <[Promise]<[any]>> Promise which resolves to the event data value.
 
@@ -683,7 +682,7 @@ page.removeListener('request', logRequest);
 - [page.url()](#pageurl)
 - [page.viewportSize()](#pageviewportsize)
 - [page.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#pagewaitforselectororfunctionortimeout-options-args)
-- [page.waitForEvent(event[, optionsOrPredicate])](#pagewaitforeventevent-optionsorpredicate)
+- [page.waitForEvent(event[, options])](#pagewaitforeventevent-options)
 - [page.waitForFunction(pageFunction[, options[, ...args]])](#pagewaitforfunctionpagefunction-options-args)
 - [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
 - [page.waitForRequest(urlOrPredicate[, options])](#pagewaitforrequesturlorpredicate-options)
@@ -1659,10 +1658,9 @@ await page.waitFor(selector => !!document.querySelector(selector), {}, selector)
 
 Shortcut for [page.mainFrame().waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#framewaitforelementorfunctionortimeout-options-args).
 
-#### page.waitForEvent(event[, optionsOrPredicate])
+#### page.waitForEvent(event[, options])
 - `event` <[string]> Event name, same one would pass into `page.on(event)`.
-- `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object.
-  - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
+- `options` <[Object]>
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[any]>> Promise which resolves to the event data value.
 
@@ -3785,7 +3783,7 @@ const backgroundPage = await backroundPageTarget.page();
 - [browserContext.setHTTPCredentials(httpCredentials)](#browsercontextsethttpcredentialshttpcredentials)
 - [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
 - [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
-- [browserContext.waitForEvent(event[, optionsOrPredicate])](#browsercontextwaitforeventevent-optionsorpredicate)
+- [browserContext.waitForEvent(event[, options])](#browsercontextwaitforeventevent-options)
 <!-- GEN:stop -->
 
 #### event: 'backgroundpage'
