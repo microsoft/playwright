@@ -62,7 +62,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
     it('should open devtools when "devtools: true" option is given', async({server}) => {
       const browser = await browserType.launch(Object.assign({devtools: true}, headfulOptions));
       const context = await browser.newContext();
-      const browserSession = await browser.createBrowserSession();
+      const browserSession = await browser.newBrowserCDPSession();
       await browserSession.send('Target.setDiscoverTargets', { discover: true });
       const devtoolsPagePromise = new Promise(fulfill => browserSession.on('Target.targetCreated', async ({targetInfo}) => {
         if (targetInfo.type === 'other' && targetInfo.url.includes('devtools://'))
@@ -124,7 +124,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
   describe('BrowserContext', function() {
     it('should not create pages automatically', async function() {
       const browser = await browserType.launch();
-      const browserSession = await browser.createBrowserSession();
+      const browserSession = await browser.newBrowserCDPSession();
       const targets = [];
       browserSession.on('Target.targetCreated', async ({targetInfo}) => {
         if (targetInfo.type !== 'browser')

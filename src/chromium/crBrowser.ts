@@ -187,7 +187,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     await disconnected;
   }
 
-  async createBrowserSession(): Promise<CRSession> {
+  async newBrowserCDPSession(): Promise<CRSession> {
     return await this._connection.createBrowserSession();
   }
 
@@ -419,7 +419,7 @@ export class CRBrowserContext extends BrowserContextBase {
     return pages.filter(page => (page instanceof Page) && !page.isClosed()) as Page[];
   }
 
-  async createSession(page: Page): Promise<CRSession> {
+  async newCDPSession(page: Page): Promise<CRSession> {
     const targetId = CRTarget.fromPage(page)._targetId;
     const rootSession = await this._browser._clientRootSession();
     const { sessionId } = await rootSession.send('Target.attachToTarget', { targetId, flatten: true });
