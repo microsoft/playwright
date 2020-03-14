@@ -479,13 +479,31 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
     });
   });
 
-  describe('Events.BrowserContext.Page', function() {
+  describe('Events.BrowserContext.PageEvent', function() {
+    it.fail(true)('should have url with nowait', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      const [otherPage] = await Promise.all([
+        context.waitForEvent('page').then(event => event.page({ waitUntil: 'nowait' })),
+        page.evaluate(url => window.open(url), server.EMPTY_PAGE)
+      ]);
+      expect(otherPage.url()).toBe(server.EMPTY_PAGE);
+    });
+    it.fail(CHROMIUM)('should have url with domcontentloaded', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      const [otherPage] = await Promise.all([
+        context.waitForEvent('page').then(event => event.page({ waitUntil: 'domcontentloaded' })),
+        page.evaluate(url => window.open(url), server.EMPTY_PAGE)
+      ]);
+      expect(otherPage.url()).toBe(server.EMPTY_PAGE);
+    });
     it('should report when a new page is created and closed', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       const [otherPage] = await Promise.all([
         context.waitForEvent('page').then(event => event.page()),
-        page.evaluate(url => window.open(url), server.CROSS_PROCESS_PREFIX + '/empty.html').catch(e => console.log('eee = ' + e)),
+        page.evaluate(url => window.open(url), server.CROSS_PROCESS_PREFIX + '/empty.html'),
       ]);
       expect(otherPage.url()).toContain(server.CROSS_PROCESS_PREFIX);
       expect(await otherPage.evaluate(() => ['Hello', 'world'].join(' '))).toBe('Hello world');
