@@ -158,6 +158,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
       // Each test is launched in a new browser context.
       describe('[Accessibility]', () => testRunner.loadTests(require('./accessibility.spec.js'), testOptions));
       describe('[Driver]', () => {
+        testRunner.loadTests(require('./autowaiting.spec.js'), testOptions);
         testRunner.loadTests(require('./click.spec.js'), testOptions);
         testRunner.loadTests(require('./cookies.spec.js'), testOptions);
         testRunner.loadTests(require('./dialog.spec.js'), testOptions);
