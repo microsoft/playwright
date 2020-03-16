@@ -77,6 +77,18 @@ module.exports.describe = function({testRunner, expect, CHROMIUM, FFOX, WEBKIT})
       const twoHandle = await aHandle.getProperty('two');
       expect(await twoHandle.jsonValue()).toEqual(2);
     });
+    it('should work with undefined, null, and empty', async({page, server}) => {
+      const aHandle = await page.evaluateHandle(() => ({
+        undefined: undefined,
+        null: null,
+      }));
+      const undefinedHandle = await aHandle.getProperty('undefined');
+      expect(String(await undefinedHandle.jsonValue())).toEqual('undefined');
+      const nullHandle = await aHandle.getProperty('null');
+      expect(await nullHandle.jsonValue()).toEqual(null);
+      const emptyhandle = await aHandle.getProperty('empty');
+      expect(String(await emptyhandle.jsonValue())).toEqual('undefined');
+    })
   });
 
   describe('JSHandle.jsonValue', function() {
