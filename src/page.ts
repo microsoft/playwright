@@ -234,7 +234,7 @@ export class Page extends platform.EventEmitter {
     return this.frames().find(f => {
       if (name)
         return f.name() === name;
-      return platform.urlMatches(f.url(), url);
+      return helper.urlMatches(f.url(), url);
     }) || null;
   }
 
@@ -332,6 +332,10 @@ export class Page extends platform.EventEmitter {
     return waitPromise;
   }
 
+  async waitForLoadState(options?: types.NavigateOptions): Promise<void> {
+    return this.mainFrame().waitForLoadState(options);
+  }
+
   async waitForNavigation(options?: types.WaitForNavigationOptions): Promise<network.Response | null> {
     return this.mainFrame().waitForNavigation(options);
   }
@@ -347,7 +351,7 @@ export class Page extends platform.EventEmitter {
     const { timeout = this._timeoutSettings.timeout() } = options;
     return helper.waitForEvent(this, Events.Page.Request, (request: network.Request) => {
       if (helper.isString(urlOrPredicate) || helper.isRegExp(urlOrPredicate))
-        return platform.urlMatches(request.url(), urlOrPredicate);
+        return helper.urlMatches(request.url(), urlOrPredicate);
       return urlOrPredicate(request);
     }, timeout, this._disconnectedPromise);
   }
@@ -356,7 +360,7 @@ export class Page extends platform.EventEmitter {
     const { timeout = this._timeoutSettings.timeout() } = options;
     return helper.waitForEvent(this, Events.Page.Response, (response: network.Response) => {
       if (helper.isString(urlOrPredicate) || helper.isRegExp(urlOrPredicate))
-        return platform.urlMatches(response.url(), urlOrPredicate);
+        return helper.urlMatches(response.url(), urlOrPredicate);
       return urlOrPredicate(response);
     }, timeout, this._disconnectedPromise);
   }
@@ -423,13 +427,13 @@ export class Page extends platform.EventEmitter {
     if (!route)
       return;
     for (const { url, handler } of this._routes) {
-      if (platform.urlMatches(request.url(), url)) {
+      if (helper.urlMatches(request.url(), url)) {
         handler(route, request);
         return;
       }
     }
     for (const { url, handler } of this._browserContext._routes) {
-      if (platform.urlMatches(request.url(), url)) {
+      if (helper.urlMatches(request.url(), url)) {
         handler(route, request);
         return;
       }

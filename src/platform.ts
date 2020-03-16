@@ -28,7 +28,6 @@ import * as https from 'https';
 import * as NodeWebSocket from 'ws';
 
 import { assert, helper } from './helper';
-import * as types from './types';
 import { ConnectionTransport } from './transport';
 
 export const isNode = typeof process === 'object' && !!process && typeof process.versions === 'object' && !!process.versions && !!process.versions.node;
@@ -220,23 +219,6 @@ export async function closeFdAsync(fd: number): Promise<void> {
 export function getMimeType(file: string): string {
   const extension = file.substring(file.lastIndexOf('.') + 1);
   return extensionToMime[extension] || 'application/octet-stream';
-}
-
-export function urlMatches(urlString: string, match: types.URLMatch | undefined): boolean {
-  if (match === undefined || match === '')
-    return true;
-  if (helper.isString(match))
-    match = helper.globToRegex(match);
-  if (helper.isRegExp(match))
-    return match.test(urlString);
-  if (typeof match === 'string' && match === urlString)
-    return true;
-  const url = new URL(urlString);
-  if (typeof match === 'string')
-    return url.pathname === match;
-
-  assert(typeof match === 'function', 'url parameter should be string, RegExp or function');
-  return match(url);
 }
 
 export function pngToJpeg(buffer: Buffer, quality?: number): Buffer {

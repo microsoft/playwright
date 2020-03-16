@@ -279,6 +279,23 @@ class Helper {
   static enclosingIntSize(size: types.Size): types.Size {
     return { width: Math.floor(size.width + 1e-3), height: Math.floor(size.height + 1e-3) };
   }
+
+  static urlMatches(urlString: string, match: types.URLMatch | undefined): boolean {
+    if (match === undefined || match === '')
+      return true;
+    if (helper.isString(match))
+      match = helper.globToRegex(match);
+    if (helper.isRegExp(match))
+      return match.test(urlString);
+    if (typeof match === 'string' && match === urlString)
+      return true;
+    const url = new URL(urlString);
+    if (typeof match === 'string')
+      return url.pathname === match;
+
+    assert(typeof match === 'function', 'url parameter should be string, RegExp or function');
+    return match(url);
+  }
 }
 
 export function assert(value: any, message?: string): asserts value {

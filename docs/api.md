@@ -686,6 +686,7 @@ page.removeListener('request', logRequest);
 - [page.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#pagewaitforselectororfunctionortimeout-options-args)
 - [page.waitForEvent(event[, optionsOrPredicate])](#pagewaitforeventevent-optionsorpredicate)
 - [page.waitForFunction(pageFunction[, options[, ...args]])](#pagewaitforfunctionpagefunction-options-args)
+- [page.waitForLoadState([options])](#pagewaitforloadstateoptions)
 - [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
 - [page.waitForRequest(urlOrPredicate[, options])](#pagewaitforrequesturlorpredicate-options)
 - [page.waitForResponse(urlOrPredicate[, options])](#pagewaitforresponseurlorpredicate-options)
@@ -1703,6 +1704,26 @@ await page.waitForFunction(selector => !!document.querySelector(selector), {}, s
 
 Shortcut for [page.mainFrame().waitForFunction(pageFunction[, options[, ...args]])](#framewaitforfunctionpagefunction-options-args).
 
+#### page.waitForLoadState([options])
+- `options` <[Object]> Navigation parameters which might have the following properties:
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2">  When to consider navigation succeeded, defaults to `load`. Events can be either:
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
+    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+- returns: <[Promise]> Promise which resolves when the load state has been achieved.
+
+This resolves when the page reaches a required load state, `load` by default. The navigation can be in progress when it is called.
+If navigation is already at a required state, resolves immediately.
+
+```js
+await page.click('button'); // Click triggers navigation.
+await page.waitForLoadState(); // The promise resolves after navigation has finished.
+```
+
+Shortcut for [page.mainFrame().waitForLoadState([options])](#framewaitforloadstateoptions).
+
 #### page.waitForNavigation([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
@@ -1887,6 +1908,7 @@ An example of getting text from an iframe element:
 - [frame.url()](#frameurl)
 - [frame.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#framewaitforselectororfunctionortimeout-options-args)
 - [frame.waitForFunction(pageFunction[, options[, ...args]])](#framewaitforfunctionpagefunction-options-args)
+- [frame.waitForLoadState([options])](#framewaitforloadstateoptions)
 - [frame.waitForNavigation([options])](#framewaitfornavigationoptions)
 - [frame.waitForSelector(selector[, options])](#framewaitforselectorselector-options)
 <!-- GEN:stop -->
@@ -2372,6 +2394,24 @@ To pass arguments from node.js to the predicate of `page.waitForFunction` functi
 ```js
 const selector = '.foo';
 await page.waitForFunction(selector => !!document.querySelector(selector), {}, selector);
+```
+
+#### frame.waitForLoadState([options])
+- `options` <[Object]> Navigation parameters which might have the following properties:
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2">  When to consider navigation succeeded, defaults to `load`. Events can be either:
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
+    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+- returns: <[Promise]> Promise which resolves when the load state has been achieved.
+
+This resolves when the page reaches a required load state, `load` by default. The navigation can be in progress when it is called.
+If navigation is already at a required state, resolves immediately.
+
+```js
+await frame.click('button'); // Click triggers navigation.
+await frame.waitForLoadState(); // The promise resolves after navigation has finished.
 ```
 
 #### frame.waitForNavigation([options])
