@@ -27,7 +27,10 @@ module.exports = {
         options: {
           transpileOnly: true
         },
-        exclude: /node_modules/
+        exclude: [
+          /node_modules/,
+          /crypto/,
+        ]
       }
     ]
   },
@@ -41,6 +44,7 @@ module.exports = {
     path: path.resolve(__dirname, '../')
   },
   externals: {
+    'crypto': 'dummy',
     'events': 'dummy',
     'fs': 'dummy',
     'path': 'dummy',

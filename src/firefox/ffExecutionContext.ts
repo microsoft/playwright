@@ -44,45 +44,26 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     if (typeof pageFunction !== 'function')
       throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
 
-    let functionText = pageFunction.toString();
-    try {
-      new Function('(' + functionText + ')');
-    } catch (e1) {
-      // This means we might have a function shorthand. Try another
-      // time prefixing 'function '.
-      if (functionText.startsWith('async '))
-        functionText = 'async function ' + functionText.substring('async '.length);
-      else
-        functionText = 'function ' + functionText;
-      try {
-        new Function('(' + functionText  + ')');
-      } catch (e2) {
-        // We tried hard to serialize, but there's a weird beast here.
-        throw new Error('Passed function is not well-serializable!');
-      }
-    }
-    const protocolArgs = args.map(arg => {
-      if (arg instanceof js.JSHandle) {
-        if (arg._context !== context)
-          throw new Error('JSHandles can be evaluated only in the context they were created!');
-        if (arg._disposed)
-          throw new Error('JSHandle is disposed!');
-        return this._toCallArgument(arg._remoteObject);
-      }
-      if (Object.is(arg, Infinity))
-        return {unserializableValue: 'Infinity'};
-      if (Object.is(arg, -Infinity))
-        return {unserializableValue: '-Infinity'};
-      if (Object.is(arg, -0))
-        return {unserializableValue: '-0'};
-      if (Object.is(arg, NaN))
-        return {unserializableValue: 'NaN'};
-      return {value: arg};
+    const { functionText, values, handles } = js.prepareFunctionCall<Protocol.Runtime.CallFunctionArgument>(pageFunction, context, args, (value: any) => {
+      if (Object.is(value, -0))
+        return { handle: { unserializableValue: '-0' } };
+      if (Object.is(value, Infinity))
+        return { handle: { unserializableValue: 'Infinity' } };
+      if (Object.is(value, -Infinity))
+        return { handle: { unserializableValue: '-Infinity' } };
+      if (Object.is(value, NaN))
+        return { handle: { unserializableValue: 'NaN' } };
+      if (value && (value instanceof js.JSHandle))
+        return { handle: this._toCallArgument(value._remoteObject) };
+      return { value };
     });
 
     const payload = await this._session.send('Runtime.callFunction', {
       functionDeclaration: functionText,
-      args: protocolArgs,
+      args: [
+        ...values.map(value => ({ value })),
+        ...handles,
+      ],
       returnByValue,
       executionContextId: this._executionContextId
     }).catch(rewriteError);

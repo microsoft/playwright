@@ -30,7 +30,6 @@ import { kBrowserCloseMessageId } from '../webkit/wkConnection';
 import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
 import { ConnectionTransport } from '../transport';
 import * as ws from 'ws';
-import * as uuidv4 from 'uuid/v4';
 import { ConnectOptions, LaunchType } from '../browser';
 import { BrowserServer } from './browserServer';
 import { Events } from '../events';
@@ -263,7 +262,7 @@ class SequenceNumberMixer<V> {
 
 function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number) {
   const server = new ws.Server({ port });
-  const guid = uuidv4();
+  const guid = platform.guid();
   const idMixer = new SequenceNumberMixer<{id: number, socket: ws}>();
   const pendingBrowserContextCreations = new Set<number>();
   const pendingBrowserContextDeletions = new Map<number, string>();

@@ -58,6 +58,14 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
       expect(url).toBe(server.EMPTY_PAGE);
     });
 
+    it('should evaluate handles', async({page, server}) => {
+      const foo = await page.evaluateHandle(() => ({ x: 1, y: 'foo' }));
+      const result = await page.evaluate(({ foo }) => {
+        return foo;
+      }, { foo });
+      expect(result).toEqual({ x: 1, y: 'foo' });
+    });
+
     it('should receive events', async({page, server}) => {
       const logs = await page.evaluate(async () => {
         const logs = [];
