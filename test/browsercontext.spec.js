@@ -488,6 +488,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
         page.evaluate(url => window.open(url), server.EMPTY_PAGE)
       ]);
       expect(otherPage.url()).toBe(server.EMPTY_PAGE);
+      await context.close();
     });
     it.fail(CHROMIUM)('should have url with domcontentloaded', async({browser, server}) => {
       const context = await browser.newContext();
@@ -497,6 +498,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
         page.evaluate(url => window.open(url), server.EMPTY_PAGE)
       ]);
       expect(otherPage.url()).toBe(server.EMPTY_PAGE);
+      await context.close();
     });
     it('should report when a new page is created and closed', async({browser, server}) => {
       const context = await browser.newContext();

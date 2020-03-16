@@ -95,8 +95,8 @@ export type Headers = { [key: string]: string };
 export class Request {
   readonly _routeDelegate: RouteDelegate | null;
   private _response: Response | null = null;
-  _redirectChain: Request[];
-  _finalRequest: Request;
+  private _redirectedFrom: Request | null;
+  private _redirectedTo: Request | null = null;
   readonly _documentId?: string;
   readonly _isFavicon: boolean;
   private _failureText: string | null = null;
@@ -109,15 +109,14 @@ export class Request {
   private _waitForResponsePromise: Promise<Response | null>;
   private _waitForResponsePromiseCallback: (value: Response | null) => void = () => {};
 
-  constructor(routeDelegate: RouteDelegate | null, frame: frames.Frame, redirectChain: Request[], documentId: string | undefined,
+  constructor(routeDelegate: RouteDelegate | null, frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: string | null, headers: Headers) {
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     this._routeDelegate = routeDelegate;
     this._frame = frame;
-    this._redirectChain = redirectChain;
-    this._finalRequest = this;
-    for (const request of redirectChain)
-      request._finalRequest = this;
+    this._redirectedFrom = redirectedFrom;
+    if (redirectedFrom)
+      redirectedFrom._redirectedTo = this;
     this._documentId = documentId;
     this._url = stripFragmentFromUrl(url);
     this._resourceType = resourceType;
@@ -166,6 +165,10 @@ export class Request {
     this._waitForResponsePromiseCallback(response);
   }
 
+  _finalRequest(): Request {
+    return this._redirectedTo ? this._redirectedTo._finalRequest() : this;
+  }
+
   frame(): frames.Frame {
     return this._frame;
   }
@@ -174,8 +177,12 @@ export class Request {
     return !!this._documentId;
   }
 
-  redirectChain(): Request[] {
-    return this._redirectChain.slice();
+  redirectedFrom(): Request | null {
+    return this._redirectedFrom;
+  }
+
+  redirectedTo(): Request | null {
+    return this._redirectedTo;
   }
 
   failure(): { errorText: string; } | null {

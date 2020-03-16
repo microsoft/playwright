@@ -730,27 +730,26 @@ export class WKPage implements PageDelegate {
   _onRequestWillBeSent(session: WKSession, event: Protocol.Network.requestWillBeSentPayload) {
     if (event.request.url.startsWith('data:'))
       return;
-    let redirectChain: network.Request[] = [];
+    let redirectedFrom: network.Request | null = null;
     if (event.redirectResponse) {
       const request = this._requestIdToRequest.get(event.requestId);
       // If we connect late to the target, we could have missed the requestWillBeSent event.
       if (request) {
         this._handleRequestRedirect(request, event.redirectResponse);
-        redirectChain = request.request._redirectChain;
+        redirectedFrom = request.request;
       }
     }
     const frame = this._page._frameManager.frame(event.frameId)!;
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
-    const request = new WKInterceptableRequest(session, this._page._needsRequestInterception(), frame, event, redirectChain, documentId);
+    const request = new WKInterceptableRequest(session, this._page._needsRequestInterception(), frame, event, redirectedFrom, documentId);
     this._requestIdToRequest.set(event.requestId, request);
     this._page._frameManager.requestStarted(request.request);
   }
 
   private _handleRequestRedirect(request: WKInterceptableRequest, responsePayload: Protocol.Network.Response) {
     const response = request.createResponse(responsePayload);
-    request.request._redirectChain.push(request.request);
     response._requestFinished(new Error('Response body is unavailable for redirect responses'));
     this._requestIdToRequest.delete(request._requestId);
     this._page._frameManager.requestReceivedResponse(response);

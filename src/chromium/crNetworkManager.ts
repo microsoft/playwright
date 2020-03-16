@@ -156,13 +156,13 @@ export class CRNetworkManager {
   _onRequest(workerFrame: frames.Frame | undefined, event: Protocol.Network.requestWillBeSentPayload, interceptionId: string | null) {
     if (event.request.url.startsWith('data:'))
       return;
-    let redirectChain: network.Request[] = [];
+    let redirectedFrom: network.Request | null = null;
     if (event.redirectResponse) {
       const request = this._requestIdToRequest.get(event.requestId);
       // If we connect late to the target, we could have missed the requestWillBeSent event.
       if (request) {
         this._handleRequestRedirect(request, event.redirectResponse);
-        redirectChain = request.request._redirectChain;
+        redirectedFrom = request.request;
       }
     }
     const frame = event.frameId ? this._page._frameManager.frame(event.frameId) : workerFrame;
@@ -173,7 +173,7 @@ export class CRNetworkManager {
     }
     const isNavigationRequest = event.requestId === event.loaderId && event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
-    const request = new InterceptableRequest(this._client, frame, interceptionId, documentId, this._userRequestInterceptionEnabled, event, redirectChain);
+    const request = new InterceptableRequest(this._client, frame, interceptionId, documentId, this._userRequestInterceptionEnabled, event, redirectedFrom);
     this._requestIdToRequest.set(event.requestId, request);
     this._page._frameManager.requestStarted(request.request);
   }
@@ -188,7 +188,6 @@ export class CRNetworkManager {
 
   _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response) {
     const response = this._createResponse(request, responsePayload);
-    request.request._redirectChain.push(request.request);
     response._requestFinished(new Error('Response body is unavailable for redirect responses'));
     this._requestIdToRequest.delete(request._requestId);
     if (request._interceptionId)
@@ -248,13 +247,13 @@ class InterceptableRequest implements network.RouteDelegate {
   _documentId: string | undefined;
   private _client: CRSession;
 
-  constructor(client: CRSession, frame: frames.Frame, interceptionId: string | null, documentId: string | undefined, allowInterception: boolean, event: Protocol.Network.requestWillBeSentPayload, redirectChain: network.Request[]) {
+  constructor(client: CRSession, frame: frames.Frame, interceptionId: string | null, documentId: string | undefined, allowInterception: boolean, event: Protocol.Network.requestWillBeSentPayload, redirectedFrom: network.Request | null) {
     this._client = client;
     this._requestId = event.requestId;
     this._interceptionId = interceptionId;
     this._documentId = documentId;
 
-    this.request = new network.Request(allowInterception ? this : null, frame, redirectChain, documentId,
+    this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId,
         event.request.url, (event.type || '').toLowerCase(), event.request.method, event.request.postData || null, headersObject(event.request.headers));
   }
 

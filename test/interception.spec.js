@@ -204,16 +204,19 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(response.url()).toContain('empty.html');
       expect(requests.length).toBe(5);
       expect(requests[2].resourceType()).toBe('document');
-      // Check redirect chain
-      const redirectChain = response.request().redirectChain();
-      expect(redirectChain.length).toBe(4);
-      expect(redirectChain[0].url()).toContain('/non-existing-page.html');
-      expect(redirectChain[2].url()).toContain('/non-existing-page-3.html');
-      for (let i = 0; i < redirectChain.length; ++i) {
-        const request = redirectChain[i];
-        expect(request.isNavigationRequest()).toBe(true);
-        expect(request.redirectChain().indexOf(request)).toBe(i);
+      const chain = [];
+      for (let r = response.request(); r; r = r.redirectedFrom()) {
+        chain.push(r);
+        expect(r.isNavigationRequest()).toBe(true);
       }
+      expect(chain.length).toBe(5);
+      expect(chain[0].url()).toContain('/empty.html');
+      expect(chain[1].url()).toContain('/non-existing-page-4.html');
+      expect(chain[2].url()).toContain('/non-existing-page-3.html');
+      expect(chain[3].url()).toContain('/non-existing-page-2.html');
+      expect(chain[4].url()).toContain('/non-existing-page.html');
+      for (let i = 0; i < chain.length; i++)
+        expect(chain[i].redirectedTo()).toBe(i ? chain[i - 1] : null);
     });
     it('should work with redirects for subresources', async({page, server}) => {
       const requests = [];
@@ -231,12 +234,14 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(response.url()).toContain('one-style.html');
       expect(requests.length).toBe(5);
       expect(requests[0].resourceType()).toBe('document');
-      expect(requests[1].resourceType()).toBe('stylesheet');
-      // Check redirect chain
-      const redirectChain = requests[1].redirectChain();
-      expect(redirectChain.length).toBe(3);
-      expect(redirectChain[0].url()).toContain('/one-style.css');
-      expect(redirectChain[2].url()).toContain('/three-style.css');
+
+      let r = requests.find(r => r.url().includes('/four-style.css'));
+      for (const url of ['/four-style.css', '/three-style.css', '/two-style.css', '/one-style.css']) {
+        expect(r.resourceType()).toBe('stylesheet');
+        expect(r.url()).toContain(url);
+        r = r.redirectedFrom();
+      }
+      expect(r).toBe(null);
     });
     it('should work with equal requests', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
