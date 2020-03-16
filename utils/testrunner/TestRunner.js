@@ -72,8 +72,11 @@ const TestMode = {
   Run: 'run',
   Skip: 'skip',
   Focus: 'focus',
-  MarkAsFailing: 'markAsFailing',
-  Flake: 'flake'
+};
+
+const TestExpectation = {
+  Ok: 'ok',
+  Fail: 'fail',
 };
 
 const TestResult = {
@@ -91,11 +94,12 @@ function isTestFailure(testResult) {
 }
 
 class Test {
-  constructor(suite, name, callback, declaredMode, timeout) {
+  constructor(suite, name, callback, declaredMode, expectation, timeout) {
     this.suite = suite;
     this.name = name;
     this.fullName = (suite.fullName + ' ' + name).trim();
     this.declaredMode = declaredMode;
+    this.expectation = expectation;
     this._userCallback = new UserCallback(callback, timeout);
     this.location = this._userCallback.location;
     this.timeout = timeout;
@@ -109,11 +113,12 @@ class Test {
 }
 
 class Suite {
-  constructor(parentSuite, name, declaredMode) {
+  constructor(parentSuite, name, declaredMode, expectation) {
     this.parentSuite = parentSuite;
     this.name = name;
     this.fullName = (parentSuite ? parentSuite.fullName + ' ' + name : name).trim();
     this.declaredMode = declaredMode;
+    this.expectation = expectation;
     /** @type {!Array<(!Test|!Suite)>} */
     this.children = [];
     this.location = getCallerLocation(__filename);
@@ -195,16 +200,16 @@ class TestWorker {
     if (this._markTerminated(test))
       return;
 
-    if (test.declaredMode === TestMode.MarkAsFailing) {
+    if (test.declaredMode === TestMode.Skip) {
       await this._testPass._willStartTest(this, test);
-      test.result = TestResult.MarkedAsFailing;
+      test.result = TestResult.Skipped;
       await this._testPass._didFinishTest(this, test);
       return;
     }
 
-    if (test.declaredMode === TestMode.Skip) {
+    if (test.expectation === TestExpectation.Fail) {
       await this._testPass._willStartTest(this, test);
-      test.result = TestResult.Skipped;
+      test.result = TestResult.MarkedAsFailing;
       await this._testPass._didFinishTest(this, test);
       return;
     }
@@ -443,14 +448,17 @@ class TestPass {
 
 function specBuilder(defaultTimeout, action) {
   let mode = TestMode.Run;
+  let expectation = TestExpectation.Ok;
   let repeat = 1;
   let timeout = defaultTimeout;
 
   const func = (...args) => {
     for (let i = 0; i < repeat; ++i)
-      action(mode, timeout, ...args);
+      action(mode, expectation, timeout, ...args);
     mode = TestMode.Run;
+    expectation = TestExpectation.Ok;
     repeat = 1;
+    timeout = defaultTimeout;
   };
 
   func.skip = condition => {
@@ -460,12 +468,7 @@ function specBuilder(defaultTimeout, action) {
   };
   func.fail = condition => {
     if (condition)
-      mode = TestMode.MarkAsFailing;
-    return func;
-  };
-  func.flake = condition => {
-    if (condition)
-      mode = TestMode.Flake;
+      expectation = TestExpectation.Fail;
     return func;
   };
   func.slow = () => {
@@ -507,14 +510,14 @@ class TestRunner extends EventEmitter {
       }
     }
 
-    this.describe = specBuilder(this._timeout, (mode, timeout, ...args) => this._addSuite(mode, ...args));
-    this.fdescribe = specBuilder(this._timeout, (mode, timeout, ...args) => this._addSuite(TestMode.Focus, ...args));
-    this.xdescribe = specBuilder(this._timeout, (mode, timeout, ...args) => this._addSuite(TestMode.Skip, ...args));
-    this.it = specBuilder(this._timeout, (mode, timeout, name, callback) => this._addTest(name, callback, mode, timeout));
-    this.fit = specBuilder(this._timeout, (mode, timeout, name, callback) => this._addTest(name, callback, TestMode.Focus, timeout));
-    this.xit = specBuilder(this._timeout, (mode, timeout, name, callback) => this._addTest(name, callback, TestMode.Skip, timeout));
-    this.dit = specBuilder(this._timeout, (mode, timeout, name, callback) => {
-      const test = this._addTest(name, callback, TestMode.Focus, INFINITE_TIMEOUT);
+    this.describe = specBuilder(this._timeout, (mode, expectation, timeout, ...args) => this._addSuite(mode, expectation, ...args));
+    this.fdescribe = specBuilder(this._timeout, (mode, expectation, timeout, ...args) => this._addSuite(TestMode.Focus, expectation, ...args));
+    this.xdescribe = specBuilder(this._timeout, (mode, expectation, timeout, ...args) => this._addSuite(TestMode.Skip, expectation, ...args));
+    this.it = specBuilder(this._timeout, (mode, expectation, timeout, name, callback) => this._addTest(name, callback, mode, expectation, timeout));
+    this.fit = specBuilder(this._timeout, (mode, expectation, timeout, name, callback) => this._addTest(name, callback, TestMode.Focus, expectation, timeout));
+    this.xit = specBuilder(this._timeout, (mode, expectation, timeout, name, callback) => this._addTest(name, callback, TestMode.Skip, expectation, timeout));
+    this.dit = specBuilder(this._timeout, (mode, expectation, timeout, name, callback) => {
+      const test = this._addTest(name, callback, TestMode.Focus, expectation, INFINITE_TIMEOUT);
       const N = callback.toString().split('\n').length;
       for (let i = 0; i < N; ++i)
         this._debuggerLogBreakpointLines.set(test.location.filePath, i + test.location.lineNumber);
@@ -529,37 +532,29 @@ class TestRunner extends EventEmitter {
 
   loadTests(module, ...args) {
     if (typeof module.describe === 'function')
-      this._addSuite(TestMode.Run, '', module.describe, ...args);
+      this._addSuite(TestMode.Run, TestExpectation.Ok, '', module.describe, ...args);
     if (typeof module.fdescribe === 'function')
-      this._addSuite(TestMode.Focus, '', module.fdescribe, ...args);
+      this._addSuite(TestMode.Focus, TestExpectation.Ok, '', module.fdescribe, ...args);
     if (typeof module.xdescribe === 'function')
-      this._addSuite(TestMode.Skip, '', module.xdescribe, ...args);
+      this._addSuite(TestMode.Skip, TestExpectation.Ok, '', module.xdescribe, ...args);
   }
 
-  _addTest(name, callback, mode, timeout) {
-    let suite = this._currentSuite;
-    let markedAsFailing = suite.declaredMode === TestMode.MarkAsFailing;
-    while ((suite = suite.parentSuite))
-      markedAsFailing |= suite.declaredMode === TestMode.MarkAsFailing;
-    if (markedAsFailing)
-      mode = TestMode.MarkAsFailing;
-
-    suite = this._currentSuite;
-    let skip = suite.declaredMode === TestMode.Skip;
-    while ((suite = suite.parentSuite))
-    skip |= suite.declaredMode === TestMode.Skip;
-    if (skip)
-      mode = TestMode.Skip;
-
-    const test = new Test(this._currentSuite, name, callback, mode, timeout);
+  _addTest(name, callback, mode, expectation, timeout) {
+    for (let suite = this._currentSuite; suite; suite = suite.parentSuite) {
+      if (suite.expectation === TestExpectation.Fail)
+        expectation = TestExpectation.Fail;
+      if (suite.declaredMode === TestMode.Skip)
+        mode = TestMode.Skip;
+    }
+    const test = new Test(this._currentSuite, name, callback, mode, expectation, timeout);
     this._currentSuite.children.push(test);
     this._tests.push(test);
     return test;
   }
 
-  _addSuite(mode, name, callback, ...args) {
+  _addSuite(mode, expectation, name, callback, ...args) {
     const oldSuite = this._currentSuite;
-    const suite = new Suite(this._currentSuite, name, mode);
+    const suite = new Suite(this._currentSuite, name, mode, expectation);
     this._suites.push(suite);
     this._currentSuite.children.push(suite);
     this._currentSuite = suite;
@@ -650,11 +645,11 @@ class TestRunner extends EventEmitter {
   }
 
   focusedSuites() {
-    return this._suites.filter(suite => suite.declaredMode === 'focus');
+    return this._suites.filter(suite => suite.declaredMode === TestMode.Focus);
   }
 
   focusedTests() {
-    return this._tests.filter(test => test.declaredMode === 'focus');
+    return this._tests.filter(test => test.declaredMode === TestMode.Focus);
   }
 
   hasFocusedTestsOrSuites() {
@@ -664,7 +659,7 @@ class TestRunner extends EventEmitter {
   focusMatchingTests(fullNameRegex) {
     for (const test of this._tests) {
       if (fullNameRegex.test(test.fullName))
-        test.declaredMode = 'focus';
+        test.declaredMode = TestMode.Focus;
     }
   }
 
@@ -673,19 +668,19 @@ class TestRunner extends EventEmitter {
   }
 
   failedTests() {
-    return this._tests.filter(test => test.result === 'failed' || test.result === 'timedout' || test.result === 'crashed');
+    return this._tests.filter(test => test.result === TestResult.Failed || test.result === TestResult.TimedOut || test.result === TestResult.Crashed);
   }
 
   passedTests() {
-    return this._tests.filter(test => test.result === 'ok');
+    return this._tests.filter(test => test.result === TestResult.Ok);
   }
 
   skippedTests() {
-    return this._tests.filter(test => test.result === 'skipped');
+    return this._tests.filter(test => test.result === TestResult.Skipped);
   }
 
   markedAsFailingTests() {
-    return this._tests.filter(test => test.result === 'markedAsFailing');
+    return this._tests.filter(test => test.result === TestResult.MarkedAsFailing);
   }
 
   parallel() {
