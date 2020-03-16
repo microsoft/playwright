@@ -130,9 +130,9 @@ module.exports.describe = function({testRunner, expect, MAC, WIN, FFOX, CHROMIUM
     it('should throw when requesting body of redirected response', async({page, server}) => {
       server.setRedirect('/foo.html', '/empty.html');
       const response = await page.goto(server.PREFIX + '/foo.html');
-      const redirectChain = response.request().redirectChain();
-      expect(redirectChain.length).toBe(1);
-      const redirected = await redirectChain[0].response();
+      const redirectedFrom = response.request().redirectedFrom();
+      expect(redirectedFrom).toBeTruthy();
+      const redirected = await redirectedFrom.response();
       expect(redirected.status()).toBe(302);
       let error = null;
       await redirected.text().catch(e => error = e);
@@ -295,11 +295,10 @@ module.exports.describe = function({testRunner, expect, MAC, WIN, FFOX, CHROMIUM
         `200 ${server.EMPTY_PAGE}`,
         `DONE ${server.EMPTY_PAGE}`
       ]);
-
-      // Check redirect chain
-      const redirectChain = response.request().redirectChain();
-      expect(redirectChain.length).toBe(1);
-      expect(redirectChain[0].url()).toContain('/foo.html');
+      const redirectedFrom = response.request().redirectedFrom();
+      expect(redirectedFrom.url()).toContain('/foo.html');
+      expect(redirectedFrom.redirectedFrom()).toBe(null);
+      expect(redirectedFrom.redirectedTo()).toBe(response.request());
     });
   });
 

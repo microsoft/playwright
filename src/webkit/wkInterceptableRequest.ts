@@ -46,11 +46,12 @@ export class WKInterceptableRequest implements network.RouteDelegate {
   _interceptedCallback: () => void = () => {};
   private _interceptedPromise: Promise<unknown>;
 
-  constructor(session: WKSession, allowInterception: boolean, frame: frames.Frame, event: Protocol.Network.requestWillBeSentPayload, redirectChain: network.Request[], documentId: string | undefined) {
+  constructor(session: WKSession, allowInterception: boolean, frame: frames.Frame, event: Protocol.Network.requestWillBeSentPayload, redirectedFrom: network.Request | null, documentId: string | undefined) {
     this._session = session;
     this._requestId = event.requestId;
-    this.request = new network.Request(allowInterception ? this : null, frame, redirectChain, documentId, event.request.url,
-        event.type ? event.type.toLowerCase() : 'Unknown', event.request.method, event.request.postData || null, headersObject(event.request.headers));
+    const resourceType = event.type ? event.type.toLowerCase() : (redirectedFrom ? redirectedFrom.resourceType() : 'unknown');
+    this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId, event.request.url,
+        resourceType, event.request.method, event.request.postData || null, headersObject(event.request.headers));
     this._interceptedPromise = new Promise(f => this._interceptedCallback = f);
   }
 

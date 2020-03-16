@@ -52,17 +52,13 @@ export class FFNetworkManager {
   }
 
   _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
-    const redirected = event.redirectedFrom ? this._requests.get(event.redirectedFrom) : null;
-    const frame = redirected ? redirected.request.frame() : (event.frameId ? this._page._frameManager.frame(event.frameId) : null);
+    const redirectedFrom = event.redirectedFrom ? (this._requests.get(event.redirectedFrom) || null) : null;
+    const frame = redirectedFrom ? redirectedFrom.request.frame() : (event.frameId ? this._page._frameManager.frame(event.frameId) : null);
     if (!frame)
       return;
-    let redirectChain: network.Request[] = [];
-    if (redirected) {
-      redirectChain = redirected.request._redirectChain;
-      redirectChain.push(redirected.request);
-      this._requests.delete(redirected._id);
-    }
-    const request = new InterceptableRequest(this._session, frame, redirectChain, event);
+    if (redirectedFrom)
+      this._requests.delete(redirectedFrom._id);
+    const request = new InterceptableRequest(this._session, frame, redirectedFrom, event);
     this._requests.set(request._id, request);
     this._page._frameManager.requestStarted(request.request);
   }
@@ -91,7 +87,7 @@ export class FFNetworkManager {
     if (!request)
       return;
     const response = request.request._existingResponse()!;
-    // Keep redirected requests in the map for future reference in redirectChain.
+    // Keep redirected requests in the map for future reference as redirectedFrom.
     const isRedirected = response.status() >= 300 && response.status() <= 399;
     if (isRedirected) {
       response._requestFinished(new Error('Response body is unavailable for redirect responses'));
@@ -146,7 +142,7 @@ class InterceptableRequest implements network.RouteDelegate {
   _id: string;
   private _session: FFSession;
 
-  constructor(session: FFSession, frame: frames.Frame, redirectChain: network.Request[], payload: Protocol.Network.requestWillBeSentPayload) {
+  constructor(session: FFSession, frame: frames.Frame, redirectedFrom: InterceptableRequest | null, payload: Protocol.Network.requestWillBeSentPayload) {
     this._id = payload.requestId;
     this._session = session;
 
@@ -154,7 +150,7 @@ class InterceptableRequest implements network.RouteDelegate {
     for (const {name, value} of payload.headers)
       headers[name.toLowerCase()] = value;
 
-    this.request = new network.Request(payload.isIntercepted ? this : null, frame, redirectChain, payload.navigationId,
+    this.request = new network.Request(payload.isIntercepted ? this : null, frame, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
         payload.url, causeToResourceType[payload.cause] || 'other', payload.method, payload.postData || null, headers);
   }
 

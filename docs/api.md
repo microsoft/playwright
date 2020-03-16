@@ -3138,7 +3138,8 @@ If request gets a 'redirect' response, the request is successfully finished with
 - [request.isNavigationRequest()](#requestisnavigationrequest)
 - [request.method()](#requestmethod)
 - [request.postData()](#requestpostdata)
-- [request.redirectChain()](#requestredirectchain)
+- [request.redirectedFrom()](#requestredirectedfrom)
+- [request.redirectedTo()](#requestredirectedto)
 - [request.resourceType()](#requestresourcetype)
 - [request.response()](#requestresponse)
 - [request.url()](#requesturl)
@@ -3176,31 +3177,29 @@ Whether this request is driving frame's navigation.
 #### request.postData()
 - returns: <?[string]> Request's post body, if any.
 
-#### request.redirectChain()
-- returns: <[Array]<[Request]>>
+#### request.redirectedFrom()
+- returns: <?[Request]> Request that was redirected by the server to this one, if any.
 
-A `redirectChain` is a chain of requests initiated to fetch a resource.
-- If there are no redirects and the request was successful, the chain will be empty.
-- If a server responds with at least a single redirect, then the chain will
-contain all the requests that were redirected.
+When the server responds with a redirect, Playwright creates a new [Request] object. The two requests are connected by `redirectedFrom()` and `redirectedTo()` methods. When multiple server redirects has happened, it is possible to construct the whole redirect chain by repeatedly calling `redirectedFrom()`.
 
-`redirectChain` is shared between all the requests of the same chain.
-
-For example, if the website `http://example.com` has a single redirect to
-`https://example.com`, then the chain will contain one request:
-
+For example, if the website `http://example.com` redirects to `https://example.com`:
 ```js
 const response = await page.goto('http://example.com');
-const chain = response.request().redirectChain();
-console.log(chain.length); // 1
-console.log(chain[0].url()); // 'http://example.com'
+console.log(response.request().redirectedFrom().url()); // 'http://example.com'
 ```
 
-If the website `https://google.com` has no redirects, then the chain will be empty:
+If the website `https://google.com` has no redirects:
 ```js
 const response = await page.goto('https://google.com');
-const chain = response.request().redirectChain();
-console.log(chain.length); // 0
+console.log(response.request().redirectedFrom()); // null
+```
+
+#### request.redirectedTo()
+- returns: <?[Request]> New request issued by the browser iff the server responded with redirect.
+
+This method is the opposite of [request.redirectedFrom()](#requestredirectedfrom):
+```js
+console.log(request.redirectedFrom().redirectedTo() === request); // true
 ```
 
 #### request.resourceType()

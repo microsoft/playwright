@@ -387,7 +387,7 @@ export class Frame {
 
     disposer.dispose();
 
-    return request ? request._finalRequest.response() : null;
+    return request ? request._finalRequest().response() : null;
 
     function throwIfError(error: Error|void): asserts error is void {
       if (!error)
@@ -430,7 +430,7 @@ export class Frame {
     if (error)
       throw error;
 
-    return request ? request._finalRequest.response() : null;
+    return request ? request._finalRequest().response() : null;
   }
 
   async _waitForLoadState(options: types.NavigateOptions = {}): Promise<void> {
@@ -519,7 +519,7 @@ export class Frame {
       this._requestWatchers.delete(onRequest);
     };
     const onRequest = (request: network.Request) => {
-      if (!request._documentId || request.redirectChain().length)
+      if (!request._documentId || request.redirectedFrom())
         return;
       requestMap.set(request._documentId, request);
     };
