@@ -83,7 +83,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
   describe.skip(FFOX)('viewport.isMobile', () => {
     // Firefox does not support isMobile.
     it('should support mobile emulation', async({browser, server}) => {
-      const context = await browser.newContext({ viewport: iPhone.viewport });
+      const context = await browser.newContext({ ...iPhone });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => window.innerWidth)).toBe(375);
@@ -92,7 +92,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       await context.close();
     });
     it('should support touch emulation', async({browser, server}) => {
-      const context = await browser.newContext({ viewport: iPhone.viewport });
+      const context = await browser.newContext({ ...iPhone });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(true);
@@ -113,7 +113,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       }
     });
     it('should be detectable by Modernizr', async({browser, server}) => {
-      const context = await browser.newContext({ viewport: iPhone.viewport });
+      const context = await browser.newContext({ ...iPhone });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/detect-touch.html');
       expect(await page.evaluate(() => document.body.textContent.trim())).toBe('YES');
@@ -128,11 +128,11 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       await context.close();
     });
     it('should support landscape emulation', async({browser, server}) => {
-      const context1 = await browser.newContext({ viewport: iPhone.viewport });
+      const context1 = await browser.newContext({ ...iPhone });
       const page1 = await context1.newPage();
       await page1.goto(server.PREFIX + '/mobile.html');
       expect(await page1.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(false);
-      const context2 = await browser.newContext({ viewport: iPhoneLandscape.viewport });
+      const context2 = await browser.newContext({ ...iPhoneLandscape });
       const page2 = await context2.newPage();
       expect(await page2.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(true);
       await context1.close();
@@ -174,7 +174,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
 
   describe.skip(FFOX)('Page.emulate', function() {
     it('should work', async({browser, server}) => {
-      const context = await browser.newContext({viewport: iPhone.viewport, userAgent: iPhone.userAgent});
+      const context = await browser.newContext({ ...iPhone });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => window.innerWidth)).toBe(375);
@@ -182,7 +182,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       await context.close();
     });
     it('should support clicking', async({browser, server}) => {
-      const context = await browser.newContext({ viewport: iPhone.viewport, userAgent: iPhone.userAgent });
+      const context = await browser.newContext({ ...iPhone });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/input/button.html');
       const button = await page.$('button');
