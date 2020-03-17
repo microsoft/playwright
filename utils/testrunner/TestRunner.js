@@ -253,6 +253,8 @@ class TestWorker {
       await this._testPass._willStartTestBody(this, test);
       this._runningTestCallback = test._userCallback;
       test.error = await test._userCallback.run(this._state, test);
+      if (test.error && test.error.stack)
+        await this._testPass._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(test.error);
       this._runningTestCallback = null;
       if (!test.error)
         test.result = TestResult.Ok;
