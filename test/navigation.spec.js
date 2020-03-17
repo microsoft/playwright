@@ -897,7 +897,6 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       await page.$eval('iframe', frame => frame.remove());
       const error = await navigationPromise;
       expect(error.message).toContain('frame was detached');
-      expect(error.stack).toContain('Frame.goto')
     });
     it('should return matching responses', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);

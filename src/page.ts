@@ -104,14 +104,13 @@ export class PageEvent {
     if (!(page instanceof Page))
       return page;
 
-    const { dispose, value: waitForLifecycle } = page.mainFrame()._waitForLifecycle(lifecycle);
-    const error = await Promise.race([
-      page.mainFrame()._createFrameDestroyedPromise(),
-      waitForLifecycle,
-    ]);
-    dispose();
-    if (error)
+    try {
+      const frameTask = new frames.FrameTask(page.mainFrame(), { timeout: 0 });
+      await frameTask.waitForLifecycle(lifecycle);
+      frameTask.done();
+    } catch (error) {
       return error;
+    }
     return page;
   }
 
