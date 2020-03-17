@@ -130,7 +130,7 @@ function compareDocumentations(actual, expected) {
           errors.push(`Method ${className}.${methodName} has unneeded description of return type`);
         else
           errors.push(`Method ${className}.${methodName} is missing return type description`);
-      } else if (actualMethod.hasReturn) {
+      } else if (actualMethod.type) {
         checkType(`Method ${className}.${methodName} has the wrong return type: `, actualMethod.type, expectedMethod.type);
       }
       const actualArgs = Array.from(actualMethod.args.keys());
@@ -143,13 +143,6 @@ function compareDocumentations(actual, expected) {
         for (const arg of argsDiff.extra)
           text.push(`- Non-existing argument found: ${arg}`);
         errors.push(text.join('\n'));
-      } else {
-        for (const name of actualMethod.args.keys()) {
-          const actual = actualMethod.args.get(name);
-          const expected = expectedMethod.args.get(name);
-          if (actual.required !== expected.required)
-            errors.push(`${className}.${methodName}(): ${name} should be ${expected.required ? 'required' : 'optional'}`);
-        }
       }
 
       for (const arg of argsDiff.equal)
@@ -182,7 +175,9 @@ function compareDocumentations(actual, expected) {
    * @param {!Documentation.Member} expected
    */
   function checkProperty(source, actual, expected) {
-    checkType(source + ' ' + actual.name, actual.type, expected.type);
+    if (actual.required !== expected.required)
+      errors.push(`${source}: ${actual.name} should be ${expected.required ? 'required' : 'optional'}`);
+    checkType(source + '.' + actual.name, actual.type, expected.type);
   }
 
   /**
@@ -196,23 +191,41 @@ function compareDocumentations(actual, expected) {
       return;
     if (expected.name === 'T' || expected.name.includes('[T]'))
       return;
-    // We don't have nullchecks on for TypeScript
-    const actualName = actual.name.replace(/[\? ]/g, '').replace(/ElementHandle\<Node\>/g, 'ElementHandle');
-    // TypeScript likes to add some spaces
-    const expectedName = expected.name.replace(/\ /g, '').replace(/ElementHandle\<Node\>/g, 'ElementHandle');
+    /** @type {Parameters<typeof String.prototype.replace>[]} */
+    const mdReplacers = [
+      [/\ /g, ''],
+      // We shortcut ? to null|
+      [/\?/g, 'null|'],
+    ];
+    const tsReplacers = [
+      [/\ /g, ''],
+      [/ElementHandle\<Element\>/g, 'ElementHandle'],
+      [/ElementHandle\<Node\>/g, 'ElementHandle'],
+      [/ElementHandle\<T\>/g, 'ElementHandle'],
+      [/Handle\<R\>/g, 'JSHandle'],
+      [/JSHandle\<Object\>/g, 'JSHandle'],
+      [/object/g, 'Object'],
+      [/Promise\<T\>/, 'Promise<Object>']
+    ]
+    let actualName = actual.name;
+    for (const replacer of mdReplacers)
+      actualName = actualName.replace(...replacer);
+    let expectedName = expected.name;
+    for (const replacer of tsReplacers)
+      expectedName = expectedName.replace(...replacer);
     if (expectedName !== actualName)
       errors.push(`${source} ${actualName} != ${expectedName}`);
     if (actual.name === 'boolean' || actual.name === 'string')
       return;
-    const actualPropertiesMap = new Map(actual.properties.map(property => [property.name, property.type]));
-    const expectedPropertiesMap = new Map(expected.properties.map(property => [property.name, property.type]));
+    const actualPropertiesMap = new Map(actual.properties.map(property => [property.name, property]));
+    const expectedPropertiesMap = new Map(expected.properties.map(property => [property.name, property]));
     const propertiesDiff = diff(Array.from(actualPropertiesMap.keys()).sort(), Array.from(expectedPropertiesMap.keys()).sort());
     for (const propertyName of propertiesDiff.extra)
       errors.push(`${source} has unexpected property '${propertyName}'`);
     for (const propertyName of propertiesDiff.missing)
       errors.push(`${source} is missing property ${propertyName}`);
     for (const propertyName of propertiesDiff.equal)
-      checkType(source + '.' + propertyName, actualPropertiesMap.get(propertyName), expectedPropertiesMap.get(propertyName));
+      checkProperty(source, actualPropertiesMap.get(propertyName), expectedPropertiesMap.get(propertyName));
   }
 
   return errors;

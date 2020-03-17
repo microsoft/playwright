@@ -383,7 +383,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._delegate.getBoundingBox(this);
   }
 
-  async screenshot(options?: types.ElementScreenshotOptions): Promise<string | platform.BufferType> {
+  async screenshot(options?: types.ElementScreenshotOptions): Promise<platform.BufferType> {
     return this._page._screenshotter.screenshotElement(this, options);
   }
 

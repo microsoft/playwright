@@ -66,7 +66,7 @@ export class Accessibility {
 
   async snapshot(options: {
       interestingOnly?: boolean;
-      root?: dom.ElementHandle | null;
+      root?: dom.ElementHandle;
     } = {}): Promise<SerializedAXNode | null> {
     const {
       interestingOnly = true,

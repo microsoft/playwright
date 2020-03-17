@@ -184,8 +184,8 @@ function checkSources(sources, externalDependencies) {
   /**
    * @param {!ts.Type} type
    */
-  function isNotNullish(type) {
-    return !((type.flags & ts.TypeFlags.Undefined) || (type.flags & ts.TypeFlags.Null));
+  function isNotUndefined(type) {
+     return !(type.flags & ts.TypeFlags.Undefined);
   }
 
   /**
@@ -234,7 +234,7 @@ function checkSources(sources, externalDependencies) {
     }
     if (type.isUnion() && (typeName.includes('|') || type.types.every(type => type.isStringLiteral() || type.intrinsicName === 'number'))) {
       const types = type.types
-        .filter(isNotNullish)
+        .filter(isNotUndefined)
         .map(type => serializeType(type, circular));
       const name = types.map(type => type.name).join('|');
       const properties = [].concat(...types.map(type => type.properties));
@@ -298,7 +298,7 @@ function checkSources(sources, externalDependencies) {
     if (signatures.length)
       return signatures[0];
     if (type.isUnion()) {
-      const innerTypes = type.types.filter(isNotNullish);
+      const innerTypes = type.types.filter(isNotUndefined);
       if (innerTypes.length === 1)
         return signatureForType(innerTypes[0]);
     }
