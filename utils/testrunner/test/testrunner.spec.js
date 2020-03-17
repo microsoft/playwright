@@ -49,6 +49,15 @@ module.exports.addTests = function({testRunner, expect}) {
       expect(test.fullName).toBe('uno');
       expect(test.declaredMode).toBe('focus');
     });
+    it('should run a failed focused test', async() => {
+      const t = newTestRunner();
+      let run = false;
+      t.fit.fail(true)('uno', () => { run = true; throw new Error('failure'); });
+      expect(t.tests().length).toBe(1);
+      await t.run();
+      expect(run).toBe(true);
+      expect(t.failedTests()[0].name).toBe('uno');
+    });
   });
 
   describe('TestRunner.describe', () => {

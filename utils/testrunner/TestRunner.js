@@ -207,7 +207,7 @@ class TestWorker {
       return;
     }
 
-    if (test.expectation === TestExpectation.Fail) {
+    if (test.expectation === TestExpectation.Fail && test.declaredMode !== TestMode.Focus) {
       await this._testPass._willStartTest(this, test);
       test.result = TestResult.MarkedAsFailing;
       await this._testPass._didFinishTest(this, test);
