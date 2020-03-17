@@ -166,8 +166,8 @@ export class FFBrowserContext extends BrowserContextBase {
   }
 
   async _initialize() {
-    const entries = Object.entries(this._options.permissions || {});
-    await Promise.all(entries.map(entry => this.setPermissions(entry[0], entry[1])));
+    if (this._options.permissions)
+      await this.grantPermissions(this._options.permissions);
     if (this._options.geolocation)
       await this.setGeolocation(this._options.geolocation);
     if (this._options.extraHTTPHeaders)
@@ -227,12 +227,12 @@ export class FFBrowserContext extends BrowserContextBase {
     await this._browser._connection.send('Browser.clearCookies', { browserContextId: this._browserContextId || undefined });
   }
 
-  async setPermissions(origin: string, permissions: string[]): Promise<void> {
-    const webPermissionToProtocol = new Map<string, 'geo' | 'microphone' | 'camera' | 'desktop-notifications'>([
+  async _doGrantPermissions(origin: string, permissions: string[]) {
+    const webPermissionToProtocol = new Map<string, 'geo' | 'desktop-notification' | 'persistent-storage' | 'push'>([
       ['geolocation', 'geo'],
-      ['microphone', 'microphone'],
-      ['camera', 'camera'],
-      ['notifications', 'desktop-notifications'],
+      ['persistent-storage', 'persistent-storage'],
+      ['push', 'push'],
+      ['notifications', 'desktop-notification'],
     ]);
     const filtered = permissions.map(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);
@@ -240,10 +240,10 @@ export class FFBrowserContext extends BrowserContextBase {
         throw new Error('Unknown permission: ' + permission);
       return protocolPermission;
     });
-    await this._browser._connection.send('Browser.grantPermissions', {origin, browserContextId: this._browserContextId || undefined, permissions: filtered});
+    await this._browser._connection.send('Browser.grantPermissions', { origin: origin, browserContextId: this._browserContextId || undefined, permissions: filtered});
   }
 
-  async clearPermissions() {
+  async _doClearPermissions() {
     await this._browser._connection.send('Browser.resetPermissions', { browserContextId: this._browserContextId || undefined });
   }
 

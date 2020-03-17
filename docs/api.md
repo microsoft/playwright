@@ -208,7 +208,7 @@ Indicates that the browser is connected.
     - `longitude` <[number]> Longitude between -180 and 180.
     - `accuracy` <[number]> Optional non-negative accuracy value.
   - `locale` <?[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
-  - `permissions` <[Object]> A map from origin keys to permissions values. See [browserContext.setPermissions](#browsercontextsetpermissionsorigin-permissions) for more details.
+  - `permissions` <[Array]<[string]>> A list of permissions to grant to all pages in this context. See [browserContext.grantPermissions](#browsercontextgrantpermissionspermissions-options) for more details.
   - `extraHTTPHeaders` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
   - `offline` <[boolean]> Whether to emulate network being offline. Defaults to `false`.
   - `httpCredentials` <[Object]> Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
@@ -246,7 +246,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
     - `longitude` <[number]> Longitude between -180 and 180.
     - `accuracy` <[number]> Optional non-negative accuracy value.
   - `locale` <?[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
-  - `permissions` <[Object]> A map from origin keys to permissions values. See [browserContext.setPermissions](#browsercontextsetpermissionsorigin-permissions) for more details.
+  - `permissions` <[Array]<[string]>> A list of permissions to grant to all pages in this context. See [browserContext.grantPermissions](#browsercontextgrantpermissionspermissions-options) for more details.
   - `extraHTTPHeaders` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
   - `offline` <[boolean]> Whether to emulate network being offline. Defaults to `false`.
   - `httpCredentials` <[Object]> Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
@@ -290,6 +290,7 @@ await context.close();
 - [browserContext.close()](#browsercontextclose)
 - [browserContext.cookies([urls])](#browsercontextcookiesurls)
 - [browserContext.exposeFunction(name, playwrightFunction)](#browsercontextexposefunctionname-playwrightfunction)
+- [browserContext.grantPermissions(permissions[][, options])](#browsercontextgrantpermissionspermissions-options)
 - [browserContext.newPage()](#browsercontextnewpage)
 - [browserContext.pages()](#browsercontextpages)
 - [browserContext.route(url, handler)](#browsercontextrouteurl-handler)
@@ -299,7 +300,6 @@ await context.close();
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setHTTPCredentials(httpCredentials)](#browsercontextsethttpcredentialshttpcredentials)
 - [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
-- [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
 - [browserContext.waitForEvent(event[, optionsOrPredicate])](#browsercontextwaitforeventevent-optionsorpredicate)
 <!-- GEN:stop -->
 
@@ -381,7 +381,7 @@ Clears all permission overrides for the browser context.
 
 ```js
 const context = await browser.newContext();
-context.setPermissions('https://example.com', ['clipboard-read']);
+await context.grantPermissions(['clipboard-read']);
 // do stuff ..
 context.clearPermissions();
 ```
@@ -446,6 +446,31 @@ const crypto = require('crypto');
   await page.click('button');
 })();
 ```
+
+#### browserContext.grantPermissions(permissions[][, options])
+- `permissions` <[Array]<[string]>> A permission or an array of permissions to grant. Permissions can be one of the following values:
+    - `'*'`
+    - `'geolocation'`
+    - `'midi'`
+    - `'midi-sysex'` (system-exclusive midi)
+    - `'notifications'`
+    - `'push'`
+    - `'camera'`
+    - `'microphone'`
+    - `'background-sync'`
+    - `'ambient-light-sensor'`
+    - `'accelerometer'`
+    - `'gyroscope'`
+    - `'magnetometer'`
+    - `'accessibility-events'`
+    - `'clipboard-read'`
+    - `'clipboard-write'`
+    - `'payment-handler'`
+- `options` <[Object]>
+  - `origin` <[string]> The [origin] to grant permissions to, e.g. "https://example.com".
+- returns: <[Promise]>
+
+Grants specified permissions to the browser context. Only grants corresponding permissions to the given origin if specified.
 
 #### browserContext.newPage()
 - returns: <[Promise]<[Page]>>
@@ -544,27 +569,6 @@ To disable authentication, pass `null`.
 - `offline` <[boolean]> Whether to emulate network being offline for the browser context.
 - returns: <[Promise]>
 
-#### browserContext.setPermissions(origin, permissions[])
-- `origin` <[string]> The [origin] to grant permissions to, e.g. "https://example.com".
-- `permissions` <[Array]<[string]>> An array of permissions to grant. All permissions that are not listed here will be automatically denied. Permissions can be one of the following values:
-    - `'geolocation'`
-    - `'midi'`
-    - `'midi-sysex'` (system-exclusive midi)
-    - `'notifications'`
-    - `'push'`
-    - `'camera'`
-    - `'microphone'`
-    - `'background-sync'`
-    - `'ambient-light-sensor'`
-    - `'accelerometer'`
-    - `'gyroscope'`
-    - `'magnetometer'`
-    - `'accessibility-events'`
-    - `'clipboard-read'`
-    - `'clipboard-write'`
-    - `'payment-handler'`
-- returns: <[Promise]>
-
 #### browserContext.waitForEvent(event[, optionsOrPredicate])
 - `event` <[string]> Event name, same one would pass into `browserContext.on(event)`.
 - `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object.
@@ -577,7 +581,7 @@ is fired.
 
 ```js
 const context = await browser.newContext();
-await context.setPermissions('https://html5demos.com', ['geolocation']);
+await context.grantPermissions(['geolocation']);
 ```
 
 ### class: Page
@@ -3824,6 +3828,7 @@ const backgroundPage = await backroundPageTarget.page();
 - [browserContext.close()](#browsercontextclose)
 - [browserContext.cookies([urls])](#browsercontextcookiesurls)
 - [browserContext.exposeFunction(name, playwrightFunction)](#browsercontextexposefunctionname-playwrightfunction)
+- [browserContext.grantPermissions(permissions[][, options])](#browsercontextgrantpermissionspermissions-options)
 - [browserContext.newPage()](#browsercontextnewpage)
 - [browserContext.pages()](#browsercontextpages)
 - [browserContext.route(url, handler)](#browsercontextrouteurl-handler)
@@ -3833,7 +3838,6 @@ const backgroundPage = await backroundPageTarget.page();
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setHTTPCredentials(httpCredentials)](#browsercontextsethttpcredentialshttpcredentials)
 - [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
-- [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
 - [browserContext.waitForEvent(event[, optionsOrPredicate])](#browsercontextwaitforeventevent-optionsorpredicate)
 <!-- GEN:stop -->
 

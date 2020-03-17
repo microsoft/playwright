@@ -252,8 +252,8 @@ export class CRBrowserContext extends BrowserContextBase {
   }
 
   async _initialize() {
-    const entries = Object.entries(this._options.permissions || {});
-    await Promise.all(entries.map(entry => this.setPermissions(entry[0], entry[1])));
+    if (this._options.permissions)
+      await this.grantPermissions(this._options.permissions);
     if (this._options.geolocation)
       await this.setGeolocation(this._options.geolocation);
     if (this._options.offline)
@@ -302,7 +302,7 @@ export class CRBrowserContext extends BrowserContextBase {
     await this._browser._session.send('Storage.clearCookies', { browserContextId: this._browserContextId || undefined });
   }
 
-  async setPermissions(origin: string, permissions: string[]): Promise<void> {
+  async _doGrantPermissions(origin: string, permissions: string[]) {
     const webPermissionToProtocol = new Map<string, Protocol.Browser.PermissionType>([
       ['geolocation', 'geolocation'],
       ['midi', 'midi'],
@@ -327,10 +327,10 @@ export class CRBrowserContext extends BrowserContextBase {
         throw new Error('Unknown permission: ' + permission);
       return protocolPermission;
     });
-    await this._browser._session.send('Browser.grantPermissions', { origin, browserContextId: this._browserContextId || undefined, permissions: filtered });
+    await this._browser._session.send('Browser.grantPermissions', { origin: origin === '*' ? undefined : origin, browserContextId: this._browserContextId || undefined, permissions: filtered });
   }
 
-  async clearPermissions() {
+  async _doClearPermissions() {
     await this._browser._session.send('Browser.resetPermissions', { browserContextId: this._browserContextId || undefined });
   }
 

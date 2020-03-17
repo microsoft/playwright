@@ -32,7 +32,7 @@ export type BrowserContextOptions = {
   locale?: string,
   timezoneId?: string,
   geolocation?: types.Geolocation,
-  permissions?: { [key: string]: string[] },
+  permissions?: string[],
   extraHTTPHeaders?: network.Headers,
   offline?: boolean,
   httpCredentials?: types.Credentials,
@@ -46,7 +46,7 @@ export interface BrowserContext {
   cookies(urls?: string | string[]): Promise<network.NetworkCookie[]>;
   addCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
   clearCookies(): Promise<void>;
-  setPermissions(origin: string, permissions: string[]): Promise<void>;
+  grantPermissions(permissions: string[], options?: { origin?: string }): Promise<void>;
   clearPermissions(): Promise<void>;
   setGeolocation(geolocation: types.Geolocation | null): Promise<void>;
   setExtraHTTPHeaders(headers: network.Headers): Promise<void>;
@@ -67,6 +67,7 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
   _closed = false;
   private readonly _closePromise: Promise<Error>;
   private _closePromiseFulfill: ((error: Error) => void) | undefined;
+  private _permissions = new Map<string, string[]>();
 
   constructor(options: BrowserContextOptions) {
     super();
@@ -92,8 +93,8 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
   abstract cookies(...urls: string[]): Promise<network.NetworkCookie[]>;
   abstract addCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
   abstract clearCookies(): Promise<void>;
-  abstract setPermissions(origin: string, permissions: string[]): Promise<void>;
-  abstract clearPermissions(): Promise<void>;
+  abstract _doGrantPermissions(origin: string, permissions: string[]): Promise<void>;
+  abstract _doClearPermissions(): Promise<void>;
   abstract setGeolocation(geolocation: types.Geolocation | null): Promise<void>;
   abstract setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void>;
   abstract setExtraHTTPHeaders(headers: network.Headers): Promise<void>;
@@ -102,6 +103,24 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
   abstract exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
   abstract route(url: types.URLMatch, handler: network.RouteHandler): Promise<void>;
   abstract close(): Promise<void>;
+
+  async grantPermissions(permissions: string[], options?: { origin?: string }) {
+    let origin = '*';
+    if (options && options.origin) {
+      const url = new URL(options.origin);
+      origin = url.origin;
+    }
+    const existing = new Set(this._permissions.get(origin) || []);
+    permissions.forEach(p => existing.add(p));
+    const list = [...existing.values()];
+    this._permissions.set(origin, list);
+    await this._doGrantPermissions(origin, list);
+  }
+
+  async clearPermissions() {
+    this._permissions.clear();
+    await this._doClearPermissions();
+  }
 
   setDefaultNavigationTimeout(timeout: number) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
