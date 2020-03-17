@@ -59,13 +59,13 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
     });
 
     it('should receive events', async({page, server}) => {
-      const logs = await page.evaluate(async url => {
+      const logs = await page.evaluate(async () => {
         const logs = [];
         page.on('console', message => logs.push(message.text()));
         await page.evaluate(() => console.log('hello'));
         await page.evaluate(() => console.log('world'));
         return logs;
-      }, server.EMPTY_PAGE);
+      });
       expect(logs).toEqual(['hello', 'world']);
     });
 
