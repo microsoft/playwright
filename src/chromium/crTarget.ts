@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
+import { assert, helper } from '../helper';
+import { Page, Worker } from '../page';
 import { CRBrowser, CRBrowserContext } from './crBrowser';
 import { CRSession, CRSessionEvents } from './crConnection';
-import { Page, Worker } from '../page';
-import { Protocol } from './protocol';
-import { debugError, assert, helper } from '../helper';
-import { CRPage } from './crPage';
 import { CRExecutionContext } from './crExecutionContext';
+import { CRPage } from './crPage';
+import { Protocol } from './protocol';
 
 const targetSymbol = Symbol('target');
 
@@ -30,11 +30,11 @@ export class CRTarget {
   private readonly _browser: CRBrowser;
   private readonly _browserContext: CRBrowserContext;
   readonly _targetId: string;
-  readonly sessionFactory: () => Promise<CRSession>;
   private readonly _pagePromise: Promise<Page | Error> | null = null;
   readonly _crPage: CRPage | null = null;
   _initializedPage: Page | null = null;
-  private _workerPromise: Promise<Worker> | null = null;
+  private readonly _workerPromise: Promise<Worker | Error> | null = null;
+  _initializedWorker: Worker | null = null;
 
   static fromPage(page: Page): CRTarget {
     return (page as any)[targetSymbol];
@@ -48,22 +48,23 @@ export class CRTarget {
     browser: CRBrowser,
     targetInfo: Protocol.Target.TargetInfo,
     browserContext: CRBrowserContext,
-    session: CRSession | null,
-    sessionFactory: () => Promise<CRSession>,
+    session: CRSession,
     hasInitialAboutBlank: boolean) {
     this._targetInfo = targetInfo;
     this._browser = browser;
     this._browserContext = browserContext;
     this._targetId = targetInfo.targetId;
-    this.sessionFactory = sessionFactory;
     if (CRTarget.isPageType(targetInfo.type)) {
-      assert(session, 'Page target must be created with existing session');
       this._crPage = new CRPage(session, this._browser, this._browserContext);
       helper.addEventListener(session, 'Page.windowOpen', event => browser._onWindowOpen(targetInfo.targetId, event));
       const page = this._crPage.page();
       (page as any)[targetSymbol] = this;
       session.once(CRSessionEvents.Disconnected, () => page._didDisconnect());
       this._pagePromise = this._crPage.initialize(hasInitialAboutBlank).then(() => this._initializedPage = page).catch(e => e);
+    } else if (targetInfo.type === 'service_worker') {
+      this._workerPromise = this._initializeServiceWorker(session);
+    } else {
+      assert(false, 'Unsupported target type: ' + targetInfo.type);
     }
   }
 
@@ -78,22 +79,26 @@ export class CRTarget {
     throw new Error('Not a page.');
   }
 
-  async serviceWorker(): Promise<Worker | null> {
-    if (this._targetInfo.type !== 'service_worker')
-      return null;
-    if (!this._workerPromise) {
-      // TODO(einbinder): Make workers send their console logs.
-      this._workerPromise = this.sessionFactory().then(session => {
-        const worker = new Worker(this._targetInfo.url);
-        session.once('Runtime.executionContextCreated', async event => {
-          worker._createExecutionContext(new CRExecutionContext(session, event.context));
-        });
-        // This might fail if the target is closed before we receive all execution contexts.
-        session.send('Runtime.enable', {}).catch(debugError);
-        return worker;
-      });
+  async _initializeServiceWorker(session: CRSession): Promise<Worker | Error> {
+    const worker = new Worker(this._targetInfo.url);
+    session.once('Runtime.executionContextCreated', event => {
+      worker._createExecutionContext(new CRExecutionContext(session, event.context));
+    });
+    try {
+      // This might fail if the target is closed before we receive all execution contexts.
+      await session.send('Runtime.enable', {});
+      await session.send('Runtime.runIfWaitingForDebugger');
+      this._initializedWorker = worker;
+      return worker;
+    } catch (error) {
+      return error;
     }
-    return this._workerPromise;
+  }
+
+  serviceWorkerOrError(): Promise<Worker | Error> {
+    if (this.type() === 'service_worker')
+      return this._workerPromise!;
+    throw new Error('Not a service worker.');
   }
 
   type(): 'page' | 'background_page' | 'service_worker' | 'shared_worker' | 'other' | 'browser' {

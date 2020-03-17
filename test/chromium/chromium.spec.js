@@ -32,6 +32,23 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       ]);
       expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
     });
+    it('serviceWorkers() should return current workers', async({browser, page, server, context}) => {
+      const [worker1] = await Promise.all([
+        context.waitForEvent('serviceworker'),
+        page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
+      ]);
+      let workers = context.serviceWorkers();
+      expect(workers.length).toBe(1);
+
+      const [worker2] = await Promise.all([
+        context.waitForEvent('serviceworker'),
+        page.goto(server.CROSS_PROCESS_PREFIX + '/serviceworkers/empty/sw.html')
+      ]);
+      workers = context.serviceWorkers();
+      expect(workers.length).toBe(2);
+      expect(workers).toContain(worker1);
+      expect(workers).toContain(worker2);
+    });
     it('should not create a worker from a shared worker', async({browser, page, server, context}) => {
       await page.goto(server.EMPTY_PAGE);
       let serviceWorkerCreated;
