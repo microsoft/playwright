@@ -458,10 +458,10 @@ index 5de630a1db847a09651b310928bb7bc4d4f66f29..0268bc2bdfb3bfda2ef6e01a5dd24209
    nsCOMPtr<nsIPrincipal> principal =
 diff --git a/juggler/BrowserContextManager.js b/juggler/BrowserContextManager.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..670ffa0bf10b3bdc98a732b740c41c217f0bc720
+index 0000000000000000000000000000000000000000..6c3d918022f0e8ff84083cb20266c97902cd04d4
 --- /dev/null
 +++ b/juggler/BrowserContextManager.js
-@@ -0,0 +1,199 @@
+@@ -0,0 +1,214 @@
 +"use strict";
 +
 +const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
@@ -541,6 +541,8 @@ index 0000000000000000000000000000000000000000..670ffa0bf10b3bdc98a732b740c41c21
 +      this.userContextId = identity.userContextId;
 +    }
 +    this._principals = [];
++    // Maps origins to the permission lists.
++    this._permissions = new Map();
 +    this._manager._browserContextIdToBrowserContext.set(this.browserContextId, this);
 +    this._manager._userContextIdToBrowserContext.set(this.userContextId, this);
 +    this.options = options || {};
@@ -562,13 +564,7 @@ index 0000000000000000000000000000000000000000..670ffa0bf10b3bdc98a732b740c41c21
 +  }
 +
 +  grantPermissions(origin, permissions) {
-+    const attrs = { userContextId: this.userContextId || undefined };
-+    const principal = Services.scriptSecurityManager.createContentPrincipal(NetUtil.newURI(origin), attrs);
-+    this._principals.push(principal);
-+    for (const permission of ALL_PERMISSIONS) {
-+      const action = permissions.includes(permission) ? Ci.nsIPermissionManager.ALLOW_ACTION : Ci.nsIPermissionManager.DENY_ACTION;
-+      Services.perms.addFromPrincipal(principal, permission, action, Ci.nsIPermissionManager.EXPIRE_NEVER, 0 /* expireTime */);
-+    }
++    this._permissions.set(origin, permissions);
 +  }
 +
 +  resetPermissions() {
@@ -577,6 +573,25 @@ index 0000000000000000000000000000000000000000..670ffa0bf10b3bdc98a732b740c41c21
 +        Services.perms.removeFromPrincipal(principal, permission);
 +    }
 +    this._principals = [];
++    this._permissions.clear();
++  }
++
++  grantPermissionsToOrigin(url) {
++    let origin = Array.from(this._permissions.keys()).find(key => url.startsWith(key));
++    if (!origin)
++      origin = '*';
++
++    const permissions = this._permissions.get(origin);
++    if (!permissions)
++      return;
++
++    const attrs = { userContextId: this.userContextId || undefined };
++    const principal = Services.scriptSecurityManager.createContentPrincipal(NetUtil.newURI(url), attrs);
++    this._principals.push(principal);
++    for (const permission of ALL_PERMISSIONS) {
++      const action = permissions.includes(permission) ? Ci.nsIPermissionManager.ALLOW_ACTION : Ci.nsIPermissionManager.DENY_ACTION;
++      Services.perms.addFromPrincipal(principal, permission, action, Ci.nsIPermissionManager.EXPIRE_NEVER, 0 /* expireTime */);
++    }
 +  }
 +
 +  setCookies(cookies) {
@@ -1612,10 +1627,10 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..98071c0e2c5429cfe8f29c390de3944f7f6e52a9
+index 0000000000000000000000000000000000000000..eab73deee89cc7c8ab0a304f79126264de5c4f8e
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
-@@ -0,0 +1,250 @@
+@@ -0,0 +1,264 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
@@ -1673,11 +1688,10 @@ index 0000000000000000000000000000000000000000..98071c0e2c5429cfe8f29c390de3944f
 +    Services.obs.addObserver(this, 'oop-frameloader-crashed');
 +  }
 +
-+  async ensurePermissionsInContextPages(browserContextId, permissions) {
++  pageTargets(browserContextId) {
 +    const browserContext = this._contextManager.browserContextForId(browserContextId);
 +    const pageTargets = [...this._targets.values()].filter(target => target instanceof PageTarget);
-+    const contextPages = pageTargets.filter(target => target._browserContext === browserContext);
-+    await Promise.all(contextPages.map(page => page._channel.connect('').send('ensurePermissions', permissions).catch(e => void e)));
++    return pageTargets.filter(target => target._browserContext === browserContext);
 +  }
 +
 +  async newPage({browserContextId}) {
@@ -1775,10 +1789,16 @@ index 0000000000000000000000000000000000000000..98071c0e2c5429cfe8f29c390de3944f
 +    this._registry = registry;
 +    this._tab = tab;
 +    this._browserContext = browserContext;
++    this._url = '';
 +    this._openerId = opener ? opener.id() : undefined;
 +    this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, tab.linkedBrowser.messageManager);
 +
++    const navigationListener = {
++      QueryInterface: ChromeUtils.generateQI([ Ci.nsIWebProgressListener]),
++      onLocationChange: (aWebProgress, aRequest, aLocation) => this._onNavigated(aLocation),
++    };
 +    this._eventListeners = [
++      helper.addProgressListener(tab.linkedBrowser, navigationListener, Ci.nsIWebProgress.NOTIFY_LOCATION),
 +      helper.addMessageListener(tab.linkedBrowser.messageManager, 'juggler:content-ready', {
 +        receiveMessage: () => this._onContentReady()
 +      }),
@@ -1837,6 +1857,15 @@ index 0000000000000000000000000000000000000000..98071c0e2c5429cfe8f29c390de3944f
 +      browserContextId: this._browserContext ? this._browserContext.browserContextId : undefined,
 +      openerId: this._openerId,
 +    };
++  }
++
++  _onNavigated(aLocation) {
++    this._url = aLocation.spec;
++    this._browserContext.grantPermissionsToOrigin(this._url);
++  }
++
++  async ensurePermissions(permissions) {
++    await this._channel.connect('').send('ensurePermissions', permissions).catch(e => void e);
 +  }
 +
 +  dispose() {
@@ -4146,7 +4175,7 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/juggler/content/main.js b/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..212f1c1a218efebe8685b019e79fb553db720453
+index 0000000000000000000000000000000000000000..6ce6eff8dc8852d7fbbac907421de6de39d8ed0e
 --- /dev/null
 +++ b/juggler/content/main.js
 @@ -0,0 +1,129 @@
@@ -4163,7 +4192,7 @@ index 0000000000000000000000000000000000000000..212f1c1a218efebe8685b019e79fb553
 +  'geo',
 +  'microphone',
 +  'camera',
-+  'desktop-notifications',
++  'desktop-notification',
 +];
 +
 +const scrollbarManager = new ScrollbarManager(docShell);
@@ -4360,10 +4389,10 @@ index 0000000000000000000000000000000000000000..2f2b7ca247f6b6dff396fb4b644654de
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/juggler/protocol/BrowserHandler.js b/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..060174f997f4a607c9e6d7bf4e1e204f07fe86c7
+index 0000000000000000000000000000000000000000..a5f050cd024dfdd3d7b1366600273744f82c5cbb
 --- /dev/null
 +++ b/juggler/protocol/BrowserHandler.js
-@@ -0,0 +1,163 @@
+@@ -0,0 +1,172 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -4481,8 +4510,17 @@ index 0000000000000000000000000000000000000000..060174f997f4a607c9e6d7bf4e1e204f
 +  }
 +
 +  async grantPermissions({browserContextId, origin, permissions}) {
-+    this._contextManager.browserContextForId(browserContextId).grantPermissions(origin, permissions);
-+    await this._targetRegistry.ensurePermissionsInContextPages(browserContextId, permissions);
++    const browserContext = this._contextManager.browserContextForId(browserContextId);
++    browserContext.grantPermissions(origin, permissions);
++    const contextPages = this._targetRegistry.pageTargets(browserContextId);
++    const promises = [];
++    for (const page of contextPages) {
++      if (origin === '*' || page._url.startsWith(origin)) {
++        browserContext.grantPermissionsToOrigin(page._url);
++        promises.push(page.ensurePermissions(permissions));
++      }
++    }
++    await Promise.all(promises);
 +  }
 +
 +  resetPermissions({browserContextId}) {
@@ -5398,10 +5436,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/juggler/protocol/Protocol.js b/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..9f7f4ce40454257ff83e8d39b278c1dbc1353991
+index 0000000000000000000000000000000000000000..9b636b045df0737039d94b5a6efc8c4f004eb58a
 --- /dev/null
 +++ b/juggler/protocol/Protocol.js
-@@ -0,0 +1,747 @@
+@@ -0,0 +1,745 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -5662,9 +5700,7 @@ index 0000000000000000000000000000000000000000..9f7f4ce40454257ff83e8d39b278c1db
 +      params: {
 +        origin: t.String,
 +        browserContextId: t.Optional(t.String),
-+        permissions: t.Array(t.Enum([
-+          'geo', 'microphone', 'camera', 'desktop-notifications'
-+        ])),
++        permissions: t.Array(t.String),
 +      },
 +    },
 +    'resetPermissions': {
