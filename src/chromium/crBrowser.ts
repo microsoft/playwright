@@ -53,6 +53,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     const promises = [
       session.send('Target.setDiscoverTargets', { discover: true }),
       session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
+      session.send('Target.setDiscoverTargets', { discover: false }),
     ];
     const existingPageAttachPromises: Promise<any>[] = [];
     if (isPersistent) {
@@ -82,8 +83,8 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
         context._browserClosed();
       this.emit(CommonEvents.Browser.Disconnected);
     });
-    this._session.on('Target.targetDestroyed', this._targetDestroyed.bind(this));
     this._session.on('Target.attachedToTarget', this._onAttachedToTarget.bind(this));
+    this._session.on('Target.detachedFromTarget', this._onDetachedFromTarget.bind(this));
     this._firstPagePromise = new Promise(f => this._firstPageCallback = f);
   }
 
@@ -172,11 +173,11 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     return { context, target };
   }
 
-  async _targetDestroyed(event: { targetId: string; }) {
-    const target = this._targets.get(event.targetId)!;
+  _onDetachedFromTarget({targetId}: Protocol.Target.detachFromTargetParameters) {
+    const target = this._targets.get(targetId!)!;
     if (!target)
       return;
-    this._targets.delete(event.targetId);
+    this._targets.delete(targetId!);
     target._didClose();
   }
 
