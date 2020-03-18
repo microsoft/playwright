@@ -86,8 +86,10 @@ export class CRTarget {
     });
     try {
       // This might fail if the target is closed before we receive all execution contexts.
-      await session.send('Runtime.enable', {});
-      await session.send('Runtime.runIfWaitingForDebugger');
+      await Promise.all([
+        session.send('Runtime.enable', {}),
+        session.send('Runtime.runIfWaitingForDebugger'),
+      ]);
       this._initializedWorker = worker;
       return worker;
     } catch (error) {
