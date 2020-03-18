@@ -24,6 +24,8 @@ import * as js from '../javascript';
 export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 
+type MaybeCallArgument = Protocol.Runtime.CallArgument | { unserializable: any };
+
 export class WKExecutionContext implements js.ExecutionContextDelegate {
   private _globalObjectIdPromise?: Promise<Protocol.Runtime.RemoteObjectId>;
   private readonly _session: WKSession;
@@ -45,7 +47,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
 
   async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
     try {
-      let response = await this._evaluateRemoteObject(pageFunction, args);
+      let response = await this._evaluateRemoteObject(context, pageFunction, args);
       if (response.result.type === 'object' && response.result.className === 'Promise') {
         response = await Promise.race([
           this._executionContextDestroyedPromise.then(() => contextDestroyedResult),
@@ -69,7 +71,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     }
   }
 
-  private async _evaluateRemoteObject(pageFunction: Function | string, args: any[]): Promise<any> {
+  private async _evaluateRemoteObject(context: js.ExecutionContext, pageFunction: Function | string, args: any[]): Promise<any> {
     if (helper.isString(pageFunction)) {
       const contextId = this._contextId;
       const expression: string = pageFunction;
@@ -85,60 +87,50 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     if (typeof pageFunction !== 'function')
       throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
 
-    try {
-      const callParams = this._serializeFunctionAndArguments(pageFunction, args);
-      const thisObjectId = await this._contextGlobalObjectId();
-      return await this._session.send('Runtime.callFunctionOn', {
-        functionDeclaration: callParams.functionText + '\n' + suffix + '\n',
-        objectId: thisObjectId,
-        arguments: callParams.callArguments,
-        returnByValue: false,
-        emulateUserGesture: true
-      });
-    } catch (err) {
-      if (err instanceof TypeError && err.message.startsWith('Converting circular structure to JSON'))
-        err.message += ' Are you passing a nested JSHandle?';
-      throw err;
-    }
+    const { functionText, values, handles } = js.prepareFunctionCall<MaybeCallArgument>(pageFunction, context, args, (value: any) => {
+      if (typeof value === 'bigint' || Object.is(value, -0) || Object.is(value, Infinity) || Object.is(value, -Infinity) || Object.is(value, NaN))
+        return { handle: { unserializable: value } };
+      if (value && (value instanceof js.JSHandle)) {
+        const remoteObject = toRemoteObject(value);
+        if (!remoteObject.objectId && !Object.is(valueFromRemoteObject(remoteObject), remoteObject.value))
+          return { handle: { unserializable: value } };
+        if (!remoteObject.objectId)
+          return { value: valueFromRemoteObject(remoteObject) };
+        return { handle: { objectId: remoteObject.objectId } };
+      }
+      return { value };
+    });
+
+    const callParams = this._serializeFunctionAndArguments(functionText, values, handles);
+    const thisObjectId = await this._contextGlobalObjectId();
+    return await this._session.send('Runtime.callFunctionOn', {
+      functionDeclaration: callParams.functionText + '\n' + suffix + '\n',
+      objectId: thisObjectId,
+      arguments: callParams.callArguments,
+      returnByValue: false,
+      emulateUserGesture: true
+    });
   }
 
-  private _serializeFunctionAndArguments(pageFunction: Function, args: any[]): { functionText: string, callArguments: Protocol.Runtime.CallArgument[] } {
-    let functionText = pageFunction.toString();
-    try {
-      new Function('(' + functionText + ')');
-    } catch (e1) {
-      // This means we might have a function shorthand. Try another
-      // time prefixing 'function '.
-      if (functionText.startsWith('async '))
-        functionText = 'async function ' + functionText.substring('async '.length);
-      else
-        functionText = 'function ' + functionText;
-      try {
-        new Function('(' + functionText  + ')');
-      } catch (e2) {
-        // We tried hard to serialize, but there's a weird beast here.
-        throw new Error('Passed function is not well-serializable!');
-      }
-    }
-
-    let serializableArgs;
-    if (args.some(isUnserializable)) {
-      serializableArgs = [];
+  private _serializeFunctionAndArguments(functionText: string, values: any[], handles: MaybeCallArgument[]): { functionText: string, callArguments: Protocol.Runtime.CallArgument[] } {
+    const callArguments: Protocol.Runtime.CallArgument[] = values.map(value => ({ value }));
+    if (handles.some(handle => 'unserializable' in handle)) {
       const paramStrings = [];
-      for (const arg of args) {
-        if (isUnserializable(arg)) {
-          paramStrings.push(unserializableToString(arg));
+      for (let i = 0; i < callArguments.length; i++)
+        paramStrings.push('a[' + i + ']');
+      for (const handle of handles) {
+        if ('unserializable' in handle) {
+          paramStrings.push(unserializableToString(handle.unserializable));
         } else {
-          paramStrings.push('arguments[' + serializableArgs.length + ']');
-          serializableArgs.push(arg);
+          paramStrings.push('a[' + callArguments.length + ']');
+          callArguments.push(handle);
         }
       }
-      functionText = `() => (${functionText})(${paramStrings.join(',')})`;
+      functionText = `(...a) => (${functionText})(${paramStrings.join(',')})`;
     } else {
-      serializableArgs = args;
+      callArguments.push(...(handles as Protocol.Runtime.CallArgument[]));
     }
-    const serialized = serializableArgs.map((arg: any) => this._convertArgument(arg));
-    return { functionText, callArguments: serialized };
+    return { functionText, callArguments };
 
     function unserializableToString(arg: any) {
       if (Object.is(arg, -0))
@@ -155,25 +147,6 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
           return valueFromRemoteObject(remoteObj);
       }
       throw new Error('Unsupported value: ' + arg + ' (' + (typeof arg) + ')');
-    }
-
-    function isUnserializable(arg: any) {
-      if (typeof arg === 'bigint')
-        return true;
-      if (Object.is(arg, -0))
-        return true;
-      if (Object.is(arg, Infinity))
-        return true;
-      if (Object.is(arg, -Infinity))
-        return true;
-      if (Object.is(arg, NaN))
-        return true;
-      if (arg instanceof js.JSHandle) {
-        const remoteObj = toRemoteObject(arg);
-        if (!remoteObj.objectId)
-          return !Object.is(valueFromRemoteObject(remoteObj), remoteObj.value);
-      }
-      return false;
     }
   }
 
@@ -251,21 +224,6 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       return 'JSHandle@' + type;
     }
     return (includeType ? 'JSHandle:' : '') + valueFromRemoteObject(object);
-  }
-
-  private _convertArgument(arg: js.JSHandle | any): Protocol.Runtime.CallArgument {
-    const objectHandle = arg && (arg instanceof js.JSHandle) ? arg : null;
-    if (objectHandle) {
-      if (objectHandle._context._delegate !== this)
-        throw new Error('JSHandles can be evaluated only in the context they were created!');
-      if (objectHandle._disposed)
-        throw new Error('JSHandle is disposed!');
-      const remoteObject = toRemoteObject(arg);
-      if (!remoteObject.objectId)
-        return { value: valueFromRemoteObject(remoteObject) };
-      return { objectId: remoteObject.objectId };
-    }
-    return { value: arg };
   }
 }
 

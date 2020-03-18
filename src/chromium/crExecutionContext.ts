@@ -55,28 +55,35 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     if (typeof pageFunction !== 'function')
       throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
 
-    let functionText = pageFunction.toString();
-    try {
-      new Function('(' + functionText + ')');
-    } catch (e1) {
-      // This means we might have a function shorthand. Try another
-      // time prefixing 'function '.
-      if (functionText.startsWith('async '))
-        functionText = 'async function ' + functionText.substring('async '.length);
-      else
-        functionText = 'function ' + functionText;
-      try {
-        new Function('(' + functionText  + ')');
-      } catch (e2) {
-        // We tried hard to serialize, but there's a weird beast here.
-        throw new Error('Passed function is not well-serializable!');
+    const { functionText, values, handles } = js.prepareFunctionCall<Protocol.Runtime.CallArgument>(pageFunction, context, args, (value: any) => {
+      if (typeof value === 'bigint') // eslint-disable-line valid-typeof
+        return { handle: { unserializableValue: `${value.toString()}n` } };
+      if (Object.is(value, -0))
+        return { handle: { unserializableValue: '-0' } };
+      if (Object.is(value, Infinity))
+        return { handle: { unserializableValue: 'Infinity' } };
+      if (Object.is(value, -Infinity))
+        return { handle: { unserializableValue: '-Infinity' } };
+      if (Object.is(value, NaN))
+        return { handle: { unserializableValue: 'NaN' } };
+      if (value && (value instanceof js.JSHandle)) {
+        const remoteObject = toRemoteObject(value);
+        if (remoteObject.unserializableValue)
+          return { handle: { unserializableValue: remoteObject.unserializableValue } };
+        if (!remoteObject.objectId)
+          return { value: remoteObject.value };
+        return { handle: { objectId: remoteObject.objectId } };
       }
-    }
+      return { value };
+    });
 
     const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
       functionDeclaration: functionText + '\n' + suffix + '\n',
       executionContextId: this._contextId,
-      arguments: args.map(convertArgument.bind(this)),
+      arguments: [
+        ...values.map(value => ({ value })),
+        ...handles,
+      ],
       returnByValue,
       awaitPromise: true,
       userGesture: true
@@ -84,33 +91,6 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     if (exceptionDetails)
       throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
     return returnByValue ? valueFromRemoteObject(remoteObject) : context._createHandle(remoteObject);
-
-    function convertArgument(arg: any): any {
-      if (typeof arg === 'bigint') // eslint-disable-line valid-typeof
-        return { unserializableValue: `${arg.toString()}n` };
-      if (Object.is(arg, -0))
-        return { unserializableValue: '-0' };
-      if (Object.is(arg, Infinity))
-        return { unserializableValue: 'Infinity' };
-      if (Object.is(arg, -Infinity))
-        return { unserializableValue: '-Infinity' };
-      if (Object.is(arg, NaN))
-        return { unserializableValue: 'NaN' };
-      const objectHandle = arg && (arg instanceof js.JSHandle) ? arg : null;
-      if (objectHandle) {
-        if (objectHandle._context !== context)
-          throw new Error('JSHandles can be evaluated only in the context they were created!');
-        if (objectHandle._disposed)
-          throw new Error('JSHandle is disposed!');
-        const remoteObject = toRemoteObject(objectHandle);
-        if (remoteObject.unserializableValue)
-          return { unserializableValue: remoteObject.unserializableValue };
-        if (!remoteObject.objectId)
-          return { value: remoteObject.value };
-        return { objectId: remoteObject.objectId };
-      }
-      return { value: arg };
-    }
 
     function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {
       if (error.message.includes('Object reference chain is too long'))

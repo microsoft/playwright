@@ -38,18 +38,73 @@ module.exports.describe = function({testRunner, expect, CHROMIUM, FFOX, WEBKIT})
       const isFive = await page.evaluate(e => Object.is(e, 5), aHandle);
       expect(isFive).toBeTruthy();
     });
-    it('should warn on nested object handles', async({page, server}) => {
-      const aHandle = await page.evaluateHandle(() => document.body);
-      let error = null;
-      await page.evaluateHandle(
-          opts => opts.elem.querySelector('p'),
-          { elem: aHandle }
-      ).catch(e => error = e);
-      expect(error.message).toContain('Are you passing a nested JSHandle?');
+    it('should accept nested handle', async({page, server}) => {
+      const foo = await page.evaluateHandle(() => ({ x: 1, y: 'foo' }));
+      const result = await page.evaluate(({ foo }) => {
+        return foo;
+      }, { foo });
+      expect(result).toEqual({ x: 1, y: 'foo' });
+    });
+    it('should accept nested window handle', async({page, server}) => {
+      const foo = await page.evaluateHandle(() => window);
+      const result = await page.evaluate(({ foo }) => {
+        return foo === window;
+      }, { foo });
+      expect(result).toBe(true);
+    });
+    it('should accept multiple nested handles', async({page, server}) => {
+      const foo = await page.evaluateHandle(() => ({ x: 1, y: 'foo' }));
+      const bar = await page.evaluateHandle(() => 5);
+      const baz = await page.evaluateHandle(() => (['baz']));
+      const result = await page.evaluate((a1, a2) => {
+        return JSON.stringify({ a1, a2 });
+      }, { foo }, { bar, arr: [{ baz }] });
+      expect(JSON.parse(result)).toEqual({
+        a1: { foo: { x: 1, y: 'foo' } },
+        a2: { bar: 5, arr: [{ baz: ['baz'] }] }
+      });
+    });
+    it('should throw for deep objects', async({page, server}) => {
+      let a = { x: 1 };
+      for (let i = 0; i < 98; i++)
+        a = { x: a };
+      expect(await page.evaluate(x => x, a)).toEqual(a);
+      let error = await page.evaluate(x => x, {a}).catch(e => e);
+      expect(error.message).toBe('Argument nesting is too deep');
+      error = await page.evaluate(x => x, [a]).catch(e => e);
+      expect(error.message).toBe('Argument nesting is too deep');
+    });
+    it('should throw for circular objects', async({page, server}) => {
+      const a = { x: 1 };
+      a.y = a;
+      const error = await page.evaluate(x => x, a).catch(e => e);
+      expect(error.message).toBe('Argument is a circular structure');
+    });
+    it('should accept same handle multiple times', async({page, server}) => {
+      const foo = await page.evaluateHandle(() => 1);
+      expect(await page.evaluate(x => x, { foo, bar: [foo], baz: { foo }})).toEqual({ foo: 1, bar: [1], baz: { foo: 1 } });
+    });
+    it('should accept same nested object multiple times', async({page, server}) => {
+      const foo = { x: 1 };
+      expect(await page.evaluate(x => x, { foo, bar: [foo], baz: { foo }})).toEqual({ foo: { x: 1 }, bar: [{ x : 1 }], baz: { foo: { x : 1 } } });
     });
     it('should accept object handle to unserializable value', async({page, server}) => {
       const aHandle = await page.evaluateHandle(() => Infinity);
       expect(await page.evaluate(e => Object.is(e, Infinity), aHandle)).toBe(true);
+    });
+    it.fail(FFOX)('should pass configurable args', async({page, server}) => {
+      const result = await page.evaluate(arg => {
+        if (arg.foo !== 42)
+          throw new Error('Not a 42');
+        arg.foo = 17;
+        if (arg.foo !== 17)
+          throw new Error('Not 17');
+        delete arg.foo;
+        if (arg.foo === 17)
+          throw new Error('Still 17');
+        return arg;
+      }, { foo: 42 });
+      expect(result).toEqual({});
     });
     it('should use the same JS wrappers', async({page, server}) => {
       const aHandle = await page.evaluateHandle(() => {

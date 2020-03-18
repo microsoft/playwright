@@ -26,6 +26,7 @@ import * as png from 'pngjs';
 import * as http from 'http';
 import * as https from 'https';
 import * as NodeWebSocket from 'ws';
+import * as crypto from 'crypto';
 
 import { assert, helper } from './helper';
 import { ConnectionTransport } from './transport';
@@ -298,6 +299,14 @@ export function makeWaitForNextTask() {
       setImmediate(loop);
     }
   };
+}
+
+export function guid(): string {
+  if (isNode)
+    return crypto.randomBytes(16).toString('hex');
+  const a = new Uint8Array(16);
+  window.crypto.getRandomValues(a);
+  return Array.from(a).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 // 'onmessage' handler must be installed synchronously when 'onopen' callback is invoked to
