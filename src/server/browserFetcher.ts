@@ -101,7 +101,7 @@ export type DownloadOptions = {
 const CURRENT_HOST_PLATFORM = ((): string => {
   const platform = os.platform();
   if (platform === 'darwin') {
-    const macVersion = execSync('sw_vers -productVersion').toString('utf8').trim();
+    const macVersion = execSync('sw_vers -productVersion').toString('utf8').trim().split('.').slice(0, 2).join('.');
     return `mac${macVersion}`;
   }
   if (platform === 'linux')
