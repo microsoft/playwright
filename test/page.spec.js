@@ -224,13 +224,14 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       });
     });
     // @see https://github.com/GoogleChrome/puppeteer/issues/3865
-    it('should not throw when there are console messages in detached iframes', async({page, server}) => {
+    it.fail(FFOX)('should not throw when there are console messages in detached iframes', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const [popup] = await Promise.all([
         page.waitForEvent('popup').then(e => e.page()),
         page.evaluate(async() => {
           // 1. Create a popup that Playwright is not connected to.
-          const win = window.open(window.location.href);
+          const win = window.open('');
+          window._popup = win;
           if (window.document.readyState !== 'complete')
             await new Promise(f => window.addEventListener('load', f));
           // 2. In this popup, create an iframe that console.logs a message.

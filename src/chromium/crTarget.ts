@@ -19,7 +19,7 @@ import { CRBrowser, CRBrowserContext } from './crBrowser';
 import { CRSession, CRSessionEvents } from './crConnection';
 import { Page, Worker } from '../page';
 import { Protocol } from './protocol';
-import { debugError, assert } from '../helper';
+import { debugError, assert, helper } from '../helper';
 import { CRPage } from './crPage';
 import { CRExecutionContext } from './crExecutionContext';
 
@@ -49,7 +49,8 @@ export class CRTarget {
     targetInfo: Protocol.Target.TargetInfo,
     browserContext: CRBrowserContext,
     session: CRSession | null,
-    sessionFactory: () => Promise<CRSession>) {
+    sessionFactory: () => Promise<CRSession>,
+    hasInitialAboutBlank: boolean) {
     this._targetInfo = targetInfo;
     this._browser = browser;
     this._browserContext = browserContext;
@@ -58,10 +59,11 @@ export class CRTarget {
     if (CRTarget.isPageType(targetInfo.type)) {
       assert(session, 'Page target must be created with existing session');
       this._crPage = new CRPage(session, this._browser, this._browserContext);
+      helper.addEventListener(session, 'Page.windowOpen', event => browser._onWindowOpen(targetInfo.targetId, event));
       const page = this._crPage.page();
       (page as any)[targetSymbol] = this;
       session.once(CRSessionEvents.Disconnected, () => page._didDisconnect());
-      this._pagePromise = this._crPage.initialize().then(() => this._initializedPage = page).catch(e => e);
+      this._pagePromise = this._crPage.initialize(hasInitialAboutBlank).then(() => this._initializedPage = page).catch(e => e);
     }
   }
 

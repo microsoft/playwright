@@ -57,10 +57,14 @@ export class WKPage implements PageDelegate {
   private readonly _evaluateOnNewDocumentSources: string[] = [];
   readonly _browserContext: WKBrowserContext;
   private _initialized = false;
+  private _hasInitialAboutBlank: boolean;
+  private _firstNonInitialNavigationCommittedPromise: Promise<void>;
+  private _firstNonInitialNavigationCommittedCallback = () => {};
 
-  constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null) {
+  constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null, hasInitialAboutBlank: boolean) {
     this._pageProxySession = pageProxySession;
     this._opener = opener;
+    this._hasInitialAboutBlank = hasInitialAboutBlank;
     this.rawKeyboard = new RawKeyboardImpl(pageProxySession);
     this.rawMouse = new RawMouseImpl(pageProxySession);
     this._contextIdToContext = new Map();
@@ -76,6 +80,7 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._pageProxySession, 'Target.didCommitProvisionalTarget', this._onDidCommitProvisionalTarget.bind(this)),
     ];
     this._pagePromise = new Promise(f => this._pagePromiseCallback = f);
+    this._firstNonInitialNavigationCommittedPromise = new Promise(f => this._firstNonInitialNavigationCommittedCallback = f);
   }
 
   _initializedPage(): Page | null {
@@ -251,6 +256,8 @@ export class WKPage implements PageDelegate {
       }
       if (targetInfo.isPaused)
         this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
+      if (this._hasInitialAboutBlank)
+        await this._firstNonInitialNavigationCommittedPromise;
       this._initialized = true;
       this._pagePromiseCallback(pageOrError);
     } else {
@@ -330,6 +337,8 @@ export class WKPage implements PageDelegate {
   private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {
     this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
     this._onFrameNavigated(frameTree.frame, true);
+    this._page._frameManager.frameLifecycleEvent(frameTree.frame.id, 'domcontentloaded');
+    this._page._frameManager.frameLifecycleEvent(frameTree.frame.id, 'load');
 
     if (!frameTree.childFrames)
       return;
@@ -348,6 +357,8 @@ export class WKPage implements PageDelegate {
     if (!framePayload.parentId)
       this._workers.clear();
     this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url, framePayload.name || '', framePayload.loaderId, initial);
+    if (!initial)
+      this._firstNonInitialNavigationCommittedCallback();
   }
 
   private _onFrameNavigatedWithinDocument(frameId: string, url: string) {
