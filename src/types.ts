@@ -18,7 +18,8 @@ import * as js from './javascript';
 import * as dom from './dom';
 import Injected from './injected/injected';
 
-type Boxed<Args extends any[]> = { [Index in keyof Args]: Args[Index] | js.JSHandle<Args[Index]> };
+type BoxedArg<Arg> = js.JSHandle<Arg> | (Arg extends object ? { [Key in keyof Arg]: BoxedArg<Arg[Key]> } : Arg);
+type Boxed<Args extends any[]> = { [Index in keyof Args]: BoxedArg<Args[Index]> };
 type PageFunction<Args extends any[], R = any> = string | ((...args: Args) => R | Promise<R>);
 type PageFunctionOn<On, Args extends any[], R = any> = string | ((on: On, ...args: Args) => R | Promise<R>);
 type PageFunctionWithInjected<On, Args extends any[], R = any> = string | ((injected: Injected, on: On, ...args: Args) => R | Promise<R>);
