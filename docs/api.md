@@ -1754,7 +1754,7 @@ const [response] = await Promise.all([
 Shortcut for [page.mainFrame().waitForNavigation(options)](#framewaitfornavigationoptions).
 
 #### page.waitForRequest(urlOrPredicate[, options])
-- `urlOrPredicate` <[string]|[RegExp]|[Function]> Optional. Request URL string, regex or predicate receiving [Request] object.
+- `urlOrPredicate` <[string]|[RegExp]|[Function]> Request URL string, regex or predicate receiving [Request] object.
 - `options` <[Object]> Optional waiting parameters
   - `timeout` <[number]> Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]<[Request]>> Promise which resolves to the matched request.
@@ -1770,7 +1770,7 @@ await page.waitForRequest(request => request.url().searchParams.get('foo') === '
 ```
 
 #### page.waitForResponse(urlOrPredicate[, options])
-- `urlOrPredicate` <[string]|[RegExp]|[Function]> Optional. Request URL string, regex or predicate receiving [Response] object.
+- `urlOrPredicate` <[string]|[RegExp]|[Function]> Request URL string, regex or predicate receiving [Response] object.
 - `options` <[Object]> Optional waiting parameters
   - `timeout` <[number]> Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[Response]>> Promise which resolves to the matched response.
