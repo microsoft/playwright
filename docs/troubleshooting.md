@@ -249,8 +249,7 @@ Running Playwright smoothly on CircleCI requires the following steps:
 
 ### Running Playwright in Docker
 
-> 👋 We run our tests for Playwright in a Docker container - see our [`Dockerfile.linux`](https://github.com/microsoft/playwright/blob/master/.ci/node10/Dockerfile.linux) for reference.
-
+> 👋 We run our tests for Playwright in a Docker container - see our [Docker setup](docker/README.md) for reference.
 
 #### Tips
 
