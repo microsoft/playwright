@@ -10,9 +10,8 @@ class Foo {
     e();
   }
 
-  www() {
-    if (1 === 1)
-      return 'df';
+  www() : string {
+    return 'df';
   }
 
   async asyncFunction() {

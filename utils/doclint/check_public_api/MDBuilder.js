@@ -47,8 +47,9 @@ class MDOutline {
 
       /**
        * @param {HTMLLIElement} element
+       * @param {boolean} defaultRequired
        */
-      function parseProperty(element) {
+      function parseProperty(element, defaultRequired) {
         const clone = element.cloneNode(true);
         const ul = clone.querySelector(':scope > ul');
         const str = parseComment(extractSiblingsIntoFragment(clone.firstChild, ul));
@@ -64,8 +65,16 @@ class MDOutline {
             const text = childElement.textContent;
             if (text.startsWith(`"`) || text.startsWith(`'`))
               continue;
-            const property = parseProperty(childElement);
-            property.required = property.comment.includes('***required***');
+            const property = parseProperty(childElement, true);
+            property.required = defaultRequired;
+            if (property.comment.toLowerCase().includes('defaults to '))
+              property.required = false;
+            if (property.comment.toLowerCase().includes('if applicable.'))
+              property.required = false;
+            if (property.comment.toLowerCase().includes('if available.'))
+              property.required = false;
+            if (property.comment.includes('**required**'))
+              property.required = true;
             properties.push(property);
           }
         }
@@ -151,13 +160,13 @@ class MDOutline {
         const ul = content.querySelector('ul');
         for (const element of content.querySelectorAll('h4 + ul > li')) {
           if (element.matches('li') && element.textContent.trim().startsWith('<')) {
-            returnType = parseProperty(element);
+            returnType = parseProperty(element, false);
           } else if (element.matches('li') && element.firstChild.matches && element.firstChild.matches('code')) {
-            const property = parseProperty(element);
+            const property = parseProperty(element, false);
             property.required = !optionalparams.has(property.name) && !property.name.startsWith('...');
             args.push(property);
           } else if (element.matches('li') && element.firstChild.nodeType === Element.TEXT_NODE && element.firstChild.textContent.toLowerCase().startsWith('return')) {
-            returnType = parseProperty(element);
+            returnType = parseProperty(element, true);
             const expectedText = 'returns: ';
             let actualText = element.firstChild.textContent;
             let angleIndex = actualText.indexOf('<');

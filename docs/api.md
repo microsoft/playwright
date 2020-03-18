@@ -194,7 +194,7 @@ Indicates that the browser is connected.
 - `options` <[Object]>
   - `ignoreHTTPSErrors` <[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
   - `bypassCSP` <[boolean]> Toggles bypassing page's Content-Security-Policy.
-  - `viewport` <[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+  - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
     - `width` <[number]> page width in pixels.
     - `height` <[number]> page height in pixels.
   - `userAgent` <[string]> Specific user agent to use in this context.
@@ -202,12 +202,12 @@ Indicates that the browser is connected.
   - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported in Firefox.
   - `hasTouch` <[boolean]> Specifies if viewport supports touch events. Defaults to false.
   - `javaScriptEnabled` <[boolean]> Whether or not to enable or disable JavaScript in the context. Defaults to true.
-  - `timezoneId` <?[string]> Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
+  - `timezoneId` <[string]> Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
   - `geolocation` <[Object]>
     - `latitude` <[number]> Latitude between -90 and 90.
     - `longitude` <[number]> Longitude between -180 and 180.
-    - `accuracy` <[number]> Optional non-negative accuracy value.
-  - `locale` <?[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
+    - `accuracy` <[number]> Non-negative accuracy value. Defaults to `0`.
+  - `locale` <[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
   - `permissions` <[Array]<[string]>> A list of permissions to grant to all pages in this context. See [browserContext.grantPermissions](#browsercontextgrantpermissionspermissions-options) for more details.
   - `extraHTTPHeaders` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
   - `offline` <[boolean]> Whether to emulate network being offline. Defaults to `false`.
@@ -231,22 +231,22 @@ Creates a new browser context. It won't share cookies/cache with other browser c
 
 #### browser.newPage([options])
 - `options` <[Object]>
-  - `ignoreHTTPSErrors` <?[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
-  - `bypassCSP` <?[boolean]> Toggles bypassing page's Content-Security-Policy.
-  - `viewport` <[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+  - `ignoreHTTPSErrors` <[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+  - `bypassCSP` <[boolean]> Toggles bypassing page's Content-Security-Policy.
+  - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
     - `width` <[number]> page width in pixels.
     - `height` <[number]> page height in pixels.
   - `userAgent` <[string]> Specific user agent to use in this context.
   - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
   - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported in Firefox.
   - `hasTouch` <[boolean]> Specifies if viewport supports touch events. Defaults to false.
-  - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the context. Defaults to true.
-  - `timezoneId` <?[string]> Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
+  - `javaScriptEnabled` <[boolean]> Whether or not to enable or disable JavaScript in the context. Defaults to `true`.
+  - `timezoneId` <[string]> Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
   - `geolocation` <[Object]>
     - `latitude` <[number]> Latitude between -90 and 90.
     - `longitude` <[number]> Longitude between -180 and 180.
-    - `accuracy` <[number]> Optional non-negative accuracy value.
-  - `locale` <?[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
+    - `accuracy` <[number]> Non-negative accuracy value. Defaults to `0`.
+  - `locale` <[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
   - `permissions` <[Array]<[string]>> A list of permissions to grant to all pages in this context. See [browserContext.grantPermissions](#browsercontextgrantpermissionspermissions-options) for more details.
   - `extraHTTPHeaders` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
   - `offline` <[boolean]> Whether to emulate network being offline. Defaults to `false`.
@@ -329,9 +329,9 @@ const newPage = await event.page();
 - `cookies` <[Array]<[Object]>>
   - `name` <[string]> **required**
   - `value` <[string]> **required**
-  - `url` <[string]> either url or domain / path are **required**
-  - `domain` <[string]> either url or domain / path are **required**
-  - `path` <[string]> either url or domain / path are **required**
+  - `url` <[string]> either url or domain / path are required
+  - `domain` <[string]> either url or domain / path are required
+  - `path` <[string]> either url or domain / path are required
   - `expires` <[number]> Unix time in seconds.
   - `httpOnly` <[boolean]>
   - `secure` <[boolean]>
@@ -403,7 +403,6 @@ will be closed.
   - `domain` <[string]>
   - `path` <[string]>
   - `expires` <[number]> Unix time in seconds.
-  - `size` <[number]>
   - `httpOnly` <[boolean]>
   - `secure` <[boolean]>
   - `sameSite` <"Strict"|"Lax"|"None">
@@ -542,13 +541,13 @@ The extra HTTP headers will be sent with every request initiated by any page in 
 > **NOTE** `browserContext.setExtraHTTPHeaders` does not guarantee the order of headers in the outgoing requests.
 
 #### browserContext.setGeolocation(geolocation)
-- `geolocation` <[Object]>
-  - `latitude` <[number]> Latitude between -90 and 90.
-  - `longitude` <[number]> Longitude between -180 and 180.
-  - `accuracy` <[number]> Optional non-negative accuracy value.
+- `geolocation` <?[Object]>
+  - `latitude` <[number]> Latitude between -90 and 90. **required**
+  - `longitude` <[number]> Longitude between -180 and 180. **required**
+  - `accuracy` <[number]> Non-negative accuracy value. Defaults to `0`.
 - returns: <[Promise]>
 
-Sets the contexts's geolocation. Passing null or undefined emulates position unavailable.
+Sets the contexts's geolocation. Passing `null` or `undefined` emulates position unavailable.
 
 ```js
 await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
@@ -558,8 +557,8 @@ await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 
 #### browserContext.setHTTPCredentials(httpCredentials)
 - `httpCredentials` <?[Object]>
-  - `username` <[string]>
-  - `password` <[string]>
+  - `username` <[string]> **required**
+  - `password` <[string]> **required**
 - returns: <[Promise]>
 
 Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
@@ -575,7 +574,7 @@ To disable authentication, pass `null`.
 - `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object.
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
-- returns: <[Promise]<[any]>> Promise which resolves to the event data value.
+- returns: <[Promise]<[Object]>> Promise which resolves to the event data value.
 
 Waits for event to fire and passes its value into the predicate function. Resolves when the predicate returns truthy value. Will throw an error if the context closes before the event
 is fired.
@@ -1219,7 +1218,7 @@ Shortcut for [page.mainFrame().focus(selector)](#framefocusselector-options).
 - `options` <[string]|[Object]> Frame name or other frame lookup options.
   - `name` <[string]> frame name specified in the `iframe`'s `name` attribute
   - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object.
-- returns: <[Frame]> frame matching the criteria.
+- returns: <?[Frame]> frame matching the criteria. Returns `null` if no frame matches.
 
 ```js
 const frame = page.frame('frame-name');
@@ -1349,10 +1348,10 @@ Page is guaranteed to have a main frame which persists during navigations.
   - `width` <[string]|[number]> Paper width, accepts values labeled with units.
   - `height` <[string]|[number]> Paper height, accepts values labeled with units.
   - `margin` <[Object]> Paper margins, defaults to none.
-    - `top` <[string]|[number]> Top margin, accepts values labeled with units.
-    - `right` <[string]|[number]> Right margin, accepts values labeled with units.
-    - `bottom` <[string]|[number]> Bottom margin, accepts values labeled with units.
-    - `left` <[string]|[number]> Left margin, accepts values labeled with units.
+    - `top` <[string]|[number]> Top margin, accepts values labeled with units. Defaults to `0`.
+    - `right` <[string]|[number]> Right margin, accepts values labeled with units. Defaults to `0`.
+    - `bottom` <[string]|[number]> Bottom margin, accepts values labeled with units. Defaults to `0`.
+    - `left` <[string]|[number]> Left margin, accepts values labeled with units. Defaults to `0`.
   - `preferCSSPageSize` <[boolean]> Give any CSS `@page` size declared in the page priority over what is declared in `width` and `height` or `format` options. Defaults to `false`, which will scale the content to fit the paper size.
 - returns: <[Promise]<[Buffer]>> Promise which resolves with PDF buffer.
 
@@ -1426,7 +1425,7 @@ If `key` is a single character and no modifier keys besides `Shift` are being he
     - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
-- returns: <[Promise]<[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
+- returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
 
 #### page.route(url, handler)
 - `url` <[string]|[RegExp]|[function]\([string]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
@@ -1640,7 +1639,7 @@ This is a shortcut for [page.mainFrame().url()](#frameurl)
     - `'mutation'` - to execute `pageFunction` on every DOM mutation.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to  `pageFunction`
-- returns: <[Promise]<[JSHandle]>> Promise which resolves to a JSHandle of the success value
+- returns: <[Promise]<?[JSHandle]>> Promise which resolves to a JSHandle of the success value
 
 This method behaves differently with respect to the type of the first parameter:
 - if `selectorOrFunctionOrTimeout` is a `string`, then the first argument is treated as a [selector] and the method is a shortcut for [page.waitForSelector](#pagewaitforselectorselector-options)
@@ -1671,7 +1670,7 @@ Shortcut for [page.mainFrame().waitFor(selectorOrFunctionOrTimeout[, options[, .
 - `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object.
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<[any]>> Promise which resolves to the event data value.
+- returns: <[Promise]<[Object]>> Promise which resolves to the event data value.
 
 Waits for event to fire and passes its value into the predicate function. Resolves when the predicate returns truthy value. Will throw an error if the page is closed before the event
 is fired.
@@ -1755,7 +1754,7 @@ const [response] = await Promise.all([
 Shortcut for [page.mainFrame().waitForNavigation(options)](#framewaitfornavigationoptions).
 
 #### page.waitForRequest(urlOrPredicate[, options])
-- `urlOrPredicate` <?[string]|[RegExp]|[Function]> Optional. Request URL string, regex or predicate receiving [Request] object.
+- `urlOrPredicate` <[string]|[RegExp]|[Function]> Request URL string, regex or predicate receiving [Request] object.
 - `options` <[Object]> Optional waiting parameters
   - `timeout` <[number]> Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]<[Request]>> Promise which resolves to the matched request.
@@ -1771,7 +1770,7 @@ await page.waitForRequest(request => request.url().searchParams.get('foo') === '
 ```
 
 #### page.waitForResponse(urlOrPredicate[, options])
-- `urlOrPredicate` <?[string]|[RegExp]|[Function]> Optional. Request URL string, regex or predicate receiving [Response] object.
+- `urlOrPredicate` <[string]|[RegExp]|[Function]> Request URL string, regex or predicate receiving [Response] object.
 - `options` <[Object]> Optional waiting parameters
   - `timeout` <[number]> Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[Response]>> Promise which resolves to the matched response.
@@ -2346,7 +2345,7 @@ Returns frame's url.
     - `'mutation'` - to execute `pageFunction` on every DOM mutation.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to  `pageFunction`
-- returns: <[Promise]<[JSHandle]>> Promise which resolves to a JSHandle of the success value
+- returns: <[Promise]<?[JSHandle]>> Promise which resolves to a JSHandle of the success value
 
 This method behaves differently with respect to the type of the first parameter:
 - if `selectorOrFunctionOrTimeout` is a `string`, then the first argument is treated as a [selector] and the method is a shortcut for [frame.waitForSelector](#framewaitforselectororfunctionortimeout-options-args)
@@ -2629,7 +2628,7 @@ This method scrolls element into view if needed, and then uses [page.mouse](#pag
 If the element is detached from DOM, the method throws an error.
 
 #### elementHandle.contentFrame()
-- returns: <[Promise]<?[Frame]>> Resolves to the content frame for element handles referencing iframe nodes, or null otherwise
+- returns: <[Promise]<?[Frame]>> Resolves to the content frame for element handles referencing iframe nodes, or `null` otherwise
 
 #### elementHandle.dblclick([options])
 - `options` <[Object]>
@@ -2698,7 +2697,7 @@ This method scrolls element into view if needed, and then uses [page.mouse](#pag
 If the element is detached from DOM, the method throws an error.
 
 #### elementHandle.ownerFrame()
-- returns: <[Promise]<[Frame]>> Returns the frame containing the given element.
+- returns: <[Promise]<?[Frame]>> Returns the frame containing the given element.
 
 #### elementHandle.press(key[, options])
 - `key` <[string]> Name of key to press, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.
@@ -2725,7 +2724,7 @@ If `key` is a single character and no modifier keys besides `Shift` are being he
   - `type` <"png"|"jpeg"> Specify screenshot type, defaults to `png`.
   - `quality` <[number]> The quality of the image, between 0-100. Not applicable to `png` images.
   - `omitBackground` <[boolean]> Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images. Defaults to `false`.
-- returns: <[Promise]<|[Buffer]>> Promise which resolves to buffer with the captured screenshot.
+- returns: <[Promise]<[Buffer]>> Promise which resolves to buffer with the captured screenshot.
 
 This method scrolls element into view if needed before taking a screenshot. If the element is detached from DOM, the method throws an error.
 
@@ -2772,9 +2771,9 @@ handle.selectOption({ value: 'blue' }, { index: 2 }, 'red');
 
 #### elementHandle.setInputFiles(files)
 - `files` <[string]|[Array]<[string]>|[Object]|[Array]<[Object]>>
-  - `name` <[string]> <[File]> name
-  - `type` <[string]> <[File]> type
-  - `data` <[string]> Base64-encoded data
+  - `name` <[string]> [File] name **required**
+  - `type` <[string]> [File] type **required**
+  - `data` <[string]> Base64-encoded data **required**
 - returns: <[Promise]>
 
 This method expects `elementHandle` to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
@@ -2936,9 +2935,9 @@ function, it **will not be called**.
 
 #### consoleMessage.location()
 - returns: <[Object]>
-  - `url` <[string]> URL of the resource if known or `undefined` otherwise.
-  - `lineNumber` <[number]> 0-based line number in the resource if known or `undefined` otherwise.
-  - `columnNumber` <[number]> 0-based column number in the resource if known or `undefined` otherwise.
+  - `url` <[string]> URL of the resource if available.
+  - `lineNumber` <[number]> 0-based line number in the resource if available.
+  - `columnNumber` <[number]> 0-based column number in the resource if available.
 
 #### consoleMessage.text()
 - returns: <[string]>
@@ -3254,7 +3253,7 @@ Contains the request's resource type as it was perceived by the rendering engine
 ResourceType will be one of the following: `document`, `stylesheet`, `image`, `media`, `font`, `script`, `texttrack`, `xhr`, `fetch`, `eventsource`, `websocket`, `manifest`, `other`.
 
 #### request.response()
-- returns: <[Promise]<?[Response]> A matching [Response] object, or `null` if the response was not received due to error.
+- returns: <[Promise]<?[Response]>> A matching [Response] object, or `null` if the response was not received due to error.
 
 #### request.url()
 - returns: <[string]> URL of the request.
@@ -3281,7 +3280,7 @@ ResourceType will be one of the following: `document`, `stylesheet`, `image`, `m
 - returns: <Promise<[Buffer]>> Promise which resolves to a buffer with response body.
 
 #### response.finished()
-- returns: <Promise<?[Error]>> Waits for this response to finish, returns failure error if request failed.
+- returns: <[Promise]<?[Error]>> Waits for this response to finish, returns failure error if request failed.
 
 #### response.frame()
 - returns: <[Frame]> A [Frame] that initiated this response.
@@ -3290,7 +3289,7 @@ ResourceType will be one of the following: `document`, `stylesheet`, `image`, `m
 - returns: <[Object]> An object with HTTP headers associated with the response. All header names are lower-case.
 
 #### response.json()
-- returns: <Promise<[Object]>> Promise which resolves to a JSON representation of response body.
+- returns: <[Promise]<[Object]>> Promise which resolves to a JSON representation of response body.
 
 This method will throw if the response body is not parsable via `JSON.parse`.
 
@@ -3489,33 +3488,33 @@ Most of the accessibility tree gets filtered out when converting from Blink AX T
 - `options` <[Object]>
   - `interestingOnly` <[boolean]> Prune uninteresting nodes from the tree. Defaults to `true`.
   - `root` <[ElementHandle]> The root DOM element for the snapshot. Defaults to the whole page.
-- returns: <[Promise]<[Object]>> An [AXNode] object with the following properties:
+- returns: <[Promise]<?[Object]>> An [AXNode] object with the following properties:
   - `role` <[string]> The [role](https://www.w3.org/TR/wai-aria/#usage_intro).
   - `name` <[string]> A human readable name for the node.
-  - `value` <[string]|[number]> The current value of the node.
-  - `description` <[string]> An additional human readable description of the node.
-  - `keyshortcuts` <[string]> Keyboard shortcuts associated with this node.
-  - `roledescription` <[string]> A human readable alternative to the role.
-  - `valuetext` <[string]> A description of the current value.
-  - `disabled` <[boolean]> Whether the node is disabled.
-  - `expanded` <[boolean]> Whether the node is expanded or collapsed.
-  - `focused` <[boolean]> Whether the node is focused.
-  - `modal` <[boolean]> Whether the node is [modal](https://en.wikipedia.org/wiki/Modal_window).
-  - `multiline` <[boolean]> Whether the node text input supports multiline.
-  - `multiselectable` <[boolean]> Whether more than one child can be selected.
-  - `readonly` <[boolean]> Whether the node is read only.
-  - `required` <[boolean]> Whether the node is required.
-  - `selected` <[boolean]> Whether the node is selected in its parent node.
-  - `checked` <[boolean]|"mixed"> Whether the checkbox is checked, or "mixed".
-  - `pressed` <[boolean]|"mixed"> Whether the toggle button is checked, or "mixed".
-  - `level` <[number]> The level of a heading.
-  - `valuemin` <[number]> The minimum value in a node.
-  - `valuemax` <[number]> The maximum value in a node.
-  - `autocomplete` <[string]> What kind of autocomplete is supported by a control.
-  - `haspopup` <[string]> What kind of popup is currently being shown for a node.
-  - `invalid` <[string]> Whether and in what way this node's value is invalid.
-  - `orientation` <[string]> Whether the node is oriented horizontally or vertically.
-  - `children` <[Array]<[Object]>> Child [AXNode]s of this node, if any.
+  - `value` <[string]|[number]> The current value of the node, if applicable.
+  - `description` <[string]> An additional human readable description of the node, if applicable.
+  - `keyshortcuts` <[string]> Keyboard shortcuts associated with this node, if applicable.
+  - `roledescription` <[string]> A human readable alternative to the role, if applicable.
+  - `valuetext` <[string]> A description of the current value, if applicable.
+  - `disabled` <[boolean]> Whether the node is disabled, if applicable.
+  - `expanded` <[boolean]> Whether the node is expanded or collapsed, if applicable.
+  - `focused` <[boolean]> Whether the node is focused, if applicable.
+  - `modal` <[boolean]> Whether the node is [modal](https://en.wikipedia.org/wiki/Modal_window), if applicable.
+  - `multiline` <[boolean]> Whether the node text input supports multiline, if applicable.
+  - `multiselectable` <[boolean]> Whether more than one child can be selected, if applicable.
+  - `readonly` <[boolean]> Whether the node is read only, if applicable.
+  - `required` <[boolean]> Whether the node is required, if applicable.
+  - `selected` <[boolean]> Whether the node is selected in its parent node, if applicable.
+  - `checked` <[boolean]|"mixed"> Whether the checkbox is checked, or "mixed", if applicable.
+  - `pressed` <[boolean]|"mixed"> Whether the toggle button is checked, or "mixed", if applicable.
+  - `level` <[number]> The level of a heading, if applicable.
+  - `valuemin` <[number]> The minimum value in a node, if applicable.
+  - `valuemax` <[number]> The maximum value in a node, if applicable.
+  - `autocomplete` <[string]> What kind of autocomplete is supported by a control, if applicable.
+  - `haspopup` <[string]> What kind of popup is currently being shown for a node, if applicable.
+  - `invalid` <[string]> Whether and in what way this node's value is invalid, if applicable.
+  - `orientation` <[string]> Whether the node is oriented horizontally or vertically, if applicable.
+  - `children` <[Array]<[Object]>> Child [AXNode]s of this node, if any, if applicable.
 
 Captures the current state of the accessibility tree. The returned object represents the root accessible node of the page.
 
@@ -3656,8 +3655,8 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 #### browserType.connect(options)
 - `options` <[Object]>
-  - `wsEndpoint` <[string]> A browser websocket endpoint to connect to.
-  - `slowMo` <?[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
+  - `wsEndpoint` <[string]> A browser websocket endpoint to connect to. **required**
+  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
 - returns: <[Promise]<[Browser]>>
 
 This methods attaches Playwright to an existing browser instance.
@@ -3910,7 +3909,7 @@ const v8toIstanbul = require('v8-to-istanbul');
 #### chromiumCoverage.stopCSSCoverage()
 - returns: <[Promise]<[Array]<[Object]>>> Promise that resolves to the array of coverage reports for all stylesheets
   - `url` <[string]> StyleSheet URL
-  - `text` <[string]> StyleSheet content
+  - `text` <[string]> StyleSheet content, if available.
   - `ranges` <[Array]<[Object]>> StyleSheet ranges that were used. Ranges are sorted and non-overlapping.
     - `start` <[number]> A start offset in text, inclusive
     - `end` <[number]> An end offset in text, exclusive
@@ -3920,8 +3919,13 @@ const v8toIstanbul = require('v8-to-istanbul');
 #### chromiumCoverage.stopJSCoverage()
 - returns: <[Promise]<[Array]<[Object]>>> Promise that resolves to the array of coverage reports for all scripts
   - `url` <[string]> Script URL
-  - `source` <[string]> Script content
+  - `source` <[string]> Script content, if applicable.
   - `functions` <[Array]<[Object]>> V8-specific coverage format.
+    - `functionName` <[string]>
+    - `ranges` <[Array]<[Object]>>
+      - `count` <[number]>
+      - `startOffset` <[number]>
+      - `endOffset` <[number]>
 
 > **NOTE** JavaScript Coverage doesn't include anonymous scripts by default. However, scripts with sourceURLs are
 reported.

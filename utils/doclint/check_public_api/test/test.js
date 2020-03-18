@@ -51,6 +51,7 @@ describe('checkPublicAPI', function() {
   it('check-duplicates', testLint);
   it('check-sorting', testLint);
   it('check-returns', testLint);
+  it('check-nullish', testLint);
   it('js-builder-common', testJSBuilder);
   it('js-builder-inheritance', testJSBuilder);
   it('md-builder-common', testMDBuilder);

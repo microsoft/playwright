@@ -20,20 +20,21 @@ import * as platform from '../platform';
 export class BrowserServer extends platform.EventEmitter {
   private _process: ChildProcess;
   private _gracefullyClose: () => Promise<void>;
-  private _browserWSEndpoint: string | null = null;
+  private _browserWSEndpoint: string = '';
 
-  constructor(process: ChildProcess, gracefullyClose: () => Promise<void>, wsEndpoint: string | null) {
+  constructor(process: ChildProcess, gracefullyClose: () => Promise<void>, wsEndpoint: string|null) {
     super();
     this._process = process;
     this._gracefullyClose = gracefullyClose;
-    this._browserWSEndpoint = wsEndpoint;
+    if (wsEndpoint)
+      this._browserWSEndpoint = wsEndpoint;
   }
 
   process(): ChildProcess {
     return this._process;
   }
 
-  wsEndpoint(): string | null {
+  wsEndpoint(): string {
     return this._browserWSEndpoint;
   }
 
