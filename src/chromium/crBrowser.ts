@@ -83,7 +83,6 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     });
     this._session.on('Target.targetCreated', this._targetCreated.bind(this));
     this._session.on('Target.targetDestroyed', this._targetDestroyed.bind(this));
-    this._session.on('Target.targetInfoChanged', this._targetInfoChanged.bind(this));
     this._session.on('Target.attachedToTarget', this._onAttachedToTarget.bind(this));
     this._firstPagePromise = new Promise(f => this._firstPageCallback = f);
   }
@@ -161,13 +160,6 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
       return;
     this._targets.delete(event.targetId);
     target._didClose();
-  }
-
-  _targetInfoChanged(event: Protocol.Target.targetInfoChangedPayload) {
-    const target = this._targets.get(event.targetInfo.targetId)!;
-    if (!target)
-      return;
-    target._targetInfoChanged(event.targetInfo);
   }
 
   async _closePage(page: Page) {
@@ -267,7 +259,7 @@ export class CRBrowserContext extends BrowserContextBase {
   }
 
   pages(): Page[] {
-    return this._targets().filter(target => target.type() === 'page').map(target => target._initializedPage()).filter(pageOrNull => !!pageOrNull) as Page[];
+    return this._targets().filter(target => target.type() === 'page').map(target => target._initializedPage).filter(pageOrNull => !!pageOrNull) as Page[];
   }
 
   async newPage(): Promise<Page> {
@@ -401,7 +393,7 @@ export class CRBrowserContext extends BrowserContextBase {
   }
 
   backgroundPages(): Page[] {
-    return this._targets().filter(target => target.type() === 'background_page').map(target => target._initializedPage()).filter(pageOrNull => !!pageOrNull) as Page[];
+    return this._targets().filter(target => target.type() === 'background_page').map(target => target._initializedPage).filter(pageOrNull => !!pageOrNull) as Page[];
   }
 
   async newCDPSession(page: Page): Promise<CRSession> {
