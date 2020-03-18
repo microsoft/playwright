@@ -26,14 +26,14 @@ import { CRExecutionContext } from './crExecutionContext';
 const targetSymbol = Symbol('target');
 
 export class CRTarget {
-  private _targetInfo: Protocol.Target.TargetInfo;
+  private readonly _targetInfo: Protocol.Target.TargetInfo;
   private readonly _browser: CRBrowser;
   private readonly _browserContext: CRBrowserContext;
   readonly _targetId: string;
   readonly sessionFactory: () => Promise<CRSession>;
-  private _pagePromiseCallback: ((pageOrError: Page | Error) => void) | null = null;
-  private _pagePromise: Promise<Page | Error> | null = null;
-  _crPage: CRPage | null = null;
+  private readonly _pagePromise: Promise<Page | Error> | null = null;
+  readonly _crPage: CRPage | null = null;
+  _initializedPage: Page | null = null;
   private _workerPromise: Promise<Worker> | null = null;
 
   static fromPage(page: Page): CRTarget {
@@ -61,19 +61,13 @@ export class CRTarget {
       const page = this._crPage.page();
       (page as any)[targetSymbol] = this;
       session.once(CRSessionEvents.Disconnected, () => page._didDisconnect());
-      this._pagePromise = this._crPage.initialize().then(() => page).catch(e => e);
+      this._pagePromise = this._crPage.initialize().then(() => this._initializedPage = page).catch(e => e);
     }
   }
 
   _didClose() {
     if (this._crPage)
       this._crPage.didClose();
-  }
-
-  _initializedPage(): Page | null {
-    if (this._crPage && this._crPage._initialized)
-      return this._crPage.page();
-    return null;
   }
 
   async pageOrError(): Promise<Page | Error> {
@@ -100,10 +94,6 @@ export class CRTarget {
     return this._workerPromise;
   }
 
-  url(): string {
-    return this._targetInfo.url;
-  }
-
   type(): 'page' | 'background_page' | 'service_worker' | 'shared_worker' | 'other' | 'browser' {
     const type = this._targetInfo.type;
     if (type === 'page' || type === 'background_page' || type === 'service_worker' || type === 'shared_worker' || type === 'browser')
@@ -120,9 +110,5 @@ export class CRTarget {
     if (!openerId)
       return null;
     return this._browser._targets.get(openerId)!;
-  }
-
-  _targetInfoChanged(targetInfo: Protocol.Target.TargetInfo) {
-    this._targetInfo = targetInfo;
   }
 }
