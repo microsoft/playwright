@@ -197,9 +197,10 @@ Indicates that the browser is connected.
   - `viewport` <[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
     - `width` <[number]> page width in pixels.
     - `height` <[number]> page height in pixels.
-    - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
-    - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported in Firefox.
   - `userAgent` <[string]> Specific user agent to use in this context.
+  - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
+  - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported in Firefox.
+  - `hasTouch` <[boolean]> Specifies if viewport supports touch events. Defaults to false.
   - `javaScriptEnabled` <[boolean]> Whether or not to enable or disable JavaScript in the context. Defaults to true.
   - `timezoneId` <?[string]> Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
   - `geolocation` <[Object]>
@@ -232,12 +233,13 @@ Creates a new browser context. It won't share cookies/cache with other browser c
 - `options` <[Object]>
   - `ignoreHTTPSErrors` <?[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
   - `bypassCSP` <?[boolean]> Toggles bypassing page's Content-Security-Policy.
-  - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+  - `viewport` <[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
     - `width` <[number]> page width in pixels.
     - `height` <[number]> page height in pixels.
-    - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
-    - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported in Firefox.
-  - `userAgent` <?[string]> Specific user agent to use in this context.
+  - `userAgent` <[string]> Specific user agent to use in this context.
+  - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
+  - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported in Firefox.
+  - `hasTouch` <[boolean]> Specifies if viewport supports touch events. Defaults to false.
   - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the context. Defaults to true.
   - `timezoneId` <?[string]> Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
   - `geolocation` <[Object]>

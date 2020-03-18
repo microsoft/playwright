@@ -24,7 +24,7 @@ import * as types from './types';
 import { Events } from './events';
 
 export type BrowserContextOptions = {
-  viewport?: types.Viewport | null,
+  viewport?: types.Size | null,
   ignoreHTTPSErrors?: boolean,
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
@@ -36,6 +36,9 @@ export type BrowserContextOptions = {
   extraHTTPHeaders?: network.Headers,
   offline?: boolean,
   httpCredentials?: types.Credentials,
+  deviceScaleFactor?: number,
+  isMobile?: boolean,
+  hasTouch?: boolean
 };
 
 export interface BrowserContext {

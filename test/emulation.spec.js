@@ -120,7 +120,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       await context.close();
     });
     it('should detect touch when applying viewport with touches', async({browser, server}) => {
-      const context = await browser.newContext({ viewport: { width: 800, height: 600, isMobile: true } });
+      const context = await browser.newContext({ viewport: { width: 800, height: 600 }, hasTouch: true });
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.addScriptTag({url: server.PREFIX + '/modernizr.js'});
@@ -139,7 +139,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       await context2.close();
     });
     it.fail(WEBKIT)('should fire orientationchange event', async({browser, server}) => {
-      const context = await browser.newContext({ viewport: { width: 300, height: 400, isMobile: true } });
+      const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
       await page.evaluate(() => {
@@ -157,14 +157,14 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       await context.close();
     });
     it('default mobile viewports to 980 width', async({browser, server}) => {
-      const context = await browser.newContext({ viewport: {width: 320, height: 480, isMobile: true} });
+      const context = await browser.newContext({ viewport: {width: 320, height: 480 }, isMobile: true });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/empty.html');
       expect(await page.evaluate(() => window.innerWidth)).toBe(980);
       await context.close();
     });
     it('respect meta viewport tag', async({browser, server}) => {
-      const context = await browser.newContext({ viewport: {width: 320, height: 480, isMobile: true} });
+      const context = await browser.newContext({ viewport: {width: 320, height: 480 }, isMobile: true });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => window.innerWidth)).toBe(320);

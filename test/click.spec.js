@@ -307,7 +307,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await frame.evaluate(() => window.result)).toBe('Clicked');
     });
     it('should click the button with deviceScaleFactor set', async({browser, server}) => {
-      const context = await browser.newContext({ viewport: {width: 400, height: 400, deviceScaleFactor: 5} });
+      const context = await browser.newContext({ viewport: { width: 400, height: 400 }, deviceScaleFactor: 5 });
       const page = await context.newPage();
       expect(await page.evaluate(() => window.devicePixelRatio)).toBe(5);
       await page.setContent('<div style="width:100px;height:100px">spacer</div>');
@@ -367,7 +367,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 1910 + 8 : 1910);
     });
     it.skip(FFOX)('should click the button with offset with page scale', async({browser, server}) => {
-      const context = await browser.newContext({ viewport: { width: 400, height: 400, isMobile: true} });
+      const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', button => {

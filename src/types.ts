@@ -77,13 +77,6 @@ export type ScreenshotOptions = ElementScreenshotOptions & {
   clip?: Rect,
 };
 
-export type Viewport = {
-  width: number;
-  height: number;
-  deviceScaleFactor?: number;
-  isMobile?: boolean;
-};
-
 export type URLMatch = string | RegExp | ((url: URL) => boolean);
 
 export type Credentials = {
@@ -117,7 +110,10 @@ export const colorSchemes: Set<ColorScheme> = new Set(['dark', 'light', 'no-pref
 
 export type DeviceDescriptor = {
   userAgent: string,
-  viewport: Viewport,
+  viewport: Size,
+  deviceScaleFactor: number,
+  isMobile: boolean,
+  hasTouch: boolean
 };
 export type Devices = { [name: string]: DeviceDescriptor };
 

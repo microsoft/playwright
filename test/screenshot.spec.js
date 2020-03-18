@@ -164,7 +164,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       expect(screenshot).toBeGolden('screenshot-clip-odd-size.png');
     });
     it.skip(FFOX)('should work with a mobile viewport', async({browser, server}) => {
-      const context = await browser.newContext({viewport: { width: 320, height: 480, isMobile: true }});
+      const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/overflow.html');
       const screenshot = await page.screenshot();
@@ -172,7 +172,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       await context.close();
     });
     it.skip(FFOX)('should work with a mobile viewport and clip', async({browser, server}) => {
-      const context = await browser.newContext({viewport: { width: 320, height: 480, isMobile: true }});
+      const context = await browser.newContext({viewport: { width: 320, height: 480 }, isMobile: true});
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/overflow.html');
       const screenshot = await page.screenshot({ clip: { x: 10, y: 10, width: 100, height: 150 } });
@@ -180,7 +180,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       await context.close();
     });
     it.skip(FFOX)('should work with a mobile viewport and fullPage', async({browser, server}) => {
-      const context = await browser.newContext({viewport: { width: 320, height: 480, isMobile: true }});
+      const context = await browser.newContext({viewport: { width: 320, height: 480 }, isMobile: true});
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/overflow-large.html');
       const screenshot = await page.screenshot({ fullPage: true });

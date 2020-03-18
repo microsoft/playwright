@@ -350,24 +350,25 @@ export class CRPage implements PageDelegate {
   }
 
   async _updateViewport(updateTouch: boolean): Promise<void> {
-    let viewport = this._browserContext._options.viewport || { width: 0, height: 0 };
+    const options = this._browserContext._options;
+    let viewport = options.viewport || { width: 0, height: 0 };
     const viewportSize = this._page._state.viewportSize;
     if (viewportSize)
       viewport = { ...viewport, ...viewportSize };
     const isLandscape = viewport.width > viewport.height;
     const promises = [
       this._client.send('Emulation.setDeviceMetricsOverride', {
-        mobile: !!viewport.isMobile,
+        mobile: !!options.isMobile,
         width: viewport.width,
         height: viewport.height,
         screenWidth: viewport.width,
         screenHeight: viewport.height,
-        deviceScaleFactor: viewport.deviceScaleFactor || 1,
+        deviceScaleFactor: options.deviceScaleFactor || 1,
         screenOrientation: isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' },
       }),
     ];
     if (updateTouch)
-      promises.push(this._client.send('Emulation.setTouchEmulationEnabled', { enabled: !!viewport.isMobile }));
+      promises.push(this._client.send('Emulation.setTouchEmulationEnabled', { enabled: !!options.hasTouch }));
     await Promise.all(promises);
   }
 

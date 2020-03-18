@@ -114,7 +114,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
     });
     it.skip(FFOX)('should inherit touch support from browser context', async function({browser, server}) {
       const context = await browser.newContext({
-        viewport: { width: 400, height: 500, isMobile: true }
+        viewport: { width: 400, height: 500 },
+        hasTouch: true
       });
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);

@@ -155,7 +155,7 @@ export class WKPage implements PageDelegate {
     promises.push(session.send('Network.setExtraHTTPHeaders', { headers: this._calculateExtraHTTPHeaders() }));
     if (contextOptions.offline)
       promises.push(session.send('Network.setEmulateOfflineState', { offline: true }));
-    promises.push(session.send('Page.setTouchEmulationEnabled', { enabled: contextOptions.viewport ? !!contextOptions.viewport.isMobile : false }));
+    promises.push(session.send('Page.setTouchEmulationEnabled', { enabled: !!contextOptions.hasTouch }));
     if (contextOptions.timezoneId) {
       promises.push(session.send('Page.setTimeZone', { timeZone: contextOptions.timezoneId }).
           catch(e => { throw new Error(`Invalid timezone ID: ${contextOptions.timezoneId}`); }));
@@ -485,7 +485,8 @@ export class WKPage implements PageDelegate {
   }
 
   async _updateViewport(): Promise<void> {
-    let viewport = this._browserContext._options.viewport || { width: 0, height: 0 };
+    const options = this._browserContext._options;
+    let viewport = options.viewport || { width: 0, height: 0 };
     const viewportSize = this._page._state.viewportSize;
     if (viewportSize)
       viewport = { ...viewport, ...viewportSize };
@@ -493,8 +494,8 @@ export class WKPage implements PageDelegate {
       this._pageProxySession.send('Emulation.setDeviceMetricsOverride', {
         width: viewport.width,
         height: viewport.height,
-        fixedLayout: !!viewport.isMobile,
-        deviceScaleFactor: viewport.deviceScaleFactor || 1
+        fixedLayout: !!options.isMobile,
+        deviceScaleFactor: options.deviceScaleFactor || 1
       }),
       this._session.send('Page.setScreenSizeOverride', {
         width: viewport.width,
