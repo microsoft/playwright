@@ -94,11 +94,11 @@ const iPhone = devices['iPhone 6'];
 - returns: <[Object]>
   - `TimeoutError` <[function]> A class of [TimeoutError].
 
-Playwright methods might throw errors if they are unable to fulfill a request. For example, [page.waitForSelector(selector[, options])](#pagewaitforelementselector-options)
+Playwright methods might throw errors if they are unable to fulfill a request. For example, [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options)
 might fail if the selector doesn't match any nodes during the given timeframe.
 
 For certain types of errors Playwright uses specific error classes.
-These classes are available via [`browserType.errors`](#browsertypeerrors) or [`playwright.errors`](#playwrighterrors).
+These classes are available via [`playwright.errors`](#playwrighterrors).
 
 An example of handling a timeout error:
 ```js
@@ -531,7 +531,7 @@ This setting will change the default maximum navigation time for the following m
 
 This setting will change the default maximum time for all the methods accepting `timeout` option.
 
-> **NOTE** [`page.setDefaultNavigationTimeout`](#pagesetdefaultnavigationtimeouttimeout), [`page.setDefaultTimeout`](#pagesetdefaulttimeouttimeout) and [`browserContext.setDefaultNavigationTimeout`](#browsercontextsetdefaultnavigationtimeouttimeout) take priority over [`browserContext.setDefaultTimeout`](#browserContextsetdefaulttimeouttimeout).
+> **NOTE** [`page.setDefaultNavigationTimeout`](#pagesetdefaultnavigationtimeouttimeout), [`page.setDefaultTimeout`](#pagesetdefaulttimeouttimeout) and [`browserContext.setDefaultNavigationTimeout`](#browsercontextsetdefaultnavigationtimeouttimeout) take priority over [`browserContext.setDefaultTimeout`](#browsercontextsetdefaulttimeouttimeout).
 
 #### browserContext.setExtraHTTPHeaders(headers)
 - `headers` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
@@ -554,7 +554,7 @@ Sets the contexts's geolocation. Passing null or undefined emulates position una
 await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 ```
 
-> **NOTE** Consider using [browserContext.setPermissions](#browsercontextsetpermissions-permissions) to grant permissions for the browser context pages to read its geolocation.
+> **NOTE** Consider using [browserContext.grantPermissions](#browsercontextgrantpermissionspermissions-options) to grant permissions for the browser context pages to read its geolocation.
 
 #### browserContext.setHTTPCredentials(httpCredentials)
 - `httpCredentials` <?[Object]>
@@ -1202,7 +1202,7 @@ If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matchi
 
 > **NOTE** Pass empty string as a value to clear the input field.
 
-Shortcut for [page.mainFrame().fill()](#framefillselector-value)
+Shortcut for [page.mainFrame().fill()](#framefillselector-value-options)
 
 #### page.focus(selector[, options])
 - `selector` <[string]> A selector of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
@@ -1213,7 +1213,7 @@ Shortcut for [page.mainFrame().fill()](#framefillselector-value)
 This method fetches an element with `selector` and focuses it.
 If there's no element matching `selector`, the method throws an error.
 
-Shortcut for [page.mainFrame().focus(selector)](#framefocusselector).
+Shortcut for [page.mainFrame().focus(selector)](#framefocusselector-options).
 
 #### page.frame(options)
 - `options` <[string]|[Object]> Frame name or other frame lookup options.
@@ -1305,7 +1305,7 @@ Shortcut for [page.mainFrame().goto(url[, options])](#framegotourl-options)
 This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to hover over the center of the element.
 If there's no element matching `selector`, the method throws an error.
 
-Shortcut for [page.mainFrame().hover(selector)](#framehoverselector).
+Shortcut for [page.mainFrame().hover(selector[, options])](#framehoverselector-options).
 
 #### page.isClosed()
 
@@ -1358,7 +1358,7 @@ Page is guaranteed to have a main frame which persists during navigations.
 
 > **NOTE** Generating a pdf is currently only supported in Chromium headless.
 
-`page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call [page.emulateMedia({ type: 'screen' })](#pageemulatemedia) before calling `page.pdf()`:
+`page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call [page.emulateMedia({ type: 'screen' })](#pageemulatemediaoptions) before calling `page.pdf()`:
 
 > **NOTE** By default, `page.pdf()` generates a pdf with modified colors for printing. Use the [`-webkit-print-color-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-print-color-adjust) property to force rendering of exact colors.
 
@@ -1412,7 +1412,7 @@ The `format` options are:
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
 
-Focuses the element, and then uses [`keyboard.down`](#keyboarddownkey-options) and [`keyboard.up`](#keyboardupkey).
+Focuses the element, and then uses [`keyboard.down`](#keyboarddownkey) and [`keyboard.up`](#keyboardupkey).
 
 If `key` is a single character and no modifier keys besides `Shift` are being held down, a `keypress`/`input` event will also be generated. The `text` option can be specified to force an input event to be generated.
 
@@ -1508,7 +1508,7 @@ page.selectOption('select#colors', 'red', 'green', 'blue');
 page.selectOption('select#colors', { value: 'blue' }, { index: 2 }, 'red');
 ```
 
-Shortcut for [page.mainFrame().selectOption()](#frameselectselector-values)
+Shortcut for [page.mainFrame().selectOption()](#frameselectoptionselector-values-options)
 
 #### page.setContent(html[, options])
 - `html` <[string]> HTML markup to assign to the page.
@@ -1643,7 +1643,7 @@ This is a shortcut for [page.mainFrame().url()](#frameurl)
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to a JSHandle of the success value
 
 This method behaves differently with respect to the type of the first parameter:
-- if `selectorOrFunctionOrTimeout` is a `string`, then the first argument is treated as a [selector] and the method is a shortcut for [page.waitForSelector](#pagewaitforelementselector-options)
+- if `selectorOrFunctionOrTimeout` is a `string`, then the first argument is treated as a [selector] and the method is a shortcut for [page.waitForSelector](#pagewaitforselectorselector-options)
 - if `selectorOrFunctionOrTimeout` is a `function`, then the first argument is treated as a predicate to wait for and the method is a shortcut for [page.waitForFunction()](#pagewaitforfunctionpagefunction-options-args).
 - if `selectorOrFunctionOrTimeout` is a `number`, then the first argument is treated as a timeout in milliseconds and the method returns a promise which resolves after the timeout
 - otherwise, an exception is thrown
@@ -1664,7 +1664,7 @@ const selector = '.foo';
 await page.waitFor(selector => !!document.querySelector(selector), {}, selector);
 ```
 
-Shortcut for [page.mainFrame().waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#framewaitforelementorfunctionortimeout-options-args).
+Shortcut for [page.mainFrame().waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#framewaitforselectororfunctionortimeout-options-args).
 
 #### page.waitForEvent(event[, optionsOrPredicate])
 - `event` <[string]> Event name, same one would pass into `page.on(event)`.
@@ -1808,7 +1808,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
   await browser.close();
 })();
 ```
-Shortcut for [page.mainFrame().waitForSelector(selector[, options])](#framewaitforelementselector-options).
+Shortcut for [page.mainFrame().waitForSelector(selector[, options])](#framewaitforselectororfunctionortimeout-options-args).
 
 #### page.workers()
 - returns: <[Array]<[Worker]>>
@@ -2236,7 +2236,7 @@ If the name is empty, returns the id attribute instead.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
 
-Focuses the element, and then uses [`keyboard.down`](#keyboarddownkey-options) and [`keyboard.up`](#keyboardupkey).
+Focuses the element, and then uses [`keyboard.down`](#keyboarddownkey) and [`keyboard.up`](#keyboardupkey).
 
 If `key` is a single character and no modifier keys besides `Shift` are being held down, a `keypress`/`input` event will also be generated. The `text` option can be specified to force an input event to be generated.
 
@@ -2349,7 +2349,7 @@ Returns frame's url.
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to a JSHandle of the success value
 
 This method behaves differently with respect to the type of the first parameter:
-- if `selectorOrFunctionOrTimeout` is a `string`, then the first argument is treated as a [selector] and the method is a shortcut for [frame.waitForSelector](#framewaitforelementselector-options)
+- if `selectorOrFunctionOrTimeout` is a `string`, then the first argument is treated as a [selector] and the method is a shortcut for [frame.waitForSelector](#framewaitforselectororfunctionortimeout-options-args)
 - if `selectorOrFunctionOrTimeout` is a `function`, then the first argument is treated as a predicate to wait for and the method is a shortcut for [frame.waitForFunction()](#framewaitforfunctionpagefunction-options-args).
 - if `selectorOrFunctionOrTimeout` is a `number`, then the first argument is treated as a timeout in milliseconds and the method returns a promise which resolves after the timeout
 - otherwise, an exception is thrown
@@ -2713,7 +2713,7 @@ If the element is detached from DOM, the method throws an error.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
 
-Focuses the element, and then uses [`keyboard.down`](#keyboarddownkey-options) and [`keyboard.up`](#keyboardupkey).
+Focuses the element, and then uses [`keyboard.down`](#keyboarddownkey) and [`keyboard.up`](#keyboardupkey).
 
 If `key` is a single character and no modifier keys besides `Shift` are being held down, a `keypress`/`input` event will also be generated. The `text` option can be specified to force an input event to be generated.
 
@@ -2997,7 +2997,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 Keyboard provides an api for managing a virtual keyboard. The high level api is [`keyboard.type`](#keyboardtypetext-options), which takes raw characters and generates proper keydown, keypress/input, and keyup events on your page.
 
-For finer control, you can use [`keyboard.down`](#keyboarddownkey-options), [`keyboard.up`](#keyboardupkey), and [`keyboard.insertText`](#keyboardsendcharacterstext) to manually fire events as if they were generated from a real keyboard.
+For finer control, you can use [`keyboard.down`](#keyboarddownkey), [`keyboard.up`](#keyboardupkey), and [`keyboard.insertText`](#keyboardinserttexttext) to manually fire events as if they were generated from a real keyboard.
 
 An example of holding down `Shift` in order to select and delete some text:
 ```js
@@ -3040,7 +3040,7 @@ If `key` is a single character and no modifier keys besides `Shift` are being he
 
 If `key` is a modifier key, `Shift`, `Meta`, `Control`, or `Alt`, subsequent key presses will be sent with that modifier active. To release the modifier key, use [`keyboard.up`](#keyboardupkey).
 
-After the key is pressed once, subsequent calls to [`keyboard.down`](#keyboarddownkey-options) will have [repeat](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/repeat) set to true. To release the key, use [`keyboard.up`](#keyboardupkey).
+After the key is pressed once, subsequent calls to [`keyboard.down`](#keyboarddownkey) will have [repeat](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/repeat) set to true. To release the key, use [`keyboard.up`](#keyboardupkey).
 
 > **NOTE** Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the text in upper case.
 
@@ -3066,7 +3066,7 @@ If `key` is a single character and no modifier keys besides `Shift` are being he
 
 > **NOTE** Modifier keys DO effect `keyboard.press`. Holding down `Shift` will type the text in upper case.
 
-Shortcut for [`keyboard.down`](#keyboarddownkey-options) and [`keyboard.up`](#keyboardupkey).
+Shortcut for [`keyboard.down`](#keyboarddownkey) and [`keyboard.up`](#keyboardupkey).
 
 #### keyboard.type(text[, options])
 - `text` <[string]> A text to type into a focused element.
@@ -3468,7 +3468,7 @@ await page.route('**/xhr_endpoint', route => route.fulfill({ path: 'mock_data.js
 
 * extends: [Error]
 
-TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [page.waitForSelector(selector[, options])](#pagewaitforelementselector-options) or [browserType.launch([options])](#browsertypelaunchoptions).
+TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options) or [browserType.launch([options])](#browsertypelaunchoptions).
 
 ### class: Accessibility
 
@@ -3709,7 +3709,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
   - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, Firefox or WebKit, use at your own risk.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
-  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`browserType.defaultArgs()`](#browsertypedefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use any of the default arguments. If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
@@ -3727,7 +3727,7 @@ Launches browser instance that uses persistent storage located at `userDataDir`.
   - `port` <[number]> Port to use for the web socket. Defaults to 0 that picks any available port.
   - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, Firefox or WebKit, use at your own risk.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
-  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`browserType.defaultArgs()`](#browsertypedefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use any of the default arguments. If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.

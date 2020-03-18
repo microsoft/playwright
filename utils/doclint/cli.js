@@ -55,6 +55,7 @@ async function run() {
       firefoxVersion: browserVersions.firefox,
     })));
     messages.push(...await preprocessor.ensureReleasedAPILinks([readme], VERSION));
+    messages.push(...preprocessor.ensureInternalLinksAreValid([api]));
 
     const browser = await playwright.chromium.launch();
     const page = await browser.newPage();

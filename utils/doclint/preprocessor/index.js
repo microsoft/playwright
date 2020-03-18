@@ -15,9 +15,8 @@
  */
 
 const Message = require('../Message');
-const {firefox, webkit, chromium} = require('../../../');
 
-module.exports.ensureReleasedAPILinks = function(sources, libversion) {
+function ensureReleasedAPILinks(sources, libversion) {
   // Release version is everything that doesn't include "-".
   const apiLinkRegex = /https:\/\/github.com\/microsoft\/playwright\/blob\/v[^/]*\/docs\/api.md/ig;
   const lastReleasedAPI = `https://github.com/microsoft/playwright/blob/v${libversion.split('-')[0]}/docs/api.md`;
@@ -32,7 +31,7 @@ module.exports.ensureReleasedAPILinks = function(sources, libversion) {
   return messages;
 };
 
-module.exports.runCommands = function(sources, {libversion, chromiumVersion, firefoxVersion}) {
+function runCommands(sources, {libversion, chromiumVersion, firefoxVersion}) {
   // Release version is everything that doesn't include "-".
   const isReleaseVersion = !libversion.includes('-');
 
@@ -137,6 +136,25 @@ function getTOCEntriesForText(text) {
   return tocEntries;
 }
 
+/**
+ * @param {string} text
+ */
+function ensureInternalLinksAreValid(sources) {
+  const messages = [];
+  for (const source of sources) {
+    const text = source.text();
+    const availableLinks = new Set(getTOCEntriesForText(text).map(entry => entry.id));
+    const internalLinkRegex = /\]\(#([#\w\-]*)\)/g;
+    let match;
+    while ((match = internalLinkRegex.exec(text)) !== null) {
+      const link = match[1];
+      if (!availableLinks.has(link))
+        messages.push(Message.error(`Found invalid link: #${match[1]}`));
+    }
+  }
+  return messages;
+}
+
 function generateTableOfContents(text, offset, topLevelOnly) {
   const allTocEntries = getTOCEntriesForText(text);
 
@@ -175,3 +193,5 @@ function generateTableOfContentsForSuperclass(text, name) {
   }
   return text;
 }
+
+module.exports = {ensureInternalLinksAreValid, runCommands, ensureReleasedAPILinks};
