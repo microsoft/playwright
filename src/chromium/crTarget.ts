@@ -79,7 +79,7 @@ export class CRTarget {
     throw new Error('Not a page.');
   }
 
-  async _initializeServiceWorker(session: CRSession): Promise<Worker | Error> {
+  private async _initializeServiceWorker(session: CRSession): Promise<Worker | Error> {
     const worker = new Worker(this._targetInfo.url);
     session.once('Runtime.executionContextCreated', event => {
       worker._createExecutionContext(new CRExecutionContext(session, event.context));
