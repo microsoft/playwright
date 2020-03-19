@@ -44,7 +44,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     if (typeof pageFunction !== 'function')
       throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
 
-    const { functionText, values, handles } = js.prepareFunctionCall<Protocol.Runtime.CallFunctionArgument>(pageFunction, context, args, (value: any) => {
+    const { functionText, values, handles, dispose } = await js.prepareFunctionCall<Protocol.Runtime.CallFunctionArgument>(pageFunction, context, args, (value: any) => {
       if (Object.is(value, -0))
         return { handle: { unserializableValue: '-0' } };
       if (Object.is(value, Infinity))
@@ -58,19 +58,23 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
       return { value };
     });
 
-    const payload = await this._session.send('Runtime.callFunction', {
-      functionDeclaration: functionText,
-      args: [
-        ...values.map(value => ({ value })),
-        ...handles,
-      ],
-      returnByValue,
-      executionContextId: this._executionContextId
-    }).catch(rewriteError);
-    checkException(payload.exceptionDetails);
-    if (returnByValue)
-      return deserializeValue(payload.result!);
-    return context._createHandle(payload.result);
+    try {
+      const payload = await this._session.send('Runtime.callFunction', {
+        functionDeclaration: functionText,
+        args: [
+          ...values.map(value => ({ value })),
+          ...handles,
+        ],
+        returnByValue,
+        executionContextId: this._executionContextId
+      }).catch(rewriteError);
+      checkException(payload.exceptionDetails);
+      if (returnByValue)
+        return deserializeValue(payload.result!);
+      return context._createHandle(payload.result);
+    } finally {
+      dispose();
+    }
 
     function rewriteError(error: Error): (Protocol.Runtime.evaluateReturnValue | Protocol.Runtime.callFunctionReturnValue) {
       if (error.message.includes('cyclic object value') || error.message.includes('Object is not serializable'))

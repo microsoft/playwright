@@ -45,35 +45,16 @@ export class FrameExecutionContext extends js.ExecutionContext {
     this.frame = frame;
   }
 
+  _adoptIfNeeded(handle: js.JSHandle): Promise<js.JSHandle> | null {
+    if (handle instanceof ElementHandle && handle._context !== this)
+      return this.frame._page._delegate.adoptElementHandle(handle, this);
+    return null;
+  }
+
   async _evaluate(returnByValue: boolean, waitForNavigations: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
-    const needsAdoption = (value: any): boolean => {
-      return typeof value === 'object' && value instanceof ElementHandle && value._context !== this;
-    };
-
-    if (!args.some(needsAdoption)) {
-      // Only go through asynchronous calls if required.
-      return await this.frame._page._frameManager.waitForNavigationsCreatedBy(async () => {
-        return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
-      }, waitForNavigations ? undefined : { waitUntil: 'nowait' });
-    }
-
-    const toDispose: Promise<ElementHandle>[] = [];
-    const adopted = await Promise.all(args.map(async arg => {
-      if (!needsAdoption(arg))
-        return arg;
-      const adopted = this.frame._page._delegate.adoptElementHandle(arg, this);
-      toDispose.push(adopted);
-      return adopted;
-    }));
-    let result;
-    try {
-      result = await this.frame._page._frameManager.waitForNavigationsCreatedBy(async () => {
-        return this._delegate.evaluate(this, returnByValue, pageFunction, ...adopted);
-      }, waitForNavigations ? undefined : { waitUntil: 'nowait' });
-    } finally {
-      toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
-    }
-    return result;
+    return await this.frame._page._frameManager.waitForNavigationsCreatedBy(async () => {
+      return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
+    }, waitForNavigations ? undefined : { waitUntil: 'nowait' });
   }
 
   _createHandle(remoteObject: any): js.JSHandle {
