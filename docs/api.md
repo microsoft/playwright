@@ -3607,7 +3607,6 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 - [browserType.launchPersistentContext(userDataDir, [options])](#browsertypelaunchpersistentcontextuserdatadir-options)
 - [browserType.launchServer([options])](#browsertypelaunchserveroptions)
 - [browserType.name()](#browsertypename)
-- [browserType.setExecutablePath(executablePath)](#browsertypesetexecutablepathexecutablepath)
 <!-- GEN:stop -->
 
 #### browserType.connect(options)
@@ -3707,9 +3706,6 @@ const { chromium } = require('playwright');  // Or 'webkit' or 'firefox'.
 - returns: <[string]>
 
 Returns browser name. For example: `'chromium'`, `'webkit'` or `'firefox'`.
-
-#### browserType.setExecutablePath(executablePath)
-- `executablePath` <[string]> An executable path that Playwright will use to launch browser.
 
 ### class: ChromiumBrowser
 

@@ -23,7 +23,7 @@ module.exports = playwright;
 
 try {
   const downloadedBrowsers = require('./.downloaded-browsers.json');
-  playwright.chromium.setExecutablePath(downloadedBrowsers.crExecutablePath);
+  playwright.chromium._executablePath = downloadedBrowsers.crExecutablePath;
 } catch (e) {
   throw new Error('playwright-chromium has not downloaded Chromium.');
 }

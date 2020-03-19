@@ -36,15 +36,8 @@ import { BrowserContext } from '../browserContext';
 export class WebKit implements BrowserType {
   private _executablePath: (string|undefined);
 
-  constructor() {
-  }
-
   executablePath(): (string|null) {
     return this._executablePath || null;
-  }
-
-  setExecutablePath(executablePath: string) {
-    this._executablePath = executablePath;
   }
 
   name() {
@@ -100,7 +93,7 @@ export class WebKit implements BrowserType {
 
     const webkitExecutable = executablePath || this._executablePath;
     if (!webkitExecutable)
-      throw new Error(`No executable path is specified. Either use "webkit.setExecutablePath()" to set one, or pass "executablePath" option directly.`);
+      throw new Error(`No executable path is specified.`);
 
     let transport: ConnectionTransport | undefined = undefined;
     let browserServer: BrowserServer | undefined = undefined;

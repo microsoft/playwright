@@ -35,15 +35,8 @@ const mkdtempAsync = platform.promisify(fs.mkdtemp);
 export class Firefox implements BrowserType {
   private _executablePath: (string|undefined);
 
-  constructor() {
-  }
-
   executablePath(): (string|null) {
     return this._executablePath || null;
-  }
-
-  setExecutablePath(executablePath: string) {
-    this._executablePath = executablePath;
   }
 
   name() {
@@ -110,7 +103,7 @@ export class Firefox implements BrowserType {
 
     const firefoxExecutable = executablePath || this._executablePath;
     if (!firefoxExecutable)
-      throw new Error(`No executable path is specified. Either use "firefox.setExecutablePath()" to set one, or pass "executablePath" option directly.`);
+      throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
 
     let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose } = await launchProcess({

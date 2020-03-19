@@ -35,15 +35,8 @@ import { BrowserContext } from '../browserContext';
 export class Chromium implements BrowserType {
   private _executablePath: (string|undefined);
 
-  constructor() {
-  }
-
   executablePath(): (string|null) {
     return this._executablePath || null;
-  }
-
-  setExecutablePath(executablePath: string) {
-    this._executablePath = executablePath;
   }
 
   name() {
@@ -100,7 +93,7 @@ export class Chromium implements BrowserType {
 
     const chromeExecutable = executablePath || this._executablePath;
     if (!chromeExecutable)
-      throw new Error(`No executable path is specified. Either use "chromium.setExecutablePath()" to set one, or pass "executablePath" option directly.`);
+      throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
     let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: chromeExecutable,

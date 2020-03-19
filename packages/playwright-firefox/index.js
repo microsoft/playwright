@@ -23,7 +23,7 @@ module.exports = playwright;
 
 try {
   const downloadedBrowsers = require(path.join(__dirname, '.downloaded-browsers.json'));
-  playwright.firefox.setExecutablePath(downloadedBrowsers.ffExecutablePath);
+  playwright.firefox._executablePath = downloadedBrowsers.ffExecutablePath;
 } catch (e) {
   throw new Error('playwright-firefox has not downloaded Firefox.');
 }

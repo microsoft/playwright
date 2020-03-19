@@ -47,8 +47,8 @@ const DOWNLOAD_PATHS = {
     if (!(await existsAsync(DOWNLOAD_PATHS.chromium))) {
       const crExecutablePath = await downloadBrowserWithProgressBar(DOWNLOAD_PATHS.chromium, 'chromium');
       downloadedBrowsersJSON.crExecutablePath = crExecutablePath;
-      await fs.promises.writeFile(DOWNLOADED_BROWSERS_JSON_PATH, JSON.stringify(downloadedBrowsersJSON));
       await protocolGenerator.generateChromiumProtocol(crExecutablePath);
+      await fs.promises.writeFile(DOWNLOADED_BROWSERS_JSON_PATH, JSON.stringify(downloadedBrowsersJSON));
     }
   } catch (e) {
     console.warn(e.message);
@@ -57,8 +57,8 @@ const DOWNLOAD_PATHS = {
     if (!(await existsAsync(DOWNLOAD_PATHS.firefox))) {
       const ffExecutablePath = await downloadBrowserWithProgressBar(DOWNLOAD_PATHS.firefox, 'firefox');
       downloadedBrowsersJSON.ffExecutablePath = ffExecutablePath;
-      await fs.promises.writeFile(DOWNLOADED_BROWSERS_JSON_PATH, JSON.stringify(downloadedBrowsersJSON));
       await protocolGenerator.generateFirefoxProtocol(ffExecutablePath);
+      await fs.promises.writeFile(DOWNLOADED_BROWSERS_JSON_PATH, JSON.stringify(downloadedBrowsersJSON));
     }
   } catch (e) {
     console.warn(e.message);
@@ -67,8 +67,8 @@ const DOWNLOAD_PATHS = {
     if (!(await existsAsync(DOWNLOAD_PATHS.webkit))) {
       const wkExecutablePath = await downloadBrowserWithProgressBar(DOWNLOAD_PATHS.webkit, 'webkit');
       downloadedBrowsersJSON.wkExecutablePath = wkExecutablePath;
-      await fs.promises.writeFile(DOWNLOADED_BROWSERS_JSON_PATH, JSON.stringify(downloadedBrowsersJSON));
       await protocolGenerator.generateWebKitProtocol(path.dirname(wkExecutablePath));
+      await fs.promises.writeFile(DOWNLOADED_BROWSERS_JSON_PATH, JSON.stringify(downloadedBrowsersJSON));
     }
   } catch (e) {
     console.warn(e.message);

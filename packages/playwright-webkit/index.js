@@ -23,7 +23,7 @@ module.exports = playwright;
 
 try {
   const downloadedBrowsers = require(path.join(__dirname, '.downloaded-browsers.json'));
-  playwright.webkit.setExecutablePath(downloadedBrowsers.wkExecutablePath);
+  playwright.webkit._executablePath = downloadedBrowsers.wkExecutablePath;
 } catch (e) {
   throw new Error('playwright-webkit has not downloaded WebKit.');
 }

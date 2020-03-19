@@ -21,9 +21,9 @@ const playwright = new Playwright({
 
 try {
   const downloadedBrowsers = require('./.downloaded-browsers.json');
-  playwright.chromium.setExecutablePath(downloadedBrowsers.crExecutablePath);
-  playwright.firefox.setExecutablePath(downloadedBrowsers.ffExecutablePath);
-  playwright.webkit.setExecutablePath(downloadedBrowsers.wkExecutablePath);
+  playwright.chromium._executablePath = downloadedBrowsers.crExecutablePath;
+  playwright.firefox._executablePath = downloadedBrowsers.ffExecutablePath;
+  playwright.webkit._executablePath = downloadedBrowsers.wkExecutablePath;
 } catch (e) {
 }
 
