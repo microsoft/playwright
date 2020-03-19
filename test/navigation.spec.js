@@ -835,10 +835,11 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     it('should work with pages that have loaded before being connected to', async({page, context, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(e => e.page()),
+        page.waitForEvent('popup'),
         page.evaluate(() => window._popup = window.open(document.location.href)),
       ]);
-      expect(popup.url()).toBe(server.EMPTY_PAGE);
+      // The url is about:blank in FF.
+      // expect(popup.url()).toBe(server.EMPTY_PAGE);
       await popup.waitForLoadState();
       expect(popup.url()).toBe(server.EMPTY_PAGE);
     });

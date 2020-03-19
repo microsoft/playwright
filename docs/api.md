@@ -9,7 +9,6 @@
 - [class: Browser](#class-browser)
 - [class: BrowserContext](#class-browsercontext)
 - [class: Page](#class-page)
-- [class: PageEvent](#class-pageevent)
 - [class: Frame](#class-frame)
 - [class: ElementHandle](#class-elementhandle)
 - [class: JSHandle](#class-jshandle)
@@ -312,17 +311,16 @@ Emitted when Browser context gets closed. This might happen because of one of th
 - The [`browser.close`](#browserclose) method was called.
 
 #### event: 'page'
-- <[PageEvent]>
+- <[Page]> 
 
-Emitted when a new Page is created in the BrowserContext. The event will also fire for popup
-pages. See also [`Page.on('popup')`](#event-popup) to receive events about popups relevant to a specific page.
+The event is emitted when a new Page is created in the BrowserContext. The page may still be navigating. Use [Page.waitForLoadState](#pagewaitforloadstateoptions) to wait until the page gets to a particular state. The event will also fire for popup pages. See also [`Page.on('popup')`](#event-popup) to receive events about popups relevant to a specific page.
 
 ```js
-const [event] = await Promise.all([
+const [page] = await Promise.all([
   context.waitForEvent('page'),
   page.click('a[target=_blank]'),
 ]);
-const newPage = await event.page();
+console.log(await page.evaluate('location.href'));
 ```
 
 #### browserContext.addCookies(cookies)
@@ -765,7 +763,7 @@ Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/We
 Emitted when an uncaught exception happens within the page.
 
 #### event: 'popup'
-- <[PageEvent]> Page event corresponding to "popup" window
+- <[Page]> Page corresponding to "popup" window
 
 Emitted when the page opens a new tab or window. This event is emitted in addition to the [`browserContext.on('page')`](#event-page), but only for popups relevant to this page.
 
@@ -1814,34 +1812,6 @@ Shortcut for [page.mainFrame().waitForSelector(selector[, options])](#framewaitf
 This method returns all of the dedicated [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) associated with the page.
 
 > **NOTE** This does not contain ServiceWorkers
-
-### class: PageEvent
-
-Event object passed to the listeners of [`browserContext.on('page')`](#event-page) and [`page.on('popup')`](#event-popup) events. Provides access to the newly created page.
-
-#### pageEvent.page([options])
-- `options` <[Object]>
-  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> When to consider the page to be loaded, defaults to `load`. Events can be either:
-    - `'nowait'` - navigation is committed, new url is displayed in the browser address bar.
-    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
-    - `'load'` - consider navigation to be finished when the `load` event is fired.
-    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
-- returns: <[Promise]<[Page]>> Promise which resolves to the created page once it loads, according to `waitUntil` option.
-
-This resolves when the page reaches a required load state, `load` by default. The earliest moment that page is available is when it has navigated to the initial url (corresponds to `{waitUntil: 'nowait'}` option). For example, when opening a popup with `window.open('http://example.com')`, this method will wait until the network request to "http://example.com" is done and its response has started loading in the popup. Passing different `waitUntil` options will also wait for the particular load state to happen, e.g. default `load` waits until the load event fires.
-
-```js
-const [, popup] = await Promise.all([
-  // Click opens a popup window.
-  page.click('button'),
-  // Resolves after popup has fired 'DOMContentLoaded' event.
-  page.waitForEvent('popup').then(event => event.page({ waitUntil: 'domcontentloaded' })),
-]);
-```
-
-> **NOTE** Some pages will never fire `load` event. In this case, default `pageEvent.page()` without options will timeout - try using `pageEvent.page({ waitUntil: 'domcontentloaded' })` instead.
 
 ### class: Frame
 
@@ -3836,7 +3806,7 @@ const backgroundPage = await backroundPageTarget.page();
 <!-- GEN:stop -->
 
 #### event: 'backgroundpage'
-- <[PageEvent]>
+- <[Page]>
 
 Emitted when new background page is created in the context.
 
@@ -4101,7 +4071,6 @@ const { chromium } = require('playwright');
 [Mouse]: #class-mouse "Mouse"
 [Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"
 [Page]: #class-page "Page"
-[PageEvent]: #class-pageevent "PageEvent"
 [Playwright]: #class-playwright "Playwright"
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"
 [RegExp]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp

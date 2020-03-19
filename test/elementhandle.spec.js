@@ -209,7 +209,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     it('should work for adopted elements', async({page,server}) => {
       await page.goto(server.EMPTY_PAGE);
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(e => e.page()),
+        page.waitForEvent('popup'),
         page.evaluate(url => window.__popup = window.open(url), server.EMPTY_PAGE),
       ]);
       const divHandle = await page.evaluateHandle(() => {
@@ -218,6 +218,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
         return div;
       });
       expect(await divHandle.ownerFrame()).toBe(page.mainFrame());
+      await popup.waitForLoadState({ waitUntil: 'domcontentloaded' });
       await page.evaluate(() => {
         const div = document.querySelector('div');
         window.__popup.document.body.appendChild(div);

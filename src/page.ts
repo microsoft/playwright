@@ -87,48 +87,6 @@ export type FileChooser = {
   multiple: boolean
 };
 
-export class PageEvent {
-  private readonly _browserContext: BrowserContextBase;
-  private readonly _pageOrError: Promise<Page | Error>;
-  private readonly _lifecyclePromises = new Map<types.LifecycleEvent, Promise<Page | Error>>();
-
-  constructor(browserContext: BrowserContextBase, pageOrErrorPromise: Promise<Page | Error>) {
-    this._browserContext = browserContext;
-    this._pageOrError = pageOrErrorPromise;
-    for (const lifecycle of types.kLifecycleEvents)
-      this._lifecyclePromises.set(lifecycle, this._createLifecyclePromise(lifecycle));
-  }
-
-  async _createLifecyclePromise(lifecycle: types.LifecycleEvent): Promise<Page | Error> {
-    const page = await this._pageOrError;
-    if (!(page instanceof Page))
-      return page;
-
-    try {
-      const frameTask = new frames.FrameTask(page.mainFrame(), { timeout: 0 });
-      await frameTask.waitForLifecycle(lifecycle);
-      frameTask.done();
-    } catch (error) {
-      return error;
-    }
-    return page;
-  }
-
-  async page(options: types.TimeoutOptions & { waitUntil?: types.LifecycleEvent | 'nowait' } = {}): Promise<Page> {
-    const {
-      timeout = this._browserContext._timeoutSettings.navigationTimeout(),
-      waitUntil = 'load',
-    } = options;
-    const lifecyclePromise = waitUntil === 'nowait' ? this._pageOrError : this._lifecyclePromises.get(waitUntil);
-    if (!lifecyclePromise)
-      throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
-    const pageOrError = await helper.waitWithTimeout(lifecyclePromise, `"${waitUntil}"`, timeout);
-    if (pageOrError instanceof Page)
-      return pageOrError;
-    throw pageOrError;
-  }
-}
-
 export class Page extends platform.EventEmitter {
   private _closed = false;
   private _closedCallback: () => void;

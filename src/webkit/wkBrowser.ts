@@ -20,7 +20,7 @@ import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, Bro
 import { Events } from '../events';
 import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
-import { Page, PageBinding, PageEvent } from '../page';
+import { Page, PageBinding } from '../page';
 import * as platform from '../platform';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
 import * as types from '../types';
@@ -137,15 +137,16 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     const wkPage = new WKPage(context, pageProxySession, opener || null, hasInitialAboutBlank);
     this._wkPages.set(pageProxyId, wkPage);
 
-    const pageEvent = new PageEvent(context, wkPage.pageOrError());
     wkPage.pageOrError().then(async () => {
       this._firstPageCallback();
-      context!.emit(Events.BrowserContext.Page, pageEvent);
+      const page = wkPage._page;
+      context!.emit(Events.BrowserContext.Page, page);
       if (!opener)
         return;
-      const openerPage = await opener.pageOrError();
-      if (openerPage instanceof Page && !openerPage.isClosed())
-        openerPage.emit(Events.Page.Popup, pageEvent);
+      await opener.pageOrError();
+      const openerPage = opener._page;
+      if (!openerPage.isClosed())
+        openerPage.emit(Events.Page.Popup, page);
     });
   }
 
