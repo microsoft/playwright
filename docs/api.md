@@ -313,7 +313,9 @@ Emitted when Browser context gets closed. This might happen because of one of th
 #### event: 'page'
 - <[Page]> 
 
-The event is emitted when a new Page is created in the BrowserContext. The page may still be navigating. Use [Page.waitForLoadState](#pagewaitforloadstateoptions) to wait until the page gets to a particular state. The event will also fire for popup pages. See also [`Page.on('popup')`](#event-popup) to receive events about popups relevant to a specific page.
+The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also [`Page.on('popup')`](#event-popup) to receive events about popups relevant to a specific page.
+
+The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
 
 ```js
 const [page] = await Promise.all([
@@ -322,6 +324,8 @@ const [page] = await Promise.all([
 ]);
 console.log(await page.evaluate('location.href'));
 ```
+
+> **NOTE** Use [Page.waitForLoadState](#pagewaitforloadstateoptions) to wait until the page gets to a particular state (you should not need it in most cases).
 
 #### browserContext.addCookies(cookies)
 - `cookies` <[Array]<[Object]>>
@@ -767,21 +771,16 @@ Emitted when an uncaught exception happens within the page.
 
 Emitted when the page opens a new tab or window. This event is emitted in addition to the [`browserContext.on('page')`](#event-page), but only for popups relevant to this page.
 
-```js
-const [event] = await Promise.all([
-  page.waitForEvent('popup'),
-  page.click('a[target=_blank]'),
-]);
-const popup = await event.page();
-```
+The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
 
 ```js
-const [event] = await Promise.all([
+const [popup] = await Promise.all([
   page.waitForEvent('popup'),
   page.evaluate(() => window.open('https://example.com')),
 ]);
-const popup = await event.page();
+console.log(await popup.evaluate('location.href'));
 ```
+> **NOTE** Use [Page.waitForLoadState](#pagewaitforloadstateoptions) to wait until the page gets to a particular state (you should not need it in most cases).
 
 #### event: 'request'
 - <[Request]>

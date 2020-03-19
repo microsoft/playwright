@@ -216,56 +216,6 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(popup).toBeTruthy();
       await context.close();
     });
-    it('should resolve page after initial navigation', async({browser, server}) => {
-      const context = await browser.newContext();
-      const page = await context.newPage();
-      await page.goto(server.EMPTY_PAGE);
-      // First popup navigation is about:blank.
-      const [popup] = await Promise.all([
-        page.waitForEvent('popup'),
-        page.evaluate(() => window.popup = window.open('about:blank')),
-      ]);
-      expect(popup).toBeTruthy();
-      await context.close();
-    });
-    it('waitForLoadState() should resolve after load', async({browser, server}) => {
-      const context = await browser.newContext();
-      const page = await context.newPage();
-      await page.goto(server.EMPTY_PAGE);
-      // Stall the 'load' by delaying css.
-      let cssResponse;
-      server.setRoute('/one-style.css', (req, res) => cssResponse = res);
-      const [popup] = await Promise.all([
-        page.waitForEvent('popup'),
-        server.waitForRequest('/one-style.css'),
-        page.evaluate(url => window.popup = window.open(url), server.PREFIX + '/one-style.html'),
-      ]);
-      let resolved = false;
-      const loadSatePromise = popup.waitForLoadState({waitUntil: 'load'}).then(() => resolved = true);
-      // Round trips!
-      for (let i = 0; i < 5; i++)
-        await page.evaluate('window');
-      expect(resolved).toBe(false);
-      cssResponse.end('');
-      await loadSatePromise;
-      expect(resolved).toBe(true);
-      expect(popup.url()).toBe(server.PREFIX + '/one-style.html');
-      await context.close();
-    });
-    it('should respect timeout in waitForLoadState()', async({browser, server}) => {
-      const context = await browser.newContext();
-      const page = await context.newPage();
-      await page.goto(server.EMPTY_PAGE);
-      // Stall the 'load' by delaying css.
-      server.setRoute('/one-style.css', (req, res) => {});
-      const [popup] = await Promise.all([
-        page.waitForEvent('popup'),
-        page.evaluate(url => window.popup = window.open(url), server.PREFIX + '/one-style.html'),
-      ]);
-      const error = await popup.waitForLoadState({ waitUntil: 'load', timeout: 1 }).catch(e => e);
-      expect(error.message).toBe('Navigation timeout of 1 ms exceeded');
-      await context.close();
-    });
     it.fail(FFOX)('should be able to capture alert', async({browser}) => {
       // Firefox:
       // - immediately closes dialog by itself, without protocol call;

@@ -39,7 +39,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
       const [popup] = await Promise.all([
-        utils.waitEvent(page, 'popup'),
+        page.waitForEvent('popup'),
         page.evaluate(url => window.open(url), server.EMPTY_PAGE)
       ]);
       expect(popup.context()).toBe(context);

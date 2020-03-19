@@ -142,7 +142,8 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
           if (!opener)
             return;
           // Opener page must have been initialized already and resumed in order to
-          // create this popup, maybe use opener._crPage!.page()?
+          // create this popup but there is a chance that not all responses have been
+          // received yet so we cannot use opener._crPage?.page()
           const openerPage = await opener.pageOrError();
           if (openerPage instanceof Page && !openerPage.isClosed())
             openerPage.emit(CommonEvents.Page.Popup, page);
