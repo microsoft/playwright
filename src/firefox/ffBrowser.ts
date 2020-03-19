@@ -269,8 +269,8 @@ export class FFBrowserContext extends BrowserContextBase {
     await this._browser._connection.send('Browser.setHTTPCredentials', { browserContextId: this._browserContextId || undefined, credentials: httpCredentials });
   }
 
-  async addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]) {
-    const source = await helper.evaluationScript(script, args);
+  async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
+    const source = await helper.evaluationScript(script, arg);
     this._evaluateOnNewDocumentSources.push(source);
     await this._browser._connection.send('Browser.addScriptToEvaluateOnNewDocument', { browserContextId: this._browserContextId || undefined, script: source });
   }

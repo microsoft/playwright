@@ -55,7 +55,7 @@ export interface BrowserContext {
   setExtraHTTPHeaders(headers: network.Headers): Promise<void>;
   setOffline(offline: boolean): Promise<void>;
   setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void>;
-  addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]): Promise<void>;
+  addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any): Promise<void>;
   exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
   route(url: types.URLMatch, handler: network.RouteHandler): Promise<void>;
   waitForEvent(event: string, optionsOrPredicate?: Function | (types.TimeoutOptions & { predicate?: Function })): Promise<any>;
@@ -102,7 +102,7 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
   abstract setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void>;
   abstract setExtraHTTPHeaders(headers: network.Headers): Promise<void>;
   abstract setOffline(offline: boolean): Promise<void>;
-  abstract addInitScript(script: string | Function | { path?: string | undefined; content?: string | undefined; }, ...args: any[]): Promise<void>;
+  abstract addInitScript(script: string | Function | { path?: string | undefined; content?: string | undefined; }, arg?: any): Promise<void>;
   abstract exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
   abstract route(url: types.URLMatch, handler: network.RouteHandler): Promise<void>;
   abstract close(): Promise<void>;

@@ -51,7 +51,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return null;
   }
 
-  async _evaluate(returnByValue: boolean, waitForNavigations: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
+  async _doEvaluateInternal(returnByValue: boolean, waitForNavigations: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
     return await this.frame._page._frameManager.waitForNavigationsCreatedBy(async () => {
       return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
     }, waitForNavigations ? undefined : { waitUntil: 'nowait' });
@@ -78,16 +78,16 @@ export class FrameExecutionContext extends js.ExecutionContext {
           ${custom.join(',\n')}
         ])
       `;
-      this._injectedPromise = this._evaluate(false /* returnByValue */, false /* waitForNavigations */, source);
+      this._injectedPromise = this._doEvaluateInternal(false /* returnByValue */, false /* waitForNavigations */, source);
       this._injectedGeneration = selectors._generation;
     }
     return this._injectedPromise;
   }
 
   async _$(selector: string, scope?: ElementHandle): Promise<ElementHandle<Element> | null> {
-    const handle = await this.evaluateHandle(
-        (injected: Injected, selector: string, scope?: Node) => injected.querySelector(selector, scope || document),
-        await this._injected(), selector, scope
+    const handle = await this.evaluateHandleInternal(
+        ({ injected, selector, scope }) => injected.querySelector(selector, scope || document),
+        { injected: await this._injected(), selector, scope }
     );
     if (!handle.asElement())
       handle.dispose();
@@ -95,9 +95,9 @@ export class FrameExecutionContext extends js.ExecutionContext {
   }
 
   async _$array(selector: string, scope?: ElementHandle): Promise<js.JSHandle<Element[]>> {
-    const arrayHandle = await this.evaluateHandle(
-        (injected: Injected, selector: string, scope?: Node) => injected.querySelectorAll(selector, scope || document),
-        await this._injected(), selector, scope
+    const arrayHandle = await this.evaluateHandleInternal(
+        ({ injected, selector, scope }) => injected.querySelectorAll(selector, scope || document),
+        { injected: await this._injected(), selector, scope }
     );
     return arrayHandle;
   }
@@ -132,9 +132,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this;
   }
 
-  _evaluateInUtility: types.EvaluateWithInjected<T> = async (pageFunction, ...args) => {
+  async _evaluateInUtility<R, Arg>(pageFunction: types.FuncOn<{ injected: Injected, node: T }, Arg, R>, arg: Arg): Promise<R> {
     const utility = await this._context.frame._utilityContext();
-    return utility.evaluate(pageFunction as any, await utility._injected(), this, ...args);
+    return utility._doEvaluateInternal(true /* returnByValue */, true /* waitForNavigations */, pageFunction, { injected: await utility._injected(), node: this }, arg);
   }
 
   async ownerFrame(): Promise<frames.Frame | null> {
@@ -150,7 +150,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async contentFrame(): Promise<frames.Frame | null> {
-    const isFrameElement = await this._evaluateInUtility((injected, node) => node && (node.nodeName === 'IFRAME' || node.nodeName === 'FRAME'));
+    const isFrameElement = await this._evaluateInUtility(({node}) => node && (node.nodeName === 'IFRAME' || node.nodeName === 'FRAME'), {});
     if (!isFrameElement)
       return null;
     return this._page._delegate.getContentFrame(this);
@@ -206,7 +206,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   private async _offsetPoint(offset: types.Point): Promise<types.Point> {
     const [box, border] = await Promise.all([
       this.boundingBox(),
-      this._evaluateInUtility((injected, node) => injected.getElementBorderWidth(node)).catch(debugError),
+      this._evaluateInUtility(({ injected, node }) => injected.getElementBorderWidth(node), {}).catch(debugError),
     ]);
     const point = { x: offset.x, y: offset.y };
     if (box) {
@@ -271,14 +271,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
     }
     return await this._page._frameManager.waitForNavigationsCreatedBy<string[]>(async () => {
-      return this._evaluateInUtility((injected, node, ...optionsToSelect) => injected.selectOptions(node, optionsToSelect), ...selectOptions);
+      return this._evaluateInUtility(({ injected, node }, selectOptions) => injected.selectOptions(node, selectOptions), selectOptions);
     }, options);
   }
 
   async fill(value: string, options?: types.NavigatingActionWaitOptions): Promise<void> {
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
-      const error = await this._evaluateInUtility((injected, node, value) => injected.fill(node, value), value);
+      const error = await this._evaluateInUtility(({ injected, node }, value) => injected.fill(node, value), value);
       if (error)
         throw new Error(error);
       if (value)
@@ -289,12 +289,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[]) {
-    const multiple = await this._evaluateInUtility((injected: Injected, node: Node) => {
-      if (node.nodeType !== Node.ELEMENT_NODE || (node as Element).tagName !== 'INPUT')
+    const multiple = await this._evaluateInUtility(({ node }) => {
+      if (node.nodeType !== Node.ELEMENT_NODE || (node as Node as Element).tagName !== 'INPUT')
         throw new Error('Node is not an HTMLInputElement');
-      const input = node as HTMLInputElement;
+      const input = node as Node as HTMLInputElement;
       return input.multiple;
-    });
+    }, {});
     let ff: string[] | types.FilePayload[];
     if (!Array.isArray(files))
       ff = [ files ] as string[] | types.FilePayload[];
@@ -320,12 +320,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async focus() {
-    const errorMessage = await this._evaluateInUtility((injected: Injected, element: Node) => {
-      if (!(element as any)['focus'])
+    const errorMessage = await this._evaluateInUtility(({ node }) => {
+      if (!(node as any)['focus'])
         return 'Node is not an HTML or SVG element.';
-      (element as HTMLElement|SVGElement).focus();
+      (node as Node as HTMLElement | SVGElement).focus();
       return false;
-    });
+    }, {});
     if (errorMessage)
       throw new Error(errorMessage);
   }
@@ -353,10 +353,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   private async _setChecked(state: boolean, options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    if (await this._evaluateInUtility((injected, node) => injected.isCheckboxChecked(node)) === state)
+    if (await this._evaluateInUtility(({ injected, node }) => injected.isCheckboxChecked(node), {}) === state)
       return;
     await this.click(options);
-    if (await this._evaluateInUtility((injected, node) => injected.isCheckboxChecked(node)) !== state)
+    if (await this._evaluateInUtility(({ injected, node }) => injected.isCheckboxChecked(node), {}) !== state)
       throw new Error('Unable to click checkbox');
   }
 
@@ -376,24 +376,28 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._context._$$(selector, this);
   }
 
-  $eval: types.$Eval = async (selector, pageFunction, ...args) => {
+  async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
+  async $eval<R>(selector: string, pageFunction: types.FuncOn<Element, void, R>, arg?: any): Promise<R>;
+  async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
     const elementHandle = await this._context._$(selector, this);
     if (!elementHandle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await elementHandle.evaluate(pageFunction, ...args as any);
+    const result = await elementHandle.evaluate(pageFunction, arg);
     elementHandle.dispose();
     return result;
   }
 
-  $$eval: types.$$Eval = async (selector, pageFunction, ...args) => {
+  async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
+  async $$eval<R>(selector: string, pageFunction: types.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
+  async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
     const arrayHandle = await this._context._$array(selector, this);
-    const result = await arrayHandle.evaluate(pageFunction, ...args as any);
+    const result = await arrayHandle.evaluate(pageFunction, arg);
     arrayHandle.dispose();
     return result;
   }
 
   async _waitForDisplayedAtStablePosition(options: types.TimeoutOptions = {}): Promise<void> {
-    const stablePromise = this._evaluateInUtility((injected, node, timeout) => {
+    const stablePromise = this._evaluateInUtility(({ injected, node }, timeout) => {
       return injected.waitForDisplayedAtStablePosition(node, timeout);
     }, options.timeout || 0);
     await helper.waitWithTimeout(stablePromise, 'element to be displayed and not moving', options.timeout || 0);
@@ -409,55 +413,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       // Translate from viewport coordinates to frame coordinates.
       point = { x: point.x - box.x, y: point.y - box.y };
     }
-    const hitTargetPromise = this._evaluateInUtility((injected, node, timeout, point) => {
+    const hitTargetPromise = this._evaluateInUtility(({ injected, node }, { timeout, point }) => {
       return injected.waitForHitTargetAt(node, timeout, point);
-    }, options.timeout || 0, point);
+    }, { timeout: options.timeout || 0, point });
     await helper.waitWithTimeout(hitTargetPromise, 'element to receive mouse events', options.timeout || 0);
   }
-}
-
-export type Task = (context: FrameExecutionContext) => Promise<js.JSHandle>;
-
-function assertPolling(polling: types.Polling) {
-  if (helper.isString(polling))
-    assert(polling === 'raf' || polling === 'mutation', 'Unknown polling option: ' + polling);
-  else if (helper.isNumber(polling))
-    assert(polling > 0, 'Cannot poll with non-positive interval: ' + polling);
-  else
-    throw new Error('Unknown polling options: ' + polling);
-}
-
-export function waitForFunctionTask(selector: string | undefined, pageFunction: Function | string, options: types.WaitForFunctionOptions, ...args: any[]): Task {
-  const { polling = 'raf' } = options;
-  assertPolling(polling);
-  const predicateBody = helper.isString(pageFunction) ? 'return (' + pageFunction + ')' : 'return (' + pageFunction + ')(...args)';
-
-  return async (context: FrameExecutionContext) => context.evaluateHandle((injected: Injected, selector: string | undefined, predicateBody: string, polling: types.Polling, timeout: number, ...args) => {
-    const innerPredicate = new Function('...args', predicateBody);
-    return injected.poll(polling, selector, timeout, (element: Element | undefined): any => {
-      if (selector === undefined)
-        return innerPredicate(...args);
-      return innerPredicate(element, ...args);
-    });
-  }, await context._injected(), selector, predicateBody, polling, options.timeout || 0, ...args);
-}
-
-export function waitForSelectorTask(selector: string, waitFor: 'attached' | 'detached' | 'visible' | 'hidden', timeout: number): Task {
-  return async (context: FrameExecutionContext) => context.evaluateHandle((injected, selector, waitFor, timeout) => {
-    const polling = (waitFor === 'attached' || waitFor === 'detached') ? 'mutation' : 'raf';
-    return injected.poll(polling, selector, timeout, (element: Element | undefined): Element | boolean => {
-      switch (waitFor) {
-        case 'attached':
-          return element || false;
-        case 'detached':
-          return !element;
-        case 'visible':
-          return element && injected.isVisible(element) ? element : false;
-        case 'hidden':
-          return !element || !injected.isVisible(element);
-      }
-    });
-  }, await context._injected(), selector, waitFor, timeout);
 }
 
 export const setFileInputFunction = async (element: HTMLInputElement, payloads: types.FilePayload[]) => {

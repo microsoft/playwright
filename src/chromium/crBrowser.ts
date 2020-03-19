@@ -374,8 +374,8 @@ export class CRBrowserContext extends BrowserContextBase {
       await (page._delegate as CRPage)._networkManager.authenticate(httpCredentials);
   }
 
-  async addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]) {
-    const source = await helper.evaluationScript(script, args);
+  async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
+    const source = await helper.evaluationScript(script, arg);
     this._evaluateOnNewDocumentSources.push(source);
     for (const page of this.pages())
       await (page._delegate as CRPage).evaluateOnNewDocument(source);

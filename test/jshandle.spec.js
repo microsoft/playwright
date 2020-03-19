@@ -56,9 +56,9 @@ module.exports.describe = function({testRunner, expect, CHROMIUM, FFOX, WEBKIT})
       const foo = await page.evaluateHandle(() => ({ x: 1, y: 'foo' }));
       const bar = await page.evaluateHandle(() => 5);
       const baz = await page.evaluateHandle(() => (['baz']));
-      const result = await page.evaluate((a1, a2) => {
-        return JSON.stringify({ a1, a2 });
-      }, { foo }, { bar, arr: [{ baz }] });
+      const result = await page.evaluate(x => {
+        return JSON.stringify(x);
+      }, { a1: { foo }, a2: { bar, arr: [{ baz }] } });
       expect(JSON.parse(result)).toEqual({
         a1: { foo: { x: 1, y: 'foo' } },
         a2: { bar: 5, arr: [{ baz: ['baz'] }] }

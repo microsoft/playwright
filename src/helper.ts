@@ -30,7 +30,7 @@ export type RegisteredListener = {
 class Helper {
   static evaluationString(fun: Function | string, ...args: any[]): string {
     if (Helper.isString(fun)) {
-      assert(args.length === 0, 'Cannot evaluate a string with arguments');
+      assert(args.length === 0 || (args.length === 1 && args[0] === undefined), 'Cannot evaluate a string with arguments');
       return fun;
     }
     return `(${fun})(${args.map(serializeArgument).join(',')})`;
@@ -42,7 +42,7 @@ class Helper {
     }
   }
 
-  static async evaluationScript(fun: Function | string | { path?: string, content?: string }, args: any[] = [], addSourceUrl: boolean = true): Promise<string> {
+  static async evaluationScript(fun: Function | string | { path?: string, content?: string }, arg?: any, addSourceUrl: boolean = true): Promise<string> {
     if (!helper.isString(fun) && typeof fun !== 'function') {
       if (fun.content !== undefined) {
         fun = fun.content;
@@ -55,7 +55,7 @@ class Helper {
         throw new Error('Either path or content property must be present');
       }
     }
-    return helper.evaluationString(fun, ...args);
+    return helper.evaluationString(fun, arg);
   }
 
   static installApiHooks(className: string, classType: any) {

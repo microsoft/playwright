@@ -118,7 +118,7 @@ const utils = module.exports = {
    */
   attachFrame: async function(page, frameId, url) {
     const frames = new Set(page.frames());
-    const handle = await page.evaluateHandle(attachFrame, frameId, url);
+    const handle = await page.evaluateHandle(attachFrame, { frameId, url });
     try {
       return await handle.asElement().contentFrame();
     } catch(e) {
@@ -130,7 +130,7 @@ const utils = module.exports = {
     }
     return null;
 
-    async function attachFrame(frameId, url) {
+    async function attachFrame({ frameId, url }) {
       const frame = document.createElement('iframe');
       frame.src = url;
       frame.id = frameId;
@@ -159,9 +159,9 @@ const utils = module.exports = {
    * @param {string} url
    */
   navigateFrame: async function(page, frameId, url) {
-    await page.evaluate(navigateFrame, frameId, url);
+    await page.evaluate(navigateFrame, { frameId, url });
 
-    function navigateFrame(frameId, url) {
+    function navigateFrame({ frameId, url }) {
       const frame = document.getElementById(frameId);
       frame.src = url;
       return new Promise(x => frame.onload = x);

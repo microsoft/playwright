@@ -410,14 +410,18 @@ export class Frame {
     return this._context('utility');
   }
 
-  evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
+  async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
+  async evaluateHandle<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<types.SmartHandle<R>>;
+  async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
     const context = await this._mainContext();
-    return context.evaluateHandle(pageFunction, ...args as any);
+    return context.evaluateHandleInternal(pageFunction, arg);
   }
 
-  evaluate: types.Evaluate = async (pageFunction, ...args) => {
+  async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R>;
+  async evaluate<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<R>;
+  async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R> {
     const context = await this._mainContext();
-    return context.evaluate(pageFunction, ...args as any);
+    return context.evaluateInternal(pageFunction, arg);
   }
 
   async $(selector: string): Promise<dom.ElementHandle<Element> | null> {
@@ -439,7 +443,7 @@ export class Frame {
     if (!['attached', 'detached', 'visible', 'hidden'].includes(waitFor))
       throw new Error(`Unsupported waitFor option "${waitFor}"`);
 
-    const task = dom.waitForSelectorTask(selector, waitFor, timeout);
+    const task = waitForSelectorTask(selector, waitFor, timeout);
     const result = await this._scheduleRerunnableTask(task, 'utility', timeout, `selector "${selectorToString(selector, waitFor)}"`);
     if (!result.asElement()) {
       result.dispose();
@@ -455,20 +459,24 @@ export class Frame {
     return handle;
   }
 
-  $eval: types.$Eval = async (selector, pageFunction, ...args) => {
+  async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
+  async $eval<R>(selector: string, pageFunction: types.FuncOn<Element, void, R>, arg?: any): Promise<R>;
+  async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
     const context = await this._mainContext();
     const elementHandle = await context._$(selector);
     if (!elementHandle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await elementHandle.evaluate(pageFunction, ...args as any);
+    const result = await elementHandle.evaluate(pageFunction, arg);
     elementHandle.dispose();
     return result;
   }
 
-  $$eval: types.$$Eval = async (selector, pageFunction, ...args) => {
+  async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
+  async $$eval<R>(selector: string, pageFunction: types.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
+  async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
     const context = await this._mainContext();
     const arrayHandle = await context._$array(selector);
-    const result = await arrayHandle.evaluate(pageFunction, ...args as any);
+    const result = await arrayHandle.evaluate(pageFunction, arg);
     arrayHandle.dispose();
     return result;
   }
@@ -480,7 +488,7 @@ export class Frame {
 
   async content(): Promise<string> {
     const context = await this._utilityContext();
-    return context.evaluate(() => {
+    return context.evaluateInternal(() => {
       let retVal = '';
       if (document.doctype)
         retVal = new XMLSerializer().serializeToString(document.doctype);
@@ -500,13 +508,13 @@ export class Frame {
         this.waitForLoadState(options).then(resolve).catch(reject);
       });
     });
-    const contentPromise = context.evaluate((html, tag) => {
+    const contentPromise = context.evaluateInternal(({ html, tag }) => {
       window.stop();
       document.open();
       console.debug(tag);  // eslint-disable-line no-console
       document.write(html);
       document.close();
-    }, html, tag);
+    }, { html, tag });
     await Promise.all([contentPromise, lifecyclePromise]);
   }
 
@@ -547,20 +555,20 @@ export class Frame {
     const context = await this._mainContext();
     return this._raceWithCSPError(async () => {
       if (url !== null)
-        return (await context.evaluateHandle(addScriptUrl, url, type)).asElement()!;
+        return (await context.evaluateHandleInternal(addScriptUrl, { url, type })).asElement()!;
       if (path !== null) {
         let contents = await platform.readFileAsync(path, 'utf8');
         contents += '//# sourceURL=' + path.replace(/\n/g, '');
-        return (await context.evaluateHandle(addScriptContent, contents, type)).asElement()!;
+        return (await context.evaluateHandleInternal(addScriptContent, { content: contents, type })).asElement()!;
       }
-      return (await context.evaluateHandle(addScriptContent, content!, type)).asElement()!;
+      return (await context.evaluateHandleInternal(addScriptContent, { content: content!, type })).asElement()!;
     });
 
-    async function addScriptUrl(url: string, type: string): Promise<HTMLElement> {
+    async function addScriptUrl(options: { url: string, type: string }): Promise<HTMLElement> {
       const script = document.createElement('script');
-      script.src = url;
-      if (type)
-        script.type = type;
+      script.src = options.url;
+      if (options.type)
+        script.type = options.type;
       const promise = new Promise((res, rej) => {
         script.onload = res;
         script.onerror = rej;
@@ -570,10 +578,10 @@ export class Frame {
       return script;
     }
 
-    function addScriptContent(content: string, type: string = 'text/javascript'): HTMLElement {
+    function addScriptContent(options: { content: string, type: string }): HTMLElement {
       const script = document.createElement('script');
-      script.type = type;
-      script.text = content;
+      script.type = options.type || 'text/javascript';
+      script.text = options.content;
       let error = null;
       script.onerror = e => error = e;
       document.head.appendChild(script);
@@ -595,15 +603,15 @@ export class Frame {
     const context = await this._mainContext();
     return this._raceWithCSPError(async () => {
       if (url !== null)
-        return (await context.evaluateHandle(addStyleUrl, url)).asElement()!;
+        return (await context.evaluateHandleInternal(addStyleUrl, url)).asElement()!;
 
       if (path !== null) {
         let contents = await platform.readFileAsync(path, 'utf8');
         contents += '/*# sourceURL=' + path.replace(/\n/g, '') + '*/';
-        return (await context.evaluateHandle(addStyleContent, contents)).asElement()!;
+        return (await context.evaluateHandleInternal(addStyleContent, contents)).asElement()!;
       }
 
-      return (await context.evaluateHandle(addStyleContent, content!)).asElement()!;
+      return (await context.evaluateHandleInternal(addStyleContent, content!)).asElement()!;
     });
 
     async function addStyleUrl(url: string): Promise<HTMLElement> {
@@ -724,32 +732,47 @@ export class Frame {
     handle.dispose();
   }
 
-  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: types.WaitForFunctionOptions & types.WaitForElementOptions = {}, ...args: any[]): Promise<js.JSHandle | null> {
+  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: types.WaitForFunctionOptions & types.WaitForElementOptions = {}, arg?: any): Promise<js.JSHandle | null> {
     if (helper.isString(selectorOrFunctionOrTimeout))
       return this.waitForSelector(selectorOrFunctionOrTimeout, options) as any;
     if (helper.isNumber(selectorOrFunctionOrTimeout))
       return new Promise(fulfill => setTimeout(fulfill, selectorOrFunctionOrTimeout));
     if (typeof selectorOrFunctionOrTimeout === 'function')
-      return this.waitForFunction(selectorOrFunctionOrTimeout, options, ...args);
+      return this.waitForFunction(selectorOrFunctionOrTimeout as any, arg, options);
     return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
   }
 
   private async _waitForSelectorInUtilityContext(selector: string, options?: types.WaitForElementOptions): Promise<dom.ElementHandle<Element>> {
     const { timeout = this._page._timeoutSettings.timeout(), waitFor = 'attached' } = (options || {});
-    const task = dom.waitForSelectorTask(selector, waitFor, timeout);
+    const task = waitForSelectorTask(selector, waitFor, timeout);
     const result = await this._scheduleRerunnableTask(task, 'utility', timeout, `selector "${selectorToString(selector, waitFor)}"`);
     return result.asElement() as dom.ElementHandle<Element>;
   }
 
-  async waitForFunction(pageFunction: Function | string, options?: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
-    options = { timeout: this._page._timeoutSettings.timeout(), ...(options || {}) };
-    const task = dom.waitForFunctionTask(undefined, pageFunction, options, ...args);
-    return this._scheduleRerunnableTask(task, 'main', options.timeout);
+  async waitForFunction<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>>;
+  async waitForFunction<R>(pageFunction: types.Func1<void, R>, arg?: any, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>>;
+  async waitForFunction<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg, options: types.WaitForFunctionOptions = {}): Promise<types.SmartHandle<R>> {
+    const { polling = 'raf', timeout = this._page._timeoutSettings.timeout() } = options;
+    if (helper.isString(polling))
+      assert(polling === 'raf' || polling === 'mutation', 'Unknown polling option: ' + polling);
+    else if (helper.isNumber(polling))
+      assert(polling > 0, 'Cannot poll with non-positive interval: ' + polling);
+    else
+      throw new Error('Unknown polling options: ' + polling);
+    const predicateBody = helper.isString(pageFunction) ? 'return (' + pageFunction + ')' : 'return (' + pageFunction + ')(arg)';
+
+    const task = async (context: dom.FrameExecutionContext) => context.evaluateHandleInternal(({ injected, predicateBody, polling, timeout, arg }) => {
+      const innerPredicate = new Function('arg', predicateBody);
+      return injected.poll(polling, undefined, timeout, (element: Element | undefined): any => {
+        return innerPredicate(arg);
+      });
+    }, { injected: await context._injected(), predicateBody, polling, timeout, arg });
+    return this._scheduleRerunnableTask(task, 'main', timeout) as any as types.SmartHandle<R>;
   }
 
   async title(): Promise<string> {
     const context = await this._utilityContext();
-    return context.evaluate(() => document.title);
+    return context.evaluateInternal(() => document.title);
   }
 
   _onDetached() {
@@ -764,7 +787,7 @@ export class Frame {
     this._parentFrame = null;
   }
 
-  private _scheduleRerunnableTask(task: dom.Task, contextType: ContextType, timeout?: number, title?: string): Promise<js.JSHandle> {
+  private _scheduleRerunnableTask(task: Task, contextType: ContextType, timeout?: number, title?: string): Promise<js.JSHandle> {
     const data = this._contextData.get(contextType)!;
     const rerunnableTask = new RerunnableTask(data, task, timeout, title);
     data.rerunnableTasks.add(rerunnableTask);
@@ -805,17 +828,37 @@ export class Frame {
   }
 }
 
+type Task = (context: dom.FrameExecutionContext) => Promise<js.JSHandle>;
+
+function waitForSelectorTask(selector: string, waitFor: 'attached' | 'detached' | 'visible' | 'hidden', timeout: number): Task {
+  return async (context: dom.FrameExecutionContext) => context.evaluateHandleInternal(({ injected, selector, waitFor, timeout }) => {
+    const polling = (waitFor === 'attached' || waitFor === 'detached') ? 'mutation' : 'raf';
+    return injected.poll(polling, selector, timeout, (element: Element | undefined): Element | boolean => {
+      switch (waitFor) {
+        case 'attached':
+          return element || false;
+        case 'detached':
+          return !element;
+        case 'visible':
+          return element && injected.isVisible(element) ? element : false;
+        case 'hidden':
+          return !element || !injected.isVisible(element);
+      }
+    });
+  }, { injected: await context._injected(), selector, waitFor, timeout });
+}
+
 class RerunnableTask {
   readonly promise: Promise<js.JSHandle>;
   private _contextData: ContextData;
-  private _task: dom.Task;
+  private _task: Task;
   private _runCount: number;
   private _resolve: (result: js.JSHandle) => void = () => {};
   private _reject: (reason: Error) => void = () => {};
   private _timeoutTimer?: NodeJS.Timer;
   private _terminated = false;
 
-  constructor(data: ContextData, task: dom.Task, timeout?: number, title?: string) {
+  constructor(data: ContextData, task: Task, timeout?: number, title?: string) {
     this._contextData = data;
     this._task = task;
     this._runCount = 0;
@@ -856,7 +899,7 @@ class RerunnableTask {
     // Ignore timeouts in pageScript - we track timeouts ourselves.
     // If execution context has been already destroyed, `context.evaluate` will
     // throw an error - ignore this predicate run altogether.
-    if (!error && await context.evaluate(s => !s, success).catch(e => true)) {
+    if (!error && await context.evaluateInternal(s => !s, success).catch(e => true)) {
       success!.dispose();
       return;
     }
