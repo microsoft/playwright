@@ -36,7 +36,9 @@ export class Chromium implements BrowserType {
   private _executablePath: (string|undefined);
 
   executablePath(): (string|null) {
-    return this._executablePath || null;
+    if (!this._executablePath)
+      throw new Error('No executable path!');
+    return this._executablePath;
   }
 
   name() {

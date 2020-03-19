@@ -35,8 +35,10 @@ const mkdtempAsync = platform.promisify(fs.mkdtemp);
 export class Firefox implements BrowserType {
   private _executablePath: (string|undefined);
 
-  executablePath(): (string|null) {
-    return this._executablePath || null;
+  executablePath(): string {
+    if (!this._executablePath)
+      throw new Error('No executable path!');
+    return this._executablePath;
   }
 
   name() {

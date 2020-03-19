@@ -3618,7 +3618,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 This methods attaches Playwright to an existing browser instance.
 
 #### browserType.executablePath()
-- returns: <[string|null]> A path where Playwright expects to find a bundled browser executable.
+- returns: <[string]> A path where Playwright expects to find a bundled browser executable.
 
 #### browserType.launch([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
