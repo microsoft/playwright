@@ -479,7 +479,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
     });
   });
 
-  describe('Events.BrowserContext.PageEvent', function() {
+  describe('Events.BrowserContext.Page', function() {
     it.fail(FFOX)('should have url', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
@@ -523,7 +523,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(otherPage.url()).toBe('about:blank');
       await context.close();
     });
-    it('should report when a new page is created and closed', async({browser, server}) => {
+    it.fail(FFOX)('should report when a new page is created and closed', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       const [otherPage] = await Promise.all([
@@ -531,7 +531,6 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
         page.evaluate(url => window.open(url), server.CROSS_PROCESS_PREFIX + '/empty.html'),
       ]);
       // The url is about:blank in FF when 'page' event is fired.
-      await otherPage.waitForLoadState({ waitUntil: 'domcontentloaded' });
       expect(otherPage.url()).toContain(server.CROSS_PROCESS_PREFIX);
       expect(await otherPage.evaluate(() => ['Hello', 'world'].join(' '))).toBe('Hello world');
       expect(await otherPage.$('body')).toBeTruthy();
@@ -583,7 +582,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       // Cleanup.
       await context.close();
     });
-    it('should have an opener', async({browser, server}) => {
+    it.fail(FFOX)('should have an opener', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
@@ -592,7 +591,6 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
         page.goto(server.PREFIX + '/popup/window-open.html')
       ]);
       // The url is still about:blank in FF when 'page' event is fired.
-      await popup.waitForLoadState({ waitUntil: 'domcontentloaded' });
       expect(popup.url()).toBe(server.PREFIX + '/popup/popup.html');
       expect(await popup.opener()).toBe(page);
       expect(await page.opener()).toBe(null);
