@@ -17,9 +17,11 @@
 
  // This file is only run when someone installs via the github repo
 
+const {execSync} = require('child_process');
+
 try {
   console.log('Building playwright...');
-  require('child_process').execSync('npm run build', {
+  execSync('npm run build', {
     stdio: 'ignore'
   });
 } catch (e) {
@@ -90,3 +92,8 @@ const DOWNLOAD_PATHS = {
   }
 })();
 
+try {
+  console.log('Generating types...');
+  execSync('npm run generate-types');
+} catch (e) {
+}
