@@ -835,14 +835,99 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     it('should work with pages that have loaded before being connected to', async({page, context, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(e => e.page()),
+        page.waitForEvent('popup'),
         page.evaluate(() => window._popup = window.open(document.location.href)),
       ]);
-      expect(popup.url()).toBe(server.EMPTY_PAGE);
+      // The url is about:blank in FF.
+      // expect(popup.url()).toBe(server.EMPTY_PAGE);
       await popup.waitForLoadState();
       expect(popup.url()).toBe(server.EMPTY_PAGE);
     });
-  });
+    it.fail(FFOX)('should wait for load state of empty url popup', async({browser, page}) => {
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.evaluate(() => window.open('') && 1),
+      ]);
+      await popup.waitForLoadState({ waitUntil: 'load' });
+      expect(await popup.evaluate(() => document.readyState)).toBe('complete');
+    });    
+    it('should wait for load state of about:blank popup ', async({browser, page}) => {
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.evaluate(() => window.open('about:blank') && 1),
+      ]);
+      await popup.waitForLoadState({ waitUntil: 'load' });
+      expect(await popup.evaluate(() => document.readyState)).toBe('complete');
+    });
+    it('should wait for load state of about:blank popup with noopener ', async({browser, page}) => {
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.evaluate(() => window.open('about:blank', null, 'noopener') && 1),
+      ]);
+      await popup.waitForLoadState({ waitUntil: 'load' });
+      expect(await popup.evaluate(() => document.readyState)).toBe('complete');
+    });
+    it('should wait for load state of popup with network url ', async({browser, page, server}) => {
+      await page.goto(server.EMPTY_PAGE);      
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.evaluate(url => window.open(url) && 1, server.EMPTY_PAGE),
+      ]);
+      await popup.waitForLoadState({ waitUntil: 'load' });
+      expect(await popup.evaluate(() => document.readyState)).toBe('complete');
+    });
+    it('should wait for load state of popup with network url and noopener ', async({browser, page, server}) => {
+      await page.goto(server.EMPTY_PAGE);      
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.evaluate(url => window.open(url, null, 'noopener') && 1, server.EMPTY_PAGE),
+      ]);
+      await popup.waitForLoadState({ waitUntil: 'load' });
+      expect(await popup.evaluate(() => document.readyState)).toBe('complete');
+    });
+    it('should work with clicking target=_blank', async({browser, page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await page.setContent('<a target=_blank rel="opener" href="/one-style.html">yo</a>');
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.click('a'),
+      ]);
+      await popup.waitForLoadState({ waitUntil: 'load' });
+      expect(await popup.evaluate(() => document.readyState)).toBe('complete');
+    });
+    it('should wait for load state of newPage', async({browser, context, page, server}) => {
+      const [newPage] = await Promise.all([
+        context.waitForEvent('page'),
+        context.newPage(),
+      ]);
+      await newPage.waitForLoadState({ waitUntil: 'load' });
+      expect(await newPage.evaluate(() => document.readyState)).toBe('complete');
+    });
+    it('should resolve after popup load', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      // Stall the 'load' by delaying css.
+      let cssResponse;
+      server.setRoute('/one-style.css', (req, res) => cssResponse = res);
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup'),
+        server.waitForRequest('/one-style.css'),
+        page.evaluate(url => window.popup = window.open(url), server.PREFIX + '/one-style.html'),
+      ]);
+      let resolved = false;
+      const loadSatePromise = popup.waitForLoadState({waitUntil: 'load'}).then(() => resolved = true);
+      // Round trips!
+      for (let i = 0; i < 5; i++)
+        await page.evaluate('window');
+      expect(resolved).toBe(false);
+      cssResponse.end('');
+      await loadSatePromise;
+      expect(resolved).toBe(true);
+      expect(popup.url()).toBe(server.PREFIX + '/one-style.html');
+      await context.close();
+    });
+});
 
   describe('Page.goBack', function() {
     it('should work', async({page, server}) => {

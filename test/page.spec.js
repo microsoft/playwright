@@ -132,7 +132,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
   describe('Page.opener', function() {
     it('should provide access to the opener page', async({page}) => {
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(e => e.page()),
+        page.waitForEvent('popup'),
         page.evaluate(() => window.open('about:blank')),
       ]);
       const opener = await popup.opener();
@@ -140,7 +140,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     });
     it('should return null if parent page has been closed', async({page}) => {
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(e => e.page()),
+        page.waitForEvent('popup'),
         page.evaluate(() => window.open('about:blank')),
       ]);
       await page.close();
@@ -227,7 +227,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     it.fail(FFOX)('should not throw when there are console messages in detached iframes', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(e => e.page()),
+        page.waitForEvent('popup'),
         page.evaluate(async() => {
           // 1. Create a popup that Playwright is not connected to.
           const win = window.open('');
@@ -1060,7 +1060,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
 
   describe('Page.Events.Close', function() {
     it('should work with window.close', async function({ page, context, server }) {
-      const newPagePromise = page.waitForEvent('popup').then(e => e.page());
+      const newPagePromise = page.waitForEvent('popup');
       await page.evaluate(() => window['newPage'] = window.open('about:blank'));
       const newPage = await newPagePromise;
       const closedPromise = new Promise(x => newPage.on('close', x));

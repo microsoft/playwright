@@ -20,7 +20,7 @@ import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, Bro
 import { Events as CommonEvents } from '../events';
 import { assert, debugError, helper } from '../helper';
 import * as network from '../network';
-import { Page, PageBinding, PageEvent, Worker } from '../page';
+import { Page, PageBinding, Worker } from '../page';
 import * as platform from '../platform';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
 import * as types from '../types';
@@ -129,19 +129,22 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     const { context, target } = this._createTarget(targetInfo, session);
 
     if (CRTarget.isPageType(targetInfo.type)) {
-      const pageEvent = new PageEvent(context, target.pageOrError());
       target.pageOrError().then(async () => {
+        const page = target._crPage!.page();
         if (targetInfo.type === 'page') {
           this._firstPageCallback();
-          context.emit(CommonEvents.BrowserContext.Page, pageEvent);
+          context.emit(CommonEvents.BrowserContext.Page, page);
           const opener = target.opener();
           if (!opener)
             return;
+          // Opener page must have been initialized already and resumed in order to
+          // create this popup but there is a chance that not all responses have been
+          // received yet so we cannot use opener._crPage?.page()
           const openerPage = await opener.pageOrError();
           if (openerPage instanceof Page && !openerPage.isClosed())
-            openerPage.emit(CommonEvents.Page.Popup, pageEvent);
+            openerPage.emit(CommonEvents.Page.Popup, page);
         } else if (targetInfo.type === 'background_page') {
-          context.emit(Events.CRBrowserContext.BackgroundPage, pageEvent);
+          context.emit(Events.CRBrowserContext.BackgroundPage, page);
         }
       });
       return;

@@ -20,7 +20,7 @@ import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, Bro
 import { Events } from '../events';
 import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
-import { Page, PageBinding, PageEvent } from '../page';
+import { Page, PageBinding } from '../page';
 import * as platform from '../platform';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
 import * as types from '../types';
@@ -130,15 +130,15 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     const ffPage = new FFPage(session, context, opener);
     this._ffPages.set(targetId, ffPage);
 
-    const pageEvent = new PageEvent(context, ffPage.pageOrError());
     ffPage.pageOrError().then(async () => {
       this._firstPageCallback();
-      context.emit(Events.BrowserContext.Page, pageEvent);
+      const page = ffPage._page;
+      context.emit(Events.BrowserContext.Page, page);
       if (!opener)
         return;
       const openerPage = await opener.pageOrError();
       if (openerPage instanceof Page && !openerPage.isClosed())
-        openerPage.emit(Events.Page.Popup, pageEvent);
+        openerPage.emit(Events.Page.Popup, page);
     });
   }
 

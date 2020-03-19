@@ -25,7 +25,7 @@ export { Frame } from './frames';
 export { Keyboard, Mouse } from './input';
 export { JSHandle } from './javascript';
 export { Request, Response, Route } from './network';
-export { FileChooser, Page, PageEvent, Worker } from './page';
+export { FileChooser, Page, Worker } from './page';
 export { Selectors } from './selectors';
 
 export { CRBrowser as ChromiumBrowser } from './chromium/crBrowser';
