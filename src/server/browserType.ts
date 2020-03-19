@@ -40,7 +40,7 @@ export type LaunchOptions = BrowserArgOptions & {
 };
 
 export interface BrowserType {
-  executablePath(): (string|null);
+  executablePath(): string;
   name(): string;
   launch(options?: LaunchOptions & { slowMo?: number }): Promise<Browser>;
   launchServer(options?: LaunchOptions & { port?: number }): Promise<BrowserServer>;
