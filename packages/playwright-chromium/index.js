@@ -22,10 +22,9 @@ const playwright = new Playwright({
 module.exports = playwright;
 
 try {
-  const downloadedBrowsers = require(path.join(__dirname, '.downloaded-browsers.json'));
+  const downloadedBrowsers = require('./.downloaded-browsers.json');
   playwright.chromium.setExecutablePath(downloadedBrowsers.crExecutablePath);
 } catch (e) {
   throw new Error('ERROR: Playwright-Chromium did not download browser');
 }
-
 
