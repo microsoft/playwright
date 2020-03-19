@@ -53,6 +53,8 @@ export class CRPage implements PageDelegate {
   private readonly _pdf: CRPDF;
   private readonly _coverage: CRCoverage;
   private readonly _browserContext: CRBrowserContext;
+  private _firstNonInitialNavigationCommittedPromise: Promise<void>;
+  private _firstNonInitialNavigationCommittedCallback = () => {};
 
   constructor(client: CRSession, browser: CRBrowser, browserContext: CRBrowserContext) {
     this._client = client;
@@ -64,9 +66,10 @@ export class CRPage implements PageDelegate {
     this._browserContext = browserContext;
     this._page = new Page(this, browserContext);
     this._networkManager = new CRNetworkManager(client, this._page);
+    this._firstNonInitialNavigationCommittedPromise = new Promise(f => this._firstNonInitialNavigationCommittedCallback = f);
   }
 
-  async initialize() {
+  async initialize(hasInitialAboutBlank: boolean) {
     const promises: Promise<any>[] = [
       this._client.send('Page.enable'),
       this._client.send('Page.getFrameTree').then(({frameTree}) => {
@@ -142,6 +145,8 @@ export class CRPage implements PageDelegate {
     for (const source of this._browserContext._evaluateOnNewDocumentSources)
       promises.push(this.evaluateOnNewDocument(source));
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
+    if (hasInitialAboutBlank)
+      promises.push(this._firstNonInitialNavigationCommittedPromise);
     await Promise.all(promises);
   }
 
@@ -189,6 +194,8 @@ export class CRPage implements PageDelegate {
 
   _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
     this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url, framePayload.name || '', framePayload.loaderId, initial);
+    if (!initial)
+      this._firstNonInitialNavigationCommittedCallback();
   }
 
   _onFrameRequestedNavigation(payload: Protocol.Page.frameRequestedNavigationPayload) {

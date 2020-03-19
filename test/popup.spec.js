@@ -292,12 +292,23 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await evaluatePromise;
       await context.close();
     });
-    it('should work with empty url', async({browser}) => {
+    it.fail(FFOX)('should work with empty url', async({browser}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup').then(e => e.page()),
+        page.evaluate(() => window.__popup = window.open('')),
+      ]);
+      expect(await page.evaluate(() => !!window.opener)).toBe(false);
+      expect(await popup.evaluate(() => !!window.opener)).toBe(true);
+      await context.close();
+    });
+    it('should work with empty url and nowait', async({browser}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       const [popup] = await Promise.all([
         page.waitForEvent('popup').then(e => e.page({ waitUntil: 'nowait' })),
-        page.evaluate(() => window.__popup = window.open('')),
+        page.evaluate(() => window.__popup = window.open()),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
       expect(await popup.evaluate(() => !!window.opener)).toBe(true);
@@ -314,6 +325,41 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
       await context.close();
     });
+    it('should work with noopener and nowait', async({browser}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup').then(e => e.page({ waitUntil: 'nowait' })),
+        page.evaluate(() => window.__popup = window.open('about:blank', null, 'noopener')),
+      ]);
+      expect(await page.evaluate(() => !!window.opener)).toBe(false);
+      expect(await popup.evaluate(() => !!window.opener)).toBe(false);
+      await context.close();
+    });
+    it('should work with noopener and url', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup').then(e => e.page()),
+        page.evaluate(url => window.__popup = window.open(url, null, 'noopener'), server.EMPTY_PAGE),
+      ]);
+      expect(await page.evaluate(() => !!window.opener)).toBe(false);
+      expect(await popup.evaluate(() => !!window.opener)).toBe(false);
+      await context.close();
+    });
+    it('should work with noopener and url and nowait', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup').then(e => e.page({ waitUntil: 'nowait' })),
+        page.evaluate(url => window.__popup = window.open(url, null, 'noopener'), server.EMPTY_PAGE),
+      ]);
+      expect(await page.evaluate(() => !!window.opener)).toBe(false);
+      expect(await popup.evaluate(() => !!window.opener)).toBe(false);
+      await context.close();
+    });
     it('should work with clicking target=_blank', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
@@ -321,6 +367,19 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await page.setContent('<a target=_blank rel="opener" href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
         page.waitForEvent('popup').then(e => e.page()),
+        page.click('a'),
+      ]);
+      expect(await page.evaluate(() => !!window.opener)).toBe(false);
+      expect(await popup.evaluate(() => !!window.opener)).toBe(true);
+      await context.close();
+    });
+    it('should work with clicking target=_blank and nowait', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      await page.setContent('<a target=_blank rel="opener" href="/one-style.html">yo</a>');
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup').then(e => e.page({ waitUntil: 'nowait' })),
         page.click('a'),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);

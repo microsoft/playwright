@@ -480,7 +480,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
   });
 
   describe('Events.BrowserContext.PageEvent', function() {
-    it.fail(true)('should have url with nowait', async({browser, server}) => {
+    it.fail(FFOX)('should have url with nowait', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       const [otherPage] = await Promise.all([
@@ -490,7 +490,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(otherPage.url()).toBe(server.EMPTY_PAGE);
       await context.close();
     });
-    it.fail(CHROMIUM)('should have url with domcontentloaded', async({browser, server}) => {
+    it('should have url with domcontentloaded', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       const [otherPage] = await Promise.all([
@@ -498,6 +498,26 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
         page.evaluate(url => window.open(url), server.EMPTY_PAGE)
       ]);
       expect(otherPage.url()).toBe(server.EMPTY_PAGE);
+      await context.close();
+    });
+    it('should have about:blank url with domcontentloaded', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      const [otherPage] = await Promise.all([
+        context.waitForEvent('page').then(event => event.page({ waitUntil: 'domcontentloaded' })),
+        page.evaluate(url => window.open(url), 'about:blank')
+      ]);
+      expect(otherPage.url()).toBe('about:blank');
+      await context.close();
+    });
+    it.fail(FFOX)('should have about:blank for empty url with domcontentloaded', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      const [otherPage] = await Promise.all([
+        context.waitForEvent('page').then(event => event.page({ waitUntil: 'domcontentloaded' })),
+        page.evaluate(() => window.open())
+      ]);
+      expect(otherPage.url()).toBe('about:blank');
       await context.close();
     });
     it('should report when a new page is created and closed', async({browser, server}) => {
@@ -527,7 +547,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
     });
     it('should report initialized pages', async({browser, server}) => {
       const context = await browser.newContext();
-      const pagePromise = context.waitForEvent('page').then(e => e.page({ waitUntil: 'nowait' }));
+      const pagePromise = context.waitForEvent('page').then(e => e.page());
       context.newPage();
       const newPage = await pagePromise;
       expect(newPage.url()).toBe('about:blank');
@@ -576,7 +596,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       const context = await browser.newContext();
       const events = [];
       context.on('page', async event => {
-        const page = await event.page({ waitUntil: 'nowait' });
+        const page = await event.page();
         events.push('CREATED: ' + page.url());
         page.on('close', () => events.push('DESTROYED: ' + page.url()));
       });
