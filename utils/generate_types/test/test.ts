@@ -123,13 +123,13 @@ playwright.chromium.launch().then(async browser => {
   await page.emulateMedia({media: 'screen'});
   await page.pdf({ path: 'page.pdf' });
 
-  await page.route('**/*', interceptedRequest => {
+  await page.route('**/*', (route, interceptedRequest) => {
     if (
       interceptedRequest.url().endsWith('.png') ||
       interceptedRequest.url().endsWith('.jpg')
     )
-      interceptedRequest.abort();
-    else interceptedRequest.continue();
+      route.abort();
+    else route.continue();
   });
 
   await page.route(str => {
@@ -169,7 +169,7 @@ playwright.chromium.launch().then(async browser => {
 
   page.keyboard.up('Shift');
   page.keyboard.press('Backspace');
-  page.keyboard.sendCharacters('嗨');
+  page.keyboard.insertText('嗨');
   await browser.startTracing(page, { path: 'trace.json'});
   await page.goto('https://www.google.com');
   await browser.stopTracing();
@@ -349,7 +349,7 @@ playwright.chromium.launch().then(async browser => {
 (async () => {
   const browser = await playwright.chromium.launch();
   const context = await browser.newContext();
-  const session = await context.createSession(await context.newPage());
+  const session = await context.newCDPSession(await context.newPage());
 
 
   session.on('Runtime.executionContextCreated', payload => {

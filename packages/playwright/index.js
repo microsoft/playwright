@@ -30,4 +30,3 @@ try {
   throw new Error('ERROR: Playwright did not download browsers');
 }
 
-
