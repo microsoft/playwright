@@ -24,41 +24,69 @@ try {
   });
 } catch (e) {
 }
-const {downloadBrowser} = require('./download-browser');
-const playwright = require('.');
+
+const path = require('path');
+const fs = require('fs');
+const util = require('util');
+const rmAsync = util.promisify(require('rimraf'));
+const existsAsync = path => fs.promises.access(path).then(() => true, e => false);
+const {downloadBrowserWithProgressBar} = require('./download-browser');
+const protocolGenerator = require('./utils/protocol-types-generator');
+const packageJSON = require('./package.json');
+
+const DOWNLOADED_BROWSERS_JSON_PATH = path.join(__dirname, '.downloaded-browsers.json');
+const DOWNLOAD_PATHS = {
+  chromium: path.join(__dirname, '.local-browsers', `chromium-${packageJSON.playwright.chromium_revision}`),
+  firefox: path.join(__dirname, '.local-browsers', `firefox-${packageJSON.playwright.firefox_revision}`),
+  webkit: path.join(__dirname, '.local-browsers', `webkit-${packageJSON.playwright.webkit_revision}`),
+};
 
 (async function() {
-  const protocolGenerator = require('./utils/protocol-types-generator');
+  const downloadedBrowsersJSON = await fs.promises.readFile(DOWNLOADED_BROWSERS_JSON_PATH, 'utf8').then(json => JSON.parse(json)).catch(() => ({}));
   try {
-    const chromeRevision = await downloadAndCleanup(playwright.chromium);
-    await protocolGenerator.generateChromiunProtocol(chromeRevision);
+    if (!(await existsAsync(DOWNLOAD_PATHS.chromium))) {
+      const crExecutablePath = await downloadBrowserWithProgressBar(DOWNLOAD_PATHS.chromium, 'chromium');
+      downloadedBrowsersJSON.crExecutablePath = crExecutablePath;
+      await protocolGenerator.generateChromiumProtocol(crExecutablePath);
+      await fs.promises.writeFile(DOWNLOADED_BROWSERS_JSON_PATH, JSON.stringify(downloadedBrowsersJSON));
+    }
+  } catch (e) {
+    console.warn(e.message);
+  }
+  try {
+    if (!(await existsAsync(DOWNLOAD_PATHS.firefox))) {
+      const ffExecutablePath = await downloadBrowserWithProgressBar(DOWNLOAD_PATHS.firefox, 'firefox');
+      downloadedBrowsersJSON.ffExecutablePath = ffExecutablePath;
+      await protocolGenerator.generateFirefoxProtocol(ffExecutablePath);
+      await fs.promises.writeFile(DOWNLOADED_BROWSERS_JSON_PATH, JSON.stringify(downloadedBrowsersJSON));
+    }
+  } catch (e) {
+    console.warn(e.message);
+  }
+  try {
+    if (!(await existsAsync(DOWNLOAD_PATHS.webkit))) {
+      const wkExecutablePath = await downloadBrowserWithProgressBar(DOWNLOAD_PATHS.webkit, 'webkit');
+      downloadedBrowsersJSON.wkExecutablePath = wkExecutablePath;
+      await protocolGenerator.generateWebKitProtocol(path.dirname(wkExecutablePath));
+      await fs.promises.writeFile(DOWNLOADED_BROWSERS_JSON_PATH, JSON.stringify(downloadedBrowsersJSON));
+    }
   } catch (e) {
     console.warn(e.message);
   }
 
-  try {
-    const firefoxRevision = await downloadAndCleanup(playwright.firefox);
-    await protocolGenerator.generateFirefoxProtocol(firefoxRevision);
-  } catch (e) {
-    console.warn(e.message);
-  }
+  // Cleanup stale revisions.
+  const directories = new Set(await readdirAsync(path.join(__dirname, '.local-browsers')));
+  directories.delete(DOWNLOAD_PATHS.chromium);
+  directories.delete(DOWNLOAD_PATHS.firefox);
+  directories.delete(DOWNLOAD_PATHS.webkit);
+  // cleanup old browser directories.
+  directories.add(path.join(__dirname, '.local-chromium'));
+  directories.add(path.join(__dirname, '.local-firefox'));
+  directories.add(path.join(__dirname, '.local-webkit'));
+  await Promise.all([...directories].map(directory => rmAsync(directory)));
 
-  try {
-    const webkitRevision = await downloadAndCleanup(playwright.webkit);
-    await protocolGenerator.generateWebKitProtocol(webkitRevision);
-  } catch (e) {
-    console.warn(e.message);
+  async function readdirAsync(dirpath) {
+    return fs.promises.readdir(dirpath).then(dirs => dirs.map(dir => path.join(dirpath, dir)));
   }
 })();
 
-async function downloadAndCleanup(browserType) {
-  const revisionInfo = await downloadBrowser(browserType);
-
-  // Remove previous revisions.
-  const fetcher = browserType._createBrowserFetcher();
-  const localRevisions = await fetcher.localRevisions();
-  const cleanupOldVersions = localRevisions.filter(revision => revision !== revisionInfo.revision).map(revision => fetcher.remove(revision));
-  await Promise.all([...cleanupOldVersions]);
-
-  return revisionInfo;
-}

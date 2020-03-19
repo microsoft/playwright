@@ -16,11 +16,11 @@
  */
 
 const assert = require('assert');
-const playwright = require('..').chromium;
+const browserFetcher = require('../lib/server/browserFetcher.js');
 const https = require('https');
 const SUPPORTER_PLATFORMS = ['linux', 'mac', 'win32', 'win64'];
 
-const fetchers = SUPPORTER_PLATFORMS.map(platform => playwright._createBrowserFetcher({platform}));
+const fetcherOptions = SUPPORTER_PLATFORMS.map(platform => ({platform: platform === 'mac' ? 'mac10.15' : platform, browser: 'chromium'}));
 
 const colors = {
   reset: '\x1b[0m',
@@ -100,7 +100,7 @@ async function checkRangeAvailability(fromRevision, toRevision, stopWhenAllAvail
  * @return {boolean}
  */
 async function checkAndDrawRevisionAvailability(table, name, revision) {
-  const promises = fetchers.map(fetcher => fetcher.canDownload(revision));
+  const promises = fetcherOptions.map(options => browserFetcher.canDownload({...options, revision}));
   const availability = await Promise.all(promises);
   const allAvailable = availability.every(e => !!e);
   const values = [name + ' ' + (allAvailable ? colors.green + revision + colors.reset : revision)];

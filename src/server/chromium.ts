@@ -18,9 +18,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import * as util from 'util';
-import { BrowserFetcher, OnProgressCallback, BrowserFetcherOptions } from '../server/browserFetcher';
-import { assert, helper } from '../helper';
+import { helper } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
 import * as platform from '../platform';
 import { TimeoutError } from '../errors';
@@ -35,14 +33,12 @@ import { ConnectionTransport } from '../transport';
 import { BrowserContext } from '../browserContext';
 
 export class Chromium implements BrowserType {
-  private _downloadPath: string;
-  private _downloadHost: string;
-  readonly _revision: string;
+  private _executablePath: (string|undefined);
 
-  constructor(downloadPath: string, downloadHost: (string|undefined), preferredRevision: string) {
-    this._downloadPath = downloadPath;
-    this._downloadHost = downloadHost || 'https://storage.googleapis.com';
-    this._revision = preferredRevision;
+  executablePath(): string {
+    if (!this._executablePath)
+      throw new Error('No executable path!');
+    return this._executablePath;
   }
 
   name() {
@@ -97,16 +93,12 @@ export class Chromium implements BrowserType {
     else
       chromeArguments.push(...args);
 
-    let chromeExecutable = executablePath;
-    if (!executablePath) {
-      const {missingText, executablePath} = this._resolveExecutablePath();
-      if (missingText)
-        throw new Error(missingText);
-      chromeExecutable = executablePath;
-    }
+    const chromeExecutable = executablePath || this._executablePath;
+    if (!chromeExecutable)
+      throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
     let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose } = await launchProcess({
-      executablePath: chromeExecutable!,
+      executablePath: chromeExecutable,
       args: chromeArguments,
       env,
       handleSIGINT,
@@ -134,7 +126,7 @@ export class Chromium implements BrowserType {
     let transport: PipeTransport | undefined;
     let browserWSEndpoint: string | undefined;
     if (launchType === 'server') {
-      const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chromium! The only Chromium revision guaranteed to work is r${this._revision}`);
+      const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chromium!`);
       const match = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, timeout, timeoutError);
       browserWSEndpoint = match[1];
       browserServer = new BrowserServer(launchedProcess, gracefullyClose, browserWSEndpoint);
@@ -151,10 +143,6 @@ export class Chromium implements BrowserType {
     return await platform.connectToWebsocket(options.wsEndpoint, transport => {
       return CRBrowser.connect(transport, false, options.slowMo);
     });
-  }
-
-  executablePath(): string {
-    return this._resolveExecutablePath().executablePath;
   }
 
   private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {
@@ -192,71 +180,6 @@ export class Chromium implements BrowserType {
     }
 
     return chromeArguments;
-  }
-
-  async downloadBrowserIfNeeded(onProgress?: OnProgressCallback) {
-    const fetcher = this._createBrowserFetcher();
-    const revisionInfo = fetcher.revisionInfo();
-    // Do nothing if the revision is already downloaded.
-    if (revisionInfo.local)
-      return;
-    await fetcher.download(revisionInfo.revision, onProgress);
-  }
-
-  _createBrowserFetcher(options: BrowserFetcherOptions = {}): BrowserFetcher {
-    const downloadURLs = {
-      linux: '%s/chromium-browser-snapshots/Linux_x64/%d/%s.zip',
-      mac: '%s/chromium-browser-snapshots/Mac/%d/%s.zip',
-      win32: '%s/chromium-browser-snapshots/Win/%d/%s.zip',
-      win64: '%s/chromium-browser-snapshots/Win_x64/%d/%s.zip',
-    };
-
-    const defaultOptions = {
-      path: path.join(this._downloadPath, '.local-chromium'),
-      host: this._downloadHost,
-      platform: (() => {
-        const platform = os.platform();
-        if (platform === 'darwin')
-          return 'mac';
-        if (platform === 'linux')
-          return 'linux';
-        if (platform === 'win32')
-          return os.arch() === 'x64' ? 'win64' : 'win32';
-        return platform;
-      })()
-    };
-    options = {
-      ...defaultOptions,
-      ...options,
-    };
-    assert(!!(downloadURLs as any)[options.platform!], 'Unsupported platform: ' + options.platform);
-
-    return new BrowserFetcher(options.path!, options.platform!, this._revision, (platform: string, revision: string) => {
-      let archiveName = '';
-      let executablePath = '';
-      if (platform === 'linux') {
-        archiveName = 'chrome-linux';
-        executablePath = path.join(archiveName, 'chrome');
-      } else if (platform === 'mac') {
-        archiveName = 'chrome-mac';
-        executablePath = path.join(archiveName, 'Chromium.app', 'Contents', 'MacOS', 'Chromium');
-      } else if (platform === 'win32' || platform === 'win64') {
-        // Windows archive name changed at r591479.
-        archiveName = parseInt(revision, 10) > 591479 ? 'chrome-win' : 'chrome-win32';
-        executablePath = path.join(archiveName, 'chrome.exe');
-      }
-      return {
-        downloadUrl: util.format((downloadURLs as any)[platform], options.host, revision, archiveName),
-        executablePath
-      };
-    });
-  }
-
-  _resolveExecutablePath(): { executablePath: string; missingText: string | null; } {
-    const browserFetcher = this._createBrowserFetcher();
-    const revisionInfo = browserFetcher.revisionInfo();
-    const missingText = !revisionInfo.local ? `Chromium revision is not downloaded. Run "npm install"` : null;
-    return { executablePath: revisionInfo.executablePath, missingText };
   }
 }
 

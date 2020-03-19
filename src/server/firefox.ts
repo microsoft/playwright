@@ -18,16 +18,14 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import * as util from 'util';
 import { ConnectOptions, LaunchType } from '../browser';
 import { BrowserContext } from '../browserContext';
 import { TimeoutError } from '../errors';
 import { Events } from '../events';
 import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
-import { assert, helper } from '../helper';
+import { helper } from '../helper';
 import * as platform from '../platform';
-import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback } from './browserFetcher';
 import { BrowserServer } from './browserServer';
 import { BrowserArgOptions, BrowserType, LaunchOptions } from './browserType';
 import { launchProcess, waitForLine } from './processLauncher';
@@ -35,23 +33,12 @@ import { launchProcess, waitForLine } from './processLauncher';
 const mkdtempAsync = platform.promisify(fs.mkdtemp);
 
 export class Firefox implements BrowserType {
-  private _downloadPath: string;
-  private _downloadHost: string;
-  readonly _revision: string;
+  private _executablePath: (string|undefined);
 
-  constructor(downloadPath: string, downloadHost: (string|undefined), preferredRevision: string) {
-    this._downloadPath = downloadPath;
-    this._downloadHost = downloadHost || 'https://playwright.azureedge.net';
-    this._revision = preferredRevision;
-  }
-
-  async downloadBrowserIfNeeded(onProgress?: OnProgressCallback) {
-    const fetcher = this._createBrowserFetcher();
-    const revisionInfo = fetcher.revisionInfo();
-    // Do nothing if the revision is already downloaded.
-    if (revisionInfo.local)
-      return;
-    await fetcher.download(revisionInfo.revision, onProgress);
+  executablePath(): string {
+    if (!this._executablePath)
+      throw new Error('No executable path!');
+    return this._executablePath;
   }
 
   name() {
@@ -116,13 +103,9 @@ export class Firefox implements BrowserType {
     else
       firefoxArguments.push(...args);
 
-    let firefoxExecutable = executablePath;
-    if (!firefoxExecutable) {
-      const {missingText, executablePath} = this._resolveExecutablePath();
-      if (missingText)
-        throw new Error(missingText);
-      firefoxExecutable = executablePath;
-    }
+    const firefoxExecutable = executablePath || this._executablePath;
+    if (!firefoxExecutable)
+      throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
 
     let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose } = await launchProcess({
@@ -168,10 +151,6 @@ export class Firefox implements BrowserType {
     });
   }
 
-  executablePath(): string {
-    return this._resolveExecutablePath().executablePath;
-  }
-
   private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {
     const {
       devtools = false,
@@ -203,56 +182,6 @@ export class Firefox implements BrowserType {
     if (args.every(arg => arg.startsWith('-')))
       firefoxArguments.push('about:blank');
     return firefoxArguments;
-  }
-
-  _createBrowserFetcher(options: BrowserFetcherOptions = {}): BrowserFetcher {
-    const downloadURLs = {
-      linux: '%s/builds/firefox/%s/firefox-linux.zip',
-      mac: '%s/builds/firefox/%s/firefox-mac.zip',
-      win32: '%s/builds/firefox/%s/firefox-win32.zip',
-      win64: '%s/builds/firefox/%s/firefox-win64.zip',
-    };
-
-    const defaultOptions = {
-      path: path.join(this._downloadPath, '.local-firefox'),
-      host: this._downloadHost,
-      platform: (() => {
-        const platform = os.platform();
-        if (platform === 'darwin')
-          return 'mac';
-        if (platform === 'linux')
-          return 'linux';
-        if (platform === 'win32')
-          return os.arch() === 'x64' ? 'win64' : 'win32';
-        return platform;
-      })()
-    };
-    options = {
-      ...defaultOptions,
-      ...options,
-    };
-    assert(!!(downloadURLs as any)[options.platform!], 'Unsupported platform: ' + options.platform);
-
-    return new BrowserFetcher(options.path!, options.platform!, this._revision, (platform: string, revision: string) => {
-      let executablePath = '';
-      if (platform === 'linux')
-        executablePath = path.join('firefox', 'firefox');
-      else if (platform === 'mac')
-        executablePath = path.join('firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox');
-      else if (platform === 'win32' || platform === 'win64')
-        executablePath = path.join('firefox', 'firefox.exe');
-      return {
-        downloadUrl: util.format((downloadURLs as any)[platform], options.host, revision),
-        executablePath
-      };
-    });
-  }
-
-  _resolveExecutablePath() {
-    const browserFetcher = this._createBrowserFetcher();
-    const revisionInfo = browserFetcher.revisionInfo();
-    const missingText = !revisionInfo.local ? `Firefox revision is not downloaded. Run "npm install"` : null;
-    return { executablePath: revisionInfo.executablePath, missingText };
   }
 }
 

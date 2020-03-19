@@ -285,9 +285,8 @@ const utils = module.exports = {
   makeUserDataDir: async function() {
     return await mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_profile-'));
   },
-  
+
   removeUserDataDir: async function(dir) {
     await removeFolderAsync(dir).catch(e => {});
   }
-  
 };

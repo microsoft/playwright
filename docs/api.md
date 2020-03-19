@@ -3645,7 +3645,6 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 <!-- GEN:toc -->
 - [browserType.connect(options)](#browsertypeconnectoptions)
-- [browserType.downloadBrowserIfNeeded([progress])](#browsertypedownloadbrowserifneededprogress)
 - [browserType.executablePath()](#browsertypeexecutablepath)
 - [browserType.launch([options])](#browsertypelaunchoptions)
 - [browserType.launchPersistentContext(userDataDir, [options])](#browsertypelaunchpersistentcontextuserdatadir-options)
@@ -3661,14 +3660,8 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 This methods attaches Playwright to an existing browser instance.
 
-#### browserType.downloadBrowserIfNeeded([progress])
-- `progress` <[function]> If download is initiated, this function is called with two parameters: `downloadedBytes` and `totalBytes`.
-- returns: <[Promise]> promise that resolves when browser is successfully downloaded.
-
-Download browser binary if it is missing.
-
 #### browserType.executablePath()
-- returns: <[string]> A path where Playwright expects to find a bundled browser.
+- returns: <[string]> A path where Playwright expects to find a bundled browser executable.
 
 #### browserType.launch([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:

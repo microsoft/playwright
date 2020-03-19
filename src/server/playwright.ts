@@ -23,17 +23,13 @@ import { Chromium } from './chromium';
 import { WebKit } from './webkit';
 import { Firefox } from './firefox';
 
-const packageJSON = require('../../package.json');
-
 for (const className in api) {
   if (typeof (api as any)[className] === 'function')
     helper.installApiHooks(className[0].toLowerCase() + className.substring(1), (api as any)[className]);
 }
 
 type PlaywrightOptions = {
-  downloadPath: string,
   browsers: Array<('firefox'|'webkit'|'chromium')>,
-  respectEnvironmentVariables: boolean,
 };
 
 export class Playwright {
@@ -46,25 +42,15 @@ export class Playwright {
 
   constructor(options: PlaywrightOptions) {
     const {
-      downloadPath,
       browsers,
-      respectEnvironmentVariables,
     } = options;
     this.devices = DeviceDescriptors;
     this.errors = { TimeoutError };
-    const downloadHost = respectEnvironmentVariables ? getFromENV('PLAYWRIGHT_DOWNLOAD_HOST') : undefined;
     if (browsers.includes('chromium'))
-      this.chromium = new Chromium(downloadPath, downloadHost, packageJSON.playwright.chromium_revision);
+      this.chromium = new Chromium();
     if (browsers.includes('webkit'))
-      this.webkit = new WebKit(downloadPath, downloadHost, packageJSON.playwright.webkit_revision);
+      this.webkit = new WebKit();
     if (browsers.includes('firefox'))
-      this.firefox = new Firefox(downloadPath, downloadHost, packageJSON.playwright.firefox_revision);
+      this.firefox = new Firefox();
   }
-}
-
-function getFromENV(name: string): (string|undefined) {
-  let value = process.env[name];
-  value = value || process.env[`npm_config_${name.toLowerCase()}`];
-  value = value || process.env[`npm_package_config_${name.toLowerCase()}`];
-  return value;
 }
