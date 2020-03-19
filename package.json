@@ -8,7 +8,7 @@
   },
   "main": "index.js",
   "playwright": {
-    "chromium_revision": "750417",
+    "chromium_revision": "751710",
     "firefox_revision": "1043",
     "webkit_revision": "1180"
   },
