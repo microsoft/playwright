@@ -120,18 +120,49 @@ function argNameForType(type) {
 /**
  * @param {Documentation.Class} classDesc
  */
+function hasUniqueEvents(classDesc) {
+  if (!classDesc.events.size)
+    return false;
+  const parent = parentClass(classDesc);
+  if (!parent)
+    return true;
+  return Array.from(classDesc.events.keys()).some(eventName => !parent.events.has(eventName));
+}
+
+/**
+ * @param {Documentation.Class} classDesc
+ */
+function createEventDescriptions(classDesc) {
+  if (!hasUniqueEvents(classDesc))
+    return [];
+  const descriptions = [];
+  for (const [eventName, value] of classDesc.events) {
+    const type = typeToString(value && value.type, classDesc.name, eventName, 'payload');
+    const argName = argNameForType(type);
+    const params = argName ? `${argName} : ${type}` : '';
+    descriptions.push({
+      params,
+      eventName,
+      comment: value.comment
+    });
+  }
+  return descriptions;
+}
+
+/**
+ * @param {Documentation.Class} classDesc
+ */
 function classBody(classDesc) {
   const parts = [];
+  const eventDescriptions = createEventDescriptions(classDesc);
   for (const method of ['on', 'once', 'addListener']) {
-    for (const [eventName, value] of classDesc.events) {
-      if (value.comment)
-        parts.push(writeComment(value.comment, '  '));
-      const type = typeToString(value && value.type, classDesc.name, eventName, 'payload');
-      const argName = argNameForType(type);
-      const params = argName ? `${argName} : ${type}` : '';
-      parts.push(`  ${method}(event: '${eventName}', listener: (${params}) => void): this;\n`);
+    for (const {eventName, params, comment} of eventDescriptions) {
+        if (comment)
+          parts.push(writeComment(comment, '  '));
+        parts.push(`  ${method}(event: '${eventName}', listener: (${params}) => void): this;\n`);
     }
   }
+
   const members = classDesc.membersArray.filter(member => member.kind !== 'event');
   parts.push(members.map(member => {
     if (member.kind === 'event')
@@ -312,7 +343,7 @@ function matchingBracket(str, open, close) {
 function argsFromMember(member, ...namespace) {
   if (member.kind === 'property')
     return '';
-  return '(' + member.argsArray.map(arg => `${nameForProperty(arg)}: ${typeToString(arg.type, ...namespace, member.name, 'options')}`).join(', ') + ')';
+  return '(' + member.argsArray.map(arg => `${nameForProperty(arg)}: ${typeToString(arg.type, ...namespace, member.name, arg.name)}`).join(', ') + ')';
 }
 /**
  * @param {Documentation.Member} member
