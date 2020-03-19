@@ -25,6 +25,5 @@ try {
   const downloadedBrowsers = require('./.downloaded-browsers.json');
   playwright.chromium.setExecutablePath(downloadedBrowsers.crExecutablePath);
 } catch (e) {
-  throw new Error('ERROR: Playwright-Chromium did not download browser');
+  throw new Error('playwright-chromium has not downloaded Chromium.');
 }
-
