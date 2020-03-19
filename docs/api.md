@@ -390,7 +390,7 @@ context.clearPermissions();
 #### browserContext.close()
 - returns: <[Promise]>
 
-Closes the browser context. All the targets that belong to the browser context
+Closes the browser context. All the pages that belong to the browser context
 will be closed.
 
 > **NOTE** the default browser context cannot be closed.
@@ -3798,11 +3798,10 @@ Only one trace can be active at a time per browser.
 
 * extends: [BrowserContext]
 
-Chromium-specific features including targets, service worker support, etc.
+Chromium-specific features including background pages, service worker support, etc.
 
 ```js
-const backroundPageTarget = await context.waitForTarget(target => target.type() === 'background_page');
-const backgroundPage = await backroundPageTarget.page();
+const backgroundPage = await context.waitForEvent('backgroundpage');
 ```
 
 <!-- GEN:toc -->
