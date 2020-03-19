@@ -15,21 +15,18 @@
  * limitations under the License.
  */
 
-import * as extract from 'extract-zip';
-import * as fs from 'fs';
-import * as os from 'os';
-import * as util from 'util';
-import { execSync } from 'child_process';
-import * as ProxyAgent from 'https-proxy-agent';
-import * as path from 'path';
-import { getProxyForUrl } from 'proxy-from-env';
-import * as URL from 'url';
-import { assert } from '../helper';
-import * as platform from '../platform';
+const extract = require('extract-zip');
+const fs = require('fs');
+const os = require('os');
+const util = require('util');
+const {execSync} = require('child_process');
+const ProxyAgent = require('https-proxy-agent');
+const path = require('path');
+const { getProxyForUrl } = require('proxy-from-env');
+const URL = require('url');
+const packageJSON = require('./package.json');
 
-const unlinkAsync = platform.promisify(fs.unlink.bind(fs));
-const chmodAsync = platform.promisify(fs.chmod.bind(fs));
-const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
+const existsAsync = path => fs.promises.stat(path).then(() => true, error => false);
 
 const DEFAULT_DOWNLOAD_HOSTS = {
   chromium: 'https://storage.googleapis.com',
@@ -85,20 +82,7 @@ const RELATIVE_EXECUTABLE_PATHS = {
   },
 };
 
-export type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
-export type BrowserName = ('chromium'|'webkit'|'firefox');
-export type BrowserPlatform = ('win32'|'win64'|'mac10.14'|'mac10.15'|'linux');
-
-export type DownloadOptions = {
-  browser: BrowserName,
-  revision: string,
-  downloadPath: string,
-  platform?: BrowserPlatform,
-  host?: string,
-  progress?: OnProgressCallback,
-};
-
-const CURRENT_HOST_PLATFORM = ((): string => {
+const CURRENT_HOST_PLATFORM = (() => {
   const platform = os.platform();
   if (platform === 'darwin') {
     const macVersion = execSync('sw_vers -productVersion').toString('utf8').trim().split('.').slice(0, 2).join('.');
@@ -111,66 +95,66 @@ const CURRENT_HOST_PLATFORM = ((): string => {
   return platform;
 })();
 
-function revisionURL(options: DownloadOptions): string {
-  const {
-    browser,
-    revision,
-    platform = CURRENT_HOST_PLATFORM,
-    host = DEFAULT_DOWNLOAD_HOSTS[browser],
-  } = options;
+function revisionURL(browser, revision, platform, host) {
   assert(revision, `'revision' must be specified`);
   assert(DOWNLOAD_URLS[browser], 'Unsupported browser: ' + browser);
-  const urlTemplate = (DOWNLOAD_URLS[browser] as any)[platform];
+  const urlTemplate = DOWNLOAD_URLS[browser][platform];
   assert(urlTemplate, `ERROR: Playwright does not support ${browser} on ${platform}`);
   return util.format(urlTemplate, host, revision);
 }
 
-export async function downloadBrowser(options: DownloadOptions): Promise<string> {
+async function downloadBrowser(options) {
   const {
     browser,
-    revision,
+    revision = packageJSON.playwright[`${browser}_revision`],
     downloadPath,
     platform = CURRENT_HOST_PLATFORM,
+    host = getFromENV('PLAYWRIGHT_DOWNLOAD_HOST') || DEFAULT_DOWNLOAD_HOSTS[browser],
     progress,
   } = options;
   assert(downloadPath, '`downloadPath` must be provided');
-  const url = revisionURL(options);
+  const url = revisionURL(browser, revision, platform, host);
   const zipPath = path.join(os.tmpdir(), `playwright-download-${browser}-${platform}-${revision}.zip`);
   if (await existsAsync(downloadPath))
     throw new Error('ERROR: downloadPath folder already exists!');
   try {
     await downloadFile(url, zipPath, progress);
-    // await mkdirAsync(downloadPath, {recursive: true});
     await extractZip(zipPath, downloadPath);
   } finally {
     if (await existsAsync(zipPath))
-      await unlinkAsync(zipPath);
+      await fs.promises.unlink(zipPath);
   }
-  const executablePath = path.join(downloadPath, ...RELATIVE_EXECUTABLE_PATHS[browser][platform as BrowserPlatform]);
-  await chmodAsync(executablePath, 0o755);
+  const executablePath = path.join(downloadPath, ...RELATIVE_EXECUTABLE_PATHS[browser][platform]);
+  await fs.promises.chmod(executablePath, 0o755);
   return executablePath;
 }
 
-export async function canDownload(options: DownloadOptions): Promise<boolean> {
-  const url = revisionURL(options);
-  let resolve: (result: boolean) => void = () => {};
+async function canDownload(options) {
+  const {
+    browser,
+    revision = packageJSON.playwright[`${browser}_revision`],
+    downloadPath,
+    platform = CURRENT_HOST_PLATFORM,
+    host = getFromENV('PLAYWRIGHT_DOWNLOAD_HOST') || DEFAULT_DOWNLOAD_HOSTS[browser],
+  } = options;
+  const url = revisionURL(browser, revision, platform, host);
+  let resolve;
   const promise = new Promise<boolean>(x => resolve = x);
   const request = httpRequest(url, 'HEAD', response => {
     resolve(response.statusCode === 200);
   });
-  request.on('error', (error: any) => {
+  request.on('error', error => {
     console.error(error);
     resolve(false);
   });
   return promise;
 }
 
-function downloadFile(url: string, destinationPath: string, progressCallback: OnProgressCallback | undefined): Promise<any> {
-  let fulfill: () => void = () => {};
-  let reject: (error: any) => void = () => {};
+async function downloadFile(url, destinationPath, progressCallback) {
   let downloadedBytes = 0;
   let totalBytes = 0;
 
+  let fulfill, reject;
   const promise = new Promise((x, y) => { fulfill = x; reject = y; });
 
   const request = httpRequest(url, 'GET', response => {
@@ -189,16 +173,16 @@ function downloadFile(url: string, destinationPath: string, progressCallback: On
     if (progressCallback)
       response.on('data', onData);
   });
-  request.on('error', (error: any) => reject(error));
+  request.on('error', error => reject(error));
   return promise;
 
-  function onData(chunk: string) {
+  function onData(chunk) {
     downloadedBytes += chunk.length;
-    progressCallback!(downloadedBytes, totalBytes);
+    progressCallback(downloadedBytes, totalBytes);
   }
 }
 
-function extractZip(zipPath: string, folderPath: string): Promise<Error | null> {
+function extractZip(zipPath, folderPath) {
   return new Promise((fulfill, reject) => extract(zipPath, {dir: folderPath}, err => {
     if (err)
       reject(err);
@@ -207,8 +191,8 @@ function extractZip(zipPath: string, folderPath: string): Promise<Error | null> 
   }));
 }
 
-function httpRequest(url: string, method: string, response: (r: any) => void) {
-  let options: any = URL.parse(url);
+function httpRequest(url, method, response) {
+  let options = URL.parse(url);
   options.method = method;
 
   const proxyURL = getProxyForUrl(url);
@@ -221,7 +205,7 @@ function httpRequest(url: string, method: string, response: (r: any) => void) {
         port: proxy.port,
       };
     } else {
-      const parsedProxyURL: any = URL.parse(proxyURL);
+      const parsedProxyURL = URL.parse(proxyURL);
       parsedProxyURL.secureProxy = parsedProxyURL.protocol === 'https:';
 
       options.agent = new ProxyAgent(parsedProxyURL);
@@ -229,7 +213,7 @@ function httpRequest(url: string, method: string, response: (r: any) => void) {
     }
   }
 
-  const requestCallback = (res: any) => {
+  const requestCallback = res => {
     if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location)
       httpRequest(res.headers.location, method, response);
     else
@@ -241,3 +225,60 @@ function httpRequest(url: string, method: string, response: (r: any) => void) {
   request.end();
   return request;
 }
+
+async function downloadBrowserWithProgressBar(options) {
+  const {
+    browser,
+  } = options;
+  let progressBar = null;
+  let lastDownloadedBytes = 0;
+  const browserName = packageJSON.version.endsWith('-post') ? `${browser} r${packageJSON.playwright[`${browser}_revision`]}` : `${browser} for ${packageJSON.name} v${packageJSON.version}`;
+
+  function progress(downloadedBytes, totalBytes) {
+    if (!progressBar) {
+      const ProgressBar = require('progress');
+      progressBar = new ProgressBar(`Downloading ${browserName} - ${toMegabytes(totalBytes)} [:bar] :percent :etas `, {
+        complete: '=',
+        incomplete: ' ',
+        width: 20,
+        total: totalBytes,
+      });
+    }
+    const delta = downloadedBytes - lastDownloadedBytes;
+    lastDownloadedBytes = downloadedBytes;
+    progressBar.tick(delta);
+  }
+  const executablePath = await downloadBrowser({
+    ...options,
+    progress,
+  });
+  logPolitely(`${browserName} downloaded to ${options.downloadPath}`);
+  return executablePath;
+}
+
+function toMegabytes(bytes) {
+  const mb = bytes / 1024 / 1024;
+  return `${Math.round(mb * 10) / 10} Mb`;
+}
+
+function logPolitely(toBeLogged) {
+  const logLevel = process.env.npm_config_loglevel;
+  const logLevelDisplay = ['silent', 'error', 'warn'].indexOf(logLevel) > -1;
+
+  if (!logLevelDisplay)
+    console.log(toBeLogged);
+}
+
+function getFromENV(name) {
+  let value = process.env[name];
+  value = value || process.env[`npm_config_${name.toLowerCase()}`];
+  value = value || process.env[`npm_package_config_${name.toLowerCase()}`];
+  return value;
+}
+
+function assert(value, message) {
+  if (!value)
+    throw new Error(message);
+}
+
+module.exports = {canDownload, downloadBrowser, downloadBrowserWithProgressBar};

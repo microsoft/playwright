@@ -17,20 +17,12 @@
 
  // This file is only run when someone installs via the github repo
 
-try {
-  console.log('Building playwright...');
-  require('child_process').execSync('npm run build', {
-    stdio: 'ignore'
-  });
-} catch (e) {
-}
-
 const path = require('path');
 const fs = require('fs');
 const util = require('util');
 const rmAsync = util.promisify(require('rimraf'));
 const existsAsync = path => fs.promises.access(path).then(() => true, e => false);
-const {downloadBrowserWithProgressBar} = require('./download-browser');
+const {downloadBrowserWithProgressBar} = require('./browserFetcher');
 const protocolGenerator = require('./utils/protocol-types-generator');
 const packageJSON = require('./package.json');
 
@@ -45,7 +37,7 @@ const DOWNLOAD_PATHS = {
   const downloadedBrowsersJSON = await fs.promises.readFile(DOWNLOADED_BROWSERS_JSON_PATH, 'utf8').then(json => JSON.parse(json)).catch(() => ({}));
   try {
     if (!(await existsAsync(DOWNLOAD_PATHS.chromium))) {
-      const crExecutablePath = await downloadBrowserWithProgressBar(DOWNLOAD_PATHS.chromium, 'chromium');
+      const crExecutablePath = await downloadBrowserWithProgressBar({downloadPath: DOWNLOAD_PATHS.chromium, browser: 'chromium'});
       downloadedBrowsersJSON.crExecutablePath = crExecutablePath;
       await protocolGenerator.generateChromiumProtocol(crExecutablePath);
       await fs.promises.writeFile(DOWNLOADED_BROWSERS_JSON_PATH, JSON.stringify(downloadedBrowsersJSON));
@@ -55,7 +47,7 @@ const DOWNLOAD_PATHS = {
   }
   try {
     if (!(await existsAsync(DOWNLOAD_PATHS.firefox))) {
-      const ffExecutablePath = await downloadBrowserWithProgressBar(DOWNLOAD_PATHS.firefox, 'firefox');
+      const ffExecutablePath = await downloadBrowserWithProgressBar({downloadPath: DOWNLOAD_PATHS.firefox, browser: 'firefox'});
       downloadedBrowsersJSON.ffExecutablePath = ffExecutablePath;
       await protocolGenerator.generateFirefoxProtocol(ffExecutablePath);
       await fs.promises.writeFile(DOWNLOADED_BROWSERS_JSON_PATH, JSON.stringify(downloadedBrowsersJSON));
@@ -65,7 +57,7 @@ const DOWNLOAD_PATHS = {
   }
   try {
     if (!(await existsAsync(DOWNLOAD_PATHS.webkit))) {
-      const wkExecutablePath = await downloadBrowserWithProgressBar(DOWNLOAD_PATHS.webkit, 'webkit');
+      const wkExecutablePath = await downloadBrowserWithProgressBar({downloadPath: DOWNLOAD_PATHS.webkit, browser: 'webkit'});
       downloadedBrowsersJSON.wkExecutablePath = wkExecutablePath;
       await protocolGenerator.generateWebKitProtocol(path.dirname(wkExecutablePath));
       await fs.promises.writeFile(DOWNLOADED_BROWSERS_JSON_PATH, JSON.stringify(downloadedBrowsersJSON));

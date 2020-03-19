@@ -15,9 +15,12 @@
  */
 const path = require('path');
 const fs = require('fs');
-const {downloadBrowserWithProgressBar} = require('playwright-core/download-browser');
+const {downloadBrowserWithProgressBar} = require('playwright-core/browserFetcher.js');
 
 (async function() {
-  const wkExecutablePath = await downloadBrowserWithProgressBar(path.join(__dirname, '.local-browsers', 'webkit'), 'webkit');
+  const wkExecutablePath = await downloadBrowserWithProgressBar({
+    downloadPath: path.join(__dirname, '.local-browsers', 'webkit'),
+    browser: 'webkit',
+  });
   await fs.promises.writeFile(path.join(__dirname, '.downloaded-browsers.json'), JSON.stringify({wkExecutablePath, }));
 })();
