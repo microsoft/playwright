@@ -323,7 +323,7 @@ export class Frame {
   _inflightRequests = new Set<network.Request>();
   readonly _networkIdleTimers = new Map<types.LifecycleEvent, NodeJS.Timer>();
   private _setContentCounter = 0;
-  private _detachedPromise: Promise<void>;
+  readonly _detachedPromise: Promise<void>;
   private _detachedCallback = () => {};
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
@@ -352,186 +352,44 @@ export class Frame {
       referer = options.referer;
     }
     url = helper.completeUserURL(url);
-    const { timeout = this._page._timeoutSettings.navigationTimeout() } = options;
-    const disposer = new Disposer();
 
-    const timeoutPromise = disposer.add(createTimeoutPromise(timeout));
-    const frameDestroyedPromise = this._createFrameDestroyedPromise();
-    const sameDocumentPromise = disposer.add(this._waitForSameDocumentNavigation());
-    const requestWatcher = disposer.add(this._trackDocumentRequests());
-    let navigateResult: GotoResult;
-    const navigate = async () => {
-      try {
-        navigateResult = await this._page._delegate.navigateFrame(this, url, referer);
-      } catch (error) {
-        return error;
-      }
-    };
-
-    throwIfError(await Promise.race([
-      navigate(),
-      timeoutPromise,
-      frameDestroyedPromise,
-    ]));
-
-    const promises: Promise<Error|void>[] = [timeoutPromise, frameDestroyedPromise];
-    if (navigateResult!.newDocumentId)
-      promises.push(disposer.add(this._waitForSpecificDocument(navigateResult!.newDocumentId)));
-    else
-      promises.push(sameDocumentPromise);
-    throwIfError(await Promise.race(promises));
-
-    const request = (navigateResult! && navigateResult!.newDocumentId) ? requestWatcher.get(navigateResult!.newDocumentId) : null;
-    const waitForLifecyclePromise = disposer.add(this._waitForLifecycle(options.waitUntil));
-    throwIfError(await Promise.race([timeoutPromise, frameDestroyedPromise, waitForLifecyclePromise]));
-
-    disposer.dispose();
-
-    return request ? request._finalRequest().response() : null;
-
-    function throwIfError(error: Error|void): asserts error is void {
-      if (!error)
-        return;
-      disposer.dispose();
-      const message = `While navigating to ${url}: ${error.message}`;
-      if (error instanceof TimeoutError)
-        throw new TimeoutError(message);
-      throw new Error(message);
+    const frameTask = new FrameTask(this, options, url);
+    const sameDocumentPromise = frameTask.waitForSameDocumentNavigation();
+    const navigateResult = await frameTask.raceAgainstFailures(this._page._delegate.navigateFrame(this, url, referer)).catch(e => {
+      // Do not leave sameDocumentPromise unhandled.
+      sameDocumentPromise.catch(e => {});
+      throw e;
+    });
+    if (navigateResult.newDocumentId) {
+      // Do not leave sameDocumentPromise unhandled.
+      sameDocumentPromise.catch(e => {});
+      await frameTask.waitForSpecificDocument(navigateResult.newDocumentId);
+    } else {
+      await sameDocumentPromise;
     }
+    const request = (navigateResult && navigateResult.newDocumentId) ? frameTask.request(navigateResult.newDocumentId) : null;
+    await frameTask.waitForLifecycle(options.waitUntil);
+    frameTask.done();
+    return request ? request._finalRequest().response() : null;
   }
 
   async waitForNavigation(options: types.WaitForNavigationOptions = {}): Promise<network.Response | null> {
-    const disposer = new Disposer();
-    const requestWatcher = disposer.add(this._trackDocumentRequests());
-    const {timeout = this._page._timeoutSettings.navigationTimeout()} = options;
-
-    const failurePromise = Promise.race([
-      this._createFrameDestroyedPromise(),
-      disposer.add(createTimeoutPromise(timeout)),
+    const frameTask = new FrameTask(this, options);
+    let documentId: string | undefined;
+    await Promise.race([
+      frameTask.waitForNewDocument(options.url).then(id => documentId = id),
+      frameTask.waitForSameDocumentNavigation(options.url),
     ]);
-    let documentId: string|null = null;
-    let error: void|Error = await Promise.race([
-      failurePromise,
-      disposer.add(this._waitForNewDocument(options.url)).then(result => {
-        if (result.error)
-          return result.error;
-        documentId = result.documentId;
-      }),
-      disposer.add(this._waitForSameDocumentNavigation(options.url)),
-    ]);
-    const request = requestWatcher.get(documentId!);
-    if (!error) {
-      error = await Promise.race([
-        failurePromise,
-        disposer.add(this._waitForLifecycle(options.waitUntil)),
-      ]);
-    }
-    disposer.dispose();
-    if (error)
-      throw error;
-
+    const request = documentId ? frameTask.request(documentId) : null;
+    await frameTask.waitForLifecycle(options.waitUntil);
+    frameTask.done();
     return request ? request._finalRequest().response() : null;
   }
 
   async waitForLoadState(options: types.NavigateOptions = {}): Promise<void> {
-    const { timeout = this._page._timeoutSettings.navigationTimeout() } = options;
-    const disposer = new Disposer();
-    const error = await Promise.race([
-      this._createFrameDestroyedPromise(),
-      disposer.add(createTimeoutPromise(timeout)),
-      disposer.add(this._waitForLifecycle(options.waitUntil)),
-    ]);
-    disposer.dispose();
-    if (error)
-      throw error;
-  }
-
-  _waitForSpecificDocument(expectedDocumentId: string): Disposable<Promise<Error|void>> {
-    let resolve: (error: Error|void) => void;
-    const promise = new Promise<Error|void>(x => resolve = x);
-    const watch = (documentId: string, error?: Error) => {
-      if (documentId === expectedDocumentId)
-        resolve(error);
-      else if (!error)
-        resolve(new Error('Navigation interrupted by another one'));
-    };
-    const dispose = () => this._documentWatchers.delete(watch);
-    this._documentWatchers.add(watch);
-    return {value: promise, dispose};
-  }
-
-  _waitForNewDocument(url?: types.URLMatch): Disposable<Promise<{error?: Error, documentId: string}>> {
-    let resolve: (error: {error?: Error, documentId: string}) => void;
-    const promise = new Promise<{error?: Error, documentId: string}>(x => resolve = x);
-    const watch = (documentId: string, error?: Error) => {
-      if (!error && !helper.urlMatches(this.url(), url))
-        return;
-      resolve({error, documentId});
-    };
-    const dispose = () => this._documentWatchers.delete(watch);
-    this._documentWatchers.add(watch);
-    return {value: promise, dispose};
-  }
-
-  _waitForSameDocumentNavigation(url?: types.URLMatch): Disposable<Promise<void>> {
-    let resolve: () => void;
-    const promise = new Promise<void>(x => resolve = x);
-    const watch = () => {
-      if (helper.urlMatches(this.url(), url))
-        resolve();
-    };
-    const dispose = () => this._sameDocumentNavigationWatchers.delete(watch);
-    this._sameDocumentNavigationWatchers.add(watch);
-    return {value: promise, dispose};
-  }
-
-  _waitForLifecycle(waitUntil: types.LifecycleEvent = 'load'): Disposable<Promise<void>> {
-    let resolve: () => void;
-    if (!types.kLifecycleEvents.has(waitUntil))
-      throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
-
-    const checkLifecycleComplete = () => {
-      if (!checkLifecycleRecursively(this))
-        return;
-      resolve();
-    };
-
-    const promise = new Promise<void>(x => resolve = x);
-    const dispose = () => this._page._frameManager._lifecycleWatchers.delete(checkLifecycleComplete);
-    this._page._frameManager._lifecycleWatchers.add(checkLifecycleComplete);
-    checkLifecycleComplete();
-    return {value: promise, dispose};
-
-    function checkLifecycleRecursively(frame: Frame): boolean {
-      if (!frame._firedLifecycleEvents.has(waitUntil))
-        return false;
-      for (const child of frame.childFrames()) {
-        if (!checkLifecycleRecursively(child))
-          return false;
-      }
-      return true;
-    }
-  }
-
-  _trackDocumentRequests(): Disposable<Map<string, network.Request>> {
-    const requestMap = new Map<string, network.Request>();
-    const dispose = () => {
-      this._requestWatchers.delete(onRequest);
-    };
-    const onRequest = (request: network.Request) => {
-      if (!request._documentId || request.redirectedFrom())
-        return;
-      requestMap.set(request._documentId, request);
-    };
-    this._requestWatchers.add(onRequest);
-    return {dispose, value: requestMap};
-  }
-
-  _createFrameDestroyedPromise(): Promise<Error> {
-    return Promise.race([
-      this._page._disconnectedPromise.then(() => new Error('Navigation failed because browser has disconnected!')),
-      this._detachedPromise.then(() => new Error('Navigating frame was detached!')),
-    ]);
+    const frameTask = new FrameTask(this, options);
+    await frameTask.waitForLifecycle(options.waitUntil);
+    frameTask.done();
   }
 
   async frameElement(): Promise<dom.ElementHandle> {
@@ -1028,37 +886,6 @@ class RerunnableTask {
   }
 }
 
-type Disposable<T> = {value: T, dispose: () => void};
-class Disposer {
-  private _disposes: (() => void)[] = [];
-  add<T>({value, dispose}: Disposable<T>) {
-    this._disposes.push(dispose);
-    return value;
-  }
-  dispose() {
-    for (const dispose of this._disposes)
-      dispose();
-    this._disposes = [];
-  }
-}
-
-function createTimeoutPromise(timeout: number): Disposable<Promise<TimeoutError>> {
-  if (!timeout)
-    return { value: new Promise(() => {}), dispose: () => void 0 };
-
-  let timer: NodeJS.Timer;
-  const errorMessage = 'Navigation timeout of ' + timeout + ' ms exceeded';
-  const promise = new Promise(fulfill => timer = setTimeout(fulfill, timeout))
-      .then(() => new TimeoutError(errorMessage));
-  const dispose = () => {
-    clearTimeout(timer);
-  };
-  return {
-    value: promise,
-    dispose
-  };
-}
-
 function selectorToString(selector: string, waitFor: 'attached' | 'detached' | 'visible' | 'hidden'): string {
   let label;
   switch (waitFor) {
@@ -1106,5 +933,148 @@ class PendingNavigationBarrier {
   private async _maybeResolve() {
     if (!this._protectCount && !this._frameIds.size)
       this._promiseCallback();
+  }
+}
+
+export class FrameTask {
+  private _frame: Frame;
+  private _failurePromise: Promise<Error>;
+  private _requestMap = new Map<string, network.Request>();
+  private _disposables: (() => void)[] = [];
+  private _url: string | undefined;
+
+  constructor(frame: Frame, options: types.TimeoutOptions, url?: string) {
+    this._frame = frame;
+    this._url = url;
+
+    // Process timeouts
+    let timeoutPromise = new Promise<TimeoutError>(() => {});
+    const { timeout = frame._page._timeoutSettings.navigationTimeout() } = options;
+    if (timeout) {
+      const errorMessage = 'Navigation timeout of ' + timeout + ' ms exceeded';
+      let timer: NodeJS.Timer;
+      timeoutPromise = new Promise(fulfill => timer = setTimeout(fulfill, timeout))
+          .then(() => { throw new TimeoutError(errorMessage); });
+      this._disposables.push(() => clearTimeout(timer));
+    }
+
+    // Process detached frames
+    this._failurePromise = Promise.race([
+      timeoutPromise,
+      this._frame._page._disconnectedPromise.then(() => { throw new Error('Navigation failed because browser has disconnected!'); }),
+      this._frame._detachedPromise.then(() => { throw new Error('Navigating frame was detached!'); }),
+    ]);
+
+    // Collect requests during the task.
+    const watcher = (request: network.Request) => {
+      if (!request._documentId || request.redirectedFrom())
+        return;
+      this._requestMap.set(request._documentId, request);
+    };
+    this._disposables.push(() => this._frame._requestWatchers.delete(watcher));
+    this._frame._requestWatchers.add(watcher);
+  }
+
+  async raceAgainstFailures<T>(promise: Promise<T>): Promise<T> {
+    let result: T;
+    let error: Error | undefined;
+    await Promise.race([
+      this._failurePromise.catch(e => error = e),
+      promise.then(r => result = r).catch(e => error = e)
+    ]);
+
+    if (!error)
+      return result!;
+    this.done();
+    if (this._url)
+      error.message = error.message + ` while navigating to ${this._url}`;
+    throw error;
+  }
+
+  request(id: string): network.Request | undefined {
+    return this._requestMap.get(id);
+  }
+
+  async waitForSameDocumentNavigation(url?: types.URLMatch): Promise<void> {
+    let resolve: () => void;
+    const promise = new Promise<void>(x => resolve = x);
+    const watch = () => {
+      if (helper.urlMatches(this._frame.url(), url))
+        resolve();
+    };
+    this._disposables.push(() => this._frame._sameDocumentNavigationWatchers.delete(watch));
+    this._frame._sameDocumentNavigationWatchers.add(watch);
+    return this.raceAgainstFailures(promise);
+  }
+
+  async waitForSpecificDocument(expectedDocumentId: string): Promise<void> {
+    let resolve: () => void;
+    let reject: (error: Error) => void;
+    const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+    const watch = (documentId: string, error?: Error) => {
+      if (documentId === expectedDocumentId) {
+        if (!error)
+          resolve();
+        else
+          reject(error);
+      } else if (!error) {
+        reject(new Error('Navigation interrupted by another one'));
+      }
+    };
+    this._disposables.push(() => this._frame._documentWatchers.delete(watch));
+    this._frame._documentWatchers.add(watch);
+    await this.raceAgainstFailures(promise);
+  }
+
+  waitForNewDocument(url?: types.URLMatch): Promise<string> {
+    let resolve: (documentId: string) => void;
+    let reject: (error: Error) => void;
+    const promise = new Promise<string>((res, rej) => { resolve = res; reject = rej; });
+    const watch = (documentId: string, error?: Error) => {
+      if (!error && !helper.urlMatches(this._frame.url(), url))
+        return;
+      if (error)
+        reject(error);
+      else
+        resolve(documentId);
+    };
+    this._disposables.push(() => this._frame._documentWatchers.delete(watch));
+    this._frame._documentWatchers.add(watch);
+    return this.raceAgainstFailures(promise);
+  }
+
+  waitForLifecycle(waitUntil: types.LifecycleEvent = 'load'): Promise<void> {
+    let resolve: () => void;
+    if (!types.kLifecycleEvents.has(waitUntil))
+      throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
+
+    const checkLifecycleComplete = () => {
+      if (!checkLifecycleRecursively(this._frame))
+        return;
+      resolve();
+    };
+
+    const promise = new Promise<void>(x => resolve = x);
+    this._disposables.push(() => this._frame._page._frameManager._lifecycleWatchers.delete(checkLifecycleComplete));
+    this._frame._page._frameManager._lifecycleWatchers.add(checkLifecycleComplete);
+    checkLifecycleComplete();
+    return this.raceAgainstFailures(promise);
+
+    function checkLifecycleRecursively(frame: Frame): boolean {
+      if (!frame._firedLifecycleEvents.has(waitUntil))
+        return false;
+      for (const child of frame.childFrames()) {
+        if (!checkLifecycleRecursively(child))
+          return false;
+      }
+      return true;
+    }
+  }
+
+  done() {
+    this._failurePromise.catch(e => {});
+    for (const disposable of this._disposables)
+      disposable();
+    this._disposables = [];
   }
 }
