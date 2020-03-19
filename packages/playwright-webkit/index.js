@@ -25,7 +25,6 @@ try {
   const downloadedBrowsers = require(path.join(__dirname, '.downloaded-browsers.json'));
   playwright.webkit.setExecutablePath(downloadedBrowsers.wkExecutablePath);
 } catch (e) {
-  throw new Error('ERROR: Playwright-Webkit did not download browser');
+  throw new Error('playwright-webkit has not downloaded WebKit.');
 }
-
 
