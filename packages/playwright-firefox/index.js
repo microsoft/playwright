@@ -25,7 +25,6 @@ try {
   const downloadedBrowsers = require(path.join(__dirname, '.downloaded-browsers.json'));
   playwright.firefox.setExecutablePath(downloadedBrowsers.ffExecutablePath);
 } catch (e) {
-  throw new Error('ERROR: Playwright-Firefox did not download browser');
+  throw new Error('playwright-firefox has not downloaded Firefox.');
 }
-
 
