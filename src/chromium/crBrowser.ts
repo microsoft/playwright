@@ -20,11 +20,7 @@ import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, Bro
 import { Events as CommonEvents } from '../events';
 import { assert, debugError, helper } from '../helper';
 import * as network from '../network';
-<<<<<<< HEAD
-import { Page, PageBinding, PageEvent, Worker } from '../page';
-=======
-import { Page, PageBinding } from '../page';
->>>>>>> api(context): get rid of PageEvent
+import { Page, PageBinding, Worker } from '../page';
 import * as platform from '../platform';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
 import * as types from '../types';
