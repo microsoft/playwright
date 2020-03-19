@@ -36,7 +36,7 @@ type WaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
 type HTMLOrSVGElement = SVGElement | HTMLElement;
 type HTMLOrSVGElementHandle = ElementHandle<HTMLOrSVGElement>;
 
-export class Page {
+export interface Page {
   evaluate<Args extends any[], R>(pageFunction: PageFunction<Args, R>, ...args: Boxed<Args>): Promise<R>;
   evaluateHandle<Args extends any[], R>(pageFunction: PageFunction<Args,  R>, ...args: Boxed<Args>): Promise<Handle<R>>;
 
@@ -58,7 +58,7 @@ export class Page {
   waitForSelector(selector: string, options: PageWaitForSelectorOptions): Promise<null|HTMLOrSVGElementHandle>;
 }
 
-export class Frame {
+export interface Frame {
   evaluate<Args extends any[], R>(pageFunction: PageFunction<Args, R>, ...args: Boxed<Args>): Promise<R>;
   evaluateHandle<Args extends any[], R>(pageFunction: PageFunction<Args,  R>, ...args: Boxed<Args>): Promise<Handle<R>>;
 
@@ -80,19 +80,19 @@ export class Frame {
   waitForSelector(selector: string, options: PageWaitForSelectorOptions): Promise<null|HTMLOrSVGElementHandle>;
 }
 
-export class Worker {
+export interface Worker {
   evaluate<Args extends any[], R>(pageFunction: PageFunction<Args, R>, ...args: Boxed<Args>): Promise<R>;
   evaluateHandle<Args extends any[], R>(pageFunction: PageFunction<Args,  R>, ...args: Boxed<Args>): Promise<Handle<R>>;
 }
 
-export class JSHandle<T = any> {
+export interface JSHandle<T = any> {
   jsonValue(): Promise<T>;
   evaluate<Args extends any[], R>(pageFunction: PageFunctionOn<T, Args, R>, ...args: Boxed<Args>): Promise<R>;
   evaluateHandle<Args extends any[], R>(pageFunction: PageFunctionOn<T, Args, R>, ...args: Boxed<Args>): Promise<Handle<R>>;
   asElement(): T extends Node ? ElementHandle<T> : null;
 }
 
-export class ElementHandle<T=Node> extends JSHandle<T> {
+export interface ElementHandle<T=Node> extends JSHandle<T> {
   $<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K> | null>;
   $(selector: string): Promise<HTMLOrSVGElementHandle | null>;
 
@@ -106,16 +106,16 @@ export class ElementHandle<T=Node> extends JSHandle<T> {
   $$eval<Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement[], Args, R>, ...args: Boxed<Args>): Promise<R>;
 }
 
-export class BrowserType<Browser> {
+export interface BrowserType<Browser> {
 
 }
 
-export class ChromiumBrowser extends Browser {
+export interface ChromiumBrowser extends Browser {
   contexts(): Array<ChromiumBrowserContext>;
   newContext(options?: BrowserNewContextOptions): Promise<ChromiumBrowserContext>;
 }
 
-export class CDPSession {
+export interface CDPSession {
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
@@ -128,8 +128,12 @@ export class CDPSession {
 }
 
 type DeviceDescriptor = {viewport: BrowserNewContextOptionsViewport, userAgent: string};
-export const errors: {
-  TimeoutError: typeof TimeoutError
-};
+
+export namespace errors {
+
+class TimeoutError extends Error {}
+
+}
+
 export const selectors: Selectors;
 export const devices: {[name: string]: DeviceDescriptor} & DeviceDescriptor[];

@@ -102,7 +102,7 @@ function classToString(classDesc) {
   }
   if (classDesc.templates.length)
     console.error(`expected an override for "${classDesc.name}" becasue it is templated`);
-  parts.push(`export class ${classDesc.name} ${classDesc.extends ? `extends ${classDesc.extends} ` : ''}{`);
+  parts.push(`export interface ${classDesc.name} ${classDesc.extends ? `extends ${classDesc.extends} ` : ''}{`);
   parts.push(classBody(classDesc));
   parts.push('}\n');
   return parts.join('\n');
