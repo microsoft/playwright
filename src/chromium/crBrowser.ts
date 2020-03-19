@@ -20,7 +20,7 @@ import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, Bro
 import { Events as CommonEvents } from '../events';
 import { assert, debugError, helper } from '../helper';
 import * as network from '../network';
-import { Page, PageBinding, PageEvent } from '../page';
+import { Page, PageBinding, PageEvent, Worker } from '../page';
 import * as platform from '../platform';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
 import * as types from '../types';
@@ -53,6 +53,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     const promises = [
       session.send('Target.setDiscoverTargets', { discover: true }),
       session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
+      session.send('Target.setDiscoverTargets', { discover: false }),
     ];
     const existingPageAttachPromises: Promise<any>[] = [];
     if (isPersistent) {
@@ -82,9 +83,8 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
         context._browserClosed();
       this.emit(CommonEvents.Browser.Disconnected);
     });
-    this._session.on('Target.targetCreated', this._targetCreated.bind(this));
-    this._session.on('Target.targetDestroyed', this._targetDestroyed.bind(this));
     this._session.on('Target.attachedToTarget', this._onAttachedToTarget.bind(this));
+    this._session.on('Target.detachedFromTarget', this._onDetachedFromTarget.bind(this));
     this._firstPagePromise = new Promise(f => this._firstPageCallback = f);
   }
 
@@ -116,8 +116,8 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
 
   _onAttachedToTarget({targetInfo, sessionId, waitingForDebugger}: Protocol.Target.attachedToTargetPayload) {
     const session = this._connection.session(sessionId)!;
-    if (!CRTarget.isPageType(targetInfo.type)) {
-      assert(targetInfo.type === 'service_worker' || targetInfo.type === 'browser' || targetInfo.type === 'other');
+    if (!CRTarget.isPageType(targetInfo.type) && targetInfo.type !== 'service_worker') {
+      assert(targetInfo.type === 'browser' || targetInfo.type === 'other');
       if (waitingForDebugger) {
         // Ideally, detaching should resume any target, but there is a bug in the backend.
         session.send('Runtime.runIfWaitingForDebugger').catch(debugError).then(() => {
@@ -128,34 +128,32 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     }
     const { context, target } = this._createTarget(targetInfo, session);
 
-    if (!CRTarget.isPageType(targetInfo.type))
+    if (CRTarget.isPageType(targetInfo.type)) {
+      const pageEvent = new PageEvent(context, target.pageOrError());
+      target.pageOrError().then(async () => {
+        if (targetInfo.type === 'page') {
+          this._firstPageCallback();
+          context.emit(CommonEvents.BrowserContext.Page, pageEvent);
+          const opener = target.opener();
+          if (!opener)
+            return;
+          const openerPage = await opener.pageOrError();
+          if (openerPage instanceof Page && !openerPage.isClosed())
+            openerPage.emit(CommonEvents.Page.Popup, pageEvent);
+        } else if (targetInfo.type === 'background_page') {
+          context.emit(Events.CRBrowserContext.BackgroundPage, pageEvent);
+        }
+      });
       return;
-    const pageEvent = new PageEvent(context, target.pageOrError());
-    target.pageOrError().then(async () => {
-      if (targetInfo.type === 'page') {
-        this._firstPageCallback();
-        context.emit(CommonEvents.BrowserContext.Page, pageEvent);
-        const opener = target.opener();
-        if (!opener)
-          return;
-        const openerPage = await opener.pageOrError();
-        if (openerPage instanceof Page && !openerPage.isClosed())
-          openerPage.emit(CommonEvents.Page.Popup, pageEvent);
-      } else if (targetInfo.type === 'background_page') {
-        context.emit(Events.CRBrowserContext.BackgroundPage, pageEvent);
-      }
+    }
+    assert(targetInfo.type === 'service_worker');
+    target.serviceWorkerOrError().then(workerOrError => {
+      if (workerOrError instanceof Worker)
+        context.emit(Events.CRBrowserContext.ServiceWorker, workerOrError);
     });
   }
 
-  async _targetCreated({targetInfo}: Protocol.Target.targetCreatedPayload) {
-    if (targetInfo.type !== 'service_worker')
-      return;
-    const { context, target } = this._createTarget(targetInfo, null);
-    const serviceWorker = await target.serviceWorker();
-    context.emit(Events.CRBrowserContext.ServiceWorker, serviceWorker);
-  }
-
-  private _createTarget(targetInfo: Protocol.Target.TargetInfo, session: CRSession | null) {
+  private _createTarget(targetInfo: Protocol.Target.TargetInfo, session: CRSession) {
     const {browserContextId} = targetInfo;
     const context = (browserContextId && this._contexts.has(browserContextId)) ? this._contexts.get(browserContextId)! : this._defaultContext;
     let hasInitialAboutBlank = false;
@@ -169,17 +167,17 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
         hasInitialAboutBlank = true;
       }
     }
-    const target = new CRTarget(this, targetInfo, context, session, () => this._connection.createSession(targetInfo), hasInitialAboutBlank);
+    const target = new CRTarget(this, targetInfo, context, session, hasInitialAboutBlank);
     assert(!this._targets.has(targetInfo.targetId), 'Target should not exist before targetCreated');
     this._targets.set(targetInfo.targetId, target);
     return { context, target };
   }
 
-  async _targetDestroyed(event: { targetId: string; }) {
-    const target = this._targets.get(event.targetId)!;
+  _onDetachedFromTarget({targetId}: Protocol.Target.detachFromTargetParameters) {
+    const target = this._targets.get(targetId!)!;
     if (!target)
       return;
-    this._targets.delete(event.targetId);
+    this._targets.delete(targetId!);
     target._didClose();
   }
 
@@ -415,6 +413,10 @@ export class CRBrowserContext extends BrowserContextBase {
 
   backgroundPages(): Page[] {
     return this._targets().filter(target => target.type() === 'background_page').map(target => target._initializedPage).filter(pageOrNull => !!pageOrNull) as Page[];
+  }
+
+  serviceWorkers(): Worker[] {
+    return this._targets().filter(target => target.type() === 'service_worker').map(target => target._initializedWorker).filter(workerOrNull => !!workerOrNull) as any as Worker[];
   }
 
   async newCDPSession(page: Page): Promise<CRSession> {

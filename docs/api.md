@@ -3810,6 +3810,7 @@ const backgroundPage = await backroundPageTarget.page();
 - [event: 'serviceworker'](#event-serviceworker)
 - [chromiumBrowserContext.backgroundPages()](#chromiumbrowsercontextbackgroundpages)
 - [chromiumBrowserContext.newCDPSession(page)](#chromiumbrowsercontextnewcdpsessionpage)
+- [chromiumBrowserContext.serviceWorkers()](#chromiumbrowsercontextserviceworkers)
 <!-- GEN:stop -->
 <!-- GEN:toc-extends-BrowserContext -->
 - [event: 'close'](#event-close)
@@ -3852,6 +3853,9 @@ Emitted when new service worker is created in the context.
 #### chromiumBrowserContext.newCDPSession(page)
 - `page` <[Page]> Page to create new session for.
 - returns: <[Promise]<[CDPSession]>> Promise that resolves to the newly created session.
+
+#### chromiumBrowserContext.serviceWorkers()
+- returns: <[Array]<[Worker]>> All existing service workers in the context.
 
 ### class: ChromiumCoverage
 
