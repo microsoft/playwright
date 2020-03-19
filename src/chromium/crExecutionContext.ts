@@ -55,7 +55,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     if (typeof pageFunction !== 'function')
       throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
 
-    const { functionText, values, handles } = js.prepareFunctionCall<Protocol.Runtime.CallArgument>(pageFunction, context, args, (value: any) => {
+    const { functionText, values, handles, dispose } = await js.prepareFunctionCall<Protocol.Runtime.CallArgument>(pageFunction, context, args, (value: any) => {
       if (typeof value === 'bigint') // eslint-disable-line valid-typeof
         return { handle: { unserializableValue: `${value.toString()}n` } };
       if (Object.is(value, -0))
@@ -71,26 +71,30 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
         if (remoteObject.unserializableValue)
           return { handle: { unserializableValue: remoteObject.unserializableValue } };
         if (!remoteObject.objectId)
-          return { value: remoteObject.value };
+          return { handle: { value: remoteObject.value } };
         return { handle: { objectId: remoteObject.objectId } };
       }
       return { value };
     });
 
-    const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
-      functionDeclaration: functionText + '\n' + suffix + '\n',
-      executionContextId: this._contextId,
-      arguments: [
-        ...values.map(value => ({ value })),
-        ...handles,
-      ],
-      returnByValue,
-      awaitPromise: true,
-      userGesture: true
-    }).catch(rewriteError);
-    if (exceptionDetails)
-      throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
-    return returnByValue ? valueFromRemoteObject(remoteObject) : context._createHandle(remoteObject);
+    try {
+      const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
+        functionDeclaration: functionText + '\n' + suffix + '\n',
+        executionContextId: this._contextId,
+        arguments: [
+          ...values.map(value => ({ value })),
+          ...handles,
+        ],
+        returnByValue,
+        awaitPromise: true,
+        userGesture: true
+      }).catch(rewriteError);
+      if (exceptionDetails)
+        throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
+      return returnByValue ? valueFromRemoteObject(remoteObject) : context._createHandle(remoteObject);
+    } finally {
+      dispose();
+    }
 
     function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {
       if (error.message.includes('Object reference chain is too long'))

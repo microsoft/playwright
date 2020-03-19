@@ -33,6 +33,10 @@ export class ExecutionContext {
     this._delegate = delegate;
   }
 
+  _adoptIfNeeded(handle: JSHandle): Promise<JSHandle> | null {
+    return null;
+  }
+
   _evaluate(returnByValue: boolean, waitForNavigations: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
     return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
   }
@@ -104,11 +108,11 @@ export class JSHandle<T = any> {
   }
 }
 
-export function prepareFunctionCall<T>(
+export async function prepareFunctionCall<T>(
   pageFunction: Function,
   context: ExecutionContext,
   args: any[],
-  toCallArgumentIfNeeded: (value: any) => { handle?: T, value?: any }): { functionText: string, values: any[], handles: T[] } {
+  toCallArgumentIfNeeded: (value: any) => { handle?: T, value?: any }): Promise<{ functionText: string, values: any[], handles: T[], dispose: () => void }> {
 
   let functionText = pageFunction.toString();
   try {
@@ -129,8 +133,9 @@ export function prepareFunctionCall<T>(
   }
 
   const guids: string[] = [];
-  const handles: T[] = [];
-  const pushHandle = (handle: T): string => {
+  const handles: (Promise<JSHandle | T>)[] = [];
+  const toDispose: Promise<JSHandle>[] = [];
+  const pushHandle = (handle: Promise<JSHandle | T>): string => {
     const guid = platform.guid();
     guids.push(guid);
     handles.push(handle);
@@ -165,14 +170,17 @@ export function prepareFunctionCall<T>(
       return result;
     }
     if (arg && (arg instanceof JSHandle)) {
-      if (arg._context !== context)
-        throw new Error('JSHandles can be evaluated only in the context they were created!');
       if (arg._disposed)
         throw new Error('JSHandle is disposed!');
+      const adopted = context._adoptIfNeeded(arg);
+      if (adopted === null)
+        return pushHandle(Promise.resolve(arg));
+      toDispose.push(adopted);
+      return pushHandle(adopted);
     }
     const { handle, value } = toCallArgumentIfNeeded(arg);
     if (handle)
-      return pushHandle(handle);
+      return pushHandle(Promise.resolve(handle));
     return value;
   };
 
@@ -181,7 +189,7 @@ export function prepareFunctionCall<T>(
     throw new Error(error);
 
   if (!guids.length)
-    return { functionText, values: args, handles: [] };
+    return { functionText, values: args, handles: [], dispose: () => {} };
 
   functionText = `(...__playwright__args__) => {
     return (${functionText})(...(() => {
@@ -208,5 +216,20 @@ export function prepareFunctionCall<T>(
     })());
   }`;
 
-  return { functionText, values: [ args.length, ...args, guids.length, ...guids ], handles };
+  const resolved = await Promise.all(handles);
+  const resultHandles: T[] = [];
+  for (let i = 0; i < resolved.length; i++) {
+    const handle = resolved[i];
+    if (handle instanceof JSHandle) {
+      if (handle._context !== context)
+        throw new Error('JSHandles can be evaluated only in the context they were created!');
+      resultHandles.push(toCallArgumentIfNeeded(handle).handle!);
+    } else {
+      resultHandles.push(handle);
+    }
+  }
+  const dispose = () => {
+    toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
+  };
+  return { functionText, values: [ args.length, ...args, guids.length, ...guids ], handles: resultHandles, dispose };
 }

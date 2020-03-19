@@ -87,7 +87,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     if (typeof pageFunction !== 'function')
       throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
 
-    const { functionText, values, handles } = js.prepareFunctionCall<MaybeCallArgument>(pageFunction, context, args, (value: any) => {
+    const { functionText, values, handles, dispose } = await js.prepareFunctionCall<MaybeCallArgument>(pageFunction, context, args, (value: any) => {
       if (typeof value === 'bigint' || Object.is(value, -0) || Object.is(value, Infinity) || Object.is(value, -Infinity) || Object.is(value, NaN))
         return { handle: { unserializable: value } };
       if (value && (value instanceof js.JSHandle)) {
@@ -95,21 +95,25 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
         if (!remoteObject.objectId && !Object.is(valueFromRemoteObject(remoteObject), remoteObject.value))
           return { handle: { unserializable: value } };
         if (!remoteObject.objectId)
-          return { value: valueFromRemoteObject(remoteObject) };
+          return { handle: { value: valueFromRemoteObject(remoteObject) } };
         return { handle: { objectId: remoteObject.objectId } };
       }
       return { value };
     });
 
-    const callParams = this._serializeFunctionAndArguments(functionText, values, handles);
-    const thisObjectId = await this._contextGlobalObjectId();
-    return await this._session.send('Runtime.callFunctionOn', {
-      functionDeclaration: callParams.functionText + '\n' + suffix + '\n',
-      objectId: thisObjectId,
-      arguments: callParams.callArguments,
-      returnByValue: false,
-      emulateUserGesture: true
-    });
+    try {
+      const callParams = this._serializeFunctionAndArguments(functionText, values, handles);
+      const thisObjectId = await this._contextGlobalObjectId();
+      return await this._session.send('Runtime.callFunctionOn', {
+        functionDeclaration: callParams.functionText + '\n' + suffix + '\n',
+        objectId: thisObjectId,
+        arguments: callParams.callArguments,
+        returnByValue: false,
+        emulateUserGesture: true
+      });
+    } finally {
+      dispose();
+    }
   }
 
   private _serializeFunctionAndArguments(functionText: string, values: any[], handles: MaybeCallArgument[]): { functionText: string, callArguments: Protocol.Runtime.CallArgument[] } {
