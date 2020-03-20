@@ -70,7 +70,7 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
   _closed = false;
   private readonly _closePromise: Promise<Error>;
   private _closePromiseFulfill: ((error: Error) => void) | undefined;
-  private _permissions = new Map<string, string[]>();
+  readonly _permissions = new Map<string, string[]>();
 
   constructor(options: BrowserContextOptions) {
     super();

@@ -98,6 +98,10 @@ export class WKPage implements PageDelegate {
     if (this._page._state.viewportSize || contextOptions.viewport)
       promises.push(this._updateViewport());
     promises.push(this.updateHttpCredentials());
+    if (this._browserContext._permissions.size) {
+      for (const [key, value] of this._browserContext._permissions)
+        this._grantPermissions(key, value);
+    }
     await Promise.all(promises);
   }
 
@@ -819,6 +823,23 @@ export class WKPage implements PageDelegate {
     this._requestIdToRequest.delete(request._requestId);
     request.request._setFailureText(event.errorText);
     this._page._frameManager.requestFailed(request.request, event.errorText.includes('cancelled'));
+  }
+
+  async _grantPermissions(origin: string, permissions: string[]) {
+    const webPermissionToProtocol = new Map<string, string>([
+      ['geolocation', 'geolocation'],
+    ]);
+    const filtered = permissions.map(permission => {
+      const protocolPermission = webPermissionToProtocol.get(permission);
+      if (!protocolPermission)
+        throw new Error('Unknown permission: ' + permission);
+      return protocolPermission;
+    });
+    await this._pageProxySession.send('Emulation.grantPermissions', { origin, permissions: filtered });
+  }
+
+  async _clearPermissions() {
+    await this._pageProxySession.send('Emulation.resetPermissions', {});
   }
 }
 

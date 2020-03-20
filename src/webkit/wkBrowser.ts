@@ -263,20 +263,11 @@ export class WKBrowserContext extends BrowserContextBase {
   }
 
   async _doGrantPermissions(origin: string, permissions: string[]) {
-    const webPermissionToProtocol = new Map<string, string>([
-      ['geolocation', 'geolocation'],
-    ]);
-    const filtered = permissions.map(permission => {
-      const protocolPermission = webPermissionToProtocol.get(permission);
-      if (!protocolPermission)
-        throw new Error('Unknown permission: ' + permission);
-      return protocolPermission;
-    });
-    await this._browser._browserSession.send('Playwright.grantPermissions', { origin, browserContextId: this._browserContextId, permissions: filtered });
+    await Promise.all(this.pages().map(page => (page._delegate as WKPage)._grantPermissions(origin, permissions)));
   }
 
   async _doClearPermissions() {
-    await this._browser._browserSession.send('Playwright.resetPermissions', { browserContextId: this._browserContextId });
+    await Promise.all(this.pages().map(page => (page._delegate as WKPage)._clearPermissions()));
   }
 
   async setGeolocation(geolocation: types.Geolocation | null): Promise<void> {

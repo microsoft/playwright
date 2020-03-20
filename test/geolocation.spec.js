@@ -112,5 +112,15 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
       expect(allMessages).toContain('lat=20 lng=30');
       expect(allMessages).toContain('lat=40 lng=50');
     });
+    it.fail(FFOX)('should use context options for popup', async({page, context, server}) => {
+      await context.grantPermissions(['geolocation']);
+      await context.setGeolocation({ longitude: 10, latitude: 10 });
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.evaluate(url => window._popup = window.open(url), server.PREFIX + '/geolocation.html'),
+      ]);
+      const geolocation = await popup.evaluate(() => window.geolocationPromise);
+      expect(geolocation).toEqual({ longitude: 10, latitude: 10 });
+    });
   });
 };
