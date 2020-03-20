@@ -20,7 +20,7 @@ import * as js from '../javascript';
 import * as frames from '../frames';
 import { debugError, helper, RegisteredListener, assert } from '../helper';
 import * as network from '../network';
-import { CRSession, CRConnection } from './crConnection';
+import { CRSession, CRConnection, CRSessionEvents } from './crConnection';
 import { EVALUATION_SCRIPT_URL, CRExecutionContext } from './crExecutionContext';
 import { CRNetworkManager } from './crNetworkManager';
 import { Page, Worker, PageBinding } from '../page';
@@ -33,32 +33,35 @@ import { RawMouseImpl, RawKeyboardImpl } from './crInput';
 import { getAccessibilityTree } from './crAccessibility';
 import { CRCoverage } from './crCoverage';
 import { CRPDF } from './crPdf';
-import { CRBrowser, CRBrowserContext } from './crBrowser';
+import { CRBrowserContext } from './crBrowser';
 import * as types from '../types';
 import { ConsoleMessage } from '../console';
 import * as platform from '../platform';
-import { CRTarget } from './crTarget';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
 export class CRPage implements PageDelegate {
   readonly _client: CRSession;
-  private readonly _page: Page;
+  readonly _page: Page;
   readonly _networkManager: CRNetworkManager;
   private readonly _contextIdToContext = new Map<number, dom.FrameExecutionContext>();
   private _eventListeners: RegisteredListener[] = [];
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
-  private readonly _browser: CRBrowser;
+  readonly _targetId: string;
+  private readonly _opener: CRPage | null;
   private readonly _pdf: CRPDF;
   private readonly _coverage: CRCoverage;
-  private readonly _browserContext: CRBrowserContext;
+  readonly _browserContext: CRBrowserContext;
   private _firstNonInitialNavigationCommittedPromise: Promise<void>;
   private _firstNonInitialNavigationCommittedCallback = () => {};
+  private readonly _pagePromise: Promise<Page | Error>;
+  _initializedPage: Page | null = null;
 
-  constructor(client: CRSession, browser: CRBrowser, browserContext: CRBrowserContext) {
+  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null) {
     this._client = client;
-    this._browser = browser;
+    this._targetId = targetId;
+    this._opener = opener;
     this.rawKeyboard = new RawKeyboardImpl(client);
     this.rawMouse = new RawMouseImpl(client);
     this._pdf = new CRPDF(client);
@@ -67,9 +70,15 @@ export class CRPage implements PageDelegate {
     this._page = new Page(this, browserContext);
     this._networkManager = new CRNetworkManager(client, this._page);
     this._firstNonInitialNavigationCommittedPromise = new Promise(f => this._firstNonInitialNavigationCommittedCallback = f);
+    client.once(CRSessionEvents.Disconnected, () => this._page._didDisconnect());
+    this._pagePromise = this._initialize().then(() => this._initializedPage = this._page).catch(e => e);
   }
 
-  async initialize() {
+  async pageOrError(): Promise<Page | Error> {
+    return this._pagePromise;
+  }
+
+  private async _initialize() {
     let lifecycleEventsEnabled: Promise<any>;
     const promises: Promise<any>[] = [
       this._client.send('Page.enable'),
@@ -193,10 +202,6 @@ export class CRPage implements PageDelegate {
 
     for (const child of frameTree.childFrames)
       this._handleFrameTree(child);
-  }
-
-  page(): Page {
-    return this._page;
   }
 
   _onFrameAttached(frameId: string, parentFrameId: string | null) {
@@ -402,10 +407,9 @@ export class CRPage implements PageDelegate {
   }
 
   async opener(): Promise<Page | null> {
-    const openerTarget = CRTarget.fromPage(this._page).opener();
-    if (!openerTarget)
+    if (!this._opener)
       return null;
-    const openerPage = await openerTarget.pageOrError();
+    const openerPage = await this._opener.pageOrError();
     if (openerPage instanceof Page && !openerPage.isClosed())
       return openerPage;
     return null;
@@ -440,7 +444,7 @@ export class CRPage implements PageDelegate {
     if (runBeforeUnload)
       await this._client.send('Page.close');
     else
-      await this._browser._closePage(this._page);
+      await this._browserContext._browser._closePage(this);
   }
 
   canScreenshotOutsideViewport(): boolean {

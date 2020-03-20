@@ -23,7 +23,7 @@ import * as network from '../network';
 import * as frames from '../frames';
 import * as platform from '../platform';
 import { Credentials } from '../types';
-import { CRTarget } from './crTarget';
+import { CRPage } from './crPage';
 
 export class CRNetworkManager {
   private _client: CRSession;
@@ -169,7 +169,7 @@ export class CRNetworkManager {
     let frame = event.frameId ? this._page._frameManager.frame(event.frameId) : workerFrame;
 
     // Check if it's main resource request interception (targetId === main frame id).
-    if (!frame && interceptionId && event.frameId === CRTarget.fromPage(this._page)._targetId) {
+    if (!frame && interceptionId && event.frameId === (this._page._delegate as CRPage)._targetId) {
       // Main resource request for the page is being intercepted so the Frame is not created
       // yet. Precreate it here for the purposes of request interception. It will be updated
       // later as soon as the request contnues and we receive frame tree from the page.
