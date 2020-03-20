@@ -268,8 +268,6 @@ export class CRBrowserContext extends BrowserContextBase {
   async _initialize() {
     if (this._options.permissions)
       await this.grantPermissions(this._options.permissions);
-    if (this._options.geolocation)
-      await this.setGeolocation(this._options.geolocation);
     if (this._options.offline)
       await this.setOffline(this._options.offline);
     if (this._options.httpCredentials)

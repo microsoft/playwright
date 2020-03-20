@@ -86,6 +86,7 @@ export class FFPage implements PageDelegate {
   }
 
   async _initialize() {
+    const geolocation = this._browserContext._options.geolocation;
     try {
       await Promise.all([
         // TODO: we should get rid of this call to resolve before any early events arrive, e.g. dialogs.
@@ -93,6 +94,7 @@ export class FFPage implements PageDelegate {
           script: '',
           worldName: UTILITY_WORLD_NAME,
         }),
+        geolocation ? this._setGeolocation(geolocation) : Promise.resolve(),
         new Promise(f => this._session.once('Page.ready', f)),
       ]);
       this._pageCallback(this._page);
@@ -480,6 +482,10 @@ export class FFPage implements PageDelegate {
     if (!result)
       throw new Error('Frame has been detached.');
     return result.handle;
+  }
+
+  async _setGeolocation(geolocation: types.Geolocation | null) {
+    await this._session.send('Page.setGeolocationOverride', geolocation || {});
   }
 }
 

@@ -23,7 +23,7 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe.fail(FFOX)('Overrides.setGeolocation', function() {
+  describe('Overrides.setGeolocation', function() {
     it('should work', async({page, server, context}) => {
       await context.grantPermissions(['geolocation']);
       await page.goto(server.EMPTY_PAGE);
@@ -86,6 +86,31 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
         longitude: 10
       });
       await context.close();
+    });
+    it('watchPosition should be notified', async({page, server, context}) => {
+      await context.grantPermissions(['geolocation']);
+      await page.goto(server.EMPTY_PAGE);
+      const messages = [];
+      page.on('console', message => messages.push(message.text()));
+
+      await context.setGeolocation({latitude: 0, longitude: 0});
+      await page.evaluate(() => {
+        navigator.geolocation.watchPosition(pos => {
+          const coords = pos.coords;
+          console.log(`lat=${coords.latitude} lng=${coords.longitude}`);
+        }, err => {});
+      });
+      await context.setGeolocation({latitude: 0, longitude: 10});
+      await page.waitForEvent('console', message => message.text().includes('lat=0 lng=10'));
+      await context.setGeolocation({latitude: 20, longitude: 30});
+      await page.waitForEvent('console', message => message.text().includes('lat=20 lng=30'));
+      await context.setGeolocation({latitude: 40, longitude: 50});
+      await page.waitForEvent('console', message => message.text().includes('lat=40 lng=50'));
+
+      const allMessages = messages.join('|');
+      expect(allMessages).toContain('lat=0 lng=10');
+      expect(allMessages).toContain('lat=20 lng=30');
+      expect(allMessages).toContain('lat=40 lng=50');
     });
   });
 };
