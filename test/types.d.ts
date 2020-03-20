@@ -48,7 +48,7 @@ interface TestSetup<STATE> {
     MAC: boolean;
     LINUX: boolean;
     WIN: boolean;
-    playwright: import('../src/server/browserType').BrowserType;
+    playwright: import('../src/server/browserType').BrowserType<import('../src/browser').Browser>;
     selectors: import('../src/selectors').Selectors;
     expect<T>(value: T): Expect<T>;
     defaultBrowserOptions: import('../src/server/browserType').LaunchOptions;

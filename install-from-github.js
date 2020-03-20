@@ -87,13 +87,13 @@ const DOWNLOAD_PATHS = {
   directories.add(path.join(__dirname, '.local-webkit'));
   await Promise.all([...directories].map(directory => rmAsync(directory)));
 
+  try {
+    console.log('Generating types...');
+    execSync('npm run generate-types');
+  } catch (e) {
+  }
+
   async function readdirAsync(dirpath) {
     return fs.promises.readdir(dirpath).then(dirs => dirs.map(dir => path.join(dirpath, dir)));
   }
 })();
-
-try {
-  console.log('Generating types...');
-  execSync('npm run generate-types');
-} catch (e) {
-}
