@@ -20,7 +20,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Link navigation', function() {
-    it.fail(CHROMIUM)('should inherit user agent from browser context', async function({browser, server}) {
+    it('should inherit user agent from browser context', async function({browser, server}) {
       const context = await browser.newContext({
         userAgent: 'hey'
       });
@@ -32,6 +32,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
         context.waitForEvent('page'),
         page.click('a'),
       ]);
+      await popup.waitForLoadState({waitUntil: 'domcontentloaded'})
       const userAgent = await popup.evaluate(() => window.initialUserAgent);
       const request = await requestPromise;
       await context.close();
