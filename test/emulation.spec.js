@@ -291,7 +291,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
     });
   });
 
-  describe.fail(FFOX)('BrowserContext({locale})', function() {
+  describe('BrowserContext({locale})', function() {
     it('should affect accept-language header', async({browser, server}) => {
       const context = await browser.newContext({ locale: 'fr-CH' });
       const page = await context.newPage();
@@ -308,7 +308,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
       await context.close();
     });
-    it('should format number', async({browser, server}) => {
+    it.fail(FFOX)('should format number', async({browser, server}) => {
       {
         const context = await browser.newContext({ locale: 'en-US' });
         const page = await context.newPage();
@@ -324,7 +324,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
         await context.close();
       }
     });
-    it('should format date', async({browser, server}) => {
+    it.fail(FFOX)('should format date', async({browser, server}) => {
       {
         const context = await browser.newContext({ locale: 'en-US', timezoneId: 'America/Los_Angeles' });
         const page = await context.newPage();
@@ -341,6 +341,20 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
             'Sat Nov 19 2016 19:12:34 GMT+0100 (Mitteleuropäische Normalzeit)');
         await context.close();
       }
+    });
+    it.fail(CHROMIUM || FFOX)('should apply to popups', async({browser, server}) => {
+      const context = await browser.newContext({ locale: 'fr-CH' });
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.evaluate(url => window._popup = window.open(url), server.PREFIX + '/formatted-number.html'),
+      ]);
+      await popup.waitForLoadState({ waitUntil: 'domcontentloaded' });
+      const result = await popup.evaluate(() => window.result);
+      expect(result).toBe('1 000 000,5');
+      await context.close();
     });
   });
 

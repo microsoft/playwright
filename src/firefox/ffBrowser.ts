@@ -170,8 +170,8 @@ export class FFBrowserContext extends BrowserContextBase {
   async _initialize() {
     if (this._options.permissions)
       await this.grantPermissions(this._options.permissions);
-    if (this._options.extraHTTPHeaders)
-      await this.setExtraHTTPHeaders(this._options.extraHTTPHeaders);
+    if (this._options.extraHTTPHeaders || this._options.locale)
+      await this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || {});
     if (this._options.offline)
       await this.setOffline(this._options.offline);
     if (this._options.httpCredentials)
@@ -257,7 +257,10 @@ export class FFBrowserContext extends BrowserContextBase {
 
   async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
     this._options.extraHTTPHeaders = network.verifyHeaders(headers);
-    await this._browser._connection.send('Browser.setExtraHTTPHeaders', { browserContextId: this._browserContextId || undefined, headers: headersArray(this._options.extraHTTPHeaders) });
+    const allHeaders = { ...this._options.extraHTTPHeaders };
+    if (this._options.locale)
+      allHeaders['Accept-Language'] = this._options.locale;
+    await this._browser._connection.send('Browser.setExtraHTTPHeaders', { browserContextId: this._browserContextId || undefined, headers: headersArray(allHeaders) });
   }
 
   async setOffline(offline: boolean): Promise<void> {
