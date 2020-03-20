@@ -17,9 +17,11 @@
 
  // This file is only run when someone installs via the github repo
 
+const {execSync} = require('child_process');
+
 try {
   console.log('Building playwright...');
-  require('child_process').execSync('npm run build', {
+  execSync('npm run build', {
     stdio: 'ignore'
   });
 } catch (e) {
@@ -85,8 +87,13 @@ const DOWNLOAD_PATHS = {
   directories.add(path.join(__dirname, '.local-webkit'));
   await Promise.all([...directories].map(directory => rmAsync(directory)));
 
+  try {
+    console.log('Generating types...');
+    execSync('npm run generate-types');
+  } catch (e) {
+  }
+
   async function readdirAsync(dirpath) {
     return fs.promises.readdir(dirpath).then(dirs => dirs.map(dir => path.join(dirpath, dir)));
   }
 })();
-

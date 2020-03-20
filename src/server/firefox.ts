@@ -32,7 +32,7 @@ import { launchProcess, waitForLine } from './processLauncher';
 
 const mkdtempAsync = platform.promisify(fs.mkdtemp);
 
-export class Firefox implements BrowserType {
+export class Firefox implements BrowserType<FFBrowser> {
   private _executablePath: (string|undefined);
 
   executablePath(): string {

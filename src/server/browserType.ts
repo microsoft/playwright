@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Browser, ConnectOptions } from '../browser';
+import { ConnectOptions } from '../browser';
 import { BrowserContext } from '../browserContext';
 import { BrowserServer } from './browserServer';
 
@@ -39,7 +39,7 @@ export type LaunchOptions = BrowserArgOptions & {
   env?: {[key: string]: string} | undefined
 };
 
-export interface BrowserType {
+export interface BrowserType<Browser> {
   executablePath(): string;
   name(): string;
   launch(options?: LaunchOptions & { slowMo?: number }): Promise<Browser>;

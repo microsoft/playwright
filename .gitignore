@@ -21,3 +21,4 @@ lib/
 playwright-*.tgz
 /web.js
 /web.js.map
+/types/*
