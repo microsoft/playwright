@@ -126,6 +126,19 @@ index cc849f051fa40518a9d1a03429bc2b4dbcfb3102..11b05346f6098fa23f51ba9abc1af0e0
      ASSERT_UNUSED(castSucceeded, castSucceeded);
  
      return BindingTraits<Protocol::Runtime::RemoteObject>::runtimeCast(resultObject);
+diff --git a/Source/JavaScriptCore/inspector/InjectedScriptSource.js b/Source/JavaScriptCore/inspector/InjectedScriptSource.js
+index cd593a24af4fe24ba59577b73b26947765edcc32..1f7a04d72065dbd60761c1a72f3254f953d3b9a9 100644
+--- a/Source/JavaScriptCore/inspector/InjectedScriptSource.js
++++ b/Source/JavaScriptCore/inspector/InjectedScriptSource.js
+@@ -136,7 +136,7 @@ let InjectedScript = class InjectedScript
+             return;
+         }
+ 
+-        if (!(promiseObject instanceof Promise)) {
++        if (InjectedScriptHost.internalConstructorName(promiseObject) !== 'Promise') {
+             callback("Object with given id is not a Promise");
+             return;
+         }
 diff --git a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp b/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
 index 038cb646d31706905deff8935040d63c0afd00f9..2fca7b043f15a8cce3819cc827912fb719a345db 100644
 --- a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
