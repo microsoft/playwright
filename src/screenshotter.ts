@@ -41,7 +41,7 @@ export class Screenshotter {
     let viewportSize = originalViewportSize;
     if (!viewportSize) {
       const context = await this._page.mainFrame()._utilityContext();
-      viewportSize = await context.evaluate(() => {
+      viewportSize = await context.evaluateInternal(() => {
         if (!document.body || !document.documentElement)
           return null;
         return {
@@ -57,7 +57,7 @@ export class Screenshotter {
 
   private async _fullPageSize(): Promise<types.Size> {
     const context = await this._page.mainFrame()._utilityContext();
-    const fullPageSize = await context.evaluate(() => {
+    const fullPageSize = await context.evaluateInternal(() => {
       if (!document.body || !document.documentElement)
         return null;
       return {
@@ -130,7 +130,7 @@ export class Screenshotter {
       }
 
       const context = await this._page.mainFrame()._utilityContext();
-      const scrollOffset = await context.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
+      const scrollOffset = await context.evaluateInternal(() => ({ x: window.scrollX, y: window.scrollY }));
       const documentRect = { ...boundingBox };
       documentRect.x += scrollOffset.x;
       documentRect.y += scrollOffset.y;

@@ -400,19 +400,19 @@ playwright.chromium.launch().then(async browser => {
   }, 5);
 
   const frame = page.mainFrame();
-  await frame.$eval('span', (element, x, y) => {
+  await frame.$eval('span', (element, [x, y]) => {
     const spanAssertion: AssertType<HTMLSpanElement, typeof element> = true;
     const numberAssertion: AssertType<number, typeof x> = true;
     const stringAssertion: AssertType<string, typeof y> = true;
-  }, 5, 'asdf');
+  }, [5, 'asdf']);
   await frame.$eval('my-custom-element', element => {
     const elementAssertion: AssertType<HTMLElement|SVGElement, typeof element> = true;
   });
-  await frame.$$eval('my-custom-element', (elements, x, y) => {
+  await frame.$$eval('my-custom-element', (elements, {x, y}) => {
     const elementAssertion: AssertType<(HTMLElement|SVGElement)[], typeof elements> = true;
     const numberAssertion: AssertType<number, typeof x> = true;
     const stringAssertion: AssertType<string, typeof y> = true;
-  }, 5, await page.evaluateHandle(() => 'asdf'));
+  }, { x: 5, y: await page.evaluateHandle(() => 'asdf') });
   await frame.$$eval('input', (elements, x) => {
     const elementAssertion: AssertType<HTMLInputElement[], typeof elements> = true;
     const numberAssertion: AssertType<number, typeof x> = true;
@@ -420,19 +420,19 @@ playwright.chromium.launch().then(async browser => {
 
   const something = Math.random()  > .5 ? 'visible' : 'attached';
   const handle = await page.waitForSelector('a', {waitFor: something});
-  await handle.$eval('span', (element, x, y) => {
+  await handle.$eval('span', (element, { x, y }) => {
     const spanAssertion: AssertType<HTMLSpanElement, typeof element> = true;
     const numberAssertion: AssertType<number, typeof x> = true;
     const stringAssertion: AssertType<string, typeof y> = true;
-  }, 5, 'asdf');
+  }, { x: 5, y: 'asdf' });
   await handle.$eval('my-custom-element', element => {
     const elementAssertion: AssertType<HTMLElement|SVGElement, typeof element> = true;
   });
-  await handle.$$eval('my-custom-element', (elements, x, y) => {
+  await handle.$$eval('my-custom-element', (elements, [x, y]) => {
     const elementAssertion: AssertType<(HTMLElement|SVGElement)[], typeof elements> = true;
     const numberAssertion: AssertType<number, typeof x> = true;
     const stringAssertion: AssertType<string, typeof y> = true;
-  }, 5, await page.evaluateHandle(() => 'asdf'));
+  }, [5, await page.evaluateHandle(() => 'asdf')]);
   await handle.$$eval('input', (elements, x) => {
     const elementAssertion: AssertType<HTMLInputElement[], typeof elements> = true;
     const numberAssertion: AssertType<number, typeof x> = true;

@@ -41,7 +41,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
       state.page = await state.hostBrowser.newPage();
       state.page.on('console', message => console.log('TEST: ' + message.text()));
       await state.page.goto(state.sourceServer.PREFIX + '/test/assets/playwrightweb.html');
-      await state.page.evaluate((product, wsEndpoint) => setup(product, wsEndpoint), product.toLowerCase(), state.controlledBrowserApp.wsEndpoint());
+      await state.page.evaluate(([product, wsEndpoint]) => setup(product, wsEndpoint), [product.toLowerCase(), state.controlledBrowserApp.wsEndpoint()]);
     });
 
     afterEach(async state => {

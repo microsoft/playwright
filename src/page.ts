@@ -215,16 +215,22 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().waitForSelector(selector, options);
   }
 
-  evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
-    return this.mainFrame().evaluateHandle(pageFunction, ...args as any);
+  async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
+  async evaluateHandle<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<types.SmartHandle<R>>;
+  async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
+    return this.mainFrame().evaluateHandle(pageFunction, arg);
   }
 
-  $eval: types.$Eval = async  (selector, pageFunction, ...args) => {
-    return this.mainFrame().$eval(selector, pageFunction, ...args as any);
+  async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
+  async $eval<R>(selector: string, pageFunction: types.FuncOn<Element, void, R>, arg?: any): Promise<R>;
+  async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
+    return this.mainFrame().$eval(selector, pageFunction, arg);
   }
 
-  $$eval: types.$$Eval = async (selector, pageFunction, ...args) => {
-    return this.mainFrame().$$eval(selector, pageFunction, ...args as any);
+  async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
+  async $$eval<R>(selector: string, pageFunction: types.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
+  async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
+    return this.mainFrame().$$eval(selector, pageFunction, arg);
   }
 
   async $$(selector: string): Promise<dom.ElementHandle<Element>[]> {
@@ -361,12 +367,14 @@ export class Page extends platform.EventEmitter {
     return this._state.viewportSize;
   }
 
-  evaluate: types.Evaluate = async (pageFunction, ...args) => {
-    return this.mainFrame().evaluate(pageFunction, ...args as any);
+  async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R>;
+  async evaluate<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<R>;
+  async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R> {
+    return this.mainFrame().evaluate(pageFunction, arg);
   }
 
-  async addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]) {
-    await this._delegate.evaluateOnNewDocument(await helper.evaluationScript(script, args));
+  async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
+    await this._delegate.evaluateOnNewDocument(await helper.evaluationScript(script, arg));
   }
 
   _needsRequestInterception(): boolean {
@@ -462,12 +470,14 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().uncheck(selector, options);
   }
 
-  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options?: types.WaitForFunctionOptions & types.WaitForElementOptions, ...args: any[]): Promise<js.JSHandle | null> {
-    return this.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, ...args);
+  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options?: types.WaitForFunctionOptions & types.WaitForElementOptions, arg?: any): Promise<js.JSHandle | null> {
+    return this.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, arg);
   }
 
-  async waitForFunction(pageFunction: Function | string, options?: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
-    return this.mainFrame().waitForFunction(pageFunction, options, ...args);
+  async waitForFunction<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>>;
+  async waitForFunction<R>(pageFunction: types.Func1<void, R>, arg?: any, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>>;
+  async waitForFunction<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>> {
+    return this.mainFrame().waitForFunction(pageFunction, arg, options);
   }
 
   workers(): Worker[] {
@@ -533,12 +543,16 @@ export class Worker extends platform.EventEmitter {
     return this._url;
   }
 
-  evaluate: types.Evaluate = async (pageFunction, ...args) => {
-    return (await this._executionContextPromise).evaluate(pageFunction, ...args as any);
+  async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R>;
+  async evaluate<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<R>;
+  async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R> {
+    return (await this._executionContextPromise).evaluateInternal(pageFunction, arg);
   }
 
-  evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
-    return (await this._executionContextPromise).evaluateHandle(pageFunction, ...args as any);
+  async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
+  async evaluateHandle<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<types.SmartHandle<R>>;
+  async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
+    return (await this._executionContextPromise).evaluateHandleInternal(pageFunction, arg);
   }
 }
 
@@ -568,7 +582,7 @@ export class PageBinding {
       else
         expression = helper.evaluationString(deliverErrorValue, name, seq, error);
     }
-    context.evaluate(expression).catch(debugError);
+    context.evaluateInternal(expression).catch(debugError);
 
     function deliverResult(name: string, seq: number, result: any) {
       (window as any)[name]['callbacks'].get(seq).resolve(result);

@@ -77,12 +77,11 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
     });
     it('should work with function shorthands', async({page, server}) => {
       const a = {
-        sum(a, b) { return a + b; },
-
-        async mult(a, b) { return a * b; }
+        sum([a, b]) { return a + b; },
+        async mult([a, b]) { return a * b; }
       };
-      expect(await page.evaluate(a.sum, 1, 2)).toBe(3);
-      expect(await page.evaluate(a.mult, 2, 4)).toBe(8);
+      expect(await page.evaluate(a.sum, [1, 2])).toBe(3);
+      expect(await page.evaluate(a.mult, [2, 4])).toBe(8);
     });
     it('should work with unicode chars', async({page, server}) => {
       const result = await page.evaluate(a => a['中文字符'], {'中文字符': 42});
@@ -120,7 +119,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
     it('should work from-inside an exposed function', async({page, server}) => {
       // Setup inpage callback, which calls Page.evaluate
       await page.exposeFunction('callController', async function(a, b) {
-        return await page.evaluate((a, b) => a * b, a, b);
+        return await page.evaluate(({ a, b }) => a * b, { a, b });
       });
       const result = await page.evaluate(async function() {
         return await callController(9, 3);
@@ -168,7 +167,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       expect(Object.is(result, -Infinity)).toBe(true);
     });
     it('should accept "undefined" as one of multiple parameters', async({page, server}) => {
-      const result = await page.evaluate((a, b) => Object.is(a, undefined) && Object.is(b, 'foo'), undefined, 'foo');
+      const result = await page.evaluate(({ a, b }) => Object.is(a, undefined) && Object.is(b, 'foo'), { a: undefined, b: 'foo' });
       expect(result).toBe(true);
     });
     it('should properly serialize undefined arguments', async({page}) => {
@@ -440,8 +439,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
       const frame = page.frames()[1];
       const context = await frame._utilityContext();
-      const elementHandle = await context.evaluateHandle(() => window.top.document.querySelector('#frame1'));
-      const constructorName = await context.evaluate(node => node.constructor.name, elementHandle);
+      const elementHandle = await context.evaluateHandleInternal(() => window.top.document.querySelector('#frame1'));
+      const constructorName = await context.evaluateInternal(node => node.constructor.name, elementHandle);
       expect(constructorName).toBe('HTMLIFrameElement');
     });
   });

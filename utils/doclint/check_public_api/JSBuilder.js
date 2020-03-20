@@ -212,7 +212,7 @@ function checkSources(sources, externalDependencies) {
    * @return {!Documentation.Type}
    */
   function serializeType(type, circular = []) {
-    let typeName = checker.typeToString(type);
+    let typeName = checker.typeToString(type).replace(/SmartHandle/g, 'Handle');
     if (typeName === 'any' || typeName === '{ [x: string]: string; }')
       typeName = 'Object';
     const nextCircular = [typeName].concat(circular);

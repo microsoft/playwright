@@ -100,12 +100,12 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
           return false;
         }
         return Date.now() - window.__startTime;
-      }, {polling});
+      }, {}, {polling});
       expect(timeDelta).not.toBeLessThan(polling);
     });
     it('should poll on mutation', async({page, server}) => {
       let success = false;
-      const watchdog = page.waitForFunction(() => window.__FOO === 'hit', {polling: 'mutation'})
+      const watchdog = page.waitForFunction(() => window.__FOO === 'hit', {}, {polling: 'mutation'})
           .then(() => success = true);
       await page.evaluate(() => window.__FOO = 'hit');
       expect(success).toBe(false);
@@ -113,7 +113,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await watchdog;
     });
     it('should poll on raf', async({page, server}) => {
-      const watchdog = page.waitForFunction(() => window.__FOO === 'hit', {polling: 'raf'});
+      const watchdog = page.waitForFunction(() => window.__FOO === 'hit', {}, {polling: 'raf'});
       await page.evaluate(() => window.__FOO = 'hit');
       await watchdog;
     });
@@ -122,7 +122,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await page.goto(server.EMPTY_PAGE);
       let error = null;
       await Promise.all([
-        page.waitForFunction(() => window.__FOO === 'hit', {polling: 'raf'}).catch(e => error = e),
+        page.waitForFunction(() => window.__FOO === 'hit', {}, {polling: 'raf'}).catch(e => error = e),
         page.evaluate(() => window.__FOO = 'hit')
       ]);
       expect(error).toBe(null);
@@ -130,7 +130,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
     it('should throw on bad polling value', async({page, server}) => {
       let error = null;
       try {
-        await page.waitForFunction(() => !!document.body, {polling: 'unknown'});
+        await page.waitForFunction(() => !!document.body, {}, {polling: 'unknown'});
       } catch (e) {
         error = e;
       }
@@ -140,7 +140,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
     it('should throw negative polling interval', async({page, server}) => {
       let error = null;
       try {
-        await page.waitForFunction(() => !!document.body, {polling: -10});
+        await page.waitForFunction(() => !!document.body, {}, {polling: -10});
       } catch (e) {
         error = e;
       }
@@ -157,14 +157,14 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await page.setContent('<div></div>');
       const div = await page.$('div');
       let resolved = false;
-      const waitForFunction = page.waitForFunction(element => !element.parentElement, {}, div).then(() => resolved = true);
+      const waitForFunction = page.waitForFunction(element => !element.parentElement, div).then(() => resolved = true);
       expect(resolved).toBe(false);
       await page.evaluate(element => element.remove(), div);
       await waitForFunction;
     });
     it('should respect timeout', async({page}) => {
       let error = null;
-      await page.waitForFunction('false', {timeout: 10}).catch(e => error = e);
+      await page.waitForFunction('false', {}, {timeout: 10}).catch(e => error = e);
       expect(error).toBeTruthy();
       expect(error.message).toContain('waiting for function failed: timeout');
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
@@ -180,7 +180,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       const watchdog = page.waitForFunction(() => {
         window.__counter = (window.__counter || 0) + 1;
         return window.__injected;
-      }, {timeout: 0, polling: 10});
+      }, {}, {timeout: 0, polling: 10});
       await page.waitForFunction(() => window.__counter > 10);
       await page.evaluate(() => window.__injected = true);
       await watchdog;

@@ -16,23 +16,19 @@
 
 import * as js from './javascript';
 import * as dom from './dom';
-import Injected from './injected/injected';
 
-type BoxedArg<Arg> = js.JSHandle<Arg> | (Arg extends object ? { [Key in keyof Arg]: BoxedArg<Arg[Key]> } : Arg);
-type Boxed<Args extends any[]> = { [Index in keyof Args]: BoxedArg<Args[Index]> };
-type PageFunction<Args extends any[], R = any> = string | ((...args: Args) => R | Promise<R>);
-type PageFunctionOn<On, Args extends any[], R = any> = string | ((on: On, ...args: Args) => R | Promise<R>);
-type PageFunctionWithInjected<On, Args extends any[], R = any> = string | ((injected: Injected, on: On, ...args: Args) => R | Promise<R>);
-
-type Handle<T> = T extends Node ? dom.ElementHandle<T> : js.JSHandle<T>;
-
-export type Evaluate = <Args extends any[], R>(pageFunction: PageFunction<Args, R>, ...args: Boxed<Args>) => Promise<R>;
-export type EvaluateHandle = <Args extends any[], R>(pageFunction: PageFunction<Args,  R>, ...args: Boxed<Args>) => Promise<Handle<R>>;
-export type $Eval = <Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<Element, Args, R>, ...args: Boxed<Args>) => Promise<R>;
-export type $$Eval = <Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<Element[], Args, R>, ...args: Boxed<Args>) => Promise<R>;
-export type EvaluateOn<T> = <Args extends any[], R>(pageFunction: PageFunctionOn<T, Args, R>, ...args: Boxed<Args>) => Promise<R>;
-export type EvaluateHandleOn<T> = <Args extends any[], R>(pageFunction: PageFunctionOn<T, Args, R>, ...args: Boxed<Args>) => Promise<Handle<R>>;
-export type EvaluateWithInjected<T> = <Args extends any[], R>(pageFunction: PageFunctionWithInjected<T, Args, R>, ...args: Boxed<Args>) => Promise<R>;
+type NoHandles<Arg> = Arg extends js.JSHandle ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg);
+type Unboxed<Arg> =
+  Arg extends dom.ElementHandle<infer T> ? T :
+  Arg extends js.JSHandle<infer T> ? T :
+  Arg extends NoHandles<Arg> ? Arg :
+  Arg extends Array<infer T> ? Array<Unboxed<T>> :
+  Arg extends object ? { [Key in keyof Arg]: Unboxed<Arg[Key]> } :
+  Arg;
+export type Func0<R> = string | (() => R | Promise<R>);
+export type Func1<Arg, R> = string | ((arg: Unboxed<Arg>) => R | Promise<R>);
+export type FuncOn<On, Arg2, R> = string | ((on: On, arg2: Unboxed<Arg2>) => R | Promise<R>);
+export type SmartHandle<T> = T extends Node ? dom.ElementHandle<T> : js.JSHandle<T>;
 
 export type Size = { width: number, height: number };
 export type Point = { x: number, y: number };

@@ -15,7 +15,6 @@
  */
 
 import * as dom from './dom';
-import Injected from './injected/injected';
 import { helper } from './helper';
 
 let selectors: Selectors;
@@ -40,7 +39,7 @@ export class Selectors {
     // Note: keep in sync with Injected class, and also keep 'zs' for future.
     if (['css', 'xpath', 'text', 'id', 'zs', 'data-testid', 'data-test-id', 'data-test'].includes(name))
       throw new Error(`"${name}" is a predefined selector engine`);
-    const source = await helper.evaluationScript(script, [], false);
+    const source = await helper.evaluationScript(script, undefined, false);
     if (this._engines.has(name))
       throw new Error(`"${name}" selector engine has been already registered`);
     this._engines.set(name, source);
@@ -49,8 +48,8 @@ export class Selectors {
 
   async _createSelector(name: string, handle: dom.ElementHandle<Element>): Promise<string | undefined> {
     const mainContext = await handle._page.mainFrame()._mainContext();
-    return mainContext.evaluate((injected: Injected, target: Element, name: string) => {
+    return mainContext.evaluateInternal(({ injected, target, name }) => {
       return injected.engines.get(name)!.create(document.documentElement, target);
-    }, await mainContext._injected(), handle, name);
+    }, { injected: await mainContext._injected(), target: handle, name });
   }
 }

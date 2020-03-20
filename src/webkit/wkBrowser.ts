@@ -305,8 +305,8 @@ export class WKBrowserContext extends BrowserContextBase {
       await (page._delegate as WKPage).updateHttpCredentials();
   }
 
-  async addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]) {
-    const source = await helper.evaluationScript(script, args);
+  async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
+    const source = await helper.evaluationScript(script, arg);
     this._evaluateOnNewDocumentSources.push(source);
     for (const page of this.pages())
       await (page._delegate as WKPage)._updateBootstrapScript();
