@@ -537,10 +537,10 @@ index 0000000000000000000000000000000000000000..79edea03fed4e9be5da96e1275e182a4
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Emulation.json b/Source/JavaScriptCore/inspector/protocol/Emulation.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..552e5dd60fa53fada79f8d6e333f52bc10a2bead
+index 0000000000000000000000000000000000000000..3f28f8e41b39c517369c8ca69415486a75657489
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Emulation.json
-@@ -0,0 +1,39 @@
+@@ -0,0 +1,51 @@
 +{
 +    "domain": "Emulation",
 +    "availability": ["web"],
@@ -577,6 +577,18 @@ index 0000000000000000000000000000000000000000..552e5dd60fa53fada79f8d6e333f52bc
 +            "parameters": [
 +                { "name": "active", "type": "boolean", "optional": true }
 +            ]
++        },
++        {
++            "name": "grantPermissions",
++            "parameters": [
++                { "name": "origin", "type": "string" },
++                { "name": "permissions", "type": "array", "items": { "type": "string" } }
++            ],
++            "description": "Overrides the permissions."
++        },
++        {
++            "name": "resetPermissions",
++            "description": "Clears permission overrides."
 +        }
 +    ]
 +}
@@ -1048,10 +1060,10 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..6aa07fd2ee4e0dff43b151d1cee7497f
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Playwright.json b/Source/JavaScriptCore/inspector/protocol/Playwright.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..cb021782b238f318f4b09c6f99699a8e184c1d75
+index 0000000000000000000000000000000000000000..f57b7187ed65ae84b9a1cff7918dad074bb57a4f
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Playwright.json
-@@ -0,0 +1,220 @@
+@@ -0,0 +1,204 @@
 +{
 +    "domain": "Playwright",
 +    "availability": ["web"],
@@ -1213,22 +1225,6 @@ index 0000000000000000000000000000000000000000..cb021782b238f318f4b09c6f99699a8e
 +                { "name": "geolocation", "$ref": "Geolocation", "optional": true, "description": "Geolocation to set, if missing emulates position unavailable." }
 +            ],
 +            "description": "Overrides the geolocation position or error."
-+        },
-+        {
-+            "name": "grantPermissions",
-+            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." },
-+                { "name": "origin", "type": "string" },
-+                { "name": "permissions", "type": "array", "items": { "type": "string" } }
-+            ],
-+            "description": "Overrides the permissions."
-+        },
-+        {
-+            "name": "resetPermissions",
-+            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
-+            ],
-+            "description": "Clears permission overrides."
 +        },
 +        {
 +            "name": "setLanguages",
@@ -8382,10 +8378,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..66bf9c54ac5e882c5c725389ea19584438a94446
+index 0000000000000000000000000000000000000000..a73982f6999b28e452896ad4ebd9f449b79f8385
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,634 @@
+@@ -0,0 +1,597 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -8707,7 +8703,6 @@ index 0000000000000000000000000000000000000000..66bf9c54ac5e882c5c725389ea195844
 +    RefPtr<WebPageProxy> page = m_client->createPage(errorString, browserContext);
 +    if (!page)
 +        return;
-+    page->setPermissionsForAutomation(m_permissions.get(browserContextID ? *browserContextID : ""));
 +    *pageProxyID = toPageProxyIDProtocolString(*page);
 +}
 +
@@ -8901,42 +8896,6 @@ index 0000000000000000000000000000000000000000..66bf9c54ac5e882c5c725389ea195844
 +        }, 0);
 +}
 +
-+void InspectorPlaywrightAgent::grantPermissions(Inspector::ErrorString& errorString, const String* browserContextID, const String& origin, const JSON::Array& values)
-+{
-+    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
-+    if (!errorString.isEmpty())
-+        return;
-+    HashSet<String> set;
-+    for (const auto& value : values) {
-+        String name;
-+        if (!value->asString(name)) {
-+            errorString = "Permission must be a string"_s;
-+            return;
-+        }
-+        set.add(name);
-+    }
-+    String key = browserContextID ? *browserContextID : "";
-+    auto it = m_permissions.add(key, Permissions()).iterator;
-+    it->value.set(origin, WTFMove(set));
-+    Vector<WebPageProxy*> pages;
-+    for (auto& process : browserContext.processPool->processes()) {
-+        for (auto* page : process->pages())
-+            page->setPermissionsForAutomation(it->value);
-+    }
-+}
-+
-+void InspectorPlaywrightAgent::resetPermissions(Inspector::ErrorString& errorString, const String* browserContextID)
-+{
-+    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
-+    if (!errorString.isEmpty())
-+        return;
-+    m_permissions.clear();
-+    for (auto& process : browserContext.processPool->processes()) {
-+        for (auto* page : process->pages())
-+            page->setPermissionsForAutomation(HashMap<String, HashSet<String>>());
-+    }
-+}
-+
 +void InspectorPlaywrightAgent::setLanguages(Inspector::ErrorString& errorString, const JSON::Array& languages, const String* browserContextID)
 +{
 +    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
@@ -9022,10 +8981,10 @@ index 0000000000000000000000000000000000000000..66bf9c54ac5e882c5c725389ea195844
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..2b5518c9f7b054746a98552c24c8752eb7acb10b
+index 0000000000000000000000000000000000000000..cc30c0bed90910351e0fd29f2577b8030bd0597e
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
-@@ -0,0 +1,122 @@
+@@ -0,0 +1,118 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -9121,8 +9080,6 @@ index 0000000000000000000000000000000000000000..2b5518c9f7b054746a98552c24c8752e
 +    void setCookies(const String* browserContextID, const JSON::Array& in_cookies, Ref<SetCookiesCallback>&&) override;
 +    void deleteAllCookies(const String* browserContextID, Ref<DeleteAllCookiesCallback>&&) override;
 +
-+    void grantPermissions(Inspector::ErrorString&, const String* browserContextID, const String& origin, const JSON::Array& permissions) override;
-+    void resetPermissions(Inspector::ErrorString&, const String* browserContextID) override;
 +    void setGeolocationOverride(Inspector::ErrorString&, const String* browserContextID, const JSON::Object* geolocation) override;
 +    void setLanguages(Inspector::ErrorString&, const JSON::Array& languages, const String* browserContextID) override;
 +
@@ -9138,8 +9095,6 @@ index 0000000000000000000000000000000000000000..2b5518c9f7b054746a98552c24c8752e
 +    Ref<Inspector::PlaywrightBackendDispatcher> m_backendDispatcher;
 +    InspectorPlaywrightAgentClient* m_client;
 +    PageProxyIDMap& m_pageProxyIDMap;
-+    using Permissions = HashMap<String, HashSet<String>>;
-+    HashMap<String, Permissions> m_permissions;
 +    HashMap<String, BrowserContext> m_browserContexts;
 +    HashMap<PAL::SessionID, std::unique_ptr<BrowserContextDeletion>> m_browserContextDeletions;
 +    bool m_isConnected { false };
@@ -9564,10 +9519,10 @@ index 04f3227cd55c992a42cd96a3f25d697aed7965a2..f0d36935f47bab03ea2ec50b70509206
  
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..c863bd49011debe4b06cab64c113810809633777
+index 0000000000000000000000000000000000000000..3983c25682b06bbbf9ae9fde95b5b9c349ae6abe
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
-@@ -0,0 +1,124 @@
+@@ -0,0 +1,145 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -9684,6 +9639,27 @@ index 0000000000000000000000000000000000000000..c863bd49011debe4b06cab64c1138108
 +    m_page.setActiveForAutomation(value);
 +}
 +
++void WebPageInspectorEmulationAgent::grantPermissions(Inspector::ErrorString& errorString, const String& origin, const JSON::Array& values)
++{
++    HashSet<String> set;
++    for (const auto& value : values) {
++        String name;
++        if (!value->asString(name)) {
++            errorString = "Permission must be a string"_s;
++            return;
++        }
++        set.add(name);
++    }
++    m_permissions.set(origin, WTFMove(set));
++    m_page.setPermissionsForAutomation(m_permissions);
++}
++
++void WebPageInspectorEmulationAgent::resetPermissions(Inspector::ErrorString&)
++{
++    m_permissions.clear();
++    m_page.setPermissionsForAutomation(m_permissions);
++}
++
 +void WebPageInspectorEmulationAgent::didShowPage()
 +{
 +    for (auto& command : m_commandsToRunWhenShown)
@@ -9694,10 +9670,10 @@ index 0000000000000000000000000000000000000000..c863bd49011debe4b06cab64c1138108
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..61969d8e4598f624df03beb56fc67375b9386edf
+index 0000000000000000000000000000000000000000..5ae0ce152f06b8316dbfbbbb2efd1990a31687d0
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h
-@@ -0,0 +1,72 @@
+@@ -0,0 +1,75 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -9757,6 +9733,8 @@ index 0000000000000000000000000000000000000000..61969d8e4598f624df03beb56fc67375
 +    void setJavaScriptEnabled(Inspector::ErrorString&, bool enabled) override;
 +    void setAuthCredentials(Inspector::ErrorString&, const String*, const String*) override;
 +    void setActiveAndFocused(Inspector::ErrorString&, const bool*) override;
++    void grantPermissions(Inspector::ErrorString&, const String& origin, const JSON::Array& permissions) override;
++    void resetPermissions(Inspector::ErrorString&) override;
 +
 +    void didShowPage();
 +
@@ -9767,6 +9745,7 @@ index 0000000000000000000000000000000000000000..61969d8e4598f624df03beb56fc67375
 +    Ref<Inspector::EmulationBackendDispatcher> m_backendDispatcher;
 +    WebPageProxy& m_page;
 +    Vector<Function<void()>> m_commandsToRunWhenShown;
++    HashMap<String, HashSet<String>> m_permissions;
 +};
 +
 +} // namespace WebKit
