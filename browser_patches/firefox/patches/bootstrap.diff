@@ -138,10 +138,18 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 344bd4a9f524616b98c664d4fb2b2154927ea7c8..5badad7c28f518c5be27341d38f0658b7413e2fb 100644
+index 344bd4a9f524616b98c664d4fb2b2154927ea7c8..abcc9be78508a9788c3b4872a1eb344ddf2f9464 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
-@@ -96,6 +96,7 @@
+@@ -53,6 +53,7 @@
+ #include "mozilla/dom/ContentFrameMessageManager.h"
+ #include "mozilla/dom/DocGroup.h"
+ #include "mozilla/dom/Element.h"
++#include "mozilla/dom/Geolocation.h"
+ #include "mozilla/dom/HTMLAnchorElement.h"
+ #include "mozilla/dom/PerformanceNavigation.h"
+ #include "mozilla/dom/PermissionMessageUtils.h"
+@@ -96,6 +97,7 @@
  #include "nsIDocShellTreeItem.h"
  #include "nsIDocShellTreeOwner.h"
  #include "mozilla/dom/Document.h"
@@ -149,7 +157,7 @@ index 344bd4a9f524616b98c664d4fb2b2154927ea7c8..5badad7c28f518c5be27341d38f0658b
  #include "nsIDocumentLoaderFactory.h"
  #include "nsIDOMWindow.h"
  #include "nsIEditingSession.h"
-@@ -351,6 +352,8 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
+@@ -351,6 +353,8 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
        mUseStrictSecurityChecks(false),
        mObserveErrorPages(true),
        mCSSErrorReportingEnabled(false),
@@ -158,7 +166,7 @@ index 344bd4a9f524616b98c664d4fb2b2154927ea7c8..5badad7c28f518c5be27341d38f0658b
        mAllowAuth(mItemType == typeContent),
        mAllowKeywordFixup(false),
        mIsOffScreenBrowser(false),
-@@ -1223,6 +1226,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
+@@ -1223,6 +1227,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
      isSubFrame = mLSHE->GetIsSubFrame();
    }
  
@@ -166,7 +174,7 @@ index 344bd4a9f524616b98c664d4fb2b2154927ea7c8..5badad7c28f518c5be27341d38f0658b
    if (!isSubFrame && !isRoot) {
      /*
       * We don't want to send OnLocationChange notifications when
-@@ -3363,6 +3367,54 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
+@@ -3363,6 +3368,72 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
    return NS_OK;
  }
  
@@ -218,10 +226,28 @@ index 344bd4a9f524616b98c664d4fb2b2154927ea7c8..5badad7c28f518c5be27341d38f0658b
 +      ToSupports(element), "juggler-file-picker-shown", nullptr);
 +}
 +
++RefPtr<nsGeolocationService> nsDocShell::GetGeolocationOverrideService() {
++  return mGeolocationOverrideService;
++}
++
++NS_IMETHODIMP
++nsDocShell::SetGeolocationOverride(nsIDOMGeoPosition* aGeolocationOverride) {
++  if (aGeolocationOverride) {
++    if (!mGeolocationOverrideService) {
++      mGeolocationOverrideService = new nsGeolocationService();
++      mGeolocationOverrideService->Init();
++    }
++    mGeolocationOverrideService->Update(aGeolocationOverride);
++  } else {
++    mGeolocationOverrideService = nullptr;
++  }
++  return NS_OK;
++}
++
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
-@@ -12138,6 +12190,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12138,6 +12209,9 @@ class OnLinkClickEvent : public Runnable {
                                  mNoOpenerImplied, nullptr, nullptr,
                                  mIsUserTriggered, mTriggeringPrincipal, mCsp);
      }
@@ -231,7 +257,7 @@ index 344bd4a9f524616b98c664d4fb2b2154927ea7c8..5badad7c28f518c5be27341d38f0658b
      return NS_OK;
    }
  
-@@ -12227,6 +12282,9 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12227,6 +12301,9 @@ nsresult nsDocShell::OnLinkClick(
        this, aContent, aURI, target, aFileName, aPostDataStream,
        aHeadersDataStream, noOpenerImplied, aIsUserTriggered, aIsTrusted,
        aTriggeringPrincipal, aCsp);
@@ -242,10 +268,18 @@ index 344bd4a9f524616b98c664d4fb2b2154927ea7c8..5badad7c28f518c5be27341d38f0658b
  }
  
 diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
-index bd8327aae45f1d56acf0d5e61519c7cf469462f3..58749e9926da642911e5dd67603d5f9c44fa217a 100644
+index bd8327aae45f1d56acf0d5e61519c7cf469462f3..89cb1a417f129b75ee7e6ec322d121d579d25ef0 100644
 --- a/docshell/base/nsDocShell.h
 +++ b/docshell/base/nsDocShell.h
-@@ -25,6 +25,7 @@
+@@ -13,6 +13,7 @@
+ #include "Units.h"
+ #include "jsapi.h"
+ #include "mozilla/BasePrincipal.h"
++#include "mozilla/dom/Geolocation.h"
+ #include "mozilla/HalScreenConfiguration.h"
+ #include "mozilla/LinkedList.h"
+ #include "mozilla/Maybe.h"
+@@ -25,6 +26,7 @@
  #include "mozilla/UniquePtr.h"
  #include "mozilla/WeakPtr.h"
  #include "mozilla/dom/BrowsingContext.h"
@@ -253,7 +287,7 @@ index bd8327aae45f1d56acf0d5e61519c7cf469462f3..58749e9926da642911e5dd67603d5f9c
  #include "mozilla/dom/ChildSHistory.h"
  #include "mozilla/dom/ProfileTimelineMarkerBinding.h"
  #include "mozilla/dom/WindowProxyHolder.h"
-@@ -481,6 +482,11 @@ class nsDocShell final : public nsDocLoader,
+@@ -481,6 +483,13 @@ class nsDocShell final : public nsDocLoader,
      mSkipBrowsingContextDetachOnDestroy = true;
    }
  
@@ -262,10 +296,12 @@ index bd8327aae45f1d56acf0d5e61519c7cf469462f3..58749e9926da642911e5dd67603d5f9c
 +
 +  bool IsBypassCSPEnabled();
 +
++  RefPtr<nsGeolocationService> GetGeolocationOverrideService();
++
    // Create a content viewer within this nsDocShell for the given
    // `WindowGlobalChild` actor.
    nsresult CreateContentViewerForActor(
-@@ -1040,6 +1046,8 @@ class nsDocShell final : public nsDocLoader,
+@@ -1040,6 +1049,8 @@ class nsDocShell final : public nsDocLoader,
  
    bool CSSErrorReportingEnabled() const { return mCSSErrorReportingEnabled; }
  
@@ -274,20 +310,29 @@ index bd8327aae45f1d56acf0d5e61519c7cf469462f3..58749e9926da642911e5dd67603d5f9c
    // Handles retrieval of subframe session history for nsDocShell::LoadURI. If a
    // load is requested in a subframe of the current DocShell, the subframe
    // loadType may need to reflect the loadType of the parent document, or in
-@@ -1296,6 +1304,8 @@ class nsDocShell final : public nsDocLoader,
+@@ -1296,6 +1307,9 @@ class nsDocShell final : public nsDocLoader,
    bool mUseStrictSecurityChecks : 1;
    bool mObserveErrorPages : 1;
    bool mCSSErrorReportingEnabled : 1;
 +  bool mFileInputInterceptionEnabled: 1;
 +  bool mBypassCSPEnabled : 1;
++  RefPtr<nsGeolocationService> mGeolocationOverrideService;
    bool mAllowAuth : 1;
    bool mAllowKeywordFixup : 1;
    bool mIsOffScreenBrowser : 1;
 diff --git a/docshell/base/nsIDocShell.idl b/docshell/base/nsIDocShell.idl
-index db95b181388e8ab3c074b3b6e036dc971633e396..4cb6e5f5e4499bad0e9eaaee8a99cea55548671f 100644
+index db95b181388e8ab3c074b3b6e036dc971633e396..bd2ab50b8a5a6f6e3b9618061b752ea52caa239c 100644
 --- a/docshell/base/nsIDocShell.idl
 +++ b/docshell/base/nsIDocShell.idl
-@@ -1132,4 +1132,8 @@ interface nsIDocShell : nsIDocShellTreeItem
+@@ -44,6 +44,7 @@ interface nsIURI;
+ interface nsIChannel;
+ interface nsIContentViewer;
+ interface nsIContentSecurityPolicy;
++interface nsIDOMGeoPosition;
+ interface nsIDocShellLoadInfo;
+ interface nsIEditor;
+ interface nsIEditingSession;
+@@ -1132,4 +1133,10 @@ interface nsIDocShell : nsIDocShellTreeItem
     * @see nsISHEntry synchronizeLayoutHistoryState().
     */
    void synchronizeLayoutHistoryState();
@@ -295,6 +340,8 @@ index db95b181388e8ab3c074b3b6e036dc971633e396..4cb6e5f5e4499bad0e9eaaee8a99cea5
 +  attribute boolean fileInputInterceptionEnabled;
 +
 +  attribute boolean bypassCSPEnabled;
++
++  void setGeolocationOverride(in nsIDOMGeoPosition position);
  };
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
 index 394004780db4017d6ff1561febd4b379705c6302..941ef9f97a4851e785edaf25c0913a1cbd00d041 100644
@@ -322,6 +369,82 @@ index 394004780db4017d6ff1561febd4b379705c6302..941ef9f97a4851e785edaf25c0913a1c
    // If this is a data document - no need to set CSP.
    if (mLoadedAsData) {
      return NS_OK;
+diff --git a/dom/geolocation/Geolocation.cpp b/dom/geolocation/Geolocation.cpp
+index f2bb0d880f179bb37e915fe5b32692ac4307ecf7..835c8f9098ffe4f63aeac0286faa33ade21f9a0f 100644
+--- a/dom/geolocation/Geolocation.cpp
++++ b/dom/geolocation/Geolocation.cpp
+@@ -294,10 +294,8 @@ nsGeolocationRequest::Allow(JS::HandleValue aChoices) {
+     return NS_OK;
+   }
+ 
+-  RefPtr<nsGeolocationService> gs =
+-      nsGeolocationService::GetGeolocationService();
+-
+-  bool canUseCache = false;
++  nsGeolocationService* gs = mLocator->GetGeolocationService();
++  bool canUseCache = gs != nsGeolocationService::sService.get();
+   CachedPositionAndAccuracy lastPosition = gs->GetCachedPosition();
+   if (lastPosition.position) {
+     DOMTimeStamp cachedPositionTime_ms;
+@@ -467,8 +465,7 @@ void nsGeolocationRequest::Shutdown() {
+   // If there are no other high accuracy requests, the geolocation service will
+   // notify the provider to switch to the default accuracy.
+   if (mOptions && mOptions->mEnableHighAccuracy) {
+-    RefPtr<nsGeolocationService> gs =
+-        nsGeolocationService::GetGeolocationService();
++    nsGeolocationService* gs = mLocator ? mLocator->GetGeolocationService() : nullptr;
+     if (gs) {
+       gs->UpdateAccuracy();
+     }
+@@ -745,8 +742,14 @@ void nsGeolocationService::StopDevice() {
+ StaticRefPtr<nsGeolocationService> nsGeolocationService::sService;
+ 
+ already_AddRefed<nsGeolocationService>
+-nsGeolocationService::GetGeolocationService() {
++nsGeolocationService::GetGeolocationService(nsDocShell* docShell) {
+   RefPtr<nsGeolocationService> result;
++  if (docShell) {
++    result = docShell->GetGeolocationOverrideService();
++    if (result)
++      return result.forget();
++  }
++
+   if (nsGeolocationService::sService) {
+     result = nsGeolocationService::sService;
+ 
+@@ -838,7 +841,9 @@ nsresult Geolocation::Init(nsPIDOMWindowInner* aContentDom) {
+   // If no aContentDom was passed into us, we are being used
+   // by chrome/c++ and have no mOwner, no mPrincipal, and no need
+   // to prompt.
+-  mService = nsGeolocationService::GetGeolocationService();
++  nsCOMPtr<Document> doc = aContentDom ? aContentDom->GetDoc() : nullptr;
++  mService = nsGeolocationService::GetGeolocationService(
++      doc ? static_cast<nsDocShell*>(doc->GetDocShell()) : nullptr);
+   if (mService) {
+     mService->AddLocator(this);
+   }
+diff --git a/dom/geolocation/Geolocation.h b/dom/geolocation/Geolocation.h
+index d92bd1c738016f93c66dbdc449c70937c37b6f9a..a4c1f0ca974470342cb8136705d78cfc00e35083 100644
+--- a/dom/geolocation/Geolocation.h
++++ b/dom/geolocation/Geolocation.h
+@@ -57,7 +57,7 @@ struct CachedPositionAndAccuracy {
+ class nsGeolocationService final : public nsIGeolocationUpdate,
+                                    public nsIObserver {
+  public:
+-  static already_AddRefed<nsGeolocationService> GetGeolocationService();
++  static already_AddRefed<nsGeolocationService> GetGeolocationService(nsDocShell* docShell = nullptr);
+   static mozilla::StaticRefPtr<nsGeolocationService> sService;
+ 
+   NS_DECL_THREADSAFE_ISUPPORTS
+@@ -182,6 +182,8 @@ class Geolocation final : public nsIGeolocationUpdate, public nsWrapperCache {
+   // null.
+   static already_AddRefed<Geolocation> NonWindowSingleton();
+ 
++  nsGeolocationService* GetGeolocationService() { return mService; };
++
+  private:
+   ~Geolocation();
+ 
 diff --git a/dom/html/HTMLInputElement.cpp b/dom/html/HTMLInputElement.cpp
 index f495214f53e6568af33fa1350bde798e5f390bfc..9b09feb9425f9bccab583fb1e724aca991822a08 100644
 --- a/dom/html/HTMLInputElement.cpp
@@ -2487,10 +2610,10 @@ index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c3
 +
 diff --git a/juggler/content/PageAgent.js b/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..3cafc06be2262a79e8459eb9afc03d424bc01303
+index 0000000000000000000000000000000000000000..2fbf254062eef50c2298916120f83a8000a5388d
 --- /dev/null
 +++ b/juggler/content/PageAgent.js
-@@ -0,0 +1,919 @@
+@@ -0,0 +1,940 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -2666,6 +2789,7 @@ index 0000000000000000000000000000000000000000..3cafc06be2262a79e8459eb9afc03d42
 +        setEmulatedMedia: this._setEmulatedMedia.bind(this),
 +        setFileInputFiles: this._setFileInputFiles.bind(this),
 +        setInterceptFileChooserDialog: this._setInterceptFileChooserDialog.bind(this),
++        setGeolocationOverride: this._setGeolocationOverride.bind(this),
 +      }),
 +    ];
 +    this._enabled = false;
@@ -2806,6 +2930,26 @@ index 0000000000000000000000000000000000000000..3cafc06be2262a79e8459eb9afc03d42
 +
 +  _setInterceptFileChooserDialog({enabled}) {
 +    this._docShell.fileInputInterceptionEnabled = !!enabled;
++  }
++
++  _setGeolocationOverride({ latitude, longitude, accuracy }) {
++    if (latitude !== undefined && longitude !== undefined) {
++      this._docShell.setGeolocationOverride({
++        coords: {
++          latitude,
++          longitude,
++          accuracy,
++          altitude: NaN,
++          altitudeAccuracy: NaN,
++          heading: NaN,
++          speed: NaN,
++        },
++        address: null,
++        timestamp: Date.now()
++      });
++    } else {
++      this._docShell.setGeolocationOverride(null);
++    }
 +  }
 +
 +  _linkClicked(sync, anchorElement) {
@@ -4933,10 +5077,10 @@ index 0000000000000000000000000000000000000000..e1f1e21a20768d707a92ffffc8a7c114
 +this.NetworkHandler = NetworkHandler;
 diff --git a/juggler/protocol/PageHandler.js b/juggler/protocol/PageHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..11f9567d816304906df6b6192b3fb71e6c9d53dc
+index 0000000000000000000000000000000000000000..e0b9ee6f25dc94d7c049fc40a61a1b7e70fa38c2
 --- /dev/null
 +++ b/juggler/protocol/PageHandler.js
-@@ -0,0 +1,348 @@
+@@ -0,0 +1,353 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -5226,6 +5370,11 @@ index 0000000000000000000000000000000000000000..11f9567d816304906df6b6192b3fb71e
 +      throw new Error('ERROR: cannot find worker with id ' + workerId);
 +    return await worker.sendMessage(JSON.parse(message));
 +  }
++
++  async setGeolocationOverride(options) {
++    return await this._contentPage.send('setGeolocationOverride', options);
++  }
++
 +}
 +
 +class Dialog {
@@ -5436,10 +5585,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/juggler/protocol/Protocol.js b/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..9b636b045df0737039d94b5a6efc8c4f004eb58a
+index 0000000000000000000000000000000000000000..c915c4b2c1dde6941c9fcf424b0a6de36dea0088
 --- /dev/null
 +++ b/juggler/protocol/Protocol.js
-@@ -0,0 +1,745 @@
+@@ -0,0 +1,752 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -6160,6 +6309,13 @@ index 0000000000000000000000000000000000000000..9b636b045df0737039d94b5a6efc8c4f
 +        message: t.String,
 +      },
 +    },
++    'setGeolocationOverride': {
++      params: {
++        latitude: t.Optional(t.Number),
++        longitude: t.Optional(t.Number),
++        accuracy: t.Optional(t.Number)
++      }
++    }
 +  },
 +};
 +
