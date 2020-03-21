@@ -56,6 +56,10 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       const result = await page.evaluate(a => Array.isArray(a), [1, 2, 3]);
       expect(result).toBe(true);
     });
+    it('should transfer maps as empty objects', async({page, server}) => {
+      const result = await page.evaluate(a => a.x.constructor.name + ' ' + JSON.stringify(a.x), {x: new Map([[1, 2]])});
+      expect(result).toBe('Object {}');
+    });
     it('should modify global environment', async({page}) => {
       await page.evaluate(() => window.globalVar = 123);
       expect(await page.evaluate('globalVar')).toBe(123);
