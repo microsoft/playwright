@@ -22,3 +22,4 @@ playwright-*.tgz
 /web.js
 /web.js.map
 /types/*
+.local-browsers
