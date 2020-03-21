@@ -843,14 +843,18 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       await popup.waitForLoadState();
       expect(popup.url()).toBe(server.EMPTY_PAGE);
     });
-    it.fail(FFOX)('should wait for load state of empty url popup', async({browser, page}) => {
-      const [popup] = await Promise.all([
+    it('should wait for load state of empty url popup', async({browser, page}) => {
+      const [popup, readyState] = await Promise.all([
         page.waitForEvent('popup'),
-        page.evaluate(() => window.open('') && 1),
+        page.evaluate(() => {
+          const popup = window.open('');
+          return popup.document.readyState;
+        }),
       ]);
       await popup.waitForLoadState({ waitUntil: 'load' });
-      expect(await popup.evaluate(() => document.readyState)).toBe('complete');
-    });    
+      expect(readyState).toBe(FFOX ? 'uninitialized' : 'complete');
+      expect(await popup.evaluate(() => document.readyState)).toBe(FFOX ? 'uninitialized' : 'complete');
+    });
     it('should wait for load state of about:blank popup ', async({browser, page}) => {
       const [popup] = await Promise.all([
         page.waitForEvent('popup'),
@@ -868,7 +872,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       expect(await popup.evaluate(() => document.readyState)).toBe('complete');
     });
     it('should wait for load state of popup with network url ', async({browser, page, server}) => {
-      await page.goto(server.EMPTY_PAGE);      
+      await page.goto(server.EMPTY_PAGE);
       const [popup] = await Promise.all([
         page.waitForEvent('popup'),
         page.evaluate(url => window.open(url) && 1, server.EMPTY_PAGE),
@@ -877,7 +881,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       expect(await popup.evaluate(() => document.readyState)).toBe('complete');
     });
     it('should wait for load state of popup with network url and noopener ', async({browser, page, server}) => {
-      await page.goto(server.EMPTY_PAGE);      
+      await page.goto(server.EMPTY_PAGE);
       const [popup] = await Promise.all([
         page.waitForEvent('popup'),
         page.evaluate(url => window.open(url, null, 'noopener') && 1, server.EMPTY_PAGE),

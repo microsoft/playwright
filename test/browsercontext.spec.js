@@ -480,7 +480,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
   });
 
   describe('Events.BrowserContext.Page', function() {
-    it.fail(FFOX)('should have url', async({browser, server}) => {
+    it('should have url', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       const [otherPage] = await Promise.all([
@@ -512,7 +512,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(otherPage.url()).toBe('about:blank');
       await context.close();
     });
-    it.fail(FFOX)('should have about:blank for empty url with domcontentloaded', async({browser, server}) => {
+    it('should have about:blank for empty url with domcontentloaded', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       const [otherPage] = await Promise.all([
@@ -523,7 +523,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(otherPage.url()).toBe('about:blank');
       await context.close();
     });
-    it.fail(FFOX)('should report when a new page is created and closed', async({browser, server}) => {
+    it('should report when a new page is created and closed', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       const [otherPage] = await Promise.all([
@@ -582,7 +582,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       // Cleanup.
       await context.close();
     });
-    it.fail(FFOX)('should have an opener', async({browser, server}) => {
+    it('should have an opener', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
