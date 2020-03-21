@@ -6,7 +6,7 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 cd "checkout"
 
-OBJ_FOLDER=$(ls -1 | grep obj- || true)
+OBJ_FOLDER="obj-build-playwright"
 if [[ -d $OBJ_FOLDER ]]; then
   rm -rf $OBJ_FOLDER
 fi
