@@ -16,7 +16,7 @@
  */
 
 import { Browser, createPageInNewContext } from '../browser';
-import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, BrowserContextOptions, validateBrowserContextOptions } from '../browserContext';
+import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, BrowserContextOptions, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { Events } from '../events';
 import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
@@ -170,8 +170,6 @@ export class FFBrowserContext extends BrowserContextBase {
   async _initialize() {
     if (this._options.permissions)
       await this.grantPermissions(this._options.permissions);
-    if (this._options.geolocation)
-      await this.setGeolocation(this._options.geolocation);
     if (this._options.extraHTTPHeaders)
       await this.setExtraHTTPHeaders(this._options.extraHTTPHeaders);
     if (this._options.offline)
@@ -250,7 +248,11 @@ export class FFBrowserContext extends BrowserContextBase {
   }
 
   async setGeolocation(geolocation: types.Geolocation | null): Promise<void> {
-    throw new Error('Geolocation emulation is not supported in Firefox');
+    if (geolocation)
+      geolocation = verifyGeolocation(geolocation);
+    this._options.geolocation = geolocation || undefined;
+    for (const page of this.pages())
+      await (page._delegate as FFPage)._setGeolocation(geolocation);
   }
 
   async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
