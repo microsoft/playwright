@@ -276,7 +276,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       const result = await page.evaluate(() => ({abc: 123}));
       expect(result).toEqual({abc: 123});
     });
-    it.fail(WEBKIT)('should await promise from popup', async function({page, server}) {
+    it('should await promise from popup', async function({page, server}) {
       await page.goto(server.EMPTY_PAGE);
       const result = await page.evaluate(() => {
         const win = window.open('about:blank');
