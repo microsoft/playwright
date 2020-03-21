@@ -41,7 +41,7 @@ module.exports.describe = function({testRunner, expect, browserType, defaultBrow
       await removeUserDataDir(userDataDir);
     });
     // see https://github.com/microsoft/playwright/issues/717
-    it.fail((WIN && CHROMIUM) || FFOX)('headless should be able to read cookies written by headful', async({server}) => {
+    it.slow().fail((WIN && CHROMIUM) || FFOX)('headless should be able to read cookies written by headful', async({server}) => {
       const userDataDir = await makeUserDataDir();
       // Write a cookie in headful chrome
       const headfulContext = await browserType.launchPersistentContext(userDataDir, headfulOptions);

@@ -258,7 +258,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   });
 
   describe('browserType.connect', function() {
-    it('should be able to reconnect to a browser', async({server}) => {
+    it.slow()('should be able to reconnect to a browser', async({server}) => {
       const browserServer = await browserType.launchServer(defaultBrowserOptions);
       {
         const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
@@ -291,7 +291,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
       await removeUserDataDir(userDataDir);
     });
-    it.fail(FFOX)('userDataDir option should restore state', async({server}) => {
+    it.slow().fail(FFOX)('userDataDir option should restore state', async({server}) => {
       const userDataDir = await makeUserDataDir();
       const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
       const page = await browserContext.newPage();
@@ -317,7 +317,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await removeUserDataDir(userDataDir2);
     });
     // See https://github.com/microsoft/playwright/issues/717
-    it.fail(FFOX || (WIN && CHROMIUM))('userDataDir option should restore cookies', async({server}) => {
+    it.slow().fail(FFOX || (WIN && CHROMIUM))('userDataDir option should restore cookies', async({server}) => {
       const userDataDir = await makeUserDataDir();
       const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
       const page = await browserContext.newPage();
