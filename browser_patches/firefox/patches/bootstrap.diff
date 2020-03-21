@@ -2698,7 +2698,7 @@ index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c3
 +
 diff --git a/juggler/content/PageAgent.js b/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..17ddd1ac290baf820bd9aa1b6aaf629f6627dc65
+index 0000000000000000000000000000000000000000..fb207d8b39bee7c1365428a171f80c438097d2bb
 --- /dev/null
 +++ b/juggler/content/PageAgent.js
 @@ -0,0 +1,945 @@
@@ -3316,7 +3316,7 @@ index 0000000000000000000000000000000000000000..17ddd1ac290baf820bd9aa1b6aaf629f
 +    if (!unsafeObject.isConnected)
 +      throw new Error('Node is detached from document');
 +    await this._scrollNodeIntoViewIfNeeded(unsafeObject);
-+    const box = this._getBoundingBox(unsafeObject);
++    const box = this._getNodeBoundingBox(unsafeObject);
 +    if (rect) {
 +      box.x += rect.x;
 +      box.y += rect.y;
@@ -3350,7 +3350,7 @@ index 0000000000000000000000000000000000000000..17ddd1ac290baf820bd9aa1b6aaf629f
 +    // TODO: implement.
 +  }
 +
-+  _getBoundingBox(unsafeObject) {
++  _getNodeBoundingBox(unsafeObject) {
 +    if (!unsafeObject.getBoxQuads)
 +      throw new Error('RemoteObject is not a node');
 +    const quads = unsafeObject.getBoxQuads({relativeTo: this._frameTree.mainFrame().domWindow().document});
@@ -3375,7 +3375,7 @@ index 0000000000000000000000000000000000000000..17ddd1ac290baf820bd9aa1b6aaf629f
 +    if (!frame)
 +      throw new Error('Failed to find frame with id = ' + frameId);
 +    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
-+    const box = this._getBoundingBox(unsafeObject);
++    const box = this._getNodeBoundingBox(unsafeObject);
 +    if (!box)
 +      return {boundingBox: null};
 +    return {boundingBox: {x: box.x + frame.domWindow().scrollX, y: box.y + frame.domWindow().scrollY, width: box.width, height: box.height}};
