@@ -44,7 +44,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
   });
 
   describe('Browser.Events.disconnected', function() {
-    it('should be emitted when: browser gets closed, disconnected or underlying websocket gets closed', async () => {
+    it.slow()('should be emitted when: browser gets closed, disconnected or underlying websocket gets closed', async () => {
       const browserServer = await browserType.launchServer(defaultBrowserOptions);
       const originalBrowser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const wsEndpoint = browserServer.wsEndpoint();
