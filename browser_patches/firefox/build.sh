@@ -36,12 +36,14 @@ else
   exit 1;
 fi
 
+OBJ_FOLDER="obj-build-playwright"
+echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
+
 ./mach build
 
-OBJ_FOLDER=$(ls -1 | grep obj-)
 if [[ "$(uname)" == "Darwin" ]]; then
-  node ../install-preferences.js $PWD/$OBJ_FOLDER/dist
+  node ../install-preferences.js $PWD/${OBJ_FOLDER}/dist
 else
-  node ../install-preferences.js $PWD/$OBJ_FOLDER/dist/bin
+  node ../install-preferences.js $PWD/${OBJ_FOLDER}/dist/bin
 fi
 
