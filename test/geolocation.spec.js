@@ -119,6 +119,7 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
         page.waitForEvent('popup'),
         page.evaluate(url => window._popup = window.open(url), server.PREFIX + '/geolocation.html'),
       ]);
+      await popup.waitForLoadState();
       const geolocation = await popup.evaluate(() => window.geolocationPromise);
       expect(geolocation).toEqual({ longitude: 10, latitude: 10 });
     });

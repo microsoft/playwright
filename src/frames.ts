@@ -47,7 +47,6 @@ export class FrameManager {
   private _page: Page;
   private _frames = new Map<string, Frame>();
   private _mainFrame: Frame;
-  readonly _lifecycleWatchers = new Set<() => void>();
   readonly _consoleMessageTags = new Map<string, ConsoleTagHandler>();
   private _pendingNavigationBarriers = new Set<PendingNavigationBarrier>();
 
@@ -141,8 +140,8 @@ export class FrameManager {
     frame._url = url;
     frame._name = name;
     frame._lastDocumentId = documentId;
-    for (const watcher of frame._documentWatchers)
-      watcher(documentId);
+    for (const task of frame._frameTasks)
+      task.onNewDocument(documentId);
     this.clearFrameLifecycle(frame);
     if (!initial)
       this._page.emit(Events.Page.FrameNavigated, frame);
@@ -153,8 +152,8 @@ export class FrameManager {
     if (!frame)
       return;
     frame._url = url;
-    for (const watcher of frame._sameDocumentNavigationWatchers)
-      watcher();
+    for (const task of frame._frameTasks)
+      task.onSameDocument();
     this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
@@ -172,8 +171,7 @@ export class FrameManager {
     const hasLoad = frame._firedLifecycleEvents.has('load');
     frame._firedLifecycleEvents.add('domcontentloaded');
     frame._firedLifecycleEvents.add('load');
-    for (const watcher of this._lifecycleWatchers)
-      watcher();
+    this._notifyLifecycle(frame);
     if (frame === this.mainFrame() && !hasDOMContentLoaded)
       this._page.emit(Events.Page.DOMContentLoaded);
     if (frame === this.mainFrame() && !hasLoad)
@@ -185,8 +183,7 @@ export class FrameManager {
     if (!frame)
       return;
     frame._firedLifecycleEvents.add(event);
-    for (const watcher of this._lifecycleWatchers)
-      watcher();
+    this._notifyLifecycle(frame);
     if (frame === this._mainFrame && event === 'load')
       this._page.emit(Events.Page.Load);
     if (frame === this._mainFrame && event === 'domcontentloaded')
@@ -207,8 +204,8 @@ export class FrameManager {
 
   requestStarted(request: network.Request) {
     this._inflightRequestStarted(request);
-    for (const watcher of request.frame()._requestWatchers)
-      watcher(request);
+    for (const task of request.frame()._frameTasks)
+      task.onRequest(request);
     if (!request._isFavicon)
       this._page._requestStarted(request);
   }
@@ -232,8 +229,8 @@ export class FrameManager {
         let errorText = request.failure()!.errorText;
         if (canceled)
           errorText += '; maybe frame was detached?';
-        for (const watcher of request.frame()._documentWatchers)
-          watcher(request._documentId, new Error(errorText));
+        for (const task of request.frame()._frameTasks)
+          task.onNewDocument(request._documentId, new Error(errorText));
       }
     }
     if (!request._isFavicon)
@@ -241,8 +238,15 @@ export class FrameManager {
   }
 
   provisionalLoadFailed(frame: Frame, documentId: string, error: string) {
-    for (const watcher of frame._documentWatchers)
-      watcher(documentId, new Error(error));
+    for (const task of frame._frameTasks)
+      task.onNewDocument(documentId, new Error(error));
+  }
+
+  private _notifyLifecycle(frame: Frame) {
+    for (let parent: Frame | null = frame; parent; parent = parent.parentFrame()) {
+      for (const frameTask of parent._frameTasks)
+        frameTask.onLifecycle();
+    }
   }
 
   private _removeFramesRecursively(frame: Frame) {
@@ -310,9 +314,7 @@ export class Frame {
   _id: string;
   readonly _firedLifecycleEvents: Set<types.LifecycleEvent>;
   _lastDocumentId = '';
-  _requestWatchers = new Set<(request: network.Request) => void>();
-  _documentWatchers = new Set<(documentId: string, error?: Error) => void>();
-  _sameDocumentNavigationWatchers = new Set<() => void>();
+  _frameTasks = new Set<FrameTask>();
   readonly _page: Page;
   private _parentFrame: Frame | null;
   _url = '';
@@ -983,8 +985,12 @@ export class FrameTask {
   private _frame: Frame;
   private _failurePromise: Promise<Error>;
   private _requestMap = new Map<string, network.Request>();
-  private _disposables: (() => void)[] = [];
+  private _timer?: NodeJS.Timer;
   private _url: string | undefined;
+
+  onNewDocument: (documentId: string, error?: Error) => void = () => {};
+  onSameDocument = () => {};
+  onLifecycle = () => {};
 
   constructor(frame: Frame, options: types.TimeoutOptions, url?: string) {
     this._frame = frame;
@@ -995,10 +1001,8 @@ export class FrameTask {
     const { timeout = frame._page._timeoutSettings.navigationTimeout() } = options;
     if (timeout) {
       const errorMessage = 'Navigation timeout of ' + timeout + ' ms exceeded';
-      let timer: NodeJS.Timer;
-      timeoutPromise = new Promise(fulfill => timer = setTimeout(fulfill, timeout))
+      timeoutPromise = new Promise(fulfill => this._timer = setTimeout(fulfill, timeout))
           .then(() => { throw new TimeoutError(errorMessage); });
-      this._disposables.push(() => clearTimeout(timer));
     }
 
     // Process detached frames
@@ -1008,14 +1012,13 @@ export class FrameTask {
       this._frame._detachedPromise.then(() => { throw new Error('Navigating frame was detached!'); }),
     ]);
 
-    // Collect requests during the task.
-    const watcher = (request: network.Request) => {
-      if (!request._documentId || request.redirectedFrom())
-        return;
-      this._requestMap.set(request._documentId, request);
-    };
-    this._disposables.push(() => this._frame._requestWatchers.delete(watcher));
-    this._frame._requestWatchers.add(watcher);
+    frame._frameTasks.add(this);
+  }
+
+  onRequest(request: network.Request) {
+    if (!request._documentId || request.redirectedFrom())
+      return;
+    this._requestMap.set(request._documentId, request);
   }
 
   async raceAgainstFailures<T>(promise: Promise<T>): Promise<T> {
@@ -1034,74 +1037,58 @@ export class FrameTask {
     throw error;
   }
 
-  request(id: string): network.Request | undefined {
-    return this._requestMap.get(id);
+  request(documentId: string): network.Request | undefined {
+    return this._requestMap.get(documentId);
   }
 
-  async waitForSameDocumentNavigation(url?: types.URLMatch): Promise<void> {
-    let resolve: () => void;
-    const promise = new Promise<void>(x => resolve = x);
-    const watch = () => {
-      if (helper.urlMatches(this._frame.url(), url))
-        resolve();
-    };
-    this._disposables.push(() => this._frame._sameDocumentNavigationWatchers.delete(watch));
-    this._frame._sameDocumentNavigationWatchers.add(watch);
-    return this.raceAgainstFailures(promise);
-  }
-
-  async waitForSpecificDocument(expectedDocumentId: string): Promise<void> {
-    let resolve: () => void;
-    let reject: (error: Error) => void;
-    const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
-    const watch = (documentId: string, error?: Error) => {
-      if (documentId === expectedDocumentId) {
-        if (!error)
+  waitForSameDocumentNavigation(url?: types.URLMatch): Promise<void> {
+    return this.raceAgainstFailures(new Promise((resolve, reject) => {
+      this.onSameDocument = () => {
+        if (helper.urlMatches(this._frame.url(), url))
           resolve();
-        else
-          reject(error);
-      } else if (!error) {
-        reject(new Error('Navigation interrupted by another one'));
-      }
-    };
-    this._disposables.push(() => this._frame._documentWatchers.delete(watch));
-    this._frame._documentWatchers.add(watch);
-    await this.raceAgainstFailures(promise);
+      };
+    }));
+  }
+
+  waitForSpecificDocument(expectedDocumentId: string): Promise<void> {
+    return this.raceAgainstFailures(new Promise((resolve, reject) => {
+      this.onNewDocument = (documentId: string, error?: Error) => {
+        if (documentId === expectedDocumentId) {
+          if (!error)
+            resolve();
+          else
+            reject(error);
+        } else if (!error) {
+          reject(new Error('Navigation interrupted by another one'));
+        }
+      };
+    }));
   }
 
   waitForNewDocument(url?: types.URLMatch): Promise<string> {
-    let resolve: (documentId: string) => void;
-    let reject: (error: Error) => void;
-    const promise = new Promise<string>((res, rej) => { resolve = res; reject = rej; });
-    const watch = (documentId: string, error?: Error) => {
-      if (!error && !helper.urlMatches(this._frame.url(), url))
-        return;
-      if (error)
-        reject(error);
-      else
-        resolve(documentId);
-    };
-    this._disposables.push(() => this._frame._documentWatchers.delete(watch));
-    this._frame._documentWatchers.add(watch);
-    return this.raceAgainstFailures(promise);
+    return this.raceAgainstFailures(new Promise((resolve, reject) => {
+      this.onNewDocument = (documentId: string, error?: Error) => {
+        if (!error && !helper.urlMatches(this._frame.url(), url))
+          return;
+        if (error)
+          reject(error);
+        else
+          resolve(documentId);
+      };
+    }));
   }
 
   waitForLifecycle(waitUntil: types.LifecycleEvent = 'load'): Promise<void> {
-    let resolve: () => void;
     if (!types.kLifecycleEvents.has(waitUntil))
       throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
-
-    const checkLifecycleComplete = () => {
-      if (!checkLifecycleRecursively(this._frame))
-        return;
-      resolve();
-    };
-
-    const promise = new Promise<void>(x => resolve = x);
-    this._disposables.push(() => this._frame._page._frameManager._lifecycleWatchers.delete(checkLifecycleComplete));
-    this._frame._page._frameManager._lifecycleWatchers.add(checkLifecycleComplete);
-    checkLifecycleComplete();
-    return this.raceAgainstFailures(promise);
+    return this.raceAgainstFailures(new Promise((resolve, reject) => {
+      this.onLifecycle = () => {
+        if (!checkLifecycleRecursively(this._frame))
+          return;
+        resolve();
+      };
+      this.onLifecycle();
+    }));
 
     function checkLifecycleRecursively(frame: Frame): boolean {
       if (!frame._firedLifecycleEvents.has(waitUntil))
@@ -1115,9 +1102,9 @@ export class FrameTask {
   }
 
   done() {
+    this._frame._frameTasks.delete(this);
+    if (this._timer)
+      clearTimeout(this._timer);
     this._failurePromise.catch(e => {});
-    for (const disposable of this._disposables)
-      disposable();
-    this._disposables = [];
   }
 }

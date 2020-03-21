@@ -157,8 +157,8 @@ export class FFPage implements PageDelegate {
 
   _onNavigationAborted(params: Protocol.Page.navigationAbortedPayload) {
     const frame = this._page._frameManager.frame(params.frameId)!;
-    for (const watcher of frame._documentWatchers)
-      watcher(params.navigationId, new Error(params.errorText));
+    for (const task of frame._frameTasks)
+      task.onNewDocument(params.navigationId, new Error(params.errorText));
   }
 
   _onNavigationCommitted(params: Protocol.Page.navigationCommittedPayload) {
