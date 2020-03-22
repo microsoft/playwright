@@ -7,13 +7,20 @@
   * [Setting Up Chrome Linux Sandbox](#setting-up-chrome-linux-sandbox)
     - [[recommended] Enable user namespace cloning](#recommended-enable-user-namespace-cloning)
     - [[alternative] Setup setuid sandbox](#alternative-setup-setuid-sandbox)
+- [Firefox](#firefox)
+  * [Firefox headless doesn't launch on Linux/WSL](#firefox-headless-doesnt-launch-on-linuxwsl)
+- [WebKit](#webkit)
+  * [WebKit headless doesn't launch on Linux/WSL](#webkit-headless-doesnt-launch-on-linuxwsl)
+- [Running Playwright on CI](#running-playwright-on-ci)
   * [Running Playwright on Travis CI](#running-playwright-on-travis-ci)
   * [Running Playwright on CircleCI](#running-playwright-on-circleci)
   * [Running Playwright in Docker](#running-playwright-in-docker)
     - [Tips](#tips)
-- [Code Transpilation Issues](#code-transpilation-issues)
-- [ReferenceError: URL is not defined](#referenceerror-url-is-not-defined)
+- [Code transpilation issues](#code-transpilation-issues)
+- [Node requirements](#node-requirements)
+  * [ReferenceError: URL is not defined](#referenceerror-url-is-not-defined)
 <!-- GEN:stop -->
+
 ## Chromium
 
 ### Chrome headless doesn't launch on Windows
@@ -36,7 +43,9 @@ const browser = await playwright.chromium.launch({
 ### Chrome headless doesn't launch on Linux/WSL
 
 Make sure all the necessary dependencies are installed. You can run `ldd chrome | grep not` on a Linux
-machine to check which dependencies are missing. The common ones are provided below.
+machine to check which dependencies are missing. For dependencies on Ubuntu, please refer to [Dockerfile](https://github.com/microsoft/playwright/blob/master/docs/docker/Dockerfile.bionic) which is used to run our tests.
+
+The common ones for Debian and CentOS are provided below.
 
 <details>
 <summary>Debian (e.g. Ubuntu) Dependencies</summary>
@@ -180,6 +189,21 @@ or `.zshenv`:
 export CHROME_DEVEL_SANDBOX=/usr/local/sbin/chrome-devel-sandbox
 ```
 
+## Firefox
+
+### Firefox headless doesn't launch on Linux/WSL
+
+Make sure all the necessary dependencies are installed. You can run `ldd chrome | grep not` on a Linux
+machine to check which dependencies are missing. For dependencies on Ubuntu, please refer to [Dockerfile](https://github.com/microsoft/playwright/blob/master/docs/docker/Dockerfile.bionic) which is used to run our tests.
+
+## WebKit
+
+### WebKit headless doesn't launch on Linux/WSL
+
+Make sure all the necessary dependencies are installed. You can run `ldd chrome | grep not` on a Linux
+machine to check which dependencies are missing. For dependencies on Ubuntu, please refer to [Dockerfile](https://github.com/microsoft/playwright/blob/master/docs/docker/Dockerfile.bionic) which is used to run our tests.
+
+## Running Playwright on CI
 
 ### Running Playwright on Travis CI
 
@@ -216,6 +240,8 @@ before_install:
 ```
 
 ### Running Playwright on CircleCI
+
+> 👋 We run our tests for Playwright on CircleCI - see our [`.circleci/config.yml`](https://github.com/microsoft/playwright/blob/master/.circleci/config.yml) for reference.
 
 Running Playwright smoothly on CircleCI requires the following steps:
 
@@ -277,11 +303,11 @@ treatment for processes with PID=1, which makes it hard to terminate Chrome
 properly in some cases (e.g. in Docker).
 
 
-## Code Transpilation Issues
+## Code transpilation issues
 
 If you are using a JavaScript transpiler like babel or TypeScript, calling `evaluate()` with an async function might not work. This is because while `playwright` uses `Function.prototype.toString()` to serialize functions while transpilers could be changing the output code in such a way it's incompatible with `playwright`.
 
-Some workarounds to this problem would be to instruct the transpiler not to mess up with the code, for example, configure TypeScript to use latest ecma version (`"target": "es2018"`). Another workaround could be using string templates instead of functions:
+Some workarounds to this problem would be to instruct the transpiler not to mess up with the code, for example, configure TypeScript to use latest ECMAScript version (`"target": "es2018"`). Another workaround could be using string templates instead of functions:
 
 ```js
 await page.evaluate(`(async() => {
@@ -289,9 +315,11 @@ await page.evaluate(`(async() => {
 })()`);
 ```
 
-## ReferenceError: URL is not defined
+## Node requirements
 
-Playwright requires node 10 or higher. Node 8 is not supported, and will cause you to receive this error.
+### ReferenceError: URL is not defined
+
+Playwright requires Node 10 or higher. Node 8 is not supported, and will cause you to receive this error.
 
 # Please file an issue
 
