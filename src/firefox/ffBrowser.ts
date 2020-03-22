@@ -171,12 +171,12 @@ export class FFBrowserContext extends BrowserContextBase {
       await this.grantPermissions(this._options.permissions);
     if (this._options.extraHTTPHeaders || this._options.locale)
       await this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || {});
-    if (this._options.offline)
-      await this.setOffline(this._options.offline);
     if (this._options.httpCredentials)
       await this.setHTTPCredentials(this._options.httpCredentials);
     if (this._options.geolocation)
       await this.setGeolocation(this._options.geolocation);
+    if (this._options.offline)
+      await this.setOffline(this._options.offline);
   }
 
   _ffPages(): FFPage[] {
@@ -264,9 +264,8 @@ export class FFBrowserContext extends BrowserContextBase {
   }
 
   async setOffline(offline: boolean): Promise<void> {
-    if (offline)
-      throw new Error('Offline mode is not implemented in Firefox');
     this._options.offline = offline;
+    await this._browser._connection.send('Browser.setOnlineOverride', { browserContextId: this._browserContextId || undefined, override: offline ? 'offline' : 'online' });
   }
 
   async setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
