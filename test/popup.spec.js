@@ -245,6 +245,18 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await popup.evaluate(() => !!window.opener)).toBe(true);
       await context.close();
     });
+    it('should work with noopener and no url', async({browser}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.evaluate(() => window.__popup = window.open(undefined, null, 'noopener')),
+      ]);
+      expect(popup.url()).toBe('about:blank');
+      expect(await page.evaluate(() => !!window.opener)).toBe(false);
+      expect(await popup.evaluate(() => !!window.opener)).toBe(false);
+      await context.close();
+    });
     it('should work with noopener and about:blank', async({browser}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
@@ -292,8 +304,6 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
         page.$eval('a', a => a.click()),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
-      // TODO: At this point popup might still have about:blank as the current document.
-      // FFOX is slow enough to trigger this. We should do something about popups api.
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
       await context.close();
     });
