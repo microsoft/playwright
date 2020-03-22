@@ -3,7 +3,7 @@
 /test/output-firefox
 /test/output-webkit
 /test/test-user-data-dir*
-/.local-browsers/
+.local-browsers/
 /.dev_profile*
 .DS_Store
 .downloaded-browsers.json
@@ -22,4 +22,3 @@ playwright-*.tgz
 /web.js
 /web.js.map
 /types/*
-.local-browsers
