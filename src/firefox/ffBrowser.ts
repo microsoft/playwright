@@ -94,6 +94,7 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
       bypassCSP: options.bypassCSP,
       javaScriptDisabled: options.javaScriptEnabled === false ? true : undefined,
       viewport,
+      locale: options.locale,
       removeOnDetach: true
     });
     // TODO: move ignoreHTTPSErrors to browser context level.
@@ -174,6 +175,8 @@ export class FFBrowserContext extends BrowserContextBase {
       await this.setOffline(this._options.offline);
     if (this._options.httpCredentials)
       await this.setHTTPCredentials(this._options.httpCredentials);
+    if (this._options.geolocation)
+      await this.setGeolocation(this._options.geolocation);
   }
 
   _ffPages(): FFPage[] {
@@ -249,8 +252,7 @@ export class FFBrowserContext extends BrowserContextBase {
     if (geolocation)
       geolocation = verifyGeolocation(geolocation);
     this._options.geolocation = geolocation || undefined;
-    for (const page of this.pages())
-      await (page._delegate as FFPage)._setGeolocation(geolocation);
+    await this._browser._connection.send('Browser.setGeolocationOverride', { browserContextId: this._browserContextId || undefined, geolocation });
   }
 
   async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
@@ -292,8 +294,8 @@ export class FFBrowserContext extends BrowserContextBase {
 
   async route(url: types.URLMatch, handler: network.RouteHandler): Promise<void> {
     this._routes.push({ url, handler });
-    throw new Error('Not implemented');
-    // TODO: update interception on the context if this is a first route.
+    if (this._routes.length === 1)
+      await this._browser._connection.send('Browser.setRequestInterception', { browserContextId: this._browserContextId || undefined, enabled: true });
   }
 
   async close() {

@@ -39,7 +39,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(userAgent).toBe('hey');
       expect(request.headers['user-agent']).toBe('hey');
     });
-    it.fail(FFOX)('should respect routes from browser context', async function({browser, server}) {
+    it('should respect routes from browser context', async function({browser, server}) {
       const context = await browser.newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
