@@ -1838,7 +1838,7 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..eab73deee89cc7c8ab0a304f79126264de5c4f8e
+index 0000000000000000000000000000000000000000..e438996fbc04d2eec36436b7e3007649ed088286
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
 @@ -0,0 +1,264 @@
@@ -1881,8 +1881,8 @@ index 0000000000000000000000000000000000000000..eab73deee89cc7c8ab0a304f79126264
 +    this._mainWindow.gBrowser.tabContainer.addEventListener('TabOpen', event => {
 +      const target = this._createTargetForTab(event.target);
 +      // If we come here, content will have juggler script from the start,
-+      // and we should wait for initial navigation, unless the tab was window.open'ed.
-+      target._waitForInitialNavigation = !event.target.linkedBrowser.hasContentOpener;
++      // and we should wait for initial navigation.
++      target._waitForInitialNavigation = true;
 +      // For pages created before we attach to them, we don't wait for initial
 +      // navigation (target._waitForInitialNavigation is false by default).
 +    });
@@ -2254,10 +2254,10 @@ index 0000000000000000000000000000000000000000..268fbc361d8053182bb6c27f626e853d
 +
 diff --git a/juggler/content/FrameTree.js b/juggler/content/FrameTree.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..1197aec925e07a52c5802e09e9fd797b48091fd3
+index 0000000000000000000000000000000000000000..13c3cd817b369ed012326b97d03ba6e123b84740
 --- /dev/null
 +++ b/juggler/content/FrameTree.js
-@@ -0,0 +1,370 @@
+@@ -0,0 +1,376 @@
 +"use strict";
 +const Ci = Components.interfaces;
 +const Cr = Components.results;
@@ -2355,6 +2355,14 @@ index 0000000000000000000000000000000000000000..1197aec925e07a52c5802e09e9fd797b
 +    return this._pageReady;
 +  }
 +
++  forcePageReady() {
++    if (this._pageReady)
++      return false;
++    this._pageReady = true;
++    this.emit(FrameTree.Events.PageReady);
++    return true;
++  }
++
 +  addScriptToEvaluateOnNewDocument(script) {
 +    this._scriptsToEvaluateOnNewDocument.push(script);
 +  }
@@ -2423,10 +2431,8 @@ index 0000000000000000000000000000000000000000..1197aec925e07a52c5802e09e9fd797b
 +      frame._lastCommittedNavigationId = navigationId;
 +      frame._url = channel.URI.spec;
 +      this.emit(FrameTree.Events.NavigationCommitted, frame);
-+      if (frame === this._mainFrame && !this._pageReady) {
-+        this._pageReady = true;
-+        this.emit(FrameTree.Events.PageReady);
-+      }
++      if (frame === this._mainFrame)
++        this.forcePageReady();
 +    } else if (isStop && frame._pendingNavigationId && status) {
 +      // Navigation is aborted.
 +      const navigationId = frame._pendingNavigationId;
@@ -2698,10 +2704,10 @@ index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c3
 +
 diff --git a/juggler/content/PageAgent.js b/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..fb207d8b39bee7c1365428a171f80c438097d2bb
+index 0000000000000000000000000000000000000000..ccf881cfee36a1f47fbab880202cc72e7e98e387
 --- /dev/null
 +++ b/juggler/content/PageAgent.js
-@@ -0,0 +1,945 @@
+@@ -0,0 +1,964 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -2990,6 +2996,7 @@ index 0000000000000000000000000000000000000000..fb207d8b39bee7c1365428a171f80c43
 +      helper.on(this._frameTree, 'pageready', () => this._browserPage.emit('pageReady', {})),
 +      helper.on(this._frameTree, 'workercreated', this._onWorkerCreated.bind(this)),
 +      helper.on(this._frameTree, 'workerdestroyed', this._onWorkerDestroyed.bind(this)),
++      helper.addObserver(this._onWindowOpen.bind(this), 'webNavigation-createdNavigationTarget-from-js'),
 +    ]);
 +
 +    if (this._frameTree.isPageReady())
@@ -3015,6 +3022,24 @@ index 0000000000000000000000000000000000000000..fb207d8b39bee7c1365428a171f80c43
 +    this._browserPage.emit('pageWorkerDestroyed', {
 +      workerId: worker.id(),
 +    });
++  }
++
++  _onWindowOpen(subject) {
++    if (!(subject instanceof Ci.nsIPropertyBag2))
++      return;
++    const props = subject.QueryInterface(Ci.nsIPropertyBag2);
++    const hasUrl = props.hasKey('url');
++    const createdDocShell = props.getPropertyAsInterface('createdTabDocShell', Ci.nsIDocShell);
++    if (!hasUrl && createdDocShell === this._docShell && this._frameTree.forcePageReady()) {
++      this._browserPage.emit('pageEventFired', {
++        frameId: this._frameTree.mainFrame().id(),
++        name: 'DOMContentLoaded',
++      });
++      this._browserPage.emit('pageEventFired', {
++        frameId: this._frameTree.mainFrame().id(),
++        name: 'load',
++      });
++    }
 +  }
 +
 +  _setInterceptFileChooserDialog({enabled}) {
