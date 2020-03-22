@@ -669,10 +669,10 @@ index 5de630a1db847a09651b310928bb7bc4d4f66f29..0268bc2bdfb3bfda2ef6e01a5dd24209
    nsCOMPtr<nsIPrincipal> principal =
 diff --git a/juggler/BrowserContextManager.js b/juggler/BrowserContextManager.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..6c3d918022f0e8ff84083cb20266c97902cd04d4
+index 0000000000000000000000000000000000000000..d30b333e03e9a4121e0a5e1bbf694d88bab5defa
 --- /dev/null
 +++ b/juggler/BrowserContextManager.js
-@@ -0,0 +1,214 @@
+@@ -0,0 +1,224 @@
 +"use strict";
 +
 +const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
@@ -758,6 +758,7 @@ index 0000000000000000000000000000000000000000..6c3d918022f0e8ff84083cb20266c979
 +    this._manager._userContextIdToBrowserContext.set(this.userContextId, this);
 +    this.options = options || {};
 +    this.options.scriptsToEvaluateOnNewDocument = [];
++    this.pages = new Set();
 +  }
 +
 +  destroy() {
@@ -769,13 +770,26 @@ index 0000000000000000000000000000000000000000..6c3d918022f0e8ff84083cb20266c979
 +    this._manager._userContextIdToBrowserContext.delete(this.userContextId);
 +  }
 +
-+  addScriptToEvaluateOnNewDocument(script) {
++  async addScriptToEvaluateOnNewDocument(script) {
 +    this.options.scriptsToEvaluateOnNewDocument.push(script);
-+    this.emit(BrowserContext.Events.ScriptToEvaluateOnNewDocumentAdded, script);
++    await Promise.all(Array.from(this.pages).map(page => page.addScriptToEvaluateOnNewDocument(script)));
 +  }
 +
-+  grantPermissions(origin, permissions) {
++  async setGeolocationOverride(geolocation) {
++    this.options.geolocation = geolocation;
++    await Promise.all(Array.from(this.pages).map(page => page.setGeolocationOverride(geolocation)));
++  }
++
++  async grantPermissions(origin, permissions) {
 +    this._permissions.set(origin, permissions);
++    const promises = [];
++    for (const page of this.pages) {
++      if (origin === '*' || page._url.startsWith(origin)) {
++        this.grantPermissionsToOrigin(page._url);
++        promises.push(page.ensurePermissions(permissions));
++      }
++    }
++    await Promise.all(promises);
 +  }
 +
 +  resetPermissions() {
@@ -874,10 +888,6 @@ index 0000000000000000000000000000000000000000..6c3d918022f0e8ff84083cb20266c979
 +    return result;
 +  }
 +}
-+
-+BrowserContext.Events = {
-+  ScriptToEvaluateOnNewDocumentAdded: Symbol('BrowserContext.Events.ScriptToEvaluateOnNewDocumentAdded'),
-+};
 +
 +function dirPath(path) {
 +  return path.substring(0, path.lastIndexOf('/') + 1);
@@ -997,10 +1007,10 @@ index 0000000000000000000000000000000000000000..862c680198bbb503a5f04c19bdb8fdf2
 +
 diff --git a/juggler/NetworkObserver.js b/juggler/NetworkObserver.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..59855077f4b9af267c805b15ec073f69f806c1e8
+index 0000000000000000000000000000000000000000..268926d1cff9c3a073a1910708a813ed5481a690
 --- /dev/null
 +++ b/juggler/NetworkObserver.js
-@@ -0,0 +1,699 @@
+@@ -0,0 +1,717 @@
 +"use strict";
 +
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
@@ -1072,6 +1082,7 @@ index 0000000000000000000000000000000000000000..59855077f4b9af267c805b15ec073f69
 +    registrar.registerFactory(SINK_CLASS_ID, SINK_CLASS_DESCRIPTION, SINK_CONTRACT_ID, this._channelSinkFactory);
 +    Services.catMan.addCategoryEntry(SINK_CATEGORY_NAME, SINK_CONTRACT_ID, SINK_CONTRACT_ID, false, true);
 +
++    this._browsersWithEnabledInterception = new Set();
 +    this._browserInterceptors = new Map();  // Browser => (requestId => interceptor).
 +    this._extraHTTPHeaders = new Map();
 +    this._browserResponseStorages = new Map();
@@ -1092,11 +1103,11 @@ index 0000000000000000000000000000000000000000..59855077f4b9af267c805b15ec073f69
 +  }
 +
 +  enableRequestInterception(browser) {
-+    if (!this._browserInterceptors.has(browser))
-+      this._browserInterceptors.set(browser, new Map());
++    this._browsersWithEnabledInterception.add(browser);
 +  }
 +
 +  disableRequestInterception(browser) {
++    this._browsersWithEnabledInterception.delete(browser);
 +    const interceptors = this._browserInterceptors.get(browser);
 +    if (!interceptors)
 +      return;
@@ -1229,8 +1240,8 @@ index 0000000000000000000000000000000000000000..59855077f4b9af267c805b15ec073f69
 +    this._appendExtraHTTPHeaders(httpChannel, this._extraHTTPHeaders.get(browser));
 +    const requestId = this._requestId(httpChannel);
 +    const isRedirect = this._redirectMap.has(requestId);
-+    const interceptors = this._browserInterceptors.get(browser);
-+    if (!interceptors) {
++    const interceptionEnabled = this._isInterceptionEnabledForBrowser(browser);
++    if (!interceptionEnabled) {
 +      new NotificationCallbacks(this, browser, httpChannel, false);
 +      this._sendOnRequest(httpChannel, false);
 +      new ResponseBodyListener(this, browser, httpChannel);
@@ -1238,6 +1249,7 @@ index 0000000000000000000000000000000000000000..59855077f4b9af267c805b15ec073f69
 +      // We pretend that redirect is interceptable in the protocol, although it's actually not
 +      // and therefore we do not instantiate the interceptor.
 +      // TODO: look into REDIRECT_MODE_MANUAL.
++      const interceptors = this._ensureInterceptors(browser);
 +      interceptors.set(requestId, {
 +        _resume: () => {},
 +        _abort: () => {},
@@ -1248,7 +1260,6 @@ index 0000000000000000000000000000000000000000..59855077f4b9af267c805b15ec073f69
 +      new ResponseBodyListener(this, browser, httpChannel);
 +    } else {
 +      const previousCallbacks = httpChannel.notificationCallbacks;
-+      let shouldIntercept = true;
 +      if (previousCallbacks instanceof Ci.nsIInterfaceRequestor) {
 +        const interceptor = previousCallbacks.getInterface(Ci.nsINetworkInterceptController);
 +        // We assume that interceptor is a service worker if there is one.
@@ -1267,6 +1278,24 @@ index 0000000000000000000000000000000000000000..59855077f4b9af267c805b15ec073f69
 +    }
 +  }
 +
++  _isInterceptionEnabledForBrowser(browser) {
++    if (this._browsersWithEnabledInterception.has(browser))
++      return true;
++    const browserContext = TargetRegistry.instance().browserContextForBrowser(browser);
++    if (browserContext && browserContext.options.requestInterceptionEnabled)
++      return true;
++    return false;
++  }
++
++  _ensureInterceptors(browser) {
++    let interceptors = this._browserInterceptors.get(browser);
++    if (!interceptors) {
++      interceptors = new Map();
++      this._browserInterceptors.set(browser, interceptors);
++    }
++    return interceptors;
++  }
++
 +  _appendExtraHTTPHeaders(httpChannel, headers) {
 +    if (!headers)
 +      return;
@@ -1280,10 +1309,10 @@ index 0000000000000000000000000000000000000000..59855077f4b9af267c805b15ec073f69
 +      interceptor._resume();
 +      return;
 +    }
-+    const interceptors = this._browserInterceptors.get(browser);
-+    this._sendOnRequest(httpChannel, !!interceptors);
-+    if (interceptors)
-+      interceptors.set(this._requestId(httpChannel), interceptor);
++    const interceptionEnabled = this._isInterceptionEnabledForBrowser(browser);
++    this._sendOnRequest(httpChannel, !!interceptionEnabled);
++    if (interceptionEnabled)
++      this._ensureInterceptors(browser).set(this._requestId(httpChannel), interceptor);
 +    else
 +      interceptor._resume();
 +  }
@@ -1377,6 +1406,7 @@ index 0000000000000000000000000000000000000000..59855077f4b9af267c805b15ec073f69
 +    } else {
 +      this._browserSessionCount.delete(browser);
 +      this._browserResponseStorages.delete(browser);
++      this._browsersWithEnabledInterception.delete(browser);
 +      this._browserInterceptors.delete(browser);
 +    }
 +  }
@@ -1657,10 +1687,8 @@ index 0000000000000000000000000000000000000000..59855077f4b9af267c805b15ec073f69
 +    for (const header of headers)
 +      this._intercepted.synthesizeHeader(header.name, header.value);
 +    const synthesized = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
-+    if (base64body)
-+      synthesized.data = atob(base64body);
-+    else
-+      synthesized.data = '';
++    const body = base64body ? atob(base64body) : '';
++    synthesized.data = body;
 +    this._intercepted.startSynthesizedResponse(synthesized, null, null, '', false);
 +    this._intercepted.finishSynthesizedResponse();
 +    this._networkObserver.emit('response', this._httpChannel, {
@@ -1671,7 +1699,7 @@ index 0000000000000000000000000000000000000000..59855077f4b9af267c805b15ec073f69
 +      status,
 +      statusText,
 +    });
-+    this._networkObserver._sendOnRequestFinished(this._httpChannel);
++    this._networkObserver._onResponseFinished(this._browser, this._httpChannel, body);
 +  }
 +
 +  _abort(errorCode) {
@@ -1838,15 +1866,14 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..e438996fbc04d2eec36436b7e3007649ed088286
+index 0000000000000000000000000000000000000000..e601450c163db148baa1966b1585abdd6852261d
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
-@@ -0,0 +1,264 @@
+@@ -0,0 +1,269 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
-+const {BrowserContext} = ChromeUtils.import("chrome://juggler/content/BrowserContextManager.js");
 +
 +const Cc = Components.classes;
 +const Ci = Components.interfaces;
@@ -2018,12 +2045,8 @@ index 0000000000000000000000000000000000000000..e438996fbc04d2eec36436b7e3007649
 +    this._contentReadyPromise = new Promise(f => this._contentReadyCallback = f);
 +    this._waitForInitialNavigation = false;
 +
-+    if (browserContext) {
-+      this._eventListeners.push(helper.on(browserContext, BrowserContext.Events.ScriptToEvaluateOnNewDocumentAdded, script => {
-+        this._channel.connect('').emit('addScriptToEvaluateOnNewDocument', {script});
-+      }));
-+    }
-+
++    if (browserContext)
++      browserContext.pages.add(this);
 +    if (browserContext && browserContext.options.viewport)
 +      this.setViewportSize(browserContext.options.viewport.viewportSize);
 +  }
@@ -2079,7 +2102,17 @@ index 0000000000000000000000000000000000000000..e438996fbc04d2eec36436b7e3007649
 +    await this._channel.connect('').send('ensurePermissions', permissions).catch(e => void e);
 +  }
 +
++  async addScriptToEvaluateOnNewDocument(script) {
++    await this._channel.connect('').send('addScriptToEvaluateOnNewDocument', script).catch(e => void e);
++  }
++
++  async setGeolocationOverride(geolocation) {
++    await this._channel.connect('').send('setGeolocationOverride', geolocation).catch(e => void e);
++  }
++
 +  dispose() {
++    if (this._browserContext)
++      this._browserContext.pages.delete(this);
 +    helper.removeListeners(this._eventListeners);
 +  }
 +}
@@ -2704,10 +2737,10 @@ index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c3
 +
 diff --git a/juggler/content/PageAgent.js b/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..ccf881cfee36a1f47fbab880202cc72e7e98e387
+index 0000000000000000000000000000000000000000..3dd06f27d071a1ca70609d63a12b1ff690d99371
 --- /dev/null
 +++ b/juggler/content/PageAgent.js
-@@ -0,0 +1,964 @@
+@@ -0,0 +1,938 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -2883,8 +2916,6 @@ index 0000000000000000000000000000000000000000..ccf881cfee36a1f47fbab880202cc72e
 +        setEmulatedMedia: this._setEmulatedMedia.bind(this),
 +        setFileInputFiles: this._setFileInputFiles.bind(this),
 +        setInterceptFileChooserDialog: this._setInterceptFileChooserDialog.bind(this),
-+        setGeolocationOverride: this._setGeolocationOverride.bind(this),
-+        setLanguageOverride: this._setLanguageOverride.bind(this),
 +      }),
 +    ];
 +    this._enabled = false;
@@ -3044,30 +3075,6 @@ index 0000000000000000000000000000000000000000..ccf881cfee36a1f47fbab880202cc72e
 +
 +  _setInterceptFileChooserDialog({enabled}) {
 +    this._docShell.fileInputInterceptionEnabled = !!enabled;
-+  }
-+
-+  _setGeolocationOverride({ latitude, longitude, accuracy }) {
-+    if (latitude !== undefined && longitude !== undefined) {
-+      this._docShell.setGeolocationOverride({
-+        coords: {
-+          latitude,
-+          longitude,
-+          accuracy,
-+          altitude: NaN,
-+          altitudeAccuracy: NaN,
-+          heading: NaN,
-+          speed: NaN,
-+        },
-+        address: null,
-+        timestamp: Date.now()
-+      });
-+    } else {
-+      this._docShell.setGeolocationOverride(null);
-+    }
-+  }
-+
-+  _setLanguageOverride({ language }) {
-+    this._docShell.languageOverride = language;
 +  }
 +
 +  _linkClicked(sync, anchorElement) {
@@ -4437,10 +4444,10 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/juggler/content/main.js b/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..6ce6eff8dc8852d7fbbac907421de6de39d8ed0e
+index 0000000000000000000000000000000000000000..c7708c6904454fb25f08aa5c19f7aeca27db5e21
 --- /dev/null
 +++ b/juggler/content/main.js
-@@ -0,0 +1,129 @@
+@@ -0,0 +1,157 @@
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
@@ -4481,13 +4488,33 @@ index 0000000000000000000000000000000000000000..6ce6eff8dc8852d7fbbac907421de6de
 +    handler.dispose();
 +}
 +
++function setGeolocationOverrideInDocShell(geolocation) {
++  if (geolocation) {
++    docShell.setGeolocationOverride({
++      coords: {
++        latitude: geolocation.latitude,
++        longitude: geolocation.longitude,
++        accuracy: geolocation.accuracy,
++        altitude: NaN,
++        altitudeAccuracy: NaN,
++        heading: NaN,
++        speed: NaN,
++      },
++      address: null,
++      timestamp: Date.now()
++    });
++  } else {
++    docShell.setGeolocationOverride(null);
++  }
++}
++
 +function initialize() {
 +  let response = sendSyncMessage('juggler:content-ready', {})[0];
 +  if (!response)
 +    response = { sessionIds: [], browserContextOptions: {}, waitForInitialNavigation: false };
 +
 +  const { sessionIds, browserContextOptions, waitForInitialNavigation } = response;
-+  const { userAgent, bypassCSP, javaScriptDisabled, viewport, scriptsToEvaluateOnNewDocument } = browserContextOptions;
++  const { userAgent, bypassCSP, javaScriptDisabled, viewport, scriptsToEvaluateOnNewDocument, locale, geolocation } = browserContextOptions;
 +
 +  if (userAgent !== undefined)
 +    docShell.customUserAgent = userAgent;
@@ -4495,6 +4522,10 @@ index 0000000000000000000000000000000000000000..6ce6eff8dc8852d7fbbac907421de6de
 +    docShell.bypassCSPEnabled = bypassCSP;
 +  if (javaScriptDisabled !== undefined)
 +    docShell.allowJavascript = !javaScriptDisabled;
++  if (locale !== undefined)
++    docShell.languageOverride = locale;
++  if (geolocation !== undefined)
++    setGeolocationOverrideInDocShell(geolocation);
 +  if (viewport !== undefined) {
 +    docShell.contentViewer.overrideDPPX = viewport.deviceScaleFactor || this._initialDPPX;
 +    docShell.deviceSizeIsPageSize = viewport.isMobile;
@@ -4521,8 +4552,12 @@ index 0000000000000000000000000000000000000000..6ce6eff8dc8852d7fbbac907421de6de
 +      disposeContentSession(sessionId);
 +    },
 +
-+    addScriptToEvaluateOnNewDocument({script}) {
++    addScriptToEvaluateOnNewDocument(script) {
 +      frameTree.addScriptToEvaluateOnNewDocument(script);
++    },
++
++    setGeolocationOverride(geolocation) {
++      setGeolocationOverrideInDocShell(geolocation);
 +    },
 +
 +    async ensurePermissions(permissions) {
@@ -4651,10 +4686,10 @@ index 0000000000000000000000000000000000000000..2f2b7ca247f6b6dff396fb4b644654de
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/juggler/protocol/BrowserHandler.js b/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..a5f050cd024dfdd3d7b1366600273744f82c5cbb
+index 0000000000000000000000000000000000000000..5983ce421c19def00f3da36d8d4e5c4f7722006c
 --- /dev/null
 +++ b/juggler/protocol/BrowserHandler.js
-@@ -0,0 +1,172 @@
+@@ -0,0 +1,170 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -4772,17 +4807,7 @@ index 0000000000000000000000000000000000000000..a5f050cd024dfdd3d7b1366600273744
 +  }
 +
 +  async grantPermissions({browserContextId, origin, permissions}) {
-+    const browserContext = this._contextManager.browserContextForId(browserContextId);
-+    browserContext.grantPermissions(origin, permissions);
-+    const contextPages = this._targetRegistry.pageTargets(browserContextId);
-+    const promises = [];
-+    for (const page of contextPages) {
-+      if (origin === '*' || page._url.startsWith(origin)) {
-+        browserContext.grantPermissionsToOrigin(page._url);
-+        promises.push(page.ensurePermissions(permissions));
-+      }
-+    }
-+    await Promise.all(promises);
++    await this._contextManager.browserContextForId(browserContextId).grantPermissions(origin, permissions);
 +  }
 +
 +  resetPermissions({browserContextId}) {
@@ -4797,8 +4822,16 @@ index 0000000000000000000000000000000000000000..a5f050cd024dfdd3d7b1366600273744
 +    this._contextManager.browserContextForId(browserContextId).options.httpCredentials = credentials;
 +  }
 +
-+  addScriptToEvaluateOnNewDocument({browserContextId, script}) {
-+    this._contextManager.browserContextForId(browserContextId).addScriptToEvaluateOnNewDocument(script);
++  setRequestInterception({browserContextId, enabled}) {
++    this._contextManager.browserContextForId(browserContextId).options.requestInterceptionEnabled = enabled;
++  }
++
++  async setGeolocationOverride({browserContextId, geolocation}) {
++    await this._contextManager.browserContextForId(browserContextId).setGeolocationOverride(geolocation);
++  }
++
++  async addScriptToEvaluateOnNewDocument({browserContextId, script}) {
++    await this._contextManager.browserContextForId(browserContextId).addScriptToEvaluateOnNewDocument(script);
 +  }
 +
 +  setCookies({browserContextId, cookies}) {
@@ -5195,10 +5228,10 @@ index 0000000000000000000000000000000000000000..e1f1e21a20768d707a92ffffc8a7c114
 +this.NetworkHandler = NetworkHandler;
 diff --git a/juggler/protocol/PageHandler.js b/juggler/protocol/PageHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..c2e7ba3ee96c9d6f3da56a274c760b36816631a0
+index 0000000000000000000000000000000000000000..11f9567d816304906df6b6192b3fb71e6c9d53dc
 --- /dev/null
 +++ b/juggler/protocol/PageHandler.js
-@@ -0,0 +1,357 @@
+@@ -0,0 +1,348 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -5488,15 +5521,6 @@ index 0000000000000000000000000000000000000000..c2e7ba3ee96c9d6f3da56a274c760b36
 +      throw new Error('ERROR: cannot find worker with id ' + workerId);
 +    return await worker.sendMessage(JSON.parse(message));
 +  }
-+
-+  async setGeolocationOverride(options) {
-+    return await this._contentPage.send('setGeolocationOverride', options);
-+  }
-+
-+  async setLanguageOverride(options) {
-+    return await this._contentPage.send('setLanguageOverride', options);
-+  }
-+
 +}
 +
 +class Dialog {
@@ -5707,10 +5731,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/juggler/protocol/Protocol.js b/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..cb775900073f83e5e6892b84f8ff782dc8f5bc04
+index 0000000000000000000000000000000000000000..a2608ebe6c45766c2fe34228f9d85ee222aa46c6
 --- /dev/null
 +++ b/juggler/protocol/Protocol.js
-@@ -0,0 +1,757 @@
+@@ -0,0 +1,764 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -5747,6 +5771,12 @@ index 0000000000000000000000000000000000000000..cb775900073f83e5e6892b84f8ff782d
 +  secure: t.Boolean,
 +  session: t.Boolean,
 +  sameSite: t.Enum(['Strict', 'Lax', 'None']),
++};
++
++browserTypes.Geolocation = {
++  latitude: t.Number,
++  longitude: t.Number,
++  accuracy: t.Optional(t.Number),
 +};
 +
 +const pageTypes = {};
@@ -5919,6 +5949,7 @@ index 0000000000000000000000000000000000000000..cb775900073f83e5e6892b84f8ff782d
 +        bypassCSP: t.Optional(t.Boolean),
 +        javaScriptDisabled: t.Optional(t.Boolean),
 +        viewport: t.Optional(pageTypes.Viewport),
++        locale: t.Optional(t.String),
 +      },
 +      returns: {
 +        browserContextId: t.String,
@@ -5960,6 +5991,18 @@ index 0000000000000000000000000000000000000000..cb775900073f83e5e6892b84f8ff782d
 +        browserContextId: t.Optional(t.String),
 +        credentials: t.Nullable(networkTypes.HTTPCredentials),
 +      },
++    },
++    'setRequestInterception': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        enabled: t.Boolean,
++      },
++    },
++    'setGeolocationOverride': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        geolocation: t.Nullable(browserTypes.Geolocation),
++      }
 +    },
 +    'addScriptToEvaluateOnNewDocument': {
 +      params: {
@@ -6431,18 +6474,6 @@ index 0000000000000000000000000000000000000000..cb775900073f83e5e6892b84f8ff782d
 +        message: t.String,
 +      },
 +    },
-+    'setGeolocationOverride': {
-+      params: {
-+        latitude: t.Optional(t.Number),
-+        longitude: t.Optional(t.Number),
-+        accuracy: t.Optional(t.Number)
-+      }
-+    },
-+    'setLanguageOverride': {
-+      params: {
-+        language: t.String,
-+      }
-+    }
 +  },
 +};
 +
