@@ -114,7 +114,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await popup.title()).toBe('Woof-Woof');
       await context.close();
     });
-    it.skip(FFOX)('should inherit touch support from browser context', async function({browser, server}) {
+    it('should inherit touch support from browser context', async function({browser, server}) {
       const context = await browser.newContext({
         viewport: { width: 400, height: 500 },
         hasTouch: true
