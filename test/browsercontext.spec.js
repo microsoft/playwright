@@ -455,7 +455,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
     });
   });
 
-  describe.fail(FFOX)('BrowserContext.setOffline', function() {
+  describe('BrowserContext.setOffline', function() {
     it('should work with initial option', async({browser, server}) => {
       const context = await browser.newContext({offline: true});
       const page = await context.newPage();
