@@ -138,7 +138,7 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 344bd4a9f524616b98c664d4fb2b2154927ea7c8..74d392e71ce3a0b1a0c640cc9149777794164e7b 100644
+index 344bd4a9f524616b98c664d4fb2b2154927ea7c8..38acc7e3636f3b3a45c3587ace35abd6f1c94925 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -53,6 +53,7 @@
@@ -157,16 +157,17 @@ index 344bd4a9f524616b98c664d4fb2b2154927ea7c8..74d392e71ce3a0b1a0c640cc91497777
  #include "nsIDocumentLoaderFactory.h"
  #include "nsIDOMWindow.h"
  #include "nsIEditingSession.h"
-@@ -351,6 +353,8 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
+@@ -351,6 +353,9 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
        mUseStrictSecurityChecks(false),
        mObserveErrorPages(true),
        mCSSErrorReportingEnabled(false),
 +      mFileInputInterceptionEnabled(false),
 +      mBypassCSPEnabled(false),
++      mOnlineOverride(nsIDocShell::ONLINE_OVERRIDE_NONE),
        mAllowAuth(mItemType == typeContent),
        mAllowKeywordFixup(false),
        mIsOffScreenBrowser(false),
-@@ -1223,6 +1227,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
+@@ -1223,6 +1228,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
      isSubFrame = mLSHE->GetIsSubFrame();
    }
  
@@ -174,10 +175,12 @@ index 344bd4a9f524616b98c664d4fb2b2154927ea7c8..74d392e71ce3a0b1a0c640cc91497777
    if (!isSubFrame && !isRoot) {
      /*
       * We don't want to send OnLocationChange notifications when
-@@ -3363,6 +3368,85 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
+@@ -3363,6 +3369,109 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
    return NS_OK;
  }
  
++// =============== Juggler Begin =======================
++
 +nsDocShell* nsDocShell::GetRootDocShell() {
 +  nsCOMPtr<nsIDocShellTreeItem> rootAsItem;
 +  GetInProcessSameTypeRootTreeItem(getter_AddRefs(rootAsItem));
@@ -205,7 +208,7 @@ index 344bd4a9f524616b98c664d4fb2b2154927ea7c8..74d392e71ce3a0b1a0c640cc91497777
 +NS_IMETHODIMP
 +nsDocShell::GetLanguageOverride(nsAString& aLanguageOverride) {
 +  MOZ_ASSERT(aEnabled);
-+  aLanguageOverride = mLanguageOverride;
++  aLanguageOverride = GetRootDocShell()->mLanguageOverride;
 +  return NS_OK;
 +}
 +
@@ -218,7 +221,7 @@ index 344bd4a9f524616b98c664d4fb2b2154927ea7c8..74d392e71ce3a0b1a0c640cc91497777
 +NS_IMETHODIMP
 +nsDocShell::GetFileInputInterceptionEnabled(bool* aEnabled) {
 +  MOZ_ASSERT(aEnabled);
-+  *aEnabled = mFileInputInterceptionEnabled;
++  *aEnabled = GetRootDocShell()->mFileInputInterceptionEnabled;
 +  return NS_OK;
 +}
 +
@@ -239,28 +242,50 @@ index 344bd4a9f524616b98c664d4fb2b2154927ea7c8..74d392e71ce3a0b1a0c640cc91497777
 +      ToSupports(element), "juggler-file-picker-shown", nullptr);
 +}
 +
-+RefPtr<nsGeolocationService> nsDocShell::GetGeolocationOverrideService() {
-+  return mGeolocationOverrideService;
++RefPtr<nsGeolocationService> nsDocShell::GetGeolocationServiceOverride() {
++  return GetRootDocShell()->mGeolocationServiceOverride;
 +}
 +
 +NS_IMETHODIMP
 +nsDocShell::SetGeolocationOverride(nsIDOMGeoPosition* aGeolocationOverride) {
 +  if (aGeolocationOverride) {
-+    if (!mGeolocationOverrideService) {
-+      mGeolocationOverrideService = new nsGeolocationService();
-+      mGeolocationOverrideService->Init();
++    if (!mGeolocationServiceOverride) {
++      mGeolocationServiceOverride = new nsGeolocationService();
++      mGeolocationServiceOverride->Init();
 +    }
-+    mGeolocationOverrideService->Update(aGeolocationOverride);
++    mGeolocationServiceOverride->Update(aGeolocationOverride);
 +  } else {
-+    mGeolocationOverrideService = nullptr;
++    mGeolocationServiceOverride = nullptr;
 +  }
 +  return NS_OK;
 +}
 +
++NS_IMETHODIMP
++nsDocShell::GetOnlineOverride(OnlineOverride* aOnlineOverride) {
++  *aOnlineOverride = GetRootDocShell()->mOnlineOverride;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsDocShell::SetOnlineOverride(OnlineOverride aOnlineOverride) {
++  // We don't have a way to verify this coming from Javascript, so this check is
++  // still needed.
++  if (!(aOnlineOverride == ONLINE_OVERRIDE_NONE ||
++        aOnlineOverride == ONLINE_OVERRIDE_ONLINE ||
++        aOnlineOverride == ONLINE_OVERRIDE_OFFLINE)) {
++    return NS_ERROR_INVALID_ARG;
++  }
++
++  mOnlineOverride = aOnlineOverride;
++  return NS_OK;
++}
++
++// =============== Juggler End =======================
++
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
-@@ -12138,6 +12222,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12138,6 +12247,9 @@ class OnLinkClickEvent : public Runnable {
                                  mNoOpenerImplied, nullptr, nullptr,
                                  mIsUserTriggered, mTriggeringPrincipal, mCsp);
      }
@@ -270,7 +295,7 @@ index 344bd4a9f524616b98c664d4fb2b2154927ea7c8..74d392e71ce3a0b1a0c640cc91497777
      return NS_OK;
    }
  
-@@ -12227,6 +12314,9 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12227,6 +12339,9 @@ nsresult nsDocShell::OnLinkClick(
        this, aContent, aURI, target, aFileName, aPostDataStream,
        aHeadersDataStream, noOpenerImplied, aIsUserTriggered, aIsTrusted,
        aTriggeringPrincipal, aCsp);
@@ -281,7 +306,7 @@ index 344bd4a9f524616b98c664d4fb2b2154927ea7c8..74d392e71ce3a0b1a0c640cc91497777
  }
  
 diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
-index bd8327aae45f1d56acf0d5e61519c7cf469462f3..bb1bdf6aadf8276ed46c435e00e0bc4ff9ce91df 100644
+index bd8327aae45f1d56acf0d5e61519c7cf469462f3..073b11500232c895472cf7649f0b910de6a7a2bd 100644
 --- a/docshell/base/nsDocShell.h
 +++ b/docshell/base/nsDocShell.h
 @@ -13,6 +13,7 @@
@@ -309,7 +334,7 @@ index bd8327aae45f1d56acf0d5e61519c7cf469462f3..bb1bdf6aadf8276ed46c435e00e0bc4f
 +
 +  bool IsBypassCSPEnabled();
 +
-+  RefPtr<nsGeolocationService> GetGeolocationOverrideService();
++  RefPtr<nsGeolocationService> GetGeolocationServiceOverride();
 +
    // Create a content viewer within this nsDocShell for the given
    // `WindowGlobalChild` actor.
@@ -323,19 +348,21 @@ index bd8327aae45f1d56acf0d5e61519c7cf469462f3..bb1bdf6aadf8276ed46c435e00e0bc4f
    // Handles retrieval of subframe session history for nsDocShell::LoadURI. If a
    // load is requested in a subframe of the current DocShell, the subframe
    // loadType may need to reflect the loadType of the parent document, or in
-@@ -1296,6 +1307,10 @@ class nsDocShell final : public nsDocLoader,
+@@ -1296,6 +1307,12 @@ class nsDocShell final : public nsDocLoader,
    bool mUseStrictSecurityChecks : 1;
    bool mObserveErrorPages : 1;
    bool mCSSErrorReportingEnabled : 1;
 +  bool mFileInputInterceptionEnabled: 1;
 +  bool mBypassCSPEnabled : 1;
 +  nsString mLanguageOverride;
-+  RefPtr<nsGeolocationService> mGeolocationOverrideService;
++  RefPtr<nsGeolocationService> mGeolocationServiceOverride;
++  OnlineOverride mOnlineOverride;
++
    bool mAllowAuth : 1;
    bool mAllowKeywordFixup : 1;
    bool mIsOffScreenBrowser : 1;
 diff --git a/docshell/base/nsIDocShell.idl b/docshell/base/nsIDocShell.idl
-index db95b181388e8ab3c074b3b6e036dc971633e396..b550e4abdb37d9ca942796d86758377ecbc3f461 100644
+index db95b181388e8ab3c074b3b6e036dc971633e396..23030bc98a517a042357e21b15bfab4881ca4c5d 100644
 --- a/docshell/base/nsIDocShell.idl
 +++ b/docshell/base/nsIDocShell.idl
 @@ -44,6 +44,7 @@ interface nsIURI;
@@ -346,7 +373,7 @@ index db95b181388e8ab3c074b3b6e036dc971633e396..b550e4abdb37d9ca942796d86758377e
  interface nsIDocShellLoadInfo;
  interface nsIEditor;
  interface nsIEditingSession;
-@@ -1132,4 +1133,12 @@ interface nsIDocShell : nsIDocShellTreeItem
+@@ -1132,4 +1133,19 @@ interface nsIDocShell : nsIDocShellTreeItem
     * @see nsISHEntry synchronizeLayoutHistoryState().
     */
    void synchronizeLayoutHistoryState();
@@ -356,6 +383,13 @@ index db95b181388e8ab3c074b3b6e036dc971633e396..b550e4abdb37d9ca942796d86758377e
 +  attribute boolean bypassCSPEnabled;
 +
 +  attribute AString languageOverride;
++
++  cenum OnlineOverride: 8 {
++    ONLINE_OVERRIDE_NONE = 0,
++    ONLINE_OVERRIDE_ONLINE = 1,
++    ONLINE_OVERRIDE_OFFLINE = 2,
++  };
++  [infallible] attribute nsIDocShell_OnlineOverride onlineOverride;
 +
 +  void setGeolocationOverride(in nsIDOMGeoPosition position);
  };
@@ -386,7 +420,7 @@ index 394004780db4017d6ff1561febd4b379705c6302..941ef9f97a4851e785edaf25c0913a1c
    if (mLoadedAsData) {
      return NS_OK;
 diff --git a/dom/base/Navigator.cpp b/dom/base/Navigator.cpp
-index 061f19c31fa396d9ff7aedc4c0e175b3d5bf521f..4cf9c16bb1b275debd326ea860e27dd76c4f8a56 100644
+index 061f19c31fa396d9ff7aedc4c0e175b3d5bf521f..cb04aed0e46e9ec6c2bba0cc5e7cab75e008c462 100644
 --- a/dom/base/Navigator.cpp
 +++ b/dom/base/Navigator.cpp
 @@ -313,14 +313,18 @@ void Navigator::GetAppName(nsAString& aAppName, CallerType aCallerType) const {
@@ -421,6 +455,21 @@ index 061f19c31fa396d9ff7aedc4c0e175b3d5bf521f..4cf9c16bb1b275debd326ea860e27dd7
  
    // The returned value is cached by the binding code. The window listen to the
    // accept languages change and will clear the cache when needed. It has to
+@@ -530,7 +536,13 @@ bool Navigator::CookieEnabled() {
+   return granted;
+ }
+ 
+-bool Navigator::OnLine() { return !NS_IsOffline(); }
++bool Navigator::OnLine() {
++  nsDocShell* docShell = static_cast<nsDocShell*>(GetDocShell());
++  nsIDocShell::OnlineOverride onlineOverride;
++  if (!docShell || docShell->GetOnlineOverride(&onlineOverride) != NS_OK || onlineOverride == nsIDocShell::ONLINE_OVERRIDE_NONE)
++    return !NS_IsOffline();
++  return onlineOverride == nsIDocShell::ONLINE_OVERRIDE_ONLINE;
++}
+ 
+ void Navigator::GetBuildID(nsAString& aBuildID, CallerType aCallerType,
+                            ErrorResult& aRv) const {
 diff --git a/dom/base/Navigator.h b/dom/base/Navigator.h
 index 1ad4f2a680177e309ff3614b17663201c8c3b68e..a867a49b16475f2a5f8be68967568bf571731ca7 100644
 --- a/dom/base/Navigator.h
@@ -435,7 +484,7 @@ index 1ad4f2a680177e309ff3614b17663201c8c3b68e..a867a49b16475f2a5f8be68967568bf5
    dom::MediaCapabilities* MediaCapabilities();
    dom::MediaSession* MediaSession();
 diff --git a/dom/geolocation/Geolocation.cpp b/dom/geolocation/Geolocation.cpp
-index f2bb0d880f179bb37e915fe5b32692ac4307ecf7..835c8f9098ffe4f63aeac0286faa33ade21f9a0f 100644
+index f2bb0d880f179bb37e915fe5b32692ac4307ecf7..acf9cd6eddfa565186d2ca1634d2530f2e9bc76f 100644
 --- a/dom/geolocation/Geolocation.cpp
 +++ b/dom/geolocation/Geolocation.cpp
 @@ -294,10 +294,8 @@ nsGeolocationRequest::Allow(JS::HandleValue aChoices) {
@@ -469,7 +518,7 @@ index f2bb0d880f179bb37e915fe5b32692ac4307ecf7..835c8f9098ffe4f63aeac0286faa33ad
 +nsGeolocationService::GetGeolocationService(nsDocShell* docShell) {
    RefPtr<nsGeolocationService> result;
 +  if (docShell) {
-+    result = docShell->GetGeolocationOverrideService();
++    result = docShell->GetGeolocationServiceOverride();
 +    if (result)
 +      return result.forget();
 +  }
@@ -669,10 +718,10 @@ index 5de630a1db847a09651b310928bb7bc4d4f66f29..0268bc2bdfb3bfda2ef6e01a5dd24209
    nsCOMPtr<nsIPrincipal> principal =
 diff --git a/juggler/BrowserContextManager.js b/juggler/BrowserContextManager.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..d30b333e03e9a4121e0a5e1bbf694d88bab5defa
+index 0000000000000000000000000000000000000000..3365aa618718308ffdf05d9f196d792fc7b58677
 --- /dev/null
 +++ b/juggler/BrowserContextManager.js
-@@ -0,0 +1,224 @@
+@@ -0,0 +1,229 @@
 +"use strict";
 +
 +const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
@@ -778,6 +827,11 @@ index 0000000000000000000000000000000000000000..d30b333e03e9a4121e0a5e1bbf694d88
 +  async setGeolocationOverride(geolocation) {
 +    this.options.geolocation = geolocation;
 +    await Promise.all(Array.from(this.pages).map(page => page.setGeolocationOverride(geolocation)));
++  }
++
++  async setOnlineOverride(override) {
++    this.options.onlineOverride = override;
++    await Promise.all(Array.from(this.pages).map(page => page.setOnlineOverride(override)));
 +  }
 +
 +  async grantPermissions(origin, permissions) {
@@ -1007,10 +1061,10 @@ index 0000000000000000000000000000000000000000..862c680198bbb503a5f04c19bdb8fdf2
 +
 diff --git a/juggler/NetworkObserver.js b/juggler/NetworkObserver.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..268926d1cff9c3a073a1910708a813ed5481a690
+index 0000000000000000000000000000000000000000..347a2b24dc4c933c6a643469967346a6014000f9
 --- /dev/null
 +++ b/juggler/NetworkObserver.js
-@@ -0,0 +1,717 @@
+@@ -0,0 +1,726 @@
 +"use strict";
 +
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
@@ -1284,6 +1338,8 @@ index 0000000000000000000000000000000000000000..268926d1cff9c3a073a1910708a813ed
 +    const browserContext = TargetRegistry.instance().browserContextForBrowser(browser);
 +    if (browserContext && browserContext.options.requestInterceptionEnabled)
 +      return true;
++    if (browserContext && browserContext.options.onlineOverride === 'offline')
++      return true;
 +    return false;
 +  }
 +
@@ -1309,6 +1365,13 @@ index 0000000000000000000000000000000000000000..268926d1cff9c3a073a1910708a813ed
 +      interceptor._resume();
 +      return;
 +    }
++
++    const browserContext = TargetRegistry.instance().browserContextForBrowser(browser);
++    if (browserContext && browserContext.options.onlineOverride === 'offline') {
++      interceptor._abort(Cr.NS_ERROR_OFFLINE);
++      return;
++    }
++
 +    const interceptionEnabled = this._isInterceptionEnabledForBrowser(browser);
 +    this._sendOnRequest(httpChannel, !!interceptionEnabled);
 +    if (interceptionEnabled)
@@ -1866,10 +1929,10 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..e601450c163db148baa1966b1585abdd6852261d
+index 0000000000000000000000000000000000000000..75ea79a8fa493f0d8f2f88244aaf397af17833d4
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
-@@ -0,0 +1,269 @@
+@@ -0,0 +1,273 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
@@ -2108,6 +2171,10 @@ index 0000000000000000000000000000000000000000..e601450c163db148baa1966b1585abdd
 +
 +  async setGeolocationOverride(geolocation) {
 +    await this._channel.connect('').send('setGeolocationOverride', geolocation).catch(e => void e);
++  }
++
++  async setOnlineOverride(override) {
++    await this._channel.connect('').send('setOnlineOverride', override).catch(e => void e);
 +  }
 +
 +  dispose() {
@@ -4444,10 +4511,10 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/juggler/content/main.js b/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..c7708c6904454fb25f08aa5c19f7aeca27db5e21
+index 0000000000000000000000000000000000000000..56472e8515cb84d66bd0ec89e5ca1984bb360f5a
 --- /dev/null
 +++ b/juggler/content/main.js
-@@ -0,0 +1,157 @@
+@@ -0,0 +1,172 @@
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
@@ -4508,13 +4575,22 @@ index 0000000000000000000000000000000000000000..c7708c6904454fb25f08aa5c19f7aeca
 +  }
 +}
 +
++function setOnlineOverrideInDocShell(override) {
++  if (!override) {
++    docShell.onlineOverride = Ci.nsIDocShell.ONLINE_OVERRIDE_NONE;
++    return;
++  }
++  docShell.onlineOverride = override === 'online' ?
++      Ci.nsIDocShell.ONLINE_OVERRIDE_ONLINE : Ci.nsIDocShell.ONLINE_OVERRIDE_OFFLINE;
++}
++
 +function initialize() {
 +  let response = sendSyncMessage('juggler:content-ready', {})[0];
 +  if (!response)
 +    response = { sessionIds: [], browserContextOptions: {}, waitForInitialNavigation: false };
 +
 +  const { sessionIds, browserContextOptions, waitForInitialNavigation } = response;
-+  const { userAgent, bypassCSP, javaScriptDisabled, viewport, scriptsToEvaluateOnNewDocument, locale, geolocation } = browserContextOptions;
++  const { userAgent, bypassCSP, javaScriptDisabled, viewport, scriptsToEvaluateOnNewDocument, locale, geolocation, onlineOverride } = browserContextOptions;
 +
 +  if (userAgent !== undefined)
 +    docShell.customUserAgent = userAgent;
@@ -4526,6 +4602,8 @@ index 0000000000000000000000000000000000000000..c7708c6904454fb25f08aa5c19f7aeca
 +    docShell.languageOverride = locale;
 +  if (geolocation !== undefined)
 +    setGeolocationOverrideInDocShell(geolocation);
++  if (onlineOverride !== undefined)
++    setOnlineOverrideInDocShell(onlineOverride);
 +  if (viewport !== undefined) {
 +    docShell.contentViewer.overrideDPPX = viewport.deviceScaleFactor || this._initialDPPX;
 +    docShell.deviceSizeIsPageSize = viewport.isMobile;
@@ -4558,6 +4636,10 @@ index 0000000000000000000000000000000000000000..c7708c6904454fb25f08aa5c19f7aeca
 +
 +    setGeolocationOverride(geolocation) {
 +      setGeolocationOverrideInDocShell(geolocation);
++    },
++
++    setOnlineOverride(override) {
++      setOnlineOverrideInDocShell(override);
 +    },
 +
 +    async ensurePermissions(permissions) {
@@ -4686,10 +4768,10 @@ index 0000000000000000000000000000000000000000..2f2b7ca247f6b6dff396fb4b644654de
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/juggler/protocol/BrowserHandler.js b/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..5983ce421c19def00f3da36d8d4e5c4f7722006c
+index 0000000000000000000000000000000000000000..b3a7b47765d69f9ba48c74e23aaae4e2a40498e5
 --- /dev/null
 +++ b/juggler/protocol/BrowserHandler.js
-@@ -0,0 +1,170 @@
+@@ -0,0 +1,174 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -4828,6 +4910,10 @@ index 0000000000000000000000000000000000000000..5983ce421c19def00f3da36d8d4e5c4f
 +
 +  async setGeolocationOverride({browserContextId, geolocation}) {
 +    await this._contextManager.browserContextForId(browserContextId).setGeolocationOverride(geolocation);
++  }
++
++  async setOnlineOverride({browserContextId, override}) {
++    await this._contextManager.browserContextForId(browserContextId).setOnlineOverride(override);
 +  }
 +
 +  async addScriptToEvaluateOnNewDocument({browserContextId, script}) {
@@ -5731,10 +5817,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/juggler/protocol/Protocol.js b/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..a2608ebe6c45766c2fe34228f9d85ee222aa46c6
+index 0000000000000000000000000000000000000000..390e68d71c0034748ae90132d9d1defaa67de772
 --- /dev/null
 +++ b/juggler/protocol/Protocol.js
-@@ -0,0 +1,764 @@
+@@ -0,0 +1,770 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -6040,6 +6126,12 @@ index 0000000000000000000000000000000000000000..a2608ebe6c45766c2fe34228f9d85ee2
 +      returns: {
 +        cookies: t.Array(browserTypes.Cookie),
 +      },
++    },
++    'setOnlineOverride': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        override: t.Optional(t.Enum(['online', 'offline'])),
++      }
 +    },
 +  },
 +};
