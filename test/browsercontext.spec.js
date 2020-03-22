@@ -367,7 +367,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
     });
   });
 
-  describe.fail(FFOX)('BrowserContext.route', () => {
+  describe('BrowserContext.route', () => {
     it('should intercept', async({browser, server}) => {
       const context = await browser.newContext();
       let intercepted = false;

@@ -342,7 +342,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
         await context.close();
       }
     });
-    it.fail(CHROMIUM || FFOX)('should apply to popups', async({browser, server}) => {
+    it.fail(CHROMIUM || FFOX)('should format number in popups', async({browser, server}) => {
       const context = await browser.newContext({ locale: 'fr-CH' });
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
@@ -354,6 +354,19 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       await popup.waitForLoadState({ waitUntil: 'domcontentloaded' });
       const result = await popup.evaluate(() => window.result);
       expect(result).toBe('1 000 000,5');
+      await context.close();
+    });
+    it.fail(CHROMIUM)('should affect navigator.language in popups', async({browser, server}) => {
+      const context = await browser.newContext({ locale: 'fr-CH' });
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.evaluate(url => window._popup = window.open(url), server.PREFIX + '/formatted-number.html'),
+      ]);
+      await popup.waitForLoadState({ waitUntil: 'domcontentloaded' });
+      const result = await popup.evaluate(() => window.initialNavigatorLanguage);
+      expect(result).toBe('fr-CH');
       await context.close();
     });
   });
