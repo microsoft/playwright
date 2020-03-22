@@ -228,9 +228,10 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.click('label[for="agree"]');
       expect(await page.evaluate(() => result.check)).toBe(false);
     });
-    it.skip(FFOX)('should not hang with touch-enabled viewports', async({server, browser}) => {
+    it('should not hang with touch-enabled viewports', async({server, browser}) => {
       // @see https://github.com/GoogleChrome/puppeteer/issues/161
-      const context = await browser.newContext({ viewport: playwright.devices['iPhone 6'].viewport });
+      const { viewport, hasTouch } = playwright.devices['iPhone 6'];
+      const context = await browser.newContext({ viewport, hasTouch });
       const page = await context.newPage();
       await page.mouse.down();
       await page.mouse.move(100, 10);
