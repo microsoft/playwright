@@ -187,7 +187,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   }
 
   _setDebugFunction(debugFunction: (message: string) => void) {
-    this._connection._debugFunction = debugFunction;
+    this._connection._debugProtocol = debugFunction;
   }
 }
 

@@ -20,6 +20,7 @@ const os = require('os');
 const rm = require('rimraf').sync;
 const GoldenUtils = require('./golden-utils');
 const {Matchers} = require('../utils/testrunner/');
+const readline = require('readline');
 
 const YELLOW_COLOR = '\x1b[33m';
 const RESET_COLOR = '\x1b[0m';
@@ -61,7 +62,6 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
     executablePath,
     slowMo,
     headless,
-    dumpio: !!process.env.DUMPIO,
   };
 
   if (defaultBrowserOptions.executablePath) {
@@ -103,31 +103,29 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
     beforeAll(async state => {
       state.browser = await browserType.launch(defaultBrowserOptions);
       state.browserServer = state.browser.__server__;
+      state._stdout = readline.createInterface({ input: state.browserServer.process().stdout });
+      state._stderr = readline.createInterface({ input: state.browserServer.process().stderr });
     });
 
     afterAll(async state => {
       await state.browserServer.close();
       state.browser = null;
       state.browserServer = null;
-    });
+      state._stdout.close();
+      state._stderr.close();
+  });
 
     beforeEach(async(state, test) => {
-      const onLine = (line) => test.output += line + '\n';
+      test.output = [];
+      const dumpout = data => test.output.push(`\x1b[33m[pw:stdio:out]\x1b[0m ${data}`);
+      const dumperr = data => test.output.push(`\x1b[31m[pw:stdio:err]\x1b[0m ${data}`);
+      state._stdout.on('line', dumpout);
+      state._stderr.on('line', dumperr);
       if (dumpProtocolOnFailure)
-        state.browser._setDebugFunction(onLine);
-
-      let rl;
-      if (state.browserServer.process().stderr) {
-        rl = require('readline').createInterface({ input: state.browserServer.process().stderr });
-        test.output = '';
-        rl.on('line', onLine);
-      }
-
+        state.browser._setDebugFunction(data => test.output.push(`\x1b[32m[pw:protocol]\x1b[0m ${data}`));
       state.tearDown = async () => {
-        if (rl) {
-          rl.removeListener('line', onLine);
-          rl.close();
-        }
+        state._stdout.off('line', dumpout);
+        state._stderr.off('line', dumperr);
         if (dumpProtocolOnFailure)
           state.browser._setDebugFunction(() => void 0);
       };

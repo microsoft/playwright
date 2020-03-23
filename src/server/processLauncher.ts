@@ -23,7 +23,6 @@ import * as readline from 'readline';
 import { TimeoutError } from '../errors';
 import * as platform from '../platform';
 
-const debugLauncher = platform.debug('pw:launcher');
 const removeFolderAsync = platform.promisify(removeFolder);
 
 export type LaunchProcessOptions = {
@@ -49,6 +48,12 @@ let lastLaunchedId = 0;
 
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
   const id = ++lastLaunchedId;
+  const debugBrowser = platform.debug(`pw:browser:proc:[${id}]`);
+  const debugBrowserOut = platform.debug(`pw:browser:out:[${id}]`);
+  const debugBrowserErr = platform.debug(`pw:browser:err:[${id}]`);
+  (debugBrowser as any).color = '33';
+  (debugBrowserOut as any).color = '178';
+  (debugBrowserErr as any).color = '160';
   const stdio: ('ignore' | 'pipe')[] = options.pipe ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe'];
   const spawnedProcess = childProcess.spawn(
       options.executablePath,
@@ -62,7 +67,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
         stdio
       }
   );
-  debugLauncher(`[${id}] <launching> ${options.executablePath} ${options.args.join(' ')}`);
+  debugBrowser(`<launching> ${options.executablePath} ${options.args.join(' ')}`);
 
   if (!spawnedProcess.pid) {
     let reject: (e: Error) => void;
@@ -73,18 +78,24 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     return result;
   }
 
-  if (options.dumpio) {
-    spawnedProcess.stdout.pipe(process.stdout);
-    spawnedProcess.stderr.pipe(process.stderr);
-  } else {
-    spawnedProcess.stderr.on('data', () => {});
-    spawnedProcess.stdout.on('data', () => {});
-  }
+  const stdout = readline.createInterface({ input: spawnedProcess.stdout });
+  stdout.on('line', (data: string) => {
+    debugBrowserOut(data);
+    if (options.dumpio)
+      console.log(`\x1b[33m[out]\x1b[0m ${data}`);  // eslint-disable-line no-console
+  });
+
+  const stderr = readline.createInterface({ input: spawnedProcess.stderr });
+  stderr.on('line', (data: string) => {
+    debugBrowserErr(data);
+    if (options.dumpio)
+      console.log(`\x1b[31m[err]\x1b[0m ${data}`);  // eslint-disable-line no-console
+  });
 
   let processClosed = false;
   const waitForProcessToClose = new Promise((fulfill, reject) => {
     spawnedProcess.once('exit', (exitCode, signal) => {
-      debugLauncher(`[${id}] <process did exit ${exitCode}, ${signal}>`);
+      debugBrowser(`<process did exit ${exitCode}, ${signal}>`);
       processClosed = true;
       helper.removeEventListeners(listeners);
       options.onkill(exitCode, signal);
@@ -117,20 +128,20 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     // reentrancy to this function, for example user sends SIGINT second time.
     // In this case, let's forcefully kill the process.
     if (gracefullyClosing) {
-      debugLauncher(`[${id}] <forecefully close>`);
+      debugBrowser(`<forecefully close>`);
       killProcess();
       return;
     }
     gracefullyClosing = true;
-    debugLauncher(`[${id}] <gracefully close start>`);
+    debugBrowser(`<gracefully close start>`);
     options.attemptToGracefullyClose().catch(() => killProcess());
     await waitForProcessToClose;
-    debugLauncher(`[${id}] <gracefully close end>`);
+    debugBrowser(`<gracefully close end>`);
   }
 
   // This method has to be sync to be used as 'exit' event handler.
   function killProcess() {
-    debugLauncher(`[${id}] <kill>`);
+    debugBrowser(`<kill>`);
     helper.removeEventListeners(listeners);
     if (spawnedProcess.pid && !spawnedProcess.killed && !processClosed) {
       // Force kill the browser.
