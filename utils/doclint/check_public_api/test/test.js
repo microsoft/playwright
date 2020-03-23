@@ -55,6 +55,7 @@ describe('checkPublicAPI', function() {
   it('js-builder-common', testJSBuilder);
   it('js-builder-inheritance', testJSBuilder);
   it('md-builder-common', testMDBuilder);
+  it('md-builder-comments', testMDBuilder);
 });
 
 runner.run();
@@ -101,6 +102,7 @@ function serialize(doc) {
   const result = {
     classes: doc.classesArray.map(cls => ({
       name: cls.name,
+      comment: cls.comment || undefined,
       members: cls.membersArray.map(serializeMember)
     }))
   };
@@ -114,6 +116,7 @@ function serializeMember(member) {
     name: member.name,
     type: serializeType(member.type),
     kind: member.kind,
+    comment: member.comment || undefined,
     args: member.argsArray.length ? member.argsArray.map(serializeMember) : undefined
   }
 }

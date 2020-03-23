@@ -30,9 +30,8 @@ class MDOutline {
     const writer = new commonmark.HtmlRenderer();
     const html = writer.render(parsed);
 
-    page.on('console', msg => {
-      console.log(msg.text());
-    });
+    const logConsole = msg => console.log(msg.text());
+    page.on('console', logConsole);
     // Extract headings.
     await page.setContent(html);
     const {classes, errors} = await page.evaluate(() => {
@@ -56,9 +55,11 @@ class MDOutline {
         const name = str.substring(0, str.indexOf('<')).replace(/\`/g, '').trim();
         const type = findType(str);
         const properties = [];
-        const comment = str.substring(str.indexOf('<') + type.length + 2).trim();
+        let comment = str.substring(str.indexOf('<') + type.length + 2).trim();
         const hasNonEnumProperties = type.split('|').some(part => {
-          return part !== 'string' && part !== 'number' && part !== 'Array<string>' && !(part[0] === '"' && part[part.length - 1] === '"');
+          const basicTypes = new Set(['string', 'number', 'boolean']);
+          const arrayTypes = new Set([...basicTypes].map(type => `Array<${type}>`));
+          return !basicTypes.has(part) && !arrayTypes.has(part) && !(part.startsWith('"') && part.endsWith('"'));
         });
         if (hasNonEnumProperties) {
           for (const childElement of element.querySelectorAll(':scope > ul > li')) {
@@ -77,6 +78,8 @@ class MDOutline {
               property.required = true;
             properties.push(property);
           }
+        } else if (ul) {
+          comment += '\n' + parseComment(ul).split('\n').map(l => ` - ${l}`).join('\n');
         }
         return {
           name,
@@ -214,6 +217,7 @@ class MDOutline {
         return fragment;
       }
     });
+    page.off('console', logConsole);
     return new MDOutline(classes, errors);
   }
 

@@ -2,13 +2,15 @@
   "classes": [
     {
       "name": "Foo",
+      "comment": "This is a class.",
       "members": [
         {
           "name": "frame",
           "type": {
             "name": "[Frame]"
           },
-          "kind": "event"
+          "kind": "event",
+          "comment": "This event is dispatched."
         },
         {
           "name": "$",
@@ -16,13 +18,15 @@
             "name": "Promise<ElementHandle>"
           },
           "kind": "method",
+          "comment": "The method runs document.querySelector.",
           "args": [
             {
               "name": "selector",
               "type": {
                 "name": "string"
               },
-              "kind": "property"
+              "kind": "property",
+              "comment": "A selector to query page for"
             }
           ]
         },
@@ -31,7 +35,8 @@
           "type": {
             "name": "string"
           },
-          "kind": "property"
+          "kind": "property",
+          "comment": "Contains the URL of the request."
         }
       ]
     }
