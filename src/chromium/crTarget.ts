@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assert, helper } from '../helper';
+import { assert } from '../helper';
 import { Page, Worker } from '../page';
 import { CRBrowser, CRBrowserContext } from './crBrowser';
 import { CRSession, CRSessionEvents } from './crConnection';
