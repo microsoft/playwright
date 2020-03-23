@@ -1,0 +1,35 @@
+{
+  "classes": [
+    {
+      "name": "Foo",
+      "members": [
+        {
+          "name": "method",
+          "type": {
+            "name": "Promise<ElementHandle>"
+          },
+          "kind": "method",
+          "comment": "The method does something.",
+          "args": [
+            {
+              "name": "arg1",
+              "type": {
+                "name": "string"
+              },
+              "kind": "property",
+              "comment": "A single line argument comment"
+            },
+            {
+              "name": "arg2",
+              "type": {
+                "name": "string"
+              },
+              "kind": "property",
+              "comment": "A multiline argument comment:\n - it could be this\n - or it could be that"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
