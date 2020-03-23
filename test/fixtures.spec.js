@@ -72,14 +72,14 @@ module.exports.describe = function({testRunner, expect, product, browserType, pl
     it.slow()('should dump browser process stderr', async({server}) => {
       let dumpioData = '';
       const res = spawn('node', [path.join(__dirname, 'fixtures', 'dumpio.js'), playwrightPath, product, 'usewebsocket']);
-      res.stderr.on('data', data => dumpioData += data.toString('utf8'));
+      res.stdout.on('data', data => dumpioData += data.toString('utf8'));
       await new Promise(resolve => res.on('close', resolve));
       expect(dumpioData).toContain('message from dumpio');
     });
     it.slow()('should dump browser process stderr', async({server}) => {
       let dumpioData = '';
       const res = spawn('node', [path.join(__dirname, 'fixtures', 'dumpio.js'), playwrightPath, product]);
-      res.stderr.on('data', data => dumpioData += data.toString('utf8'));
+      res.stdout.on('data', data => dumpioData += data.toString('utf8'));
       await new Promise(resolve => res.on('close', resolve));
       expect(dumpioData).toContain('message from dumpio');
     });

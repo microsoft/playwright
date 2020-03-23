@@ -207,7 +207,8 @@ class Reporter {
       console.log(`${prefix} ${colors.red(`[TIMEOUT ${test.timeout}ms]`)} ${test.fullName} (${formatLocation(test.location)})`);
       if (test.output) {
         console.log('  Output:');
-        console.log(padLines(test.output, 4));
+        for (const line of test.output)
+          console.log('  ' + line);
       }
     } else if (test.result === 'failed') {
       console.log(`${prefix} ${colors.red('[FAIL]')} ${test.fullName} (${formatLocation(test.location)})`);
@@ -253,7 +254,8 @@ class Reporter {
       }
       if (test.output) {
         console.log('  Output:');
-        console.log(padLines(test.output, 4));
+        for (const line of test.output)
+          console.log('  ' + line);
       }
     }
   }

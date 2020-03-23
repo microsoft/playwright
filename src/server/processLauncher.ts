@@ -24,6 +24,10 @@ import { TimeoutError } from '../errors';
 import * as platform from '../platform';
 
 const debugLauncher = platform.debug('pw:launcher');
+const debugStdout = platform.debug('pw:stdio:out');
+const debugStderr = platform.debug('pw:stdio:err');
+(debugStdout as any).color = '178';
+(debugStderr as any).color = '160';
 const removeFolderAsync = platform.promisify(removeFolder);
 
 export type LaunchProcessOptions = {
@@ -73,13 +77,19 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     return result;
   }
 
-  if (options.dumpio) {
-    spawnedProcess.stdout.pipe(process.stdout);
-    spawnedProcess.stderr.pipe(process.stderr);
-  } else {
-    spawnedProcess.stderr.on('data', () => {});
-    spawnedProcess.stdout.on('data', () => {});
-  }
+  const stdout = readline.createInterface({ input: spawnedProcess.stdout });
+  stdout.on('line', (data: string) => {
+    debugStdout(data);
+    if (options.dumpio)
+      console.log(`\x1b[33m[out]\x1b[0m ${data}`);  // eslint-disable-line no-console
+  });
+
+  const stderr = readline.createInterface({ input: spawnedProcess.stderr });
+  stderr.on('line', (data: string) => {
+    debugStderr(data);
+    if (options.dumpio)
+      console.log(`\x1b[31m[err]\x1b[0m ${data}`);  // eslint-disable-line no-console
+  });
 
   let processClosed = false;
   const waitForProcessToClose = new Promise((fulfill, reject) => {

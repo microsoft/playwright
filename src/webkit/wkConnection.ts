@@ -46,6 +46,7 @@ export class WKConnection {
     this.browserSession = new WKSession(this, '', 'Browser has been closed.', (message: any) => {
       this.rawSend(message);
     });
+    (this._debugFunction as any).color = '34';
   }
 
   nextMessageId(): number {
