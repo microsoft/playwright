@@ -734,7 +734,7 @@ Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/e
   - `element` <[ElementHandle]> handle to the input element that was clicked
   - `multiple` <[boolean]> Whether file chooser allow for [multiple](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#attr-multiple) file selection.
 
-Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can respond to it via setting the input files using [`elementHandle.setInputFiles`](#elementhandlesetinputfilesfiles).
+Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can respond to it via setting the input files using [`elementHandle.setInputFiles`](#elementhandlesetinputfilesfiles) which can be uploaded in the end.
 
 ```js
 page.on('filechooser', async ({element, multiple}) => {
