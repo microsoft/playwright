@@ -107,6 +107,9 @@ export class CRPage implements PageDelegate {
         }
         const isInitialEmptyPage = this._page.mainFrame().url() === ':';
         if (isInitialEmptyPage) {
+          // Ignore lifecycle events for the initial empty page. It is never the final page
+          // hence we are going to get more lifecycle updates after the actual navigation has
+          // started (even if the target url is about:blank).
           lifecycleEventsEnabled.then(() => {
             this._eventListeners.push(helper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
           });
@@ -172,11 +175,6 @@ export class CRPage implements PageDelegate {
   }
 
   _onLifecycleEvent(event: Protocol.Page.lifecycleEventPayload) {
-    // Ignore lifecycle events for the initial empty page. It is never the final page
-    // hence we are going to get more lifecycle updates after the actual navigation has
-    // started (even if the target url is about:blank).
-    if (this._page.mainFrame().url() === ':')
-      return;
     if (event.name === 'load')
       this._page._frameManager.frameLifecycleEvent(event.frameId, 'load');
     else if (event.name === 'DOMContentLoaded')
