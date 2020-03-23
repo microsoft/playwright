@@ -6726,6 +6726,19 @@ index 6dca2b78830edc1ddbd66264bd332853729dac71..fbe89c9682834e11b9d9219d9eb056ed
      return NS_ERROR_NOT_AVAILABLE;
    }
  
+diff --git a/services/settings/Utils.jsm b/services/settings/Utils.jsm
+index 36da62856100a9db680f2515d9dc5427d8945233..b29d93917386d2f70d35122da0fdbe0a7b3484f1 100644
+--- a/services/settings/Utils.jsm
++++ b/services/settings/Utils.jsm
+@@ -42,7 +42,7 @@ var Utils = {
+       Ci.nsIEnvironment
+     );
+     const isXpcshell = env.exists("XPCSHELL_TEST_PROFILE_DIR");
+-    return AppConstants.RELEASE_OR_BETA && !Cu.isInAutomation && !isXpcshell
++    return false && !Cu.isInAutomation && !isXpcshell
+       ? "https://firefox.settings.services.mozilla.com/v1"
+       : gServerURL;
+   },
 diff --git a/toolkit/components/statusfilter/nsBrowserStatusFilter.cpp b/toolkit/components/statusfilter/nsBrowserStatusFilter.cpp
 index 7e10920c900670949c2bef73715bde0eb4f0ea23..8c0f31c01bce59e24fa83faeae69813b3ee60de7 100644
 --- a/toolkit/components/statusfilter/nsBrowserStatusFilter.cpp
@@ -6749,6 +6762,19 @@ index 7e10920c900670949c2bef73715bde0eb4f0ea23..8c0f31c01bce59e24fa83faeae69813b
                                          int32_t aCurSelfProgress,
                                          int32_t aMaxSelfProgress,
                                          int32_t aCurTotalProgress,
+diff --git a/toolkit/mozapps/update/UpdateService.jsm b/toolkit/mozapps/update/UpdateService.jsm
+index 33caae56237e10f01fbcbf3ea9bf5ebf22e82763..1538c49f64b36a706de5ece79075319696409789 100644
+--- a/toolkit/mozapps/update/UpdateService.jsm
++++ b/toolkit/mozapps/update/UpdateService.jsm
+@@ -3097,7 +3097,7 @@ UpdateService.prototype = {
+       ).running;
+     }
+ 
+-    return (
++    return true || (
+       (Cu.isInAutomation || marionetteRunning) &&
+       Services.prefs.getBoolPref(PREF_APP_UPDATE_DISABLEDFORTESTING, false)
+     );
 diff --git a/toolkit/toolkit.mozbuild b/toolkit/toolkit.mozbuild
 index 299230cb3bde5ecd111454ed6f59d1f0504b67a1..09f4ef69776217e5e9f5cc4ad4de939887d8c871 100644
 --- a/toolkit/toolkit.mozbuild
