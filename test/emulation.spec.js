@@ -342,7 +342,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
         await context.close();
       }
     });
-    it.fail(CHROMIUM || FFOX)('should format number in popups', async({browser, server}) => {
+    it.fail(FFOX)('should format number in popups', async({browser, server}) => {
       const context = await browser.newContext({ locale: 'fr-CH' });
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
@@ -356,7 +356,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       expect(result).toBe('1 000 000,5');
       await context.close();
     });
-    it.fail(CHROMIUM)('should affect navigator.language in popups', async({browser, server}) => {
+    it('should affect navigator.language in popups', async({browser, server}) => {
       const context = await browser.newContext({ locale: 'fr-CH' });
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);

@@ -69,7 +69,8 @@ export class CRPage implements PageDelegate {
     this._firstNonInitialNavigationCommittedPromise = new Promise(f => this._firstNonInitialNavigationCommittedCallback = f);
   }
 
-  async initialize(hasInitialAboutBlank: boolean) {
+  async initialize() {
+    let lifecycleEventsEnabled: Promise<any>;
     const promises: Promise<any>[] = [
       this._client.send('Page.enable'),
       this._client.send('Page.getFrameTree').then(({frameTree}) => {
@@ -84,7 +85,6 @@ export class CRPage implements PageDelegate {
           helper.addEventListener(this._client, 'Page.frameRequestedNavigation', event => this._onFrameRequestedNavigation(event)),
           helper.addEventListener(this._client, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
           helper.addEventListener(this._client, 'Page.javascriptDialogOpening', event => this._onDialog(event)),
-          helper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)),
           helper.addEventListener(this._client, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
           helper.addEventListener(this._client, 'Runtime.bindingCalled', event => this._onBindingCalled(event)),
           helper.addEventListener(this._client, 'Runtime.consoleAPICalled', event => this._onConsoleAPI(event)),
@@ -105,9 +105,21 @@ export class CRPage implements PageDelegate {
           for (const binding of this._browserContext._pageBindings.values())
             frame.evaluate(binding.source).catch(debugError);
         }
+        const isInitialEmptyPage = this._page.mainFrame().url() === ':';
+        if (isInitialEmptyPage) {
+          // Ignore lifecycle events for the initial empty page. It is never the final page
+          // hence we are going to get more lifecycle updates after the actual navigation has
+          // started (even if the target url is about:blank).
+          lifecycleEventsEnabled.then(() => {
+            this._eventListeners.push(helper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
+          });
+        } else {
+          this._firstNonInitialNavigationCommittedCallback();
+          this._eventListeners.push(helper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
+        }
       }),
       this._client.send('Log.enable', {}),
-      this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
+      lifecycleEventsEnabled = this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
       this._client.send('Runtime.enable', {}),
       this._client.send('Page.addScriptToEvaluateOnNewDocument', {
         source: `//# sourceURL=${EVALUATION_SCRIPT_URL}`,
@@ -145,8 +157,7 @@ export class CRPage implements PageDelegate {
     for (const source of this._browserContext._evaluateOnNewDocumentSources)
       promises.push(this.evaluateOnNewDocument(source));
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
-    if (hasInitialAboutBlank)
-      promises.push(this._firstNonInitialNavigationCommittedPromise);
+    promises.push(this._firstNonInitialNavigationCommittedPromise);
     await Promise.all(promises);
   }
 

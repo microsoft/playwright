@@ -40,7 +40,6 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   _targets = new Map<string, CRTarget>();
   readonly _firstPagePromise: Promise<void>;
   private _firstPageCallback = () => {};
-  private _popupOpeners: string[] = [];
 
   private _tracingRecording = false;
   private _tracingPath: string | null = '';
@@ -105,15 +104,6 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     return createPageInNewContext(this, options);
   }
 
-  _onWindowOpen(openerId: string, payload: Protocol.Page.windowOpenPayload) {
-    // window.open($url) with noopener forces a new browser-initiated window, not
-    // a renderer-initiated one. When url is about:blank, we only get an
-    // initial navigation, and no real navigation to $url.
-    if (payload.windowFeatures.includes('noopener') && payload.url.startsWith('about:blank'))
-      return;
-    this._popupOpeners.push(openerId);
-  }
-
   _onAttachedToTarget({targetInfo, sessionId, waitingForDebugger}: Protocol.Target.attachedToTargetPayload) {
     const session = this._connection.session(sessionId)!;
     if (!CRTarget.isPageType(targetInfo.type) && targetInfo.type !== 'service_worker') {
@@ -159,18 +149,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   private _createTarget(targetInfo: Protocol.Target.TargetInfo, session: CRSession) {
     const {browserContextId} = targetInfo;
     const context = (browserContextId && this._contexts.has(browserContextId)) ? this._contexts.get(browserContextId)! : this._defaultContext;
-    let hasInitialAboutBlank = false;
-    if (CRTarget.isPageType(targetInfo.type) && targetInfo.openerId) {
-      const openerIndex = this._popupOpeners.indexOf(targetInfo.openerId);
-      if (openerIndex !== -1) {
-        this._popupOpeners.splice(openerIndex, 1);
-        // When this page is a result of window.open($url) call, we should have it's opener
-        // in the list of popup openers. In this case we know there is an initial
-        // about:blank navigation, followed by a navigation to $url.
-        hasInitialAboutBlank = true;
-      }
-    }
-    const target = new CRTarget(this, targetInfo, context, session, hasInitialAboutBlank);
+    const target = new CRTarget(this, targetInfo, context, session);
     assert(!this._targets.has(targetInfo.targetId), 'Target should not exist before targetCreated');
     this._targets.set(targetInfo.targetId, target);
     return { context, target };
