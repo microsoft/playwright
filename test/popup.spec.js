@@ -87,7 +87,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(request.headers['foo']).toBe('bar');
     });
-    it.fail(FFOX)('should inherit offline from browser context', async function({browser, server}) {
+    it('should inherit offline from browser context', async function({browser, server}) {
       const context = await browser.newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);

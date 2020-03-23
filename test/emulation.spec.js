@@ -237,7 +237,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       await page.emulateMedia({ colorScheme: 'bad' }).catch(e => error = e);
       expect(error.message).toBe('Unsupported color scheme: bad');
     });
-    it.fail(FFOX)('should work during navigation', async({page, server}) => {
+    it('should work during navigation', async({page, server}) => {
       await page.emulateMedia({ colorScheme: 'light' });
       const navigated = page.goto(server.EMPTY_PAGE);
       for (let i = 0; i < 9; i++) {

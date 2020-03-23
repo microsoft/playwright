@@ -224,7 +224,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       });
     });
     // @see https://github.com/GoogleChrome/puppeteer/issues/3865
-    it.fail(FFOX)('should not throw when there are console messages in detached iframes', async({page, server}) => {
+    it('should not throw when there are console messages in detached iframes', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const [popup] = await Promise.all([
         page.waitForEvent('popup'),
