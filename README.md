@@ -16,7 +16,7 @@ Playwright is a Node library to automate the [Chromium](https://www.chromium.org
 
 Our primary goal with Playwright is to improve automated UI testing by eliminating flakiness, improving the speed of execution and offering insights into the browser operation.
 
-### Installation
+### Usage
 
 ```
 npm i playwright
@@ -24,9 +24,10 @@ npm i playwright
 
 This installs Playwright along with its dependencies and the browser binaries. Browser binaries are about 50-100MB each, so expect the installation network traffic to be substantial.
 
-### Usage
+Once installed, Playwright can be used to create a browser instance, open pages and then automate interactions.
 
-Playwright can be used to create a browser instance, open pages, and then manipulate them. See [API docs](https://github.com/microsoft/playwright/blob/master/docs/api.md) for a comprehensive list.
+* [Get started with examples](docs/examples/README.md)
+* [API reference](docs/api.md)
 
 ### Examples
 
