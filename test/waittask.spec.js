@@ -185,7 +185,8 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await page.evaluate(() => window.__injected = true);
       await watchdog;
     });
-    it('should survive cross-process navigation', async({page, server}) => {
+    it.fail(WEBKIT)('should survive cross-process navigation', async({page, server}) => {
+      // Started failing after rolling WebKit r258875.
       let fooFound = false;
       const waitForFunction = page.waitForFunction('window.__FOO === 1').then(() => fooFound = true);
       await page.goto(server.EMPTY_PAGE);
