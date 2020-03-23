@@ -141,7 +141,7 @@ export class CRPage implements PageDelegate {
     if (options.userAgent || options.locale)
       promises.push(this._client.send('Emulation.setUserAgentOverride', { userAgent: options.userAgent || '', acceptLanguage: options.locale }));
     if (options.locale)
-      promises.push(this._client.send('Emulation.setLocaleOverride', { locale: options.locale }));
+      promises.push(emulateLocale(this._client, options.locale));
     if (options.timezoneId)
       promises.push(emulateTimezone(this._client, options.timezoneId));
     if (options.geolocation)
@@ -608,10 +608,25 @@ function toRemoteObject(handle: js.JSHandle): Protocol.Runtime.RemoteObject {
   return handle._remoteObject as Protocol.Runtime.RemoteObject;
 }
 
+async function emulateLocale(session: CRSession, locale: string) {
+  try {
+    await session.send('Emulation.setLocaleOverride', { locale });
+  } catch (exception) {
+    // All pages in the same renderer share locale. All such pages belong to the same
+    // context and if locale is overridden for one of them its value is the same as
+    // we are trying to set so it's not a problem.
+    if (exception.message.includes('Another locale override is already in effect'))
+      return;
+    throw exception;
+  }
+}
+
 async function emulateTimezone(session: CRSession, timezoneId: string) {
   try {
     await session.send('Emulation.setTimezoneOverride', { timezoneId: timezoneId });
   } catch (exception) {
+    if (exception.message.includes('Timezone override is already in effect'))
+      return;
     if (exception.message.includes('Invalid timezone'))
       throw new Error(`Invalid timezone ID: ${timezoneId}`);
     throw exception;
