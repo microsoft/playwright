@@ -411,7 +411,7 @@ class TestPass {
     if (error) {
       if (error.stack)
         await this._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
-      this._result.addError(message, error);
+      this._result.addError(message, error, this._workers.length === 1 ? this._workers[0] : null);
     }
   }
 
