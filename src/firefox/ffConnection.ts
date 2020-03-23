@@ -58,7 +58,6 @@ export class FFConnection extends platform.EventEmitter {
     this.off = super.removeListener;
     this.removeListener = super.removeListener;
     this.once = super.once;
-    (this._debugProtocol as any).color = '34';
   }
 
   async send<T extends keyof Protocol.CommandParameters>(

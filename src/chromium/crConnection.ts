@@ -44,7 +44,6 @@ export class CRConnection extends platform.EventEmitter {
     this.rootSession = new CRSession(this, '', 'browser', '');
     this._sessions.set('', this.rootSession);
     this._debugProtocol = platform.debug('pw:protocol');
-    (this._debugProtocol as any).color = '34';
   }
 
   static fromSession(session: CRSession): CRConnection {
