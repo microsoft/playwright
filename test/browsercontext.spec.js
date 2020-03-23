@@ -497,7 +497,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
         context.waitForEvent('page'),
         page.evaluate(url => window.open(url), server.EMPTY_PAGE)
       ]);
-      await otherPage.waitForLoadState({ waitUntil: 'domcontentloaded' });
+      await otherPage.waitForLoadState('domcontentloaded');
       expect(otherPage.url()).toBe(server.EMPTY_PAGE);
       await context.close();
     });
@@ -508,7 +508,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
         context.waitForEvent('page'),
         page.evaluate(url => window.open(url), 'about:blank')
       ]);
-      await otherPage.waitForLoadState({ waitUntil: 'domcontentloaded' });
+      await otherPage.waitForLoadState('domcontentloaded');
       expect(otherPage.url()).toBe('about:blank');
       await context.close();
     });
@@ -519,7 +519,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
         context.waitForEvent('page'),
         page.evaluate(() => window.open())
       ]);
-      await otherPage.waitForLoadState({ waitUntil: 'domcontentloaded' });
+      await otherPage.waitForLoadState('domcontentloaded');
       expect(otherPage.url()).toBe('about:blank');
       await context.close();
     });
@@ -577,7 +577,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       // Issue a redirect.
       serverResponse.writeHead(302, { location: '/injectedstyle.css' });
       serverResponse.end();
-      await newPage.waitForLoadState({ waitUntil: 'domcontentloaded' });
+      await newPage.waitForLoadState('domcontentloaded');
       expect(newPage.url()).toBe(server.PREFIX + '/one-style.html');
       // Cleanup.
       await context.close();

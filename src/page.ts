@@ -295,8 +295,8 @@ export class Page extends platform.EventEmitter {
     return waitPromise;
   }
 
-  async waitForLoadState(options?: types.NavigateOptions): Promise<void> {
-    return this.mainFrame().waitForLoadState(options);
+  async waitForLoadState(state?: types.LifecycleEvent, options?: types.TimeoutOptions): Promise<void> {
+    return this.mainFrame().waitForLoadState(state, options);
   }
 
   async waitForNavigation(options?: types.WaitForNavigationOptions): Promise<network.Response | null> {

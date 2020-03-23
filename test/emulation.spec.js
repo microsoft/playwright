@@ -351,7 +351,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
         page.waitForEvent('popup'),
         page.evaluate(url => window._popup = window.open(url), server.PREFIX + '/formatted-number.html'),
       ]);
-      await popup.waitForLoadState({ waitUntil: 'domcontentloaded' });
+      await popup.waitForLoadState('domcontentloaded');
       const result = await popup.evaluate(() => window.result);
       expect(result).toBe('1 000 000,5');
       await context.close();
@@ -364,7 +364,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
         page.waitForEvent('popup'),
         page.evaluate(url => window._popup = window.open(url), server.PREFIX + '/formatted-number.html'),
       ]);
-      await popup.waitForLoadState({ waitUntil: 'domcontentloaded' });
+      await popup.waitForLoadState('domcontentloaded');
       const result = await popup.evaluate(() => window.initialNavigatorLanguage);
       expect(result).toBe('fr-CH');
       await context.close();

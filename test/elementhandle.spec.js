@@ -218,7 +218,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
         return div;
       });
       expect(await divHandle.ownerFrame()).toBe(page.mainFrame());
-      await popup.waitForLoadState({ waitUntil: 'domcontentloaded' });
+      await popup.waitForLoadState('domcontentloaded');
       await page.evaluate(() => {
         const div = document.querySelector('div');
         window.__popup.document.body.appendChild(div);

@@ -32,7 +32,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
         context.waitForEvent('page'),
         page.click('a'),
       ]);
-      await popup.waitForLoadState({waitUntil: 'domcontentloaded'})
+      await popup.waitForLoadState('domcontentloaded');
       const userAgent = await popup.evaluate(() => window.initialUserAgent);
       const request = await requestPromise;
       await context.close();
@@ -110,7 +110,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
         page.waitForEvent('popup'),
         page.evaluate(url => window._popup = window.open(url), server.PREFIX + '/title.html'),
       ]);
-      await popup.waitForLoadState({waitUntil: 'domcontentloaded'});
+      await popup.waitForLoadState('domcontentloaded');
       expect(await popup.title()).toBe('Woof-Woof');
       await context.close();
     });
