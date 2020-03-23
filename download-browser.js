@@ -14,10 +14,19 @@
  * limitations under the License.
  */
 const fs = require('fs');
+const path = require('path');
 const browserFetcher = require('./lib/server/browserFetcher.js');
 const packageJSON = require('./package.json');
 
-async function downloadBrowserWithProgressBar(downloadPath, browser, version = '') {
+const FALSY_VALUES = ['0', 'false'];
+
+async function downloadBrowserWithProgressBar(downloadPath, browser, respectGlobalInstall = false) {
+  const PLAYWRIGHT_GLOBAL_INSTALL = respectGlobalInstall ? getFromENV('PLAYWRIGHT_GLOBAL_INSTALL') : false;
+  if (!!PLAYWRIGHT_GLOBAL_INSTALL && !FALSY_VALUES.includes(PLAYWRIGHT_GLOBAL_INSTALL.toLowerCase().trim())) {
+    const envPaths = require('env-paths');
+    const appPaths = envPaths('playwright');
+    downloadPath = path.join(appPaths.cache, `playwright-${packageJSON.version}-${browser}`);
+  }
   let progressBar = null;
   let lastDownloadedBytes = 0;
   const revision = packageJSON.playwright[`${browser}_revision`];
@@ -29,7 +38,6 @@ async function downloadBrowserWithProgressBar(downloadPath, browser, version = '
         incomplete: ' ',
         width: 20,
         total: totalBytes,
-        host: getFromENV('PLAYWRIGHT_DOWNLOAD_HOST'),
       });
     }
     const delta = downloadedBytes - lastDownloadedBytes;
@@ -41,6 +49,7 @@ async function downloadBrowserWithProgressBar(downloadPath, browser, version = '
     browser,
     revision,
     progress,
+    host: getFromENV('PLAYWRIGHT_DOWNLOAD_HOST'),
   });
   logPolitely(`${browser} downloaded to ${downloadPath}`);
   return executablePath;
