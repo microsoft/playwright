@@ -37,28 +37,27 @@ It is also possible to open **browser developer tools** during execution, to ins
 
 <p align="center"><a href="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png"><img src="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png" width="500" alt="Chromium Developer Tools"></a></p>
 
+## Core concepts
+
+* A [`Browser`](../api.md#class-browser) refers to an instance of Chromium, Firefox or WebKit browsers.
+* A [`BrowserContext`](../api.md#class-browsercontext) is an isolated incognito session within a browser instance. Browser contexts are fast to create and can be used to parallelize isolated test executions.
+* A [`Page`](../api.md#class-page) refers to a single tab within a browser context, which includes one or more [`Frame`](../api.md#class-frame) objects.
+
 ## Example recipes
 
 ### [Authentication](authentication.js)
 
 This script logs in on GitHub.com through Chromium, and then reuses the login cookies state in WebKit. This recipe can be used to speed up tests by logging in once and reusing login state.
 
-<!--
-## Core concepts
+### [File uploads](upload.js)
 
-* Browser
-* Browser contexts
-* Pages and frames
-* Evaluate in page context
--->
+This script uploads a file to an `input` element that accepts file uploads.
 
 <!--
 Other examples
-* Page navigation and wait for load
-* Request interception
+* Request interception/server response stub/mock
 * Geolocation and mobile emulation
-
-* Uploading a file
 * Handling a popup, eg, accept dialog
-* Async page load (see #662)
+* Page navigation and wait for load
+  * Async page load (see #662)
 -->
