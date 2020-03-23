@@ -27,7 +27,7 @@ import { Selectors } from './selectors';
 
 export type PointerActionOptions = {
   modifiers?: input.Modifier[];
-  offset?: types.Point;
+  position?: types.Point;
 };
 
 export type ClickOptions = PointerActionOptions & input.MouseClickOptions;
@@ -225,9 +225,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const { force = false } = (options || {});
     if (!force)
       await this._waitForDisplayedAtStablePosition(options);
-    const offset = options ? options.offset : undefined;
-    await this._scrollRectIntoViewIfNeeded(offset ? { x: offset.x, y: offset.y, width: 0, height: 0 } : undefined);
-    const point = offset ? await this._offsetPoint(offset) : await this._clickablePoint();
+    const position = options ? options.position : undefined;
+    await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
+    const point = position ? await this._offsetPoint(position) : await this._clickablePoint();
     if (!force)
       await this._waitForHitTargetAt(point, options);
 
