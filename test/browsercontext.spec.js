@@ -326,7 +326,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
   });
 
   describe('BrowserContext.exposeFunction', () => {
-    it.fail(FFOX)('should work', async({browser, server}) => {
+    it('should work', async({browser, server}) => {
       const context = await browser.newContext();
       await context.exposeFunction('add', (a, b) => a + b);
       const page = await context.newPage();
@@ -337,7 +337,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(result).toEqual({ mul: 36, add: 13 });
       await context.close();
     });
-    it.fail(FFOX)('should throw for duplicate registrations', async({browser, server}) => {
+    it('should throw for duplicate registrations', async({browser, server}) => {
       const context = await browser.newContext();
       await context.exposeFunction('foo', () => {});
       await context.exposeFunction('bar', () => {});
@@ -351,7 +351,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(error.message).toBe('Function "baz" has been already registered in one of the pages');
       await context.close();
     });
-    it.fail(FFOX)('should be callable from-inside addInitScript', async({browser, server}) => {
+    it('should be callable from-inside addInitScript', async({browser, server}) => {
       const context = await browser.newContext();
       let args = [];
       await context.exposeFunction('woof', function(arg) {

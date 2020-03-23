@@ -166,7 +166,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(injected).toBe(123);
     });
-    it.fail(FFOX)('should expose function from browser context', async function({browser, server}) {
+    it('should expose function from browser context', async function({browser, server}) {
       const context = await browser.newContext();
       await context.exposeFunction('add', (a, b) => a + b);
       const page = await context.newPage();

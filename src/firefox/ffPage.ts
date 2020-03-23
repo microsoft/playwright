@@ -266,9 +266,7 @@ export class FFPage implements PageDelegate {
   }
 
   async exposeBinding(binding: PageBinding) {
-    await this._session.send('Page.addBinding', {name: binding.name});
-    await this._session.send('Page.addScriptToEvaluateOnNewDocument', {script: binding.source});
-    await Promise.all(this._page.frames().map(frame => frame.evaluate(binding.source).catch(debugError)));
+    await this._session.send('Page.addBinding', { name: binding.name, script: binding.source });
   }
 
   didClose() {
