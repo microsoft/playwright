@@ -718,10 +718,10 @@ index 5de630a1db847a09651b310928bb7bc4d4f66f29..0268bc2bdfb3bfda2ef6e01a5dd24209
    nsCOMPtr<nsIPrincipal> principal =
 diff --git a/juggler/BrowserContextManager.js b/juggler/BrowserContextManager.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..3365aa618718308ffdf05d9f196d792fc7b58677
+index 0000000000000000000000000000000000000000..bd57d338c279f5ab31102e6644f43e133b7f4e25
 --- /dev/null
 +++ b/juggler/BrowserContextManager.js
-@@ -0,0 +1,229 @@
+@@ -0,0 +1,235 @@
 +"use strict";
 +
 +const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
@@ -807,6 +807,7 @@ index 0000000000000000000000000000000000000000..3365aa618718308ffdf05d9f196d792f
 +    this._manager._userContextIdToBrowserContext.set(this.userContextId, this);
 +    this.options = options || {};
 +    this.options.scriptsToEvaluateOnNewDocument = [];
++    this.options.bindings = [];
 +    this.pages = new Set();
 +  }
 +
@@ -822,6 +823,11 @@ index 0000000000000000000000000000000000000000..3365aa618718308ffdf05d9f196d792f
 +  async addScriptToEvaluateOnNewDocument(script) {
 +    this.options.scriptsToEvaluateOnNewDocument.push(script);
 +    await Promise.all(Array.from(this.pages).map(page => page.addScriptToEvaluateOnNewDocument(script)));
++  }
++
++  async addBinding(name, script) {
++    this.options.bindings.push({ name, script });
++    await Promise.all(Array.from(this.pages).map(page => page.addBinding(name, script)));
 +  }
 +
 +  async setGeolocationOverride(geolocation) {
@@ -1929,10 +1935,10 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..75ea79a8fa493f0d8f2f88244aaf397af17833d4
+index 0000000000000000000000000000000000000000..e624e3c21a20dd324e0d135598e2a2402c8b62bf
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
-@@ -0,0 +1,273 @@
+@@ -0,0 +1,277 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
@@ -2169,6 +2175,10 @@ index 0000000000000000000000000000000000000000..75ea79a8fa493f0d8f2f88244aaf397a
 +    await this._channel.connect('').send('addScriptToEvaluateOnNewDocument', script).catch(e => void e);
 +  }
 +
++  async addBinding(name, script) {
++    await this._channel.connect('').send('addBinding', { name, script }).catch(e => void e);
++  }
++
 +  async setGeolocationOverride(geolocation) {
 +    await this._channel.connect('').send('setGeolocationOverride', geolocation).catch(e => void e);
 +  }
@@ -2354,10 +2364,10 @@ index 0000000000000000000000000000000000000000..268fbc361d8053182bb6c27f626e853d
 +
 diff --git a/juggler/content/FrameTree.js b/juggler/content/FrameTree.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..13c3cd817b369ed012326b97d03ba6e123b84740
+index 0000000000000000000000000000000000000000..679b5851c427064c636bd1f7793358cc45b0de67
 --- /dev/null
 +++ b/juggler/content/FrameTree.js
-@@ -0,0 +1,376 @@
+@@ -0,0 +1,411 @@
 +"use strict";
 +const Ci = Components.interfaces;
 +const Cr = Components.results;
@@ -2378,6 +2388,7 @@ index 0000000000000000000000000000000000000000..13c3cd817b369ed012326b97d03ba6e1
 +      this._browsingContextGroup.__jugglerFrameTrees = new Set();
 +    this._browsingContextGroup.__jugglerFrameTrees.add(this);
 +
++    this._bindings = new Map();
 +    this._workers = new Map();
 +    this._docShellToFrame = new Map();
 +    this._frameIdToFrame = new Map();
@@ -2408,6 +2419,7 @@ index 0000000000000000000000000000000000000000..13c3cd817b369ed012326b97d03ba6e1
 +    this._eventListeners = [
 +      helper.addObserver(subject => this._onDocShellCreated(subject.QueryInterface(Ci.nsIDocShell)), 'webnavigation-create'),
 +      helper.addObserver(subject => this._onDocShellDestroyed(subject.QueryInterface(Ci.nsIDocShell)), 'webnavigation-destroy'),
++      helper.addObserver(window => this._onDOMWindowCreated(window), 'content-document-global-created'),
 +      helper.addProgressListener(webProgress, this, flags),
 +    ];
 +  }
@@ -2469,6 +2481,25 @@ index 0000000000000000000000000000000000000000..13c3cd817b369ed012326b97d03ba6e1
 +
 +  scriptsToEvaluateOnNewDocument() {
 +    return this._scriptsToEvaluateOnNewDocument;
++  }
++
++  addBinding(name, script) {
++    this._bindings.set(name, script);
++    for (const frame of this.frames())
++      this._addBindingToFrame(frame, name, script);
++  }
++
++  _addBindingToFrame(frame, name, script) {
++    Cu.exportFunction((...args) => {
++      this.emit(FrameTree.Events.BindingCalled, {
++        frame,
++        name,
++        payload: args[0]
++      });
++    }, frame.domWindow(), {
++      defineAs: name,
++    });
++    frame.domWindow().eval(script);
 +  }
 +
 +  frameForDocShell(docShell) {
@@ -2578,6 +2609,8 @@ index 0000000000000000000000000000000000000000..13c3cd817b369ed012326b97d03ba6e1
 +    const frame = new Frame(this, docShell, parentFrame);
 +    this._docShellToFrame.set(docShell, frame);
 +    this._frameIdToFrame.set(frame.id(), frame);
++    for (const [name, script] of this._bindings)
++      this._addBindingToFrame(frame, name, script);
 +    this.emit(FrameTree.Events.FrameAttached, frame);
 +    return frame;
 +  }
@@ -2586,6 +2619,16 @@ index 0000000000000000000000000000000000000000..13c3cd817b369ed012326b97d03ba6e1
 +    const frame = this._docShellToFrame.get(docShell);
 +    if (frame)
 +      this._detachFrame(frame);
++  }
++
++  _onDOMWindowCreated(window) {
++    const docShell = window.docShell;
++    const frame = this.frameForDocShell(docShell);
++    if (!frame)
++      return;
++    for (const [name, script] of this._bindings)
++      this._addBindingToFrame(frame, name, script);
++    this.emit(FrameTree.Events.GlobalObjectCreated, { frame, window });
 +  }
 +
 +  _detachFrame(frame) {
@@ -2602,8 +2645,10 @@ index 0000000000000000000000000000000000000000..13c3cd817b369ed012326b97d03ba6e1
 +}
 +
 +FrameTree.Events = {
++  BindingCalled: 'bindingcalled',
 +  FrameAttached: 'frameattached',
 +  FrameDetached: 'framedetached',
++  GlobalObjectCreated: 'globalobjectcreated',
 +  WorkerCreated: 'workercreated',
 +  WorkerDestroyed: 'workerdestroyed',
 +  NavigationStarted: 'navigationstarted',
@@ -2804,10 +2849,10 @@ index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c3
 +
 diff --git a/juggler/content/PageAgent.js b/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..3dd06f27d071a1ca70609d63a12b1ff690d99371
+index 0000000000000000000000000000000000000000..6a001d9f51c819edd3981e090172ac87d6f85840
 --- /dev/null
 +++ b/juggler/content/PageAgent.js
-@@ -0,0 +1,938 @@
+@@ -0,0 +1,921 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -2873,8 +2918,6 @@ index 0000000000000000000000000000000000000000..3dd06f27d071a1ca70609d63a12b1ff6
 +      name: '',
 +    });
 +
-+    for (const bindingName of this._agent._bindingsToAdd.values())
-+      this.exposeFunction(bindingName);
 +    for (const script of this._agent._frameTree.scriptsToEvaluateOnNewDocument()) {
 +      // TODO: this should actually be handled in FrameTree, but first we have to move
 +      // execution contexts there.
@@ -2894,18 +2937,6 @@ index 0000000000000000000000000000000000000000..3dd06f27d071a1ca70609d63a12b1ff6
 +      } catch (e) {
 +      }
 +    }
-+  }
-+
-+  exposeFunction(name) {
-+    Cu.exportFunction((...args) => {
-+      this._agent._browserPage.emit('pageBindingCalled', {
-+        executionContextId: this.mainContext.id(),
-+        name,
-+        payload: args[0]
-+      });
-+    }, this._frame.domWindow(), {
-+      defineAs: name,
-+    });
 +  }
 +
 +  createIsolatedWorld(name) {
@@ -2954,11 +2985,10 @@ index 0000000000000000000000000000000000000000..3dd06f27d071a1ca70609d63a12b1ff6
 +    this._frameData = new Map();
 +    this._workerData = new Map();
 +    this._scriptsToEvaluateOnNewDocument = new Map();
-+    this._bindingsToAdd = new Set();
 +
 +    this._eventListeners = [
 +      browserChannel.register(sessionId + 'page', {
-+        addBinding: this._addBinding.bind(this),
++        addBinding: ({ name, script }) => this._frameTree.addBinding(name, script),
 +        addScriptToEvaluateOnNewDocument: this._addScriptToEvaluateOnNewDocument.bind(this),
 +        adoptNode: this._adoptNode.bind(this),
 +        awaitViewportDimensions: this._awaitViewportDimensions.bind(this),
@@ -3080,13 +3110,14 @@ index 0000000000000000000000000000000000000000..3dd06f27d071a1ca70609d63a12b1ff6
 +      helper.addObserver(this._linkClicked.bind(this, false), 'juggler-link-click'),
 +      helper.addObserver(this._linkClicked.bind(this, true), 'juggler-link-click-sync'),
 +      helper.addObserver(this._filePickerShown.bind(this), 'juggler-file-picker-shown'),
-+      helper.addObserver(this._onDOMWindowCreated.bind(this), 'content-document-global-created'),
 +      helper.addEventListener(this._messageManager, 'DOMContentLoaded', this._onDOMContentLoaded.bind(this)),
 +      helper.addEventListener(this._messageManager, 'pageshow', this._onLoad.bind(this)),
 +      helper.addObserver(this._onDocumentOpenLoad.bind(this), 'juggler-document-open-loaded'),
 +      helper.addEventListener(this._messageManager, 'error', this._onError.bind(this)),
++      helper.on(this._frameTree, 'bindingcalled', this._onBindingCalled.bind(this)),
 +      helper.on(this._frameTree, 'frameattached', this._onFrameAttached.bind(this)),
 +      helper.on(this._frameTree, 'framedetached', this._onFrameDetached.bind(this)),
++      helper.on(this._frameTree, 'globalobjectcreated', this._onGlobalObjectCreated.bind(this)),
 +      helper.on(this._frameTree, 'navigationstarted', this._onNavigationStarted.bind(this)),
 +      helper.on(this._frameTree, 'navigationcommitted', this._onNavigationCommitted.bind(this)),
 +      helper.on(this._frameTree, 'navigationaborted', this._onNavigationAborted.bind(this)),
@@ -3244,11 +3275,7 @@ index 0000000000000000000000000000000000000000..3dd06f27d071a1ca70609d63a12b1ff6
 +    });
 +  }
 +
-+  _onDOMWindowCreated(window) {
-+    const docShell = window.docShell;
-+    const frame = this._frameTree.frameForDocShell(docShell);
-+    if (!frame)
-+      return;
++  _onGlobalObjectCreated({ frame }) {
 +    this._frameData.get(frame).reset();
 +  }
 +
@@ -3264,6 +3291,15 @@ index 0000000000000000000000000000000000000000..3dd06f27d071a1ca70609d63a12b1ff6
 +    this._frameData.delete(frame);
 +    this._browserPage.emit('pageFrameDetached', {
 +      frameId: frame.id(),
++    });
++  }
++
++  _onBindingCalled({frame, name, payload}) {
++    const frameData = this._frameData.get(frame);
++    this._browserPage.emit('pageBindingCalled', {
++      executionContextId: frameData.mainContext.id(),
++      name,
++      payload
 +    });
 +  }
 +
@@ -3332,14 +3368,6 @@ index 0000000000000000000000000000000000000000..3dd06f27d071a1ca70609d63a12b1ff6
 +      return {navigationId: null, navigationURL: null};
 +    docShell.goForward();
 +    return {navigationId: frame.pendingNavigationId(), navigationURL: frame.pendingNavigationURL()};
-+  }
-+
-+  _addBinding({name}) {
-+    if (this._bindingsToAdd.has(name))
-+      throw new Error(`Binding with name ${name} already exists`);
-+    this._bindingsToAdd.add(name);
-+    for (const frameData of this._frameData.values())
-+      frameData.exposeFunction(name);
 +  }
 +
 +  async _adoptNode({frameId, objectId, executionContextId}) {
@@ -4511,10 +4539,10 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/juggler/content/main.js b/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..56472e8515cb84d66bd0ec89e5ca1984bb360f5a
+index 0000000000000000000000000000000000000000..9bb5c2bff8eb3e350203b56a3445e9b200747f8b
 --- /dev/null
 +++ b/juggler/content/main.js
-@@ -0,0 +1,172 @@
+@@ -0,0 +1,178 @@
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
@@ -4590,7 +4618,7 @@ index 0000000000000000000000000000000000000000..56472e8515cb84d66bd0ec89e5ca1984
 +    response = { sessionIds: [], browserContextOptions: {}, waitForInitialNavigation: false };
 +
 +  const { sessionIds, browserContextOptions, waitForInitialNavigation } = response;
-+  const { userAgent, bypassCSP, javaScriptDisabled, viewport, scriptsToEvaluateOnNewDocument, locale, geolocation, onlineOverride } = browserContextOptions;
++  const { userAgent, bypassCSP, javaScriptDisabled, viewport, scriptsToEvaluateOnNewDocument, bindings, locale, geolocation, onlineOverride } = browserContextOptions;
 +
 +  if (userAgent !== undefined)
 +    docShell.customUserAgent = userAgent;
@@ -4614,6 +4642,8 @@ index 0000000000000000000000000000000000000000..56472e8515cb84d66bd0ec89e5ca1984
 +  frameTree = new FrameTree(docShell, waitForInitialNavigation);
 +  for (const script of scriptsToEvaluateOnNewDocument || [])
 +    frameTree.addScriptToEvaluateOnNewDocument(script);
++  for (const { name, script } of bindings || [])
++    frameTree.addBinding(name, script);
 +  networkMonitor = new NetworkMonitor(docShell, frameTree);
 +
 +  const channel = SimpleChannel.createForMessageManager('content::page', messageManager);
@@ -4632,6 +4662,10 @@ index 0000000000000000000000000000000000000000..56472e8515cb84d66bd0ec89e5ca1984
 +
 +    addScriptToEvaluateOnNewDocument(script) {
 +      frameTree.addScriptToEvaluateOnNewDocument(script);
++    },
++
++    addBinding(name, script) {
++      frameTree.addBinding(name, script);
 +    },
 +
 +    setGeolocationOverride(geolocation) {
@@ -4768,10 +4802,10 @@ index 0000000000000000000000000000000000000000..2f2b7ca247f6b6dff396fb4b644654de
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/juggler/protocol/BrowserHandler.js b/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..b3a7b47765d69f9ba48c74e23aaae4e2a40498e5
+index 0000000000000000000000000000000000000000..e225fc81c62bbfac4d071ab1a9d83a754dda46bb
 --- /dev/null
 +++ b/juggler/protocol/BrowserHandler.js
-@@ -0,0 +1,174 @@
+@@ -0,0 +1,178 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -4918,6 +4952,10 @@ index 0000000000000000000000000000000000000000..b3a7b47765d69f9ba48c74e23aaae4e2
 +
 +  async addScriptToEvaluateOnNewDocument({browserContextId, script}) {
 +    await this._contextManager.browserContextForId(browserContextId).addScriptToEvaluateOnNewDocument(script);
++  }
++
++  async addBinding({browserContextId, name, script}) {
++    await this._contextManager.browserContextForId(browserContextId).addBinding(name, script);
 +  }
 +
 +  setCookies({browserContextId, cookies}) {
@@ -5817,10 +5855,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/juggler/protocol/Protocol.js b/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..390e68d71c0034748ae90132d9d1defaa67de772
+index 0000000000000000000000000000000000000000..67df4d5592d66e0db3c7c120ad12f9b360b9c45d
 --- /dev/null
 +++ b/juggler/protocol/Protocol.js
-@@ -0,0 +1,770 @@
+@@ -0,0 +1,778 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -6095,6 +6133,13 @@ index 0000000000000000000000000000000000000000..390e68d71c0034748ae90132d9d1defa
 +        browserContextId: t.Optional(t.String),
 +        script: t.String,
 +      }
++    },
++    'addBinding': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        name: t.String,
++        script: t.String,
++      },
 +    },
 +    'grantPermissions': {
 +      params: {
@@ -6382,6 +6427,7 @@ index 0000000000000000000000000000000000000000..390e68d71c0034748ae90132d9d1defa
 +    'addBinding': {
 +      params: {
 +        name: t.String,
++        script: t.String,
 +      },
 +    },
 +    'setViewportSize': {
