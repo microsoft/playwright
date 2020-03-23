@@ -48,19 +48,17 @@ export class CRTarget {
     browser: CRBrowser,
     targetInfo: Protocol.Target.TargetInfo,
     browserContext: CRBrowserContext,
-    session: CRSession,
-    hasInitialAboutBlank: boolean) {
+    session: CRSession) {
     this._targetInfo = targetInfo;
     this._browser = browser;
     this._browserContext = browserContext;
     this._targetId = targetInfo.targetId;
     if (CRTarget.isPageType(targetInfo.type)) {
       this._crPage = new CRPage(session, this._browser, this._browserContext);
-      helper.addEventListener(session, 'Page.windowOpen', event => browser._onWindowOpen(targetInfo.targetId, event));
       const page = this._crPage.page();
       (page as any)[targetSymbol] = this;
       session.once(CRSessionEvents.Disconnected, () => page._didDisconnect());
-      this._pagePromise = this._crPage.initialize(hasInitialAboutBlank).then(() => this._initializedPage = page).catch(e => e);
+      this._pagePromise = this._crPage.initialize().then(() => this._initializedPage = page).catch(e => e);
     } else if (targetInfo.type === 'service_worker') {
       this._workerPromise = this._initializeServiceWorker(session);
     } else {
