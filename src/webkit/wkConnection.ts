@@ -34,7 +34,7 @@ export class WKConnection {
   private readonly _onDisconnect: () => void;
   private _lastId = 0;
   private _closed = false;
-  _debugFunction: (message: string) => void = platform.debug('pw:protocol');
+  _debugProtocol: (message: string) => void = platform.debug('pw:protocol');
 
   readonly browserSession: WKSession;
 
@@ -46,6 +46,7 @@ export class WKConnection {
     this.browserSession = new WKSession(this, '', 'Browser has been closed.', (message: any) => {
       this.rawSend(message);
     });
+    (this._debugProtocol as any).color = '34';
   }
 
   nextMessageId(): number {
@@ -54,12 +55,12 @@ export class WKConnection {
 
   rawSend(message: any) {
     const data = JSON.stringify(message);
-    this._debugFunction('SEND ► ' + (rewriteInjectedScriptEvaluationLog(message) || data));
+    this._debugProtocol('SEND ► ' + (rewriteInjectedScriptEvaluationLog(message) || data));
     this._transport.send(data);
   }
 
   private _dispatchMessage(message: string) {
-    this._debugFunction('◀ RECV ' + message);
+    this._debugProtocol('◀ RECV ' + message);
     const object = JSON.parse(message);
     if (object.id === kBrowserCloseMessageId)
       return;
