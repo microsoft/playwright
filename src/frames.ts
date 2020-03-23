@@ -370,7 +370,7 @@ export class Frame {
       await sameDocumentPromise;
     }
     const request = (navigateResult && navigateResult.newDocumentId) ? frameTask.request(navigateResult.newDocumentId) : null;
-    await frameTask.waitForLifecycle(options.waitUntil);
+    await frameTask.waitForLifecycle(options.waitUntil === undefined ? 'load' : options.waitUntil);
     frameTask.done();
     return request ? request._finalRequest().response() : null;
   }
@@ -383,14 +383,14 @@ export class Frame {
       frameTask.waitForSameDocumentNavigation(options.url),
     ]);
     const request = documentId ? frameTask.request(documentId) : null;
-    await frameTask.waitForLifecycle(options.waitUntil);
+    await frameTask.waitForLifecycle(options.waitUntil === undefined ? 'load' : options.waitUntil);
     frameTask.done();
     return request ? request._finalRequest().response() : null;
   }
 
-  async waitForLoadState(options: types.NavigateOptions = {}): Promise<void> {
+  async waitForLoadState(state: types.LifecycleEvent = 'load', options: types.TimeoutOptions = {}): Promise<void> {
     const frameTask = new FrameTask(this, options);
-    await frameTask.waitForLifecycle(options.waitUntil);
+    await frameTask.waitForLifecycle(state);
     frameTask.done();
   }
 
@@ -507,7 +507,7 @@ export class Frame {
       this._page._frameManager._consoleMessageTags.set(tag, () => {
         // Clear lifecycle right after document.open() - see 'tag' below.
         this._page._frameManager.clearFrameLifecycle(this);
-        this.waitForLoadState(options).then(resolve).catch(reject);
+        this.waitForLoadState(options ? options.waitUntil : 'load', options).then(resolve).catch(reject);
       });
     });
     const contentPromise = context.evaluateInternal(({ html, tag }) => {
@@ -1078,7 +1078,7 @@ export class FrameTask {
     }));
   }
 
-  waitForLifecycle(waitUntil: types.LifecycleEvent = 'load'): Promise<void> {
+  waitForLifecycle(waitUntil: types.LifecycleEvent): Promise<void> {
     if (!types.kLifecycleEvents.has(waitUntil))
       throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
     return this.raceAgainstFailures(new Promise((resolve, reject) => {

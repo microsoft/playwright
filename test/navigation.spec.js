@@ -819,7 +819,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     it('should respect timeout', async({page, server}) => {
       server.setRoute('/one-style.css', (req, res) => response = res);
       await page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'domcontentloaded'});
-      const error = await page.waitForLoadState({ timeout: 1 }).catch(e => e);
+      const error = await page.waitForLoadState('load', { timeout: 1 }).catch(e => e);
       expect(error.message).toBe('Navigation timeout of 1 ms exceeded');
     });
     it('should resolve immediately if loaded', async({page, server}) => {
@@ -830,7 +830,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       await page.goto(server.EMPTY_PAGE);
       server.setRoute('/one-style.css', (req, res) => response = res);
       await page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'domcontentloaded'});
-      await page.waitForLoadState({ waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('domcontentloaded');
     });
     it('should work with pages that have loaded before being connected to', async({page, context, server}) => {
       await page.goto(server.EMPTY_PAGE);
@@ -851,7 +851,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
           return popup.document.readyState;
         }),
       ]);
-      await popup.waitForLoadState({ waitUntil: 'load' });
+      await popup.waitForLoadState();
       expect(readyState).toBe(FFOX ? 'uninitialized' : 'complete');
       expect(await popup.evaluate(() => document.readyState)).toBe(FFOX ? 'uninitialized' : 'complete');
     });
@@ -860,7 +860,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
         page.waitForEvent('popup'),
         page.evaluate(() => window.open('about:blank') && 1),
       ]);
-      await popup.waitForLoadState({ waitUntil: 'load' });
+      await popup.waitForLoadState();
       expect(await popup.evaluate(() => document.readyState)).toBe('complete');
     });
     it('should wait for load state of about:blank popup with noopener ', async({browser, page}) => {
@@ -868,7 +868,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
         page.waitForEvent('popup'),
         page.evaluate(() => window.open('about:blank', null, 'noopener') && 1),
       ]);
-      await popup.waitForLoadState({ waitUntil: 'load' });
+      await popup.waitForLoadState();
       expect(await popup.evaluate(() => document.readyState)).toBe('complete');
     });
     it('should wait for load state of popup with network url ', async({browser, page, server}) => {
@@ -877,7 +877,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
         page.waitForEvent('popup'),
         page.evaluate(url => window.open(url) && 1, server.EMPTY_PAGE),
       ]);
-      await popup.waitForLoadState({ waitUntil: 'load' });
+      await popup.waitForLoadState();
       expect(await popup.evaluate(() => document.readyState)).toBe('complete');
     });
     it('should wait for load state of popup with network url and noopener ', async({browser, page, server}) => {
@@ -886,7 +886,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
         page.waitForEvent('popup'),
         page.evaluate(url => window.open(url, null, 'noopener') && 1, server.EMPTY_PAGE),
       ]);
-      await popup.waitForLoadState({ waitUntil: 'load' });
+      await popup.waitForLoadState();
       expect(await popup.evaluate(() => document.readyState)).toBe('complete');
     });
     it('should work with clicking target=_blank', async({browser, page, server}) => {
@@ -896,7 +896,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
         page.waitForEvent('popup'),
         page.click('a'),
       ]);
-      await popup.waitForLoadState({ waitUntil: 'load' });
+      await popup.waitForLoadState();
       expect(await popup.evaluate(() => document.readyState)).toBe('complete');
     });
     it('should wait for load state of newPage', async({browser, context, page, server}) => {
@@ -904,7 +904,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
         context.waitForEvent('page'),
         context.newPage(),
       ]);
-      await newPage.waitForLoadState({ waitUntil: 'load' });
+      await newPage.waitForLoadState();
       expect(await newPage.evaluate(() => document.readyState)).toBe('complete');
     });
     it('should resolve after popup load', async({browser, server}) => {
@@ -920,7 +920,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
         page.evaluate(url => window.popup = window.open(url), server.PREFIX + '/one-style.html'),
       ]);
       let resolved = false;
-      const loadSatePromise = popup.waitForLoadState({waitUntil: 'load'}).then(() => resolved = true);
+      const loadSatePromise = popup.waitForLoadState().then(() => resolved = true);
       // Round trips!
       for (let i = 0; i < 5; i++)
         await page.evaluate('window');
