@@ -9,7 +9,7 @@
   "main": "index.js",
   "playwright": {
     "chromium_revision": "751710",
-    "firefox_revision": "1050",
+    "firefox_revision": "1051",
     "webkit_revision": "1182"
   },
   "scripts": {
