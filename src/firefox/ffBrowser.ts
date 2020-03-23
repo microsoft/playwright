@@ -288,7 +288,7 @@ export class FFBrowserContext extends BrowserContextBase {
       throw new Error(`Function "${name}" has been already registered`);
     const binding = new PageBinding(name, playwrightFunction);
     this._pageBindings.set(name, binding);
-    throw new Error('Not implemented');
+    await this._browser._connection.send('Browser.addBinding', { browserContextId: this._browserContextId || undefined, name, script: binding.source });
   }
 
   async route(url: types.URLMatch, handler: network.RouteHandler): Promise<void> {
