@@ -15,10 +15,10 @@
  */
 const path = require('path');
 const fs = require('fs');
-const {downloadBrowserWithProgressBar, downloadOptionsFromEnv} = require('playwright-core/download-browser');
+const {downloadBrowserWithProgressBar, downloadOptionsFromENV} = require('playwright-core/download-browser');
 
 (async function() {
-  await downloadBrowserWithProgressBar(downloadOptionsFromEnv(__dirname, 'chromium'));
-  await downloadBrowserWithProgressBar(downloadOptionsFromEnv(__dirname, 'firefox'));
-  await downloadBrowserWithProgressBar(downloadOptionsFromEnv(__dirname, 'webkit'));
+  await downloadBrowserWithProgressBar(downloadOptionsFromENV(__dirname, 'chromium'));
+  await downloadBrowserWithProgressBar(downloadOptionsFromENV(__dirname, 'firefox'));
+  await downloadBrowserWithProgressBar(downloadOptionsFromENV(__dirname, 'webkit'));
 })();
