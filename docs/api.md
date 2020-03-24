@@ -3983,7 +3983,10 @@ If Playwright doesn't find them in the environment, a lowercased variant of thes
 - `PLAYWRIGHT_BROWSERS_PATH` - specify a shared folder that playwright will use to download browsers and to look for browsers when launching browser instances.
 
 ```sh
+# Install browsers to the shared location.
 $ PLAYWRIGHT_BROWSERS_PATH=$HOME/playwright-browsers npm install playwright
+# Use shared location to find browsers.
+$ PLAYWRIGHT_BROWSERS_PATH=$HOME/playwright-browsers node playwright-script.js
 ```
 
 
