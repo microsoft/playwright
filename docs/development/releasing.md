@@ -23,18 +23,19 @@
 
 # Releasing to npm
 
+1. Announce `PSA: release vXXX.YYY.ZZZ in progress. Please do not commit anything.`
+    - **Important**: no other commits should land in-between release commit and bump commit.
 1. Mark a new version.
     - Bump `package.json` version to `vXXX.YYY.ZZZ`.
-    - `npm run doc` to update documentation links.
+    - `node utils/sync_package_versions.js && npm run doc`.
     - Send a PR titled `chore: mark version vXXX.YYY.ZZZ`.
-    - Make sure the PR passes all required checks.
-    - Merge it.
-1. Click 'Publish release' button on the prepared release notes.
+    - Make sure the PR passes all required checks and merge it.
 1. Publish to npm.
     - `npm login`
     - `node utils/publish_all_packages.sh --release`
+1. Click 'Publish release' button on the prepared release notes.
 1. Mark post release.
     - Bump `package.json` version to `vXXX.YYY.ZZZ-post`.
-    - `npm run doc` to update documentation links.
+    - `node utils/sync_package_versions.js && npm run doc`.
     - Merge a PR titled `chore: bump version to vXXX.YYY.ZZZ-post`.
-    - **NOTE**: no other commits should be landed in-between release commit and bump commit.
+1. Announce `PSA: release vXXX.YYY.ZZZ is out.`
