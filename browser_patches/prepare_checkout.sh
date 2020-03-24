@@ -31,13 +31,13 @@ FRIENDLY_CHECKOUT_PATH="";
 CHECKOUT_PATH=""
 PATCHES_PATH=""
 BUILD_NUMBER=""
-if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
+if [[ ("$1" == "firefox") || ("$1" == "firefox/") || ("$1" == "ff") ]]; then
   FRIENDLY_CHECKOUT_PATH="//browser_patches/firefox/checkout";
   CHECKOUT_PATH="$PWD/firefox/checkout"
   PATCHES_PATH="$PWD/firefox/patches"
   BUILD_NUMBER=$(cat "$PWD/firefox/BUILD_NUMBER")
   source "./firefox/UPSTREAM_CONFIG.sh"
-elif [[ ("$1" == "webkit") || ("$1" == "webkit/") ]]; then
+elif [[ ("$1" == "webkit") || ("$1" == "webkit/") || ("$1" == "wk") ]]; then
   FRIENDLY_CHECKOUT_PATH="//browser_patches/webkit/checkout";
   CHECKOUT_PATH="$PWD/webkit/checkout"
   PATCHES_PATH="$PWD/webkit/patches"
