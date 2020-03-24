@@ -158,7 +158,7 @@ export class Firefox implements BrowserType<FFBrowser> {
       args = [],
     } = options;
     if (devtools)
-      throw new Error('Option "devtools" is not supported by Firefox');
+      console.warn('devtools parameter is not supported as a launch argument in Firefox. You can launch the devtools window manually.');
     const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
     if (userDataDirArg)
       throw new Error('Pass userDataDir parameter instead of specifying -profile argument');

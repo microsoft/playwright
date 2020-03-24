@@ -144,7 +144,7 @@ export class WebKit implements BrowserType<WKBrowser> {
       args = [],
     } = options;
     if (devtools)
-      throw new Error('Option "devtools" is not supported by WebKit');
+      console.warn('devtools parameter as a launch argument in WebKit is not supported. Also starting Web Inspector manually will terminate the execution in WebKit.');
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir='));
     if (userDataDirArg)
       throw new Error('Pass userDataDir parameter instead of specifying --user-data-dir argument');
