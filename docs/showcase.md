@@ -5,6 +5,7 @@
 * [VS Code](https://github.com/microsoft/vscode): Playwright is used to run cross-browser tests on their web builds
 * [TypeScript](https://github.com/microsoft/TypeScript): Playwright is used test typescript.js across browsers
 * [Elastic APM JS agent](https://github.com/elastic/apm-agent-rum-js): Playwright is used to run benchmark tests across browsers
+* [Blockstack](https://github.com/blockstack/ux): Playwright is used to run cross-browser UI tests
 * [Codex](https://github.com/codex-src/codex-app): Playwright is used to run functional and performance tests
 * [Instakittens React admin](https://github.com/fredericbonnet/instakittens-react-admin): Playwright is used to run end-to-end test scenarios written with Cucumber
 * [xterm.js](https://github.com/xtermjs/xterm.js): Playwright is used to run cross-browser integration tests
@@ -13,6 +14,8 @@
 
 * [QA Wolf](https://github.com/qawolf/qawolf): Record and create Playwright tests and then run them in CI
 * [CodeceptJS](https://github.com/Codeception/CodeceptJS): Write scenario-driven Playwright tests with synchronous code
+* [Try Playwright](https://try.playwright.tech/): Interactive playground for Playwright to run examples directly from your browser
+* [Testim Playground](https://www.testim.io/playground/): Record Playwright UI tests as code
 * [Lumberjack](https://github.com/JakePartusch/lumberjack): Automated accessibility scanner to run checks on your entire website
 * [playwright-video](https://github.com/qawolf/playwright-video): Capture a video while executing a Playwright script
 * [test-real-styles](https://github.com/Xiphe/test-real-styles): Utility to test real styling of virtual DOM elements in a browser
