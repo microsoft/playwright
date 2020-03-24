@@ -41,15 +41,15 @@ const protocolGenerator = require('./utils/protocol-types-generator');
   const webkitOptions = localDownloadOptions('webkit');
   if (!(await existsAsync(chromiumOptions.downloadPath))) {
     await downloadBrowserWithProgressBar(chromiumOptions);
-    await protocolGenerator.generateChromiumProtocol(chromiumOptions.executablePath);
+    await protocolGenerator.generateChromiumProtocol(chromiumOptions.executablePath).catch(console.warn);
   }
   if (!(await existsAsync(firefoxOptions.downloadPath))) {
     await downloadBrowserWithProgressBar(firefoxOptions);
-    await protocolGenerator.generateFirefoxProtocol(firefoxOptions.executablePath);
+    await protocolGenerator.generateFirefoxProtocol(firefoxOptions.executablePath).catch(console.warn);
   }
   if (!(await existsAsync(webkitOptions.downloadPath))) {
     await downloadBrowserWithProgressBar(webkitOptions);
-    await protocolGenerator.generateWebKitProtocol(webkitOptions.downloadPath);
+    await protocolGenerator.generateWebKitProtocol(webkitOptions.downloadPath).catch(console.warn);
   }
 
   // Cleanup stale revisions.
