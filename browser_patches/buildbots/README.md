@@ -227,6 +227,8 @@ $ sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-9 100
 
 ## Setting Bot Environment
 
+WebKit on Linux requires a new version of BubbleWrap. Download from https://launchpad.net/ubuntu/+source/bubblewrap/0.3.1-1ubuntu1 and install manually.
+
 > TODO: instructions to set up linux bot
 
 ## Running Build Loop
