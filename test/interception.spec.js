@@ -254,11 +254,9 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         spinner ? route.abort() : route.continue();
         spinner = !spinner;
       });
-      const results = await page.evaluate(() => Promise.all([
-        fetch('/zzz').then(response => response.text()).catch(e => 'FAILED'),
-        fetch('/zzz').then(response => response.text()).catch(e => 'FAILED'),
-        fetch('/zzz').then(response => response.text()).catch(e => 'FAILED'),
-      ]));
+      const results = [];
+      for (let i = 0; i < 3; i++)
+        results.push(await page.evaluate(() => fetch('/zzz').then(response => response.text()).catch(e => 'FAILED')));
       expect(results).toEqual(['11', 'FAILED', '22']);
     });
     it('should navigate to dataURL and not fire dataURL requests', async({page, server}) => {
