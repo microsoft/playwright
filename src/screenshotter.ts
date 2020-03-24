@@ -79,7 +79,7 @@ export class Screenshotter {
   }
 
   async screenshotPage(options: types.ScreenshotOptions = {}): Promise<platform.BufferType> {
-    const format = validateScreeshotOptions(options);
+    const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
       const { viewportSize, originalViewportSize } = await this._originalViewportSize();
 
@@ -103,7 +103,7 @@ export class Screenshotter {
   }
 
   async screenshotElement(handle: dom.ElementHandle, options: types.ElementScreenshotOptions = {}): Promise<platform.BufferType> {
-    const format = validateScreeshotOptions(options);
+    const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
       const { viewportSize, originalViewportSize } = await this._originalViewportSize();
 
@@ -188,7 +188,7 @@ function trimClipToSize(clip: types.Rect, size: types.Size): types.Rect {
   return result;
 }
 
-function validateScreeshotOptions(options: types.ScreenshotOptions): 'png' | 'jpeg' {
+function validateScreenshotOptions(options: types.ScreenshotOptions): 'png' | 'jpeg' {
   let format: 'png' | 'jpeg' | null = null;
   // options.type takes precedence over inferring the type from options.path
   // because it may be a 0-length file with no extension created beforehand (i.e. as a temp file).
