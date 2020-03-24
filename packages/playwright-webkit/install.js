@@ -18,6 +18,6 @@ const fs = require('fs');
 const {downloadBrowserWithProgressBar} = require('playwright-core/download-browser');
 
 (async function() {
-  const wkExecutablePath = await downloadBrowserWithProgressBar(path.join(__dirname, '.local-browsers', 'webkit'), 'webkit', true /* respectGlobalInstall */);
+  const wkExecutablePath = await downloadBrowserWithProgressBar(path.join(__dirname, '.local-browsers', 'webkit'), 'webkit');
   await fs.promises.writeFile(path.join(__dirname, '.downloaded-browsers.json'), JSON.stringify({wkExecutablePath, }));
 })();

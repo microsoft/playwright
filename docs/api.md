@@ -3980,10 +3980,6 @@ Playwright looks for certain [environment variables](https://en.wikipedia.org/wi
 If Playwright doesn't find them in the environment, a lowercased variant of these variables will be used from the [npm config](https://docs.npmjs.com/cli/config).
 
 - `PLAYWRIGHT_DOWNLOAD_HOST` - overwrite URL prefix that is used to download browsers. Note: this includes protocol and might even include path prefix. By default, Playwright uses `https://storage.googleapis.com` to download Chromium and `https://playwright.azureedge.net` to download Webkit & Firefox.
-- `PLAYWRIGHT_GLOBAL_INSTALL` - install Playwright browsers in a single global location. Locations are different on different platforms:
-  * MacOS: `$HOME/Library/Caches/playwright-nodejs`
-  * Linux: `$HOME/.cache/playwright-nodejs`
-  * Windows: `$HOME/AppData/Local/playwright-nodejs/Cache`
 
 
 ### Working with selectors

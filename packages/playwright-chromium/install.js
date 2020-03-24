@@ -17,6 +17,6 @@ const path = require('path');
 const fs = require('fs');
 const {downloadBrowserWithProgressBar} = require('playwright-core/download-browser');
 (async function() {
-  const crExecutablePath = await downloadBrowserWithProgressBar(path.join(__dirname, '.local-browsers', 'chromium'), 'chromium', true /* respectGlobalInstall */);
+  const crExecutablePath = await downloadBrowserWithProgressBar(path.join(__dirname, '.local-browsers', 'chromium'), 'chromium');
   await fs.promises.writeFile(path.join(__dirname, '.downloaded-browsers.json'), JSON.stringify({crExecutablePath}));
 })();
