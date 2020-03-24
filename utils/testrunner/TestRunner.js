@@ -293,7 +293,8 @@ class TestWorker {
         message = `${location} - Timeout Exceeded ${hook.timeout}ms while running "${hookName}" in suite "${suite.fullName}"`;
         error = null;
       } else if (error === TerminatedError) {
-        message = `${location} - TERMINATED while running "${hookName}" in suite "${suite.fullName}"`;
+        // Do not report termination details - it's just noise.
+        message = '';
         error = null;
       } else {
         if (error.stack)
@@ -408,6 +409,8 @@ class TestPass {
     for (const worker of this._workers)
       worker.terminate(force /* terminateHooks */);
     this._result.setResult(result, message);
+    if (this._result.message === 'SIGINT received' && message === 'SIGTERM received')
+      this._result.message = message;
     if (error) {
       if (error.stack)
         await this._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
@@ -439,7 +442,8 @@ class TestPass {
 
   async _didFailHook(worker, suite, hook, hookName, message, error) {
     debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" FAILED for "${suite.fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
-    this._result.addError(message, error, worker);
+    if (message)
+      this._result.addError(message, error, worker);
     this._result.setResult(TestResult.Crashed, message);
   }
 
