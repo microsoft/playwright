@@ -643,8 +643,8 @@ page.removeListener('request', logRequest);
 - [event: 'worker'](#event-worker)
 - [page.$(selector)](#pageselector)
 - [page.$$(selector)](#pageselector-1)
-- [page.$$eval(selector, pageFunction, arg)](#pageevalselector-pagefunction-arg)
-- [page.$eval(selector, pageFunction, arg)](#pageevalselector-pagefunction-arg-1)
+- [page.$$eval(selector, pageFunction[, arg])](#pageevalselector-pagefunction-arg)
+- [page.$eval(selector, pageFunction[, arg])](#pageevalselector-pagefunction-arg-1)
 - [page.accessibility](#pageaccessibility)
 - [page.addInitScript(script[, arg])](#pageaddinitscriptscript-arg)
 - [page.addScriptTag(options)](#pageaddscripttagoptions)
@@ -657,8 +657,8 @@ page.removeListener('request', logRequest);
 - [page.coverage](#pagecoverage)
 - [page.dblclick(selector[, options])](#pagedblclickselector-options)
 - [page.emulateMedia(options)](#pageemulatemediaoptions)
-- [page.evaluate(pageFunction, arg)](#pageevaluatepagefunction-arg)
-- [page.evaluateHandle(pageFunction, arg)](#pageevaluatehandlepagefunction-arg)
+- [page.evaluate(pageFunction[, arg])](#pageevaluatepagefunction-arg)
+- [page.evaluateHandle(pageFunction[, arg])](#pageevaluatehandlepagefunction-arg)
 - [page.exposeFunction(name, playwrightFunction)](#pageexposefunctionname-playwrightfunction)
 - [page.fill(selector, value[, options])](#pagefillselector-value-options)
 - [page.focus(selector[, options])](#pagefocusselector-options)
@@ -691,7 +691,7 @@ page.removeListener('request', logRequest);
 - [page.viewportSize()](#pageviewportsize)
 - [page.waitFor(selectorOrFunctionOrTimeout[, options[, arg]])](#pagewaitforselectororfunctionortimeout-options-arg)
 - [page.waitForEvent(event[, optionsOrPredicate])](#pagewaitforeventevent-optionsorpredicate)
-- [page.waitForFunction(pageFunction, arg[, options])](#pagewaitforfunctionpagefunction-arg-options)
+- [page.waitForFunction(pageFunction[, arg, options])](#pagewaitforfunctionpagefunction-arg-options)
 - [page.waitForLoadState([state[, options]])](#pagewaitforloadstatestate-options)
 - [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
 - [page.waitForRequest(urlOrPredicate[, options])](#pagewaitforrequesturlorpredicate-options)
@@ -827,7 +827,7 @@ The method runs `document.querySelectorAll` within the page. If no elements matc
 
 Shortcut for [page.mainFrame().$$(selector)](#frameselector-1).
 
-#### page.$$eval(selector, pageFunction, arg)
+#### page.$$eval(selector, pageFunction[, arg])
 - `selector` <[string]> A selector to query page for
 - `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
 - `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
@@ -842,7 +842,7 @@ Examples:
 const divsCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 10);
 ```
 
-#### page.$eval(selector, pageFunction, arg)
+#### page.$eval(selector, pageFunction[, arg])
 - `selector` <[string]> A selector to query page for
 - `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
 - `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
@@ -1061,7 +1061,7 @@ await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').ma
 // → false
 ```
 
-#### page.evaluate(pageFunction, arg)
+#### page.evaluate(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
 - `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -1092,9 +1092,9 @@ const html = await page.evaluate(([body, suffix]) => body.innerHTML + suffix, [b
 await bodyHandle.dispose();
 ```
 
-Shortcut for [page.mainFrame().evaluate(pageFunction, arg)](#frameevaluatepagefunction-arg).
+Shortcut for [page.mainFrame().evaluate(pageFunction[, arg])](#frameevaluatepagefunction-arg).
 
-#### page.evaluateHandle(pageFunction, arg)
+#### page.evaluateHandle(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
 - `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle)
@@ -1673,7 +1673,7 @@ Shortcut for [page.mainFrame().waitFor(selectorOrFunctionOrTimeout[, options[, .
 Waits for event to fire and passes its value into the predicate function. Resolves when the predicate returns truthy value. Will throw an error if the page is closed before the event
 is fired.
 
-#### page.waitForFunction(pageFunction, arg[, options])
+#### page.waitForFunction(pageFunction[, arg, options])
 - `pageFunction` <[function]|[string]> Function to be evaluated in browser context
 - `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
 - `options` <[Object]> Optional waiting parameters
@@ -1862,8 +1862,8 @@ An example of getting text from an iframe element:
 <!-- GEN:toc -->
 - [frame.$(selector)](#frameselector)
 - [frame.$$(selector)](#frameselector-1)
-- [frame.$$eval(selector, pageFunction, arg)](#frameevalselector-pagefunction-arg)
-- [frame.$eval(selector, pageFunction, arg)](#frameevalselector-pagefunction-arg-1)
+- [frame.$$eval(selector, pageFunction[, arg])](#frameevalselector-pagefunction-arg)
+- [frame.$eval(selector, pageFunction[, arg])](#frameevalselector-pagefunction-arg-1)
 - [frame.addScriptTag(options)](#frameaddscripttagoptions)
 - [frame.addStyleTag(options)](#frameaddstyletagoptions)
 - [frame.check(selector, [options])](#framecheckselector-options)
@@ -1871,8 +1871,8 @@ An example of getting text from an iframe element:
 - [frame.click(selector[, options])](#frameclickselector-options)
 - [frame.content()](#framecontent)
 - [frame.dblclick(selector[, options])](#framedblclickselector-options)
-- [frame.evaluate(pageFunction, arg)](#frameevaluatepagefunction-arg)
-- [frame.evaluateHandle(pageFunction, arg)](#frameevaluatehandlepagefunction-arg)
+- [frame.evaluate(pageFunction[, arg])](#frameevaluatepagefunction-arg)
+- [frame.evaluateHandle(pageFunction[, arg])](#frameevaluatehandlepagefunction-arg)
 - [frame.fill(selector, value[, options])](#framefillselector-value-options)
 - [frame.focus(selector[, options])](#framefocusselector-options)
 - [frame.frameElement()](#frameframeelement)
@@ -1889,7 +1889,7 @@ An example of getting text from an iframe element:
 - [frame.uncheck(selector, [options])](#frameuncheckselector-options)
 - [frame.url()](#frameurl)
 - [frame.waitFor(selectorOrFunctionOrTimeout[, options[, arg]])](#framewaitforselectororfunctionortimeout-options-arg)
-- [frame.waitForFunction(pageFunction, arg[, options])](#framewaitforfunctionpagefunction-arg-options)
+- [frame.waitForFunction(pageFunction[, arg, options])](#framewaitforfunctionpagefunction-arg-options)
 - [frame.waitForLoadState([state[, options]])](#framewaitforloadstatestate-options)
 - [frame.waitForNavigation([options])](#framewaitfornavigationoptions)
 - [frame.waitForSelector(selector[, options])](#framewaitforselectorselector-options)
@@ -1907,7 +1907,7 @@ The method queries frame for the selector. If there's no such element within the
 
 The method runs `document.querySelectorAll` within the frame. If no elements match the selector, the return value resolves to `[]`.
 
-#### frame.$$eval(selector, pageFunction, arg)
+#### frame.$$eval(selector, pageFunction[, arg])
 - `selector` <[string]> A selector to query frame for
 - `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
 - `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
@@ -1922,7 +1922,7 @@ Examples:
 const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 10);
 ```
 
-#### frame.$eval(selector, pageFunction, arg)
+#### frame.$eval(selector, pageFunction[, arg])
 - `selector` <[string]> A selector to query frame for
 - `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
 - `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
@@ -2043,7 +2043,7 @@ Bear in mind that if the first click of the `dblclick()` triggers a navigation e
 
 > **NOTE** `frame.dblclick()` dispatches two `click` events and a single `dblclick` event.
 
-#### frame.evaluate(pageFunction, arg)
+#### frame.evaluate(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in browser context
 - `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -2072,7 +2072,7 @@ const html = await frame.evaluate(([body, suffix]) => body.innerHTML + suffix, [
 await bodyHandle.dispose();
 ```
 
-#### frame.evaluateHandle(pageFunction, arg)
+#### frame.evaluateHandle(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
 - `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle)
@@ -2347,7 +2347,7 @@ const selector = '.foo';
 await frame.waitFor(selector => !!document.querySelector(selector), {}, selector);
 ```
 
-#### frame.waitForFunction(pageFunction, arg[, options])
+#### frame.waitForFunction(pageFunction[, arg, options])
 - `pageFunction` <[function]|[string]> Function to be evaluated in browser context
 - `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
 - `options` <[Object]> Optional waiting parameters
@@ -2470,8 +2470,8 @@ ElementHandle instances can be used as an argument in [`page.$eval()`](#pageeval
 <!-- GEN:toc -->
 - [elementHandle.$(selector)](#elementhandleselector)
 - [elementHandle.$$(selector)](#elementhandleselector-1)
-- [elementHandle.$$eval(selector, pageFunction, arg)](#elementhandleevalselector-pagefunction-arg)
-- [elementHandle.$eval(selector, pageFunction, arg)](#elementhandleevalselector-pagefunction-arg-1)
+- [elementHandle.$$eval(selector, pageFunction[, arg])](#elementhandleevalselector-pagefunction-arg)
+- [elementHandle.$eval(selector, pageFunction[, arg])](#elementhandleevalselector-pagefunction-arg-1)
 - [elementHandle.boundingBox()](#elementhandleboundingbox)
 - [elementHandle.check([options])](#elementhandlecheckoptions)
 - [elementHandle.click([options])](#elementhandleclickoptions)
@@ -2493,8 +2493,8 @@ ElementHandle instances can be used as an argument in [`page.$eval()`](#pageeval
 <!-- GEN:toc-extends-JSHandle -->
 - [jsHandle.asElement()](#jshandleaselement)
 - [jsHandle.dispose()](#jshandledispose)
-- [jsHandle.evaluate(pageFunction, arg)](#jshandleevaluatepagefunction-arg)
-- [jsHandle.evaluateHandle(pageFunction, arg)](#jshandleevaluatehandlepagefunction-arg)
+- [jsHandle.evaluate(pageFunction[, arg])](#jshandleevaluatepagefunction-arg)
+- [jsHandle.evaluateHandle(pageFunction[, arg])](#jshandleevaluatehandlepagefunction-arg)
 - [jsHandle.getProperties()](#jshandlegetproperties)
 - [jsHandle.getProperty(propertyName)](#jshandlegetpropertypropertyname)
 - [jsHandle.jsonValue()](#jshandlejsonvalue)
@@ -2512,7 +2512,7 @@ The method runs `element.querySelector` within the page. If no element matches t
 
 The method runs `element.querySelectorAll` within the page. If no elements match the selector, the return value resolves to `[]`.
 
-#### elementHandle.$$eval(selector, pageFunction, arg)
+#### elementHandle.$$eval(selector, pageFunction[, arg])
 - `selector` <[string]> A selector to query page for
 - `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
 - `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
@@ -2534,7 +2534,7 @@ const feedHandle = await page.$('.feed');
 expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).toEqual(['Hello!', 'Hi!']);
 ```
 
-#### elementHandle.$eval(selector, pageFunction, arg)
+#### elementHandle.$eval(selector, pageFunction[, arg])
 - `selector` <[string]> A selector to query page for
 - `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
 - `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
@@ -2823,8 +2823,8 @@ JSHandle instances can be used as an argument in [`page.$eval()`](#pageevalselec
 <!-- GEN:toc -->
 - [jsHandle.asElement()](#jshandleaselement)
 - [jsHandle.dispose()](#jshandledispose)
-- [jsHandle.evaluate(pageFunction, arg)](#jshandleevaluatepagefunction-arg)
-- [jsHandle.evaluateHandle(pageFunction, arg)](#jshandleevaluatehandlepagefunction-arg)
+- [jsHandle.evaluate(pageFunction[, arg])](#jshandleevaluatepagefunction-arg)
+- [jsHandle.evaluateHandle(pageFunction[, arg])](#jshandleevaluatehandlepagefunction-arg)
 - [jsHandle.getProperties()](#jshandlegetproperties)
 - [jsHandle.getProperty(propertyName)](#jshandlegetpropertypropertyname)
 - [jsHandle.jsonValue()](#jshandlejsonvalue)
@@ -2840,7 +2840,7 @@ Returns either `null` or the object handle itself, if the object handle is an in
 
 The `jsHandle.dispose` method stops referencing the element handle.
 
-#### jsHandle.evaluate(pageFunction, arg)
+#### jsHandle.evaluate(pageFunction[, arg])
 - `pageFunction` <[function]\([Object]\)> Function to be evaluated in browser context
 - `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -2855,7 +2855,7 @@ const tweetHandle = await page.$('.tweet .retweets');
 expect(await tweetHandle.evaluate((node, suffix) => node.innerText, ' retweets')).toBe('10 retweets');
 ```
 
-#### jsHandle.evaluateHandle(pageFunction, arg)
+#### jsHandle.evaluateHandle(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated
 - `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle)
@@ -3541,8 +3541,8 @@ for (const worker of page.workers())
 
 <!-- GEN:toc -->
 - [event: 'close'](#event-close-2)
-- [worker.evaluate(pageFunction, arg)](#workerevaluatepagefunction-arg)
-- [worker.evaluateHandle(pageFunction, arg)](#workerevaluatehandlepagefunction-arg)
+- [worker.evaluate(pageFunction[, arg])](#workerevaluatepagefunction-arg)
+- [worker.evaluateHandle(pageFunction[, arg])](#workerevaluatehandlepagefunction-arg)
 - [worker.url()](#workerurl)
 <!-- GEN:stop -->
 
@@ -3551,7 +3551,7 @@ for (const worker of page.workers())
 
 Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
 
-#### worker.evaluate(pageFunction, arg)
+#### worker.evaluate(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the worker context
 - `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -3560,7 +3560,7 @@ If the function passed to the `worker.evaluate` returns a [Promise], then `worke
 
 If the function passed to the `worker.evaluate` returns a non-[Serializable] value, then `worker.evaluate` resolves to `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
 
-#### worker.evaluateHandle(pageFunction, arg)
+#### worker.evaluateHandle(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
 - `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle)

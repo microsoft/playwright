@@ -299,7 +299,7 @@ function checkSources(sources, externalDependencies) {
   function signatureForType(type) {
     const signatures = type.getCallSignatures();
     if (signatures.length)
-      return signatures[0];
+      return signatures[signatures.length - 1];
     if (type.isUnion()) {
       const innerTypes = type.types.filter(isNotUndefined);
       if (innerTypes.length === 1)
