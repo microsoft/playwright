@@ -32,7 +32,7 @@
     - Make sure the PR passes all required checks and merge it.
 1. Publish to npm.
     - `npm login`
-    - `node utils/publish_all_packages.sh --release`
+    - `utils/publish_all_packages.sh --release`
 1. Click 'Publish release' button on the prepared release notes.
 1. Mark post release.
     - Bump `package.json` version to `vXXX.YYY.ZZZ-post`.
