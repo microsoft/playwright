@@ -45,7 +45,6 @@
   "license": "Apache-2.0",
   "dependencies": {
     "debug": "^4.1.0",
-    "env-paths": "^2.2.0",
     "extract-zip": "^1.6.6",
     "https-proxy-agent": "^3.0.0",
     "jpeg-js": "^0.3.6",

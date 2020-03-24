@@ -125,7 +125,7 @@ function revisionURL(options: DownloadOptions): string {
   return util.format(urlTemplate, host, revision);
 }
 
-export async function downloadBrowser(options: DownloadOptions): Promise<string> {
+export async function downloadBrowser(options: DownloadOptions): Promise<void> {
   const {
     browser,
     revision,
@@ -146,9 +146,16 @@ export async function downloadBrowser(options: DownloadOptions): Promise<string>
     if (await existsAsync(zipPath))
       await unlinkAsync(zipPath);
   }
-  const executablePath = path.join(downloadPath, ...RELATIVE_EXECUTABLE_PATHS[browser][platform as BrowserPlatform]);
-  await chmodAsync(executablePath, 0o755);
-  return executablePath;
+  await chmodAsync(executablePath(options), 0o755);
+}
+
+export function executablePath(options: DownloadOptions): string {
+  const {
+    browser,
+    downloadPath,
+    platform = CURRENT_HOST_PLATFORM,
+  } = options;
+  return path.join(downloadPath, ...RELATIVE_EXECUTABLE_PATHS[browser][platform as BrowserPlatform]);
 }
 
 export async function canDownload(options: DownloadOptions): Promise<boolean> {

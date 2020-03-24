@@ -32,55 +32,31 @@ const fs = require('fs');
 const util = require('util');
 const rmAsync = util.promisify(require('rimraf'));
 const existsAsync = path => fs.promises.access(path).then(() => true, e => false);
-const {downloadBrowserWithProgressBar} = require('./download-browser');
+const {downloadBrowserWithProgressBar, localDownloadOptions} = require('./download-browser');
 const protocolGenerator = require('./utils/protocol-types-generator');
-const packageJSON = require('./package.json');
-
-const DOWNLOADED_BROWSERS_JSON_PATH = path.join(__dirname, '.downloaded-browsers.json');
-const DOWNLOAD_PATHS = {
-  chromium: path.join(__dirname, '.local-browsers', `chromium-${packageJSON.playwright.chromium_revision}`),
-  firefox: path.join(__dirname, '.local-browsers', `firefox-${packageJSON.playwright.firefox_revision}`),
-  webkit: path.join(__dirname, '.local-browsers', `webkit-${packageJSON.playwright.webkit_revision}`),
-};
 
 (async function() {
-  const downloadedBrowsersJSON = await fs.promises.readFile(DOWNLOADED_BROWSERS_JSON_PATH, 'utf8').then(json => JSON.parse(json)).catch(() => ({}));
-  try {
-    if (!(await existsAsync(DOWNLOAD_PATHS.chromium))) {
-      const crExecutablePath = await downloadBrowserWithProgressBar(DOWNLOAD_PATHS.chromium, 'chromium', false /* respectGlobalInstall */);
-      downloadedBrowsersJSON.crExecutablePath = crExecutablePath;
-      await protocolGenerator.generateChromiumProtocol(crExecutablePath);
-      await fs.promises.writeFile(DOWNLOADED_BROWSERS_JSON_PATH, JSON.stringify(downloadedBrowsersJSON));
-    }
-  } catch (e) {
-    console.warn(e.message);
+  const chromiumOptions = localDownloadOptions('chromium');
+  const firefoxOptions = localDownloadOptions('firefox');
+  const webkitOptions = localDownloadOptions('webkit');
+  if (!(await existsAsync(chromiumOptions.downloadPath))) {
+    await downloadBrowserWithProgressBar(chromiumOptions);
+    await protocolGenerator.generateChromiumProtocol(chromiumOptions.executablePath).catch(console.warn);
   }
-  try {
-    if (!(await existsAsync(DOWNLOAD_PATHS.firefox))) {
-      const ffExecutablePath = await downloadBrowserWithProgressBar(DOWNLOAD_PATHS.firefox, 'firefox', false /* respectGlobalInstall */);
-      downloadedBrowsersJSON.ffExecutablePath = ffExecutablePath;
-      await protocolGenerator.generateFirefoxProtocol(ffExecutablePath);
-      await fs.promises.writeFile(DOWNLOADED_BROWSERS_JSON_PATH, JSON.stringify(downloadedBrowsersJSON));
-    }
-  } catch (e) {
-    console.warn(e.message);
+  if (!(await existsAsync(firefoxOptions.downloadPath))) {
+    await downloadBrowserWithProgressBar(firefoxOptions);
+    await protocolGenerator.generateFirefoxProtocol(firefoxOptions.executablePath).catch(console.warn);
   }
-  try {
-    if (!(await existsAsync(DOWNLOAD_PATHS.webkit))) {
-      const wkExecutablePath = await downloadBrowserWithProgressBar(DOWNLOAD_PATHS.webkit, 'webkit', false /* respectGlobalInstall */);
-      downloadedBrowsersJSON.wkExecutablePath = wkExecutablePath;
-      await protocolGenerator.generateWebKitProtocol(path.dirname(wkExecutablePath));
-      await fs.promises.writeFile(DOWNLOADED_BROWSERS_JSON_PATH, JSON.stringify(downloadedBrowsersJSON));
-    }
-  } catch (e) {
-    console.warn(e.message);
+  if (!(await existsAsync(webkitOptions.downloadPath))) {
+    await downloadBrowserWithProgressBar(webkitOptions);
+    await protocolGenerator.generateWebKitProtocol(webkitOptions.downloadPath).catch(console.warn);
   }
 
   // Cleanup stale revisions.
   const directories = new Set(await readdirAsync(path.join(__dirname, '.local-browsers')));
-  directories.delete(DOWNLOAD_PATHS.chromium);
-  directories.delete(DOWNLOAD_PATHS.firefox);
-  directories.delete(DOWNLOAD_PATHS.webkit);
+  directories.delete(chromiumOptions.downloadPath);
+  directories.delete(firefoxOptions.downloadPath);
+  directories.delete(webkitOptions.downloadPath);
   // cleanup old browser directories.
   directories.add(path.join(__dirname, '.local-chromium'));
   directories.add(path.join(__dirname, '.local-firefox'));

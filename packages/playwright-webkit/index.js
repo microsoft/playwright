@@ -15,16 +15,13 @@
  */
 const path = require('path');
 const {Playwright} = require('playwright-core/lib/server/playwright.js');
+const {downloadOptionsFromENV} = require('playwright-core/download-browser.js');
 
 const playwright = new Playwright({
   browsers: ['webkit'],
 });
-module.exports = playwright;
 
-try {
-  const downloadedBrowsers = require(path.join(__dirname, '.downloaded-browsers.json'));
-  playwright.webkit._executablePath = downloadedBrowsers.wkExecutablePath;
-} catch (e) {
-  throw new Error('playwright-webkit has not downloaded WebKit.');
-}
+playwright.webkit._executablePath = downloadOptionsFromENV(__dirname, 'webkit').executablePath;
+
+module.exports = playwright;
 

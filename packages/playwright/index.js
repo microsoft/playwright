@@ -15,18 +15,15 @@
  */
 const path = require('path');
 const {Playwright} = require('playwright-core/lib/server/playwright.js');
+const {downloadOptionsFromENV} = require('playwright-core/download-browser.js');
 
 const playwright = new Playwright({
   browsers: ['webkit', 'chromium', 'firefox'],
 });
-module.exports = playwright;
 
-try {
-  const downloadedBrowsers = require(path.join(__dirname, '.downloaded-browsers.json'));
-  playwright.chromium._executablePath = downloadedBrowsers.crExecutablePath;
-  playwright.firefox._executablePath = downloadedBrowsers.ffExecutablePath;
-  playwright.webkit._executablePath = downloadedBrowsers.wkExecutablePath;
-} catch (e) {
-  throw new Error('ERROR: Playwright did not download browsers');
-}
+playwright.chromium._executablePath = downloadOptionsFromENV(__dirname, 'chromium').executablePath;
+playwright.webkit._executablePath = downloadOptionsFromENV(__dirname, 'webkit').executablePath;
+playwright.firefox._executablePath = downloadOptionsFromENV(__dirname, 'firefox').executablePath;
+
+module.exports = playwright;
 

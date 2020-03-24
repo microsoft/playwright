@@ -18,22 +18,40 @@ const path = require('path');
 const browserFetcher = require('./lib/server/browserFetcher.js');
 const packageJSON = require('./package.json');
 
-const FALSY_VALUES = ['0', 'false'];
+function localDownloadOptions(browserName) {
+  const revision = packageJSON.playwright[`${browserName}_revision`];
+  const downloadPath = path.join(__dirname, '.local-browsers', `${browserName}-${revision}`);
+  return {
+    browser: browserName,
+    progressBarBrowserName: `${browserName} r${revision}`,
+    revision,
+    downloadPath,
+    executablePath: browserFetcher.executablePath({browser: browserName, downloadPath}),
+  };
+}
 
-async function downloadBrowserWithProgressBar(downloadPath, browser, respectGlobalInstall = false) {
-  const PLAYWRIGHT_GLOBAL_INSTALL = respectGlobalInstall ? getFromENV('PLAYWRIGHT_GLOBAL_INSTALL') : false;
-  if (!!PLAYWRIGHT_GLOBAL_INSTALL && !FALSY_VALUES.includes(PLAYWRIGHT_GLOBAL_INSTALL.toLowerCase().trim())) {
-    const envPaths = require('env-paths');
-    const appPaths = envPaths('playwright');
-    downloadPath = path.join(appPaths.cache, `playwright-${packageJSON.version}-${browser}`);
-  }
+function downloadOptionsFromENV(packagePath, browserName) {
+  const browsersPath = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
+  const downloadPath = browsersPath ?
+      path.join(browsersPath, 'v' + packageJSON.version, browserName) :
+      path.join(packagePath, '.local-browsers', browserName);
+  return {
+    downloadPath,
+    progressBarBrowserName: `${browserName} for playwright v${packageJSON.version}`,
+    revision: packageJSON.playwright[`${browserName}_revision`],
+    browser: browserName,
+    host: getFromENV('PLAYWRIGHT_DOWNLOAD_HOST'),
+    executablePath: browserFetcher.executablePath({browser: browserName, downloadPath}),
+  };
+}
+
+async function downloadBrowserWithProgressBar(options) {
   let progressBar = null;
   let lastDownloadedBytes = 0;
-  const revision = packageJSON.playwright[`${browser}_revision`];
   function progress(downloadedBytes, totalBytes) {
     if (!progressBar) {
       const ProgressBar = require('progress');
-      progressBar = new ProgressBar(`Downloading ${browser} r${revision} - ${toMegabytes(totalBytes)} [:bar] :percent :etas `, {
+      progressBar = new ProgressBar(`Downloading ${options.progressBarBrowserName} - ${toMegabytes(totalBytes)} [:bar] :percent :etas `, {
         complete: '=',
         incomplete: ' ',
         width: 20,
@@ -44,15 +62,8 @@ async function downloadBrowserWithProgressBar(downloadPath, browser, respectGlob
     lastDownloadedBytes = downloadedBytes;
     progressBar.tick(delta);
   }
-  const executablePath = await browserFetcher.downloadBrowser({
-    downloadPath,
-    browser,
-    revision,
-    progress,
-    host: getFromENV('PLAYWRIGHT_DOWNLOAD_HOST'),
-  });
-  logPolitely(`${browser} downloaded to ${downloadPath}`);
-  return executablePath;
+  await browserFetcher.downloadBrowser({...options, progress});
+  logPolitely(`${options.progressBarBrowserName} downloaded to ${options.downloadPath}`);
 }
 
 function toMegabytes(bytes) {
@@ -75,4 +86,4 @@ function getFromENV(name) {
   return value;
 }
 
-module.exports = {downloadBrowserWithProgressBar};
+module.exports = {downloadBrowserWithProgressBar, downloadOptionsFromENV, localDownloadOptions};

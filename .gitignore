@@ -6,7 +6,6 @@
 .local-browsers/
 /.dev_profile*
 .DS_Store
-.downloaded-browsers.json
 *.swp
 *.pyc
 .vscode
