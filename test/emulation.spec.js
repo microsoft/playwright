@@ -289,6 +289,20 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
         await context.close();
       }
     });
+    it('should work for multiple pages sharing same process', async({browser, server}) => {
+      const context = await browser.newContext({ timezoneId: 'Europe/Moscow' });
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      let [popup] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.evaluate(url => { window.open(url); }, server.EMPTY_PAGE),
+      ]);
+      [popup] = await Promise.all([
+        popup.waitForEvent('popup'),
+        popup.evaluate(url => { window.open(url); }, server.EMPTY_PAGE),
+      ]);
+      await context.close();
+    });
   });
 
   describe('BrowserContext({locale})', function() {
@@ -367,6 +381,20 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       await popup.waitForLoadState('domcontentloaded');
       const result = await popup.evaluate(() => window.initialNavigatorLanguage);
       expect(result).toBe('fr-CH');
+      await context.close();
+    });
+    it('should work for multiple pages sharing same process', async({browser, server}) => {
+      const context = await browser.newContext({ locale: 'ru-RU' });
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      let [popup] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.evaluate(url => { window.open(url); }, server.EMPTY_PAGE),
+      ]);
+      [popup] = await Promise.all([
+        popup.waitForEvent('popup'),
+        popup.evaluate(url => { window.open(url); }, server.EMPTY_PAGE),
+      ]);
       await context.close();
     });
   });
