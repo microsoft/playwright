@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+const fs = require('fs');
+const path = require('path');
 const {Playwright} = require('./lib/server/playwright.js');
+const {localDownloadOptions} = require('./download-browser.js');
 
 const playwright = new Playwright({
   browsers: ['webkit', 'chromium', 'firefox'],
 });
 
-try {
-  const downloadedBrowsers = require('./.downloaded-browsers.json');
-  playwright.chromium._executablePath = downloadedBrowsers.crExecutablePath;
-  playwright.firefox._executablePath = downloadedBrowsers.ffExecutablePath;
-  playwright.webkit._executablePath = downloadedBrowsers.wkExecutablePath;
-} catch (e) {
+if (fs.existsSync(path.join(__dirname, '.local-browsers'))) {
+  playwright.chromium._executablePath = localDownloadOptions('chromium').executablePath;
+  playwright.firefox._executablePath = localDownloadOptions('firefox').executablePath;
+  playwright.webkit._executablePath = localDownloadOptions('webkit').executablePath;
 }
 
 module.exports = playwright;
