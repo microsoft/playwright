@@ -66,6 +66,7 @@ class TestServer {
     this._wsServer.on('connection', this._onWebSocketConnection.bind(this));
     this._server.listen(port);
     this._dirPath = dirPath;
+    this.debugServer = require('debug')('pw:server');
 
     this._startTime = new Date();
     this._cachedPathPrefix = null;
@@ -108,6 +109,7 @@ class TestServer {
    * @param {string} password
    */
   setAuth(path, username, password) {
+    this.debugServer(`set auth for ${path} to ${username}:${password}`);
     this._auths.set(path, {username, password});
   }
 
@@ -197,10 +199,14 @@ class TestServer {
       request.on('end', () => resolve(body));
     });
     const pathName = url.parse(request.url).path;
+    this.debugServer(`request ${pathName}`);
     if (this._auths.has(pathName)) {
       const auth = this._auths.get(pathName);
       const credentials = Buffer.from((request.headers.authorization || '').split(' ')[1] || '', 'base64').toString();
+      this.debugServer(`request credentials ${credentials}`);
+      this.debugServer(`actual credentials ${auth.username}:${auth.password}`);
       if (credentials !== `${auth.username}:${auth.password}`) {
+        this.debugServer(`request write www-auth`);
         response.writeHead(401, { 'WWW-Authenticate': 'Basic realm="Secure Area"' });
         response.end('HTTP Error 401 Unauthorized: Access is denied');
         return;
