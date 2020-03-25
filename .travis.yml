@@ -38,12 +38,12 @@ jobs:
   include:
   - node_js: '12'
 
-before_deploy:
-  - node utils/apply_next_version.js
+# before_deploy:
+#   - node utils/apply_next_version.js
 
-deploy:
-  skip_cleanup: true
-  provider: script
-  script: utils/publish_all_packages.sh --tip-of-tree
-  on:
-    branch: master
+# deploy:
+#   skip_cleanup: true
+#   provider: script
+#   script: utils/publish_all_packages.sh --tip-of-tree
+#   on:
+#     branch: master
