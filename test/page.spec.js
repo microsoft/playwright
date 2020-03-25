@@ -998,12 +998,17 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.$eval('input', i => i.style.visibility = 'hidden');
       const hiddenError = await page.fill('input', 'some value', { force: true }).catch(e => e);
-      expect(hiddenError.message).toBe('Element is hidden');
+      expect(hiddenError.message).toBe('Element is not visible');
     });
     it('should be able to fill the body', async({page}) => {
       await page.setContent(`<body contentEditable="true"></body>`);
       await page.fill('body', 'some value');
       expect(await page.evaluate(() => document.body.textContent)).toBe('some value');
+    });
+    it('should fill fixed position input', async ({page}) => {
+      await page.setContent(`<input style='position: fixed;' />`);
+      await page.fill('input', 'some value');
+      expect(await page.evaluate(() => document.querySelector('input').value)).toBe('some value');
     });
     it('should be able to fill when focus is in the wrong frame', async({page}) => {
       await page.setContent(`
