@@ -52,19 +52,19 @@ module.exports.describe = function({testRunner, expect, WEBKIT, FFOX}) {
       await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
       expect(await getPermission(page, 'geolocation')).toBe('granted');
     });
-    it.fail(FFOX)('should grant notifications permission when listed', async({page, server, context}) => {
+    it('should grant notifications permission when listed', async({page, server, context}) => {
       await page.goto(server.EMPTY_PAGE);
       await context.grantPermissions(['notifications'], { origin: server.EMPTY_PAGE });
       expect(await getPermission(page, 'notifications')).toBe('granted');
     });
-    it.fail(FFOX)('should accumulate when adding', async({page, server, context}) => {
+    it('should accumulate when adding', async({page, server, context}) => {
       await page.goto(server.EMPTY_PAGE);
       await context.grantPermissions(['geolocation']);
       await context.grantPermissions(['notifications']);
       expect(await getPermission(page, 'geolocation')).toBe('granted');
       expect(await getPermission(page, 'notifications')).toBe('granted');
     });
-    it.fail(FFOX)('should clear permissions', async({page, server, context}) => {
+    it('should clear permissions', async({page, server, context}) => {
       await page.goto(server.EMPTY_PAGE);
       await context.grantPermissions(['geolocation']);
       await context.clearPermissions();
