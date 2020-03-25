@@ -375,7 +375,7 @@ await browserContext.addInitScript({
 #### browserContext.clearCookies()
 - returns: <[Promise]>
 
-Clears context bookies.
+Clears context cookies.
 
 #### browserContext.clearPermissions()
 - returns: <[Promise]>
