@@ -17,7 +17,6 @@
 const util = require('util');
 const url = require('url');
 const inspector = require('inspector');
-const path = require('path');
 const EventEmitter = require('events');
 const Multimap = require('./Multimap');
 const fs = require('fs');
@@ -452,11 +451,46 @@ class TestPass {
   }
 }
 
-function specBuilder(defaultTimeout, action) {
+function specBuilder(defaultTimeout, modifiers, attributes, action) {
   let mode = TestMode.Run;
   let expectation = TestExpectation.Ok;
   let repeat = 1;
   let timeout = defaultTimeout;
+
+  const spec = {
+    Modes: { ...TestMode },
+    Expectations: { ...TestExpectation },
+    mode() {
+      return mode;
+    },
+    setMode(m) {
+      if (mode !== TestMode.Focus)
+        mode = m;
+    },
+    expectations() {
+      return [expectation];
+    },
+    setExpectations(e) {
+      if (Array.isArray(e)) {
+        if (e.length > 1)
+          throw new Error('');
+        e = e[0];
+      }
+      expectation = e;
+    },
+    timeout() {
+      return timeout;
+    },
+    setTimeout(t) {
+      timeout = t;
+    },
+    repeat() {
+      return repeat;
+    },
+    setRepeat(r) {
+      repeat = r;
+    }
+  };
 
   const func = (...args) => {
     for (let i = 0; i < repeat; ++i)
@@ -466,25 +500,20 @@ function specBuilder(defaultTimeout, action) {
     repeat = 1;
     timeout = defaultTimeout;
   };
-
-  func.skip = condition => {
-    if (condition)
-      mode = TestMode.Skip;
-    return func;
-  };
-  func.fail = condition => {
-    if (condition)
-      expectation = TestExpectation.Fail;
-    return func;
-  };
-  func.slow = () => {
-    timeout = 3 * defaultTimeout;
-    return func;
+  for (const { name, callback } of modifiers) {
+    func[name] = (...args) => {
+      callback(spec, ...args);
+      return func;
+    };
   }
-  func.repeat = count => {
-    repeat = count;
-    return func;
-  };
+  for (const { name, callback } of attributes) {
+    Object.defineProperty(func, name, {
+      get: () => {
+        callback(spec);
+        return func;
+      }
+    });
+  }
   return func;
 }
 
@@ -507,6 +536,8 @@ class TestRunner extends EventEmitter {
     this._timeout = timeout === 0 ? INFINITE_TIMEOUT : timeout;
     this._parallel = parallel;
     this._breakOnFailure = breakOnFailure;
+    this._modifiers = [];
+    this._attributes = [];
 
     if (MAJOR_NODEJS_VERSION >= 8 && disableTimeoutWhenInspectorIsEnabled) {
       if (inspector.url()) {
@@ -516,24 +547,47 @@ class TestRunner extends EventEmitter {
       }
     }
 
-    this.describe = specBuilder(this._timeout, (mode, expectation, timeout, ...args) => this._addSuite(mode, expectation, ...args));
-    this.fdescribe = specBuilder(this._timeout, (mode, expectation, timeout, ...args) => this._addSuite(TestMode.Focus, expectation, ...args));
-    this.xdescribe = specBuilder(this._timeout, (mode, expectation, timeout, ...args) => this._addSuite(TestMode.Skip, expectation, ...args));
-    this.it = specBuilder(this._timeout, (mode, expectation, timeout, name, callback) => this._addTest(name, callback, mode, expectation, timeout));
-    this.fit = specBuilder(this._timeout, (mode, expectation, timeout, name, callback) => this._addTest(name, callback, TestMode.Focus, expectation, timeout));
-    this.xit = specBuilder(this._timeout, (mode, expectation, timeout, name, callback) => this._addTest(name, callback, TestMode.Skip, expectation, timeout));
-    this.dit = specBuilder(this._timeout, (mode, expectation, timeout, name, callback) => {
-      const test = this._addTest(name, callback, TestMode.Focus, expectation, INFINITE_TIMEOUT);
-      const N = callback.toString().split('\n').length;
-      for (let i = 0; i < N; ++i)
-        this._debuggerLogBreakpointLines.set(test.location.filePath, i + test.location.lineNumber);
-    });
     this._debuggerLogBreakpointLines = new Multimap();
 
     this.beforeAll = this._addHook.bind(this, 'beforeAll');
     this.beforeEach = this._addHook.bind(this, 'beforeEach');
     this.afterAll = this._addHook.bind(this, 'afterAll');
     this.afterEach = this._addHook.bind(this, 'afterEach');
+
+    this._modifiers.push({ name: 'skip', callback: (t, condition) => condition && t.setMode(t.Modes.Skip) });
+    this._modifiers.push({ name: 'fail', callback: (t, condition) => condition && t.setExpectations(t.Expectations.Fail) });
+    this._modifiers.push({ name: 'slow', callback: (t, condition) => condition && t.setTimeout(t.timeout() * 3) });
+    this._modifiers.push({ name: 'repeat', callback: (t, count) => t.setRepeat(count) });
+    this._attributes.push({ name: 'focus', callback: t => t.setMode(t.Modes.Focus) });
+    this._buildSpecs();
+  }
+
+  _buildSpecs() {
+    this.describe = specBuilder(this._timeout, this._modifiers, this._attributes, (mode, expectation, timeout, ...args) => this._addSuite(mode, expectation, ...args));
+    this.fdescribe = specBuilder(this._timeout, this._modifiers, this._attributes, (mode, expectation, timeout, ...args) => this._addSuite(TestMode.Focus, expectation, ...args));
+    this.xdescribe = specBuilder(this._timeout, this._modifiers, this._attributes, (mode, expectation, timeout, ...args) => this._addSuite(TestMode.Skip, expectation, ...args));
+    this.it = specBuilder(this._timeout, this._modifiers, this._attributes, (mode, expectation, timeout, name, callback) => this._addTest(name, callback, mode, expectation, timeout));
+    this.fit = specBuilder(this._timeout, this._modifiers, this._attributes, (mode, expectation, timeout, name, callback) => this._addTest(name, callback, TestMode.Focus, expectation, timeout));
+    this.xit = specBuilder(this._timeout, this._modifiers, this._attributes, (mode, expectation, timeout, name, callback) => this._addTest(name, callback, TestMode.Skip, expectation, timeout));
+    this.dit = specBuilder(this._timeout, this._modifiers, this._attributes, (mode, expectation, timeout, name, callback) => {
+      const test = this._addTest(name, callback, TestMode.Focus, expectation, INFINITE_TIMEOUT);
+      const N = callback.toString().split('\n').length;
+      for (let i = 0; i < N; ++i)
+        this._debuggerLogBreakpointLines.set(test.location.filePath, i + test.location.lineNumber);
+    });
+  }
+
+  _buildSpec() {
+  }
+
+  modifier(name, callback) {
+    this._modifiers.push({ name, callback });
+    this._buildSpecs();
+  }
+
+  attribute(name, callback) {
+    this._attributes.push({ name, callback });
+    this._buildSpecs();
   }
 
   loadTests(module, ...args) {
