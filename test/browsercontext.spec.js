@@ -421,8 +421,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(response.status()).toBe(200);
       await context.close();
     });
-    // flaky: https://github.com/microsoft/playwright/pull/1301/checks?check_run_id=496478707
-    it.fail(FFOX && LINUX)('should fail if wrong credentials', async({browser, server}) => {
+    it('should fail if wrong credentials', async({browser, server}) => {
       server.setAuth('/empty.html', 'user', 'pass');
       const context = await browser.newContext({
         httpCredentials: { username: 'foo', password: 'bar' }
@@ -438,8 +437,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(response.status()).toBe(200);
       await context.close();
     });
-    // flaky: https://github.com/microsoft/playwright/pull/1320/checks?check_run_id=498666394
-    it.fail(FFOX && LINUX)('should allow disable authentication', async({browser, server}) => {
+    it('should allow disable authentication', async({browser, server}) => {
       server.setAuth('/empty.html', 'user', 'pass');
       const context = await browser.newContext({
         httpCredentials: { username: 'user', password: 'pass' }
@@ -451,6 +449,18 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       // Navigate to a different origin to bust Chromium's credential caching.
       response = await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
       expect(response.status()).toBe(401);
+      await context.close();
+    });
+    it('should return resource body', async({browser, server}) => {
+      server.setAuth('/playground.html', 'user', 'pass');
+      const context = await browser.newContext({
+        httpCredentials: { username: 'user', password: 'pass' }
+      });
+      const page = await context.newPage();
+      let response = await page.goto(server.PREFIX + '/playground.html');
+      expect(response.status()).toBe(200);
+      expect(await page.title()).toBe("Playground");
+      expect((await response.body()).toString()).toContain("Playground");
       await context.close();
     });
   });

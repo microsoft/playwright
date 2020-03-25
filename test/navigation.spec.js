@@ -103,7 +103,8 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     it('should work with redirects', async({page, server}) => {
       server.setRedirect('/redirect/1.html', '/redirect/2.html');
       server.setRedirect('/redirect/2.html', '/empty.html');
-      await page.goto(server.PREFIX + '/redirect/1.html');
+      const response = await page.goto(server.PREFIX + '/redirect/1.html');
+      expect(response.status()).toBe(200);
       expect(page.url()).toBe(server.EMPTY_PAGE);
     });
     it('should navigate to about:blank', async({page, server}) => {
