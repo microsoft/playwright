@@ -288,6 +288,11 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       });
       expect(result).toBe(42);
     });
+    it('should work with new Function() and CSP', async({page, server}) => {
+      server.setCSP('/empty.html', 'script-src ' + server.PREFIX);
+      await page.goto(server.PREFIX + '/empty.html');
+      expect(await page.evaluate(() => new Function('return true')())).toBe(true);
+    });
   });
 
   describe('Page.addInitScript', function() {
