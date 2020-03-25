@@ -30,16 +30,17 @@ type EvaluatorData = {
 
 export class Selectors {
   readonly _builtinEngines: Set<string>;
-  readonly _engines: Map<string, string>;
+  readonly _engines: Map<string, { source: string, contentScript: boolean }>;
   _generation = 0;
 
   constructor() {
-    // Note: keep in sync with Injected class.
+    // Note: keep in sync with SelectorEvaluator class.
     this._builtinEngines = new Set(['css', 'xpath', 'text', 'id', 'data-testid', 'data-test-id', 'data-test']);
     this._engines = new Map();
   }
 
-  async register(name: string, script: string | Function | { path?: string, content?: string }): Promise<void> {
+  async register(name: string, script: string | Function | { path?: string, content?: string }, options: { contentScript?: boolean } = {}): Promise<void> {
+    const { contentScript = false } = options;
     if (!name.match(/^[a-zA-Z_0-9-]+$/))
       throw new Error('Selector engine name may only contain [a-zA-Z0-9_] characters');
     // Note: we keep 'zs' for future use.
@@ -48,8 +49,15 @@ export class Selectors {
     const source = await helper.evaluationScript(script, undefined, false);
     if (this._engines.has(name))
       throw new Error(`"${name}" selector engine has been already registered`);
-    this._engines.set(name, source);
+    this._engines.set(name, { source, contentScript });
     ++this._generation;
+  }
+
+  private _needsMainContext(parsed: types.ParsedSelector): boolean {
+    return parsed.some(({name}) => {
+      const custom = this._engines.get(name);
+      return custom ? !custom.contentScript : false;
+    });
   }
 
   async _prepareEvaluator(context: dom.FrameExecutionContext): Promise<js.JSHandle<SelectorEvaluator>> {
@@ -60,7 +68,7 @@ export class Selectors {
     }
     if (!data) {
       const custom: string[] = [];
-      for (const [name, source] of this._engines)
+      for (const [name, { source }] of this._engines)
         custom.push(`{ name: '${name}', engine: (${source}) }`);
       const source = `
         new (${selectorEvaluatorSource.source})([
@@ -78,7 +86,7 @@ export class Selectors {
 
   async _query(frame: frames.Frame, selector: string, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
     const parsed = this._parseSelector(selector);
-    const context = await frame._utilityContext();
+    const context = this._needsMainContext(parsed) ? await frame._mainContext() : await frame._utilityContext();
     const handle = await context.evaluateHandleInternal(
         ({ evaluator, parsed, scope }) => evaluator.querySelector(parsed, scope || document),
         { evaluator: await this._prepareEvaluator(context), parsed, scope }
@@ -108,7 +116,7 @@ export class Selectors {
 
   async _queryAll(frame: frames.Frame, selector: string, scope?: dom.ElementHandle, allowUtilityContext?: boolean): Promise<dom.ElementHandle<Element>[]> {
     const parsed = this._parseSelector(selector);
-    const context = !allowUtilityContext ? await frame._mainContext() : await frame._utilityContext();
+    const context = !allowUtilityContext || this._needsMainContext(parsed) ? await frame._mainContext() : await frame._utilityContext();
     const arrayHandle = await context.evaluateHandleInternal(
         ({ evaluator, parsed, scope }) => evaluator.querySelectorAll(parsed, scope || document),
         { evaluator: await this._prepareEvaluator(context), parsed, scope }
@@ -144,7 +152,7 @@ export class Selectors {
         }
       });
     }, { evaluator: await this._prepareEvaluator(context), parsed, waitFor, timeout });
-    return { world: 'utility', task };
+    return { world: this._needsMainContext(parsed) ? 'main' : 'utility', task };
   }
 
   async _createSelector(name: string, handle: dom.ElementHandle<Element>): Promise<string | undefined> {

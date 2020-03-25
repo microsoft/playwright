@@ -560,6 +560,37 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.setContent('<section></section>');
       expect(await page.$eval('foo=whatever', e => e.nodeName)).toBe('SECTION');
     });
+    it('should work in main and isolated world', async ({page}) => {
+      const createDummySelector = () => ({
+        create(root, target) { },
+        query(root, selector) {
+          return window.__answer;
+        },
+        queryAll(root, selector) {
+          return [document.body, document.documentElement, window.__answer];
+        }
+      });
+      await playwright.selectors.register('main', createDummySelector);
+      await playwright.selectors.register('isolated', createDummySelector, { contentScript: true });
+      await page.setContent('<div><span><section></section></span></div>');
+      await page.evaluate(() => window.__answer = document.querySelector('span'));
+      // Works in main if asked.
+      expect(await page.$eval('main=ignored', e => e.nodeName)).toBe('SPAN');
+      expect(await page.$eval('css=div >> main=ignored', e => e.nodeName)).toBe('SPAN');
+      expect(await page.$$eval('main=ignored', es => window.__answer !== undefined)).toBe(true);
+      expect(await page.$$eval('main=ignored', es => es.filter(e => e).length)).toBe(3);
+      // Works in isolated by default.
+      expect(await page.$('isolated=ignored')).toBe(null);
+      expect(await page.$('css=div >> isolated=ignored')).toBe(null);
+      // $$eval always works in main, to avoid adopting nodes one by one.
+      expect(await page.$$eval('isolated=ignored', es => window.__answer !== undefined)).toBe(true);
+      expect(await page.$$eval('isolated=ignored', es => es.filter(e => e).length)).toBe(3);
+      // At least one engine in main forces all to be in main.
+      expect(await page.$eval('main=ignored >> isolated=ignored', e => e.nodeName)).toBe('SPAN');
+      expect(await page.$eval('isolated=ignored >> main=ignored', e => e.nodeName)).toBe('SPAN');
+      // Can be chained to css.
+      expect(await page.$eval('main=ignored >> css=section', e => e.nodeName)).toBe('SECTION');
+    });
     it('should update', async ({page}) => {
       await page.setContent('<div><dummy id=d1></dummy></div><span><dummy id=d2></dummy></span>');
       expect(await page.$eval('div', e => e.nodeName)).toBe('DIV');
