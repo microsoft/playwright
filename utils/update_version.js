@@ -53,10 +53,7 @@ if (version === '--next') {
   console.log('Setting version to ' + version);
 } else {
   if (!version || !version.match(/^v\d+\.\d+\.\d+(-post)?$/)) {
-    console.error(`Malformed version "${version}"`);
-    console.error(`Correct examples:`);
-    console.error(`  ${SCRIPT_NAME} v1.0.0`);
-    console.error(`  ${SCRIPT_NAME} v1.0.0-post`);
+    console.error(`Malformed version "${version}". Use --help for details.`);
     process.exit(1);
   }
   version = version.substring(1);
