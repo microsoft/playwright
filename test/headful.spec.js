@@ -59,7 +59,7 @@ module.exports.describe = function({testRunner, expect, browserType, defaultBrow
       await removeUserDataDir(userDataDir);
       expect(cookie).toBe('foo=true');
     });
-    it.fail(FFOX)('should close browser with beforeunload page', async({server}) => {
+    it('should close browser with beforeunload page', async({server}) => {
       const userDataDir = await makeUserDataDir();
       const browserContext = await browserType.launchPersistentContext(userDataDir, headfulOptions);
       const page = await browserContext.newPage();
