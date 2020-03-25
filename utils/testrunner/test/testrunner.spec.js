@@ -159,6 +159,49 @@ module.exports.addTests = function({testRunner, expect}) {
     });
   });
 
+  describe('TestRunner attributes', () => {
+    it('should work', async() => {
+      const t = newTestRunner({timeout: 123});
+      const log = [];
+
+      t.modifier('foo', (t, ...args) => {
+        log.push('foo');
+
+        expect(t.Modes.Run).toBeTruthy();
+        expect(t.Modes.Skip).toBeTruthy();
+        expect(t.Modes.Focus).toBeTruthy();
+        expect(t.mode()).toBe(t.Modes.Run);
+        expect(t.Expectations.Ok).toBeTruthy();
+        expect(t.Expectations.Fail).toBeTruthy();
+        expect(t.expectations()).toEqual([t.Expectations.Ok]);
+        expect(t.timeout()).toBe(123);
+        expect(t.repeat()).toBe(1);
+
+        expect(args.length).toBe(2);
+        expect(args[0]).toBe('uno');
+        expect(args[1]).toBe('dos');
+
+        t.setMode(t.Modes.Focus);
+        t.setExpectations([t.Expectations.Fail]);
+        t.setTimeout(234);
+        t.setRepeat(42);
+      });
+
+      t.attribute('bar', t => {
+        log.push('bar');
+        expect(t.mode()).toBe(t.Modes.Focus);
+        t.setMode(t.Modes.Skip);
+        expect(t.mode()).toBe(t.Modes.Focus);
+        expect(t.expectations()).toEqual([t.Expectations.Fail]);
+        expect(t.timeout()).toBe(234);
+        expect(t.repeat()).toBe(42);
+      });
+
+      t.it.foo('uno', 'dos').bar('test', () => { });
+      expect(log).toEqual(['foo', 'bar']);
+    });
+  });
+
   describe('TestRunner hooks', () => {
     it('should run all hooks in proper order', async() => {
       const log = [];
