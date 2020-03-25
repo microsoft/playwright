@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import * as extract from 'extract-zip';
+import * as yauzl from 'yauzl-promise';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as util from 'util';
@@ -28,6 +28,8 @@ import { assert } from '../helper';
 
 const unlinkAsync = util.promisify(fs.unlink.bind(fs));
 const chmodAsync = util.promisify(fs.chmod.bind(fs));
+const fsPromises = fs.promises;
+
 const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
 const DEFAULT_DOWNLOAD_HOSTS = {
@@ -211,13 +213,32 @@ function downloadFile(url: string, destinationPath: string, progressCallback: On
   }
 }
 
-function extractZip(zipPath: string, folderPath: string): Promise<Error | null> {
-  return new Promise((fulfill, reject) => extract(zipPath, {dir: folderPath}, err => {
-    if (err)
-      reject(err);
-    else
-      fulfill();
-  }));
+async function extractZip(zipPath: string, folderPath: string) {
+  const zipfile = await yauzl.open(zipPath);
+
+  const finishedPromises: Promise<any>[] = [];
+
+  await zipfile.walkEntries(async entry => {
+    if (entry.fileName.endsWith('/')) {
+      await fsPromises.mkdir(path.resolve(folderPath, entry.fileName), { recursive: true });
+    } else {
+      const filepath = path.resolve(folderPath, entry.fileName);
+      await fsPromises.mkdir(path.parse(filepath).dir, { recursive: true });
+
+      const stream = await zipfile.openReadStream(entry);
+
+      const finishedPromise = new Promise((resolve, reject) => {
+        stream.on('end', resolve);
+        stream.on('error', reject);
+      });
+      finishedPromises.push(finishedPromise);
+
+      stream.pipe(fs.createWriteStream(filepath));
+    }
+  });
+
+  await Promise.all(finishedPromises);
+  zipfile.close();
 }
 
 function httpRequest(url: string, method: string, response: (r: any) => void) {
