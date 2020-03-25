@@ -726,10 +726,10 @@ index 02f18c7f13c55a16688cee887f586ba3bf97a6fb..1f0c2a3192e35fd71b5fa26fa6822c2b
    nsCOMPtr<nsIPrincipal> principal =
 diff --git a/juggler/BrowserContextManager.js b/juggler/BrowserContextManager.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..bd57d338c279f5ab31102e6644f43e133b7f4e25
+index 0000000000000000000000000000000000000000..937c3d0bdf0bf1e402468a6eccd139f60b1db356
 --- /dev/null
 +++ b/juggler/BrowserContextManager.js
-@@ -0,0 +1,235 @@
+@@ -0,0 +1,233 @@
 +"use strict";
 +
 +const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
@@ -744,9 +744,7 @@ index 0000000000000000000000000000000000000000..bd57d338c279f5ab31102e6644f43e13
 +
 +const ALL_PERMISSIONS = [
 +  'geo',
-+  'microphone',
-+  'camera',
-+  'desktop-notifications',
++  'desktop-notification',
 +];
 +
 +class BrowserContextManager {
@@ -854,7 +852,7 @@ index 0000000000000000000000000000000000000000..bd57d338c279f5ab31102e6644f43e13
 +    for (const page of this.pages) {
 +      if (origin === '*' || page._url.startsWith(origin)) {
 +        this.grantPermissionsToOrigin(page._url);
-+        promises.push(page.ensurePermissions(permissions));
++        promises.push(page.ensurePermissions());
 +      }
 +    }
 +    await Promise.all(promises);
@@ -1990,7 +1988,7 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..e624e3c21a20dd324e0d135598e2a2402c8b62bf
+index 0000000000000000000000000000000000000000..930edb24bbe5d5732a27adb87155df6ca3727422
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
 @@ -0,0 +1,277 @@
@@ -2222,8 +2220,8 @@ index 0000000000000000000000000000000000000000..e624e3c21a20dd324e0d135598e2a240
 +    this._browserContext.grantPermissionsToOrigin(this._url);
 +  }
 +
-+  async ensurePermissions(permissions) {
-+    await this._channel.connect('').send('ensurePermissions', permissions).catch(e => void e);
++  async ensurePermissions() {
++    await this._channel.connect('').send('ensurePermissions', {}).catch(e => void e);
 +  }
 +
 +  async addScriptToEvaluateOnNewDocument(script) {
@@ -4665,10 +4663,10 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/juggler/content/main.js b/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..a3d9501d4582bf1428d9e994d609dc54e59b90c7
+index 0000000000000000000000000000000000000000..93dfa70ec9921044006fb6adbe8a1f60627666a1
 --- /dev/null
 +++ b/juggler/content/main.js
-@@ -0,0 +1,174 @@
+@@ -0,0 +1,146 @@
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
@@ -4676,13 +4674,6 @@ index 0000000000000000000000000000000000000000..a3d9501d4582bf1428d9e994d609dc54
 +const {ScrollbarManager} = ChromeUtils.import('chrome://juggler/content/content/ScrollbarManager.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
 +const {PageAgent} = ChromeUtils.import('chrome://juggler/content/content/PageAgent.js');
-+
-+const ALL_PERMISSIONS = [
-+  'geo',
-+  'microphone',
-+  'camera',
-+  'desktop-notification',
-+];
 +
 +const scrollbarManager = new ScrollbarManager(docShell);
 +let frameTree;
@@ -4798,29 +4789,8 @@ index 0000000000000000000000000000000000000000..a3d9501d4582bf1428d9e994d609dc54
 +      setOnlineOverrideInDocShell(override);
 +    },
 +
-+    async ensurePermissions(permissions) {
-+      const checkPermissions = () => {
-+        for (const permission of ALL_PERMISSIONS) {
-+          const actual = Services.perms.testExactPermissionFromPrincipal(this._docShell.domWindow.document.nodePrincipal, permission);
-+          const expected = permissions.include(permission) ? Ci.nsIPermissionManager.ALLOW_ACTION : Ci.nsIPermissionManager.DENY_ACTION;
-+          if (actual !== expected)
-+            return false;
-+        }
-+        return true;
-+      }
-+
-+      if (checkPermissions())
-+        return;
-+
-+      // Track all 'perm-changed' events and wait until permissions are expected.
-+      await new Promise(resolve => {
-+        const listeners = [helper.addObserver(() => {
-+          if (!checkPermission())
-+            return;
-+          helper.removeListeners(listeners);
-+          resolve();
-+        }, 'perm-changed')];
-+      });
++    ensurePermissions() {
++      // noop, just a rountrip.
 +    },
 +
 +    dispose() {
