@@ -144,3 +144,8 @@ export type JSCoverageOptions = {
   resetOnNavigation?: boolean,
   reportAnonymousScripts?: boolean,
 };
+
+export type ParsedSelector = {
+  name: string,
+  body: string,
+}[];

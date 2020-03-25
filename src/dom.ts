@@ -18,12 +18,11 @@ import * as frames from './frames';
 import * as input from './input';
 import * as js from './javascript';
 import * as types from './types';
-import * as injectedSource from './generated/injectedSource';
 import { assert, helper, debugError } from './helper';
 import Injected from './injected/injected';
 import { Page } from './page';
 import * as platform from './platform';
-import { Selectors } from './selectors';
+import { selectors } from './selectors';
 
 export type PointerActionOptions = {
   modifiers?: input.Modifier[];
@@ -36,9 +35,7 @@ export type MultiClickOptions = PointerActionOptions & input.MouseMultiClickOpti
 
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
-
   private _injectedPromise?: Promise<js.JSHandle>;
-  private _injectedGeneration = -1;
 
   constructor(delegate: js.ExecutionContextDelegate, frame: frames.Frame) {
     super(delegate);
@@ -64,57 +61,12 @@ export class FrameExecutionContext extends js.ExecutionContext {
   }
 
   _injected(): Promise<js.JSHandle<Injected>> {
-    const selectors = Selectors._instance();
-    if (this._injectedPromise && selectors._generation !== this._injectedGeneration) {
-      this._injectedPromise.then(handle => handle.dispose());
-      this._injectedPromise = undefined;
-    }
     if (!this._injectedPromise) {
-      const custom: string[] = [];
-      for (const [name, source] of selectors._engines)
-        custom.push(`{ name: '${name}', engine: (${source}) }`);
-      const source = `
-        new (${injectedSource.source})([
-          ${custom.join(',\n')}
-        ])
-      `;
-      this._injectedPromise = this._doEvaluateInternal(false /* returnByValue */, false /* waitForNavigations */, source);
-      this._injectedGeneration = selectors._generation;
+      this._injectedPromise = selectors._prepareEvaluator(this).then(evaluator => {
+        return this.evaluateHandleInternal(evaluator => evaluator.injected, evaluator);
+      });
     }
     return this._injectedPromise;
-  }
-
-  async _$(selector: string, scope?: ElementHandle): Promise<ElementHandle<Element> | null> {
-    const handle = await this.evaluateHandleInternal(
-        ({ injected, selector, scope }) => injected.querySelector(selector, scope || document),
-        { injected: await this._injected(), selector, scope }
-    );
-    if (!handle.asElement())
-      handle.dispose();
-    return handle.asElement() as ElementHandle<Element>;
-  }
-
-  async _$array(selector: string, scope?: ElementHandle): Promise<js.JSHandle<Element[]>> {
-    const arrayHandle = await this.evaluateHandleInternal(
-        ({ injected, selector, scope }) => injected.querySelectorAll(selector, scope || document),
-        { injected: await this._injected(), selector, scope }
-    );
-    return arrayHandle;
-  }
-
-  async _$$(selector: string, scope?: ElementHandle): Promise<ElementHandle<Element>[]> {
-    const arrayHandle = await this._$array(selector, scope);
-    const properties = await arrayHandle.getProperties();
-    arrayHandle.dispose();
-    const result: ElementHandle<Element>[] = [];
-    for (const property of properties.values()) {
-      const elementHandle = property.asElement() as ElementHandle<Element>;
-      if (elementHandle)
-        result.push(elementHandle);
-      else
-        property.dispose();
-    }
-    return result;
   }
 }
 
@@ -369,28 +321,32 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   $(selector: string): Promise<ElementHandle | null> {
-    return this._context._$(selector, this);
+    // TODO: this should be ownerFrame() instead.
+    return selectors._query(this._context.frame, selector, this);
   }
 
   $$(selector: string): Promise<ElementHandle<Element>[]> {
-    return this._context._$$(selector, this);
+    // TODO: this should be ownerFrame() instead.
+    return selectors._queryAll(this._context.frame, selector, this);
   }
 
   async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
   async $eval<R>(selector: string, pageFunction: types.FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
-    const elementHandle = await this._context._$(selector, this);
-    if (!elementHandle)
+    // TODO: this should be ownerFrame() instead.
+    const handle = await selectors._query(this._context.frame, selector, this);
+    if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await elementHandle.evaluate(pageFunction, arg);
-    elementHandle.dispose();
+    const result = await handle.evaluate(pageFunction, arg);
+    handle.dispose();
     return result;
   }
 
   async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
   async $$eval<R>(selector: string, pageFunction: types.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
   async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
-    const arrayHandle = await this._context._$array(selector, this);
+    // TODO: this should be ownerFrame() instead.
+    const arrayHandle = await selectors._queryArray(this._context.frame, selector, this);
     const result = await arrayHandle.evaluate(pageFunction, arg);
     arrayHandle.dispose();
     return result;

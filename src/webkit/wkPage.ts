@@ -34,6 +34,7 @@ import * as platform from '../platform';
 import { getAccessibilityTree } from './wkAccessibility';
 import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKBrowserContext } from './wkBrowser';
+import { selectors } from '../selectors';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
@@ -730,8 +731,7 @@ export class WKPage implements PageDelegate {
     const parent = frame.parentFrame();
     if (!parent)
       throw new Error('Frame has been detached.');
-    const context = await parent._utilityContext();
-    const handles = await context._$$('iframe');
+    const handles = await selectors._queryAll(parent, 'iframe', undefined, true /* allowUtilityContext */);
     const items = await Promise.all(handles.map(async handle => {
       const frame = await handle.contentFrame().catch(e => null);
       return { handle, frame };

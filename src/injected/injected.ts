@@ -14,144 +14,11 @@
  * limitations under the License.
  */
 
-import { SelectorEngine, SelectorRoot } from './selectorEngine';
-import { Utils } from './utils';
-import { CSSEngine } from './cssSelectorEngine';
-import { XPathEngine } from './xpathSelectorEngine';
-import { TextEngine } from './textSelectorEngine';
 import * as types from '../types';
 
-function createAttributeEngine(attribute: string): SelectorEngine {
-  const engine: SelectorEngine = {
-    create(root: SelectorRoot, target: Element): string | undefined {
-      const value = target.getAttribute(attribute);
-      if (!value)
-        return;
-      if (root.querySelector(`[${attribute}=${value}]`) === target)
-        return value;
-    },
-
-    query(root: SelectorRoot, selector: string): Element | undefined {
-      return root.querySelector(`[${attribute}=${selector}]`) || undefined;
-    },
-
-    queryAll(root: SelectorRoot, selector: string): Element[] {
-      return Array.from(root.querySelectorAll(`[${attribute}=${selector}]`));
-    }
-  };
-  return engine;
-}
-
-type ParsedSelector = { engine: SelectorEngine, selector: string }[];
-type Predicate = (element: Element | undefined) => any;
+type Predicate = () => any;
 
 class Injected {
-  readonly utils: Utils;
-  readonly engines: Map<string, SelectorEngine>;
-
-  constructor(customEngines: { name: string, engine: SelectorEngine}[]) {
-    this.utils = new Utils();
-    this.engines = new Map();
-    // Note: keep predefined names in sync with Selectors class.
-    this.engines.set('css', CSSEngine);
-    this.engines.set('xpath', XPathEngine);
-    this.engines.set('text', TextEngine);
-    this.engines.set('id', createAttributeEngine('id'));
-    this.engines.set('data-testid', createAttributeEngine('data-testid'));
-    this.engines.set('data-test-id', createAttributeEngine('data-test-id'));
-    this.engines.set('data-test', createAttributeEngine('data-test'));
-    for (const {name, engine} of customEngines)
-      this.engines.set(name, engine);
-  }
-
-  querySelector(selector: string, root: Node): Element | undefined {
-    const parsed = this._parseSelector(selector);
-    if (!(root as any)['querySelector'])
-      throw new Error('Node is not queryable.');
-    return this._querySelectorRecursively(root as SelectorRoot, parsed, 0);
-  }
-
-  private _querySelectorRecursively(root: SelectorRoot, parsed: ParsedSelector, index: number): Element | undefined {
-    const current = parsed[index];
-    root = (root as Element).shadowRoot || root;
-    if (index === parsed.length - 1)
-      return current.engine.query(root, current.selector);
-    const all = current.engine.queryAll(root, current.selector);
-    for (const next of all) {
-      const result = this._querySelectorRecursively(next, parsed, index + 1);
-      if (result)
-        return result;
-    }
-  }
-
-  querySelectorAll(selector: string, root: Node): Element[] {
-    const parsed = this._parseSelector(selector);
-    if (!(root as any)['querySelectorAll'])
-      throw new Error('Node is not queryable.');
-    let set = new Set<SelectorRoot>([ root as SelectorRoot ]);
-    for (const { engine, selector } of parsed) {
-      const newSet = new Set<Element>();
-      for (const prev of set) {
-        for (const next of engine.queryAll((prev as Element).shadowRoot || prev, selector)) {
-          if (newSet.has(next))
-            continue;
-          newSet.add(next);
-        }
-      }
-      set = newSet;
-    }
-    return Array.from(set) as Element[];
-  }
-
-  private _parseSelector(selector: string): ParsedSelector {
-    let index = 0;
-    let quote: string | undefined;
-    let start = 0;
-    const result: ParsedSelector = [];
-    const append = () => {
-      const part = selector.substring(start, index).trim();
-      const eqIndex = part.indexOf('=');
-      let name: string;
-      let body: string;
-      if (eqIndex !== -1 && part.substring(0, eqIndex).trim().match(/^[a-zA-Z_0-9-]+$/)) {
-        name = part.substring(0, eqIndex).trim();
-        body = part.substring(eqIndex + 1);
-      } else if (part.startsWith('"')) {
-        name = 'text';
-        body = part;
-      } else if (/^\(*\/\//.test(part)) {
-        // If selector starts with '//' or '//' prefixed with multiple opening
-        // parenthesis, consider xpath. @see https://github.com/microsoft/playwright/issues/817
-        name = 'xpath';
-        body = part;
-      } else {
-        name = 'css';
-        body = part;
-      }
-      const engine = this.engines.get(name.toLowerCase());
-      if (!engine)
-        throw new Error(`Unknown engine ${name} while parsing selector ${selector}`);
-      result.push({ engine, selector: body });
-    };
-    while (index < selector.length) {
-      const c = selector[index];
-      if (c === '\\' && index + 1 < selector.length) {
-        index += 2;
-      } else if (c === quote) {
-        quote = undefined;
-        index++;
-      } else if (!quote && c === '>' && selector[index + 1] === '>') {
-        append();
-        index += 2;
-        start = index;
-      } else {
-        index++;
-      }
-    }
-    append();
-    return result;
-  }
-
   isVisible(element: Element): boolean {
     if (!element.ownerDocument || !element.ownerDocument.defaultView)
       return true;
@@ -162,13 +29,12 @@ class Injected {
     return !!(rect.top || rect.bottom || rect.width || rect.height);
   }
 
-  private _pollMutation(selector: string | undefined, predicate: Predicate, timeout: number): Promise<any> {
+  private _pollMutation(predicate: Predicate, timeout: number): Promise<any> {
     let timedOut = false;
     if (timeout)
       setTimeout(() => timedOut = true, timeout);
 
-    const element = selector === undefined ? undefined : this.querySelector(selector, document);
-    const success = predicate(element);
+    const success = predicate();
     if (success)
       return Promise.resolve(success);
 
@@ -180,8 +46,7 @@ class Injected {
         fulfill();
         return;
       }
-      const element = selector === undefined ? undefined : this.querySelector(selector, document);
-      const success = predicate(element);
+      const success = predicate();
       if (success) {
         observer.disconnect();
         fulfill(success);
@@ -195,7 +60,7 @@ class Injected {
     return result;
   }
 
-  private _pollRaf(selector: string | undefined, predicate: Predicate, timeout: number): Promise<any> {
+  private _pollRaf(predicate: Predicate, timeout: number): Promise<any> {
     let timedOut = false;
     if (timeout)
       setTimeout(() => timedOut = true, timeout);
@@ -208,8 +73,7 @@ class Injected {
         fulfill();
         return;
       }
-      const element = selector === undefined ? undefined : this.querySelector(selector, document);
-      const success = predicate(element);
+      const success = predicate();
       if (success)
         fulfill(success);
       else
@@ -220,7 +84,7 @@ class Injected {
     return result;
   }
 
-  private _pollInterval(selector: string | undefined, pollInterval: number, predicate: Predicate, timeout: number): Promise<any> {
+  private _pollInterval(pollInterval: number, predicate: Predicate, timeout: number): Promise<any> {
     let timedOut = false;
     if (timeout)
       setTimeout(() => timedOut = true, timeout);
@@ -232,8 +96,7 @@ class Injected {
         fulfill();
         return;
       }
-      const element = selector === undefined ? undefined : this.querySelector(selector, document);
-      const success = predicate(element);
+      const success = predicate();
       if (success)
         fulfill(success);
       else
@@ -244,12 +107,12 @@ class Injected {
     return result;
   }
 
-  poll(polling: 'raf' | 'mutation' | number, selector: string | undefined, timeout: number, predicate: Predicate): Promise<any> {
+  poll(polling: 'raf' | 'mutation' | number, timeout: number, predicate: Predicate): Promise<any> {
     if (polling === 'raf')
-      return this._pollRaf(selector, predicate, timeout);
+      return this._pollRaf(predicate, timeout);
     if (polling === 'mutation')
-      return this._pollMutation(selector, predicate, timeout);
-    return this._pollInterval(selector, polling, predicate, timeout);
+      return this._pollMutation(predicate, timeout);
+    return this._pollInterval(polling, predicate, timeout);
   }
 
   getElementBorderWidth(node: Node): { left: number; top: number; } {
@@ -375,7 +238,7 @@ class Injected {
 
     let lastRect: types.Rect | undefined;
     let counter = 0;
-    const result = await this.poll('raf', undefined, timeout, () => {
+    const result = await this.poll('raf', timeout, () => {
       // First raf happens in the same animation frame as evaluation, so it does not produce
       // any client rect difference compared to synchronous call. We skip the synchronous call
       // and only force layout during actual rafs as a small optimisation.
@@ -395,14 +258,36 @@ class Injected {
     const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
     if (!element)
       throw new Error('Element is not attached to the DOM');
-    const result = await this.poll('raf', undefined, timeout, () => {
-      let hitElement = this.utils.deepElementFromPoint(document, point.x, point.y);
+    const result = await this.poll('raf', timeout, () => {
+      let hitElement = this._deepElementFromPoint(document, point.x, point.y);
       while (hitElement && hitElement !== element)
-        hitElement = this.utils.parentElementOrShadowHost(hitElement);
+        hitElement = this._parentElementOrShadowHost(hitElement);
       return hitElement === element;
     });
     if (!result)
       throw new Error(`waiting for element to receive mouse events failed: timeout ${timeout}ms exceeded`);
+  }
+
+  private _parentElementOrShadowHost(element: Element): Element | undefined {
+    if (element.parentElement)
+      return element.parentElement;
+    if (!element.parentNode)
+      return;
+    if (element.parentNode.nodeType === Node.DOCUMENT_FRAGMENT_NODE && (element.parentNode as ShadowRoot).host)
+      return (element.parentNode as ShadowRoot).host;
+  }
+
+  private _deepElementFromPoint(document: Document, x: number, y: number): Element | undefined {
+    let container: Document | ShadowRoot | null = document;
+    let element: Element | undefined;
+    while (container) {
+      const innerElement = container.elementFromPoint(x, y) as Element | undefined;
+      if (!innerElement || element === innerElement)
+        break;
+      element = innerElement;
+      container = element.shadowRoot;
+    }
+    return element;
   }
 }
 

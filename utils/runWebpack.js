@@ -19,7 +19,7 @@ const path = require('path');
 
 const files = [
   path.join('src', 'injected', 'zsSelectorEngine.webpack.config.js'),
-  path.join('src', 'injected', 'injected.webpack.config.js'),
+  path.join('src', 'injected', 'selectorEvaluator.webpack.config.js'),
   path.join('src', 'web.webpack.config.js'),
 ];
 
