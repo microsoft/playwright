@@ -22,6 +22,7 @@ import { DeviceDescriptors } from '../deviceDescriptors';
 import { Chromium } from './chromium';
 import { WebKit } from './webkit';
 import { Firefox } from './firefox';
+import { selectors } from '../selectors';
 
 for (const className in api) {
   if (typeof (api as any)[className] === 'function')
@@ -33,7 +34,7 @@ type PlaywrightOptions = {
 };
 
 export class Playwright {
-  readonly selectors = api.Selectors._instance();
+  readonly selectors = selectors;
   readonly devices: types.Devices;
   readonly errors: { TimeoutError: typeof TimeoutError };
   readonly chromium: (Chromium|undefined);

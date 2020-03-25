@@ -25,6 +25,7 @@ import { Events } from './events';
 import { Page } from './page';
 import { ConsoleMessage } from './console';
 import * as platform from './platform';
+import { selectors } from './selectors';
 
 type ContextType = 'main' | 'utility';
 type ContextData = {
@@ -427,15 +428,7 @@ export class Frame {
   }
 
   async $(selector: string): Promise<dom.ElementHandle<Element> | null> {
-    const utilityContext = await this._utilityContext();
-    const mainContext = await this._mainContext();
-    const handle = await utilityContext._$(selector);
-    if (handle && handle._context !== mainContext) {
-      const adopted = this._page._delegate.adoptElementHandle(handle, mainContext);
-      handle.dispose();
-      return adopted;
-    }
-    return handle;
+    return selectors._query(this, selector);
   }
 
   async waitForSelector(selector: string, options?: types.WaitForElementOptions): Promise<dom.ElementHandle<Element> | null> {
@@ -445,8 +438,8 @@ export class Frame {
     if (!['attached', 'detached', 'visible', 'hidden'].includes(waitFor))
       throw new Error(`Unsupported waitFor option "${waitFor}"`);
 
-    const task = waitForSelectorTask(selector, waitFor, timeout);
-    const result = await this._scheduleRerunnableTask(task, 'utility', timeout, `selector "${selectorToString(selector, waitFor)}"`);
+    const { world, task } = selectors._waitForSelectorTask(selector, waitFor, timeout);
+    const result = await this._scheduleRerunnableTask(task, world, timeout, `selector "${selectorToString(selector, waitFor)}"`);
     if (!result.asElement()) {
       result.dispose();
       return null;
@@ -464,28 +457,25 @@ export class Frame {
   async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
   async $eval<R>(selector: string, pageFunction: types.FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
-    const context = await this._mainContext();
-    const elementHandle = await context._$(selector);
-    if (!elementHandle)
+    const handle = await this.$(selector);
+    if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await elementHandle.evaluate(pageFunction, arg);
-    elementHandle.dispose();
+    const result = await handle.evaluate(pageFunction, arg);
+    handle.dispose();
     return result;
   }
 
   async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
   async $$eval<R>(selector: string, pageFunction: types.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
   async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
-    const context = await this._mainContext();
-    const arrayHandle = await context._$array(selector);
+    const arrayHandle = await selectors._queryArray(this, selector);
     const result = await arrayHandle.evaluate(pageFunction, arg);
     arrayHandle.dispose();
     return result;
   }
 
   async $$(selector: string): Promise<dom.ElementHandle<Element>[]> {
-    const context = await this._mainContext();
-    return context._$$(selector);
+    return selectors._queryAll(this, selector);
   }
 
   async content(): Promise<string> {
@@ -746,8 +736,8 @@ export class Frame {
 
   private async _waitForSelectorInUtilityContext(selector: string, options?: types.WaitForElementOptions): Promise<dom.ElementHandle<Element>> {
     const { timeout = this._page._timeoutSettings.timeout(), waitFor = 'attached' } = (options || {});
-    const task = waitForSelectorTask(selector, waitFor, timeout);
-    const result = await this._scheduleRerunnableTask(task, 'utility', timeout, `selector "${selectorToString(selector, waitFor)}"`);
+    const { world, task } = selectors._waitForSelectorTask(selector, waitFor, timeout);
+    const result = await this._scheduleRerunnableTask(task, world, timeout, `selector "${selectorToString(selector, waitFor)}"`);
     return result.asElement() as dom.ElementHandle<Element>;
   }
 
@@ -765,9 +755,7 @@ export class Frame {
 
     const task = async (context: dom.FrameExecutionContext) => context.evaluateHandleInternal(({ injected, predicateBody, polling, timeout, arg }) => {
       const innerPredicate = new Function('arg', predicateBody);
-      return injected.poll(polling, undefined, timeout, (element: Element | undefined): any => {
-        return innerPredicate(arg);
-      });
+      return injected.poll(polling, timeout, () => innerPredicate(arg));
     }, { injected: await context._injected(), predicateBody, polling, timeout, arg });
     return this._scheduleRerunnableTask(task, 'main', timeout) as any as types.SmartHandle<R>;
   }
@@ -831,24 +819,6 @@ export class Frame {
 }
 
 type Task = (context: dom.FrameExecutionContext) => Promise<js.JSHandle>;
-
-function waitForSelectorTask(selector: string, waitFor: 'attached' | 'detached' | 'visible' | 'hidden', timeout: number): Task {
-  return async (context: dom.FrameExecutionContext) => context.evaluateHandleInternal(({ injected, selector, waitFor, timeout }) => {
-    const polling = (waitFor === 'attached' || waitFor === 'detached') ? 'mutation' : 'raf';
-    return injected.poll(polling, selector, timeout, (element: Element | undefined): Element | boolean => {
-      switch (waitFor) {
-        case 'attached':
-          return element || false;
-        case 'detached':
-          return !element;
-        case 'visible':
-          return element && injected.isVisible(element) ? element : false;
-        case 'hidden':
-          return !element || !injected.isVisible(element);
-      }
-    });
-  }, { injected: await context._injected(), selector, waitFor, timeout });
-}
 
 class RerunnableTask {
   readonly promise: Promise<js.JSHandle>;

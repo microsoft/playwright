@@ -978,19 +978,6 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       await page.fill('textarea', 123).catch(e => error = e);
       expect(error.message).toContain('Value must be string.');
     });
-    it('should wait for visible visibilty', async({page, server}) => {
-      await page.goto(server.PREFIX + '/input/textarea.html');
-      await page.fill('input', 'some value');
-      expect(await page.evaluate(() => result)).toBe('some value');
-
-      await page.goto(server.PREFIX + '/input/textarea.html');
-      await page.$eval('input', i => i.style.display = 'none');
-      await Promise.all([
-        page.fill('input', 'some value'),
-        page.$eval('input', i => i.style.display = 'block'),
-      ]);
-      expect(await page.evaluate(() => result)).toBe('some value');
-    });
     it('should throw on disabled and readonly elements', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.$eval('input', i => i.disabled = true);

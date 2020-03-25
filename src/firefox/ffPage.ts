@@ -31,6 +31,7 @@ import { FFExecutionContext } from './ffExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl } from './ffInput';
 import { FFNetworkManager, headersArray } from './ffNetworkManager';
 import { Protocol } from './protocol';
+import { selectors } from '../selectors';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -467,8 +468,7 @@ export class FFPage implements PageDelegate {
     const parent = frame.parentFrame();
     if (!parent)
       throw new Error('Frame has been detached.');
-    const context = await parent._utilityContext();
-    const handles = await context._$$('iframe');
+    const handles = await selectors._queryAll(parent, 'iframe', undefined, true /* allowUtilityContext */);
     const items = await Promise.all(handles.map(async handle => {
       const frame = await handle.contentFrame().catch(e => null);
       return { handle, frame };
