@@ -155,15 +155,7 @@ class Injected {
     if (node.nodeType !== Node.ELEMENT_NODE)
       return 'Node is not of type HTMLElement';
     const element = node as HTMLElement;
-    if (!element.isConnected)
-      return 'Element is not attached to the DOM';
-    if (!element.ownerDocument || !element.ownerDocument.defaultView)
-      return 'Element does not belong to a window';
-
-    const style = element.ownerDocument.defaultView.getComputedStyle(element);
-    if (!style || style.visibility === 'hidden')
-      return 'Element is hidden';
-    if (!element.offsetParent && element.tagName !== 'BODY')
+    if (!this.isVisible(element))
       return 'Element is not visible';
     if (element.nodeName.toLowerCase() === 'input') {
       const input = element as HTMLInputElement;
@@ -192,9 +184,9 @@ class Injected {
       textarea.selectionEnd = textarea.value.length;
       textarea.focus();
     } else if (element.isContentEditable) {
-      const range = element.ownerDocument.createRange();
+      const range = element.ownerDocument!.createRange();
       range.selectNodeContents(element);
-      const selection = element.ownerDocument.defaultView.getSelection();
+      const selection = element.ownerDocument!.defaultView!.getSelection();
       if (!selection)
         return 'Element belongs to invisible iframe.';
       selection.removeAllRanges();
