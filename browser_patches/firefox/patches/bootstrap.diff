@@ -6805,6 +6805,19 @@ index 36da62856100a9db680f2515d9dc5427d8945233..b29d93917386d2f70d35122da0fdbe0a
        ? "https://firefox.settings.services.mozilla.com/v1"
        : gServerURL;
    },
+diff --git a/toolkit/components/startup/nsAppStartup.cpp b/toolkit/components/startup/nsAppStartup.cpp
+index 1fc58612ab8efe2f7cfd5da29026f39c60e49584..19a314b950bdb0327b6fdd3f310e94135d6778de 100644
+--- a/toolkit/components/startup/nsAppStartup.cpp
++++ b/toolkit/components/startup/nsAppStartup.cpp
+@@ -336,7 +336,7 @@ nsAppStartup::Quit(uint32_t aMode) {
+     nsCOMPtr<nsISimpleEnumerator> windowEnumerator;
+     nsCOMPtr<nsIWindowMediator> mediator(
+         do_GetService(NS_WINDOWMEDIATOR_CONTRACTID));
+-    if (mediator) {
++    if (ferocity != eForceQuit && mediator) {
+       mediator->GetEnumerator(nullptr, getter_AddRefs(windowEnumerator));
+       if (windowEnumerator) {
+         bool more;
 diff --git a/toolkit/components/statusfilter/nsBrowserStatusFilter.cpp b/toolkit/components/statusfilter/nsBrowserStatusFilter.cpp
 index 7e10920c900670949c2bef73715bde0eb4f0ea23..8c0f31c01bce59e24fa83faeae69813b3ee60de7 100644
 --- a/toolkit/components/statusfilter/nsBrowserStatusFilter.cpp
