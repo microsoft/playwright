@@ -724,6 +724,22 @@ index 02f18c7f13c55a16688cee887f586ba3bf97a6fb..1f0c2a3192e35fd71b5fa26fa6822c2b
    }
  
    nsCOMPtr<nsIPrincipal> principal =
+diff --git a/js/src/debugger/Object.cpp b/js/src/debugger/Object.cpp
+index 347c4b0ebc09a7647247cd8bd8a234558c224ca3..956384fd96f574b76a5c2298340a88e9438d140a 100644
+--- a/js/src/debugger/Object.cpp
++++ b/js/src/debugger/Object.cpp
+@@ -2391,7 +2391,11 @@ Maybe<Completion> DebuggerObject::call(JSContext* cx,
+         invokeArgs[i].set(args2[i]);
+       }
+ 
++      // Disable CSP for the scope of the call.
++      const JSSecurityCallbacks* securityCallbacks = JS_GetSecurityCallbacks(cx);
++      JS_SetSecurityCallbacks(cx, nullptr);
+       ok = js::Call(cx, calleev, thisv, invokeArgs, &result);
++      JS_SetSecurityCallbacks(cx, securityCallbacks);
+     }
+   }
+ 
 diff --git a/juggler/BrowserContextManager.js b/juggler/BrowserContextManager.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..937c3d0bdf0bf1e402468a6eccd139f60b1db356
