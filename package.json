@@ -35,7 +35,6 @@
     "prepare": "node install-from-github.js",
     "build": "node utils/runWebpack.js --mode='development' && tsc -p .",
     "watch": "node utils/runWebpack.js --mode='development' --watch --silent | tsc -w -p .",
-    "version": "node utils/sync_package_versions.js && npm run doc",
     "test-types": "npm run generate-types && npx -p typescript@3.7.5 tsc -p utils/generate_types/test/tsconfig.json",
     "generate-types": "node utils/generate_types/"
   },
