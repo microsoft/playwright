@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -16,17 +17,52 @@
 
 const fs = require('fs');
 const path = require('path');
-let version = process.argv[2];
 
-if (!version || !version.match(/^v\d+\.\d+\.\d+(-post)?$/)) {
-  console.error(`Malformed version "${version}"`);
-  console.error(`Correct examples:`);
-  console.error(`  update_version.js v1.0.0`);
-  console.error(`  update_version.js v1.0.0-post`);
+const SCRIPT_NAME = path.basename(__filename);
+const USAGE = `
+  Usage: ${SCRIPT_NAME} [--next|<version>|--help]
+
+    --next      generate the @next version and put it across all packages
+    <version>   set a new version across all packages. See examples for format
+    --help      show this help message
+
+  Examples:
+    ${SCRIPT_NAME} v1.0.0
+    ${SCRIPT_NAME} v1.0.0-post
+    ${SCRIPT_NAME} --next
+`;
+
+if (process.argv[2] === '--help' || process.argv[2] === '-h') {
+  console.log(USAGE);
+  process.exit(0);
+}
+
+if (process.argv.length !== 3) {
+  console.log(`ERROR: missing version argument. Use --help for details.`);
   process.exit(1);
 }
 
-version = version.substring(1);
+let version = process.argv[2];
+if (version === '--next') {
+  const packageJSON = require('../package.json');
+  version = package.version;
+  const dashIndex = version.indexOf('-');
+  if (dashIndex === -1)
+    version = version.substring(0, dashIndex);
+  version += '-next.' + Date.now();
+  console.log('Setting version to ' + version);
+} else {
+  if (!version || !version.match(/^v\d+\.\d+\.\d+(-post)?$/)) {
+    console.error(`Malformed version "${version}"`);
+    console.error(`Correct examples:`);
+    console.error(`  ${SCRIPT_NAME} v1.0.0`);
+    console.error(`  ${SCRIPT_NAME} v1.0.0-post`);
+    process.exit(1);
+  }
+  version = version.substring(1);
+}
+
+
 updatePackage(path.join(__dirname, '..', 'package.json'), packageJSON => {
   packageJSON.version = version;
 });
@@ -40,7 +76,7 @@ for (const packageName of ['playwright-chromium', 'playwright-firefox', 'playwri
 
 function updatePackage(packageJSONPath, transform) {
   console.log(`Updating ${packageJSONPath} to ${version}.`);
-  const packageJSON = JSON.parse(fs.readFileSync(packageJSONPath));
+  const packageJSON = JSON.parse(fs.readFileSync(packageJSONPath, 'utf8'));
   transform(packageJSON);
   fs.writeFileSync(packageJSONPath, JSON.stringify(packageJSON, undefined, 2) + '\n');
 }
