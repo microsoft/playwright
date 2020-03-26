@@ -322,7 +322,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
       await context.close();
     });
-    it.fail(FFOX)('should format number', async({browser, server}) => {
+    it('should format number', async({browser, server}) => {
       {
         const context = await browser.newContext({ locale: 'en-US' });
         const page = await context.newPage();
@@ -356,7 +356,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
         await context.close();
       }
     });
-    it.fail(FFOX)('should format number in popups', async({browser, server}) => {
+    it('should format number in popups', async({browser, server}) => {
       const context = await browser.newContext({ locale: 'fr-CH' });
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
