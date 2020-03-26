@@ -85,7 +85,7 @@ const BROWSER_CONFIGS = [
       ...require('../lib/events').Events,
       ...require('../lib/chromium/events').Events,
     },
-    missingCoverage: ['browserContext.setGeolocation', 'browserContext.setOffline', 'worker.url', 'cDPSession.send', 'cDPSession.detach'],
+    missingCoverage: ['browserContext.setGeolocation', 'browserContext.setOffline', 'cDPSession.send', 'cDPSession.detach'],
   },
   {
     name: 'WebKit',
