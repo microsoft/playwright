@@ -138,10 +138,23 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 514a4f2890a20558afe0d9c1aec697612fc8e873..b1ce2962086b0d93a252f8944d86e1b36fc633b7 100644
+index 514a4f2890a20558afe0d9c1aec697612fc8e873..44b48f306cb6c67264edbb2eaa49c890b657c675 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
-@@ -53,6 +53,7 @@
+@@ -15,6 +15,12 @@
+ #  include <unistd.h>  // for getpid()
+ #endif
+ 
++#if JS_HAS_INTL_API && !MOZ_SYSTEM_ICU
++#  include "unicode/locid.h"
++#endif /* JS_HAS_INTL_API && !MOZ_SYSTEM_ICU */
++
++#include "js/LocaleSensitive.h"
++
+ #include "mozilla/ArrayUtils.h"
+ #include "mozilla/Attributes.h"
+ #include "mozilla/AutoRestore.h"
+@@ -53,6 +59,7 @@
  #include "mozilla/dom/ContentFrameMessageManager.h"
  #include "mozilla/dom/DocGroup.h"
  #include "mozilla/dom/Element.h"
@@ -149,7 +162,15 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..b1ce2962086b0d93a252f8944d86e1b3
  #include "mozilla/dom/HTMLAnchorElement.h"
  #include "mozilla/dom/PerformanceNavigation.h"
  #include "mozilla/dom/PermissionMessageUtils.h"
-@@ -96,6 +97,7 @@
+@@ -71,6 +78,7 @@
+ #include "mozilla/dom/nsCSPContext.h"
+ #include "mozilla/dom/LoadURIOptionsBinding.h"
+ #include "mozilla/dom/JSWindowActorChild.h"
++#include "mozilla/dom/WorkerCommon.h"
+ 
+ #include "mozilla/net/DocumentChannel.h"
+ #include "mozilla/net/DocumentChannelChild.h"
+@@ -96,6 +104,7 @@
  #include "nsIDocShellTreeItem.h"
  #include "nsIDocShellTreeOwner.h"
  #include "mozilla/dom/Document.h"
@@ -157,7 +178,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..b1ce2962086b0d93a252f8944d86e1b3
  #include "nsIDocumentLoaderFactory.h"
  #include "nsIDOMWindow.h"
  #include "nsIEditingSession.h"
-@@ -350,6 +352,9 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
+@@ -350,6 +359,9 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
        mUseErrorPages(false),
        mObserveErrorPages(true),
        mCSSErrorReportingEnabled(false),
@@ -167,7 +188,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..b1ce2962086b0d93a252f8944d86e1b3
        mAllowAuth(mItemType == typeContent),
        mAllowKeywordFixup(false),
        mIsOffScreenBrowser(false),
-@@ -1219,6 +1224,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
+@@ -1219,6 +1231,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
      isSubFrame = mLSHE->GetIsSubFrame();
    }
  
@@ -175,7 +196,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..b1ce2962086b0d93a252f8944d86e1b3
    if (!isSubFrame && !isRoot) {
      /*
       * We don't want to send OnLocationChange notifications when
-@@ -3340,6 +3346,109 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
+@@ -3340,6 +3353,131 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
    return NS_OK;
  }
  
@@ -212,9 +233,31 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..b1ce2962086b0d93a252f8944d86e1b3
 +  return NS_OK;
 +}
 +
++
++static void SetIcuLocale(const nsAString& aLanguageOverride) {
++  icu::Locale locale(NS_LossyConvertUTF16toASCII(aLanguageOverride).get());
++  if (icu::Locale::getDefault() == locale)
++    return;
++  UErrorCode error_code = U_ZERO_ERROR;
++  const char* lang = locale.getLanguage();
++  if (lang != nullptr && *lang != '\0') {
++    icu::Locale::setDefault(locale, error_code);
++  } else {
++    fprintf(stderr, "SetIcuLocale Failed to set the ICU default locale to %s\n", NS_LossyConvertUTF16toASCII(aLanguageOverride).get());
++  }
++
++  AutoJSAPI jsapi;
++  jsapi.Init();
++  JSContext* cx = jsapi.cx();
++  JS_ResetDefaultLocale(JS_GetRuntime(cx));
++
++  ResetDefaultLocaleInAllWorkers();
++}
++
 +NS_IMETHODIMP
 +nsDocShell::SetLanguageOverride(const nsAString& aLanguageOverride) {
 +  mLanguageOverride = aLanguageOverride;
++  SetIcuLocale(aLanguageOverride);
 +  return NS_OK;
 +}
 +
@@ -285,7 +328,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..b1ce2962086b0d93a252f8944d86e1b3
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
-@@ -12137,6 +12246,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12137,6 +12275,9 @@ class OnLinkClickEvent : public Runnable {
                                  mNoOpenerImplied, nullptr, nullptr,
                                  mIsUserTriggered, mTriggeringPrincipal, mCsp);
      }
@@ -295,7 +338,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..b1ce2962086b0d93a252f8944d86e1b3
      return NS_OK;
    }
  
-@@ -12226,6 +12338,9 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12226,6 +12367,9 @@ nsresult nsDocShell::OnLinkClick(
        this, aContent, aURI, target, aFileName, aPostDataStream,
        aHeadersDataStream, noOpenerImplied, aIsUserTriggered, aIsTrusted,
        aTriggeringPrincipal, aCsp);
@@ -671,7 +714,7 @@ index 1782a10a26f51c3bf79efe6713a493c4f058898c..bd2f13802731aa8db42c016d8a91de68
        nsContentUtils::TrimWhitespace<nsContentUtils::IsHTMLWhitespace>(
            aPolicyStr));
 diff --git a/dom/workers/RuntimeService.cpp b/dom/workers/RuntimeService.cpp
-index b20abd71cbb825b17ea3cef1791a2d8b0185b5b2..e7311028af2e8250b8010093549d9e3ff26a6e9a 100644
+index b20abd71cbb825b17ea3cef1791a2d8b0185b5b2..b8c36d9948647a39d69fc9305961e39eb3613e72 100644
 --- a/dom/workers/RuntimeService.cpp
 +++ b/dom/workers/RuntimeService.cpp
 @@ -1052,7 +1052,7 @@ void PrefLanguagesChanged(const char* /* aPrefName */, void* /* aClosure */) {
@@ -693,6 +736,137 @@ index b20abd71cbb825b17ea3cef1791a2d8b0185b5b2..e7311028af2e8250b8010093549d9e3f
        mNavigatorPropertiesLoaded = true;
      }
  
+@@ -2010,6 +2009,11 @@ void RuntimeService::PropagateFirstPartyStorageAccessGranted(
+   }
+ }
+ 
++void RuntimeService::ResetDefaultLocaleInAllWorkers() {
++  AssertIsOnMainThread();
++  BROADCAST_ALL_WORKERS(ResetDefaultLocale);
++}
++
+ void RuntimeService::NoteIdleThread(WorkerThread* aThread) {
+   AssertIsOnMainThread();
+   MOZ_ASSERT(aThread);
+@@ -2425,6 +2429,14 @@ void PropagateFirstPartyStorageAccessGrantedToWorkers(
+   }
+ }
+ 
++void ResetDefaultLocaleInAllWorkers() {
++  AssertIsOnMainThread();
++  RuntimeService* runtime = RuntimeService::GetService();
++  if (runtime) {
++    runtime->ResetDefaultLocaleInAllWorkers();
++  }
++}
++
+ WorkerPrivate* GetWorkerPrivateFromContext(JSContext* aCx) {
+   MOZ_ASSERT(!NS_IsMainThread());
+   MOZ_ASSERT(aCx);
+diff --git a/dom/workers/RuntimeService.h b/dom/workers/RuntimeService.h
+index 138fad04ada8876a34803fde0516b030a5315a2d..c22457c8c34fb10de84289abb8a3e2acd15f12ef 100644
+--- a/dom/workers/RuntimeService.h
++++ b/dom/workers/RuntimeService.h
+@@ -114,6 +114,8 @@ class RuntimeService final : public nsIObserver {
+ 
+   void PropagateFirstPartyStorageAccessGranted(nsPIDOMWindowInner* aWindow);
+ 
++  void ResetDefaultLocaleInAllWorkers();
++
+   const NavigatorProperties& GetNavigatorProperties() const {
+     return mNavigatorProperties;
+   }
+diff --git a/dom/workers/WorkerCommon.h b/dom/workers/WorkerCommon.h
+index f5e5c232d424e25607fb2fcf089c747708e02104..ada9c56f9d31d8d1c7c4c918403f14279358a4a8 100644
+--- a/dom/workers/WorkerCommon.h
++++ b/dom/workers/WorkerCommon.h
+@@ -47,6 +47,8 @@ void ResumeWorkersForWindow(nsPIDOMWindowInner* aWindow);
+ void PropagateFirstPartyStorageAccessGrantedToWorkers(
+     nsPIDOMWindowInner* aWindow);
+ 
++void ResetDefaultLocaleInAllWorkers();
++
+ // All of these are implemented in WorkerScope.cpp
+ 
+ bool IsWorkerGlobal(JSObject* global);
+diff --git a/dom/workers/WorkerPrivate.cpp b/dom/workers/WorkerPrivate.cpp
+index 4cf0b2cb0d592e560f08264d9452e11b7f14f68e..d236f97b52e04ef453e8b6f77da323bcdf7133f2 100644
+--- a/dom/workers/WorkerPrivate.cpp
++++ b/dom/workers/WorkerPrivate.cpp
+@@ -659,6 +659,18 @@ class UpdateContextOptionsRunnable final : public WorkerControlRunnable {
+   }
+ };
+ 
++class ResetDefaultLocaleRunnable final : public WorkerControlRunnable {
++ public:
++  explicit ResetDefaultLocaleRunnable(WorkerPrivate* aWorkerPrivate)
++      : WorkerControlRunnable(aWorkerPrivate, WorkerThreadUnchangedBusyCount) {}
++
++  virtual bool WorkerRun(JSContext* aCx,
++                         WorkerPrivate* aWorkerPrivate) override {
++    aWorkerPrivate->ResetDefaultLocaleInternal(aCx);
++    return true;
++  }
++};
++
+ class UpdateLanguagesRunnable final : public WorkerRunnable {
+   nsTArray<nsString> mLanguages;
+ 
+@@ -1836,6 +1848,16 @@ void WorkerPrivate::UpdateContextOptions(
+   }
+ }
+ 
++void WorkerPrivate::ResetDefaultLocale() {
++  AssertIsOnParentThread();
++
++  RefPtr<ResetDefaultLocaleRunnable> runnable =
++      new ResetDefaultLocaleRunnable(this);
++  if (!runnable->Dispatch()) {
++    NS_WARNING("Failed to reset default locale in worker!");
++  }
++}
++
+ void WorkerPrivate::UpdateLanguages(const nsTArray<nsString>& aLanguages) {
+   AssertIsOnParentThread();
+ 
+@@ -4681,6 +4703,15 @@ void WorkerPrivate::UpdateContextOptionsInternal(
+   }
+ }
+ 
++void WorkerPrivate::ResetDefaultLocaleInternal(JSContext* aCx) {
++  JS_ResetDefaultLocale(JS_GetRuntime(aCx));
++
++  MOZ_ACCESS_THREAD_BOUND(mWorkerThreadAccessible, data);
++  for (uint32_t index = 0; index < data->mChildWorkers.Length(); index++) {
++    data->mChildWorkers[index]->ResetDefaultLocale();
++  }
++}
++
+ void WorkerPrivate::UpdateLanguagesInternal(
+     const nsTArray<nsString>& aLanguages) {
+   WorkerGlobalScope* globalScope = GlobalScope();
+diff --git a/dom/workers/WorkerPrivate.h b/dom/workers/WorkerPrivate.h
+index 0dd5b318b3ec3bad314eb69cb4ec85c19aa20c51..b4ecfd4b840235fb9075e9b231441acdba3e1af8 100644
+--- a/dom/workers/WorkerPrivate.h
++++ b/dom/workers/WorkerPrivate.h
+@@ -270,6 +270,8 @@ class WorkerPrivate : public RelativeTimeline {
+   void UpdateContextOptionsInternal(JSContext* aCx,
+                                     const JS::ContextOptions& aContextOptions);
+ 
++  void ResetDefaultLocaleInternal(JSContext* aCx);
++
+   void UpdateLanguagesInternal(const nsTArray<nsString>& aLanguages);
+ 
+   void UpdateJSWorkerMemoryParameterInternal(JSContext* aCx, JSGCParamKey key,
+@@ -859,6 +861,8 @@ class WorkerPrivate : public RelativeTimeline {
+ 
+   void UpdateContextOptions(const JS::ContextOptions& aContextOptions);
+ 
++  void ResetDefaultLocale();
++
+   void UpdateLanguages(const nsTArray<nsString>& aLanguages);
+ 
+   void UpdateJSWorkerMemoryParameter(JSGCParamKey key, uint32_t value);
 diff --git a/extensions/permissions/nsPermissionManager.cpp b/extensions/permissions/nsPermissionManager.cpp
 index 02f18c7f13c55a16688cee887f586ba3bf97a6fb..1f0c2a3192e35fd71b5fa26fa6822c2b733b7049 100644
 --- a/extensions/permissions/nsPermissionManager.cpp
