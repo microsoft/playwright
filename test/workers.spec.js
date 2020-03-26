@@ -27,8 +27,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Workers', function() {
-    // flaky: https://github.com/microsoft/playwright/pull/1297/checks?check_run_id=496348690
-    it.fail(FFOX && LINUX)('Page.workers', async function({page, server}) {
+    it('Page.workers', async function({page, server}) {
       await Promise.all([
         page.waitForEvent('worker'),
         page.goto(server.PREFIX + '/worker/worker.html')]);
@@ -102,8 +101,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       expect(destroyed).toBe(true);
       expect(page.workers().length).toBe(0);
     });
-    // flaky: https://github.com/microsoft/playwright/pull/1277/checks?check_run_id=496461538
-    it.fail(FFOX && LINUX)('should report network activity', async function({page, server}) {
+    it('should report network activity', async function({page, server}) {
       const [worker] = await Promise.all([
         page.waitForEvent('worker'),
         page.goto(server.PREFIX + '/worker/worker.html'),
@@ -132,26 +130,6 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       expect(request.url()).toBe(url);
       expect(response.request()).toBe(request);
       expect(response.ok()).toBe(true);
-    });
-    false && it.fail(FFOX)('should report web socket activity', async function({page, server}) {
-      const [worker] = await Promise.all([
-        page.waitForEvent('worker'),
-        page.goto(server.PREFIX + '/worker/worker.html'),
-      ]);
-      const log = [];
-      let socketClosed;
-      const socketClosePromise = new Promise(f => socketClosed = f);
-      page.on('websocket', ws => {
-        ws.on('open', () => log.push(`open<${ws.url()}>`));
-        ws.on('close', () => { log.push('close'); socketClosed(); });
-      });
-      worker.evaluate((port) => {
-        const ws = new WebSocket('ws://localhost:' + port + '/ws');
-        ws.addEventListener('open', () => ws.close());
-      }, server.PORT);
-
-      await socketClosePromise;
-      expect(log.join(':')).toBe(`open<ws://localhost:${server.PORT}/ws>:close`);
     });
   });
 };
