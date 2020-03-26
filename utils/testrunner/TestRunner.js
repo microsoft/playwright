@@ -24,7 +24,7 @@ const {SourceMapSupport} = require('./SourceMapSupport');
 const debug = require('debug');
 const {getCallerLocation} = require('./utils');
 
-const INFINITE_TIMEOUT = 2147483647;
+const INFINITE_TIMEOUT = 100000000;
 
 const readFileAsync = util.promisify(fs.readFile.bind(fs));
 
@@ -451,15 +451,21 @@ class TestPass {
   }
 }
 
-function specBuilder(defaultTimeout, modifiers, attributes, action) {
-  let mode = TestMode.Run;
-  let expectation = TestExpectation.Ok;
+// TODO: merge spec with Test/Suite.
+function createSpec(name, callback) {
+  let timeout = INFINITE_TIMEOUT;
   let repeat = 1;
-  let timeout = defaultTimeout;
-
+  let expectation = TestExpectation.Ok;
+  let mode = TestMode.Run;
   const spec = {
     Modes: { ...TestMode },
     Expectations: { ...TestExpectation },
+    name() {
+      return name;
+    },
+    callback() {
+      return callback;
+    },
     mode() {
       return mode;
     },
@@ -473,7 +479,7 @@ function specBuilder(defaultTimeout, modifiers, attributes, action) {
     setExpectations(e) {
       if (Array.isArray(e)) {
         if (e.length > 1)
-          throw new Error('');
+          throw new Error('Only a single expectation is currently supported');
         e = e[0];
       }
       expectation = e;
@@ -489,32 +495,9 @@ function specBuilder(defaultTimeout, modifiers, attributes, action) {
     },
     setRepeat(r) {
       repeat = r;
-    }
+    },
   };
-
-  const func = (...args) => {
-    for (let i = 0; i < repeat; ++i)
-      action(mode, expectation, timeout, ...args);
-    mode = TestMode.Run;
-    expectation = TestExpectation.Ok;
-    repeat = 1;
-    timeout = defaultTimeout;
-  };
-  for (const { name, callback } of modifiers) {
-    func[name] = (...args) => {
-      callback(spec, ...args);
-      return func;
-    };
-  }
-  for (const { name, callback } of attributes) {
-    Object.defineProperty(func, name, {
-      get: () => {
-        callback(spec);
-        return func;
-      }
-    });
-  }
-  return func;
+  return spec;
 }
 
 class TestRunner extends EventEmitter {
@@ -536,8 +519,8 @@ class TestRunner extends EventEmitter {
     this._timeout = timeout === 0 ? INFINITE_TIMEOUT : timeout;
     this._parallel = parallel;
     this._breakOnFailure = breakOnFailure;
-    this._modifiers = [];
-    this._attributes = [];
+    this._modifiers = new Map();
+    this._attributes = new Map();
 
     if (MAJOR_NODEJS_VERSION >= 8 && disableTimeoutWhenInspectorIsEnabled) {
       if (inspector.url()) {
@@ -554,72 +537,104 @@ class TestRunner extends EventEmitter {
     this.afterAll = this._addHook.bind(this, 'afterAll');
     this.afterEach = this._addHook.bind(this, 'afterEach');
 
-    this._modifiers.push({ name: 'skip', callback: (t, condition) => condition && t.setMode(t.Modes.Skip) });
-    this._modifiers.push({ name: 'fail', callback: (t, condition) => condition && t.setExpectations(t.Expectations.Fail) });
-    this._modifiers.push({ name: 'slow', callback: (t, condition) => condition && t.setTimeout(t.timeout() * 3) });
-    this._modifiers.push({ name: 'repeat', callback: (t, count) => t.setRepeat(count) });
-    this._attributes.push({ name: 'focus', callback: t => t.setMode(t.Modes.Focus) });
-    this._buildSpecs();
+    this.describe = this._specBuilder([], true);
+    this.it = this._specBuilder([], false);
+
+    this._attributes.set('debug', t => {
+      t.setMode(t.Modes.Focus);
+      t.setTimeout(INFINITE_TIMEOUT);
+      const N = t.callback().toString().split('\n').length;
+      const location = getCallerLocation(__filename);
+      for (let line = 0; line < N; ++line)
+        this._debuggerLogBreakpointLines.set(location.filePath, line + location.lineNumber);
+    });
+
+    this._modifiers.set('skip', (t, condition) => condition && t.setMode(t.Modes.Skip));
+    this._modifiers.set('fail', (t, condition) => condition && t.setExpectations(t.Expectations.Fail));
+    this._modifiers.set('slow', (t, condition) => condition && t.setTimeout(t.timeout() * 3));
+    this._modifiers.set('repeat', (t, count) => t.setRepeat(count));
+    this._attributes.set('focus', t => t.setMode(t.Modes.Focus));
+    this.fdescribe = this.describe.focus;
+    this.xdescribe = this.describe.skip(true);
+    this.fit = this.it.focus;
+    this.xit = this.it.skip(true);
+    this.dit = this.it.debug;
   }
 
-  _buildSpecs() {
-    this.describe = specBuilder(this._timeout, this._modifiers, this._attributes, (mode, expectation, timeout, ...args) => this._addSuite(mode, expectation, ...args));
-    this.fdescribe = specBuilder(this._timeout, this._modifiers, this._attributes, (mode, expectation, timeout, ...args) => this._addSuite(TestMode.Focus, expectation, ...args));
-    this.xdescribe = specBuilder(this._timeout, this._modifiers, this._attributes, (mode, expectation, timeout, ...args) => this._addSuite(TestMode.Skip, expectation, ...args));
-    this.it = specBuilder(this._timeout, this._modifiers, this._attributes, (mode, expectation, timeout, name, callback) => this._addTest(name, callback, mode, expectation, timeout));
-    this.fit = specBuilder(this._timeout, this._modifiers, this._attributes, (mode, expectation, timeout, name, callback) => this._addTest(name, callback, TestMode.Focus, expectation, timeout));
-    this.xit = specBuilder(this._timeout, this._modifiers, this._attributes, (mode, expectation, timeout, name, callback) => this._addTest(name, callback, TestMode.Skip, expectation, timeout));
-    this.dit = specBuilder(this._timeout, this._modifiers, this._attributes, (mode, expectation, timeout, name, callback) => {
-      const test = this._addTest(name, callback, TestMode.Focus, expectation, INFINITE_TIMEOUT);
-      const N = callback.toString().split('\n').length;
-      for (let i = 0; i < N; ++i)
-        this._debuggerLogBreakpointLines.set(test.location.filePath, i + test.location.lineNumber);
+  _specBuilder(callbacks, isSuite) {
+    return new Proxy(() => {}, {
+      apply: (target, thisArg, [name, callback]) => {
+        const spec = createSpec(name, callback);
+        spec.setTimeout(this._timeout);
+        for (const { callback, args } of callbacks)
+          callback(spec, ...args);
+        if (isSuite)
+          this._addSuite(spec, []);
+        else
+          this._addTest(spec);
+      },
+      get: (obj, prop) => {
+        if (this._modifiers.has(prop))
+          return (...args) => this._specBuilder([...callbacks, { callback: this._modifiers.get(prop), args }], isSuite);
+        if (this._attributes.has(prop))
+          return this._specBuilder([...callbacks, { callback: this._attributes.get(prop), args: [] }], isSuite);
+        return obj[prop];
+      },
     });
   }
 
-  _buildSpec() {
-  }
-
   modifier(name, callback) {
-    this._modifiers.push({ name, callback });
-    this._buildSpecs();
+    this._modifiers.set(name, callback);
   }
 
   attribute(name, callback) {
-    this._attributes.push({ name, callback });
-    this._buildSpecs();
+    this._attributes.set(name, callback);
   }
 
   loadTests(module, ...args) {
-    if (typeof module.describe === 'function')
-      this._addSuite(TestMode.Run, TestExpectation.Ok, '', module.describe, ...args);
-    if (typeof module.fdescribe === 'function')
-      this._addSuite(TestMode.Focus, TestExpectation.Ok, '', module.fdescribe, ...args);
-    if (typeof module.xdescribe === 'function')
-      this._addSuite(TestMode.Skip, TestExpectation.Ok, '', module.xdescribe, ...args);
-  }
-
-  _addTest(name, callback, mode, expectation, timeout) {
-    for (let suite = this._currentSuite; suite; suite = suite.parentSuite) {
-      if (suite.expectation === TestExpectation.Fail)
-        expectation = TestExpectation.Fail;
-      if (suite.declaredMode === TestMode.Skip)
-        mode = TestMode.Skip;
+    if (typeof module.describe === 'function') {
+      const spec = createSpec('', module.describe);
+      spec.setMode(spec.Modes.Run);
+      this._addSuite(spec, args);
     }
-    const test = new Test(this._currentSuite, name, callback, mode, expectation, timeout);
-    this._currentSuite.children.push(test);
-    this._tests.push(test);
-    return test;
+    if (typeof module.fdescribe === 'function') {
+      const spec = createSpec('', module.fdescribe);
+      spec.setMode(spec.Modes.Focus);
+      this._addSuite(spec, args);
+    }
+    if (typeof module.xdescribe === 'function') {
+      const spec = createSpec('', module.xdescribe);
+      spec.setMode(spec.Modes.Skip);
+      this._addSuite(spec, args);
+    }
   }
 
-  _addSuite(mode, expectation, name, callback, ...args) {
-    const oldSuite = this._currentSuite;
-    const suite = new Suite(this._currentSuite, name, mode, expectation);
-    this._suites.push(suite);
-    this._currentSuite.children.push(suite);
-    this._currentSuite = suite;
-    callback(...args);
-    this._currentSuite = oldSuite;
+  _addTest(spec) {
+    for (let i = 0; i < spec.repeat(); i++) {
+      let expectation = spec.expectations()[0];
+      let mode = spec.mode();
+      for (let suite = this._currentSuite; suite; suite = suite.parentSuite) {
+        if (suite.expectation === TestExpectation.Fail)
+          expectation = TestExpectation.Fail;
+        if (suite.declaredMode === TestMode.Skip)
+          mode = TestMode.Skip;
+      }
+      const test = new Test(this._currentSuite, spec.name(), spec.callback(), mode, expectation, spec.timeout());
+      this._currentSuite.children.push(test);
+      this._tests.push(test);
+    }
+  }
+
+  _addSuite(spec, args) {
+    for (let i = 0; i < spec.repeat(); i++) {
+      const oldSuite = this._currentSuite;
+      const suite = new Suite(this._currentSuite, spec.name(), spec.mode(), spec.expectations()[0]);
+      this._suites.push(suite);
+      this._currentSuite.children.push(suite);
+      this._currentSuite = suite;
+      spec.callback()(...args);
+      this._currentSuite = oldSuite;
+    }
   }
 
   _addHook(hookName, callback) {
