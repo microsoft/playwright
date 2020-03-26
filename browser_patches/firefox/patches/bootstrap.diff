@@ -3901,10 +3901,10 @@ index 0000000000000000000000000000000000000000..643fcfeb7d1084c2a5eb99031d0f626e
 +
 diff --git a/juggler/content/Runtime.js b/juggler/content/Runtime.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..56eff8002ee0313ebe5a67bf3191eb8ff8b3a5df
+index 0000000000000000000000000000000000000000..9ed30684e25c7943a72b37d4289ce1f4629428e0
 --- /dev/null
 +++ b/juggler/content/Runtime.js
-@@ -0,0 +1,536 @@
+@@ -0,0 +1,537 @@
 +"use strict";
 +// Note: this file should be loadabale with eval() into worker environment.
 +// Avoid Components.*, ChromeUtils and global const variables.
@@ -4359,6 +4359,7 @@ index 0000000000000000000000000000000000000000..56eff8002ee0313ebe5a67bf3191eb8f
 +    const properties = {};
 +    for (let [key, value] of Object.entries(obj)) {
 +      properties[key] = {
++        configurable: true,
 +        writable: true,
 +        enumerable: true,
 +        value: this._toDebugger(value),
