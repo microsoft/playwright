@@ -33,38 +33,18 @@ const TerminatedError = new Error('Terminated');
 
 const MAJOR_NODEJS_VERSION = parseInt(process.version.substring(1).split('.')[0], 10);
 
-class UserCallback {
-  constructor(callback, timeout) {
-    this._callback = callback;
-    this._terminatePromise = new Promise(resolve => {
-      this._terminateCallback = resolve;
-    });
-
-    this.timeout = timeout;
-    this.location = getCallerLocation(__filename);
-  }
-
-  async run(...args) {
-    let timeoutId;
-    const timeoutPromise = new Promise(resolve => {
-      timeoutId = setTimeout(resolve.bind(null, TimeoutError), this.timeout);
-    });
-    try {
-      return await Promise.race([
-        Promise.resolve().then(this._callback.bind(null, ...args)).then(() => null).catch(e => e),
-        timeoutPromise,
-        this._terminatePromise
-      ]);
-    } catch (e) {
-      return e;
-    } finally {
-      clearTimeout(timeoutId);
-    }
-  }
-
-  terminate() {
-    this._terminateCallback(TerminatedError);
-  }
+function runUserCallback(callback, timeout, args) {
+  let terminateCallback;
+  let timeoutId;
+  const promise = Promise.race([
+    Promise.resolve().then(callback.bind(null, ...args)).then(() => null).catch(e => e),
+    new Promise(resolve => {
+      timeoutId = setTimeout(resolve.bind(null, TimeoutError), timeout);
+    }),
+    new Promise(resolve => terminateCallback = resolve),
+  ]).catch(e => e).finally(() => clearTimeout(timeoutId));
+  const terminate = () => terminateCallback(TerminatedError);
+  return { promise, terminate };
 }
 
 const TestMode = {
@@ -99,8 +79,8 @@ class Test {
     this.fullName = (suite.fullName + ' ' + name).trim();
     this.declaredMode = declaredMode;
     this.expectation = expectation;
-    this._userCallback = new UserCallback(callback, timeout);
-    this.location = this._userCallback.location;
+    this._callback = callback;
+    this.location = getCallerLocation(__filename);
     this.timeout = timeout;
 
     // Test results
@@ -173,17 +153,17 @@ class TestWorker {
     this._suiteStack = [];
     this._terminating = false;
     this._workerId = workerId;
-    this._runningTestCallback = null;
-    this._runningHookCallback = null;
+    this._runningTestTerminate = null;
+    this._runningHookTerminate = null;
     this._runTests = [];
   }
 
   terminate(terminateHooks) {
     this._terminating = true;
-    if (this._runningTestCallback)
-      this._runningTestCallback.terminate();
-    if (terminateHooks && this._runningHookCallback)
-      this._runningHookCallback.terminate();
+    if (this._runningTestTerminate)
+      this._runningTestTerminate();
+    if (terminateHooks && this._runningHookTerminate)
+      this._runningHookTerminate();
   }
 
   _markTerminated(test) {
@@ -250,11 +230,12 @@ class TestWorker {
 
     if (!test.error && !this._markTerminated(test)) {
       await this._testPass._willStartTestBody(this, test);
-      this._runningTestCallback = test._userCallback;
-      test.error = await test._userCallback.run(this._state, test);
+      const { promise, terminate } = runUserCallback(test._callback, test.timeout, [this._state, test]);
+      this._runningTestTerminate = terminate;
+      test.error = await promise;
+      this._runningTestTerminate = null;
       if (test.error && test.error.stack)
         await this._testPass._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(test.error);
-      this._runningTestCallback = null;
       if (!test.error)
         test.result = TestResult.Ok;
       else if (test.error === TimeoutError)
@@ -276,20 +257,22 @@ class TestWorker {
     if (!hook)
       return true;
 
-    await this._testPass._willStartHook(this, suite, hook, hookName);
-    this._runningHookCallback = hook;
-    let error = await hook.run(this._state, test);
-    this._runningHookCallback = null;
+    await this._testPass._willStartHook(this, suite, hook.location, hookName);
+    const timeout = this._testPass._runner._timeout;
+    const { promise, terminate } = runUserCallback(hook.callback, timeout, [this._state, test]);
+    this._runningHookTerminate = terminate;
+    let error = await promise;
+    this._runningHookTerminate = null;
 
     if (error) {
-      const location = `${hook.location.fileName}:${hook.location.lineNumber}:${hook.location.columnNumber}`;
+      const locationString = `${hook.location.fileName}:${hook.location.lineNumber}:${hook.location.columnNumber}`;
       if (test.result !== TestResult.Terminated) {
         // Prefer terminated result over any hook failures.
         test.result = error === TerminatedError ? TestResult.Terminated : TestResult.Crashed;
       }
       let message;
       if (error === TimeoutError) {
-        message = `${location} - Timeout Exceeded ${hook.timeout}ms while running "${hookName}" in suite "${suite.fullName}"`;
+        message = `${locationString} - Timeout Exceeded ${timeout}ms while running "${hookName}" in suite "${suite.fullName}"`;
         error = null;
       } else if (error === TerminatedError) {
         // Do not report termination details - it's just noise.
@@ -298,14 +281,14 @@ class TestWorker {
       } else {
         if (error.stack)
           await this._testPass._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
-        message = `${location} - FAILED while running "${hookName}" in suite "${suite.fullName}": `;
+        message = `${locationString} - FAILED while running "${hookName}" in suite "${suite.fullName}": `;
       }
-      await this._testPass._didFailHook(this, suite, hook, hookName, message, error);
+      await this._testPass._didFailHook(this, suite, hook.location, hookName, message, error);
       test.error = error;
       return false;
     }
 
-    await this._testPass._didCompleteHook(this, suite, hook, hookName);
+    await this._testPass._didCompleteHook(this, suite, hook.location, hookName);
     return true;
   }
 
@@ -435,19 +418,19 @@ class TestPass {
     debug('testrunner:test')(`[${worker._workerId}] ${test.result.toUpperCase()} "${test.fullName}" (${test.location.fileName + ':' + test.location.lineNumber})`);
   }
 
-  async _willStartHook(worker, suite, hook, hookName) {
-    debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" started for "${suite.fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
+  async _willStartHook(worker, suite, location, hookName) {
+    debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" started for "${suite.fullName}" (${location.fileName + ':' + location.lineNumber})`);
   }
 
-  async _didFailHook(worker, suite, hook, hookName, message, error) {
-    debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" FAILED for "${suite.fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
+  async _didFailHook(worker, suite, location, hookName, message, error) {
+    debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" FAILED for "${suite.fullName}" (${location.fileName + ':' + location.lineNumber})`);
     if (message)
       this._result.addError(message, error, worker);
     this._result.setResult(TestResult.Crashed, message);
   }
 
-  async _didCompleteHook(worker, suite, hook, hookName) {
-    debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" OK for "${suite.fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
+  async _didCompleteHook(worker, suite, location, hookName) {
+    debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" OK for "${suite.fullName}" (${location.fileName + ':' + location.lineNumber})`);
   }
 }
 
@@ -639,8 +622,8 @@ class TestRunner extends EventEmitter {
 
   _addHook(hookName, callback) {
     assert(this._currentSuite[hookName] === null, `Only one ${hookName} hook available per suite`);
-    const hook = new UserCallback(callback, this._timeout);
-    this._currentSuite[hookName] = hook;
+    const location = getCallerLocation(__filename);
+    this._currentSuite[hookName] = { callback, location };
   }
 
   async run(options = {}) {
