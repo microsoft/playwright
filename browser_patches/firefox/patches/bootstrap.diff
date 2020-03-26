@@ -4532,10 +4532,10 @@ index 0000000000000000000000000000000000000000..caee4df323d0a526ed7e38947c41c643
 +
 diff --git a/juggler/content/WorkerMain.js b/juggler/content/WorkerMain.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..a6ed6200364b871ee21ee2cdfd2c9246c9bf0055
+index 0000000000000000000000000000000000000000..fb35b515e58829d86bb74f36eecd8dc885102d69
 --- /dev/null
 +++ b/juggler/content/WorkerMain.js
-@@ -0,0 +1,69 @@
+@@ -0,0 +1,83 @@
 +"use strict";
 +loadSubScript('chrome://juggler/content/content/Runtime.js');
 +loadSubScript('chrome://juggler/content/SimpleChannel.js');
@@ -4551,7 +4551,21 @@ index 0000000000000000000000000000000000000000..a6ed6200364b871ee21ee2cdfd2c9246
 +};
 +
 +const runtime = new Runtime(true /* isWorker */);
-+runtime.createExecutionContext(null /* domWindow */, global, {});
++
++(() => {
++  // Create execution context in the runtime only when the script
++  // source was actually evaluated in it.
++  const dbg = new Debugger(global);
++  if (dbg.findScripts({global}).length) {
++    runtime.createExecutionContext(null /* domWindow */, global, {});
++  } else {
++    dbg.onNewScript = function(s) {
++      dbg.onNewScript = undefined;
++      dbg.removeAllDebuggees();
++      runtime.createExecutionContext(null /* domWindow */, global, {});
++    };
++  }
++})();
 +
 +class RuntimeAgent {
 +  constructor(runtime, channel, sessionId) {
