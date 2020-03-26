@@ -83,24 +83,13 @@ export class FFPage implements PageDelegate {
     ];
     this._pagePromise = new Promise(f => this._pageCallback = f);
     session.once(FFSessionEvents.Disconnected, () => this._page._didDisconnect());
-    this._initialize();
-  }
-
-  async _initialize() {
-    try {
-      await Promise.all([
-        // TODO: we should get rid of this call to resolve before any early events arrive, e.g. dialogs.
-        this._session.send('Page.addScriptToEvaluateOnNewDocument', {
-          script: '',
-          worldName: UTILITY_WORLD_NAME,
-        }),
-        new Promise(f => this._session.once('Page.ready', f)),
-      ]);
+    this._session.once('Page.ready', () => {
       this._pageCallback(this._page);
-    } catch (e) {
-      this._pageCallback(e);
-    }
-    this._initialized = true;
+      this._initialized = true;
+    });
+    // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
+    // Therefore, we can end up with an initialized page without utility world, although very unlikely.
+    this._session.send('Page.addScriptToEvaluateOnNewDocument', { script: '', worldName: UTILITY_WORLD_NAME }).catch(this._pageCallback);
   }
 
   _initializedPage(): Page | null {
