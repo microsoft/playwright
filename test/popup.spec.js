@@ -141,7 +141,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(size).toEqual({width: 400, height: 500});
     });
-    it.fail(FFOX)('should respect routes from browser context', async function({browser, server}) {
+    it('should respect routes from browser context', async function({browser, server}) {
       const context = await browser.newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
@@ -150,9 +150,12 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
         route.continue();
         intercepted = true;
       });
-      await page.evaluate(url => window.__popup = window.open(url), server.EMPTY_PAGE);
-      await context.close();
+      await Promise.all([
+        page.waitForEvent('popup'),
+        page.evaluate(url => window.__popup = window.open(url), server.EMPTY_PAGE),
+      ]);
       expect(intercepted).toBe(true);
+      await context.close();
     });
     it('should apply addInitScript from browser context', async function({browser, server}) {
       const context = await browser.newContext();
