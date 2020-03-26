@@ -40,6 +40,7 @@ const DEFAULT_DOWNLOAD_HOSTS = {
 const DOWNLOAD_URLS = {
   chromium: {
     'linux': '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip',
+    'mac10.13': '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip',
     'mac10.14': '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip',
     'mac10.15': '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip',
     'win32': '%s/chromium-browser-snapshots/Win/%d/chrome-win.zip',
@@ -47,6 +48,7 @@ const DOWNLOAD_URLS = {
   },
   firefox: {
     'linux': '%s/builds/firefox/%s/firefox-linux.zip',
+    'mac10.13': '%s/builds/firefox/%s/firefox-mac.zip',
     'mac10.14': '%s/builds/firefox/%s/firefox-mac.zip',
     'mac10.15': '%s/builds/firefox/%s/firefox-mac.zip',
     'win32': '%s/builds/firefox/%s/firefox-win32.zip',
@@ -54,6 +56,7 @@ const DOWNLOAD_URLS = {
   },
   webkit: {
     'linux': '%s/builds/webkit/%s/minibrowser-gtk-wpe.zip',
+    'mac10.13': undefined,
     'mac10.14': '%s/builds/webkit/%s/minibrowser-mac-10.14.zip',
     'mac10.15': '%s/builds/webkit/%s/minibrowser-mac-10.15.zip',
     'win32': '%s/builds/webkit/%s/minibrowser-win64.zip',
@@ -64,6 +67,7 @@ const DOWNLOAD_URLS = {
 const RELATIVE_EXECUTABLE_PATHS = {
   chromium: {
     'linux': ['chrome-linux', 'chrome'],
+    'mac10.13': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
     'mac10.14': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
     'mac10.15': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
     'win32': ['chrome-win', 'chrome.exe'],
@@ -71,6 +75,7 @@ const RELATIVE_EXECUTABLE_PATHS = {
   },
   firefox: {
     'linux': ['firefox', 'firefox'],
+    'mac10.13': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
     'mac10.14': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
     'mac10.15': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
     'win32': ['firefox', 'firefox.exe'],
@@ -78,6 +83,7 @@ const RELATIVE_EXECUTABLE_PATHS = {
   },
   webkit: {
     'linux': ['pw_run.sh'],
+    'mac10.13': undefined,
     'mac10.14': ['pw_run.sh'],
     'mac10.15': ['pw_run.sh'],
     'win32': ['MiniBrowser.exe'],
@@ -87,7 +93,7 @@ const RELATIVE_EXECUTABLE_PATHS = {
 
 export type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
 export type BrowserName = ('chromium'|'webkit'|'firefox');
-export type BrowserPlatform = ('win32'|'win64'|'mac10.14'|'mac10.15'|'linux');
+export type BrowserPlatform = ('win32'|'win64'|'mac10.13'|'mac10.14'|'mac10.15'|'linux');
 
 export type DownloadOptions = {
   browser: BrowserName,
@@ -120,7 +126,7 @@ function revisionURL(options: DownloadOptions): string {
   } = options;
   assert(revision, `'revision' must be specified`);
   assert(DOWNLOAD_URLS[browser], 'Unsupported browser: ' + browser);
-  const urlTemplate = (DOWNLOAD_URLS[browser] as any)[platform];
+  const urlTemplate = DOWNLOAD_URLS[browser][platform as BrowserPlatform];
   assert(urlTemplate, `ERROR: Playwright does not support ${browser} on ${platform}`);
   return util.format(urlTemplate, host, revision);
 }
@@ -155,7 +161,9 @@ export function executablePath(options: DownloadOptions): string {
     downloadPath,
     platform = CURRENT_HOST_PLATFORM,
   } = options;
-  return path.join(downloadPath, ...RELATIVE_EXECUTABLE_PATHS[browser][platform as BrowserPlatform]);
+  const relativePath = RELATIVE_EXECUTABLE_PATHS[browser][platform as BrowserPlatform];
+  assert(relativePath, `Unsupported platform for ${browser}: ${platform}`);
+  return path.join(downloadPath, ...relativePath);
 }
 
 export async function canDownload(options: DownloadOptions): Promise<boolean> {
