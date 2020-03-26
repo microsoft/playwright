@@ -23,8 +23,6 @@ const fs = require('fs');
 const util = require('util');
 const rmAsync = util.promisify(require('rimraf'));
 const existsAsync = path => fs.promises.access(path).then(() => true, e => false);
-const {downloadBrowserWithProgressBar, localDownloadOptions} = require('./download-browser');
-const protocolGenerator = require('./utils/protocol-types-generator');
 
 (async () => {
   const SRC_FOLDER = path.join(__dirname, 'src');
@@ -66,6 +64,8 @@ async function listFiles(dirpath) {
 }
 
 async function downloadAllBrowsersAndGenerateProtocolTypes() {
+  const {downloadBrowserWithProgressBar, localDownloadOptions} = require('./download-browser');
+  const protocolGenerator = require('./utils/protocol-types-generator');
   const chromiumOptions = localDownloadOptions('chromium');
   const firefoxOptions = localDownloadOptions('firefox');
   const webkitOptions = localDownloadOptions('webkit');
