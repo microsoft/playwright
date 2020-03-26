@@ -3901,10 +3901,10 @@ index 0000000000000000000000000000000000000000..643fcfeb7d1084c2a5eb99031d0f626e
 +
 diff --git a/juggler/content/Runtime.js b/juggler/content/Runtime.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..bd5345b1fab48d798b7e628eed67787a4ba952bb
+index 0000000000000000000000000000000000000000..56eff8002ee0313ebe5a67bf3191eb8ff8b3a5df
 --- /dev/null
 +++ b/juggler/content/Runtime.js
-@@ -0,0 +1,534 @@
+@@ -0,0 +1,536 @@
 +"use strict";
 +// Note: this file should be loadabale with eval() into worker environment.
 +// Avoid Components.*, ChromeUtils and global const variables.
@@ -4253,6 +4253,8 @@ index 0000000000000000000000000000000000000000..bd5345b1fab48d798b7e628eed67787a
 +      }
 +    });
 +    const userInputHelper = this._domWindow ? this._domWindow.windowUtils.setHandlingUserInput(true) : null;
++    if (this._domWindow && this._domWindow.document)
++      this._domWindow.document.notifyUserGestureActivation();
 +    let {success, obj} = this._getResult(funEvaluation.obj.apply(null, args), exceptionDetails);
 +    userInputHelper && userInputHelper.destruct();
 +    if (!success)
