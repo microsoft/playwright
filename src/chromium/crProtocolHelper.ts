@@ -78,12 +78,7 @@ export async function readProtocolStream(client: CRSession, handle: string, path
   if (path)
     await platform.closeFdAsync(fd!);
   await client.send('IO.close', {handle});
-  let resultBuffer = null;
-  try {
-    resultBuffer = platform.Buffer.concat(bufs);
-  } finally {
-    return resultBuffer!;
-  }
+  return platform.Buffer.concat(bufs);
 }
 
 export function toConsoleMessageLocation(stackTrace: Protocol.Runtime.StackTrace | undefined) {
