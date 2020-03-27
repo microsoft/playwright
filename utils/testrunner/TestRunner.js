@@ -155,22 +155,6 @@ class Test {
   setRepeat(repeat) {
     this._repeat = repeat;
   }
-
-  effectiveMode() {
-    for (let suite = this._suite; suite; suite = suite.parentSuite()) {
-      if (suite.mode() === TestMode.Skip)
-        return TestMode.Skip;
-    }
-    return this._mode;
-  }
-
-  effectiveExpectation() {
-    for (let suite = this._suite; suite; suite = suite.parentSuite()) {
-      if (suite.expectation() === TestExpectation.Fail)
-        return TestExpectation.Fail;
-    }
-    return this._expectation;
-  }
 }
 
 class Suite {
@@ -313,14 +297,20 @@ class TestWorker {
     if (this._markTerminated(test))
       return;
 
-    if (test.effectiveMode() === TestMode.Skip) {
+    let skipped = test.mode() === TestMode.Skip;
+    for (let suite = test.suite(); suite; suite = suite.parentSuite())
+      skipped = skipped || (suite.mode() === TestMode.Skip);
+    if (skipped) {
       await this._testPass._willStartTest(this, test);
       test.result = TestResult.Skipped;
       await this._testPass._didFinishTest(this, test);
       return;
     }
 
-    if (test.effectiveExpectation() === TestExpectation.Fail && test.effectiveMode() !== TestMode.Focus) {
+    let expectedToFail = test.expectation() === TestExpectation.Fail;
+    for (let suite = test.suite(); suite; suite = suite.parentSuite())
+      expectedToFail = expectedToFail || (suite.expectation() === TestExpectation.Fail);
+    if (expectedToFail && test.mode() !== TestMode.Focus) {
       await this._testPass._willStartTest(this, test);
       test.result = TestResult.MarkedAsFailing;
       await this._testPass._didFinishTest(this, test);
@@ -740,6 +730,29 @@ class TestRunner extends EventEmitter {
     return result;
   }
 
+  runnableTests() {
+    if (!this.hasFocusedTestsOrSuites())
+      return this._tests.slice();
+    const notFocusedSuites = new Set();
+    // Mark parent suites of focused tests as not focused.
+    for (const test of this._tests) {
+      if (test.mode() === TestMode.Focus) {
+        for (let suite = test.suite(); suite; suite = suite.parentSuite())
+          notFocusedSuites.add(suite);
+      }
+    }
+    // Pick all tests that are focused or belong to focused suites.
+    const tests = [];
+    for (const test of this._tests) {
+      let focused = test.mode() === TestMode.Focus;
+      for (let suite = test.suite(); suite; suite = suite.parentSuite())
+        focused = focused || (suite.mode() === TestMode.Focus && !notFocusedSuites.has(suite));
+      if (focused)
+        tests.push(test);
+    }
+    return tests;
+  }
+
   async terminate() {
     if (!this._runningPass)
       return;
@@ -750,44 +763,12 @@ class TestRunner extends EventEmitter {
     return this._timeout;
   }
 
-  runnableTests() {
-    if (!this.hasFocusedTestsOrSuites())
-      return this._tests;
-
-    const tests = [];
-    const blacklistSuites = new Set();
-    // First pass: pick "fit" and blacklist parent suites
-    for (let i = 0; i < this._tests.length; i++) {
-      const test = this._tests[i];
-      if (test.mode() !== TestMode.Focus)
-        continue;
-      tests.push({ i, test });
-      for (let suite = test.suite(); suite; suite = suite.parentSuite())
-        blacklistSuites.add(suite);
-    }
-    // Second pass: pick all tests that belong to non-blacklisted "fdescribe"
-    for (let i = 0; i < this._tests.length; i++) {
-      const test = this._tests[i];
-      let insideFocusedSuite = false;
-      for (let suite = test.suite(); suite; suite = suite.parentSuite()) {
-        if (!blacklistSuites.has(suite) && suite.mode() === TestMode.Focus) {
-          insideFocusedSuite = true;
-          break;
-        }
-      }
-      if (insideFocusedSuite)
-        tests.push({ i, test });
-    }
-    tests.sort((a, b) => a.i - b.i);
-    return tests.map(t => t.test);
-  }
-
   focusedSuites() {
     return this._suites.filter(suite => suite.mode() === TestMode.Focus);
   }
 
   focusedTests() {
-    return this._tests.filter(test => test.effectiveMode() === TestMode.Focus);
+    return this._tests.filter(test => test.mode() === TestMode.Focus);
   }
 
   hasFocusedTestsOrSuites() {
