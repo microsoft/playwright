@@ -73,39 +73,173 @@ function isTestFailure(testResult) {
 }
 
 class Test {
-  constructor(suite, name, callback, declaredMode, expectation, timeout) {
-    this.suite = suite;
-    this.name = name;
-    this.fullName = (suite.fullName + ' ' + name).trim();
-    this.declaredMode = declaredMode;
-    this.expectation = expectation;
-    this._callback = callback;
-    this.location = getCallerLocation(__filename);
-    this.timeout = timeout;
+  constructor(suite, name, callback, location) {
+    this._suite = suite;
+    this._name = name;
+    this._fullName = (suite.fullName() + ' ' + name).trim();
+    this._mode = TestMode.Run;
+    this._expectation = TestExpectation.Ok;
+    this._body = callback;
+    this._location = location;
+    this._timeout = INFINITE_TIMEOUT;
+    this._repeat = 1;
 
-    // Test results
+    // Test results. TODO: make these private.
     this.result = null;
     this.error = null;
     this.startTimestamp = 0;
     this.endTimestamp = 0;
+
+    this.Modes = { ...TestMode };
+    this.Expectations = { ...TestExpectation };
+  }
+
+  _clone() {
+    // TODO: introduce TestRun instead?
+    const test = new Test(this._suite, this._name, this._body, this._location);
+    test._timeout = this._timeout;
+    test._mode = this._mode;
+    test._expectation = this._expectation;
+    return test;
+  }
+
+  suite() {
+    return this._suite;
+  }
+
+  name() {
+    return this._name;
+  }
+
+  fullName() {
+    return this._fullName;
+  }
+
+  location() {
+    return this._location;
+  }
+
+  body() {
+    return this._body;
+  }
+
+  mode() {
+    return this._mode;
+  }
+
+  setMode(mode) {
+    if (this._mode !== TestMode.Focus)
+      this._mode = mode;
+  }
+
+  timeout() {
+    return this._timeout;
+  }
+
+  setTimeout(timeout) {
+    this._timeout = timeout;
+  }
+
+  expectation() {
+    return this._expectation;
+  }
+
+  setExpectation(expectation) {
+    this._expectation = expectation;
+  }
+
+  repeat() {
+    return this._repeat;
+  }
+
+  setRepeat(repeat) {
+    this._repeat = repeat;
+  }
+
+  effectiveMode() {
+    for (let suite = this._suite; suite; suite = suite.parentSuite()) {
+      if (suite.mode() === TestMode.Skip)
+        return TestMode.Skip;
+    }
+    return this._mode;
+  }
+
+  effectiveExpectation() {
+    for (let suite = this._suite; suite; suite = suite.parentSuite()) {
+      if (suite.expectation() === TestExpectation.Fail)
+        return TestExpectation.Fail;
+    }
+    return this._expectation;
   }
 }
 
 class Suite {
-  constructor(parentSuite, name, declaredMode, expectation) {
-    this.parentSuite = parentSuite;
-    this.name = name;
-    this.fullName = (parentSuite ? parentSuite.fullName + ' ' + name : name).trim();
-    this.declaredMode = declaredMode;
-    this.expectation = expectation;
-    /** @type {!Array<(!Test|!Suite)>} */
-    this.children = [];
-    this.location = getCallerLocation(__filename);
+  constructor(parentSuite, name, location) {
+    this._parentSuite = parentSuite;
+    this._name = name;
+    this._fullName = (parentSuite ? parentSuite.fullName() + ' ' + name : name).trim();
+    this._mode = TestMode.Run;
+    this._expectation = TestExpectation.Ok;
+    this._location = location;
+    this._repeat = 1;
 
+    // TODO: make these private.
     this.beforeAll = null;
     this.beforeEach = null;
     this.afterAll = null;
     this.afterEach = null;
+
+    this.Modes = { ...TestMode };
+    this.Expectations = { ...TestExpectation };
+  }
+
+  _clone() {
+    // TODO: introduce TestRun instead?
+    const suite = new Suite(this._parentSuite, this._name, this._location);
+    suite._mode = this._mode;
+    suite._expectation = this._expectation;
+    return suite;
+  }
+
+  parentSuite() {
+    return this._parentSuite;
+  }
+
+  name() {
+    return this._name;
+  }
+
+  fullName() {
+    return this._fullName;
+  }
+
+  mode() {
+    return this._mode;
+  }
+
+  setMode(mode) {
+    if (this._mode !== TestMode.Focus)
+      this._mode = mode;
+  }
+
+  location() {
+    return this._location;
+  }
+
+  expectation() {
+    return this._expectation;
+  }
+
+  setExpectation(expectation) {
+    this._expectation = expectation;
+  }
+
+  repeat() {
+    return this._repeat;
+  }
+
+  setRepeat(repeat) {
+    this._repeat = repeat;
   }
 }
 
@@ -179,14 +313,14 @@ class TestWorker {
     if (this._markTerminated(test))
       return;
 
-    if (test.declaredMode === TestMode.Skip) {
+    if (test.effectiveMode() === TestMode.Skip) {
       await this._testPass._willStartTest(this, test);
       test.result = TestResult.Skipped;
       await this._testPass._didFinishTest(this, test);
       return;
     }
 
-    if (test.expectation === TestExpectation.Fail && test.declaredMode !== TestMode.Focus) {
+    if (test.effectiveExpectation() === TestExpectation.Fail && test.effectiveMode() !== TestMode.Focus) {
       await this._testPass._willStartTest(this, test);
       test.result = TestResult.MarkedAsFailing;
       await this._testPass._didFinishTest(this, test);
@@ -194,7 +328,7 @@ class TestWorker {
     }
 
     const suiteStack = [];
-    for (let suite = test.suite; suite; suite = suite.parentSuite)
+    for (let suite = test.suite(); suite; suite = suite.parentSuite())
       suiteStack.push(suite);
     suiteStack.reverse();
 
@@ -230,7 +364,7 @@ class TestWorker {
 
     if (!test.error && !this._markTerminated(test)) {
       await this._testPass._willStartTestBody(this, test);
-      const { promise, terminate } = runUserCallback(test._callback, test.timeout, [this._state, test]);
+      const { promise, terminate } = runUserCallback(test.body(), test.timeout(), [this._state, test]);
       this._runningTestTerminate = terminate;
       test.error = await promise;
       this._runningTestTerminate = null;
@@ -259,7 +393,7 @@ class TestWorker {
 
     await this._testPass._willStartHook(this, suite, hook.location, hookName);
     const timeout = this._testPass._runner._timeout;
-    const { promise, terminate } = runUserCallback(hook.callback, timeout, [this._state, test]);
+    const { promise, terminate } = runUserCallback(hook.body, timeout, [this._state, test]);
     this._runningHookTerminate = terminate;
     let error = await promise;
     this._runningHookTerminate = null;
@@ -272,7 +406,7 @@ class TestWorker {
       }
       let message;
       if (error === TimeoutError) {
-        message = `${locationString} - Timeout Exceeded ${timeout}ms while running "${hookName}" in suite "${suite.fullName}"`;
+        message = `${locationString} - Timeout Exceeded ${timeout}ms while running "${hookName}" in suite "${suite.fullName()}"`;
         error = null;
       } else if (error === TerminatedError) {
         // Do not report termination details - it's just noise.
@@ -281,7 +415,7 @@ class TestWorker {
       } else {
         if (error.stack)
           await this._testPass._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
-        message = `${locationString} - FAILED while running "${hookName}" in suite "${suite.fullName}": `;
+        message = `${locationString} - FAILED while running "${hookName}" in suite "${suite.fullName()}": `;
       }
       await this._testPass._didFailHook(this, suite, hook.location, hookName, message, error);
       test.error = error;
@@ -411,76 +545,27 @@ class TestPass {
   }
 
   async _willStartTestBody(worker, test) {
-    debug('testrunner:test')(`[${worker._workerId}] starting "${test.fullName}" (${test.location.fileName + ':' + test.location.lineNumber})`);
+    debug('testrunner:test')(`[${worker._workerId}] starting "${test.fullName()}" (${test.location().fileName + ':' + test.location().lineNumber})`);
   }
 
   async _didFinishTestBody(worker, test) {
-    debug('testrunner:test')(`[${worker._workerId}] ${test.result.toUpperCase()} "${test.fullName}" (${test.location.fileName + ':' + test.location.lineNumber})`);
+    debug('testrunner:test')(`[${worker._workerId}] ${test.result.toUpperCase()} "${test.fullName()}" (${test.location().fileName + ':' + test.location().lineNumber})`);
   }
 
   async _willStartHook(worker, suite, location, hookName) {
-    debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" started for "${suite.fullName}" (${location.fileName + ':' + location.lineNumber})`);
+    debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" started for "${suite.fullName()}" (${location.fileName + ':' + location.lineNumber})`);
   }
 
   async _didFailHook(worker, suite, location, hookName, message, error) {
-    debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" FAILED for "${suite.fullName}" (${location.fileName + ':' + location.lineNumber})`);
+    debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" FAILED for "${suite.fullName()}" (${location.fileName + ':' + location.lineNumber})`);
     if (message)
       this._result.addError(message, error, worker);
     this._result.setResult(TestResult.Crashed, message);
   }
 
   async _didCompleteHook(worker, suite, location, hookName) {
-    debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" OK for "${suite.fullName}" (${location.fileName + ':' + location.lineNumber})`);
+    debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" OK for "${suite.fullName()}" (${location.fileName + ':' + location.lineNumber})`);
   }
-}
-
-// TODO: merge spec with Test/Suite.
-function createSpec(name, callback) {
-  let timeout = INFINITE_TIMEOUT;
-  let repeat = 1;
-  let expectation = TestExpectation.Ok;
-  let mode = TestMode.Run;
-  const spec = {
-    Modes: { ...TestMode },
-    Expectations: { ...TestExpectation },
-    name() {
-      return name;
-    },
-    callback() {
-      return callback;
-    },
-    mode() {
-      return mode;
-    },
-    setMode(m) {
-      if (mode !== TestMode.Focus)
-        mode = m;
-    },
-    expectations() {
-      return [expectation];
-    },
-    setExpectations(e) {
-      if (Array.isArray(e)) {
-        if (e.length > 1)
-          throw new Error('Only a single expectation is currently supported');
-        e = e[0];
-      }
-      expectation = e;
-    },
-    timeout() {
-      return timeout;
-    },
-    setTimeout(t) {
-      timeout = t;
-    },
-    repeat() {
-      return repeat;
-    },
-    setRepeat(r) {
-      repeat = r;
-    },
-  };
-  return spec;
 }
 
 class TestRunner extends EventEmitter {
@@ -495,15 +580,18 @@ class TestRunner extends EventEmitter {
     } = options;
     this._crashIfTestsAreFocusedOnCI = crashIfTestsAreFocusedOnCI;
     this._sourceMapSupport = new SourceMapSupport();
-    this._rootSuite = new Suite(null, '', TestMode.Run);
+    const dummyLocation = { fileName: '', filePath: '', lineNumber: 0, columnNumber: 0 };
+    this._rootSuite = new Suite(null, '', dummyLocation);
     this._currentSuite = this._rootSuite;
     this._tests = [];
     this._suites = [];
     this._timeout = timeout === 0 ? INFINITE_TIMEOUT : timeout;
     this._parallel = parallel;
     this._breakOnFailure = breakOnFailure;
-    this._modifiers = new Map();
-    this._attributes = new Map();
+    this._suiteModifiers = new Map();
+    this._suiteAttributes = new Map();
+    this._testModifiers = new Map();
+    this._testAttributes = new Map();
 
     if (MAJOR_NODEJS_VERSION >= 8 && disableTimeoutWhenInspectorIsEnabled) {
       if (inspector.url()) {
@@ -520,23 +608,27 @@ class TestRunner extends EventEmitter {
     this.afterAll = this._addHook.bind(this, 'afterAll');
     this.afterEach = this._addHook.bind(this, 'afterEach');
 
-    this.describe = this._specBuilder([], true);
-    this.it = this._specBuilder([], false);
+    this.describe = this._suiteBuilder([]);
+    this.it = this._testBuilder([]);
 
-    this._attributes.set('debug', t => {
+    this.testAttribute('debug', t => {
       t.setMode(t.Modes.Focus);
       t.setTimeout(INFINITE_TIMEOUT);
-      const N = t.callback().toString().split('\n').length;
-      const location = getCallerLocation(__filename);
+      const N = t.body().toString().split('\n').length;
+      const location = t.location();
       for (let line = 0; line < N; ++line)
         this._debuggerLogBreakpointLines.set(location.filePath, line + location.lineNumber);
     });
 
-    this._modifiers.set('skip', (t, condition) => condition && t.setMode(t.Modes.Skip));
-    this._modifiers.set('fail', (t, condition) => condition && t.setExpectations(t.Expectations.Fail));
-    this._modifiers.set('slow', (t, condition) => condition && t.setTimeout(t.timeout() * 3));
-    this._modifiers.set('repeat', (t, count) => t.setRepeat(count));
-    this._attributes.set('focus', t => t.setMode(t.Modes.Focus));
+    this.testModifier('skip', (t, condition) => condition && t.setMode(t.Modes.Skip));
+    this.suiteModifier('skip', (s, condition) => condition && s.setMode(s.Modes.Skip));
+    this.testModifier('fail', (t, condition) => condition && t.setExpectation(t.Expectations.Fail));
+    this.suiteModifier('fail', (s, condition) => condition && s.setExpectation(s.Expectations.Fail));
+    this.testModifier('slow', (t, condition) => condition && t.setTimeout(t.timeout() * 3));
+    this.testModifier('repeat', (t, count) => t.setRepeat(count));
+    this.suiteModifier('repeat', (s, count) => s.setRepeat(count));
+    this.testAttribute('focus', t => t.setMode(t.Modes.Focus));
+    this.suiteAttribute('focus', s => s.setMode(s.Modes.Focus));
     this.fdescribe = this.describe.focus;
     this.xdescribe = this.describe.skip(true);
     this.fit = this.it.focus;
@@ -544,86 +636,78 @@ class TestRunner extends EventEmitter {
     this.dit = this.it.debug;
   }
 
-  _specBuilder(callbacks, isSuite) {
-    return new Proxy(() => {}, {
-      apply: (target, thisArg, [name, callback]) => {
-        const spec = createSpec(name, callback);
-        spec.setTimeout(this._timeout);
-        for (const { callback, args } of callbacks)
-          callback(spec, ...args);
-        if (isSuite)
-          this._addSuite(spec, []);
-        else
-          this._addTest(spec);
-      },
+  _suiteBuilder(callbacks) {
+    return new Proxy((name, callback, ...suiteArgs) => {
+      const location = getCallerLocation(__filename);
+      const suite = new Suite(this._currentSuite, name, location);
+      for (const { callback, args } of callbacks)
+        callback(suite, ...args);
+      for (let i = 0; i < suite.repeat(); i++) {
+        this._currentSuite = suite._clone();
+        callback(...suiteArgs);
+        this._suites.push(this._currentSuite);
+        this._currentSuite = this._currentSuite.parentSuite();
+      }
+    }, {
       get: (obj, prop) => {
-        if (this._modifiers.has(prop))
-          return (...args) => this._specBuilder([...callbacks, { callback: this._modifiers.get(prop), args }], isSuite);
-        if (this._attributes.has(prop))
-          return this._specBuilder([...callbacks, { callback: this._attributes.get(prop), args: [] }], isSuite);
+        if (this._suiteModifiers.has(prop))
+          return (...args) => this._suiteBuilder([...callbacks, { callback: this._suiteModifiers.get(prop), args }]);
+        if (this._suiteAttributes.has(prop))
+          return this._suiteBuilder([...callbacks, { callback: this._suiteAttributes.get(prop), args: [] }]);
         return obj[prop];
       },
     });
   }
 
-  modifier(name, callback) {
-    this._modifiers.set(name, callback);
+  _testBuilder(callbacks) {
+    return new Proxy((name, callback) => {
+      const location = getCallerLocation(__filename);
+      const test = new Test(this._currentSuite, name, callback, location);
+      test.setTimeout(this._timeout);
+      for (const { callback, args } of callbacks)
+        callback(test, ...args);
+      for (let i = 0; i < test.repeat(); i++)
+        this._tests.push(test._clone());
+    }, {
+      get: (obj, prop) => {
+        if (this._testModifiers.has(prop))
+          return (...args) => this._testBuilder([...callbacks, { callback: this._testModifiers.get(prop), args }]);
+        if (this._testAttributes.has(prop))
+          return this._testBuilder([...callbacks, { callback: this._testAttributes.get(prop), args: [] }]);
+        return obj[prop];
+      },
+    });
   }
 
-  attribute(name, callback) {
-    this._attributes.set(name, callback);
+  testModifier(name, callback) {
+    this._testModifiers.set(name, callback);
+  }
+
+  testAttribute(name, callback) {
+    this._testAttributes.set(name, callback);
+  }
+
+  suiteModifier(name, callback) {
+    this._suiteModifiers.set(name, callback);
+  }
+
+  suiteAttribute(name, callback) {
+    this._suiteAttributes.set(name, callback);
   }
 
   loadTests(module, ...args) {
-    if (typeof module.describe === 'function') {
-      const spec = createSpec('', module.describe);
-      spec.setMode(spec.Modes.Run);
-      this._addSuite(spec, args);
-    }
-    if (typeof module.fdescribe === 'function') {
-      const spec = createSpec('', module.fdescribe);
-      spec.setMode(spec.Modes.Focus);
-      this._addSuite(spec, args);
-    }
-    if (typeof module.xdescribe === 'function') {
-      const spec = createSpec('', module.xdescribe);
-      spec.setMode(spec.Modes.Skip);
-      this._addSuite(spec, args);
-    }
-  }
-
-  _addTest(spec) {
-    for (let i = 0; i < spec.repeat(); i++) {
-      let expectation = spec.expectations()[0];
-      let mode = spec.mode();
-      for (let suite = this._currentSuite; suite; suite = suite.parentSuite) {
-        if (suite.expectation === TestExpectation.Fail)
-          expectation = TestExpectation.Fail;
-        if (suite.declaredMode === TestMode.Skip)
-          mode = TestMode.Skip;
-      }
-      const test = new Test(this._currentSuite, spec.name(), spec.callback(), mode, expectation, spec.timeout());
-      this._currentSuite.children.push(test);
-      this._tests.push(test);
-    }
-  }
-
-  _addSuite(spec, args) {
-    for (let i = 0; i < spec.repeat(); i++) {
-      const oldSuite = this._currentSuite;
-      const suite = new Suite(this._currentSuite, spec.name(), spec.mode(), spec.expectations()[0]);
-      this._suites.push(suite);
-      this._currentSuite.children.push(suite);
-      this._currentSuite = suite;
-      spec.callback()(...args);
-      this._currentSuite = oldSuite;
-    }
+    if (typeof module.describe === 'function')
+      this.describe('', module.describe, ...args);
+    if (typeof module.fdescribe === 'function')
+      this.describe.focus('', module.fdescribe, ...args);
+    if (typeof module.xdescribe === 'function')
+      this.describe.skip(true)('', module.xdescribe, ...args);
   }
 
   _addHook(hookName, callback) {
     assert(this._currentSuite[hookName] === null, `Only one ${hookName} hook available per suite`);
     const location = getCallerLocation(__filename);
-    this._currentSuite[hookName] = { callback, location };
+    this._currentSuite[hookName] = { body: callback, location };
   }
 
   async run(options = {}) {
@@ -636,21 +720,17 @@ class TestRunner extends EventEmitter {
     if (this._crashIfTestsAreFocusedOnCI && process.env.CI && this.hasFocusedTestsOrSuites()) {
       result.setResult(TestResult.Crashed, '"focused" tests or suites are probitted on CI');
     } else {
+      this._runningPass = new TestPass(this, this._parallel, this._breakOnFailure);
       let timeoutId;
-      const timeoutPromise = new Promise(resolve => {
-        const timeoutResult = new Result();
-        timeoutResult.setResult(TestResult.Crashed, `Total timeout of ${totalTimeout}ms reached.`);
-        if (totalTimeout)
-          timeoutId = setTimeout(resolve.bind(null, timeoutResult), totalTimeout);
-      });
+      if (totalTimeout) {
+        timeoutId = setTimeout(() => {
+          this._runningPass._terminate(TestResult.Terminated, `Total timeout of ${totalTimeout}ms reached.`, true /* force */, null /* error */);
+        }, totalTimeout);
+      }
       try {
-        this._runningPass = new TestPass(this, this._parallel, this._breakOnFailure);
-        result = await Promise.race([
-          this._runningPass.run(runnableTests).catch(e => { console.error(e); throw e; }),
-          timeoutPromise,
-        ]);
-        this._runningPass = null;
+        result = await this._runningPass.run(runnableTests).catch(e => { console.error(e); throw e; });
       } finally {
+        this._runningPass = null;
         clearTimeout(timeoutId);
       }
     }
@@ -679,18 +759,18 @@ class TestRunner extends EventEmitter {
     // First pass: pick "fit" and blacklist parent suites
     for (let i = 0; i < this._tests.length; i++) {
       const test = this._tests[i];
-      if (test.declaredMode !== TestMode.Focus)
+      if (test.mode() !== TestMode.Focus)
         continue;
       tests.push({ i, test });
-      for (let suite = test.suite; suite; suite = suite.parentSuite)
+      for (let suite = test.suite(); suite; suite = suite.parentSuite())
         blacklistSuites.add(suite);
     }
     // Second pass: pick all tests that belong to non-blacklisted "fdescribe"
     for (let i = 0; i < this._tests.length; i++) {
       const test = this._tests[i];
       let insideFocusedSuite = false;
-      for (let suite = test.suite; suite; suite = suite.parentSuite) {
-        if (!blacklistSuites.has(suite) && suite.declaredMode === TestMode.Focus) {
+      for (let suite = test.suite(); suite; suite = suite.parentSuite()) {
+        if (!blacklistSuites.has(suite) && suite.mode() === TestMode.Focus) {
           insideFocusedSuite = true;
           break;
         }
@@ -703,11 +783,11 @@ class TestRunner extends EventEmitter {
   }
 
   focusedSuites() {
-    return this._suites.filter(suite => suite.declaredMode === TestMode.Focus);
+    return this._suites.filter(suite => suite.mode() === TestMode.Focus);
   }
 
   focusedTests() {
-    return this._tests.filter(test => test.declaredMode === TestMode.Focus);
+    return this._tests.filter(test => test.effectiveMode() === TestMode.Focus);
   }
 
   hasFocusedTestsOrSuites() {
@@ -716,8 +796,8 @@ class TestRunner extends EventEmitter {
 
   focusMatchingTests(fullNameRegex) {
     for (const test of this._tests) {
-      if (fullNameRegex.test(test.fullName))
-        test.declaredMode = TestMode.Focus;
+      if (fullNameRegex.test(test.fullName()))
+        test.setMode(TestMode.Focus);
     }
   }
 
@@ -726,7 +806,7 @@ class TestRunner extends EventEmitter {
   }
 
   failedTests() {
-    return this._tests.filter(test => test.result === TestResult.Failed || test.result === TestResult.TimedOut || test.result === TestResult.Crashed);
+    return this._tests.filter(test => isTestFailure(test.result));
   }
 
   passedTests() {
