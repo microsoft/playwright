@@ -38,9 +38,10 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       expect(await page.evaluate(() => window.innerWidth)).toBe(123);
       expect(await page.evaluate(() => window.innerHeight)).toBe(456);
     });
-    it.fail(FFOX)('should emulate device-width media queries', async({page, server}) => {
+    it('should emulate device width', async({page, server}) => {
       expect(page.viewportSize()).toEqual({width: 1280, height: 720});
       await page.setViewportSize({width: 200, height: 200});
+      expect(await page.evaluate(() => window.screen.width)).toBe(200);
       expect(await page.evaluate(() => matchMedia('(min-device-width: 100px)').matches)).toBe(true);
       expect(await page.evaluate(() => matchMedia('(min-device-width: 300px)').matches)).toBe(false);
       expect(await page.evaluate(() => matchMedia('(max-device-width: 100px)').matches)).toBe(false);
@@ -48,6 +49,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       expect(await page.evaluate(() => matchMedia('(device-width: 500px)').matches)).toBe(false);
       expect(await page.evaluate(() => matchMedia('(device-width: 200px)').matches)).toBe(true);
       await page.setViewportSize({width: 500, height: 500});
+      expect(await page.evaluate(() => window.screen.width)).toBe(500);
       expect(await page.evaluate(() => matchMedia('(min-device-width: 400px)').matches)).toBe(true);
       expect(await page.evaluate(() => matchMedia('(min-device-width: 600px)').matches)).toBe(false);
       expect(await page.evaluate(() => matchMedia('(max-device-width: 400px)').matches)).toBe(false);
@@ -55,9 +57,10 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       expect(await page.evaluate(() => matchMedia('(device-width: 200px)').matches)).toBe(false);
       expect(await page.evaluate(() => matchMedia('(device-width: 500px)').matches)).toBe(true);
     });
-    it.fail(FFOX)('should emulate device-height media queries', async({page, server}) => {
+    it('should emulate device height', async({page, server}) => {
       expect(page.viewportSize()).toEqual({width: 1280, height: 720});
       await page.setViewportSize({width: 200, height: 200});
+      expect(await page.evaluate(() => window.screen.height)).toBe(200);
       expect(await page.evaluate(() => matchMedia('(min-device-height: 100px)').matches)).toBe(true);
       expect(await page.evaluate(() => matchMedia('(min-device-height: 300px)').matches)).toBe(false);
       expect(await page.evaluate(() => matchMedia('(max-device-height: 100px)').matches)).toBe(false);
@@ -65,6 +68,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       expect(await page.evaluate(() => matchMedia('(device-height: 500px)').matches)).toBe(false);
       expect(await page.evaluate(() => matchMedia('(device-height: 200px)').matches)).toBe(true);
       await page.setViewportSize({width: 500, height: 500});
+      expect(await page.evaluate(() => window.screen.height)).toBe(500);
       expect(await page.evaluate(() => matchMedia('(min-device-height: 400px)').matches)).toBe(true);
       expect(await page.evaluate(() => matchMedia('(min-device-height: 600px)').matches)).toBe(false);
       expect(await page.evaluate(() => matchMedia('(max-device-height: 400px)').matches)).toBe(false);
