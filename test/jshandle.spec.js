@@ -92,7 +92,7 @@ module.exports.describe = function({testRunner, expect, CHROMIUM, FFOX, WEBKIT})
       const aHandle = await page.evaluateHandle(() => Infinity);
       expect(await page.evaluate(e => Object.is(e, Infinity), aHandle)).toBe(true);
     });
-    it.fail(FFOX)('should pass configurable args', async({page, server}) => {
+    it('should pass configurable args', async({page, server}) => {
       const result = await page.evaluate(arg => {
         if (arg.foo !== 42)
           throw new Error('Not a 42');
