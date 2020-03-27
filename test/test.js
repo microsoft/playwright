@@ -18,6 +18,7 @@ const path = require('path');
 const {TestServer} = require('../utils/testserver/');
 const {TestRunner, Reporter} = require('../utils/testrunner/');
 const utils = require('./utils');
+const inspector = require('inspector');
 
 let parallel = 1;
 if (process.env.PW_PARALLEL_TESTS)
@@ -30,11 +31,66 @@ require('events').defaultMaxListeners *= parallel;
 let timeout = process.env.CI ? 30 * 1000 : 10 * 1000;
 if (!isNaN(process.env.TIMEOUT))
   timeout = parseInt(process.env.TIMEOUT * 1000, 10);
+const MAJOR_NODEJS_VERSION = parseInt(process.version.substring(1).split('.')[0], 10);
+if (MAJOR_NODEJS_VERSION >= 8 && inspector.url()) {
+  console.log('Detected inspector - disabling timeout to be debugger-friendly');
+  timeout = 0;
+}
+
 const testRunner = new TestRunner({
   timeout,
   parallel,
   breakOnFailure: process.argv.indexOf('--break-on-failure') !== -1,
+  installCommonHelpers: false
 });
+testRunner.testModifier('skip', (t, condition) => condition && t.setMode(t.Modes.Skip));
+testRunner.suiteModifier('skip', (s, condition) => condition && s.setMode(s.Modes.Skip));
+testRunner.testModifier('fail', (t, condition) => condition && t.setExpectation(t.Expectations.Fail));
+testRunner.suiteModifier('fail', (s, condition) => condition && s.setExpectation(s.Expectations.Fail));
+testRunner.testModifier('slow', (t, condition) => condition && t.setTimeout(t.timeout() * 3));
+testRunner.testModifier('repeat', (t, count) => t.setRepeat(count));
+testRunner.suiteModifier('repeat', (s, count) => s.setRepeat(count));
+testRunner.testAttribute('focus', t => t.setMode(t.Modes.Focus));
+testRunner.suiteAttribute('focus', s => s.setMode(s.Modes.Focus));
+testRunner.testAttribute('debug', t => {
+  t.setMode(t.Modes.Focus);
+  t.setTimeout(100000000);
+
+  let session;
+  t.before(async () => {
+    const util = require('util');
+    const fs = require('fs');
+    const url = require('url');
+    const readFileAsync = util.promisify(fs.readFile.bind(fs));
+    session = new inspector.Session();
+    session.connect();
+    const postAsync = util.promisify(session.post.bind(session));
+    await postAsync('Debugger.enable');
+    const setBreakpointCommands = [];
+    const N = t.body().toString().split('\n').length;
+    const location = t.location();
+    const lines = (await readFileAsync(location.filePath, 'utf8')).split('\n');
+    for (let line = 0; line < N; ++line) {
+      const lineNumber = line + location.lineNumber;
+      setBreakpointCommands.push(postAsync('Debugger.setBreakpointByUrl', {
+        url: url.pathToFileURL(location.filePath),
+        lineNumber,
+        condition: `console.log('${String(lineNumber + 1).padStart(6, ' ')} | ' + ${JSON.stringify(lines[lineNumber])})`,
+      }).catch(e => {}));
+    }
+    await Promise.all(setBreakpointCommands);
+  });
+
+  t.after(async () => {
+    session.disconnect();
+  });
+});
+testRunner.fdescribe = testRunner.describe.focus;
+testRunner.xdescribe = testRunner.describe.skip(true);
+testRunner.fit = testRunner.it.focus;
+testRunner.xit = testRunner.it.skip(true);
+testRunner.dit = testRunner.it.debug;
+
 const {describe, fdescribe, beforeAll, afterAll, beforeEach, afterEach} = testRunner;
 
 console.log('Testing on Node', process.version);
@@ -106,7 +162,7 @@ for (const browserConfig of BROWSER_CONFIGS) {
     continue;
   const product = browserConfig.name;
   describe(product, () => {
-    testRunner.loadTests(require('./playwright.spec.js'), {
+    testRunner.describe('', require('./playwright.spec.js').describe, {
       product,
       playwrightPath: utils.projectRoot(),
       testRunner,

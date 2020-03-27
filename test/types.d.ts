@@ -36,7 +36,7 @@ type TestRunner<STATE> = {
     fit: ItFunction<STATE>;
     dit: ItFunction<STATE>;
 
-    beforeAll, beforeEach, afterAll, afterEach, loadTests;
+    beforeAll, beforeEach, afterAll, afterEach;
 };
 
 interface TestSetup<STATE> {
