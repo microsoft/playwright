@@ -1710,6 +1710,37 @@ index 4894de526ecfbd98b7b6f800fcb7b9310a78bf64..3dc5994a178e3b668be1f77b7979fc39
  				2D8B92F4203D13E1009C868F /* UnifiedSource519.cpp in Sources */,
  				2D8B92F5203D13E1009C868F /* UnifiedSource520.cpp in Sources */,
  				2D8B92F6203D13E1009C868F /* UnifiedSource521.cpp in Sources */,
+diff --git a/Source/WebCore/accessibility/AccessibilityObject.cpp b/Source/WebCore/accessibility/AccessibilityObject.cpp
+index 45c0b070fdd80e808d130e1c17c7b27bfd20d767..ce3abdd19ebed996514c66a16de34abf7af6a7f5 100644
+--- a/Source/WebCore/accessibility/AccessibilityObject.cpp
++++ b/Source/WebCore/accessibility/AccessibilityObject.cpp
+@@ -58,6 +58,7 @@
+ #include "HTMLParserIdioms.h"
+ #include "HTMLTextAreaElement.h"
+ #include "HitTestResult.h"
++#include "InspectorInstrumentation.h"
+ #include "LocalizedStrings.h"
+ #include "MathMLNames.h"
+ #include "NodeList.h"
+@@ -3277,10 +3278,15 @@ AccessibilityObjectInclusion AccessibilityObject::defaultObjectInclusion() const
+     
+     if (useParentData ? m_isIgnoredFromParentData.isPresentationalChildOfAriaRole : isPresentationalChildOfAriaRole())
+         return AccessibilityObjectInclusion::IgnoreObject;
+-    
+-    return accessibilityPlatformIncludesObject();
++
++    AccessibilityObjectInclusion platformBehavior = accessibilityPlatformIncludesObject();
++    if (platformBehavior != AccessibilityObjectInclusion::DefaultBehavior) {
++        if (auto* page = this->page())
++            InspectorInstrumentation::maybeOverrideDefaultObjectInclusion(*page, platformBehavior);
++    }
++    return platformBehavior;
+ }
+-    
++
+ bool AccessibilityObject::accessibilityIsIgnored() const
+ {
+     AXComputedObjectAttributeCache* attributeCache = nullptr;
 diff --git a/Source/WebCore/css/MediaQueryEvaluator.cpp b/Source/WebCore/css/MediaQueryEvaluator.cpp
 index 2ac163067f2e00a595c425a91fc3a55617baf689..0f492b539ed56f7f963fdf5a72ab75f8f7ea89ab 100644
 --- a/Source/WebCore/css/MediaQueryEvaluator.cpp
@@ -1835,7 +1866,7 @@ index cd4497c9cdf7e3dc7fe89ffdbf188d47f2aaa00d..8cadb40ac6cd04fa3921866a6c4d3142
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index 3dc7b494d6656a91c7dd9c68e1c9eaf789666d01..54ff59eaec197fdd12248cd4542b91db2b5bb83a 100644
+index 3dc7b494d6656a91c7dd9c68e1c9eaf789666d01..301f0098706d110d2c82b9e9d2fffcea5822e293 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
 @@ -621,6 +621,12 @@ void InspectorInstrumentation::didFailLoadingImpl(InstrumentingAgents& instrumen
@@ -1933,11 +1964,33 @@ index 3dc7b494d6656a91c7dd9c68e1c9eaf789666d01..54ff59eaec197fdd12248cd4542b91db
  InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope& workerGlobalScope)
  {
      return workerGlobalScope.inspectorController().m_instrumentingAgents;
+@@ -1299,6 +1327,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForPage(Page&
+     return page.inspectorController().m_instrumentingAgents.get();
+ }
+ 
++void InspectorInstrumentation::maybeOverrideDefaultObjectInclusion(Page& page, AccessibilityObjectInclusion& inclusion) {
++    if (InspectorPageAgent* pageAgent = InspectorInstrumentation::instrumentingAgentsForPage(page).inspectorPageAgent()) {
++        if (pageAgent->doingAccessibilitySnapshot())
++            inclusion = AccessibilityObjectInclusion::DefaultBehavior;
++    }
++}
++
+ InstrumentingAgents* InspectorInstrumentation::instrumentingAgentsForContext(ScriptExecutionContext& context)
+ {
+     if (is<Document>(context))
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.h b/Source/WebCore/inspector/InspectorInstrumentation.h
-index b246eaa559a75265c890dfa47d01d311c186a403..57460008e1925fe15ea37d1eee194836afed8370 100644
+index b246eaa559a75265c890dfa47d01d311c186a403..059ae8f56026a390aeb534d8ed5f6826d0733d94 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.h
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.h
-@@ -45,11 +45,13 @@
+@@ -31,6 +31,7 @@
+ 
+ #pragma once
+ 
++#include "AccessibilityObjectInterface.h"
+ #include "CSSSelector.h"
+ #include "CallTracerTypes.h"
+ #include "CanvasBase.h"
+@@ -45,11 +46,13 @@
  #include "HitTestResult.h"
  #include "InspectorInstrumentationPublic.h"
  #include "Page.h"
@@ -1951,7 +2004,7 @@ index b246eaa559a75265c890dfa47d01d311c186a403..57460008e1925fe15ea37d1eee194836
  #include <wtf/MemoryPressureHandler.h>
  #include <wtf/RefPtr.h>
  
-@@ -77,6 +79,7 @@ class DOMWrapperWorld;
+@@ -77,6 +80,7 @@ class DOMWrapperWorld;
  class Document;
  class DocumentLoader;
  class EventListener;
@@ -1959,7 +2012,7 @@ index b246eaa559a75265c890dfa47d01d311c186a403..57460008e1925fe15ea37d1eee194836
  class HTTPHeaderMap;
  class InspectorTimelineAgent;
  class InstrumentingAgents;
-@@ -197,6 +200,7 @@ public:
+@@ -197,6 +201,7 @@ public:
      static void didReceiveData(Frame*, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoading(Frame*, DocumentLoader*, unsigned long identifier, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoading(Frame*, DocumentLoader*, unsigned long identifier, const ResourceError&);
@@ -1967,7 +2020,7 @@ index b246eaa559a75265c890dfa47d01d311c186a403..57460008e1925fe15ea37d1eee194836
  
      static void willSendRequest(WorkerGlobalScope&, unsigned long identifier, ResourceRequest&);
      static void didReceiveResourceResponse(WorkerGlobalScope&, unsigned long identifier, const ResourceResponse&);
-@@ -223,11 +227,11 @@ public:
+@@ -223,11 +228,11 @@ public:
      static void frameDetachedFromParent(Frame&);
      static void didCommitLoad(Frame&, DocumentLoader*);
      static void frameDocumentUpdated(Frame&);
@@ -1980,7 +2033,7 @@ index b246eaa559a75265c890dfa47d01d311c186a403..57460008e1925fe15ea37d1eee194836
      static void defaultAppearanceDidChange(Page&, bool useDarkAppearance);
      static void willDestroyCachedResource(CachedResource&);
  
-@@ -317,6 +321,11 @@ public:
+@@ -317,6 +322,11 @@ public:
      static void layerTreeDidChange(Page*);
      static void renderLayerDestroyed(Page*, const RenderLayer&);
  
@@ -1992,7 +2045,16 @@ index b246eaa559a75265c890dfa47d01d311c186a403..57460008e1925fe15ea37d1eee194836
      static void frontendCreated();
      static void frontendDeleted();
      static bool hasFrontends() { return InspectorInstrumentationPublic::hasFrontends(); }
-@@ -417,6 +426,7 @@ private:
+@@ -332,6 +342,8 @@ public:
+     static void registerInstrumentingAgents(InstrumentingAgents&);
+     static void unregisterInstrumentingAgents(InstrumentingAgents&);
+ 
++    static void maybeOverrideDefaultObjectInclusion(Page&, AccessibilityObjectInclusion&);
++
+ private:
+     static void didClearWindowObjectInWorldImpl(InstrumentingAgents&, Frame&, DOMWrapperWorld&);
+     static bool isDebuggerPausedImpl(InstrumentingAgents&);
+@@ -417,6 +429,7 @@ private:
      static void didReceiveDataImpl(InstrumentingAgents&, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const ResourceError&);
@@ -2000,7 +2062,7 @@ index b246eaa559a75265c890dfa47d01d311c186a403..57460008e1925fe15ea37d1eee194836
      static void willLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void didLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void scriptImportedImpl(InstrumentingAgents&, unsigned long identifier, const String& sourceString);
-@@ -427,11 +437,11 @@ private:
+@@ -427,11 +440,11 @@ private:
      static void frameDetachedFromParentImpl(InstrumentingAgents&, Frame&);
      static void didCommitLoadImpl(InstrumentingAgents&, Frame&, DocumentLoader*);
      static void frameDocumentUpdatedImpl(InstrumentingAgents&, Frame&);
@@ -2013,7 +2075,7 @@ index b246eaa559a75265c890dfa47d01d311c186a403..57460008e1925fe15ea37d1eee194836
      static void defaultAppearanceDidChangeImpl(InstrumentingAgents&, bool useDarkAppearance);
      static void willDestroyCachedResourceImpl(CachedResource&);
  
-@@ -517,6 +527,11 @@ private:
+@@ -517,6 +530,11 @@ private:
      static void layerTreeDidChangeImpl(InstrumentingAgents&);
      static void renderLayerDestroyedImpl(InstrumentingAgents&, const RenderLayer&);
  
@@ -2025,7 +2087,7 @@ index b246eaa559a75265c890dfa47d01d311c186a403..57460008e1925fe15ea37d1eee194836
      static InstrumentingAgents& instrumentingAgentsForPage(Page&);
      static InstrumentingAgents& instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope&);
  
-@@ -1097,6 +1112,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
+@@ -1097,6 +1115,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
          didFailLoadingImpl(*instrumentingAgents, identifier, loader, error);
  }
  
@@ -2039,7 +2101,7 @@ index b246eaa559a75265c890dfa47d01d311c186a403..57460008e1925fe15ea37d1eee194836
  inline void InspectorInstrumentation::didFailLoading(WorkerGlobalScope& workerGlobalScope, unsigned long identifier, const ResourceError& error)
  {
      didFailLoadingImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), identifier, nullptr, error);
-@@ -1192,13 +1214,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
+@@ -1192,13 +1217,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
          frameDocumentUpdatedImpl(*instrumentingAgents, frame);
  }
  
@@ -2053,7 +2115,7 @@ index b246eaa559a75265c890dfa47d01d311c186a403..57460008e1925fe15ea37d1eee194836
  inline void InspectorInstrumentation::frameStartedLoading(Frame& frame)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1227,6 +1242,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
+@@ -1227,6 +1245,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
          frameClearedScheduledNavigationImpl(*instrumentingAgents, frame);
  }
  
@@ -2067,7 +2129,7 @@ index b246eaa559a75265c890dfa47d01d311c186a403..57460008e1925fe15ea37d1eee194836
  inline void InspectorInstrumentation::defaultAppearanceDidChange(Page& page, bool useDarkAppearance)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1677,6 +1699,36 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
+@@ -1677,6 +1702,36 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
          renderLayerDestroyedImpl(*instrumentingAgents, renderLayer);
  }
  
@@ -2914,7 +2976,7 @@ index b038a1879c043aa17dae97425693f29be42e3258..d60716b837663004675ffd90bceede4c
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index 44a7da37f588d38e3070e967cdc23a9fd9dad203..bf760c64150ea04e82c979df2fabf73a3fbd7733 100644
+index 44a7da37f588d38e3070e967cdc23a9fd9dad203..087af22ac54579e1aed6ce56d4d60e3e7dcf095a 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -3227,7 +3289,7 @@ index 44a7da37f588d38e3070e967cdc23a9fd9dad203..bf760c64150ea04e82c979df2fabf73a
  void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  {
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
-@@ -983,4 +1093,529 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -983,4 +1093,531 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -3695,7 +3757,9 @@ index 44a7da37f588d38e3070e967cdc23a9fd9dad203..bf760c64150ea04e82c979df2fabf73a
 +        }
 +    }
 +
++    m_doingAccessibilitySnapshot = true;
 +    out_axNode = snapshotForAXObject(makeRefPtr(axObject), node);
++    m_doingAccessibilitySnapshot = false;
 +}
 +
 +void InspectorPageAgent::setInterceptFileChooserDialog(ErrorString&, bool enabled)
@@ -3758,7 +3822,7 @@ index 44a7da37f588d38e3070e967cdc23a9fd9dad203..bf760c64150ea04e82c979df2fabf73a
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..f59486b7e1635ceaa67f3fe5968e8e0e42a023b9 100644
+index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..6dd83bfd85e307ddb6b5f44cbbb55f7dd79f4931 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,11 +40,16 @@
@@ -3824,17 +3888,18 @@ index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..f59486b7e1635ceaa67f3fe5968e8e0e
      void defaultAppearanceDidChange(bool useDarkAppearance);
      void applyUserAgentOverride(String&);
      void applyEmulatedMedia(String&);
-@@ -133,6 +150,9 @@ public:
+@@ -133,6 +150,10 @@ public:
      void didLayout();
      void didScroll();
      void didRecalculateStyle();
 +    void runOpenPanel(HTMLInputElement* element, bool* intercept);
 +    void frameAttached(Frame&);
 +    bool shouldBypassCSP();
++    bool doingAccessibilitySnapshot() const { return m_doingAccessibilitySnapshot; };
  
      Frame* frameForId(const String& frameId);
      WEBCORE_EXPORT String frameId(Frame*);
-@@ -141,6 +161,7 @@ public:
+@@ -141,6 +162,7 @@ public:
  
  private:
      double timestamp();
@@ -3842,7 +3907,7 @@ index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..f59486b7e1635ceaa67f3fe5968e8e0e
  
      static bool mainResourceContent(Frame*, bool withBase64Encode, String* result);
      static bool dataContent(const char* data, unsigned size, const String& textEncodingName, bool withBase64Encode, String* result);
-@@ -152,18 +173,19 @@ private:
+@@ -152,18 +174,20 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -3861,6 +3926,7 @@ index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..f59486b7e1635ceaa67f3fe5968e8e0e
      bool m_showPaintRects { false };
 +    bool m_interceptFileChooserDialog { false };
 +    bool m_bypassCSP { false };
++    bool m_doingAccessibilitySnapshot { false };
  };
  
  } // namespace WebCore
