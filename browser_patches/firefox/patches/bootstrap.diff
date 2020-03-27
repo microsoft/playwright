@@ -526,6 +526,25 @@ index ab9e3b40096c3b4f453dba6109c2ef7e3134fa53..7a1cdd7d106879446a8631806817eabe
  
    dom::MediaCapabilities* MediaCapabilities();
    dom::MediaSession* MediaSession();
+diff --git a/dom/base/nsGlobalWindowOuter.cpp b/dom/base/nsGlobalWindowOuter.cpp
+index 249580e733d1b05e35205cd2f7b4ccbe91c9cb54..765e3f58e0a359c622f68d371c5089bcec8f1a0f 100644
+--- a/dom/base/nsGlobalWindowOuter.cpp
++++ b/dom/base/nsGlobalWindowOuter.cpp
+@@ -3826,6 +3826,14 @@ Maybe<CSSIntSize> nsGlobalWindowOuter::GetRDMDeviceSize(
+       }
+     }
+   }
++  if (topInProcessContentDoc) {
++    nsIDocShell* docShell = topInProcessContentDoc->GetDocShell();
++    if (docShell && docShell->GetDeviceSizeIsPageSize()) {
++      nsPresContext* presContext = docShell->GetPresContext();
++      if (presContext)
++        return Some(CSSPixel::FromAppUnitsRounded(presContext->GetVisibleArea().Size()));
++    }
++  }
+   return Nothing();
+ }
+ 
 diff --git a/dom/geolocation/Geolocation.cpp b/dom/geolocation/Geolocation.cpp
 index 51c04d2f40f51c9163183559d6a92ea7b0179e17..72084201c77a4dfeabb9a2a6d42a3348b5aa6485 100644
 --- a/dom/geolocation/Geolocation.cpp
@@ -4870,7 +4889,7 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/juggler/content/main.js b/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..93dfa70ec9921044006fb6adbe8a1f60627666a1
+index 0000000000000000000000000000000000000000..b1f66264a97a0ca24fe29fb8a04e3ea2f5ec9eeb
 --- /dev/null
 +++ b/juggler/content/main.js
 @@ -0,0 +1,146 @@
@@ -4954,8 +4973,8 @@ index 0000000000000000000000000000000000000000..93dfa70ec9921044006fb6adbe8a1f60
 +    setOnlineOverrideInDocShell(onlineOverride);
 +  if (viewport !== undefined) {
 +    docShell.contentViewer.overrideDPPX = viewport.deviceScaleFactor || this._initialDPPX;
-+    docShell.deviceSizeIsPageSize = viewport.isMobile;
 +    docShell.touchEventsOverride = viewport.hasTouch ? Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_ENABLED : Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_NONE;
++    docShell.deviceSizeIsPageSize = true;
 +    scrollbarManager.setFloatingScrollbars(viewport.isMobile);
 +  }
 +
