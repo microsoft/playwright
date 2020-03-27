@@ -214,47 +214,73 @@ module.exports.addTests = function({testRunner, expect}) {
       const log = [];
       const t = newTestRunner();
       t.beforeAll(() => log.push('root:beforeAll'));
-      t.beforeEach(() => log.push('root:beforeEach'));
+      t.beforeEach(() => log.push('root:beforeEach1'));
+      t.beforeEach(() => log.push('root:beforeEach2'));
       t.it('uno', () => log.push('test #1'));
       t.describe('suite1', () => {
-        t.beforeAll(() => log.push('suite:beforeAll'));
-        t.beforeEach(() => log.push('suite:beforeEach'));
+        t.beforeAll(() => log.push('suite:beforeAll1'));
+        t.beforeAll(() => log.push('suite:beforeAll2'));
+        t.beforeEach((state, test) => {
+          log.push('suite:beforeEach');
+          test.before(() => log.push('test:before1'));
+          test.before(() => log.push('test:before2'));
+          test.after(() => log.push('test:after1'));
+          test.after(() => log.push('test:after2'));
+        });
         t.it('dos', () => log.push('test #2'));
         t.it('tres', () => log.push('test #3'));
-        t.afterEach(() => log.push('suite:afterEach'));
+        t.afterEach(() => log.push('suite:afterEach1'));
+        t.afterEach(() => log.push('suite:afterEach2'));
         t.afterAll(() => log.push('suite:afterAll'));
       });
       t.it('cuatro', () => log.push('test #4'));
       t.afterEach(() => log.push('root:afterEach'));
-      t.afterAll(() => log.push('root:afterAll'));
+      t.afterAll(() => log.push('root:afterAll1'));
+      t.afterAll(() => log.push('root:afterAll2'));
       await t.run();
       expect(log).toEqual([
         'root:beforeAll',
-        'root:beforeEach',
+        'root:beforeEach1',
+        'root:beforeEach2',
         'test #1',
         'root:afterEach',
 
-        'suite:beforeAll',
+        'suite:beforeAll1',
+        'suite:beforeAll2',
 
-        'root:beforeEach',
+        'root:beforeEach1',
+        'root:beforeEach2',
         'suite:beforeEach',
+        'test:before1',
+        'test:before2',
         'test #2',
-        'suite:afterEach',
+        'test:after1',
+        'test:after2',
+        'suite:afterEach1',
+        'suite:afterEach2',
         'root:afterEach',
 
-        'root:beforeEach',
+        'root:beforeEach1',
+        'root:beforeEach2',
         'suite:beforeEach',
+        'test:before1',
+        'test:before2',
         'test #3',
-        'suite:afterEach',
+        'test:after1',
+        'test:after2',
+        'suite:afterEach1',
+        'suite:afterEach2',
         'root:afterEach',
 
         'suite:afterAll',
 
-        'root:beforeEach',
+        'root:beforeEach1',
+        'root:beforeEach2',
         'test #4',
         'root:afterEach',
 
-        'root:afterAll',
+        'root:afterAll1',
+        'root:afterAll2',
       ]);
     });
     it('should have the same state object in hooks and test', async() => {
