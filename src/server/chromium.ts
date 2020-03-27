@@ -95,7 +95,6 @@ export class Chromium implements BrowserType<CRBrowser> {
     const chromeExecutable = executablePath || this._executablePath;
     if (!chromeExecutable)
       throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
-    let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: chromeExecutable,
       args: chromeArguments,
@@ -123,6 +122,7 @@ export class Chromium implements BrowserType<CRBrowser> {
     });
 
     let transport: PipeTransport | undefined = undefined;
+    let browserServer: BrowserServer | undefined = undefined;
     transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream, () => browserServer!.close());
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, port || 0) : null);
     return { browserServer, transport };
@@ -251,11 +251,6 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
 
     socket.on('message', (message: string) => {
       const parsedMessage = JSON.parse(Buffer.from(message).toString()) as ProtocolRequest;
-      if (parsedMessage.method.startsWith('Backend')) {
-        // Add backend domain handler here.
-        return;
-      }
-
       // If message has sessionId, pass through.
       if (parsedMessage.sessionId) {
         transport.send(parsedMessage);
