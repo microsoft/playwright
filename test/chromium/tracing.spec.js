@@ -75,17 +75,6 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
       const trace = await browser.stopTracing();
       expect(trace).toBeTruthy();
     });
-    it('should return null in case of Buffer error', async({browser, page, server}) => {
-      await browser.startTracing(page, {screenshots: true});
-      await page.goto(server.PREFIX + '/grid.html');
-      const oldBufferConcat = Buffer.concat;
-      Buffer.concat = bufs => {
-        throw new Error('Buffer.concat fake error, should be caught by playwright');
-      };
-      const trace = await browser.stopTracing();
-      expect(trace).toEqual(null);
-      Buffer.concat = oldBufferConcat;
-    });
     it('should support a buffer without a path', async({browser, page, server}) => {
       await browser.startTracing(page, {screenshots: true});
       await page.goto(server.PREFIX + '/grid.html');
