@@ -26,7 +26,7 @@ module.exports.describe = function({testRunner, expect, product, browserType, pl
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  async function testSignal(action) {
+  async function testSignal(action, exitOnClose) {
     const options = Object.assign({}, defaultBrowserOptions, {
       // Disable DUMPIO to cleanly read stdout.
       dumpio: false,
@@ -34,7 +34,7 @@ module.exports.describe = function({testRunner, expect, product, browserType, pl
       handleSIGTERM: true,
       handleSIGHUP: true,
     });
-    const res = spawn('node', [path.join(__dirname, 'fixtures', 'closeme.js'), playwrightPath, product, JSON.stringify(options)]);
+    const res = spawn('node', [path.join(__dirname, 'fixtures', 'closeme.js'), playwrightPath, product, JSON.stringify(options), exitOnClose ? 'true' : '']);
     let wsEndPointCallback;
     const wsEndPointPromise = new Promise(x => wsEndPointCallback = x);
     let output = '';
@@ -42,7 +42,7 @@ module.exports.describe = function({testRunner, expect, product, browserType, pl
     let browserSignal = 'none';
     let browserPid;
     res.stdout.on('data', data => {
-      output += data;
+      output += data.toString();
       // Uncomment to debug these tests.
       // console.log(data.toString());
       let match = output.match(/browserWS:(.+):browserWS/);
@@ -94,23 +94,18 @@ module.exports.describe = function({testRunner, expect, product, browserType, pl
       // We might not get browser exitCode in time when killing the parent node process,
       // so we don't check it here.
     });
-    if (!WIN) {
+
+    describe.skip(WIN)('signals', () => {
       // Cannot reliably send signals on Windows.
       it.slow()('should report browser close signal', async () => {
-        const result = await testSignal((child, browserPid) => {
-          process.kill(browserPid);
-          process.kill(child.pid, 'SIGINT');
-        });
-        expect(result.exitCode).toBe(130);
+        const result = await testSignal((child, browserPid) => process.kill(browserPid), true);
+        expect(result.exitCode).toBe(0);
         expect(result.browserExitCode).toBe('null');
         expect(result.browserSignal).toBe('SIGTERM');
       });
-      it.slow()('should report browser close signal 2', async () => {
-        const result = await testSignal((child, browserPid) => {
-          process.kill(browserPid, 'SIGKILL');
-          process.kill(child.pid, 'SIGINT');
-        });
-        expect(result.exitCode).toBe(130);
+      it.slow()('should report browser close signal 2', async (state, test) => {
+        const result = await testSignal((child, browserPid) => process.kill(browserPid, 'SIGKILL'), true);
+        expect(result.exitCode).toBe(0);
         expect(result.browserExitCode).toBe('null');
         expect(result.browserSignal).toBe('SIGKILL');
       });
@@ -159,6 +154,6 @@ module.exports.describe = function({testRunner, expect, product, browserType, pl
         // TODO: ideally, we would expect the SIGKILL on the browser from
         // force kill, but that's racy with sending two signals.
       });
-    }
+    });
   });
 };
