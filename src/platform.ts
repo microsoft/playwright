@@ -29,7 +29,7 @@ import * as NodeWebSocket from 'ws';
 import * as crypto from 'crypto';
 
 import { assert, helper } from './helper';
-import { ConnectionTransport } from './transport';
+import { ConnectionTransport, ProtocolMessage } from './transport';
 
 export const isNode = typeof process === 'object' && !!process && typeof process.versions === 'object' && !!process.versions && !!process.versions.node;
 
@@ -112,7 +112,8 @@ export const EventEmitter: typeof nodeEvents.EventEmitter = isNode ? nodeEvents.
 ) as any as typeof nodeEvents.EventEmitter;
 export type EventEmitterType = nodeEvents.EventEmitter;
 
-type DebugType = typeof nodeDebug;
+export type DebuggerType = nodeDebug.IDebugger;
+export type DebugType = nodeDebug.IDebug;
 export const debug: DebugType = isNode ? nodeDebug : (
   function debug(namespace: string) {
     return () => {};
@@ -322,7 +323,7 @@ export async function connectToWebsocket<T>(url: string, onopen: (transport: Con
 class WebSocketTransport implements ConnectionTransport {
   _ws: WebSocket;
 
-  onmessage?: (message: string) => void;
+  onmessage?: (message: ProtocolMessage) => void;
   onclose?: () => void;
 
   constructor(url: string) {
@@ -339,7 +340,7 @@ class WebSocketTransport implements ConnectionTransport {
     this._ws.addEventListener('message', event => {
       messageWrap(() => {
         if (this.onmessage)
-          this.onmessage.call(null, event.data);
+          this.onmessage.call(null, JSON.parse(event.data));
       });
     });
 
@@ -351,8 +352,8 @@ class WebSocketTransport implements ConnectionTransport {
     this._ws.addEventListener('error', () => {});
   }
 
-  send(message: string) {
-    this._ws.send(message);
+  send(message: ProtocolMessage) {
+    this._ws.send(JSON.stringify(message));
   }
 
   close() {

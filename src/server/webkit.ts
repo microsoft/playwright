@@ -114,8 +114,7 @@ export class WebKit implements BrowserType<WKBrowser> {
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
         // our connection ignores kBrowserCloseMessageId.
-        const message = JSON.stringify({method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId});
-        transport.send(message);
+        transport.send({method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId});
       },
       onkill: (exitCode, signal) => {
         if (browserServer)
@@ -194,54 +193,53 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
   const sockets = new Set<ws>();
 
   transport.onmessage = message => {
-    const parsedMessage = JSON.parse(message);
-    if ('id' in parsedMessage) {
-      if (parsedMessage.id === -9999)
+    if (typeof message.id === 'number') {
+      if (message.id === -9999)
         return;
       // Process command response.
-      const value = idMixer.take(parsedMessage.id);
+      const value = idMixer.take(message.id);
       if (!value)
         return;
       const { id, socket } = value;
 
       if (!socket || socket.readyState === ws.CLOSING) {
         if (pendingBrowserContextCreations.has(id)) {
-          transport.send(JSON.stringify({
+          transport.send({
             id: ++SequenceNumberMixer._lastSequenceNumber,
             method: 'Playwright.deleteContext',
-            params: { browserContextId: parsedMessage.result.browserContextId }
-          }));
+            params: { browserContextId: message.result.browserContextId }
+          });
         }
         return;
       }
 
-      if (pendingBrowserContextCreations.has(parsedMessage.id)) {
+      if (pendingBrowserContextCreations.has(message.id)) {
         // Browser.createContext response -> establish context attribution.
-        browserContextIds.set(parsedMessage.result.browserContextId, socket);
-        pendingBrowserContextCreations.delete(parsedMessage.id);
+        browserContextIds.set(message.result.browserContextId, socket);
+        pendingBrowserContextCreations.delete(message.id);
       }
 
-      const deletedContextId = pendingBrowserContextDeletions.get(parsedMessage.id);
+      const deletedContextId = pendingBrowserContextDeletions.get(message.id);
       if (deletedContextId) {
         // Browser.deleteContext response -> remove context attribution.
         browserContextIds.delete(deletedContextId);
-        pendingBrowserContextDeletions.delete(parsedMessage.id);
+        pendingBrowserContextDeletions.delete(message.id);
       }
 
-      parsedMessage.id = id;
-      socket.send(JSON.stringify(parsedMessage));
+      message.id = id;
+      socket.send(JSON.stringify(message));
       return;
     }
 
     // Process notification response.
-    const { method, params, pageProxyId } = parsedMessage;
+    const { method, params, pageProxyId } = message;
     if (pageProxyId) {
       const socket = pageProxyIds.get(pageProxyId);
       if (!socket || socket.readyState === ws.CLOSING) {
         // Drop unattributed messages on the floor.
         return;
       }
-      socket.send(message);
+      socket.send(JSON.stringify(message));
       return;
     }
     if (method === 'Playwright.pageProxyCreated') {
@@ -251,20 +249,20 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
         return;
       }
       pageProxyIds.set(params.pageProxyInfo.pageProxyId, socket);
-      socket.send(message);
+      socket.send(JSON.stringify(message));
       return;
     }
     if (method === 'Playwright.pageProxyDestroyed') {
       const socket = pageProxyIds.get(params.pageProxyId);
       pageProxyIds.delete(params.pageProxyId);
       if (socket && socket.readyState !== ws.CLOSING)
-        socket.send(message);
+        socket.send(JSON.stringify(message));
       return;
     }
     if (method === 'Playwright.provisionalLoadFailed') {
       const socket = pageProxyIds.get(params.pageProxyId);
       if (socket && socket.readyState !== ws.CLOSING)
-        socket.send(message);
+        socket.send(JSON.stringify(message));
       return;
     }
   };
@@ -280,7 +278,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
       const parsedMessage = JSON.parse(Buffer.from(message).toString());
       const { id, method, params } = parsedMessage;
       const seqNum = idMixer.generate({ id, socket });
-      transport.send(JSON.stringify({ ...parsedMessage, id: seqNum }));
+      transport.send({ ...parsedMessage, id: seqNum });
       if (method === 'Playwright.createContext')
         pendingBrowserContextCreations.add(seqNum);
       if (method === 'Playwright.deleteContext')
@@ -294,11 +292,11 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
       }
       for (const [browserContextId, s] of browserContextIds) {
         if (s === socket) {
-          transport.send(JSON.stringify({
+          transport.send({
             id: ++SequenceNumberMixer._lastSequenceNumber,
             method: 'Playwright.deleteContext',
             params: { browserContextId }
-          }));
+          });
           browserContextIds.delete(browserContextId);
         }
       }

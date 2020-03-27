@@ -243,7 +243,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     return this._clientRootSessionPromise;
   }
 
-  _setDebugFunction(debugFunction: (message: string) => void) {
+  _setDebugFunction(debugFunction: platform.DebuggerType) {
     this._connection._debugProtocol = debugFunction;
   }
 }
