@@ -255,7 +255,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
     });
   });
 
-  describe.fail(FFOX)('BrowserContext({timezoneId})', function() {
+  describe('BrowserContext({timezoneId})', function() {
     it('should work', async ({ browser }) => {
       const func = () => new Date(1479579154987).toString();
       {
@@ -342,7 +342,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
         await context.close();
       }
     });
-    it.fail(FFOX)('should format date', async({browser, server}) => {
+    it('should format date', async({browser, server}) => {
       {
         const context = await browser.newContext({ locale: 'en-US', timezoneId: 'America/Los_Angeles' });
         const page = await context.newPage();

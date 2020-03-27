@@ -8,9 +8,9 @@
   },
   "main": "index.js",
   "playwright": {
-    "chromium_revision": "754895",
-    "firefox_revision": "1067",
-    "webkit_revision": "1185"
+    "chromium_revision": "751710",
+    "firefox_revision": "1064",
+    "webkit_revision": "1184"
   },
   "scripts": {
     "ctest": "cross-env BROWSER=chromium node test/test.js",
