@@ -19,7 +19,7 @@ module.exports.addTests = function({testRunner, expect}) {
       const test = t.tests()[0];
       expect(test.name()).toBe('uno');
       expect(test.fullName()).toBe('uno');
-      expect(test.effectiveMode()).toBe('run');
+      expect(test.mode()).toBe('run');
       expect(test.location().filePath).toEqual(__filename);
       expect(test.location().fileName).toEqual('testrunner.spec.js');
       expect(test.location().lineNumber).toBeTruthy();
@@ -35,7 +35,8 @@ module.exports.addTests = function({testRunner, expect}) {
       const test = t.tests()[0];
       expect(test.name()).toBe('uno');
       expect(test.fullName()).toBe('uno');
-      expect(test.effectiveMode()).toBe('skip');
+      expect(test.mode()).toBe('skip');
+      expect(t.runnableTests()).toEqual([test]);
     });
   });
 
@@ -47,7 +48,8 @@ module.exports.addTests = function({testRunner, expect}) {
       const test = t.tests()[0];
       expect(test.name()).toBe('uno');
       expect(test.fullName()).toBe('uno');
-      expect(test.effectiveMode()).toBe('focus');
+      expect(test.mode()).toBe('focus');
+      expect(t.runnableTests()).toEqual([test]);
     });
     it('should run a failed focused test', async() => {
       const t = newTestRunner();
@@ -70,10 +72,11 @@ module.exports.addTests = function({testRunner, expect}) {
       const test = t.tests()[0];
       expect(test.name()).toBe('uno');
       expect(test.fullName()).toBe('suite uno');
-      expect(test.effectiveMode()).toBe('run');
+      expect(test.mode()).toBe('run');
       expect(test.suite().name()).toBe('suite');
       expect(test.suite().fullName()).toBe('suite');
       expect(test.suite().mode()).toBe('run');
+      expect(t.runnableTests()).toEqual([test]);
     });
   });
 
@@ -85,18 +88,20 @@ module.exports.addTests = function({testRunner, expect}) {
       });
       expect(t.tests().length).toBe(1);
       const test = t.tests()[0];
-      expect(test.effectiveMode()).toBe('skip');
+      expect(test.mode()).toBe('run');
       expect(test.suite().mode()).toBe('skip');
+      expect(t.runnableTests()).toEqual([test]);
     });
-    it('focused tests inside a skipped suite are considered skipped', async() => {
+    it('focused tests inside a skipped suite are not run', async() => {
       const t = newTestRunner();
       t.xdescribe('suite', () => {
         t.fit('uno', () => {});
       });
       expect(t.tests().length).toBe(1);
       const test = t.tests()[0];
-      expect(test.effectiveMode()).toBe('skip');
+      expect(test.mode()).toBe('focus');
       expect(test.suite().mode()).toBe('skip');
+      expect(t.runnableTests()).toEqual([test]);
     });
   });
 
@@ -108,18 +113,20 @@ module.exports.addTests = function({testRunner, expect}) {
       });
       expect(t.tests().length).toBe(1);
       const test = t.tests()[0];
-      expect(test.effectiveMode()).toBe('run');
+      expect(test.mode()).toBe('run');
       expect(test.suite().mode()).toBe('focus');
+      expect(t.runnableTests()).toEqual([test]);
     });
-    it('skipped tests inside a focused suite should stay skipped', async() => {
+    it('skipped tests inside a focused suite should not be run', async() => {
       const t = newTestRunner();
       t.fdescribe('suite', () => {
         t.xit('uno', () => {});
       });
       expect(t.tests().length).toBe(1);
       const test = t.tests()[0];
-      expect(test.effectiveMode()).toBe('skip');
+      expect(test.mode()).toBe('skip');
       expect(test.suite().mode()).toBe('focus');
+      expect(t.runnableTests()).toEqual([test]);
     });
     it('should run all "run" tests inside a focused suite', async() => {
       const log = [];
