@@ -17,7 +17,7 @@
 
 import {assert} from '../helper';
 import * as platform from '../platform';
-import { ConnectionTransport, ProtocolMessage } from '../transport';
+import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { Protocol } from './protocol';
 
 export const ConnectionEvents = {
@@ -76,15 +76,15 @@ export class FFConnection extends platform.EventEmitter {
     return ++this._lastId;
   }
 
-  _rawSend(message: ProtocolMessage) {
+  _rawSend(message: ProtocolRequest) {
     if (this._debugProtocol.enabled)
       this._debugProtocol('SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
     this._transport.send(message);
   }
 
-  async _onMessage(message: ProtocolMessage) {
+  async _onMessage(message: ProtocolResponse) {
     if (this._debugProtocol.enabled)
-      this._debugProtocol('◀ RECV ' + message);
+      this._debugProtocol('◀ RECV ' + JSON.stringify(message));
     if (message.id === kBrowserCloseMessageId)
       return;
     if (message.sessionId) {
@@ -102,7 +102,7 @@ export class FFConnection extends platform.EventEmitter {
           callback.resolve(message.result);
       }
     } else {
-      Promise.resolve().then(() => this.emit(message.method, message.params));
+      Promise.resolve().then(() => this.emit(message.method!, message.params));
     }
   }
 
@@ -176,7 +176,7 @@ export class FFSession extends platform.EventEmitter {
     });
   }
 
-  dispatchMessage(object: ProtocolMessage) {
+  dispatchMessage(object: ProtocolResponse) {
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
@@ -186,7 +186,7 @@ export class FFSession extends platform.EventEmitter {
         callback.resolve(object.result);
     } else {
       assert(!object.id);
-      Promise.resolve().then(() => this.emit(object.method, object.params));
+      Promise.resolve().then(() => this.emit(object.method!, object.params));
     }
   }
 
@@ -212,7 +212,7 @@ function rewriteError(error: Error, message: string): Error {
   return error;
 }
 
-function rewriteInjectedScriptEvaluationLog(message: ProtocolMessage): string {
+function rewriteInjectedScriptEvaluationLog(message: ProtocolRequest): string {
   // Injected script is very long and clutters protocol logs.
   // To increase development velocity, we skip replace it with short description in the log.
   if (message.method === 'Runtime.evaluate' && message.params && message.params.expression && message.params.expression.includes('src/injected/injected.ts'))

@@ -29,7 +29,7 @@ import * as NodeWebSocket from 'ws';
 import * as crypto from 'crypto';
 
 import { assert, helper } from './helper';
-import { ConnectionTransport, ProtocolMessage } from './transport';
+import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from './transport';
 
 export const isNode = typeof process === 'object' && !!process && typeof process.versions === 'object' && !!process.versions && !!process.versions.node;
 
@@ -323,7 +323,7 @@ export async function connectToWebsocket<T>(url: string, onopen: (transport: Con
 class WebSocketTransport implements ConnectionTransport {
   _ws: WebSocket;
 
-  onmessage?: (message: ProtocolMessage) => void;
+  onmessage?: (message: ProtocolResponse) => void;
   onclose?: () => void;
 
   constructor(url: string) {
@@ -352,7 +352,7 @@ class WebSocketTransport implements ConnectionTransport {
     this._ws.addEventListener('error', () => {});
   }
 
-  send(message: ProtocolMessage) {
+  send(message: ProtocolRequest) {
     this._ws.send(JSON.stringify(message));
   }
 

@@ -16,7 +16,7 @@
  */
 
 import { debugError, helper, RegisteredListener } from '../helper';
-import { ConnectionTransport, ProtocolMessage } from '../transport';
+import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { makeWaitForNextTask } from '../platform';
 
 export class PipeTransport implements ConnectionTransport {
@@ -26,7 +26,7 @@ export class PipeTransport implements ConnectionTransport {
   private _waitForNextTask = makeWaitForNextTask();
   private readonly _closeCallback: () => void;
 
-  onmessage?: (message: ProtocolMessage) => void;
+  onmessage?: (message: ProtocolResponse) => void;
   onclose?: () => void;
 
   constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream, closeCallback: () => void) {
@@ -46,7 +46,7 @@ export class PipeTransport implements ConnectionTransport {
     this.onclose = undefined;
   }
 
-  send(message: ProtocolMessage) {
+  send(message: ProtocolRequest) {
     this._pipeWrite!.write(JSON.stringify(message));
     this._pipeWrite!.write('\0');
   }

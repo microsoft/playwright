@@ -17,7 +17,7 @@
 
 import { assert } from '../helper';
 import * as platform from '../platform';
-import { ConnectionTransport, ProtocolMessage } from '../transport';
+import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { Protocol } from './protocol';
 
 // WKPlaywright uses this special id to issue Browser.close command which we
@@ -53,13 +53,13 @@ export class WKConnection {
     return ++this._lastId;
   }
 
-  rawSend(message: ProtocolMessage) {
+  rawSend(message: ProtocolRequest) {
     if (this._debugProtocol.enabled)
       this._debugProtocol('SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
     this._transport.send(message);
   }
 
-  private _dispatchMessage(message: ProtocolMessage) {
+  private _dispatchMessage(message: ProtocolResponse) {
     if (this._debugProtocol.enabled)
       this._debugProtocol('◀ RECV ' + message);
     if (message.id === kBrowserCloseMessageId)

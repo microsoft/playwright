@@ -21,15 +21,15 @@ import * as path from 'path';
 import { helper } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
 import * as platform from '../platform';
-import { TimeoutError } from '../errors';
-import { launchProcess, waitForLine } from '../server/processLauncher';
+import * as ws from 'ws';
+import { launchProcess } from '../server/processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
 import { PipeTransport } from './pipeTransport';
 import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
 import { ConnectOptions, LaunchType } from '../browser';
 import { BrowserServer } from './browserServer';
 import { Events } from '../events';
-import { ConnectionTransport } from '../transport';
+import { ConnectionTransport, ProtocolRequest } from '../transport';
 import { BrowserContext } from '../browserContext';
 
 export class Chromium implements BrowserType<CRBrowser> {
@@ -76,7 +76,6 @@ export class Chromium implements BrowserType<CRBrowser> {
       handleSIGINT = true,
       handleSIGTERM = true,
       handleSIGHUP = true,
-      timeout = 30000
     } = options;
 
     let temporaryUserDataDir: string | null = null;
@@ -87,9 +86,9 @@ export class Chromium implements BrowserType<CRBrowser> {
 
     const chromeArguments = [];
     if (!ignoreDefaultArgs)
-      chromeArguments.push(...this._defaultArgs(options, launchType, userDataDir!, port || 0));
+      chromeArguments.push(...this._defaultArgs(options, launchType, userDataDir!));
     else if (Array.isArray(ignoreDefaultArgs))
-      chromeArguments.push(...this._defaultArgs(options, launchType, userDataDir!, port || 0).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
+      chromeArguments.push(...this._defaultArgs(options, launchType, userDataDir!).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
     else
       chromeArguments.push(...args);
 
@@ -105,7 +104,7 @@ export class Chromium implements BrowserType<CRBrowser> {
       handleSIGTERM,
       handleSIGHUP,
       dumpio,
-      pipe: launchType !== 'server',
+      pipe: true,
       tempDir: temporaryUserDataDir || undefined,
       attemptToGracefullyClose: async () => {
         if (!browserServer)
@@ -113,9 +112,9 @@ export class Chromium implements BrowserType<CRBrowser> {
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
         // our connection ignores kBrowserCloseMessageId.
-        const t = transport || await platform.connectToWebsocket(browserWSEndpoint!, async transport => transport);
-        const message = { method: 'Browser.close', id: kBrowserCloseMessageId };
-        await t.send(message);
+        const t = transport!;
+        const message: ProtocolRequest = { method: 'Browser.close', id: kBrowserCloseMessageId, params: {} };
+        t.send(message);
       },
       onkill: (exitCode, signal) => {
         if (browserServer)
@@ -123,20 +122,10 @@ export class Chromium implements BrowserType<CRBrowser> {
       },
     });
 
-    let transport: PipeTransport | undefined;
-    let browserWSEndpoint: string | undefined;
-    if (launchType === 'server') {
-      const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chromium!`);
-      const match = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, timeout, timeoutError);
-      browserWSEndpoint = match[1];
-      browserServer = new BrowserServer(launchedProcess, gracefullyClose, browserWSEndpoint);
-      return { browserServer };
-    } else {
-      // For local launch scenario close will terminate the browser process.
-      transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream, () => browserServer!.close());
-      browserServer = new BrowserServer(launchedProcess, gracefullyClose, null);
-      return { browserServer, transport };
-    }
+    let transport: PipeTransport | undefined = undefined;
+    transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream, () => browserServer!.close());
+    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, port || 0) : null);
+    return { browserServer, transport };
   }
 
   async connect(options: ConnectOptions): Promise<CRBrowser> {
@@ -145,7 +134,7 @@ export class Chromium implements BrowserType<CRBrowser> {
     });
   }
 
-  private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {
+  private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string): string[] {
     const {
       devtools = false,
       headless = !devtools,
@@ -161,7 +150,7 @@ export class Chromium implements BrowserType<CRBrowser> {
 
     const chromeArguments = [...DEFAULT_ARGS];
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
-    chromeArguments.push(launchType === 'server' ? `--remote-debugging-port=${port || 0}` : '--remote-debugging-pipe');
+    chromeArguments.push('--remote-debugging-pipe');
     if (devtools)
       chromeArguments.push('--auto-open-devtools-for-tabs');
     if (headless) {
@@ -182,6 +171,130 @@ export class Chromium implements BrowserType<CRBrowser> {
     return chromeArguments;
   }
 }
+
+function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number): string {
+  const server = new ws.Server({ port });
+  const guid = platform.guid();
+
+  const awaitingBrowserTarget = new Map<number, ws>();
+  const sessionToSocket = new Map<string, ws>();
+  const socketToBrowserSession = new Map<ws, { sessionId?: string, queue?: ProtocolRequest[] }>();
+  const browserSessions = new Set<string>();
+  let lastSequenceNumber = 1;
+
+  transport.onmessage = message => {
+    if (typeof message.id === 'number' && awaitingBrowserTarget.has(message.id)) {
+      const freshSocket = awaitingBrowserTarget.get(message.id)!;
+      awaitingBrowserTarget.delete(message.id);
+
+      const sessionId = message.result.sessionId;
+      if (freshSocket.readyState !== ws.CLOSED && freshSocket.readyState !== ws.CLOSING) {
+        sessionToSocket.set(sessionId, freshSocket);
+        const { queue } = socketToBrowserSession.get(freshSocket)!;
+        for (const item of queue!) {
+          item.sessionId = sessionId;
+          transport.send(item);
+        }
+        socketToBrowserSession.set(freshSocket, { sessionId });
+        browserSessions.add(sessionId);
+      } else {
+        transport.send({
+          id: ++lastSequenceNumber,
+          method: 'Target.detachFromTarget',
+          params: { sessionId }
+        });
+        socketToBrowserSession.delete(freshSocket);
+      }
+      return;
+    }
+
+    // At this point everything we care about has sessionId.
+    if (!message.sessionId)
+      return;
+
+    const socket = sessionToSocket.get(message.sessionId);
+    if (socket && socket.readyState !== ws.CLOSING) {
+      if (message.method === 'Target.attachedToTarget')
+        sessionToSocket.set(message.params.sessionId, socket);
+      if (message.method === 'Target.detachedFromTarget')
+        sessionToSocket.delete(message.params.sessionId);
+      // Strip session ids from the browser sessions.
+      if (browserSessions.has(message.sessionId))
+        delete message.sessionId;
+      socket.send(JSON.stringify(message));
+    }
+  };
+
+  transport.onclose = () => {
+    for (const socket of socketToBrowserSession.keys()) {
+      socket.removeListener('close', (socket as any).__closeListener);
+      socket.close(undefined, 'Browser disconnected');
+    }
+    server.close();
+    transport.onmessage = undefined;
+    transport.onclose = undefined;
+  };
+
+  server.on('connection', (socket: ws, req) => {
+    if (req.url !== '/' + guid) {
+      socket.close();
+      return;
+    }
+    socketToBrowserSession.set(socket, { queue: [] });
+
+    transport.send({
+      id: ++lastSequenceNumber,
+      method: 'Target.attachToBrowserTarget',
+      params: {}
+    });
+    awaitingBrowserTarget.set(lastSequenceNumber, socket);
+
+    socket.on('message', (message: string) => {
+      const parsedMessage = JSON.parse(Buffer.from(message).toString()) as ProtocolRequest;
+      if (parsedMessage.method.startsWith('Backend')) {
+        // Add backend domain handler here.
+        return;
+      }
+
+      // If message has sessionId, pass through.
+      if (parsedMessage.sessionId) {
+        transport.send(parsedMessage);
+        return;
+      }
+
+      // If message has no sessionId, look it up.
+      const session = socketToBrowserSession.get(socket)!;
+      if (session.sessionId) {
+        // We have it, use it.
+        parsedMessage.sessionId = session.sessionId;
+        transport.send(parsedMessage);
+        return;
+      }
+      // Pending session id, queue the message.
+      session.queue!.push(parsedMessage);
+    });
+
+    socket.on('close', (socket as any).__closeListener = () => {
+      const session = socketToBrowserSession.get(socket);
+      if (!session || !session.sessionId)
+        return;
+      sessionToSocket.delete(session.sessionId);
+      browserSessions.delete(session.sessionId);
+      socketToBrowserSession.delete(socket);
+      transport.send({
+        id: ++lastSequenceNumber,
+        method: 'Target.detachFromTarget',
+        params: { sessionId: session.sessionId }
+      });
+    });
+  });
+
+  const address = server.address();
+  if (typeof address === 'string')
+    return address + '/' + guid;
+  return 'ws://127.0.0.1:' + address.port + '/' + guid;
+}
+
 
 const mkdtempAsync = platform.promisify(fs.mkdtemp);
 
