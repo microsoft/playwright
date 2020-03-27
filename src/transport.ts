@@ -15,20 +15,28 @@
  * limitations under the License.
  */
 
-export type ProtocolMessage = {
-  id?: number;
+export type ProtocolRequest = {
+  id: number;
   method: string;
-  params?: any;
+  params: any;
+  sessionId?: string;
+  pageProxyId?: string;
+};
+
+export type ProtocolResponse = {
+  id?: number;
+  method?: string;
   sessionId?: string;
   error?: { message: string; data: any; };
+  params?: any;
   result?: any;
   pageProxyId?: string;
 };
 
 export interface ConnectionTransport {
-  send(s: ProtocolMessage): void;
+  send(s: ProtocolRequest): void;
   close(): void;  // Note: calling close is expected to issue onclose at some point.
-  onmessage?: (message: ProtocolMessage) => void,
+  onmessage?: (message: ProtocolResponse) => void,
   onclose?: () => void,
 }
 
@@ -36,7 +44,7 @@ export class SlowMoTransport {
   private readonly _delay: number;
   private readonly _delegate: ConnectionTransport;
 
-  onmessage?: (message: ProtocolMessage) => void;
+  onmessage?: (message: ProtocolResponse) => void;
   onclose?: () => void;
 
   static wrap(transport: ConnectionTransport, delay?: number): ConnectionTransport {
@@ -50,7 +58,7 @@ export class SlowMoTransport {
     this._delegate.onclose = this._onClose.bind(this);
   }
 
-  private _onmessage(message: ProtocolMessage) {
+  private _onmessage(message: ProtocolResponse) {
     if (this.onmessage)
       this.onmessage(message);
   }
@@ -62,7 +70,7 @@ export class SlowMoTransport {
     this._delegate.onclose = undefined;
   }
 
-  send(s: ProtocolMessage) {
+  send(s: ProtocolRequest) {
     setTimeout(() => {
       if (this._delegate.onmessage)
         this._delegate.send(s);
@@ -78,14 +86,14 @@ export class DeferWriteTransport implements ConnectionTransport {
   private _delegate: ConnectionTransport;
   private _readPromise: Promise<void>;
 
-  onmessage?: (message: ProtocolMessage) => void;
+  onmessage?: (message: ProtocolResponse) => void;
   onclose?: () => void;
 
   constructor(transport: ConnectionTransport) {
     this._delegate = transport;
     let callback: () => void;
     this._readPromise = new Promise(f => callback = f);
-    this._delegate.onmessage = (s: ProtocolMessage) => {
+    this._delegate.onmessage = (s: ProtocolResponse) => {
       callback();
       if (this.onmessage)
         this.onmessage(s);
@@ -96,7 +104,7 @@ export class DeferWriteTransport implements ConnectionTransport {
     };
   }
 
-  async send(s: ProtocolMessage) {
+  async send(s: ProtocolRequest) {
     await this._readPromise;
     this._delegate.send(s);
   }

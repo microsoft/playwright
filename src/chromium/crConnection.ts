@@ -17,7 +17,7 @@
 
 import { assert } from '../helper';
 import * as platform from '../platform';
-import { ConnectionTransport, ProtocolMessage } from '../transport';
+import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { Protocol } from './protocol';
 
 export const ConnectionEvents = {
@@ -55,9 +55,9 @@ export class CRConnection extends platform.EventEmitter {
     return this._sessions.get(sessionId) || null;
   }
 
-  _rawSend(sessionId: string, message: ProtocolMessage): number {
+  _rawSend(sessionId: string, method: string, params: any): number {
     const id = ++this._lastId;
-    message.id = id;
+    const message: ProtocolRequest = { id, method, params };
     if (sessionId)
       message.sessionId = sessionId;
     if (this._debugProtocol.enabled)
@@ -66,9 +66,9 @@ export class CRConnection extends platform.EventEmitter {
     return id;
   }
 
-  async _onMessage(message: ProtocolMessage) {
+  async _onMessage(message: ProtocolResponse) {
     if (this._debugProtocol.enabled)
-      this._debugProtocol('◀ RECV ' + rewriteInjectedScriptEvaluationLog(message));
+      this._debugProtocol('◀ RECV ' + JSON.stringify(message));
     if (message.id === kBrowserCloseMessageId)
       return;
     if (message.method === 'Target.attachedToTarget') {
@@ -150,13 +150,13 @@ export class CRSession extends platform.EventEmitter {
   ): Promise<Protocol.CommandReturnValues[T]> {
     if (!this._connection)
       throw new Error(`Protocol error (${method}): Session closed. Most likely the ${this._targetType} has been closed.`);
-    const id = this._connection._rawSend(this._sessionId, { method, params });
+    const id = this._connection._rawSend(this._sessionId, method, params);
     return new Promise((resolve, reject) => {
       this._callbacks.set(id, {resolve, reject, error: new Error(), method});
     });
   }
 
-  _onMessage(object: ProtocolMessage) {
+  _onMessage(object: ProtocolResponse) {
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
@@ -166,7 +166,7 @@ export class CRSession extends platform.EventEmitter {
         callback.resolve(object.result);
     } else {
       assert(!object.id);
-      Promise.resolve().then(() => this.emit(object.method, object.params));
+      Promise.resolve().then(() => this.emit(object.method!, object.params));
     }
   }
 
@@ -200,7 +200,7 @@ function rewriteError(error: Error, message: string): Error {
   return error;
 }
 
-function rewriteInjectedScriptEvaluationLog(message: ProtocolMessage): string {
+function rewriteInjectedScriptEvaluationLog(message: ProtocolRequest): string {
   // Injected script is very long and clutters protocol logs.
   // To increase development velocity, we skip replace it with short description in the log.
   if (message.method === 'Runtime.evaluate' && message.params && message.params.expression && message.params.expression.includes('src/injected/injected.ts'))

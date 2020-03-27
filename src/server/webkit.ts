@@ -96,8 +96,6 @@ export class WebKit implements BrowserType<WKBrowser> {
     if (!webkitExecutable)
       throw new Error(`No executable path is specified.`);
 
-    let transport: ConnectionTransport | undefined = undefined;
-    let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: webkitExecutable,
       args: webkitArguments,
@@ -123,10 +121,10 @@ export class WebKit implements BrowserType<WKBrowser> {
     });
 
     // For local launch scenario close will terminate the browser process.
+    let transport: ConnectionTransport | undefined = undefined;
+    let browserServer: BrowserServer | undefined = undefined;
     transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream, () => browserServer!.close());
-    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? await wrapTransportWithWebSocket(transport, port || 0) : null);
-    if (launchType === 'server')
-      return { browserServer };
+    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, port || 0) : null);
     return { browserServer, transport };
   }
 
@@ -182,7 +180,7 @@ class SequenceNumberMixer<V> {
   }
 }
 
-function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number) {
+function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number): string {
   const server = new ws.Server({ port });
   const guid = platform.guid();
   const idMixer = new SequenceNumberMixer<{id: number, socket: ws}>();
@@ -202,7 +200,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
         return;
       const { id, socket } = value;
 
-      if (!socket || socket.readyState === ws.CLOSING) {
+      if (socket.readyState === ws.CLOSING) {
         if (pendingBrowserContextCreations.has(id)) {
           transport.send({
             id: ++SequenceNumberMixer._lastSequenceNumber,
