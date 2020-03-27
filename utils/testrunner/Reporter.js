@@ -49,14 +49,14 @@ class Reporter {
       console.log(`Running ${colors.yellow(runnableTests.length)} focused tests out of total ${colors.yellow(allTests.length)} on ${colors.yellow(this._runner.parallel())} worker${this._runner.parallel() > 1 ? 's' : ''}`);
       console.log('');
       const focusedSuites = this._runner.focusedSuites().map(suite => ({
-        id: suite.location.filePath + ':' + suite.location.lineNumber + ':' + suite.location.columnNumber,
-        fullName: suite.fullName,
-        location: suite.location,
+        id: suite.location().filePath + ':' + suite.location().lineNumber + ':' + suite.location().columnNumber,
+        fullName: suite.fullName(),
+        location: suite.location(),
       }));
       const focusedTests = this._runner.focusedTests().map(test => ({
-        id: test.location.filePath + ':' + test.location.lineNumber + ':' + test.location.columnNumber,
-        fullName: test.fullName,
-        location: test.location,
+        id: test.location().filePath + ':' + test.location().lineNumber + ':' + test.location().columnNumber,
+        fullName: test.fullName(),
+        location: test.location(),
       }));
       const focusedEntities = new Map([
         ...focusedSuites.map(suite => ([suite.id, suite])),
@@ -121,7 +121,7 @@ class Reporter {
       if (markedAsFailingTests.length > 0) {
         console.log('\nMarked as failing:');
         markedAsFailingTests.slice(0, this._showMarkedAsFailingTests).forEach((test, index) => {
-          console.log(`${index + 1}) ${test.fullName} (${formatLocation(test.location)})`);
+          console.log(`${index + 1}) ${test.fullName()} (${formatLocation(test.location())})`);
         });
       }
       if (this._showMarkedAsFailingTests < markedAsFailingTests.length) {
@@ -140,7 +140,7 @@ class Reporter {
       for (let i = 0; i < slowTests.length; ++i) {
         const test = slowTests[i];
         const duration = test.endTimestamp - test.startTimestamp;
-        console.log(`  (${i + 1}) ${colors.yellow((duration / 1000) + 's')} - ${test.fullName} (${formatLocation(test.location)})`);
+        console.log(`  (${i + 1}) ${colors.yellow((duration / 1000) + 's')} - ${test.fullName()} (${formatLocation(test.location())})`);
       }
     }
 
@@ -195,23 +195,23 @@ class Reporter {
     if (this._runner.parallel() > 1 && workerId !== undefined)
       prefix += ' ' + colors.gray(`[worker = ${workerId}]`);
     if (test.result === 'ok') {
-      console.log(`${prefix} ${colors.green('[OK]')} ${test.fullName} (${formatLocation(test.location)})`);
+      console.log(`${prefix} ${colors.green('[OK]')} ${test.fullName()} (${formatLocation(test.location())})`);
     } else if (test.result === 'terminated') {
-      console.log(`${prefix} ${colors.magenta('[TERMINATED]')} ${test.fullName} (${formatLocation(test.location)})`);
+      console.log(`${prefix} ${colors.magenta('[TERMINATED]')} ${test.fullName()} (${formatLocation(test.location())})`);
     } else if (test.result === 'crashed') {
-      console.log(`${prefix} ${colors.red('[CRASHED]')} ${test.fullName} (${formatLocation(test.location)})`);
+      console.log(`${prefix} ${colors.red('[CRASHED]')} ${test.fullName()} (${formatLocation(test.location())})`);
     } else if (test.result === 'skipped') {
     } else if (test.result === 'markedAsFailing') {
-      console.log(`${prefix} ${colors.yellow('[MARKED AS FAILING]')} ${test.fullName} (${formatLocation(test.location)})`);
+      console.log(`${prefix} ${colors.yellow('[MARKED AS FAILING]')} ${test.fullName()} (${formatLocation(test.location())})`);
     } else if (test.result === 'timedout') {
-      console.log(`${prefix} ${colors.red(`[TIMEOUT ${test.timeout}ms]`)} ${test.fullName} (${formatLocation(test.location)})`);
+      console.log(`${prefix} ${colors.red(`[TIMEOUT ${test.timeout()}ms]`)} ${test.fullName()} (${formatLocation(test.location())})`);
       if (test.output) {
         console.log('  Output:');
         for (const line of test.output)
           console.log('  ' + line);
       }
     } else if (test.result === 'failed') {
-      console.log(`${prefix} ${colors.red('[FAIL]')} ${test.fullName} (${formatLocation(test.location)})`);
+      console.log(`${prefix} ${colors.red('[FAIL]')} ${test.fullName()} (${formatLocation(test.location())})`);
       if (test.error instanceof MatchError) {
         let lines = this._filePathToLines.get(test.error.location.filePath);
         if (!lines) {
@@ -225,7 +225,7 @@ class Reporter {
         const lineNumber = test.error.location.lineNumber;
         if (lineNumber < lines.length) {
           const lineNumberLength = (lineNumber + 1 + '').length;
-          const FROM = Math.max(test.location.lineNumber - 1, lineNumber - 5);
+          const FROM = Math.max(test.location().lineNumber - 1, lineNumber - 5);
           const snippet = lines.slice(FROM, lineNumber).map((line, index) => `    ${(FROM + index + 1 + '').padStart(lineNumberLength, ' ')} | ${line}`).join('\n');
           const pointer = `    ` + ' '.repeat(lineNumberLength) + '   ' + '~'.repeat(test.error.location.columnNumber - 1) + '^';
           console.log('\n' + snippet + '\n' + colors.grey(pointer) + '\n');
@@ -243,10 +243,10 @@ class Reporter {
           console.log('  Stack:');
           let stack = test.error.stack;
           // Highlight first test location, if any.
-          const match = stack.match(new RegExp(test.location.filePath + ':(\\d+):(\\d+)'));
+          const match = stack.match(new RegExp(test.location().filePath + ':(\\d+):(\\d+)'));
           if (match) {
             const [, line, column] = match;
-            const fileName = `${test.location.fileName}:${line}:${column}`;
+            const fileName = `${test.location().fileName}:${line}:${column}`;
             stack = stack.substring(0, match.index) + stack.substring(match.index).replace(fileName, colors.yellow(fileName));
           }
           console.log(padLines(stack, 4));

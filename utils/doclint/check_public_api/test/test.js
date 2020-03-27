@@ -61,7 +61,7 @@ describe('checkPublicAPI', function() {
 runner.run();
 
 async function testLint(state, test) {
-  const dirPath = path.join(__dirname, test.name);
+  const dirPath = path.join(__dirname, test.name());
   const {expect} = new Matchers({
     toBeGolden: GoldenUtils.compare.bind(null, dirPath, dirPath)
   });
@@ -75,7 +75,7 @@ async function testLint(state, test) {
 }
 
 async function testMDBuilder(state, test) {
-  const dirPath = path.join(__dirname, test.name);
+  const dirPath = path.join(__dirname, test.name());
   const {expect} = new Matchers({
     toBeGolden: GoldenUtils.compare.bind(null, dirPath, dirPath)
   });
@@ -85,7 +85,7 @@ async function testMDBuilder(state, test) {
 }
 
 async function testJSBuilder(state, test) {
-  const dirPath = path.join(__dirname, test.name);
+  const dirPath = path.join(__dirname, test.name());
   const {expect} = new Matchers({
     toBeGolden: GoldenUtils.compare.bind(null, dirPath, dirPath)
   });
