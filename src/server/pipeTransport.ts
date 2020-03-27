@@ -16,7 +16,7 @@
  */
 
 import { debugError, helper, RegisteredListener } from '../helper';
-import { ConnectionTransport } from '../transport';
+import { ConnectionTransport, ProtocolMessage } from '../transport';
 import { makeWaitForNextTask } from '../platform';
 
 export class PipeTransport implements ConnectionTransport {
@@ -26,7 +26,7 @@ export class PipeTransport implements ConnectionTransport {
   private _waitForNextTask = makeWaitForNextTask();
   private readonly _closeCallback: () => void;
 
-  onmessage?: (message: string) => void;
+  onmessage?: (message: ProtocolMessage) => void;
   onclose?: () => void;
 
   constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream, closeCallback: () => void) {
@@ -46,8 +46,8 @@ export class PipeTransport implements ConnectionTransport {
     this.onclose = undefined;
   }
 
-  send(message: string) {
-    this._pipeWrite!.write(message);
+  send(message: ProtocolMessage) {
+    this._pipeWrite!.write(JSON.stringify(message));
     this._pipeWrite!.write('\0');
   }
 
@@ -64,7 +64,7 @@ export class PipeTransport implements ConnectionTransport {
     const message = this._pendingMessage + buffer.toString(undefined, 0, end);
     this._waitForNextTask(() => {
       if (this.onmessage)
-        this.onmessage.call(null, message);
+        this.onmessage.call(null, JSON.parse(message));
     });
 
     let start = end + 1;
@@ -73,7 +73,7 @@ export class PipeTransport implements ConnectionTransport {
       const message = buffer.toString(undefined, start, end);
       this._waitForNextTask(() => {
         if (this.onmessage)
-          this.onmessage.call(null, message);
+          this.onmessage.call(null, JSON.parse(message));
       });
       start = end + 1;
       end = buffer.indexOf('\0', start);

@@ -115,7 +115,7 @@ export class Chromium implements BrowserType<CRBrowser> {
         // our connection ignores kBrowserCloseMessageId.
         const t = transport || await platform.connectToWebsocket(browserWSEndpoint!, async transport => transport);
         const message = { method: 'Browser.close', id: kBrowserCloseMessageId };
-        await t.send(JSON.stringify(message));
+        await t.send(message);
       },
       onkill: (exitCode, signal) => {
         if (browserServer)

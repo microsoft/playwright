@@ -130,7 +130,7 @@ export class Firefox implements BrowserType<FFBrowser> {
         // our connection ignores kBrowserCloseMessageId.
         const transport = await platform.connectToWebsocket(browserWSEndpoint, async transport => transport);
         const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
-        await transport.send(JSON.stringify(message));
+        await transport.send(message);
       },
       onkill: (exitCode, signal) => {
         if (browserServer)

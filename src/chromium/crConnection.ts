@@ -17,7 +17,7 @@
 
 import { assert } from '../helper';
 import * as platform from '../platform';
-import { ConnectionTransport } from '../transport';
+import { ConnectionTransport, ProtocolMessage } from '../transport';
 import { Protocol } from './protocol';
 
 export const ConnectionEvents = {
@@ -34,7 +34,7 @@ export class CRConnection extends platform.EventEmitter {
   private readonly _sessions = new Map<string, CRSession>();
   readonly rootSession: CRSession;
   _closed = false;
-  _debugProtocol: (message: string) => void;
+  _debugProtocol: platform.DebuggerType;
 
   constructor(transport: ConnectionTransport) {
     super();
@@ -55,37 +55,37 @@ export class CRConnection extends platform.EventEmitter {
     return this._sessions.get(sessionId) || null;
   }
 
-  _rawSend(sessionId: string, message: any): number {
+  _rawSend(sessionId: string, message: ProtocolMessage): number {
     const id = ++this._lastId;
     message.id = id;
     if (sessionId)
       message.sessionId = sessionId;
-    const data = JSON.stringify(message);
-    this._debugProtocol('SEND ► ' + (rewriteInjectedScriptEvaluationLog(message) || data));
-    this._transport.send(data);
+    if (this._debugProtocol.enabled)
+      this._debugProtocol('SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
+    this._transport.send(message);
     return id;
   }
 
-  async _onMessage(message: string) {
-    this._debugProtocol('◀ RECV ' + message);
-    const object = JSON.parse(message);
-    if (object.id === kBrowserCloseMessageId)
+  async _onMessage(message: ProtocolMessage) {
+    if (this._debugProtocol.enabled)
+      this._debugProtocol('◀ RECV ' + rewriteInjectedScriptEvaluationLog(message));
+    if (message.id === kBrowserCloseMessageId)
       return;
-    if (object.method === 'Target.attachedToTarget') {
-      const sessionId = object.params.sessionId;
-      const rootSessionId = object.sessionId || '';
-      const session = new CRSession(this, rootSessionId, object.params.targetInfo.type, sessionId);
+    if (message.method === 'Target.attachedToTarget') {
+      const sessionId = message.params.sessionId;
+      const rootSessionId = message.sessionId || '';
+      const session = new CRSession(this, rootSessionId, message.params.targetInfo.type, sessionId);
       this._sessions.set(sessionId, session);
-    } else if (object.method === 'Target.detachedFromTarget') {
-      const session = this._sessions.get(object.params.sessionId);
+    } else if (message.method === 'Target.detachedFromTarget') {
+      const session = this._sessions.get(message.params.sessionId);
       if (session) {
         session._onClosed();
-        this._sessions.delete(object.params.sessionId);
+        this._sessions.delete(message.params.sessionId);
       }
     }
-    const session = this._sessions.get(object.sessionId || '');
+    const session = this._sessions.get(message.sessionId || '');
     if (session)
-      session._onMessage(object);
+      session._onMessage(message);
   }
 
   _onClose() {
@@ -156,12 +156,12 @@ export class CRSession extends platform.EventEmitter {
     });
   }
 
-  _onMessage(object: { id?: number; method: string; params: any; error: { message: string; data: any; }; result?: any; }) {
+  _onMessage(object: ProtocolMessage) {
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
       if (object.error)
-        callback.reject(createProtocolError(callback.error, callback.method, object));
+        callback.reject(createProtocolError(callback.error, callback.method, object.error));
       else
         callback.resolve(object.result);
     } else {
@@ -188,10 +188,10 @@ export class CRSession extends platform.EventEmitter {
   }
 }
 
-function createProtocolError(error: Error, method: string, object: { error: { message: string; data: any; }; }): Error {
-  let message = `Protocol error (${method}): ${object.error.message}`;
-  if ('data' in object.error)
-    message += ` ${object.error.data}`;
+function createProtocolError(error: Error, method: string, protocolError: { message: string; data: any; }): Error {
+  let message = `Protocol error (${method}): ${protocolError.message}`;
+  if ('data' in protocolError)
+    message += ` ${protocolError.data}`;
   return rewriteError(error, message);
 }
 
@@ -200,9 +200,10 @@ function rewriteError(error: Error, message: string): Error {
   return error;
 }
 
-function rewriteInjectedScriptEvaluationLog(message: any): string | undefined {
+function rewriteInjectedScriptEvaluationLog(message: ProtocolMessage): string {
   // Injected script is very long and clutters protocol logs.
   // To increase development velocity, we skip replace it with short description in the log.
   if (message.method === 'Runtime.evaluate' && message.params && message.params.expression && message.params.expression.includes('src/injected/injected.ts'))
     return `{"id":${message.id} [evaluate injected script]}`;
+  return JSON.stringify(message);
 }

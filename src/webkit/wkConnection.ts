@@ -17,7 +17,7 @@
 
 import { assert } from '../helper';
 import * as platform from '../platform';
-import { ConnectionTransport } from '../transport';
+import { ConnectionTransport, ProtocolMessage } from '../transport';
 import { Protocol } from './protocol';
 
 // WKPlaywright uses this special id to issue Browser.close command which we
@@ -34,7 +34,7 @@ export class WKConnection {
   private readonly _onDisconnect: () => void;
   private _lastId = 0;
   private _closed = false;
-  _debugProtocol: (message: string) => void = platform.debug('pw:protocol');
+  _debugProtocol: platform.DebuggerType = platform.debug('pw:protocol');
 
   readonly browserSession: WKSession;
 
@@ -53,23 +53,23 @@ export class WKConnection {
     return ++this._lastId;
   }
 
-  rawSend(message: any) {
-    const data = JSON.stringify(message);
-    this._debugProtocol('SEND ► ' + (rewriteInjectedScriptEvaluationLog(message) || data));
-    this._transport.send(data);
+  rawSend(message: ProtocolMessage) {
+    if (this._debugProtocol.enabled)
+      this._debugProtocol('SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
+    this._transport.send(message);
   }
 
-  private _dispatchMessage(message: string) {
-    this._debugProtocol('◀ RECV ' + message);
-    const object = JSON.parse(message);
-    if (object.id === kBrowserCloseMessageId)
+  private _dispatchMessage(message: ProtocolMessage) {
+    if (this._debugProtocol.enabled)
+      this._debugProtocol('◀ RECV ' + message);
+    if (message.id === kBrowserCloseMessageId)
       return;
-    if (object.pageProxyId) {
-      const payload: PageProxyMessageReceivedPayload = { message: object, pageProxyId: object.pageProxyId };
+    if (message.pageProxyId) {
+      const payload: PageProxyMessageReceivedPayload = { message: message, pageProxyId: message.pageProxyId };
       this.browserSession.dispatchMessage({ method: kPageProxyMessageReceived, params: payload });
       return;
     }
-    this.browserSession.dispatchMessage(object);
+    this.browserSession.dispatchMessage(message);
   }
 
   _onClose() {
@@ -151,7 +151,7 @@ export class WKSession extends platform.EventEmitter {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
       if (object.error)
-        callback.reject(createProtocolError(callback.error, callback.method, object));
+        callback.reject(createProtocolError(callback.error, callback.method, object.error));
       else
         callback.resolve(object.result);
     } else if (object.id) {
@@ -163,10 +163,10 @@ export class WKSession extends platform.EventEmitter {
   }
 }
 
-export function createProtocolError(error: Error, method: string, object: { error: { message: string; data: any; }; }): Error {
-  let message = `Protocol error (${method}): ${object.error.message}`;
-  if ('data' in object.error)
-    message += ` ${JSON.stringify(object.error.data)}`;
+export function createProtocolError(error: Error, method: string, protocolError: { message: string; data: any; }): Error {
+  let message = `Protocol error (${method}): ${protocolError.message}`;
+  if ('data' in protocolError)
+    message += ` ${JSON.stringify(protocolError.data)}`;
   return rewriteError(error, message);
 }
 
@@ -179,9 +179,10 @@ export function isSwappedOutError(e: Error) {
   return e.message.includes('Target was swapped out.');
 }
 
-function rewriteInjectedScriptEvaluationLog(message: any): string | undefined {
+function rewriteInjectedScriptEvaluationLog(message: any): string {
   // Injected script is very long and clutters protocol logs.
   // To increase development velocity, we skip replace it with short description in the log.
   if (message.params && message.params.message && message.params.message.includes('Runtime.evaluate') && message.params.message.includes('src/injected/injected.ts'))
     return `{"id":${message.id},"method":"${message.method}","params":{"message":[evaluate injected script],"targetId":"${message.params.targetId}"},"pageProxyId":${message.pageProxyId}}`;
+  return JSON.stringify(message);
 }

@@ -17,7 +17,7 @@
 
 import {assert} from '../helper';
 import * as platform from '../platform';
-import { ConnectionTransport } from '../transport';
+import { ConnectionTransport, ProtocolMessage } from '../transport';
 import { Protocol } from './protocol';
 
 export const ConnectionEvents = {
@@ -33,7 +33,7 @@ export class FFConnection extends platform.EventEmitter {
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
   private _transport: ConnectionTransport;
   readonly _sessions: Map<string, FFSession>;
-  _debugProtocol: (message: string) => void = platform.debug('pw:protocol');
+  _debugProtocol: platform.DebuggerType = platform.debug('pw:protocol');
   _closed: boolean;
 
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
@@ -76,33 +76,33 @@ export class FFConnection extends platform.EventEmitter {
     return ++this._lastId;
   }
 
-  _rawSend(message: any) {
-    const data = JSON.stringify(message);
-    this._debugProtocol('SEND ► ' + (rewriteInjectedScriptEvaluationLog(message) || data));
-    this._transport.send(data);
+  _rawSend(message: ProtocolMessage) {
+    if (this._debugProtocol.enabled)
+      this._debugProtocol('SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
+    this._transport.send(message);
   }
 
-  async _onMessage(message: string) {
-    this._debugProtocol('◀ RECV ' + message);
-    const object = JSON.parse(message);
-    if (object.id === kBrowserCloseMessageId)
+  async _onMessage(message: ProtocolMessage) {
+    if (this._debugProtocol.enabled)
+      this._debugProtocol('◀ RECV ' + message);
+    if (message.id === kBrowserCloseMessageId)
       return;
-    if (object.sessionId) {
-      const session = this._sessions.get(object.sessionId);
+    if (message.sessionId) {
+      const session = this._sessions.get(message.sessionId);
       if (session)
-        session.dispatchMessage(object);
-    } else if (object.id) {
-      const callback = this._callbacks.get(object.id);
+        session.dispatchMessage(message);
+    } else if (message.id) {
+      const callback = this._callbacks.get(message.id);
       // Callbacks could be all rejected if someone has called `.dispose()`.
       if (callback) {
-        this._callbacks.delete(object.id);
-        if (object.error)
-          callback.reject(createProtocolError(callback.error, callback.method, object));
+        this._callbacks.delete(message.id);
+        if (message.error)
+          callback.reject(createProtocolError(callback.error, callback.method, message.error));
         else
-          callback.resolve(object.result);
+          callback.resolve(message.result);
       }
     } else {
-      Promise.resolve().then(() => this.emit(object.method, object.params));
+      Promise.resolve().then(() => this.emit(message.method, message.params));
     }
   }
 
@@ -176,12 +176,12 @@ export class FFSession extends platform.EventEmitter {
     });
   }
 
-  dispatchMessage(object: { id?: number; method: string; params: object; error: { message: string; data: any; }; result?: any; }) {
+  dispatchMessage(object: ProtocolMessage) {
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
       if (object.error)
-        callback.reject(createProtocolError(callback.error, callback.method, object));
+        callback.reject(createProtocolError(callback.error, callback.method, object.error));
       else
         callback.resolve(object.result);
     } else {
@@ -200,10 +200,10 @@ export class FFSession extends platform.EventEmitter {
   }
 }
 
-function createProtocolError(error: Error, method: string, object: { error: { message: string; data: any; }; }): Error {
-  let message = `Protocol error (${method}): ${object.error.message}`;
-  if ('data' in object.error)
-    message += ` ${object.error.data}`;
+function createProtocolError(error: Error, method: string, protocolError: { message: string; data: any; }): Error {
+  let message = `Protocol error (${method}): ${protocolError.message}`;
+  if ('data' in protocolError)
+    message += ` ${protocolError.data}`;
   return rewriteError(error, message);
 }
 
@@ -212,9 +212,10 @@ function rewriteError(error: Error, message: string): Error {
   return error;
 }
 
-function rewriteInjectedScriptEvaluationLog(message: any): string | undefined {
+function rewriteInjectedScriptEvaluationLog(message: ProtocolMessage): string {
   // Injected script is very long and clutters protocol logs.
   // To increase development velocity, we skip replace it with short description in the log.
   if (message.method === 'Runtime.evaluate' && message.params && message.params.expression && message.params.expression.includes('src/injected/injected.ts'))
     return `{"id":${message.id} [evaluate injected script]}`;
+  return JSON.stringify(message);
 }
