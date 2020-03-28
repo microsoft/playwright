@@ -54,7 +54,9 @@ module.exports.addTests = function({testRunner, expect}) {
     it('should run a failed focused test', async() => {
       const t = newTestRunner();
       let run = false;
-      t.fit.fail(true)('uno', () => { run = true; throw new Error('failure'); });
+      t.fit.setup(t => t.setExpectation(t.Expectations.Fail))('uno', () => {
+        run = true; throw new Error('failure');
+      });
       expect(t.tests().length).toBe(1);
       await t.run();
       expect(run).toBe(true);
@@ -374,6 +376,8 @@ module.exports.addTests = function({testRunner, expect}) {
     });
     it('should handle repeat', async() => {
       const t = newTestRunner();
+      t.testModifier('repeat', (t, count) => t.setRepeat(count));
+      t.suiteModifier('repeat', (s, count) => s.setRepeat(count));
       let suite = 0;
       let test = 0;
       let beforeAll = 0;

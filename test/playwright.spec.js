@@ -99,6 +99,16 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
     ASSETS_DIR,
   };
 
+  function loadTests(modulePath) {
+    const module = require(modulePath);
+    if (typeof module.describe === 'function')
+      describe('', module.describe, testOptions);
+    if (typeof module.fdescribe === 'function')
+      fdescribe('', module.fdescribe, testOptions);
+    if (typeof module.xdescribe === 'function')
+      xdescribe('', module.xdescribe, testOptions);
+  }
+
   describe('', function() {
     beforeAll(async state => {
       state.browser = await browserType.launch(defaultBrowserOptions);
@@ -154,69 +164,69 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
 
       // Page-level tests that are given a browser, a context and a page.
       // Each test is launched in a new browser context.
-      describe('[Accessibility]', () => testRunner.loadTests(require('./accessibility.spec.js'), testOptions));
+      describe('[Accessibility]', () => loadTests('./accessibility.spec.js'));
       describe('[Driver]', () => {
-        testRunner.loadTests(require('./autowaiting.spec.js'), testOptions);
-        testRunner.loadTests(require('./click.spec.js'), testOptions);
-        testRunner.loadTests(require('./cookies.spec.js'), testOptions);
-        testRunner.loadTests(require('./dialog.spec.js'), testOptions);
-        testRunner.loadTests(require('./elementhandle.spec.js'), testOptions);
-        testRunner.loadTests(require('./emulation.spec.js'), testOptions);
-        testRunner.loadTests(require('./evaluation.spec.js'), testOptions);
-        testRunner.loadTests(require('./frame.spec.js'), testOptions);
-        testRunner.loadTests(require('./focus.spec.js'), testOptions);
-        testRunner.loadTests(require('./input.spec.js'), testOptions);
-        testRunner.loadTests(require('./jshandle.spec.js'), testOptions);
-        testRunner.loadTests(require('./keyboard.spec.js'), testOptions);
-        testRunner.loadTests(require('./mouse.spec.js'), testOptions);
-        testRunner.loadTests(require('./navigation.spec.js'), testOptions);
-        testRunner.loadTests(require('./network.spec.js'), testOptions);
-        testRunner.loadTests(require('./page.spec.js'), testOptions);
-        testRunner.loadTests(require('./queryselector.spec.js'), testOptions);
-        testRunner.loadTests(require('./screenshot.spec.js'), testOptions);
-        testRunner.loadTests(require('./waittask.spec.js'), testOptions);
-        testRunner.loadTests(require('./interception.spec.js'), testOptions);
-        testRunner.loadTests(require('./geolocation.spec.js'), testOptions);
-        testRunner.loadTests(require('./workers.spec.js'), testOptions);
-        testRunner.loadTests(require('./capabilities.spec.js'), testOptions);
+        loadTests('./autowaiting.spec.js');
+        loadTests('./click.spec.js');
+        loadTests('./cookies.spec.js');
+        loadTests('./dialog.spec.js');
+        loadTests('./elementhandle.spec.js');
+        loadTests('./emulation.spec.js');
+        loadTests('./evaluation.spec.js');
+        loadTests('./frame.spec.js');
+        loadTests('./focus.spec.js');
+        loadTests('./input.spec.js');
+        loadTests('./jshandle.spec.js');
+        loadTests('./keyboard.spec.js');
+        loadTests('./mouse.spec.js');
+        loadTests('./navigation.spec.js');
+        loadTests('./network.spec.js');
+        loadTests('./page.spec.js');
+        loadTests('./queryselector.spec.js');
+        loadTests('./screenshot.spec.js');
+        loadTests('./waittask.spec.js');
+        loadTests('./interception.spec.js');
+        loadTests('./geolocation.spec.js');
+        loadTests('./workers.spec.js');
+        loadTests('./capabilities.spec.js');
       });
       describe('[Permissions]', () => {
-        testRunner.loadTests(require('./permissions.spec.js'), testOptions);
+        loadTests('./permissions.spec.js');
       });
 
       describe.skip(!CHROMIUM)('[Chromium]', () => {
-        testRunner.loadTests(require('./chromium/chromium.spec.js'), testOptions);
-        testRunner.loadTests(require('./chromium/coverage.spec.js'), testOptions);
-        testRunner.loadTests(require('./chromium/pdf.spec.js'), testOptions);
-        testRunner.loadTests(require('./chromium/session.spec.js'), testOptions);
+        loadTests('./chromium/chromium.spec.js');
+        loadTests('./chromium/coverage.spec.js');
+        loadTests('./chromium/pdf.spec.js');
+        loadTests('./chromium/session.spec.js');
       });
     });
 
     // Browser-level tests that are given a browser.
     describe('[Driver]', () => {
-      testRunner.loadTests(require('./browser.spec.js'), testOptions);
-      testRunner.loadTests(require('./browsercontext.spec.js'), testOptions);
-      testRunner.loadTests(require('./ignorehttpserrors.spec.js'), testOptions);
-      testRunner.loadTests(require('./popup.spec.js'), testOptions);
+      loadTests('./browser.spec.js');
+      loadTests('./browsercontext.spec.js');
+      loadTests('./ignorehttpserrors.spec.js');
+      loadTests('./popup.spec.js');
     });
   });
 
   // Top-level tests that launch Browser themselves.
   describe('[Driver]', () => {
-    testRunner.loadTests(require('./defaultbrowsercontext.spec.js'), testOptions);
-    testRunner.loadTests(require('./fixtures.spec.js'), testOptions);
-    testRunner.loadTests(require('./launcher.spec.js'), testOptions);
-    testRunner.loadTests(require('./headful.spec.js'), testOptions);
-    testRunner.loadTests(require('./multiclient.spec.js'), testOptions);
+    loadTests('./defaultbrowsercontext.spec.js');
+    loadTests('./fixtures.spec.js');
+    loadTests('./launcher.spec.js');
+    loadTests('./headful.spec.js');
+    loadTests('./multiclient.spec.js');
   });
 
   describe.skip(!CHROMIUM)('[Chromium]', () => {
-    testRunner.loadTests(require('./chromium/launcher.spec.js'), testOptions);
-    testRunner.loadTests(require('./chromium/oopif.spec.js'), testOptions);
-    testRunner.loadTests(require('./chromium/tracing.spec.js'), testOptions);
+    loadTests('./chromium/launcher.spec.js');
+    loadTests('./chromium/oopif.spec.js');
+    loadTests('./chromium/tracing.spec.js');
   });
 
   describe('[Driver]', () => {
-    testRunner.loadTests(require('./web.spec.js'), testOptions);
+    loadTests('./web.spec.js');
   });
 };

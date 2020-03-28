@@ -14,24 +14,14 @@
  * limitations under the License.
  */
 
-const util = require('util');
-const url = require('url');
-const inspector = require('inspector');
 const EventEmitter = require('events');
-const Multimap = require('./Multimap');
-const fs = require('fs');
 const {SourceMapSupport} = require('./SourceMapSupport');
 const debug = require('debug');
 const {getCallerLocation} = require('./utils');
 
 const INFINITE_TIMEOUT = 100000000;
-
-const readFileAsync = util.promisify(fs.readFile.bind(fs));
-
 const TimeoutError = new Error('Timeout');
 const TerminatedError = new Error('Terminated');
-
-const MAJOR_NODEJS_VERSION = parseInt(process.version.substring(1).split('.')[0], 10);
 
 function runUserCallback(callback, timeout, args) {
   let terminateCallback;
@@ -609,7 +599,7 @@ class TestRunner extends EventEmitter {
       parallel = 1,
       breakOnFailure = false,
       crashIfTestsAreFocusedOnCI = true,
-      disableTimeoutWhenInspectorIsEnabled = true,
+      installCommonHelpers = true,
     } = options;
     this._crashIfTestsAreFocusedOnCI = crashIfTestsAreFocusedOnCI;
     this._sourceMapSupport = new SourceMapSupport();
@@ -626,16 +616,6 @@ class TestRunner extends EventEmitter {
     this._testModifiers = new Map();
     this._testAttributes = new Map();
 
-    if (MAJOR_NODEJS_VERSION >= 8 && disableTimeoutWhenInspectorIsEnabled) {
-      if (inspector.url()) {
-        console.log('TestRunner detected inspector; overriding certain properties to be debugger-friendly');
-        console.log('  - timeout = 0 (Infinite)');
-        this._timeout = INFINITE_TIMEOUT;
-      }
-    }
-
-    this._debuggerLogBreakpointLines = new Multimap();
-
     this.beforeAll = (callback) => this._currentSuite.beforeAll(callback);
     this.beforeEach = (callback) => this._currentSuite.beforeEach(callback);
     this.afterAll = (callback) => this._currentSuite.afterAll(callback);
@@ -644,29 +624,12 @@ class TestRunner extends EventEmitter {
     this.describe = this._suiteBuilder([]);
     this.it = this._testBuilder([]);
 
-    this.testAttribute('debug', t => {
-      t.setMode(t.Modes.Focus);
-      t.setTimeout(INFINITE_TIMEOUT);
-      const N = t.body().toString().split('\n').length;
-      const location = t.location();
-      for (let line = 0; line < N; ++line)
-        this._debuggerLogBreakpointLines.set(location.filePath, line + location.lineNumber);
-    });
-
-    this.testModifier('skip', (t, condition) => condition && t.setMode(t.Modes.Skip));
-    this.suiteModifier('skip', (s, condition) => condition && s.setMode(s.Modes.Skip));
-    this.testModifier('fail', (t, condition) => condition && t.setExpectation(t.Expectations.Fail));
-    this.suiteModifier('fail', (s, condition) => condition && s.setExpectation(s.Expectations.Fail));
-    this.testModifier('slow', (t, condition) => condition && t.setTimeout(t.timeout() * 3));
-    this.testModifier('repeat', (t, count) => t.setRepeat(count));
-    this.suiteModifier('repeat', (s, count) => s.setRepeat(count));
-    this.testAttribute('focus', t => t.setMode(t.Modes.Focus));
-    this.suiteAttribute('focus', s => s.setMode(s.Modes.Focus));
-    this.fdescribe = this.describe.focus;
-    this.xdescribe = this.describe.skip(true);
-    this.fit = this.it.focus;
-    this.xit = this.it.skip(true);
-    this.dit = this.it.debug;
+    if (installCommonHelpers) {
+      this.fdescribe = this.describe.setup(s => s.setMode(s.Modes.Focus));
+      this.xdescribe = this.describe.setup(s => s.setMode(s.Modes.Skip));
+      this.fit = this.it.setup(t => t.setMode(t.Modes.Focus));
+      this.xit = this.it.setup(t => t.setMode(t.Modes.Skip));
+    }
   }
 
   _suiteBuilder(callbacks) {
@@ -683,6 +646,8 @@ class TestRunner extends EventEmitter {
       }
     }, {
       get: (obj, prop) => {
+        if (prop === 'setup')
+          return callback => this._suiteBuilder([...callbacks, { callback, args: [] }]);
         if (this._suiteModifiers.has(prop))
           return (...args) => this._suiteBuilder([...callbacks, { callback: this._suiteModifiers.get(prop), args }]);
         if (this._suiteAttributes.has(prop))
@@ -703,6 +668,8 @@ class TestRunner extends EventEmitter {
         this._tests.push(test._clone());
     }, {
       get: (obj, prop) => {
+        if (prop === 'setup')
+          return callback => this._testBuilder([...callbacks, { callback, args: [] }]);
         if (this._testModifiers.has(prop))
           return (...args) => this._testBuilder([...callbacks, { callback: this._testModifiers.get(prop), args }]);
         if (this._testAttributes.has(prop))
@@ -728,18 +695,8 @@ class TestRunner extends EventEmitter {
     this._suiteAttributes.set(name, callback);
   }
 
-  loadTests(module, ...args) {
-    if (typeof module.describe === 'function')
-      this.describe('', module.describe, ...args);
-    if (typeof module.fdescribe === 'function')
-      this.describe.focus('', module.fdescribe, ...args);
-    if (typeof module.xdescribe === 'function')
-      this.describe.skip(true)('', module.xdescribe, ...args);
-  }
-
   async run(options = {}) {
     const { totalTimeout = 0 } = options;
-    let session = this._debuggerLogBreakpointLines.size ? await setLogBreakpoints(this._debuggerLogBreakpointLines) : null;
     const runnableTests = this.runnableTests();
     this.emit(TestRunner.Events.Started, runnableTests);
 
@@ -762,8 +719,6 @@ class TestRunner extends EventEmitter {
       }
     }
     this.emit(TestRunner.Events.Finished, result);
-    if (session)
-      session.disconnect();
     return result;
   }
 
@@ -842,36 +797,6 @@ class TestRunner extends EventEmitter {
   parallel() {
     return this._parallel;
   }
-}
-
-async function setLogBreakpoints(debuggerLogBreakpoints) {
-  const session = new inspector.Session();
-  session.connect();
-  const postAsync = util.promisify(session.post.bind(session));
-  await postAsync('Debugger.enable');
-  const setBreakpointCommands = [];
-  for (const filePath of debuggerLogBreakpoints.keysArray()) {
-    const lineNumbers = debuggerLogBreakpoints.get(filePath);
-    const lines = (await readFileAsync(filePath, 'utf8')).split('\n');
-    for (const lineNumber of lineNumbers) {
-      setBreakpointCommands.push(postAsync('Debugger.setBreakpointByUrl', {
-        url: url.pathToFileURL(filePath),
-        lineNumber,
-        condition: `console.log('${String(lineNumber + 1).padStart(6, ' ')} | ' + ${JSON.stringify(lines[lineNumber])})`,
-      }).catch(e => {}));
-    };
-  }
-  await Promise.all(setBreakpointCommands);
-  return session;
-}
-
-/**
- * @param {*} value
- * @param {string=} message
- */
-function assert(value, message) {
-  if (!value)
-    throw new Error(message);
 }
 
 TestRunner.Events = {
