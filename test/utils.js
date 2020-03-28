@@ -254,8 +254,8 @@ const utils = module.exports = {
       const url = `https://github.com/Microsoft/playwright/blob/${sha}/${testpath}#L${test.location.lineNumber}`;
       dashboard.reportTestResult({
         testId: test.testId,
-        name: test.location.fileName + ':' + test.location.lineNumber,
-        description: test.fullName,
+        name: test.location().toString(),
+        description: test.fullName(),
         url,
         result: test.result,
       });
@@ -275,7 +275,7 @@ const utils = module.exports = {
         const testId = testIdComponents.join('>');
         const clashingTest = testIds.get(testId);
         if (clashingTest)
-          throw new Error(`Two tests with clashing IDs: ${test.location.fileName}:${test.location.lineNumber} and ${clashingTest.location.fileName}:${clashingTest.location.lineNumber}`);
+          throw new Error(`Two tests with clashing IDs: ${test.location()} and ${clashingTest.location()}`);
         testIds.set(testId, test);
         test.testId = testId;
       }

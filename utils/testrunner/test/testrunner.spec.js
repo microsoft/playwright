@@ -21,10 +21,10 @@ module.exports.addTests = function({testRunner, expect}) {
       expect(test.fullName()).toBe('uno');
       expect(test.focused()).toBe(false);
       expect(test.skipped()).toBe(false);
-      expect(test.location().filePath).toEqual(__filename);
-      expect(test.location().fileName).toEqual('testrunner.spec.js');
-      expect(test.location().lineNumber).toBeTruthy();
-      expect(test.location().columnNumber).toBeTruthy();
+      expect(test.location().filePath()).toEqual(__filename);
+      expect(test.location().fileName()).toEqual('testrunner.spec.js');
+      expect(test.location().lineNumber()).toBeTruthy();
+      expect(test.location().columnNumber()).toBeTruthy();
     });
     it('should run a test', async() => {
       const t = newTestRunner();

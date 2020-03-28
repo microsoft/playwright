@@ -198,21 +198,22 @@ class Reporter {
     } else if (testRun.result() === 'failed') {
       console.log(`${prefix} ${colors.red('[FAIL]')} ${test.fullName()} (${formatLocation(test.location())})`);
       if (testRun.error() instanceof MatchError) {
-        let lines = this._filePathToLines.get(testRun.error().location.filePath);
+        const location = testRun.error().location;
+        let lines = this._filePathToLines.get(location.filePath());
         if (!lines) {
           try {
-            lines = fs.readFileSync(testRun.error().location.filePath, 'utf8').split('\n');
+            lines = fs.readFileSync(location.filePath(), 'utf8').split('\n');
           } catch (e) {
             lines = [];
           }
-          this._filePathToLines.set(testRun.error().location.filePath, lines);
+          this._filePathToLines.set(location.filePath(), lines);
         }
-        const lineNumber = testRun.error().location.lineNumber;
+        const lineNumber = location.lineNumber();
         if (lineNumber < lines.length) {
           const lineNumberLength = (lineNumber + 1 + '').length;
-          const FROM = Math.max(test.location().lineNumber - 1, lineNumber - 5);
+          const FROM = Math.max(test.location().lineNumber() - 1, lineNumber - 5);
           const snippet = lines.slice(FROM, lineNumber).map((line, index) => `    ${(FROM + index + 1 + '').padStart(lineNumberLength, ' ')} | ${line}`).join('\n');
-          const pointer = `    ` + ' '.repeat(lineNumberLength) + '   ' + '~'.repeat(testRun.error().location.columnNumber - 1) + '^';
+          const pointer = `    ` + ' '.repeat(lineNumberLength) + '   ' + '~'.repeat(location.columnNumber() - 1) + '^';
           console.log('\n' + snippet + '\n' + colors.grey(pointer) + '\n');
         }
         console.log(padLines(testRun.error().formatter(), 4));
@@ -228,10 +229,10 @@ class Reporter {
           console.log('  Stack:');
           let stack = testRun.error().stack;
           // Highlight first test location, if any.
-          const match = stack.match(new RegExp(test.location().filePath + ':(\\d+):(\\d+)'));
+          const match = stack.match(new RegExp(test.location().filePath() + ':(\\d+):(\\d+)'));
           if (match) {
             const [, line, column] = match;
-            const fileName = `${test.location().fileName}:${line}:${column}`;
+            const fileName = `${test.location().fileName()}:${line}:${column}`;
             stack = stack.substring(0, match.index) + stack.substring(match.index).replace(fileName, colors.yellow(fileName));
           }
           console.log(padLines(stack, 4));
@@ -249,7 +250,7 @@ class Reporter {
 function formatLocation(location) {
   if (!location)
     return '';
-  return colors.yellow(`${location.fileName}:${location.lineNumber}:${location.columnNumber}`);
+  return colors.yellow(`${location.toDetailedString()}`);
 }
 
 function padLines(text, spaces = 0) {
