@@ -18,6 +18,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import * as ws from 'ws';
 import { ConnectOptions, LaunchType } from '../browser';
 import { BrowserContext } from '../browserContext';
 import { TimeoutError } from '../errors';
@@ -29,6 +30,7 @@ import * as platform from '../platform';
 import { BrowserServer } from './browserServer';
 import { BrowserArgOptions, BrowserType, LaunchOptions } from './browserType';
 import { launchProcess, waitForLine } from './processLauncher';
+import { ConnectionTransport, SequenceNumberMixer } from '../transport';
 
 const mkdtempAsync = platform.promisify(fs.mkdtemp);
 
@@ -97,9 +99,9 @@ export class Firefox implements BrowserType<FFBrowser> {
     }
 
     if (!ignoreDefaultArgs)
-      firefoxArguments.push(...this._defaultArgs(options, launchType, userDataDir!, port || 0));
+      firefoxArguments.push(...this._defaultArgs(options, launchType, userDataDir!, 0));
     else if (Array.isArray(ignoreDefaultArgs))
-      firefoxArguments.push(...this._defaultArgs(options, launchType, userDataDir!, port || 0).filter(arg => !ignoreDefaultArgs.includes(arg)));
+      firefoxArguments.push(...this._defaultArgs(options, launchType, userDataDir!, 0).filter(arg => !ignoreDefaultArgs.includes(arg)));
     else
       firefoxArguments.push(...args);
 
@@ -107,7 +109,6 @@ export class Firefox implements BrowserType<FFBrowser> {
     if (!firefoxExecutable)
       throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
 
-    let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: firefoxExecutable,
       args: firefoxArguments,
@@ -140,7 +141,10 @@ export class Firefox implements BrowserType<FFBrowser> {
 
     const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Firefox!`);
     const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
-    const browserWSEndpoint = match[1];
+    const innerEndpoint = match[1];
+
+    let browserServer: BrowserServer | undefined = undefined;
+    const browserWSEndpoint = launchType === 'server' ? (await platform.connectToWebsocket(innerEndpoint, t => wrapTransportWithWebSocket(t, port || 0))) : innerEndpoint;
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, browserWSEndpoint);
     return browserServer;
   }
@@ -183,5 +187,132 @@ export class Firefox implements BrowserType<FFBrowser> {
       firefoxArguments.push('about:blank');
     return firefoxArguments;
   }
+}
+
+function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number): string {
+  const server = new ws.Server({ port });
+  const guid = platform.guid();
+  const idMixer = new SequenceNumberMixer<{id: number, socket: ws}>();
+  const pendingBrowserContextCreations = new Set<number>();
+  const pendingBrowserContextDeletions = new Map<number, string>();
+  const browserContextIds = new Map<string, ws>();
+  const sessionToSocket = new Map<string, ws>();
+  const sockets = new Set<ws>();
+
+  transport.onmessage = message => {
+    if (typeof message.id === 'number') {
+      // Process command response.
+      const seqNum = message.id;
+      const value = idMixer.take(seqNum);
+      if (!value)
+        return;
+      const { id, socket } = value;
+
+      if (socket.readyState === ws.CLOSING) {
+        if (pendingBrowserContextCreations.has(id)) {
+          transport.send({
+            id: ++SequenceNumberMixer._lastSequenceNumber,
+            method: 'Browser.removeBrowserContext',
+            params: { browserContextId: message.result.browserContextId }
+          });
+        }
+        return;
+      }
+
+      if (pendingBrowserContextCreations.has(seqNum)) {
+        // Browser.createBrowserContext response -> establish context attribution.
+        browserContextIds.set(message.result.browserContextId, socket);
+        pendingBrowserContextCreations.delete(seqNum);
+      }
+
+      const deletedContextId = pendingBrowserContextDeletions.get(seqNum);
+      if (deletedContextId) {
+        // Browser.removeBrowserContext response -> remove context attribution.
+        browserContextIds.delete(deletedContextId);
+        pendingBrowserContextDeletions.delete(seqNum);
+      }
+
+      message.id = id;
+      socket.send(JSON.stringify(message));
+      return;
+    }
+
+    // Process notification response.
+    const { method, params, sessionId } = message;
+    if (sessionId) {
+      const socket = sessionToSocket.get(sessionId);
+      if (!socket || socket.readyState === ws.CLOSING) {
+        // Drop unattributed messages on the floor.
+        return;
+      }
+      socket.send(JSON.stringify(message));
+      return;
+    }
+    if (method === 'Browser.attachedToTarget') {
+      const socket = browserContextIds.get(params.targetInfo.browserContextId);
+      if (!socket || socket.readyState === ws.CLOSING) {
+        // Drop unattributed messages on the floor.
+        return;
+      }
+      sessionToSocket.set(params.sessionId, socket);
+      socket.send(JSON.stringify(message));
+      return;
+    }
+    if (method === 'Browser.detachedFromTarget') {
+      const socket = sessionToSocket.get(params.sessionId);
+      sessionToSocket.delete(params.sessionId);
+      if (socket && socket.readyState !== ws.CLOSING)
+        socket.send(JSON.stringify(message));
+      return;
+    }
+  };
+
+  transport.onclose = () => {
+    for (const socket of sockets) {
+      socket.removeListener('close', (socket as any).__closeListener);
+      socket.close(undefined, 'Browser disconnected');
+    }
+    server.close();
+    transport.onmessage = undefined;
+    transport.onclose = undefined;
+  };
+
+  server.on('connection', (socket: ws, req) => {
+    if (req.url !== '/' + guid) {
+      socket.close();
+      return;
+    }
+    sockets.add(socket);
+
+    socket.on('message', (message: string) => {
+      const parsedMessage = JSON.parse(Buffer.from(message).toString());
+      const { id, method, params } = parsedMessage;
+      const seqNum = idMixer.generate({ id, socket });
+      transport.send({ ...parsedMessage, id: seqNum });
+      if (method === 'Browser.createBrowserContext')
+        pendingBrowserContextCreations.add(seqNum);
+      if (method === 'Browser.removeBrowserContext')
+        pendingBrowserContextDeletions.set(seqNum, params.browserContextId);
+    });
+
+    socket.on('close', (socket as any).__closeListener = () => {
+      for (const [browserContextId, s] of browserContextIds) {
+        if (s === socket) {
+          transport.send({
+            id: ++SequenceNumberMixer._lastSequenceNumber,
+            method: 'Browser.removeBrowserContext',
+            params: { browserContextId }
+          });
+          browserContextIds.delete(browserContextId);
+        }
+      }
+      sockets.delete(socket);
+    });
+  });
+
+  const address = server.address();
+  if (typeof address === 'string')
+    return address + '/' + guid;
+  return 'ws://127.0.0.1:' + address.port + '/' + guid;
 }
 

@@ -25,7 +25,7 @@ import * as os from 'os';
 import { helper } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
 import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
-import { ConnectionTransport } from '../transport';
+import { ConnectionTransport, SequenceNumberMixer } from '../transport';
 import * as ws from 'ws';
 import { ConnectOptions, LaunchType } from '../browser';
 import { BrowserServer } from './browserServer';
@@ -163,23 +163,6 @@ const mkdtempAsync = platform.promisify(fs.mkdtemp);
 
 const WEBKIT_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_dev_profile-');
 
-class SequenceNumberMixer<V> {
-  static _lastSequenceNumber = 1;
-  private _values = new Map<number, V>();
-
-  generate(value: V): number {
-    const sequenceNumber = ++SequenceNumberMixer._lastSequenceNumber;
-    this._values.set(sequenceNumber, value);
-    return sequenceNumber;
-  }
-
-  take(sequenceNumber: number): V | undefined {
-    const value = this._values.get(sequenceNumber);
-    this._values.delete(sequenceNumber);
-    return value;
-  }
-}
-
 function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number): string {
   const server = new ws.Server({ port });
   const guid = platform.guid();
@@ -265,6 +248,16 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
     }
   };
 
+  transport.onclose = () => {
+    for (const socket of sockets) {
+      socket.removeListener('close', (socket as any).__closeListener);
+      socket.close(undefined, 'Browser disconnected');
+    }
+    server.close();
+    transport.onmessage = undefined;
+    transport.onclose = undefined;
+  };
+
   server.on('connection', (socket: ws, req) => {
     if (req.url !== '/' + guid) {
       socket.close();
@@ -301,16 +294,6 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
       sockets.delete(socket);
     });
   });
-
-  transport.onclose = () => {
-    for (const socket of sockets) {
-      socket.removeListener('close', (socket as any).__closeListener);
-      socket.close(undefined, 'Browser disconnected');
-    }
-    server.close();
-    transport.onmessage = undefined;
-    transport.onclose = undefined;
-  };
 
   const address = server.address();
   if (typeof address === 'string')
