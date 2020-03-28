@@ -43,17 +43,17 @@ const testRunner = new TestRunner({
   breakOnFailure: process.argv.indexOf('--break-on-failure') !== -1,
   installCommonHelpers: false
 });
-testRunner.testModifier('skip', (t, condition) => condition && t.setMode(t.Modes.Skip));
-testRunner.suiteModifier('skip', (s, condition) => condition && s.setMode(s.Modes.Skip));
+testRunner.testModifier('skip', (t, condition) => condition && t.setSkipped(true));
+testRunner.suiteModifier('skip', (s, condition) => condition && s.setSkipped(true));
 testRunner.testModifier('fail', (t, condition) => condition && t.setExpectation(t.Expectations.Fail));
 testRunner.suiteModifier('fail', (s, condition) => condition && s.setExpectation(s.Expectations.Fail));
 testRunner.testModifier('slow', (t, condition) => condition && t.setTimeout(t.timeout() * 3));
 testRunner.testModifier('repeat', (t, count) => t.setRepeat(count));
 testRunner.suiteModifier('repeat', (s, count) => s.setRepeat(count));
-testRunner.testAttribute('focus', t => t.setMode(t.Modes.Focus));
-testRunner.suiteAttribute('focus', s => s.setMode(s.Modes.Focus));
+testRunner.testAttribute('focus', t => t.setFocused(true));
+testRunner.suiteAttribute('focus', s => s.setFocused(true));
 testRunner.testAttribute('debug', t => {
-  t.setMode(t.Modes.Focus);
+  t.setFocused(true);
   t.setTimeout(100000000);
 
   let session;

@@ -19,11 +19,20 @@ module.exports.addTests = function({testRunner, expect}) {
       const test = t.tests()[0];
       expect(test.name()).toBe('uno');
       expect(test.fullName()).toBe('uno');
-      expect(test.mode()).toBe('run');
+      expect(test.focused()).toBe(false);
+      expect(test.skipped()).toBe(false);
       expect(test.location().filePath).toEqual(__filename);
       expect(test.location().fileName).toEqual('testrunner.spec.js');
       expect(test.location().lineNumber).toBeTruthy();
       expect(test.location().columnNumber).toBeTruthy();
+    });
+    it('should run a test', async() => {
+      const t = newTestRunner();
+      t.it('uno', () => {});
+      const result = await t.run();
+      expect(result.runs.length).toBe(1);
+      expect(result.runs[0].test()).toBe(t.tests()[0]);
+      expect(result.runs[0].result()).toBe('ok');
     });
   });
 
@@ -35,8 +44,16 @@ module.exports.addTests = function({testRunner, expect}) {
       const test = t.tests()[0];
       expect(test.name()).toBe('uno');
       expect(test.fullName()).toBe('uno');
-      expect(test.mode()).toBe('skip');
-      expect(t.runnableTests()).toEqual([test]);
+      expect(test.focused()).toBe(false);
+      expect(test.skipped()).toBe(true);
+    });
+    it('should not run a skipped test', async() => {
+      const t = newTestRunner();
+      t.xit('uno', () => {});
+      const result = await t.run();
+      expect(result.runs.length).toBe(1);
+      expect(result.runs[0].test()).toBe(t.tests()[0]);
+      expect(result.runs[0].result()).toBe('skipped');
     });
   });
 
@@ -48,8 +65,16 @@ module.exports.addTests = function({testRunner, expect}) {
       const test = t.tests()[0];
       expect(test.name()).toBe('uno');
       expect(test.fullName()).toBe('uno');
-      expect(test.mode()).toBe('focus');
-      expect(t.runnableTests()).toEqual([test]);
+      expect(test.focused()).toBe(true);
+      expect(test.skipped()).toBe(false);
+    });
+    it('should run a focused test', async() => {
+      const t = newTestRunner();
+      t.fit('uno', () => {});
+      const result = await t.run();
+      expect(result.runs.length).toBe(1);
+      expect(result.runs[0].test()).toBe(t.tests()[0]);
+      expect(result.runs[0].result()).toBe('ok');
     });
     it('should run a failed focused test', async() => {
       const t = newTestRunner();
@@ -57,10 +82,11 @@ module.exports.addTests = function({testRunner, expect}) {
       t.fit.setup(t => t.setExpectation(t.Expectations.Fail))('uno', () => {
         run = true; throw new Error('failure');
       });
-      expect(t.tests().length).toBe(1);
-      await t.run();
+      const result = await t.run();
       expect(run).toBe(true);
-      expect(t.failedTests()[0].name()).toBe('uno');
+      expect(result.runs.length).toBe(1);
+      expect(result.runs[0].test()).toBe(t.tests()[0]);
+      expect(result.runs[0].result()).toBe('failed');
     });
   });
 
@@ -74,11 +100,12 @@ module.exports.addTests = function({testRunner, expect}) {
       const test = t.tests()[0];
       expect(test.name()).toBe('uno');
       expect(test.fullName()).toBe('suite uno');
-      expect(test.mode()).toBe('run');
+      expect(test.focused()).toBe(false);
+      expect(test.skipped()).toBe(false);
       expect(test.suite().name()).toBe('suite');
       expect(test.suite().fullName()).toBe('suite');
-      expect(test.suite().mode()).toBe('run');
-      expect(t.runnableTests()).toEqual([test]);
+      expect(test.suite().focused()).toBe(false);
+      expect(test.suite().skipped()).toBe(false);
     });
   });
 
@@ -90,20 +117,22 @@ module.exports.addTests = function({testRunner, expect}) {
       });
       expect(t.tests().length).toBe(1);
       const test = t.tests()[0];
-      expect(test.mode()).toBe('run');
-      expect(test.suite().mode()).toBe('skip');
-      expect(t.runnableTests()).toEqual([test]);
+      expect(test.focused()).toBe(false);
+      expect(test.skipped()).toBe(false);
+      expect(test.suite().focused()).toBe(false);
+      expect(test.suite().skipped()).toBe(true);
     });
     it('focused tests inside a skipped suite are not run', async() => {
       const t = newTestRunner();
+      let run = false;
       t.xdescribe('suite', () => {
-        t.fit('uno', () => {});
+        t.fit('uno', () => { run = true; });
       });
-      expect(t.tests().length).toBe(1);
-      const test = t.tests()[0];
-      expect(test.mode()).toBe('focus');
-      expect(test.suite().mode()).toBe('skip');
-      expect(t.runnableTests()).toEqual([test]);
+      const result = await t.run();
+      expect(run).toBe(false);
+      expect(result.runs.length).toBe(1);
+      expect(result.runs[0].test()).toBe(t.tests()[0]);
+      expect(result.runs[0].result()).toBe('skipped');
     });
   });
 
@@ -115,20 +144,20 @@ module.exports.addTests = function({testRunner, expect}) {
       });
       expect(t.tests().length).toBe(1);
       const test = t.tests()[0];
-      expect(test.mode()).toBe('run');
-      expect(test.suite().mode()).toBe('focus');
-      expect(t.runnableTests()).toEqual([test]);
+      expect(test.focused()).toBe(false);
+      expect(test.skipped()).toBe(false);
+      expect(test.suite().focused()).toBe(true);
+      expect(test.suite().skipped()).toBe(false);
     });
     it('skipped tests inside a focused suite should not be run', async() => {
       const t = newTestRunner();
       t.fdescribe('suite', () => {
         t.xit('uno', () => {});
       });
-      expect(t.tests().length).toBe(1);
-      const test = t.tests()[0];
-      expect(test.mode()).toBe('skip');
-      expect(test.suite().mode()).toBe('focus');
-      expect(t.runnableTests()).toEqual([test]);
+      const result = await t.run();
+      expect(result.runs.length).toBe(1);
+      expect(result.runs[0].test()).toBe(t.tests()[0]);
+      expect(result.runs[0].result()).toBe('skipped');
     });
     it('should run all "run" tests inside a focused suite', async() => {
       const log = [];
@@ -176,10 +205,8 @@ module.exports.addTests = function({testRunner, expect}) {
       t.testModifier('foo', (t, ...args) => {
         log.push('foo');
 
-        expect(t.Modes.Run).toBeTruthy();
-        expect(t.Modes.Skip).toBeTruthy();
-        expect(t.Modes.Focus).toBeTruthy();
-        expect(t.mode()).toBe(t.Modes.Run);
+        expect(t.focused()).toBe(false);
+        expect(t.skipped()).toBe(false);
         expect(t.Expectations.Ok).toBeTruthy();
         expect(t.Expectations.Fail).toBeTruthy();
         expect(t.expectation()).toBe(t.Expectations.Ok);
@@ -190,7 +217,7 @@ module.exports.addTests = function({testRunner, expect}) {
         expect(args[0]).toBe('uno');
         expect(args[1]).toBe('dos');
 
-        t.setMode(t.Modes.Focus);
+        t.setFocused(true);
         t.setExpectation(t.Expectations.Fail);
         t.setTimeout(234);
         t.setRepeat(42);
@@ -198,9 +225,9 @@ module.exports.addTests = function({testRunner, expect}) {
 
       t.testAttribute('bar', t => {
         log.push('bar');
-        expect(t.mode()).toBe(t.Modes.Focus);
-        t.setMode(t.Modes.Skip);
-        expect(t.mode()).toBe(t.Modes.Focus);
+        t.setSkipped(true);
+        expect(t.focused()).toBe(true);
+        expect(t.skipped()).toBe(true);
         expect(t.expectation()).toBe(t.Expectations.Fail);
         expect(t.timeout()).toBe(234);
         expect(t.repeat()).toBe(42);
@@ -323,15 +350,15 @@ module.exports.addTests = function({testRunner, expect}) {
       const t = newTestRunner({timeout: 10000});
       t.afterEach(() => { throw new Error('crash!'); });
       t.it('uno', () => { t.terminate(); });
-      await t.run();
-      expect(t.tests()[0].result).toBe('terminated');
+      const result = await t.run();
+      expect(result.runs[0].result()).toBe('terminated');
     });
     it('should report as terminated when terminated during hook', async() => {
       const t = newTestRunner({timeout: 10000});
       t.afterEach(() => { t.terminate(); });
       t.it('uno', () => { });
-      await t.run();
-      expect(t.tests()[0].result).toBe('terminated');
+      const result = await t.run();
+      expect(result.runs[0].result()).toBe('terminated');
     });
     it('should unwind hooks properly when crashed', async() => {
       const log = [];
@@ -389,8 +416,8 @@ module.exports.addTests = function({testRunner, expect}) {
         t.it.repeat(3)('uno', () => test++);
       });
       await t.run();
-      expect(suite).toBe(2);
-      expect(beforeAll).toBe(2);
+      expect(suite).toBe(1);
+      expect(beforeAll).toBe(1);
       expect(beforeEach).toBe(6);
       expect(test).toBe(6);
     });
@@ -513,7 +540,7 @@ module.exports.addTests = function({testRunner, expect}) {
       const t = newTestRunner({timeout: 10000});
       t.it('uno', async () => { await new Promise(() => {}); });
       const result = await t.run({totalTimeout: 1});
-      expect(t.tests()[0].result).toBe('terminated');
+      expect(result.runs[0].result()).toBe('terminated');
       expect(result.message).toContain('Total timeout');
     });
   });
@@ -603,92 +630,64 @@ module.exports.addTests = function({testRunner, expect}) {
     });
   });
 
-  describe('TestRunner.passedTests', () => {
-    it('should work', async() => {
-      const t = newTestRunner();
-      t.it('uno', () => {});
-      await t.run();
-      expect(t.failedTests().length).toBe(0);
-      expect(t.skippedTests().length).toBe(0);
-      expect(t.passedTests().length).toBe(1);
-      const [test] = t.passedTests();
-      expect(test.result).toBe('ok');
-    });
-  });
-
-  describe('TestRunner.failedTests', () => {
+  describe('TestRunner result', () => {
     it('should work for both throwing and timeouting tests', async() => {
       const t = newTestRunner({timeout: 1});
       t.it('uno', () => { throw new Error('boo');});
       t.it('dos', () => new Promise(() => {}));
-      await t.run();
-      expect(t.skippedTests().length).toBe(0);
-      expect(t.passedTests().length).toBe(0);
-      expect(t.failedTests().length).toBe(2);
-      const [test1, test2] = t.failedTests();
-      expect(test1.result).toBe('failed');
-      expect(test2.result).toBe('timedout');
+      const result = await t.run();
+      expect(result.runs[0].result()).toBe('failed');
+      expect(result.runs[1].result()).toBe('timedout');
     });
     it('should report crashed tests', async() => {
       const t = newTestRunner();
       t.beforeEach(() => { throw new Error('woof');});
       t.it('uno', () => {});
-      await t.run();
-      expect(t.failedTests().length).toBe(1);
-      expect(t.failedTests()[0].result).toBe('crashed');
+      const result = await t.run();
+      expect(result.runs[0].result()).toBe('crashed');
     });
-  });
-
-  describe('TestRunner.skippedTests', () => {
-    it('should work for both throwing and timeouting tests', async() => {
+    it('skipped should work for both throwing and timeouting tests', async() => {
       const t = newTestRunner({timeout: 1});
       t.xit('uno', () => { throw new Error('boo');});
-      await t.run();
-      expect(t.skippedTests().length).toBe(1);
-      expect(t.passedTests().length).toBe(0);
-      expect(t.failedTests().length).toBe(0);
-      const [test] = t.skippedTests();
-      expect(test.result).toBe('skipped');
+      const result = await t.run();
+      expect(result.runs[0].result()).toBe('skipped');
     });
-  });
-
-  describe('Test.result', () => {
     it('should return OK', async() => {
       const t = newTestRunner();
       t.it('uno', () => {});
-      await t.run();
-      expect(t.tests()[0].result).toBe('ok');
+      const result = await t.run();
+      expect(result.runs[0].result()).toBe('ok');
     });
     it('should return TIMEDOUT', async() => {
       const t = newTestRunner({timeout: 1});
       t.it('uno', async() => new Promise(() => {}));
-      await t.run();
-      expect(t.tests()[0].result).toBe('timedout');
+      const result = await t.run();
+      expect(result.runs[0].result()).toBe('timedout');
     });
     it('should return SKIPPED', async() => {
       const t = newTestRunner();
       t.xit('uno', () => {});
-      await t.run();
-      expect(t.tests()[0].result).toBe('skipped');
+      const result = await t.run();
+      expect(result.runs[0].result()).toBe('skipped');
     });
     it('should return FAILED', async() => {
       const t = newTestRunner();
       t.it('uno', async() => Promise.reject('woof'));
-      await t.run();
-      expect(t.tests()[0].result).toBe('failed');
+      const result = await t.run();
+      expect(result.runs[0].result()).toBe('failed');
     });
     it('should return TERMINATED', async() => {
       const t = newTestRunner();
       t.it('uno', async() => t.terminate());
-      await t.run();
-      expect(t.tests()[0].result).toBe('terminated');
+      const result = await t.run();
+      expect(result.runs[0].result()).toBe('terminated');
     });
     it('should return CRASHED', async() => {
       const t = newTestRunner();
       t.it('uno', () => {});
       t.afterEach(() => {throw new Error('foo');});
-      await t.run();
-      expect(t.tests()[0].result).toBe('crashed');
+      const result = await t.run();
+      expect(result.runs[0].result()).toBe('crashed');
     });
   });
 
