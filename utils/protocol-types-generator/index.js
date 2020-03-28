@@ -9,13 +9,13 @@ const util = require('util');
 async function generateChromiumProtocol(executablePath) {
   const outputPath = path.join(__dirname, '..', '..', 'src', 'chromium', 'protocol.ts');
   const playwright = await require('../../index').chromium;
-  const browserServer = await playwright.launchServer({ executablePath, args: ['--no-sandbox'] });
-  const origin = browserServer.wsEndpoint().match(/ws:\/\/([0-9A-Za-z:\.]*)\//)[1];
-  const browser = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+  const args = playwright._defaultArgs();
+  args.push('--remote-debugging-port=9339');
+  const browser = await playwright.launch({ executablePath, args, ignoreDefaultArgs: true });
   const page = await browser.newPage();
-  await page.goto(`http://${origin}/json/protocol`);
+  await page.goto(`http://localhost:9339/json/protocol`);
   const json = JSON.parse(await page.evaluate(() => document.documentElement.innerText));
-  await browserServer.close();
+  await browser.close();
   await fs.promises.writeFile(outputPath, jsonToTS(json));
   console.log(`Wrote protocol.ts to ${path.relative(process.cwd(), outputPath)}`);
 }
