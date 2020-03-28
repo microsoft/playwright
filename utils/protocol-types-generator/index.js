@@ -9,9 +9,13 @@ const util = require('util');
 async function generateChromiumProtocol(executablePath) {
   const outputPath = path.join(__dirname, '..', '..', 'src', 'chromium', 'protocol.ts');
   const playwright = await require('../../index').chromium;
-  const args = playwright._defaultArgs();
-  args.push('--remote-debugging-port=9339');
-  const browser = await playwright.launch({ executablePath, args, ignoreDefaultArgs: true });
+  const defaultArgs = playwright._defaultArgs.bind(playwright);
+  playwright._defaultArgs = (...args) => {
+    const result = defaultArgs(...args);
+    result.push('--remote-debugging-port=9339');
+    return result;
+  };
+  const browser = await playwright.launch({ executablePath });
   const page = await browser.newPage();
   await page.goto(`http://localhost:9339/json/protocol`);
   const json = JSON.parse(await page.evaluate(() => document.documentElement.innerText));
