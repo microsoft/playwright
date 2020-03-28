@@ -39,34 +39,23 @@ class Reporter {
     runner.on('testfinished', this._onTestFinished.bind(this));
   }
 
-  _onStarted(runnableTests) {
+  _onStarted(testRuns) {
     this._testCounter = 0;
     this._timestamp = Date.now();
     const allTests = this._runner.tests();
-    if (allTests.length === runnableTests.length) {
-      console.log(`Running all ${colors.yellow(runnableTests.length)} tests on ${colors.yellow(this._runner.parallel())} worker${this._runner.parallel() > 1 ? 's' : ''}:\n`);
+    if (!this._runner.hasFocusedTestsOrSuites()) {
+      console.log(`Running all ${colors.yellow(testRuns.length)} tests on ${colors.yellow(this._runner.parallel())} worker${this._runner.parallel() > 1 ? 's' : ''}:\n`);
     } else {
-      console.log(`Running ${colors.yellow(runnableTests.length)} focused tests out of total ${colors.yellow(allTests.length)} on ${colors.yellow(this._runner.parallel())} worker${this._runner.parallel() > 1 ? 's' : ''}`);
+      console.log(`Running ${colors.yellow(testRuns.length)} focused tests out of total ${colors.yellow(allTests.length)} on ${colors.yellow(this._runner.parallel())} worker${this._runner.parallel() > 1 ? 's' : ''}`);
       console.log('');
-      const focusedSuites = this._runner.focusedSuites().map(suite => ({
-        id: suite.location().filePath + ':' + suite.location().lineNumber + ':' + suite.location().columnNumber,
-        fullName: suite.fullName(),
-        location: suite.location(),
-      }));
-      const focusedTests = this._runner.focusedTests().map(test => ({
-        id: test.location().filePath + ':' + test.location().lineNumber + ':' + test.location().columnNumber,
-        fullName: test.fullName(),
-        location: test.location(),
-      }));
-      const focusedEntities = new Map([
-        ...focusedSuites.map(suite => ([suite.id, suite])),
-        ...focusedTests.map(test => ([test.id, test])),
-      ]);
-      if (focusedEntities.size) {
+      const focusedEntities = [
+        ...this._runner.suites().filter(suite => suite.focused()),
+        ...this._runner.tests().filter(test => test.focused()),
+      ];
+      if (focusedEntities.length) {
         console.log('Focused Suites and Tests:');
-        const entities = [...focusedEntities.values()];
-        for (let i = 0; i < entities.length; ++i)
-          console.log(`  ${i + 1}) ${entities[i].fullName} (${formatLocation(entities[i].location)})`);
+        for (let i = 0; i < focusedEntities.length; ++i)
+          console.log(`  ${i + 1}) ${focusedEntities[i].fullName()} (${formatLocation(focusedEntities[i].location())})`);
         console.log('');
       }
     }
@@ -80,168 +69,164 @@ class Reporter {
     }
 
     for (let i = 0; i < result.errors.length; i++) {
-      const { message, error, workerId, tests } = result.errors[i];
+      const { message, error, runs } = result.errors[i];
       console.log(`\n${colors.magenta('NON-TEST ERROR #' + i)}: ${message}`);
       if (error && error.stack)
         console.log(padLines(error.stack, 2));
-      const lastTests = tests.slice(tests.length - Math.min(10, tests.length));
-      if (lastTests.length)
+      const lastRuns = runs.slice(runs.length - Math.min(10, runs.length));
+      if (lastRuns.length)
         console.log(`WORKER STATE`);
-      for (let j = 0; j < lastTests.length; j++)
-        this._printVerboseTestResult(j, lastTests[j], workerId);
+      for (let j = 0; j < lastRuns.length; j++)
+        this._printVerboseTestRunResult(j, lastRuns[j]);
     }
     console.log('');
     console.log('');
   }
 
   _onFinished(result) {
-    this._printTestResults();
+    this._printTestResults(result);
     if (!result.ok())
       this._printFailedResult(result);
     process.exitCode = result.exitCode;
   }
 
-  _printTestResults() {
+  _printTestResults(result) {
     // 2 newlines after completing all tests.
     console.log('\n');
 
-    const failedTests = this._runner.failedTests();
-    if (this._summary && failedTests.length > 0) {
+    const runs = result.runs;
+    const failedRuns = runs.filter(run => run.isFailure());
+    const executedRuns = runs.filter(run => run.result());
+    const okRuns = runs.filter(run => run.ok());
+    const skippedRuns = runs.filter(run => run.result() === 'skipped');
+    const markedAsFailingRuns = runs.filter(run => run.result() === 'markedAsFailing');
+
+    if (this._summary && failedRuns.length > 0) {
       console.log('\nFailures:');
-      for (let i = 0; i < failedTests.length; ++i) {
-        const test = failedTests[i];
-        this._printVerboseTestResult(i + 1, test);
+      for (let i = 0; i < failedRuns.length; ++i) {
+        this._printVerboseTestRunResult(i + 1, failedRuns[i]);
         console.log('');
       }
     }
 
-    const skippedTests = this._runner.skippedTests();
-    const markedAsFailingTests = this._runner.markedAsFailingTests();
-    if (this._showMarkedAsFailingTests && this._summary && markedAsFailingTests.length) {
-      if (markedAsFailingTests.length > 0) {
+    if (this._showMarkedAsFailingTests && this._summary && markedAsFailingRuns.length) {
+      if (markedAsFailingRuns.length > 0) {
         console.log('\nMarked as failing:');
-        markedAsFailingTests.slice(0, this._showMarkedAsFailingTests).forEach((test, index) => {
-          console.log(`${index + 1}) ${test.fullName()} (${formatLocation(test.location())})`);
+        markedAsFailingRuns.slice(0, this._showMarkedAsFailingTests).forEach((testRun, index) => {
+          console.log(`${index + 1}) ${testRun.test().fullName()} (${formatLocation(testRun.test().location())})`);
         });
       }
-      if (this._showMarkedAsFailingTests < markedAsFailingTests.length) {
+      if (this._showMarkedAsFailingTests < markedAsFailingRuns.length) {
         console.log('');
-        console.log(`... and ${colors.yellow(markedAsFailingTests.length - this._showMarkedAsFailingTests)} more marked as failing tests ...`);
+        console.log(`... and ${colors.yellow(markedAsFailingRuns.length - this._showMarkedAsFailingTests)} more marked as failing tests ...`);
       }
     }
 
     if (this._showSlowTests) {
-      const slowTests = this._runner.passedTests().sort((a, b) => {
-        const aDuration = a.endTimestamp - a.startTimestamp;
-        const bDuration = b.endTimestamp - b.startTimestamp;
-        return bDuration - aDuration;
-      }).slice(0, this._showSlowTests);
+      const slowRuns = okRuns.sort((a, b) => b.duration() - a.duration()).slice(0, this._showSlowTests);
       console.log(`\nSlowest tests:`);
-      for (let i = 0; i < slowTests.length; ++i) {
-        const test = slowTests[i];
-        const duration = test.endTimestamp - test.startTimestamp;
-        console.log(`  (${i + 1}) ${colors.yellow((duration / 1000) + 's')} - ${test.fullName()} (${formatLocation(test.location())})`);
+      for (let i = 0; i < slowRuns.length; ++i) {
+        const run = slowRuns[i];
+        console.log(`  (${i + 1}) ${colors.yellow((run.duration() / 1000) + 's')} - ${run.test().fullName()} (${formatLocation(run.test().location())})`);
       }
     }
 
-    const tests = this._runner.tests();
-    const executedTests = tests.filter(test => test.result);
-    const okTestsLength = executedTests.length - failedTests.length - markedAsFailingTests.length - skippedTests.length;
     let summaryText = '';
-    if (failedTests.length || markedAsFailingTests.length) {
-      const summary = [`ok - ${colors.green(okTestsLength)}`];
-      if (failedTests.length)
-        summary.push(`failed - ${colors.red(failedTests.length)}`);
-      if (markedAsFailingTests.length)
-        summary.push(`marked as failing - ${colors.yellow(markedAsFailingTests.length)}`);
-      if (skippedTests.length)
-        summary.push(`skipped - ${colors.yellow(skippedTests.length)}`);
+    if (failedRuns.length || markedAsFailingRuns.length) {
+      const summary = [`ok - ${colors.green(okRuns.length)}`];
+      if (failedRuns.length)
+        summary.push(`failed - ${colors.red(failedRuns.length)}`);
+      if (markedAsFailingRuns.length)
+        summary.push(`marked as failing - ${colors.yellow(markedAsFailingRuns.length)}`);
+      if (skippedRuns.length)
+        summary.push(`skipped - ${colors.yellow(skippedRuns.length)}`);
       summaryText = ` (${summary.join(', ')})`;
     }
 
-    console.log(`\nRan ${executedTests.length}${summaryText} of ${tests.length} test${tests.length > 1 ? 's' : ''}`);
+    console.log(`\nRan ${executedRuns.length}${summaryText} of ${runs.length} test${runs.length > 1 ? 's' : ''}`);
     const milliseconds = Date.now() - this._timestamp;
     const seconds = milliseconds / 1000;
     console.log(`Finished in ${colors.yellow(seconds)} seconds`);
   }
 
-  _onTestStarted(test, workerId) {
+  _onTestStarted(testRun) {
   }
 
-  _onTestFinished(test, workerId) {
+  _onTestFinished(testRun) {
     if (this._verbose) {
       ++this._testCounter;
-      this._printVerboseTestResult(this._testCounter, test, workerId);
+      this._printVerboseTestRunResult(this._testCounter, testRun);
     } else {
-      if (test.result === 'ok')
+      if (testRun.result() === 'ok')
         process.stdout.write(colors.green('\u00B7'));
-      else if (test.result === 'skipped')
+      else if (testRun.result() === 'skipped')
         process.stdout.write(colors.yellow('\u00B7'));
-      else if (test.result === 'markedAsFailing')
+      else if (testRun.result() === 'markedAsFailing')
         process.stdout.write(colors.yellow('\u00D7'));
-      else if (test.result === 'failed')
+      else if (testRun.result() === 'failed')
         process.stdout.write(colors.red('F'));
-      else if (test.result === 'crashed')
+      else if (testRun.result() === 'crashed')
         process.stdout.write(colors.red('C'));
-      else if (test.result === 'terminated')
+      else if (testRun.result() === 'terminated')
         process.stdout.write(colors.magenta('.'));
-      else if (test.result === 'timedout')
+      else if (testRun.result() === 'timedout')
         process.stdout.write(colors.red('T'));
     }
   }
 
-  _printVerboseTestResult(resultIndex, test, workerId = undefined) {
+  _printVerboseTestRunResult(resultIndex, testRun) {
+    const test = testRun.test();
     let prefix = `${resultIndex})`;
-    if (this._runner.parallel() > 1 && workerId !== undefined)
-      prefix += ' ' + colors.gray(`[worker = ${workerId}]`);
-    if (test.result === 'ok') {
+    if (this._runner.parallel() > 1)
+      prefix += ' ' + colors.gray(`[worker = ${testRun.workerId()}]`);
+    if (testRun.result() === 'ok') {
       console.log(`${prefix} ${colors.green('[OK]')} ${test.fullName()} (${formatLocation(test.location())})`);
-    } else if (test.result === 'terminated') {
+    } else if (testRun.result() === 'terminated') {
       console.log(`${prefix} ${colors.magenta('[TERMINATED]')} ${test.fullName()} (${formatLocation(test.location())})`);
-    } else if (test.result === 'crashed') {
+    } else if (testRun.result() === 'crashed') {
       console.log(`${prefix} ${colors.red('[CRASHED]')} ${test.fullName()} (${formatLocation(test.location())})`);
-    } else if (test.result === 'skipped') {
-    } else if (test.result === 'markedAsFailing') {
+    } else if (testRun.result() === 'skipped') {
+    } else if (testRun.result() === 'markedAsFailing') {
       console.log(`${prefix} ${colors.yellow('[MARKED AS FAILING]')} ${test.fullName()} (${formatLocation(test.location())})`);
-    } else if (test.result === 'timedout') {
+    } else if (testRun.result() === 'timedout') {
       console.log(`${prefix} ${colors.red(`[TIMEOUT ${test.timeout()}ms]`)} ${test.fullName()} (${formatLocation(test.location())})`);
-      if (test.output) {
+      if (testRun.output) {
         console.log('  Output:');
-        for (const line of test.output)
+        for (const line of testRun.output)
           console.log('  ' + line);
       }
-    } else if (test.result === 'failed') {
+    } else if (testRun.result() === 'failed') {
       console.log(`${prefix} ${colors.red('[FAIL]')} ${test.fullName()} (${formatLocation(test.location())})`);
-      if (test.error instanceof MatchError) {
-        let lines = this._filePathToLines.get(test.error.location.filePath);
+      if (testRun.error() instanceof MatchError) {
+        let lines = this._filePathToLines.get(testRun.error().location.filePath);
         if (!lines) {
           try {
-            lines = fs.readFileSync(test.error.location.filePath, 'utf8').split('\n');
+            lines = fs.readFileSync(testRun.error().location.filePath, 'utf8').split('\n');
           } catch (e) {
             lines = [];
           }
-          this._filePathToLines.set(test.error.location.filePath, lines);
+          this._filePathToLines.set(testRun.error().location.filePath, lines);
         }
-        const lineNumber = test.error.location.lineNumber;
+        const lineNumber = testRun.error().location.lineNumber;
         if (lineNumber < lines.length) {
           const lineNumberLength = (lineNumber + 1 + '').length;
           const FROM = Math.max(test.location().lineNumber - 1, lineNumber - 5);
           const snippet = lines.slice(FROM, lineNumber).map((line, index) => `    ${(FROM + index + 1 + '').padStart(lineNumberLength, ' ')} | ${line}`).join('\n');
-          const pointer = `    ` + ' '.repeat(lineNumberLength) + '   ' + '~'.repeat(test.error.location.columnNumber - 1) + '^';
+          const pointer = `    ` + ' '.repeat(lineNumberLength) + '   ' + '~'.repeat(testRun.error().location.columnNumber - 1) + '^';
           console.log('\n' + snippet + '\n' + colors.grey(pointer) + '\n');
         }
-        console.log(padLines(test.error.formatter(), 4));
+        console.log(padLines(testRun.error().formatter(), 4));
         console.log('');
       } else {
         console.log('  Message:');
-        let message = '' + (test.error.message || test.error);
-        if (test.error.stack && message.includes(test.error.stack))
-          message = message.substring(0, message.indexOf(test.error.stack));
+        let message = '' + (testRun.error().message || testRun.error());
+        if (testRun.error().stack && message.includes(testRun.error().stack))
+          message = message.substring(0, message.indexOf(testRun.error().stack));
         if (message)
           console.log(`    ${colors.red(message)}`);
-        if (test.error.stack) {
+        if (testRun.error().stack) {
           console.log('  Stack:');
-          let stack = test.error.stack;
+          let stack = testRun.error().stack;
           // Highlight first test location, if any.
           const match = stack.match(new RegExp(test.location().filePath + ':(\\d+):(\\d+)'));
           if (match) {
@@ -252,9 +237,9 @@ class Reporter {
           console.log(padLines(stack, 4));
         }
       }
-      if (test.output) {
+      if (testRun.output) {
         console.log('  Output:');
-        for (const line of test.output)
+        for (const line of testRun.output)
           console.log('  ' + line);
       }
     }

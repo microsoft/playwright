@@ -37,12 +37,6 @@ function runUserCallback(callback, timeout, args) {
   return { promise, terminate };
 }
 
-const TestMode = {
-  Run: 'run',
-  Skip: 'skip',
-  Focus: 'focus',
-};
-
 const TestExpectation = {
   Ok: 'ok',
   Fail: 'fail',
@@ -72,7 +66,8 @@ class Test {
     this._suite = suite;
     this._name = name;
     this._fullName = (suite.fullName() + ' ' + name).trim();
-    this._mode = TestMode.Run;
+    this._skipped = false;
+    this._focused = false;
     this._expectation = TestExpectation.Ok;
     this._body = callback;
     this._location = location;
@@ -80,24 +75,7 @@ class Test {
     this._repeat = 1;
     this._hooks = [];
 
-    // Test results. TODO: make these private.
-    this.result = null;
-    this.error = null;
-    this.startTimestamp = 0;
-    this.endTimestamp = 0;
-
-    this.Modes = { ...TestMode };
     this.Expectations = { ...TestExpectation };
-  }
-
-  _clone() {
-    // TODO: introduce TestRun instead?
-    const test = new Test(this._suite, this._name, this._body, this._location);
-    test._timeout = this._timeout;
-    test._mode = this._mode;
-    test._expectation = this._expectation;
-    test._hooks = this._hooks.slice();
-    return test;
   }
 
   suite() {
@@ -120,13 +98,20 @@ class Test {
     return this._body;
   }
 
-  mode() {
-    return this._mode;
+  skipped() {
+    return this._skipped;
   }
 
-  setMode(mode) {
-    if (this._mode !== TestMode.Focus)
-      this._mode = mode;
+  setSkipped(skipped) {
+    this._skipped = skipped;
+  }
+
+  focused() {
+    return this._focused;
+  }
+
+  setFocused(focused) {
+    this._focused = focused;
   }
 
   timeout() {
@@ -171,22 +156,14 @@ class Suite {
     this._parentSuite = parentSuite;
     this._name = name;
     this._fullName = (parentSuite ? parentSuite.fullName() + ' ' + name : name).trim();
-    this._mode = TestMode.Run;
+    this._skipped = false;
+    this._focused = false;
     this._expectation = TestExpectation.Ok;
     this._location = location;
     this._repeat = 1;
     this._hooks = [];
 
-    this.Modes = { ...TestMode };
     this.Expectations = { ...TestExpectation };
-  }
-
-  _clone() {
-    // TODO: introduce TestRun instead?
-    const suite = new Suite(this._parentSuite, this._name, this._location);
-    suite._mode = this._mode;
-    suite._expectation = this._expectation;
-    return suite;
   }
 
   parentSuite() {
@@ -201,13 +178,20 @@ class Suite {
     return this._fullName;
   }
 
-  mode() {
-    return this._mode;
+  skipped() {
+    return this._skipped;
   }
 
-  setMode(mode) {
-    if (this._mode !== TestMode.Focus)
-      this._mode = mode;
+  setSkipped(skipped) {
+    this._skipped = skipped;
+  }
+
+  focused() {
+    return this._focused;
+  }
+
+  setFocused(focused) {
+    this._focused = focused;
   }
 
   location() {
@@ -251,12 +235,56 @@ class Suite {
   }
 }
 
+class TestRun {
+  constructor(test) {
+    this._test = test;
+    this._result = null;
+    this._error = null;
+    this._startTimestamp = 0;
+    this._endTimestamp = 0;
+    this._workerId = null;
+  }
+
+  finished() {
+    return this._result !== null && this._result !== 'running';
+  }
+
+  isFailure() {
+    return this._result === TestResult.Failed || this._result === TestResult.TimedOut || this._result === TestResult.Crashed;
+  }
+
+  ok() {
+    return this._result === TestResult.Ok;
+  }
+
+  result() {
+    return this._result;
+  }
+
+  error() {
+    return this._error;
+  }
+
+  duration() {
+    return this._endTimestamp - this._startTimestamp;
+  }
+
+  test() {
+    return this._test;
+  }
+
+  workerId() {
+    return this._workerId;
+  }
+}
+
 class Result {
   constructor() {
     this.result = TestResult.Ok;
     this.exitCode = 0;
     this.message = '';
     this.errors = [];
+    this.runs = [];
   }
 
   setResult(result, message) {
@@ -275,11 +303,9 @@ class Result {
   }
 
   addError(message, error, worker) {
-    const data = { message, error, tests: [] };
-    if (worker) {
-      data.workerId = worker._workerId;
-      data.tests = worker._runTests.slice();
-    }
+    const data = { message, error, runs: [] };
+    if (worker)
+      data.runs = worker._runs.slice();
     this.errors.push(data);
   }
 
@@ -297,7 +323,7 @@ class TestWorker {
     this._workerId = workerId;
     this._runningTestTerminate = null;
     this._runningHookTerminate = null;
-    this._runTests = [];
+    this._runs = [];
   }
 
   terminate(terminateHooks) {
@@ -308,36 +334,34 @@ class TestWorker {
       this._runningHookTerminate();
   }
 
-  _markTerminated(test) {
+  _markTerminated(testRun) {
     if (!this._terminating)
       return false;
-    test.result = TestResult.Terminated;
+    testRun._result = TestResult.Terminated;
     return true;
   }
 
-  async runTest(test) {
-    this._runTests.push(test);
+  async run(testRun) {
+    this._runs.push(testRun);
 
-    if (this._markTerminated(test))
-      return;
-
-    let skipped = test.mode() === TestMode.Skip;
+    const test = testRun.test();
+    let skipped = test.skipped() && !test.focused();
     for (let suite = test.suite(); suite; suite = suite.parentSuite())
-      skipped = skipped || (suite.mode() === TestMode.Skip);
+      skipped = skipped || (suite.skipped() && !suite.focused());
     if (skipped) {
-      await this._testPass._willStartTest(this, test);
-      test.result = TestResult.Skipped;
-      await this._testPass._didFinishTest(this, test);
+      await this._willStartTestRun(testRun);
+      testRun._result = TestResult.Skipped;
+      await this._didFinishTestRun(testRun);
       return;
     }
 
     let expectedToFail = test.expectation() === TestExpectation.Fail;
     for (let suite = test.suite(); suite; suite = suite.parentSuite())
       expectedToFail = expectedToFail || (suite.expectation() === TestExpectation.Fail);
-    if (expectedToFail && test.mode() !== TestMode.Focus) {
-      await this._testPass._willStartTest(this, test);
-      test.result = TestResult.MarkedAsFailing;
-      await this._testPass._didFinishTest(this, test);
+    if (expectedToFail && !test.focused()) {
+      await this._willStartTestRun(testRun);
+      testRun._result = TestResult.MarkedAsFailing;
+      await this._didFinishTestRun(testRun);
       return;
     }
 
@@ -351,80 +375,80 @@ class TestWorker {
       common++;
 
     while (this._suiteStack.length > common) {
-      if (this._markTerminated(test))
+      if (this._markTerminated(testRun))
         return;
       const suite = this._suiteStack.pop();
       for (const hook of suite.hooks('afterAll')) {
-        if (!await this._runHook(test, hook, suite.fullName()))
+        if (!await this._runHook(testRun, hook, suite.fullName()))
           return;
       }
     }
     while (this._suiteStack.length < suiteStack.length) {
-      if (this._markTerminated(test))
+      if (this._markTerminated(testRun))
         return;
       const suite = suiteStack[this._suiteStack.length];
       this._suiteStack.push(suite);
       for (const hook of suite.hooks('beforeAll')) {
-        if (!await this._runHook(test, hook, suite.fullName()))
+        if (!await this._runHook(testRun, hook, suite.fullName()))
           return;
       }
     }
 
-    if (this._markTerminated(test))
+    if (this._markTerminated(testRun))
       return;
 
     // From this point till the end, we have to run all hooks
     // no matter what happens.
 
-    await this._testPass._willStartTest(this, test);
+    await this._willStartTestRun(testRun);
     for (const suite of this._suiteStack) {
       for (const hook of suite.hooks('beforeEach'))
-        await this._runHook(test, hook, suite.fullName(), true);
+        await this._runHook(testRun, hook, suite.fullName(), true);
     }
     for (const hook of test.hooks('before'))
-      await this._runHook(test, hook, test.fullName(), true);
+      await this._runHook(testRun, hook, test.fullName(), true);
 
-    if (!test.error && !this._markTerminated(test)) {
-      await this._testPass._willStartTestBody(this, test);
+    if (!testRun._error && !this._markTerminated(testRun)) {
+      await this._willStartTestBody(testRun);
       const { promise, terminate } = runUserCallback(test.body(), test.timeout(), [this._state, test]);
       this._runningTestTerminate = terminate;
-      test.error = await promise;
+      testRun._error = await promise;
       this._runningTestTerminate = null;
-      if (test.error && test.error.stack)
-        await this._testPass._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(test.error);
-      if (!test.error)
-        test.result = TestResult.Ok;
-      else if (test.error === TimeoutError)
-        test.result = TestResult.TimedOut;
-      else if (test.error === TerminatedError)
-        test.result = TestResult.Terminated;
+      if (testRun._error && testRun._error.stack)
+        await this._testPass._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(testRun._error);
+      if (!testRun._error)
+        testRun._result = TestResult.Ok;
+      else if (testRun._error === TimeoutError)
+        testRun._result = TestResult.TimedOut;
+      else if (testRun._error === TerminatedError)
+        testRun._result = TestResult.Terminated;
       else
-        test.result = TestResult.Failed;
-      await this._testPass._didFinishTestBody(this, test);
+        testRun._result = TestResult.Failed;
+      await this._didFinishTestBody(testRun);
     }
 
     for (const hook of test.hooks('after'))
-      await this._runHook(test, hook, test.fullName(), true);
+      await this._runHook(testRun, hook, test.fullName(), true);
     for (const suite of this._suiteStack.slice().reverse()) {
       for (const hook of suite.hooks('afterEach'))
-        await this._runHook(test, hook, suite.fullName(), true);
+        await this._runHook(testRun, hook, suite.fullName(), true);
     }
-    await this._testPass._didFinishTest(this, test);
+    await this._didFinishTestRun(testRun);
   }
 
-  async _runHook(test, hook, fullName, passTest = false) {
-    await this._testPass._willStartHook(this, hook, fullName);
+  async _runHook(testRun, hook, fullName, passTest = false) {
+    await this._willStartHook(hook, fullName);
     const timeout = this._testPass._runner._timeout;
-    const { promise, terminate } = runUserCallback(hook.body, timeout, passTest ? [this._state, test] : [this._state]);
+    const { promise, terminate } = runUserCallback(hook.body, timeout, passTest ? [this._state, testRun.test()] : [this._state]);
     this._runningHookTerminate = terminate;
     let error = await promise;
     this._runningHookTerminate = null;
 
     if (error) {
       const locationString = `${hook.location.fileName}:${hook.location.lineNumber}:${hook.location.columnNumber}`;
-      if (test.result !== TestResult.Terminated) {
+      if (testRun && testRun._result !== TestResult.Terminated) {
         // Prefer terminated result over any hook failures.
-        test.result = error === TerminatedError ? TestResult.Terminated : TestResult.Crashed;
+        testRun._result = error === TerminatedError ? TestResult.Terminated : TestResult.Crashed;
       }
       let message;
       if (error === TimeoutError) {
@@ -439,20 +463,56 @@ class TestWorker {
           await this._testPass._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
         message = `${locationString} - FAILED while running "${hook.name}" in suite "${fullName}": `;
       }
-      await this._testPass._didFailHook(this, hook, fullName, message, error);
-      test.error = error;
+      await this._didFailHook(hook, fullName, message, error);
+      if (testRun)
+        testRun._error = error;
       return false;
     }
 
-    await this._testPass._didCompleteHook(this, hook, fullName);
+    await this._didCompleteHook(hook, fullName);
     return true;
+  }
+
+  async _willStartTestRun(testRun) {
+    testRun._startTimestamp = Date.now();
+    testRun._workerId = this._workerId;
+    this._testPass._runner.emit(TestRunner.Events.TestStarted, testRun);
+  }
+
+  async _didFinishTestRun(testRun) {
+    testRun._endTimestamp = Date.now();
+    testRun._workerId = this._workerId;
+    this._testPass._runner.emit(TestRunner.Events.TestFinished, testRun);
+  }
+
+  async _willStartTestBody(testRun) {
+    debug('testrunner:test')(`[${this._workerId}] starting "${testRun.test().fullName()}" (${testRun.test().location().fileName + ':' + testRun.test().location().lineNumber})`);
+  }
+
+  async _didFinishTestBody(testRun) {
+    debug('testrunner:test')(`[${this._workerId}] ${testRun._result.toUpperCase()} "${testRun.test().fullName()}" (${testRun.test().location().fileName + ':' + testRun.test().location().lineNumber})`);
+  }
+
+  async _willStartHook(hook, fullName) {
+    debug('testrunner:hook')(`[${this._workerId}] "${hook.name}" started for "${fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
+  }
+
+  async _didFailHook(hook, fullName, message, error) {
+    debug('testrunner:hook')(`[${this._workerId}] "${hook.name}" FAILED for "${fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
+    if (message)
+      this._testPass._result.addError(message, error, this);
+    this._testPass._result.setResult(TestResult.Crashed, message);
+  }
+
+  async _didCompleteHook(hook, fullName) {
+    debug('testrunner:hook')(`[${this._workerId}] "${hook.name}" OK for "${fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
   }
 
   async shutdown() {
     while (this._suiteStack.length > 0) {
       const suite = this._suiteStack.pop();
       for (const hook of suite.hooks('afterAll'))
-        await this._runHook({}, hook, suite.fullName());
+        await this._runHook(null, hook, suite.fullName());
     }
   }
 }
@@ -469,7 +529,7 @@ class TestPass {
     this._terminating = false;
   }
 
-  async run(testList) {
+  async run(testRuns) {
     const terminations = [
       createTermination.call(this, 'SIGINT', TestResult.Terminated, 'SIGINT received'),
       createTermination.call(this, 'SIGHUP', TestResult.Terminated, 'SIGHUP received'),
@@ -480,24 +540,21 @@ class TestPass {
     for (const termination of terminations)
       process.on(termination.event, termination.handler);
 
-    for (const test of testList) {
-      test.result = null;
-      test.error = null;
-    }
     this._result = new Result();
+    this._result.runs = testRuns;
 
-    const parallel = Math.min(this._parallel, testList.length);
+    const parallel = Math.min(this._parallel, testRuns.length);
     const workerPromises = [];
     for (let i = 0; i < parallel; ++i) {
-      const initialTestIndex = i * Math.floor(testList.length / parallel);
-      workerPromises.push(this._runWorker(initialTestIndex, testList, i));
+      const initialTestRunIndex = i * Math.floor(testRuns.length / parallel);
+      workerPromises.push(this._runWorker(initialTestRunIndex, testRuns, i));
     }
     await Promise.all(workerPromises);
 
     for (const termination of terminations)
       process.removeListener(termination.event, termination.handler);
 
-    if (this._runner.failedTests().length)
+    if (testRuns.some(run => run.isFailure()))
       this._result.setResult(TestResult.Failed, '');
     return this._result;
 
@@ -510,25 +567,25 @@ class TestPass {
     }
   }
 
-  async _runWorker(testIndex, testList, parallelIndex) {
+  async _runWorker(testRunIndex, testRuns, parallelIndex) {
     let worker = new TestWorker(this, this._nextWorkerId++, parallelIndex);
     this._workers[parallelIndex] = worker;
     while (!worker._terminating) {
       let skipped = 0;
-      while (skipped < testList.length && testList[testIndex].result !== null) {
-        testIndex = (testIndex + 1) % testList.length;
+      while (skipped < testRuns.length && testRuns[testRunIndex]._result !== null) {
+        testRunIndex = (testRunIndex + 1) % testRuns.length;
         skipped++;
       }
-      const test = testList[testIndex];
-      if (test.result !== null) {
+      const testRun = testRuns[testRunIndex];
+      if (testRun._result !== null) {
         // All tests have been run.
         break;
       }
 
       // Mark as running so that other workers do not run it again.
-      test.result = 'running';
-      await worker.runTest(test);
-      if (isTestFailure(test.result)) {
+      testRun._result = 'running';
+      await worker.run(testRun);
+      if (testRun.isFailure()) {
         // Something went wrong during test run, let's use a fresh worker.
         await worker.shutdown();
         if (this._breakOnFailure) {
@@ -555,39 +612,6 @@ class TestPass {
         await this._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
       this._result.addError(message, error, this._workers.length === 1 ? this._workers[0] : null);
     }
-  }
-
-  async _willStartTest(worker, test) {
-    test.startTimestamp = Date.now();
-    this._runner.emit(TestRunner.Events.TestStarted, test, worker._workerId);
-  }
-
-  async _didFinishTest(worker, test) {
-    test.endTimestamp = Date.now();
-    this._runner.emit(TestRunner.Events.TestFinished, test, worker._workerId);
-  }
-
-  async _willStartTestBody(worker, test) {
-    debug('testrunner:test')(`[${worker._workerId}] starting "${test.fullName()}" (${test.location().fileName + ':' + test.location().lineNumber})`);
-  }
-
-  async _didFinishTestBody(worker, test) {
-    debug('testrunner:test')(`[${worker._workerId}] ${test.result.toUpperCase()} "${test.fullName()}" (${test.location().fileName + ':' + test.location().lineNumber})`);
-  }
-
-  async _willStartHook(worker, hook, fullName) {
-    debug('testrunner:hook')(`[${worker._workerId}] "${hook.name}" started for "${fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
-  }
-
-  async _didFailHook(worker, hook, fullName, message, error) {
-    debug('testrunner:hook')(`[${worker._workerId}] "${hook.name}" FAILED for "${fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
-    if (message)
-      this._result.addError(message, error, worker);
-    this._result.setResult(TestResult.Crashed, message);
-  }
-
-  async _didCompleteHook(worker, hook, fullName) {
-    debug('testrunner:hook')(`[${worker._workerId}] "${hook.name}" OK for "${fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
   }
 }
 
@@ -625,10 +649,10 @@ class TestRunner extends EventEmitter {
     this.it = this._testBuilder([]);
 
     if (installCommonHelpers) {
-      this.fdescribe = this.describe.setup(s => s.setMode(s.Modes.Focus));
-      this.xdescribe = this.describe.setup(s => s.setMode(s.Modes.Skip));
-      this.fit = this.it.setup(t => t.setMode(t.Modes.Focus));
-      this.xit = this.it.setup(t => t.setMode(t.Modes.Skip));
+      this.fdescribe = this.describe.setup(s => s.setFocused(true));
+      this.xdescribe = this.describe.setup(s => s.setSkipped(true));
+      this.fit = this.it.setup(t => t.setFocused(true));
+      this.xit = this.it.setup(t => t.setSkipped(true));
     }
   }
 
@@ -638,12 +662,10 @@ class TestRunner extends EventEmitter {
       const suite = new Suite(this._currentSuite, name, location);
       for (const { callback, args } of callbacks)
         callback(suite, ...args);
-      for (let i = 0; i < suite.repeat(); i++) {
-        this._currentSuite = suite._clone();
-        callback(...suiteArgs);
-        this._suites.push(this._currentSuite);
-        this._currentSuite = this._currentSuite.parentSuite();
-      }
+      this._currentSuite = suite;
+      callback(...suiteArgs);
+      this._suites.push(suite);
+      this._currentSuite = suite.parentSuite();
     }, {
       get: (obj, prop) => {
         if (prop === 'setup')
@@ -664,8 +686,7 @@ class TestRunner extends EventEmitter {
       test.setTimeout(this._timeout);
       for (const { callback, args } of callbacks)
         callback(test, ...args);
-      for (let i = 0; i < test.repeat(); i++)
-        this._tests.push(test._clone());
+      this._tests.push(test);
     }, {
       get: (obj, prop) => {
         if (prop === 'setup')
@@ -697,11 +718,19 @@ class TestRunner extends EventEmitter {
 
   async run(options = {}) {
     const { totalTimeout = 0 } = options;
-    const runnableTests = this.runnableTests();
-    this.emit(TestRunner.Events.Started, runnableTests);
+    const testRuns = [];
+    for (const test of this._testsToRun()) {
+      let repeat = test.repeat();
+      for (let suite = test.suite(); suite; suite = suite.parentSuite())
+        repeat *= suite.repeat();
+      for (let i = 0; i < repeat; i++)
+        testRuns.push(new TestRun(test));
+    }
+    this.emit(TestRunner.Events.Started, testRuns);
 
-    let result = new Result();
+    let result;
     if (this._crashIfTestsAreFocusedOnCI && process.env.CI && this.hasFocusedTestsOrSuites()) {
+      result = new Result();
       result.setResult(TestResult.Crashed, '"focused" tests or suites are probitted on CI');
     } else {
       this._runningPass = new TestPass(this, this._parallel, this._breakOnFailure);
@@ -712,7 +741,7 @@ class TestRunner extends EventEmitter {
         }, totalTimeout);
       }
       try {
-        result = await this._runningPass.run(runnableTests).catch(e => { console.error(e); throw e; });
+        result = await this._runningPass.run(testRuns).catch(e => { console.error(e); throw e; });
       } finally {
         this._runningPass = null;
         clearTimeout(timeoutId);
@@ -722,13 +751,13 @@ class TestRunner extends EventEmitter {
     return result;
   }
 
-  runnableTests() {
+  _testsToRun() {
     if (!this.hasFocusedTestsOrSuites())
-      return this._tests.slice();
+      return this._tests;
     const notFocusedSuites = new Set();
     // Mark parent suites of focused tests as not focused.
     for (const test of this._tests) {
-      if (test.mode() === TestMode.Focus) {
+      if (test.focused()) {
         for (let suite = test.suite(); suite; suite = suite.parentSuite())
           notFocusedSuites.add(suite);
       }
@@ -736,9 +765,9 @@ class TestRunner extends EventEmitter {
     // Pick all tests that are focused or belong to focused suites.
     const tests = [];
     for (const test of this._tests) {
-      let focused = test.mode() === TestMode.Focus;
+      let focused = test.focused();
       for (let suite = test.suite(); suite; suite = suite.parentSuite())
-        focused = focused || (suite.mode() === TestMode.Focus && !notFocusedSuites.has(suite));
+        focused = focused || (suite.focused() && !notFocusedSuites.has(suite));
       if (focused)
         tests.push(test);
     }
@@ -755,22 +784,14 @@ class TestRunner extends EventEmitter {
     return this._timeout;
   }
 
-  focusedSuites() {
-    return this._suites.filter(suite => suite.mode() === TestMode.Focus);
-  }
-
-  focusedTests() {
-    return this._tests.filter(test => test.mode() === TestMode.Focus);
-  }
-
   hasFocusedTestsOrSuites() {
-    return !!this.focusedTests().length || !!this.focusedSuites().length;
+    return this._tests.some(test => test.focused()) || this._suites.some(suite => suite.focused());
   }
 
   focusMatchingTests(fullNameRegex) {
     for (const test of this._tests) {
       if (fullNameRegex.test(test.fullName()))
-        test.setMode(TestMode.Focus);
+        test.setFocused(true);
     }
   }
 
@@ -778,20 +799,8 @@ class TestRunner extends EventEmitter {
     return this._tests.slice();
   }
 
-  failedTests() {
-    return this._tests.filter(test => isTestFailure(test.result));
-  }
-
-  passedTests() {
-    return this._tests.filter(test => test.result === TestResult.Ok);
-  }
-
-  skippedTests() {
-    return this._tests.filter(test => test.result === TestResult.Skipped);
-  }
-
-  markedAsFailingTests() {
-    return this._tests.filter(test => test.result === TestResult.MarkedAsFailing);
+  suites() {
+    return this._suites.slice();
   }
 
   parallel() {
