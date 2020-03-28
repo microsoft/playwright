@@ -72,6 +72,11 @@ function isTestFailure(testResult) {
   return testResult === TestResult.Failed || testResult === TestResult.TimedOut || testResult === TestResult.Crashed;
 }
 
+function createHook(callback, name) {
+  const location = getCallerLocation(__filename);
+  return { name, body: callback, location };
+}
+
 class Test {
   constructor(suite, name, callback, location) {
     this._suite = suite;
@@ -83,6 +88,7 @@ class Test {
     this._location = location;
     this._timeout = INFINITE_TIMEOUT;
     this._repeat = 1;
+    this._hooks = [];
 
     // Test results. TODO: make these private.
     this.result = null;
@@ -100,6 +106,7 @@ class Test {
     test._timeout = this._timeout;
     test._mode = this._mode;
     test._expectation = this._expectation;
+    test._hooks = this._hooks.slice();
     return test;
   }
 
@@ -155,6 +162,18 @@ class Test {
   setRepeat(repeat) {
     this._repeat = repeat;
   }
+
+  before(callback) {
+    this._hooks.push(createHook(callback, 'before'));
+  }
+
+  after(callback) {
+    this._hooks.push(createHook(callback, 'after'));
+  }
+
+  hooks(name) {
+    return this._hooks.filter(hook => !name || hook.name === name);
+  }
 }
 
 class Suite {
@@ -166,12 +185,7 @@ class Suite {
     this._expectation = TestExpectation.Ok;
     this._location = location;
     this._repeat = 1;
-
-    // TODO: make these private.
-    this.beforeAll = null;
-    this.beforeEach = null;
-    this.afterAll = null;
-    this.afterEach = null;
+    this._hooks = [];
 
     this.Modes = { ...TestMode };
     this.Expectations = { ...TestExpectation };
@@ -224,6 +238,26 @@ class Suite {
 
   setRepeat(repeat) {
     this._repeat = repeat;
+  }
+
+  beforeEach(callback) {
+    this._hooks.push(createHook(callback, 'beforeEach'));
+  }
+
+  afterEach(callback) {
+    this._hooks.push(createHook(callback, 'afterEach'));
+  }
+
+  beforeAll(callback) {
+    this._hooks.push(createHook(callback, 'beforeAll'));
+  }
+
+  afterAll(callback) {
+    this._hooks.push(createHook(callback, 'afterAll'));
+  }
+
+  hooks(name) {
+    return this._hooks.filter(hook => !name || hook.name === name);
   }
 }
 
@@ -330,16 +364,20 @@ class TestWorker {
       if (this._markTerminated(test))
         return;
       const suite = this._suiteStack.pop();
-      if (!await this._runHook(test, suite, 'afterAll'))
-        return;
+      for (const hook of suite.hooks('afterAll')) {
+        if (!await this._runHook(test, hook, suite.fullName()))
+          return;
+      }
     }
     while (this._suiteStack.length < suiteStack.length) {
       if (this._markTerminated(test))
         return;
       const suite = suiteStack[this._suiteStack.length];
       this._suiteStack.push(suite);
-      if (!await this._runHook(test, suite, 'beforeAll'))
-        return;
+      for (const hook of suite.hooks('beforeAll')) {
+        if (!await this._runHook(test, hook, suite.fullName()))
+          return;
+      }
     }
 
     if (this._markTerminated(test))
@@ -349,8 +387,12 @@ class TestWorker {
     // no matter what happens.
 
     await this._testPass._willStartTest(this, test);
-    for (let i = 0; i < this._suiteStack.length; i++)
-      await this._runHook(test, this._suiteStack[i], 'beforeEach');
+    for (const suite of this._suiteStack) {
+      for (const hook of suite.hooks('beforeEach'))
+        await this._runHook(test, hook, suite.fullName(), true);
+    }
+    for (const hook of test.hooks('before'))
+      await this._runHook(test, hook, test.fullName(), true);
 
     if (!test.error && !this._markTerminated(test)) {
       await this._testPass._willStartTestBody(this, test);
@@ -371,19 +413,19 @@ class TestWorker {
       await this._testPass._didFinishTestBody(this, test);
     }
 
-    for (let i = this._suiteStack.length - 1; i >= 0; i--)
-      await this._runHook(test, this._suiteStack[i], 'afterEach');
+    for (const hook of test.hooks('after'))
+      await this._runHook(test, hook, test.fullName(), true);
+    for (const suite of this._suiteStack.slice().reverse()) {
+      for (const hook of suite.hooks('afterEach'))
+        await this._runHook(test, hook, suite.fullName(), true);
+    }
     await this._testPass._didFinishTest(this, test);
   }
 
-  async _runHook(test, suite, hookName) {
-    const hook = suite[hookName];
-    if (!hook)
-      return true;
-
-    await this._testPass._willStartHook(this, suite, hook.location, hookName);
+  async _runHook(test, hook, fullName, passTest = false) {
+    await this._testPass._willStartHook(this, hook, fullName);
     const timeout = this._testPass._runner._timeout;
-    const { promise, terminate } = runUserCallback(hook.body, timeout, [this._state, test]);
+    const { promise, terminate } = runUserCallback(hook.body, timeout, passTest ? [this._state, test] : [this._state]);
     this._runningHookTerminate = terminate;
     let error = await promise;
     this._runningHookTerminate = null;
@@ -396,7 +438,7 @@ class TestWorker {
       }
       let message;
       if (error === TimeoutError) {
-        message = `${locationString} - Timeout Exceeded ${timeout}ms while running "${hookName}" in suite "${suite.fullName()}"`;
+        message = `${locationString} - Timeout Exceeded ${timeout}ms while running "${hook.name}" in "${fullName}"`;
         error = null;
       } else if (error === TerminatedError) {
         // Do not report termination details - it's just noise.
@@ -405,21 +447,22 @@ class TestWorker {
       } else {
         if (error.stack)
           await this._testPass._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
-        message = `${locationString} - FAILED while running "${hookName}" in suite "${suite.fullName()}": `;
+        message = `${locationString} - FAILED while running "${hook.name}" in suite "${fullName}": `;
       }
-      await this._testPass._didFailHook(this, suite, hook.location, hookName, message, error);
+      await this._testPass._didFailHook(this, hook, fullName, message, error);
       test.error = error;
       return false;
     }
 
-    await this._testPass._didCompleteHook(this, suite, hook.location, hookName);
+    await this._testPass._didCompleteHook(this, hook, fullName);
     return true;
   }
 
   async shutdown() {
     while (this._suiteStack.length > 0) {
       const suite = this._suiteStack.pop();
-      await this._runHook({}, suite, 'afterAll');
+      for (const hook of suite.hooks('afterAll'))
+        await this._runHook({}, hook, suite.fullName());
     }
   }
 }
@@ -542,19 +585,19 @@ class TestPass {
     debug('testrunner:test')(`[${worker._workerId}] ${test.result.toUpperCase()} "${test.fullName()}" (${test.location().fileName + ':' + test.location().lineNumber})`);
   }
 
-  async _willStartHook(worker, suite, location, hookName) {
-    debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" started for "${suite.fullName()}" (${location.fileName + ':' + location.lineNumber})`);
+  async _willStartHook(worker, hook, fullName) {
+    debug('testrunner:hook')(`[${worker._workerId}] "${hook.name}" started for "${fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
   }
 
-  async _didFailHook(worker, suite, location, hookName, message, error) {
-    debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" FAILED for "${suite.fullName()}" (${location.fileName + ':' + location.lineNumber})`);
+  async _didFailHook(worker, hook, fullName, message, error) {
+    debug('testrunner:hook')(`[${worker._workerId}] "${hook.name}" FAILED for "${fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
     if (message)
       this._result.addError(message, error, worker);
     this._result.setResult(TestResult.Crashed, message);
   }
 
-  async _didCompleteHook(worker, suite, location, hookName) {
-    debug('testrunner:hook')(`[${worker._workerId}] "${hookName}" OK for "${suite.fullName()}" (${location.fileName + ':' + location.lineNumber})`);
+  async _didCompleteHook(worker, hook, fullName) {
+    debug('testrunner:hook')(`[${worker._workerId}] "${hook.name}" OK for "${fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
   }
 }
 
@@ -593,10 +636,10 @@ class TestRunner extends EventEmitter {
 
     this._debuggerLogBreakpointLines = new Multimap();
 
-    this.beforeAll = this._addHook.bind(this, 'beforeAll');
-    this.beforeEach = this._addHook.bind(this, 'beforeEach');
-    this.afterAll = this._addHook.bind(this, 'afterAll');
-    this.afterEach = this._addHook.bind(this, 'afterEach');
+    this.beforeAll = (callback) => this._currentSuite.beforeAll(callback);
+    this.beforeEach = (callback) => this._currentSuite.beforeEach(callback);
+    this.afterAll = (callback) => this._currentSuite.afterAll(callback);
+    this.afterEach = (callback) => this._currentSuite.afterEach(callback);
 
     this.describe = this._suiteBuilder([]);
     this.it = this._testBuilder([]);
@@ -692,12 +735,6 @@ class TestRunner extends EventEmitter {
       this.describe.focus('', module.fdescribe, ...args);
     if (typeof module.xdescribe === 'function')
       this.describe.skip(true)('', module.xdescribe, ...args);
-  }
-
-  _addHook(hookName, callback) {
-    assert(this._currentSuite[hookName] === null, `Only one ${hookName} hook available per suite`);
-    const location = getCallerLocation(__filename);
-    this._currentSuite[hookName] = { body: callback, location };
   }
 
   async run(options = {}) {
