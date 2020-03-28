@@ -32,6 +32,25 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(response.ok()).toBe(true);
       await context.close();
     });
+    it.fail(FFOX)('should isolate contexts', async({browser, httpsServer}) => {
+      {
+        let error = null;
+        const context = await browser.newContext({ ignoreHTTPSErrors: true });
+        const page = await context.newPage();
+        const response = await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
+        expect(error).toBe(null);
+        expect(response.ok()).toBe(true);
+        await context.close();  
+      }
+      {
+        let error = null;
+        const context = await browser.newContext();
+        const page = await context.newPage();
+        await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
+        expect(error).not.toBe(null);
+        await context.close();  
+      }
+    });
     it('should work with mixed content', async({browser, server, httpsServer}) => {
       httpsServer.setRoute('/mixedcontent.html', (req, res) => {
         res.end(`<iframe src=${server.EMPTY_PAGE}></iframe>`);
