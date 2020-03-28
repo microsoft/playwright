@@ -52,10 +52,6 @@ const TestResult = {
   Crashed: 'crashed', // If testrunner crashed due to this test
 };
 
-function isTestFailure(testResult) {
-  return testResult === TestResult.Failed || testResult === TestResult.TimedOut || testResult === TestResult.Crashed;
-}
-
 function createHook(callback, name) {
   const location = getCallerLocation(__filename);
   return { name, body: callback, location };
@@ -104,6 +100,7 @@ class Test {
 
   setSkipped(skipped) {
     this._skipped = skipped;
+    return this;
   }
 
   focused() {
@@ -112,6 +109,7 @@ class Test {
 
   setFocused(focused) {
     this._focused = focused;
+    return this;
   }
 
   timeout() {
@@ -120,6 +118,7 @@ class Test {
 
   setTimeout(timeout) {
     this._timeout = timeout;
+    return this;
   }
 
   expectation() {
@@ -128,6 +127,7 @@ class Test {
 
   setExpectation(expectation) {
     this._expectation = expectation;
+    return this;
   }
 
   repeat() {
@@ -136,14 +136,17 @@ class Test {
 
   setRepeat(repeat) {
     this._repeat = repeat;
+    return this;
   }
 
   before(callback) {
     this._hooks.push(createHook(callback, 'before'));
+    return this;
   }
 
   after(callback) {
     this._hooks.push(createHook(callback, 'after'));
+    return this;
   }
 
   hooks(name) {
@@ -184,6 +187,7 @@ class Suite {
 
   setSkipped(skipped) {
     this._skipped = skipped;
+    return this;
   }
 
   focused() {
@@ -192,6 +196,7 @@ class Suite {
 
   setFocused(focused) {
     this._focused = focused;
+    return this;
   }
 
   location() {
@@ -204,6 +209,7 @@ class Suite {
 
   setExpectation(expectation) {
     this._expectation = expectation;
+    return this;
   }
 
   repeat() {
@@ -212,22 +218,27 @@ class Suite {
 
   setRepeat(repeat) {
     this._repeat = repeat;
+    return this;
   }
 
   beforeEach(callback) {
     this._hooks.push(createHook(callback, 'beforeEach'));
+    return this;
   }
 
   afterEach(callback) {
     this._hooks.push(createHook(callback, 'afterEach'));
+    return this;
   }
 
   beforeAll(callback) {
     this._hooks.push(createHook(callback, 'beforeAll'));
+    return this;
   }
 
   afterAll(callback) {
     this._hooks.push(createHook(callback, 'afterAll'));
+    return this;
   }
 
   hooks(name) {
@@ -647,12 +658,13 @@ class TestRunner extends EventEmitter {
 
     this.describe = this._suiteBuilder([]);
     this.it = this._testBuilder([]);
+    this.Expectations = { ...TestExpectation };
 
     if (installCommonHelpers) {
-      this.fdescribe = this.describe.setup(s => s.setFocused(true));
-      this.xdescribe = this.describe.setup(s => s.setSkipped(true));
-      this.fit = this.it.setup(t => t.setFocused(true));
-      this.xit = this.it.setup(t => t.setSkipped(true));
+      this.fdescribe = this._suiteBuilder([{ callback: s => s.setFocused(true), args: [] }]);
+      this.xdescribe = this._suiteBuilder([{ callback: s => s.setSkipped(true), args: [] }]);
+      this.fit = this._testBuilder([{ callback: t => t.setFocused(true), args: [] }]);
+      this.xit = this._testBuilder([{ callback: t => t.setSkipped(true), args: [] }]);
     }
   }
 
@@ -666,10 +678,9 @@ class TestRunner extends EventEmitter {
       callback(...suiteArgs);
       this._suites.push(suite);
       this._currentSuite = suite.parentSuite();
+      return suite;
     }, {
       get: (obj, prop) => {
-        if (prop === 'setup')
-          return callback => this._suiteBuilder([...callbacks, { callback, args: [] }]);
         if (this._suiteModifiers.has(prop))
           return (...args) => this._suiteBuilder([...callbacks, { callback: this._suiteModifiers.get(prop), args }]);
         if (this._suiteAttributes.has(prop))
@@ -687,10 +698,9 @@ class TestRunner extends EventEmitter {
       for (const { callback, args } of callbacks)
         callback(test, ...args);
       this._tests.push(test);
+      return test;
     }, {
       get: (obj, prop) => {
-        if (prop === 'setup')
-          return callback => this._testBuilder([...callbacks, { callback, args: [] }]);
         if (this._testModifiers.has(prop))
           return (...args) => this._testBuilder([...callbacks, { callback: this._testModifiers.get(prop), args }]);
         if (this._testAttributes.has(prop))
