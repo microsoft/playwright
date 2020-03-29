@@ -79,9 +79,11 @@ module.exports.addTests = function({testRunner, expect}) {
     it('should run a failed focused test', async() => {
       const t = newTestRunner();
       let run = false;
-      t.fit.setup(t => t.setExpectation(t.Expectations.Fail))('uno', () => {
+      t.it('uno', () => {
         run = true; throw new Error('failure');
-      });
+      }).setFocused(true).setExpectation(t.Expectations.Fail);
+      expect(t.tests()[0].focused()).toBe(true);
+      expect(t.tests()[0].expectation()).toBe(t.Expectations.Fail);
       const result = await t.run();
       expect(run).toBe(true);
       expect(result.runs.length).toBe(1);
