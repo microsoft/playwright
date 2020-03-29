@@ -27,7 +27,7 @@ import { kBrowserCloseMessageId } from '../chromium/crConnection';
 import { PipeTransport } from './pipeTransport';
 import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
 import { ConnectOptions, LaunchType } from '../browser';
-import { BrowserServer } from './browserServer';
+import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { Events } from '../events';
 import { ConnectionTransport, ProtocolRequest } from '../transport';
 import { BrowserContext } from '../browserContext';
@@ -172,7 +172,7 @@ export class Chromium implements BrowserType<CRBrowser> {
   }
 }
 
-function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number): string {
+function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number): WebSocketWrapper {
   const server = new ws.Server({ port });
   const guid = platform.guid();
 
@@ -285,9 +285,8 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
   });
 
   const address = server.address();
-  if (typeof address === 'string')
-    return address + '/' + guid;
-  return 'ws://127.0.0.1:' + address.port + '/' + guid;
+  const wsEndpoint = typeof address === 'string' ? `${address}/${guid}` : `ws://127.0.0.1:${address.port}/${guid}`;
+  return new WebSocketWrapper(wsEndpoint, [awaitingBrowserTarget, sessionToSocket, socketToBrowserSession, browserSessions]);
 }
 
 

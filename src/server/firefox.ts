@@ -27,7 +27,7 @@ import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
 import { helper } from '../helper';
 import * as platform from '../platform';
-import { BrowserServer } from './browserServer';
+import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { BrowserArgOptions, BrowserType, LaunchOptions } from './browserType';
 import { launchProcess, waitForLine } from './processLauncher';
 import { ConnectionTransport, SequenceNumberMixer } from '../transport';
@@ -129,7 +129,7 @@ export class Firefox implements BrowserType<FFBrowser> {
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
         // our connection ignores kBrowserCloseMessageId.
-        const transport = await platform.connectToWebsocket(browserWSEndpoint, async transport => transport);
+        const transport = await platform.connectToWebsocket(browserWSEndpoint!, async transport => transport);
         const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
         await transport.send(message);
       },
@@ -144,8 +144,10 @@ export class Firefox implements BrowserType<FFBrowser> {
     const innerEndpoint = match[1];
 
     let browserServer: BrowserServer | undefined = undefined;
-    const browserWSEndpoint = launchType === 'server' ? (await platform.connectToWebsocket(innerEndpoint, t => wrapTransportWithWebSocket(t, port || 0))) : innerEndpoint;
-    browserServer = new BrowserServer(launchedProcess, gracefullyClose, browserWSEndpoint);
+    let browserWSEndpoint: string | undefined = undefined;
+    const webSocketWrapper = launchType === 'server' ? (await platform.connectToWebsocket(innerEndpoint, t => wrapTransportWithWebSocket(t, port || 0))) : new WebSocketWrapper(innerEndpoint, []);
+    browserWSEndpoint = webSocketWrapper.wsEndpoint;
+    browserServer = new BrowserServer(launchedProcess, gracefullyClose, webSocketWrapper);
     return browserServer;
   }
 
@@ -189,7 +191,7 @@ export class Firefox implements BrowserType<FFBrowser> {
   }
 }
 
-function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number): string {
+function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number): WebSocketWrapper {
   const server = new ws.Server({ port });
   const guid = platform.guid();
   const idMixer = new SequenceNumberMixer<{id: number, socket: ws}>();
@@ -311,8 +313,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
   });
 
   const address = server.address();
-  if (typeof address === 'string')
-    return address + '/' + guid;
-  return 'ws://127.0.0.1:' + address.port + '/' + guid;
+  const wsEndpoint = typeof address === 'string' ? `${address}/${guid}` : `ws://127.0.0.1:${address.port}/${guid}`;
+  return new WebSocketWrapper(wsEndpoint,
+      [pendingBrowserContextCreations, pendingBrowserContextDeletions, browserContextIds, sessionToSocket, sockets]);
 }
-

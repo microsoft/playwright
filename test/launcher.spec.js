@@ -142,6 +142,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(remote.isConnected()).toBe(true);
       await remote.close();
       expect(remote.isConnected()).toBe(false);
+      await browserServer._checkLeaks();
       await browserServer.close();
     });
     it('should throw when used after isConnected returns false', async({server}) => {
@@ -169,6 +170,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await remote.close();
       const error = await navigationPromise;
       expect(error.message).toContain('Navigation failed because browser has disconnected!');
+      await browserServer._checkLeaks();
       await browserServer.close();
     });
     it('should reject waitForSelector when browser closes', async({server}) => {
@@ -184,6 +186,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await remote.close();
       const error = await watchdog;
       expect(error.message).toContain('Protocol error');
+      await browserServer._checkLeaks();
       await browserServer.close();
     });
     it('should throw if used after disconnect', async({server}) => {
@@ -193,6 +196,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await remote.close();
       const error = await page.evaluate('1 + 1').catch(e => e);
       expect(error.message).toContain('has been closed');
+      await browserServer._checkLeaks();
       await browserServer.close();
     });
     it('should emit close events on pages and contexts', async({server}) => {
@@ -246,6 +250,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const page = await browserContext.newPage();
       expect(await page.evaluate('11 * 11')).toBe(121);
       await page.close();
+      await browser.close();
+      await browserServer._checkLeaks();
       await browserServer.close();
     });
     it('should fire "disconnected" when closing with webSocket', async() => {
@@ -274,6 +280,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         await page.goto(server.EMPTY_PAGE);
         await browser.close();
       }
+      await browserServer._checkLeaks();
       await browserServer.close();
     });
   });
