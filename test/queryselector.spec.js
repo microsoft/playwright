@@ -528,7 +528,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.setContent(`<div> "yo <div></div>ya</div>`);
       expect(await playwright.selectors._createSelector('text', await page.$('div'))).toBe('" \\"yo "');
     });
-    it('should be case sensitive iff quotes are specified', async({page}) => {
+    it('should be case sensitive if quotes are specified', async({page}) => {
       await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
       expect(await page.$eval(`text=yA`, e => e.outerHTML)).toBe('<div>ya</div>');
       expect(await page.$(`text="yA"`)).toBe(null);
