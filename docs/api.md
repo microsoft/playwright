@@ -3216,7 +3216,7 @@ console.log(response.request().redirectedFrom()); // null
 ```
 
 #### request.redirectedTo()
-- returns: <?[Request]> New request issued by the browser iff the server responded with redirect.
+- returns: <?[Request]> New request issued by the browser if the server responded with redirect.
 
 This method is the opposite of [request.redirectedFrom()](#requestredirectedfrom):
 ```js
