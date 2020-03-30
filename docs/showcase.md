@@ -32,7 +32,7 @@
 
 ## Examples
  
-* [e2e Boilerplates](https://github.com/e2e-boilerplates?utf8=%E2%9C%93&q=playwright): Project boilerplates for using Playwright with TypeScript, Cucumber, Jest, and other libraries
+* [e2e Boilerplates](https://github.com/e2e-boilerplate?utf8=%E2%9C%93&q=playwright): Project boilerplates for using Playwright with TypeScript, Cucumber, Jest, and other libraries
 * [react-app-playwright](https://github.com/KyleADay/react-app-playwright): Using Playwright with a create-react-app project
 * [playwright-react-typescript-jest-example](https://github.com/azemetre/playwright-react-typescript-jest-example): Using Playwright + Jest with a custom webpack configuration for React + Typescript project 
 * [playwright-mocha](https://github.com/roggerfe/playwright-mocha): Using Playwright with Mocha and Chai
