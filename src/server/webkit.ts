@@ -22,7 +22,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as platform from '../platform';
 import * as os from 'os';
-import { helper } from '../helper';
+import { debugError, helper } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
 import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
 import { ConnectionTransport, SequenceNumberMixer } from '../transport';
@@ -275,6 +275,8 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
       if (method === 'Playwright.deleteContext')
         pendingBrowserContextDeletions.set(seqNum, params.browserContextId);
     });
+
+    socket.on('error', error => debugError(error));
 
     socket.on('close', (socket as any).__closeListener = () => {
       for (const [pageProxyId, s] of pageProxyIds) {
