@@ -244,6 +244,12 @@ module.exports.addTests = function({testRunner, expect}) {
     it('should run all hooks in proper order', async() => {
       const log = [];
       const t = newTestRunner();
+      const e = t.environment('env', () => {
+        t.beforeAll(() => log.push('env:beforeAll'));
+        t.afterAll(() => log.push('env:afterAll'));
+        t.beforeEach(() => log.push('env:beforeEach'));
+        t.afterEach(() => log.push('env:afterEach'));
+      });
       t.beforeAll(() => log.push('root:beforeAll'));
       t.beforeEach(() => log.push('root:beforeEach1'));
       t.beforeEach(() => log.push('root:beforeEach2'));
@@ -264,7 +270,16 @@ module.exports.addTests = function({testRunner, expect}) {
         t.afterEach(() => log.push('suite:afterEach2'));
         t.afterAll(() => log.push('suite:afterAll'));
       });
-      t.it('cuatro', () => log.push('test #4'));
+      t.it('cuatro', () => log.push('test #4')).environment(e);
+      t.describe('no hooks suite', () => {
+        t.describe('suite2', () => {
+          t.beforeAll(() => log.push('suite2:beforeAll'));
+          t.afterAll(() => log.push('suite2:afterAll'));
+          t.describe('no hooks suite 2', () => {
+            t.it('cinco', () => log.push('test #5')).environment(e);
+          });
+        });
+      });
       t.afterEach(() => log.push('root:afterEach'));
       t.afterAll(() => log.push('root:afterAll1'));
       t.afterAll(() => log.push('root:afterAll2'));
@@ -305,14 +320,61 @@ module.exports.addTests = function({testRunner, expect}) {
 
         'suite:afterAll',
 
+        'env:beforeAll',
+
         'root:beforeEach1',
         'root:beforeEach2',
+        'env:beforeEach',
         'test #4',
+        'env:afterEach',
         'root:afterEach',
+
+        'suite2:beforeAll',
+        'root:beforeEach1',
+        'root:beforeEach2',
+        'env:beforeEach',
+        'test #5',
+        'env:afterEach',
+        'root:afterEach',
+        'suite2:afterAll',
+
+        'env:afterAll',
 
         'root:afterAll1',
         'root:afterAll2',
       ]);
+    });
+    it('environment restrictions', async () => {
+      const t = newTestRunner();
+      let env;
+      t.describe('suite1', () => {
+        env = t.environment('env', () => {
+          try {
+            t.it('test', () => {});
+            expect(true).toBe(false);
+          } catch (e) {
+            expect(e.message).toBe('Cannot define a test inside an environment');
+          }
+          try {
+            t.describe('suite', () => {});
+            expect(true).toBe(false);
+          } catch (e) {
+            expect(e.message).toBe('Cannot define a suite inside an environment');
+          }
+          try {
+            t.environment('env2', () => {});
+            expect(true).toBe(false);
+          } catch (e) {
+            expect(e.message).toBe('Cannot define an environment inside an environment');
+          }
+        });
+      });
+      try {
+        t.it('test', () => {}).environment(env);
+        expect(true).toBe(false);
+      } catch (e) {
+        expect(e.message).toBe('Cannot use environment "env" from suite "suite1" in unrelated test "test"');
+      }
     });
     it('should have the same state object in hooks and test', async() => {
       const states = [];

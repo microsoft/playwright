@@ -71,6 +71,7 @@ class Test {
     this._timeout = INFINITE_TIMEOUT;
     this._repeat = 1;
     this._hooks = [];
+    this._environments = [];
 
     this.Expectations = { ...TestExpectation };
   }
@@ -153,21 +154,25 @@ class Test {
   hooks(name) {
     return this._hooks.filter(hook => !name || hook.name === name);
   }
+
+  environment(environment) {
+    for (let suite = this.suite(); suite; suite = suite.parentSuite()) {
+      if (suite === environment.parentSuite()) {
+        this._environments.push(environment);
+        return;
+      }
+    }
+    throw new Error(`Cannot use environment "${environment.name()}" from suite "${environment.parentSuite().fullName()}" in unrelated test "${this.fullName()}"`);
+  }
 }
 
-class Suite {
+class Environment {
   constructor(parentSuite, name, location) {
     this._parentSuite = parentSuite;
     this._name = name;
     this._fullName = (parentSuite ? parentSuite.fullName() + ' ' + name : name).trim();
-    this._skipped = false;
-    this._focused = false;
-    this._expectation = TestExpectation.Ok;
     this._location = location;
-    this._repeat = 1;
     this._hooks = [];
-
-    this.Expectations = { ...TestExpectation };
   }
 
   parentSuite() {
@@ -180,6 +185,41 @@ class Suite {
 
   fullName() {
     return this._fullName;
+  }
+
+  beforeEach(callback) {
+    this._hooks.push(createHook(callback, 'beforeEach'));
+    return this;
+  }
+
+  afterEach(callback) {
+    this._hooks.push(createHook(callback, 'afterEach'));
+    return this;
+  }
+
+  beforeAll(callback) {
+    this._hooks.push(createHook(callback, 'beforeAll'));
+    return this;
+  }
+
+  afterAll(callback) {
+    this._hooks.push(createHook(callback, 'afterAll'));
+    return this;
+  }
+
+  hooks(name) {
+    return this._hooks.filter(hook => !name || hook.name === name);
+  }
+}
+
+class Suite extends Environment {
+  constructor(parentSuite, name, location) {
+    super(parentSuite, name, location);
+    this._skipped = false;
+    this._focused = false;
+    this._expectation = TestExpectation.Ok;
+    this._repeat = 1;
+    this.Expectations = { ...TestExpectation };
   }
 
   skipped() {
@@ -220,30 +260,6 @@ class Suite {
   setRepeat(repeat) {
     this._repeat = repeat;
     return this;
-  }
-
-  beforeEach(callback) {
-    this._hooks.push(createHook(callback, 'beforeEach'));
-    return this;
-  }
-
-  afterEach(callback) {
-    this._hooks.push(createHook(callback, 'afterEach'));
-    return this;
-  }
-
-  beforeAll(callback) {
-    this._hooks.push(createHook(callback, 'beforeAll'));
-    return this;
-  }
-
-  afterAll(callback) {
-    this._hooks.push(createHook(callback, 'afterAll'));
-    return this;
-  }
-
-  hooks(name) {
-    return this._hooks.filter(hook => !name || hook.name === name);
   }
 }
 
@@ -330,7 +346,7 @@ class TestWorker {
   constructor(testPass, workerId, parallelIndex) {
     this._testPass = testPass;
     this._state = { parallelIndex };
-    this._suiteStack = [];
+    this._environmentStack = [];
     this._terminating = false;
     this._workerId = workerId;
     this._runningTestTerminate = null;
@@ -377,31 +393,33 @@ class TestWorker {
       return;
     }
 
-    const suiteStack = [];
+    const environmentStack = [];
     for (let suite = test.suite(); suite; suite = suite.parentSuite())
-      suiteStack.push(suite);
-    suiteStack.reverse();
+      environmentStack.push(suite);
+    environmentStack.reverse();
+    for (const environment of test._environments)
+      environmentStack.splice(environmentStack.indexOf(environment.parentSuite()) + 1, 0, environment);
 
     let common = 0;
-    while (common < suiteStack.length && this._suiteStack[common] === suiteStack[common])
+    while (common < environmentStack.length && this._environmentStack[common] === environmentStack[common])
       common++;
 
-    while (this._suiteStack.length > common) {
+    while (this._environmentStack.length > common) {
       if (this._markTerminated(testRun))
         return;
-      const suite = this._suiteStack.pop();
-      for (const hook of suite.hooks('afterAll')) {
-        if (!await this._runHook(testRun, hook, suite.fullName()))
+      const environment = this._environmentStack.pop();
+      for (const hook of environment.hooks('afterAll')) {
+        if (!await this._runHook(testRun, hook, environment.fullName()))
           return;
       }
     }
-    while (this._suiteStack.length < suiteStack.length) {
+    while (this._environmentStack.length < environmentStack.length) {
       if (this._markTerminated(testRun))
         return;
-      const suite = suiteStack[this._suiteStack.length];
-      this._suiteStack.push(suite);
-      for (const hook of suite.hooks('beforeAll')) {
-        if (!await this._runHook(testRun, hook, suite.fullName()))
+      const environment = environmentStack[this._environmentStack.length];
+      this._environmentStack.push(environment);
+      for (const hook of environment.hooks('beforeAll')) {
+        if (!await this._runHook(testRun, hook, environment.fullName()))
           return;
       }
     }
@@ -413,9 +431,9 @@ class TestWorker {
     // no matter what happens.
 
     await this._willStartTestRun(testRun);
-    for (const suite of this._suiteStack) {
-      for (const hook of suite.hooks('beforeEach'))
-        await this._runHook(testRun, hook, suite.fullName(), true);
+    for (const environment of this._environmentStack) {
+      for (const hook of environment.hooks('beforeEach'))
+        await this._runHook(testRun, hook, environment.fullName(), true);
     }
     for (const hook of test.hooks('before'))
       await this._runHook(testRun, hook, test.fullName(), true);
@@ -441,9 +459,9 @@ class TestWorker {
 
     for (const hook of test.hooks('after'))
       await this._runHook(testRun, hook, test.fullName(), true);
-    for (const suite of this._suiteStack.slice().reverse()) {
-      for (const hook of suite.hooks('afterEach'))
-        await this._runHook(testRun, hook, suite.fullName(), true);
+    for (const environment of this._environmentStack.slice().reverse()) {
+      for (const hook of environment.hooks('afterEach'))
+        await this._runHook(testRun, hook, environment.fullName(), true);
     }
     await this._didFinishTestRun(testRun);
   }
@@ -520,10 +538,10 @@ class TestWorker {
   }
 
   async shutdown() {
-    while (this._suiteStack.length > 0) {
-      const suite = this._suiteStack.pop();
-      for (const hook of suite.hooks('afterAll'))
-        await this._runHook(null, hook, suite.fullName());
+    while (this._environmentStack.length > 0) {
+      const environment = this._environmentStack.pop();
+      for (const hook of environment.hooks('afterAll'))
+        await this._runHook(null, hook, environment.fullName());
     }
   }
 }
@@ -640,7 +658,7 @@ class TestRunner extends EventEmitter {
     this._crashIfTestsAreFocusedOnCI = crashIfTestsAreFocusedOnCI;
     this._sourceMapSupport = new SourceMapSupport();
     this._rootSuite = new Suite(null, '', new Location());
-    this._currentSuite = this._rootSuite;
+    this._currentEnvironment = this._rootSuite;
     this._tests = [];
     this._suites = [];
     this._timeout = timeout === 0 ? INFINITE_TIMEOUT : timeout;
@@ -651,13 +669,23 @@ class TestRunner extends EventEmitter {
     this._testModifiers = new Map();
     this._testAttributes = new Map();
 
-    this.beforeAll = (callback) => this._currentSuite.beforeAll(callback);
-    this.beforeEach = (callback) => this._currentSuite.beforeEach(callback);
-    this.afterAll = (callback) => this._currentSuite.afterAll(callback);
-    this.afterEach = (callback) => this._currentSuite.afterEach(callback);
+    this.beforeAll = (callback) => this._currentEnvironment.beforeAll(callback);
+    this.beforeEach = (callback) => this._currentEnvironment.beforeEach(callback);
+    this.afterAll = (callback) => this._currentEnvironment.afterAll(callback);
+    this.afterEach = (callback) => this._currentEnvironment.afterEach(callback);
 
     this.describe = this._suiteBuilder([]);
     this.it = this._testBuilder([]);
+    this.environment = (name, callback) => {
+      if (!(this._currentEnvironment instanceof Suite))
+        throw new Error(`Cannot define an environment inside an environment`);
+      const location = Location.getCallerLocation(__filename);
+      const environment = new Environment(this._currentEnvironment, name, location);
+      this._currentEnvironment = environment;
+      callback();
+      this._currentEnvironment = environment.parentSuite();
+      return environment;
+    };
     this.Expectations = { ...TestExpectation };
 
     if (installCommonHelpers) {
@@ -670,14 +698,16 @@ class TestRunner extends EventEmitter {
 
   _suiteBuilder(callbacks) {
     return new Proxy((name, callback, ...suiteArgs) => {
+      if (!(this._currentEnvironment instanceof Suite))
+        throw new Error(`Cannot define a suite inside an environment`);
       const location = Location.getCallerLocation(__filename);
-      const suite = new Suite(this._currentSuite, name, location);
+      const suite = new Suite(this._currentEnvironment, name, location);
       for (const { callback, args } of callbacks)
         callback(suite, ...args);
-      this._currentSuite = suite;
+      this._currentEnvironment = suite;
       callback(...suiteArgs);
       this._suites.push(suite);
-      this._currentSuite = suite.parentSuite();
+      this._currentEnvironment = suite.parentSuite();
       return suite;
     }, {
       get: (obj, prop) => {
@@ -692,8 +722,10 @@ class TestRunner extends EventEmitter {
 
   _testBuilder(callbacks) {
     return new Proxy((name, callback) => {
+      if (!(this._currentEnvironment instanceof Suite))
+        throw new Error(`Cannot define a test inside an environment`);
       const location = Location.getCallerLocation(__filename);
-      const test = new Test(this._currentSuite, name, callback, location);
+      const test = new Test(this._currentEnvironment, name, callback, location);
       test.setTimeout(this._timeout);
       for (const { callback, args } of callbacks)
         callback(test, ...args);
