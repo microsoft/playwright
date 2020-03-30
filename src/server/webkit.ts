@@ -28,7 +28,7 @@ import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
 import { ConnectionTransport, SequenceNumberMixer } from '../transport';
 import * as ws from 'ws';
 import { ConnectOptions, LaunchType } from '../browser';
-import { BrowserServer } from './browserServer';
+import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { Events } from '../events';
 import { BrowserContext } from '../browserContext';
 
@@ -163,7 +163,7 @@ const mkdtempAsync = platform.promisify(fs.mkdtemp);
 
 const WEBKIT_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_dev_profile-');
 
-function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number): string {
+function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number): WebSocketWrapper {
   const server = new ws.Server({ port });
   const guid = platform.guid();
   const idMixer = new SequenceNumberMixer<{id: number, socket: ws}>();
@@ -296,7 +296,8 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
   });
 
   const address = server.address();
-  if (typeof address === 'string')
-    return address + '/' + guid;
-  return 'ws://127.0.0.1:' + address.port + '/' + guid;
+  const wsEndpoint = typeof address === 'string' ? `${address}/${guid}` : `ws://127.0.0.1:${address.port}/${guid}`;
+
+  return new WebSocketWrapper(wsEndpoint,
+      [pendingBrowserContextCreations, pendingBrowserContextDeletions, browserContextIds, pageProxyIds, sockets]);
 }

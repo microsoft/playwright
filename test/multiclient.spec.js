@@ -39,6 +39,11 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
       expect(browser2.contexts().length).toBe(1);
 
       expect(browser1.contexts().length).toBe(1);
+
+      await browser1.close();
+      await browser2.close();
+
+      await browserServer._checkLeaks();
       await browserServer.close();
     });
   });
@@ -90,6 +95,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
 
       const page2 = await browser2.newPage();
       expect(await page2.evaluate(() => 7 * 6)).toBe(42, 'original browser should still work');
+      await browser2.close();
+      await browserServer._checkLeaks();
       await browserServer.close();
     });
     it('should not be able to close remote browser', async() => {
@@ -104,6 +111,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
         await remote.newContext();
         await remote.close();
       }
+      await browserServer._checkLeaks();
+      await browserServer.close();
     });
   });
 };

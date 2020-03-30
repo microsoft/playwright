@@ -17,17 +17,45 @@
 import { ChildProcess, execSync } from 'child_process';
 import * as platform from '../platform';
 
+export class WebSocketWrapper {
+  readonly wsEndpoint: string;
+  private _bindings: (Map<any, any> | Set<any>)[];
+  constructor(wsEndpoint: string, bindings: (Map<any, any>|Set<any>)[]) {
+    this.wsEndpoint = wsEndpoint;
+    this._bindings = bindings;
+  }
+
+  async checkLeaks() {
+    let counter = 0;
+    return new Promise((fulfill, reject) => {
+      const check = () => {
+        const filtered = this._bindings.filter(entry => entry.size);
+        if (!filtered.length) {
+          fulfill();
+          return;
+        }
+
+        if (++counter >= 50) {
+          reject(new Error('Web socket leak ' + filtered.map(entry => [...entry.keys()].join(':')).join('|')));
+          return;
+        }
+        setTimeout(check, 100);
+      };
+      check();
+    });
+  }
+}
+
 export class BrowserServer extends platform.EventEmitter {
   private _process: ChildProcess;
   private _gracefullyClose: () => Promise<void>;
-  private _browserWSEndpoint: string = '';
+  private _webSocketWrapper: WebSocketWrapper | null;
 
-  constructor(process: ChildProcess, gracefullyClose: () => Promise<void>, wsEndpoint: string|null) {
+  constructor(process: ChildProcess, gracefullyClose: () => Promise<void>, webSocketWrapper: WebSocketWrapper | null) {
     super();
     this._process = process;
     this._gracefullyClose = gracefullyClose;
-    if (wsEndpoint)
-      this._browserWSEndpoint = wsEndpoint;
+    this._webSocketWrapper = webSocketWrapper;
   }
 
   process(): ChildProcess {
@@ -35,7 +63,7 @@ export class BrowserServer extends platform.EventEmitter {
   }
 
   wsEndpoint(): string {
-    return this._browserWSEndpoint;
+    return this._webSocketWrapper ? this._webSocketWrapper.wsEndpoint : '';
   }
 
   kill() {
@@ -53,5 +81,10 @@ export class BrowserServer extends platform.EventEmitter {
 
   async close(): Promise<void> {
     await this._gracefullyClose();
+  }
+
+  async _checkLeaks(): Promise<void> {
+    if (this._webSocketWrapper)
+      await this._webSocketWrapper.checkLeaks();
   }
 }
