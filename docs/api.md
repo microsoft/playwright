@@ -2871,7 +2871,7 @@ See [page.evaluateHandle()](#pageevaluatehandlepagefunction-arg) for more detail
 #### jsHandle.getProperties()
 - returns: <[Promise]<[Map]<[string], [JSHandle]>>>
 
-The method returns a map with property names as keys and JSHandle instances for the property values.
+The method returns a map with **own property names** as keys and JSHandle instances for the property values.
 
 ```js
 const handle = await page.evaluateHandle(() => ({window, document}));
