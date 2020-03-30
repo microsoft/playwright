@@ -85,7 +85,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       };
       expect(await page.accessibility.snapshot()).toEqual(golden);
     });
-    it.fail(WEBKIT && !MAC)('should work with regular text', async({page}) => {
+    it('should work with regular text', async({page}) => {
       await page.setContent(`<div>Hello World</div>`);
       const snapshot = await page.accessibility.snapshot();
       expect(snapshot.children[0]).toEqual({
