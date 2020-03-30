@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const {getCallerLocation} = require('./utils.js');
+const Location = require('./Location.js');
 const colors = require('colors/safe');
 const Diff = require('text-diff');
 
@@ -40,7 +40,7 @@ class MatchError extends Error {
     super(message);
     this.name = this.constructor.name;
     this.formatter = formatter;
-    this.location = getCallerLocation(__filename);
+    this.location = Location.getCallerLocation(__filename);
     Error.captureStackTrace(this, this.constructor);
   }
 }

@@ -144,7 +144,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
     afterEach(async (state, test) => {
       if (state.browser.contexts().length !== 0) {
         if (test.result === 'ok')
-          console.warn(`\nWARNING: test "${test.fullName}" (${test.location.fileName}:${test.location.lineNumber}) did not close all created contexts!\n`);
+          console.warn(`\nWARNING: test "${test.fullName()}" (${test.location()}) did not close all created contexts!\n`);
         await Promise.all(state.browser.contexts().map(context => context.close()));
       }
       await state.tearDown();

@@ -1,5 +1,6 @@
 /**
  * Copyright 2017 Google Inc. All rights reserved.
+ * Modifications copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +18,7 @@
 const EventEmitter = require('events');
 const {SourceMapSupport} = require('./SourceMapSupport');
 const debug = require('debug');
-const {getCallerLocation} = require('./utils');
+const Location = require('./Location');
 
 const INFINITE_TIMEOUT = 100000000;
 const TimeoutError = new Error('Timeout');
@@ -53,7 +54,7 @@ const TestResult = {
 };
 
 function createHook(callback, name) {
-  const location = getCallerLocation(__filename);
+  const location = Location.getCallerLocation(__filename);
   return { name, body: callback, location };
 }
 
@@ -456,14 +457,13 @@ class TestWorker {
     this._runningHookTerminate = null;
 
     if (error) {
-      const locationString = `${hook.location.fileName}:${hook.location.lineNumber}:${hook.location.columnNumber}`;
       if (testRun && testRun._result !== TestResult.Terminated) {
         // Prefer terminated result over any hook failures.
         testRun._result = error === TerminatedError ? TestResult.Terminated : TestResult.Crashed;
       }
       let message;
       if (error === TimeoutError) {
-        message = `${locationString} - Timeout Exceeded ${timeout}ms while running "${hook.name}" in "${fullName}"`;
+        message = `${hook.location.toDetailedString()} - Timeout Exceeded ${timeout}ms while running "${hook.name}" in "${fullName}"`;
         error = null;
       } else if (error === TerminatedError) {
         // Do not report termination details - it's just noise.
@@ -472,7 +472,7 @@ class TestWorker {
       } else {
         if (error.stack)
           await this._testPass._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
-        message = `${locationString} - FAILED while running "${hook.name}" in suite "${fullName}": `;
+        message = `${hook.location.toDetailedString()} - FAILED while running "${hook.name}" in suite "${fullName}": `;
       }
       await this._didFailHook(hook, fullName, message, error);
       if (testRun)
@@ -497,26 +497,26 @@ class TestWorker {
   }
 
   async _willStartTestBody(testRun) {
-    debug('testrunner:test')(`[${this._workerId}] starting "${testRun.test().fullName()}" (${testRun.test().location().fileName + ':' + testRun.test().location().lineNumber})`);
+    debug('testrunner:test')(`[${this._workerId}] starting "${testRun.test().fullName()}" (${testRun.test().location()})`);
   }
 
   async _didFinishTestBody(testRun) {
-    debug('testrunner:test')(`[${this._workerId}] ${testRun._result.toUpperCase()} "${testRun.test().fullName()}" (${testRun.test().location().fileName + ':' + testRun.test().location().lineNumber})`);
+    debug('testrunner:test')(`[${this._workerId}] ${testRun._result.toUpperCase()} "${testRun.test().fullName()}" (${testRun.test().location()})`);
   }
 
   async _willStartHook(hook, fullName) {
-    debug('testrunner:hook')(`[${this._workerId}] "${hook.name}" started for "${fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
+    debug('testrunner:hook')(`[${this._workerId}] "${hook.name}" started for "${fullName}" (${hook.location})`);
   }
 
   async _didFailHook(hook, fullName, message, error) {
-    debug('testrunner:hook')(`[${this._workerId}] "${hook.name}" FAILED for "${fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
+    debug('testrunner:hook')(`[${this._workerId}] "${hook.name}" FAILED for "${fullName}" (${hook.location})`);
     if (message)
       this._testPass._result.addError(message, error, this);
     this._testPass._result.setResult(TestResult.Crashed, message);
   }
 
   async _didCompleteHook(hook, fullName) {
-    debug('testrunner:hook')(`[${this._workerId}] "${hook.name}" OK for "${fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
+    debug('testrunner:hook')(`[${this._workerId}] "${hook.name}" OK for "${fullName}" (${hook.location})`);
   }
 
   async shutdown() {
@@ -581,7 +581,7 @@ class TestPass {
   async _runWorker(testRunIndex, testRuns, parallelIndex) {
     let worker = new TestWorker(this, this._nextWorkerId++, parallelIndex);
     this._workers[parallelIndex] = worker;
-    while (!worker._terminating) {
+    while (!this._terminating) {
       let skipped = 0;
       while (skipped < testRuns.length && testRuns[testRunIndex]._result !== null) {
         testRunIndex = (testRunIndex + 1) % testRuns.length;
@@ -613,6 +613,7 @@ class TestPass {
 
   async _terminate(result, message, force, error) {
     debug('testrunner')(`TERMINATED result = ${result}, message = ${message}`);
+    this._terminating = true;
     for (const worker of this._workers)
       worker.terminate(force /* terminateHooks */);
     this._result.setResult(result, message);
@@ -638,8 +639,7 @@ class TestRunner extends EventEmitter {
     } = options;
     this._crashIfTestsAreFocusedOnCI = crashIfTestsAreFocusedOnCI;
     this._sourceMapSupport = new SourceMapSupport();
-    const dummyLocation = { fileName: '', filePath: '', lineNumber: 0, columnNumber: 0 };
-    this._rootSuite = new Suite(null, '', dummyLocation);
+    this._rootSuite = new Suite(null, '', new Location());
     this._currentSuite = this._rootSuite;
     this._tests = [];
     this._suites = [];
@@ -670,7 +670,7 @@ class TestRunner extends EventEmitter {
 
   _suiteBuilder(callbacks) {
     return new Proxy((name, callback, ...suiteArgs) => {
-      const location = getCallerLocation(__filename);
+      const location = Location.getCallerLocation(__filename);
       const suite = new Suite(this._currentSuite, name, location);
       for (const { callback, args } of callbacks)
         callback(suite, ...args);
@@ -692,7 +692,7 @@ class TestRunner extends EventEmitter {
 
   _testBuilder(callbacks) {
     return new Proxy((name, callback) => {
-      const location = getCallerLocation(__filename);
+      const location = Location.getCallerLocation(__filename);
       const test = new Test(this._currentSuite, name, callback, location);
       test.setTimeout(this._timeout);
       for (const { callback, args } of callbacks)
