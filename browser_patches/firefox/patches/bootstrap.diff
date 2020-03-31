@@ -1996,10 +1996,10 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..dcf03385589acc29c7fe0f02f912d40ab7efb76f
+index 0000000000000000000000000000000000000000..13bce6f411d4b9f1f71f33526b4729e178eb98d5
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
-@@ -0,0 +1,479 @@
+@@ -0,0 +1,559 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
@@ -2010,6 +2010,7 @@ index 0000000000000000000000000000000000000000..dcf03385589acc29c7fe0f02f912d40a
 +const {NetworkHandler} = ChromeUtils.import("chrome://juggler/content/protocol/NetworkHandler.js");
 +const {RuntimeHandler} = ChromeUtils.import("chrome://juggler/content/protocol/RuntimeHandler.js");
 +const {AccessibilityHandler} = ChromeUtils.import("chrome://juggler/content/protocol/AccessibilityHandler.js");
++const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
 +
 +const Cc = Components.classes;
 +const Ci = Components.interfaces;
@@ -2026,7 +2027,7 @@ index 0000000000000000000000000000000000000000..dcf03385589acc29c7fe0f02f912d40a
 +];
 +
 +class TargetRegistry {
-+  constructor(mainWindow) {
++  constructor() {
 +    EventEmitter.decorate(this);
 +
 +    this._browserContextIdToBrowserContext = new Map();
@@ -2042,22 +2043,20 @@ index 0000000000000000000000000000000000000000..dcf03385589acc29c7fe0f02f912d40a
 +
 +    this._defaultContext = new BrowserContext(this, undefined, undefined);
 +
-+    this._mainWindow = mainWindow;
 +    this._targets = new Map();
-+
 +    this._tabToTarget = new Map();
++    Services.obs.addObserver(this, 'oop-frameloader-crashed');
 +
-+    for (const tab of this._mainWindow.gBrowser.tabs)
-+      this._createTargetForTab(tab);
-+    this._mainWindow.gBrowser.tabContainer.addEventListener('TabOpen', event => {
++    const onTabOpenListener = event => {
 +      const target = this._createTargetForTab(event.target);
 +      // If we come here, content will have juggler script from the start,
 +      // and we should wait for initial navigation.
 +      target._waitForInitialNavigation = true;
 +      // For pages created before we attach to them, we don't wait for initial
 +      // navigation (target._waitForInitialNavigation is false by default).
-+    });
-+    this._mainWindow.gBrowser.tabContainer.addEventListener('TabClose', event => {
++    };
++
++    const onTabCloseListener = event => {
 +      const tab = event.target;
 +      const target = this._tabToTarget.get(tab);
 +      if (!target)
@@ -2066,8 +2065,32 @@ index 0000000000000000000000000000000000000000..dcf03385589acc29c7fe0f02f912d40a
 +      this._tabToTarget.delete(tab);
 +      target.dispose();
 +      this.emit(TargetRegistry.Events.TargetDestroyed, target);
-+    });
-+    Services.obs.addObserver(this, 'oop-frameloader-crashed');
++    };
++
++    const wmListener = {
++      onOpenWindow: async window => {
++        const domWindow = window.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
++        if (!(domWindow instanceof Ci.nsIDOMChromeWindow))
++          return;
++        await this._waitForWindowLoad(domWindow);
++        for (const tab of domWindow.gBrowser.tabs)
++          this._createTargetForTab(tab);
++        domWindow.gBrowser.tabContainer.addEventListener('TabOpen', onTabOpenListener);
++        domWindow.gBrowser.tabContainer.addEventListener('TabClose', onTabCloseListener);
++      },
++      onCloseWindow: window => {
++        const domWindow = window.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
++        if (!(domWindow instanceof Ci.nsIDOMChromeWindow))
++          return;
++        if (!domWindow.gBrowser)
++          return;
++        domWindow.gBrowser.tabContainer.removeEventListener('TabOpen', onTabOpenListener);
++        domWindow.gBrowser.tabContainer.removeEventListener('TabClose', onTabCloseListener);
++        for (const tab of domWindow.gBrowser.tabs)
++          onTabCloseListener({ target: tab });
++      },
++    };
++    Services.wm.addListener(wmListener);
 +  }
 +
 +  defaultContext() {
@@ -2082,13 +2105,42 @@ index 0000000000000000000000000000000000000000..dcf03385589acc29c7fe0f02f912d40a
 +    return this._browserContextIdToBrowserContext.get(browserContextId);
 +  }
 +
++  async _waitForWindowLoad(window) {
++    if (window.document.readyState === 'complete')
++      return;
++    await new Promise(fulfill => {
++      window.addEventListener('load', function listener() {
++        window.removeEventListener('load', listener);
++        fulfill();
++      });
++    });
++  }
++
 +  async newPage({browserContextId}) {
++    let window;
++    let created = false;
++    const windowsIt = Services.wm.getEnumerator('navigator:browser');
++    if (windowsIt.hasMoreElements()) {
++      window = windowsIt.getNext();
++    } else {
++      const features = "chrome,dialog=no,all";
++      const args = Cc["@mozilla.org/supports-string;1"].createInstance(Ci.nsISupportsString);
++      args.data = 'about:blank';
++      window = Services.ww.openWindow(null, AppConstants.BROWSER_CHROME_URL, '_blank', features, args);
++      created = true;
++    }
++    await this._waitForWindowLoad(window);
 +    const browserContext = this.browserContextForId(browserContextId);
-+    const tab = this._mainWindow.gBrowser.addTab('about:blank', {
++    const tab = window.gBrowser.addTab('about:blank', {
 +      userContextId: browserContext.userContextId,
 +      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
 +    });
-+    this._mainWindow.gBrowser.selectedTab = tab;
++    if (created) {
++      window.gBrowser.removeTab(window.gBrowser.getTabForBrowser(window.gBrowser.getBrowserAtIndex(0)), {
++        skipPermitUnload: true,
++      });
++    }
++    window.gBrowser.selectedTab = tab;
 +    const target = this._tabToTarget.get(tab);
 +    await target._contentReadyPromise;
 +    if (browserContext.options.timezoneId) {
@@ -2129,14 +2181,25 @@ index 0000000000000000000000000000000000000000..dcf03385589acc29c7fe0f02f912d40a
 +    return this._targets.get(targetId);
 +  }
 +
++  _tabForBrowser(browser) {
++    // TODO: replace all of this with browser -> target map.
++    const windowsIt = Services.wm.getEnumerator('navigator:browser');
++    while (windowsIt.hasMoreElements()) {
++      const window = windowsIt.getNext();
++      const tab = window.gBrowser.getTabForBrowser(browser);
++      if (tab)
++        return { tab, gBrowser: window.gBrowser };
++    }
++  }
++
 +  _targetForBrowser(browser) {
-+    const tab = this._mainWindow.gBrowser.getTabForBrowser(browser);
-+    return tab ? this._tabToTarget.get(tab) : undefined;
++    const tab = this._tabForBrowser(browser);
++    return tab ? this._tabToTarget.get(tab.tab) : undefined;
 +  }
 +
 +  browserContextForBrowser(browser) {
-+    const tab = this._mainWindow.gBrowser.getTabForBrowser(browser);
-+    return tab ? this._userContextIdToBrowserContext.get(tab.userContextId) : undefined;
++    const tab = this._tabForBrowser(browser);
++    return tab ? this._userContextIdToBrowserContext.get(tab.tab.userContextId) : undefined;
 +  }
 +
 +  _createTargetForTab(tab) {
@@ -2159,6 +2222,10 @@ index 0000000000000000000000000000000000000000..dcf03385589acc29c7fe0f02f912d40a
 +      if (!target)
 +        return;
 +      target.emit('crashed');
++      this._targets.delete(target.id());
++      this._tabToTarget.delete(target._tab);
++      target.dispose();
++      this.emit(TargetRegistry.Events.TargetDestroyed, target);
 +      return;
 +    }
 +  }
@@ -2183,7 +2250,7 @@ index 0000000000000000000000000000000000000000..dcf03385589acc29c7fe0f02f912d40a
 +    this._eventListeners = [
 +      helper.addProgressListener(tab.linkedBrowser, navigationListener, Ci.nsIWebProgress.NOTIFY_LOCATION),
 +      helper.addMessageListener(tab.linkedBrowser.messageManager, 'juggler:content-ready', {
-+        receiveMessage: () => this._onContentReady()
++        receiveMessage: message => this._onContentReady(message.data)
 +      }),
 +    ];
 +
@@ -2229,7 +2296,8 @@ index 0000000000000000000000000000000000000000..dcf03385589acc29c7fe0f02f912d40a
 +  }
 +
 +  async close(runBeforeUnload = false) {
-+    await this._registry._mainWindow.gBrowser.removeTab(this._tab, {
++    const tab = this._registry._tabForBrowser(this._tab.linkedBrowser);
++    await tab.gBrowser.removeTab(this._tab, {
 +      skipPermitUnload: !runBeforeUnload,
 +    });
 +  }
@@ -2245,7 +2313,9 @@ index 0000000000000000000000000000000000000000..dcf03385589acc29c7fe0f02f912d40a
 +    networkHandler.enable();
 +  }
 +
-+  _onContentReady() {
++  _onContentReady({ userContextId }) {
++    // TODO: this is the earliest when userContextId is available.
++    // We should create target here, while listening to onContentReady for every tab.
 +    const sessions = [];
 +    const data = { sessions, target: this };
 +    this._registry.emit(TargetRegistry.Events.PageTargetReady, data);
@@ -2329,10 +2399,20 @@ index 0000000000000000000000000000000000000000..dcf03385589acc29c7fe0f02f912d40a
 +    this.pages = new Set();
 +  }
 +
-+  destroy() {
++  async destroy() {
 +    if (this.userContextId !== 0) {
 +      ContextualIdentityService.remove(this.userContextId);
 +      ContextualIdentityService.closeContainerTabs(this.userContextId);
++      if (this.pages.size) {
++        await new Promise(f => {
++          const listener = helper.on(this._registry, TargetRegistry.Events.TargetDestroyed, () => {
++            if (!this.pages.size) {
++              helper.removeListeners([listener]);
++              f();
++            }
++          });
++        });
++      }
 +    }
 +    this._registry._browserContextIdToBrowserContext.delete(this.browserContextId);
 +    this._registry._userContextIdToBrowserContext.delete(this.userContextId);
@@ -2481,10 +2561,10 @@ index 0000000000000000000000000000000000000000..dcf03385589acc29c7fe0f02f912d40a
 +this.TargetRegistry = TargetRegistry;
 diff --git a/juggler/components/juggler.js b/juggler/components/juggler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..50617b19845d32006873c15b446afc04651cb6b7
+index 0000000000000000000000000000000000000000..858bb44e43fa3654dafaa9b7a35b2111237f4af0
 --- /dev/null
 +++ b/juggler/components/juggler.js
-@@ -0,0 +1,117 @@
+@@ -0,0 +1,76 @@
 +const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Dispatcher} = ChromeUtils.import("chrome://juggler/content/protocol/Dispatcher.js");
@@ -2501,7 +2581,6 @@ index 0000000000000000000000000000000000000000..50617b19845d32006873c15b446afc04
 +
 +// Command Line Handler
 +function CommandLineHandler() {
-+  this._port = -1;
 +};
 +
 +CommandLineHandler.prototype = {
@@ -2518,31 +2597,30 @@ index 0000000000000000000000000000000000000000..50617b19845d32006873c15b446afc04
 +    const jugglerFlag = cmdLine.handleFlagWithParam("juggler", false);
 +    if (!jugglerFlag || isNaN(jugglerFlag))
 +      return;
-+    this._port = parseInt(jugglerFlag, 10);
-+    Services.obs.addObserver(this, 'sessionstore-windows-restored');
-+  },
++    const port = parseInt(jugglerFlag, 10);
++    const silent = cmdLine.preventDefault;
++    if (silent)
++      Services.startup.enterLastWindowClosingSurvivalArea();
 +
-+  observe: async function(subject, topic) {
-+    Services.obs.removeObserver(this, 'sessionstore-windows-restored');
-+
-+    const win = await waitForBrowserWindow();
-+    const targetRegistry = new TargetRegistry(win);
++    const targetRegistry = new TargetRegistry();
 +    new NetworkObserver(targetRegistry);
 +
 +    const { require } = ChromeUtils.import("resource://devtools/shared/Loader.jsm");
 +    const WebSocketServer = require('devtools/server/socket/websocket-server');
 +    this._server = Cc["@mozilla.org/network/server-socket;1"].createInstance(Ci.nsIServerSocket);
-+    this._server.initSpecialConnection(this._port, Ci.nsIServerSocket.KeepWhenOffline | Ci.nsIServerSocket.LoopbackOnly, 4);
++    this._server.initSpecialConnection(port, Ci.nsIServerSocket.KeepWhenOffline | Ci.nsIServerSocket.LoopbackOnly, 4);
 +
 +    const token = helper.generateId();
-+
 +    this._server.asyncListen({
 +      onSocketAccepted: async(socket, transport) => {
 +        const input = transport.openInputStream(0, 0, 0);
 +        const output = transport.openOutputStream(0, 0, 0);
 +        const webSocket = await WebSocketServer.accept(transport, input, output, "/" + token);
 +        const dispatcher = new Dispatcher(webSocket);
-+        const browserHandler = new BrowserHandler(dispatcher.rootSession(), dispatcher, targetRegistry);
++        const browserHandler = new BrowserHandler(dispatcher.rootSession(), dispatcher, targetRegistry, () => {
++          if (silent)
++            Services.startup.exitLastWindowClosingSurvivalArea();
++        });
 +        dispatcher.rootSession().registerHandler('Browser', browserHandler);
 +      }
 +    });
@@ -2563,45 +2641,6 @@ index 0000000000000000000000000000000000000000..50617b19845d32006873c15b446afc04
 +};
 +
 +var NSGetFactory = XPCOMUtils.generateNSGetFactory([CommandLineHandler]);
-+
-+/**
-+ * @return {!Promise<Ci.nsIDOMChromeWindow>}
-+ */
-+async function waitForBrowserWindow() {
-+  const windowsIt = Services.wm.getEnumerator('navigator:browser');
-+  if (windowsIt.hasMoreElements())
-+    return waitForWindowLoaded(windowsIt.getNext());
-+
-+  let fulfill;
-+  let promise = new Promise(x => fulfill = x);
-+
-+  const listener = {
-+    onOpenWindow: window => {
-+      if (window instanceof Ci.nsIDOMChromeWindow) {
-+        Services.wm.removeListener(listener);
-+        fulfill(waitForWindowLoaded(window));
-+      }
-+    },
-+    onCloseWindow: () => {}
-+  };
-+  Services.wm.addListener(listener);
-+  return promise;
-+
-+  /**
-+   * @param {!Ci.nsIDOMChromeWindow} window
-+   * @return {!Promise<Ci.nsIDOMChromeWindow>}
-+   */
-+  function waitForWindowLoaded(window) {
-+    if (window.document.readyState === 'complete')
-+      return window;
-+    return new Promise(fulfill => {
-+      window.addEventListener('load', function listener() {
-+        window.removeEventListener('load', listener);
-+        fulfill(window);
-+      });
-+    });
-+  }
-+}
 diff --git a/juggler/components/juggler.manifest b/juggler/components/juggler.manifest
 new file mode 100644
 index 0000000000000000000000000000000000000000..50f8930207563e0d6b8a7878fc602dbca54d77fc
@@ -4891,10 +4930,10 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/juggler/content/main.js b/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..1864328a47107621309c9b3726bb84535b780c2f
+index 0000000000000000000000000000000000000000..e2a8fc14afe9b851e2bf3893691ca98c69bd12ee
 --- /dev/null
 +++ b/juggler/content/main.js
-@@ -0,0 +1,153 @@
+@@ -0,0 +1,156 @@
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
@@ -4954,7 +4993,10 @@ index 0000000000000000000000000000000000000000..1864328a47107621309c9b3726bb8453
 +}
 +
 +function initialize() {
-+  let response = sendSyncMessage('juggler:content-ready', {})[0];
++  const loadContext = docShell.QueryInterface(Ci.nsILoadContext);
++  const userContextId = loadContext.originAttributes.userContextId;
++
++  let response = sendSyncMessage('juggler:content-ready', { userContextId })[0];
 +  if (!response)
 +    response = { sessionIds: [], browserContextOptions: {}, waitForInitialNavigation: false };
 +
@@ -5127,10 +5169,10 @@ index 0000000000000000000000000000000000000000..bf37558bccc48f4d90eadc971c1eb3e4
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/juggler/protocol/BrowserHandler.js b/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..b26325857d87f714f1250a52f233644806a61ebf
+index 0000000000000000000000000000000000000000..5f2368224404c1a4497e1eb06d96f53e84d1453d
 --- /dev/null
 +++ b/juggler/protocol/BrowserHandler.js
-@@ -0,0 +1,196 @@
+@@ -0,0 +1,198 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -5143,7 +5185,7 @@ index 0000000000000000000000000000000000000000..b26325857d87f714f1250a52f2336448
 +const helper = new Helper();
 +
 +class BrowserHandler {
-+  constructor(session, dispatcher, targetRegistry) {
++  constructor(session, dispatcher, targetRegistry, onclose) {
 +    this._session = session;
 +    this._dispatcher = dispatcher;
 +    this._targetRegistry = targetRegistry;
@@ -5152,6 +5194,7 @@ index 0000000000000000000000000000000000000000..b26325857d87f714f1250a52f2336448
 +    this._eventListeners = [];
 +    this._createdBrowserContextIds = new Set();
 +    this._attachedSessions = new Map();
++    this._onclose = onclose;
 +  }
 +
 +  async enable({attachToDefaultContext}) {
@@ -5189,8 +5232,8 @@ index 0000000000000000000000000000000000000000..b26325857d87f714f1250a52f2336448
 +  async removeBrowserContext({browserContextId}) {
 +    if (!this._enabled)
 +      throw new Error('Browser domain is not enabled');
++    await this._targetRegistry.browserContextForId(browserContextId).destroy();
 +    this._createdBrowserContextIds.delete(browserContextId);
-+    this._targetRegistry.browserContextForId(browserContextId).destroy();
 +  }
 +
 +  dispose() {
@@ -5246,6 +5289,7 @@ index 0000000000000000000000000000000000000000..b26325857d87f714f1250a52f2336448
 +  }
 +
 +  async close() {
++    this._onclose();
 +    let browserWindow = Services.wm.getMostRecentWindow(
 +      "navigator:browser"
 +    );
