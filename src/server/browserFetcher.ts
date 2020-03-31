@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-import * as yauzl from 'yauzl-promise';
+import * as yauzl from 'yauzl';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as util from 'util';
+import { Readable } from 'stream';
 import { execSync } from 'child_process';
 import * as ProxyAgent from 'https-proxy-agent';
 import * as path from 'path';
@@ -213,32 +214,43 @@ function downloadFile(url: string, destinationPath: string, progressCallback: On
   }
 }
 
-async function extractZip(zipPath: string, folderPath: string) {
-  const zipfile = await yauzl.open(zipPath);
+function extractZip(zipPath: string, folderPath: string) {
+  return new Promise((resolve, reject) => {
+    yauzl.open(zipPath, { lazyEntries: true }, (err, zf) => {
+      if (err) reject(err);
+      const zipfile = zf as yauzl.ZipFile;
 
-  const finishedPromises: Promise<any>[] = [];
+      const filePromises: Promise<any>[] = [];
 
-  await zipfile.walkEntries(async entry => {
-    if (entry.fileName.endsWith('/')) {
-      await fsPromises.mkdir(path.resolve(folderPath, entry.fileName), { recursive: true });
-    } else {
-      const filepath = path.resolve(folderPath, entry.fileName);
-      await fsPromises.mkdir(path.parse(filepath).dir, { recursive: true });
-
-      const stream = await zipfile.openReadStream(entry);
-
-      const finishedPromise = new Promise((resolve, reject) => {
-        stream.on('end', resolve);
-        stream.on('error', reject);
+      zipfile.on('end', async () => {
+        await Promise.all(filePromises);
+        resolve();
       });
-      finishedPromises.push(finishedPromise);
 
-      stream.pipe(fs.createWriteStream(filepath));
-    }
+      zipfile.on('entry', async (entry) => {
+        if (entry.fileName.endsWith('/')) {
+          await fsPromises.mkdir(path.resolve(folderPath, entry.fileName), { recursive: true });
+          zipfile.readEntry();
+        } else {
+          const filepath = path.resolve(folderPath, entry.fileName);
+          await fsPromises.mkdir(path.parse(filepath).dir, { recursive: true });
+
+          zipfile.openReadStream(entry, (err, rs) => {
+            if (err) reject(err);
+            const readStream = rs as Readable;
+
+            readStream.on('end', () => {
+              zipfile.readEntry();
+            });
+            filePromises.push(new Promise(res => readStream.on('end', res)));
+
+            readStream.pipe(fs.createWriteStream(filepath));
+          });
+        }
+      });
+      zipfile.readEntry();
+    })
   });
-
-  await Promise.all(finishedPromises);
-  zipfile.close();
 }
 
 function httpRequest(url: string, method: string, response: (r: any) => void) {
