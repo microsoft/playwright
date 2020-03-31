@@ -286,7 +286,14 @@ playwright.chromium.launch().then(async browser => {
     console.log(elements.map(x => x)[0].textContent);
     return elements[3].innerHTML;
   });
-
+  {
+    const value = await page.$eval('input', i => i.disabled);
+    const assertion: AssertType<boolean, typeof value> = true;
+  }
+  {
+    const value = await page.$$eval('input', i => i[0].defaultValue);
+    const assertion: AssertType<string, typeof value> = true;
+  }
   browser.close();
 })();
 
