@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Browser, createPageInNewContext } from '../browser';
+import { BrowserBase } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, BrowserContextOptions, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { Events } from '../events';
 import { assert, helper, RegisteredListener } from '../helper';
@@ -26,12 +26,11 @@ import * as types from '../types';
 import { Protocol } from './protocol';
 import { kPageProxyMessageReceived, PageProxyMessageReceivedPayload, WKConnection, WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
-import { EventEmitter } from 'events';
 import type { BrowserServer } from '../server/browserServer';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15';
 
-export class WKBrowser extends EventEmitter implements Browser {
+export class WKBrowser extends BrowserBase {
   private readonly _connection: WKConnection;
   private readonly _attachToDefaultContext: boolean;
   readonly _browserSession: WKSession;
@@ -65,6 +64,8 @@ export class WKBrowser extends EventEmitter implements Browser {
       helper.addEventListener(this._browserSession, 'Playwright.pageProxyDestroyed', this._onPageProxyDestroyed.bind(this)),
       helper.addEventListener(this._browserSession, 'Playwright.provisionalLoadFailed', event => this._onProvisionalLoadFailed(event)),
       helper.addEventListener(this._browserSession, 'Playwright.windowOpen', this._onWindowOpen.bind(this)),
+      helper.addEventListener(this._browserSession, 'Playwright.downloadCreated', this._onDownloadCreated.bind(this)),
+      helper.addEventListener(this._browserSession, 'Playwright.downloadFinished', this._onDownloadFinished.bind(this)),
       helper.addEventListener(this._browserSession, kPageProxyMessageReceived, this._onPageProxyMessageReceived.bind(this)),
     ];
 
@@ -95,10 +96,6 @@ export class WKBrowser extends EventEmitter implements Browser {
     return Array.from(this._contexts.values());
   }
 
-  async newPage(options?: BrowserContextOptions): Promise<Page> {
-    return createPageInNewContext(this, options);
-  }
-
   async _waitForFirstPageTarget(): Promise<void> {
     assert(!this._wkPages.size);
     return this._firstPagePromise;
@@ -106,6 +103,17 @@ export class WKBrowser extends EventEmitter implements Browser {
 
   _onWindowOpen(payload: Protocol.Playwright.windowOpenPayload) {
     this._popupOpeners.push(payload.pageProxyId);
+  }
+
+  _onDownloadCreated(payload: Protocol.Playwright.downloadCreatedPayload) {
+    const page = this._wkPages.get(payload.pageProxyId);
+    if (!page)
+      return;
+    this._downloadCreated(page._page, payload.uuid, payload.url);
+  }
+
+  _onDownloadFinished(payload: Protocol.Playwright.downloadFinishedPayload) {
+    this._downloadFinished(payload.uuid, payload.error);
   }
 
   _onPageProxyCreated(event: Protocol.Playwright.pageProxyCreatedPayload) {
@@ -196,10 +204,6 @@ export class WKBrowser extends EventEmitter implements Browser {
     else
       await this._disconnect();
   }
-
-  _setDebugFunction(debugFunction: debug.IDebugger) {
-    this._connection._debugProtocol = debugFunction;
-  }
 }
 
 export class WKBrowserContext extends BrowserContextBase {
@@ -215,18 +219,27 @@ export class WKBrowserContext extends BrowserContextBase {
   }
 
   async _initialize() {
+    const browserContextId = this._browserContextId;
+    const promises: Promise<any>[] = [
+      this._browser._browserSession.send('Playwright.setDownloadBehavior', {
+        behavior: this._options.acceptDownloads ? 'allow' : 'deny',
+        downloadPath: this._browser._downloadsPath,
+        browserContextId
+      })
+    ];
     if (this._options.ignoreHTTPSErrors)
-      await this._browser._browserSession.send('Playwright.setIgnoreCertificateErrors', { browserContextId: this._browserContextId, ignore: true });
+      promises.push(this._browser._browserSession.send('Playwright.setIgnoreCertificateErrors', { browserContextId, ignore: true }));
     if (this._options.locale)
-      await this._browser._browserSession.send('Playwright.setLanguages', { browserContextId: this._browserContextId, languages: [this._options.locale] });
+      promises.push(this._browser._browserSession.send('Playwright.setLanguages', { browserContextId, languages: [this._options.locale] }));
     if (this._options.permissions)
-      await this.grantPermissions(this._options.permissions);
+      promises.push(this.grantPermissions(this._options.permissions));
     if (this._options.geolocation)
-      await this.setGeolocation(this._options.geolocation);
+      promises.push(this.setGeolocation(this._options.geolocation));
     if (this._options.offline)
-      await this.setOffline(this._options.offline);
+      promises.push(this.setOffline(this._options.offline));
     if (this._options.httpCredentials)
-      await this.setHTTPCredentials(this._options.httpCredentials);
+      promises.push(this.setHTTPCredentials(this._options.httpCredentials));
+    await Promise.all(promises);
   }
 
   _wkPages(): WKPage[] {
@@ -344,6 +357,6 @@ export class WKBrowserContext extends BrowserContextBase {
     }
     await this._browser._browserSession.send('Playwright.deleteContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
-    this._didCloseInternal();
+    await this._didCloseInternal();
   }
 }

@@ -16,6 +16,7 @@
 import { Protocol } from './protocol';
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
+import { Readable } from 'stream';
 
 /**
  * Can be converted to JSON

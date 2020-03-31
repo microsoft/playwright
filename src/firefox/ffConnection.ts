@@ -15,10 +15,9 @@
  * limitations under the License.
  */
 
-import * as debug from 'debug';
 import { EventEmitter } from 'events';
 import { assert } from '../helper';
-import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
+import { ConnectionTransport, ProtocolRequest, ProtocolResponse, debugProtocol } from '../transport';
 import { Protocol } from './protocol';
 
 export const ConnectionEvents = {
@@ -34,7 +33,6 @@ export class FFConnection extends EventEmitter {
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
   private _transport: ConnectionTransport;
   readonly _sessions: Map<string, FFSession>;
-  _debugProtocol = debug('pw:protocol');
   _closed: boolean;
 
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
@@ -59,7 +57,6 @@ export class FFConnection extends EventEmitter {
     this.off = super.removeListener;
     this.removeListener = super.removeListener;
     this.once = super.once;
-    (this._debugProtocol as any).color = '34';
   }
 
   async send<T extends keyof Protocol.CommandParameters>(
@@ -78,14 +75,14 @@ export class FFConnection extends EventEmitter {
   }
 
   _rawSend(message: ProtocolRequest) {
-    if (this._debugProtocol.enabled)
-      this._debugProtocol('SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
+    if (debugProtocol.enabled)
+      debugProtocol('SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
     this._transport.send(message);
   }
 
   async _onMessage(message: ProtocolResponse) {
-    if (this._debugProtocol.enabled)
-      this._debugProtocol('◀ RECV ' + JSON.stringify(message));
+    if (debugProtocol.enabled)
+      debugProtocol('◀ RECV ' + JSON.stringify(message));
     if (message.id === kBrowserCloseMessageId)
       return;
     if (message.sessionId) {

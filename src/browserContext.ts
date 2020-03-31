@@ -22,6 +22,7 @@ import { TimeoutSettings } from './timeoutSettings';
 import * as types from './types';
 import { Events } from './events';
 import { ExtendedEventEmitter } from './extendedEventEmitter';
+import { Download } from './download';
 
 export type BrowserContextOptions = {
   viewport?: types.Size | null,
@@ -38,7 +39,8 @@ export type BrowserContextOptions = {
   httpCredentials?: types.Credentials,
   deviceScaleFactor?: number,
   isMobile?: boolean,
-  hasTouch?: boolean
+  hasTouch?: boolean,
+  acceptDownloads?: boolean
 };
 
 export interface BrowserContext {
@@ -71,6 +73,7 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
   private readonly _closePromise: Promise<Error>;
   private _closePromiseFulfill: ((error: Error) => void) | undefined;
   readonly _permissions = new Map<string, string[]>();
+  readonly _downloads = new Set<Download>();
 
   constructor(options: BrowserContextOptions) {
     super();
@@ -89,13 +92,16 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
   _browserClosed() {
     for (const page of this.pages())
       page._didClose();
-    this._didCloseInternal();
+    this._didCloseInternal(true);
   }
 
-  _didCloseInternal() {
+  async _didCloseInternal(omitDeleteDownloads = false) {
     this._closed = true;
     this.emit(Events.BrowserContext.Close);
     this._closePromiseFulfill!(new Error('Context closed'));
+    if (!omitDeleteDownloads)
+      await Promise.all([...this._downloads].map(d => d.delete()));
+    this._downloads.clear();
   }
 
   // BrowserContext methods.
