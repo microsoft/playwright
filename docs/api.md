@@ -1195,9 +1195,9 @@ const fs = require('fs');
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully filled. The promise will be rejected if there is no element matching `selector`.
 
 This method focuses the element and triggers an `input` event after filling.
-If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matching `selector`, the method throws an error.
+If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matching `selector`, the method throws an error. Note that you can pass an empty string to clear the input field.
 
-> **NOTE** Pass empty string as a value to clear the input field.
+To send fine-grained keyboard events, use [`page.type`](#pagetypeselector-text-options).
 
 Shortcut for [page.mainFrame().fill()](#framefillselector-value-options)
 
@@ -1585,7 +1585,7 @@ Shortcut for [page.mainFrame().title()](#frametitle).
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
 
-Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
+Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `page.type` can be used to send fine-grained keyboard events. To fill values in form fields, use [`page.fill`](#pagefillselector-value-options).
 
 To press a special key, like `Control` or `ArrowDown`, use [`keyboard.press`](#keyboardpresskey-options).
 
@@ -2116,6 +2116,8 @@ await resultHandle.dispose();
 This method focuses the element and triggers an `input` event after filling.
 If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matching `selector`, the method throws an error.
 
+To send fine-grained keyboard events, use [`frame.type`](#frametypeselector-text-options).
+
 #### frame.focus(selector[, options])
 - `selector` <[string]> A selector of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
 - `options` <[Object]>
@@ -2280,7 +2282,7 @@ frame.selectOption('select#colors', { value: 'blue' }, { index: 2 }, 'red');
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
 
-Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
+Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `frame.type` can be used to send fine-grained keyboard events. To fill values in form fields, use [`frame.fill`](#framefillselector-value-options).
 
 To press a special key, like `Control` or `ArrowDown`, use [`keyboard.press`](#keyboardpresskey-options).
 
