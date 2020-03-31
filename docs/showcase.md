@@ -36,6 +36,7 @@
 * [react-app-playwright](https://github.com/KyleADay/react-app-playwright): Using Playwright with a create-react-app project
 * [playwright-react-typescript-jest-example](https://github.com/azemetre/playwright-react-typescript-jest-example): Using Playwright + Jest with a custom webpack configuration for React + Typescript project 
 * [playwright-mocha](https://github.com/roggerfe/playwright-mocha): Using Playwright with Mocha and Chai
+* [playwright-cljs](https://github.com/apeckham/playwright-cljs): Playwright examples in ClojureScript
 * [playwright-github-actions](https://github.com/arjun27/playwright-github-actions/actions): Playwright setup on GitHub Actions
 * [playwright-azure-functions](https://github.com/arjun27/playwright-azure-functions): Playwright setup on Azure Functions
 * [playwright-aws-lambda](https://github.com/austinkelleher/playwright-aws-lambda): Playwright setup on AWS Lambda
