@@ -92,14 +92,12 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     const { browserContextId } = await this._connection.send('Browser.createBrowserContext', {
       userAgent: options.userAgent,
       bypassCSP: options.bypassCSP,
+      ignoreHTTPSErrors: options.ignoreHTTPSErrors,
       javaScriptDisabled: options.javaScriptEnabled === false ? true : undefined,
       viewport,
       locale: options.locale,
       removeOnDetach: true
     });
-    // TODO: move ignoreHTTPSErrors to browser context level.
-    if (options.ignoreHTTPSErrors)
-      await this._connection.send('Browser.setIgnoreHTTPSErrors', { enabled: true });
     const context = new FFBrowserContext(this, browserContextId, options);
     await context._initialize();
     this._contexts.set(browserContextId, context);
