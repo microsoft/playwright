@@ -1060,10 +1060,10 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..6aa07fd2ee4e0dff43b151d1cee7497f
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Playwright.json b/Source/JavaScriptCore/inspector/protocol/Playwright.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..f57b7187ed65ae84b9a1cff7918dad074bb57a4f
+index 0000000000000000000000000000000000000000..b132b4f0017157b36b3a5d5fc67b9f3697bdf1ea
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Playwright.json
-@@ -0,0 +1,204 @@
+@@ -0,0 +1,229 @@
 +{
 +    "domain": "Playwright",
 +    "availability": ["web"],
@@ -1233,6 +1233,15 @@ index 0000000000000000000000000000000000000000..f57b7187ed65ae84b9a1cff7918dad07
 +                { "name": "languages", "type": "array", "items": { "type": "string" } },
 +                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
 +            ]
++        },
++        {
++            "name": "setDownloadBehavior",
++            "description": "Allows to override download behavior.",
++            "parameters": [
++                { "name": "behavior", "optional": true, "type": "string", "enum": ["allow", "deny"] },
++                { "name": "downloadPath", "optional": true, "type": "string" },
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
++            ]
 +        }
 +    ],
 +    "events": [
@@ -1264,6 +1273,22 @@ index 0000000000000000000000000000000000000000..f57b7187ed65ae84b9a1cff7918dad07
 +                { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
 +                { "name": "loaderId", "$ref": "Network.LoaderId", "description": "Identifier of the loader associated with the navigation." },
 +                { "name": "error", "type": "string", "description": "Localized error string." }
++            ]
++        },
++        {
++            "name": "downloadCreated",
++            "parameters": [
++                { "name": "uuid", "type": "string" },
++                { "name": "url", "type": "string" },
++                { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
++                { "name": "browserContextId", "$ref": "ContextID" }
++            ]
++        },
++        {
++            "name": "downloadFinished",
++            "parameters": [
++                { "name": "uuid", "type": "string" },
++                { "name": "error", "type": "string" }
 +            ]
 +        }
 +    ]
@@ -7572,6 +7597,91 @@ index d7695088e7cfc4f638f157338754f9f157489749..ba114d47ac079661702e44f19853398f
  #if !PLATFORM(WPE)
      bool m_isBackingStoreDiscardable { true };
      std::unique_ptr<BackingStore> m_backingStore;
+diff --git a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
+index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..a016c4b86ea4cf6db0c76e77a42abe9189233573 100644
+--- a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
++++ b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
+@@ -42,8 +42,10 @@
+ #include <WebCore/MIMETypeRegistry.h>
+ #include <WebCore/ResourceResponseBase.h>
+ #include <wtf/FileSystem.h>
++#include <wtf/NeverDestroyed.h>
+ #include <wtf/text/CString.h>
+ #include <wtf/text/WTFString.h>
++#include <wtf/UUID.h>
+ 
+ namespace WebKit {
+ using namespace WebCore;
+@@ -62,7 +64,10 @@ DownloadProxy::DownloadProxy(DownloadProxyMap& downloadProxyMap, WebsiteDataStor
+     , m_request(resourceRequest)
+     , m_originatingPage(makeWeakPtr(originatingPage))
+     , m_frameInfo(API::FrameInfo::create(FrameInfoData { frameInfoData }, originatingPage))
++    , m_uuid(createCanonicalUUIDString())
+ {
++    if (auto* instrumentation = m_processPool->downloadInstrumentation())
++      instrumentation->downloadCreated(m_uuid, m_request, originatingPage);
+ }
+ 
+ DownloadProxy::~DownloadProxy()
+@@ -178,7 +183,18 @@ void DownloadProxy::decideDestinationWithSuggestedFilenameAsync(DownloadID downl
+ {
+     if (!m_processPool)
+         return;
+-    
++
++    if (m_processPool->networkProcess() && m_processPool->allowDownloadForAutomation()) {
++        SandboxExtension::Handle sandboxExtensionHandle;
++        String destination;
++        if (*m_processPool->allowDownloadForAutomation()) {
++            destination = FileSystem::pathByAppendingComponent(m_processPool->downloadPathForAutomation(), m_uuid);
++            SandboxExtension::createHandle(destination, SandboxExtension::Type::ReadWrite, sandboxExtensionHandle);
++        }
++        m_processPool->networkProcess()->send(Messages::NetworkProcess::ContinueDecidePendingDownloadDestination(downloadID, destination, sandboxExtensionHandle, true), 0);
++        return;
++    }
++
+     m_processPool->downloadClient().decideDestinationWithSuggestedFilename(*this, ResourceResponseBase::sanitizeSuggestedFilename(suggestedFilename), [this, protectedThis = makeRef(*this), downloadID = downloadID] (AllowOverwrite allowOverwrite, String destination) {
+         SandboxExtension::Handle sandboxExtensionHandle;
+         if (!destination.isNull())
+@@ -206,6 +222,8 @@ void DownloadProxy::didFinish()
+         return;
+ 
+     m_processPool->downloadClient().didFinish(*this);
++    if (auto* instrumentation = m_processPool->downloadInstrumentation())
++      instrumentation->downloadFinished(m_uuid, String());
+ 
+     // This can cause the DownloadProxy object to be deleted.
+     m_downloadProxyMap.downloadFinished(*this);
+@@ -227,6 +245,8 @@ void DownloadProxy::didFail(const ResourceError& error, const IPC::DataReference
+     m_resumeData = createData(resumeData);
+ 
+     m_processPool->downloadClient().didFail(*this, error);
++    if (auto* instrumentation = m_processPool->downloadInstrumentation())
++      instrumentation->downloadFinished(m_uuid, error.localizedDescription());
+ 
+     // This can cause the DownloadProxy object to be deleted.
+     m_downloadProxyMap.downloadFinished(*this);
+@@ -237,6 +257,8 @@ void DownloadProxy::didCancel(const IPC::DataReference& resumeData)
+     m_resumeData = createData(resumeData);
+ 
+     m_processPool->downloadClient().didCancel(*this);
++    if (auto* instrumentation = m_processPool->downloadInstrumentation())
++      instrumentation->downloadFinished(m_uuid, "canceled"_s);
+ 
+     // This can cause the DownloadProxy object to be deleted.
+     m_downloadProxyMap.downloadFinished(*this);
+diff --git a/Source/WebKit/UIProcess/Downloads/DownloadProxy.h b/Source/WebKit/UIProcess/Downloads/DownloadProxy.h
+index a0ccbe0663c3c126437704bcc8f91b4724ccca9f..5d52ca9048562410c686c6fb30a0fae654bbb6db 100644
+--- a/Source/WebKit/UIProcess/Downloads/DownloadProxy.h
++++ b/Source/WebKit/UIProcess/Downloads/DownloadProxy.h
+@@ -141,6 +141,7 @@ private:
+     Vector<URL> m_redirectChain;
+     bool m_wasUserInitiated { true };
+     Ref<API::FrameInfo> m_frameInfo;
++    String m_uuid;
+ };
+ 
+ } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/DrawingAreaProxy.h b/Source/WebKit/UIProcess/DrawingAreaProxy.h
 index cb1212fdd5a8b780ba61f554ed003ef288dee661..3aefb0af2c6c0b669df64a855e5250b4e56a89e4 100644
 --- a/Source/WebKit/UIProcess/DrawingAreaProxy.h
@@ -8319,10 +8429,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..a73982f6999b28e452896ad4ebd9f449b79f8385
+index 0000000000000000000000000000000000000000..cac12beb34ef7a3b8ac5564140e9a9122da66cdc
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,597 @@
+@@ -0,0 +1,634 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -8545,6 +8655,8 @@ index 0000000000000000000000000000000000000000..a73982f6999b28e452896ad4ebd9f449
 +void InspectorPlaywrightAgent::didCreateFrontendAndBackend(FrontendRouter*, BackendDispatcher*)
 +{
 +    m_isConnected = true;
++    for (auto& pool : WebProcessPool::allProcessPools())
++        pool->setDownloadInstrumentation(this);
 +}
 +
 +void InspectorPlaywrightAgent::didFailProvisionalLoad(WebPageProxy& page, uint64_t navigationID, const String& error)
@@ -8566,6 +8678,10 @@ index 0000000000000000000000000000000000000000..a73982f6999b28e452896ad4ebd9f449
 +void InspectorPlaywrightAgent::willDestroyFrontendAndBackend(DisconnectReason)
 +{
 +    m_isConnected = false;
++    for (auto& pool : WebProcessPool::allProcessPools()) {
++        pool->setDownloadInstrumentation(nullptr);
++        pool->setDownloadForAutomation(Optional<bool>(), String());
++    }
 +    m_browserContextDeletions.clear();
 +}
 +
@@ -8609,6 +8725,8 @@ index 0000000000000000000000000000000000000000..a73982f6999b28e452896ad4ebd9f449
 +        return;
 +    browserContext.processPool->setPrimaryDataStore(*browserContext.dataStore);
 +    browserContext.processPool->ensureNetworkProcess(browserContext.dataStore.get());
++    browserContext.processPool->setDownloadInstrumentation(this);
++
 +    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
 +    *browserContextID = toBrowserContextIDProtocolString(sessionID);
 +    m_browserContexts.set(*browserContextID, browserContext);
@@ -8856,6 +8974,19 @@ index 0000000000000000000000000000000000000000..a73982f6999b28e452896ad4ebd9f449
 +    browserContext.processPool->setLanguagesForAutomation(WTFMove(items));
 +}
 +
++void InspectorPlaywrightAgent::setDownloadBehavior(Inspector::ErrorString& errorString, const String* behavior, const String* downloadPath, const String* browserContextID)
++{
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty())
++        return;
++    Optional<bool> allow;
++    if (behavior && *behavior == "allow"_s)
++      allow = true;
++    if (behavior && *behavior == "deny"_s)
++      allow = false;
++    browserContext.processPool->setDownloadForAutomation(allow, downloadPath ? *downloadPath : String());
++}
++
 +void InspectorPlaywrightAgent::setGeolocationOverride(Inspector::ErrorString& errorString, const String* browserContextID, const JSON::Object* geolocation)
 +{
 +    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
@@ -8863,7 +8994,7 @@ index 0000000000000000000000000000000000000000..a73982f6999b28e452896ad4ebd9f449
 +        return;
 +    auto* geoManager = browserContext.processPool->supplement<WebGeolocationManagerProxy>();
 +    if (!geoManager) {
-+        errorString = "Internal error: geolocation manager is not available.";
++        errorString = "Internal error: geolocation manager is not available."_s;
 +        return;
 +    }
 +    if (geolocation) {
@@ -8871,10 +9002,10 @@ index 0000000000000000000000000000000000000000..a73982f6999b28e452896ad4ebd9f449
 +        double latitude = 0;
 +        double longitude = 0;
 +        double accuracy = 0;
-+        if (!geolocation->getDouble("timestamp", timestamp) ||
-+            !geolocation->getDouble("latitude", latitude) ||
-+            !geolocation->getDouble("longitude", longitude) ||
-+            !geolocation->getDouble("accuracy", accuracy)) {
++        if (!geolocation->getDouble("timestamp"_s, timestamp) ||
++            !geolocation->getDouble("latitude"_s, latitude) ||
++            !geolocation->getDouble("longitude"_s, longitude) ||
++            !geolocation->getDouble("accuracy"_s, accuracy)) {
 +            errorString = "Invalid geolocation format"_s;
 +            return;
 +        }
@@ -8883,6 +9014,22 @@ index 0000000000000000000000000000000000000000..a73982f6999b28e452896ad4ebd9f449
 +    } else {
 +        geoManager->providerDidFailToDeterminePosition("Position unavailable"_s);
 +    }
++}
++
++void InspectorPlaywrightAgent::downloadCreated(const String& uuid, const WebCore::ResourceRequest& request, WebPageProxy* page)
++{
++    if (!m_isConnected)
++        return;
++    m_frontendDispatcher->downloadCreated(uuid, request.url().string(),
++        InspectorPlaywrightAgent::toPageProxyIDProtocolString(*page),
++        InspectorPlaywrightAgent::toBrowserContextIDProtocolString(page->sessionID()));
++}
++
++void InspectorPlaywrightAgent::downloadFinished(const String& uuid, const String& error)
++{
++    if (!m_isConnected)
++        return;
++    m_frontendDispatcher->downloadFinished(uuid, error);
 +}
 +
 +String InspectorPlaywrightAgent::toBrowserContextIDProtocolString(const PAL::SessionID& sessionID)
@@ -8922,10 +9069,10 @@ index 0000000000000000000000000000000000000000..a73982f6999b28e452896ad4ebd9f449
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..cc30c0bed90910351e0fd29f2577b8030bd0597e
+index 0000000000000000000000000000000000000000..0c5699a60504d56e88ed3a915550386484b6d937
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
-@@ -0,0 +1,118 @@
+@@ -0,0 +1,126 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -8958,6 +9105,7 @@ index 0000000000000000000000000000000000000000..cc30c0bed90910351e0fd29f2577b803
 +#include "InspectorPlaywrightAgentClient.h"
 +#include <JavaScriptCore/InspectorAgentBase.h>
 +#include <JavaScriptCore/InspectorBackendDispatchers.h>
++#include "WebProcessPool.h"
 +#include <wtf/HashMap.h>
 +#include <pal/SessionID.h>
 +#include <wtf/Forward.h>
@@ -8983,7 +9131,6 @@ index 0000000000000000000000000000000000000000..cc30c0bed90910351e0fd29f2577b803
 +
 +class NetworkProcess;
 +class WebFrameProxy;
-+class WebProcessPool;
 +
 +class PageProxyIDMap {
 +public:
@@ -8993,7 +9140,10 @@ index 0000000000000000000000000000000000000000..cc30c0bed90910351e0fd29f2577b803
 +    virtual ~PageProxyIDMap() = default;
 +};
 +
-+class InspectorPlaywrightAgent final : public Inspector::InspectorAgentBase, public Inspector::PlaywrightBackendDispatcherHandler {
++class InspectorPlaywrightAgent final
++    : public Inspector::InspectorAgentBase
++    , public Inspector::PlaywrightBackendDispatcherHandler
++    , public DownloadInstrumentation {
 +    WTF_MAKE_NONCOPYABLE(InspectorPlaywrightAgent);
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
@@ -9023,9 +9173,14 @@ index 0000000000000000000000000000000000000000..cc30c0bed90910351e0fd29f2577b803
 +
 +    void setGeolocationOverride(Inspector::ErrorString&, const String* browserContextID, const JSON::Object* geolocation) override;
 +    void setLanguages(Inspector::ErrorString&, const JSON::Array& languages, const String* browserContextID) override;
++    void setDownloadBehavior(Inspector::ErrorString&, const String* behavior, const String* downloadPath, const String* browserContextID) override;
 +
 +    static String toBrowserContextIDProtocolString(const PAL::SessionID&);
 +    static String toPageProxyIDProtocolString(const WebPageProxy&);
++
++    // DownloadInstrumentation
++    void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, WebPageProxy* page) override;
++    void downloadFinished(const String& uuid, const String& error) override;
 +
 +private:
 +    class BrowserContextDeletion;
@@ -10443,10 +10598,10 @@ index eae5a57029ba2546faf38a30f6ed889391c74e6a..aff4cda4f8cd5c9b9c9711bb829894b3
      PluginZoomFactorDidChange(double zoomFactor)
  
 diff --git a/Source/WebKit/UIProcess/WebProcessPool.cpp b/Source/WebKit/UIProcess/WebProcessPool.cpp
-index 4bb7b460869932a237e3d43476b3b07e1fa6c675..c01fc3579b9df54294f78fbb7a33ffb8d00496e1 100644
+index 4bb7b460869932a237e3d43476b3b07e1fa6c675..a7cfe3c4d07f53ebfb77e537f99efb34d130ce63 100644
 --- a/Source/WebKit/UIProcess/WebProcessPool.cpp
 +++ b/Source/WebKit/UIProcess/WebProcessPool.cpp
-@@ -437,12 +437,19 @@ void WebProcessPool::languageChanged(void* context)
+@@ -437,12 +437,25 @@ void WebProcessPool::languageChanged(void* context)
      static_cast<WebProcessPool*>(context)->languageChanged();
  }
  
@@ -10454,6 +10609,12 @@ index 4bb7b460869932a237e3d43476b3b07e1fa6c675..c01fc3579b9df54294f78fbb7a33ffb8
 +{
 +    m_languagesForAutomation = WTFMove(languages);
 +    languageChanged();
++}
++
++void WebProcessPool::setDownloadForAutomation(Optional<bool> allow, const String& downloadPath)
++{
++    m_allowDownloadForAutomation = allow;
++    m_downloadPathForAutomation = downloadPath;
 +}
 +
  void WebProcessPool::languageChanged()
@@ -10468,7 +10629,7 @@ index 4bb7b460869932a237e3d43476b3b07e1fa6c675..c01fc3579b9df54294f78fbb7a33ffb8
  #endif
  }
  
-@@ -1005,7 +1012,10 @@ void WebProcessPool::initializeNewWebProcess(WebProcessProxy& process, WebsiteDa
+@@ -1005,7 +1018,10 @@ void WebProcessPool::initializeNewWebProcess(WebProcessProxy& process, WebsiteDa
  #endif
  
      parameters.cacheModel = LegacyGlobalSettings::singleton().cacheModel();
@@ -10481,10 +10642,24 @@ index 4bb7b460869932a237e3d43476b3b07e1fa6c675..c01fc3579b9df54294f78fbb7a33ffb8
      parameters.urlSchemesRegisteredAsEmptyDocument = copyToVector(m_schemesToRegisterAsEmptyDocument);
      parameters.urlSchemesRegisteredAsSecure = copyToVector(LegacyGlobalSettings::singleton().schemesToRegisterAsSecure());
 diff --git a/Source/WebKit/UIProcess/WebProcessPool.h b/Source/WebKit/UIProcess/WebProcessPool.h
-index 535dd52b958d373169aa6c42d8cbeb1fcd0c0002..a141d9b6644bfe38de9603fb082dd250f3e5e64f 100644
+index 535dd52b958d373169aa6c42d8cbeb1fcd0c0002..92b547f89fdb66ce93744c7f5af07078881dd890 100644
 --- a/Source/WebKit/UIProcess/WebProcessPool.h
 +++ b/Source/WebKit/UIProcess/WebProcessPool.h
-@@ -413,7 +413,7 @@ public:
+@@ -123,6 +123,13 @@ int webProcessThroughputQOS();
+ 
+ enum class ProcessSwapRequestedByClient : bool;
+ 
++class DownloadInstrumentation {
++public:
++    virtual void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, WebPageProxy* page) = 0;
++    virtual void downloadFinished(const String& uuid, const String& error) = 0;
++    virtual ~DownloadInstrumentation() = default;
++};
++
+ class WebProcessPool final : public API::ObjectImpl<API::Object::Type::ProcessPool>, public CanMakeWeakPtr<WebProcessPool>, private IPC::MessageReceiver {
+ public:
+     static Ref<WebProcessPool> create(API::ProcessPoolConfiguration&);
+@@ -413,7 +420,7 @@ public:
  
      void windowServerConnectionStateChanged();
  
@@ -10493,24 +10668,33 @@ index 535dd52b958d373169aa6c42d8cbeb1fcd0c0002..a141d9b6644bfe38de9603fb082dd250
      void setIgnoreTLSErrors(bool);
      bool ignoreTLSErrors() const { return m_ignoreTLSErrors; }
  #endif
-@@ -534,6 +534,8 @@ public:
+@@ -534,6 +541,14 @@ public:
      
      PlugInAutoStartProvider& plugInAutoStartProvider() { return m_plugInAutoStartProvider; }
  
 +    void setLanguagesForAutomation(Vector<String>&&);
++    void setDownloadForAutomation(Optional<bool> allow, const String& downloadPath);
++    Optional<bool> allowDownloadForAutomation() { return m_allowDownloadForAutomation; };
++    String downloadPathForAutomation() { return m_downloadPathForAutomation; };
++
++    void setDownloadInstrumentation(DownloadInstrumentation* instrumentation) { m_downloadInstrumentation = instrumentation; };
++    DownloadInstrumentation* downloadInstrumentation() { return m_downloadInstrumentation; };
 +
      void setUseSeparateServiceWorkerProcess(bool);
      bool useSeparateServiceWorkerProcess() const { return m_useSeparateServiceWorkerProcess; }
  
-@@ -642,6 +644,7 @@ private:
+@@ -642,6 +657,10 @@ private:
      std::unique_ptr<API::CustomProtocolManagerClient> m_customProtocolManagerClient;
  
      RefPtr<WebAutomationSession> m_automationSession;
 +    Vector<String> m_languagesForAutomation;
++    Optional<bool> m_allowDownloadForAutomation;
++    String m_downloadPathForAutomation;
++    DownloadInstrumentation* m_downloadInstrumentation { nullptr };
  
  #if ENABLE(NETSCAPE_PLUGIN_API)
      PluginInfoStore m_pluginInfoStore;
-@@ -710,8 +713,8 @@ private:
+@@ -710,8 +729,8 @@ private:
  
      HashMap<uint64_t, RefPtr<DictionaryCallback>> m_dictionaryCallbacks;
  
@@ -14454,10 +14638,10 @@ index 0000000000000000000000000000000000000000..00fb6b0006c743091a8bbf8edb18b211
 +</Scheme>
 diff --git a/Tools/Playwright/mac/AppDelegate.h b/Tools/Playwright/mac/AppDelegate.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..86e7b0c64df5fccdd66b87eecd995e0a10d57b83
+index 0000000000000000000000000000000000000000..ff88daf2035365d0f1d19c5adc47b467c7d4e980
 --- /dev/null
 +++ b/Tools/Playwright/mac/AppDelegate.h
-@@ -0,0 +1,53 @@
+@@ -0,0 +1,54 @@
 +/*
 + * Copyright (C) 2010 Apple Inc. All rights reserved.
 + *
@@ -14484,13 +14668,14 @@ index 0000000000000000000000000000000000000000..86e7b0c64df5fccdd66b87eecd995e0a
 + */
 +
 +#import <WebKit/_WKBrowserInspector.h>
++#import <WebKit/_WKDownloadDelegate.h>
 +
 +@interface WebViewDialog : NSObject
 +@property (nonatomic, strong) WKWebView *webView;
 +@property (nonatomic, copy) void (^completionHandler)(BOOL accept, NSString* value);
 +@end
 +
-+@interface BrowserAppDelegate : NSObject <NSApplicationDelegate, WKUIDelegate, _WKBrowserInspectorDelegate> {
++@interface BrowserAppDelegate : NSObject <NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate, _WKBrowserInspectorDelegate, _WKDownloadDelegate> {
 +    NSMutableSet *_browserWindowControllers;
 +    NSMutableSet *_headlessWindows;
 +    NSMutableSet *_browserContexts;
@@ -14513,10 +14698,10 @@ index 0000000000000000000000000000000000000000..86e7b0c64df5fccdd66b87eecd995e0a
 +@end
 diff --git a/Tools/Playwright/mac/AppDelegate.m b/Tools/Playwright/mac/AppDelegate.m
 new file mode 100644
-index 0000000000000000000000000000000000000000..144bb42f13cc92a5ddd91417cbef2512613bd27c
+index 0000000000000000000000000000000000000000..6eb18b8f492fe3937d2c38b36b4daebbe2199586
 --- /dev/null
 +++ b/Tools/Playwright/mac/AppDelegate.m
-@@ -0,0 +1,401 @@
+@@ -0,0 +1,440 @@
 +/*
 + * Copyright (C) 2010-2016 Apple Inc. All rights reserved.
 + *
@@ -14545,6 +14730,8 @@ index 0000000000000000000000000000000000000000..144bb42f13cc92a5ddd91417cbef2512
 +#import "AppDelegate.h"
 +
 +#import "BrowserWindowController.h"
++#import <WebKit/WKNavigationActionPrivate.h>
++#import <WebKit/WKNavigationDelegatePrivate.h>
 +#import <WebKit/WKPreferencesPrivate.h>
 +#import <WebKit/WKProcessPoolPrivate.h>
 +#import <WebKit/WKUserContentControllerPrivate.h>
@@ -14553,6 +14740,7 @@ index 0000000000000000000000000000000000000000..144bb42f13cc92a5ddd91417cbef2512
 +#import <WebKit/WKWebsiteDataStorePrivate.h>
 +#import <WebKit/WebNSURLExtras.h>
 +#import <WebKit/WebKit.h>
++#import <WebKit/_WKDownload.h>
 +#import <WebKit/_WKExperimentalFeature.h>
 +#import <WebKit/_WKInternalDebugFeature.h>
 +#import <WebKit/_WKProcessPoolConfiguration.h>
@@ -14818,6 +15006,7 @@ index 0000000000000000000000000000000000000000..144bb42f13cc92a5ddd91417cbef2512
 +        [webView loadRequest:[NSURLRequest requestWithURL:url]];
 +    }
 +    [_headlessWindows addObject:window];
++    webView.navigationDelegate = self;
 +    webView.UIDelegate = self;
 +    return [webView autorelease];
 +}
@@ -14829,6 +15018,7 @@ index 0000000000000000000000000000000000000000..144bb42f13cc92a5ddd91417cbef2512
 +    processConfiguration.forceOverlayScrollbars = YES;
 +    browserContext.dataStore = [WKWebsiteDataStore nonPersistentDataStore];
 +    browserContext.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
++    [browserContext.processPool _setDownloadDelegate:self];
 +    [_browserContexts addObject:browserContext];
 +    return browserContext;
 +}
@@ -14915,6 +15105,40 @@ index 0000000000000000000000000000000000000000..144bb42f13cc92a5ddd91417cbef2512
 +- (nullable WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
 +{
 +    return [self createHeadlessPage:configuration withURL:nil];
++}
++
++- (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler
++{
++    LOG(@"decidePolicyForNavigationAction");
++
++    if (navigationAction._canHandleRequest) {
++        decisionHandler(WKNavigationActionPolicyAllow);
++        return;
++    }
++    decisionHandler(WKNavigationActionPolicyCancel);
++}
++
++- (void)webView:(WKWebView *)webView decidePolicyForNavigationResponse:(WKNavigationResponse *)navigationResponse decisionHandler:(void (^)(WKNavigationResponsePolicy))decisionHandler
++{
++    if (![navigationResponse.response isKindOfClass:[NSHTTPURLResponse class]]) {
++      decisionHandler(WKNavigationResponsePolicyAllow);
++      return;
++    }
++    NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)navigationResponse.response;
++
++    NSString *disposition = [[httpResponse allHeaderFields] objectForKey:@"Content-Disposition"];
++    if (disposition && [disposition hasPrefix:@"attachment"]) {
++        decisionHandler(_WKNavigationResponsePolicyBecomeDownload);
++        return;
++    }
++    decisionHandler(WKNavigationResponsePolicyAllow);
++}
++
++#pragma mark _WKDownloadDelegate
++
++- (void)_download:(_WKDownload *)download decideDestinationWithSuggestedFilename:(NSString *)filename completionHandler:(void (^)(BOOL allowOverwrite, NSString *destination))completionHandler
++{
++    completionHandler(NO, @"");
 +}
 +
 +@end
@@ -15131,10 +15355,10 @@ index 0000000000000000000000000000000000000000..4dbf13c8fb31a745ae8e1965a457d4fb
 +@end
 diff --git a/Tools/Playwright/mac/BrowserWindowController.m b/Tools/Playwright/mac/BrowserWindowController.m
 new file mode 100644
-index 0000000000000000000000000000000000000000..72edf5c432f58659765d16dabdb536b44942b1f2
+index 0000000000000000000000000000000000000000..8d4cf055b4e93f2990801cfbddc20182534ce594
 --- /dev/null
 +++ b/Tools/Playwright/mac/BrowserWindowController.m
-@@ -0,0 +1,828 @@
+@@ -0,0 +1,838 @@
 +/*
 + * Copyright (C) 2010-2016 Apple Inc. All rights reserved.
 + *
@@ -15165,7 +15389,7 @@ index 0000000000000000000000000000000000000000..72edf5c432f58659765d16dabdb536b4
 +#import "AppDelegate.h"
 +#import <WebKit/WKFrameInfo.h>
 +#import <WebKit/WKNavigationActionPrivate.h>
-+#import <WebKit/WKNavigationDelegate.h>
++#import <WebKit/WKNavigationDelegatePrivate.h>
 +#import <WebKit/WKPreferencesPrivate.h>
 +#import <WebKit/WKUIDelegate.h>
 +#import <WebKit/WKUIDelegatePrivate.h>
@@ -15782,7 +16006,17 @@ index 0000000000000000000000000000000000000000..72edf5c432f58659765d16dabdb536b4
 +
 +- (void)webView:(WKWebView *)webView decidePolicyForNavigationResponse:(WKNavigationResponse *)navigationResponse decisionHandler:(void (^)(WKNavigationResponsePolicy))decisionHandler
 +{
-+    LOG(@"decidePolicyForNavigationResponse");
++    if (![navigationResponse.response isKindOfClass:[NSHTTPURLResponse class]]) {
++      decisionHandler(WKNavigationResponsePolicyAllow);
++      return;
++    }
++    NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)navigationResponse.response;
++
++    NSString *disposition = [[httpResponse allHeaderFields] objectForKey:@"Content-Disposition"];
++    if (disposition && [disposition hasPrefix:@"attachment"]) {
++        decisionHandler(_WKNavigationResponsePolicyBecomeDownload);
++        return;
++    }
 +    decisionHandler(WKNavigationResponsePolicyAllow);
 +}
 +
