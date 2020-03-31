@@ -74,7 +74,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       expect(error.message).toContain('Unsupported target type');
     });
     it('should wait for predicate with arguments', async({page, server}) => {
-      await page.waitFor((arg1, arg2) => arg1 !== arg2, {}, 1, 2);
+      await page.waitFor(({arg1, arg2}) => arg1 + arg2 === 3, {}, { arg1: 1, arg2: 2});
     });
   });
 
