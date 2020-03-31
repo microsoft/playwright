@@ -43,7 +43,6 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@types/yauzl": "^2.9.1",
     "debug": "^4.1.0",
     "https-proxy-agent": "^3.0.0",
     "jpeg-js": "^0.3.6",
@@ -63,6 +62,7 @@
     "@types/proxy-from-env": "^1.0.0",
     "@types/rimraf": "^2.0.2",
     "@types/ws": "^6.0.1",
+    "@types/yauzl": "^2.9.1",
     "@typescript-eslint/eslint-plugin": "^2.6.1",
     "@typescript-eslint/parser": "^2.6.1",
     "colors": "^1.4.0",
