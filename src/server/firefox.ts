@@ -25,7 +25,7 @@ import { TimeoutError } from '../errors';
 import { Events } from '../events';
 import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
-import { helper } from '../helper';
+import { debugError, helper } from '../helper';
 import * as platform from '../platform';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { BrowserArgOptions, BrowserType, LaunchOptions } from './browserType';
@@ -296,6 +296,8 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
       if (method === 'Browser.removeBrowserContext')
         pendingBrowserContextDeletions.set(seqNum, params.browserContextId);
     });
+
+    socket.on('error', error => debugError(error));
 
     socket.on('close', (socket as any).__closeListener = () => {
       for (const [browserContextId, s] of browserContextIds) {

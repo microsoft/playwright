@@ -18,7 +18,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { helper } from '../helper';
+import { debugError, helper } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
 import * as platform from '../platform';
 import * as ws from 'ws';
@@ -268,6 +268,8 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
       // Pending session id, queue the message.
       session.queue!.push(parsedMessage);
     });
+
+    socket.on('error', error => debugError(error));
 
     socket.on('close', (socket as any).__closeListener = () => {
       const session = socketToBrowserSession.get(socket);
