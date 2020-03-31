@@ -290,6 +290,31 @@ playwright.chromium.launch().then(async browser => {
   browser.close();
 })();
 
+// waitForEvent
+(async () => {
+  const browser = await playwright.webkit.launch();
+  const page = await browser.newPage();
+  {
+    const frame = await page.waitForEvent('frameattached');
+    const assertion: AssertType<playwright.Frame, typeof frame> = true;
+  }
+  {
+    const worker = await page.waitForEvent('worker', {
+      predicate: worker => {
+        const condition: AssertType<playwright.Worker, typeof worker> = true;
+        return true;
+      }
+    });
+    const assertion: AssertType<playwright.Worker, typeof worker> = true;
+  }
+  {
+    const newPage = await page.context().waitForEvent('page', {
+      timeout: 500
+    });
+    const assertion: AssertType<playwright.Page, typeof newPage> = true;
+  }
+})();
+
 // typed handles
 (async () => {
   const browser = await playwright.webkit.launch();
@@ -514,7 +539,6 @@ playwright.chromium.launch().then(async browser => {
       const canBeNull: AssertType<null, typeof handle> = true;
     }
   }
-
 
   await browser.close();
 })();
