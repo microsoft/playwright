@@ -197,7 +197,7 @@ jobs:
       with:
         name: firefox-win-testrun.log
         path: firefox-win-testrun.log
-  e2e:
+  test-package-installations:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
