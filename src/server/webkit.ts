@@ -60,7 +60,7 @@ export class WebKit implements BrowserType<WKBrowser> {
   async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
     const {
       timeout = 30000,
-      slowMo = undefined,
+      slowMo = 0,
     } = options;
     const { transport } = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await WKBrowser.connect(transport!, slowMo, true);

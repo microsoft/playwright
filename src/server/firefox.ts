@@ -66,7 +66,7 @@ export class Firefox implements BrowserType<FFBrowser> {
   async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
     const {
       timeout = 30000,
-      slowMo = undefined,
+      slowMo = 0,
     } = options;
     const browserServer = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await platform.connectToWebsocket(browserServer.wsEndpoint()!, transport => {
