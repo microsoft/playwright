@@ -73,12 +73,17 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
   readonly _permissions = new Map<string, string[]>();
 
   constructor(options: BrowserContextOptions) {
-    super({
-      timeoutGetter: event => this._timeoutSettings.timeout(),
-      abortGetter: event => event === Events.BrowserContext.Close ? new Promise<Error>(() => void 0) : this._closePromise,
-    });
+    super();
     this._options = options;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
+  }
+
+  protected _abortPromiseForEvent(event: string) {
+    return event === Events.BrowserContext.Close ? super._abortPromiseForEvent(event) : this._closePromise;
+  }
+
+  protected _timeoutForEvent(event: string): number {
+    return this._timeoutSettings.timeout();
   }
 
   _browserClosed() {

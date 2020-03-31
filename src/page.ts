@@ -112,10 +112,7 @@ export class Page extends ExtendedEventEmitter {
   _ownedContext: BrowserContext | undefined;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContextBase) {
-    super({
-      timeoutGetter: event => this._timeoutSettings.timeout(),
-      abortGetter: event => this._disconnectedPromise,
-    });
+    super();
     this._delegate = delegate;
     this._closedCallback = () => {};
     this._closedPromise = new Promise(f => this._closedCallback = f);
@@ -144,6 +141,14 @@ export class Page extends ExtendedEventEmitter {
     if (delegate.pdf)
       this.pdf = delegate.pdf.bind(delegate);
     this.coverage = delegate.coverage ? delegate.coverage() : null;
+  }
+
+  protected _abortPromiseForEvent(event: string) {
+    return this._disconnectedPromise;
+  }
+
+  protected _timeoutForEvent(event: string): number {
+    return this._timeoutSettings.timeout();
   }
 
   _didClose() {
