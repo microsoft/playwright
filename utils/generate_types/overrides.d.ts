@@ -173,4 +173,3 @@ class TimeoutError extends Error {}
 
 export const selectors: Selectors;
 export const devices: {[name: string]: DeviceDescriptor} & DeviceDescriptor[];
-w
