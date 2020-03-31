@@ -18,15 +18,15 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { debugError, helper } from '../helper';
+import { debugError, helper, assert } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
 import * as platform from '../platform';
 import * as ws from 'ws';
 import { launchProcess } from '../server/processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
 import { PipeTransport } from './pipeTransport';
-import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
-import { ConnectOptions, LaunchType } from '../browser';
+import { LaunchOptions, BrowserArgOptions, BrowserType, ConnectOptions, LaunchServerOptions } from './browserType';
+import { LaunchType } from '../browser';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { Events } from '../events';
 import { ConnectionTransport, ProtocolRequest } from '../transport';
@@ -45,28 +45,30 @@ export class Chromium implements BrowserType<CRBrowser> {
     return 'chromium';
   }
 
-  async launch(options?: LaunchOptions & { slowMo?: number }): Promise<CRBrowser> {
-    if (options && (options as any).userDataDir)
-      throw new Error('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
+  async launch(options: LaunchOptions = {}): Promise<CRBrowser> {
+    assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     const { browserServer, transport } = await this._launchServer(options, 'local');
-    const browser = await CRBrowser.connect(transport!, false, options && options.slowMo);
+    const browser = await CRBrowser.connect(transport!, false, options.slowMo);
     (browser as any)['__server__'] = browserServer;
     return browser;
   }
 
-  async launchServer(options?: LaunchOptions & { port?: number }): Promise<BrowserServer> {
-    return (await this._launchServer(options, 'server', undefined, options && options.port)).browserServer;
+  async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
+    return (await this._launchServer(options, 'server')).browserServer;
   }
 
-  async launchPersistentContext(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
-    const { timeout = 30000 } = options || {};
+  async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
+    const {
+      timeout = 30000,
+      slowMo = 0
+    } = options;
     const { transport } = await this._launchServer(options, 'persistent', userDataDir);
-    const browser = await CRBrowser.connect(transport!, true);
+    const browser = await CRBrowser.connect(transport!, true, slowMo);
     await helper.waitWithTimeout(browser._firstPagePromise, 'first page', timeout);
     return browser._defaultContext;
   }
 
-  private async _launchServer(options: LaunchOptions = {}, launchType: LaunchType, userDataDir?: string, port?: number): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport }> {
+  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -76,7 +78,9 @@ export class Chromium implements BrowserType<CRBrowser> {
       handleSIGINT = true,
       handleSIGTERM = true,
       handleSIGHUP = true,
+      port = 0,
     } = options;
+    assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
 
     let temporaryUserDataDir: string | null = null;
     if (!userDataDir) {
@@ -124,7 +128,7 @@ export class Chromium implements BrowserType<CRBrowser> {
     let transport: PipeTransport | undefined = undefined;
     let browserServer: BrowserServer | undefined = undefined;
     transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream, () => browserServer!.close());
-    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, port || 0) : null);
+    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, port) : null);
     return { browserServer, transport };
   }
 

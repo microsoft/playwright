@@ -19,16 +19,16 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as ws from 'ws';
-import { ConnectOptions, LaunchType } from '../browser';
+import { LaunchType } from '../browser';
 import { BrowserContext } from '../browserContext';
 import { TimeoutError } from '../errors';
 import { Events } from '../events';
 import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
-import { debugError, helper } from '../helper';
+import { debugError, helper, assert } from '../helper';
 import * as platform from '../platform';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
-import { BrowserArgOptions, BrowserType, LaunchOptions } from './browserType';
+import { BrowserArgOptions, BrowserType, LaunchOptions, LaunchServerOptions, ConnectOptions } from './browserType';
 import { launchProcess, waitForLine } from './processLauncher';
 import { ConnectionTransport, SequenceNumberMixer } from '../transport';
 
@@ -47,12 +47,11 @@ export class Firefox implements BrowserType<FFBrowser> {
     return 'firefox';
   }
 
-  async launch(options?: LaunchOptions & { slowMo?: number }): Promise<FFBrowser> {
-    if (options && (options as any).userDataDir)
-      throw new Error('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
+  async launch(options: LaunchOptions = {}): Promise<FFBrowser> {
+    assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     const browserServer = await this._launchServer(options, 'local');
     const browser = await platform.connectToWebsocket(browserServer.wsEndpoint()!, transport => {
-      return FFBrowser.connect(transport, false, options && options.slowMo);
+      return FFBrowser.connect(transport, false, options.slowMo);
     });
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
     browser.close = () => browserServer.close();
@@ -60,15 +59,18 @@ export class Firefox implements BrowserType<FFBrowser> {
     return browser;
   }
 
-  async launchServer(options?: LaunchOptions & { port?: number }): Promise<BrowserServer> {
-    return await this._launchServer(options, 'server', undefined, options && options.port);
+  async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
+    return await this._launchServer(options, 'server');
   }
 
-  async launchPersistentContext(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
-    const { timeout = 30000 } = options || {};
+  async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
+    const {
+      timeout = 30000,
+      slowMo = 0,
+    } = options;
     const browserServer = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await platform.connectToWebsocket(browserServer.wsEndpoint()!, transport => {
-      return FFBrowser.connect(transport, true);
+      return FFBrowser.connect(transport, true, slowMo);
     });
     await helper.waitWithTimeout(browser._firstPagePromise, 'first page', timeout);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
@@ -77,7 +79,7 @@ export class Firefox implements BrowserType<FFBrowser> {
     return browserContext;
   }
 
-  private async _launchServer(options: LaunchOptions = {}, launchType: LaunchType, userDataDir?: string, port?: number): Promise<BrowserServer> {
+  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<BrowserServer> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -88,7 +90,9 @@ export class Firefox implements BrowserType<FFBrowser> {
       handleSIGINT = true,
       handleSIGTERM = true,
       timeout = 30000,
+      port = 0,
     } = options;
+    assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
 
     const firefoxArguments = [];
 
@@ -145,7 +149,7 @@ export class Firefox implements BrowserType<FFBrowser> {
 
     let browserServer: BrowserServer | undefined = undefined;
     let browserWSEndpoint: string | undefined = undefined;
-    const webSocketWrapper = launchType === 'server' ? (await platform.connectToWebsocket(innerEndpoint, t => wrapTransportWithWebSocket(t, port || 0))) : new WebSocketWrapper(innerEndpoint, []);
+    const webSocketWrapper = launchType === 'server' ? (await platform.connectToWebsocket(innerEndpoint, t => wrapTransportWithWebSocket(t, port))) : new WebSocketWrapper(innerEndpoint, []);
     browserWSEndpoint = webSocketWrapper.wsEndpoint;
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, webSocketWrapper);
     return browserServer;

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { ConnectOptions } from '../browser';
 import { BrowserContext } from '../browserContext';
 import { BrowserServer } from './browserServer';
 
@@ -24,7 +23,7 @@ export type BrowserArgOptions = {
   devtools?: boolean,
 };
 
-export type LaunchOptions = BrowserArgOptions & {
+type LaunchOptionsBase = BrowserArgOptions & {
   executablePath?: string,
   ignoreDefaultArgs?: boolean | string[],
   handleSIGINT?: boolean,
@@ -39,11 +38,17 @@ export type LaunchOptions = BrowserArgOptions & {
   env?: {[key: string]: string} | undefined
 };
 
+export type ConnectOptions = {
+  wsEndpoint: string,
+  slowMo?: number
+};
+export type LaunchOptions = LaunchOptionsBase & { slowMo?: number };
+export type LaunchServerOptions = LaunchOptionsBase & { port?: number };
 export interface BrowserType<Browser> {
   executablePath(): string;
   name(): string;
-  launch(options?: LaunchOptions & { slowMo?: number }): Promise<Browser>;
-  launchServer(options?: LaunchOptions & { port?: number }): Promise<BrowserServer>;
+  launch(options?: LaunchOptions): Promise<Browser>;
+  launchServer(options?: LaunchServerOptions): Promise<BrowserServer>;
   launchPersistentContext(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext>;
   connect(options: ConnectOptions): Promise<Browser>;
 }

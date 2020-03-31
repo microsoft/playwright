@@ -27,11 +27,6 @@ export interface Browser extends platform.EventEmitterType {
   _setDebugFunction(debugFunction: (message: string) => void): void;
 }
 
-export type ConnectOptions = {
-  slowMo?: number,
-  wsEndpoint: string
-};
-
 export async function createPageInNewContext(browser: Browser, options?: BrowserContextOptions): Promise<Page> {
   const context = await browser.newContext(options);
   const page = await context.newPage();

@@ -22,12 +22,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as platform from '../platform';
 import * as os from 'os';
-import { debugError, helper } from '../helper';
+import { debugError, helper, assert } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
-import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
+import { LaunchOptions, BrowserArgOptions, BrowserType, LaunchServerOptions, ConnectOptions } from './browserType';
 import { ConnectionTransport, SequenceNumberMixer } from '../transport';
 import * as ws from 'ws';
-import { ConnectOptions, LaunchType } from '../browser';
+import { LaunchType } from '../browser';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { Events } from '../events';
 import { BrowserContext } from '../browserContext';
@@ -45,28 +45,30 @@ export class WebKit implements BrowserType<WKBrowser> {
     return 'webkit';
   }
 
-  async launch(options?: LaunchOptions & { slowMo?: number }): Promise<WKBrowser> {
-    if (options && (options as any).userDataDir)
-      throw new Error('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
+  async launch(options: LaunchOptions = {}): Promise<WKBrowser> {
+    assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     const { browserServer, transport } = await this._launchServer(options, 'local');
-    const browser = await WKBrowser.connect(transport!, options && options.slowMo);
+    const browser = await WKBrowser.connect(transport!, options.slowMo);
     (browser as any)['__server__'] = browserServer;
     return browser;
   }
 
-  async launchServer(options?: LaunchOptions & { port?: number }): Promise<BrowserServer> {
-    return (await this._launchServer(options, 'server', undefined, options && options.port)).browserServer;
+  async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
+    return (await this._launchServer(options, 'server')).browserServer;
   }
 
-  async launchPersistentContext(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
-    const { timeout = 30000 } = options || {};
+  async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
+    const {
+      timeout = 30000,
+      slowMo = 0,
+    } = options;
     const { transport } = await this._launchServer(options, 'persistent', userDataDir);
-    const browser = await WKBrowser.connect(transport!, undefined, true);
+    const browser = await WKBrowser.connect(transport!, slowMo, true);
     await helper.waitWithTimeout(browser._waitForFirstPageTarget(), 'first page', timeout);
     return browser._defaultContext;
   }
 
-  private async _launchServer(options: LaunchOptions = {}, launchType: LaunchType, userDataDir?: string, port?: number): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport }> {
+  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -76,7 +78,9 @@ export class WebKit implements BrowserType<WKBrowser> {
       handleSIGINT = true,
       handleSIGTERM = true,
       handleSIGHUP = true,
+      port = 0,
     } = options;
+    assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
 
     let temporaryUserDataDir: string | null = null;
     if (!userDataDir) {
@@ -86,9 +90,9 @@ export class WebKit implements BrowserType<WKBrowser> {
 
     const webkitArguments = [];
     if (!ignoreDefaultArgs)
-      webkitArguments.push(...this._defaultArgs(options, launchType, userDataDir!, port || 0));
+      webkitArguments.push(...this._defaultArgs(options, launchType, userDataDir!, port));
     else if (Array.isArray(ignoreDefaultArgs))
-      webkitArguments.push(...this._defaultArgs(options, launchType, userDataDir!, port || 0).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
+      webkitArguments.push(...this._defaultArgs(options, launchType, userDataDir!, port).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
     else
       webkitArguments.push(...args);
 
