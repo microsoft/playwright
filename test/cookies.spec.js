@@ -421,11 +421,10 @@ module.exports.describe = function({testRunner, expect, browserType, defaultBrow
         sameSite: 'None',
       }]);
     });
-    it('should set cookies from a frame', async({context, page, server}) => {
-      await page.goto(server.PREFIX + '/grid.html');
+    it('should set cookies for a frame', async({context, page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
       await context.addCookies([
-        {url: server.PREFIX, name: 'localhost-cookie', value: 'best'},
-        {url: server.CROSS_PROCESS_PREFIX, name: '127-cookie', value: 'worst'}
+        {url: server.PREFIX, name: 'frame-cookie', value: 'value'}
       ]);
       await page.evaluate(src => {
         let fulfill;
@@ -435,32 +434,9 @@ module.exports.describe = function({testRunner, expect, browserType, defaultBrow
         iframe.onload = fulfill;
         iframe.src = src;
         return promise;
-      }, server.CROSS_PROCESS_PREFIX);
+      }, server.PREFIX + '/grid.html');
 
-      expect(await page.evaluate('document.cookie')).toBe('localhost-cookie=best');
-      expect(await page.frames()[1].evaluate('document.cookie')).toBe('127-cookie=worst');
-
-      expect(await context.cookies(server.PREFIX)).toEqual([{
-        name: 'localhost-cookie',
-        value: 'best',
-        domain: 'localhost',
-        path: '/',
-        expires: -1,
-        httpOnly: false,
-        secure: false,
-        sameSite: 'None',
-      }]);
-
-      expect(await context.cookies(server.CROSS_PROCESS_PREFIX)).toEqual([{
-        name: '127-cookie',
-        value: 'worst',
-        domain: '127.0.0.1',
-        path: '/',
-        expires: -1,
-        httpOnly: false,
-        secure: false,
-        sameSite: 'None',
-      }]);
+      expect(await page.frames()[1].evaluate('document.cookie')).toBe('frame-cookie=value');
     });
   });
 
