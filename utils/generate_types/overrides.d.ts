@@ -56,12 +56,12 @@ export interface Page {
 
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
   $eval<R, Arg>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement, Arg, R>, arg: Arg): Promise<R>;
-  $eval<K extends keyof HTMLElementTagNameMap, R>(selector: string, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any): Promise<R>;
+  $eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any): Promise<R>;
   $eval<R>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement, void, R>, arg?: any): Promise<R>;
 
   $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg): Promise<R>;
   $$eval<R, Arg>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement[], Arg, R>, arg: Arg): Promise<R>;
-  $$eval<K extends keyof HTMLElementTagNameMap, R>(selector: string, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], void, R>, arg?: any): Promise<R>;
+  $$eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], void, R>, arg?: any): Promise<R>;
   $$eval<R>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement[], void, R>, arg?: any): Promise<R>;
 
   waitForFunction<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
@@ -88,12 +88,12 @@ export interface Frame {
 
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
   $eval<R, Arg>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement, Arg, R>, arg: Arg): Promise<R>;
-  $eval<K extends keyof HTMLElementTagNameMap, R>(selector: string, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any): Promise<R>;
+  $eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any): Promise<R>;
   $eval<R>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement, void, R>, arg?: any): Promise<R>;
 
   $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg): Promise<R>;
   $$eval<R, Arg>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement[], Arg, R>, arg: Arg): Promise<R>;
-  $$eval<K extends keyof HTMLElementTagNameMap, R>(selector: string, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], void, R>, arg?: any): Promise<R>;
+  $$eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], void, R>, arg?: any): Promise<R>;
   $$eval<R>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement[], void, R>, arg?: any): Promise<R>;
 
   waitForFunction<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
@@ -133,12 +133,12 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
   $eval<R, Arg>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement, Arg, R>, arg: Arg): Promise<R>;
-  $eval<K extends keyof HTMLElementTagNameMap, R>(selector: string, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any): Promise<R>;
+  $eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any): Promise<R>;
   $eval<R>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement, void, R>, arg?: any): Promise<R>;
 
   $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg): Promise<R>;
   $$eval<R, Arg>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement[], Arg, R>, arg: Arg): Promise<R>;
-  $$eval<K extends keyof HTMLElementTagNameMap, R>(selector: string, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], void, R>, arg?: any): Promise<R>;
+  $$eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], void, R>, arg?: any): Promise<R>;
   $$eval<R>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement[], void, R>, arg?: any): Promise<R>;
 }
 
