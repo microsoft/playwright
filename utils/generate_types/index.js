@@ -141,6 +141,7 @@ function createEventDescriptions(classDesc) {
     const argName = argNameForType(type);
     const params = argName ? `${argName} : ${type}` : '';
     descriptions.push({
+      type,
       params,
       eventName,
       comment: value.comment
@@ -167,6 +168,16 @@ function classBody(classDesc) {
   parts.push(members.map(member => {
     if (member.kind === 'event')
       return '';
+    if (member.name === 'waitForEvent') {
+      const parts = [];
+      for (const {eventName, params, comment, type} of eventDescriptions) {
+        if (comment)
+          parts.push(writeComment(comment, '  '));
+        parts.push(`  ${member.name}(event: '${eventName}', optionsOrPredicate?: { predicate?: (${params}) => boolean, timeout?: number }): Promise<${type}>;\n`);
+      }
+
+      return parts.join('\n');
+    }
     const jsdoc = memberJSDOC(member, '  ');
     const args = argsFromMember(member, classDesc.name);
     const type = typeToString(member.type, classDesc.name, member.name);
