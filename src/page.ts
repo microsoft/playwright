@@ -29,6 +29,7 @@ import { BrowserContext, BrowserContextBase } from './browserContext';
 import { ConsoleMessage, ConsoleMessageLocation } from './console';
 import * as accessibility from './accessibility';
 import * as platform from './platform';
+import { ExtendedEventEmitter } from './extendedEventEmitter';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -87,7 +88,7 @@ export type FileChooser = {
   multiple: boolean
 };
 
-export class Page extends platform.EventEmitter {
+export class Page extends ExtendedEventEmitter {
   private _closed = false;
   private _closedCallback: () => void;
   private _closedPromise: Promise<void>;
@@ -111,7 +112,10 @@ export class Page extends platform.EventEmitter {
   _ownedContext: BrowserContext | undefined;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContextBase) {
-    super();
+    super({
+      timeoutGetter: event => this._timeoutSettings.timeout(),
+      abortGetter: event => this._disconnectedPromise,
+    });
     this._delegate = delegate;
     this._closedCallback = () => {};
     this._closedPromise = new Promise(f => this._closedCallback = f);
@@ -301,13 +305,6 @@ export class Page extends platform.EventEmitter {
 
   async waitForNavigation(options?: types.WaitForNavigationOptions): Promise<network.Response | null> {
     return this.mainFrame().waitForNavigation(options);
-  }
-
-  async waitForEvent(event: string, optionsOrPredicate: Function | (types.TimeoutOptions & { predicate?: Function }) = {}): Promise<any> {
-    if (typeof optionsOrPredicate === 'function')
-      optionsOrPredicate = { predicate: optionsOrPredicate };
-    const { timeout = this._timeoutSettings.timeout(), predicate = () => true } = optionsOrPredicate;
-    return helper.waitForEvent(this, event, (...args: any[]) => !!predicate(...args), timeout, this._disconnectedPromise);
   }
 
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: network.Request) => boolean), options: types.TimeoutOptions = {}): Promise<network.Request> {

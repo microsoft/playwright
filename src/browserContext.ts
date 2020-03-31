@@ -18,10 +18,10 @@
 import { helper } from './helper';
 import * as network from './network';
 import { Page, PageBinding } from './page';
-import * as platform from './platform';
 import { TimeoutSettings } from './timeoutSettings';
 import * as types from './types';
 import { Events } from './events';
+import { ExtendedEventEmitter } from './extendedEventEmitter';
 
 export type BrowserContextOptions = {
   viewport?: types.Size | null,
@@ -62,7 +62,7 @@ export interface BrowserContext {
   close(): Promise<void>;
 }
 
-export abstract class BrowserContextBase extends platform.EventEmitter implements BrowserContext {
+export abstract class BrowserContextBase extends ExtendedEventEmitter implements BrowserContext {
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: BrowserContextOptions;
@@ -73,7 +73,10 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
   readonly _permissions = new Map<string, string[]>();
 
   constructor(options: BrowserContextOptions) {
-    super();
+    super({
+      timeoutGetter: event => this._timeoutSettings.timeout(),
+      abortGetter: event => event === Events.BrowserContext.Close ? new Promise<Error>(() => void 0) : this._closePromise,
+    });
     this._options = options;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
   }
@@ -131,17 +134,6 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
-  }
-
-  async waitForEvent(event: string, optionsOrPredicate?: Function | (types.TimeoutOptions & { predicate?: Function })): Promise<any> {
-    if (!optionsOrPredicate)
-      optionsOrPredicate = {};
-    if (typeof optionsOrPredicate === 'function')
-      optionsOrPredicate = { predicate: optionsOrPredicate };
-    const { timeout = this._timeoutSettings.timeout(), predicate = () => true } = optionsOrPredicate;
-
-    const abortPromise = (event === Events.BrowserContext.Close) ? new Promise<Error>(() => { }) : this._closePromise;
-    return helper.waitForEvent(this, event, (...args: any[]) => !!predicate(...args), timeout, abortPromise);
   }
 }
 
