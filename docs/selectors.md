@@ -72,8 +72,8 @@ XPath engine is equivalent to [`Document.evaluate`](https://developer.mozilla.or
 ### text
 
 Text engine finds an element that contains a text node with passed text. Example: `text=Login`.
-- By default, the match is case-insensitive, and ignores leading/trailing whitespace. This means `text= Login` matches `<button>loGIN </button>`.
-- Text body can be escaped with double quotes for precise matching, insisting on specific whitespace and case. This means `text="Login "` will only match `<button>Login </button>` with exactly one space after "Login".
+- By default, the match is case-insensitive, ignores leading/trailing whitespace and searches for a substring. This means `text= Login` matches `<button>Button loGIN (click me)</button>`.
+- Text body can be escaped with double quotes for precise matching, insisting on exact match, including specified whitespace and case. This means `text="Login "` will only match `<button>Login </button>` with exactly one space after "Login".
 - Text body can also be a JavaScript-like regex wrapped in `/` symbols. This means `text=/^\\s*Login$/i` will match `<button> loGIN</button>` with any number of spaces before "Login" and no spaces after.
 
 > **NOTE** Malformed selector starting with `"` is automatically transformed to text selector. For example, Playwright converts `page.click('"Login"')` to `page.click('text="Login"')`.
