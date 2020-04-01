@@ -5140,16 +5140,13 @@ index 0000000000000000000000000000000000000000..bf37558bccc48f4d90eadc971c1eb3e4
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/juggler/protocol/BrowserHandler.js b/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..b26325857d87f714f1250a52f233644806a61ebf
+index 0000000000000000000000000000000000000000..f63ee04a355e7426e13bd7095365bf44bb44648d
 --- /dev/null
 +++ b/juggler/protocol/BrowserHandler.js
-@@ -0,0 +1,196 @@
+@@ -0,0 +1,183 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
-+const { allowAllCerts } = ChromeUtils.import(
-+  "chrome://marionette/content/cert.js"
-+);
 +const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +
@@ -5266,16 +5263,6 @@ index 0000000000000000000000000000000000000000..b26325857d87f714f1250a52f2336448
 +      await browserWindow.gBrowserInit.idleTasksFinishedPromise;
 +    }
 +    Services.startup.quit(Ci.nsIAppStartup.eForceQuit);
-+  }
-+
-+  async setIgnoreHTTPSErrors({enabled}) {
-+    if (!enabled) {
-+      allowAllCerts.disable()
-+      Services.prefs.setBoolPref('security.mixed_content.block_active_content', true);
-+    } else {
-+      allowAllCerts.enable()
-+      Services.prefs.setBoolPref('security.mixed_content.block_active_content', false);
-+    }
 +  }
 +
 +  async grantPermissions({browserContextId, origin, permissions}) {
@@ -6146,10 +6133,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/juggler/protocol/Protocol.js b/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..41bd5059dafd9b9f192f8792110e8e3a5d1c7b20
+index 0000000000000000000000000000000000000000..e5482da00da11c88b278164b148f44c724cb0c89
 --- /dev/null
 +++ b/juggler/protocol/Protocol.js
-@@ -0,0 +1,780 @@
+@@ -0,0 +1,775 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -6390,11 +6377,6 @@ index 0000000000000000000000000000000000000000..41bd5059dafd9b9f192f8792110e8e3a
 +      returns: {
 +        userAgent: t.String,
 +        version: t.String,
-+      },
-+    },
-+    'setIgnoreHTTPSErrors': {
-+      params: {
-+        enabled: t.Boolean,
 +      },
 +    },
 +    'setExtraHTTPHeaders': {
