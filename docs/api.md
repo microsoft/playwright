@@ -643,8 +643,8 @@ page.removeListener('request', logRequest);
 - [event: 'worker'](#event-worker)
 - [page.$(selector)](#pageselector)
 - [page.$$(selector)](#pageselector-1)
-- [page.$$eval(selector, pageFunction[, arg])](#pageevalselector-pagefunction-arg)
-- [page.$eval(selector, pageFunction[, arg])](#pageevalselector-pagefunction-arg-1)
+- [page.$eval(selector, pageFunction[, arg])](#pageevalselector-pagefunction-arg)
+- [page.$$eval(selector, pageFunction[, arg])](#pageevalselector-pagefunction-arg-1)
 - [page.accessibility](#pageaccessibility)
 - [page.addInitScript(script[, arg])](#pageaddinitscriptscript-arg)
 - [page.addScriptTag(options)](#pageaddscripttagoptions)
@@ -827,21 +827,6 @@ The method runs `document.querySelectorAll` within the page. If no elements matc
 
 Shortcut for [page.mainFrame().$$(selector)](#frameselector-1).
 
-#### page.$$eval(selector, pageFunction[, arg])
-- `selector` <[string]> A selector to query page for
-- `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
-
-This method runs `Array.from(document.querySelectorAll(selector))` within the page and passes it as the first argument to `pageFunction`.
-
-If `pageFunction` returns a [Promise], then `page.$$eval` would wait for the promise to resolve and return its value.
-
-Examples:
-```js
-const divsCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 10);
-```
-
 #### page.$eval(selector, pageFunction[, arg])
 - `selector` <[string]> A selector to query page for
 - `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
@@ -860,6 +845,21 @@ const html = await page.$eval('.main-container', (e, suffix) => e.outerHTML + su
 ```
 
 Shortcut for [page.mainFrame().$eval(selector, pageFunction)](#frameevalselector-pagefunction-arg).
+
+#### page.$$eval(selector, pageFunction[, arg])
+- `selector` <[string]> A selector to query page for
+- `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
+- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
+
+This method runs `Array.from(document.querySelectorAll(selector))` within the page and passes it as the first argument to `pageFunction`.
+
+If `pageFunction` returns a [Promise], then `page.$$eval` would wait for the promise to resolve and return its value.
+
+Examples:
+```js
+const divsCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 10);
+```
 
 #### page.accessibility
 - returns: <[Accessibility]>
@@ -1862,8 +1862,8 @@ An example of getting text from an iframe element:
 <!-- GEN:toc -->
 - [frame.$(selector)](#frameselector)
 - [frame.$$(selector)](#frameselector-1)
-- [frame.$$eval(selector, pageFunction[, arg])](#frameevalselector-pagefunction-arg)
-- [frame.$eval(selector, pageFunction[, arg])](#frameevalselector-pagefunction-arg-1)
+- [frame.$eval(selector, pageFunction[, arg])](#frameevalselector-pagefunction-arg)
+- [frame.$$eval(selector, pageFunction[, arg])](#frameevalselector-pagefunction-arg-1)
 - [frame.addScriptTag(options)](#frameaddscripttagoptions)
 - [frame.addStyleTag(options)](#frameaddstyletagoptions)
 - [frame.check(selector, [options])](#framecheckselector-options)
@@ -1907,21 +1907,6 @@ The method queries frame for the selector. If there's no such element within the
 
 The method runs `document.querySelectorAll` within the frame. If no elements match the selector, the return value resolves to `[]`.
 
-#### frame.$$eval(selector, pageFunction[, arg])
-- `selector` <[string]> A selector to query frame for
-- `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
-
-This method runs `Array.from(document.querySelectorAll(selector))` within the frame and passes it as the first argument to `pageFunction`.
-
-If `pageFunction` returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return its value.
-
-Examples:
-```js
-const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 10);
-```
-
 #### frame.$eval(selector, pageFunction[, arg])
 - `selector` <[string]> A selector to query frame for
 - `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
@@ -1937,6 +1922,21 @@ Examples:
 const searchValue = await frame.$eval('#search', el => el.value);
 const preloadHref = await frame.$eval('link[rel=preload]', el => el.href);
 const html = await frame.$eval('.main-container', (e, suffix) => e.outerHTML + suffix, 'hello');
+```
+
+#### frame.$$eval(selector, pageFunction[, arg])
+- `selector` <[string]> A selector to query frame for
+- `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
+- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
+
+This method runs `Array.from(document.querySelectorAll(selector))` within the frame and passes it as the first argument to `pageFunction`.
+
+If `pageFunction` returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return its value.
+
+Examples:
+```js
+const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 10);
 ```
 
 #### frame.addScriptTag(options)
@@ -2472,8 +2472,8 @@ ElementHandle instances can be used as an argument in [`page.$eval()`](#pageeval
 <!-- GEN:toc -->
 - [elementHandle.$(selector)](#elementhandleselector)
 - [elementHandle.$$(selector)](#elementhandleselector-1)
-- [elementHandle.$$eval(selector, pageFunction[, arg])](#elementhandleevalselector-pagefunction-arg)
-- [elementHandle.$eval(selector, pageFunction[, arg])](#elementhandleevalselector-pagefunction-arg-1)
+- [elementHandle.$eval(selector, pageFunction[, arg])](#elementhandleevalselector-pagefunction-arg)
+- [elementHandle.$$eval(selector, pageFunction[, arg])](#elementhandleevalselector-pagefunction-arg-1)
 - [elementHandle.boundingBox()](#elementhandleboundingbox)
 - [elementHandle.check([options])](#elementhandlecheckoptions)
 - [elementHandle.click([options])](#elementhandleclickoptions)
@@ -2514,6 +2514,23 @@ The method runs `element.querySelector` within the page. If no element matches t
 
 The method runs `element.querySelectorAll` within the page. If no elements match the selector, the return value resolves to `[]`.
 
+#### elementHandle.$eval(selector, pageFunction[, arg])
+- `selector` <[string]> A selector to query page for
+- `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
+- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
+
+This method runs `document.querySelector` within the element and passes it as the first argument to `pageFunction`. If there's no element matching `selector`, the method throws an error.
+
+If `pageFunction` returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return its value.
+
+Examples:
+```js
+const tweetHandle = await page.$('.tweet');
+expect(await tweetHandle.$eval('.like', node => node.innerText)).toBe('100');
+expect(await tweetHandle.$eval('.retweets', node => node.innerText)).toBe('10');
+```
+
 #### elementHandle.$$eval(selector, pageFunction[, arg])
 - `selector` <[string]> A selector to query page for
 - `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
@@ -2534,23 +2551,6 @@ Examples:
 ```js
 const feedHandle = await page.$('.feed');
 expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).toEqual(['Hello!', 'Hi!']);
-```
-
-#### elementHandle.$eval(selector, pageFunction[, arg])
-- `selector` <[string]> A selector to query page for
-- `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
-
-This method runs `document.querySelector` within the element and passes it as the first argument to `pageFunction`. If there's no element matching `selector`, the method throws an error.
-
-If `pageFunction` returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return its value.
-
-Examples:
-```js
-const tweetHandle = await page.$('.tweet');
-expect(await tweetHandle.$eval('.like', node => node.innerText)).toBe('100');
-expect(await tweetHandle.$eval('.retweets', node => node.innerText)).toBe('10');
 ```
 
 #### elementHandle.boundingBox()
