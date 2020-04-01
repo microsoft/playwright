@@ -21,16 +21,16 @@ import { Events } from '../events';
 import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding } from '../page';
-import * as platform from '../platform';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
 import * as types from '../types';
 import { Protocol } from './protocol';
 import { kPageProxyMessageReceived, PageProxyMessageReceivedPayload, WKConnection, WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
+import { EventEmitter } from 'events';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15';
 
-export class WKBrowser extends platform.EventEmitter implements Browser {
+export class WKBrowser extends EventEmitter implements Browser {
   private readonly _connection: WKConnection;
   private readonly _attachToDefaultContext: boolean;
   readonly _browserSession: WKSession;
@@ -186,7 +186,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     await disconnected;
   }
 
-  _setDebugFunction(debugFunction: platform.DebuggerType) {
+  _setDebugFunction(debugFunction: debug.IDebugger) {
     this._connection._debugProtocol = debugFunction;
   }
 }

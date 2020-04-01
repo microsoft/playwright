@@ -17,13 +17,12 @@
 
 import { debugError, helper, RegisteredListener } from '../helper';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
-import { makeWaitForNextTask } from '../platform';
 
 export class PipeTransport implements ConnectionTransport {
   private _pipeWrite: NodeJS.WritableStream | null;
   private _pendingMessage = '';
   private _eventListeners: RegisteredListener[];
-  private _waitForNextTask = makeWaitForNextTask();
+  private _waitForNextTask = helper.makeWaitForNextTask();
   private readonly _closeCallback: () => void;
 
   onmessage?: (message: ProtocolResponse) => void;

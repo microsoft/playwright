@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-import {assert} from '../helper';
-import * as platform from '../platform';
+import * as debug from 'debug';
+import { EventEmitter } from 'events';
+import { assert } from '../helper';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { Protocol } from './protocol';
 
@@ -28,12 +29,12 @@ export const ConnectionEvents = {
 // should ignore.
 export const kBrowserCloseMessageId = -9999;
 
-export class FFConnection extends platform.EventEmitter {
+export class FFConnection extends EventEmitter {
   private _lastId: number;
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
   private _transport: ConnectionTransport;
   readonly _sessions: Map<string, FFSession>;
-  _debugProtocol: platform.DebuggerType = platform.debug('pw:protocol');
+  _debugProtocol = debug('pw:protocol');
   _closed: boolean;
 
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
@@ -135,7 +136,7 @@ export const FFSessionEvents = {
   Disconnected: Symbol('Disconnected')
 };
 
-export class FFSession extends platform.EventEmitter {
+export class FFSession extends EventEmitter {
   _connection: FFConnection;
   _disposed = false;
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;

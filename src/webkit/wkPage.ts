@@ -30,11 +30,12 @@ import * as dialog from '../dialog';
 import { RawMouseImpl, RawKeyboardImpl } from './wkInput';
 import * as types from '../types';
 import * as accessibility from '../accessibility';
-import * as platform from '../platform';
 import { getAccessibilityTree } from './wkAccessibility';
 import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKBrowserContext } from './wkBrowser';
 import { selectors } from '../selectors';
+import * as jpeg from 'jpeg-js';
+import * as png from 'pngjs';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
@@ -73,7 +74,7 @@ export class WKPage implements PageDelegate {
     this._workers = new WKWorkers(this._page);
     this._session = undefined as any as WKSession;
     this._browserContext = browserContext;
-    this._page.on(Events.Page.FrameDetached, frame => this._removeContextsForFrame(frame, false));
+    this._page.on(Events.Page.FrameDetached, (frame: frames.Frame) => this._removeContextsForFrame(frame, false));
     this._eventListeners = [
       helper.addEventListener(this._pageProxySession, 'Target.targetCreated', this._onTargetCreated.bind(this)),
       helper.addEventListener(this._pageProxySession, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
@@ -618,15 +619,15 @@ export class WKPage implements PageDelegate {
     await this._session.send('Page.setDefaultBackgroundColorOverride', { color });
   }
 
-  async takeScreenshot(format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<platform.BufferType> {
+  async takeScreenshot(format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
     // TODO: documentRect does not include pageScale, while backend considers it does.
     // This brakes mobile screenshots of elements or full page.
     const rect = (documentRect || viewportRect)!;
     const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport' });
     const prefix = 'data:image/png;base64,';
-    let buffer = platform.Buffer.from(result.dataURL.substr(prefix.length), 'base64');
+    let buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
     if (format === 'jpeg')
-      buffer = platform.pngToJpeg(buffer, quality);
+      buffer = jpeg.encode(png.PNG.sync.read(buffer), quality).data;
     return buffer;
   }
 

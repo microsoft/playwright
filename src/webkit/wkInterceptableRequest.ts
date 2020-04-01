@@ -18,7 +18,6 @@
 import * as frames from '../frames';
 import { assert, debugError, helper } from '../helper';
 import * as network from '../network';
-import * as platform from '../platform';
 import { Protocol } from './protocol';
 import { WKSession } from './wkConnection';
 
@@ -80,7 +79,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     if (response.contentType)
       responseHeaders['content-type'] = response.contentType;
     if (responseBody && !('content-length' in responseHeaders))
-      responseHeaders['content-length'] = String(platform.Buffer.byteLength(responseBody));
+      responseHeaders['content-length'] = String(Buffer.byteLength(responseBody));
 
     await this._session.send('Network.interceptWithResponse', {
       requestId: this._requestId,
@@ -114,7 +113,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
   createResponse(responsePayload: Protocol.Network.Response): network.Response {
     const getResponseBody = async () => {
       const response = await this._session.send('Network.getResponseBody', { requestId: this._requestId });
-      return platform.Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
+      return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
     };
     return new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObject(responsePayload.headers), getResponseBody);
   }

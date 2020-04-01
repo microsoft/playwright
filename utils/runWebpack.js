@@ -20,7 +20,6 @@ const path = require('path');
 const files = [
   path.join('src', 'injected', 'zsSelectorEngine.webpack.config.js'),
   path.join('src', 'injected', 'selectorEvaluator.webpack.config.js'),
-  path.join('src', 'web.webpack.config.js'),
 ];
 
 function runOne(runner, file) {

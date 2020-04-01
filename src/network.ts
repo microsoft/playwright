@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
+import * as mime from 'mime';
+import * as util from 'util';
 import * as frames from './frames';
 import { assert, helper } from './helper';
-import * as platform from './platform';
 
 export type NetworkCookie = {
   name: string,
@@ -227,8 +229,8 @@ export class Route {
       response = {
         status: response.status,
         headers: response.headers,
-        contentType: platform.getMimeType(response.path),
-        body: await platform.readFileBuffer(response.path)
+        contentType: mime.getType(response.path) || 'application/octet-stream',
+        body: await util.promisify(fs.readFile)(response.path)
       };
     }
     await this._delegate.fulfill(response);
@@ -242,11 +244,11 @@ export class Route {
 
 export type RouteHandler = (route: Route, request: Request) => void;
 
-type GetResponseBodyCallback = () => Promise<platform.BufferType>;
+type GetResponseBodyCallback = () => Promise<Buffer>;
 
 export class Response {
   private _request: Request;
-  private _contentPromise: Promise<platform.BufferType> | null = null;
+  private _contentPromise: Promise<Buffer> | null = null;
   _finishedPromise: Promise<Error | null>;
   private _finishedPromiseCallback: any;
   private _status: number;
@@ -296,7 +298,7 @@ export class Response {
     return this._finishedPromise;
   }
 
-  body(): Promise<platform.BufferType> {
+  body(): Promise<Buffer> {
     if (!this._contentPromise) {
       this._contentPromise = this._finishedPromise.then(async error => {
         if (error)
@@ -330,7 +332,7 @@ export type FulfillResponse = {
   status?: number,
   headers?: Headers,
   contentType?: string,
-  body?: string | platform.BufferType,
+  body?: string | Buffer,
 };
 
 export interface RouteDelegate {

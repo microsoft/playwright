@@ -18,7 +18,8 @@
 import { assert } from '../helper';
 import { CRSession } from './crConnection';
 import { Protocol } from './protocol';
-import * as platform from '../platform';
+import * as fs from 'fs';
+import * as util from 'util';
 
 export function getExceptionMessage(exceptionDetails: Protocol.Runtime.ExceptionDetails): string {
   if (exceptionDetails.exception)
@@ -61,24 +62,24 @@ export async function releaseObject(client: CRSession, remoteObject: Protocol.Ru
   await client.send('Runtime.releaseObject', {objectId: remoteObject.objectId}).catch(error => {});
 }
 
-export async function readProtocolStream(client: CRSession, handle: string, path: string | null): Promise<platform.BufferType> {
+export async function readProtocolStream(client: CRSession, handle: string, path: string | null): Promise<Buffer> {
   let eof = false;
   let fd: number | undefined;
   if (path)
-    fd = await platform.openFdAsync(path, 'w');
+    fd = await util.promisify(fs.open)(path, 'w');
   const bufs = [];
   while (!eof) {
     const response = await client.send('IO.read', {handle});
     eof = response.eof;
-    const buf = platform.Buffer.from(response.data, response.base64Encoded ? 'base64' : undefined);
+    const buf = Buffer.from(response.data, response.base64Encoded ? 'base64' : undefined);
     bufs.push(buf);
     if (path)
-      await platform.writeFdAsync(fd!, buf);
+      await util.promisify(fs.write)(fd!, buf);
   }
   if (path)
-    await platform.closeFdAsync(fd!);
+    await util.promisify(fs.close)(fd!);
   await client.send('IO.close', {handle});
-  return platform.Buffer.concat(bufs);
+  return Buffer.concat(bufs);
 }
 
 export function toConsoleMessageLocation(stackTrace: Protocol.Runtime.StackTrace | undefined) {

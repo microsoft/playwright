@@ -15,10 +15,10 @@
  */
 
 import { BrowserContext, BrowserContextOptions } from './browserContext';
-import * as platform from './platform';
 import { Page } from './page';
+import { EventEmitter } from 'events';
 
-export interface Browser extends platform.EventEmitterType {
+export interface Browser extends EventEmitter {
   newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
   contexts(): BrowserContext[];
   newPage(options?: BrowserContextOptions): Promise<Page>;

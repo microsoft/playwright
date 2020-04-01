@@ -16,7 +16,6 @@
  */
 
 import { assert, helper } from '../helper';
-import * as platform from '../platform';
 import * as types from '../types';
 import { CRSession } from './crConnection';
 import { readProtocolStream } from './crProtocolHelper';
@@ -77,7 +76,7 @@ export class CRPDF {
     this._client = client;
   }
 
-  async generate(options: types.PDFOptions = {}): Promise<platform.BufferType> {
+  async generate(options: types.PDFOptions = {}): Promise<Buffer> {
     const {
       scale = 1,
       displayHeaderFooter = false,

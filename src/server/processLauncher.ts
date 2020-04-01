@@ -16,14 +16,15 @@
  */
 
 import * as childProcess from 'child_process';
-import * as stream from 'stream';
-import * as removeFolder from 'rimraf';
-import { helper } from '../helper';
+import * as debug from 'debug';
 import * as readline from 'readline';
+import * as removeFolder from 'rimraf';
+import * as stream from 'stream';
+import * as util from 'util';
 import { TimeoutError } from '../errors';
-import * as platform from '../platform';
+import { helper } from '../helper';
 
-const removeFolderAsync = platform.promisify(removeFolder);
+const removeFolderAsync = util.promisify(removeFolder);
 
 export type LaunchProcessOptions = {
   executablePath: string,
@@ -48,9 +49,9 @@ let lastLaunchedId = 0;
 
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
   const id = ++lastLaunchedId;
-  const debugBrowser = platform.debug(`pw:browser:proc:[${id}]`);
-  const debugBrowserOut = platform.debug(`pw:browser:out:[${id}]`);
-  const debugBrowserErr = platform.debug(`pw:browser:err:[${id}]`);
+  const debugBrowser = debug(`pw:browser:proc:[${id}]`);
+  const debugBrowserOut = debug(`pw:browser:out:[${id}]`);
+  const debugBrowserErr = debug(`pw:browser:err:[${id}]`);
   (debugBrowser as any).color = '33';
   (debugBrowserOut as any).color = '178';
   (debugBrowserErr as any).color = '160';

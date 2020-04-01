@@ -15,11 +15,13 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
+import * as mime from 'mime';
+import * as util from 'util';
 import * as dom from './dom';
 import { assert, helper } from './helper';
-import * as types from './types';
 import { Page } from './page';
-import * as platform from './platform';
+import * as types from './types';
 
 export class Screenshotter {
   private _queue = new TaskQueue();
@@ -78,7 +80,7 @@ export class Screenshotter {
     return fullPageSize;
   }
 
-  async screenshotPage(options: types.ScreenshotOptions = {}): Promise<platform.BufferType> {
+  async screenshotPage(options: types.ScreenshotOptions = {}): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
       const { viewportSize, originalViewportSize } = await this._originalViewportSize();
@@ -102,7 +104,7 @@ export class Screenshotter {
     }).catch(rewriteError);
   }
 
-  async screenshotElement(handle: dom.ElementHandle, options: types.ElementScreenshotOptions = {}): Promise<platform.BufferType> {
+  async screenshotElement(handle: dom.ElementHandle, options: types.ElementScreenshotOptions = {}): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
       const { viewportSize, originalViewportSize } = await this._originalViewportSize();
@@ -138,7 +140,7 @@ export class Screenshotter {
     }).catch(rewriteError);
   }
 
-  private async _screenshot(format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, options: types.ElementScreenshotOptions, overridenViewportSize: types.Size | null, originalViewportSize: types.Size | null): Promise<platform.BufferType> {
+  private async _screenshot(format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, options: types.ElementScreenshotOptions, overridenViewportSize: types.Size | null, originalViewportSize: types.Size | null): Promise<Buffer> {
     const shouldSetDefaultBackground = options.omitBackground && format === 'png';
     if (shouldSetDefaultBackground)
       await this._page._delegate.setBackgroundColor({ r: 0, g: 0, b: 0, a: 0});
@@ -153,7 +155,7 @@ export class Screenshotter {
         await this._page._delegate.resetViewport();
     }
     if (options.path)
-      await platform.writeFileAsync(options.path, buffer);
+      await util.promisify(fs.writeFile)(options.path, buffer);
     return buffer;
   }
 }
@@ -196,7 +198,7 @@ function validateScreenshotOptions(options: types.ScreenshotOptions): 'png' | 'j
     assert(options.type === 'png' || options.type === 'jpeg', 'Unknown options.type value: ' + options.type);
     format = options.type;
   } else if (options.path) {
-    const mimeType = platform.getMimeType(options.path);
+    const mimeType = mime.getType(options.path);
     if (mimeType === 'image/png')
       format = 'png';
     else if (mimeType === 'image/jpeg')

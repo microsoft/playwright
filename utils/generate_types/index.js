@@ -37,7 +37,7 @@ let documentation;
   const {documentation: mdDocumentation} = await require('../doclint/check_public_api/MDBuilder')(page, [api]);
   await browser.close();
   const sources = await Source.readdir(path.join(PROJECT_DIR, 'src'));
-  const {documentation: jsDocumentation} = await require('../doclint/check_public_api/JSBuilder').checkSources(sources, Object.keys(require('../../src/web.webpack.config').externals));
+  const {documentation: jsDocumentation} = await require('../doclint/check_public_api/JSBuilder').checkSources(sources);
   documentation = mergeDocumentation(mdDocumentation, jsDocumentation);
   const handledClasses = new Set();
 

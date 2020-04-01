@@ -18,9 +18,9 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import * as util from 'util';
 import { debugError, helper, assert } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
-import * as platform from '../platform';
 import * as ws from 'ws';
 import { launchProcess } from '../server/processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
@@ -29,7 +29,7 @@ import { LaunchOptions, BrowserArgOptions, BrowserType, ConnectOptions, LaunchSe
 import { LaunchType } from '../browser';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { Events } from '../events';
-import { ConnectionTransport, ProtocolRequest } from '../transport';
+import { ConnectionTransport, ProtocolRequest, WebSocketTransport } from '../transport';
 import { BrowserContext } from '../browserContext';
 
 export class Chromium implements BrowserType<CRBrowser> {
@@ -85,14 +85,14 @@ export class Chromium implements BrowserType<CRBrowser> {
     let temporaryUserDataDir: string | null = null;
     if (!userDataDir) {
       userDataDir = await mkdtempAsync(CHROMIUM_PROFILE_PATH);
-      temporaryUserDataDir = userDataDir!;
+      temporaryUserDataDir = userDataDir;
     }
 
     const chromeArguments = [];
     if (!ignoreDefaultArgs)
-      chromeArguments.push(...this._defaultArgs(options, launchType, userDataDir!));
+      chromeArguments.push(...this._defaultArgs(options, launchType, userDataDir));
     else if (Array.isArray(ignoreDefaultArgs))
-      chromeArguments.push(...this._defaultArgs(options, launchType, userDataDir!).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
+      chromeArguments.push(...this._defaultArgs(options, launchType, userDataDir).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
     else
       chromeArguments.push(...args);
 
@@ -133,7 +133,7 @@ export class Chromium implements BrowserType<CRBrowser> {
   }
 
   async connect(options: ConnectOptions): Promise<CRBrowser> {
-    return await platform.connectToWebsocket(options.wsEndpoint, transport => {
+    return await WebSocketTransport.connect(options.wsEndpoint, transport => {
       return CRBrowser.connect(transport, false, options.slowMo);
     });
   }
@@ -178,7 +178,7 @@ export class Chromium implements BrowserType<CRBrowser> {
 
 function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number): WebSocketWrapper {
   const server = new ws.Server({ port });
-  const guid = platform.guid();
+  const guid = helper.guid();
 
   const awaitingBrowserTarget = new Map<number, ws>();
   const sessionToSocket = new Map<string, ws>();
@@ -296,7 +296,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
 }
 
 
-const mkdtempAsync = platform.promisify(fs.mkdtemp);
+const mkdtempAsync = util.promisify(fs.mkdtemp);
 
 const CHROMIUM_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_dev_profile-');
 

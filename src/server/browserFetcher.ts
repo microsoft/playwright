@@ -25,10 +25,9 @@ import * as path from 'path';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import { assert } from '../helper';
-import * as platform from '../platform';
 
-const unlinkAsync = platform.promisify(fs.unlink.bind(fs));
-const chmodAsync = platform.promisify(fs.chmod.bind(fs));
+const unlinkAsync = util.promisify(fs.unlink.bind(fs));
+const chmodAsync = util.promisify(fs.chmod.bind(fs));
 const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
 const DEFAULT_DOWNLOAD_HOSTS = {

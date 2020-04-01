@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
+import * as mime from 'mime';
+import * as path from 'path';
+import * as util from 'util';
 import * as frames from './frames';
+import { assert, debugError, helper } from './helper';
+import Injected from './injected/injected';
 import * as input from './input';
 import * as js from './javascript';
-import * as types from './types';
-import { assert, helper, debugError } from './helper';
-import Injected from './injected/injected';
 import { Page } from './page';
-import * as platform from './platform';
 import { selectors } from './selectors';
+import * as types from './types';
 
 export type PointerActionOptions = {
   modifiers?: input.Modifier[];
@@ -257,9 +260,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     for (const item of ff) {
       if (typeof item === 'string') {
         const file: types.FilePayload = {
-          name: platform.basename(item),
-          type: platform.getMimeType(item),
-          data: await platform.readFileAsync(item, 'base64')
+          name: path.basename(item),
+          type: mime.getType(item) || 'application/octet-stream',
+          data: await util.promisify(fs.readFile)(item, 'base64')
         };
         filePayloads.push(file);
       } else {
@@ -316,7 +319,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._delegate.getBoundingBox(this);
   }
 
-  async screenshot(options?: types.ElementScreenshotOptions): Promise<platform.BufferType> {
+  async screenshot(options?: types.ElementScreenshotOptions): Promise<Buffer> {
     return this._page._screenshotter.screenshotElement(this, options);
   }
 
