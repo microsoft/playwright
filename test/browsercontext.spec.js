@@ -25,7 +25,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('BrowserContext', function() {
+  xdescribe('BrowserContext', function() {
     it('should create new context', async function({browser}) {
       expect(browser.contexts().length).toBe(0);
       const context = await browser.newContext();

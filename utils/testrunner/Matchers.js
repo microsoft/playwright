@@ -60,8 +60,11 @@ class Expect {
     function applyMatcher(matcherName, matcher, inverse, received, ...args) {
       const result = matcher.call(null, received, ...args);
       const message = `expect.${inverse ? 'not.' : ''}${matcherName} failed` + (result.message ? `: ${result.message}` : '');
-      if (result.pass === inverse)
-        throw new MatchError(message, result.formatter || defaultFormatter.bind(null, received));
+      if (result.pass === inverse) {
+        const error = new MatchError(message, result.formatter || defaultFormatter.bind(null, received));
+        Error.captureStackTrace(error, applyMatcher);
+        throw error;
+      }
     }
   }
 }
