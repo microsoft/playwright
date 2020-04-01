@@ -79,5 +79,5 @@ function createMatcher(selector: string): Matcher {
     return text => re.test(text);
   }
   selector = selector.trim().toLowerCase();
-  return text => text.trim().toLowerCase() === selector;
+  return text => text.toLowerCase().includes(selector);
 }
