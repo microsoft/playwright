@@ -138,17 +138,15 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 514a4f2890a20558afe0d9c1aec697612fc8e873..4be480a4ec0e397c6c9a1d695a1faf381af414d1 100644
+index 514a4f2890a20558afe0d9c1aec697612fc8e873..a013080177ee2c49342db2cda869b10a698482f4 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
-@@ -15,6 +15,14 @@
+@@ -15,6 +15,12 @@
  #  include <unistd.h>  // for getpid()
  #endif
  
 +#if JS_HAS_INTL_API && !MOZ_SYSTEM_ICU
 +#  include "unicode/locid.h"
-+#  include "unicode/timezone.h"
-+#  include "unicode/unistr.h"
 +#endif /* JS_HAS_INTL_API && !MOZ_SYSTEM_ICU */
 +
 +#include "js/LocaleSensitive.h"
@@ -156,7 +154,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..4be480a4ec0e397c6c9a1d695a1faf38
  #include "mozilla/ArrayUtils.h"
  #include "mozilla/Attributes.h"
  #include "mozilla/AutoRestore.h"
-@@ -53,6 +61,7 @@
+@@ -53,6 +59,7 @@
  #include "mozilla/dom/ContentFrameMessageManager.h"
  #include "mozilla/dom/DocGroup.h"
  #include "mozilla/dom/Element.h"
@@ -164,7 +162,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..4be480a4ec0e397c6c9a1d695a1faf38
  #include "mozilla/dom/HTMLAnchorElement.h"
  #include "mozilla/dom/PerformanceNavigation.h"
  #include "mozilla/dom/PermissionMessageUtils.h"
-@@ -71,6 +80,7 @@
+@@ -71,6 +78,7 @@
  #include "mozilla/dom/nsCSPContext.h"
  #include "mozilla/dom/LoadURIOptionsBinding.h"
  #include "mozilla/dom/JSWindowActorChild.h"
@@ -172,7 +170,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..4be480a4ec0e397c6c9a1d695a1faf38
  
  #include "mozilla/net/DocumentChannel.h"
  #include "mozilla/net/DocumentChannelChild.h"
-@@ -96,6 +106,7 @@
+@@ -96,6 +104,7 @@
  #include "nsIDocShellTreeItem.h"
  #include "nsIDocShellTreeOwner.h"
  #include "mozilla/dom/Document.h"
@@ -180,7 +178,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..4be480a4ec0e397c6c9a1d695a1faf38
  #include "nsIDocumentLoaderFactory.h"
  #include "nsIDOMWindow.h"
  #include "nsIEditingSession.h"
-@@ -183,6 +194,7 @@
+@@ -183,6 +192,7 @@
  #include "nsGlobalWindow.h"
  #include "nsISearchService.h"
  #include "nsJSEnvironment.h"
@@ -188,7 +186,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..4be480a4ec0e397c6c9a1d695a1faf38
  #include "nsNetCID.h"
  #include "nsNetUtil.h"
  #include "nsObjectLoadingContent.h"
-@@ -350,6 +362,9 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
+@@ -350,6 +360,9 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
        mUseErrorPages(false),
        mObserveErrorPages(true),
        mCSSErrorReportingEnabled(false),
@@ -198,7 +196,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..4be480a4ec0e397c6c9a1d695a1faf38
        mAllowAuth(mItemType == typeContent),
        mAllowKeywordFixup(false),
        mIsOffScreenBrowser(false),
-@@ -1219,6 +1234,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
+@@ -1219,6 +1232,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
      isSubFrame = mLSHE->GetIsSubFrame();
    }
  
@@ -206,7 +204,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..4be480a4ec0e397c6c9a1d695a1faf38
    if (!isSubFrame && !isRoot) {
      /*
       * We don't want to send OnLocationChange notifications when
-@@ -3340,6 +3356,162 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
+@@ -3340,6 +3354,155 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
    return NS_OK;
  }
  
@@ -272,19 +270,13 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..4be480a4ec0e397c6c9a1d695a1faf38
 +}
 +
 +NS_IMETHODIMP
-+nsDocShell::OverrideTimezone(const nsAString& aTimezoneOverride, bool* aSuccess) {
++nsDocShell::OverrideTimezone(const nsAString& aTimezoneOverride,
++                             bool* aSuccess) {
 +  NS_ENSURE_ARG(aSuccess);
++  NS_LossyConvertUTF16toASCII timeZoneId(aTimezoneOverride);
++  *aSuccess = nsJSUtils::SetTimeZoneOverride(timeZoneId.get());
 +
-+  // Validate timezone id.
-+  UniquePtr<icu::TimeZone> timezone(icu::TimeZone::createTimeZone(
-+      icu::UnicodeString(NS_LossyConvertUTF16toASCII(aTimezoneOverride).get(), -1, US_INV)));
-+  if (!timezone || *timezone == icu::TimeZone::getUnknown()) {
-+    fprintf(stderr, "Invalid timezone id: %s\n", NS_LossyConvertUTF16toASCII(aTimezoneOverride).get());
-+    *aSuccess = false;
-+    return NS_OK;
-+  }
-+
-+  // The env variable is read by js::DateTimeInfo::internalResyncICUDefaultTimeZone()
++  // Set TZ which affects localtime_s().
 +  auto setTimeZoneEnv = [](const char* value) {
 +#if defined(_WIN32)
 +    return _putenv_s("TZ", value) == 0;
@@ -292,12 +284,11 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..4be480a4ec0e397c6c9a1d695a1faf38
 +    return setenv("TZ", value, true) == 0;
 +#endif /* _WIN32 */
 +  };
-+
-+  *aSuccess = setTimeZoneEnv(NS_LossyConvertUTF16toASCII(aTimezoneOverride).get());
 +  if (*aSuccess) {
-+    nsJSUtils::ResetTimeZone();
-+  } else {
-+    fprintf(stderr, "Failed to change timezone to '%s'\n", NS_LossyConvertUTF16toASCII(aTimezoneOverride).get());
++    *aSuccess = setTimeZoneEnv(timeZoneId.get());
++    if (!*aSuccess) {
++      fprintf(stderr, "Failed to set 'TZ' to '%s'\n", timeZoneId.get());
++    }
 +  }
 +  return NS_OK;
 +}
@@ -369,7 +360,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..4be480a4ec0e397c6c9a1d695a1faf38
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
-@@ -12137,6 +12309,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12137,6 +12300,9 @@ class OnLinkClickEvent : public Runnable {
                                  mNoOpenerImplied, nullptr, nullptr,
                                  mIsUserTriggered, mTriggeringPrincipal, mCsp);
      }
@@ -379,7 +370,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..4be480a4ec0e397c6c9a1d695a1faf38
      return NS_OK;
    }
  
-@@ -12226,6 +12401,9 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12226,6 +12392,9 @@ nsresult nsDocShell::OnLinkClick(
        this, aContent, aURI, target, aFileName, aPostDataStream,
        aHeadersDataStream, noOpenerImplied, aIsUserTriggered, aIsTrusted,
        aTriggeringPrincipal, aCsp);
@@ -588,6 +579,34 @@ index 249580e733d1b05e35205cd2f7b4ccbe91c9cb54..765e3f58e0a359c622f68d371c5089bc
    return Nothing();
  }
  
+diff --git a/dom/base/nsJSUtils.cpp b/dom/base/nsJSUtils.cpp
+index ac68cf67ecc61f0960b276c5380abb131c4bfc4f..3b9fd67742db591bb0e02c5f1f64127fa77d420f 100644
+--- a/dom/base/nsJSUtils.cpp
++++ b/dom/base/nsJSUtils.cpp
+@@ -617,6 +617,11 @@ bool nsJSUtils::GetScopeChainForElement(
+   return true;
+ }
+ 
++/* static */
++bool nsJSUtils::SetTimeZoneOverride(const char* timezoneId) {
++  return JS::SetTimeZoneOverride(timezoneId);
++}
++
+ /* static */
+ void nsJSUtils::ResetTimeZone() { JS::ResetTimeZone(); }
+ 
+diff --git a/dom/base/nsJSUtils.h b/dom/base/nsJSUtils.h
+index 2b654b490e53d0e258bcd4edb0470cb2e7cc9452..462e60d7fa84fb3bd09f7009c0a0cb3783caf651 100644
+--- a/dom/base/nsJSUtils.h
++++ b/dom/base/nsJSUtils.h
+@@ -241,6 +241,7 @@ class nsJSUtils {
+       JSContext* aCx, mozilla::dom::Element* aElement,
+       JS::MutableHandleVector<JSObject*> aScopeChain);
+ 
++  static bool SetTimeZoneOverride(const char* timezoneId);
+   static void ResetTimeZone();
+ 
+   static bool DumpEnabled();
 diff --git a/dom/geolocation/Geolocation.cpp b/dom/geolocation/Geolocation.cpp
 index 51c04d2f40f51c9163183559d6a92ea7b0179e17..72084201c77a4dfeabb9a2a6d42a3348b5aa6485 100644
 --- a/dom/geolocation/Geolocation.cpp
@@ -960,6 +979,19 @@ index 02f18c7f13c55a16688cee887f586ba3bf97a6fb..1f0c2a3192e35fd71b5fa26fa6822c2b
    }
  
    nsCOMPtr<nsIPrincipal> principal =
+diff --git a/js/public/Date.h b/js/public/Date.h
+index 8a2dddc9a2ab5f2bc832a0af5f6f89ab8038bbf6..d5bf241dec39f8ee2f57a57f064bffa2dd890f0f 100644
+--- a/js/public/Date.h
++++ b/js/public/Date.h
+@@ -56,6 +56,8 @@ namespace JS {
+  */
+ extern JS_PUBLIC_API void ResetTimeZone();
+ 
++extern JS_PUBLIC_API bool SetTimeZoneOverride(const char* timezoneId);
++
+ class ClippedTime;
+ inline ClippedTime TimeClip(double time);
+ 
 diff --git a/js/src/debugger/Object.cpp b/js/src/debugger/Object.cpp
 index 347c4b0ebc09a7647247cd8bd8a234558c224ca3..956384fd96f574b76a5c2298340a88e9438d140a 100644
 --- a/js/src/debugger/Object.cpp
@@ -976,6 +1008,101 @@ index 347c4b0ebc09a7647247cd8bd8a234558c224ca3..956384fd96f574b76a5c2298340a88e9
      }
    }
  
+diff --git a/js/src/vm/DateTime.cpp b/js/src/vm/DateTime.cpp
+index d27ba46016e0a01bd57dde7acc219eaaee9e65ca..3cfa6ec99272339238a4494b62b008de7036d426 100644
+--- a/js/src/vm/DateTime.cpp
++++ b/js/src/vm/DateTime.cpp
+@@ -168,6 +168,11 @@ void js::DateTimeInfo::internalResetTimeZone(ResetTimeZoneMode mode) {
+   }
+ }
+ 
++void js::DateTimeInfo::internalSetTimeZoneOverride(mozilla::UniquePtr<icu::TimeZone> timeZone) {
++  timeZoneOverride_ = std::move(timeZone);
++  internalResetTimeZone(ResetTimeZoneMode::ResetEvenIfOffsetUnchanged);
++}
++
+ void js::DateTimeInfo::updateTimeZone() {
+   MOZ_ASSERT(timeZoneStatus_ != TimeZoneStatus::Valid);
+ 
+@@ -528,10 +533,27 @@ void js::ResetTimeZoneInternal(ResetTimeZoneMode mode) {
+   js::DateTimeInfo::resetTimeZone(mode);
+ }
+ 
++void js::SetTimeZoneOverrideInternal(mozilla::UniquePtr<icu::TimeZone> timeZone) {
++  auto guard = js::DateTimeInfo::instance->lock();
++  guard->internalSetTimeZoneOverride(std::move(timeZone));
++}
++
+ JS_PUBLIC_API void JS::ResetTimeZone() {
+   js::ResetTimeZoneInternal(js::ResetTimeZoneMode::ResetEvenIfOffsetUnchanged);
+ }
+ 
++JS_PUBLIC_API bool JS::SetTimeZoneOverride(const char* timeZoneId) {
++  // Validate timezone id.
++  mozilla::UniquePtr<icu::TimeZone> timeZone(icu::TimeZone::createTimeZone(
++      icu::UnicodeString(timeZoneId, -1, US_INV)));
++  if (!timeZone || *timeZone == icu::TimeZone::getUnknown()) {
++    fprintf(stderr, "Invalid timezone id: %s\n", timeZoneId);
++    return false;
++  }
++  js::SetTimeZoneOverrideInternal(std::move(timeZone));
++  return true;
++}
++
+ #if defined(XP_WIN)
+ static bool IsOlsonCompatibleWindowsTimeZoneId(const char* tz) {
+   // ICU ignores the TZ environment variable on Windows and instead directly
+@@ -726,6 +748,11 @@ void js::ResyncICUDefaultTimeZone() {
+ 
+ void js::DateTimeInfo::internalResyncICUDefaultTimeZone() {
+ #if JS_HAS_INTL_API && !MOZ_SYSTEM_ICU
++  if (timeZoneOverride_) {
++    icu::TimeZone::setDefault(*timeZoneOverride_);
++    return;
++  }
++
+   if (const char* tz = std::getenv("TZ")) {
+     icu::UnicodeString tzid;
+ 
+diff --git a/js/src/vm/DateTime.h b/js/src/vm/DateTime.h
+index 25c5b01fc54c8d45da8ceb7cf6ba163bee3c5361..490c5ce49cd9b5f804df59abbfb0450fb9d1f877 100644
+--- a/js/src/vm/DateTime.h
++++ b/js/src/vm/DateTime.h
+@@ -67,6 +67,8 @@ enum class ResetTimeZoneMode : bool {
+  */
+ extern void ResetTimeZoneInternal(ResetTimeZoneMode mode);
+ 
++extern void SetTimeZoneOverrideInternal(mozilla::UniquePtr<icu::TimeZone> timeZone);
++
+ /**
+  * ICU's default time zone, used for various date/time formatting operations
+  * that include the local time in the representation, is allowed to go stale
+@@ -206,6 +208,7 @@ class DateTimeInfo {
+   // and js::ResyncICUDefaultTimeZone().
+   friend void js::ResetTimeZoneInternal(ResetTimeZoneMode);
+   friend void js::ResyncICUDefaultTimeZone();
++  friend void js::SetTimeZoneOverrideInternal(mozilla::UniquePtr<icu::TimeZone>);
+ 
+   static void resetTimeZone(ResetTimeZoneMode mode) {
+     auto guard = instance->lock();
+@@ -302,6 +305,8 @@ class DateTimeInfo {
+   JS::UniqueChars locale_;
+   JS::UniqueTwoByteChars standardName_;
+   JS::UniqueTwoByteChars daylightSavingsName_;
++
++  mozilla::UniquePtr<icu::TimeZone> timeZoneOverride_;
+ #else
+   // Restrict the data-time range to the minimum required time_t range as
+   // specified in POSIX. Most operating systems support 64-bit time_t
+@@ -317,6 +322,8 @@ class DateTimeInfo {
+ 
+   void internalResetTimeZone(ResetTimeZoneMode mode);
+ 
++  void internalSetTimeZoneOverride(mozilla::UniquePtr<icu::TimeZone> timeZone);
++
+   void updateTimeZone();
+ 
+   void internalResyncICUDefaultTimeZone();
 diff --git a/juggler/Helper.js b/juggler/Helper.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..862c680198bbb503a5f04c19bdb8fdf2cd8c9cef
