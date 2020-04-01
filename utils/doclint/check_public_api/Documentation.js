@@ -107,7 +107,7 @@ Documentation.Class = class {
         continue;
       if (member1.kind === 'method' && member1.name === 'constructor')
         continue;
-      if (member1.name > member2.name) {
+      if (member1.name.replace(/^\$+/, '$') > member2.name.replace(/^\$+/, '$')) {
         let memberName1 = `${this.name}.${member1.name}`;
         if (member1.kind === 'method')
           memberName1 += '()';
