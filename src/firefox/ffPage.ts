@@ -21,7 +21,6 @@ import { Events } from '../events';
 import * as frames from '../frames';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { Page, PageBinding, PageDelegate, Worker } from '../page';
-import * as platform from '../platform';
 import { kScreenshotDuringNavigationError } from '../screenshotter';
 import * as types from '../types';
 import { getAccessibilityTree } from './ffAccessibility';
@@ -340,7 +339,7 @@ export class FFPage implements PageDelegate {
       throw new Error('Not implemented');
   }
 
-  async takeScreenshot(format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<platform.BufferType> {
+  async takeScreenshot(format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
     if (!documentRect) {
       const context = await this._page.mainFrame()._utilityContext();
       const scrollOffset = await context.evaluateInternal(() => ({ x: window.scrollX, y: window.scrollY }));
@@ -361,7 +360,7 @@ export class FFPage implements PageDelegate {
         e.message = kScreenshotDuringNavigationError;
       throw e;
     });
-    return platform.Buffer.from(data, 'base64');
+    return Buffer.from(data, 'base64');
   }
 
   async resetViewport(): Promise<void> {

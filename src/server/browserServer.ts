@@ -15,7 +15,7 @@
  */
 
 import { ChildProcess, execSync } from 'child_process';
-import * as platform from '../platform';
+import { EventEmitter } from 'events';
 
 export class WebSocketWrapper {
   readonly wsEndpoint: string;
@@ -46,7 +46,7 @@ export class WebSocketWrapper {
   }
 }
 
-export class BrowserServer extends platform.EventEmitter {
+export class BrowserServer extends EventEmitter {
   private _process: ChildProcess;
   private _gracefullyClose: () => Promise<void>;
   private _webSocketWrapper: WebSocketWrapper | null;

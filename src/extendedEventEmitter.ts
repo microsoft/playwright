@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from './platform';
+import { EventEmitter } from 'events';
 import { helper } from './helper';
 
 export class ExtendedEventEmitter extends EventEmitter {

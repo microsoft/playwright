@@ -21,15 +21,15 @@ import { Events } from '../events';
 import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding } from '../page';
-import * as platform from '../platform';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
 import * as types from '../types';
 import { ConnectionEvents, FFConnection } from './ffConnection';
 import { headersArray } from './ffNetworkManager';
 import { FFPage } from './ffPage';
 import { Protocol } from './protocol';
+import { EventEmitter } from 'events';
 
-export class FFBrowser extends platform.EventEmitter implements Browser {
+export class FFBrowser extends EventEmitter implements Browser {
   _connection: FFConnection;
   readonly _ffPages: Map<string, FFPage>;
   readonly _defaultContext: FFBrowserContext;
@@ -149,7 +149,7 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     await disconnected;
   }
 
-  _setDebugFunction(debugFunction: platform.DebuggerType) {
+  _setDebugFunction(debugFunction: debug.IDebugger) {
     this._connection._debugProtocol = debugFunction;
   }
 }

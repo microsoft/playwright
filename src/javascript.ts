@@ -16,7 +16,7 @@
 
 import * as types from './types';
 import * as dom from './dom';
-import * as platform from './platform';
+import { helper } from './helper';
 
 export interface ExecutionContextDelegate {
   evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: string | Function, ...args: any[]): Promise<any>;
@@ -144,7 +144,7 @@ export async function prepareFunctionCall<T>(
   const handles: (Promise<JSHandle | T>)[] = [];
   const toDispose: Promise<JSHandle>[] = [];
   const pushHandle = (handle: Promise<JSHandle | T>): string => {
-    const guid = platform.guid();
+    const guid = helper.guid();
     guids.push(guid);
     handles.push(handle);
     return guid;

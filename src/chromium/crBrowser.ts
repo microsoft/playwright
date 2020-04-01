@@ -21,7 +21,6 @@ import { Events as CommonEvents } from '../events';
 import { assert, debugError, helper } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding, Worker } from '../page';
-import * as platform from '../platform';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
 import * as types from '../types';
 import { ConnectionEvents, CRConnection, CRSession } from './crConnection';
@@ -30,8 +29,9 @@ import { readProtocolStream } from './crProtocolHelper';
 import { Events } from './events';
 import { Protocol } from './protocol';
 import { CRExecutionContext } from './crExecutionContext';
+import { EventEmitter } from 'events';
 
-export class CRBrowser extends platform.EventEmitter implements Browser {
+export class CRBrowser extends EventEmitter implements Browser {
   readonly _connection: CRConnection;
   _session: CRSession;
   private _clientRootSessionPromise: Promise<CRSession> | null = null;
@@ -221,7 +221,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     });
   }
 
-  async stopTracing(): Promise<platform.BufferType> {
+  async stopTracing(): Promise<Buffer> {
     assert(this._tracingClient, 'Tracing was not started.');
     const [event] = await Promise.all([
       new Promise(f => this._tracingClient!.once('Tracing.tracingComplete', f)),
@@ -242,7 +242,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     return this._clientRootSessionPromise;
   }
 
-  _setDebugFunction(debugFunction: platform.DebuggerType) {
+  _setDebugFunction(debugFunction: debug.IDebugger) {
     this._connection._debugProtocol = debugFunction;
   }
 }

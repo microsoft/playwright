@@ -225,8 +225,4 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
     loadTests('./chromium/oopif.spec.js');
     loadTests('./chromium/tracing.spec.js');
   });
-
-  describe('[Driver]', () => {
-    loadTests('./web.spec.js');
-  });
 };

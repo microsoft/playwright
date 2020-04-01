@@ -17,7 +17,7 @@
 
 import * as dom from './dom';
 import * as frames from './frames';
-import { assert, debugError, helper } from './helper';
+import { assert, debugError, helper, Listener } from './helper';
 import * as input from './input';
 import * as js from './javascript';
 import * as network from './network';
@@ -28,8 +28,8 @@ import { Events } from './events';
 import { BrowserContext, BrowserContextBase } from './browserContext';
 import { ConsoleMessage, ConsoleMessageLocation } from './console';
 import * as accessibility from './accessibility';
-import * as platform from './platform';
 import { ExtendedEventEmitter } from './extendedEventEmitter';
+import { EventEmitter } from 'events';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -55,7 +55,7 @@ export interface PageDelegate {
   canScreenshotOutsideViewport(): boolean;
   resetViewport(): Promise<void>; // Only called if canScreenshotOutsideViewport() returns false.
   setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void>;
-  takeScreenshot(format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<platform.BufferType>;
+  takeScreenshot(format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer>;
 
   isElementHandle(remoteObject: any): boolean;
   adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>>;
@@ -69,7 +69,7 @@ export interface PageDelegate {
   scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<void>;
 
   getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}>;
-  pdf?: (options?: types.PDFOptions) => Promise<platform.BufferType>;
+  pdf?: (options?: types.PDFOptions) => Promise<Buffer>;
   coverage?: () => any;
 
   // Work around Chrome's non-associated input and protocol.
@@ -106,7 +106,7 @@ export class Page extends ExtendedEventEmitter {
   readonly _frameManager: frames.FrameManager;
   readonly accessibility: accessibility.Accessibility;
   private _workers = new Map<string, Worker>();
-  readonly pdf: ((options?: types.PDFOptions) => Promise<platform.BufferType>) | undefined;
+  readonly pdf: ((options?: types.PDFOptions) => Promise<Buffer>) | undefined;
   readonly coverage: any;
   readonly _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
   _ownedContext: BrowserContext | undefined;
@@ -408,7 +408,7 @@ export class Page extends ExtendedEventEmitter {
     route.continue();
   }
 
-  async screenshot(options?: types.ScreenshotOptions): Promise<platform.BufferType> {
+  async screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {
     return this._screenshotter.screenshotPage(options);
   }
 
@@ -506,7 +506,7 @@ export class Page extends ExtendedEventEmitter {
     }
   }
 
-  on(event: string | symbol, listener: platform.Listener): this {
+  on(event: string | symbol, listener: Listener): this {
     if (event === Events.Page.FileChooser) {
       if (!this.listenerCount(event))
         this._delegate.setFileChooserIntercepted(true);
@@ -515,7 +515,7 @@ export class Page extends ExtendedEventEmitter {
     return this;
   }
 
-  removeListener(event: string | symbol, listener: platform.Listener): this {
+  removeListener(event: string | symbol, listener: Listener): this {
     super.removeListener(event, listener);
     if (event === Events.Page.FileChooser && !this.listenerCount(event))
       this._delegate.setFileChooserIntercepted(false);
@@ -523,7 +523,7 @@ export class Page extends ExtendedEventEmitter {
   }
 }
 
-export class Worker extends platform.EventEmitter {
+export class Worker extends EventEmitter {
   private _url: string;
   private _executionContextPromise: Promise<js.ExecutionContext>;
   private _executionContextCallback: (value?: js.ExecutionContext) => void;

@@ -15,17 +15,23 @@
  * limitations under the License.
  */
 
+import * as crypto from 'crypto';
+import * as debug from 'debug';
+import { EventEmitter } from 'events';
+import * as fs from 'fs';
+import * as util from 'util';
 import { TimeoutError } from './errors';
-import * as platform from './platform';
 import * as types from './types';
 
-export const debugError = platform.debug(`pw:error`);
+export const debugError = debug(`pw:error`);
 
 export type RegisteredListener = {
-  emitter: platform.EventEmitterType;
+  emitter: EventEmitter;
   eventName: (string | symbol);
   handler: (...args: any[]) => void;
 };
+
+export type Listener = (...args: any[]) => void;
 
 class Helper {
   static evaluationString(fun: Function | string, ...args: any[]): string {
@@ -47,7 +53,7 @@ class Helper {
       if (fun.content !== undefined) {
         fun = fun.content;
       } else if (fun.path !== undefined) {
-        let contents = await platform.readFileAsync(fun.path, 'utf8');
+        let contents = await util.promisify(fs.readFile)(fun.path, 'utf8');
         if (addSourceUrl)
           contents += '//# sourceURL=' + fun.path.replace(/\n/g, '');
         fun = contents;
@@ -59,7 +65,7 @@ class Helper {
   }
 
   static installApiHooks(className: string, classType: any) {
-    const log = platform.debug('pw:api');
+    const log = debug('pw:api');
     for (const methodName of Reflect.ownKeys(classType.prototype)) {
       const method = Reflect.get(classType.prototype, methodName);
       if (methodName === 'constructor' || typeof methodName !== 'string' || methodName.startsWith('_') || typeof method !== 'function')
@@ -102,7 +108,7 @@ class Helper {
   }
 
   static addEventListener(
-    emitter: platform.EventEmitterType,
+    emitter: EventEmitter,
     eventName: (string | symbol),
     handler: (...args: any[]) => void): RegisteredListener {
     emitter.on(eventName, handler);
@@ -110,7 +116,7 @@ class Helper {
   }
 
   static removeEventListeners(listeners: Array<{
-      emitter: platform.EventEmitterType;
+      emitter: EventEmitter;
       eventName: (string | symbol);
       handler: (...args: any[]) => void;
     }>) {
@@ -140,7 +146,7 @@ class Helper {
   }
 
   static async waitForEvent(
-    emitter: platform.EventEmitterType,
+    emitter: EventEmitter,
     eventName: (string | symbol),
     predicate: Function,
     timeout: number,
@@ -295,6 +301,45 @@ class Helper {
 
     assert(typeof match === 'function', 'url parameter should be string, RegExp or function');
     return match(url);
+  }
+
+  // See https://joel.tools/microtasks/
+  static makeWaitForNextTask() {
+    if (parseInt(process.versions.node, 10) >= 11)
+      return setImmediate;
+
+    // Unlike Node 11, Node 10 and less have a bug with Task and MicroTask execution order:
+    // - https://github.com/nodejs/node/issues/22257
+    //
+    // So we can't simply run setImmediate to dispatch code in a following task.
+    // However, we can run setImmediate from-inside setImmediate to make sure we're getting
+    // in the following task.
+
+    let spinning = false;
+    const callbacks: (() => void)[] = [];
+    const loop = () => {
+      const callback = callbacks.shift();
+      if (!callback) {
+        spinning = false;
+        return;
+      }
+      setImmediate(loop);
+      // Make sure to call callback() as the last thing since it's
+      // untrusted code that might throw.
+      callback();
+    };
+
+    return (callback: () => void) => {
+      callbacks.push(callback);
+      if (!spinning) {
+        spinning = true;
+        setImmediate(loop);
+      }
+    };
+  }
+
+  static guid(): string {
+    return crypto.randomBytes(16).toString('hex');
   }
 }
 

@@ -23,9 +23,8 @@ module.exports = { checkSources, expandPrefix };
 
 /**
  * @param {!Array<!import('../Source')>} sources
- * @param {!Array<string>} externalDependencies
  */
-function checkSources(sources, externalDependencies) {
+function checkSources(sources) {
   // special treatment for Events.js
   const classEvents = new Map();
   const eventsSources = sources.filter(source => source.name().startsWith('events.'));
@@ -108,31 +107,14 @@ function checkSources(sources, externalDependencies) {
     }
     if (fileName.endsWith('/api.ts') && ts.isExportSpecifier(node))
       apiClassNames.add(expandPrefix((node.propertyName || node.name).text));
-    const isPlatform = fileName.endsWith('platform.ts');
     if (!fileName.includes('src/server/')) {
       // Only relative imports.
       if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
         const module = node.moduleSpecifier.text;
-        const isRelative = module.startsWith('.');
-        const isPlatformDependency = isPlatform && externalDependencies.includes(module);
         const isServerDependency = path.resolve(path.dirname(fileName), module).includes('src/server');
-        if (isServerDependency || (!isRelative && !isPlatformDependency)) {
+        if (isServerDependency) {
           const lac = ts.getLineAndCharacterOfPosition(node.getSourceFile(), node.moduleSpecifier.pos);
           errors.push(`Disallowed import "${module}" at ${node.getSourceFile().fileName}:${lac.line + 1}`);
-        }
-      }
-      // No references to external types.
-      if (!isPlatform && ts.isTypeReferenceNode(node)) {
-        const isPlatformReference = ts.isQualifiedName(node.typeName) && ts.isIdentifier(node.typeName.left) && node.typeName.left.escapedText === 'platform';
-        if (!isPlatformReference) {
-          const type = checker.getTypeAtLocation(node);
-          if (type.symbol && type.symbol.valueDeclaration) {
-            const source = type.symbol.valueDeclaration.getSourceFile();
-            if (source.fileName.includes('@types')) {
-              const lac = ts.getLineAndCharacterOfPosition(node.getSourceFile(), node.pos);
-              errors.push(`Disallowed type reference "${type.symbol.escapedName}" at ${node.getSourceFile().fileName}:${lac.line + 1}:${lac.character + 1}`);
-            }
-          }
         }
       }
     }

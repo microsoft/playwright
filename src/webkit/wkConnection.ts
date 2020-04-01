@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
+import * as debug from 'debug';
+import { EventEmitter } from 'events';
 import { assert } from '../helper';
-import * as platform from '../platform';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { Protocol } from './protocol';
 
@@ -34,7 +35,7 @@ export class WKConnection {
   private readonly _onDisconnect: () => void;
   private _lastId = 0;
   private _closed = false;
-  _debugProtocol: platform.DebuggerType = platform.debug('pw:protocol');
+  _debugProtocol = debug('pw:protocol');
 
   readonly browserSession: WKSession;
 
@@ -90,7 +91,7 @@ export class WKConnection {
   }
 }
 
-export class WKSession extends platform.EventEmitter {
+export class WKSession extends EventEmitter {
   connection: WKConnection;
   errorText: string;
   readonly sessionId: string;
@@ -127,7 +128,7 @@ export class WKSession extends platform.EventEmitter {
       throw new Error(`Protocol error (${method}): ${this.errorText}`);
     const id = this.connection.nextMessageId();
     const messageObj = { id, method, params };
-    platform.debug('pw:wrapped:' + this.sessionId)('SEND ► ' + JSON.stringify(messageObj, null, 2));
+    debug('pw:wrapped:' + this.sessionId)('SEND ► ' + JSON.stringify(messageObj, null, 2));
     this._rawSend(messageObj);
     return new Promise<Protocol.CommandReturnValues[T]>((resolve, reject) => {
       this._callbacks.set(id, {resolve, reject, error: new Error(), method});
@@ -146,7 +147,7 @@ export class WKSession extends platform.EventEmitter {
   }
 
   dispatchMessage(object: any) {
-    platform.debug('pw:wrapped:' + this.sessionId)('◀ RECV ' + JSON.stringify(object, null, 2));
+    debug('pw:wrapped:' + this.sessionId)('◀ RECV ' + JSON.stringify(object, null, 2));
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);

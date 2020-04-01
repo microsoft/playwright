@@ -47,6 +47,7 @@
     "extract-zip": "^1.6.6",
     "https-proxy-agent": "^3.0.0",
     "jpeg-js": "^0.3.6",
+    "mime": "^2.4.4",
     "pngjs": "^3.4.0",
     "progress": "^2.0.3",
     "proxy-from-env": "^1.1.0",
@@ -56,6 +57,7 @@
   "devDependencies": {
     "@types/debug": "0.0.31",
     "@types/extract-zip": "^1.6.2",
+    "@types/mime": "^2.0.1",
     "@types/node": "^8.10.34",
     "@types/pngjs": "^3.4.0",
     "@types/proxy-from-env": "^1.0.0",

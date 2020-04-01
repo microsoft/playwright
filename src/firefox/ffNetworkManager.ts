@@ -20,7 +20,6 @@ import { FFSession } from './ffConnection';
 import { Page } from '../page';
 import * as network from '../network';
 import * as frames from '../frames';
-import * as platform from '../platform';
 import { Protocol } from './protocol';
 
 export class FFNetworkManager {
@@ -73,7 +72,7 @@ export class FFNetworkManager {
       });
       if (response.evicted)
         throw new Error(`Response body for ${request.request.method()} ${request.request.url()} was evicted!`);
-      return platform.Buffer.from(response.base64body, 'base64');
+      return Buffer.from(response.base64body, 'base64');
     };
     const headers: network.Headers = {};
     for (const {name, value} of event.headers)
@@ -171,7 +170,7 @@ class InterceptableRequest implements network.RouteDelegate {
   }
 
   async fulfill(response: network.FulfillResponse) {
-    const responseBody = response.body && helper.isString(response.body) ? platform.Buffer.from(response.body) : (response.body || null);
+    const responseBody = response.body && helper.isString(response.body) ? Buffer.from(response.body) : (response.body || null);
 
     const responseHeaders: { [s: string]: string; } = {};
     if (response.headers) {
@@ -181,7 +180,7 @@ class InterceptableRequest implements network.RouteDelegate {
     if (response.contentType)
       responseHeaders['content-type'] = response.contentType;
     if (responseBody && !('content-length' in responseHeaders))
-      responseHeaders['content-length'] = String(platform.Buffer.byteLength(responseBody));
+      responseHeaders['content-length'] = String(Buffer.byteLength(responseBody));
 
     await this._session.send('Network.fulfillInterceptedRequest', {
       requestId: this._id,

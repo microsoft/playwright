@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+import * as WebSocket from 'ws';
+import { helper } from './helper';
+
 export type ProtocolRequest = {
   id: number;
   method: string;
@@ -111,6 +114,57 @@ export class DeferWriteTransport implements ConnectionTransport {
 
   close() {
     this._delegate.close();
+  }
+}
+
+export class WebSocketTransport implements ConnectionTransport {
+  _ws: WebSocket;
+
+  onmessage?: (message: ProtocolResponse) => void;
+  onclose?: () => void;
+
+  // 'onmessage' handler must be installed synchronously when 'onopen' callback is invoked to
+  // avoid missing incoming messages.
+  static connect<T>(url: string, onopen: (transport: ConnectionTransport) => Promise<T> | T): Promise<T> {
+    const transport = new WebSocketTransport(url);
+    return new Promise<T>((fulfill, reject) => {
+      transport._ws.addEventListener('open', async () => fulfill(await onopen(transport)));
+      transport._ws.addEventListener('error', event => reject(new Error('WebSocket error: ' + event.message)));
+    });
+  }
+
+  constructor(url: string) {
+    this._ws = new WebSocket(url, [], {
+      perMessageDeflate: false,
+      maxPayload: 256 * 1024 * 1024, // 256Mb
+    });
+    // The 'ws' module in node sometimes sends us multiple messages in a single task.
+    // In Web, all IO callbacks (e.g. WebSocket callbacks)
+    // are dispatched into separate tasks, so there's no need
+    // to do anything extra.
+    const messageWrap: (cb: () => void) => void = helper.makeWaitForNextTask();
+
+    this._ws.addEventListener('message', event => {
+      messageWrap(() => {
+        if (this.onmessage)
+          this.onmessage.call(null, JSON.parse(event.data));
+      });
+    });
+
+    this._ws.addEventListener('close', event => {
+      if (this.onclose)
+        this.onclose.call(null);
+    });
+    // Silently ignore all errors - we don't know what to do with them.
+    this._ws.addEventListener('error', () => {});
+  }
+
+  send(message: ProtocolRequest) {
+    this._ws.send(JSON.stringify(message));
+  }
+
+  close() {
+    this._ws.close();
   }
 }
 

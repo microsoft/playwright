@@ -15,17 +15,18 @@
  * limitations under the License.
  */
 
-import * as types from './types';
-import * as js from './javascript';
+import * as fs from 'fs';
+import * as util from 'util';
+import { ConsoleMessage } from './console';
 import * as dom from './dom';
-import * as network from './network';
-import { helper, assert, RegisteredListener } from './helper';
 import { TimeoutError } from './errors';
 import { Events } from './events';
+import { assert, helper, RegisteredListener } from './helper';
+import * as js from './javascript';
+import * as network from './network';
 import { Page } from './page';
-import { ConsoleMessage } from './console';
-import * as platform from './platform';
 import { selectors } from './selectors';
+import * as types from './types';
 
 type ContextType = 'main' | 'utility';
 type ContextData = {
@@ -109,7 +110,7 @@ export class FrameManager {
         await this._page._delegate.inputActionEpilogue();
       await barrier.waitFor();
       // Resolve in the next task, after all waitForNavigations.
-      await new Promise(platform.makeWaitForNextTask());
+      await new Promise(helper.makeWaitForNextTask());
       return result;
     } finally {
       this._pendingNavigationBarriers.delete(barrier);
@@ -549,7 +550,7 @@ export class Frame {
       if (url !== null)
         return (await context.evaluateHandleInternal(addScriptUrl, { url, type })).asElement()!;
       if (path !== null) {
-        let contents = await platform.readFileAsync(path, 'utf8');
+        let contents = await util.promisify(fs.readFile)(path, 'utf8');
         contents += '//# sourceURL=' + path.replace(/\n/g, '');
         return (await context.evaluateHandleInternal(addScriptContent, { content: contents, type })).asElement()!;
       }
@@ -598,7 +599,7 @@ export class Frame {
         return (await context.evaluateHandleInternal(addStyleUrl, url)).asElement()!;
 
       if (path !== null) {
-        let contents = await platform.readFileAsync(path, 'utf8');
+        let contents = await util.promisify(fs.readFile)(path, 'utf8');
         contents += '/*# sourceURL=' + path.replace(/\n/g, '') + '*/';
         return (await context.evaluateHandleInternal(addStyleContent, contents)).asElement()!;
       }

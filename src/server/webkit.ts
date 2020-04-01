@@ -20,12 +20,12 @@ import { PipeTransport } from './pipeTransport';
 import { launchProcess } from './processLauncher';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as platform from '../platform';
 import * as os from 'os';
+import * as util from 'util';
 import { debugError, helper, assert } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
 import { LaunchOptions, BrowserArgOptions, BrowserType, LaunchServerOptions, ConnectOptions } from './browserType';
-import { ConnectionTransport, SequenceNumberMixer } from '../transport';
+import { ConnectionTransport, SequenceNumberMixer, WebSocketTransport } from '../transport';
 import * as ws from 'ws';
 import { LaunchType } from '../browser';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
@@ -85,14 +85,14 @@ export class WebKit implements BrowserType<WKBrowser> {
     let temporaryUserDataDir: string | null = null;
     if (!userDataDir) {
       userDataDir = await mkdtempAsync(WEBKIT_PROFILE_PATH);
-      temporaryUserDataDir = userDataDir!;
+      temporaryUserDataDir = userDataDir;
     }
 
     const webkitArguments = [];
     if (!ignoreDefaultArgs)
-      webkitArguments.push(...this._defaultArgs(options, launchType, userDataDir!, port));
+      webkitArguments.push(...this._defaultArgs(options, launchType, userDataDir, port));
     else if (Array.isArray(ignoreDefaultArgs))
-      webkitArguments.push(...this._defaultArgs(options, launchType, userDataDir!, port).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
+      webkitArguments.push(...this._defaultArgs(options, launchType, userDataDir, port).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
     else
       webkitArguments.push(...args);
 
@@ -103,7 +103,7 @@ export class WebKit implements BrowserType<WKBrowser> {
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: webkitExecutable,
       args: webkitArguments,
-      env: { ...env, CURL_COOKIE_JAR_PATH: path.join(userDataDir!, 'cookiejar.db') },
+      env: { ...env, CURL_COOKIE_JAR_PATH: path.join(userDataDir, 'cookiejar.db') },
       handleSIGINT,
       handleSIGTERM,
       handleSIGHUP,
@@ -133,7 +133,7 @@ export class WebKit implements BrowserType<WKBrowser> {
   }
 
   async connect(options: ConnectOptions): Promise<WKBrowser> {
-    return await platform.connectToWebsocket(options.wsEndpoint, transport => {
+    return await WebSocketTransport.connect(options.wsEndpoint, transport => {
       return WKBrowser.connect(transport, options.slowMo);
     });
   }
@@ -163,13 +163,13 @@ export class WebKit implements BrowserType<WKBrowser> {
   }
 }
 
-const mkdtempAsync = platform.promisify(fs.mkdtemp);
+const mkdtempAsync = util.promisify(fs.mkdtemp);
 
 const WEBKIT_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_dev_profile-');
 
 function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number): WebSocketWrapper {
   const server = new ws.Server({ port });
-  const guid = platform.guid();
+  const guid = helper.guid();
   const idMixer = new SequenceNumberMixer<{id: number, socket: ws}>();
   const pendingBrowserContextCreations = new Set<number>();
   const pendingBrowserContextDeletions = new Map<number, string>();

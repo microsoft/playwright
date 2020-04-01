@@ -36,7 +36,6 @@ import { CRPDF } from './crPdf';
 import { CRBrowserContext } from './crBrowser';
 import * as types from '../types';
 import { ConsoleMessage } from '../console';
-import * as platform from '../platform';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -455,7 +454,7 @@ export class CRPage implements PageDelegate {
     await this._client.send('Emulation.setDefaultBackgroundColorOverride', { color });
   }
 
-  async takeScreenshot(format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<platform.BufferType> {
+  async takeScreenshot(format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
     const { visualViewport } = await this._client.send('Page.getLayoutMetrics');
     if (!documentRect) {
       documentRect = {
@@ -472,7 +471,7 @@ export class CRPage implements PageDelegate {
     // ignore current page scale.
     const clip = { ...documentRect, scale: viewportRect ? visualViewport.scale : 1 };
     const result = await this._client.send('Page.captureScreenshot', { format, quality, clip });
-    return platform.Buffer.from(result.data, 'base64');
+    return Buffer.from(result.data, 'base64');
   }
 
   async resetViewport(): Promise<void> {
@@ -587,7 +586,7 @@ export class CRPage implements PageDelegate {
     await this._client.send('Page.enable').catch(e => {});
   }
 
-  async pdf(options?: types.PDFOptions): Promise<platform.BufferType> {
+  async pdf(options?: types.PDFOptions): Promise<Buffer> {
     return this._pdf.generate(options);
   }
 

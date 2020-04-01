@@ -16,9 +16,10 @@
  */
 
 import { assert } from '../helper';
-import * as platform from '../platform';
+import * as debug from 'debug';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { Protocol } from './protocol';
+import { EventEmitter } from 'events';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('ConnectionEvents.Disconnected')
@@ -28,13 +29,13 @@ export const ConnectionEvents = {
 // should ignore.
 export const kBrowserCloseMessageId = -9999;
 
-export class CRConnection extends platform.EventEmitter {
+export class CRConnection extends EventEmitter {
   private _lastId = 0;
   private readonly _transport: ConnectionTransport;
   private readonly _sessions = new Map<string, CRSession>();
   readonly rootSession: CRSession;
   _closed = false;
-  _debugProtocol: platform.DebuggerType;
+  _debugProtocol: debug.IDebugger;
 
   constructor(transport: ConnectionTransport) {
     super();
@@ -43,7 +44,7 @@ export class CRConnection extends platform.EventEmitter {
     this._transport.onclose = this._onClose.bind(this);
     this.rootSession = new CRSession(this, '', 'browser', '');
     this._sessions.set('', this.rootSession);
-    this._debugProtocol = platform.debug('pw:protocol');
+    this._debugProtocol = debug('pw:protocol');
     (this._debugProtocol as any).color = '34';
   }
 
@@ -118,7 +119,7 @@ export const CRSessionEvents = {
   Disconnected: Symbol('Events.CDPSession.Disconnected')
 };
 
-export class CRSession extends platform.EventEmitter {
+export class CRSession extends EventEmitter {
   _connection: CRConnection | null;
   private readonly _callbacks = new Map<number, {resolve: (o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
   private readonly _targetType: string;
