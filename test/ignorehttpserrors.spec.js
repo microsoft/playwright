@@ -32,7 +32,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(response.ok()).toBe(true);
       await context.close();
     });
-    it.fail(FFOX)('should isolate contexts', async({browser, httpsServer}) => {
+    it('should isolate contexts', async({browser, httpsServer}) => {
       {
         let error = null;
         const context = await browser.newContext({ ignoreHTTPSErrors: true });
@@ -57,7 +57,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       });
       const context = await browser.newContext({ ignoreHTTPSErrors: true });
       const page = await context.newPage();
-      await page.goto(httpsServer.PREFIX + '/mixedcontent.html', {waitUntil: 'load'});
+      await page.goto(httpsServer.PREFIX + '/mixedcontent.html', {waitUntil: 'domcontentloaded'});
       expect(page.frames().length).toBe(2);
       // Make sure blocked iframe has functional execution context
       // @see https://github.com/GoogleChrome/puppeteer/issues/2709
