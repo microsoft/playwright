@@ -132,7 +132,6 @@ Documentation.Member = class {
    * @param {string[]=} templates
    */
   constructor(kind, name, type, argsArray, comment = '', returnComment = '', required = true, templates = []) {
-    if (name === 'code') debugger;
     this.kind = kind;
     this.name = name;
     this.type = type;

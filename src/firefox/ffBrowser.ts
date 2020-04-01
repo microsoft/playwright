@@ -291,10 +291,18 @@ export class FFBrowserContext extends BrowserContextBase {
     await this._browser._connection.send('Browser.addBinding', { browserContextId: this._browserContextId || undefined, name, script: binding.source });
   }
 
-  async route(url: types.URLMatch, handler: network.RouteHandler): Promise<void> {
-    this._routes.push({ url, handler });
+  async route(url: types.URLMatch, handler: network.RouteHandler): Promise<() => Promise<void>> {
+    const route = { url, handler };
+    this._routes.push(route);
     if (this._routes.length === 1)
       await this._browser._connection.send('Browser.setRequestInterception', { browserContextId: this._browserContextId || undefined, enabled: true });
+    return async () => {
+      const index = this._routes.indexOf(route);
+      assert(index !== -1, 'Route has been already removed');
+      this._routes.splice(index, 1);
+      if (!this._routes.length)
+        await this._browser._connection.send('Browser.setRequestInterception', { browserContextId: this._browserContextId || undefined, enabled: false });
+    };
   }
 
   async close() {

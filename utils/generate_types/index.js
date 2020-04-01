@@ -109,7 +109,7 @@ function classToString(classDesc) {
 }
 
 /**
- * @param {string} type 
+ * @param {string} type
  */
 function argNameForType(type) {
   if (type === 'void')
@@ -192,8 +192,8 @@ function classBody(classDesc) {
 }
 
 /**
- * @param {Documentation.Class} classDesc 
- * @param {string} methodName 
+ * @param {Documentation.Class} classDesc
+ * @param {string} methodName
  */
 function hasOwnMethod(classDesc, methodName) {
   if (handledMethods.has(`${classDesc.name}.${methodName}`))
@@ -206,7 +206,7 @@ function hasOwnMethod(classDesc, methodName) {
 }
 
 /**
- * @param {Documentation.Class} classDesc 
+ * @param {Documentation.Class} classDesc
  */
 function parentClass(classDesc) {
   if (!classDesc.extends)
@@ -256,6 +256,12 @@ function parseType(type) {
   }
   if (type.startsWith('...'))
     return parseType('Array<' + type.substring(3) + '>');
+  if (type.startsWith('function:')) {
+    return {
+      retType: parseType(type.substring('function:'.length)),
+      name: 'function',
+    };
+  }
   let name = type;
   let next = null;
   let template = null;
@@ -322,6 +328,8 @@ function stringifyType(parsedType) {
       stringArgs.push(stringifyType(arg));
     }
     out = `((${stringArgs.map((type, index) => `arg${index} : ${type}`).join(', ')}) => ${stringifyType(parsedType.retType)})`;
+  } else if (parsedType.name === 'function' && parsedType.retType) {
+    out = '() => ' + stringifyType(parsedType.retType);
   } else if (parsedType.name === 'function') {
     out = 'Function';
   }
@@ -373,9 +381,9 @@ function memberJSDOC(member, indent) {
 }
 
 /**
- * @param {Documentation} mdDoc 
- * @param {Documentation} jsDoc 
- * @return {Documentation} 
+ * @param {Documentation} mdDoc
+ * @param {Documentation} jsDoc
+ * @return {Documentation}
  */
 function mergeDocumentation(mdDoc, jsDoc) {
   const classes = [];

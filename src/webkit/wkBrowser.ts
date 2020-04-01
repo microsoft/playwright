@@ -316,10 +316,18 @@ export class WKBrowserContext extends BrowserContextBase {
       await (page._delegate as WKPage).exposeBinding(binding);
   }
 
-  async route(url: types.URLMatch, handler: network.RouteHandler): Promise<void> {
-    this._routes.push({ url, handler });
+  async route(url: types.URLMatch, handler: network.RouteHandler): Promise<() => Promise<void>> {
+    const route = { url, handler };
+    this._routes.push(route);
     for (const page of this.pages())
       await (page._delegate as WKPage).updateRequestInterception();
+    return async () => {
+      const index = this._routes.indexOf(route);
+      assert(index !== -1, 'Route has been already removed');
+      this._routes.splice(index, 1);
+      for (const page of this.pages())
+        await (page._delegate as WKPage).updateRequestInterception();
+    };
   }
 
   async close() {

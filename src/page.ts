@@ -383,9 +383,16 @@ export class Page extends ExtendedEventEmitter {
     return this._routes.length > 0 || this._browserContext._routes.length > 0;
   }
 
-  async route(url: types.URLMatch, handler: network.RouteHandler): Promise<void> {
-    this._routes.push({ url, handler });
+  async route(url: types.URLMatch, handler: network.RouteHandler): Promise<() => Promise<void>> {
+    const route = { url, handler };
+    this._routes.push(route);
     await this._delegate.updateRequestInterception();
+    return async () => {
+      const index = this._routes.indexOf(route);
+      assert(index !== -1, 'Route has been already removed');
+      this._routes.splice(index, 1);
+      await this._delegate.updateRequestInterception();
+    };
   }
 
   _requestStarted(request: network.Request) {

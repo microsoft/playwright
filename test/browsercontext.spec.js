@@ -404,6 +404,22 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(await response.text()).toBe('page');
       await context.close();
     });
+    it('should be removable', async({browser, server}) => {
+      const context = await browser.newContext();
+      let intercepted = false;
+      const remove = await context.route('**/empty.html', route => {
+        intercepted = true;
+        route.continue();
+      });
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      expect(intercepted).toBe(true);
+      await remove();
+      intercepted = false;
+      await page.goto(server.EMPTY_PAGE);
+      expect(intercepted).toBe(false);
+      await context.close();
+    });
   });
 
   describe('BrowserContext.setHTTPCredentials', function() {

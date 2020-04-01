@@ -49,6 +49,19 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(response.ok()).toBe(true);
       expect(intercepted).toBe(true);
     });
+    it('should be removable', async({page, server}) => {
+      let intercepted = false;
+      const remove = await page.route('**/empty.html', (route, request) => {
+        route.continue();
+        intercepted = true;
+      });
+      await page.goto(server.EMPTY_PAGE);
+      expect(intercepted).toBe(true);
+      await remove();
+      intercepted = false;
+      await page.goto(server.EMPTY_PAGE);
+      expect(intercepted).toBe(false);
+    });
     it('should work when POST is redirected with 302', async({page, server}) => {
       server.setRedirect('/rredirect', '/empty.html');
       await page.goto(server.EMPTY_PAGE);

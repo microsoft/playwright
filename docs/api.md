@@ -485,7 +485,7 @@ Creates a new page in the browser context.
 #### browserContext.route(url, handler)
 - `url` <[string]|[RegExp]|[function]\([string]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
 - `handler` <[function]\([Route], [Request]\)> handler function to route the request.
-- returns: <[Promise]>
+- returns: <[Promise]<[function]:[Promise]>> Promise which resolves to the function that can be used to remove the route.
 
 Routing provides the capability to modify network requests that are made by any page in the browser context.
 Once route is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
@@ -1428,7 +1428,7 @@ If `key` is a single character and no modifier keys besides `Shift` are being he
 #### page.route(url, handler)
 - `url` <[string]|[RegExp]|[function]\([string]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
 - `handler` <[function]\([Route], [Request]\)> handler function to route the request.
-- returns: <[Promise]>.
+- returns: <[Promise]<[function]:[Promise]>> Promise which resolves to the function that can be used to remove the route.
 
 Routing provides the capability to modify network requests that are made by a page.
 
