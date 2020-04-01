@@ -1996,14 +1996,15 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..dcf03385589acc29c7fe0f02f912d40ab7efb76f
+index 0000000000000000000000000000000000000000..b74ea28f1ee7bbfeb6ea3fa9c5a4ff244ac0f6ac
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
-@@ -0,0 +1,479 @@
+@@ -0,0 +1,492 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
++const {Preferences} = ChromeUtils.import("resource://gre/modules/Preferences.jsm");
 +const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
 +const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
 +const {PageHandler} = ChromeUtils.import("chrome://juggler/content/protocol/PageHandler.js");
@@ -2327,6 +2328,18 @@ index 0000000000000000000000000000000000000000..dcf03385589acc29c7fe0f02f912d40a
 +    this.options.scriptsToEvaluateOnNewDocument = [];
 +    this.options.bindings = [];
 +    this.pages = new Set();
++
++    if (this.options.ignoreHTTPSErrors) {
++      Preferences.set("network.stricttransportsecurity.preloadlist", false);
++      Preferences.set("security.cert_pinning.enforcement_level", 0);
++
++      const certOverrideService = Cc[
++        "@mozilla.org/security/certoverride;1"
++      ].getService(Ci.nsICertOverrideService);
++      certOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData(
++        true, this.userContextId
++      );
++    }
 +  }
 +
 +  destroy() {
@@ -6133,10 +6146,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/juggler/protocol/Protocol.js b/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..4028ed2f4c87e869da15103e936f85e887d769a1
+index 0000000000000000000000000000000000000000..41bd5059dafd9b9f192f8792110e8e3a5d1c7b20
 --- /dev/null
 +++ b/juggler/protocol/Protocol.js
-@@ -0,0 +1,779 @@
+@@ -0,0 +1,780 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -6349,6 +6362,7 @@ index 0000000000000000000000000000000000000000..4028ed2f4c87e869da15103e936f85e8
 +        removeOnDetach: t.Optional(t.Boolean),
 +        userAgent: t.Optional(t.String),
 +        bypassCSP: t.Optional(t.Boolean),
++        ignoreHTTPSErrors: t.Optional(t.Boolean),
 +        javaScriptDisabled: t.Optional(t.Boolean),
 +        viewport: t.Optional(pageTypes.Viewport),
 +        locale: t.Optional(t.String),
@@ -6992,19 +7006,105 @@ index 5bdd250f8061a2fc1f755a4ea82b91e525b88131..9d5d3b92429abc0a8d570b4ea6db67e2
    nsresult rv = NS_OK;
    nsCOMPtr<nsIContentSecurityPolicy> preloadCsp = mDocument->GetPreloadCsp();
    if (!preloadCsp) {
+diff --git a/security/manager/ssl/SSLServerCertVerification.cpp b/security/manager/ssl/SSLServerCertVerification.cpp
+index d2014f0b1b6f3f02489d3259dd89446a25e4570f..61ceaa4da3f7dcc93e88521e0b0538c99968730e 100644
+--- a/security/manager/ssl/SSLServerCertVerification.cpp
++++ b/security/manager/ssl/SSLServerCertVerification.cpp
+@@ -1296,8 +1296,8 @@ PRErrorCode AuthCertificateParseResults(
+         return SEC_ERROR_NO_MEMORY;
+       }
+       nsresult rv = overrideService->HasMatchingOverride(
+-          aHostName, aPort, nssCert, &overrideBits, &isTemporaryOverride,
+-          &haveOverride);
++          aHostName, aPort, aOriginAttributes.mUserContextId, nssCert,
++          &overrideBits, &isTemporaryOverride, &haveOverride);
+       if (NS_SUCCEEDED(rv) && haveOverride) {
+         // remove the errors that are already overriden
+         remainingDisplayErrors &= ~overrideBits;
 diff --git a/security/manager/ssl/nsCertOverrideService.cpp b/security/manager/ssl/nsCertOverrideService.cpp
-index e27b18249b9dca7fddbd0c45b5af383e75ef3143..cc352957002985d0d168b7045186b389cbc911fb 100644
+index e27b18249b9dca7fddbd0c45b5af383e75ef3143..371f2c7286dcc03f5759060009f09cb96afe9aa4 100644
 --- a/security/manager/ssl/nsCertOverrideService.cpp
 +++ b/security/manager/ssl/nsCertOverrideService.cpp
-@@ -633,7 +633,7 @@ static bool IsDebugger() {
+@@ -413,13 +413,20 @@ nsCertOverrideService::RememberTemporaryValidityOverrideUsingFingerprint(
+ 
+ NS_IMETHODIMP
+ nsCertOverrideService::HasMatchingOverride(const nsACString& aHostName,
+-                                           int32_t aPort, nsIX509Cert* aCert,
++                                           int32_t aPort,
++                                           uint32_t aUserContextId,
++                                           nsIX509Cert* aCert,
+                                            uint32_t* aOverrideBits,
+                                            bool* aIsTemporary, bool* _retval) {
+   bool disableAllSecurityCheck = false;
+   {
+     MutexAutoLock lock(mMutex);
+-    disableAllSecurityCheck = mDisableAllSecurityCheck;
++    if (aUserContextId) {
++      disableAllSecurityCheck = mUserContextIdsWithDisabledSecurityChecks.has(
++          aUserContextId);
++    } else {
++      disableAllSecurityCheck = mDisableAllSecurityCheck;
++    }
+   }
+   if (disableAllSecurityCheck) {
+     nsCertOverride::OverrideBits all = nsCertOverride::OverrideBits::Untrusted |
+@@ -632,12 +639,21 @@ static bool IsDebugger() {
+ 
  NS_IMETHODIMP
  nsCertOverrideService::
-     SetDisableAllSecurityChecksAndLetAttackersInterceptMyData(bool aDisable) {
+-    SetDisableAllSecurityChecksAndLetAttackersInterceptMyData(bool aDisable) {
 -  if (!(PR_GetEnv("XPCSHELL_TEST_PROFILE_DIR") || IsDebugger())) {
++    SetDisableAllSecurityChecksAndLetAttackersInterceptMyData(
++      bool aDisable, uint32_t aUserContextId) {
 +  if (false /* juggler hacks */ && !(PR_GetEnv("XPCSHELL_TEST_PROFILE_DIR") || IsDebugger())) {
      return NS_ERROR_NOT_AVAILABLE;
    }
  
+   MutexAutoLock lock(mMutex);
++  if (aUserContextId) {
++    if (aDisable) {
++      mozilla::Unused << mUserContextIdsWithDisabledSecurityChecks.put(aUserContextId);
++    } else {
++      mUserContextIdsWithDisabledSecurityChecks.remove(aUserContextId);
++    }
++    return NS_OK;
++  }
+   mDisableAllSecurityCheck = aDisable;
+   return NS_OK;
+ }
+diff --git a/security/manager/ssl/nsCertOverrideService.h b/security/manager/ssl/nsCertOverrideService.h
+index b8702a933adc0c9c59e337a4fdb626681abf9797..b60b4836edcc7c88ca9a99d01cc0fb3e04b4e518 100644
+--- a/security/manager/ssl/nsCertOverrideService.h
++++ b/security/manager/ssl/nsCertOverrideService.h
+@@ -133,6 +133,7 @@ class nsCertOverrideService final : public nsICertOverrideService,
+   ~nsCertOverrideService();
+ 
+   bool mDisableAllSecurityCheck;
++  mozilla::HashSet<uint32_t> mUserContextIdsWithDisabledSecurityChecks;
+   mozilla::Mutex mMutex;
+   nsCOMPtr<nsIFile> mSettingsFile;
+   nsTHashtable<nsCertOverrideEntry> mSettingsTable;
+diff --git a/security/manager/ssl/nsICertOverrideService.idl b/security/manager/ssl/nsICertOverrideService.idl
+index 6f0f8259b309c0a299c9c80b2943a498b0f1b0e6..03d17899be96bc87dc78f06277e1bd9eb93d08f8 100644
+--- a/security/manager/ssl/nsICertOverrideService.idl
++++ b/security/manager/ssl/nsICertOverrideService.idl
+@@ -98,6 +98,7 @@ interface nsICertOverrideService : nsISupports {
+   [must_use]
+   boolean hasMatchingOverride(in AUTF8String aHostName,
+                               in int32_t aPort,
++                              in uint32_t aUserContextId,
+                               in nsIX509Cert aCert,
+                               out uint32_t aOverrideBits,
+                               out boolean aIsTemporary);
+@@ -137,5 +138,7 @@ interface nsICertOverrideService : nsISupports {
+    *  @param aDisable If true, disable all security check and make
+    *                  hasMatchingOverride always return true.
+    */
+-  void setDisableAllSecurityChecksAndLetAttackersInterceptMyData(in boolean aDisable);
++  void setDisableAllSecurityChecksAndLetAttackersInterceptMyData(
++      in boolean aDisable,
++      [optional] in uint32_t aUserContextId);
+ };
 diff --git a/services/settings/Utils.jsm b/services/settings/Utils.jsm
 index 54eb24bceb10eeccdbdf1d0111f2cc0527cb09f8..0efa6e21ee0f32c0092402db60751c9f0674061d 100644
 --- a/services/settings/Utils.jsm
