@@ -14,11 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const path = require('path');
-const {TestServer} = require('../utils/testserver/');
+
 const {TestRunner, Reporter} = require('../utils/testrunner/');
 const utils = require('./utils');
-const inspector = require('inspector');
+const os = require('os');
 
 let parallel = 1;
 if (process.env.PW_PARALLEL_TESTS)
@@ -32,7 +31,7 @@ let timeout = process.env.CI ? 30 * 1000 : 10 * 1000;
 if (!isNaN(process.env.TIMEOUT))
   timeout = parseInt(process.env.TIMEOUT * 1000, 10);
 const MAJOR_NODEJS_VERSION = parseInt(process.version.substring(1).split('.')[0], 10);
-if (MAJOR_NODEJS_VERSION >= 8 && inspector.url()) {
+if (MAJOR_NODEJS_VERSION >= 8 && require('inspector').url()) {
   console.log('Detected inspector - disabling timeout to be debugger-friendly');
   timeout = 0;
 }
@@ -43,142 +42,38 @@ const testRunner = new TestRunner({
   breakOnFailure: process.argv.indexOf('--break-on-failure') !== -1,
   installCommonHelpers: false
 });
-testRunner.testModifier('skip', (t, condition) => condition && t.setSkipped(true));
-testRunner.suiteModifier('skip', (s, condition) => condition && s.setSkipped(true));
-testRunner.testModifier('fail', (t, condition) => condition && t.setExpectation(t.Expectations.Fail));
-testRunner.suiteModifier('fail', (s, condition) => condition && s.setExpectation(s.Expectations.Fail));
-testRunner.testModifier('slow', (t, condition) => condition && t.setTimeout(t.timeout() * 3));
-testRunner.testModifier('repeat', (t, count) => t.setRepeat(count));
-testRunner.suiteModifier('repeat', (s, count) => s.setRepeat(count));
-testRunner.testAttribute('focus', t => t.setFocused(true));
-testRunner.suiteAttribute('focus', s => s.setFocused(true));
-testRunner.testAttribute('debug', t => {
-  t.setFocused(true);
-  t.setTimeout(100000000);
-
-  let session;
-  t.before(async () => {
-    const util = require('util');
-    const fs = require('fs');
-    const url = require('url');
-    const readFileAsync = util.promisify(fs.readFile.bind(fs));
-    session = new inspector.Session();
-    session.connect();
-    const postAsync = util.promisify(session.post.bind(session));
-    await postAsync('Debugger.enable');
-    const setBreakpointCommands = [];
-    const N = t.body().toString().split('\n').length;
-    const location = t.location();
-    const lines = (await readFileAsync(location.filePath, 'utf8')).split('\n');
-    for (let line = 0; line < N; ++line) {
-      const lineNumber = line + location.lineNumber;
-      setBreakpointCommands.push(postAsync('Debugger.setBreakpointByUrl', {
-        url: url.pathToFileURL(location.filePath),
-        lineNumber,
-        condition: `console.log('${String(lineNumber + 1).padStart(6, ' ')} | ' + ${JSON.stringify(lines[lineNumber])})`,
-      }).catch(e => {}));
-    }
-    await Promise.all(setBreakpointCommands);
-  });
-
-  t.after(async () => {
-    session.disconnect();
-  });
-});
-testRunner.fdescribe = testRunner.describe.focus;
-testRunner.xdescribe = testRunner.describe.skip(true);
-testRunner.fit = testRunner.it.focus;
-testRunner.xit = testRunner.it.skip(true);
-testRunner.dit = testRunner.it.debug;
-
-const {describe, fdescribe, beforeAll, afterAll, beforeEach, afterEach} = testRunner;
+utils.setupTestRunner(testRunner);
 
 console.log('Testing on Node', process.version);
 
-beforeAll(async state => {
-  const assetsPath = path.join(__dirname, 'assets');
-  const cachedPath = path.join(__dirname, 'assets', 'cached');
-
-  const port = 8907 + state.parallelIndex * 3;
-  state.server = await TestServer.create(assetsPath, port);
-  state.server.enableHTTPCache(cachedPath);
-  state.server.PORT = port;
-  state.server.PREFIX = `http://localhost:${port}`;
-  state.server.CROSS_PROCESS_PREFIX = `http://127.0.0.1:${port}`;
-  state.server.EMPTY_PAGE = `http://localhost:${port}/empty.html`;
-
-  const httpsPort = port + 1;
-  state.httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
-  state.httpsServer.enableHTTPCache(cachedPath);
-  state.httpsServer.PORT = httpsPort;
-  state.httpsServer.PREFIX = `https://localhost:${httpsPort}`;
-  state.httpsServer.CROSS_PROCESS_PREFIX = `https://127.0.0.1:${httpsPort}`;
-  state.httpsServer.EMPTY_PAGE = `https://localhost:${httpsPort}/empty.html`;
-
-  const sourcePort = port + 2;
-  state.sourceServer = await TestServer.create(path.join(__dirname, '..'), sourcePort);
-  state.sourceServer.PORT = sourcePort;
-  state.sourceServer.PREFIX = `http://localhost:${sourcePort}`;
+const names = ['Chromium', 'Firefox', 'WebKit'].filter(name => {
+  return process.env.BROWSER === name.toLowerCase() || process.env.BROWSER === 'all';
+});
+const products = names.map(name => {
+  const executablePath = {
+    'Chromium': process.env.CRPATH,
+    'Firefox': process.env.FFPATH,
+    'WebKit': process.env.WKPATH,
+  }[name];
+  return { product: name, executablePath };
 });
 
-afterAll(async({server, sourceServer, httpsServer}) => {
-  await Promise.all([
-    server.stop(),
-    httpsServer.stop(),
-    sourceServer.stop(),
-  ]);
-});
-
-beforeEach(async({server, httpsServer}) => {
-  server.reset();
-  httpsServer.reset();
-});
-
-const BROWSER_CONFIGS = [
-  {
-    name: 'Firefox',
-    events: {
-      ...require('../lib/events').Events,
-      ...require('../lib/chromium/events').Events,
-    },
-    missingCoverage: ['browserContext.setGeolocation', 'browserContext.setOffline', 'cDPSession.send', 'cDPSession.detach'],
-  },
-  {
-    name: 'WebKit',
-    events: require('../lib/events').Events,
-    missingCoverage: ['browserContext.clearPermissions', 'cDPSession.send', 'cDPSession.detach'],
-  },
-  {
-    name: 'Chromium',
-    events: require('../lib/events').Events,
-    missingCoverage: [],
-  },
-];
-
-const browserNames = BROWSER_CONFIGS.map(config => config.name);
-
-for (const browserConfig of BROWSER_CONFIGS) {
-  if (process.env.BROWSER !== browserConfig.name.toLowerCase() && process.env.BROWSER !== 'all')
-    continue;
-  const product = browserConfig.name;
-  describe(product, () => {
-    testRunner.describe('', require('./playwright.spec.js').describe, {
-      product,
-      playwrightPath: utils.projectRoot(),
-      testRunner,
-    });
-    if (process.env.COVERAGE) {
-      const api = require('../lib/api');
-      const filteredApi = {};
-      Object.keys(api).forEach(apiName => {
-        if (browserNames.some(browserName => apiName.startsWith(browserName)) && !apiName.startsWith(product))
-          return;
-        filteredApi[apiName] = api[apiName];
-      });
-      utils.recordAPICoverage(testRunner, filteredApi, browserConfig.events, browserConfig.missingCoverage);
-    }
-  });
+function valueFromEnv(name, defaultValue) {
+  if (!(name in process.env))
+    return defaultValue;
+  return JSON.parse(process.env[name]);
 }
+
+require('./playwright.spec.js').addPlaywrightTests({
+  playwrightPath: utils.projectRoot(),
+  products,
+  platform: os.platform(),
+  testRunner,
+  headless: !!valueFromEnv('HEADLESS', true),
+  slowMo: valueFromEnv('SLOW_MO', 0),
+  dumpProtocolOnFailure: valueFromEnv('DEBUGP', false),
+  coverage: process.env.COVERAGE,
+});
 
 const filterArgIndex = process.argv.indexOf('--filter');
 if (filterArgIndex !== -1) {

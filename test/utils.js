@@ -20,6 +20,7 @@ const path = require('path');
 const util = require('util');
 const os = require('os');
 const removeFolder = require('rimraf');
+const url = require('url');
 
 const {FlakinessDashboard} = require('../utils/flakiness-dashboard');
 const PROJECT_ROOT = fs.existsSync(path.join(__dirname, '..', 'package.json')) ? path.join(__dirname, '..') : path.join(__dirname, '..', '..');
@@ -288,5 +289,52 @@ const utils = module.exports = {
 
   removeUserDataDir: async function(dir) {
     await removeFolderAsync(dir).catch(e => {});
-  }
+  },
+
+  setupTestRunner: function(testRunner) {
+    testRunner.testModifier('skip', (t, condition) => condition && t.setSkipped(true));
+    testRunner.suiteModifier('skip', (s, condition) => condition && s.setSkipped(true));
+    testRunner.testModifier('fail', (t, condition) => condition && t.setExpectation(t.Expectations.Fail));
+    testRunner.suiteModifier('fail', (s, condition) => condition && s.setExpectation(s.Expectations.Fail));
+    testRunner.testModifier('slow', (t, condition) => condition && t.setTimeout(t.timeout() * 3));
+    testRunner.testModifier('repeat', (t, count) => t.setRepeat(count));
+    testRunner.suiteModifier('repeat', (s, count) => s.setRepeat(count));
+    testRunner.testAttribute('focus', t => t.setFocused(true));
+    testRunner.suiteAttribute('focus', s => s.setFocused(true));
+    testRunner.testAttribute('debug', t => {
+      t.setFocused(true);
+      t.setTimeout(100000000);
+
+      let session;
+      t.before(async () => {
+        const readFileAsync = util.promisify(fs.readFile.bind(fs));
+        session = new require('inspector').Session();
+        session.connect();
+        const postAsync = util.promisify(session.post.bind(session));
+        await postAsync('Debugger.enable');
+        const setBreakpointCommands = [];
+        const N = t.body().toString().split('\n').length;
+        const location = t.location();
+        const lines = (await readFileAsync(location.filePath, 'utf8')).split('\n');
+        for (let line = 0; line < N; ++line) {
+          const lineNumber = line + location.lineNumber;
+          setBreakpointCommands.push(postAsync('Debugger.setBreakpointByUrl', {
+            url: url.pathToFileURL(location.filePath),
+            lineNumber,
+            condition: `console.log('${String(lineNumber + 1).padStart(6, ' ')} | ' + ${JSON.stringify(lines[lineNumber])})`,
+          }).catch(e => {}));
+        }
+        await Promise.all(setBreakpointCommands);
+      });
+
+      t.after(async () => {
+        session.disconnect();
+      });
+    });
+    testRunner.fdescribe = testRunner.describe.focus;
+    testRunner.xdescribe = testRunner.describe.skip(true);
+    testRunner.fit = testRunner.it.focus;
+    testRunner.xit = testRunner.it.skip(true);
+    testRunner.dit = testRunner.it.debug;
+  },
 };
