@@ -96,6 +96,7 @@ export class FFBrowser extends EventEmitter implements Browser {
       javaScriptDisabled: options.javaScriptEnabled === false ? true : undefined,
       viewport,
       locale: options.locale,
+      timezoneId: options.timezoneId,
       removeOnDetach: true
     });
     const context = new FFBrowserContext(this, browserContextId, options);
@@ -197,6 +198,10 @@ export class FFBrowserContext extends BrowserContextBase {
     assertBrowserContextIsNotOwned(this);
     const { targetId } = await this._browser._connection.send('Browser.newPage', {
       browserContextId: this._browserContextId || undefined
+    }).catch(e =>  {
+      if (e.message.includes('Failed to override timezone'))
+        throw new Error(`Invalid timezone ID: ${this._options.timezoneId}`);
+      throw e;
     });
     const ffPage = this._browser._ffPages.get(targetId)!;
     const pageOrError = await ffPage.pageOrError();
