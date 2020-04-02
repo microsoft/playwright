@@ -206,7 +206,10 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
           setTimeout(() => window.stop(), 100);
         }, server.EMPTY_PAGE);
     });
-    it('calling window.stop sync', async({page, server, httpsServer}) => {
+    it.fail(CHROMIUM)('calling window.stop sync', async({page, server, httpsServer}) => {
+      // Flaky, see https://github.com/microsoft/playwright/pull/1630/checks?check_run_id=553475173.
+      // We only get Page.frameStoppedLoading, but do not know that navigation was aborted or
+      // that navigation request was cancelled.
       await page.evaluate((url) => {
           window.location.href = url;
           window.stop();
