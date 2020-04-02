@@ -5397,6 +5397,92 @@ index 82e6ffd18a3bcd8a14e4a1890fb549269c8b4252..17254c036846b7f80df6bc22e2e01fbc
      const String& host = challenge.protectionSpace().host();
      NSArray *certificates = [NSURLRequest allowsSpecificHTTPSCertificateForHost:host];
      if (!certificates)
+diff --git a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
+index 977a403be8dc962a9ccfa6428bc1d3e7c4682f86..5fb2c30136bffda04d4d5ffacea4511ef86ca427 100644
+--- a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
++++ b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
+@@ -26,9 +26,13 @@
+ #include "config.h"
+ #include "NetworkDataTaskCurl.h"
+ 
++#include "APIError.h"
+ #include "AuthenticationChallengeDisposition.h"
+ #include "AuthenticationManager.h"
++#include "DataReference.h"
++#include "Download.h"
+ #include "NetworkSessionCurl.h"
++#include "NetworkProcess.h"
+ #include <WebCore/AuthenticationChallenge.h>
+ #include <WebCore/CookieJar.h>
+ #include <WebCore/CurlRequest.h>
+@@ -38,6 +42,7 @@
+ #include <WebCore/ResourceError.h>
+ #include <WebCore/SameSiteInfo.h>
+ #include <WebCore/SynchronousLoaderClient.h>
++#include <wtf/FileSystem.h>
+ 
+ namespace WebKit {
+ 
+@@ -177,7 +182,12 @@ void NetworkDataTaskCurl::curlDidReceiveBuffer(CurlRequest&, Ref<SharedBuffer>&&
+     auto protectedThis = makeRef(*this);
+     if (state() == State::Canceling || state() == State::Completed || (!m_client && !isDownload()))
+         return;
+-
++    if (isDownload()) {
++        FileSystem::PlatformFileHandle file = FileSystem::openFile(m_pendingDownloadLocation, FileSystem::FileOpenMode::Write);
++        FileSystem::writeToFile(file, buffer->data(), buffer->size());
++        FileSystem::closeFile(file);
++        return;
++    }
+     m_client->didReceiveData(WTFMove(buffer));
+ }
+ 
+@@ -186,6 +196,12 @@ void NetworkDataTaskCurl::curlDidComplete(CurlRequest&, NetworkLoadMetrics&& net
+     if (state() == State::Canceling || state() == State::Completed || (!m_client && !isDownload()))
+         return;
+ 
++    if (isDownload()) {
++        auto* download = m_session->networkProcess().downloadManager().download(m_pendingDownloadID);
++        ASSERT(download);
++        download->didFinish();
++        return;
++    }
+     m_client->didCompleteWithError({ }, WTFMove(networkLoadMetrics));
+ }
+ 
+@@ -199,6 +215,13 @@ void NetworkDataTaskCurl::curlDidFailWithError(CurlRequest& request, ResourceErr
+         return;
+     }
+ 
++    if (isDownload()) {
++        auto* download = m_session->networkProcess().downloadManager().download(m_pendingDownloadID);
++        ASSERT(download);
++        download->didFail(resourceError, IPC::DataReference());
++        return;
++    }
++
+     m_client->didCompleteWithError(resourceError);
+ }
+ 
+@@ -235,6 +258,18 @@ void NetworkDataTaskCurl::invokeDidReceiveResponse()
+             break;
+         case PolicyAction::Ignore:
+             break;
++        case PolicyAction::Download: {
++            FileSystem::deleteFile(m_pendingDownloadLocation);
++            auto& downloadManager = m_session->networkProcess().downloadManager();
++            auto download = makeUnique<Download>(downloadManager, m_pendingDownloadID, *this, *m_session, suggestedFilename());
++            auto* downloadPtr = download.get();
++            downloadManager.dataTaskBecameDownloadTask(m_pendingDownloadID, WTFMove(download));
++            downloadPtr->didCreateDestination(m_pendingDownloadLocation);
++
++            if (m_curlRequest)
++                m_curlRequest->completeDidReceiveResponse();
++            break;
++        }
+         default:
+             notImplemented();
+             break;
 diff --git a/Source/WebKit/NetworkProcess/curl/NetworkProcessCurl.cpp b/Source/WebKit/NetworkProcess/curl/NetworkProcessCurl.cpp
 index 20b659f5cf4895e75a2762a9260611cd5f2fff80..ef094ae0d772f9884fd3021ba0eb4f491264ddbf 100644
 --- a/Source/WebKit/NetworkProcess/curl/NetworkProcessCurl.cpp
@@ -13381,10 +13467,18 @@ index d79c6fdc4fa05e1e4b9acdcc6932e571163320eb..99718b19797788634f4233a8892729b5
      int m_toolbarItemsWidth { };
  };
 diff --git a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
-index 1e4fb27884034dcca333f77efd24150d4c9dc2ec..ed9046f38f0b517644f8c5208c8b7800fd2fc9fe 100644
+index 1e4fb27884034dcca333f77efd24150d4c9dc2ec..30eaa65b5600fce08e6153bbd47fdbca900bbd7b 100644
 --- a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
 +++ b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
-@@ -106,7 +106,7 @@ WKRetainPtr<WKURLRef> createWKURL(const std::wstring& str)
+@@ -32,6 +32,7 @@
+ #include <WebKit/WKAuthenticationDecisionListener.h>
+ #include <WebKit/WKCertificateInfoCurl.h>
+ #include <WebKit/WKCredential.h>
++#include <WebKit/WKFramePolicyListener.h>
+ #include <WebKit/WKInspector.h>
+ #include <WebKit/WKProtectionSpace.h>
+ #include <WebKit/WKProtectionSpaceCurl.h>
+@@ -106,7 +107,7 @@ WKRetainPtr<WKURLRef> createWKURL(const std::wstring& str)
      return adoptWK(WKURLCreateWithUTF8CString(utf8.data()));
  }
  
@@ -13393,7 +13487,7 @@ index 1e4fb27884034dcca333f77efd24150d4c9dc2ec..ed9046f38f0b517644f8c5208c8b7800
  {
      auto conf = adoptWK(WKPageConfigurationCreate());
  
-@@ -120,8 +120,8 @@ Ref<BrowserWindow> WebKitBrowserWindow::create(BrowserWindowClient& client, HWND
+@@ -120,8 +121,8 @@ Ref<BrowserWindow> WebKitBrowserWindow::create(BrowserWindowClient& client, HWND
      WKPreferencesSetDeveloperExtrasEnabled(prefs.get(), true);
      WKPageConfigurationSetPreferences(conf.get(), prefs.get());
  
@@ -13404,7 +13498,7 @@ index 1e4fb27884034dcca333f77efd24150d4c9dc2ec..ed9046f38f0b517644f8c5208c8b7800
  
      return adoptRef(*new WebKitBrowserWindow(client, conf.get(), mainWnd));
  }
-@@ -142,11 +142,17 @@ WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, WKPageConf
+@@ -142,11 +143,17 @@ WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, WKPageConf
      navigationClient.didReceiveAuthenticationChallenge = didReceiveAuthenticationChallenge;
      WKPageSetPageNavigationClient(page, &navigationClient.base);
  
@@ -13424,15 +13518,20 @@ index 1e4fb27884034dcca333f77efd24150d4c9dc2ec..ed9046f38f0b517644f8c5208c8b7800
      WKPageSetPageUIClient(page, &uiClient.base);
  
      WKPageStateClientV0 stateClient = { };
-@@ -158,7 +164,6 @@ WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, WKPageConf
+@@ -158,7 +165,11 @@ WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, WKPageConf
      stateClient.didChangeActiveURL = didChangeActiveURL;
      WKPageSetPageStateClient(page, &stateClient.base);
  
 -    updateProxySettings();
++    WKPagePolicyClientV1 policyClient = { };
++    policyClient.base.version = 1;
++    policyClient.base.clientInfo = this;
++    policyClient.decidePolicyForResponse_deprecatedForUseWithV0 = decidePolicyForResponse;
++    WKPageSetPagePolicyClient(page, &policyClient.base);
      resetZoom();
  }
  
-@@ -182,6 +187,29 @@ void WebKitBrowserWindow::updateProxySettings()
+@@ -182,6 +193,29 @@ void WebKitBrowserWindow::updateProxySettings()
      WKWebsiteDataStoreEnableCustomNetworkProxySettings(store, url.get(), excludeHosts.get());
  }
  
@@ -13462,7 +13561,7 @@ index 1e4fb27884034dcca333f77efd24150d4c9dc2ec..ed9046f38f0b517644f8c5208c8b7800
  HRESULT WebKitBrowserWindow::init()
  {
      return S_OK;
-@@ -250,7 +278,6 @@ void WebKitBrowserWindow::openProxySettings()
+@@ -250,7 +284,6 @@ void WebKitBrowserWindow::openProxySettings()
  {
      if (askProxySettings(m_hMainWnd, m_proxy))
          updateProxySettings();
@@ -13470,15 +13569,13 @@ index 1e4fb27884034dcca333f77efd24150d4c9dc2ec..ed9046f38f0b517644f8c5208c8b7800
  }
  
  void WebKitBrowserWindow::setUserAgent(_bstr_t& customUAString)
-@@ -388,18 +415,94 @@ bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protect
+@@ -388,18 +421,94 @@ bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protect
      return false;
  }
  
 -WKPageRef WebKitBrowserWindow::createNewPage(WKPageRef page, WKPageConfigurationRef configuration, WKNavigationActionRef navigationAction, WKWindowFeaturesRef windowFeatures, const void *clientInfo)
 +void WebKitBrowserWindow::closeWindow(WKPageRef page, const void* clientInfo)
- {
--    auto& newWindow = MainWindow::create().leakRef();
--    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, bool) -> auto {
++{
 +    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
 +    PostMessage(thisWindow.m_hMainWnd, WM_CLOSE, 0, 0);
 +}
@@ -13505,7 +13602,9 @@ index 1e4fb27884034dcca333f77efd24150d4c9dc2ec..ed9046f38f0b517644f8c5208c8b7800
 +}
 +
 +void WebKitBrowserWindow::runBeforeUnloadConfirmPanel(WKPageRef page, WKStringRef message, WKFrameRef frame, WKPageRunBeforeUnloadConfirmPanelResultListenerRef listener, const void *clientInfo)
-+{
+ {
+-    auto& newWindow = MainWindow::create().leakRef();
+-    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, bool) -> auto {
 +    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
 +    WKRetain(listener);
 +    thisWindow.m_beforeUnloadDialog = listener;
@@ -13572,8 +13671,20 @@ index 1e4fb27884034dcca333f77efd24150d4c9dc2ec..ed9046f38f0b517644f8c5208c8b7800
      return newPage.leakRef();
  }
  
+@@ -408,3 +517,11 @@ void WebKitBrowserWindow::didNotHandleKeyEvent(WKPageRef, WKNativeEventPtr event
+     auto& thisWindow = toWebKitBrowserWindow(clientInfo);
+     PostMessage(thisWindow.m_hMainWnd, event->message, event->wParam, event->lParam);
+ }
++
++void WebKitBrowserWindow::decidePolicyForResponse(WKPageRef page, WKFrameRef frame, WKURLResponseRef response, WKURLRequestRef request, WKFramePolicyListenerRef listener, WKTypeRef userData, const void* clientInfo)
++{
++    if (WKURLResponseIsAttachment(response))
++        WKFramePolicyListenerDownload(listener);
++    else
++        WKFramePolicyListenerUse(listener);
++}
 diff --git a/Tools/MiniBrowser/win/WebKitBrowserWindow.h b/Tools/MiniBrowser/win/WebKitBrowserWindow.h
-index 373d0de77e852c673a6615e0acedd5195e3c021b..cfeb4f806f79d1a213fdb13346e2b383b9a64273 100644
+index 373d0de77e852c673a6615e0acedd5195e3c021b..2f25d60c366efa428197dba4a7e0aea6de86af6c 100644
 --- a/Tools/MiniBrowser/win/WebKitBrowserWindow.h
 +++ b/Tools/MiniBrowser/win/WebKitBrowserWindow.h
 @@ -26,6 +26,7 @@
@@ -13599,7 +13710,7 @@ index 373d0de77e852c673a6615e0acedd5195e3c021b..cfeb4f806f79d1a213fdb13346e2b383
  
      HRESULT init() override;
      HWND hwnd() override;
-@@ -71,6 +75,12 @@ private:
+@@ -71,11 +75,22 @@ private:
      static void didChangeActiveURL(const void*);
      static void didReceiveAuthenticationChallenge(WKPageRef, WKAuthenticationChallengeRef, const void*);
      static WKPageRef createNewPage(WKPageRef, WKPageConfigurationRef, WKNavigationActionRef, WKWindowFeaturesRef, const void *);
@@ -13610,9 +13721,10 @@ index 373d0de77e852c673a6615e0acedd5195e3c021b..cfeb4f806f79d1a213fdb13346e2b383
 +    static void runBeforeUnloadConfirmPanel(WKPageRef page, WKStringRef message, WKFrameRef frame, WKPageRunBeforeUnloadConfirmPanelResultListenerRef listener, const void *clientInfo);
 +    static void handleJavaScriptDialog(WKPageRef page, bool accept, WKStringRef value, const void *clientInfo);
      static void didNotHandleKeyEvent(WKPageRef, WKNativeEventPtr, const void*);
++    static void decidePolicyForResponse(WKPageRef, WKFrameRef, WKURLResponseRef, WKURLRequestRef, WKFramePolicyListenerRef, WKTypeRef, const void*);
  
      BrowserWindowClient& m_client;
-@@ -78,4 +88,8 @@ private:
+     WKRetainPtr<WKViewRef> m_view;
      HWND m_hMainWnd { nullptr };
      ProxySettings m_proxy { };
      std::unordered_map<std::wstring, std::wstring> m_acceptedServerTrustCerts;
