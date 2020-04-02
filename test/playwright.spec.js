@@ -160,7 +160,7 @@ module.exports.addPlaywrightTests = ({testRunner, platform, products, playwright
       describe('', function() {
         beforeAll(async state => {
           state.browser = await browserType.launch(defaultBrowserOptions);
-          state.browserServer = state.browser.__server__;
+          state.browserServer = state.browser._ownedServer;
           state._stdout = readline.createInterface({ input: state.browserServer.process().stdout });
           state._stderr = readline.createInterface({ input: state.browserServer.process().stderr });
         });
