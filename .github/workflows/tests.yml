@@ -197,3 +197,43 @@ jobs:
       with:
         name: firefox-win-testrun.log
         path: firefox-win-testrun.log
+  test-package-installations:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        # chromium dependencies
+        sudo apt-get install libgbm1
+        # webkit dependencies
+        sudo apt-get install libwoff1 libopus0 libwebp6 libwebpdemux2 libenchant1c2a libgudev-1.0-0 libsecret-1-0 libhyphen0 libgdk-pixbuf2.0-0 libegl1 libgles2 libevent-2.1-6 libnotify4 libvpx5 libxslt1.1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10.15
+    - run: npm install
+    - run: npm link
+    - name: Running e2e test for playwright
+      run: |
+        npm link playwright-core
+        node install.js
+        node ../../test/e2e/stub.js chromium firefox webkit
+      working-directory: packages/playwright
+    - name: Running e2e test for playwright-chromium
+      run: |
+        npm link playwright-core
+        node install.js
+        node ../../test/e2e/stub.js chromium
+      working-directory: packages/playwright-chromium
+    - name: Running e2e test for playwright-webkit
+      run: |
+        npm link playwright-core
+        node install.js
+        node ../../test/e2e/stub.js webkit
+      working-directory: packages/playwright-webkit
+    - name: Running e2e test for playwright-firefox
+      run: |
+        npm link playwright-core
+        node install.js
+        node ../../test/e2e/stub.js firefox
+      working-directory: packages/playwright-firefox
