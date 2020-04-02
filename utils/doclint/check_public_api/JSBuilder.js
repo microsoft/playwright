@@ -112,7 +112,7 @@ function checkSources(sources) {
       if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
         const module = node.moduleSpecifier.text;
         const isServerDependency = path.resolve(path.dirname(fileName), module).includes('src/server');
-        if (isServerDependency) {
+        if (isServerDependency && !node.importClause.isTypeOnly) {
           const lac = ts.getLineAndCharacterOfPosition(node.getSourceFile(), node.moduleSpecifier.pos);
           errors.push(`Disallowed import "${module}" at ${node.getSourceFile().fileName}:${lac.line + 1}`);
         }

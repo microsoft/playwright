@@ -48,8 +48,8 @@ export class WebKit implements BrowserType<WKBrowser> {
   async launch(options: LaunchOptions = {}): Promise<WKBrowser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     const { browserServer, transport } = await this._launchServer(options, 'local');
-    const browser = await WKBrowser.connect(transport!, options.slowMo);
-    (browser as any)['__server__'] = browserServer;
+    const browser = await WKBrowser.connect(transport!, options.slowMo, false, () => browserServer.close());
+    browser._ownedServer = browserServer;
     return browser;
   }
 
@@ -62,8 +62,8 @@ export class WebKit implements BrowserType<WKBrowser> {
       timeout = 30000,
       slowMo = 0,
     } = options;
-    const { transport } = await this._launchServer(options, 'persistent', userDataDir);
-    const browser = await WKBrowser.connect(transport!, slowMo, true);
+    const { transport, browserServer } = await this._launchServer(options, 'persistent', userDataDir);
+    const browser = await WKBrowser.connect(transport!, slowMo, true, () => browserServer.close());
     await helper.waitWithTimeout(browser._waitForFirstPageTarget(), 'first page', timeout);
     return browser._defaultContext;
   }
@@ -111,12 +111,11 @@ export class WebKit implements BrowserType<WKBrowser> {
       pipe: true,
       tempDir: temporaryUserDataDir || undefined,
       attemptToGracefullyClose: async () => {
-        if (!transport)
-          return Promise.reject();
+        assert(transport);
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
         // our connection ignores kBrowserCloseMessageId.
-        transport.send({method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId});
+        await transport.send({method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId});
       },
       onkill: (exitCode, signal) => {
         if (browserServer)
@@ -127,7 +126,7 @@ export class WebKit implements BrowserType<WKBrowser> {
     // For local launch scenario close will terminate the browser process.
     let transport: ConnectionTransport | undefined = undefined;
     let browserServer: BrowserServer | undefined = undefined;
-    transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream, () => browserServer!.close());
+    transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, port || 0) : null);
     return { browserServer, transport };
   }

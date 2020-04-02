@@ -135,7 +135,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     }
     gracefullyClosing = true;
     debugBrowser(`<gracefully close start>`);
-    options.attemptToGracefullyClose().catch(() => killProcess());
+    await options.attemptToGracefullyClose().catch(() => killProcess());
     await waitForProcessToClose;
     debugBrowser(`<gracefully close end>`);
   }

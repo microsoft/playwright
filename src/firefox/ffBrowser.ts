@@ -28,6 +28,7 @@ import { headersArray } from './ffNetworkManager';
 import { FFPage } from './ffPage';
 import { Protocol } from './protocol';
 import { EventEmitter } from 'events';
+import type { BrowserServer } from '../server/browserServer';
 
 export class FFBrowser extends EventEmitter implements Browser {
   _connection: FFConnection;
@@ -37,6 +38,7 @@ export class FFBrowser extends EventEmitter implements Browser {
   private _eventListeners: RegisteredListener[];
   readonly _firstPagePromise: Promise<void>;
   private _firstPageCallback = () => {};
+  _ownedServer: BrowserServer | null = null;
 
   static async connect(transport: ConnectionTransport, attachToDefaultContext: boolean, slowMo?: number): Promise<FFBrowser> {
     const connection = new FFConnection(SlowMoTransport.wrap(transport, slowMo));
@@ -140,12 +142,19 @@ export class FFBrowser extends EventEmitter implements Browser {
     });
   }
 
-  async close() {
+  async _disconnect() {
     await Promise.all(this.contexts().map(context => context.close()));
     helper.removeEventListeners(this._eventListeners);
     const disconnected = new Promise(f => this.once(Events.Browser.Disconnected, f));
     this._connection.close();
     await disconnected;
+  }
+
+  async close() {
+    if (this._ownedServer)
+      await this._ownedServer.close();
+    else
+      await this._disconnect();
   }
 
   _setDebugFunction(debugFunction: debug.IDebugger) {

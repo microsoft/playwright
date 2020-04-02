@@ -24,6 +24,7 @@ export interface Browser extends EventEmitter {
   newPage(options?: BrowserContextOptions): Promise<Page>;
   isConnected(): boolean;
   close(): Promise<void>;
+  _disconnect(): Promise<void>;
   _setDebugFunction(debugFunction: (message: string) => void): void;
 }
 

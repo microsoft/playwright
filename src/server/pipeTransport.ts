@@ -23,14 +23,12 @@ export class PipeTransport implements ConnectionTransport {
   private _pendingMessage = '';
   private _eventListeners: RegisteredListener[];
   private _waitForNextTask = helper.makeWaitForNextTask();
-  private readonly _closeCallback: () => void;
 
   onmessage?: (message: ProtocolResponse) => void;
   onclose?: () => void;
 
-  constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream, closeCallback: () => void) {
+  constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream) {
     this._pipeWrite = pipeWrite;
-    this._closeCallback = closeCallback;
     this._eventListeners = [
       helper.addEventListener(pipeRead, 'data', buffer => this._dispatch(buffer)),
       helper.addEventListener(pipeRead, 'close', () => {
@@ -51,7 +49,7 @@ export class PipeTransport implements ConnectionTransport {
   }
 
   close() {
-    this._closeCallback();
+    throw new Error('unimplemented');
   }
 
   _dispatch(buffer: Buffer) {
