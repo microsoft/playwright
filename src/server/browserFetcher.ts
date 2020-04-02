@@ -227,7 +227,7 @@ function extractZip(zipPath: string, folderPath: string) {
         resolve();
       });
 
-      zipfile.on('entry', async (entry) => {
+      zipfile.on('entry', async entry => {
         if (entry.fileName.endsWith('/')) {
           await fsPromises.mkdir(path.resolve(folderPath, entry.fileName), { recursive: true });
           zipfile.readEntry();
@@ -249,7 +249,7 @@ function extractZip(zipPath: string, folderPath: string) {
         }
       });
       zipfile.readEntry();
-    })
+    });
   });
 }
 
