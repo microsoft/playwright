@@ -64,7 +64,7 @@ module.exports.addPlaywrightTests = ({testRunner, platform, products, playwright
     const assetsPath = path.join(__dirname, 'assets');
     const cachedPath = path.join(__dirname, 'assets', 'cached');
 
-    const port = 8907 + state.parallelIndex * 3;
+    const port = 8907 + state.parallelIndex * 2;
     state.server = await TestServer.create(assetsPath, port);
     state.server.enableHTTPCache(cachedPath);
     state.server.PORT = port;
@@ -79,18 +79,12 @@ module.exports.addPlaywrightTests = ({testRunner, platform, products, playwright
     state.httpsServer.PREFIX = `https://localhost:${httpsPort}`;
     state.httpsServer.CROSS_PROCESS_PREFIX = `https://127.0.0.1:${httpsPort}`;
     state.httpsServer.EMPTY_PAGE = `https://localhost:${httpsPort}/empty.html`;
-
-    const sourcePort = port + 2;
-    state.sourceServer = await TestServer.create(path.join(__dirname, '..'), sourcePort);
-    state.sourceServer.PORT = sourcePort;
-    state.sourceServer.PREFIX = `http://localhost:${sourcePort}`;
   });
 
-  afterAll(async({server, sourceServer, httpsServer}) => {
+  afterAll(async({server, httpsServer}) => {
     await Promise.all([
       server.stop(),
       httpsServer.stop(),
-      sourceServer.stop(),
     ]);
   });
 
@@ -158,7 +152,10 @@ module.exports.addPlaywrightTests = ({testRunner, platform, products, playwright
     }
 
     describe(product, () => {
-      describe('', function() {
+      let pageEnv;
+      let contextEnv;
+
+      const browserEnv = testRunner.environment('BrowserTest', () => {
         beforeAll(async state => {
           state.browser = await browserType.launch(defaultBrowserOptions);
           state.browserServer = state.browser._ownedServer;
@@ -199,7 +196,7 @@ module.exports.addPlaywrightTests = ({testRunner, platform, products, playwright
           await state.tearDown();
         });
 
-        describe('', function() {
+        pageEnv = testRunner.environment('PageTest', () => {
           beforeEach(async state => {
             state.context = await state.browser.newContext();
             state.page = await state.context.newPage();
@@ -210,67 +207,78 @@ module.exports.addPlaywrightTests = ({testRunner, platform, products, playwright
             state.context = null;
             state.page = null;
           });
-
-          // Page-level tests that are given a browser, a context and a page.
-          // Each test is launched in a new browser context.
-          describe('[Accessibility]', () => loadTests('./accessibility.spec.js'));
-          describe('[Driver]', () => {
-            loadTests('./autowaiting.spec.js');
-            loadTests('./click.spec.js');
-            loadTests('./cookies.spec.js');
-            loadTests('./dialog.spec.js');
-            loadTests('./download.spec.js');
-            loadTests('./elementhandle.spec.js');
-            loadTests('./emulation.spec.js');
-            loadTests('./evaluation.spec.js');
-            loadTests('./frame.spec.js');
-            loadTests('./focus.spec.js');
-            loadTests('./input.spec.js');
-            loadTests('./jshandle.spec.js');
-            loadTests('./keyboard.spec.js');
-            loadTests('./mouse.spec.js');
-            loadTests('./navigation.spec.js');
-            loadTests('./network.spec.js');
-            loadTests('./page.spec.js');
-            loadTests('./queryselector.spec.js');
-            loadTests('./screenshot.spec.js');
-            loadTests('./waittask.spec.js');
-            loadTests('./interception.spec.js');
-            loadTests('./geolocation.spec.js');
-            loadTests('./workers.spec.js');
-            loadTests('./capabilities.spec.js');
-          });
-          describe('[Permissions]', () => {
-            loadTests('./permissions.spec.js');
-          });
-
-          describe.skip(!CHROMIUM)('[Chromium]', () => {
-            loadTests('./chromium/chromium.spec.js');
-            loadTests('./chromium/coverage.spec.js');
-            loadTests('./chromium/pdf.spec.js');
-            loadTests('./chromium/session.spec.js');
-          });
         });
 
-        // Browser-level tests that are given a browser.
-        describe('[Driver]', () => {
-          loadTests('./browser.spec.js');
-          loadTests('./browsercontext.spec.js');
-          loadTests('./ignorehttpserrors.spec.js');
-          loadTests('./popup.spec.js');
+        contextEnv = testRunner.environment('ContextTest', () => {
+          beforeEach(async state => {
+            state.context = await state.browser.newContext();
+          });
+
+          afterEach(async state => {
+            await state.context.close();
+            state.context = null;
+          });
         });
       });
 
-      // Top-level tests that launch Browser themselves.
+      // Page-level tests are given a browser, a browser context and a page.
+      testRunner.testAttribute('__page', t => t.addEnvironment(pageEnv));
+      // Make if a default.
+      testRunner.it = testRunner.it.__page;
+      testRunner.fit = testRunner.fit.__page;
+      testRunner.xit = testRunner.xit.__page;
+
+      // Top-level tests launch Browser themselves, no setup is needed.
+      testRunner.testAttribute('pw', t => t.removeEnvironment(pageEnv));
+      // Browser-level tests are given a browser.
+      testRunner.testAttribute('browser', t => t.removeEnvironment(pageEnv).addEnvironment(browserEnv));
+      // BrowserContext-level tests are given a browser and a browser context.
+      testRunner.testAttribute('context', t => t.removeEnvironment(pageEnv).addEnvironment(contextEnv));
+
+      describe('[Accessibility]', () => loadTests('./accessibility.spec.js'));
       describe('[Driver]', () => {
+        loadTests('./autowaiting.spec.js');
+        loadTests('./click.spec.js');
+        loadTests('./cookies.spec.js');
+        loadTests('./dialog.spec.js');
+        loadTests('./download.spec.js');
+        loadTests('./elementhandle.spec.js');
+        loadTests('./emulation.spec.js');
+        loadTests('./evaluation.spec.js');
+        loadTests('./frame.spec.js');
+        loadTests('./focus.spec.js');
+        loadTests('./input.spec.js');
+        loadTests('./jshandle.spec.js');
+        loadTests('./keyboard.spec.js');
+        loadTests('./mouse.spec.js');
+        loadTests('./navigation.spec.js');
+        loadTests('./network.spec.js');
+        loadTests('./page.spec.js');
+        loadTests('./queryselector.spec.js');
+        loadTests('./screenshot.spec.js');
+        loadTests('./waittask.spec.js');
+        loadTests('./interception.spec.js');
+        loadTests('./geolocation.spec.js');
+        loadTests('./workers.spec.js');
+        loadTests('./capabilities.spec.js');
+        loadTests('./browser.spec.js');
+        loadTests('./browsercontext.spec.js');
+        loadTests('./ignorehttpserrors.spec.js');
+        loadTests('./popup.spec.js');
         loadTests('./defaultbrowsercontext.spec.js');
         loadTests('./fixtures.spec.js');
         loadTests('./launcher.spec.js');
         loadTests('./headful.spec.js');
         loadTests('./multiclient.spec.js');
       });
-
+      describe('[Permissions]', () => {
+        loadTests('./permissions.spec.js');
+      });
       describe.skip(!CHROMIUM)('[Chromium]', () => {
+        loadTests('./chromium/chromium.spec.js');
+        loadTests('./chromium/coverage.spec.js');
+        loadTests('./chromium/pdf.spec.js');
+        loadTests('./chromium/session.spec.js');
         loadTests('./chromium/launcher.spec.js');
         loadTests('./chromium/oopif.spec.js');
         loadTests('./chromium/tracing.spec.js');

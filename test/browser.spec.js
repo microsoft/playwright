@@ -17,7 +17,7 @@
 const utils = require('./utils');
 
 /**
- * @type {BrowserTestSuite}
+ * @type {TestSuite}
  */
 module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
@@ -25,7 +25,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Browser.newPage', function() {
-    it('should create new page', async function({browser}) {
+    it.browser('should create new page', async function({browser}) {
       const page1 = await browser.newPage();
       expect(browser.contexts().length).toBe(1);
 
@@ -38,7 +38,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await page2.close();
       expect(browser.contexts().length).toBe(0);
     });
-    it('should throw upon second create new page', async function({browser}) {
+    it.browser('should throw upon second create new page', async function({browser}) {
       const page = await browser.newPage();
       let error;
       await page.context().newPage().catch(e => error = e);

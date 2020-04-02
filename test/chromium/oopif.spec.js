@@ -15,7 +15,7 @@
  */
 
 /**
- * @type {ChromiumTestSuite}
+ * @type {TestSuite}
  */
 module.exports.describe = function({testRunner, expect, defaultBrowserOptions, browserType, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
@@ -45,24 +45,24 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
       await state.browser.close();
       state.browser = null;
     });
-    it.fail(true)('should report oopif frames', async function({browser, page, server, context}) {
+    it.pw.fail(true)('should report oopif frames', async function({browser, page, server, context}) {
       await page.goto(server.PREFIX + '/dynamic-oopif.html');
       expect(await countOOPIFs(browser)).toBe(1);
       expect(page.frames().length).toBe(2);
     });
-    it('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {
+    it.pw('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {
       await page.route('**/*', route => route.continue());
       await page.goto(server.PREFIX + '/dynamic-oopif.html');
       expect(await countOOPIFs(browser)).toBe(1);
     });
     // @see https://github.com/microsoft/playwright/issues/1240
-    xit('should click a button when it overlays oopif', async function({browser, page, server, context}) {
+    xit.pw('should click a button when it overlays oopif', async function({browser, page, server, context}) {
       await page.goto(server.PREFIX + '/button-overlay-oopif.html');
       expect(await countOOPIFs(browser)).toBe(1);
       await page.click('button');
       expect(await page.evaluate(() => window.BUTTON_CLICKED)).toBe(true);
     });
-    it.fail(true)('should report google.com frame with headful', async({server}) => {
+    it.pw.fail(true)('should report google.com frame with headful', async({server}) => {
       // TODO: Support OOOPIF. @see https://github.com/GoogleChrome/puppeteer/issues/2548
       // https://google.com is isolated by default in Chromium embedder.
       const browser = await browserType.launch(headfulOptions);

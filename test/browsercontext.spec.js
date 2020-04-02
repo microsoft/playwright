@@ -18,7 +18,7 @@
 const utils = require('./utils');
 
 /**
- * @type {BrowserTestSuite}
+ * @type {TestSuite}
  */
 module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FFOX, WEBKIT, LINUX}) {
   const {describe, xdescribe, fdescribe} = testRunner;
@@ -26,7 +26,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('BrowserContext', function() {
-    it('should create new context', async function({browser}) {
+    it.browser('should create new context', async function({browser}) {
       expect(browser.contexts().length).toBe(0);
       const context = await browser.newContext();
       expect(browser.contexts().length).toBe(1);
@@ -34,7 +34,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       await context.close();
       expect(browser.contexts().length).toBe(0);
     });
-    it('window.open should use parent tab context', async function({browser, server}) {
+    it.browser('window.open should use parent tab context', async function({browser, server}) {
       const context = await browser.newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
@@ -45,7 +45,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(popup.context()).toBe(context);
       await context.close();
     });
-    it('should isolate localStorage and cookies', async function({browser, server}) {
+    it.browser('should isolate localStorage and cookies', async function({browser, server}) {
       // Create two incognito contexts.
       const context1 = await browser.newContext();
       const context2 = await browser.newContext();
@@ -89,7 +89,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       ]);
       expect(browser.contexts().length).toBe(0);
     });
-    it('should propagate default viewport to the page', async({ browser }) => {
+    it.browser('should propagate default viewport to the page', async({ browser }) => {
       const context = await browser.newContext({ viewport: { width: 456, height: 789 } });
       const page = await context.newPage();
       expect(page.viewportSize().width).toBe(456);
@@ -98,7 +98,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(await page.evaluate('window.innerHeight')).toBe(789);
       await context.close();
     });
-    it('should make a copy of default viewport', async({ browser }) => {
+    it.browser('should make a copy of default viewport', async({ browser }) => {
       const viewport = { width: 456, height: 789 };
       const context = await browser.newContext({ viewport });
       viewport.width = 567;
@@ -109,11 +109,11 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(await page.evaluate('window.innerHeight')).toBe(789);
       await context.close();
     });
-    it('close() should work for empty context', async({ browser }) => {
+    it.browser('close() should work for empty context', async({ browser }) => {
       const context = await browser.newContext();
       await context.close();
     });
-    it('close() should abort waitForEvent', async({ browser }) => {
+    it.browser('close() should abort waitForEvent', async({ browser }) => {
       const context = await browser.newContext();
       const promise = context.waitForEvent('page').catch(e => e);
       await context.close();
@@ -123,7 +123,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
   });
 
   describe('BrowserContext({userAgent})', function() {
-    it('should work', async({browser, server}) => {
+    it.browser('should work', async({browser, server}) => {
       {
         const context = await browser.newContext();
         const page = await context.newPage();
@@ -141,7 +141,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
         await context.close();
       }
     });
-    it('should work for subframes', async({browser, server}) => {
+    it.browser('should work for subframes', async({browser, server}) => {
       {
         const context = await browser.newContext();
         const page = await context.newPage();
@@ -159,7 +159,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
         await context.close();
       }
     });
-    it('should emulate device user-agent', async({browser, server}) => {
+    it.browser('should emulate device user-agent', async({browser, server}) => {
       {
         const context = await browser.newContext();
         const page = await context.newPage();
@@ -175,7 +175,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
         await context.close();
       }
     });
-    it('should make a copy of default options', async({browser, server}) => {
+    it.browser('should make a copy of default options', async({browser, server}) => {
       const options = { userAgent: 'foobar' };
       const context = await browser.newContext(options);
       options.userAgent = 'wrong';
@@ -190,7 +190,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
   });
 
   describe('BrowserContext({bypassCSP})', function() {
-    it('should bypass CSP meta tag', async({browser, server}) => {
+    it.browser('should bypass CSP meta tag', async({browser, server}) => {
       // Make sure CSP prohibits addScriptTag.
       {
         const context = await browser.newContext();
@@ -212,7 +212,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       }
     });
 
-    it('should bypass CSP header', async({browser, server}) => {
+    it.browser('should bypass CSP header', async({browser, server}) => {
       // Make sure CSP prohibits addScriptTag.
       server.setCSP('/empty.html', 'default-src "self"');
 
@@ -236,7 +236,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       }
     });
 
-    it('should bypass after cross-process navigation', async({browser, server}) => {
+    it.browser('should bypass after cross-process navigation', async({browser, server}) => {
       const context = await browser.newContext({ bypassCSP: true });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/csp.html');
@@ -248,7 +248,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(await page.evaluate(() => window.__injected)).toBe(42);
       await context.close();
     });
-    it('should bypass CSP in iframes as well', async({browser, server}) => {
+    it.browser('should bypass CSP in iframes as well', async({browser, server}) => {
       // Make sure CSP prohibits addScriptTag in an iframe.
       {
         const context = await browser.newContext();
@@ -274,7 +274,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
   });
 
   describe('BrowserContext({javaScriptEnabled})', function() {
-    it('should work', async({browser}) => {
+    it.browser('should work', async({browser}) => {
       {
         const context = await browser.newContext({ javaScriptEnabled: false });
         const page = await context.newPage();
@@ -296,7 +296,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
         await context.close();
       }
     });
-    it('should be able to navigate after disabling javascript', async({browser, server}) => {
+    it.browser('should be able to navigate after disabling javascript', async({browser, server}) => {
       const context = await browser.newContext({ javaScriptEnabled: false });
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
@@ -305,7 +305,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
   });
 
   describe('BrowserContext.pages()', function() {
-    it('should return all of the pages', async({browser, server}) => {
+    it.browser('should return all of the pages', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       const second = await context.newPage();
@@ -315,7 +315,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(allPages).toContain(second);
       await context.close();
     });
-    it('should close all belonging pages once closing context', async function({browser}) {
+    it.browser('should close all belonging pages once closing context', async function({browser}) {
       const context = await browser.newContext();
       await context.newPage();
       expect(context.pages().length).toBe(1);
@@ -326,7 +326,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
   });
 
   describe('BrowserContext.exposeFunction', () => {
-    it('should work', async({browser, server}) => {
+    it.browser('should work', async({browser, server}) => {
       const context = await browser.newContext();
       await context.exposeFunction('add', (a, b) => a + b);
       const page = await context.newPage();
@@ -337,7 +337,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(result).toEqual({ mul: 36, add: 13 });
       await context.close();
     });
-    it('should throw for duplicate registrations', async({browser, server}) => {
+    it.browser('should throw for duplicate registrations', async({browser, server}) => {
       const context = await browser.newContext();
       await context.exposeFunction('foo', () => {});
       await context.exposeFunction('bar', () => {});
@@ -351,7 +351,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(error.message).toBe('Function "baz" has been already registered in one of the pages');
       await context.close();
     });
-    it('should be callable from-inside addInitScript', async({browser, server}) => {
+    it.browser('should be callable from-inside addInitScript', async({browser, server}) => {
       const context = await browser.newContext();
       let args = [];
       await context.exposeFunction('woof', function(arg) {
@@ -368,7 +368,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
   });
 
   describe('BrowserContext.route', () => {
-    it('should intercept', async({browser, server}) => {
+    it.browser('should intercept', async({browser, server}) => {
       const context = await browser.newContext();
       let intercepted = false;
       await context.route('**/empty.html', route => {
@@ -390,7 +390,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(intercepted).toBe(true);
       await context.close();
     });
-    it('should yield to page.route', async({browser, server}) => {
+    it.browser('should yield to page.route', async({browser, server}) => {
       const context = await browser.newContext();
       await context.route('**/empty.html', route => {
         route.fulfill({ status: 200, body: 'context' });
@@ -407,7 +407,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
   });
 
   describe('BrowserContext.setHTTPCredentials', function() {
-    it('should work', async({browser, server}) => {
+    it.browser('should work', async({browser, server}) => {
       server.setAuth('/empty.html', 'user', 'pass');
       const context = await browser.newContext();
       const page = await context.newPage();
@@ -421,7 +421,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(response.status()).toBe(200);
       await context.close();
     });
-    it('should fail if wrong credentials', async({browser, server}) => {
+    it.browser('should fail if wrong credentials', async({browser, server}) => {
       server.setAuth('/empty.html', 'user', 'pass');
       const context = await browser.newContext({
         httpCredentials: { username: 'foo', password: 'bar' }
@@ -437,7 +437,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(response.status()).toBe(200);
       await context.close();
     });
-    it('should allow disable authentication', async({browser, server}) => {
+    it.browser('should allow disable authentication', async({browser, server}) => {
       server.setAuth('/empty.html', 'user', 'pass');
       const context = await browser.newContext({
         httpCredentials: { username: 'user', password: 'pass' }
@@ -451,7 +451,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(response.status()).toBe(401);
       await context.close();
     });
-    it('should return resource body', async({browser, server}) => {
+    it.browser('should return resource body', async({browser, server}) => {
       server.setAuth('/playground.html', 'user', 'pass');
       const context = await browser.newContext({
         httpCredentials: { username: 'user', password: 'pass' }
@@ -466,7 +466,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
   });
 
   describe('BrowserContext.setOffline', function() {
-    it('should work with initial option', async({browser, server}) => {
+    it.browser('should work with initial option', async({browser, server}) => {
       const context = await browser.newContext({offline: true});
       const page = await context.newPage();
       let error = null;
@@ -477,7 +477,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(response.status()).toBe(200);
       await context.close();
     });
-    it('should emulate navigator.onLine', async({browser, server}) => {
+    it.browser('should emulate navigator.onLine', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       expect(await page.evaluate(() => window.navigator.onLine)).toBe(true);
@@ -490,7 +490,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
   });
 
   describe('Events.BrowserContext.Page', function() {
-    it('should have url', async({browser, server}) => {
+    it.browser('should have url', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       const [otherPage] = await Promise.all([
@@ -500,7 +500,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(otherPage.url()).toBe(server.EMPTY_PAGE);
       await context.close();
     });
-    it('should have url after domcontentloaded', async({browser, server}) => {
+    it.browser('should have url after domcontentloaded', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       const [otherPage] = await Promise.all([
@@ -511,7 +511,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(otherPage.url()).toBe(server.EMPTY_PAGE);
       await context.close();
     });
-    it('should have about:blank url with domcontentloaded', async({browser, server}) => {
+    it.browser('should have about:blank url with domcontentloaded', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       const [otherPage] = await Promise.all([
@@ -522,7 +522,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(otherPage.url()).toBe('about:blank');
       await context.close();
     });
-    it('should have about:blank for empty url with domcontentloaded', async({browser, server}) => {
+    it.browser('should have about:blank for empty url with domcontentloaded', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       const [otherPage] = await Promise.all([
@@ -533,7 +533,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(otherPage.url()).toBe('about:blank');
       await context.close();
     });
-    it('should report when a new page is created and closed', async({browser, server}) => {
+    it.browser('should report when a new page is created and closed', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       const [otherPage] = await Promise.all([
@@ -559,7 +559,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(allPages).not.toContain(otherPage);
       await context.close();
     });
-    it('should report initialized pages', async({browser, server}) => {
+    it.browser('should report initialized pages', async({browser, server}) => {
       const context = await browser.newContext();
       const pagePromise = context.waitForEvent('page');
       context.newPage();
@@ -573,7 +573,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       await evaluatePromise;
       await context.close();
     });
-    it('should not crash while redirecting of original request was missed', async({browser, server}) => {
+    it.browser('should not crash while redirecting of original request was missed', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       let serverResponse = null;
@@ -592,7 +592,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       // Cleanup.
       await context.close();
     });
-    it('should have an opener', async({browser, server}) => {
+    it.browser('should have an opener', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
@@ -606,7 +606,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(await page.opener()).toBe(null);
       await context.close();
     });
-    it('should fire page lifecycle events', async function({browser, server}) {
+    it.browser('should fire page lifecycle events', async function({browser, server}) {
       const context = await browser.newContext();
       const events = [];
       context.on('page', async page => {

@@ -19,7 +19,7 @@ const path = require('path');
 const zsSelectorEngineSource = require('../lib/generated/zsSelectorEngineSource');
 
 /**
- * @type {PageTestSuite}
+ * @type {TestSuite}
  */
 module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;

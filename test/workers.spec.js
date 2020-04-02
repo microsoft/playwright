@@ -19,7 +19,7 @@ const utils = require('./utils');
 const { waitEvent } = utils;
 
 /**
- * @type {PageTestSuite}
+ * @type {TestSuite}
  */
 module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, LINUX}) {
   const {describe, xdescribe, fdescribe} = testRunner;

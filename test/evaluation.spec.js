@@ -20,7 +20,7 @@ const path = require('path');
 const bigint = typeof BigInt !== 'undefined';
 
 /**
- * @type {PageTestSuite}
+ * @type {TestSuite}
  */
 module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, LINUX}) {
   const {describe, xdescribe, fdescribe} = testRunner;

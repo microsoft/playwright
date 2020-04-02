@@ -18,7 +18,7 @@ const utils = require('./utils');
 const { waitEvent } = utils;
 
 /**
- * @type {PageTestSuite}
+ * @type {TestSuite}
  */
 module.exports.describe = function({testRunner, expect}) {
   const {describe, xdescribe, fdescribe} = testRunner;

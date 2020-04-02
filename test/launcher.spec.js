@@ -30,7 +30,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   describe('Playwright', function() {
     describe('browserType.launch', function() {
-      it('should reject all promises when browser is closed', async() => {
+      it.pw('should reject all promises when browser is closed', async() => {
         const browser = await browserType.launch(defaultBrowserOptions);
         const page = await (await browser.newContext()).newPage();
         let error = null;
@@ -39,19 +39,19 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         await neverResolves;
         expect(error.message).toContain('Protocol error');
       });
-      it('should throw if userDataDir option is passed', async() => {
+      it.pw('should throw if userDataDir option is passed', async() => {
         let waitError = null;
         const options = Object.assign({}, defaultBrowserOptions, {userDataDir: 'random-path'});
         await browserType.launch(options).catch(e => waitError = e);
         expect(waitError.message).toContain('launchPersistentContext');
       });
-      it('should throw if page argument is passed', async() => {
+      it.pw('should throw if page argument is passed', async() => {
         let waitError = null;
         const options = Object.assign({}, defaultBrowserOptions, { args: ['http://example.com'] });
         await browserType.launch(options).catch(e => waitError = e);
         expect(waitError.message).toContain('can not specify page');
       });
-      it('should reject if executable path is invalid', async({server}) => {
+      it.pw('should reject if executable path is invalid', async({server}) => {
         let waitError = null;
         const options = Object.assign({}, defaultBrowserOptions, {executablePath: 'random-invalid-path'});
         await browserType.launch(options).catch(e => waitError = e);
@@ -60,7 +60,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
 
     describe('browserType.launchPersistentContext', function() {
-      it('should have default URL when launching browser', async function() {
+      it.pw('should have default URL when launching browser', async function() {
         const userDataDir = await makeUserDataDir();
         const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
         const urls = browserContext.pages().map(page => page.url());
@@ -68,7 +68,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         await browserContext.close();
         await removeUserDataDir(userDataDir);
       });
-      it('should have custom URL when launching browser', async function({server}) {
+      it.pw('should have custom URL when launching browser', async function({server}) {
         const userDataDir = await makeUserDataDir();
         const options = Object.assign({}, defaultBrowserOptions);
         options.args = [server.EMPTY_PAGE].concat(options.args || []);
@@ -86,12 +86,12 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
 
     describe('browserType.launchServer', function() {
-      it('should return child_process instance', async () => {
+      it.pw('should return child_process instance', async () => {
         const browserServer = await browserType.launchServer(defaultBrowserOptions);
         expect(browserServer.process().pid).toBeGreaterThan(0);
         await browserServer.close();
       });
-      it('should fire close event', async () => {
+      it.pw('should fire close event', async () => {
         const browserServer = await browserType.launchServer(defaultBrowserOptions);
         await Promise.all([
           utils.waitEvent(browserServer, 'close'),
@@ -101,7 +101,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
 
     describe('browserType.executablePath', function() {
-      it('should work', async({server}) => {
+      it.pw('should work', async({server}) => {
         const executablePath = browserType.executablePath();
         expect(fs.existsSync(executablePath)).toBe(true);
         expect(fs.realpathSync(executablePath)).toBe(executablePath);
@@ -109,7 +109,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
 
     describe('browserType.name', function() {
-      it('should work', async({server}) => {
+      it.pw('should work', async({server}) => {
         if (WEBKIT)
           expect(browserType.name()).toBe('webkit');
         else if (FFOX)
@@ -123,11 +123,11 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   });
 
   describe('Top-level requires', function() {
-    it('should require top-level Errors', async() => {
+    it.pw('should require top-level Errors', async() => {
       const Errors = require(path.join(utils.projectRoot(), '/lib/errors.js'));
       expect(Errors.TimeoutError).toBe(playwright.errors.TimeoutError);
     });
-    it('should require top-level DeviceDescriptors', async() => {
+    it.pw('should require top-level DeviceDescriptors', async() => {
       const Devices = require(path.join(utils.projectRoot(), '/lib/deviceDescriptors.js')).DeviceDescriptors;
       expect(Devices['iPhone 6']).toBeTruthy();
       expect(Devices['iPhone 6']).toBe(playwright.devices['iPhone 6']);
@@ -136,7 +136,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   });
 
   describe('Browser.isConnected', () => {
-    it('should set the browser connected state', async () => {
+    it.pw('should set the browser connected state', async () => {
       const browserServer = await browserType.launchServer({...defaultBrowserOptions });
       const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       expect(remote.isConnected()).toBe(true);
@@ -145,7 +145,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await browserServer._checkLeaks();
       await browserServer.close();
     });
-    it('should throw when used after isConnected returns false', async({server}) => {
+    it.pw('should throw when used after isConnected returns false', async({server}) => {
       const browserServer = await browserType.launchServer({...defaultBrowserOptions });
       const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const page = await remote.newPage();
@@ -160,7 +160,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   });
 
   describe('Browser.disconnect', function() {
-    it('should reject navigation when browser closes', async({server}) => {
+    it.pw('should reject navigation when browser closes', async({server}) => {
       server.setRoute('/one-style.css', () => {});
       const browserServer = await browserType.launchServer({...defaultBrowserOptions });
       const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
@@ -173,7 +173,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await browserServer._checkLeaks();
       await browserServer.close();
     });
-    it('should reject waitForSelector when browser closes', async({server}) => {
+    it.pw('should reject waitForSelector when browser closes', async({server}) => {
       server.setRoute('/empty.html', () => {});
       const browserServer = await browserType.launchServer({...defaultBrowserOptions });
       const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
@@ -189,7 +189,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await browserServer._checkLeaks();
       await browserServer.close();
     });
-    it('should throw if used after disconnect', async({server}) => {
+    it.pw('should throw if used after disconnect', async({server}) => {
       const browserServer = await browserType.launchServer({...defaultBrowserOptions });
       const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const page = await remote.newPage();
@@ -199,7 +199,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await browserServer._checkLeaks();
       await browserServer.close();
     });
-    it('should emit close events on pages and contexts', async({server}) => {
+    it.pw('should emit close events on pages and contexts', async({server}) => {
       const browserServer = await browserType.launchServer({...defaultBrowserOptions });
       const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const context = await remote.newContext();
@@ -215,7 +215,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   });
 
   describe('Browser.close', function() {
-    it('should terminate network waiters', async({server}) => {
+    it.pw('should terminate network waiters', async({server}) => {
       const browserServer = await browserType.launchServer({...defaultBrowserOptions });
       const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const newPage = await remote.newPage();
@@ -230,7 +230,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         expect(message).not.toContain('Timeout');
       }
     });
-    it('should fire close event for all contexts', async(state, test) => {
+    it.pw('should fire close event for all contexts', async(state, test) => {
       const browser = await browserType.launch(defaultBrowserOptions);
       const context = await browser.newContext();
       let closed = false;
@@ -241,7 +241,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   });
 
   describe('browserType.launch |webSocket| option', function() {
-    it('should support the webSocket option', async() => {
+    it.pw('should support the webSocket option', async() => {
       const browserServer = await browserType.launchServer(defaultBrowserOptions);
       const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const browserContext = await browser.newContext();
@@ -254,7 +254,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await browserServer._checkLeaks();
       await browserServer.close();
     });
-    it('should fire "disconnected" when closing with webSocket', async() => {
+    it.pw('should fire "disconnected" when closing with webSocket', async() => {
       const browserServer = await browserType.launchServer(defaultBrowserOptions);
       const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const disconnectedEventPromise = new Promise(resolve => browser.once('disconnected', resolve));
@@ -264,7 +264,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   });
 
   describe('browserType.connect', function() {
-    it.slow()('should be able to reconnect to a browser', async({server}) => {
+    it.pw.slow()('should be able to reconnect to a browser', async({server}) => {
       const browserServer = await browserType.launchServer(defaultBrowserOptions);
       {
         const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
@@ -286,7 +286,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   });
 
   describe('browserType.launchPersistentContext', function() {
-    it('userDataDir option', async({server}) => {
+    it.pw('userDataDir option', async({server}) => {
       const userDataDir = await makeUserDataDir();
       const options = Object.assign(defaultBrowserOptions);
       const browserContext = await browserType.launchPersistentContext(userDataDir, options);
@@ -298,7 +298,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
       await removeUserDataDir(userDataDir);
     });
-    it.slow()('userDataDir option should restore state', async({server}) => {
+    it.pw.slow()('userDataDir option should restore state', async({server}) => {
       const userDataDir = await makeUserDataDir();
       const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
       const page = await browserContext.newPage();
@@ -324,7 +324,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await removeUserDataDir(userDataDir2);
     });
     // See https://github.com/microsoft/playwright/issues/717
-    it.slow().fail(WIN && CHROMIUM)('userDataDir option should restore cookies', async({server}) => {
+    it.pw.slow().fail(WIN && CHROMIUM)('userDataDir option should restore cookies', async({server}) => {
       const userDataDir = await makeUserDataDir();
       const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
       const page = await browserContext.newPage();

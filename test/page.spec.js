@@ -21,7 +21,7 @@ const {waitEvent} = utils;
 const vm = require('vm');
 
 /**
- * @type {PageTestSuite}
+ * @type {TestSuite}
  */
 module.exports.describe = function({testRunner, expect, headless, playwright, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;

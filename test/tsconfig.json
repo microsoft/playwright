@@ -7,5 +7,5 @@
         "target": "ESNext",
         "strictNullChecks": false,
     },
-    "include": ["*.spec.js", "types.d.ts"]
+    "include": ["*.spec.js"]
   }

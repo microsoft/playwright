@@ -16,7 +16,7 @@
  */
 
 /**
- * @type {PageTestSuite}
+ * @type {TestSuite}
  */
 module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
@@ -163,7 +163,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       });
       expect(screenshot).toBeGolden('screenshot-clip-odd-size.png');
     });
-    it.skip(FFOX)('should work with a mobile viewport', async({browser, server}) => {
+    it.browser.skip(FFOX)('should work with a mobile viewport', async({browser, server}) => {
       const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/overflow.html');
@@ -171,7 +171,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       expect(screenshot).toBeGolden('screenshot-mobile.png');
       await context.close();
     });
-    it.skip(FFOX)('should work with a mobile viewport and clip', async({browser, server}) => {
+    it.browser.skip(FFOX)('should work with a mobile viewport and clip', async({browser, server}) => {
       const context = await browser.newContext({viewport: { width: 320, height: 480 }, isMobile: true});
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/overflow.html');
@@ -179,7 +179,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       expect(screenshot).toBeGolden('screenshot-mobile-clip.png');
       await context.close();
     });
-    it.skip(FFOX)('should work with a mobile viewport and fullPage', async({browser, server}) => {
+    it.browser.skip(FFOX)('should work with a mobile viewport and fullPage', async({browser, server}) => {
       const context = await browser.newContext({viewport: { width: 320, height: 480 }, isMobile: true});
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/overflow-large.html');
@@ -376,7 +376,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       const screenshot = await elementHandle.screenshot();
       expect(screenshot).toBeGolden('screenshot-element-fractional.png');
     });
-    it.skip(FFOX)('should work with a mobile viewport', async({browser, server}) => {
+    it.browser.skip(FFOX)('should work with a mobile viewport', async({browser, server}) => {
       const context = await browser.newContext({viewport: { width: 320, height: 480, isMobile: true }});
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/grid.html');

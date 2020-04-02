@@ -43,7 +43,7 @@ module.exports.describe = function({testRunner, expect, browserType, CHROMIUM, W
       expect(await download.failure()).toContain('acceptDownloads');
       expect(error.message).toContain('acceptDownloads: true');
     });
-    it('should report downloads with acceptDownloads: true', async({browser, server}) => {
+    it.browser('should report downloads with acceptDownloads: true', async({browser, server}) => {
       const page = await browser.newPage({ acceptDownloads: true });
       await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);
       const [ download ] = await Promise.all([
@@ -55,7 +55,7 @@ module.exports.describe = function({testRunner, expect, browserType, CHROMIUM, W
       expect(fs.readFileSync(path).toString()).toBe('Hello world');
       await page.close();
     });
-    it('should delete file', async({browser, server}) => {
+    it.browser('should delete file', async({browser, server}) => {
       const page = await browser.newPage({ acceptDownloads: true });
       await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);
       const [ download ] = await Promise.all([
@@ -67,7 +67,7 @@ module.exports.describe = function({testRunner, expect, browserType, CHROMIUM, W
       await download.delete();
       expect(fs.existsSync(path)).toBeFalsy();
     });
-    it('should expose stream', async({browser, server}) => {
+    it.browser('should expose stream', async({browser, server}) => {
       const page = await browser.newPage({ acceptDownloads: true });
       await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);
       const [ download ] = await Promise.all([
@@ -81,7 +81,7 @@ module.exports.describe = function({testRunner, expect, browserType, CHROMIUM, W
       expect(content).toBe('Hello world');
       stream.close();
     });
-    it('should delete downloads on context destruction', async({browser, server}) => {
+    it.browser('should delete downloads on context destruction', async({browser, server}) => {
       const page = await browser.newPage({ acceptDownloads: true });
       await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);
       const [ download1 ] = await Promise.all([
@@ -100,7 +100,7 @@ module.exports.describe = function({testRunner, expect, browserType, CHROMIUM, W
       expect(fs.existsSync(path1)).toBeFalsy();
       expect(fs.existsSync(path2)).toBeFalsy();
     });
-    it('should delete downloads on browser gone', async ({ server, defaultBrowserOptions }) => {
+    it.pw('should delete downloads on browser gone', async ({ server, defaultBrowserOptions }) => {
       const browser = await browserType.launch(defaultBrowserOptions);
       const page = await browser.newPage({ acceptDownloads: true });
       await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);

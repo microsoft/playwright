@@ -26,7 +26,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('BrowserContext', function() {
-    it('should work across sessions', async () => {
+    it.pw('should work across sessions', async () => {
       const browserServer = await browserType.launchServer(defaultBrowserOptions);
       const browser1 = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       expect(browser1.contexts().length).toBe(0);
@@ -49,7 +49,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
   });
 
   describe('Browser.Events.disconnected', function() {
-    it.slow()('should be emitted when: browser gets closed, disconnected or underlying websocket gets closed', async () => {
+    it.pw.slow()('should be emitted when: browser gets closed, disconnected or underlying websocket gets closed', async () => {
       const browserServer = await browserType.launchServer(defaultBrowserOptions);
       const originalBrowser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const wsEndpoint = browserServer.wsEndpoint();
@@ -85,7 +85,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
   });
 
   describe('browserType.connect', function() {
-    it('should be able to connect multiple times to the same browser', async({server}) => {
+    it.pw('should be able to connect multiple times to the same browser', async({server}) => {
       const browserServer = await browserType.launchServer(defaultBrowserOptions);
       const browser1 = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const browser2 = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
@@ -99,7 +99,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
       await browserServer._checkLeaks();
       await browserServer.close();
     });
-    it('should not be able to close remote browser', async() => {
+    it.pw('should not be able to close remote browser', async() => {
       const browserServer = await browserType.launchServer(defaultBrowserOptions);
       {
         const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });

@@ -27,7 +27,7 @@ function dimensions() {
 }
 
 /**
- * @type {PageTestSuite}
+ * @type {TestSuite}
  */
 module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, MAC}) {
   const {describe, xdescribe, fdescribe} = testRunner;
@@ -132,7 +132,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
         [200, 300]
       ]);
     });
-    it.skip(FFOX)('should work with mobile viewports and cross process navigations', async({browser, server}) => {
+    it.browser.skip(FFOX)('should work with mobile viewports and cross process navigations', async({browser, server}) => {
       // @see https://crbug.com/929806
       const context = await browser.newContext({ viewport: {width: 360, height: 640, isMobile: true} });
       const page = await context.newPage();

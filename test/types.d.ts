@@ -1,7 +1,6 @@
 type ServerResponse = import('http').ServerResponse;
 type IncomingMessage = import('http').IncomingMessage;
 
-type Falsy = false|""|0|null|undefined;
 interface Expect<T> {
     toBe(other: T, message?: string): void;
     toBeFalsy(message?: string): void;
@@ -22,25 +21,41 @@ interface Expect<T> {
     not: Expect<T>;
 }
 
-type DescribeFunction = ((name: string, inner: () => void) => void) & {fail(condition: boolean): DescribeFunction};
+type DescribeFunction = ((name: string, inner: () => void) => void) & {
+  skip(condition: boolean): DescribeFunction;
+  fail(condition: boolean): DescribeFunction;
+  repeat(count: number): DescribeFunction;
+  slow(): DescribeFunction;
+};
 
-type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>) => void) & {fail(condition: boolean): ItFunction<STATE>; repeat(n: number): ItFunction<STATE>};
+type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>) => void) & {
+  skip(condition: boolean): ItFunction<STATE>;
+  fail(condition: boolean): ItFunction<STATE>;
+  repeat(count: number): ItFunction<STATE>;
+  slow(): ItFunction<STATE>;
+};
 
-type TestRunner<STATE> = {
+type ItFunctionDefault = ItFunction<PageState> & {
+  pw: ItFunction<TestState>;
+  browser: ItFunction<BrowserState>;
+  context: ItFunction<ContextState>;
+};
+
+type TestRunner = {
     describe: DescribeFunction;
     xdescribe: DescribeFunction;
     fdescribe: DescribeFunction;
 
-    it: ItFunction<STATE>;
-    xit: ItFunction<STATE>;
-    fit: ItFunction<STATE>;
-    dit: ItFunction<STATE>;
+    it: ItFunctionDefault;
+    xit: ItFunctionDefault;
+    fit: ItFunctionDefault;
+    dit: ItFunctionDefault;
 
     beforeAll, beforeEach, afterAll, afterEach;
 };
 
-interface TestSetup<STATE> {
-    testRunner: TestRunner<STATE>;
+interface TestSetup {
+    testRunner: TestRunner;
     product: 'Chromium'|'Firefox'|'WebKit';
     FFOX: boolean;
     WEBKIT: boolean;
@@ -61,26 +76,18 @@ interface TestSetup<STATE> {
 type TestState = {
     server: TestServer;
     httpsServer: TestServer;
-    sourceServer: TestServer;
 };
-
 type BrowserState = TestState & {
     browser: import('../index').Browser;
     browserServer: import('../index').BrowserServer;
 };
-
-type PageState = BrowserState & {
+type ContextState = BrowserState & {
     context: import('../index').BrowserContext;
+};
+type PageState = ContextState & {
     page: import('../index').Page;
 };
-type ChromiumPageState = PageState & {
-    browser: import('../index').ChromiumBrowser;
-};
-type TestSuite = (setup: TestSetup<TestState>) => void;
-type BrowserTestSuite = (setup: TestSetup<BrowserState>) => void;
-type PageTestSuite = (setup: TestSetup<PageState>) => void;
-type ChromiumTestSuite = (setup: TestSetup<ChromiumPageState>) => void;
-
+type TestSuite = (setup: TestSetup) => void;
 
 interface TestServer {
     enableHTTPCache(pathPrefix: string);
@@ -98,5 +105,4 @@ interface TestServer {
     PREFIX: string;
     CROSS_PROCESS_PREFIX: string;
     EMPTY_PAGE: string;
-
 }

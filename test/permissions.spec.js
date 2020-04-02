@@ -19,7 +19,7 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * @type {PageTestSuite}
+ * @type {TestSuite}
  */
 module.exports.describe = function({testRunner, expect, WEBKIT, FFOX}) {
   const {describe, xdescribe, fdescribe} = testRunner;

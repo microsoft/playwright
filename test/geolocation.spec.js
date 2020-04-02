@@ -16,15 +16,16 @@
  */
 
 /**
- * @type {PageTestSuite}
+ * @type {TestSuite}
  */
 module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('Overrides.setGeolocation', function() {
-    it('should work', async({page, server, context}) => {
+  describe('BrowserContext.setGeolocation', function() {
+    it.context('should work', async({server, context}) => {
+      const page = await context.newPage();
       await context.grantPermissions(['geolocation']);
       await page.goto(server.EMPTY_PAGE);
       await context.setGeolocation({longitude: 10, latitude: 10});
@@ -36,7 +37,7 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
         longitude: 10
       });
     });
-    it('should throw when invalid longitude', async({context}) => {
+    it.context('should throw when invalid longitude', async({context}) => {
       let error = null;
       try {
         await context.setGeolocation({longitude: 200, latitude: 10});
@@ -45,7 +46,7 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
       }
       expect(error.message).toContain('Invalid longitude "200"');
     });
-    it('should throw with missing latitude', async({context}) => {
+    it.context('should throw with missing latitude', async({context}) => {
       let error = null;
       try {
         await context.setGeolocation({longitude: 10});
@@ -54,7 +55,7 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
       }
       expect(error.message).toContain('Invalid latitude "undefined"');
     });
-    it('should not modify passed default options object', async({browser}) => {
+    it.browser('should not modify passed default options object', async({browser}) => {
       const geolocation = { longitude: 10, latitude: 10 };
       const options = { geolocation };
       const context = await browser.newContext(options);
@@ -62,7 +63,7 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
       expect(options.geolocation).toBe(geolocation);
       await context.close();
     });
-    it('should throw with missing longitude in default options', async({browser}) => {
+    it.browser('should throw with missing longitude in default options', async({browser}) => {
       let error = null;
       try {
         const context = await browser.newContext({ geolocation: {latitude: 10} });
@@ -72,7 +73,7 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
       }
       expect(error.message).toContain('Invalid longitude "undefined"');
     });
-    it('should use context options', async({browser, server}) => {
+    it.browser('should use context options', async({browser, server}) => {
       const options = { geolocation: { longitude: 10, latitude: 10 }, permissions: ['geolocation'] };
       const context = await browser.newContext(options);
       const page = await context.newPage();
@@ -87,7 +88,8 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
       });
       await context.close();
     });
-    it('watchPosition should be notified', async({page, server, context}) => {
+    it.context('watchPosition should be notified', async({server, context}) => {
+      const page = await context.newPage();
       await context.grantPermissions(['geolocation']);
       await page.goto(server.EMPTY_PAGE);
       const messages = [];
@@ -112,7 +114,8 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
       expect(allMessages).toContain('lat=20 lng=30');
       expect(allMessages).toContain('lat=40 lng=50');
     });
-    it('should use context options for popup', async({page, context, server}) => {
+    it.context('should use context options for popup', async({context, server}) => {
+      const page = await context.newPage();
       await context.grantPermissions(['geolocation']);
       await context.setGeolocation({ longitude: 10, latitude: 10 });
       const [popup] = await Promise.all([

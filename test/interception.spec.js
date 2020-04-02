@@ -22,7 +22,7 @@ const utils = require('./utils');
 const vm = require('vm');
 
 /**
- * @type {PageTestSuite}
+ * @type {TestSuite}
  */
 module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
@@ -487,7 +487,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   });
 
   describe('ignoreHTTPSErrors', function() {
-    it('should work with request interception', async({browser, httpsServer}) => {
+    it.browser('should work with request interception', async({browser, httpsServer}) => {
       const context = await browser.newContext({ ignoreHTTPSErrors: true });
       const page = await context.newPage();
 
@@ -528,7 +528,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   });
 
   describe('glob', function() {
-    it('should work with glob', async({newPage, httpsServer}) => {
+    it.pw('should work with glob', async() => {
       expect(helper.globToRegex('**/*.js').test('https://localhost:8080/foo.js')).toBeTruthy();
       expect(helper.globToRegex('**/*.css').test('https://localhost:8080/foo.js')).toBeFalsy();
       expect(helper.globToRegex('*.js').test('https://localhost:8080/foo.js')).toBeFalsy();

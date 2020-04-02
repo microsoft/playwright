@@ -20,7 +20,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Link navigation', function() {
-    it('should inherit user agent from browser context', async function({browser, server}) {
+    it.browser('should inherit user agent from browser context', async function({browser, server}) {
       const context = await browser.newContext({
         userAgent: 'hey'
       });
@@ -39,8 +39,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(userAgent).toBe('hey');
       expect(request.headers['user-agent']).toBe('hey');
     });
-    it('should respect routes from browser context', async function({browser, server}) {
-      const context = await browser.newContext();
+    it.context('should respect routes from browser context', async function({context, server}) {
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="empty.html">link</a>');
@@ -53,13 +52,12 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
         context.waitForEvent('page'),
         page.click('a'),
       ]);
-      await context.close();
       expect(intercepted).toBe(true);
     });
   });
 
   describe('window.open', function() {
-    it('should inherit user agent from browser context', async function({browser, server}) {
+    it.browser('should inherit user agent from browser context', async function({browser, server}) {
       const context = await browser.newContext({
         userAgent: 'hey'
       });
@@ -75,7 +73,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(userAgent).toBe('hey');
       expect(request.headers['user-agent']).toBe('hey');
     });
-    it('should inherit extra headers from browser context', async function({browser, server}) {
+    it.browser('should inherit extra headers from browser context', async function({browser, server}) {
       const context = await browser.newContext({
         extraHTTPHeaders: { 'foo': 'bar' },
       });
@@ -87,19 +85,16 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(request.headers['foo']).toBe('bar');
     });
-    it('should inherit offline from browser context', async function({browser, server}) {
-      const context = await browser.newContext();
-      const page = await context.newPage();
+    it('should inherit offline from browser context', async function({page, context, server}) {
       await page.goto(server.EMPTY_PAGE);
       await context.setOffline(true);
       const online = await page.evaluate(url => {
         const win = window.open(url);
         return win.navigator.onLine;
       }, server.PREFIX + '/dummy.html');
-      await context.close();
       expect(online).toBe(false);
     });
-    it('should inherit http credentials from browser context', async function({browser, server}) {
+    it.browser('should inherit http credentials from browser context', async function({browser, server}) {
       server.setAuth('/title.html', 'user', 'pass');
       const context = await browser.newContext({
         httpCredentials: { username: 'user', password: 'pass' }
@@ -114,7 +109,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await popup.title()).toBe('Woof-Woof');
       await context.close();
     });
-    it('should inherit touch support from browser context', async function({browser, server}) {
+    it.browser('should inherit touch support from browser context', async function({browser, server}) {
       const context = await browser.newContext({
         viewport: { width: 400, height: 500 },
         hasTouch: true
@@ -128,7 +123,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(hasTouch).toBe(true);
     });
-    it('should inherit viewport size from browser context', async function({browser, server}) {
+    it.browser('should inherit viewport size from browser context', async function({browser, server}) {
       const context = await browser.newContext({
         viewport: { width: 400, height: 500 }
       });
@@ -141,9 +136,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(size).toEqual({width: 400, height: 500});
     });
-    it('should respect routes from browser context', async function({browser, server}) {
-      const context = await browser.newContext();
-      const page = await context.newPage();
+    it('should respect routes from browser context', async function({page, context, server}) {
       await page.goto(server.EMPTY_PAGE);
       let intercepted = false;
       await context.route('**/empty.html', route => {
@@ -155,10 +148,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
         page.evaluate(url => window.__popup = window.open(url), server.EMPTY_PAGE),
       ]);
       expect(intercepted).toBe(true);
-      await context.close();
     });
-    it('should apply addInitScript from browser context', async function({browser, server}) {
-      const context = await browser.newContext();
+    it.context('should apply addInitScript from browser context', async function({context, server}) {
       await context.addInitScript(() => window.injected = 123);
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
@@ -166,11 +157,9 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
         const win = window.open('about:blank');
         return win.injected;
       });
-      await context.close();
       expect(injected).toBe(123);
     });
-    it('should expose function from browser context', async function({browser, server}) {
-      const context = await browser.newContext();
+    it.context('should expose function from browser context', async function({context, server}) {
       await context.exposeFunction('add', (a, b) => a + b);
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
@@ -178,26 +167,20 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
         const win = window.open('about:blank');
         return win.add(9, 4);
       });
-      await context.close();
       expect(added).toBe(13);
     });
   });
 
   describe('Page.Events.Popup', function() {
-    it('should work', async({browser}) => {
-      const context = await browser.newContext();
-      const page = await context.newPage();
+    it('should work', async({page}) => {
       const [popup] = await Promise.all([
         page.waitForEvent('popup'),
         page.evaluate(() => window.__popup = window.open('about:blank')),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
       expect(await popup.evaluate(() => !!window.opener)).toBe(true);
-      await context.close();
     });
-    it.fail(FFOX)('should work with window features', async({browser, server}) => {
-      const context = await browser.newContext();
-      const page = await context.newPage();
+    it.fail(FFOX)('should work with window features', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const [popup] = await Promise.all([
         page.waitForEvent('popup'),
@@ -205,11 +188,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
       expect(await popup.evaluate(() => !!window.opener)).toBe(true);
-      await context.close();
     });
-    it('should emit for immediately closed popups', async({browser}) => {
-      const context = await browser.newContext();
-      const page = await context.newPage();
+    it('should emit for immediately closed popups', async({page}) => {
       const [popup] = await Promise.all([
         page.waitForEvent('popup'),
         page.evaluate(() => {
@@ -218,11 +198,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
         }),
       ]);
       expect(popup).toBeTruthy();
-      await context.close();
     });
-    it('should be able to capture alert', async({browser}) => {
-      const context = await browser.newContext();
-      const page = await context.newPage();
+    it('should be able to capture alert', async({page}) => {
       const evaluatePromise = page.evaluate(() => {
         const win = window.open('');
         win.alert('hello');
@@ -232,22 +209,16 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(dialog.message()).toBe('hello');
       await dialog.dismiss();
       await evaluatePromise;
-      await context.close();
     });
-    it('should work with empty url', async({browser}) => {
-      const context = await browser.newContext();
-      const page = await context.newPage();
+    it('should work with empty url', async({page}) => {
       const [popup] = await Promise.all([
         page.waitForEvent('popup'),
         page.evaluate(() => window.__popup = window.open('')),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
       expect(await popup.evaluate(() => !!window.opener)).toBe(true);
-      await context.close();
     });
-    it('should work with noopener and no url', async({browser}) => {
-      const context = await browser.newContext();
-      const page = await context.newPage();
+    it('should work with noopener and no url', async({page}) => {
       const [popup] = await Promise.all([
         page.waitForEvent('popup'),
         page.evaluate(() => window.__popup = window.open(undefined, null, 'noopener')),
@@ -255,22 +226,16 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(popup.url()).toBe('about:blank');
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
-      await context.close();
     });
-    it('should work with noopener and about:blank', async({browser}) => {
-      const context = await browser.newContext();
-      const page = await context.newPage();
+    it('should work with noopener and about:blank', async({page}) => {
       const [popup] = await Promise.all([
         page.waitForEvent('popup'),
         page.evaluate(() => window.__popup = window.open('about:blank', null, 'noopener')),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
-      await context.close();
     });
-    it('should work with noopener and url', async({browser, server}) => {
-      const context = await browser.newContext();
-      const page = await context.newPage();
+    it('should work with noopener and url', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const [popup] = await Promise.all([
         page.waitForEvent('popup'),
@@ -278,11 +243,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
-      await context.close();
     });
-    it('should work with clicking target=_blank', async({browser, server}) => {
-      const context = await browser.newContext();
-      const page = await context.newPage();
+    it('should work with clicking target=_blank', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel="opener" href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
@@ -291,11 +253,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
       expect(await popup.evaluate(() => !!window.opener)).toBe(true);
-      await context.close();
     });
-    it('should work with fake-clicking target=_blank and rel=noopener', async({browser, server}) => {
-      const context = await browser.newContext();
-      const page = await context.newPage();
+    it('should work with fake-clicking target=_blank and rel=noopener', async({page, server}) => {
       // TODO: FFOX sends events for "one-style.html" request to both pages.
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
@@ -305,11 +264,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
-      await context.close();
     });
-    it('should work with clicking target=_blank and rel=noopener', async({browser, server}) => {
-      const context = await browser.newContext();
-      const page = await context.newPage();
+    it('should work with clicking target=_blank and rel=noopener', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
@@ -318,11 +274,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
-      await context.close();
     });
-    it('should not treat navigations as new popups', async({browser, server}) => {
-      const context = await browser.newContext();
-      const page = await context.newPage();
+    it('should not treat navigations as new popups', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
@@ -332,7 +285,6 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       let badSecondPopup = false;
       page.on('popup', () => badSecondPopup = true);
       await popup.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
-      await context.close();
       expect(badSecondPopup).toBe(false);
     });
   });

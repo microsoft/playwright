@@ -18,7 +18,7 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * @type {ChromiumTestSuite}
+ * @type {TestSuite}
  */
 module.exports.describe = function({testRunner, expect, headless, ASSETS_DIR}) {
   const {describe, xdescribe, fdescribe} = testRunner;

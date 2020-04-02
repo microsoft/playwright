@@ -16,7 +16,7 @@
  */
 
 /**
- * @type {PageTestSuite}
+ * @type {TestSuite}
  */
 module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, MAC}) {
   const {describe, xdescribe, fdescribe} = testRunner;

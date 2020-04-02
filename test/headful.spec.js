@@ -32,7 +32,7 @@ module.exports.describe = function({testRunner, expect, browserType, defaultBrow
   });
 
   describe('Headful', function() {
-    it('should have default url when launching browser', async function() {
+    it.pw('should have default url when launching browser', async function() {
       const userDataDir = await makeUserDataDir();
       const browserContext = await browserType.launchPersistentContext(userDataDir, headfulOptions);
       const urls = browserContext.pages().map(page => page.url());
@@ -40,7 +40,7 @@ module.exports.describe = function({testRunner, expect, browserType, defaultBrow
       await browserContext.close();
       await removeUserDataDir(userDataDir);
     });
-    it.slow().fail(WIN && CHROMIUM)('headless should be able to read cookies written by headful', async({server}) => {
+    it.pw.slow().fail(WIN && CHROMIUM)('headless should be able to read cookies written by headful', async({server}) => {
       // see https://github.com/microsoft/playwright/issues/717
       const userDataDir = await makeUserDataDir();
       // Write a cookie in headful chrome
@@ -59,7 +59,7 @@ module.exports.describe = function({testRunner, expect, browserType, defaultBrow
       await removeUserDataDir(userDataDir);
       expect(cookie).toBe('foo=true');
     });
-    it('should close browser with beforeunload page', async({server}) => {
+    it.pw('should close browser with beforeunload page', async({server}) => {
       const userDataDir = await makeUserDataDir();
       const browserContext = await browserType.launchPersistentContext(userDataDir, headfulOptions);
       const page = await browserContext.newPage();

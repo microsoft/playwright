@@ -47,19 +47,19 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
   });
 
   describe('launcher', function() {
-    it('should throw with remote-debugging-pipe argument', async() => {
+    it.pw('should throw with remote-debugging-pipe argument', async() => {
       const options = Object.assign({}, defaultBrowserOptions);
       options.args = ['--remote-debugging-pipe'].concat(options.args || []);
       const error = await browserType.launchServer(options).catch(e => e);
       expect(error.message).toContain('Playwright manages remote debugging connection itself');
     });
-    it('should throw with remote-debugging-port argument', async() => {
+    it.pw('should throw with remote-debugging-port argument', async() => {
       const options = Object.assign({}, defaultBrowserOptions);
       options.args = ['--remote-debugging-port=9222'].concat(options.args || []);
       const error = await browserType.launchServer(options).catch(e => e);
       expect(error.message).toContain('Playwright manages remote debugging connection itself');
     });
-    it('should open devtools when "devtools: true" option is given', async({server}) => {
+    it.pw('should open devtools when "devtools: true" option is given', async({server}) => {
       const browser = await browserType.launch(Object.assign({devtools: true}, headfulOptions));
       const context = await browser.newContext();
       const browserSession = await browser.newBrowserCDPSession();
@@ -77,7 +77,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
   });
 
   describe('extensions', () => {
-    it('should return background pages', async() => {
+    it.pw('should return background pages', async() => {
       const userDataDir = await makeUserDataDir();
       const context = await browserType.launchPersistentContext(userDataDir, extensionOptions);
       const backgroundPages = context.backgroundPages();
@@ -92,7 +92,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
   });
 
   describe('BrowserContext', function() {
-    it('should not create pages automatically', async function() {
+    it.pw('should not create pages automatically', async function() {
       const browser = await browserType.launch();
       const browserSession = await browser.newBrowserCDPSession();
       const targets = [];

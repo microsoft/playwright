@@ -178,7 +178,7 @@ class Test {
   removeEnvironment(environment) {
     const index = this._environments.indexOf(environment);
     if (index === -1)
-      throw new Error(`Environment "${environment.name()}" cannot be removed because it was not added to the test "${test.fullName()}"`);
+      throw new Error(`Environment "${environment.name()}" cannot be removed because it was not added to the test "${this.fullName()}"`);
     this._environments.splice(index, 1);
     return this;
   }

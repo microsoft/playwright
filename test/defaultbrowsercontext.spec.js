@@ -18,7 +18,7 @@
 const { makeUserDataDir, removeUserDataDir } = require('./utils');
 
 /**
- * @type {PageTestSuite}
+ * @type {TestSuite}
  */
 module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions, browserType, WEBKIT }) {
   const {describe, xdescribe, fdescribe} = testRunner;
@@ -37,7 +37,7 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
       delete state.page;
       await removeUserDataDir(state.userDataDir);
     });
-    it('context.cookies() should work', async({page, server}) => {
+    it.pw('context.cookies() should work', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => {
         document.cookie = 'username=John Doe';
@@ -53,7 +53,7 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
         sameSite: 'None',
       }]);
     });
-    it('context.addCookies() should work', async({page, server}) => {
+    it.pw('context.addCookies() should work', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.context().addCookies([{
         url: server.EMPTY_PAGE,
@@ -72,7 +72,7 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
         sameSite: 'None',
       }]);
     });
-    it('context.clearCookies() should work', async({page, server}) => {
+    it.pw('context.clearCookies() should work', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.context().addCookies([{
         url: server.EMPTY_PAGE,
