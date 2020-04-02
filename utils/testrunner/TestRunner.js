@@ -156,10 +156,20 @@ class Test {
   }
 
   environment(environment) {
+    const parents = new Set();
+    for (let parent = environment; !(parent instanceof Suite); parent = parent.parentEnvironment())
+      parents.add(parent);
+    for (const env of this._environments) {
+      for (let parent = env; !(parent instanceof Suite); parent = parent.parentEnvironment()) {
+        if (parents.has(parent))
+          throw new Error(`Cannot use environments "${environment.name()}" and "${env.name()}" that share a parent environment "${parent.fullName()}" in test "${this.fullName()}"`);
+      }
+    }
+    const environmentParentSuite = environment.parentSuite();
     for (let suite = this.suite(); suite; suite = suite.parentSuite()) {
-      if (suite === environment.parentSuite()) {
+      if (suite === environmentParentSuite) {
         this._environments.push(environment);
-        return;
+        return this;
       }
     }
     throw new Error(`Cannot use environment "${environment.name()}" from suite "${environment.parentSuite().fullName()}" in unrelated test "${this.fullName()}"`);
@@ -167,12 +177,19 @@ class Test {
 }
 
 class Environment {
-  constructor(parentSuite, name, location) {
-    this._parentSuite = parentSuite;
+  constructor(parentEnvironment, name, location) {
+    this._parentEnvironment = parentEnvironment;
+    this._parentSuite = parentEnvironment;
+    if (parentEnvironment && !(parentEnvironment instanceof Suite))
+      this._parentSuite = parentEnvironment.parentSuite();
     this._name = name;
-    this._fullName = (parentSuite ? parentSuite.fullName() + ' ' + name : name).trim();
+    this._fullName = (parentEnvironment ? parentEnvironment.fullName() + ' ' + name : name).trim();
     this._location = location;
     this._hooks = [];
+  }
+
+  parentEnvironment() {
+    return this._parentEnvironment;
   }
 
   parentSuite() {
@@ -397,8 +414,12 @@ class TestWorker {
     for (let suite = test.suite(); suite; suite = suite.parentSuite())
       environmentStack.push(suite);
     environmentStack.reverse();
-    for (const environment of test._environments)
-      environmentStack.splice(environmentStack.indexOf(environment.parentSuite()) + 1, 0, environment);
+    for (const environment of test._environments) {
+      const insert = [];
+      for (let parent = environment; !(parent instanceof Suite); parent = parent.parentEnvironment())
+        insert.push(parent);
+      environmentStack.splice(environmentStack.indexOf(environment.parentSuite()) + 1, 0, ...insert.reverse());
+    }
 
     let common = 0;
     while (common < environmentStack.length && this._environmentStack[common] === environmentStack[common])
@@ -677,13 +698,11 @@ class TestRunner extends EventEmitter {
     this.describe = this._suiteBuilder([]);
     this.it = this._testBuilder([]);
     this.environment = (name, callback) => {
-      if (!(this._currentEnvironment instanceof Suite))
-        throw new Error(`Cannot define an environment inside an environment`);
       const location = Location.getCallerLocation(__filename);
       const environment = new Environment(this._currentEnvironment, name, location);
       this._currentEnvironment = environment;
       callback();
-      this._currentEnvironment = environment.parentSuite();
+      this._currentEnvironment = environment.parentEnvironment();
       return environment;
     };
     this.Expectations = { ...TestExpectation };

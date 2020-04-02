@@ -244,11 +244,16 @@ module.exports.addTests = function({testRunner, expect}) {
     it('should run all hooks in proper order', async() => {
       const log = [];
       const t = newTestRunner();
-      const e = t.environment('env', () => {
+      let e2;
+      t.environment('env', () => {
         t.beforeAll(() => log.push('env:beforeAll'));
         t.afterAll(() => log.push('env:afterAll'));
         t.beforeEach(() => log.push('env:beforeEach'));
         t.afterEach(() => log.push('env:afterEach'));
+        e2 = t.environment('env2', () => {
+          t.beforeAll(() => log.push('env2:beforeAll'));
+          t.afterAll(() => log.push('env2:afterAll'));
+        });
       });
       t.beforeAll(() => log.push('root:beforeAll'));
       t.beforeEach(() => log.push('root:beforeEach1'));
@@ -270,13 +275,13 @@ module.exports.addTests = function({testRunner, expect}) {
         t.afterEach(() => log.push('suite:afterEach2'));
         t.afterAll(() => log.push('suite:afterAll'));
       });
-      t.it('cuatro', () => log.push('test #4')).environment(e);
+      t.it('cuatro', () => log.push('test #4')).environment(e2);
       t.describe('no hooks suite', () => {
         t.describe('suite2', () => {
           t.beforeAll(() => log.push('suite2:beforeAll'));
           t.afterAll(() => log.push('suite2:afterAll'));
           t.describe('no hooks suite 2', () => {
-            t.it('cinco', () => log.push('test #5')).environment(e);
+            t.it('cinco', () => log.push('test #5')).environment(e2);
           });
         });
       });
@@ -321,6 +326,7 @@ module.exports.addTests = function({testRunner, expect}) {
         'suite:afterAll',
 
         'env:beforeAll',
+        'env2:beforeAll',
 
         'root:beforeEach1',
         'root:beforeEach2',
@@ -338,6 +344,7 @@ module.exports.addTests = function({testRunner, expect}) {
         'root:afterEach',
         'suite2:afterAll',
 
+        'env2:afterAll',
         'env:afterAll',
 
         'root:afterAll1',
@@ -347,8 +354,10 @@ module.exports.addTests = function({testRunner, expect}) {
     it('environment restrictions', async () => {
       const t = newTestRunner();
       let env;
+      let env2;
       t.describe('suite1', () => {
         env = t.environment('env', () => {
+          env2 = t.environment('env2', () => {});
           try {
             t.it('test', () => {});
             expect(true).toBe(false);
@@ -361,13 +370,19 @@ module.exports.addTests = function({testRunner, expect}) {
           } catch (e) {
             expect(e.message).toBe('Cannot define a suite inside an environment');
           }
-          try {
-            t.environment('env2', () => {});
-            expect(true).toBe(false);
-          } catch (e) {
-            expect(e.message).toBe('Cannot define an environment inside an environment');
-          }
         });
+        try {
+          t.it('test', () => {}).environment(env).environment(env2);
+          expect(true).toBe(false);
+        } catch (e) {
+          expect(e.message).toBe('Cannot use environments "env2" and "env" that share a parent environment "suite1 env" in test "suite1 test"');
+        }
+        try {
+          t.it('test', () => {}).environment(env2).environment(env);
+          expect(true).toBe(false);
+        } catch (e) {
+          expect(e.message).toBe('Cannot use environments "env" and "env2" that share a parent environment "suite1 env" in test "suite1 test"');
+        }
       });
       try {
         t.it('test', () => {}).environment(env);
