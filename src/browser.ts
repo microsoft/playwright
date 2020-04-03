@@ -62,14 +62,14 @@ export abstract class BrowserBase extends EventEmitter implements Browser {
   }
 
   async close() {
-    const disconnectEventPromise = new Promise(x => this.once(Events.Browser.Disconnected, x));
     if (this._ownedServer) {
       await this._ownedServer.close();
     } else {
       await Promise.all(this.contexts().map(context => context.close()));
       this._disconnect();
     }
-    await disconnectEventPromise;
+    if (this.isConnected())
+      await new Promise(x => this.once(Events.Browser.Disconnected, x));
   }
 }
 
