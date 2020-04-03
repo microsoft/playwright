@@ -541,6 +541,12 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await page.$(`text="with"`)).toBe(null);
     });
 
+    it('should match input[type=button|submit]', async({page}) => {
+      await page.setContent(`<input type="submit" value="hello"><input type="button" value="world">`);
+      expect(await page.$eval(`text=hello`, e => e.outerHTML)).toBe('<input type="submit" value="hello">');
+      expect(await page.$eval(`text=world`, e => e.outerHTML)).toBe('<input type="button" value="world">');
+    });
+
     it('should work for open shadow roots', async({page, server}) => {
       await page.goto(server.PREFIX + '/deep-shadow.html');
       expect(await page.$eval(`text=root1`, e => e.outerHTML)).toBe('<span>Hello from root1</span>');

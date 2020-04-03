@@ -68,6 +68,8 @@ function queryInternal(root: SelectorRoot, matcher: Matcher): Element | undefine
     const node = walker.currentNode;
     if (node.nodeType === Node.ELEMENT_NODE) {
       const element = node as Element;
+      if ((element instanceof HTMLInputElement) && (element.type === 'submit' || element.type === 'button') && matcher(element.value))
+        return element;
       if (element.shadowRoot)
         shadowRoots.push(element.shadowRoot);
     } else {
@@ -92,6 +94,8 @@ function queryAllInternal(root: SelectorRoot, matcher: Matcher, result: Element[
     const node = walker.currentNode;
     if (node.nodeType === Node.ELEMENT_NODE) {
       const element = node as Element;
+      if ((element instanceof HTMLInputElement) && (element.type === 'submit' || element.type === 'button') && matcher(element.value))
+        result.push(element);
       if (element.shadowRoot)
         shadowRoots.push(element.shadowRoot);
     } else {

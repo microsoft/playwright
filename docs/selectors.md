@@ -78,6 +78,8 @@ Text engine finds an element that contains a text node with passed text. Example
 
 > **NOTE** Text engine searches for elements inside open shadow roots, but not inside closed shadow roots or iframes.
 
+> **NOTE** Input elements of the type `button` and `submit` are rendered with their value as text, and text engine finds them. For example, `text=Login` matches `<input type=button value="Login">`.
+
 > **NOTE** Malformed selector starting with `"` is automatically transformed to text selector. For example, Playwright converts `page.click('"Login"')` to `page.click('text="Login"')`.
 
 ### id, data-testid, data-test-id, data-test
