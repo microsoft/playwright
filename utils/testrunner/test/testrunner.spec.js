@@ -275,13 +275,13 @@ module.exports.addTests = function({testRunner, expect}) {
         t.afterEach(() => log.push('suite:afterEach2'));
         t.afterAll(() => log.push('suite:afterAll'));
       });
-      t.it('cuatro', () => log.push('test #4')).environment(e2);
+      t.it('cuatro', () => log.push('test #4')).addEnvironment(e2);
       t.describe('no hooks suite', () => {
         t.describe('suite2', () => {
           t.beforeAll(() => log.push('suite2:beforeAll'));
           t.afterAll(() => log.push('suite2:afterAll'));
           t.describe('no hooks suite 2', () => {
-            t.it('cinco', () => log.push('test #5')).environment(e2);
+            t.it('cinco', () => log.push('test #5')).addEnvironment(e2);
           });
         });
       });
@@ -351,6 +351,31 @@ module.exports.addTests = function({testRunner, expect}) {
         'root:afterAll2',
       ]);
     });
+    it('should remove environment', async() => {
+      const log = [];
+      const t = newTestRunner();
+      const e = t.environment('env', () => {
+        t.beforeAll(() => log.push('env:beforeAll'));
+        t.afterAll(() => log.push('env:afterAll'));
+        t.beforeEach(() => log.push('env:beforeEach'));
+        t.afterEach(() => log.push('env:afterEach'));
+      });
+      const e2 = t.environment('env2', () => {
+        t.beforeAll(() => log.push('env2:beforeAll'));
+        t.afterAll(() => log.push('env2:afterAll'));
+        t.beforeEach(() => log.push('env2:beforeEach'));
+        t.afterEach(() => log.push('env2:afterEach'));
+      });
+      t.it('uno', () => log.push('test #1')).addEnvironment(e).addEnvironment(e2).removeEnvironment(e);
+      await t.run();
+      expect(log).toEqual([
+        'env2:beforeAll',
+        'env2:beforeEach',
+        'test #1',
+        'env2:afterEach',
+        'env2:afterAll',
+      ]);
+    });
     it('environment restrictions', async () => {
       const t = newTestRunner();
       let env;
@@ -372,20 +397,20 @@ module.exports.addTests = function({testRunner, expect}) {
           }
         });
         try {
-          t.it('test', () => {}).environment(env).environment(env2);
+          t.it('test', () => {}).addEnvironment(env).addEnvironment(env2);
           expect(true).toBe(false);
         } catch (e) {
           expect(e.message).toBe('Cannot use environments "env2" and "env" that share a parent environment "suite1 env" in test "suite1 test"');
         }
         try {
-          t.it('test', () => {}).environment(env2).environment(env);
+          t.it('test', () => {}).addEnvironment(env2).addEnvironment(env);
           expect(true).toBe(false);
         } catch (e) {
           expect(e.message).toBe('Cannot use environments "env" and "env2" that share a parent environment "suite1 env" in test "suite1 test"');
         }
       });
       try {
-        t.it('test', () => {}).environment(env);
+        t.it('test', () => {}).addEnvironment(env);
         expect(true).toBe(false);
       } catch (e) {
         expect(e.message).toBe('Cannot use environment "env" from suite "suite1" in unrelated test "test"');
