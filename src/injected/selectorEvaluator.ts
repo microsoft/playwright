@@ -20,27 +20,7 @@ import { TextEngine } from './textSelectorEngine';
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import Injected from './injected';
 import * as types from '../types';
-
-function createAttributeEngine(attribute: string): SelectorEngine {
-  const engine: SelectorEngine = {
-    create(root: SelectorRoot, target: Element): string | undefined {
-      const value = target.getAttribute(attribute);
-      if (!value)
-        return;
-      if (root.querySelector(`[${attribute}=${value}]`) === target)
-        return value;
-    },
-
-    query(root: SelectorRoot, selector: string): Element | undefined {
-      return root.querySelector(`[${attribute}=${selector}]`) || undefined;
-    },
-
-    queryAll(root: SelectorRoot, selector: string): Element[] {
-      return Array.from(root.querySelectorAll(`[${attribute}=${selector}]`));
-    }
-  };
-  return engine;
-}
+import { createAttributeEngine } from './attributeSelectorEngine';
 
 class SelectorEvaluator {
   readonly engines: Map<string, SelectorEngine>;

@@ -76,7 +76,7 @@ Text engine finds an element that contains a text node with passed text. Example
 - Text body can be escaped with double quotes for precise matching, insisting on exact match, including specified whitespace and case. This means `text="Login "` will only match `<button>Login </button>` with exactly one space after "Login".
 - Text body can also be a JavaScript-like regex wrapped in `/` symbols. This means `text=/^\\s*Login$/i` will match `<button> loGIN</button>` with any number of spaces before "Login" and no spaces after.
 
-> **NOTE** Text engine searches for elements inside open shadow roots, but not inside closed shadow roots or iframes.
+> **NOTE** Text engine searches for elements in the light dom in the iteration order, and then recursively inside open shadow roots in the iteration order. It does not search inside closed shadow roots or iframes.
 
 > **NOTE** Input elements of the type `button` and `submit` are rendered with their value as text, and text engine finds them. For example, `text=Login` matches `<input type=button value="Login">`.
 
@@ -84,7 +84,9 @@ Text engine finds an element that contains a text node with passed text. Example
 
 ### id, data-testid, data-test-id, data-test
 
-Id engines are selecting based on the corresponding atrribute value. For example: `data-test-id=foo` is equivalent to `querySelector('*[data-test-id=foo]')`.
+Attribute engines are selecting based on the corresponding atrribute value. For example: `data-test-id=foo` is similar to `querySelector('*[data-test-id=foo]')`.
+
+> **NOTE** Attribute engine searches for elements in the light dom in the iteration order, and then recursively inside open shadow roots in the iteration order. It does not search inside closed shadow roots or iframes.
 
 ## Custom selector engines
 
