@@ -19,6 +19,8 @@ import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Download } from './download';
 import { debugProtocol } from './transport';
+import type { BrowserServer } from './server/browserServer';
+import { Events } from './events';
 
 export interface Browser extends EventEmitter {
   newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
@@ -26,19 +28,18 @@ export interface Browser extends EventEmitter {
   newPage(options?: BrowserContextOptions): Promise<Page>;
   isConnected(): boolean;
   close(): Promise<void>;
-  _disconnect(): Promise<void>;
 }
 
 export abstract class BrowserBase extends EventEmitter implements Browser {
   _downloadsPath: string = '';
   private _downloads = new Map<string, Download>();
   _debugProtocol = debugProtocol;
+  _ownedServer: BrowserServer | null = null;
 
   abstract newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
   abstract contexts(): BrowserContext[];
   abstract isConnected(): boolean;
-  abstract close(): Promise<void>;
-  abstract _disconnect(): Promise<void>;
+  abstract _disconnect(): void;
 
   async newPage(options?: BrowserContextOptions): Promise<Page> {
     const context = await this.newContext(options);
@@ -58,6 +59,17 @@ export abstract class BrowserBase extends EventEmitter implements Browser {
       return;
     download._reportFinished(error);
     this._downloads.delete(uuid);
+  }
+
+  async close() {
+    const disconnectEventPromise = new Promise(x => this.once(Events.Browser.Disconnected, x));
+    if (this._ownedServer) {
+      await this._ownedServer.close();
+    } else {
+      await Promise.all(this.contexts().map(context => context.close()));
+      this._disconnect();
+    }
+    await disconnectEventPromise;
   }
 }
 

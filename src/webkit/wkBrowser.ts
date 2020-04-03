@@ -26,7 +26,6 @@ import * as types from '../types';
 import { Protocol } from './protocol';
 import { kPageProxyMessageReceived, PageProxyMessageReceivedPayload, WKConnection, WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
-import { BrowserServer } from '../server/browserServer';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15';
 
@@ -43,18 +42,16 @@ export class WKBrowser extends BrowserBase {
 
   private _firstPageCallback: () => void = () => {};
   private readonly _firstPagePromise: Promise<void>;
-  _ownedServer: BrowserServer | null = null;
 
-  static async connect(transport: ConnectionTransport, slowMo: number = 0, attachToDefaultContext: boolean = false, closeOverride?: () => Promise<void>): Promise<WKBrowser> {
-    const browser = new WKBrowser(SlowMoTransport.wrap(transport, slowMo), attachToDefaultContext, closeOverride);
+  static async connect(transport: ConnectionTransport, slowMo: number = 0, attachToDefaultContext: boolean = false): Promise<WKBrowser> {
+    const browser = new WKBrowser(SlowMoTransport.wrap(transport, slowMo), attachToDefaultContext);
     return browser;
   }
 
-  constructor(transport: ConnectionTransport, attachToDefaultContext: boolean, closeOverride?: () => Promise<void>) {
+  constructor(transport: ConnectionTransport, attachToDefaultContext: boolean) {
     super();
     this._connection = new WKConnection(transport, this._onDisconnect.bind(this));
     this._attachToDefaultContext = attachToDefaultContext;
-    this._closeOverride = closeOverride;
     this._browserSession = this._connection.browserSession;
 
     this._defaultContext = new WKBrowserContext(this, undefined, validateBrowserContextOptions({}));
@@ -190,19 +187,9 @@ export class WKBrowser extends BrowserBase {
     return !this._connection.isClosed();
   }
 
-  async _disconnect() {
+  _disconnect() {
     helper.removeEventListeners(this._eventListeners);
-    const disconnected = new Promise(f => this.once(Events.Browser.Disconnected, f));
-    await Promise.all(this.contexts().map(context => context.close()));
     this._connection.close();
-    await disconnected;
-  }
-
-  async close() {
-    if (this._closeOverride)
-      await this._closeOverride();
-    else
-      await this._disconnect();
   }
 }
 

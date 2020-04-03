@@ -48,7 +48,7 @@ export class WebKit implements BrowserType<WKBrowser> {
   async launch(options: LaunchOptions = {}): Promise<WKBrowser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     const { browserServer, transport, downloadsPath } = await this._launchServer(options, 'local');
-    const browser = await WKBrowser.connect(transport!, options.slowMo, false, () => browserServer.close());
+    const browser = await WKBrowser.connect(transport!, options.slowMo, false);
     browser._ownedServer = browserServer;
     browser._downloadsPath = downloadsPath;
     return browser;
@@ -64,7 +64,8 @@ export class WebKit implements BrowserType<WKBrowser> {
       slowMo = 0,
     } = options;
     const { transport, browserServer } = await this._launchServer(options, 'persistent', userDataDir);
-    const browser = await WKBrowser.connect(transport!, slowMo, true, () => browserServer.close());
+    const browser = await WKBrowser.connect(transport!, slowMo, true);
+    browser._ownedServer = browserServer;
     await helper.waitWithTimeout(browser._waitForFirstPageTarget(), 'first page', timeout);
     return browser._defaultContext;
   }
