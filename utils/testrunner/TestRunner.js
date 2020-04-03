@@ -155,7 +155,7 @@ class Test {
     return this._hooks.filter(hook => !name || hook.name === name);
   }
 
-  environment(environment) {
+  addEnvironment(environment) {
     const parents = new Set();
     for (let parent = environment; !(parent instanceof Suite); parent = parent.parentEnvironment())
       parents.add(parent);
@@ -173,6 +173,14 @@ class Test {
       }
     }
     throw new Error(`Cannot use environment "${environment.name()}" from suite "${environment.parentSuite().fullName()}" in unrelated test "${this.fullName()}"`);
+  }
+
+  removeEnvironment(environment) {
+    const index = this._environments.indexOf(environment);
+    if (index === -1)
+      throw new Error(`Environment "${environment.name()}" cannot be removed because it was not added to the test "${test.fullName()}"`);
+    this._environments.splice(index, 1);
+    return this;
   }
 }
 
