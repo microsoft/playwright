@@ -53,7 +53,7 @@ export abstract class BrowserBase extends EventEmitter implements Browser {
     this._downloads.set(uuid, download);
   }
 
-  _downloadFinished(uuid: string, error: string) {
+  _downloadFinished(uuid: string, error?: string) {
     const download = this._downloads.get(uuid);
     if (!download)
       return;

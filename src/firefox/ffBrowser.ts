@@ -59,6 +59,8 @@ export class FFBrowser extends BrowserBase {
     this._eventListeners = [
       helper.addEventListener(this._connection, 'Browser.attachedToTarget', this._onAttachedToTarget.bind(this)),
       helper.addEventListener(this._connection, 'Browser.detachedFromTarget', this._onDetachedFromTarget.bind(this)),
+      helper.addEventListener(this._connection, 'Browser.downloadCreated', this._onDownloadCreated.bind(this)),
+      helper.addEventListener(this._connection, 'Browser.downloadFinished', this._onDownloadFinished.bind(this)),
     ];
     this._firstPagePromise = new Promise(f => this._firstPageCallback = f);
   }
@@ -96,7 +98,11 @@ export class FFBrowser extends BrowserBase {
       viewport,
       locale: options.locale,
       timezoneId: options.timezoneId,
-      removeOnDetach: true
+      removeOnDetach: true,
+      downloadOptions: {
+        behavior: options.acceptDownloads ? 'saveToDisk' : 'cancel',
+        downloadsDir: this._downloadsPath,
+      },
     });
     const context = new FFBrowserContext(this, browserContextId, options);
     await context._initialize();
@@ -133,6 +139,19 @@ export class FFBrowser extends BrowserBase {
       if (openerPage instanceof Page && !openerPage.isClosed())
         openerPage.emit(Events.Page.Popup, page);
     });
+  }
+
+  _onDownloadCreated(payload: Protocol.Browser.downloadCreatedPayload) {
+    const ffPage = this._ffPages.get(payload.pageTargetId)!;
+    assert(ffPage);
+    if (!ffPage)
+      return;
+    this._downloadCreated(ffPage._page, payload.uuid, payload.url);
+  }
+
+  _onDownloadFinished(payload: Protocol.Browser.downloadFinishedPayload) {
+    const error = payload.canceled ? 'canceled' : payload.error;
+    this._downloadFinished(payload.uuid, error);
   }
 
   _disconnect() {

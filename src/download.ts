@@ -81,7 +81,7 @@ export class Download {
       await util.promisify(fs.unlink)(fileName).catch(e => {});
   }
 
-  _reportFinished(error: string) {
+  _reportFinished(error?: string) {
     this._failure = error || null;
     this._finishedCallback();
   }
