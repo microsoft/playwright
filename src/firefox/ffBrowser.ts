@@ -27,7 +27,7 @@ import { ConnectionEvents, FFConnection } from './ffConnection';
 import { headersArray } from './ffNetworkManager';
 import { FFPage } from './ffPage';
 import { Protocol } from './protocol';
-import type { BrowserServer } from '../server/browserServer';
+import { BrowserServer } from '../server/browserServer';
 
 export class FFBrowser extends BrowserBase {
   _connection: FFConnection;

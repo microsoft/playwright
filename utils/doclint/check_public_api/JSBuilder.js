@@ -107,17 +107,6 @@ function checkSources(sources) {
     }
     if (fileName.endsWith('/api.ts') && ts.isExportSpecifier(node))
       apiClassNames.add(expandPrefix((node.propertyName || node.name).text));
-    if (!fileName.includes('src/server/')) {
-      // Only relative imports.
-      if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
-        const module = node.moduleSpecifier.text;
-        const isServerDependency = path.resolve(path.dirname(fileName), module).includes('src/server');
-        if (isServerDependency && !node.importClause.isTypeOnly) {
-          const lac = ts.getLineAndCharacterOfPosition(node.getSourceFile(), node.moduleSpecifier.pos);
-          errors.push(`Disallowed import "${module}" at ${node.getSourceFile().fileName}:${lac.line + 1}`);
-        }
-      }
-    }
     ts.forEachChild(node, visit);
   }
 
