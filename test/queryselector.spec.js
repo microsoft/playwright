@@ -540,6 +540,13 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await page.$eval(`text=with`, e => e.outerHTML)).toBe('<div>textwithsubstring</div>');
       expect(await page.$(`text="with"`)).toBe(null);
     });
+
+    it('should work for open shadow roots', async({page, server}) => {
+      await page.goto(server.PREFIX + '/deep-shadow.html');
+      expect(await page.$eval(`text=root1`, e => e.outerHTML)).toBe('<span>Hello from root1</span>');
+      expect(await page.$eval(`text=root2`, e => e.outerHTML)).toBe('<span>Hello from root2</span>');
+      expect(await page.$eval(`text=root3`, e => e.outerHTML)).toBe('<span>Hello from root3</span>');
+    });
   });
 
   describe('selectors.register', () => {

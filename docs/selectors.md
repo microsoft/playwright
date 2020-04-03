@@ -76,6 +76,8 @@ Text engine finds an element that contains a text node with passed text. Example
 - Text body can be escaped with double quotes for precise matching, insisting on exact match, including specified whitespace and case. This means `text="Login "` will only match `<button>Login </button>` with exactly one space after "Login".
 - Text body can also be a JavaScript-like regex wrapped in `/` symbols. This means `text=/^\\s*Login$/i` will match `<button> loGIN</button>` with any number of spaces before "Login" and no spaces after.
 
+> **NOTE** Text engine searches for elements inside open shadow roots, but not inside closed shadow roots or iframes.
+
 > **NOTE** Malformed selector starting with `"` is automatically transformed to text selector. For example, Playwright converts `page.click('"Login"')` to `page.click('text="Login"')`.
 
 ### id, data-testid, data-test-id, data-test
