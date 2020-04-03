@@ -56,7 +56,7 @@ function compareImages(actualBuffer, expectedBuffer, mimeType) {
     };
   }
   const diff = new PNG({width: expected.width, height: expected.height});
-  const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, {threshold: 0.1});
+  const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, {threshold: 0.15});
   return count > 0 ? { diff: PNG.sync.write(diff) } : null;
 }
 
