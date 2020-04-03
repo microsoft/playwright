@@ -2123,10 +2123,10 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..9dd2c096cd9fa72ecda79a5ee56ef6176dc485d3
+index 0000000000000000000000000000000000000000..836b5c537aa322663de78cd35b64f215c4c91abc
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
-@@ -0,0 +1,572 @@
+@@ -0,0 +1,552 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
@@ -2160,6 +2160,8 @@ index 0000000000000000000000000000000000000000..9dd2c096cd9fa72ecda79a5ee56ef617
 +
 +    this._browserContextIdToBrowserContext = new Map();
 +    this._userContextIdToBrowserContext = new Map();
++    this._browserToTarget = new Map();
++    this._browserBrowsingContextToTarget = new Map();
 +
 +    // Cleanup containers from previous runs (if any)
 +    for (const identity of ContextualIdentityService.getPublicIdentities()) {
@@ -2171,38 +2173,97 @@ index 0000000000000000000000000000000000000000..9dd2c096cd9fa72ecda79a5ee56ef617
 +
 +    this._defaultContext = new BrowserContext(this, undefined, undefined);
 +
-+    this._targets = new Map();
-+    this._tabToTarget = new Map();
-+    Services.obs.addObserver(this, 'oop-frameloader-crashed');
++    Services.obs.addObserver({
++      observe: (subject, topic, data) => {
++        const browser = subject.ownerElement;
++        if (!browser)
++          return;
++        const target = this._browserToTarget.get(browser);
++        if (!target)
++          return;
++        target.emit('crashed');
++        target.dispose();
++        this.emit(TargetRegistry.Events.TargetDestroyed, target);
++      }
++    }, 'oop-frameloader-crashed');
++
++    Services.mm.addMessageListener('juggler:content-ready', {
++      receiveMessage: message => {
++        const linkedBrowser = message.target;
++        if (this._browserToTarget.has(linkedBrowser))
++          throw new Error(`Internal error: two targets per linkedBrowser`);
++
++        let tab;
++        let gBrowser;
++        const windowsIt = Services.wm.getEnumerator('navigator:browser');
++        while (windowsIt.hasMoreElements()) {
++          const window = windowsIt.getNext();
++          tab = window.gBrowser.getTabForBrowser(linkedBrowser);
++          if (tab) {
++            gBrowser = window.gBrowser;
++            break;
++          }
++        }
++        if (!tab)
++          return;
++
++        const { userContextId } = message.data;
++        const openerContext = linkedBrowser.browsingContext.opener;
++        let openerTarget;
++        if (openerContext) {
++          // Popups usually have opener context.
++          openerTarget = this._browserBrowsingContextToTarget.get(openerContext);
++        } else if (tab.openerTab) {
++          // Noopener popups from the same window have opener tab instead.
++          openerTarget = this._browserToTarget.get(tab.openerTab.linkedBrowser);
++        }
++        const browserContext = this._userContextIdToBrowserContext.get(userContextId);
++        const target = new PageTarget(this, gBrowser, tab, linkedBrowser, browserContext, openerTarget);
++
++        const sessions = [];
++        const readyData = { sessions, target };
++        this.emit(TargetRegistry.Events.TargetCreated, readyData);
++        sessions.forEach(session => target._initSession(session));
++        return {
++          browserContextOptions: browserContext ? browserContext.options : {},
++          sessionIds: sessions.map(session => session.sessionId()),
++        };
++      },
++    });
 +
 +    const onTabOpenListener = event => {
-+      const target = this._createTargetForTab(event.target);
-+      // If we come here, content will have juggler script from the start,
-+      // and we should wait for initial navigation.
-+      target._waitForInitialNavigation = true;
-+      // For pages created before we attach to them, we don't wait for initial
-+      // navigation (target._waitForInitialNavigation is false by default).
++      const tab = event.target;
++      const userContextId = tab.userContextId;
++      const browserContext = this._userContextIdToBrowserContext.get(userContextId);
++      if (browserContext && browserContext.options.viewport)
++        setViewportSizeForBrowser(browserContext.options.viewport.viewportSize, tab.linkedBrowser);
 +    };
 +
 +    const onTabCloseListener = event => {
 +      const tab = event.target;
-+      const target = this._tabToTarget.get(tab);
-+      if (!target)
-+        return;
-+      this._targets.delete(target.id());
-+      this._tabToTarget.delete(tab);
-+      target.dispose();
-+      this.emit(TargetRegistry.Events.TargetDestroyed, target);
++      const linkedBrowser = tab.linkedBrowser;
++      const target = this._browserToTarget.get(linkedBrowser);
++      if (target) {
++        target.dispose();
++        this.emit(TargetRegistry.Events.TargetDestroyed, target);
++      }
 +    };
 +
-+    const wmListener = {
++    Services.wm.addListener({
 +      onOpenWindow: async window => {
 +        const domWindow = window.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
 +        if (!(domWindow instanceof Ci.nsIDOMChromeWindow))
 +          return;
-+        await this._waitForWindowLoad(domWindow);
-+        for (const tab of domWindow.gBrowser.tabs)
-+          this._createTargetForTab(tab);
++        if (domWindow.document.readyState !== 'uninitialized')
++          throw new Error('DOMWindow should not be loaded yet');
++        await new Promise(fulfill => {
++          domWindow.addEventListener('DOMContentLoaded', function listener() {
++            domWindow.removeEventListener('DOMContentLoaded', listener);
++            fulfill();
++          });
++        });
++        if (!domWindow.gBrowser)
++          return;
 +        domWindow.gBrowser.tabContainer.addEventListener('TabOpen', onTabOpenListener);
 +        domWindow.gBrowser.tabContainer.addEventListener('TabClose', onTabCloseListener);
 +      },
@@ -2217,8 +2278,7 @@ index 0000000000000000000000000000000000000000..9dd2c096cd9fa72ecda79a5ee56ef617
 +        for (const tab of domWindow.gBrowser.tabs)
 +          onTabCloseListener({ target: tab });
 +      },
-+    };
-+    Services.wm.addListener(wmListener);
++    });
 +  }
 +
 +  defaultContext() {
@@ -2231,17 +2291,6 @@ index 0000000000000000000000000000000000000000..9dd2c096cd9fa72ecda79a5ee56ef617
 +
 +  browserContextForId(browserContextId) {
 +    return this._browserContextIdToBrowserContext.get(browserContextId);
-+  }
-+
-+  async _waitForWindowLoad(window) {
-+    if (window.document.readyState === 'complete')
-+      return;
-+    await new Promise(fulfill => {
-+      window.addEventListener('load', function listener() {
-+        window.removeEventListener('load', listener);
-+        fulfill();
-+      });
-+    });
 +  }
 +
 +  async newPage({browserContextId}) {
@@ -2257,11 +2306,26 @@ index 0000000000000000000000000000000000000000..9dd2c096cd9fa72ecda79a5ee56ef617
 +      window = Services.ww.openWindow(null, AppConstants.BROWSER_CHROME_URL, '_blank', features, args);
 +      created = true;
 +    }
-+    await this._waitForWindowLoad(window);
++    if (window.document.readyState !== 'complete') {
++      await new Promise(fulfill => {
++        window.addEventListener('load', function listener() {
++          window.removeEventListener('load', listener);
++          fulfill();
++        });
++      });
++    }
 +    const browserContext = this.browserContextForId(browserContextId);
 +    const tab = window.gBrowser.addTab('about:blank', {
 +      userContextId: browserContext.userContextId,
 +      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
++    });
++    const target = await new Promise(fulfill => {
++      const listener = helper.on(this, TargetRegistry.Events.TargetCreated, ({target}) => {
++        if (target._tab === tab) {
++          helper.removeListeners([listener]);
++          fulfill(target);
++        }
++      });
 +    });
 +    if (created) {
 +      window.gBrowser.removeTab(window.gBrowser.getTabForBrowser(window.gBrowser.getBrowserAtIndex(0)), {
@@ -2269,8 +2333,6 @@ index 0000000000000000000000000000000000000000..9dd2c096cd9fa72ecda79a5ee56ef617
 +      });
 +    }
 +    window.gBrowser.selectedTab = tab;
-+    const target = this._tabToTarget.get(tab);
-+    await target._contentReadyPromise;
 +    if (browserContext.options.timezoneId) {
 +      if (await target.hasFailedToOverrideTimezone())
 +        throw new Error('Failed to override timezone');
@@ -2279,97 +2341,32 @@ index 0000000000000000000000000000000000000000..9dd2c096cd9fa72ecda79a5ee56ef617
 +  }
 +
 +  targets() {
-+    return Array.from(this._targets.values());
-+  }
-+
-+  targetInfo(targetId) {
-+    const target = this._targets.get(targetId);
-+    return target ? target.info() : null;
-+  }
-+
-+  tabForTarget(targetId) {
-+    const target = this._targets.get(targetId);
-+    if (!target)
-+      throw new Error(`Target "${targetId}" does not exist!`);
-+    if (!(target instanceof PageTarget))
-+      throw new Error(`Target "${targetId}" is not a page!`);
-+    return target._tab;
-+  }
-+
-+  contentChannelForTarget(targetId) {
-+    const target = this._targets.get(targetId);
-+    if (!target)
-+      throw new Error(`Target "${targetId}" does not exist!`);
-+    if (!(target instanceof PageTarget))
-+      throw new Error(`Target "${targetId}" is not a page!`);
-+    return target._channel;
-+  }
-+
-+  targetForId(targetId) {
-+    return this._targets.get(targetId);
-+  }
-+
-+  _tabForBrowser(browser) {
-+    // TODO: replace all of this with browser -> target map.
-+    const windowsIt = Services.wm.getEnumerator('navigator:browser');
-+    while (windowsIt.hasMoreElements()) {
-+      const window = windowsIt.getNext();
-+      const tab = window.gBrowser.getTabForBrowser(browser);
-+      if (tab)
-+        return { tab, gBrowser: window.gBrowser };
-+    }
-+  }
-+
-+  _targetForBrowser(browser) {
-+    const tab = this._tabForBrowser(browser);
-+    return tab ? this._tabToTarget.get(tab.tab) : undefined;
++    return Array.from(this._browserToTarget.values());
 +  }
 +
 +  browserContextForBrowser(browser) {
-+    const tab = this._tabForBrowser(browser);
-+    return tab ? this._userContextIdToBrowserContext.get(tab.tab.userContextId) : undefined;
++    const target = this._browserToTarget.get(browser);
++    return target ? target._browserContext : undefined;
 +  }
 +
-+  _createTargetForTab(tab) {
-+    if (this._tabToTarget.has(tab))
-+      throw new Error(`Internal error: two targets per tab`);
-+    const openerTarget = tab.openerTab ? this._tabToTarget.get(tab.openerTab) : null;
-+    const target = new PageTarget(this, tab, this._userContextIdToBrowserContext.get(tab.userContextId), openerTarget);
-+    this._targets.set(target.id(), target);
-+    this._tabToTarget.set(tab, target);
-+    this.emit(TargetRegistry.Events.TargetCreated, target);
-+    return target;
-+  }
-+
-+  observe(subject, topic, data) {
-+    if (topic === 'oop-frameloader-crashed') {
-+      const browser = subject.ownerElement;
-+      if (!browser)
-+        return;
-+      const target = this._targetForBrowser(browser);
-+      if (!target)
-+        return;
-+      target.emit('crashed');
-+      this._targets.delete(target.id());
-+      this._tabToTarget.delete(target._tab);
-+      target.dispose();
-+      this.emit(TargetRegistry.Events.TargetDestroyed, target);
-+      return;
-+    }
++  targetForBrowser(browser) {
++    return this._browserToTarget.get(browser);
 +  }
 +}
 +
 +class PageTarget {
-+  constructor(registry, tab, browserContext, opener) {
++  constructor(registry, gBrowser, tab, linkedBrowser, browserContext, opener) {
 +    EventEmitter.decorate(this);
 +
 +    this._targetId = helper.generateId();
 +    this._registry = registry;
++    this._gBrowser = gBrowser;
 +    this._tab = tab;
++    this._linkedBrowser = linkedBrowser;
 +    this._browserContext = browserContext;
 +    this._url = '';
 +    this._openerId = opener ? opener.id() : undefined;
-+    this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, tab.linkedBrowser.messageManager);
++    this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, this._linkedBrowser.messageManager);
 +
 +    const navigationListener = {
 +      QueryInterface: ChromeUtils.generateQI([ Ci.nsIWebProgressListener]),
@@ -2377,40 +2374,21 @@ index 0000000000000000000000000000000000000000..9dd2c096cd9fa72ecda79a5ee56ef617
 +    };
 +    this._eventListeners = [
 +      helper.addProgressListener(tab.linkedBrowser, navigationListener, Ci.nsIWebProgress.NOTIFY_LOCATION),
-+      helper.addMessageListener(tab.linkedBrowser.messageManager, 'juggler:content-ready', {
-+        receiveMessage: message => this._onContentReady(message.data)
-+      }),
 +    ];
 +
-+    this._contentReadyPromise = new Promise(f => this._contentReadyCallback = f);
-+    this._waitForInitialNavigation = false;
 +    this._disposed = false;
-+
 +    if (browserContext)
 +      browserContext.pages.add(this);
-+    if (browserContext && browserContext.options.viewport)
-+      this.setViewportSize(browserContext.options.viewport.viewportSize);
++    this._registry._browserToTarget.set(this._linkedBrowser, this);
++    this._registry._browserBrowsingContextToTarget.set(this._linkedBrowser.browsingContext, this);
 +  }
 +
 +  linkedBrowser() {
-+    return this._tab.linkedBrowser;
++    return this._linkedBrowser;
 +  }
 +
 +  setViewportSize(viewportSize) {
-+    if (viewportSize) {
-+      const {width, height} = viewportSize;
-+      this._tab.linkedBrowser.style.setProperty('min-width', width + 'px');
-+      this._tab.linkedBrowser.style.setProperty('min-height', height + 'px');
-+      this._tab.linkedBrowser.style.setProperty('max-width', width + 'px');
-+      this._tab.linkedBrowser.style.setProperty('max-height', height + 'px');
-+    } else {
-+      this._tab.linkedBrowser.style.removeProperty('min-width');
-+      this._tab.linkedBrowser.style.removeProperty('min-height');
-+      this._tab.linkedBrowser.style.removeProperty('max-width');
-+      this._tab.linkedBrowser.style.removeProperty('max-height');
-+    }
-+    const rect = this._tab.linkedBrowser.getBoundingClientRect();
-+    return { width: rect.width, height: rect.height };
++    return setViewportSizeForBrowser(viewportSize, this._linkedBrowser);
 +  }
 +
 +  connectSession(session) {
@@ -2424,8 +2402,7 @@ index 0000000000000000000000000000000000000000..9dd2c096cd9fa72ecda79a5ee56ef617
 +  }
 +
 +  async close(runBeforeUnload = false) {
-+    const tab = this._registry._tabForBrowser(this._tab.linkedBrowser);
-+    await tab.gBrowser.removeTab(this._tab, {
++    await this._gBrowser.removeTab(this._tab, {
 +      skipPermitUnload: !runBeforeUnload,
 +    });
 +  }
@@ -2439,21 +2416,6 @@ index 0000000000000000000000000000000000000000..9dd2c096cd9fa72ecda79a5ee56ef617
 +    session.registerHandler('Accessibility', new AccessibilityHandler(session, this._channel));
 +    pageHandler.enable();
 +    networkHandler.enable();
-+  }
-+
-+  _onContentReady({ userContextId }) {
-+    // TODO: this is the earliest when userContextId is available.
-+    // We should create target here, while listening to onContentReady for every tab.
-+    const sessions = [];
-+    const data = { sessions, target: this };
-+    this._registry.emit(TargetRegistry.Events.PageTargetReady, data);
-+    sessions.forEach(session => this._initSession(session));
-+    this._contentReadyCallback();
-+    return {
-+      browserContextOptions: this._browserContext ? this._browserContext.options : {},
-+      waitForInitialNavigation: this._waitForInitialNavigation,
-+      sessionIds: sessions.map(session => session.sessionId()),
-+    };
 +  }
 +
 +  id() {
@@ -2502,6 +2464,8 @@ index 0000000000000000000000000000000000000000..9dd2c096cd9fa72ecda79a5ee56ef617
 +    this._disposed = true;
 +    if (this._browserContext)
 +      this._browserContext.pages.delete(this);
++    this._registry._browserToTarget.delete(this._linkedBrowser);
++    this._registry._browserBrowsingContextToTarget.delete(this._linkedBrowser.browsingContext);
 +    helper.removeListeners(this._eventListeners);
 +  }
 +}
@@ -2691,10 +2655,26 @@ index 0000000000000000000000000000000000000000..9dd2c096cd9fa72ecda79a5ee56ef617
 +  return path.substring(0, path.lastIndexOf('/') + 1);
 +}
 +
++function setViewportSizeForBrowser(viewportSize, browser) {
++  if (viewportSize) {
++    const {width, height} = viewportSize;
++    browser.style.setProperty('min-width', width + 'px');
++    browser.style.setProperty('min-height', height + 'px');
++    browser.style.setProperty('max-width', width + 'px');
++    browser.style.setProperty('max-height', height + 'px');
++  } else {
++    browser.style.removeProperty('min-width');
++    browser.style.removeProperty('min-height');
++    browser.style.removeProperty('max-width');
++    browser.style.removeProperty('max-height');
++  }
++  const rect = browser.getBoundingClientRect();
++  return { width: rect.width, height: rect.height };
++}
++
 +TargetRegistry.Events = {
 +  TargetCreated: Symbol('TargetRegistry.Events.TargetCreated'),
 +  TargetDestroyed: Symbol('TargetRegistry.Events.TargetDestroyed'),
-+  PageTargetReady: Symbol('TargetRegistry.Events.PageTargetReady'),
 +};
 +
 +var EXPORTED_SYMBOLS = ['TargetRegistry'];
@@ -2816,7 +2796,7 @@ index 0000000000000000000000000000000000000000..268fbc361d8053182bb6c27f626e853d
 +
 diff --git a/juggler/content/FrameTree.js b/juggler/content/FrameTree.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..5f2b6b5de4faa91e32c14e53064b9484648ef9eb
+index 0000000000000000000000000000000000000000..255d1a842e9646eccc7c7bf8902baf94ef094c0e
 --- /dev/null
 +++ b/juggler/content/FrameTree.js
 @@ -0,0 +1,452 @@
@@ -2833,7 +2813,7 @@ index 0000000000000000000000000000000000000000..5f2b6b5de4faa91e32c14e53064b9484
 +const helper = new Helper();
 +
 +class FrameTree {
-+  constructor(rootDocShell, waitForInitialNavigation) {
++  constructor(rootDocShell) {
 +    EventEmitter.decorate(this);
 +
 +    this._browsingContextGroup = rootDocShell.browsingContext.group;
@@ -2847,7 +2827,7 @@ index 0000000000000000000000000000000000000000..5f2b6b5de4faa91e32c14e53064b9484
 +    this._workers = new Map();
 +    this._docShellToFrame = new Map();
 +    this._frameIdToFrame = new Map();
-+    this._pageReady = !waitForInitialNavigation;
++    this._pageReady = false;
 +    this._mainFrame = this._createFrame(rootDocShell);
 +    const webProgress = rootDocShell.QueryInterface(Ci.nsIInterfaceRequestor)
 +                                .getInterface(Ci.nsIWebProgress);
@@ -5079,7 +5059,7 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/juggler/content/main.js b/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..e2a8fc14afe9b851e2bf3893691ca98c69bd12ee
+index 0000000000000000000000000000000000000000..0060f625a8ad10d7f0df121bdc5fcfa8d5d7b336
 --- /dev/null
 +++ b/juggler/content/main.js
 @@ -0,0 +1,156 @@
@@ -5147,9 +5127,9 @@ index 0000000000000000000000000000000000000000..e2a8fc14afe9b851e2bf3893691ca98c
 +
 +  let response = sendSyncMessage('juggler:content-ready', { userContextId })[0];
 +  if (!response)
-+    response = { sessionIds: [], browserContextOptions: {}, waitForInitialNavigation: false };
++    response = { sessionIds: [], browserContextOptions: {} };
 +
-+  const { sessionIds, browserContextOptions, waitForInitialNavigation } = response;
++  const { sessionIds, browserContextOptions } = response;
 +  const { userAgent, bypassCSP, javaScriptDisabled, viewport, scriptsToEvaluateOnNewDocument, bindings, locale, timezoneId, geolocation, onlineOverride } = browserContextOptions;
 +
 +  let failedToOverrideTimezone = false;
@@ -5174,7 +5154,7 @@ index 0000000000000000000000000000000000000000..e2a8fc14afe9b851e2bf3893691ca98c
 +    scrollbarManager.setFloatingScrollbars(viewport.isMobile);
 +  }
 +
-+  frameTree = new FrameTree(docShell, waitForInitialNavigation);
++  frameTree = new FrameTree(docShell);
 +  for (const script of scriptsToEvaluateOnNewDocument || [])
 +    frameTree.addScriptToEvaluateOnNewDocument(script);
 +  for (const { name, script } of bindings || [])
@@ -5318,7 +5298,7 @@ index 0000000000000000000000000000000000000000..bf37558bccc48f4d90eadc971c1eb3e4
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/juggler/protocol/BrowserHandler.js b/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..b4f0e856efb2331525c54c4d5ff124d83ea71ee6
+index 0000000000000000000000000000000000000000..da90d080ac091afa6c75cfc993d8850231e0d41a
 --- /dev/null
 +++ b/juggler/protocol/BrowserHandler.js
 @@ -0,0 +1,185 @@
@@ -5362,7 +5342,7 @@ index 0000000000000000000000000000000000000000..b4f0e856efb2331525c54c4d5ff124d8
 +    }
 +
 +    this._eventListeners = [
-+      helper.on(this._targetRegistry, TargetRegistry.Events.PageTargetReady, this._onPageTargetReady.bind(this)),
++      helper.on(this._targetRegistry, TargetRegistry.Events.TargetCreated, this._onTargetCreated.bind(this)),
 +      helper.on(this._targetRegistry, TargetRegistry.Events.TargetDestroyed, this._onTargetDestroyed.bind(this)),
 +    ];
 +  }
@@ -5405,7 +5385,7 @@ index 0000000000000000000000000000000000000000..b4f0e856efb2331525c54c4d5ff124d8
 +    return this._attachToDefaultContext && target._browserContext === this._targetRegistry.defaultContext();
 +  }
 +
-+  _onPageTargetReady({sessions, target}) {
++  _onTargetCreated({sessions, target}) {
 +    if (!this._shouldAttachToTarget(target))
 +      return;
 +    const session = this._dispatcher.createSession();
