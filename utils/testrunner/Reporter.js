@@ -33,13 +33,10 @@ class Reporter {
     this._verbose = verbose;
     this._summary = summary;
     this._testCounter = 0;
-    runner.on('started', this._onStarted.bind(this));
-    runner.on('finished', this._onFinished.bind(this));
-    runner.on('teststarted', this._onTestStarted.bind(this));
-    runner.on('testfinished', this._onTestFinished.bind(this));
+    runner.setDelegate(this);
   }
 
-  _onStarted(testRuns) {
+  onStarted(testRuns) {
     this._testCounter = 0;
     this._timestamp = Date.now();
     const allTests = this._runner.tests();
@@ -83,7 +80,7 @@ class Reporter {
     console.log('');
   }
 
-  _onFinished(result) {
+  onFinished(result) {
     this._printTestResults(result);
     if (!result.ok())
       this._printFailedResult(result);
@@ -149,10 +146,10 @@ class Reporter {
     console.log(`Finished in ${colors.yellow(seconds)} seconds`);
   }
 
-  _onTestStarted(testRun) {
+  onTestRunStarted(testRun) {
   }
 
-  _onTestFinished(testRun) {
+  onTestRunFinished(testRun) {
     if (this._verbose) {
       ++this._testCounter;
       this._printVerboseTestRunResult(this._testCounter, testRun);
