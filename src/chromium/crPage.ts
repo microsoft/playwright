@@ -145,7 +145,9 @@ export class CRPage implements PageDelegate {
     if (options.ignoreHTTPSErrors)
       promises.push(this._client.send('Security.setIgnoreCertificateErrors', { ignore: true }));
     if (options.viewport)
-      promises.push(this._updateViewport(true /* updateTouch */));
+      promises.push(this._updateViewport());
+    if (options.hasTouch)
+      promises.push(this._client.send('Emulation.setTouchEmulationEnabled', { enabled: true }));
     if (options.javaScriptEnabled === false)
       promises.push(this._client.send('Emulation.setScriptExecutionDisabled', { value: true }));
     if (options.userAgent || options.locale)
@@ -378,10 +380,10 @@ export class CRPage implements PageDelegate {
 
   async setViewportSize(viewportSize: types.Size): Promise<void> {
     assert(this._page._state.viewportSize === viewportSize);
-    await this._updateViewport(false /* updateTouch */);
+    await this._updateViewport();
   }
 
-  async _updateViewport(updateTouch: boolean): Promise<void> {
+  async _updateViewport(): Promise<void> {
     const options = this._browserContext._options;
     let viewport = options.viewport || { width: 0, height: 0 };
     const viewportSize = this._page._state.viewportSize;
@@ -399,8 +401,6 @@ export class CRPage implements PageDelegate {
         screenOrientation: isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' },
       }),
     ];
-    if (updateTouch)
-      promises.push(this._client.send('Emulation.setTouchEmulationEnabled', { enabled: !!options.hasTouch }));
     await Promise.all(promises);
   }
 
