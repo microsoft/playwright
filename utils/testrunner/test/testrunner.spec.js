@@ -262,12 +262,12 @@ module.exports.addTests = function({testRunner, expect}) {
       t.describe('suite1', () => {
         t.beforeAll(() => log.push('suite:beforeAll1'));
         t.beforeAll(() => log.push('suite:beforeAll2'));
-        t.beforeEach((state, test) => {
+        t.beforeEach((state, run) => {
           log.push('suite:beforeEach');
-          test.before(() => log.push('test:before1'));
-          test.before(() => log.push('test:before2'));
-          test.after(() => log.push('test:after1'));
-          test.after(() => log.push('test:after2'));
+          run.test().before(() => log.push('test:before1'));
+          run.test().before(() => log.push('test:before2'));
+          run.test().after(() => log.push('test:after1'));
+          run.test().after(() => log.push('test:after2'));
         });
         t.it('dos', () => log.push('test #2'));
         t.it('tres', () => log.push('test #3'));

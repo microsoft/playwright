@@ -321,6 +321,10 @@ class TestRun {
   workerId() {
     return this._workerId;
   }
+
+  name() {
+    return this._test.name();
+  }
 }
 
 class Result {
@@ -461,7 +465,7 @@ class TestWorker {
 
     if (!testRun._error && !this._markTerminated(testRun)) {
       await this._willStartTestBody(testRun);
-      const { promise, terminate } = runUserCallback(test.body(), test.timeout(), [this._state, test]);
+      const { promise, terminate } = runUserCallback(test.body(), test.timeout(), [this._state, testRun]);
       this._runningTestTerminate = terminate;
       testRun._error = await promise;
       this._runningTestTerminate = null;
@@ -490,7 +494,7 @@ class TestWorker {
   async _runHook(testRun, hook, fullName, passTest = false) {
     await this._willStartHook(hook, fullName);
     const timeout = this._testPass._runner._timeout;
-    const { promise, terminate } = runUserCallback(hook.body, timeout, passTest ? [this._state, testRun.test()] : [this._state]);
+    const { promise, terminate } = runUserCallback(hook.body, timeout, passTest ? [this._state, testRun] : [this._state]);
     this._runningHookTerminate = terminate;
     let error = await promise;
     this._runningHookTerminate = null;
