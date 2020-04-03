@@ -153,7 +153,7 @@ export class Keyboard {
   async _ensureModifiers(modifiers: Modifier[]): Promise<Modifier[]> {
     for (const modifier of modifiers) {
       if (!kModifiers.includes(modifier))
-        throw new Error('Uknown modifier ' + modifier);
+        throw new Error('Unknown modifier ' + modifier);
     }
     const restore: Modifier[] = Array.from(this._pressedModifiers);
     const promises: Promise<void>[] = [];
