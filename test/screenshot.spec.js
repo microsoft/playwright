@@ -18,7 +18,7 @@
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, product, playwright, FFOX, CHROMIUM, WEBKIT, LINUX }) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -217,6 +217,14 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
         expect(screenshot).toBeInstanceOf(Buffer);
       }
     });
+    it.fail(WEBKIT)('should work with device scale factor', async({browser, server}) => {
+      const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
+      const page = await context.newPage();
+      await page.goto(server.PREFIX + '/grid.html');
+      const screenshot = await page.screenshot();
+      expect(screenshot).toBeGolden('screenshot-device-scale-factor.png');
+      await context.close();
+    });
   });
 
   describe('ElementHandle.screenshot', function() {
@@ -384,6 +392,16 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       const elementHandle = await page.$('.box:nth-of-type(3)');
       const screenshot = await elementHandle.screenshot();
       expect(screenshot).toBeGolden('screenshot-element-mobile.png');
+      await context.close();
+    });
+    it.fail(WEBKIT && LINUX).skip(FFOX)('should work with device scale factor', async({browser, server}) => {
+      const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
+      const page = await context.newPage();
+      await page.goto(server.PREFIX + '/grid.html');
+      await page.evaluate(() => window.scrollBy(50, 100));
+      const elementHandle = await page.$('.box:nth-of-type(3)');
+      const screenshot = await elementHandle.screenshot();
+      expect(screenshot).toBeGolden('screenshot-element-mobile-dsf.png');
       await context.close();
     });
     it('should work for an element with an offset', async({page}) => {
