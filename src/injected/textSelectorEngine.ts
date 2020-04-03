@@ -28,41 +28,19 @@ export const TextEngine: SelectorEngine = {
           continue;
         if (text.match(/^\s*[a-zA-Z0-9]+\s*$/) && TextEngine.query(root, text.trim()) === targetElement)
           return text.trim();
-        if (TextEngine.query(root, JSON.stringify(text)) === targetElement)
+        if (queryInternal(root, createMatcher(JSON.stringify(text))) === targetElement)
           return JSON.stringify(text);
       }
     }
   },
 
   query(root: SelectorRoot, selector: string): Element | undefined {
-    const document = root instanceof Document ? root : root.ownerDocument;
-    if (!document)
-      return;
-    const matcher = createMatcher(selector);
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    while (walker.nextNode()) {
-      const node = walker.currentNode;
-      const element = node.parentElement;
-      const text = node.nodeValue;
-      if (element && text && matcher(text))
-        return element;
-    }
+    return queryInternal(root, createMatcher(selector));
   },
 
   queryAll(root: SelectorRoot, selector: string): Element[] {
     const result: Element[] = [];
-    const document = root instanceof Document ? root : root.ownerDocument;
-    if (!document)
-      return result;
-    const matcher = createMatcher(selector);
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    while (walker.nextNode()) {
-      const node = walker.currentNode;
-      const element = node.parentElement;
-      const text = node.nodeValue;
-      if (element && text && matcher(text))
-        result.push(element);
-    }
+    queryAllInternal(root, createMatcher(selector), result);
     return result;
   }
 };
@@ -80,4 +58,49 @@ function createMatcher(selector: string): Matcher {
   }
   selector = selector.trim().toLowerCase();
   return text => text.toLowerCase().includes(selector);
+}
+
+function queryInternal(root: SelectorRoot, matcher: Matcher): Element | undefined {
+  const document = root instanceof Document ? root : root.ownerDocument!;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+  const shadowRoots = [];
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const element = node as Element;
+      if (element.shadowRoot)
+        shadowRoots.push(element.shadowRoot);
+    } else {
+      const element = node.parentElement;
+      const text = node.nodeValue;
+      if (element && element.nodeName !== 'SCRIPT' && element.nodeName !== 'STYLE' && text && matcher(text))
+        return element;
+    }
+  }
+  for (const shadowRoot of shadowRoots) {
+    const element = queryInternal(shadowRoot, matcher);
+    if (element)
+      return element;
+  }
+}
+
+function queryAllInternal(root: SelectorRoot, matcher: Matcher, result: Element[]) {
+  const document = root instanceof Document ? root : root.ownerDocument!;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+  const shadowRoots = [];
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const element = node as Element;
+      if (element.shadowRoot)
+        shadowRoots.push(element.shadowRoot);
+    } else {
+      const element = node.parentElement;
+      const text = node.nodeValue;
+      if (element && element.nodeName !== 'SCRIPT' && element.nodeName !== 'STYLE' && text && matcher(text))
+        result.push(element);
+    }
+  }
+  for (const shadowRoot of shadowRoots)
+    queryAllInternal(shadowRoot, matcher, result);
 }

@@ -53,9 +53,7 @@ export class Firefox implements BrowserType<FFBrowser> {
     const browser = await WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
       return FFBrowser.connect(transport, false, options.slowMo);
     });
-    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
-    browser.close = () => browserServer.close();
-    (browser as any)['__server__'] = browserServer;
+    browser._ownedServer = browserServer;
     return browser;
   }
 
@@ -72,10 +70,9 @@ export class Firefox implements BrowserType<FFBrowser> {
     const browser = await WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
       return FFBrowser.connect(transport, true, slowMo);
     });
+    browser._ownedServer = browserServer;
     await helper.waitWithTimeout(browser._firstPagePromise, 'first page', timeout);
-    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
     const browserContext = browser._defaultContext;
-    browserContext.close = () => browserServer.close();
     return browserContext;
   }
 
@@ -128,11 +125,8 @@ export class Firefox implements BrowserType<FFBrowser> {
       pipe: false,
       tempDir: temporaryProfileDir || undefined,
       attemptToGracefullyClose: async () => {
-        if (!browserServer)
-          return Promise.reject();
+        assert(browserServer);
         // We try to gracefully close to prevent crash reporting and core dumps.
-        // Note that it's fine to reuse the pipe transport, since
-        // our connection ignores kBrowserCloseMessageId.
         const transport = await WebSocketTransport.connect(browserWSEndpoint!, async transport => transport);
         const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
         await transport.send(message);

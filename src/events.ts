@@ -33,6 +33,7 @@ export const Events = {
     Close: 'close',
     Console: 'console',
     Dialog: 'dialog',
+    Download: 'download',
     FileChooser: 'filechooser',
     DOMContentLoaded: 'domcontentloaded',
     // Can't use just 'error' due to node.js special treatment of error events.

@@ -32,7 +32,8 @@ const BROWSER_CONFIGS = [
       ...require('../lib/events').Events,
       ...require('../lib/chromium/events').Events,
     },
-    missingCoverage: ['browserContext.setGeolocation', 'browserContext.setOffline', 'cDPSession.send', 'cDPSession.detach'],
+    missingCoverage: ['browserContext.setGeolocation', 'browserContext.setOffline', 'cDPSession.send', 'cDPSession.detach', 'page.emit("download")',
+        'download.url', 'download.path', 'download.failure', 'download.createReadStream', 'download.delete'],
   },
   {
     name: 'WebKit',
@@ -160,7 +161,7 @@ module.exports.addPlaywrightTests = ({testRunner, platform, products, playwright
       describe('', function() {
         beforeAll(async state => {
           state.browser = await browserType.launch(defaultBrowserOptions);
-          state.browserServer = state.browser.__server__;
+          state.browserServer = state.browser._ownedServer;
           state._stdout = readline.createInterface({ input: state.browserServer.process().stdout });
           state._stderr = readline.createInterface({ input: state.browserServer.process().stderr });
         });
@@ -180,12 +181,12 @@ module.exports.addPlaywrightTests = ({testRunner, platform, products, playwright
           state._stdout.on('line', dumpout);
           state._stderr.on('line', dumperr);
           if (dumpProtocolOnFailure)
-            state.browser._setDebugFunction(data => test.output.push(`\x1b[32m[pw:protocol]\x1b[0m ${data}`));
+            state.browser._debugProtocol.log = data => test.output.push(`\x1b[32m[pw:protocol]\x1b[0m ${data}`);
           state.tearDown = async () => {
             state._stdout.off('line', dumpout);
             state._stderr.off('line', dumperr);
             if (dumpProtocolOnFailure)
-              state.browser._setDebugFunction(() => void 0);
+              delete state.browser._debugProtocol.log;
           };
         });
 
@@ -218,6 +219,7 @@ module.exports.addPlaywrightTests = ({testRunner, platform, products, playwright
             loadTests('./click.spec.js');
             loadTests('./cookies.spec.js');
             loadTests('./dialog.spec.js');
+            loadTests('./download.spec.js');
             loadTests('./elementhandle.spec.js');
             loadTests('./emulation.spec.js');
             loadTests('./evaluation.spec.js');

@@ -22,7 +22,7 @@ import * as util from 'util';
 import { debugError, helper, assert } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
 import * as ws from 'ws';
-import { launchProcess } from '../server/processLauncher';
+import { launchProcess } from './processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
 import { PipeTransport } from './pipeTransport';
 import { LaunchOptions, BrowserArgOptions, BrowserType, ConnectOptions, LaunchServerOptions } from './browserType';
@@ -47,9 +47,10 @@ export class Chromium implements BrowserType<CRBrowser> {
 
   async launch(options: LaunchOptions = {}): Promise<CRBrowser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
-    const { browserServer, transport } = await this._launchServer(options, 'local');
+    const { browserServer, transport, downloadsPath } = await this._launchServer(options, 'local');
     const browser = await CRBrowser.connect(transport!, false, options.slowMo);
-    (browser as any)['__server__'] = browserServer;
+    browser._ownedServer = browserServer;
+    browser._downloadsPath = downloadsPath;
     return browser;
   }
 
@@ -62,13 +63,14 @@ export class Chromium implements BrowserType<CRBrowser> {
       timeout = 30000,
       slowMo = 0
     } = options;
-    const { transport } = await this._launchServer(options, 'persistent', userDataDir);
+    const { transport, browserServer } = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await CRBrowser.connect(transport!, true, slowMo);
+    browser._ownedServer = browserServer;
     await helper.waitWithTimeout(browser._firstPagePromise, 'first page', timeout);
     return browser._defaultContext;
   }
 
-  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport }> {
+  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport, downloadsPath: string }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -99,7 +101,7 @@ export class Chromium implements BrowserType<CRBrowser> {
     const chromeExecutable = executablePath || this._executablePath;
     if (!chromeExecutable)
       throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
-    const { launchedProcess, gracefullyClose } = await launchProcess({
+    const { launchedProcess, gracefullyClose, downloadsPath } = await launchProcess({
       executablePath: chromeExecutable,
       args: chromeArguments,
       env,
@@ -110,8 +112,7 @@ export class Chromium implements BrowserType<CRBrowser> {
       pipe: true,
       tempDir: temporaryUserDataDir || undefined,
       attemptToGracefullyClose: async () => {
-        if (!browserServer)
-          return Promise.reject();
+        assert(browserServer);
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
         // our connection ignores kBrowserCloseMessageId.
@@ -127,9 +128,9 @@ export class Chromium implements BrowserType<CRBrowser> {
 
     let transport: PipeTransport | undefined = undefined;
     let browserServer: BrowserServer | undefined = undefined;
-    transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream, () => browserServer!.close());
+    transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, port) : null);
-    return { browserServer, transport };
+    return { browserServer, transport, downloadsPath };
   }
 
   async connect(options: ConnectOptions): Promise<CRBrowser> {

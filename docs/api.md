@@ -14,6 +14,7 @@
 - [class: JSHandle](#class-jshandle)
 - [class: ConsoleMessage](#class-consolemessage)
 - [class: Dialog](#class-dialog)
+- [class: Download](#class-download)
 - [class: Keyboard](#class-keyboard)
 - [class: Mouse](#class-mouse)
 - [class: Request](#class-request)
@@ -191,6 +192,7 @@ Indicates that the browser is connected.
 
 #### browser.newContext([options])
 - `options` <[Object]>
+  - `acceptDownloads` <[boolean]> Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
   - `ignoreHTTPSErrors` <[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
   - `bypassCSP` <[boolean]> Toggles bypassing page's Content-Security-Policy.
   - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
@@ -230,6 +232,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
 
 #### browser.newPage([options])
 - `options` <[Object]>
+  - `acceptDownloads` <[boolean]> Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
   - `ignoreHTTPSErrors` <[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
   - `bypassCSP` <[boolean]> Toggles bypassing page's Content-Security-Policy.
   - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
@@ -629,6 +632,7 @@ page.removeListener('request', logRequest);
 - [event: 'console'](#event-console)
 - [event: 'dialog'](#event-dialog)
 - [event: 'domcontentloaded'](#event-domcontentloaded)
+- [event: 'download'](#event-download)
 - [event: 'filechooser'](#event-filechooser)
 - [event: 'frameattached'](#event-frameattached)
 - [event: 'framedetached'](#event-framedetached)
@@ -728,6 +732,11 @@ Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` o
 #### event: 'domcontentloaded'
 
 Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded) event is dispatched.
+
+#### event: 'download'
+- <[Download]>
+
+Emitted when attachment is downloaded. User can access basic file operations on downloaded content via the passed [Download] instance. Browser context must be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
 
 #### event: 'filechooser'
 - <[Object]>
@@ -2971,6 +2980,58 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 - returns: <[string]> Dialog's type, can be one of `alert`, `beforeunload`, `confirm` or `prompt`.
 
 
+### class: Download
+
+[Download] objects are dispatched by page via the ['download'](#event-download) event.
+
+Note that browser context must be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
+
+All the downloaded files belonging to the browser context are deleted when the browser context is closed. All downloaded files are deleted when the browser closes.
+
+An example of using `Download` class:
+```js
+const [ download ] = await Promise.all([
+  page.waitForEvent('download'),
+  page.click('a')
+]);
+const path = await download.path();
+...
+```
+
+<!-- GEN:toc -->
+- [download.createReadStream()](#downloadcreatereadstream)
+- [download.delete()](#downloaddelete)
+- [download.failure()](#downloadfailure)
+- [download.path()](#downloadpath)
+- [download.url()](#downloadurl)
+<!-- GEN:stop -->
+
+#### download.createReadStream()
+- returns: <[Promise]<null|[Readable]>>
+
+Returns readable stream for current download or `null` if download failed.
+
+#### download.delete()
+- returns: <[Promise]>
+
+Deletes the downloaded file.
+
+#### download.failure()
+- returns: <[Promise]<null|[string]>>
+
+Returns download error if any.
+
+#### download.path()
+- returns: <[Promise]<null|[string]>>
+
+Returns path to the downloaded file in case of successful download.
+
+#### download.url()
+- returns: <[string]>
+
+Returns downloaded url.
+
+
 ### class: Keyboard
 
 Keyboard provides an api for managing a virtual keyboard. The high level api is [`keyboard.type`](#keyboardtypetext-options), which takes raw characters and generates proper keydown, keypress/input, and keyup events on your page.
@@ -4112,6 +4173,6 @@ const { chromium } = require('playwright');
 [number]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Number_type "Number"
 [origin]: https://developer.mozilla.org/en-US/docs/Glossary/Origin "Origin"
 [selector]: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors "selector"
-[stream.Readable]: https://nodejs.org/api/stream.html#stream_class_stream_readable "stream.Readable"
+[Readable]: https://nodejs.org/api/stream.html#stream_class_stream_readable "Readable"
 [string]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#String_type "String"
 [xpath]: https://developer.mozilla.org/en-US/docs/Web/XPath "xpath"

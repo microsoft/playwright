@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Browser, createPageInNewContext } from '../browser';
+import { BrowserBase } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, BrowserContextOptions, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { Events as CommonEvents } from '../events';
 import { assert, debugError, helper } from '../helper';
@@ -29,9 +29,9 @@ import { readProtocolStream } from './crProtocolHelper';
 import { Events } from './events';
 import { Protocol } from './protocol';
 import { CRExecutionContext } from './crExecutionContext';
-import { EventEmitter } from 'events';
+import { BrowserServer } from '../server/browserServer';
 
-export class CRBrowser extends EventEmitter implements Browser {
+export class CRBrowser extends BrowserBase {
   readonly _connection: CRConnection;
   _session: CRSession;
   private _clientRootSessionPromise: Promise<CRSession> | null = null;
@@ -46,6 +46,7 @@ export class CRBrowser extends EventEmitter implements Browser {
   private _tracingRecording = false;
   private _tracingPath: string | null = '';
   private _tracingClient: CRSession | undefined;
+  _ownedServer: BrowserServer | null = null;
 
   static async connect(transport: ConnectionTransport, isPersistent: boolean, slowMo?: number): Promise<CRBrowser> {
     const connection = new CRConnection(SlowMoTransport.wrap(transport, slowMo));
@@ -100,10 +101,6 @@ export class CRBrowser extends EventEmitter implements Browser {
 
   contexts(): BrowserContext[] {
     return Array.from(this._contexts.values());
-  }
-
-  async newPage(options?: BrowserContextOptions): Promise<Page> {
-    return createPageInNewContext(this, options);
   }
 
   _onAttachedToTarget({targetInfo, sessionId, waitingForDebugger}: Protocol.Target.attachedToTargetPayload) {
@@ -183,11 +180,18 @@ export class CRBrowser extends EventEmitter implements Browser {
     await this._session.send('Target.closeTarget', { targetId: crPage._targetId });
   }
 
-  async close() {
+  async _disconnect() {
     const disconnected = new Promise(f => this._connection.once(ConnectionEvents.Disconnected, f));
     await Promise.all(this.contexts().map(context => context.close()));
     this._connection.close();
     await disconnected;
+  }
+
+  async close() {
+    if (this._ownedServer)
+      await this._ownedServer.close();
+    else
+      await this._disconnect();
   }
 
   async newBrowserCDPSession(): Promise<CRSession> {
@@ -241,10 +245,6 @@ export class CRBrowser extends EventEmitter implements Browser {
       this._clientRootSessionPromise = this._connection.createBrowserSession();
     return this._clientRootSessionPromise;
   }
-
-  _setDebugFunction(debugFunction: debug.IDebugger) {
-    this._connection._debugProtocol = debugFunction;
-  }
 }
 
 class CRServiceWorker extends Worker {
@@ -275,12 +275,20 @@ export class CRBrowserContext extends BrowserContextBase {
   }
 
   async _initialize() {
+    const promises: Promise<any>[] = [
+      this._browser._session.send('Browser.setDownloadBehavior', {
+        behavior: this._options.acceptDownloads ? 'allowAndName' : 'deny',
+        browserContextId: this._browserContextId || undefined,
+        downloadPath: this._browser._downloadsPath
+      })
+    ];
     if (this._options.permissions)
-      await this.grantPermissions(this._options.permissions);
+      promises.push(this.grantPermissions(this._options.permissions));
     if (this._options.offline)
-      await this.setOffline(this._options.offline);
+      promises.push(this.setOffline(this._options.offline));
     if (this._options.httpCredentials)
-      await this.setHTTPCredentials(this._options.httpCredentials);
+      promises.push(this.setHTTPCredentials(this._options.httpCredentials));
+    await Promise.all(promises);
   }
 
   pages(): Page[] {
@@ -426,7 +434,7 @@ export class CRBrowserContext extends BrowserContextBase {
     }
     await this._browser._session.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
-    this._didCloseInternal();
+    await this._didCloseInternal();
   }
 
   backgroundPages(): Page[] {

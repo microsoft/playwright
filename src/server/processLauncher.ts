@@ -17,6 +17,9 @@
 
 import * as childProcess from 'child_process';
 import * as debug from 'debug';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import * as readline from 'readline';
 import * as removeFolder from 'rimraf';
 import * as stream from 'stream';
@@ -25,6 +28,8 @@ import { TimeoutError } from '../errors';
 import { helper } from '../helper';
 
 const removeFolderAsync = util.promisify(removeFolder);
+const mkdtempAsync = util.promisify(fs.mkdtemp);
+const DOWNLOADS_FOLDER = path.join(os.tmpdir(), 'playwright_downloads-');
 
 export type LaunchProcessOptions = {
   executablePath: string,
@@ -43,7 +48,11 @@ export type LaunchProcessOptions = {
   onkill: (exitCode: number | null, signal: string | null) => void,
 };
 
-type LaunchResult = { launchedProcess: childProcess.ChildProcess, gracefullyClose: () => Promise<void> };
+type LaunchResult = {
+  launchedProcess: childProcess.ChildProcess,
+  gracefullyClose: () => Promise<void>,
+  downloadsPath: string
+};
 
 let lastLaunchedId = 0;
 
@@ -93,6 +102,8 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
       console.log(`\x1b[31m[err]\x1b[0m ${data}`);  // eslint-disable-line no-console
   });
 
+  const downloadsPath = await mkdtempAsync(DOWNLOADS_FOLDER);
+
   let processClosed = false;
   const waitForProcessToClose = new Promise((fulfill, reject) => {
     spawnedProcess.once('exit', (exitCode, signal) => {
@@ -101,13 +112,10 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
       helper.removeEventListeners(listeners);
       options.onkill(exitCode, signal);
       // Cleanup as processes exit.
-      if (options.tempDir) {
-        removeFolderAsync(options.tempDir)
-            .catch((err: Error) => console.error(err))
-            .then(fulfill);
-      } else {
-        fulfill();
-      }
+      Promise.all([
+        removeFolderAsync(downloadsPath),
+        options.tempDir ? removeFolderAsync(options.tempDir) : Promise.resolve()
+      ]).catch((err: Error) => console.error(err)).then(fulfill);
     });
   });
 
@@ -135,7 +143,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     }
     gracefullyClosing = true;
     debugBrowser(`<gracefully close start>`);
-    options.attemptToGracefullyClose().catch(() => killProcess());
+    await options.attemptToGracefullyClose().catch(() => killProcess());
     await waitForProcessToClose;
     debugBrowser(`<gracefully close end>`);
   }
@@ -162,7 +170,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     } catch (e) { }
   }
 
-  return { launchedProcess: spawnedProcess, gracefullyClose };
+  return { launchedProcess: spawnedProcess, gracefullyClose, downloadsPath };
 }
 
 export function waitForLine(process: childProcess.ChildProcess, inputStream: stream.Readable, regex: RegExp, timeout: number, timeoutError: TimeoutError): Promise<RegExpMatchArray> {
