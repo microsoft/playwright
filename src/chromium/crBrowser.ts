@@ -29,7 +29,6 @@ import { readProtocolStream } from './crProtocolHelper';
 import { Events } from './events';
 import { Protocol } from './protocol';
 import { CRExecutionContext } from './crExecutionContext';
-import { BrowserServer } from '../server/browserServer';
 
 export class CRBrowser extends BrowserBase {
   readonly _connection: CRConnection;
@@ -46,7 +45,6 @@ export class CRBrowser extends BrowserBase {
   private _tracingRecording = false;
   private _tracingPath: string | null = '';
   private _tracingClient: CRSession | undefined;
-  _ownedServer: BrowserServer | null = null;
 
   static async connect(transport: ConnectionTransport, isPersistent: boolean, slowMo?: number): Promise<CRBrowser> {
     const connection = new CRConnection(SlowMoTransport.wrap(transport, slowMo));
@@ -180,18 +178,8 @@ export class CRBrowser extends BrowserBase {
     await this._session.send('Target.closeTarget', { targetId: crPage._targetId });
   }
 
-  async _disconnect() {
-    const disconnected = new Promise(f => this._connection.once(ConnectionEvents.Disconnected, f));
-    await Promise.all(this.contexts().map(context => context.close()));
+  _disconnect() {
     this._connection.close();
-    await disconnected;
-  }
-
-  async close() {
-    if (this._ownedServer)
-      await this._ownedServer.close();
-    else
-      await this._disconnect();
   }
 
   async newBrowserCDPSession(): Promise<CRSession> {
