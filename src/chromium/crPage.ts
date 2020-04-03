@@ -94,6 +94,8 @@ export class CRPage implements PageDelegate {
           helper.addEventListener(this._client, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
           helper.addEventListener(this._client, 'Page.javascriptDialogOpening', event => this._onDialog(event)),
           helper.addEventListener(this._client, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
+          helper.addEventListener(this._client, 'Page.downloadWillBegin', event => this._onDownloadWillBegin(event)),
+          helper.addEventListener(this._client, 'Page.downloadProgress', event => this._onDownloadProgress(event)),
           helper.addEventListener(this._client, 'Runtime.bindingCalled', event => this._onBindingCalled(event)),
           helper.addEventListener(this._client, 'Runtime.consoleAPICalled', event => this._onConsoleAPI(event)),
           helper.addEventListener(this._client, 'Runtime.exceptionThrown', exception => this._handleException(exception.exceptionDetails)),
@@ -168,7 +170,6 @@ export class CRPage implements PageDelegate {
     promises.push(this._firstNonInitialNavigationCommittedPromise);
     await Promise.all(promises);
   }
-
   didClose() {
     helper.removeEventListeners(this._eventListeners);
     this._networkManager.dispose();
@@ -354,6 +355,17 @@ export class CRPage implements PageDelegate {
     const utilityContext = await frame._utilityContext();
     const handle = await this.adoptBackendNodeId(event.backendNodeId, utilityContext);
     this._page._onFileChooserOpened(handle);
+  }
+
+  _onDownloadWillBegin(payload: Protocol.Page.downloadWillBeginPayload) {
+    this._browserContext._browser._downloadCreated(this._page, payload.guid, payload.url);
+  }
+
+  _onDownloadProgress(payload: Protocol.Page.downloadProgressPayload) {
+    if (payload.state === 'completed')
+      this._browserContext._browser._downloadFinished(payload.guid, '');
+    if (payload.state === 'canceled')
+      this._browserContext._browser._downloadFinished(payload.guid, 'canceled');
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {

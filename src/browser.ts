@@ -17,6 +17,8 @@
 import { BrowserContext, BrowserContextOptions } from './browserContext';
 import { Page } from './page';
 import { EventEmitter } from 'events';
+import { Download } from './download';
+import { debugProtocol } from './transport';
 
 export interface Browser extends EventEmitter {
   newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
@@ -25,14 +27,38 @@ export interface Browser extends EventEmitter {
   isConnected(): boolean;
   close(): Promise<void>;
   _disconnect(): Promise<void>;
-  _setDebugFunction(debugFunction: (message: string) => void): void;
 }
 
-export async function createPageInNewContext(browser: Browser, options?: BrowserContextOptions): Promise<Page> {
-  const context = await browser.newContext(options);
-  const page = await context.newPage();
-  page._ownedContext = context;
-  return page;
+export abstract class BrowserBase extends EventEmitter implements Browser {
+  _downloadsPath: string = '';
+  private _downloads = new Map<string, Download>();
+  _debugProtocol = debugProtocol;
+
+  abstract newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
+  abstract contexts(): BrowserContext[];
+  abstract isConnected(): boolean;
+  abstract close(): Promise<void>;
+  abstract _disconnect(): Promise<void>;
+
+  async newPage(options?: BrowserContextOptions): Promise<Page> {
+    const context = await this.newContext(options);
+    const page = await context.newPage();
+    page._ownedContext = context;
+    return page;
+  }
+
+  _downloadCreated(page: Page, uuid: string, url: string) {
+    const download = new Download(page, this._downloadsPath, uuid, url);
+    this._downloads.set(uuid, download);
+  }
+
+  _downloadFinished(uuid: string, error: string) {
+    const download = this._downloads.get(uuid);
+    if (!download)
+      return;
+    download._reportFinished(error);
+    this._downloads.delete(uuid);
+  }
 }
 
 export type LaunchType = 'local' | 'server' | 'persistent';

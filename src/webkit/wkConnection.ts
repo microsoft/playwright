@@ -18,7 +18,7 @@
 import * as debug from 'debug';
 import { EventEmitter } from 'events';
 import { assert } from '../helper';
-import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
+import { ConnectionTransport, ProtocolRequest, ProtocolResponse, debugProtocol } from '../transport';
 import { Protocol } from './protocol';
 
 // WKPlaywright uses this special id to issue Browser.close command which we
@@ -35,7 +35,6 @@ export class WKConnection {
   private readonly _onDisconnect: () => void;
   private _lastId = 0;
   private _closed = false;
-  _debugProtocol = debug('pw:protocol');
 
   readonly browserSession: WKSession;
 
@@ -47,7 +46,6 @@ export class WKConnection {
     this.browserSession = new WKSession(this, '', 'Browser has been closed.', (message: any) => {
       this.rawSend(message);
     });
-    (this._debugProtocol as any).color = '34';
   }
 
   nextMessageId(): number {
@@ -55,14 +53,14 @@ export class WKConnection {
   }
 
   rawSend(message: ProtocolRequest) {
-    if (this._debugProtocol.enabled)
-      this._debugProtocol('SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
+    if (debugProtocol.enabled)
+      debugProtocol('SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
     this._transport.send(message);
   }
 
   private _dispatchMessage(message: ProtocolResponse) {
-    if (this._debugProtocol.enabled)
-      this._debugProtocol('◀ RECV ' + message);
+    if (debugProtocol.enabled)
+      debugProtocol('◀ RECV ' + JSON.stringify(message));
     if (message.id === kBrowserCloseMessageId)
       return;
     if (message.pageProxyId) {
