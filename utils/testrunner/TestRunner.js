@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-const EventEmitter = require('events');
 const {SourceMapSupport} = require('./SourceMapSupport');
 const debug = require('debug');
 const Location = require('./Location');
@@ -360,8 +359,8 @@ class Result {
 }
 
 class TestWorker {
-  constructor(testPass, workerId, parallelIndex) {
-    this._testPass = testPass;
+  constructor(testRunner, workerId, parallelIndex) {
+    this._testRunner = testRunner;
     this._state = { parallelIndex };
     this._environmentStack = [];
     this._terminating = false;
@@ -466,7 +465,7 @@ class TestWorker {
       testRun._error = await promise;
       this._runningTestTerminate = null;
       if (testRun._error && testRun._error.stack)
-        await this._testPass._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(testRun._error);
+        await this._testRunner._sourceMapSupport.rewriteStackTraceWithSourceMaps(testRun._error);
       if (!testRun._error)
         testRun._result = TestResult.Ok;
       else if (testRun._error === TimeoutError)
@@ -489,7 +488,7 @@ class TestWorker {
 
   async _runHook(testRun, hook, fullName, passTest = false) {
     await this._willStartHook(hook, fullName);
-    const timeout = this._testPass._runner._timeout;
+    const timeout = this._testRunner._timeout;
     const { promise, terminate } = runUserCallback(hook.body, timeout, passTest ? [this._state, testRun.test()] : [this._state]);
     this._runningHookTerminate = terminate;
     let error = await promise;
@@ -510,7 +509,7 @@ class TestWorker {
         error = null;
       } else {
         if (error.stack)
-          await this._testPass._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
+          await this._testRunner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
         message = `${hook.location.toDetailedString()} - FAILED while running "${hook.name}" in suite "${fullName}": `;
       }
       await this._didFailHook(hook, fullName, message, error);
@@ -526,13 +525,13 @@ class TestWorker {
   async _willStartTestRun(testRun) {
     testRun._startTimestamp = Date.now();
     testRun._workerId = this._workerId;
-    this._testPass._runner.emit(TestRunner.Events.TestStarted, testRun);
+    await this._testRunner._delegate.onTestRunStarted(testRun);
   }
 
   async _didFinishTestRun(testRun) {
     testRun._endTimestamp = Date.now();
     testRun._workerId = this._workerId;
-    this._testPass._runner.emit(TestRunner.Events.TestFinished, testRun);
+    await this._testRunner._delegate.onTestRunFinished(testRun);
   }
 
   async _willStartTestBody(testRun) {
@@ -550,8 +549,8 @@ class TestWorker {
   async _didFailHook(hook, fullName, message, error) {
     debug('testrunner:hook')(`[${this._workerId}] "${hook.name}" FAILED for "${fullName}" (${hook.location})`);
     if (message)
-      this._testPass._result.addError(message, error, this);
-    this._testPass._result.setResult(TestResult.Crashed, message);
+      this._testRunner._result.addError(message, error, this);
+    this._testRunner._result.setResult(TestResult.Crashed, message);
   }
 
   async _didCompleteHook(hook, fullName) {
@@ -567,108 +566,8 @@ class TestWorker {
   }
 }
 
-class TestPass {
-  constructor(runner, parallel, breakOnFailure) {
-    this._runner = runner;
-    this._workers = [];
-    this._nextWorkerId = 1;
-    this._parallel = parallel;
-    this._breakOnFailure = breakOnFailure;
-    this._errors = [];
-    this._result = new Result();
-    this._terminating = false;
-  }
-
-  async run(testRuns) {
-    const terminations = [
-      createTermination.call(this, 'SIGINT', TestResult.Terminated, 'SIGINT received'),
-      createTermination.call(this, 'SIGHUP', TestResult.Terminated, 'SIGHUP received'),
-      createTermination.call(this, 'SIGTERM', TestResult.Terminated, 'SIGTERM received'),
-      createTermination.call(this, 'unhandledRejection', TestResult.Crashed, 'UNHANDLED PROMISE REJECTION'),
-      createTermination.call(this, 'uncaughtException', TestResult.Crashed, 'UNHANDLED ERROR'),
-    ];
-    for (const termination of terminations)
-      process.on(termination.event, termination.handler);
-
-    this._result = new Result();
-    this._result.runs = testRuns;
-
-    const parallel = Math.min(this._parallel, testRuns.length);
-    const workerPromises = [];
-    for (let i = 0; i < parallel; ++i) {
-      const initialTestRunIndex = i * Math.floor(testRuns.length / parallel);
-      workerPromises.push(this._runWorker(initialTestRunIndex, testRuns, i));
-    }
-    await Promise.all(workerPromises);
-
-    for (const termination of terminations)
-      process.removeListener(termination.event, termination.handler);
-
-    if (testRuns.some(run => run.isFailure()))
-      this._result.setResult(TestResult.Failed, '');
-    return this._result;
-
-    function createTermination(event, result, message) {
-      return {
-        event,
-        message,
-        handler: error => this._terminate(result, message, event === 'SIGTERM', event.startsWith('SIG') ? null : error)
-      };
-    }
-  }
-
-  async _runWorker(testRunIndex, testRuns, parallelIndex) {
-    let worker = new TestWorker(this, this._nextWorkerId++, parallelIndex);
-    this._workers[parallelIndex] = worker;
-    while (!this._terminating) {
-      let skipped = 0;
-      while (skipped < testRuns.length && testRuns[testRunIndex]._result !== null) {
-        testRunIndex = (testRunIndex + 1) % testRuns.length;
-        skipped++;
-      }
-      const testRun = testRuns[testRunIndex];
-      if (testRun._result !== null) {
-        // All tests have been run.
-        break;
-      }
-
-      // Mark as running so that other workers do not run it again.
-      testRun._result = 'running';
-      await worker.run(testRun);
-      if (testRun.isFailure()) {
-        // Something went wrong during test run, let's use a fresh worker.
-        await worker.shutdown();
-        if (this._breakOnFailure) {
-          const message = `Terminating because a test has failed and |testRunner.breakOnFailure| is enabled`;
-          await this._terminate(TestResult.Terminated, message, false /* force */, null /* error */);
-          return;
-        }
-        worker = new TestWorker(this, this._nextWorkerId++, parallelIndex);
-        this._workers[parallelIndex] = worker;
-      }
-    }
-    await worker.shutdown();
-  }
-
-  async _terminate(result, message, force, error) {
-    debug('testrunner')(`TERMINATED result = ${result}, message = ${message}`);
-    this._terminating = true;
-    for (const worker of this._workers)
-      worker.terminate(force /* terminateHooks */);
-    this._result.setResult(result, message);
-    if (this._result.message === 'SIGINT received' && message === 'SIGTERM received')
-      this._result.message = message;
-    if (error) {
-      if (error.stack)
-        await this._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
-      this._result.addError(message, error, this._workers.length === 1 ? this._workers[0] : null);
-    }
-  }
-}
-
-class TestRunner extends EventEmitter {
+class TestRunner {
   constructor(options = {}) {
-    super();
     const {
       timeout = 10 * 1000, // Default timeout is 10 seconds.
       parallel = 1,
@@ -689,6 +588,17 @@ class TestRunner extends EventEmitter {
     this._suiteAttributes = new Map();
     this._testModifiers = new Map();
     this._testAttributes = new Map();
+    this._nextWorkerId = 1;
+    this._workers = [];
+    this._terminating = false;
+    this._result = null;
+
+    this._delegate = {
+      async onStarted(testRuns) {},
+      async onFinished(result) {},
+      async onTestRunStarted(testRun) {},
+      async onTestRunFinished(testRun) {},
+    };
 
     this.beforeAll = (callback) => this._currentEnvironment.beforeAll(callback);
     this.beforeEach = (callback) => this._currentEnvironment.beforeEach(callback);
@@ -777,6 +687,10 @@ class TestRunner extends EventEmitter {
     this._suiteAttributes.set(name, callback);
   }
 
+  setDelegate(delegate) {
+    this._delegate = delegate;
+  }
+
   async run(options = {}) {
     const { totalTimeout = 0 } = options;
     const testRuns = [];
@@ -787,29 +701,113 @@ class TestRunner extends EventEmitter {
       for (let i = 0; i < repeat; i++)
         testRuns.push(new TestRun(test));
     }
-    this.emit(TestRunner.Events.Started, testRuns);
 
-    let result;
+    this._result = new Result();
+
     if (this._crashIfTestsAreFocusedOnCI && process.env.CI && this.hasFocusedTestsOrSuites()) {
-      result = new Result();
-      result.setResult(TestResult.Crashed, '"focused" tests or suites are probitted on CI');
+      await this._delegate.onStarted([]);
+      this._result.setResult(TestResult.Crashed, '"focused" tests or suites are probitted on CI');
+      await this._delegate.onFinished(this._result);
     } else {
-      this._runningPass = new TestPass(this, this._parallel, this._breakOnFailure);
+      await this._delegate.onStarted(testRuns);
+      this._result.runs = testRuns;
+
       let timeoutId;
       if (totalTimeout) {
         timeoutId = setTimeout(() => {
-          this._runningPass._terminate(TestResult.Terminated, `Total timeout of ${totalTimeout}ms reached.`, true /* force */, null /* error */);
+          this._terminate(TestResult.Terminated, `Total timeout of ${totalTimeout}ms reached.`, true /* force */, null /* error */);
         }, totalTimeout);
       }
-      try {
-        result = await this._runningPass.run(testRuns).catch(e => { console.error(e); throw e; });
-      } finally {
-        this._runningPass = null;
-        clearTimeout(timeoutId);
+
+      const terminations = [
+        createTermination.call(this, 'SIGINT', TestResult.Terminated, 'SIGINT received'),
+        createTermination.call(this, 'SIGHUP', TestResult.Terminated, 'SIGHUP received'),
+        createTermination.call(this, 'SIGTERM', TestResult.Terminated, 'SIGTERM received'),
+        createTermination.call(this, 'unhandledRejection', TestResult.Crashed, 'UNHANDLED PROMISE REJECTION'),
+        createTermination.call(this, 'uncaughtException', TestResult.Crashed, 'UNHANDLED ERROR'),
+      ];
+      for (const termination of terminations)
+        process.on(termination.event, termination.handler);
+
+      const parallel = Math.min(this._parallel, testRuns.length);
+      const workerPromises = [];
+      for (let i = 0; i < parallel; ++i) {
+        const initialTestRunIndex = i * Math.floor(testRuns.length / parallel);
+        workerPromises.push(this._runWorker(initialTestRunIndex, testRuns, i));
+      }
+      await Promise.all(workerPromises);
+
+      for (const termination of terminations)
+        process.removeListener(termination.event, termination.handler);
+
+      if (testRuns.some(run => run.isFailure()))
+        this._result.setResult(TestResult.Failed, '');
+
+      clearTimeout(timeoutId);
+      await this._delegate.onFinished(this._result);
+
+      function createTermination(event, result, message) {
+        return {
+          event,
+          message,
+          handler: error => this._terminate(result, message, event === 'SIGTERM', event.startsWith('SIG') ? null : error),
+        };
       }
     }
-    this.emit(TestRunner.Events.Finished, result);
+
+    const result = this._result;
+    this._result = null;
+    this._workers = [];
+    this._terminating = false;
     return result;
+  }
+
+  async _runWorker(testRunIndex, testRuns, parallelIndex) {
+    let worker = new TestWorker(this, this._nextWorkerId++, parallelIndex);
+    this._workers[parallelIndex] = worker;
+    while (!this._terminating) {
+      let skipped = 0;
+      while (skipped < testRuns.length && testRuns[testRunIndex]._result !== null) {
+        testRunIndex = (testRunIndex + 1) % testRuns.length;
+        skipped++;
+      }
+      const testRun = testRuns[testRunIndex];
+      if (testRun._result !== null) {
+        // All tests have been run.
+        break;
+      }
+
+      // Mark as running so that other workers do not run it again.
+      testRun._result = 'running';
+      await worker.run(testRun);
+      if (testRun.isFailure()) {
+        // Something went wrong during test run, let's use a fresh worker.
+        await worker.shutdown();
+        if (this._breakOnFailure) {
+          const message = `Terminating because a test has failed and |testRunner.breakOnFailure| is enabled`;
+          await this._terminate(TestResult.Terminated, message, false /* force */, null /* error */);
+          return;
+        }
+        worker = new TestWorker(this, this._nextWorkerId++, parallelIndex);
+        this._workers[parallelIndex] = worker;
+      }
+    }
+    await worker.shutdown();
+  }
+
+  async _terminate(result, message, force, error) {
+    debug('testrunner')(`TERMINATED result = ${result}, message = ${message}`);
+    this._terminating = true;
+    for (const worker of this._workers)
+      worker.terminate(force /* terminateHooks */);
+    this._result.setResult(result, message);
+    if (this._result.message === 'SIGINT received' && message === 'SIGTERM received')
+      this._result.message = message;
+    if (error) {
+      if (error.stack)
+        await this._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
+      this._result.addError(message, error, this._workers.length === 1 ? this._workers[0] : null);
+    }
   }
 
   _testsToRun() {
@@ -836,9 +834,9 @@ class TestRunner extends EventEmitter {
   }
 
   async terminate() {
-    if (!this._runningPass)
+    if (!this._result)
       return;
-    await this._runningPass._terminate(TestResult.Terminated, 'Terminated with |TestRunner.terminate()| call', true /* force */, null /* error */);
+    await this._terminate(TestResult.Terminated, 'Terminated with |TestRunner.terminate()| call', true /* force */, null /* error */);
   }
 
   timeout() {
@@ -868,12 +866,5 @@ class TestRunner extends EventEmitter {
     return this._parallel;
   }
 }
-
-TestRunner.Events = {
-  Started: 'started',
-  Finished: 'finished',
-  TestStarted: 'teststarted',
-  TestFinished: 'testfinished',
-};
 
 module.exports = TestRunner;

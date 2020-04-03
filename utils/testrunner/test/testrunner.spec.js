@@ -770,8 +770,8 @@ module.exports.addTests = function({testRunner, expect}) {
     });
   });
 
-  describe('TestRunner Events', () => {
-    it('should emit events in proper order', async() => {
+  describe('TestRunner delegate', () => {
+    it('should call delegate methpds in proper order', async() => {
       const log = [];
       const t = newTestRunner();
       t.beforeAll(() => log.push('beforeAll'));
@@ -779,10 +779,12 @@ module.exports.addTests = function({testRunner, expect}) {
       t.it('test#1', () => log.push('test#1'));
       t.afterEach(() => log.push('afterEach'));
       t.afterAll(() => log.push('afterAll'));
-      t.on('started', () => log.push('E:started'));
-      t.on('teststarted', () => log.push('E:teststarted'));
-      t.on('testfinished', () => log.push('E:testfinished'));
-      t.on('finished', () => log.push('E:finished'));
+      t.setDelegate({
+        onStarted: () => log.push('E:started'),
+        onTestRunStarted: () => log.push('E:teststarted'),
+        onTestRunFinished: () => log.push('E:testfinished'),
+        onFinished: () => log.push('E:finished'),
+      });
       await t.run();
       expect(log).toEqual([
         'E:started',
@@ -796,10 +798,15 @@ module.exports.addTests = function({testRunner, expect}) {
         'E:finished',
       ]);
     });
-    it('should emit finish event with result', async() => {
+    it('should call onFinished with result', async() => {
       const t = newTestRunner();
       const [result] = await Promise.all([
-        new Promise(x => t.once('finished', x)),
+        new Promise(x => t.setDelegate({
+          onStarted() {},
+          onFinished(result) { x(result); },
+          onTestRunStarted() {},
+          onTestRunFinished() {},
+        })),
         t.run(),
       ]);
       expect(result.result).toBe('ok');
