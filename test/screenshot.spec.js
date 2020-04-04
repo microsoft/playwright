@@ -217,7 +217,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
         expect(screenshot).toBeInstanceOf(Buffer);
       }
     });
-    it.fail(WEBKIT)('should work with device scale factor', async({browser, server}) => {
+    it('should work with device scale factor', async({browser, server}) => {
       const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/grid.html');
@@ -394,7 +394,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       expect(screenshot).toBeGolden('screenshot-element-mobile.png');
       await context.close();
     });
-    it.fail(WEBKIT && LINUX).skip(FFOX)('should work with device scale factor', async({browser, server}) => {
+    it.skip(FFOX)('should work with device scale factor', async({browser, server}) => {
       const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/grid.html');
