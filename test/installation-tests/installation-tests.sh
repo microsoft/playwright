@@ -30,12 +30,12 @@ SANITY_JS="$(pwd -P)/../sanity.js"
 TEST_ROOT="$(pwd -P)"
 
 function run_tests {
+  test_playwright_global_installation_subsequent_installs
   test_playwright_should_work
   test_playwright_chromium_should_work
   test_playwright_webkit_should_work
   test_playwright_firefox_should_work
   test_playwright_global_installation
-  test_playwright_global_installation_multiple_installs
 }
 
 function test_playwright_global_installation {
@@ -57,7 +57,8 @@ function test_playwright_global_installation {
 }
 
 
-function test_playwright_global_installation_multiple_installs {
+# @see https://github.com/microsoft/playwright/issues/1651
+function test_playwright_global_installation_subsequent_installs {
   initialize_test "${FUNCNAME[0]}"
 
   local BROWSERS="$(pwd -P)/browsers"
@@ -65,16 +66,12 @@ function test_playwright_global_installation_multiple_installs {
   mkdir install-1 && pushd install-1 && npm init -y
   PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_CORE_TGZ}
   PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_TGZ}
-  cp ${SANITY_JS} .
-  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" node sanity.js playwright chromium
-  popd
-
-  mkdir install-2 && pushd install-2 && npm init -y
-  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_CORE_TGZ}
-  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_TGZ}
-  cp ${SANITY_JS} .
-  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" node sanity.js playwright chromium
-  popd
+  # Note: the `npm install` would not actually crash, the error
+  # is merely logged to the console. To reproduce the error, we should make
+  # sure that script's install.js can be run subsequently without unhandled promise rejections.
+  # Note: the flag `--unahdnled-rejections=strict` will force node to terminate in case
+  # of UnhandledPromiseRejection.
+  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" node --unhandled-rejections=strict node_modules/playwright/install.js
 }
 
 function test_playwright_should_work {
