@@ -1,11 +1,7 @@
-const playwright = require(process.cwd());
+const requireName = process.argv[2];
+const browsers = process.argv.slice(3);
 
-if (process.argv.length === 2) {
-  console.error("Usage stub.js <browser-types-space-separated>");
-  process.exit(1);
-}
-
-const browsers = process.argv.slice(2, process.argv.length);
+const playwright = require(requireName);
 
 (async () => {
   for (const browserType of browsers) {

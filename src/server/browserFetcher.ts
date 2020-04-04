@@ -139,13 +139,12 @@ export async function downloadBrowser(options: DownloadOptions): Promise<void> {
     progress,
   } = options;
   assert(downloadPath, '`downloadPath` must be provided');
+  if (await existsAsync(downloadPath))
+    return;
   const url = revisionURL(options);
   const zipPath = path.join(os.tmpdir(), `playwright-download-${browser}-${platform}-${revision}.zip`);
-  if (await existsAsync(downloadPath))
-    throw new Error('ERROR: downloadPath folder already exists!');
   try {
     await downloadFile(url, zipPath, progress);
-    // await mkdirAsync(downloadPath, {recursive: true});
     await extractZip(zipPath, downloadPath);
   } finally {
     if (await existsAsync(zipPath))
