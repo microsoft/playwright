@@ -2752,6 +2752,7 @@ index ee9edb30dd7b3461c4d491dfaf7929011d498bc9..71b51b0261494112b23800fe02f5e31b
  }
  
 -void InspectorNetworkAgent::interceptContinue(ErrorString& errorString, const String& requestId)
+-{
 +bool InspectorNetworkAgent::interceptRequest(ResourceLoader& loader, Function<void(bool handled)>&& handler) {
 +    if (!m_interceptionEnabled || !m_interceptRequests)
 +        return false;
@@ -2765,10 +2766,7 @@ index ee9edb30dd7b3461c4d491dfaf7929011d498bc9..71b51b0261494112b23800fe02f5e31b
 +}
 +
 +void InspectorNetworkAgent::interceptContinue(ErrorString& errorString, const String& requestId, const String* method, const JSON::Object* headers, const String* postData)
- {
--    auto pendingInterceptResponse = m_pendingInterceptResponses.take(requestId);
--    if (!pendingInterceptResponse) {
--        errorString = "Missing pending intercept response for given requestId"_s;
++{
 +    auto pendingRequest = m_pendingInterceptRequests.take(requestId);
 +    if (pendingRequest) {
 +        ResourceLoader* loader = pendingRequest->m_loader.get();
@@ -2799,16 +2797,18 @@ index ee9edb30dd7b3461c4d491dfaf7929011d498bc9..71b51b0261494112b23800fe02f5e31b
 +            request->setHTTPBody(WTFMove(data));
 +        }
 +        pendingRequest->m_callback(false);
++        return;
++    }
++
+     auto pendingInterceptResponse = m_pendingInterceptResponses.take(requestId);
+-    if (!pendingInterceptResponse) {
+-        errorString = "Missing pending intercept response for given requestId"_s;
++    if (pendingInterceptResponse) {
++        pendingInterceptResponse->respondWithOriginalResponse();
          return;
      }
  
 -    pendingInterceptResponse->respondWithOriginalResponse();
-+    auto pendingInterceptResponse = m_pendingInterceptResponses.take(requestId);
-+    if (pendingInterceptResponse) {
-+        pendingInterceptResponse->respondWithOriginalResponse();
-+        return;
-+    }
-+
 +    errorString = "Missing pending intercept response for given requestId"_s;
  }
  
@@ -3132,16 +3132,16 @@ index 09dd591948baa0bf4a31cc57b391792faae97a57..d5d4a44e4d921ed3b60a2ac093346b93
 +    Frame* frame = frameId ? assertFrame(errorString, *frameId) : &m_inspectedPage.mainFrame();
 +    if (!frame)
 +        return;
- 
--    ResourceRequest resourceRequest { frame.document()->completeURL(url) };
--    FrameLoadRequest frameLoadRequest { *frame.document(), frame.document()->securityOrigin(), WTFMove(resourceRequest), "_self"_s, LockHistory::No, LockBackForwardList::No, ReferrerPolicy::EmptyString, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
--    frame.loader().changeLocation(WTFMove(frameLoadRequest));
++
 +    ResourceRequest resourceRequest { frame->document()->completeURL(url) };
 +    if (!resourceRequest.url().isValid()) {
 +        errorString = "Cannot navigate to invalid URL"_s;
 +        return;
 +    }
-+
+ 
+-    ResourceRequest resourceRequest { frame.document()->completeURL(url) };
+-    FrameLoadRequest frameLoadRequest { *frame.document(), frame.document()->securityOrigin(), WTFMove(resourceRequest), "_self"_s, LockHistory::No, LockBackForwardList::No, ReferrerPolicy::EmptyString, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
+-    frame.loader().changeLocation(WTFMove(frameLoadRequest));
 +    if (referrer)
 +        resourceRequest.setInitiatorIdentifier(InspectorNetworkAgent::createInitiatorIdentifierForInspectorNavigation(*referrer));
 +    FrameLoadRequest frameLoadRequest { *frame->document(), frame->document()->securityOrigin(), WTFMove(resourceRequest), "_self"_s, LockHistory::No, LockBackForwardList::No, ReferrerPolicy::EmptyString, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
@@ -4415,19 +4415,23 @@ index 69146c375b32cec512d7750f114a0a4f8e614f1a..403fefc5e2f3ab69f3a51919e9e70666
  
  Ref<Frame> Frame::create(Page* page, HTMLFrameOwnerElement* ownerElement, UniqueRef<FrameLoaderClient>&& client)
 diff --git a/Source/WebCore/page/FrameSnapshotting.cpp b/Source/WebCore/page/FrameSnapshotting.cpp
-index 73587787f88a6ad4e4baffb0beb0b87e7782916f..7e7a984207d6005bdb116784f981b487c8c16846 100644
+index 73587787f88a6ad4e4baffb0beb0b87e7782916f..88492f501e6ec9e38455dbe6fd27537bf0ee6970 100644
 --- a/Source/WebCore/page/FrameSnapshotting.cpp
 +++ b/Source/WebCore/page/FrameSnapshotting.cpp
-@@ -115,6 +115,8 @@ std::unique_ptr<ImageBuffer> snapshotFrameRectWithClip(Frame& frame, const IntRe
+@@ -114,7 +114,12 @@ std::unique_ptr<ImageBuffer> snapshotFrameRectWithClip(Frame& frame, const IntRe
+     std::unique_ptr<ImageBuffer> buffer = ImageBuffer::create(imageRect.size(), RenderingMode::Unaccelerated, scaleFactor);
      if (!buffer)
          return nullptr;
++#if !PLATFORM(MAC)
++    buffer->context().scale(scaleFactor);
++#endif
      buffer->context().translate(-imageRect.x(), -imageRect.y());
 +    if (coordinateSpace != FrameView::ViewCoordinates)
 +      buffer->context().scale(1 / frame.page()->pageScaleFactor());
  
      if (!clipRects.isEmpty()) {
          Path clipPath;
-@@ -123,7 +125,10 @@ std::unique_ptr<ImageBuffer> snapshotFrameRectWithClip(Frame& frame, const IntRe
+@@ -123,7 +128,10 @@ std::unique_ptr<ImageBuffer> snapshotFrameRectWithClip(Frame& frame, const IntRe
          buffer->context().clipPath(clipPath);
      }
  
@@ -13575,9 +13579,7 @@ index 1e4fb27884034dcca333f77efd24150d4c9dc2ec..30eaa65b5600fce08e6153bbd47fdbca
  
 -WKPageRef WebKitBrowserWindow::createNewPage(WKPageRef page, WKPageConfigurationRef configuration, WKNavigationActionRef navigationAction, WKWindowFeaturesRef windowFeatures, const void *clientInfo)
 +void WebKitBrowserWindow::closeWindow(WKPageRef page, const void* clientInfo)
- {
--    auto& newWindow = MainWindow::create().leakRef();
--    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, bool) -> auto {
++{
 +    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
 +    PostMessage(thisWindow.m_hMainWnd, WM_CLOSE, 0, 0);
 +}
@@ -13604,7 +13606,9 @@ index 1e4fb27884034dcca333f77efd24150d4c9dc2ec..30eaa65b5600fce08e6153bbd47fdbca
 +}
 +
 +void WebKitBrowserWindow::runBeforeUnloadConfirmPanel(WKPageRef page, WKStringRef message, WKFrameRef frame, WKPageRunBeforeUnloadConfirmPanelResultListenerRef listener, const void *clientInfo)
-+{
+ {
+-    auto& newWindow = MainWindow::create().leakRef();
+-    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, bool) -> auto {
 +    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
 +    WKRetain(listener);
 +    thisWindow.m_beforeUnloadDialog = listener;
@@ -13794,9 +13798,9 @@ index 6008ca19e26a938cf962c0c336299fff7d13f9a3..8005d72f8c0d9ef82efda8aec1ff0e7d
 -    else
 -        ::SetProcessDPIAware();
 +        SetProcessDpiAwarenessContextPtr()(DPI_AWARENESS_CONTEXT_UNAWARE);
- 
-+    MainWindow::configure(options.headless, options.noStartupWindow);
 +
++    MainWindow::configure(options.headless, options.noStartupWindow);
+ 
 +    if (!options.noStartupWindow) {
  #if !ENABLE(WEBKIT_LEGACY)
 -    auto factory = WebKitBrowserWindow::create;
