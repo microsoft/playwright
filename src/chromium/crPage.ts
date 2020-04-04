@@ -150,8 +150,8 @@ export class CRPage implements PageDelegate {
     await this._mainFrameSession._updateViewport();
   }
 
-  async setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
-    await this._forAllFrameSessions(frame => frame._setEmulateMedia(mediaType, colorScheme));
+  async updateEmulateMedia(): Promise<void> {
+    await this._forAllFrameSessions(frame => frame._updateEmulateMedia());
   }
 
   async updateRequestInterception(): Promise<void> {
@@ -422,6 +422,7 @@ class FrameSession {
     promises.push(this._updateRequestInterception());
     promises.push(this._updateOffline());
     promises.push(this._updateHttpCredentials());
+    promises.push(this._updateEmulateMedia());
     for (const binding of this._crPage._browserContext._pageBindings.values())
       promises.push(this._initBinding(binding));
     for (const source of this._crPage._browserContext._evaluateOnNewDocumentSources)
@@ -687,9 +688,10 @@ class FrameSession {
     await Promise.all(promises);
   }
 
-  async _setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
+  async _updateEmulateMedia(): Promise<void> {
+    const colorScheme = this._page._state.colorScheme || this._crPage._browserContext._options.colorScheme || 'light';
     const features = colorScheme ? [{ name: 'prefers-color-scheme', value: colorScheme }] : [];
-    await this._client.send('Emulation.setEmulatedMedia', { media: mediaType || '', features });
+    await this._client.send('Emulation.setEmulatedMedia', { media: this._page._state.mediaType || '', features });
   }
 
   async _updateRequestInterception(): Promise<void> {

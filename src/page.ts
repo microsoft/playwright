@@ -48,7 +48,7 @@ export interface PageDelegate {
 
   updateExtraHTTPHeaders(): Promise<void>;
   setViewportSize(viewportSize: types.Size): Promise<void>;
-  setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void>;
+  updateEmulateMedia(): Promise<void>;
   updateRequestInterception(): Promise<void>;
   setFileChooserIntercepted(enabled: boolean): Promise<void>;
 
@@ -357,7 +357,7 @@ export class Page extends ExtendedEventEmitter {
       this._state.mediaType = options.media;
     if (options.colorScheme !== undefined)
       this._state.colorScheme = options.colorScheme;
-    await this._delegate.setEmulateMedia(this._state.mediaType, this._state.colorScheme);
+    await this._delegate.updateEmulateMedia();
   }
 
   async setViewportSize(viewportSize: types.Size) {
