@@ -7,6 +7,7 @@ window.addEventListener('DOMContentLoaded', () => {
   outer.appendChild(root1);
   const shadowRoot1 = root1.attachShadow({mode: 'open'});
   const span1 = document.createElement('span');
+  span1.setAttribute('data-testid', 'foo');
   span1.textContent = 'Hello from root1';
   shadowRoot1.appendChild(span1);
 
@@ -14,6 +15,8 @@ window.addEventListener('DOMContentLoaded', () => {
   shadowRoot1.appendChild(root2);
   const shadowRoot2 = root2.attachShadow({mode: 'open'});
   const span2 = document.createElement('span');
+  span2.setAttribute('data-testid', 'foo');
+  span2.setAttribute('id', 'target');
   span2.textContent = 'Hello from root2';
   shadowRoot2.appendChild(span2);
 
@@ -21,6 +24,7 @@ window.addEventListener('DOMContentLoaded', () => {
   shadowRoot1.appendChild(root3);
   const shadowRoot3 = root3.attachShadow({mode: 'open'});
   const span3 = document.createElement('span');
+  span3.setAttribute('data-testid', 'foo');
   span3.textContent = 'Hello from root3';
   shadowRoot3.appendChild(span3);
 });

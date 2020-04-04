@@ -549,9 +549,18 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
 
     it('should work for open shadow roots', async({page, server}) => {
       await page.goto(server.PREFIX + '/deep-shadow.html');
-      expect(await page.$eval(`text=root1`, e => e.outerHTML)).toBe('<span>Hello from root1</span>');
-      expect(await page.$eval(`text=root2`, e => e.outerHTML)).toBe('<span>Hello from root2</span>');
-      expect(await page.$eval(`text=root3`, e => e.outerHTML)).toBe('<span>Hello from root3</span>');
+      expect(await page.$eval(`text=root1`, e => e.textContent)).toBe('Hello from root1');
+      expect(await page.$eval(`text=root2`, e => e.textContent)).toBe('Hello from root2');
+      expect(await page.$eval(`text=root3`, e => e.textContent)).toBe('Hello from root3');
+    });
+  });
+
+  describe('attribute selector', () => {
+    it('should work for open shadow roots', async({page, server}) => {
+      await page.goto(server.PREFIX + '/deep-shadow.html');
+      expect(await page.$eval(`id=target`, e => e.textContent)).toBe('Hello from root2');
+      expect(await page.$eval(`data-testid=foo`, e => e.textContent)).toBe('Hello from root1');
+      expect(await page.$$eval(`data-testid=foo`, els => els.length)).toBe(3);
     });
   });
 
