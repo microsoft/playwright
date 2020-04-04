@@ -210,6 +210,8 @@ jobs:
         sudo apt-get install libwoff1 libopus0 libwebp6 libwebpdemux2 libenchant1c2a libgudev-1.0-0 libsecret-1-0 libhyphen0 libgdk-pixbuf2.0-0 libegl1 libgles2 libevent-2.1-6 libnotify4 libvpx5 libxslt1.1
     - uses: actions/setup-node@v1
       with:
-        node-version: 10.15
+        # New node.js version supports `--unhandled-rejections=strict` flag that
+        # we use in `installation-tests.sh`.
+        node-version: 12
     - run: npm install
     - run: bash test/installation-tests/installation-tests.sh
