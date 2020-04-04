@@ -1,10 +1,19 @@
 <script>
-window.addEventListener('DOMContentLoaded', () => {
-  const iframe = document.createElement('iframe');
+function goLocal() {
+  document.querySelector('iframe').src = location.href.replace('dynamic-oopif.html', 'grid.html');
+}
+
+function goRemote(iframe) {
+  iframe = iframe || document.querySelector('iframe');
   const url = new URL(location.href);
   url.hostname = url.hostname === 'localhost' ? '127.0.0.1' : 'localhost';
   url.pathname = '/grid.html';
   iframe.src = url.toString();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const iframe = document.createElement('iframe');
+  goRemote(iframe);
   document.body.appendChild(iframe);
 }, false);
 </script>

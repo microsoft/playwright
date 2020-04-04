@@ -137,8 +137,7 @@ export class FrameManager {
 
   frameCommittedNewDocumentNavigation(frameId: string, url: string, name: string, documentId: string, initial: boolean) {
     const frame = this._frames.get(frameId)!;
-    for (const child of frame.childFrames())
-      this._removeFramesRecursively(child);
+    this.removeChildFramesRecursively(frame);
     frame._url = url;
     frame._name = name;
     frame._lastDocumentId = documentId;
@@ -251,9 +250,13 @@ export class FrameManager {
     }
   }
 
-  private _removeFramesRecursively(frame: Frame) {
+  removeChildFramesRecursively(frame: Frame) {
     for (const child of frame.childFrames())
       this._removeFramesRecursively(child);
+  }
+
+  private _removeFramesRecursively(frame: Frame) {
+    this.removeChildFramesRecursively(frame);
     frame._onDetached();
     this._frames.delete(frame._id);
     this._page.emit(Events.Page.FrameDetached, frame);

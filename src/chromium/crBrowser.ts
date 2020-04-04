@@ -188,7 +188,7 @@ export class CRBrowser extends BrowserBase {
 
   async startTracing(page?: Page, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
     assert(!this._tracingRecording, 'Cannot start recording trace while already recording trace.');
-    this._tracingClient = page ? (page._delegate as CRPage)._client : this._session;
+    this._tracingClient = page ? (page._delegate as CRPage)._mainFrameSession._client : this._session;
 
     const defaultCategories = [
       '-*', 'devtools.timeline', 'v8.execute', 'disabled-by-default-devtools.timeline',
@@ -364,7 +364,7 @@ export class CRBrowserContext extends BrowserContextBase {
       geolocation = verifyGeolocation(geolocation);
     this._options.geolocation = geolocation || undefined;
     for (const page of this.pages())
-      await (page._delegate as CRPage)._client.send('Emulation.setGeolocationOverride', geolocation || {});
+      await (page._delegate as CRPage).updateGeolocation();
   }
 
   async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
@@ -376,13 +376,13 @@ export class CRBrowserContext extends BrowserContextBase {
   async setOffline(offline: boolean): Promise<void> {
     this._options.offline = offline;
     for (const page of this.pages())
-      await (page._delegate as CRPage)._networkManager.setOffline(offline);
+      await (page._delegate as CRPage).updateOffline();
   }
 
   async setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
     this._options.httpCredentials = httpCredentials || undefined;
     for (const page of this.pages())
-      await (page._delegate as CRPage)._networkManager.authenticate(httpCredentials);
+      await (page._delegate as CRPage).updateHttpCredentials();
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
