@@ -247,7 +247,9 @@ class Injected {
   }
 
   async waitForHitTargetAt(node: Node, timeout: number, point: types.Point) {
-    const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+    let element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+    while (element && window.getComputedStyle(element).pointerEvents === 'none')
+      element = element.parentElement;
     if (!element)
       throw new Error('Element is not attached to the DOM');
     const result = await this.poll('raf', timeout, () => {
