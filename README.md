@@ -64,7 +64,7 @@ const iPhone11 = devices['iPhone 11 Pro'];
     viewport: iPhone11.viewport,
     userAgent: iPhone11.userAgent,
     geolocation: { longitude: 12.492507, latitude: 41.889938 },
-    permissions: { 'https://www.google.com': ['geolocation'] }
+    permissions: ['geolocation']
   });
   const page = await context.newPage();
   await page.goto('https://maps.google.com');
