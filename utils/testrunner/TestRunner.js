@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-const {SourceMapSupport} = require('./SourceMapSupport');
+const { SourceMapSupport } = require('./SourceMapSupport');
 const debug = require('debug');
-const Location = require('./Location');
+const { TestExpectation } = require('./Test');
 
-const INFINITE_TIMEOUT = 100000000;
 const TimeoutError = new Error('Timeout');
 const TerminatedError = new Error('Terminated');
 
@@ -37,11 +36,6 @@ function runUserCallback(callback, timeout, args) {
   return { promise, terminate };
 }
 
-const TestExpectation = {
-  Ok: 'ok',
-  Fail: 'fail',
-};
-
 const TestResult = {
   Ok: 'ok',
   MarkedAsFailing: 'markedAsFailing', // User marked as failed
@@ -52,241 +46,6 @@ const TestResult = {
   Crashed: 'crashed', // If testrunner crashed due to this test
 };
 
-function createHook(callback, name) {
-  const location = Location.getCallerLocation(__filename);
-  return { name, body: callback, location };
-}
-
-class Test {
-  constructor(suite, name, callback, location) {
-    this._suite = suite;
-    this._name = name;
-    this._fullName = (suite.fullName() + ' ' + name).trim();
-    this._skipped = false;
-    this._focused = false;
-    this._expectation = TestExpectation.Ok;
-    this._body = callback;
-    this._location = location;
-    this._timeout = INFINITE_TIMEOUT;
-    this._repeat = 1;
-    this._hooks = [];
-    this._environments = [];
-
-    this.Expectations = { ...TestExpectation };
-  }
-
-  suite() {
-    return this._suite;
-  }
-
-  name() {
-    return this._name;
-  }
-
-  fullName() {
-    return this._fullName;
-  }
-
-  location() {
-    return this._location;
-  }
-
-  body() {
-    return this._body;
-  }
-
-  skipped() {
-    return this._skipped;
-  }
-
-  setSkipped(skipped) {
-    this._skipped = skipped;
-    return this;
-  }
-
-  focused() {
-    return this._focused;
-  }
-
-  setFocused(focused) {
-    this._focused = focused;
-    return this;
-  }
-
-  timeout() {
-    return this._timeout;
-  }
-
-  setTimeout(timeout) {
-    this._timeout = timeout;
-    return this;
-  }
-
-  expectation() {
-    return this._expectation;
-  }
-
-  setExpectation(expectation) {
-    this._expectation = expectation;
-    return this;
-  }
-
-  repeat() {
-    return this._repeat;
-  }
-
-  setRepeat(repeat) {
-    this._repeat = repeat;
-    return this;
-  }
-
-  before(callback) {
-    this._hooks.push(createHook(callback, 'before'));
-    return this;
-  }
-
-  after(callback) {
-    this._hooks.push(createHook(callback, 'after'));
-    return this;
-  }
-
-  hooks(name) {
-    return this._hooks.filter(hook => !name || hook.name === name);
-  }
-
-  addEnvironment(environment) {
-    const parents = new Set();
-    for (let parent = environment; !(parent instanceof Suite); parent = parent.parentEnvironment())
-      parents.add(parent);
-    for (const env of this._environments) {
-      for (let parent = env; !(parent instanceof Suite); parent = parent.parentEnvironment()) {
-        if (parents.has(parent))
-          throw new Error(`Cannot use environments "${environment.name()}" and "${env.name()}" that share a parent environment "${parent.fullName()}" in test "${this.fullName()}"`);
-      }
-    }
-    const environmentParentSuite = environment.parentSuite();
-    for (let suite = this.suite(); suite; suite = suite.parentSuite()) {
-      if (suite === environmentParentSuite) {
-        this._environments.push(environment);
-        return this;
-      }
-    }
-    throw new Error(`Cannot use environment "${environment.name()}" from suite "${environment.parentSuite().fullName()}" in unrelated test "${this.fullName()}"`);
-  }
-
-  removeEnvironment(environment) {
-    const index = this._environments.indexOf(environment);
-    if (index === -1)
-      throw new Error(`Environment "${environment.name()}" cannot be removed because it was not added to the test "${test.fullName()}"`);
-    this._environments.splice(index, 1);
-    return this;
-  }
-}
-
-class Environment {
-  constructor(parentEnvironment, name, location) {
-    this._parentEnvironment = parentEnvironment;
-    this._parentSuite = parentEnvironment;
-    if (parentEnvironment && !(parentEnvironment instanceof Suite))
-      this._parentSuite = parentEnvironment.parentSuite();
-    this._name = name;
-    this._fullName = (parentEnvironment ? parentEnvironment.fullName() + ' ' + name : name).trim();
-    this._location = location;
-    this._hooks = [];
-  }
-
-  parentEnvironment() {
-    return this._parentEnvironment;
-  }
-
-  parentSuite() {
-    return this._parentSuite;
-  }
-
-  name() {
-    return this._name;
-  }
-
-  fullName() {
-    return this._fullName;
-  }
-
-  beforeEach(callback) {
-    this._hooks.push(createHook(callback, 'beforeEach'));
-    return this;
-  }
-
-  afterEach(callback) {
-    this._hooks.push(createHook(callback, 'afterEach'));
-    return this;
-  }
-
-  beforeAll(callback) {
-    this._hooks.push(createHook(callback, 'beforeAll'));
-    return this;
-  }
-
-  afterAll(callback) {
-    this._hooks.push(createHook(callback, 'afterAll'));
-    return this;
-  }
-
-  hooks(name) {
-    return this._hooks.filter(hook => !name || hook.name === name);
-  }
-}
-
-class Suite extends Environment {
-  constructor(parentSuite, name, location) {
-    super(parentSuite, name, location);
-    this._skipped = false;
-    this._focused = false;
-    this._expectation = TestExpectation.Ok;
-    this._repeat = 1;
-    this.Expectations = { ...TestExpectation };
-  }
-
-  skipped() {
-    return this._skipped;
-  }
-
-  setSkipped(skipped) {
-    this._skipped = skipped;
-    return this;
-  }
-
-  focused() {
-    return this._focused;
-  }
-
-  setFocused(focused) {
-    this._focused = focused;
-    return this;
-  }
-
-  location() {
-    return this._location;
-  }
-
-  expectation() {
-    return this._expectation;
-  }
-
-  setExpectation(expectation) {
-    this._expectation = expectation;
-    return this;
-  }
-
-  repeat() {
-    return this._repeat;
-  }
-
-  setRepeat(repeat) {
-    this._repeat = repeat;
-    return this;
-  }
-}
-
 class TestRun {
   constructor(test) {
     this._test = test;
@@ -295,6 +54,7 @@ class TestRun {
     this._startTimestamp = 0;
     this._endTimestamp = 0;
     this._workerId = null;
+    this._output = [];
   }
 
   finished() {
@@ -327,6 +87,14 @@ class TestRun {
 
   workerId() {
     return this._workerId;
+  }
+
+  log(log) {
+    this._output.push(log);
+  }
+
+  output() {
+    return this._output;
   }
 }
 
@@ -397,9 +165,9 @@ class TestWorker {
     this._runs.push(testRun);
 
     const test = testRun.test();
-    let skipped = test.skipped() && !test.focused();
+    let skipped = test.skipped();
     for (let suite = test.suite(); suite; suite = suite.parentSuite())
-      skipped = skipped || (suite.skipped() && !suite.focused());
+      skipped = skipped || suite.skipped();
     if (skipped) {
       await this._willStartTestRun(testRun);
       testRun._result = TestResult.Skipped;
@@ -410,7 +178,7 @@ class TestWorker {
     let expectedToFail = test.expectation() === TestExpectation.Fail;
     for (let suite = test.suite(); suite; suite = suite.parentSuite())
       expectedToFail = expectedToFail || (suite.expectation() === TestExpectation.Fail);
-    if (expectedToFail && !test.focused()) {
+    if (expectedToFail) {
       await this._willStartTestRun(testRun);
       testRun._result = TestResult.MarkedAsFailing;
       await this._didFinishTestRun(testRun);
@@ -418,15 +186,20 @@ class TestWorker {
     }
 
     const environmentStack = [];
-    for (let suite = test.suite(); suite; suite = suite.parentSuite())
-      environmentStack.push(suite);
-    environmentStack.reverse();
-    for (const environment of test._environments) {
-      const insert = [];
-      for (let parent = environment; !(parent instanceof Suite); parent = parent.parentEnvironment())
-        insert.push(parent);
-      environmentStack.splice(environmentStack.indexOf(environment.parentSuite()) + 1, 0, ...insert.reverse());
+    function appendEnvironment(e) {
+      while (e) {
+        if (!e.isEmpty())
+          environmentStack.push(e);
+        e = e.parentEnvironment();
+      }
     }
+    for (const environment of test._environments.slice().reverse())
+      appendEnvironment(environment);
+    for (let suite = test.suite(); suite; suite = suite.parentSuite()) {
+      for (const environment of suite._environments.slice().reverse())
+        appendEnvironment(environment);
+    }
+    environmentStack.reverse();
 
     let common = 0;
     while (common < environmentStack.length && this._environmentStack[common] === environmentStack[common])
@@ -437,7 +210,7 @@ class TestWorker {
         return;
       const environment = this._environmentStack.pop();
       for (const hook of environment.hooks('afterAll')) {
-        if (!await this._runHook(testRun, hook, environment.fullName()))
+        if (!await this._runHook(testRun, hook, environment.name()))
           return;
       }
     }
@@ -447,7 +220,7 @@ class TestWorker {
       const environment = environmentStack[this._environmentStack.length];
       this._environmentStack.push(environment);
       for (const hook of environment.hooks('beforeAll')) {
-        if (!await this._runHook(testRun, hook, environment.fullName()))
+        if (!await this._runHook(testRun, hook, environment.name()))
           return;
       }
     }
@@ -461,14 +234,12 @@ class TestWorker {
     await this._willStartTestRun(testRun);
     for (const environment of this._environmentStack) {
       for (const hook of environment.hooks('beforeEach'))
-        await this._runHook(testRun, hook, environment.fullName(), true);
+        await this._runHook(testRun, hook, environment.name(), true);
     }
-    for (const hook of test.hooks('before'))
-      await this._runHook(testRun, hook, test.fullName(), true);
 
     if (!testRun._error && !this._markTerminated(testRun)) {
       await this._willStartTestBody(testRun);
-      const { promise, terminate } = runUserCallback(test.body(), test.timeout(), [this._state, test]);
+      const { promise, terminate } = runUserCallback(test.body(), test.timeout(), [this._state, testRun]);
       this._runningTestTerminate = terminate;
       testRun._error = await promise;
       this._runningTestTerminate = null;
@@ -485,19 +256,17 @@ class TestWorker {
       await this._didFinishTestBody(testRun);
     }
 
-    for (const hook of test.hooks('after'))
-      await this._runHook(testRun, hook, test.fullName(), true);
     for (const environment of this._environmentStack.slice().reverse()) {
       for (const hook of environment.hooks('afterEach'))
-        await this._runHook(testRun, hook, environment.fullName(), true);
+        await this._runHook(testRun, hook, environment.name(), true);
     }
     await this._didFinishTestRun(testRun);
   }
 
-  async _runHook(testRun, hook, fullName, passTest = false) {
+  async _runHook(testRun, hook, fullName, passTestRun = false) {
     await this._willStartHook(hook, fullName);
-    const timeout = this._testRunner._timeout;
-    const { promise, terminate } = runUserCallback(hook.body, timeout, passTest ? [this._state, testRun.test()] : [this._state]);
+    const timeout = this._testRunner._hookTimeout;
+    const { promise, terminate } = runUserCallback(hook.body, timeout, passTestRun ? [this._state, testRun] : [this._state]);
     this._runningHookTerminate = terminate;
     let error = await promise;
     this._runningHookTerminate = null;
@@ -569,198 +338,84 @@ class TestWorker {
     while (this._environmentStack.length > 0) {
       const environment = this._environmentStack.pop();
       for (const hook of environment.hooks('afterAll'))
-        await this._runHook(null, hook, environment.fullName());
+        await this._runHook(null, hook, environment.name());
     }
   }
 }
 
 class TestRunner {
-  constructor(options = {}) {
-    const {
-      timeout = 10 * 1000, // Default timeout is 10 seconds.
-      parallel = 1,
-      breakOnFailure = false,
-      crashIfTestsAreFocusedOnCI = true,
-      installCommonHelpers = true,
-    } = options;
-    this._crashIfTestsAreFocusedOnCI = crashIfTestsAreFocusedOnCI;
+  constructor() {
     this._sourceMapSupport = new SourceMapSupport();
-    this._rootSuite = new Suite(null, '', new Location());
-    this._currentEnvironment = this._rootSuite;
-    this._tests = [];
-    this._suites = [];
-    this._timeout = timeout === 0 ? INFINITE_TIMEOUT : timeout;
-    this._parallel = parallel;
-    this._breakOnFailure = breakOnFailure;
-    this._suiteModifiers = new Map();
-    this._suiteAttributes = new Map();
-    this._testModifiers = new Map();
-    this._testAttributes = new Map();
     this._nextWorkerId = 1;
     this._workers = [];
     this._terminating = false;
     this._result = null;
+  }
 
+  async run(testRuns, options = {}) {
+    const {
+      parallel = 1,
+      breakOnFailure = false,
+      hookTimeout = 10 * 1000,
+      totalTimeout = 0,
+      onStarted = async (testRuns) => {},
+      onFinished = async (result) => {},
+      onTestRunStarted = async(testRun) => {},
+      onTestRunFinished = async (testRun) => {},
+    } = options;
+    this._breakOnFailure = breakOnFailure;
+    this._hookTimeout = hookTimeout;
     this._delegate = {
-      async onStarted(testRuns) {},
-      async onFinished(result) {},
-      async onTestRunStarted(testRun) {},
-      async onTestRunFinished(testRun) {},
+      onStarted,
+      onFinished,
+      onTestRunStarted,
+      onTestRunFinished
     };
-
-    this.beforeAll = (callback) => this._currentEnvironment.beforeAll(callback);
-    this.beforeEach = (callback) => this._currentEnvironment.beforeEach(callback);
-    this.afterAll = (callback) => this._currentEnvironment.afterAll(callback);
-    this.afterEach = (callback) => this._currentEnvironment.afterEach(callback);
-
-    this.describe = this._suiteBuilder([]);
-    this.it = this._testBuilder([]);
-    this.environment = (name, callback) => {
-      const location = Location.getCallerLocation(__filename);
-      const environment = new Environment(this._currentEnvironment, name, location);
-      this._currentEnvironment = environment;
-      callback();
-      this._currentEnvironment = environment.parentEnvironment();
-      return environment;
-    };
-    this.Expectations = { ...TestExpectation };
-
-    if (installCommonHelpers) {
-      this.fdescribe = this._suiteBuilder([{ callback: s => s.setFocused(true), args: [] }]);
-      this.xdescribe = this._suiteBuilder([{ callback: s => s.setSkipped(true), args: [] }]);
-      this.fit = this._testBuilder([{ callback: t => t.setFocused(true), args: [] }]);
-      this.xit = this._testBuilder([{ callback: t => t.setSkipped(true), args: [] }]);
-    }
-  }
-
-  _suiteBuilder(callbacks) {
-    return new Proxy((name, callback, ...suiteArgs) => {
-      if (!(this._currentEnvironment instanceof Suite))
-        throw new Error(`Cannot define a suite inside an environment`);
-      const location = Location.getCallerLocation(__filename);
-      const suite = new Suite(this._currentEnvironment, name, location);
-      for (const { callback, args } of callbacks)
-        callback(suite, ...args);
-      this._currentEnvironment = suite;
-      callback(...suiteArgs);
-      this._suites.push(suite);
-      this._currentEnvironment = suite.parentSuite();
-      return suite;
-    }, {
-      get: (obj, prop) => {
-        if (this._suiteModifiers.has(prop))
-          return (...args) => this._suiteBuilder([...callbacks, { callback: this._suiteModifiers.get(prop), args }]);
-        if (this._suiteAttributes.has(prop))
-          return this._suiteBuilder([...callbacks, { callback: this._suiteAttributes.get(prop), args: [] }]);
-        return obj[prop];
-      },
-    });
-  }
-
-  _testBuilder(callbacks) {
-    return new Proxy((name, callback) => {
-      if (!(this._currentEnvironment instanceof Suite))
-        throw new Error(`Cannot define a test inside an environment`);
-      const location = Location.getCallerLocation(__filename);
-      const test = new Test(this._currentEnvironment, name, callback, location);
-      test.setTimeout(this._timeout);
-      for (const { callback, args } of callbacks)
-        callback(test, ...args);
-      this._tests.push(test);
-      return test;
-    }, {
-      get: (obj, prop) => {
-        if (this._testModifiers.has(prop))
-          return (...args) => this._testBuilder([...callbacks, { callback: this._testModifiers.get(prop), args }]);
-        if (this._testAttributes.has(prop))
-          return this._testBuilder([...callbacks, { callback: this._testAttributes.get(prop), args: [] }]);
-        return obj[prop];
-      },
-    });
-  }
-
-  testModifier(name, callback) {
-    this._testModifiers.set(name, callback);
-  }
-
-  testAttribute(name, callback) {
-    this._testAttributes.set(name, callback);
-  }
-
-  suiteModifier(name, callback) {
-    this._suiteModifiers.set(name, callback);
-  }
-
-  suiteAttribute(name, callback) {
-    this._suiteAttributes.set(name, callback);
-  }
-
-  setDelegate(delegate) {
-    this._delegate = delegate;
-  }
-
-  async run(options = {}) {
-    const { totalTimeout = 0 } = options;
-    const testRuns = [];
-    for (const test of this._testsToRun()) {
-      let repeat = test.repeat();
-      for (let suite = test.suite(); suite; suite = suite.parentSuite())
-        repeat *= suite.repeat();
-      for (let i = 0; i < repeat; i++)
-        testRuns.push(new TestRun(test));
-    }
 
     this._result = new Result();
+    this._result.runs = testRuns;
+    await this._delegate.onStarted(testRuns);
 
-    if (this._crashIfTestsAreFocusedOnCI && process.env.CI && this.hasFocusedTestsOrSuites()) {
-      await this._delegate.onStarted([]);
-      this._result.setResult(TestResult.Crashed, '"focused" tests or suites are probitted on CI');
-      await this._delegate.onFinished(this._result);
-    } else {
-      await this._delegate.onStarted(testRuns);
-      this._result.runs = testRuns;
+    let timeoutId;
+    if (totalTimeout) {
+      timeoutId = setTimeout(() => {
+        this._terminate(TestResult.Terminated, `Total timeout of ${totalTimeout}ms reached.`, true /* force */, null /* error */);
+      }, totalTimeout);
+    }
 
-      let timeoutId;
-      if (totalTimeout) {
-        timeoutId = setTimeout(() => {
-          this._terminate(TestResult.Terminated, `Total timeout of ${totalTimeout}ms reached.`, true /* force */, null /* error */);
-        }, totalTimeout);
-      }
+    const terminations = [
+      createTermination.call(this, 'SIGINT', TestResult.Terminated, 'SIGINT received'),
+      createTermination.call(this, 'SIGHUP', TestResult.Terminated, 'SIGHUP received'),
+      createTermination.call(this, 'SIGTERM', TestResult.Terminated, 'SIGTERM received'),
+      createTermination.call(this, 'unhandledRejection', TestResult.Crashed, 'UNHANDLED PROMISE REJECTION'),
+      createTermination.call(this, 'uncaughtException', TestResult.Crashed, 'UNHANDLED ERROR'),
+    ];
+    for (const termination of terminations)
+      process.on(termination.event, termination.handler);
 
-      const terminations = [
-        createTermination.call(this, 'SIGINT', TestResult.Terminated, 'SIGINT received'),
-        createTermination.call(this, 'SIGHUP', TestResult.Terminated, 'SIGHUP received'),
-        createTermination.call(this, 'SIGTERM', TestResult.Terminated, 'SIGTERM received'),
-        createTermination.call(this, 'unhandledRejection', TestResult.Crashed, 'UNHANDLED PROMISE REJECTION'),
-        createTermination.call(this, 'uncaughtException', TestResult.Crashed, 'UNHANDLED ERROR'),
-      ];
-      for (const termination of terminations)
-        process.on(termination.event, termination.handler);
+    const workerCount = Math.min(parallel, testRuns.length);
+    const workerPromises = [];
+    for (let i = 0; i < workerCount; ++i) {
+      const initialTestRunIndex = i * Math.floor(testRuns.length / workerCount);
+      workerPromises.push(this._runWorker(initialTestRunIndex, testRuns, i));
+    }
+    await Promise.all(workerPromises);
 
-      const parallel = Math.min(this._parallel, testRuns.length);
-      const workerPromises = [];
-      for (let i = 0; i < parallel; ++i) {
-        const initialTestRunIndex = i * Math.floor(testRuns.length / parallel);
-        workerPromises.push(this._runWorker(initialTestRunIndex, testRuns, i));
-      }
-      await Promise.all(workerPromises);
+    for (const termination of terminations)
+      process.removeListener(termination.event, termination.handler);
 
-      for (const termination of terminations)
-        process.removeListener(termination.event, termination.handler);
+    if (testRuns.some(run => run.isFailure()))
+      this._result.setResult(TestResult.Failed, '');
 
-      if (testRuns.some(run => run.isFailure()))
-        this._result.setResult(TestResult.Failed, '');
+    clearTimeout(timeoutId);
+    await this._delegate.onFinished(this._result);
 
-      clearTimeout(timeoutId);
-      await this._delegate.onFinished(this._result);
-
-      function createTermination(event, result, message) {
-        return {
-          event,
-          message,
-          handler: error => this._terminate(result, message, event === 'SIGTERM', event.startsWith('SIG') ? null : error),
-        };
-      }
+    function createTermination(event, result, message) {
+      return {
+        event,
+        message,
+        handler: error => this._terminate(result, message, event === 'SIGTERM', event.startsWith('SIG') ? null : error),
+      };
     }
 
     const result = this._result;
@@ -818,61 +473,11 @@ class TestRunner {
     }
   }
 
-  _testsToRun() {
-    if (!this.hasFocusedTestsOrSuites())
-      return this._tests;
-    const notFocusedSuites = new Set();
-    // Mark parent suites of focused tests as not focused.
-    for (const test of this._tests) {
-      if (test.focused()) {
-        for (let suite = test.suite(); suite; suite = suite.parentSuite())
-          notFocusedSuites.add(suite);
-      }
-    }
-    // Pick all tests that are focused or belong to focused suites.
-    const tests = [];
-    for (const test of this._tests) {
-      let focused = test.focused();
-      for (let suite = test.suite(); suite; suite = suite.parentSuite())
-        focused = focused || (suite.focused() && !notFocusedSuites.has(suite));
-      if (focused)
-        tests.push(test);
-    }
-    return tests;
-  }
-
   async terminate() {
     if (!this._result)
       return;
     await this._terminate(TestResult.Terminated, 'Terminated with |TestRunner.terminate()| call', true /* force */, null /* error */);
   }
-
-  timeout() {
-    return this._timeout;
-  }
-
-  hasFocusedTestsOrSuites() {
-    return this._tests.some(test => test.focused()) || this._suites.some(suite => suite.focused());
-  }
-
-  focusMatchingTests(fullNameRegex) {
-    for (const test of this._tests) {
-      if (fullNameRegex.test(test.fullName()))
-        test.setFocused(true);
-    }
-  }
-
-  tests() {
-    return this._tests.slice();
-  }
-
-  suites() {
-    return this._suites.slice();
-  }
-
-  parallel() {
-    return this._parallel;
-  }
 }
 
-module.exports = TestRunner;
+module.exports = { TestRunner, TestRun, TestResult, Result };

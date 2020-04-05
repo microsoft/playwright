@@ -49,6 +49,8 @@ class Location {
     return this._fileName + ':' + this._lineNumber + ':' + this._columnNumber;
   }
 
+  // TODO: static getCallerLocationIn(glob) vs getCallerLocationIgnoring(glob).
+
   static getCallerLocation(filename) {
     const error = new Error();
     const stackFrames = error.stack.split('\n').slice(1);

@@ -19,7 +19,7 @@ const colors = require('colors/safe');
 const {MatchError} = require('./Matchers.js');
 
 class Reporter {
-  constructor(runner, options = {}) {
+  constructor(delegate, options = {}) {
     const {
       showSlowTests = 3,
       showMarkedAsFailingTests = Infinity,
@@ -27,27 +27,25 @@ class Reporter {
       summary = true,
     } = options;
     this._filePathToLines = new Map();
-    this._runner = runner;
+    this._delegate = delegate;
     this._showSlowTests = showSlowTests;
     this._showMarkedAsFailingTests = showMarkedAsFailingTests;
     this._verbose = verbose;
     this._summary = summary;
     this._testCounter = 0;
-    runner.setDelegate(this);
   }
 
   onStarted(testRuns) {
     this._testCounter = 0;
     this._timestamp = Date.now();
-    const allTests = this._runner.tests();
-    if (!this._runner.hasFocusedTestsOrSuites()) {
-      console.log(`Running all ${colors.yellow(testRuns.length)} tests on ${colors.yellow(this._runner.parallel())} worker${this._runner.parallel() > 1 ? 's' : ''}:\n`);
+    if (!this._delegate.hasFocusedTestsOrSuites()) {
+      console.log(`Running all ${colors.yellow(testRuns.length)} tests on ${colors.yellow(this._delegate.parallel())} worker${this._delegate.parallel() > 1 ? 's' : ''}:\n`);
     } else {
-      console.log(`Running ${colors.yellow(testRuns.length)} focused tests out of total ${colors.yellow(allTests.length)} on ${colors.yellow(this._runner.parallel())} worker${this._runner.parallel() > 1 ? 's' : ''}`);
+      console.log(`Running ${colors.yellow(testRuns.length)} focused tests out of total ${colors.yellow(this._delegate.testCount())} on ${colors.yellow(this._delegate.parallel())} worker${this._delegate.parallel() > 1 ? 's' : ''}`);
       console.log('');
       const focusedEntities = [
-        ...this._runner.suites().filter(suite => suite.focused()),
-        ...this._runner.tests().filter(test => test.focused()),
+        ...this._delegate.focusedSuites(),
+        ...this._delegate.focusedTests(),
       ];
       if (focusedEntities.length) {
         console.log('Focused Suites and Tests:');
@@ -174,7 +172,7 @@ class Reporter {
   _printVerboseTestRunResult(resultIndex, testRun) {
     const test = testRun.test();
     let prefix = `${resultIndex})`;
-    if (this._runner.parallel() > 1)
+    if (this._delegate.parallel() > 1)
       prefix += ' ' + colors.gray(`[worker = ${testRun.workerId()}]`);
     if (testRun.result() === 'ok') {
       console.log(`${prefix} ${colors.green('[OK]')} ${test.fullName()} (${formatLocation(test.location())})`);
@@ -187,9 +185,10 @@ class Reporter {
       console.log(`${prefix} ${colors.yellow('[MARKED AS FAILING]')} ${test.fullName()} (${formatLocation(test.location())})`);
     } else if (testRun.result() === 'timedout') {
       console.log(`${prefix} ${colors.red(`[TIMEOUT ${test.timeout()}ms]`)} ${test.fullName()} (${formatLocation(test.location())})`);
-      if (testRun.output) {
+      const output = testRun.output();
+      if (output.length) {
         console.log('  Output:');
-        for (const line of testRun.output)
+        for (const line of output)
           console.log('  ' + line);
       }
     } else if (testRun.result() === 'failed') {
@@ -235,9 +234,10 @@ class Reporter {
           console.log(padLines(stack, 4));
         }
       }
-      if (testRun.output) {
+      const output = testRun.output();
+      if (output.length) {
         console.log('  Output:');
-        for (const line of testRun.output)
+        for (const line of output)
           console.log('  ' + line);
       }
     }
