@@ -45,10 +45,26 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
       await state.browser.close();
       state.browser = null;
     });
-    it.fail(true)('should report oopif frames', async function({browser, page, server, context}) {
+    it('should report oopif frames', async function({browser, page, server, context}) {
       await page.goto(server.PREFIX + '/dynamic-oopif.html');
       expect(await countOOPIFs(browser)).toBe(1);
       expect(page.frames().length).toBe(2);
+      expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
+    });
+    it('should handle remote -> local -> remote transitions', async function({browser, page, server, context}) {
+      await page.goto(server.PREFIX + '/dynamic-oopif.html');
+      expect(page.frames().length).toBe(2);
+      expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
+      await Promise.all([
+        page.frames()[1].waitForNavigation(),
+        page.evaluate(() => goLocal()),
+      ]);
+      expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.PREFIX + '/grid.html');
+      await Promise.all([
+        page.frames()[1].waitForNavigation(),
+        page.evaluate(() => goRemote()),
+      ]);
+      expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
     });
     it('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {
       await page.route('**/*', route => route.continue());
@@ -62,7 +78,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
       await page.click('button');
       expect(await page.evaluate(() => window.BUTTON_CLICKED)).toBe(true);
     });
-    it.fail(true)('should report google.com frame with headful', async({server}) => {
+    it('should report google.com frame with headful', async({server}) => {
       // TODO: Support OOOPIF. @see https://github.com/GoogleChrome/puppeteer/issues/2548
       // https://google.com is isolated by default in Chromium embedder.
       const browser = await browserType.launch(headfulOptions);
@@ -78,7 +94,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, b
         return new Promise(x => frame.onload = x);
       });
       await page.waitForSelector('iframe[src="https://google.com/"]');
-      const urls = page.frames().map(frame => frame.url()).sort();
+      const urls = page.frames().map(frame => frame.url());
       expect(urls).toEqual([
         server.EMPTY_PAGE,
         'https://google.com/'

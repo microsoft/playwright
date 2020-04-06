@@ -40,11 +40,9 @@ import { ConsoleMessage } from '../console';
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
 export class CRPage implements PageDelegate {
-  readonly _client: CRSession;
+  readonly _mainFrameSession: FrameSession;
+  readonly _sessions = new Map<Protocol.Target.TargetID, FrameSession>();
   readonly _page: Page;
-  readonly _networkManager: CRNetworkManager;
-  private readonly _contextIdToContext = new Map<number, dom.FrameExecutionContext>();
-  private _eventListeners: RegisteredListener[] = [];
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
   readonly _targetId: string;
@@ -52,13 +50,10 @@ export class CRPage implements PageDelegate {
   private readonly _pdf: CRPDF;
   private readonly _coverage: CRCoverage;
   readonly _browserContext: CRBrowserContext;
-  private _firstNonInitialNavigationCommittedPromise: Promise<void>;
-  private _firstNonInitialNavigationCommittedCallback = () => {};
   private readonly _pagePromise: Promise<Page | Error>;
   _initializedPage: Page | null = null;
 
   constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null) {
-    this._client = client;
     this._targetId = targetId;
     this._opener = opener;
     this.rawKeyboard = new RawKeyboardImpl(client);
@@ -67,55 +62,321 @@ export class CRPage implements PageDelegate {
     this._coverage = new CRCoverage(client);
     this._browserContext = browserContext;
     this._page = new Page(this, browserContext);
-    this._networkManager = new CRNetworkManager(client, this._page);
-    this._firstNonInitialNavigationCommittedPromise = new Promise(f => this._firstNonInitialNavigationCommittedCallback = f);
+    this._mainFrameSession = new FrameSession(this, client, targetId);
+    this._sessions.set(targetId, this._mainFrameSession);
     client.once(CRSessionEvents.Disconnected, () => this._page._didDisconnect());
-    this._pagePromise = this._initialize().then(() => this._initializedPage = this._page).catch(e => e);
+    this._pagePromise = this._mainFrameSession._initialize().then(() => this._initializedPage = this._page).catch(e => e);
+  }
+
+  private async _forAllFrameSessions(cb: (frame: FrameSession) => Promise<any>) {
+    await Promise.all(Array.from(this._sessions.values()).map(frame => cb(frame)));
+  }
+
+  private _sessionForFrame(frame: frames.Frame): FrameSession {
+    // Frame id equals target id.
+    while (!this._sessions.has(frame._id)) {
+      const parent = frame.parentFrame();
+      if (!parent)
+        throw new Error(`Frame has been detached.`);
+      frame = parent;
+    }
+    return this._sessions.get(frame._id)!;
+  }
+
+  private _sessionForHandle(handle: dom.ElementHandle): FrameSession {
+    const frame = handle._context.frame;
+    return this._sessionForFrame(frame);
+  }
+
+  addFrameSession(targetId: Protocol.Target.TargetID, session: CRSession) {
+    // Frame id equals target id.
+    const frame = this._page._frameManager.frame(targetId);
+    assert(frame);
+    this._page._frameManager.removeChildFramesRecursively(frame);
+    const frameSession = new FrameSession(this, session, targetId);
+    this._sessions.set(targetId, frameSession);
+    frameSession._initialize().catch(e => e);
+  }
+
+  removeFrameSession(targetId: Protocol.Target.TargetID) {
+    const frameSession = this._sessions.get(targetId);
+    if (!frameSession)
+      return;
+    // Frame id equals target id.
+    const frame = this._page._frameManager.frame(targetId);
+    assert(frame);
+    this._page._frameManager.removeChildFramesRecursively(frame);
+    frameSession.dispose();
+    this._sessions.delete(targetId);
   }
 
   async pageOrError(): Promise<Page | Error> {
     return this._pagePromise;
   }
 
-  private async _initialize() {
+  didClose() {
+    for (const session of this._sessions.values())
+      session.dispose();
+    this._page._didClose();
+  }
+
+  async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
+    return this._sessionForFrame(frame)._navigate(frame, url, referrer);
+  }
+
+  async exposeBinding(binding: PageBinding) {
+    await this._forAllFrameSessions(frame => frame._initBinding(binding));
+    await Promise.all(this._page.frames().map(frame => frame.evaluate(binding.source).catch(debugError)));
+  }
+
+  async updateExtraHTTPHeaders(): Promise<void> {
+    await this._forAllFrameSessions(frame => frame._updateExtraHTTPHeaders());
+  }
+
+  async updateGeolocation(): Promise<void> {
+    await this._forAllFrameSessions(frame => frame._updateGeolocation());
+  }
+
+  async updateOffline(): Promise<void> {
+    await this._forAllFrameSessions(frame => frame._updateOffline());
+  }
+
+  async updateHttpCredentials(): Promise<void> {
+    await this._forAllFrameSessions(frame => frame._updateHttpCredentials());
+  }
+
+  async setViewportSize(viewportSize: types.Size): Promise<void> {
+    assert(this._page._state.viewportSize === viewportSize);
+    await this._mainFrameSession._updateViewport();
+  }
+
+  async setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
+    await this._forAllFrameSessions(frame => frame._setEmulateMedia(mediaType, colorScheme));
+  }
+
+  async updateRequestInterception(): Promise<void> {
+    await this._forAllFrameSessions(frame => frame._updateRequestInterception());
+  }
+
+  async setFileChooserIntercepted(enabled: boolean) {
+    await this._forAllFrameSessions(frame => frame._setFileChooserIntercepted(enabled));
+  }
+
+  async opener(): Promise<Page | null> {
+    if (!this._opener)
+      return null;
+    const openerPage = await this._opener.pageOrError();
+    if (openerPage instanceof Page && !openerPage.isClosed())
+      return openerPage;
+    return null;
+  }
+
+  async reload(): Promise<void> {
+    await this._mainFrameSession._client.send('Page.reload');
+  }
+
+  private async _go(delta: number): Promise<boolean> {
+    const history = await this._mainFrameSession._client.send('Page.getNavigationHistory');
+    const entry = history.entries[history.currentIndex + delta];
+    if (!entry)
+      return false;
+    await this._mainFrameSession._client.send('Page.navigateToHistoryEntry', { entryId: entry.id });
+    return true;
+  }
+
+  goBack(): Promise<boolean> {
+    return this._go(-1);
+  }
+
+  goForward(): Promise<boolean> {
+    return this._go(+1);
+  }
+
+  async evaluateOnNewDocument(source: string): Promise<void> {
+    await this._forAllFrameSessions(frame => frame._evaluateOnNewDocument(source));
+  }
+
+  async closePage(runBeforeUnload: boolean): Promise<void> {
+    if (runBeforeUnload)
+      await this._mainFrameSession._client.send('Page.close');
+    else
+      await this._browserContext._browser._closePage(this);
+  }
+
+  canScreenshotOutsideViewport(): boolean {
+    return false;
+  }
+
+  async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
+    await this._mainFrameSession._client.send('Emulation.setDefaultBackgroundColorOverride', { color });
+  }
+
+  async takeScreenshot(format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
+    const { visualViewport } = await this._mainFrameSession._client.send('Page.getLayoutMetrics');
+    if (!documentRect) {
+      documentRect = {
+        x: visualViewport.pageX + viewportRect!.x,
+        y: visualViewport.pageY + viewportRect!.y,
+        ...helper.enclosingIntSize({
+          width: viewportRect!.width / visualViewport.scale,
+          height: viewportRect!.height / visualViewport.scale,
+        })
+      };
+    }
+    await this._mainFrameSession._client.send('Page.bringToFront', {});
+    // When taking screenshots with documentRect (based on the page content, not viewport),
+    // ignore current page scale.
+    const clip = { ...documentRect, scale: viewportRect ? visualViewport.scale : 1 };
+    const result = await this._mainFrameSession._client.send('Page.captureScreenshot', { format, quality, clip });
+    return Buffer.from(result.data, 'base64');
+  }
+
+  async resetViewport(): Promise<void> {
+    await this._mainFrameSession._client.send('Emulation.setDeviceMetricsOverride', { mobile: false, width: 0, height: 0, deviceScaleFactor: 0 });
+  }
+
+  async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
+    return this._sessionForHandle(handle)._getContentFrame(handle);
+  }
+
+  async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
+    return this._sessionForHandle(handle)._getOwnerFrame(handle);
+  }
+
+  isElementHandle(remoteObject: any): boolean {
+    return (remoteObject as Protocol.Runtime.RemoteObject).subtype === 'node';
+  }
+
+  async getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
+    return this._sessionForHandle(handle)._getBoundingBox(handle);
+  }
+
+  async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<void> {
+    return this._sessionForHandle(handle)._scrollRectIntoViewIfNeeded(handle, rect);
+  }
+
+  async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
+    return this._sessionForHandle(handle)._getContentQuads(handle);
+  }
+
+  async layoutViewport(): Promise<{ width: number, height: number }> {
+    const layoutMetrics = await this._mainFrameSession._client.send('Page.getLayoutMetrics');
+    return { width: layoutMetrics.layoutViewport.clientWidth, height: layoutMetrics.layoutViewport.clientHeight };
+  }
+
+  async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
+    await handle.evaluate(dom.setFileInputFunction, files);
+  }
+
+  async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
+    return this._sessionForHandle(handle)._adoptElementHandle<T>(handle, to);
+  }
+
+  async getAccessibilityTree(needle?: dom.ElementHandle) {
+    return getAccessibilityTree(this._mainFrameSession._client, needle);
+  }
+
+  async inputActionEpilogue(): Promise<void> {
+    await this._mainFrameSession._client.send('Page.enable').catch(e => {});
+  }
+
+  async pdf(options?: types.PDFOptions): Promise<Buffer> {
+    return this._pdf.generate(options);
+  }
+
+  coverage(): CRCoverage {
+    return this._coverage;
+  }
+
+  async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {
+    let parent = frame.parentFrame();
+    if (!parent)
+      throw new Error('Frame has been detached.');
+    const parentSession = this._sessionForFrame(parent);
+    const { backendNodeId } = await parentSession._client.send('DOM.getFrameOwner', { frameId: frame._id }).catch(e => {
+      if (e instanceof Error && e.message.includes('Frame with the given id was not found.'))
+        e.message = 'Frame has been detached.';
+      throw e;
+    });
+    parent = frame.parentFrame();
+    if (!parent)
+      throw new Error('Frame has been detached.');
+    return parentSession._adoptBackendNodeId(backendNodeId, await parent._mainContext());
+  }
+}
+
+class FrameSession {
+  readonly _client: CRSession;
+  readonly _crPage: CRPage;
+  readonly _page: Page;
+  readonly _networkManager: CRNetworkManager;
+  private readonly _contextIdToContext = new Map<number, dom.FrameExecutionContext>();
+  private _eventListeners: RegisteredListener[] = [];
+  readonly _targetId: string;
+  private _firstNonInitialNavigationCommittedPromise: Promise<void>;
+  private _firstNonInitialNavigationCommittedCallback = () => {};
+
+  constructor(crPage: CRPage, client: CRSession, targetId: string) {
+    this._client = client;
+    this._crPage = crPage;
+    this._page = crPage._page;
+    this._targetId = targetId;
+    this._networkManager = new CRNetworkManager(client, this._page);
+    this._firstNonInitialNavigationCommittedPromise = new Promise(f => this._firstNonInitialNavigationCommittedCallback = f);
+  }
+
+  private _isMainFrame(): boolean {
+    return this._targetId === this._crPage._targetId;
+  }
+
+  private _addSessionListeners() {
+    this._eventListeners = [
+      helper.addEventListener(this._client, 'Inspector.targetCrashed', event => this._onTargetCrashed()),
+      helper.addEventListener(this._client, 'Log.entryAdded', event => this._onLogEntryAdded(event)),
+      helper.addEventListener(this._client, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
+      helper.addEventListener(this._client, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
+      helper.addEventListener(this._client, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
+      helper.addEventListener(this._client, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
+      helper.addEventListener(this._client, 'Page.frameRequestedNavigation', event => this._onFrameRequestedNavigation(event)),
+      helper.addEventListener(this._client, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
+      helper.addEventListener(this._client, 'Page.javascriptDialogOpening', event => this._onDialog(event)),
+      helper.addEventListener(this._client, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
+      helper.addEventListener(this._client, 'Page.downloadWillBegin', event => this._onDownloadWillBegin(event)),
+      helper.addEventListener(this._client, 'Page.downloadProgress', event => this._onDownloadProgress(event)),
+      helper.addEventListener(this._client, 'Runtime.bindingCalled', event => this._onBindingCalled(event)),
+      helper.addEventListener(this._client, 'Runtime.consoleAPICalled', event => this._onConsoleAPI(event)),
+      helper.addEventListener(this._client, 'Runtime.exceptionThrown', exception => this._handleException(exception.exceptionDetails)),
+      helper.addEventListener(this._client, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
+      helper.addEventListener(this._client, 'Runtime.executionContextDestroyed', event => this._onExecutionContextDestroyed(event.executionContextId)),
+      helper.addEventListener(this._client, 'Runtime.executionContextsCleared', event => this._onExecutionContextsCleared()),
+      helper.addEventListener(this._client, 'Target.attachedToTarget', event => this._onAttachedToTarget(event)),
+      helper.addEventListener(this._client, 'Target.detachedFromTarget', event => this._onDetachedFromTarget(event)),
+    ];
+  }
+
+  async _initialize() {
     let lifecycleEventsEnabled: Promise<any>;
+    if (!this._isMainFrame())
+      this._addSessionListeners();
     const promises: Promise<any>[] = [
       this._client.send('Page.enable'),
       this._client.send('Page.getFrameTree').then(({frameTree}) => {
-        this._handleFrameTree(frameTree);
-        this._eventListeners = [
-          helper.addEventListener(this._client, 'Inspector.targetCrashed', event => this._onTargetCrashed()),
-          helper.addEventListener(this._client, 'Log.entryAdded', event => this._onLogEntryAdded(event)),
-          helper.addEventListener(this._client, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
-          helper.addEventListener(this._client, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
-          helper.addEventListener(this._client, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
-          helper.addEventListener(this._client, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
-          helper.addEventListener(this._client, 'Page.frameRequestedNavigation', event => this._onFrameRequestedNavigation(event)),
-          helper.addEventListener(this._client, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
-          helper.addEventListener(this._client, 'Page.javascriptDialogOpening', event => this._onDialog(event)),
-          helper.addEventListener(this._client, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
-          helper.addEventListener(this._client, 'Page.downloadWillBegin', event => this._onDownloadWillBegin(event)),
-          helper.addEventListener(this._client, 'Page.downloadProgress', event => this._onDownloadProgress(event)),
-          helper.addEventListener(this._client, 'Runtime.bindingCalled', event => this._onBindingCalled(event)),
-          helper.addEventListener(this._client, 'Runtime.consoleAPICalled', event => this._onConsoleAPI(event)),
-          helper.addEventListener(this._client, 'Runtime.exceptionThrown', exception => this._handleException(exception.exceptionDetails)),
-          helper.addEventListener(this._client, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
-          helper.addEventListener(this._client, 'Runtime.executionContextDestroyed', event => this._onExecutionContextDestroyed(event.executionContextId)),
-          helper.addEventListener(this._client, 'Runtime.executionContextsCleared', event => this._onExecutionContextsCleared()),
-          helper.addEventListener(this._client, 'Target.attachedToTarget', event => this._onAttachedToTarget(event)),
-          helper.addEventListener(this._client, 'Target.detachedFromTarget', event => this._onDetachedFromTarget(event)),
-        ];
-        for (const frame of this._page.frames()) {
+        if (this._isMainFrame()) {
+          this._handleFrameTree(frameTree);
+          this._addSessionListeners();
+        }
+        const localFrames = this._isMainFrame() ? this._page.frames() : [ this._page._frameManager.frame(this._targetId)! ];
+        for (const frame of localFrames) {
           // Note: frames might be removed before we send these.
           this._client.send('Page.createIsolatedWorld', {
             frameId: frame._id,
             grantUniveralAccess: true,
             worldName: UTILITY_WORLD_NAME,
           }).catch(debugError);
-          for (const binding of this._browserContext._pageBindings.values())
+          for (const binding of this._crPage._browserContext._pageBindings.values())
             frame.evaluate(binding.source).catch(debugError);
         }
-        const isInitialEmptyPage = this._page.mainFrame().url() === ':';
+        const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
         if (isInitialEmptyPage) {
           // Ignore lifecycle events for the initial empty page. It is never the final page
           // hence we are going to get more lifecycle updates after the actual navigation has
@@ -139,12 +400,12 @@ export class CRPage implements PageDelegate {
       this._client.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
       this._client.send('Emulation.setFocusEmulationEnabled', { enabled: true }),
     ];
-    const options = this._browserContext._options;
+    const options = this._crPage._browserContext._options;
     if (options.bypassCSP)
       promises.push(this._client.send('Page.setBypassCSP', { enabled: true }));
     if (options.ignoreHTTPSErrors)
       promises.push(this._client.send('Security.setIgnoreCertificateErrors', { ignore: true }));
-    if (options.viewport)
+    if (this._isMainFrame() && options.viewport)
       promises.push(this._updateViewport());
     if (options.hasTouch)
       promises.push(this._client.send('Emulation.setTouchEmulationEnabled', { enabled: true }));
@@ -156,29 +417,26 @@ export class CRPage implements PageDelegate {
       promises.push(emulateLocale(this._client, options.locale));
     if (options.timezoneId)
       promises.push(emulateTimezone(this._client, options.timezoneId));
-    if (options.geolocation)
-      promises.push(this._client.send('Emulation.setGeolocationOverride', options.geolocation));
-    promises.push(this.updateExtraHTTPHeaders());
-    promises.push(this.updateRequestInterception());
-    if (options.offline)
-      promises.push(this._networkManager.setOffline(options.offline));
-    if (options.httpCredentials)
-      promises.push(this._networkManager.authenticate(options.httpCredentials));
-    for (const binding of this._browserContext._pageBindings.values())
+    promises.push(this._updateGeolocation());
+    promises.push(this._updateExtraHTTPHeaders());
+    promises.push(this._updateRequestInterception());
+    promises.push(this._updateOffline());
+    promises.push(this._updateHttpCredentials());
+    for (const binding of this._crPage._browserContext._pageBindings.values())
       promises.push(this._initBinding(binding));
-    for (const source of this._browserContext._evaluateOnNewDocumentSources)
-      promises.push(this.evaluateOnNewDocument(source));
+    for (const source of this._crPage._browserContext._evaluateOnNewDocumentSources)
+      promises.push(this._evaluateOnNewDocument(source));
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
     promises.push(this._firstNonInitialNavigationCommittedPromise);
     await Promise.all(promises);
   }
-  didClose() {
+
+  dispose() {
     helper.removeEventListeners(this._eventListeners);
     this._networkManager.dispose();
-    this._page._didClose();
   }
 
-  async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
+  async _navigate(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
     const response = await this._client.send('Page.navigate', { url, referrer, frameId: frame._id });
     if (response.errorText)
       throw new Error(`${response.errorText} at ${url}`);
@@ -207,6 +465,12 @@ export class CRPage implements PageDelegate {
   }
 
   _onFrameAttached(frameId: string, parentFrameId: string | null) {
+    if (this._crPage._sessions.has(frameId) && frameId !== this._targetId) {
+      // This is a remote -> local frame transition.
+      const frame = this._page._frameManager.frame(frameId)!;
+      this._page._frameManager.removeChildFramesRecursively(frame);
+      return;
+    }
     this._page._frameManager.frameAttached(frameId, parentFrameId);
   }
 
@@ -225,6 +489,11 @@ export class CRPage implements PageDelegate {
   }
 
   _onFrameDetached(frameId: string) {
+    if (this._crPage._sessions.has(frameId)) {
+      // This is a local -> remote frame transtion.
+      // We already got a new target and handled frame reattach - nothing to do here.
+      return;
+    }
     this._page._frameManager.frameDetached(frameId);
   }
 
@@ -256,6 +525,12 @@ export class CRPage implements PageDelegate {
 
   _onAttachedToTarget(event: Protocol.Target.attachedToTargetPayload) {
     const session = CRConnection.fromSession(this._client).session(event.sessionId)!;
+
+    if (event.targetInfo.type === 'iframe') {
+      this._crPage.addFrameSession(event.targetInfo.targetId, session);
+      return;
+    }
+
     if (event.targetInfo.type !== 'worker') {
       // Ideally, detaching should resume any target, but there is a bug in the backend.
       session.send('Runtime.runIfWaitingForDebugger').catch(debugError).then(() => {
@@ -263,6 +538,7 @@ export class CRPage implements PageDelegate {
       });
       return;
     }
+
     const url = event.targetInfo.url;
     const worker = new Worker(url);
     this._page._addWorker(event.sessionId, worker);
@@ -280,10 +556,11 @@ export class CRPage implements PageDelegate {
     });
     session.on('Runtime.exceptionThrown', exception => this._page.emit(Events.Page.PageError, exceptionToError(exception.exceptionDetails)));
     // TODO: attribute workers to the right frame.
-    this._networkManager.instrumentNetworkEvents(session, this._page.mainFrame());
+    this._networkManager.instrumentNetworkEvents(session, this._page._frameManager.frame(this._targetId)!);
   }
 
   _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {
+    this._crPage.removeFrameSession(event.targetId!);
     this._page._removeWorker(event.sessionId);
   }
 
@@ -307,11 +584,6 @@ export class CRPage implements PageDelegate {
     const context = this._contextIdToContext.get(event.executionContextId)!;
     const values = event.args.map(arg => context._createHandle(arg));
     this._page._addConsoleMessage(event.type, values, toConsoleMessageLocation(event.stackTrace));
-  }
-
-  async exposeBinding(binding: PageBinding) {
-    await this._initBinding(binding);
-    await Promise.all(this._page.frames().map(frame => frame.evaluate(binding.source).catch(debugError)));
   }
 
   async _initBinding(binding: PageBinding) {
@@ -355,36 +627,47 @@ export class CRPage implements PageDelegate {
   async _onFileChooserOpened(event: Protocol.Page.fileChooserOpenedPayload) {
     const frame = this._page._frameManager.frame(event.frameId)!;
     const utilityContext = await frame._utilityContext();
-    const handle = await this.adoptBackendNodeId(event.backendNodeId, utilityContext);
+    const handle = await this._adoptBackendNodeId(event.backendNodeId, utilityContext);
     this._page._onFileChooserOpened(handle);
   }
 
   _onDownloadWillBegin(payload: Protocol.Page.downloadWillBeginPayload) {
-    this._browserContext._browser._downloadCreated(this._page, payload.guid, payload.url);
+    this._crPage._browserContext._browser._downloadCreated(this._page, payload.guid, payload.url);
   }
 
   _onDownloadProgress(payload: Protocol.Page.downloadProgressPayload) {
     if (payload.state === 'completed')
-      this._browserContext._browser._downloadFinished(payload.guid, '');
+      this._crPage._browserContext._browser._downloadFinished(payload.guid, '');
     if (payload.state === 'canceled')
-      this._browserContext._browser._downloadFinished(payload.guid, 'canceled');
+      this._crPage._browserContext._browser._downloadFinished(payload.guid, 'canceled');
   }
 
-  async updateExtraHTTPHeaders(): Promise<void> {
+  async _updateExtraHTTPHeaders(): Promise<void> {
     const headers = network.mergeHeaders([
-      this._browserContext._options.extraHTTPHeaders,
+      this._crPage._browserContext._options.extraHTTPHeaders,
       this._page._state.extraHTTPHeaders
     ]);
     await this._client.send('Network.setExtraHTTPHeaders', { headers });
   }
 
-  async setViewportSize(viewportSize: types.Size): Promise<void> {
-    assert(this._page._state.viewportSize === viewportSize);
-    await this._updateViewport();
+  async _updateGeolocation(): Promise<void> {
+    const geolocation = this._crPage._browserContext._options.geolocation;
+    await this._client.send('Emulation.setGeolocationOverride', geolocation || {});
+  }
+
+  async _updateOffline(): Promise<void> {
+    const offline = !!this._crPage._browserContext._options.offline;
+    await this._networkManager.setOffline(offline);
+  }
+
+  async _updateHttpCredentials(): Promise<void> {
+    const credentials = this._crPage._browserContext._options.httpCredentials || null;
+    await this._networkManager.authenticate(credentials);
   }
 
   async _updateViewport(): Promise<void> {
-    const options = this._browserContext._options;
+    assert(this._isMainFrame());
+    const options = this._crPage._browserContext._options;
     let viewport = options.viewport || { width: 0, height: 0 };
     const viewportSize = this._page._state.viewportSize;
     if (viewportSize)
@@ -404,93 +687,24 @@ export class CRPage implements PageDelegate {
     await Promise.all(promises);
   }
 
-  async setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
+  async _setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
     const features = colorScheme ? [{ name: 'prefers-color-scheme', value: colorScheme }] : [];
     await this._client.send('Emulation.setEmulatedMedia', { media: mediaType || '', features });
   }
 
-  async updateRequestInterception(): Promise<void> {
+  async _updateRequestInterception(): Promise<void> {
     await this._networkManager.setRequestInterception(this._page._needsRequestInterception());
   }
 
-  async setFileChooserIntercepted(enabled: boolean) {
+  async _setFileChooserIntercepted(enabled: boolean) {
     await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
   }
 
-  async opener(): Promise<Page | null> {
-    if (!this._opener)
-      return null;
-    const openerPage = await this._opener.pageOrError();
-    if (openerPage instanceof Page && !openerPage.isClosed())
-      return openerPage;
-    return null;
-  }
-
-  async reload(): Promise<void> {
-    await this._client.send('Page.reload');
-  }
-
-  private async _go(delta: number): Promise<boolean> {
-    const history = await this._client.send('Page.getNavigationHistory');
-    const entry = history.entries[history.currentIndex + delta];
-    if (!entry)
-      return false;
-    await this._client.send('Page.navigateToHistoryEntry', { entryId: entry.id });
-    return true;
-  }
-
-  goBack(): Promise<boolean> {
-    return this._go(-1);
-  }
-
-  goForward(): Promise<boolean> {
-    return this._go(+1);
-  }
-
-  async evaluateOnNewDocument(source: string): Promise<void> {
+  async _evaluateOnNewDocument(source: string): Promise<void> {
     await this._client.send('Page.addScriptToEvaluateOnNewDocument', { source });
   }
 
-  async closePage(runBeforeUnload: boolean): Promise<void> {
-    if (runBeforeUnload)
-      await this._client.send('Page.close');
-    else
-      await this._browserContext._browser._closePage(this);
-  }
-
-  canScreenshotOutsideViewport(): boolean {
-    return false;
-  }
-
-  async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
-    await this._client.send('Emulation.setDefaultBackgroundColorOverride', { color });
-  }
-
-  async takeScreenshot(format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
-    const { visualViewport } = await this._client.send('Page.getLayoutMetrics');
-    if (!documentRect) {
-      documentRect = {
-        x: visualViewport.pageX + viewportRect!.x,
-        y: visualViewport.pageY + viewportRect!.y,
-        ...helper.enclosingIntSize({
-          width: viewportRect!.width / visualViewport.scale,
-          height: viewportRect!.height / visualViewport.scale,
-        })
-      };
-    }
-    await this._client.send('Page.bringToFront', {});
-    // When taking screenshots with documentRect (based on the page content, not viewport),
-    // ignore current page scale.
-    const clip = { ...documentRect, scale: viewportRect ? visualViewport.scale : 1 };
-    const result = await this._client.send('Page.captureScreenshot', { format, quality, clip });
-    return Buffer.from(result.data, 'base64');
-  }
-
-  async resetViewport(): Promise<void> {
-    await this._client.send('Emulation.setDeviceMetricsOverride', { mobile: false, width: 0, height: 0, deviceScaleFactor: 0 });
-  }
-
-  async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
+  async _getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
     const nodeInfo = await this._client.send('DOM.describeNode', {
       objectId: toRemoteObject(handle).objectId
     });
@@ -499,7 +713,7 @@ export class CRPage implements PageDelegate {
     return this._page._frameManager.frame(nodeInfo.node.frameId);
   }
 
-  async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
+  async _getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
     // document.documentElement has frameId of the owner frame.
     const documentElement = await handle.evaluateHandle(node => {
       const doc = node as Document;
@@ -521,11 +735,7 @@ export class CRPage implements PageDelegate {
     return frameId;
   }
 
-  isElementHandle(remoteObject: any): boolean {
-    return (remoteObject as Protocol.Runtime.RemoteObject).subtype === 'node';
-  }
-
-  async getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
+  async _getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
     const result = await this._client.send('DOM.getBoxModel', {
       objectId: toRemoteObject(handle).objectId
     }).catch(debugError);
@@ -539,7 +749,7 @@ export class CRPage implements PageDelegate {
     return {x, y, width, height};
   }
 
-  async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<void> {
+  async _scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<void> {
     await this._client.send('DOM.scrollIntoViewIfNeeded', {
       objectId: toRemoteObject(handle).objectId,
       rect,
@@ -550,7 +760,7 @@ export class CRPage implements PageDelegate {
     });
   }
 
-  async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
+  async _getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     const result = await this._client.send('DOM.getContentQuads', {
       objectId: toRemoteObject(handle).objectId
     }).catch(debugError);
@@ -564,23 +774,14 @@ export class CRPage implements PageDelegate {
     ]);
   }
 
-  async layoutViewport(): Promise<{ width: number, height: number }> {
-    const layoutMetrics = await this._client.send('Page.getLayoutMetrics');
-    return { width: layoutMetrics.layoutViewport.clientWidth, height: layoutMetrics.layoutViewport.clientHeight };
-  }
-
-  async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
-    await handle.evaluate(dom.setFileInputFunction, files);
-  }
-
-  async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
+  async _adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
     const nodeInfo = await this._client.send('DOM.describeNode', {
       objectId: toRemoteObject(handle).objectId,
     });
-    return this.adoptBackendNodeId(nodeInfo.node.backendNodeId, to) as Promise<dom.ElementHandle<T>>;
+    return this._adoptBackendNodeId(nodeInfo.node.backendNodeId, to) as Promise<dom.ElementHandle<T>>;
   }
 
-  async adoptBackendNodeId(backendNodeId: Protocol.DOM.BackendNodeId, to: dom.FrameExecutionContext): Promise<dom.ElementHandle> {
+  async _adoptBackendNodeId(backendNodeId: Protocol.DOM.BackendNodeId, to: dom.FrameExecutionContext): Promise<dom.ElementHandle> {
     const result = await this._client.send('DOM.resolveNode', {
       backendNodeId,
       executionContextId: (to._delegate as CRExecutionContext)._contextId,
@@ -588,34 +789,6 @@ export class CRPage implements PageDelegate {
     if (!result || result.object.subtype === 'null')
       throw new Error('Unable to adopt element handle from a different document');
     return to._createHandle(result.object).asElement()!;
-  }
-
-  async getAccessibilityTree(needle?: dom.ElementHandle) {
-    return getAccessibilityTree(this._client, needle);
-  }
-
-  async inputActionEpilogue(): Promise<void> {
-    await this._client.send('Page.enable').catch(e => {});
-  }
-
-  async pdf(options?: types.PDFOptions): Promise<Buffer> {
-    return this._pdf.generate(options);
-  }
-
-  coverage(): CRCoverage {
-    return this._coverage;
-  }
-
-  async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {
-    const { backendNodeId } = await this._client.send('DOM.getFrameOwner', { frameId: frame._id }).catch(e => {
-      if (e instanceof Error && e.message.includes('Frame with the given id was not found.'))
-        e.message = 'Frame has been detached.';
-      throw e;
-    });
-    const parent = frame.parentFrame();
-    if (!parent)
-      throw new Error('Frame has been detached.');
-    return this.adoptBackendNodeId(backendNodeId, await parent._mainContext());
   }
 }
 
