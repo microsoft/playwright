@@ -159,11 +159,12 @@ class Injected {
       return 'Element is not visible';
     if (element.nodeName.toLowerCase() === 'input') {
       const input = element as HTMLInputElement;
-      const type = input.getAttribute('type') || '';
+      const type = (input.getAttribute('type') || '').toLowerCase();
+      const kDateTypes = new Set(['date', 'time', 'datetime', 'datetime-local']);
       const kTextInputTypes = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
-      if (!kTextInputTypes.has(type.toLowerCase()))
+      if (!kTextInputTypes.has(type) && !kDateTypes.has(type))
         return 'Cannot fill input of type "' + type + '".';
-      if (type.toLowerCase() === 'number') {
+      if (type === 'number') {
         value = value.trim();
         if (!value || isNaN(Number(value)))
           return 'Cannot type text into input[type=number].';
@@ -172,9 +173,21 @@ class Injected {
         return 'Cannot fill a disabled input.';
       if (input.readOnly)
         return 'Cannot fill a readonly input.';
+      if (kDateTypes.has(type)) {
+        value = value.trim();
+        input.focus();
+        input.value = value;
+        if (input.value !== value)
+          return `Malformed ${type} "${value}"`;
+        element.dispatchEvent(new Event('input', { 'bubbles': true }));
+        element.dispatchEvent(new Event('change', { 'bubbles': true }));
+        return false;  // We have already changed the value, no need to input it.
+      }
       input.select();
       input.focus();
-    } else if (element.nodeName.toLowerCase() === 'textarea') {
+      return true;
+    }
+    if (element.nodeName.toLowerCase() === 'textarea') {
       const textarea = element as HTMLTextAreaElement;
       if (textarea.disabled)
         return 'Cannot fill a disabled textarea.';
@@ -183,7 +196,9 @@ class Injected {
       textarea.selectionStart = 0;
       textarea.selectionEnd = textarea.value.length;
       textarea.focus();
-    } else if (element.isContentEditable) {
+      return true;
+    }
+    if (element.isContentEditable) {
       const range = element.ownerDocument!.createRange();
       range.selectNodeContents(element);
       const selection = element.ownerDocument!.defaultView!.getSelection();
@@ -192,10 +207,9 @@ class Injected {
       selection.removeAllRanges();
       selection.addRange(range);
       element.focus();
-    } else {
-      return 'Element is not an <input>, <textarea> or [contenteditable] element.';
+      return true;
     }
-    return false;
+    return 'Element is not an <input>, <textarea> or [contenteditable] element.';
   }
 
   isCheckboxChecked(node: Node) {
