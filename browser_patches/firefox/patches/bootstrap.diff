@@ -138,7 +138,7 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 514a4f2890a20558afe0d9c1aec697612fc8e873..a013080177ee2c49342db2cda869b10a698482f4 100644
+index 514a4f2890a20558afe0d9c1aec697612fc8e873..8d16217833c15ee3611be913646c77fc440473e5 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -15,6 +15,12 @@
@@ -186,17 +186,18 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..a013080177ee2c49342db2cda869b10a
  #include "nsNetCID.h"
  #include "nsNetUtil.h"
  #include "nsObjectLoadingContent.h"
-@@ -350,6 +360,9 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
+@@ -350,6 +360,10 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
        mUseErrorPages(false),
        mObserveErrorPages(true),
        mCSSErrorReportingEnabled(false),
 +      mFileInputInterceptionEnabled(false),
 +      mBypassCSPEnabled(false),
 +      mOnlineOverride(nsIDocShell::ONLINE_OVERRIDE_NONE),
++      mColorSchemeOverride(COLOR_SCHEME_OVERRIDE_NONE),
        mAllowAuth(mItemType == typeContent),
        mAllowKeywordFixup(false),
        mIsOffScreenBrowser(false),
-@@ -1219,6 +1232,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
+@@ -1219,6 +1233,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
      isSubFrame = mLSHE->GetIsSubFrame();
    }
  
@@ -204,7 +205,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..a013080177ee2c49342db2cda869b10a
    if (!isSubFrame && !isRoot) {
      /*
       * We don't want to send OnLocationChange notifications when
-@@ -3340,6 +3354,155 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
+@@ -3340,6 +3355,167 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
    return NS_OK;
  }
  
@@ -355,12 +356,24 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..a013080177ee2c49342db2cda869b10a
 +  return NS_OK;
 +}
 +
++NS_IMETHODIMP
++nsDocShell::GetColorSchemeOverride(ColorSchemeOverride* aColorSchemeOverride) {
++  *aColorSchemeOverride = GetRootDocShell()->mColorSchemeOverride;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsDocShell::SetColorSchemeOverride(ColorSchemeOverride aColorSchemeOverride) {
++  mColorSchemeOverride = aColorSchemeOverride;
++  return NS_OK;
++}
++
 +// =============== Juggler End =======================
 +
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
-@@ -12137,6 +12300,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12137,6 +12313,9 @@ class OnLinkClickEvent : public Runnable {
                                  mNoOpenerImplied, nullptr, nullptr,
                                  mIsUserTriggered, mTriggeringPrincipal, mCsp);
      }
@@ -370,7 +383,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..a013080177ee2c49342db2cda869b10a
      return NS_OK;
    }
  
-@@ -12226,6 +12392,9 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12226,6 +12405,9 @@ nsresult nsDocShell::OnLinkClick(
        this, aContent, aURI, target, aFileName, aPostDataStream,
        aHeadersDataStream, noOpenerImplied, aIsUserTriggered, aIsTrusted,
        aTriggeringPrincipal, aCsp);
@@ -381,7 +394,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..a013080177ee2c49342db2cda869b10a
  }
  
 diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
-index cc88045201371eb2195a28c60fcd3b6d940e8b72..7fad3529cc7a22b0b2aa8d8cb5ebbb5814aa2490 100644
+index cc88045201371eb2195a28c60fcd3b6d940e8b72..2ea1e4825849c3bf42d0ab2c06a73ce79363922a 100644
 --- a/docshell/base/nsDocShell.h
 +++ b/docshell/base/nsDocShell.h
 @@ -13,6 +13,7 @@
@@ -423,7 +436,7 @@ index cc88045201371eb2195a28c60fcd3b6d940e8b72..7fad3529cc7a22b0b2aa8d8cb5ebbb58
    // Handles retrieval of subframe session history for nsDocShell::LoadURI. If a
    // load is requested in a subframe of the current DocShell, the subframe
    // loadType may need to reflect the loadType of the parent document, or in
-@@ -1292,6 +1303,12 @@ class nsDocShell final : public nsDocLoader,
+@@ -1292,6 +1303,13 @@ class nsDocShell final : public nsDocLoader,
    bool mUseErrorPages : 1;
    bool mObserveErrorPages : 1;
    bool mCSSErrorReportingEnabled : 1;
@@ -432,12 +445,13 @@ index cc88045201371eb2195a28c60fcd3b6d940e8b72..7fad3529cc7a22b0b2aa8d8cb5ebbb58
 +  nsString mLanguageOverride;
 +  RefPtr<nsGeolocationService> mGeolocationServiceOverride;
 +  OnlineOverride mOnlineOverride;
++  ColorSchemeOverride mColorSchemeOverride;
 +
    bool mAllowAuth : 1;
    bool mAllowKeywordFixup : 1;
    bool mIsOffScreenBrowser : 1;
 diff --git a/docshell/base/nsIDocShell.idl b/docshell/base/nsIDocShell.idl
-index ee89208c3ada6da09ecda6147e1a372ee0562810..ce8d31365b5190ac2c974100a6ec6408c53681d5 100644
+index ee89208c3ada6da09ecda6147e1a372ee0562810..1d3156f00f193bd9c1173a1326a1cb140efcf7b5 100644
 --- a/docshell/base/nsIDocShell.idl
 +++ b/docshell/base/nsIDocShell.idl
 @@ -44,6 +44,7 @@ interface nsIURI;
@@ -448,7 +462,7 @@ index ee89208c3ada6da09ecda6147e1a372ee0562810..ce8d31365b5190ac2c974100a6ec6408
  interface nsIDocShellLoadInfo;
  interface nsIEditor;
  interface nsIEditingSession;
-@@ -1129,4 +1130,21 @@ interface nsIDocShell : nsIDocShellTreeItem
+@@ -1129,4 +1130,29 @@ interface nsIDocShell : nsIDocShellTreeItem
     * @see nsISHEntry synchronizeLayoutHistoryState().
     */
    void synchronizeLayoutHistoryState();
@@ -468,10 +482,18 @@ index ee89208c3ada6da09ecda6147e1a372ee0562810..ce8d31365b5190ac2c974100a6ec6408
 +  };
 +  [infallible] attribute nsIDocShell_OnlineOverride onlineOverride;
 +
++  cenum ColorSchemeOverride : 8 {
++    COLOR_SCHEME_OVERRIDE_LIGHT,
++    COLOR_SCHEME_OVERRIDE_DARK,
++    COLOR_SCHEME_OVERRIDE_NO_PREFERENCE,
++    COLOR_SCHEME_OVERRIDE_NONE, /* This clears the override. */
++  };
++  [infallible] attribute nsIDocShell_ColorSchemeOverride colorSchemeOverride;
++
 +  void setGeolocationOverride(in nsIDOMGeoPosition position);
  };
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index bc0aeaefb9ca6d7cd15fc5ad189d2d260d519997..e948a5c20308ad8a9f43b3a53c532ee0cf62950c 100644
+index bc0aeaefb9ca6d7cd15fc5ad189d2d260d519997..c5f649f2b0508028955be4fa9562cfc1370b0a00 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
 @@ -3269,6 +3269,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
@@ -496,6 +518,27 @@ index bc0aeaefb9ca6d7cd15fc5ad189d2d260d519997..e948a5c20308ad8a9f43b3a53c532ee0
    // If this is a data document - no need to set CSP.
    if (mLoadedAsData) {
      return NS_OK;
+@@ -16114,6 +16122,20 @@ void Document::RemoveToplevelLoadingDocument(Document* aDoc) {
+ }
+ 
+ StylePrefersColorScheme Document::PrefersColorScheme() const {
++  auto* docShell = static_cast<nsDocShell*>(GetDocShell());
++  nsIDocShell::ColorSchemeOverride colorScheme;
++  if (docShell->GetColorSchemeOverride(&colorScheme) == NS_OK &&
++      colorScheme != nsIDocShell::COLOR_SCHEME_OVERRIDE_NONE) {
++    switch (colorScheme) {
++      case nsIDocShell::COLOR_SCHEME_OVERRIDE_LIGHT:
++        return StylePrefersColorScheme::Light;
++      case nsIDocShell::COLOR_SCHEME_OVERRIDE_DARK:
++        return StylePrefersColorScheme::Dark;
++      case nsIDocShell::COLOR_SCHEME_OVERRIDE_NO_PREFERENCE:
++        return StylePrefersColorScheme::NoPreference;
++    };
++  }
++
+   if (nsContentUtils::ShouldResistFingerprinting(this)) {
+     return StylePrefersColorScheme::Light;
+   }
 diff --git a/dom/base/Navigator.cpp b/dom/base/Navigator.cpp
 index 1388a20edd594c6799e47ed567edb1f7d9cc9224..549026512c86e1e7e81a200d1c45f2cb58b3fc67 100644
 --- a/dom/base/Navigator.cpp
@@ -2123,10 +2166,10 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..836b5c537aa322663de78cd35b64f215c4c91abc
+index 0000000000000000000000000000000000000000..345aa8b0ebbd9d1e8c9c79913bd7ec3fbb1cc768
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
-@@ -0,0 +1,552 @@
+@@ -0,0 +1,561 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
@@ -2456,6 +2499,10 @@ index 0000000000000000000000000000000000000000..836b5c537aa322663de78cd35b64f215
 +    await this._channel.connect('').send('setOnlineOverride', override).catch(e => void e);
 +  }
 +
++  async setColorScheme(colorScheme) {
++    await this._channel.connect('').send('setColorScheme', colorScheme).catch(e => void e);
++  }
++
 +  async hasFailedToOverrideTimezone() {
 +    return await this._channel.connect('').send('hasFailedToOverrideTimezone').catch(e => true);
 +  }
@@ -2540,6 +2587,11 @@ index 0000000000000000000000000000000000000000..836b5c537aa322663de78cd35b64f215
 +  async setOnlineOverride(override) {
 +    this.options.onlineOverride = override;
 +    await Promise.all(Array.from(this.pages).map(page => page.setOnlineOverride(override)));
++  }
++
++  async setColorScheme(colorScheme) {
++    this.options.colorScheme = colorScheme;
++    await Promise.all(Array.from(this.pages).map(page => page.setColorScheme(colorScheme)));
 +  }
 +
 +  async grantPermissions(origin, permissions) {
@@ -2796,10 +2848,10 @@ index 0000000000000000000000000000000000000000..268fbc361d8053182bb6c27f626e853d
 +
 diff --git a/juggler/content/FrameTree.js b/juggler/content/FrameTree.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..255d1a842e9646eccc7c7bf8902baf94ef094c0e
+index 0000000000000000000000000000000000000000..5a1df2837d70531a670163b7c860108895bc9106
 --- /dev/null
 +++ b/juggler/content/FrameTree.js
-@@ -0,0 +1,452 @@
+@@ -0,0 +1,462 @@
 +"use strict";
 +const Ci = Components.interfaces;
 +const Cr = Components.results;
@@ -2934,6 +2986,16 @@ index 0000000000000000000000000000000000000000..255d1a842e9646eccc7c7bf8902baf94
 +    this._bindings.set(name, script);
 +    for (const frame of this.frames())
 +      frame._addBinding(name, script);
++  }
++
++  setColorScheme(colorScheme) {
++    const docShell = this._mainFrame._docShell;
++    switch (colorScheme) {
++      case 'light': docShell.colorSchemeOverride = Ci.nsIDocShell.COLOR_SCHEME_OVERRIDE_LIGHT; break;
++      case 'dark': docShell.colorSchemeOverride = Ci.nsIDocShell.COLOR_SCHEME_OVERRIDE_DARK; break;
++      case 'no-preference': docShell.colorSchemeOverride = Ci.nsIDocShell.COLOR_SCHEME_OVERRIDE_NO_PREFERENCE; break;
++      default: docShell.colorSchemeOverride = Ci.nsIDocShell.COLOR_SCHEME_OVERRIDE_NONE; break;
++    }
 +  }
 +
 +  frameForDocShell(docShell) {
@@ -3322,10 +3384,10 @@ index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c3
 +
 diff --git a/juggler/content/PageAgent.js b/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..643fcfeb7d1084c2a5eb99031d0f626ebee725f9
+index 0000000000000000000000000000000000000000..7f1958121f24c5f5360f24d7580ebf1132f91e83
 --- /dev/null
 +++ b/juggler/content/PageAgent.js
-@@ -0,0 +1,936 @@
+@@ -0,0 +1,932 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -3512,11 +3574,7 @@ index 0000000000000000000000000000000000000000..643fcfeb7d1084c2a5eb99031d0f626e
 +      cv.stopEmulatingMedium();
 +    else if (type)
 +      cv.emulateMedium(type);
-+    switch (colorScheme) {
-+      case 'light': cv.emulatePrefersColorScheme(cv.PREFERS_COLOR_SCHEME_LIGHT); break;
-+      case 'dark': cv.emulatePrefersColorScheme(cv.PREFERS_COLOR_SCHEME_DARK); break;
-+      case 'no-preference': cv.emulatePrefersColorScheme(cv.PREFERS_COLOR_SCHEME_NO_PREFERENCE); break;
-+    }
++    this._frameTree.setColorScheme(colorScheme);
 +  }
 +
 +  _addScriptToEvaluateOnNewDocument({script, worldName}) {
@@ -5059,10 +5117,10 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/juggler/content/main.js b/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..0060f625a8ad10d7f0df121bdc5fcfa8d5d7b336
+index 0000000000000000000000000000000000000000..40eb01dfb672fdb3e31d03fef83ae3210698b17c
 --- /dev/null
 +++ b/juggler/content/main.js
-@@ -0,0 +1,156 @@
+@@ -0,0 +1,162 @@
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
@@ -5130,7 +5188,7 @@ index 0000000000000000000000000000000000000000..0060f625a8ad10d7f0df121bdc5fcfa8
 +    response = { sessionIds: [], browserContextOptions: {} };
 +
 +  const { sessionIds, browserContextOptions } = response;
-+  const { userAgent, bypassCSP, javaScriptDisabled, viewport, scriptsToEvaluateOnNewDocument, bindings, locale, timezoneId, geolocation, onlineOverride } = browserContextOptions;
++  const { userAgent, bypassCSP, javaScriptDisabled, viewport, scriptsToEvaluateOnNewDocument, bindings, locale, timezoneId, geolocation, onlineOverride, colorScheme } = browserContextOptions;
 +
 +  let failedToOverrideTimezone = false;
 +  if (timezoneId)
@@ -5155,6 +5213,8 @@ index 0000000000000000000000000000000000000000..0060f625a8ad10d7f0df121bdc5fcfa8
 +  }
 +
 +  frameTree = new FrameTree(docShell);
++  if (colorScheme !== undefined)
++    frameTree.setColorScheme(colorScheme);
 +  for (const script of scriptsToEvaluateOnNewDocument || [])
 +    frameTree.addScriptToEvaluateOnNewDocument(script);
 +  for (const { name, script } of bindings || [])
@@ -5189,6 +5249,10 @@ index 0000000000000000000000000000000000000000..0060f625a8ad10d7f0df121bdc5fcfa8
 +
 +    setOnlineOverride(override) {
 +      setOnlineOverrideInDocShell(override);
++    },
++
++    setColorScheme(colorScheme) {
++      frameTree.setColorScheme(colorScheme);
 +    },
 +
 +    ensurePermissions() {
@@ -5298,10 +5362,10 @@ index 0000000000000000000000000000000000000000..bf37558bccc48f4d90eadc971c1eb3e4
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/juggler/protocol/BrowserHandler.js b/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..da90d080ac091afa6c75cfc993d8850231e0d41a
+index 0000000000000000000000000000000000000000..97e88dd582090971d122064b8a131096a317b6be
 --- /dev/null
 +++ b/juggler/protocol/BrowserHandler.js
-@@ -0,0 +1,185 @@
+@@ -0,0 +1,189 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -5451,6 +5515,10 @@ index 0000000000000000000000000000000000000000..da90d080ac091afa6c75cfc993d88502
 +
 +  async setOnlineOverride({browserContextId, override}) {
 +    await this._targetRegistry.browserContextForId(browserContextId).setOnlineOverride(override);
++  }
++
++  async setColorScheme({browserContextId, colorScheme}) {
++    await this._targetRegistry.browserContextForId(browserContextId).setColorScheme(colorScheme);
 +  }
 +
 +  async addScriptToEvaluateOnNewDocument({browserContextId, script}) {
@@ -6293,10 +6361,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/juggler/protocol/Protocol.js b/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..e5482da00da11c88b278164b148f44c724cb0c89
+index 0000000000000000000000000000000000000000..6e187212618130bc716a0fd0121ed0dd23d35770
 --- /dev/null
 +++ b/juggler/protocol/Protocol.js
-@@ -0,0 +1,775 @@
+@@ -0,0 +1,781 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -6612,6 +6680,12 @@ index 0000000000000000000000000000000000000000..e5482da00da11c88b278164b148f44c7
 +        browserContextId: t.Optional(t.String),
 +        override: t.Optional(t.Enum(['online', 'offline'])),
 +      }
++    },
++    'setColorScheme': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        colorScheme: t.Optional(t.Enum(['dark', 'light', 'no-preference'])),
++      },
 +    },
 +  },
 +};
