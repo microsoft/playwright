@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
-const { waitEvent } = utils;
-
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({}) {
 
   describe('Page.focus', function() {
     it('should work', async function({page, server}) {

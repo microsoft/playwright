@@ -20,10 +20,7 @@ const utils = require('./utils');
 /**
  * @type {TestSuite}
  */
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, browserType, FFOX, CHROMIUM, WEBKIT}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({defaultBrowserOptions, browserType, FFOX, CHROMIUM, WEBKIT}) {
 
   describe('BrowserContext', function() {
     it('should work across sessions', async () => {

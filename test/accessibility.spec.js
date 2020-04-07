@@ -18,10 +18,7 @@
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, MAC}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({FFOX, CHROMIUM, WEBKIT, MAC}) {
 
   describe('Accessibility', function() {
     it('should work', async function({page}) {

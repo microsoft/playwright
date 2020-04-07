@@ -19,10 +19,7 @@ const { makeUserDataDir, removeUserDataDir } = require('./utils');
 /**
  * @type {TestSuite}
  */
-module.exports.describe = function({testRunner, expect, browserType, defaultBrowserOptions, FFOX, CHROMIUM, WEBKIT, WIN}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({browserType, defaultBrowserOptions, FFOX, CHROMIUM, WEBKIT, WIN}) {
 
   const headfulOptions = Object.assign({}, defaultBrowserOptions, {
     headless: false

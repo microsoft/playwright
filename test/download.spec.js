@@ -17,10 +17,7 @@
 const fs = require('fs');
 const path = require('path');
 
-module.exports.describe = function({testRunner, expect, browserType, CHROMIUM, WEBKIT, FFOX, WIN, MAC}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({browserType, CHROMIUM, WEBKIT, FFOX, WIN, MAC}) {
 
   describe.fail(FFOX)('Download', function() {
     beforeEach(async(state) => {

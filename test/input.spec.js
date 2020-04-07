@@ -24,10 +24,8 @@ const FILE_TO_UPLOAD = path.join(__dirname, '/assets/file-to-upload.txt');
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMIUM, WEBKIT}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({playwright, FFOX, CHROMIUM, WEBKIT}) {
+
   describe('input', function() {
     it('should upload the file', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/fileupload.html');

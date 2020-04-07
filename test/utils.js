@@ -80,13 +80,13 @@ const utils = module.exports = {
     return promisified;
   },
 
-  recordAPICoverage: function(testRunner, api, events, ignoredMethodsArray = []) {
+  recordAPICoverage: function(api, events, ignoredMethodsArray = []) {
     const coverage = new Map();
     const ignoredMethods = new Set(ignoredMethodsArray);
     for (const [className, classType] of Object.entries(api))
       traceAPICoverage(coverage, events, className, classType);
-    testRunner.describe(COVERAGE_TESTSUITE_NAME, () => {
-      testRunner.it('should call all API methods', () => {
+    describe(COVERAGE_TESTSUITE_NAME, () => {
+      it('should call all API methods', () => {
         const missingMethods = [];
         const extraIgnoredMethods = [];
         for (const method of coverage.keys()) {

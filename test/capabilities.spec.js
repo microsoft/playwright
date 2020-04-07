@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
-const { waitEvent } = utils;
-
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, WIN, WEBKIT}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({WIN, WEBKIT}) {
 
   describe('Capabilities', function() {
     it.fail(WEBKIT && WIN)('Web Assembly should work', async function({page, server}) {

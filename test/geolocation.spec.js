@@ -18,10 +18,7 @@
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function ({ FFOX, WEBKIT }) {
 
   describe('Overrides.setGeolocation', function() {
     it('should work', async({page, server, context}) => {

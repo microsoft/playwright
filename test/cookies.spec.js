@@ -18,10 +18,7 @@
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, browserType, defaultBrowserOptions, MAC, FFOX, CHROMIUM, WEBKIT}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({browserType, defaultBrowserOptions, MAC, FFOX, CHROMIUM, WEBKIT}) {
 
   describe('BrowserContext.cookies', function() {
     it('should return no cookies in pristine browser context', async({context, page, server}) => {

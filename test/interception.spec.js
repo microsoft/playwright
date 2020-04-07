@@ -24,10 +24,7 @@ const vm = require('vm');
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, FFOX, CHROMIUM, WEBKIT}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({defaultBrowserOptions, playwright, FFOX, CHROMIUM, WEBKIT}) {
 
   describe('Page.route', function() {
     it('should intercept', async({page, server}) => {

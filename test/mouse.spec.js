@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const os = require('os');
 
 function dimensions() {
   const rect = document.querySelector('textarea').getBoundingClientRect();
@@ -29,10 +28,7 @@ function dimensions() {
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, MAC}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({FFOX, CHROMIUM, WEBKIT, MAC}) {
 
   describe('Mouse', function() {
     it('should click the document', async({page, server}) => {

@@ -23,10 +23,7 @@ const { makeUserDataDir, removeUserDataDir } = require('./utils');
 /**
  * @type {TestSuite}
  */
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, browserType, playwrightPath, product, CHROMIUM, FFOX, WEBKIT, WIN}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({defaultBrowserOptions, playwright, browserType, playwrightPath, CHROMIUM, FFOX, WEBKIT, WIN}) {
 
   describe('Playwright', function() {
     describe('browserType.launch', function() {

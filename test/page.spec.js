@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const fs = require('fs');
+
 const path = require('path');
 const utils = require('./utils');
 const {waitEvent} = utils;
@@ -23,10 +23,7 @@ const vm = require('vm');
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, headless, playwright, FFOX, CHROMIUM, WEBKIT}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({playwright, FFOX, CHROMIUM, WEBKIT}) {
 
   describe('Page.close', function() {
     it('should reject all promises when page is closed', async({context}) => {

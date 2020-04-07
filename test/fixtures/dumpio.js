@@ -4,7 +4,7 @@
     console.log('unhandledRejection', error.message);
   });
 
-  const [, , playwrightRoot, product, useWebSocket] = process.argv;
+  const [, , playwrightRoot, browserType] = process.argv;
   const options = {
     ignoreDefaultArgs: true,
     dumpio: true,
@@ -12,9 +12,8 @@
     executablePath: 'node',
     args: ['-e', 'console.error("message from dumpio")', '--']
   }
-  console.error('using web socket: ' + options.webSocket);
   try {
-    await require(playwrightRoot)[product.toLowerCase()].launchServer(options);
+    await require(playwrightRoot)[browserType].launchServer(options);
     console.error('Browser launch unexpectedly succeeded.');
   } catch (e) {
   }

@@ -14,15 +14,10 @@
  * limitations under the License.
  */
 
-const { waitEvent } = require('../utils');
-
 /**
  * @type {ChromiumTestSuite}
  */
-module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMIUM, WEBKIT}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({playwright, FFOX, CHROMIUM, WEBKIT}) {
 
   describe('ChromiumBrowserContext', function() {
     it('should create a worker from a service worker', async({browser, page, server, context}) => {

@@ -18,10 +18,7 @@
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, product, playwright, FFOX, CHROMIUM, WEBKIT, LINUX }) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({FFOX, CHROMIUM, WEBKIT, LINUX }) {
 
   describe('Page.screenshot', function() {
     it('should work', async({page, server}) => {
