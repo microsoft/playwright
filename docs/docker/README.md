@@ -13,7 +13,7 @@ $ sudo docker build -t microsoft/playwright:bionic -f Dockerfile.bionic .
 Running image:
 
 ```
-$ sudo docker container run -it --rm --security-opt seccomp=chrome.json microsoft/playwright /bin/bash
+$ sudo docker container run -it --rm --security-opt seccomp=chrome.json microsoft/playwright:bionic /bin/bash
 ```
 
 > **NOTE**: The seccomp profile is coming from Jessie Frazelle. It's needed
