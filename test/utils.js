@@ -85,9 +85,8 @@ const utils = module.exports = {
     const ignoredMethods = new Set(ignoredMethodsArray);
     for (const [className, classType] of Object.entries(api))
       traceAPICoverage(coverage, events, className, classType);
-    const focus = testRunner.hasFocusedTestsOrSuites();
-    (focus ? testRunner.fdescribe : testRunner.describe)(COVERAGE_TESTSUITE_NAME, () => {
-      (focus ? testRunner.fit : testRunner.it)('should call all API methods', () => {
+    testRunner.describe(COVERAGE_TESTSUITE_NAME, () => {
+      testRunner.it('should call all API methods', () => {
         const missingMethods = [];
         const extraIgnoredMethods = [];
         for (const method of coverage.keys()) {
@@ -292,34 +291,31 @@ const utils = module.exports = {
   },
 
   setupTestRunner: function(testRunner) {
-    testRunner.testModifier('skip', (t, condition) => condition && t.setSkipped(true));
-    testRunner.suiteModifier('skip', (s, condition) => condition && s.setSkipped(true));
-    testRunner.testModifier('fail', (t, condition) => condition && t.setExpectation(t.Expectations.Fail));
-    testRunner.suiteModifier('fail', (s, condition) => condition && s.setExpectation(s.Expectations.Fail));
-    testRunner.testModifier('slow', (t, condition) => condition && t.setTimeout(t.timeout() * 3));
-    testRunner.testModifier('repeat', (t, count) => t.setRepeat(count));
-    testRunner.suiteModifier('repeat', (s, count) => s.setRepeat(count));
-    testRunner.testAttribute('focus', t => t.setFocused(true));
-    testRunner.suiteAttribute('focus', s => s.setFocused(true));
-    testRunner.testAttribute('debug', t => {
-      t.setFocused(true);
+    const collector = testRunner._collector;
+    collector.addTestModifier('skip', (t, condition) => condition && t.setSkipped(true));
+    collector.addSuiteModifier('skip', (s, condition) => condition && s.setSkipped(true));
+    collector.addTestModifier('fail', (t, condition) => condition && t.setExpectation(t.Expectations.Fail));
+    collector.addSuiteModifier('fail', (s, condition) => condition && s.setExpectation(s.Expectations.Fail));
+    collector.addTestModifier('slow', t => t.setTimeout(t.timeout() * 3));
+    collector.addTestAttribute('debug', t => {
       t.setTimeout(100000000);
 
       let session;
-      t.before(async () => {
+      t.environment().beforeEach(async () => {
+        const inspector = require('inspector');
         const readFileAsync = util.promisify(fs.readFile.bind(fs));
-        session = new require('inspector').Session();
+        session = new inspector.Session();
         session.connect();
         const postAsync = util.promisify(session.post.bind(session));
         await postAsync('Debugger.enable');
         const setBreakpointCommands = [];
         const N = t.body().toString().split('\n').length;
         const location = t.location();
-        const lines = (await readFileAsync(location.filePath, 'utf8')).split('\n');
+        const lines = (await readFileAsync(location.filePath(), 'utf8')).split('\n');
         for (let line = 0; line < N; ++line) {
-          const lineNumber = line + location.lineNumber;
+          const lineNumber = line + location.lineNumber();
           setBreakpointCommands.push(postAsync('Debugger.setBreakpointByUrl', {
-            url: url.pathToFileURL(location.filePath),
+            url: url.pathToFileURL(location.filePath()),
             lineNumber,
             condition: `console.log('${String(lineNumber + 1).padStart(6, ' ')} | ' + ${JSON.stringify(lines[lineNumber])})`,
           }).catch(e => {}));
@@ -327,14 +323,14 @@ const utils = module.exports = {
         await Promise.all(setBreakpointCommands);
       });
 
-      t.after(async () => {
+      t.environment().afterEach(async () => {
         session.disconnect();
       });
     });
-    testRunner.fdescribe = testRunner.describe.focus;
-    testRunner.xdescribe = testRunner.describe.skip(true);
-    testRunner.fit = testRunner.it.focus;
-    testRunner.xit = testRunner.it.skip(true);
-    testRunner.dit = testRunner.it.debug;
+    testRunner.api().fdescribe = testRunner.api().describe.only;
+    testRunner.api().xdescribe = testRunner.api().describe.skip(true);
+    testRunner.api().fit = testRunner.api().it.only;
+    testRunner.api().xit = testRunner.api().it.skip(true);
+    testRunner.api().dit = testRunner.api().it.only.debug;
   },
 };

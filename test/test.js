@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const {TestRunner, Reporter} = require('../utils/testrunner/');
+const TestRunner = require('../utils/testrunner/');
 const utils = require('./utils');
 const os = require('os');
 
@@ -38,9 +38,13 @@ if (MAJOR_NODEJS_VERSION >= 8 && require('inspector').url()) {
 
 const testRunner = new TestRunner({
   timeout,
+  totalTimeout: process.env.CI ? 15 * 60 * 1000 : 0,
   parallel,
   breakOnFailure: process.argv.indexOf('--break-on-failure') !== -1,
-  installCommonHelpers: false
+  verbose: process.argv.includes('--verbose'),
+  summary: !process.argv.includes('--verbose'),
+  showSlowTests: process.env.CI ? 5 : 0,
+  showMarkedAsFailingTests: 10,
 });
 utils.setupTestRunner(testRunner);
 
@@ -68,7 +72,7 @@ require('./playwright.spec.js').addPlaywrightTests({
   playwrightPath: utils.projectRoot(),
   products,
   platform: os.platform(),
-  testRunner,
+  testRunner: testRunner.api(),
   headless: !!valueFromEnv('HEADLESS', true),
   slowMo: valueFromEnv('SLOW_MO', 0),
   dumpProtocolOnFailure: valueFromEnv('DEBUGP', false),
@@ -81,15 +85,5 @@ if (filterArgIndex !== -1) {
   testRunner.focusMatchingTests(new RegExp(filter, 'i'));
 }
 
-new Reporter(testRunner, {
-  verbose: process.argv.includes('--verbose'),
-  summary: !process.argv.includes('--verbose'),
-  showSlowTests: process.env.CI ? 5 : 0,
-  showMarkedAsFailingTests: 10,
-});
-
 // await utils.initializeFlakinessDashboardIfNeeded(testRunner);
-testRunner.run({ totalTimeout: process.env.CI ? 15 * 60 * 1000 : 0 }).then(result => {
-  process.exit(result.exitCode);
-});
-
+testRunner.run();

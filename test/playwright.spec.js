@@ -18,7 +18,7 @@ const fs = require('fs');
 const path = require('path');
 const rm = require('rimraf').sync;
 const GoldenUtils = require('./golden-utils');
-const {Matchers} = require('../utils/testrunner/');
+const {Matchers} = require('../utils/testrunner/Matchers');
 const readline = require('readline');
 const {TestServer} = require('../utils/testserver/');
 
@@ -174,14 +174,13 @@ module.exports.addPlaywrightTests = ({testRunner, platform, products, playwright
           state._stderr.close();
         });
 
-        beforeEach(async(state, test) => {
-          test.output = [];
-          const dumpout = data => test.output.push(`\x1b[33m[pw:stdio:out]\x1b[0m ${data}`);
-          const dumperr = data => test.output.push(`\x1b[31m[pw:stdio:err]\x1b[0m ${data}`);
+        beforeEach(async(state, testRun) => {
+          const dumpout = data => testRun.log(`\x1b[33m[pw:stdio:out]\x1b[0m ${data}`);
+          const dumperr = data => testRun.log(`\x1b[31m[pw:stdio:err]\x1b[0m ${data}`);
           state._stdout.on('line', dumpout);
           state._stderr.on('line', dumperr);
           if (dumpProtocolOnFailure)
-            state.browser._debugProtocol.log = data => test.output.push(`\x1b[32m[pw:protocol]\x1b[0m ${data}`);
+            state.browser._debugProtocol.log = data => testRun.log(`\x1b[32m[pw:protocol]\x1b[0m ${data}`);
           state.tearDown = async () => {
             state._stdout.off('line', dumpout);
             state._stderr.off('line', dumperr);

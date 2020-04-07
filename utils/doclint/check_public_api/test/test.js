@@ -22,15 +22,15 @@ const mdBuilder = require('../MDBuilder');
 const jsBuilder = require('../JSBuilder');
 const GoldenUtils = require('../../../../test/golden-utils');
 
-const {TestRunner, Reporter, Matchers}  = require('../../../testrunner/');
+const {Matchers} = require('../../../testrunner/Matchers');
+const TestRunner  = require('../../../testrunner/');
 const runner = new TestRunner();
-const reporter = new Reporter(runner);
 
-const {describe, xdescribe, fdescribe} = runner;
-const {it, fit, xit} = runner;
-const {beforeAll, beforeEach, afterAll, afterEach} = runner;
+const {describe, xdescribe, fdescribe} = runner.api();
+const {it, fit, xit} = runner.api();
+const {beforeAll, beforeEach, afterAll, afterEach} = runner.api();
 
-let browserContext;
+let browser;
 let page;
 
 beforeAll(async function() {
@@ -60,8 +60,8 @@ describe('checkPublicAPI', function() {
 
 runner.run();
 
-async function testLint(state, test) {
-  const dirPath = path.join(__dirname, test.name());
+async function testLint(state, testRun) {
+  const dirPath = path.join(__dirname, testRun.test().name());
   const {expect} = new Matchers({
     toBeGolden: GoldenUtils.compare.bind(null, dirPath, dirPath)
   });
@@ -74,8 +74,8 @@ async function testLint(state, test) {
   expect(errors.join('\n')).toBeGolden('result.txt');
 }
 
-async function testMDBuilder(state, test) {
-  const dirPath = path.join(__dirname, test.name());
+async function testMDBuilder(state, testRun) {
+  const dirPath = path.join(__dirname, testRun.test().name());
   const {expect} = new Matchers({
     toBeGolden: GoldenUtils.compare.bind(null, dirPath, dirPath)
   });
@@ -84,8 +84,8 @@ async function testMDBuilder(state, test) {
   expect(serialize(documentation)).toBeGolden('result.txt');
 }
 
-async function testJSBuilder(state, test) {
-  const dirPath = path.join(__dirname, test.name());
+async function testJSBuilder(state, testRun) {
+  const dirPath = path.join(__dirname, testRun.test().name());
   const {expect} = new Matchers({
     toBeGolden: GoldenUtils.compare.bind(null, dirPath, dirPath)
   });
