@@ -41,7 +41,7 @@ RUN apt-get install -y libnss3 \
 
 RUN apt-get install -y libdbus-glib-1-2
 
-# 5. Install ffmpeg to bring in audio and video codecs necessary for playing videos in Playwright.
+# 5. Install ffmpeg to bring in audio and video codecs necessary for playing videos in Firefox.
 
 RUN apt-get install -y ffmpeg
 
