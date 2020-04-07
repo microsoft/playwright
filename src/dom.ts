@@ -243,13 +243,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async fill(value: string, options?: types.NavigatingActionWaitOptions): Promise<void> {
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
-      const error = await this._evaluateInUtility(({ injected, node }, value) => injected.fill(node, value), value);
-      if (error)
-        throw new Error(error);
-      if (value)
-        await this._page.keyboard.insertText(value);
-      else
-        await this._page.keyboard.press('Delete');
+      const errorOrNeedsInput = await this._evaluateInUtility(({ injected, node }, value) => injected.fill(node, value), value);
+      if (typeof errorOrNeedsInput === 'string')
+        throw new Error(errorOrNeedsInput);
+      if (errorOrNeedsInput) {
+        if (value)
+          await this._page.keyboard.insertText(value);
+        else
+          await this._page.keyboard.press('Delete');
+      }
     }, options, true);
   }
 
