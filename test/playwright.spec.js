@@ -23,28 +23,6 @@ const {TestServer} = require('../utils/testserver/');
 const YELLOW_COLOR = '\x1b[33m';
 const RESET_COLOR = '\x1b[0m';
 
-const BROWSER_CONFIGS = [
-  {
-    name: 'Firefox',
-    events: {
-      ...require('../lib/events').Events,
-      ...require('../lib/chromium/events').Events,
-    },
-    missingCoverage: ['browserContext.setGeolocation', 'browserContext.setOffline', 'cDPSession.send', 'cDPSession.detach'],
-  },
-  {
-    name: 'WebKit',
-    events: require('../lib/events').Events,
-    missingCoverage: ['browserContext.clearPermissions', 'cDPSession.send', 'cDPSession.detach'],
-  },
-  {
-    name: 'Chromium',
-    events: require('../lib/events').Events,
-    missingCoverage: [],
-  },
-];
-const browserNames = BROWSER_CONFIGS.map(config => config.name);
-
 /**
  * @type {TestSuite}
  */
@@ -265,6 +243,28 @@ module.exports.addPlaywrightTests = ({platform, products, playwrightPath, headle
       });
 
       if (coverage) {
+        const BROWSER_CONFIGS = [
+          {
+            name: 'Firefox',
+            events: require('../lib/events').Events,
+            missingCoverage: ['browserContext.setGeolocation', 'browserContext.setOffline', 'cDPSession.send', 'cDPSession.detach'],
+          },
+          {
+            name: 'WebKit',
+            events: require('../lib/events').Events,
+            missingCoverage: ['browserContext.clearPermissions', 'cDPSession.send', 'cDPSession.detach'],
+          },
+          {
+            name: 'Chromium',
+            events: {
+              ...require('../lib/events').Events,
+              ...require('../lib/chromium/events').Events,
+            },
+            // Sometimes we already have a background page while launching, before adding a listener.
+            missingCoverage: ['chromiumBrowserContext.emit("backgroundpage")'],
+          },
+        ];
+        const browserNames = BROWSER_CONFIGS.map(config => config.name);
         const browserConfig = BROWSER_CONFIGS.find(config => config.name === product);
         const api = require('../lib/api');
         const filteredApi = {};
