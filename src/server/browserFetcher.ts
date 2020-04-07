@@ -29,7 +29,7 @@ import { assert } from '../helper';
 
 const unlinkAsync = util.promisify(fs.unlink.bind(fs));
 const chmodAsync = util.promisify(fs.chmod.bind(fs));
-const mkdirAsync = fs.promises.mkdir;
+const mkdirAsync = util.promisify(fs.mkdir.bind(fs));
 
 const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
@@ -238,6 +238,8 @@ function extractZip(zipPath: string, folderPath: string) {
           zipfile.openReadStream(entry, (err, rs) => {
             if (err) reject(err);
             const readStream = rs as Readable;
+
+            readStream.on('error', reject);
 
             readStream.on('end', () => {
               zipfile.readEntry();
