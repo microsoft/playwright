@@ -147,8 +147,8 @@ export class Page extends ExtendedEventEmitter {
     return this._disconnectedPromise;
   }
 
-  protected _timeoutForEvent(event: string): number {
-    return this._timeoutSettings.timeout();
+  protected _computeDeadline(options?: types.TimeoutOptions): number {
+    return this._timeoutSettings.computeDeadline(options);
   }
 
   _didClose() {
@@ -313,21 +313,21 @@ export class Page extends ExtendedEventEmitter {
   }
 
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: network.Request) => boolean), options: types.TimeoutOptions = {}): Promise<network.Request> {
-    const { timeout = this._timeoutSettings.timeout() } = options;
+    const deadline = this._timeoutSettings.computeDeadline(options);
     return helper.waitForEvent(this, Events.Page.Request, (request: network.Request) => {
       if (helper.isString(urlOrPredicate) || helper.isRegExp(urlOrPredicate))
         return helper.urlMatches(request.url(), urlOrPredicate);
       return urlOrPredicate(request);
-    }, timeout, this._disconnectedPromise);
+    }, deadline, this._disconnectedPromise);
   }
 
   async waitForResponse(urlOrPredicate: string | RegExp | ((r: network.Response) => boolean), options: types.TimeoutOptions = {}): Promise<network.Response> {
-    const { timeout = this._timeoutSettings.timeout() } = options;
+    const deadline = this._timeoutSettings.computeDeadline(options);
     return helper.waitForEvent(this, Events.Page.Response, (response: network.Response) => {
       if (helper.isString(urlOrPredicate) || helper.isRegExp(urlOrPredicate))
         return helper.urlMatches(response.url(), urlOrPredicate);
       return urlOrPredicate(response);
-    }, timeout, this._disconnectedPromise);
+    }, deadline, this._disconnectedPromise);
   }
 
   async goBack(options?: types.NavigateOptions): Promise<network.Response | null> {

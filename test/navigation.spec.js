@@ -198,7 +198,7 @@ module.exports.describe = function({playwright, MAC, WIN, FFOX, CHROMIUM, WEBKIT
       server.setRoute('/empty.html', (req, res) => { });
       let error = null;
       await page.goto(server.PREFIX + '/empty.html', {timeout: 1}).catch(e => error = e);
-      const message = 'Navigation timeout of 1 ms exceeded';
+      const message = 'Navigation timeout exceeded';
       expect(error.message).toContain(message);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
@@ -209,7 +209,7 @@ module.exports.describe = function({playwright, MAC, WIN, FFOX, CHROMIUM, WEBKIT
       page.context().setDefaultNavigationTimeout(2);
       page.setDefaultNavigationTimeout(1);
       await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-      const message = 'Navigation timeout of 1 ms exceeded';
+      const message = 'Navigation timeout exceeded';
       expect(error.message).toContain(message);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
@@ -219,7 +219,7 @@ module.exports.describe = function({playwright, MAC, WIN, FFOX, CHROMIUM, WEBKIT
       let error = null;
       page.context().setDefaultNavigationTimeout(2);
       await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-      const message = 'Navigation timeout of 2 ms exceeded';
+      const message = 'Navigation timeout exceeded';
       expect(error.message).toContain(message);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
@@ -230,7 +230,7 @@ module.exports.describe = function({playwright, MAC, WIN, FFOX, CHROMIUM, WEBKIT
       page.context().setDefaultTimeout(2);
       page.setDefaultTimeout(1);
       await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-      const message = 'Navigation timeout of 1 ms exceeded';
+      const message = 'Navigation timeout exceeded';
       expect(error.message).toContain(message);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
@@ -240,7 +240,7 @@ module.exports.describe = function({playwright, MAC, WIN, FFOX, CHROMIUM, WEBKIT
       let error = null;
       page.context().setDefaultTimeout(2);
       await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-      const message = 'Navigation timeout of 2 ms exceeded';
+      const message = 'Navigation timeout exceeded';
       expect(error.message).toContain(message);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
@@ -251,7 +251,7 @@ module.exports.describe = function({playwright, MAC, WIN, FFOX, CHROMIUM, WEBKIT
       page.setDefaultTimeout(0);
       page.setDefaultNavigationTimeout(1);
       await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-      const message = 'Navigation timeout of 1 ms exceeded';
+      const message = 'Navigation timeout exceeded';
       expect(error.message).toContain(message);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
@@ -818,7 +818,7 @@ module.exports.describe = function({playwright, MAC, WIN, FFOX, CHROMIUM, WEBKIT
       server.setRoute('/one-style.css', (req, res) => response = res);
       await page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'domcontentloaded'});
       const error = await page.waitForLoadState('load', { timeout: 1 }).catch(e => e);
-      expect(error.message).toBe('Navigation timeout of 1 ms exceeded');
+      expect(error.message).toBe('Navigation timeout exceeded');
     });
     it('should resolve immediately if loaded', async({page, server}) => {
       await page.goto(server.PREFIX + '/one-style.html');

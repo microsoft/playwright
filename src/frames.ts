@@ -99,10 +99,10 @@ export class FrameManager {
     }
   }
 
-  async waitForNavigationsCreatedBy<T>(action: () => Promise<T>, options: types.NavigatingActionWaitOptions = {}, input?: boolean): Promise<T> {
+  async waitForNavigationsCreatedBy<T>(action: () => Promise<T>, deadline: number, options: types.NavigatingActionWaitOptions = {}, input?: boolean): Promise<T> {
     if (options.waitUntil === 'nowait')
       return action();
-    const barrier = new PendingNavigationBarrier({ waitUntil: 'domcontentloaded', ...options });
+    const barrier = new PendingNavigationBarrier({ waitUntil: 'domcontentloaded', ...options }, deadline);
     this._pendingNavigationBarriers.add(barrier);
     try {
       const result = await action();
@@ -438,12 +438,13 @@ export class Frame {
   async waitForSelector(selector: string, options?: types.WaitForElementOptions): Promise<dom.ElementHandle<Element> | null> {
     if (options && (options as any).visibility)
       throw new Error('options.visibility is not supported, did you mean options.waitFor?');
-    const { timeout = this._page._timeoutSettings.timeout(), waitFor = 'attached' } = (options || {});
+    const { waitFor = 'attached' } = (options || {});
     if (!['attached', 'detached', 'visible', 'hidden'].includes(waitFor))
       throw new Error(`Unsupported waitFor option "${waitFor}"`);
 
-    const { world, task } = selectors._waitForSelectorTask(selector, waitFor, timeout);
-    const result = await this._scheduleRerunnableTask(task, world, timeout, `selector "${selectorToString(selector, waitFor)}"`);
+    const deadline = this._page._timeoutSettings.computeDeadline(options);
+    const { world, task } = selectors._waitForSelectorTask(selector, waitFor, deadline);
+    const result = await this._scheduleRerunnableTask(task, world, deadline, `selector "${selectorToString(selector, waitFor)}"`);
     if (!result.asElement()) {
       result.dispose();
       return null;
@@ -667,64 +668,64 @@ export class Frame {
     return result!;
   }
 
-  async click(selector: string, options?: dom.ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    const handle = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.click(options);
+  async click(selector: string, options: dom.ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
+    await handle.click(helper.optionsWithUpdatedTimeout(options, deadline));
     handle.dispose();
   }
 
-  async dblclick(selector: string, options?: dom.MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    const handle = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.dblclick(options);
+  async dblclick(selector: string, options: dom.MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
+    await handle.dblclick(helper.optionsWithUpdatedTimeout(options, deadline));
     handle.dispose();
   }
 
-  async fill(selector: string, value: string, options?: types.NavigatingActionWaitOptions) {
-    const handle = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.fill(value, options);
+  async fill(selector: string, value: string, options: types.NavigatingActionWaitOptions = {}) {
+    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
+    await handle.fill(value, helper.optionsWithUpdatedTimeout(options, deadline));
     handle.dispose();
   }
 
   async focus(selector: string, options?: types.TimeoutOptions) {
-    const handle = await this._waitForSelectorInUtilityContext(selector, options);
+    const { handle } = await this._waitForSelectorInUtilityContext(selector, options);
     await handle.focus();
     handle.dispose();
   }
 
   async hover(selector: string, options?: dom.PointerActionOptions & types.PointerActionWaitOptions) {
-    const handle = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.hover(options);
+    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
+    await handle.hover(helper.optionsWithUpdatedTimeout(options, deadline));
     handle.dispose();
   }
 
   async selectOption(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options?: types.NavigatingActionWaitOptions): Promise<string[]> {
-    const handle = await this._waitForSelectorInUtilityContext(selector, options);
-    const result = await handle.selectOption(values, options);
+    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
+    const result = await handle.selectOption(values, helper.optionsWithUpdatedTimeout(options, deadline));
     handle.dispose();
     return result;
   }
 
   async type(selector: string, text: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
-    const handle = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.type(text, options);
+    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
+    await handle.type(text, helper.optionsWithUpdatedTimeout(options, deadline));
     handle.dispose();
   }
 
   async press(selector: string, key: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
-    const handle = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.press(key, options);
+    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
+    await handle.press(key, helper.optionsWithUpdatedTimeout(options, deadline));
     handle.dispose();
   }
 
   async check(selector: string, options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    const handle = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.check(options);
+    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
+    await handle.check(helper.optionsWithUpdatedTimeout(options, deadline));
     handle.dispose();
   }
 
   async uncheck(selector: string, options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    const handle = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.uncheck(options);
+    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
+    await handle.uncheck(helper.optionsWithUpdatedTimeout(options, deadline));
     handle.dispose();
   }
 
@@ -738,17 +739,19 @@ export class Frame {
     return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
   }
 
-  private async _waitForSelectorInUtilityContext(selector: string, options?: types.WaitForElementOptions): Promise<dom.ElementHandle<Element>> {
-    const { timeout = this._page._timeoutSettings.timeout(), waitFor = 'attached' } = (options || {});
-    const { world, task } = selectors._waitForSelectorTask(selector, waitFor, timeout);
-    const result = await this._scheduleRerunnableTask(task, world, timeout, `selector "${selectorToString(selector, waitFor)}"`);
-    return result.asElement() as dom.ElementHandle<Element>;
+  private async _waitForSelectorInUtilityContext(selector: string, options?: types.WaitForElementOptions): Promise<{ handle: dom.ElementHandle<Element>, deadline: number }> {
+    const { waitFor = 'attached' } = options || {};
+    const deadline = this._page._timeoutSettings.computeDeadline(options);
+    const { world, task } = selectors._waitForSelectorTask(selector, waitFor, deadline);
+    const result = await this._scheduleRerunnableTask(task, world, deadline, `selector "${selectorToString(selector, waitFor)}"`);
+    return { handle: result.asElement() as dom.ElementHandle<Element>, deadline };
   }
 
   async waitForFunction<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>>;
   async waitForFunction<R>(pageFunction: types.Func1<void, R>, arg?: any, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>>;
   async waitForFunction<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg, options: types.WaitForFunctionOptions = {}): Promise<types.SmartHandle<R>> {
-    const { polling = 'raf', timeout = this._page._timeoutSettings.timeout() } = options;
+    const { polling = 'raf' } = options;
+    const deadline = this._page._timeoutSettings.computeDeadline(options);
     if (helper.isString(polling))
       assert(polling === 'raf' || polling === 'mutation', 'Unknown polling option: ' + polling);
     else if (helper.isNumber(polling))
@@ -760,8 +763,8 @@ export class Frame {
     const task = async (context: dom.FrameExecutionContext) => context.evaluateHandleInternal(({ injected, predicateBody, polling, timeout, arg }) => {
       const innerPredicate = new Function('arg', predicateBody);
       return injected.poll(polling, timeout, () => innerPredicate(arg));
-    }, { injected: await context._injected(), predicateBody, polling, timeout, arg });
-    return this._scheduleRerunnableTask(task, 'main', timeout) as any as types.SmartHandle<R>;
+    }, { injected: await context._injected(), predicateBody, polling, timeout: helper.timeUntilDeadline(deadline), arg });
+    return this._scheduleRerunnableTask(task, 'main', deadline) as any as types.SmartHandle<R>;
   }
 
   async title(): Promise<string> {
@@ -781,9 +784,9 @@ export class Frame {
     this._parentFrame = null;
   }
 
-  private _scheduleRerunnableTask(task: Task, contextType: ContextType, timeout?: number, title?: string): Promise<js.JSHandle> {
+  private _scheduleRerunnableTask(task: Task, contextType: ContextType, deadline: number, title?: string): Promise<js.JSHandle> {
     const data = this._contextData.get(contextType)!;
-    const rerunnableTask = new RerunnableTask(data, task, timeout, title);
+    const rerunnableTask = new RerunnableTask(data, task, deadline, title);
     data.rerunnableTasks.add(rerunnableTask);
     if (data.context)
       rerunnableTask.rerun(data.context);
@@ -834,7 +837,7 @@ class RerunnableTask {
   private _timeoutTimer?: NodeJS.Timer;
   private _terminated = false;
 
-  constructor(data: ContextData, task: Task, timeout?: number, title?: string) {
+  constructor(data: ContextData, task: Task, deadline: number, title?: string) {
     this._contextData = data;
     this._task = task;
     this._runCount = 0;
@@ -844,10 +847,8 @@ class RerunnableTask {
     });
     // Since page navigation requires us to re-install the pageScript, we should track
     // timeout on our end.
-    if (timeout) {
-      const timeoutError = new TimeoutError(`waiting for ${title || 'function'} failed: timeout ${timeout}ms exceeded`);
-      this._timeoutTimer = setTimeout(() => this.terminate(timeoutError), timeout);
-    }
+    const timeoutError = new TimeoutError(`waiting for ${title || 'function'} failed: timeout exceeded`);
+    this._timeoutTimer = setTimeout(() => this.terminate(timeoutError), helper.timeUntilDeadline(deadline));
   }
 
   terminate(error: Error) {
@@ -918,13 +919,15 @@ function selectorToString(selector: string, waitFor: 'attached' | 'detached' | '
 
 class PendingNavigationBarrier {
   private _frameIds = new Map<string, number>();
-  private _options: types.NavigatingActionWaitOptions | undefined;
+  private _options: types.NavigatingActionWaitOptions;
   private _protectCount = 0;
   private _promise: Promise<void>;
   private _promiseCallback = () => {};
+  private _deadline: number;
 
-  constructor(options: types.NavigatingActionWaitOptions | undefined) {
+  constructor(options: types.NavigatingActionWaitOptions, deadline: number) {
     this._options = options;
+    this._deadline = deadline;
     this._promise = new Promise(f => this._promiseCallback = f);
     this.retain();
   }
@@ -936,7 +939,9 @@ class PendingNavigationBarrier {
 
   async addFrame(frame: Frame) {
     this.retain();
-    await frame.waitForNavigation(this._options as types.NavigateOptions).catch(e => {});
+    const timeout = helper.timeUntilDeadline(this._deadline);
+    const options = { ...this._options, timeout } as types.NavigateOptions;
+    await frame.waitForNavigation(options).catch(e => {});
     this.release();
   }
 
@@ -974,7 +979,7 @@ export class FrameTask {
     let timeoutPromise = new Promise<TimeoutError>(() => {});
     const { timeout = frame._page._timeoutSettings.navigationTimeout() } = options;
     if (timeout) {
-      const errorMessage = 'Navigation timeout of ' + timeout + ' ms exceeded';
+      const errorMessage = 'Navigation timeout exceeded';
       timeoutPromise = new Promise(fulfill => this._timer = setTimeout(fulfill, timeout))
           .then(() => { throw new TimeoutError(errorMessage); });
     }

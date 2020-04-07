@@ -149,9 +149,8 @@ class Helper {
     emitter: EventEmitter,
     eventName: (string | symbol),
     predicate: Function,
-    timeout: number,
+    deadline: number,
     abortPromise: Promise<Error>): Promise<any> {
-    let eventTimeout: NodeJS.Timer;
     let resolveCallback: (event: any) => void = () => {};
     let rejectCallback: (error: any) => void = () => {};
     const promise = new Promise((resolve, reject) => {
@@ -167,11 +166,9 @@ class Helper {
         rejectCallback(e);
       }
     });
-    if (timeout) {
-      eventTimeout = setTimeout(() => {
-        rejectCallback(new TimeoutError(`Timeout exceeded while waiting for ${String(eventName)}`));
-      }, timeout);
-    }
+    const eventTimeout = setTimeout(() => {
+      rejectCallback(new TimeoutError(`Timeout exceeded while waiting for ${String(eventName)}`));
+    }, helper.timeUntilDeadline(deadline));
     function cleanup() {
       Helper.removeEventListeners([listener]);
       clearTimeout(eventTimeout);
@@ -189,12 +186,14 @@ class Helper {
   }
 
   static async waitWithTimeout<T>(promise: Promise<T>, taskName: string, timeout: number): Promise<T> {
+    return this.waitWithDeadline(promise, taskName, helper.monotonicTime() + timeout);
+  }
+
+  static async waitWithDeadline<T>(promise: Promise<T>, taskName: string, deadline: number): Promise<T> {
     let reject: (error: Error) => void;
-    const timeoutError = new TimeoutError(`waiting for ${taskName} failed: timeout ${timeout}ms exceeded`);
+    const timeoutError = new TimeoutError(`waiting for ${taskName} failed: timeout exceeded`);
     const timeoutPromise = new Promise<T>((resolve, x) => reject = x);
-    let timeoutTimer = null;
-    if (timeout)
-      timeoutTimer = setTimeout(() => reject(timeoutError), timeout);
+    const timeoutTimer = setTimeout(() => reject(timeoutError), helper.timeUntilDeadline(deadline));
     try {
       return await Promise.race([promise, timeoutPromise]);
     } finally {
@@ -340,6 +339,19 @@ class Helper {
 
   static guid(): string {
     return crypto.randomBytes(16).toString('hex');
+  }
+
+  static monotonicTime(): number {
+    const [seconds, nanoseconds] = process.hrtime();
+    return seconds * 1000 + (nanoseconds / 1000000 | 0);
+  }
+
+  static timeUntilDeadline(deadline: number): number {
+    return Math.min(deadline - this.monotonicTime(), 2147483647); // 2^31-1 safe setTimeout in Node.
+  }
+
+  static optionsWithUpdatedTimeout<T extends types.TimeoutOptions>(options: T | undefined, deadline: number): T {
+    return { ...(options || {}) as T, timeout: this.timeUntilDeadline(deadline) };
   }
 }
 
