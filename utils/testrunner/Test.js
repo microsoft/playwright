@@ -23,7 +23,7 @@ const TestExpectation = {
 };
 
 function createHook(callback, name) {
-  const location = Location.getCallerLocation(__filename);
+  const location = Location.getCallerLocation();
   return { name, body: callback, location };
 }
 

@@ -49,9 +49,7 @@ class Location {
     return this._fileName + ':' + this._lineNumber + ':' + this._columnNumber;
   }
 
-  // TODO: static getCallerLocationIn(glob) vs getCallerLocationIgnoring(glob).
-
-  static getCallerLocation(filename) {
+  static getCallerLocation(ignorePrefix = __dirname) {
     const error = new Error();
     const stackFrames = error.stack.split('\n').slice(1);
     const location = new Location();
@@ -71,7 +69,7 @@ class Location {
       if (!match)
         return null;
       const filePath = match[1];
-      if (filePath === __filename || filePath === filename)
+      if (filePath === __filename || filePath.startsWith(ignorePrefix))
         continue;
 
       location._filePath = filePath;

@@ -40,7 +40,7 @@ class MatchError extends Error {
     super(message);
     this.name = this.constructor.name;
     this.formatter = formatter;
-    this.location = Location.getCallerLocation(__filename);
+    this.location = Location.getCallerLocation();
     Error.captureStackTrace(this, this.constructor);
   }
 }
