@@ -50,17 +50,14 @@ utils.setupTestRunner(testRunner);
 
 console.log('Testing on Node', process.version);
 
-const names = ['Chromium', 'Firefox', 'WebKit'].filter(name => {
-  return process.env.BROWSER === name.toLowerCase() || process.env.BROWSER === 'all';
+const product = ['Chromium', 'Firefox', 'WebKit'].find(name => {
+  return process.env.BROWSER === name.toLowerCase();
 });
-const products = names.map(name => {
-  const executablePath = {
-    'Chromium': process.env.CRPATH,
-    'Firefox': process.env.FFPATH,
-    'WebKit': process.env.WKPATH,
-  }[name];
-  return { product: name, executablePath };
-});
+const executablePath = {
+  'Chromium': process.env.CRPATH,
+  'Firefox': process.env.FFPATH,
+  'WebKit': process.env.WKPATH,
+}[product];
 
 function valueFromEnv(name, defaultValue) {
   if (!(name in process.env))
@@ -70,7 +67,8 @@ function valueFromEnv(name, defaultValue) {
 
 require('./playwright.spec.js').addPlaywrightTests({
   playwrightPath: utils.projectRoot(),
-  products,
+  product,
+  executablePath,
   platform: os.platform(),
   testRunner: testRunner.api(),
   headless: !!valueFromEnv('HEADLESS', true),
