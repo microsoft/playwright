@@ -483,6 +483,10 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await page.evaluate(() => window.result)).toBe('Was not clicked');
     });
 
+    it('should climb dom for pointer-events:none targets', async({page, server}) => {
+      await page.setContent('<button><label style="pointer-events:none">Click target</label></button>')
+      await page.click('text=Click target');
+    });
     it('should update modifiers correctly', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.click('button', { modifiers: ['Shift'] });

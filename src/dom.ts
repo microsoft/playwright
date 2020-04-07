@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as debug from 'debug';
 import * as fs from 'fs';
 import * as mime from 'mime';
 import * as path from 'path';
@@ -35,6 +36,8 @@ export type PointerActionOptions = {
 export type ClickOptions = PointerActionOptions & input.MouseClickOptions;
 
 export type MultiClickOptions = PointerActionOptions & input.MouseMultiClickOptions;
+
+const debugInput = debug('pw:input');
 
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
@@ -112,7 +115,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _scrollRectIntoViewIfNeeded(rect?: types.Rect): Promise<void> {
+    debugInput('scrolling into veiw if needed...');
     await this._page._delegate.scrollRectIntoViewIfNeeded(this, rect);
+    debugInput('...done');
   }
 
   async scrollIntoViewIfNeeded() {
@@ -186,11 +191,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (!force)
       await this._waitForHitTargetAt(point, options);
 
+    point.x = (point.x * 100 | 0) / 100;
+    point.y = (point.y * 100 | 0) / 100;
+
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       let restoreModifiers: input.Modifier[] | undefined;
       if (options && options.modifiers)
         restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
+      debugInput('performing input action...');
       await action(point);
+      debugInput('...done');
       if (restoreModifiers)
         await this._page.keyboard._ensureModifiers(restoreModifiers);
     }, options, true);
@@ -356,13 +366,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _waitForDisplayedAtStablePosition(options: types.TimeoutOptions = {}): Promise<void> {
+    debugInput('waiting for element to be displayed and not moving...');
     const stablePromise = this._evaluateInUtility(({ injected, node }, timeout) => {
       return injected.waitForDisplayedAtStablePosition(node, timeout);
     }, options.timeout || 0);
     await helper.waitWithTimeout(stablePromise, 'element to be displayed and not moving', options.timeout || 0);
+    debugInput('...done');
   }
 
   async _waitForHitTargetAt(point: types.Point, options: types.TimeoutOptions = {}): Promise<void> {
+    debugInput(`waiting for element to receive pointer events at (${point.x},${point.y}) ...`);
     const frame = await this.ownerFrame();
     if (frame && frame.parentFrame()) {
       const element = await frame.frameElement();
@@ -375,7 +388,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const hitTargetPromise = this._evaluateInUtility(({ injected, node }, { timeout, point }) => {
       return injected.waitForHitTargetAt(node, timeout, point);
     }, { timeout: options.timeout || 0, point });
-    await helper.waitWithTimeout(hitTargetPromise, 'element to receive mouse events', options.timeout || 0);
+    await helper.waitWithTimeout(hitTargetPromise, 'element to receive pointer events', options.timeout || 0);
+    debugInput('...done');
   }
 }
 
