@@ -30,8 +30,7 @@ const BROWSER_CONFIGS = [
       ...require('../lib/events').Events,
       ...require('../lib/chromium/events').Events,
     },
-    missingCoverage: ['browserContext.setGeolocation', 'browserContext.setOffline', 'cDPSession.send', 'cDPSession.detach', 'page.emit("download")',
-        'download.url', 'download.path', 'download.failure', 'download.createReadStream', 'download.delete'],
+    missingCoverage: ['browserContext.setGeolocation', 'browserContext.setOffline', 'cDPSession.send', 'cDPSession.detach'],
   },
   {
     name: 'WebKit',

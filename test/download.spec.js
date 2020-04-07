@@ -17,9 +17,9 @@
 const fs = require('fs');
 const path = require('path');
 
-module.exports.describe = function({browserType, CHROMIUM, WEBKIT, FFOX, WIN, MAC}) {
+module.exports.describe = function({browserType, defaultBrowserOptions, CHROMIUM, WEBKIT, FFOX, WIN, MAC}) {
 
-  describe.fail(FFOX)('Download', function() {
+  describe('Download', function() {
     beforeEach(async(state) => {
       state.server.setRoute('/download', (req, res) => {
         res.setHeader('Content-Type', 'application/octet-stream');
@@ -97,7 +97,7 @@ module.exports.describe = function({browserType, CHROMIUM, WEBKIT, FFOX, WIN, MA
       expect(fs.existsSync(path1)).toBeFalsy();
       expect(fs.existsSync(path2)).toBeFalsy();
     });
-    it('should delete downloads on browser gone', async ({ server, defaultBrowserOptions }) => {
+    it('should delete downloads on browser gone', async ({ server }) => {
       const browser = await browserType.launch(defaultBrowserOptions);
       const page = await browser.newPage({ acceptDownloads: true });
       await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);

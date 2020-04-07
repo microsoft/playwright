@@ -49,16 +49,17 @@ export class Firefox implements BrowserType<FFBrowser> {
 
   async launch(options: LaunchOptions = {}): Promise<FFBrowser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
-    const browserServer = await this._launchServer(options, 'local');
+    const {browserServer, downloadsPath} = await this._launchServer(options, 'local');
     const browser = await WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
       return FFBrowser.connect(transport, false, options.slowMo);
     });
     browser._ownedServer = browserServer;
+    browser._downloadsPath = downloadsPath;
     return browser;
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
-    return await this._launchServer(options, 'server');
+    return (await this._launchServer(options, 'server')).browserServer;
   }
 
   async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
@@ -66,17 +67,18 @@ export class Firefox implements BrowserType<FFBrowser> {
       timeout = 30000,
       slowMo = 0,
     } = options;
-    const browserServer = await this._launchServer(options, 'persistent', userDataDir);
+    const {browserServer, downloadsPath} = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
       return FFBrowser.connect(transport, true, slowMo);
     });
     browser._ownedServer = browserServer;
+    browser._downloadsPath = downloadsPath;
     await helper.waitWithTimeout(browser._firstPagePromise, 'first page', timeout);
     const browserContext = browser._defaultContext;
     return browserContext;
   }
 
-  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<BrowserServer> {
+  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, downloadsPath: string }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -110,7 +112,7 @@ export class Firefox implements BrowserType<FFBrowser> {
     if (!firefoxExecutable)
       throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
 
-    const { launchedProcess, gracefullyClose } = await launchProcess({
+    const { launchedProcess, gracefullyClose, downloadsPath } = await launchProcess({
       executablePath: firefoxExecutable,
       args: firefoxArguments,
       env: os.platform() === 'linux' ? {
@@ -146,7 +148,7 @@ export class Firefox implements BrowserType<FFBrowser> {
     const webSocketWrapper = launchType === 'server' ? (await WebSocketTransport.connect(innerEndpoint, t => wrapTransportWithWebSocket(t, port))) : new WebSocketWrapper(innerEndpoint, []);
     browserWSEndpoint = webSocketWrapper.wsEndpoint;
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, webSocketWrapper);
-    return browserServer;
+    return {browserServer, downloadsPath};
   }
 
   async connect(options: ConnectOptions): Promise<FFBrowser> {
