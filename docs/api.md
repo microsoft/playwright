@@ -4140,6 +4140,7 @@ const { chromium } = require('playwright');
 [CDPSession]: #class-cdpsession  "CDPSession"
 [ConsoleMessage]: #class-consolemessage "ConsoleMessage"
 [Dialog]: #class-dialog "Dialog"
+[Download]: #class-download "Download"
 [ElementHandle]: #class-elementhandle "ElementHandle"
 [Element]: https://developer.mozilla.org/en-US/docs/Web/API/element "Element"
 [Error]: https://nodejs.org/api/errors.html#errors_class_error "Error"
