@@ -78,6 +78,29 @@ module.exports.describe = function({browserType, CHROMIUM, WEBKIT, FFOX, WIN, MA
       expect(content).toBe('Hello world');
       stream.close();
     });
+    it.fail(CHROMIUM || FFOX)('should report failure if download is aborted', async({browser, server}) => {
+      server.setRoute('/failing-download', (req, res) => {
+        res.setHeader('Content-Type', 'text/plain');
+        res.setHeader('Content-Length', 10000);
+        res.setHeader('Content-Disposition', 'attachment');
+        res.end(`Incomplete`);
+      });
+      const page = await browser.newPage({ acceptDownloads: true });
+      await page.setContent(`<a download=true href="${server.PREFIX}/failing-download">download</a>`);
+      const [ download ] = await Promise.all([
+        page.waitForEvent('download'),
+        page.click('a')
+      ]);
+      let pathError = null;
+      const path = await download.path().catch(e => pathError = e);
+      expect(pathError).toBe(null);
+      expect(path).toBe(null);
+      expect(await download.failure()).toBeTruthy();
+      let streamError = null;
+      const stream = await download.createReadStream().catch(e => streamError = e);
+      expect(streamError).toBe(null);
+      expect(stream).toBe(null);
+    });
     it('should delete downloads on context destruction', async({browser, server}) => {
       const page = await browser.newPage({ acceptDownloads: true });
       await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);
