@@ -128,7 +128,8 @@ export class Chromium implements BrowserType<CRBrowser> {
 
     let transport: PipeTransport | undefined = undefined;
     let browserServer: BrowserServer | undefined = undefined;
-    transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
+    const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
+    transport = new PipeTransport(stdio[3], stdio[4]);
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, port) : null);
     return { browserServer, transport, downloadsPath };
   }

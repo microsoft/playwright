@@ -128,7 +128,8 @@ export class WebKit implements BrowserType<WKBrowser> {
     // For local launch scenario close will terminate the browser process.
     let transport: ConnectionTransport | undefined = undefined;
     let browserServer: BrowserServer | undefined = undefined;
-    transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
+    const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
+    transport = new PipeTransport(stdio[3], stdio[4]);
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, port || 0) : null);
     return { browserServer, transport, downloadsPath };
   }
