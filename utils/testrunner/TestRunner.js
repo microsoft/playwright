@@ -383,15 +383,32 @@ class TestRunner {
       }, totalTimeout);
     }
 
-    const terminations = [
-      createTermination.call(this, 'SIGINT', TestResult.Terminated, 'SIGINT received'),
-      createTermination.call(this, 'SIGHUP', TestResult.Terminated, 'SIGHUP received'),
-      createTermination.call(this, 'SIGTERM', TestResult.Terminated, 'SIGTERM received'),
-      createTermination.call(this, 'unhandledRejection', TestResult.Crashed, 'UNHANDLED PROMISE REJECTION'),
-      createTermination.call(this, 'uncaughtException', TestResult.Crashed, 'UNHANDLED ERROR'),
-    ];
-    for (const termination of terminations)
-      process.on(termination.event, termination.handler);
+    const handleSIGINT = () => this._terminate(TestResult.Terminated, 'SIGINT received', false, null);
+    const handleSIGHUP = () => this._terminate(TestResult.Terminated, 'SIGHUP received', false, null);
+    const handleSIGTERM = () => this._terminate(TestResult.Terminated, 'SIGTERM received', true, null);
+    const handleRejection = error => {
+      let message = 'UNHANDLED PROMISE REJECTION';
+      if (!(error instanceof Error)) {
+        message += ': ' + error;
+        error = new Error();
+        error.stack = '';
+      }
+      this._terminate(TestResult.Crashed, message, false, error);
+    };
+    const handleException = error => {
+      let message = 'UNHANDLED ERROR';
+      if (!(error instanceof Error)) {
+        message += ': ' + error;
+        error = new Error();
+        error.stack = '';
+      }
+      this._terminate(TestResult.Crashed, message, false, error);
+    };
+    process.on('SIGINT', handleSIGINT);
+    process.on('SIGHUP', handleSIGHUP);
+    process.on('SIGTERM', handleSIGTERM);
+    process.on('unhandledRejection', handleRejection);
+    process.on('uncaughtException', handleException);
 
     const workerCount = Math.min(parallel, testRuns.length);
     const workerPromises = [];
@@ -401,22 +418,17 @@ class TestRunner {
     }
     await Promise.all(workerPromises);
 
-    for (const termination of terminations)
-      process.removeListener(termination.event, termination.handler);
+    process.removeListener('SIGINT', handleSIGINT);
+    process.removeListener('SIGHUP', handleSIGHUP);
+    process.removeListener('SIGTERM', handleSIGTERM);
+    process.removeListener('unhandledRejection', handleRejection);
+    process.removeListener('uncaughtException', handleException);
 
     if (testRuns.some(run => run.isFailure()))
       this._result.setResult(TestResult.Failed, '');
 
     clearTimeout(timeoutId);
     await this._delegate.onFinished(this._result);
-
-    function createTermination(event, result, message) {
-      return {
-        event,
-        message,
-        handler: error => this._terminate(result, message, event === 'SIGTERM', event.startsWith('SIG') ? null : error),
-      };
-    }
 
     const result = this._result;
     this._result = null;
