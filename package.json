@@ -58,7 +58,7 @@
     "@types/debug": "0.0.31",
     "@types/extract-zip": "^1.6.2",
     "@types/mime": "^2.0.1",
-    "@types/node": "^8.10.34",
+    "@types/node": "^10.17.17",
     "@types/pngjs": "^3.4.0",
     "@types/proxy-from-env": "^1.0.0",
     "@types/rimraf": "^2.0.2",
