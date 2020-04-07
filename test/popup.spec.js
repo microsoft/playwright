@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WEBKIT, FFOX}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({playwright, CHROMIUM, WEBKIT, FFOX}) {
 
   describe('Link navigation', function() {
     it('should inherit user agent from browser context', async function({browser, server}) {

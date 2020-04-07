@@ -21,10 +21,7 @@ const zsSelectorEngineSource = require('../lib/generated/zsSelectorEngineSource'
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMIUM, WEBKIT}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({playwright, FFOX, CHROMIUM, WEBKIT}) {
 
   describe('Page.$eval', function() {
     it('should work with css selector', async({page, server}) => {

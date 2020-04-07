@@ -20,10 +20,7 @@ const utils = require('./utils');
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, playwright, headless, FFOX, CHROMIUM, WEBKIT, MAC, WIN}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({playwright, headless, FFOX, CHROMIUM, WEBKIT, MAC, WIN}) {
   const iPhone = playwright.devices['iPhone 6'];
   const iPhoneLandscape = playwright.devices['iPhone 6 landscape'];
 

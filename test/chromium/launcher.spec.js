@@ -18,21 +18,12 @@ const util = require('util');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const readFileAsync = util.promisify(fs.readFile);
-const rmAsync = util.promisify(require('rimraf'));
-const mkdtempAsync = util.promisify(fs.mkdtemp);
-const statAsync = util.promisify(fs.stat);
 const { makeUserDataDir, removeUserDataDir } = require('../utils');
-
-const TMP_FOLDER = path.join(os.tmpdir(), 'pw_tmp_folder-');
 
 /**
  * @type {TestSuite}
  */
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, browserType, WIN}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({defaultBrowserOptions, browserType, WIN}) {
 
   const headfulOptions = Object.assign({}, defaultBrowserOptions, {
     headless: false

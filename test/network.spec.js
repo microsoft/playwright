@@ -22,10 +22,7 @@ const utils = require('./utils');
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, MAC, WIN, FFOX, CHROMIUM, WEBKIT}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({MAC, WIN, FFOX, CHROMIUM, WEBKIT}) {
 
   describe('Page.Events.Request', function() {
     it('should fire for navigation requests', async({page, server}) => {

@@ -18,10 +18,7 @@
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, CHROMIUM, FFOX, WEBKIT}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({CHROMIUM, FFOX, WEBKIT}) {
 
   describe('Page.evaluateHandle', function() {
     it('should work', async({page, server}) => {

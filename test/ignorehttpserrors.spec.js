@@ -18,10 +18,8 @@
 /**
  * @type {BrowserTestSuite}
  */
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, FFOX, CHROMIUM, WEBKIT}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({defaultBrowserOptions, playwright, FFOX, CHROMIUM, WEBKIT}) {
+
   describe('ignoreHTTPSErrors', function() {
     it('should work', async({browser, httpsServer}) => {
       let error = null;
@@ -40,7 +38,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         const response = await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
         expect(error).toBe(null);
         expect(response.ok()).toBe(true);
-        await context.close();  
+        await context.close();
       }
       {
         let error = null;
@@ -48,7 +46,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         const page = await context.newPage();
         await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
         expect(error).not.toBe(null);
-        await context.close();  
+        await context.close();
       }
     });
     it('should work with mixed content', async({browser, server, httpsServer}) => {

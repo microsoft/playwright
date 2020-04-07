@@ -20,10 +20,7 @@ const utils = require('./utils');
 /**
  * @type {BrowserTestSuite}
  */
-module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FFOX, WEBKIT, LINUX}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({playwright, CHROMIUM, FFOX, WEBKIT, LINUX}) {
 
   describe('BrowserContext', function() {
     it('should create new context', async function({browser}) {

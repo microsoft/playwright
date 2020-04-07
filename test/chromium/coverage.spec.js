@@ -17,10 +17,7 @@
 /**
  * @type {ChromiumTestSuite}
  */
-module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({FFOX, CHROMIUM, WEBKIT}) {
 
   describe('JSCoverage', function() {
     it('should work', async function({page, server}) {

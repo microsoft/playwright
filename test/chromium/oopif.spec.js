@@ -17,10 +17,7 @@
 /**
  * @type {ChromiumTestSuite}
  */
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, browserType, FFOX, CHROMIUM, WEBKIT}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({defaultBrowserOptions, browserType, FFOX, CHROMIUM, WEBKIT}) {
 
   const headfulOptions = Object.assign({}, defaultBrowserOptions, {
     headless: false

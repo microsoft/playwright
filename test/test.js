@@ -68,16 +68,22 @@ function valueFromEnv(name, defaultValue) {
   return JSON.parse(process.env[name]);
 }
 
+for (const [key, value] of Object.entries(testRunner.api()))
+  global[key] = value;
 require('./playwright.spec.js').addPlaywrightTests({
   playwrightPath: utils.projectRoot(),
   products,
   platform: os.platform(),
-  testRunner: testRunner.api(),
   headless: !!valueFromEnv('HEADLESS', true),
   slowMo: valueFromEnv('SLOW_MO', 0),
   dumpProtocolOnFailure: valueFromEnv('DEBUGP', false),
   coverage: process.env.COVERAGE,
 });
+for (const [key, value] of Object.entries(testRunner.api())) {
+  // expect is used when running tests, while the rest of api is not.
+  if (key !== 'expect')
+    delete global[key];
+}
 
 const filterArgIndex = process.argv.indexOf('--filter');
 if (filterArgIndex !== -1) {
@@ -86,4 +92,4 @@ if (filterArgIndex !== -1) {
 }
 
 // await utils.initializeFlakinessDashboardIfNeeded(testRunner);
-testRunner.run();
+testRunner.run().then(() => { delete global.expect; });

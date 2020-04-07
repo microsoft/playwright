@@ -21,10 +21,7 @@ const {spawn, execSync} = require('child_process');
 /**
  * @type {TestSuite}
  */
-module.exports.describe = function({testRunner, expect, product, browserType, playwrightPath, defaultBrowserOptions, WIN, FFOX, CHROMIUM, WEBKIT}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function({browserType, playwrightPath, defaultBrowserOptions, WIN, FFOX, CHROMIUM, WEBKIT}) {
 
   async function testSignal(action, exitOnClose) {
     const options = Object.assign({}, defaultBrowserOptions, {
@@ -34,7 +31,7 @@ module.exports.describe = function({testRunner, expect, product, browserType, pl
       handleSIGTERM: true,
       handleSIGHUP: true,
     });
-    const res = spawn('node', [path.join(__dirname, 'fixtures', 'closeme.js'), playwrightPath, product, JSON.stringify(options), exitOnClose ? 'true' : '']);
+    const res = spawn('node', [path.join(__dirname, 'fixtures', 'closeme.js'), playwrightPath, browserType.name(), JSON.stringify(options), exitOnClose ? 'true' : '']);
     let wsEndPointCallback;
     const wsEndPointPromise = new Promise(x => wsEndPointCallback = x);
     let output = '';
@@ -71,14 +68,7 @@ module.exports.describe = function({testRunner, expect, product, browserType, pl
   describe('Fixtures', function() {
     it.slow()('should dump browser process stderr', async({server}) => {
       let dumpioData = '';
-      const res = spawn('node', [path.join(__dirname, 'fixtures', 'dumpio.js'), playwrightPath, product, 'usewebsocket']);
-      res.stdout.on('data', data => dumpioData += data.toString('utf8'));
-      await new Promise(resolve => res.on('close', resolve));
-      expect(dumpioData).toContain('message from dumpio');
-    });
-    it.slow()('should dump browser process stderr', async({server}) => {
-      let dumpioData = '';
-      const res = spawn('node', [path.join(__dirname, 'fixtures', 'dumpio.js'), playwrightPath, product]);
+      const res = spawn('node', [path.join(__dirname, 'fixtures', 'dumpio.js'), playwrightPath, browserType.name()]);
       res.stdout.on('data', data => dumpioData += data.toString('utf8'));
       await new Promise(resolve => res.on('close', resolve));
       expect(dumpioData).toContain('message from dumpio');

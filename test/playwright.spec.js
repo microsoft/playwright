@@ -49,11 +49,7 @@ const browserNames = BROWSER_CONFIGS.map(config => config.name);
 /**
  * @type {TestSuite}
  */
-module.exports.addPlaywrightTests = ({testRunner, platform, products, playwrightPath, headless, slowMo, dumpProtocolOnFailure, coverage}) => {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
-  const {expect} = testRunner;
-
+module.exports.addPlaywrightTests = ({platform, products, playwrightPath, headless, slowMo, dumpProtocolOnFailure, coverage}) => {
   const MAC = platform === 'darwin';
   const LINUX = platform === 'linux';
   const WIN = platform === 'win32';
@@ -121,14 +117,12 @@ module.exports.addPlaywrightTests = ({testRunner, platform, products, playwright
 
     const GOLDEN_DIR = path.join(__dirname, 'golden-' + product.toLowerCase());
     const OUTPUT_DIR = path.join(__dirname, 'output-' + product.toLowerCase());
-    const ASSETS_DIR = path.join(__dirname, 'assets');
     if (fs.existsSync(OUTPUT_DIR))
       rm(OUTPUT_DIR);
+    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
     expect.setupGolden(GOLDEN_DIR, OUTPUT_DIR);
 
     const testOptions = {
-      testRunner,
-      product,
       FFOX,
       WEBKIT,
       CHROMIUM,
@@ -137,11 +131,10 @@ module.exports.addPlaywrightTests = ({testRunner, platform, products, playwright
       WIN,
       browserType,
       playwright,
-      expect,
       defaultBrowserOptions,
       playwrightPath,
       headless: !!defaultBrowserOptions.headless,
-      ASSETS_DIR,
+      OUTPUT_DIR,
     };
 
     function loadTests(modulePath) {
@@ -281,7 +274,7 @@ module.exports.addPlaywrightTests = ({testRunner, platform, products, playwright
             return;
           filteredApi[apiName] = api[apiName];
         });
-        require('./utils').recordAPICoverage(testRunner, filteredApi, browserConfig.events, browserConfig.missingCoverage);
+        require('./utils').recordAPICoverage(filteredApi, browserConfig.events, browserConfig.missingCoverage);
       }
     });
   }

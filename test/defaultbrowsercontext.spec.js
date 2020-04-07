@@ -20,10 +20,7 @@ const { makeUserDataDir, removeUserDataDir } = require('./utils');
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions, browserType, WEBKIT }) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit, dit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+module.exports.describe = function ({ defaultBrowserOptions, browserType, WEBKIT }) {
 
   describe('launchPersistentContext()', function() {
     beforeEach(async state => {
