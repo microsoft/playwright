@@ -145,7 +145,7 @@ export async function downloadBrowser(options: DownloadOptions): Promise<void> {
   const zipPath = path.join(os.tmpdir(), `playwright-download-${browser}-${platform}-${revision}.zip`);
   try {
     await downloadFile(url, zipPath, progress);
-    await extractZip(zipPath, downloadPath);
+    await extract(zipPath, {dir: downloadPath});
   } finally {
     if (await existsAsync(zipPath))
       await unlinkAsync(zipPath);
@@ -209,15 +209,6 @@ function downloadFile(url: string, destinationPath: string, progressCallback: On
     downloadedBytes += chunk.length;
     progressCallback!(downloadedBytes, totalBytes);
   }
-}
-
-function extractZip(zipPath: string, folderPath: string): Promise<Error | null> {
-  return new Promise((fulfill, reject) => extract(zipPath, {dir: folderPath}, err => {
-    if (err)
-      reject(err);
-    else
-      fulfill();
-  }));
 }
 
 function httpRequest(url: string, method: string, response: (r: any) => void) {
