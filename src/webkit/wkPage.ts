@@ -162,7 +162,7 @@ export class WKPage implements PageDelegate {
         height: this._page._state.viewportSize.height,
       }));
     }
-
+    promises.push(this.updateEmulateMedia());
     promises.push(session.send('Network.setExtraHTTPHeaders', { headers: this._calculateExtraHTTPHeaders() }));
     if (contextOptions.offline)
       promises.push(session.send('Network.setEmulateOfflineState', { offline: true }));
@@ -492,8 +492,9 @@ export class WKPage implements PageDelegate {
     return headers;
   }
 
-  async setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
-    await this._forAllSessions(session => WKPage._setEmulateMedia(session, mediaType, colorScheme));
+  async updateEmulateMedia(): Promise<void> {
+    const colorScheme = this._page._state.colorScheme || this._browserContext._options.colorScheme || 'light';
+    await this._forAllSessions(session => WKPage._setEmulateMedia(session, this._page._state.mediaType, colorScheme));
   }
 
   async setViewportSize(viewportSize: types.Size): Promise<void> {

@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+const utils = require('./utils');
+
 /**
  * @type {PageTestSuite}
  */
@@ -236,6 +238,21 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
         expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches)).toBe(true);
       }
     });
+    it('should default to light', async({page, server}) => {
+      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
+      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
+      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches)).toBe(false);
+
+      await page.emulateMedia({ colorScheme: 'dark' });
+      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
+      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
+      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches)).toBe(false);
+
+      await page.emulateMedia({ colorScheme: null });
+      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
+      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
+      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches)).toBe(false);
+    });
     it('should throw in case of bad argument', async({page, server}) => {
       let error = null;
       await page.emulateMedia({ colorScheme: 'bad' }).catch(e => error = e);
@@ -252,6 +269,39 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       }
       await navigated;
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
+    });
+    it('should work in popup', async({browser, server}) => {
+      {
+        const context = await browser.newContext({ colorScheme: 'dark' });
+        const page = await context.newPage();
+        await page.goto(server.EMPTY_PAGE);
+        const [popup] = await Promise.all([
+          page.waitForEvent('popup'),
+          page.evaluate(url => { window.open(url); }, server.EMPTY_PAGE),
+        ]);
+        expect(await popup.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
+        expect(await popup.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
+        await context.close();
+      }
+      {
+        const page = await browser.newPage({ colorScheme: 'light' });
+        await page.goto(server.EMPTY_PAGE);
+        const [popup] = await Promise.all([
+          page.waitForEvent('popup'),
+          page.evaluate(url => { window.open(url); }, server.EMPTY_PAGE),
+        ]);
+        expect(await popup.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
+        expect(await popup.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
+        await page.close();
+      }
+    });
+    it('should work in cross-process iframe', async({browser, server}) => {
+      const page = await browser.newPage({ colorScheme: 'dark' });
+      await page.goto(server.EMPTY_PAGE);
+      await utils.attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');
+      const frame = page.frames()[1];
+      expect(await frame.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
+      await page.close();
     });
   });
 

@@ -40,6 +40,7 @@ export type BrowserContextOptions = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
+  colorScheme?: types.ColorScheme,
   acceptDownloads?: boolean
 };
 

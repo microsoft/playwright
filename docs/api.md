@@ -215,6 +215,7 @@ Indicates that the browser is connected.
   - `httpCredentials` <[Object]> Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
     - `username` <[string]>
     - `password` <[string]>
+  - `colorScheme` <"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
 - returns: <[Promise]<[BrowserContext]>>
 
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -255,6 +256,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
   - `httpCredentials` <[Object]> Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
     - `username` <[string]>
     - `password` <[string]>
+  - `colorScheme` <"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
 - returns: <[Promise]<[Page]>>
 
 Creates a new page in a new browser context. Closing this page will close the context as well.

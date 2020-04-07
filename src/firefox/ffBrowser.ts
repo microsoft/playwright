@@ -164,6 +164,8 @@ export class FFBrowserContext extends BrowserContextBase {
       await this.setGeolocation(this._options.geolocation);
     if (this._options.offline)
       await this.setOffline(this._options.offline);
+    if (this._options.colorScheme)
+      await this._setColorScheme(this._options.colorScheme);
   }
 
   _ffPages(): FFPage[] {
@@ -257,6 +259,10 @@ export class FFBrowserContext extends BrowserContextBase {
   async setOffline(offline: boolean): Promise<void> {
     this._options.offline = offline;
     await this._browser._connection.send('Browser.setOnlineOverride', { browserContextId: this._browserContextId || undefined, override: offline ? 'offline' : 'online' });
+  }
+
+  async _setColorScheme(colorScheme?: types.ColorScheme): Promise<void> {
+    await this._browser._connection.send('Browser.setColorScheme', { browserContextId: this._browserContextId || undefined, colorScheme });
   }
 
   async setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {

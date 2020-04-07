@@ -284,10 +284,11 @@ export class FFPage implements PageDelegate {
     });
   }
 
-  async setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
+  async updateEmulateMedia(): Promise<void> {
+    const colorScheme = this._page._state.colorScheme || this._browserContext._options.colorScheme || 'light';
     await this._session.send('Page.setEmulatedMedia', {
-      type: mediaType === null ? undefined : mediaType,
-      colorScheme: colorScheme === null ? undefined : colorScheme
+      type: this._page._state.mediaType === null ? undefined : this._page._state.mediaType,
+      colorScheme
     });
   }
 
