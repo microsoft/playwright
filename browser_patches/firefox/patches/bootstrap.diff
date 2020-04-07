@@ -1148,10 +1148,10 @@ index 25c5b01fc54c8d45da8ceb7cf6ba163bee3c5361..490c5ce49cd9b5f804df59abbfb0450f
    void internalResyncICUDefaultTimeZone();
 diff --git a/juggler/Helper.js b/juggler/Helper.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..862c680198bbb503a5f04c19bdb8fdf2cd8c9cef
+index 0000000000000000000000000000000000000000..b8e6649fb91be6cd72b000426fb4d58216745c4f
 --- /dev/null
 +++ b/juggler/Helper.js
-@@ -0,0 +1,102 @@
+@@ -0,0 +1,115 @@
 +const uuidGen = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +
@@ -1193,6 +1193,19 @@ index 0000000000000000000000000000000000000000..862c680198bbb503a5f04c19bdb8fdf2
 +  generateId() {
 +    const string = uuidGen.generateUUID().toString();
 +    return string.substring(1, string.length - 1);
++  }
++
++  getLoadContext(httpChannel) {
++    let loadContext = null;
++    try {
++      if (httpChannel.notificationCallbacks)
++        loadContext = httpChannel.notificationCallbacks.getInterface(Ci.nsILoadContext);
++    } catch (e) {}
++    try {
++      if (!loadContext && httpChannel.loadGroup)
++        loadContext = httpChannel.loadGroup.notificationCallbacks.getInterface(Ci.nsILoadContext);
++    } catch (e) { }
++    return loadContext;
 +  }
 +
 +  getNetworkErrorStatusText(status) {
@@ -1256,10 +1269,10 @@ index 0000000000000000000000000000000000000000..862c680198bbb503a5f04c19bdb8fdf2
 +
 diff --git a/juggler/NetworkObserver.js b/juggler/NetworkObserver.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..2e3a2c60b5c5052a85ad1a6712d46587fe00838b
+index 0000000000000000000000000000000000000000..052f893eb0e984914ac59f8cb24580449dc12a66
 --- /dev/null
 +++ b/juggler/NetworkObserver.js
-@@ -0,0 +1,768 @@
+@@ -0,0 +1,760 @@
 +"use strict";
 +
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
@@ -1462,15 +1475,7 @@ index 0000000000000000000000000000000000000000..2e3a2c60b5c5052a85ad1a6712d46587
 +  }
 +
 +  _getBrowserForChannel(httpChannel) {
-+    let loadContext = null;
-+    try {
-+      if (httpChannel.notificationCallbacks)
-+        loadContext = httpChannel.notificationCallbacks.getInterface(Ci.nsILoadContext);
-+    } catch (e) {}
-+    try {
-+      if (!loadContext && httpChannel.loadGroup)
-+        loadContext = httpChannel.loadGroup.notificationCallbacks.getInterface(Ci.nsILoadContext);
-+    } catch (e) { }
++    let loadContext = helper.getLoadContext(httpChannel);
 +    if (!loadContext || !this._browserSessionCount.has(loadContext.topFrameElement))
 +      return;
 +    return loadContext.topFrameElement;
@@ -2166,10 +2171,10 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..345aa8b0ebbd9d1e8c9c79913bd7ec3fbb1cc768
+index 0000000000000000000000000000000000000000..27cfe133cab5dc4b1218c0e5624b7eb2f8bc08e3
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
-@@ -0,0 +1,561 @@
+@@ -0,0 +1,661 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
@@ -2196,6 +2201,88 @@ index 0000000000000000000000000000000000000000..345aa8b0ebbd9d1e8c9c79913bd7ec3f
 +  'geo',
 +  'desktop-notification',
 +];
++
++class DownloadInterceptor {
++  constructor(registry) {
++    this._registry = registry
++    this._handlerToUuid = new Map();
++    helper.addObserver(this._onRequest.bind(this), 'http-on-modify-request');
++  }
++
++  _onRequest(httpChannel, topic) {
++    let loadContext = helper.getLoadContext(httpChannel);
++    if (!loadContext)
++      return;
++    if (!loadContext.topFrameElement)
++      return;
++    const target = this._registry.targetForBrowser(loadContext.topFrameElement);
++    if (!target)
++      return;
++    target._httpChannelIds.add(httpChannel.channelId);
++  }
++
++  //
++  // nsIDownloadInterceptor implementation.
++  //
++  interceptDownloadRequest(externalAppHandler, request, outFile) {
++    const httpChannel = request.QueryInterface(Ci.nsIHttpChannel);
++    if (!httpChannel)
++      return false;
++    if (!httpChannel.loadInfo)
++      return false;
++    const userContextId = httpChannel.loadInfo.originAttributes.userContextId;
++    const browserContext = this._registry._userContextIdToBrowserContext.get(userContextId);
++    const options = browserContext.options.downloadOptions;
++    if (!options)
++      return false;
++
++    const pageTarget = this._registry._targetForChannel(httpChannel);
++    if (!pageTarget)
++      return false;
++
++    const uuid = helper.generateId();
++    let file = null;
++    if (options.behavior === 'saveToDisk') {
++      file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
++      file.initWithPath(options.downloadsDir);
++      file.append(uuid);
++
++      try {
++        file.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0o600);
++      } catch (e) {
++        dump(`interceptDownloadRequest failed to create file: ${e}\n`);
++        return false;
++      }
++    }
++    outFile.value = file;
++    this._handlerToUuid.set(externalAppHandler, uuid);
++    const downloadInfo = {
++      uuid,
++      browserContextId: browserContext.browserContextId,
++      pageTargetId: pageTarget.id(),
++      url: httpChannel.URI.spec,
++      suggestedFileName: externalAppHandler.suggestedFileName,
++    };
++    this._registry.emit(TargetRegistry.Events.DownloadCreated, downloadInfo);
++    return true;
++  }
++
++  onDownloadComplete(externalAppHandler, canceled, errorName) {
++    const uuid = this._handlerToUuid.get(externalAppHandler);
++    if (!uuid)
++      return;
++    this._handlerToUuid.delete(externalAppHandler);
++    const downloadInfo = {
++      uuid,
++    };
++    if (errorName === 'NS_BINDING_ABORTED') {
++      downloadInfo.canceled = true;
++    } else {
++      downloadInfo.error = errorName;
++    }
++    this._registry.emit(TargetRegistry.Events.DownloadFinished, downloadInfo);
++  }
++}
 +
 +class TargetRegistry {
 +  constructor() {
@@ -2322,6 +2409,9 @@ index 0000000000000000000000000000000000000000..345aa8b0ebbd9d1e8c9c79913bd7ec3f
 +          onTabCloseListener({ target: tab });
 +      },
 +    });
++
++    const extHelperAppSvc = Cc["@mozilla.org/uriloader/external-helper-app-service;1"].getService(Ci.nsIExternalHelperAppService);
++    extHelperAppSvc.setDownloadInterceptor(new DownloadInterceptor(this));
 +  }
 +
 +  defaultContext() {
@@ -2395,6 +2485,18 @@ index 0000000000000000000000000000000000000000..345aa8b0ebbd9d1e8c9c79913bd7ec3f
 +  targetForBrowser(browser) {
 +    return this._browserToTarget.get(browser);
 +  }
++
++  _targetForChannel(httpChannel) {
++    let loadContext = helper.getLoadContext(httpChannel);
++    if (loadContext)
++      return this.targetForBrowser(loadContext.topFrameElement);
++    const channelId = httpChannel.channelId;
++    for (const target of this._browserToTarget.values()) {
++      if (target._httpChannelIds.has(channelId))
++        return target;
++    }
++    return null;
++  }
 +}
 +
 +class PageTarget {
@@ -2410,6 +2512,7 @@ index 0000000000000000000000000000000000000000..345aa8b0ebbd9d1e8c9c79913bd7ec3f
 +    this._url = '';
 +    this._openerId = opener ? opener.id() : undefined;
 +    this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, this._linkedBrowser.messageManager);
++    this._httpChannelIds = new Set();
 +
 +    const navigationListener = {
 +      QueryInterface: ChromeUtils.generateQI([ Ci.nsIWebProgressListener]),
@@ -2727,6 +2830,8 @@ index 0000000000000000000000000000000000000000..345aa8b0ebbd9d1e8c9c79913bd7ec3f
 +TargetRegistry.Events = {
 +  TargetCreated: Symbol('TargetRegistry.Events.TargetCreated'),
 +  TargetDestroyed: Symbol('TargetRegistry.Events.TargetDestroyed'),
++  DownloadCreated: Symbol('TargetRegistry.Events.DownloadCreated'),
++  DownloadFinished: Symbol('TargetRegistry.Events.DownloadFinished'),
 +};
 +
 +var EXPORTED_SYMBOLS = ['TargetRegistry'];
@@ -3316,10 +3421,10 @@ index 0000000000000000000000000000000000000000..5a1df2837d70531a670163b7c8601088
 +
 diff --git a/juggler/content/NetworkMonitor.js b/juggler/content/NetworkMonitor.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c32e8c11be
+index 0000000000000000000000000000000000000000..155d0770ddf704728829272a41a31ce8c9509a25
 --- /dev/null
 +++ b/juggler/content/NetworkMonitor.js
-@@ -0,0 +1,62 @@
+@@ -0,0 +1,48 @@
 +"use strict";
 +const Ci = Components.interfaces;
 +const Cr = Components.results;
@@ -3343,7 +3448,7 @@ index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c3
 +    if (!(channel instanceof Ci.nsIHttpChannel))
 +      return;
 +    const httpChannel = channel.QueryInterface(Ci.nsIHttpChannel);
-+    const loadContext = getLoadContext(httpChannel);
++    const loadContext = helper.getLoadContext(httpChannel);
 +    if (!loadContext)
 +      return;
 +    const window = loadContext.associatedWindow;
@@ -3364,20 +3469,6 @@ index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c3
 +    helper.removeListeners(this._eventListeners);
 +  }
 +}
-+
-+function getLoadContext(httpChannel) {
-+  let loadContext = null;
-+  try {
-+    if (httpChannel.notificationCallbacks)
-+      loadContext = httpChannel.notificationCallbacks.getInterface(Ci.nsILoadContext);
-+  } catch (e) {}
-+  try {
-+    if (!loadContext && httpChannel.loadGroup)
-+      loadContext = httpChannel.loadGroup.notificationCallbacks.getInterface(Ci.nsILoadContext);
-+  } catch (e) { }
-+  return loadContext;
-+}
-+
 +
 +var EXPORTED_SYMBOLS = ['NetworkMonitor'];
 +this.NetworkMonitor = NetworkMonitor;
@@ -5362,10 +5453,10 @@ index 0000000000000000000000000000000000000000..bf37558bccc48f4d90eadc971c1eb3e4
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/juggler/protocol/BrowserHandler.js b/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..97e88dd582090971d122064b8a131096a317b6be
+index 0000000000000000000000000000000000000000..21ea3ef1451d02b36f884cf3c6ef3df81bd1a9b9
 --- /dev/null
 +++ b/juggler/protocol/BrowserHandler.js
-@@ -0,0 +1,189 @@
+@@ -0,0 +1,199 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -5408,6 +5499,8 @@ index 0000000000000000000000000000000000000000..97e88dd582090971d122064b8a131096
 +    this._eventListeners = [
 +      helper.on(this._targetRegistry, TargetRegistry.Events.TargetCreated, this._onTargetCreated.bind(this)),
 +      helper.on(this._targetRegistry, TargetRegistry.Events.TargetDestroyed, this._onTargetDestroyed.bind(this)),
++      helper.on(this._targetRegistry, TargetRegistry.Events.DownloadCreated, this._onDownloadCreated.bind(this)),
++      helper.on(this._targetRegistry, TargetRegistry.Events.DownloadFinished, this._onDownloadFinished.bind(this)),
 +    ];
 +  }
 +
@@ -5471,6 +5564,14 @@ index 0000000000000000000000000000000000000000..97e88dd582090971d122064b8a131096
 +      sessionId: session.sessionId(),
 +      targetId: target.id(),
 +    });
++  }
++
++  _onDownloadCreated(downloadInfo) {
++    this._session.emitEvent('Browser.downloadCreated', downloadInfo);
++  }
++
++  _onDownloadFinished(downloadInfo) {
++    this._session.emitEvent('Browser.downloadFinished', downloadInfo);
 +  }
 +
 +  async newPage({browserContextId}) {
@@ -6361,10 +6462,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/juggler/protocol/Protocol.js b/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..6e187212618130bc716a0fd0121ed0dd23d35770
+index 0000000000000000000000000000000000000000..ae13d7ad1ce2a9776121ffcfcf7e68c5118e6e5c
 --- /dev/null
 +++ b/juggler/protocol/Protocol.js
-@@ -0,0 +1,781 @@
+@@ -0,0 +1,800 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -6407,6 +6508,11 @@ index 0000000000000000000000000000000000000000..6e187212618130bc716a0fd0121ed0dd
 +  latitude: t.Number,
 +  longitude: t.Number,
 +  accuracy: t.Optional(t.Number),
++};
++
++browserTypes.DownloadOptions = {
++  behavior: t.Optional(t.Enum(['saveToDisk', 'cancel'])),
++  downloadsDir: t.Optional(t.String),
 +};
 +
 +const pageTypes = {};
@@ -6550,6 +6656,7 @@ index 0000000000000000000000000000000000000000..6e187212618130bc716a0fd0121ed0dd
 +  validTo: t.Number,
 +};
 +
++
 +const Browser = {
 +  targets: ['browser'],
 +
@@ -6563,6 +6670,18 @@ index 0000000000000000000000000000000000000000..6e187212618130bc716a0fd0121ed0dd
 +    'detachedFromTarget': {
 +      sessionId: t.String,
 +      targetId: t.String,
++    },
++    'downloadCreated': {
++      uuid: t.String,
++      browserContextId: t.String,
++      pageTargetId: t.String,
++      url: t.String,
++      suggestedFileName: t.String,
++    },
++    'downloadFinished': {
++      uuid: t.String,
++      canceled: t.Optional(t.Boolean),
++      error: t.Optional(t.String),
 +    },
 +  },
 +
@@ -6582,6 +6701,7 @@ index 0000000000000000000000000000000000000000..6e187212618130bc716a0fd0121ed0dd
 +        viewport: t.Optional(pageTypes.Viewport),
 +        locale: t.Optional(t.String),
 +        timezoneId: t.Optional(t.String),
++        downloadOptions: t.Optional(browserTypes.DownloadOptions),
 +      },
 +      returns: {
 +        browserContextId: t.String,
@@ -7515,3 +7635,192 @@ index 87701f8d2cfee8bd84acd28c62b3be4989c9474c..ae1aa85c019cb21d4f7e79c35e8afe72
 +                             in nsIURI aLocation,
 +                             [optional] in unsigned long aFlags);
  };
+diff --git a/uriloader/exthandler/nsExternalHelperAppService.cpp b/uriloader/exthandler/nsExternalHelperAppService.cpp
+index a9a0f395bd6afcb995b786f83f1ba56ff0d56b00..b134791c28101ed4fd34004e23ee674691333964 100644
+--- a/uriloader/exthandler/nsExternalHelperAppService.cpp
++++ b/uriloader/exthandler/nsExternalHelperAppService.cpp
+@@ -100,6 +100,7 @@
+ 
+ #include "mozilla/Components.h"
+ #include "mozilla/ClearOnShutdown.h"
++#include "mozilla/ErrorNames.h"
+ #include "mozilla/Preferences.h"
+ #include "mozilla/ipc/URIUtils.h"
+ 
+@@ -841,6 +842,12 @@ NS_IMETHODIMP nsExternalHelperAppService::ApplyDecodingForExtension(
+   return NS_OK;
+ }
+ 
++NS_IMETHODIMP nsExternalHelperAppService::SetDownloadInterceptor(
++    nsIDownloadInterceptor* interceptor) {
++  mInterceptor = interceptor;
++  return NS_OK;
++}
++
+ nsresult nsExternalHelperAppService::GetFileTokenForPath(
+     const char16_t* aPlatformAppPath, nsIFile** aFile) {
+   nsDependentString platformAppPath(aPlatformAppPath);
+@@ -1407,7 +1414,12 @@ nsresult nsExternalAppHandler::SetUpTempFile(nsIChannel* aChannel) {
+   // Strip off the ".part" from mTempLeafName
+   mTempLeafName.Truncate(mTempLeafName.Length() - ArrayLength(".part") + 1);
+ 
++  return CreateSaverForTempFile();
++}
++
++nsresult nsExternalAppHandler::CreateSaverForTempFile() {
+   MOZ_ASSERT(!mSaver, "Output file initialization called more than once!");
++  nsresult rv;
+   mSaver =
+       do_CreateInstance(NS_BACKGROUNDFILESAVERSTREAMLISTENER_CONTRACTID, &rv);
+   NS_ENSURE_SUCCESS(rv, rv);
+@@ -1567,7 +1579,36 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
+     return NS_OK;
+   }
+ 
+-  rv = SetUpTempFile(aChannel);
++  bool isIntercepted = false;
++  nsCOMPtr<nsIDownloadInterceptor> interceptor = mExtProtSvc->mInterceptor;
++  if (interceptor) {
++    nsCOMPtr<nsIFile> fileToUse;
++    rv = interceptor->InterceptDownloadRequest(this, request, getter_AddRefs(fileToUse), &isIntercepted);
++    if (!NS_SUCCEEDED(rv)) {
++      LOG(("    failed to call nsIDowloadInterceptor.interceptDownloadRequest"));
++      return rv;
++    }
++    if (isIntercepted) {
++      LOG(("    request interceped by nsIDowloadInterceptor"));
++      if (fileToUse) {
++        mTempFile = fileToUse;
++        rv = mTempFile->GetLeafName(mTempLeafName);
++        NS_ENSURE_SUCCESS(rv, rv);
++      } else {
++        Cancel(NS_BINDING_ABORTED);
++        return NS_OK;
++      }
++    }
++  }
++
++  // Temp file is the final destination when download is intercepted. In that
++  // case we only need to create saver (and not create transfer later). Not creating
++  // mTransfer also cuts off all downloads handling logic in the js compoenents and
++  // browser UI.
++  if (isIntercepted)
++    rv = CreateSaverForTempFile();
++  else
++    rv = SetUpTempFile(aChannel);
+   if (NS_FAILED(rv)) {
+     nsresult transferError = rv;
+ 
+@@ -1615,6 +1656,11 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
+   mMimeInfo->GetAlwaysAskBeforeHandling(&alwaysAsk);
+   nsAutoCString MIMEType;
+   mMimeInfo->GetMIMEType(MIMEType);
++
++  if (isIntercepted) {
++    return NS_OK;
++  }
++
+   if (alwaysAsk) {
+     // But we *don't* ask if this mimeInfo didn't come from
+     // our user configuration datastore and the user has said
+@@ -2015,6 +2061,15 @@ nsExternalAppHandler::OnSaveComplete(nsIBackgroundFileSaver* aSaver,
+     NotifyTransfer(aStatus);
+   }
+ 
++  if (!mCanceled) {
++    nsCOMPtr<nsIDownloadInterceptor> interceptor = mExtProtSvc->mInterceptor;
++    if (interceptor) {
++      nsCString noError;
++      nsresult rv = interceptor->OnDownloadComplete(this, noError);
++      MOZ_ASSERT(NS_SUCCEEDED(rv), "Failed to call nsIDowloadInterceptor.OnDownloadComplete");
++    }
++  }
++
+   return NS_OK;
+ }
+ 
+@@ -2385,6 +2440,14 @@ NS_IMETHODIMP nsExternalAppHandler::Cancel(nsresult aReason) {
+     }
+   }
+ 
++  nsCOMPtr<nsIDownloadInterceptor> interceptor = mExtProtSvc->mInterceptor;
++  if (interceptor) {
++    nsCString errorName;
++    GetErrorName(aReason, errorName);
++    nsresult rv = interceptor->OnDownloadComplete(this, errorName);
++    MOZ_ASSERT(NS_SUCCEEDED(rv), "Failed notify nsIDowloadInterceptor about cancel");
++  }
++
+   // Break our reference cycle with the helper app dialog (set up in
+   // OnStartRequest)
+   mDialog = nullptr;
+diff --git a/uriloader/exthandler/nsExternalHelperAppService.h b/uriloader/exthandler/nsExternalHelperAppService.h
+index f3d18ce83858b9cb876091ea04fcf6f079f5471c..abb0be752aeceae3e396d65b92d0b3eac215a2e9 100644
+--- a/uriloader/exthandler/nsExternalHelperAppService.h
++++ b/uriloader/exthandler/nsExternalHelperAppService.h
+@@ -189,6 +189,8 @@ class nsExternalHelperAppService : public nsIExternalHelperAppService,
+       mozilla::dom::BrowsingContext* aContentContext, bool aForceSave,
+       nsIInterfaceRequestor* aWindowContext,
+       nsIStreamListener** aStreamListener);
++
++  nsCOMPtr<nsIDownloadInterceptor> mInterceptor;
+ };
+ 
+ /**
+@@ -366,6 +368,9 @@ class nsExternalAppHandler final : public nsIStreamListener,
+    * Upon successful return, both mTempFile and mSaver will be valid.
+    */
+   nsresult SetUpTempFile(nsIChannel* aChannel);
++
++  nsresult CreateSaverForTempFile();
++
+   /**
+    * When we download a helper app, we are going to retarget all load
+    * notifications into our own docloader and load group instead of
+diff --git a/uriloader/exthandler/nsIExternalHelperAppService.idl b/uriloader/exthandler/nsIExternalHelperAppService.idl
+index 8a55c1bd666c4f7a032863f1527a2315830643c5..c8bfff858079216798e0c71cc757e67466ad4ce1 100644
+--- a/uriloader/exthandler/nsIExternalHelperAppService.idl
++++ b/uriloader/exthandler/nsIExternalHelperAppService.idl
+@@ -6,6 +6,7 @@
+ 
+ #include "nsICancelable.idl"
+ 
++interface nsIHelperAppLauncher;
+ interface nsIURI;
+ interface nsIRequest;
+ interface nsIStreamListener;
+@@ -20,6 +21,17 @@ webidl BrowsingContext;
+ class nsExternalAppHandler;
+ %}
+ 
++/**
++ * Interceptor interface used by Juggler.
++ */
++[scriptable, uuid(9a20e9b0-75d0-11ea-bc55-0242ac130003)]
++interface nsIDownloadInterceptor : nsISupports
++{
++  bool interceptDownloadRequest(in nsIHelperAppLauncher aHandler, in nsIRequest aRequest, out nsIFile file);
++
++  void onDownloadComplete(in nsIHelperAppLauncher aHandler, in ACString aErrorName);
++};
++
+ /**
+  * The external helper app service is used for finding and launching
+  * platform specific external applications for a given mime content type.
+@@ -49,7 +61,7 @@ interface nsIExternalHelperAppService : nsISupports
+                                in nsIInterfaceRequestor aContentContext,
+                                in boolean aForceSave,
+                                [optional] in nsIInterfaceRequestor aWindowContext);
+-  
++
+   /**
+    * Binds an external helper application to a stream listener. The caller
+    * should pump data into the returned stream listener. When the OnStopRequest
+@@ -82,6 +94,7 @@ interface nsIExternalHelperAppService : nsISupports
+   boolean applyDecodingForExtension(in AUTF8String aExtension,
+                                     in ACString aEncodingType);
+ 
++  void setDownloadInterceptor(in nsIDownloadInterceptor interceptor);
+ };
+ 
+ /**
