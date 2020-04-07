@@ -20,15 +20,14 @@ const checkPublicAPI = require('..');
 const Source = require('../../Source');
 const mdBuilder = require('../MDBuilder');
 const jsBuilder = require('../JSBuilder');
-const GoldenUtils = require('../../../../test/golden-utils');
 
-const {Matchers} = require('../../../testrunner/Matchers');
 const TestRunner  = require('../../../testrunner/');
 const runner = new TestRunner();
 
 const {describe, xdescribe, fdescribe} = runner.api();
 const {it, fit, xit} = runner.api();
 const {beforeAll, beforeEach, afterAll, afterEach} = runner.api();
+const {expect} = runner.api();
 
 let browser;
 let page;
@@ -62,10 +61,7 @@ runner.run();
 
 async function testLint(state, testRun) {
   const dirPath = path.join(__dirname, testRun.test().name());
-  const {expect} = new Matchers({
-    toBeGolden: GoldenUtils.compare.bind(null, dirPath, dirPath)
-  });
-
+  expect.setupGolden(dirPath);
   const mdSources = await Source.readdir(dirPath, '.md');
   const tsSources = await Source.readdir(dirPath, '.ts');
   const jsSources = await Source.readdir(dirPath, '.js');
@@ -76,9 +72,7 @@ async function testLint(state, testRun) {
 
 async function testMDBuilder(state, testRun) {
   const dirPath = path.join(__dirname, testRun.test().name());
-  const {expect} = new Matchers({
-    toBeGolden: GoldenUtils.compare.bind(null, dirPath, dirPath)
-  });
+  expect.setupGolden(dirPath);
   const sources = await Source.readdir(dirPath, '.md');
   const {documentation} = await mdBuilder(page, sources);
   expect(serialize(documentation)).toBeGolden('result.txt');
@@ -86,9 +80,7 @@ async function testMDBuilder(state, testRun) {
 
 async function testJSBuilder(state, testRun) {
   const dirPath = path.join(__dirname, testRun.test().name());
-  const {expect} = new Matchers({
-    toBeGolden: GoldenUtils.compare.bind(null, dirPath, dirPath)
-  });
+  expect.setupGolden(dirPath);
   const jsSources = await Source.readdir(dirPath, '.js');
   const tsSources = await Source.readdir(dirPath, '.ts');
   const {documentation} = await jsBuilder.checkSources(jsSources.concat(tsSources));

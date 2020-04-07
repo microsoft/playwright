@@ -17,8 +17,6 @@
 const fs = require('fs');
 const path = require('path');
 const rm = require('rimraf').sync;
-const GoldenUtils = require('./golden-utils');
-const {Matchers} = require('../utils/testrunner/Matchers');
 const readline = require('readline');
 const {TestServer} = require('../utils/testserver/');
 
@@ -54,6 +52,7 @@ const browserNames = BROWSER_CONFIGS.map(config => config.name);
 module.exports.addPlaywrightTests = ({testRunner, platform, products, playwrightPath, headless, slowMo, dumpProtocolOnFailure, coverage}) => {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
+  const {expect} = testRunner;
 
   const MAC = platform === 'darwin';
   const LINUX = platform === 'linux';
@@ -125,9 +124,7 @@ module.exports.addPlaywrightTests = ({testRunner, platform, products, playwright
     const ASSETS_DIR = path.join(__dirname, 'assets');
     if (fs.existsSync(OUTPUT_DIR))
       rm(OUTPUT_DIR);
-    const {expect} = new Matchers({
-      toBeGolden: GoldenUtils.compare.bind(null, GOLDEN_DIR, OUTPUT_DIR)
-    });
+    expect.setupGolden(GOLDEN_DIR, OUTPUT_DIR);
 
     const testOptions = {
       testRunner,

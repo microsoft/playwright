@@ -17,6 +17,7 @@
 const Location = require('./Location.js');
 const colors = require('colors/safe');
 const Diff = require('text-diff');
+const GoldenUtils = require('./GoldenUtils');
 
 class Matchers {
   constructor(customMatchers = {}) {
@@ -24,6 +25,9 @@ class Matchers {
     Object.assign(this._matchers, DefaultMatchers);
     Object.assign(this._matchers, customMatchers);
     this.expect = this.expect.bind(this);
+    this.expect.setupGolden = (expected, output = expected) => {
+      this._matchers.toBeGolden = GoldenUtils.compare.bind(null, expected, output);
+    };
   }
 
   addMatcher(name, matcher) {
