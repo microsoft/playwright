@@ -134,7 +134,7 @@ export class Selectors {
     return result;
   }
 
-  _waitForSelectorTask(selector: string, waitFor: 'attached' | 'detached' | 'visible' | 'hidden', timeout: number): { world: 'main' | 'utility', task: (context: dom.FrameExecutionContext) => Promise<js.JSHandle> } {
+  _waitForSelectorTask(selector: string, waitFor: 'attached' | 'detached' | 'visible' | 'hidden', deadline: number): { world: 'main' | 'utility', task: (context: dom.FrameExecutionContext) => Promise<js.JSHandle> } {
     const parsed = this._parseSelector(selector);
     const task = async (context: dom.FrameExecutionContext) => context.evaluateHandleInternal(({ evaluator, parsed, waitFor, timeout }) => {
       const polling = (waitFor === 'attached' || waitFor === 'detached') ? 'mutation' : 'raf';
@@ -151,7 +151,7 @@ export class Selectors {
             return !element || !evaluator.injected.isVisible(element);
         }
       });
-    }, { evaluator: await this._prepareEvaluator(context), parsed, waitFor, timeout });
+    }, { evaluator: await this._prepareEvaluator(context), parsed, waitFor, timeout: helper.timeUntilDeadline(deadline) });
     return { world: this._needsMainContext(parsed) ? 'main' : 'utility', task };
   }
 

@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+import { TimeoutOptions } from './types';
+import { helper } from './helper';
+
 const DEFAULT_TIMEOUT = 30000;
 
 export class TimeoutSettings {
@@ -44,11 +47,20 @@ export class TimeoutSettings {
     return DEFAULT_TIMEOUT;
   }
 
-  timeout(): number {
+  private _timeout(): number {
     if (this._defaultTimeout !== null)
       return this._defaultTimeout;
     if (this._parent)
-      return this._parent.timeout();
+      return this._parent._timeout();
     return DEFAULT_TIMEOUT;
+  }
+
+  computeDeadline(options?: TimeoutOptions) {
+    const { timeout } = options || {};
+    if (timeout === 0)
+      return Number.MAX_SAFE_INTEGER;
+    else if (typeof timeout === 'number')
+      return helper.monotonicTime() + timeout;
+    return helper.monotonicTime() + this._timeout();
   }
 }

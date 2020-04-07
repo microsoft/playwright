@@ -745,7 +745,7 @@ Emitted when attachment is downloaded. User can access basic file operations on 
   - `element` <[ElementHandle]> handle to the input element that was clicked
   - `multiple` <[boolean]> Whether file chooser allow for [multiple](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#attr-multiple) file selection.
 
-Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can respond to it via setting the input files using [`elementHandle.setInputFiles`](#elementhandlesetinputfilesfiles) which can be uploaded in the end.
+Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can respond to it via setting the input files using [`elementHandle.setInputFiles`](#elementhandlesetinputfilesfiles-options) which can be uploaded in the end.
 
 ```js
 page.on('filechooser', async ({element, multiple}) => {
@@ -2498,7 +2498,7 @@ ElementHandle instances can be used as an argument in [`page.$eval()`](#pageeval
 - [elementHandle.screenshot([options])](#elementhandlescreenshotoptions)
 - [elementHandle.scrollIntoViewIfNeeded()](#elementhandlescrollintoviewifneeded)
 - [elementHandle.selectOption(values[, options])](#elementhandleselectoptionvalues-options)
-- [elementHandle.setInputFiles(files)](#elementhandlesetinputfilesfiles)
+- [elementHandle.setInputFiles(files[, options])](#elementhandlesetinputfilesfiles-options)
 - [elementHandle.toString()](#elementhandletostring)
 - [elementHandle.type(text[, options])](#elementhandletypetext-options)
 - [elementHandle.uncheck([options])](#elementhandleuncheckoptions)
@@ -2759,11 +2759,19 @@ handle.selectOption('red', 'green', 'blue');
 handle.selectOption({ value: 'blue' }, { index: 2 }, 'red');
 ```
 
-#### elementHandle.setInputFiles(files)
+#### elementHandle.setInputFiles(files[, options])
 - `files` <[string]|[Array]<[string]>|[Object]|[Array]<[Object]>>
   - `name` <[string]> [File] name **required**
   - `type` <[string]> [File] type **required**
   - `data` <[string]> Base64-encoded data **required**
+- `options` <[Object]>
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
+    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
+    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'nowait'` - do not wait.
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
 
 This method expects `elementHandle` to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).

@@ -257,7 +257,7 @@ class Injected {
       return isDisplayedAndStable;
     });
     if (!result)
-      throw new Error(`waiting for element to be displayed and not moving failed: timeout ${timeout}ms exceeded`);
+      throw new Error(`waiting for element to be displayed and not moving failed: timeout exceeded`);
   }
 
   async waitForHitTargetAt(node: Node, timeout: number, point: types.Point) {
@@ -273,7 +273,7 @@ class Injected {
       return hitElement === element;
     });
     if (!result)
-      throw new Error(`waiting for element to receive mouse events failed: timeout ${timeout}ms exceeded`);
+      throw new Error(`waiting for element to receive mouse events failed: timeout exceeded`);
   }
 
   private _parentElementOrShadowHost(element: Element): Element | undefined {

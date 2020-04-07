@@ -57,7 +57,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
   async _doEvaluateInternal(returnByValue: boolean, waitForNavigations: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
     return await this.frame._page._frameManager.waitForNavigationsCreatedBy(async () => {
       return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
-    }, waitForNavigations ? undefined : { waitUntil: 'nowait' });
+    }, Number.MAX_SAFE_INTEGER, waitForNavigations ? undefined : { waitUntil: 'nowait' });
   }
 
   _createHandle(remoteObject: any): js.JSHandle {
@@ -181,18 +181,20 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return point;
   }
 
-  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
+  async _performPointerAction(action: (point: types.Point) => Promise<void>, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
+    const deadline = this._page._timeoutSettings.computeDeadline(options);
     const { force = false } = (options || {});
     if (!force)
-      await this._waitForDisplayedAtStablePosition(options);
+      await this._waitForDisplayedAtStablePosition(deadline);
     const position = options ? options.position : undefined;
     await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
     const point = position ? await this._offsetPoint(position) : await this._clickablePoint();
-    if (!force)
-      await this._waitForHitTargetAt(point, options);
 
     point.x = (point.x * 100 | 0) / 100;
     point.y = (point.y * 100 | 0) / 100;
+
+    if (!force)
+      await this._waitForHitTargetAt(point, deadline);
 
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       let restoreModifiers: input.Modifier[] | undefined;
@@ -203,7 +205,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       debugInput('...done');
       if (restoreModifiers)
         await this._page.keyboard._ensureModifiers(restoreModifiers);
-    }, options, true);
+    }, deadline, options, true);
   }
 
   hover(options?: PointerActionOptions & types.PointerActionWaitOptions): Promise<void> {
@@ -219,6 +221,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options?: types.NavigatingActionWaitOptions): Promise<string[]> {
+    const deadline = this._page._timeoutSettings.computeDeadline(options);
     let vals: string[] | ElementHandle[] | types.SelectOption[];
     if (!Array.isArray(values))
       vals = [ values ] as (string[] | ElementHandle[] | types.SelectOption[]);
@@ -237,11 +240,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }
     return await this._page._frameManager.waitForNavigationsCreatedBy<string[]>(async () => {
       return this._evaluateInUtility(({ injected, node }, selectOptions) => injected.selectOptions(node, selectOptions), selectOptions);
-    }, options);
+    }, deadline, options);
   }
 
   async fill(value: string, options?: types.NavigatingActionWaitOptions): Promise<void> {
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
+    const deadline = this._page._timeoutSettings.computeDeadline(options);
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       const errorOrNeedsInput = await this._evaluateInUtility(({ injected, node }, value) => injected.fill(node, value), value);
       if (typeof errorOrNeedsInput === 'string')
@@ -252,10 +256,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         else
           await this._page.keyboard.press('Delete');
       }
-    }, options, true);
+    }, deadline, options, true);
   }
 
-  async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[]) {
+  async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options?: types.NavigatingActionWaitOptions) {
+    const deadline = this._page._timeoutSettings.computeDeadline(options);
     const multiple = await this._evaluateInUtility(({ node }) => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node as Node as Element).tagName !== 'INPUT')
         throw new Error('Node is not an HTMLInputElement');
@@ -283,7 +288,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, filePayloads);
-    });
+    }, deadline, options);
   }
 
   async focus() {
@@ -298,17 +303,19 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async type(text: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
+    const deadline = this._page._timeoutSettings.computeDeadline(options);
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       await this.focus();
       await this._page.keyboard.type(text, options);
-    }, options, true);
+    }, deadline, options, true);
   }
 
   async press(key: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
+    const deadline = this._page._timeoutSettings.computeDeadline(options);
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       await this.focus();
       await this._page.keyboard.press(key, options);
-    }, options, true);
+    }, deadline, options, true);
   }
 
   async check(options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
@@ -367,16 +374,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  async _waitForDisplayedAtStablePosition(options: types.TimeoutOptions = {}): Promise<void> {
+  async _waitForDisplayedAtStablePosition(deadline: number): Promise<void> {
     debugInput('waiting for element to be displayed and not moving...');
     const stablePromise = this._evaluateInUtility(({ injected, node }, timeout) => {
       return injected.waitForDisplayedAtStablePosition(node, timeout);
-    }, options.timeout || 0);
-    await helper.waitWithTimeout(stablePromise, 'element to be displayed and not moving', options.timeout || 0);
+    }, helper.timeUntilDeadline(deadline));
+    await helper.waitWithDeadline(stablePromise, 'element to be displayed and not moving', deadline);
     debugInput('...done');
   }
 
-  async _waitForHitTargetAt(point: types.Point, options: types.TimeoutOptions = {}): Promise<void> {
+  async _waitForHitTargetAt(point: types.Point, deadline: number): Promise<void> {
     debugInput(`waiting for element to receive pointer events at (${point.x},${point.y}) ...`);
     const frame = await this.ownerFrame();
     if (frame && frame.parentFrame()) {
@@ -389,8 +396,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }
     const hitTargetPromise = this._evaluateInUtility(({ injected, node }, { timeout, point }) => {
       return injected.waitForHitTargetAt(node, timeout, point);
-    }, { timeout: options.timeout || 0, point });
-    await helper.waitWithTimeout(hitTargetPromise, 'element to receive pointer events', options.timeout || 0);
+    }, { timeout: helper.timeUntilDeadline(deadline), point });
+    await helper.waitWithDeadline(hitTargetPromise, 'element to receive pointer events', deadline);
     debugInput('...done');
   }
 }

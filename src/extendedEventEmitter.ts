@@ -16,21 +16,22 @@
 
 import { EventEmitter } from 'events';
 import { helper } from './helper';
+import { TimeoutOptions } from './types';
 
 export class ExtendedEventEmitter extends EventEmitter {
   protected _abortPromiseForEvent(event: string) {
     return new Promise<Error>(() => void 0);
   }
 
-  protected _timeoutForEvent(event: string): number {
+  protected _computeDeadline(options?: TimeoutOptions): number {
     throw new Error('unimplemented');
   }
 
   async waitForEvent(event: string, optionsOrPredicate: Function|{ predicate?: Function, timeout?: number } = {}): Promise<any> {
+    const deadline = this._computeDeadline(typeof optionsOrPredicate === 'function' ? undefined : optionsOrPredicate);
     const {
       predicate = () => true,
-      timeout = this._timeoutForEvent(event)
     } = typeof optionsOrPredicate === 'function' ? {predicate: optionsOrPredicate} : optionsOrPredicate;
-    return helper.waitForEvent(this, event, predicate, timeout, this._abortPromiseForEvent(event));
+    return helper.waitForEvent(this, event, predicate, deadline, this._abortPromiseForEvent(event));
   }
 }

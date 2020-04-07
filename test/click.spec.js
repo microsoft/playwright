@@ -169,7 +169,7 @@ const utils = require('./utils');
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', b => b.style.display = 'none');
       const error = await page.click('button', { timeout: 100 }).catch(e => e);
-      expect(error.message).toContain('timeout 100ms exceeded');
+      expect(error.message).toContain('timeout exceeded');
     });
     it('should waitFor visible when parent is hidden', async({page, server}) => {
       let done = false;
@@ -413,7 +413,7 @@ const utils = require('./utils');
         button.style.marginLeft = '200px';
       });
       const error = await button.click({ timeout: 100 }).catch(e => e);
-      expect(error.message).toContain('timeout 100ms exceeded');
+      expect(error.message).toContain('timeout exceeded');
     });
     it('should wait for becoming hit target', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
@@ -461,7 +461,7 @@ const utils = require('./utils');
         document.body.appendChild(blocker);
       });
       const error = await button.click({ timeout: 100 }).catch(e => e);
-      expect(error.message).toContain('timeout 100ms exceeded');
+      expect(error.message).toContain('timeout exceeded');
     });
     it('should fail when obscured and not waiting for hit target', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
@@ -553,10 +553,10 @@ const utils = require('./utils');
       // guarantee timeout.
       const error1 = await page.click('button', { timeout: 250 }).catch(e => e);
       if (error1)
-        expect(error1.message).toContain('timeout 250ms exceeded');
+        expect(error1.message).toContain('timeout exceeded');
       const error2 = await page.click('button', { timeout: 250 }).catch(e => e);
       if (error2)
-        expect(error2.message).toContain('timeout 250ms exceeded');
+        expect(error2.message).toContain('timeout exceeded');
     });
   });
 
