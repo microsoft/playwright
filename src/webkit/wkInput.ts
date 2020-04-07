@@ -17,7 +17,7 @@
 
 import * as input from '../input';
 import { helper } from '../helper';
-import { macEditingCommands } from '../usKeyboardLayout';
+import { macEditingCommands } from '../macEditingCommands';
 import { WKSession } from './wkConnection';
 
 function toModifiersMask(modifiers: Set<input.Modifier>): number {
