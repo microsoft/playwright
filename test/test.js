@@ -44,6 +44,7 @@ function collect(browserNames) {
     timeout,
     totalTimeout: process.env.CI ? 15 * 60 * 1000 : 0,
     parallel,
+    crashIfTestsAreFocusedOnCI: false,
     breakOnFailure: process.argv.indexOf('--break-on-failure') !== -1,
     verbose: process.argv.includes('--verbose'),
     summary: !process.argv.includes('--verbose'),

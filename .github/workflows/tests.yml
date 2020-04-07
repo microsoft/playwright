@@ -32,8 +32,11 @@ jobs:
     - run: xvfb-run --auto-servernum -- bash -c "npm run ccoverage 2>./chromium-linux-testrun.log"
       env:
         DEBUG: "*"
+    - run: pwd -L && ls -la test/output-chromium
+      if: always()
     # Ensure output folder exists just in case it was not created by the test run.
     - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-chromium'), {recursive:true})"
+      if: failure()
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
