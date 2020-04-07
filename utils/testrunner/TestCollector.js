@@ -136,7 +136,7 @@ class TestCollector {
     this._currentSuite = new Suite(null, '', new Location());
 
     this._api.describe = specBuilder(this._suiteModifiers, this._suiteAttributes, (specs, name, suiteCallback, ...suiteArgs) => {
-      const location = Location.getCallerLocation(__filename);
+      const location = Location.getCallerLocation();
       const suite = new Suite(this._currentSuite, name, location);
       for (const { callback, args } of specs)
         callback(suite, ...args);
@@ -146,7 +146,7 @@ class TestCollector {
       this._currentSuite = suite.parentSuite();
     });
     this._api.it = specBuilder(this._testModifiers, this._testAttributes, (specs, name, testCallback) => {
-      const location = Location.getCallerLocation(__filename);
+      const location = Location.getCallerLocation();
       const test = new Test(this._currentSuite, name, testCallback, location);
       test.setTimeout(timeout);
       for (const { callback, args } of specs)
