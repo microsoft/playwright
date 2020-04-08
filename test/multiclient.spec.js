@@ -61,7 +61,7 @@ module.exports.describe = function({defaultBrowserOptions, browserType, FFOX, CH
       remoteBrowser2.on('disconnected', () => ++disconnectedRemote2);
 
       await Promise.all([
-        utils.waitEvent(remoteBrowser2, 'disconnected'),
+        new Promise(f => remoteBrowser2.on('disconnected', f)),
         remoteBrowser2.close(),
       ]);
 
@@ -70,8 +70,8 @@ module.exports.describe = function({defaultBrowserOptions, browserType, FFOX, CH
       expect(disconnectedRemote2).toBe(1);
 
       await Promise.all([
-        utils.waitEvent(remoteBrowser1, 'disconnected'),
-        utils.waitEvent(originalBrowser, 'disconnected'),
+        new Promise(f => remoteBrowser1.on('disconnected', f)),
+        new Promise(f => originalBrowser.on('disconnected', f)),
         browserServer.close(),
       ]);
 

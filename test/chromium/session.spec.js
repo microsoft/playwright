@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-const { waitEvent } = require('../utils');
-
 /**
  * @type {ChromiumTestSuite}
  */
@@ -49,7 +47,7 @@ module.exports.describe = function({FFOX, CHROMIUM, WEBKIT}) {
       await page.coverage.stopJSCoverage();
       // generate a script in page and wait for the event.
       const [event] = await Promise.all([
-        waitEvent(client, 'Debugger.scriptParsed'),
+        new Promise(f => client.on('Debugger.scriptParsed', f)),
         page.evaluate('//# sourceURL=foo.js')
       ]);
       // expect events to be dispatched.

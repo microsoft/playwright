@@ -15,9 +15,6 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
-const { waitEvent } = utils;
-
 /**
  * @type {PageTestSuite}
  */
@@ -49,7 +46,7 @@ module.exports.describe = function({FFOX, CHROMIUM, WEBKIT, LINUX}) {
     });
     it('should report console logs', async function({page}) {
       const [message] = await Promise.all([
-        waitEvent(page, 'console'),
+        page.waitForEvent('console'),
         page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'})))),
       ]);
       expect(message.text()).toBe('1');

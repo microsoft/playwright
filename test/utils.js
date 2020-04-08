@@ -64,22 +64,6 @@ function traceAPICoverage(apiCoverage, events, className, classType) {
 }
 
 const utils = module.exports = {
-  promisify: function (nodeFunction) {
-    function promisified(...args) {
-      return new Promise((resolve, reject) => {
-        function callback(err, ...result) {
-          if (err)
-            return reject(err);
-          if (result.length === 1)
-            return resolve(result[0]);
-          return resolve(result);
-        }
-        nodeFunction.call(null, ...args, callback);
-      });
-    }
-    return promisified;
-  },
-
   recordAPICoverage: function(api, events, ignoredMethodsArray = []) {
     const coverage = new Map();
     const ignoredMethods = new Set(ignoredMethodsArray);
@@ -117,27 +101,15 @@ const utils = module.exports = {
    * @return {!Playwright.Frame}
    */
   attachFrame: async function(page, frameId, url) {
-    const frames = new Set(page.frames());
-    const handle = await page.evaluateHandle(attachFrame, { frameId, url });
-    try {
-      return await handle.asElement().contentFrame();
-    } catch(e) {
-      // we might not support contentFrame, but this can still work ok.
-      for (const frame of page.frames()) {
-        if (!frames.has(frame))
-          return frame;
-      }
-    }
-    return null;
-
-    async function attachFrame({ frameId, url }) {
+    const handle = await page.evaluateHandle(async ({ frameId, url }) => {
       const frame = document.createElement('iframe');
       frame.src = url;
       frame.id = frameId;
       document.body.appendChild(frame);
       await new Promise(x => frame.onload = x);
       return frame;
-    }
+    }, { frameId, url });
+    return handle.asElement().contentFrame();
   },
 
   /**
@@ -145,27 +117,9 @@ const utils = module.exports = {
    * @param {string} frameId
    */
   detachFrame: async function(page, frameId) {
-    await page.evaluate(detachFrame, frameId);
-
-    function detachFrame(frameId) {
-      const frame = document.getElementById(frameId);
-      frame.remove();
-    }
-  },
-
-  /**
-   * @param {!Page} page
-   * @param {string} frameId
-   * @param {string} url
-   */
-  navigateFrame: async function(page, frameId, url) {
-    await page.evaluate(navigateFrame, { frameId, url });
-
-    function navigateFrame({ frameId, url }) {
-      const frame = document.getElementById(frameId);
-      frame.src = url;
-      return new Promise(x => frame.onload = x);
-    }
+    await page.evaluate(frameId => {
+      document.getElementById(frameId).remove();
+    }, frameId);
   },
 
   /**
@@ -188,22 +142,6 @@ const utils = module.exports = {
     for (const child of childFrames)
       result.push(...utils.dumpFrames(child, '    ' + indentation));
     return result;
-  },
-
-  /**
-   * @param {!EventEmitter} emitter
-   * @param {string} eventName
-   * @return {!Promise<!Object>}
-   */
-  waitEvent: function(emitter, eventName, predicate = () => true) {
-    return new Promise(fulfill => {
-      emitter.on(eventName, function listener(event) {
-        if (!predicate(event))
-          return;
-        emitter.removeListener(eventName, listener);
-        fulfill(event);
-      });
-    });
   },
 
   initializeFlakinessDashboardIfNeeded: async function(testRunner) {
