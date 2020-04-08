@@ -74,6 +74,10 @@ class DefaultTestRunner {
     this._api.xit = this._api.it.skip;
   }
 
+  collector() {
+    return this._collector;
+  }
+
   api() {
     return this._api;
   }

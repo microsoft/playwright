@@ -14,107 +14,141 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 const fs = require('fs');
 const path = require('path');
 const rm = require('rimraf').sync;
 const readline = require('readline');
 const {TestServer} = require('../utils/testserver/');
+const {Environment} = require('../utils/testrunner/Test');
 
-const YELLOW_COLOR = '\x1b[33m';
-const RESET_COLOR = '\x1b[0m';
+const serverEnvironment = new Environment('TestServer');
+serverEnvironment.beforeAll(async state => {
+  const assetsPath = path.join(__dirname, 'assets');
+  const cachedPath = path.join(__dirname, 'assets', 'cached');
+
+  const port = 8907 + state.parallelIndex * 3;
+  state.server = await TestServer.create(assetsPath, port);
+  state.server.enableHTTPCache(cachedPath);
+  state.server.PORT = port;
+  state.server.PREFIX = `http://localhost:${port}`;
+  state.server.CROSS_PROCESS_PREFIX = `http://127.0.0.1:${port}`;
+  state.server.EMPTY_PAGE = `http://localhost:${port}/empty.html`;
+
+  const httpsPort = port + 1;
+  state.httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
+  state.httpsServer.enableHTTPCache(cachedPath);
+  state.httpsServer.PORT = httpsPort;
+  state.httpsServer.PREFIX = `https://localhost:${httpsPort}`;
+  state.httpsServer.CROSS_PROCESS_PREFIX = `https://127.0.0.1:${httpsPort}`;
+  state.httpsServer.EMPTY_PAGE = `https://localhost:${httpsPort}/empty.html`;
+
+  const sourcePort = port + 2;
+  state.sourceServer = await TestServer.create(path.join(__dirname, '..'), sourcePort);
+  state.sourceServer.PORT = sourcePort;
+  state.sourceServer.PREFIX = `http://localhost:${sourcePort}`;
+});
+serverEnvironment.afterAll(async({server, sourceServer, httpsServer}) => {
+  await Promise.all([
+    server.stop(),
+    httpsServer.stop(),
+    sourceServer.stop(),
+  ]);
+});
+serverEnvironment.beforeEach(async({server, httpsServer}) => {
+  server.reset();
+  httpsServer.reset();
+});
+
+const goldenEnvironment = new Environment('Golden');
+goldenEnvironment.beforeAll(async ({browserType}) => {
+  const { OUTPUT_DIR, GOLDEN_DIR } = require('./utils').testOptions(browserType);
+  if (fs.existsSync(OUTPUT_DIR))
+    rm(OUTPUT_DIR);
+  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+  expect.setupGolden(GOLDEN_DIR, OUTPUT_DIR);
+});
 
 /**
  * @type {TestSuite}
  */
-module.exports.addPlaywrightTests = ({platform, products, playwrightPath, headless, slowMo, dumpProtocolOnFailure, coverage}) => {
-  const MAC = platform === 'darwin';
-  const LINUX = platform === 'linux';
-  const WIN = platform === 'win32';
+module.exports.addPlaywrightTests = ({testRunner, products}) => {
+  const dumpProtocolOnFailure = valueFromEnv('DEBUGP', false);
+  const playwrightPath = require('./utils').projectRoot();
   const playwright = require(playwrightPath);
 
-  beforeAll(async state => {
-    const assetsPath = path.join(__dirname, 'assets');
-    const cachedPath = path.join(__dirname, 'assets', 'cached');
-
-    const port = 8907 + state.parallelIndex * 3;
-    state.server = await TestServer.create(assetsPath, port);
-    state.server.enableHTTPCache(cachedPath);
-    state.server.PORT = port;
-    state.server.PREFIX = `http://localhost:${port}`;
-    state.server.CROSS_PROCESS_PREFIX = `http://127.0.0.1:${port}`;
-    state.server.EMPTY_PAGE = `http://localhost:${port}/empty.html`;
-
-    const httpsPort = port + 1;
-    state.httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
-    state.httpsServer.enableHTTPCache(cachedPath);
-    state.httpsServer.PORT = httpsPort;
-    state.httpsServer.PREFIX = `https://localhost:${httpsPort}`;
-    state.httpsServer.CROSS_PROCESS_PREFIX = `https://127.0.0.1:${httpsPort}`;
-    state.httpsServer.EMPTY_PAGE = `https://localhost:${httpsPort}/empty.html`;
-
-    const sourcePort = port + 2;
-    state.sourceServer = await TestServer.create(path.join(__dirname, '..'), sourcePort);
-    state.sourceServer.PORT = sourcePort;
-    state.sourceServer.PREFIX = `http://localhost:${sourcePort}`;
+  const playwrightEnvironment = new Environment('Playwright');
+  playwrightEnvironment.beforeAll(async state => {
+    state.playwright = playwright;
+  });
+  playwrightEnvironment.afterAll(async state => {
+    delete state.playwright;
   });
 
-  afterAll(async({server, sourceServer, httpsServer}) => {
-    await Promise.all([
-      server.stop(),
-      httpsServer.stop(),
-      sourceServer.stop(),
-    ]);
-  });
+  for (const product of products) {
+    const browserTypeEnvironment = new Environment('BrowserType');
+    browserTypeEnvironment.beforeAll(async state => {
+      state.browserType = state.playwright[product.toLowerCase()];
+    });
+    browserTypeEnvironment.afterAll(async state => {
+      delete state.browserType;
+    });
 
-  beforeEach(async({server, httpsServer}) => {
-    server.reset();
-    httpsServer.reset();
-  });
+    const browserEnvironment = new Environment(product);
+    browserEnvironment.beforeAll(async state => {
+      const { defaultBrowserOptions } = require('./utils').testOptions(state.browserType);
+      state.browser = await state.browserType.launch(defaultBrowserOptions);
+      state.browserServer = state.browser._ownedServer;
+      state._stdout = readline.createInterface({ input: state.browserServer.process().stdout });
+      state._stderr = readline.createInterface({ input: state.browserServer.process().stderr });
+    });
+    browserEnvironment.afterAll(async state => {
+      await state.browserServer.close();
+      state.browser = null;
+      state.browserServer = null;
+      state._stdout.close();
+      state._stderr.close();
+    });
+    browserEnvironment.beforeEach(async(state, testRun) => {
+      const dumpout = data => testRun.log(`\x1b[33m[pw:stdio:out]\x1b[0m ${data}`);
+      const dumperr = data => testRun.log(`\x1b[31m[pw:stdio:err]\x1b[0m ${data}`);
+      state._stdout.on('line', dumpout);
+      state._stderr.on('line', dumperr);
+      if (dumpProtocolOnFailure)
+        state.browser._debugProtocol.log = data => testRun.log(`\x1b[32m[pw:protocol]\x1b[0m ${data}`);
+      state.tearDown = async () => {
+        state._stdout.off('line', dumpout);
+        state._stderr.off('line', dumperr);
+        if (dumpProtocolOnFailure)
+          delete state.browser._debugProtocol.log;
+      };
+    });
+    browserEnvironment.afterEach(async (state, test) => {
+      if (state.browser.contexts().length !== 0) {
+        if (test.result === 'ok')
+          console.warn(`\nWARNING: test "${test.fullName()}" (${test.location()}) did not close all created contexts!\n`);
+        await Promise.all(state.browser.contexts().map(context => context.close()));
+      }
+      await state.tearDown();
+    });
 
-  for (const productInfo of products) {
-    const product = productInfo.product;
-    const browserType = playwright[product.toLowerCase()];
-    const CHROMIUM = product === 'Chromium';
-    const FFOX = product === 'Firefox';
-    const WEBKIT = product === 'WebKit';
-    const defaultBrowserOptions = {
-      handleSIGINT: false,
-      executablePath: productInfo.executablePath,
-      slowMo,
-      headless,
-    };
-
-    if (defaultBrowserOptions.executablePath) {
-      console.warn(`${YELLOW_COLOR}WARN: running ${product} tests with ${defaultBrowserOptions.executablePath}${RESET_COLOR}`);
-    } else {
-      // Make sure the `npm install` was run after the chromium roll.
-      if (!fs.existsSync(browserType.executablePath()))
-        throw new Error(`Browser is not downloaded. Run 'npm install' and try to re-run tests`);
-    }
-
-    const GOLDEN_DIR = path.join(__dirname, 'golden-' + product.toLowerCase());
-    const OUTPUT_DIR = path.join(__dirname, 'output-' + product.toLowerCase());
-    if (fs.existsSync(OUTPUT_DIR))
-      rm(OUTPUT_DIR);
-    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-    expect.setupGolden(GOLDEN_DIR, OUTPUT_DIR);
-
-    const testOptions = {
-      FFOX,
-      WEBKIT,
-      CHROMIUM,
-      MAC,
-      LINUX,
-      WIN,
-      browserType,
-      playwright,
-      defaultBrowserOptions,
-      playwrightPath,
-      headless: !!defaultBrowserOptions.headless,
-      OUTPUT_DIR,
-    };
+    const pageEnvironment = new Environment('Page');
+    pageEnvironment.beforeEach(async state => {
+      state.context = await state.browser.newContext();
+      state.page = await state.context.newPage();
+    });
+    pageEnvironment.afterEach(async state => {
+      await state.context.close();
+      state.context = null;
+      state.page = null;
+    });
 
     function loadTests(modulePath) {
+      const testOptions = {
+        ...require('./utils').testOptions(global.browserType),
+        playwright: global.playwright,
+        browserType: global.browserType,
+      };
       const module = require(modulePath);
       if (typeof module.describe === 'function')
         describe('', module.describe, testOptions);
@@ -124,58 +158,22 @@ module.exports.addPlaywrightTests = ({platform, products, playwrightPath, headle
         xdescribe('', module.xdescribe, testOptions);
     }
 
+    testRunner.collector().useEnvironment(serverEnvironment);  // Custom global environment.
+    testRunner.collector().useEnvironment(playwrightEnvironment);
+
     describe(product, () => {
+      // In addition to state, expose these two on global so that describes can access them.
+      global.playwright = playwright;
+      global.browserType = playwright[product.toLowerCase()];
+
+      testRunner.collector().useEnvironment(browserTypeEnvironment);
+      testRunner.collector().useEnvironment(goldenEnvironment);  // Custom environment.
+
       describe('', function() {
-        beforeAll(async state => {
-          state.browser = await browserType.launch(defaultBrowserOptions);
-          state.browserServer = state.browser._ownedServer;
-          state._stdout = readline.createInterface({ input: state.browserServer.process().stdout });
-          state._stderr = readline.createInterface({ input: state.browserServer.process().stderr });
-        });
-
-        afterAll(async state => {
-          await state.browserServer.close();
-          state.browser = null;
-          state.browserServer = null;
-          state._stdout.close();
-          state._stderr.close();
-        });
-
-        beforeEach(async(state, testRun) => {
-          const dumpout = data => testRun.log(`\x1b[33m[pw:stdio:out]\x1b[0m ${data}`);
-          const dumperr = data => testRun.log(`\x1b[31m[pw:stdio:err]\x1b[0m ${data}`);
-          state._stdout.on('line', dumpout);
-          state._stderr.on('line', dumperr);
-          if (dumpProtocolOnFailure)
-            state.browser._debugProtocol.log = data => testRun.log(`\x1b[32m[pw:protocol]\x1b[0m ${data}`);
-          state.tearDown = async () => {
-            state._stdout.off('line', dumpout);
-            state._stderr.off('line', dumperr);
-            if (dumpProtocolOnFailure)
-              delete state.browser._debugProtocol.log;
-          };
-        });
-
-        afterEach(async (state, test) => {
-          if (state.browser.contexts().length !== 0) {
-            if (test.result === 'ok')
-              console.warn(`\nWARNING: test "${test.fullName()}" (${test.location()}) did not close all created contexts!\n`);
-            await Promise.all(state.browser.contexts().map(context => context.close()));
-          }
-          await state.tearDown();
-        });
+        testRunner.collector().useEnvironment(browserEnvironment);
 
         describe('', function() {
-          beforeEach(async state => {
-            state.context = await state.browser.newContext();
-            state.page = await state.context.newPage();
-          });
-
-          afterEach(async state => {
-            await state.context.close();
-            state.context = null;
-            state.page = null;
-          });
+          testRunner.collector().useEnvironment(pageEnvironment);
 
           // Page-level tests that are given a browser, a context and a page.
           // Each test is launched in a new browser context.
@@ -210,7 +208,7 @@ module.exports.addPlaywrightTests = ({platform, products, playwrightPath, headle
             loadTests('./permissions.spec.js');
           });
 
-          describe.skip(!CHROMIUM)('[Chromium]', () => {
+          describe.skip(product !== 'Chromium')('[Chromium]', () => {
             loadTests('./chromium/chromium.spec.js');
             loadTests('./chromium/coverage.spec.js');
             loadTests('./chromium/pdf.spec.js');
@@ -236,14 +234,23 @@ module.exports.addPlaywrightTests = ({platform, products, playwrightPath, headle
         loadTests('./multiclient.spec.js');
       });
 
-      describe.skip(!CHROMIUM)('[Chromium]', () => {
+      describe.skip(product !== 'Chromium')('[Chromium]', () => {
         loadTests('./chromium/launcher.spec.js');
         loadTests('./chromium/oopif.spec.js');
         loadTests('./chromium/tracing.spec.js');
       });
 
-      if (coverage)
+      if (process.env.COVERAGE)
         loadTests('./apicoverage.spec.js');
+
+      delete global.browserType;
+      delete global.playwright;
     });
   }
 };
+
+function valueFromEnv(name, defaultValue) {
+  if (!(name in process.env))
+    return defaultValue;
+  return JSON.parse(process.env[name]);
+}
