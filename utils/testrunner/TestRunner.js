@@ -264,7 +264,7 @@ class TestWorker {
   }
 
   async _runHook(testRun, hook, fullName, passTestRun = false) {
-    await this._willStartHook(hook, fullName);
+    await this._willStartHook(testRun, hook, fullName);
     const timeout = this._testRunner._hookTimeout;
     const { promise, terminate } = runUserCallback(hook.body, timeout, passTestRun ? [this._state, testRun] : [this._state]);
     this._runningHookTerminate = terminate;
@@ -289,13 +289,13 @@ class TestWorker {
           await this._testRunner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
         message = `${hook.location.toDetailedString()} - FAILED while running "${hook.name}" in suite "${fullName}": `;
       }
-      await this._didFailHook(hook, fullName, message, error);
+      await this._didFailHook(testRun, hook, fullName, message, error);
       if (testRun)
         testRun._error = error;
       return false;
     }
 
-    await this._didCompleteHook(hook, fullName);
+    await this._didCompleteHook(testRun, hook, fullName);
     return true;
   }
 
@@ -319,19 +319,19 @@ class TestWorker {
     debug('testrunner:test')(`[${this._workerId}] ${testRun._result.toUpperCase()} "${testRun.test().fullName()}" (${testRun.test().location()})`);
   }
 
-  async _willStartHook(hook, fullName) {
-    debug('testrunner:hook')(`[${this._workerId}] "${hook.name}" started for "${fullName}" (${hook.location})`);
+  async _willStartHook(testRun, hook, fullName) {
+    debug('testrunner:hook')(`[${this._workerId}] "${fullName}.${hook.name}" started for "${testRun ? testRun.test().fullName() : ''}" (${hook.location})`);
   }
 
-  async _didFailHook(hook, fullName, message, error) {
-    debug('testrunner:hook')(`[${this._workerId}] "${hook.name}" FAILED for "${fullName}" (${hook.location})`);
+  async _didFailHook(testRun, hook, fullName, message, error) {
+    debug('testrunner:hook')(`[${this._workerId}] "${fullName}.${hook.name}" FAILED for "${testRun ? testRun.test().fullName() : ''}" (${hook.location})`);
     if (message)
       this._testRunner._result.addError(message, error, this);
     this._testRunner._result.setResult(TestResult.Crashed, message);
   }
 
-  async _didCompleteHook(hook, fullName) {
-    debug('testrunner:hook')(`[${this._workerId}] "${hook.name}" OK for "${fullName}" (${hook.location})`);
+  async _didCompleteHook(testRun, hook, fullName) {
+    debug('testrunner:hook')(`[${this._workerId}] "${fullName}.${hook.name}" OK for "${testRun ? testRun.test().fullName() : ''}" (${hook.location})`);
   }
 
   async shutdown() {

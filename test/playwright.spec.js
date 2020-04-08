@@ -87,6 +87,9 @@ module.exports.addPlaywrightTests = ({testRunner, products}) => {
     delete global.playwright;
   });
 
+  testRunner.collector().useEnvironment(serverEnvironment);  // Custom global environment.
+  testRunner.collector().useEnvironment(playwrightEnvironment);
+
   for (const product of products) {
     const browserTypeEnvironment = new Environment('BrowserType');
     browserTypeEnvironment.beforeAll(async state => {
@@ -145,8 +148,10 @@ module.exports.addPlaywrightTests = ({testRunner, products}) => {
       state.page = null;
     });
 
-    testRunner.collector().useEnvironment(serverEnvironment);  // Custom global environment.
-    testRunner.collector().useEnvironment(playwrightEnvironment);
+    function loadTest(path) {
+      require(path);
+      delete require.cache[require.resolve(path)];
+    }
 
     describe(product, () => {
       // In addition to state, expose these two on global so that describes can access them.
@@ -164,66 +169,66 @@ module.exports.addPlaywrightTests = ({testRunner, products}) => {
 
           // Page-level tests that are given a browser, a context and a page.
           // Each test is launched in a new browser context.
-          require('./accessibility.spec.js');
-          require('./autowaiting.spec.js');
-          require('./click.spec.js');
-          require('./cookies.spec.js');
-          require('./dialog.spec.js');
-          require('./download.spec.js');
-          require('./elementhandle.spec.js');
-          require('./emulation.spec.js');
-          require('./evaluation.spec.js');
-          require('./frame.spec.js');
-          require('./focus.spec.js');
-          require('./input.spec.js');
-          require('./jshandle.spec.js');
-          require('./keyboard.spec.js');
-          require('./mouse.spec.js');
-          require('./navigation.spec.js');
-          require('./network.spec.js');
-          require('./page.spec.js');
-          require('./queryselector.spec.js');
-          require('./screenshot.spec.js');
-          require('./waittask.spec.js');
-          require('./interception.spec.js');
-          require('./geolocation.spec.js');
-          require('./workers.spec.js');
-          require('./capabilities.spec.js');
-          require('./permissions.spec.js');
+          loadTest('./accessibility.spec.js');
+          loadTest('./autowaiting.spec.js');
+          loadTest('./click.spec.js');
+          loadTest('./cookies.spec.js');
+          loadTest('./dialog.spec.js');
+          loadTest('./download.spec.js');
+          loadTest('./elementhandle.spec.js');
+          loadTest('./emulation.spec.js');
+          loadTest('./evaluation.spec.js');
+          loadTest('./frame.spec.js');
+          loadTest('./focus.spec.js');
+          loadTest('./input.spec.js');
+          loadTest('./jshandle.spec.js');
+          loadTest('./keyboard.spec.js');
+          loadTest('./mouse.spec.js');
+          loadTest('./navigation.spec.js');
+          loadTest('./network.spec.js');
+          loadTest('./page.spec.js');
+          loadTest('./queryselector.spec.js');
+          loadTest('./screenshot.spec.js');
+          loadTest('./waittask.spec.js');
+          loadTest('./interception.spec.js');
+          loadTest('./geolocation.spec.js');
+          loadTest('./workers.spec.js');
+          loadTest('./capabilities.spec.js');
+          loadTest('./permissions.spec.js');
 
           describe.skip(product !== 'Chromium')('[Chromium]', () => {
-            require('./chromium/chromium.spec.js');
-            require('./chromium/coverage.spec.js');
-            require('./chromium/pdf.spec.js');
-            require('./chromium/session.spec.js');
+            loadTest('./chromium/chromium.spec.js');
+            loadTest('./chromium/coverage.spec.js');
+            loadTest('./chromium/pdf.spec.js');
+            loadTest('./chromium/session.spec.js');
           });
         });
 
         // Browser-level tests that are given a browser.
         describe('[Driver]', () => {
-          require('./browser.spec.js');
-          require('./browsercontext.spec.js');
-          require('./ignorehttpserrors.spec.js');
-          require('./popup.spec.js');
+          loadTest('./browser.spec.js');
+          loadTest('./browsercontext.spec.js');
+          loadTest('./ignorehttpserrors.spec.js');
+          loadTest('./popup.spec.js');
         });
       });
 
       // Top-level tests that launch Browser themselves.
       describe('[Driver]', () => {
-        require('./defaultbrowsercontext.spec.js');
-        require('./fixtures.spec.js');
-        require('./launcher.spec.js');
-        require('./headful.spec.js');
-        require('./multiclient.spec.js');
+        loadTest('./defaultbrowsercontext.spec.js');
+        loadTest('./fixtures.spec.js');
+        loadTest('./launcher.spec.js');
+        loadTest('./headful.spec.js');
+        loadTest('./multiclient.spec.js');
       });
 
       describe.skip(product !== 'Chromium')('[Chromium]', () => {
-        require('./chromium/launcher.spec.js');
-        require('./chromium/oopif.spec.js');
-        require('./chromium/tracing.spec.js');
+        loadTest('./chromium/launcher.spec.js');
+        loadTest('./chromium/oopif.spec.js');
+        loadTest('./chromium/tracing.spec.js');
       });
 
-      require('./apicoverage.spec.js');
+      loadTest('./apicoverage.spec.js');
 
       delete global.browserType;
       delete global.playwright;
