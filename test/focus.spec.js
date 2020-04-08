@@ -14,38 +14,34 @@
  * limitations under the License.
  */
 
-/**
- * @type {PageTestSuite}
- */
-module.exports.describe = function({}) {
+const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
 
-  describe('Page.focus', function() {
-    it('should work', async function({page, server}) {
-      await page.setContent(`<div id=d1 tabIndex=0></div>`);
-      expect(await page.evaluate(() => document.activeElement.nodeName)).toBe('BODY');
-      await page.focus('#d1');
-      expect(await page.evaluate(() => document.activeElement.id)).toBe('d1');
-    });
-    it('should emit focus event', async function({page, server}) {
-      await page.setContent(`<div id=d1 tabIndex=0></div>`);
-      let focused = false;
-      await page.exposeFunction('focusEvent', () => focused = true);
-      await page.evaluate(() => d1.addEventListener('focus', focusEvent));
-      await page.focus('#d1');
-      expect(focused).toBe(true);
-    });
-    it('should emit blur event', async function({page, server}) {
-      await page.setContent(`<div id=d1 tabIndex=0>DIV1</div><div id=d2 tabIndex=0>DIV2</div>`);
-      await page.focus('#d1');
-      let focused = false;
-      let blurred = false;
-      await page.exposeFunction('focusEvent', () => focused = true);
-      await page.exposeFunction('blurEvent', () => blurred = true);
-      await page.evaluate(() => d1.addEventListener('blur', blurEvent));
-      await page.evaluate(() => d2.addEventListener('focus', focusEvent));
-      await page.focus('#d2');
-      expect(focused).toBe(true);
-      expect(blurred).toBe(true);
-    });
+describe('Page.focus', function() {
+  it('should work', async function({page, server}) {
+    await page.setContent(`<div id=d1 tabIndex=0></div>`);
+    expect(await page.evaluate(() => document.activeElement.nodeName)).toBe('BODY');
+    await page.focus('#d1');
+    expect(await page.evaluate(() => document.activeElement.id)).toBe('d1');
   });
-};
+  it('should emit focus event', async function({page, server}) {
+    await page.setContent(`<div id=d1 tabIndex=0></div>`);
+    let focused = false;
+    await page.exposeFunction('focusEvent', () => focused = true);
+    await page.evaluate(() => d1.addEventListener('focus', focusEvent));
+    await page.focus('#d1');
+    expect(focused).toBe(true);
+  });
+  it('should emit blur event', async function({page, server}) {
+    await page.setContent(`<div id=d1 tabIndex=0>DIV1</div><div id=d2 tabIndex=0>DIV2</div>`);
+    await page.focus('#d1');
+    let focused = false;
+    let blurred = false;
+    await page.exposeFunction('focusEvent', () => focused = true);
+    await page.exposeFunction('blurEvent', () => blurred = true);
+    await page.evaluate(() => d1.addEventListener('blur', blurEvent));
+    await page.evaluate(() => d2.addEventListener('focus', focusEvent));
+    await page.focus('#d2');
+    expect(focused).toBe(true);
+    expect(blurred).toBe(true);
+  });
+});

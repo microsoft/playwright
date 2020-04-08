@@ -15,13 +15,20 @@
  * limitations under the License.
  */
 
-/**
- * @type {BrowserTestSuite}
- */
-module.exports.describe = function({defaultBrowserOptions, playwright, FFOX, CHROMIUM, WEBKIT}) {
+const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
 
-  describe('ignoreHTTPSErrors', function() {
-    it('should work', async({browser, httpsServer}) => {
+describe('ignoreHTTPSErrors', function() {
+  it('should work', async({browser, httpsServer}) => {
+    let error = null;
+    const context = await browser.newContext({ ignoreHTTPSErrors: true });
+    const page = await context.newPage();
+    const response = await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
+    expect(error).toBe(null);
+    expect(response.ok()).toBe(true);
+    await context.close();
+  });
+  it('should isolate contexts', async({browser, httpsServer}) => {
+    {
       let error = null;
       const context = await browser.newContext({ ignoreHTTPSErrors: true });
       const page = await context.newPage();
@@ -29,39 +36,28 @@ module.exports.describe = function({defaultBrowserOptions, playwright, FFOX, CHR
       expect(error).toBe(null);
       expect(response.ok()).toBe(true);
       await context.close();
-    });
-    it('should isolate contexts', async({browser, httpsServer}) => {
-      {
-        let error = null;
-        const context = await browser.newContext({ ignoreHTTPSErrors: true });
-        const page = await context.newPage();
-        const response = await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
-        expect(error).toBe(null);
-        expect(response.ok()).toBe(true);
-        await context.close();
-      }
-      {
-        let error = null;
-        const context = await browser.newContext();
-        const page = await context.newPage();
-        await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
-        expect(error).not.toBe(null);
-        await context.close();
-      }
-    });
-    it('should work with mixed content', async({browser, server, httpsServer}) => {
-      httpsServer.setRoute('/mixedcontent.html', (req, res) => {
-        res.end(`<iframe src=${server.EMPTY_PAGE}></iframe>`);
-      });
-      const context = await browser.newContext({ ignoreHTTPSErrors: true });
+    }
+    {
+      let error = null;
+      const context = await browser.newContext();
       const page = await context.newPage();
-      await page.goto(httpsServer.PREFIX + '/mixedcontent.html', {waitUntil: 'domcontentloaded'});
-      expect(page.frames().length).toBe(2);
-      // Make sure blocked iframe has functional execution context
-      // @see https://github.com/GoogleChrome/puppeteer/issues/2709
-      expect(await page.frames()[0].evaluate('1 + 2')).toBe(3);
-      expect(await page.frames()[1].evaluate('2 + 3')).toBe(5);
+      await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
+      expect(error).not.toBe(null);
       await context.close();
-    });
+    }
   });
-};
+  it('should work with mixed content', async({browser, server, httpsServer}) => {
+    httpsServer.setRoute('/mixedcontent.html', (req, res) => {
+      res.end(`<iframe src=${server.EMPTY_PAGE}></iframe>`);
+    });
+    const context = await browser.newContext({ ignoreHTTPSErrors: true });
+    const page = await context.newPage();
+    await page.goto(httpsServer.PREFIX + '/mixedcontent.html', {waitUntil: 'domcontentloaded'});
+    expect(page.frames().length).toBe(2);
+    // Make sure blocked iframe has functional execution context
+    // @see https://github.com/GoogleChrome/puppeteer/issues/2709
+    expect(await page.frames()[0].evaluate('1 + 2')).toBe(3);
+    expect(await page.frames()[1].evaluate('2 + 3')).toBe(5);
+    await context.close();
+  });
+});

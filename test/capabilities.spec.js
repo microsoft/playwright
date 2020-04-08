@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-/**
- * @type {PageTestSuite}
- */
-module.exports.describe = function({WIN, WEBKIT}) {
+const {FFOX, CHROMIUM, WEBKIT, WIN} = require('./utils').testOptions(browserType);
 
-  describe('Capabilities', function() {
-    it.fail(WEBKIT && WIN)('Web Assembly should work', async function({page, server}) {
-      await page.goto(server.PREFIX + '/wasm/table2.html');
-      expect(await page.evaluate(() => loadTable())).toBe('42, 83');
-    });
+describe('Capabilities', function() {
+  it.fail(WEBKIT && WIN)('Web Assembly should work', async function({page, server}) {
+    await page.goto(server.PREFIX + '/wasm/table2.html');
+    expect(await page.evaluate(() => loadTable())).toBe('42, 83');
   });
-};
+});
