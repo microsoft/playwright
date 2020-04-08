@@ -1839,9 +1839,20 @@ index 4e41fd3f807e8f34bfef3f63f0ba6119a619821e..1f7be602cb2134f8867bf95afe0c9337
          return;
  
 diff --git a/Source/WebCore/inspector/InspectorController.cpp b/Source/WebCore/inspector/InspectorController.cpp
-index 7d50ddc7a38a3723e4ee7d66ca97c8acb37c726a..7ee70c6dd4bb84012a682ed648dc3c0cbd8ad211 100644
+index 7d50ddc7a38a3723e4ee7d66ca97c8acb37c726a..bcab1fb5bc6a26174dc6a57e233fe6e9b8c2161c 100644
 --- a/Source/WebCore/inspector/InspectorController.cpp
 +++ b/Source/WebCore/inspector/InspectorController.cpp
+@@ -366,8 +366,8 @@ void InspectorController::inspect(Node* node)
+     if (!enabled())
+         return;
+ 
+-    if (!hasRemoteFrontend())
+-        show();
++    // HACK: Always attempt to show inspector even if there is a remote connection.
++    show();
+ 
+     ensureDOMAgent().inspect(node);
+ }
 @@ -510,4 +510,24 @@ void InspectorController::didComposite(Frame& frame)
      InspectorInstrumentation::didComposite(frame);
  }
