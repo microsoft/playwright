@@ -102,8 +102,6 @@ function stringFormatter(received, expected) {
 }
 
 function objectFormatter(received, expected) {
-  const receivedLines = received.split('\n');
-  const expectedLines = expected.split('\n');
   const encodingMap = new Map();
   const decodingMap = new Map();
 
@@ -142,8 +140,12 @@ function objectFormatter(received, expected) {
     if (type === 1)
       return lines.map(line => '+   ' + colors.bgGreen.black(line));
     return lines.map(line => '    ' + line);
-  }).flat().join('\n');
-  return `Received:\n${highlighted}`;
+  });
+
+  const flattened = [];
+  for (const list of highlighted)
+    flattened.push(...list);
+  return `Received:\n${flattened.join('\n')}`;
 }
 
 function toBeFormatter(received, expected) {

@@ -302,13 +302,13 @@ class TestWorker {
   async _willStartTestRun(testRun) {
     testRun._startTimestamp = Date.now();
     testRun._workerId = this._workerId;
-    await this._testRunner._delegate.onTestRunStarted(testRun);
+    await this._testRunner._runDelegateCallback(this._testRunner._delegate.onTestRunStarted, [testRun]);
   }
 
   async _didFinishTestRun(testRun) {
     testRun._endTimestamp = Date.now();
     testRun._workerId = this._workerId;
-    await this._testRunner._delegate.onTestRunFinished(testRun);
+    await this._testRunner._runDelegateCallback(this._testRunner._delegate.onTestRunFinished, [testRun]);
   }
 
   async _willStartTestBody(testRun) {
@@ -352,6 +352,26 @@ class TestRunner {
     this._result = null;
   }
 
+  async _runDelegateCallback(callback, args) {
+    let { promise, terminate } = runUserCallback(callback, this._hookTimeout, args);
+    // Note: we do not terminate the delegate to keep reporting even when terminating.
+    const e = await promise;
+    if (e) {
+      debug('testrunner')(`Error while running delegate method: ${e}`);
+      const { message, error } = this._toError('INTERNAL ERROR', e);
+      this._terminate(TestResult.Crashed, message, false, error);
+    }
+  }
+
+  _toError(message, error) {
+    if (!(error instanceof Error)) {
+      message += ': ' + error;
+      error = new Error();
+      error.stack = '';
+    }
+    return { message, error };
+  }
+
   async run(testRuns, options = {}) {
     const {
       parallel = 1,
@@ -360,7 +380,7 @@ class TestRunner {
       totalTimeout = 0,
       onStarted = async (testRuns) => {},
       onFinished = async (result) => {},
-      onTestRunStarted = async(testRun) => {},
+      onTestRunStarted = async (testRun) => {},
       onTestRunFinished = async (testRun) => {},
     } = options;
     this._breakOnFailure = breakOnFailure;
@@ -374,34 +394,16 @@ class TestRunner {
 
     this._result = new Result();
     this._result.runs = testRuns;
-    await this._delegate.onStarted(testRuns);
-
-    let timeoutId;
-    if (totalTimeout) {
-      timeoutId = setTimeout(() => {
-        this._terminate(TestResult.Terminated, `Total timeout of ${totalTimeout}ms reached.`, true /* force */, null /* error */);
-      }, totalTimeout);
-    }
 
     const handleSIGINT = () => this._terminate(TestResult.Terminated, 'SIGINT received', false, null);
     const handleSIGHUP = () => this._terminate(TestResult.Terminated, 'SIGHUP received', false, null);
     const handleSIGTERM = () => this._terminate(TestResult.Terminated, 'SIGTERM received', true, null);
-    const handleRejection = error => {
-      let message = 'UNHANDLED PROMISE REJECTION';
-      if (!(error instanceof Error)) {
-        message += ': ' + error;
-        error = new Error();
-        error.stack = '';
-      }
+    const handleRejection = e => {
+      const { message, error } = this._toError('UNHANDLED PROMISE REJECTION', e);
       this._terminate(TestResult.Crashed, message, false, error);
     };
-    const handleException = error => {
-      let message = 'UNHANDLED ERROR';
-      if (!(error instanceof Error)) {
-        message += ': ' + error;
-        error = new Error();
-        error.stack = '';
-      }
+    const handleException = e => {
+      const { message, error } = this._toError('UNHANDLED ERROR', e);
       this._terminate(TestResult.Crashed, message, false, error);
     };
     process.on('SIGINT', handleSIGINT);
@@ -409,6 +411,14 @@ class TestRunner {
     process.on('SIGTERM', handleSIGTERM);
     process.on('unhandledRejection', handleRejection);
     process.on('uncaughtException', handleException);
+
+    let timeoutId;
+    if (totalTimeout) {
+      timeoutId = setTimeout(() => {
+        this._terminate(TestResult.Terminated, `Total timeout of ${totalTimeout}ms reached.`, true /* force */, null /* error */);
+      }, totalTimeout);
+    }
+    await this._runDelegateCallback(this._delegate.onStarted, [testRuns]);
 
     const workerCount = Math.min(parallel, testRuns.length);
     const workerPromises = [];
@@ -418,23 +428,18 @@ class TestRunner {
     }
     await Promise.all(workerPromises);
 
+    if (testRuns.some(run => run.isFailure()))
+      this._result.setResult(TestResult.Failed, '');
+
+    await this._runDelegateCallback(this._delegate.onFinished, [this._result]);
+    clearTimeout(timeoutId);
+
     process.removeListener('SIGINT', handleSIGINT);
     process.removeListener('SIGHUP', handleSIGHUP);
     process.removeListener('SIGTERM', handleSIGTERM);
     process.removeListener('unhandledRejection', handleRejection);
     process.removeListener('uncaughtException', handleException);
-
-    if (testRuns.some(run => run.isFailure()))
-      this._result.setResult(TestResult.Failed, '');
-
-    clearTimeout(timeoutId);
-    await this._delegate.onFinished(this._result);
-
-    const result = this._result;
-    this._result = null;
-    this._workers = [];
-    this._terminating = false;
-    return result;
+    return this._result;
   }
 
   async _runWorker(testRunIndex, testRuns, parallelIndex) {

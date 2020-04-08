@@ -822,6 +822,23 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
       ]);
       expect(result.result).toBe('ok');
     });
+    it('should crash when onStarted throws', async() => {
+      const t = new Runner({
+        onStarted: () => { throw 42; },
+      });
+      const result = await t.run();
+      expect(result.ok()).toBe(false);
+      expect(result.message).toBe('INTERNAL ERROR: 42');
+    });
+    it('should crash when onFinished throws', async() => {
+      const t = new Runner({
+        onFinished: () => { throw new Error('42'); },
+      });
+      const result = await t.run();
+      expect(result.ok()).toBe(false);
+      expect(result.message).toBe('INTERNAL ERROR');
+      expect(result.result).toBe('crashed');
+    });
   });
 };
 
