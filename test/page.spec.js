@@ -16,8 +16,6 @@
  */
 
 const path = require('path');
-const utils = require('./utils');
-const {waitEvent} = utils;
 const vm = require('vm');
 
 /**
@@ -48,7 +46,7 @@ module.exports.describe = function({playwright, FFOX, CHROMIUM, WEBKIT}) {
       // fire.
       await newPage.click('body');
       const pageClosingPromise = newPage.close({ runBeforeUnload: true });
-      const dialog = await waitEvent(newPage, 'dialog');
+      const dialog = await newPage.waitForEvent('dialog');
       expect(dialog.type()).toBe('beforeunload');
       expect(dialog.defaultValue()).toBe('');
       if (CHROMIUM)
@@ -93,7 +91,7 @@ module.exports.describe = function({playwright, FFOX, CHROMIUM, WEBKIT}) {
     it('should fire when expected', async({page, server}) => {
       await Promise.all([
         page.goto('about:blank'),
-        utils.waitEvent(page, 'load'),
+        page.waitForEvent('load'),
       ]);
     });
   });
@@ -121,7 +119,7 @@ module.exports.describe = function({playwright, FFOX, CHROMIUM, WEBKIT}) {
         page._delegate._session.send('Page.crash', {}).catch(e => {});
       else if (FFOX)
         page._delegate._session.send('Page.crash', {}).catch(e => {});
-      await waitEvent(page, 'error');
+      await new Promise(f => page.on('error', f));
       expect(error.message).toBe('Page crashed!');
     });
   });
@@ -152,7 +150,7 @@ module.exports.describe = function({playwright, FFOX, CHROMIUM, WEBKIT}) {
       page.once('console', m => message = m);
       await Promise.all([
         page.evaluate(() => console.log('hello', 5, {foo: 'bar'})),
-        waitEvent(page, 'console')
+        page.waitForEvent('console')
       ]);
       expect(message.text()).toEqual('hello 5 JSHandle@object');
       expect(message.type()).toEqual('log');
@@ -191,14 +189,14 @@ module.exports.describe = function({playwright, FFOX, CHROMIUM, WEBKIT}) {
       page.once('console', msg => message = msg);
       await Promise.all([
         page.evaluate(() => console.error(window)),
-        waitEvent(page, 'console')
+        page.waitForEvent('console')
       ]);
       expect(message.text()).toBe('JSHandle@object');
     });
     it('should trigger correct Log', async({page, server}) => {
       await page.goto('about:blank');
       const [message] = await Promise.all([
-        waitEvent(page, 'console'),
+        page.waitForEvent('console'),
         page.evaluate(async url => fetch(url).catch(e => {}), server.EMPTY_PAGE)
       ]);
       expect(message.text()).toContain('Access-Control-Allow-Origin');
@@ -207,7 +205,7 @@ module.exports.describe = function({playwright, FFOX, CHROMIUM, WEBKIT}) {
     it('should have location for console API calls', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const [message] = await Promise.all([
-        waitEvent(page, 'console'),
+        page.waitForEvent('console'),
         page.goto(server.PREFIX + '/consolelog.html'),
       ]);
       expect(message.text()).toBe('yellow');
@@ -248,7 +246,7 @@ module.exports.describe = function({playwright, FFOX, CHROMIUM, WEBKIT}) {
   describe('Page.Events.DOMContentLoaded', function() {
     it('should fire when expected', async({page, server}) => {
       const navigatedPromise = page.goto('about:blank');
-      await waitEvent(page, 'domcontentloaded');
+      await page.waitForEvent('domcontentloaded');
       await navigatedPromise;
     });
   });
@@ -494,7 +492,7 @@ module.exports.describe = function({playwright, FFOX, CHROMIUM, WEBKIT}) {
       page.once('pageerror', e => error = e);
       await Promise.all([
         page.goto(server.PREFIX + '/error.html'),
-        waitEvent(page, 'pageerror')
+        new Promise(f => page.on('pageerror', f))
       ]);
       expect(error.message).toContain('Fancy');
     });

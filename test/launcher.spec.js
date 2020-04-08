@@ -91,7 +91,7 @@ module.exports.describe = function({defaultBrowserOptions, playwright, browserTy
       it('should fire close event', async () => {
         const browserServer = await browserType.launchServer(defaultBrowserOptions);
         await Promise.all([
-          utils.waitEvent(browserServer, 'close'),
+          new Promise(f => browserServer.on('close', f)),
           browserServer.close(),
         ]);
       });

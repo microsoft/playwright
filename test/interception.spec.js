@@ -323,7 +323,7 @@ module.exports.describe = function({defaultBrowserOptions, playwright, FFOX, CHR
       await page.route('**/*', async r => route = r);
       page.$eval('iframe', (frame, url) => frame.src = url, server.EMPTY_PAGE),
       // Wait for request interception.
-      await utils.waitEvent(page, 'request');
+      await page.waitForEvent('request');
       // Delete frame to cause request to be canceled.
       await page.$eval('iframe', frame => frame.remove());
       let error = null;

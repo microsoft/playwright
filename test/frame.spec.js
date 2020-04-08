@@ -112,7 +112,11 @@ module.exports.describe = function({FFOX, CHROMIUM, WEBKIT}) {
       // validate framenavigated events
       const navigatedFrames = [];
       page.on('framenavigated', frame => navigatedFrames.push(frame));
-      await utils.navigateFrame(page, 'frame1', './empty.html');
+      await page.evaluate(() => {
+        const frame = document.getElementById('frame1');
+        frame.src = './empty.html';
+        return new Promise(x => frame.onload = x);
+      });
       expect(navigatedFrames.length).toBe(1);
       expect(navigatedFrames[0].url()).toBe(server.EMPTY_PAGE);
 
@@ -127,7 +131,7 @@ module.exports.describe = function({FFOX, CHROMIUM, WEBKIT}) {
       await page.goto(server.EMPTY_PAGE);
       await Promise.all([
         page.goto(server.EMPTY_PAGE + '#foo'),
-        utils.waitEvent(page, 'framenavigated')
+        page.waitForEvent('framenavigated')
       ]);
       expect(page.url()).toBe(server.EMPTY_PAGE + '#foo');
     });
@@ -223,7 +227,7 @@ module.exports.describe = function({FFOX, CHROMIUM, WEBKIT}) {
       });
       expect(frame1.isDetached()).toBe(true);
       const [frame2] = await Promise.all([
-        utils.waitEvent(page, 'frameattached'),
+        page.waitForEvent('frameattached'),
         page.evaluate(() => document.body.appendChild(window.frame)),
       ]);
       expect(frame2.isDetached()).toBe(false);
