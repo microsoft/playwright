@@ -15,76 +15,72 @@
  * limitations under the License.
  */
 
-const { makeUserDataDir, removeUserDataDir } = require('./utils');
+const utils = require('./utils');
+const {makeUserDataDir, removeUserDataDir} = utils;
+const {FFOX, CHROMIUM, WEBKIT, defaultBrowserOptions} = utils.testOptions(browserType);
 
-/**
- * @type {PageTestSuite}
- */
-module.exports.describe = function ({ defaultBrowserOptions, browserType, WEBKIT }) {
-
-  describe('launchPersistentContext()', function() {
-    beforeEach(async state => {
-      state.userDataDir = await makeUserDataDir();
-      state.browserContext = await browserType.launchPersistentContext(state.userDataDir, defaultBrowserOptions);
-      state.page = await state.browserContext.newPage();
-    });
-    afterEach(async state => {
-      await state.browserContext.close();
-      delete state.browserContext;
-      delete state.page;
-      await removeUserDataDir(state.userDataDir);
-    });
-    it('context.cookies() should work', async({page, server}) => {
-      await page.goto(server.EMPTY_PAGE);
-      await page.evaluate(() => {
-        document.cookie = 'username=John Doe';
-      });
-      expect(await page.context().cookies()).toEqual([{
-        name: 'username',
-        value: 'John Doe',
-        domain: 'localhost',
-        path: '/',
-        expires: -1,
-        httpOnly: false,
-        secure: false,
-        sameSite: 'None',
-      }]);
-    });
-    it('context.addCookies() should work', async({page, server}) => {
-      await page.goto(server.EMPTY_PAGE);
-      await page.context().addCookies([{
-        url: server.EMPTY_PAGE,
-        name: 'username',
-        value: 'John Doe'
-      }]);
-      expect(await page.evaluate(() => document.cookie)).toBe('username=John Doe');
-      expect(await page.context().cookies()).toEqual([{
-        name: 'username',
-        value: 'John Doe',
-        domain: 'localhost',
-        path: '/',
-        expires: -1,
-        httpOnly: false,
-        secure: false,
-        sameSite: 'None',
-      }]);
-    });
-    it('context.clearCookies() should work', async({page, server}) => {
-      await page.goto(server.EMPTY_PAGE);
-      await page.context().addCookies([{
-        url: server.EMPTY_PAGE,
-        name: 'cookie1',
-        value: '1'
-      }, {
-        url: server.EMPTY_PAGE,
-        name: 'cookie2',
-        value: '2'
-      }]);
-      expect(await page.evaluate('document.cookie')).toBe('cookie1=1; cookie2=2');
-      await page.context().clearCookies();
-      await page.reload();
-      expect(await page.context().cookies([])).toEqual([]);
-      expect(await page.evaluate('document.cookie')).toBe('');
-    });
+describe('launchPersistentContext()', function() {
+  beforeEach(async state => {
+    state.userDataDir = await makeUserDataDir();
+    state.browserContext = await state.browserType.launchPersistentContext(state.userDataDir, defaultBrowserOptions);
+    state.page = await state.browserContext.newPage();
   });
-};
+  afterEach(async state => {
+    await state.browserContext.close();
+    delete state.browserContext;
+    delete state.page;
+    await removeUserDataDir(state.userDataDir);
+  });
+  it('context.cookies() should work', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(() => {
+      document.cookie = 'username=John Doe';
+    });
+    expect(await page.context().cookies()).toEqual([{
+      name: 'username',
+      value: 'John Doe',
+      domain: 'localhost',
+      path: '/',
+      expires: -1,
+      httpOnly: false,
+      secure: false,
+      sameSite: 'None',
+    }]);
+  });
+  it('context.addCookies() should work', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.context().addCookies([{
+      url: server.EMPTY_PAGE,
+      name: 'username',
+      value: 'John Doe'
+    }]);
+    expect(await page.evaluate(() => document.cookie)).toBe('username=John Doe');
+    expect(await page.context().cookies()).toEqual([{
+      name: 'username',
+      value: 'John Doe',
+      domain: 'localhost',
+      path: '/',
+      expires: -1,
+      httpOnly: false,
+      secure: false,
+      sameSite: 'None',
+    }]);
+  });
+  it('context.clearCookies() should work', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.context().addCookies([{
+      url: server.EMPTY_PAGE,
+      name: 'cookie1',
+      value: '1'
+    }, {
+      url: server.EMPTY_PAGE,
+      name: 'cookie2',
+      value: '2'
+    }]);
+    expect(await page.evaluate('document.cookie')).toBe('cookie1=1; cookie2=2');
+    await page.context().clearCookies();
+    await page.reload();
+    expect(await page.context().cookies([])).toEqual([]);
+    expect(await page.evaluate('document.cookie')).toBe('');
+  });
+});

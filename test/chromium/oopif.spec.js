@@ -14,92 +14,88 @@
  * limitations under the License.
  */
 
-/**
- * @type {ChromiumTestSuite}
- */
-module.exports.describe = function({defaultBrowserOptions, browserType, FFOX, CHROMIUM, WEBKIT}) {
+const {FFOX, CHROMIUM, WEBKIT, defaultBrowserOptions} = require('../utils').testOptions(browserType);
 
-  const headfulOptions = Object.assign({}, defaultBrowserOptions, {
-    headless: false
-  });
+const headfulOptions = Object.assign({}, defaultBrowserOptions, {
+  headless: false
+});
 
-  describe('OOPIF', function() {
-    beforeAll(async function(state) {
-      state.browser = await browserType.launch(Object.assign({}, defaultBrowserOptions, {
-        args: (defaultBrowserOptions.args || []).concat(['--site-per-process']),
-      }));
-    });
-    beforeEach(async function(state) {
-      state.context = await state.browser.newContext();
-      state.page = await state.context.newPage();
-    });
-    afterEach(async function(state) {
-      await state.context.close();
-      state.page = null;
-      state.context = null;
-    });
-    afterAll(async function(state) {
-      await state.browser.close();
-      state.browser = null;
-    });
-    it('should report oopif frames', async function({browser, page, server, context}) {
-      await page.goto(server.PREFIX + '/dynamic-oopif.html');
-      expect(await countOOPIFs(browser)).toBe(1);
-      expect(page.frames().length).toBe(2);
-      expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
-    });
-    it('should handle remote -> local -> remote transitions', async function({browser, page, server, context}) {
-      await page.goto(server.PREFIX + '/dynamic-oopif.html');
-      expect(page.frames().length).toBe(2);
-      expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
-      await Promise.all([
-        page.frames()[1].waitForNavigation(),
-        page.evaluate(() => goLocal()),
-      ]);
-      expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.PREFIX + '/grid.html');
-      await Promise.all([
-        page.frames()[1].waitForNavigation(),
-        page.evaluate(() => goRemote()),
-      ]);
-      expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
-    });
-    it('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {
-      await page.route('**/*', route => route.continue());
-      await page.goto(server.PREFIX + '/dynamic-oopif.html');
-      expect(await countOOPIFs(browser)).toBe(1);
-    });
-    // @see https://github.com/microsoft/playwright/issues/1240
-    xit('should click a button when it overlays oopif', async function({browser, page, server, context}) {
-      await page.goto(server.PREFIX + '/button-overlay-oopif.html');
-      expect(await countOOPIFs(browser)).toBe(1);
-      await page.click('button');
-      expect(await page.evaluate(() => window.BUTTON_CLICKED)).toBe(true);
-    });
-    it('should report google.com frame with headful', async({server}) => {
-      // TODO: Support OOOPIF. @see https://github.com/GoogleChrome/puppeteer/issues/2548
-      // https://google.com is isolated by default in Chromium embedder.
-      const browser = await browserType.launch(headfulOptions);
-      const page = await browser.newPage();
-      await page.goto(server.EMPTY_PAGE);
-      await page.route('**/*', route => {
-        route.fulfill({body: 'YO, GOOGLE.COM'});
-      });
-      await page.evaluate(() => {
-        const frame = document.createElement('iframe');
-        frame.setAttribute('src', 'https://google.com/');
-        document.body.appendChild(frame);
-        return new Promise(x => frame.onload = x);
-      });
-      await page.waitForSelector('iframe[src="https://google.com/"]');
-      const urls = page.frames().map(frame => frame.url());
-      expect(urls).toEqual([
-        server.EMPTY_PAGE,
-        'https://google.com/'
-      ]);
-      await browser.close();
-    });
+describe('OOPIF', function() {
+  beforeAll(async function(state) {
+    state.browser = await state.browserType.launch(Object.assign({}, defaultBrowserOptions, {
+      args: (defaultBrowserOptions.args || []).concat(['--site-per-process']),
+    }));
   });
-};
+  beforeEach(async function(state) {
+    state.context = await state.browser.newContext();
+    state.page = await state.context.newPage();
+  });
+  afterEach(async function(state) {
+    await state.context.close();
+    state.page = null;
+    state.context = null;
+  });
+  afterAll(async function(state) {
+    await state.browser.close();
+    state.browser = null;
+  });
+  it('should report oopif frames', async function({browser, page, server, context}) {
+    await page.goto(server.PREFIX + '/dynamic-oopif.html');
+    expect(await countOOPIFs(browser)).toBe(1);
+    expect(page.frames().length).toBe(2);
+    expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
+  });
+  it('should handle remote -> local -> remote transitions', async function({browser, page, server, context}) {
+    await page.goto(server.PREFIX + '/dynamic-oopif.html');
+    expect(page.frames().length).toBe(2);
+    expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
+    await Promise.all([
+      page.frames()[1].waitForNavigation(),
+      page.evaluate(() => goLocal()),
+    ]);
+    expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.PREFIX + '/grid.html');
+    await Promise.all([
+      page.frames()[1].waitForNavigation(),
+      page.evaluate(() => goRemote()),
+    ]);
+    expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
+  });
+  it('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {
+    await page.route('**/*', route => route.continue());
+    await page.goto(server.PREFIX + '/dynamic-oopif.html');
+    expect(await countOOPIFs(browser)).toBe(1);
+  });
+  // @see https://github.com/microsoft/playwright/issues/1240
+  xit('should click a button when it overlays oopif', async function({browser, page, server, context}) {
+    await page.goto(server.PREFIX + '/button-overlay-oopif.html');
+    expect(await countOOPIFs(browser)).toBe(1);
+    await page.click('button');
+    expect(await page.evaluate(() => window.BUTTON_CLICKED)).toBe(true);
+  });
+  it('should report google.com frame with headful', async({browserType, server}) => {
+    // TODO: Support OOOPIF. @see https://github.com/GoogleChrome/puppeteer/issues/2548
+    // https://google.com is isolated by default in Chromium embedder.
+    const browser = await browserType.launch(headfulOptions);
+    const page = await browser.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    await page.route('**/*', route => {
+      route.fulfill({body: 'YO, GOOGLE.COM'});
+    });
+    await page.evaluate(() => {
+      const frame = document.createElement('iframe');
+      frame.setAttribute('src', 'https://google.com/');
+      document.body.appendChild(frame);
+      return new Promise(x => frame.onload = x);
+    });
+    await page.waitForSelector('iframe[src="https://google.com/"]');
+    const urls = page.frames().map(frame => frame.url());
+    expect(urls).toEqual([
+      server.EMPTY_PAGE,
+      'https://google.com/'
+    ]);
+    await browser.close();
+  });
+});
 
 async function countOOPIFs(browser) {
   const browserSession = await browser.newBrowserCDPSession();

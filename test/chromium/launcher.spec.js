@@ -14,87 +14,80 @@
  * limitations under the License.
  */
 
-const util = require('util');
-const fs = require('fs');
 const path = require('path');
-const os = require('os');
-const { makeUserDataDir, removeUserDataDir } = require('../utils');
+const utils = require('../utils');
+const {makeUserDataDir, removeUserDataDir} = utils;
+const {FFOX, CHROMIUM, WEBKIT, WIN, defaultBrowserOptions} = utils.testOptions(browserType);
 
-/**
- * @type {TestSuite}
- */
-module.exports.describe = function({defaultBrowserOptions, browserType, WIN}) {
+const headfulOptions = Object.assign({}, defaultBrowserOptions, {
+  headless: false
+});
+const extensionPath = path.join(__dirname, '..', 'assets', 'simple-extension');
+const extensionOptions = Object.assign({}, defaultBrowserOptions, {
+  headless: false,
+  args: [
+    `--disable-extensions-except=${extensionPath}`,
+    `--load-extension=${extensionPath}`,
+  ],
+});
 
-  const headfulOptions = Object.assign({}, defaultBrowserOptions, {
-    headless: false
+describe('launcher', function() {
+  it('should throw with remote-debugging-pipe argument', async({browserType}) => {
+    const options = Object.assign({}, defaultBrowserOptions);
+    options.args = ['--remote-debugging-pipe'].concat(options.args || []);
+    const error = await browserType.launchServer(options).catch(e => e);
+    expect(error.message).toContain('Playwright manages remote debugging connection itself');
   });
-  const extensionPath = path.join(__dirname, '..', 'assets', 'simple-extension');
-  const extensionOptions = Object.assign({}, defaultBrowserOptions, {
-    headless: false,
-    args: [
-      `--disable-extensions-except=${extensionPath}`,
-      `--load-extension=${extensionPath}`,
-    ],
+  it('should throw with remote-debugging-port argument', async({browserType}) => {
+    const options = Object.assign({}, defaultBrowserOptions);
+    options.args = ['--remote-debugging-port=9222'].concat(options.args || []);
+    const error = await browserType.launchServer(options).catch(e => e);
+    expect(error.message).toContain('Playwright manages remote debugging connection itself');
   });
+  it('should open devtools when "devtools: true" option is given', async({browserType}) => {
+    const browser = await browserType.launch(Object.assign({devtools: true}, headfulOptions));
+    const context = await browser.newContext();
+    const browserSession = await browser.newBrowserCDPSession();
+    await browserSession.send('Target.setDiscoverTargets', { discover: true });
+    const devtoolsPagePromise = new Promise(fulfill => browserSession.on('Target.targetCreated', async ({targetInfo}) => {
+      if (targetInfo.type === 'other' && targetInfo.url.includes('devtools://'))
+          fulfill();
+    }));
+    await Promise.all([
+      devtoolsPagePromise,
+      context.newPage()
+    ]);
+    await browser.close();
+  });
+});
 
-  describe('launcher', function() {
-    it('should throw with remote-debugging-pipe argument', async() => {
-      const options = Object.assign({}, defaultBrowserOptions);
-      options.args = ['--remote-debugging-pipe'].concat(options.args || []);
-      const error = await browserType.launchServer(options).catch(e => e);
-      expect(error.message).toContain('Playwright manages remote debugging connection itself');
-    });
-    it('should throw with remote-debugging-port argument', async() => {
-      const options = Object.assign({}, defaultBrowserOptions);
-      options.args = ['--remote-debugging-port=9222'].concat(options.args || []);
-      const error = await browserType.launchServer(options).catch(e => e);
-      expect(error.message).toContain('Playwright manages remote debugging connection itself');
-    });
-    it('should open devtools when "devtools: true" option is given', async({server}) => {
-      const browser = await browserType.launch(Object.assign({devtools: true}, headfulOptions));
-      const context = await browser.newContext();
-      const browserSession = await browser.newBrowserCDPSession();
-      await browserSession.send('Target.setDiscoverTargets', { discover: true });
-      const devtoolsPagePromise = new Promise(fulfill => browserSession.on('Target.targetCreated', async ({targetInfo}) => {
-        if (targetInfo.type === 'other' && targetInfo.url.includes('devtools://'))
-           fulfill();
-      }));
-      await Promise.all([
-        devtoolsPagePromise,
-        context.newPage()
-      ]);
-      await browser.close();
-    });
+describe('extensions', () => {
+  it('should return background pages', async({browserType}) => {
+    const userDataDir = await makeUserDataDir();
+    const context = await browserType.launchPersistentContext(userDataDir, extensionOptions);
+    const backgroundPages = context.backgroundPages();
+    let backgroundPage = backgroundPages.length
+        ? backgroundPages[0]
+        : await context.waitForEvent('backgroundpage');
+    expect(backgroundPage).toBeTruthy();
+    expect(context.backgroundPages()).toContain(backgroundPage);
+    expect(context.pages()).not.toContain(backgroundPage);
+    await removeUserDataDir(userDataDir);
   });
+});
 
-  describe('extensions', () => {
-    it('should return background pages', async() => {
-      const userDataDir = await makeUserDataDir();
-      const context = await browserType.launchPersistentContext(userDataDir, extensionOptions);
-      const backgroundPages = context.backgroundPages();
-      let backgroundPage = backgroundPages.length
-          ? backgroundPages[0]
-          : await context.waitForEvent('backgroundpage');
-      expect(backgroundPage).toBeTruthy();
-      expect(context.backgroundPages()).toContain(backgroundPage);
-      expect(context.pages()).not.toContain(backgroundPage);
-      await removeUserDataDir(userDataDir);
+describe('BrowserContext', function() {
+  it('should not create pages automatically', async ({browserType}) => {
+    const browser = await browserType.launch();
+    const browserSession = await browser.newBrowserCDPSession();
+    const targets = [];
+    browserSession.on('Target.targetCreated', async ({targetInfo}) => {
+      if (targetInfo.type !== 'browser')
+          targets.push(targetInfo);
     });
+    await browserSession.send('Target.setDiscoverTargets', { discover: true });
+    await browser.newContext();
+    await browser.close();
+    expect(targets.length).toBe(0);
   });
-
-  describe('BrowserContext', function() {
-    it('should not create pages automatically', async function() {
-      const browser = await browserType.launch();
-      const browserSession = await browser.newBrowserCDPSession();
-      const targets = [];
-      browserSession.on('Target.targetCreated', async ({targetInfo}) => {
-        if (targetInfo.type !== 'browser')
-           targets.push(targetInfo);
-      });
-      await browserSession.send('Target.setDiscoverTargets', { discover: true });
-      await browser.newContext();
-      await browser.close();
-      expect(targets.length).toBe(0);
-    });
-  });
-};
+});
