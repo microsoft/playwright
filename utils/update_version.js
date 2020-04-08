@@ -45,7 +45,7 @@ if (process.argv.length !== 3) {
 let version = process.argv[2];
 if (version === '--next') {
   const packageJSON = require('../package.json');
-  version = package.version;
+  version = packageJSON.version;
   const dashIndex = version.indexOf('-');
   if (dashIndex === -1)
     version = version.substring(0, dashIndex);
