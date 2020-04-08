@@ -15,7 +15,10 @@
  * limitations under the License.
  */
 
- const path = require('path');
+const path = require('path');
+
+// Hack for our own tests.
+const testRunnerTestFile = path.join(__dirname, 'test', 'testrunner.spec.js');
 
 class Location {
   constructor() {
@@ -69,7 +72,7 @@ class Location {
       if (!match)
         return null;
       const filePath = match[1];
-      if (filePath === __filename || filePath.startsWith(ignorePrefix))
+      if (filePath === __filename || (filePath.startsWith(ignorePrefix) && filePath !== testRunnerTestFile))
         continue;
 
       location._filePath = filePath;
