@@ -738,7 +738,9 @@ Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/e
 #### event: 'download'
 - <[Download]>
 
-Emitted when attachment is downloaded. User can access basic file operations on downloaded content via the passed [Download] instance. Browser context must be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
+Emitted when attachment download started. User can access basic file operations on downloaded content via the passed [Download] instance.
+
+> **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
 
 #### event: 'filechooser'
 - <[Object]>
@@ -2994,19 +2996,22 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 [Download] objects are dispatched by page via the ['download'](#event-download) event.
 
-Note that browser context must be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
-
 All the downloaded files belonging to the browser context are deleted when the browser context is closed. All downloaded files are deleted when the browser closes.
 
-An example of using `Download` class:
+Download event is emitted once the download starts. Download path becomes available
+once download completes:
+
 ```js
 const [ download ] = await Promise.all([
-  page.waitForEvent('download'),
+  page.waitForEvent('download'), // wait for download to start
   page.click('a')
 ]);
+// wait for download to complete
 const path = await download.path();
 ...
 ```
+
+> **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
 
 <!-- GEN:toc -->
 - [download.createReadStream()](#downloadcreatereadstream)
