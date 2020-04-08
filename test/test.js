@@ -50,34 +50,15 @@ utils.setupTestRunner(testRunner);
 
 console.log('Testing on Node', process.version);
 
-const names = ['Chromium', 'Firefox', 'WebKit'].filter(name => {
+const products = ['Chromium', 'Firefox', 'WebKit'].filter(name => {
   return process.env.BROWSER === name.toLowerCase() || process.env.BROWSER === 'all';
 });
-const products = names.map(name => {
-  const executablePath = {
-    'Chromium': process.env.CRPATH,
-    'Firefox': process.env.FFPATH,
-    'WebKit': process.env.WKPATH,
-  }[name];
-  return { product: name, executablePath };
-});
-
-function valueFromEnv(name, defaultValue) {
-  if (!(name in process.env))
-    return defaultValue;
-  return JSON.parse(process.env[name]);
-}
 
 for (const [key, value] of Object.entries(testRunner.api()))
   global[key] = value;
 require('./playwright.spec.js').addPlaywrightTests({
-  playwrightPath: utils.projectRoot(),
+  testRunner,
   products,
-  platform: os.platform(),
-  headless: !!valueFromEnv('HEADLESS', true),
-  slowMo: valueFromEnv('SLOW_MO', 0),
-  dumpProtocolOnFailure: valueFromEnv('DEBUGP', false),
-  coverage: process.env.COVERAGE,
 });
 for (const [key, value] of Object.entries(testRunner.api())) {
   // expect is used when running tests, while the rest of api is not.

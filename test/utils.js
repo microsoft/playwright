@@ -213,4 +213,50 @@ const utils = module.exports = {
     testRunner.api().xit = testRunner.api().it.skip(true);
     testRunner.api().dit = testRunner.api().it.only.debug;
   },
+
+  testOptions(browserType) {
+    const headless = !!valueFromEnv('HEADLESS', true);
+    const executablePath = {
+      'chromium': process.env.CRPATH,
+      'firefox': process.env.FFPATH,
+      'webkit': process.env.WKPATH,
+    }[browserType.name()];
+    const defaultBrowserOptions = {
+      handleSIGINT: false,
+      executablePath,
+      slowMo: valueFromEnv('SLOW_MO', 0),
+      headless,
+    };
+    if (defaultBrowserOptions.executablePath) {
+      const YELLOW_COLOR = '\x1b[33m';
+      const RESET_COLOR = '\x1b[0m';
+      console.warn(`${YELLOW_COLOR}WARN: running ${product} tests with ${defaultBrowserOptions.executablePath}${RESET_COLOR}`);
+    } else {
+      // Make sure the `npm install` was run after the chromium roll.
+      if (!fs.existsSync(browserType.executablePath()))
+        throw new Error(`Browser is not downloaded. Run 'npm install' and try to re-run tests`);
+    }
+    const GOLDEN_DIR = path.join(__dirname, 'golden-' + browserType.name());
+    const OUTPUT_DIR = path.join(__dirname, 'output-' + browserType.name());
+    return {
+      FFOX: browserType.name() === 'firefox',
+      WEBKIT: browserType.name() === 'webkit',
+      CHROMIUM: browserType.name() === 'chromium',
+      MAC: os.platform() === 'darwin',
+      LINUX: os.platform() === 'linux',
+      WIN: os.platform() === 'win32',
+      browserType,
+      defaultBrowserOptions,
+      playwrightPath: PROJECT_ROOT,
+      headless: !!defaultBrowserOptions.headless,
+      GOLDEN_DIR,
+      OUTPUT_DIR,
+    };
+  },
 };
+
+function valueFromEnv(name, defaultValue) {
+  if (!(name in process.env))
+    return defaultValue;
+  return JSON.parse(process.env[name]);
+}

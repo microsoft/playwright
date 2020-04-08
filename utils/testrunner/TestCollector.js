@@ -159,6 +159,10 @@ class TestCollector {
     this._api.afterEach = callback => this._currentSuite.environment().afterEach(callback);
   }
 
+  useEnvironment(environment) {
+    return this._currentSuite.addEnvironment(environment);
+  }
+
   addTestModifier(name, callback) {
     this._testModifiers.set(name, callback);
   }
