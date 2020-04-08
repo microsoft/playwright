@@ -5798,6 +5798,19 @@ index b47560ee3f9d9ac1b587d8a2009a59d1f3a23701..b6db06947431c2335fb8675158db1023
  #if PLATFORM(GTK)
      String themeName;
  #endif
+diff --git a/Source/WebKit/Shared/WebPreferences.yaml b/Source/WebKit/Shared/WebPreferences.yaml
+index c6fddb6120f2c958b3021552220b8991fab322ef..322fcc5f4669ed178690f39a5a4932458a2da046 100644
+--- a/Source/WebKit/Shared/WebPreferences.yaml
++++ b/Source/WebKit/Shared/WebPreferences.yaml
+@@ -317,7 +317,7 @@ MediaControlsScaleWithPageZoom:
+ 
+ InspectorStartsAttached:
+   type: bool
+-  defaultValue: true
++  defaultValue: false
+   webcoreBinding: none
+ 
+ ShowsToolTipOverTruncatedText:
 diff --git a/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp b/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp
 index 2357f3d58415fae78e48b0f8a25bddad85c786bf..f3941a74922f5a0a3bf59a11cd4c42fbfd33d0af 100644
 --- a/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp
