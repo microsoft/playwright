@@ -28,65 +28,7 @@ const PROJECT_ROOT = fs.existsSync(path.join(__dirname, '..', 'package.json')) ?
 const mkdtempAsync = util.promisify(require('fs').mkdtemp);
 const removeFolderAsync = util.promisify(removeFolder);
 
-const COVERAGE_TESTSUITE_NAME = '**API COVERAGE**';
-
-/**
- * @param {Map<string, boolean>} apiCoverage
- * @param {Object} events
- * @param {string} className
- * @param {!Object} classType
- */
-function traceAPICoverage(apiCoverage, events, className, classType) {
-  className = className.substring(0, 1).toLowerCase() + className.substring(1);
-  for (const methodName of Reflect.ownKeys(classType.prototype)) {
-    const method = Reflect.get(classType.prototype, methodName);
-    if (methodName === 'constructor' || typeof methodName !== 'string' || methodName.startsWith('_') || typeof method !== 'function')
-      continue;
-    apiCoverage.set(`${className}.${methodName}`, false);
-    Reflect.set(classType.prototype, methodName, function(...args) {
-      apiCoverage.set(`${className}.${methodName}`, true);
-      return method.call(this, ...args);
-    });
-  }
-
-  if (events[classType.name]) {
-    for (const event of Object.values(events[classType.name])) {
-      if (typeof event !== 'symbol')
-        apiCoverage.set(`${className}.emit(${JSON.stringify(event)})`, false);
-    }
-    const method = Reflect.get(classType.prototype, 'emit');
-    Reflect.set(classType.prototype, 'emit', function(event, ...args) {
-      if (typeof event !== 'symbol' && this.listenerCount(event))
-        apiCoverage.set(`${className}.emit(${JSON.stringify(event)})`, true);
-      return method.call(this, event, ...args);
-    });
-  }
-}
-
 const utils = module.exports = {
-  recordAPICoverage: function(api, events, ignoredMethodsArray = []) {
-    const coverage = new Map();
-    const ignoredMethods = new Set(ignoredMethodsArray);
-    for (const [className, classType] of Object.entries(api))
-      traceAPICoverage(coverage, events, className, classType);
-    describe(COVERAGE_TESTSUITE_NAME, () => {
-      it('should call all API methods', () => {
-        const missingMethods = [];
-        const extraIgnoredMethods = [];
-        for (const method of coverage.keys()) {
-          if (!coverage.get(method) && !ignoredMethods.has(method))
-            missingMethods.push(method);
-          else if (coverage.get(method) && ignoredMethods.has(method))
-            extraIgnoredMethods.push(method);
-        }
-        if (extraIgnoredMethods.length)
-          throw new Error('Certain API Methods are called and should not be ignored: ' + extraIgnoredMethods.join(', '));
-        if (missingMethods.length)
-          throw new Error('Certain API Methods are not called: ' + missingMethods.join(', '));
-      });
-    });
-  },
-
   /**
    * @return {string}
    */
@@ -186,7 +128,7 @@ const utils = module.exports = {
     testRunner.on('testfinished', test => {
       // Do not report tests from COVERAGE testsuite.
       // They don't bring much value to us.
-      if (test.fullName.includes(COVERAGE_TESTSUITE_NAME))
+      if (test.fullName.includes('**API COVERAGE**'))
         return;
       const testpath = test.location.filePath.substring(utils.projectRoot().length);
       const url = `https://github.com/Microsoft/playwright/blob/${sha}/${testpath}#L${test.location.lineNumber}`;

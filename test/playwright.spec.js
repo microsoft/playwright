@@ -242,39 +242,8 @@ module.exports.addPlaywrightTests = ({platform, products, playwrightPath, headle
         loadTests('./chromium/tracing.spec.js');
       });
 
-      if (coverage) {
-        const BROWSER_CONFIGS = [
-          {
-            name: 'Firefox',
-            events: require('../lib/events').Events,
-            missingCoverage: ['browserContext.setGeolocation', 'browserContext.setOffline', 'cDPSession.send', 'cDPSession.detach'],
-          },
-          {
-            name: 'WebKit',
-            events: require('../lib/events').Events,
-            missingCoverage: ['browserContext.clearPermissions', 'cDPSession.send', 'cDPSession.detach'],
-          },
-          {
-            name: 'Chromium',
-            events: {
-              ...require('../lib/events').Events,
-              ...require('../lib/chromium/events').Events,
-            },
-            // Sometimes we already have a background page while launching, before adding a listener.
-            missingCoverage: ['chromiumBrowserContext.emit("backgroundpage")'],
-          },
-        ];
-        const browserNames = BROWSER_CONFIGS.map(config => config.name);
-        const browserConfig = BROWSER_CONFIGS.find(config => config.name === product);
-        const api = require('../lib/api');
-        const filteredApi = {};
-        Object.keys(api).forEach(apiName => {
-          if (browserNames.some(browserName => apiName.startsWith(browserName)) && !apiName.startsWith(product))
-            return;
-          filteredApi[apiName] = api[apiName];
-        });
-        require('./utils').recordAPICoverage(filteredApi, browserConfig.events, browserConfig.missingCoverage);
-      }
+      if (coverage)
+        loadTests('./apicoverage.spec.js');
     });
   }
 };
