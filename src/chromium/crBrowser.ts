@@ -50,25 +50,36 @@ export class CRBrowser extends BrowserBase {
     const connection = new CRConnection(SlowMoTransport.wrap(transport, slowMo));
     const browser = new CRBrowser(connection);
     const session = connection.rootSession;
-    const promises = [
-      session.send('Target.setDiscoverTargets', { discover: true }),
-      session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
-      session.send('Target.setDiscoverTargets', { discover: false }),
-    ];
-    const existingPageAttachPromises: Promise<any>[] = [];
-    if (isPersistent) {
-      // First page and background pages in the persistent context are created automatically
-      // and may be initialized before we enable auto-attach.
-      function attachToExistingPage({targetInfo}: Protocol.Target.targetCreatedPayload) {
-        if (targetInfo.type !== 'page' && targetInfo.type !== 'background_page')
-          return;
-        existingPageAttachPromises.push(session.send('Target.attachToTarget', {targetId: targetInfo.targetId, flatten: true}));
-      }
-      session.on('Target.targetCreated', attachToExistingPage);
-      Promise.all(promises).then(() => session.off('Target.targetCreated', attachToExistingPage)).catch(debugError);
+    if (!isPersistent) {
+      await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
+      return browser;
     }
-    await Promise.all(promises);
-    await Promise.all(existingPageAttachPromises);
+
+    const existingTargetAttachPromises: Promise<any>[] = [];
+    // First page, background pages and their service workers in the persistent context
+    // are created automatically and may be initialized before we enable auto-attach.
+    function attachToExistingPage({targetInfo}: Protocol.Target.targetCreatedPayload) {
+      if (targetInfo.type !== 'page' && targetInfo.type !== 'background_page' && targetInfo.type !== 'service_worker')
+        return;
+      // TODO: should we handle the error during 'Target.attachToTarget'? Can the target disappear?
+      existingTargetAttachPromises.push(session.send('Target.attachToTarget', {targetId: targetInfo.targetId, flatten: true}));
+    }
+    session.on('Target.targetCreated', attachToExistingPage);
+
+    const startDiscover = session.send('Target.setDiscoverTargets', { discover: true });
+    const autoAttachAndStopDiscover = session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }).then(() => {
+      // All targets collected before setAutoAttach response will not be auto-attached, the rest will be.
+      // TODO: We should fix this upstream and remove this tricky logic.
+      session.off('Target.targetCreated', attachToExistingPage);
+      return session.send('Target.setDiscoverTargets', { discover: false });
+    });
+    await Promise.all([
+      startDiscover,
+      autoAttachAndStopDiscover,
+    ]);
+
+    // Wait for initial targets to arrive.
+    await Promise.all(existingTargetAttachPromises);
     return browser;
   }
 
