@@ -2494,13 +2494,17 @@ ElementHandle instances can be used as an argument in [`page.$eval()`](#pageeval
 - [elementHandle.dblclick([options])](#elementhandledblclickoptions)
 - [elementHandle.fill(value[, options])](#elementhandlefillvalue-options)
 - [elementHandle.focus()](#elementhandlefocus)
+- [elementHandle.getAttribute(name)](#elementhandlegetattributename)
 - [elementHandle.hover([options])](#elementhandlehoveroptions)
+- [elementHandle.innerHTML()](#elementhandleinnerhtml)
+- [elementHandle.innerText()](#elementhandleinnertext)
 - [elementHandle.ownerFrame()](#elementhandleownerframe)
 - [elementHandle.press(key[, options])](#elementhandlepresskey-options)
 - [elementHandle.screenshot([options])](#elementhandlescreenshotoptions)
 - [elementHandle.scrollIntoViewIfNeeded()](#elementhandlescrollintoviewifneeded)
 - [elementHandle.selectOption(values[, options])](#elementhandleselectoptionvalues-options)
 - [elementHandle.setInputFiles(files[, options])](#elementhandlesetinputfilesfiles-options)
+- [elementHandle.textContent()](#elementhandletextcontent)
 - [elementHandle.toString()](#elementhandletostring)
 - [elementHandle.type(text[, options])](#elementhandletypetext-options)
 - [elementHandle.uncheck([options])](#elementhandleuncheckoptions)
@@ -2671,6 +2675,12 @@ If element is not a text `<input>`, `<textarea>` or `[contenteditable]` element,
 
 Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus) on the element.
 
+#### elementHandle.getAttribute(name)
+- `name` <[string]> Attribute name to get the value for.
+- returns: <[Promise]<null|[string]>> Resolves to the attribute value.
+
+Returns element attribute value.
+
 #### elementHandle.hover([options])
 - `options` <[Object]>
   - `position` <[Object]> A point to hover relative to the top-left corner of element padding box. If not specified, hovers over some visible point of the element.
@@ -2687,6 +2697,12 @@ Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus
 
 This method scrolls element into view if needed, and then uses [page.mouse](#pagemouse) to hover over the center of the element.
 If the element is detached from DOM, the method throws an error.
+
+#### elementHandle.innerHTML()
+- returns: <[Promise]<null|[string]>> Resolves to the `element.innerHTML`.
+
+#### elementHandle.innerText()
+- returns: <[Promise]<null|[string]>> Resolves to the `element.innerText`.
 
 #### elementHandle.ownerFrame()
 - returns: <[Promise]<?[Frame]>> Returns the frame containing the given element.
@@ -2779,6 +2795,9 @@ handle.selectOption({ value: 'blue' }, { index: 2 }, 'red');
 This method expects `elementHandle` to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
 
 Sets the value of the file input to these file paths or files. If some of the  `filePaths` are relative paths, then they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). For empty array, clears the selected files.
+
+#### elementHandle.textContent()
+- returns: <[Promise]<null|[string]>> Resolves to the `node.textContent`.
 
 #### elementHandle.toString()
 - returns: <[string]>

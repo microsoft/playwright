@@ -114,6 +114,37 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._delegate.getContentFrame(this);
   }
 
+  async getAttribute(name: string): Promise<string | null> {
+    return this._evaluateInUtility(({node}, name: string) => {
+      if (node.nodeType !== Node.ELEMENT_NODE)
+        throw new Error('Not an element');
+      const element = node as unknown as Element;
+      return element.getAttribute(name);
+    }, name);
+  }
+
+  async textContent(): Promise<string | null> {
+    return this._evaluateInUtility(({node}) => node.textContent, {});
+  }
+
+  async innerText(): Promise<string | null> {
+    return this._evaluateInUtility(({node}) => {
+      if (node.nodeType !== Node.ELEMENT_NODE)
+        throw new Error('Not an element');
+      const element = node as unknown as HTMLElement;
+      return element.innerText;
+    }, {});
+  }
+
+  async innerHTML(): Promise<string | null> {
+    return this._evaluateInUtility(({node}) => {
+      if (node.nodeType !== Node.ELEMENT_NODE)
+        throw new Error('Not an element');
+      const element = node as unknown as Element;
+      return element.innerHTML;
+    }, {});
+  }
+
   async _scrollRectIntoViewIfNeeded(rect?: types.Rect): Promise<void> {
     debugInput('scrolling into veiw if needed...');
     await this._page._delegate.scrollRectIntoViewIfNeeded(this, rect);
