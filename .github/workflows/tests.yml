@@ -32,6 +32,13 @@ jobs:
     - run: xvfb-run --auto-servernum -- bash -c "npm run ccoverage 2>./chromium-linux-testrun.log"
       env:
         DEBUG: "*"
+    # Ensure output folder exists just in case it was not created by the test run.
+    - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-chromium'), {recursive:true})"
+    - uses: actions/upload-artifact@v1
+      if: failure()
+      with:
+        name: chromium-linux-output
+        path: test/output-chromium
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -51,6 +58,13 @@ jobs:
     - run: npm run ctest 2>./chromium-mac-testrun.log
       env:
         DEBUG: "*"
+    # Ensure output folder exists just in case it was not created by the test run.
+    - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-chromium'), {recursive:true})"
+    - uses: actions/upload-artifact@v1
+      if: failure()
+      with:
+        name: chromium-mac-output
+        path: test/output-chromium
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -71,6 +85,13 @@ jobs:
       shell: bash
       env:
         DEBUG: "*"
+    # Ensure output folder exists just in case it was not created by the test run.
+    - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-chromium'), {recursive:true})"
+    - uses: actions/upload-artifact@v1
+      if: failure()
+      with:
+        name: chromium-win-output
+        path: test/output-chromium
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -95,6 +116,13 @@ jobs:
     - run: xvfb-run --auto-servernum -- bash -c "npm run wcoverage 2>./webkit-linux-testrun.log"
       env:
         DEBUG: "*,-pw:wrapped*"
+    # Ensure output folder exists just in case it was not created by the test run.
+    - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-webkit'), {recursive:true})"
+    - uses: actions/upload-artifact@v1
+      if: failure()
+      with:
+        name: webkit-linux-output
+        path: test/output-webkit
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -114,6 +142,13 @@ jobs:
     - run: npm run wtest 2>./webkit-mac-testrun.log
       env:
         DEBUG: "*,-pw:wrapped*"
+    # Ensure output folder exists just in case it was not created by the test run.
+    - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-webkit'), {recursive:true})"
+    - uses: actions/upload-artifact@v1
+      if: failure()
+      with:
+        name: webkit-mac-output
+        path: test/output-webkit
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -134,6 +169,13 @@ jobs:
       shell: bash
       env:
         DEBUG: "*,-pw:wrapped*"
+    # Ensure output folder exists just in case it was not created by the test run.
+    - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-webkit'), {recursive:true})"
+    - uses: actions/upload-artifact@v1
+      if: failure()
+      with:
+        name: webkit-win-output
+        path: test/output-webkit
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -158,6 +200,13 @@ jobs:
     - run: xvfb-run --auto-servernum -- bash -c "npm run fcoverage 2>./firefox-linux-testrun.log"
       env:
         DEBUG: "*"
+    # Ensure output folder exists just in case it was not created by the test run.
+    - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-firefox'), {recursive:true})"
+    - uses: actions/upload-artifact@v1
+      if: failure()
+      with:
+        name: firefox-linux-output
+        path: test/output-firefox
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -177,6 +226,13 @@ jobs:
     - run: npm run ftest 2>./firefox-mac-testrun.log
       env:
         DEBUG: "*"
+    # Ensure output folder exists just in case it was not created by the test run.
+    - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-firefox'), {recursive:true})"
+    - uses: actions/upload-artifact@v1
+      if: failure()
+      with:
+        name: firefox-mac-output
+        path: test/output-firefox
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -197,6 +253,13 @@ jobs:
       shell: bash
       env:
         DEBUG: "*"
+    # Ensure output folder exists just in case it was not created by the test run.
+    - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-firefox'), {recursive:true})"
+    - uses: actions/upload-artifact@v1
+      if: failure()
+      with:
+        name: firefox-win-output
+        path: test/output-firefox
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
