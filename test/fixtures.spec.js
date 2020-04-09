@@ -26,6 +26,7 @@ async function testSignal(browserType, action, exitOnClose) {
     handleSIGINT: true,
     handleSIGTERM: true,
     handleSIGHUP: true,
+    executablePath: browserType.executablePath(),
   });
   const res = spawn('node', [path.join(__dirname, 'fixtures', 'closeme.js'), playwrightPath, browserType.name(), JSON.stringify(options), exitOnClose ? 'true' : '']);
   let wsEndPointCallback;
