@@ -99,10 +99,31 @@ module.exports.addPlaywrightTests = ({testRunner, products}) => {
       delete state.browserType;
     });
 
+    const browserType = playwright[product.toLowerCase()];
+    const executablePath = {
+      'chromium': process.env.CRPATH,
+      'firefox': process.env.FFPATH,
+      'webkit': process.env.WKPATH,
+    }[browserType.name()];
+    if (executablePath) {
+      const YELLOW_COLOR = '\x1b[33m';
+      const RESET_COLOR = '\x1b[0m';
+      console.warn(`${YELLOW_COLOR}WARN: running ${product} tests with ${executablePath}${RESET_COLOR}`);
+      browserType._executablePath = executablePath;
+    } else {
+      // Make sure the `npm install` was run after the chromium roll.
+      if (!fs.existsSync(browserType.executablePath()))
+        throw new Error(`Browser is not downloaded. Run 'npm install' and try to re-run tests`);
+    }
+    const launchOptions = {
+      handleSIGINT: false,
+      slowMo: valueFromEnv('SLOW_MO', 0),
+      headless: !!valueFromEnv('HEADLESS', true),
+    };
+
     const browserEnvironment = new Environment(product);
     browserEnvironment.beforeAll(async state => {
-      const { defaultBrowserOptions } = require('./utils').testOptions(state.browserType);
-      state.browser = await state.browserType.launch(defaultBrowserOptions);
+      state.browser = await state.browserType.launch(launchOptions);
       state.browserServer = state.browser._ownedServer;
       state._stdout = readline.createInterface({ input: state.browserServer.process().stdout });
       state._stderr = readline.createInterface({ input: state.browserServer.process().stderr });
@@ -156,7 +177,7 @@ module.exports.addPlaywrightTests = ({testRunner, products}) => {
     describe(product, () => {
       // In addition to state, expose these two on global so that describes can access them.
       global.playwright = playwright;
-      global.browserType = playwright[product.toLowerCase()];
+      global.browserType = browserType;
 
       testRunner.collector().useEnvironment(browserTypeEnvironment);
       testRunner.collector().useEnvironment(goldenEnvironment);  // Custom environment.
