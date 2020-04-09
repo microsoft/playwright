@@ -2200,10 +2200,10 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..5ae2f349b65eb437aa646d14b8d5afd76380b3ad
+index 0000000000000000000000000000000000000000..5f10371dc2f2a921cd5df2b9b038bd1a6cec2533
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
-@@ -0,0 +1,660 @@
+@@ -0,0 +1,664 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
@@ -2357,6 +2357,10 @@ index 0000000000000000000000000000000000000000..5ae2f349b65eb437aa646d14b8d5afd7
 +        const windowsIt = Services.wm.getEnumerator('navigator:browser');
 +        while (windowsIt.hasMoreElements()) {
 +          const window = windowsIt.getNext();
++          // gBrowser is always created before tabs. If gBrowser is not
++          // initialized yet the browser belongs to another window.
++          if (!window.gBrowser)
++            continue;
 +          tab = window.gBrowser.getTabForBrowser(linkedBrowser);
 +          if (tab) {
 +            gBrowser = window.gBrowser;
@@ -2866,10 +2870,10 @@ index 0000000000000000000000000000000000000000..5ae2f349b65eb437aa646d14b8d5afd7
 +this.TargetRegistry = TargetRegistry;
 diff --git a/juggler/components/juggler.js b/juggler/components/juggler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..3477b09f25c90f2b5492d0dd9eb16d7496ec6480
+index 0000000000000000000000000000000000000000..4905a1bc7c585d3d1bf33430991d190cee75e332
 --- /dev/null
 +++ b/juggler/components/juggler.js
-@@ -0,0 +1,85 @@
+@@ -0,0 +1,80 @@
 +const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Dispatcher} = ChromeUtils.import("chrome://juggler/content/protocol/Dispatcher.js");
@@ -2917,16 +2921,11 @@ index 0000000000000000000000000000000000000000..3477b09f25c90f2b5492d0dd9eb16d74
 +
 +    const token = helper.generateId();
 +
-+    let windowsRestoredCallback;
-+    const windowsRestored = new Promise(fulfill => windowsRestoredCallback = fulfill);
-+    const removeObserver = helper.addObserver(() => {
-+      windowsRestoredCallback();
-+      removeObserver();
-+    }, "sessionstore-windows-restored");
++    // Force create hidden window here, otherwise its creation later closes the web socket!
++    Services.appShell.hiddenDOMWindow;
 +
 +    this._server.asyncListen({
 +      onSocketAccepted: async(socket, transport) => {
-+        await windowsRestored;
 +        const input = transport.openInputStream(0, 0, 0);
 +        const output = transport.openOutputStream(0, 0, 0);
 +        const webSocket = await WebSocketServer.accept(transport, input, output, "/" + token);
