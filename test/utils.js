@@ -20,7 +20,6 @@ const path = require('path');
 const util = require('util');
 const os = require('os');
 const removeFolder = require('rimraf');
-const url = require('url');
 
 const {FlakinessDashboard} = require('../utils/flakiness-dashboard');
 const PROJECT_ROOT = fs.existsSync(path.join(__dirname, '..', 'package.json')) ? path.join(__dirname, '..') : path.join(__dirname, '..', '..');
@@ -168,50 +167,6 @@ const utils = module.exports = {
 
   removeUserDataDir: async function(dir) {
     await removeFolderAsync(dir).catch(e => {});
-  },
-
-  setupTestRunner: function(testRunner) {
-    const collector = testRunner._collector;
-    collector.addTestModifier('skip', (t, condition) => condition && t.setSkipped(true));
-    collector.addSuiteModifier('skip', (s, condition) => condition && s.setSkipped(true));
-    collector.addTestModifier('fail', (t, condition) => condition && t.setExpectation(t.Expectations.Fail));
-    collector.addSuiteModifier('fail', (s, condition) => condition && s.setExpectation(s.Expectations.Fail));
-    collector.addTestModifier('slow', t => t.setTimeout(t.timeout() * 3));
-    collector.addTestAttribute('debug', t => {
-      t.setTimeout(100000000);
-
-      let session;
-      t.environment().beforeEach(async () => {
-        const inspector = require('inspector');
-        const readFileAsync = util.promisify(fs.readFile.bind(fs));
-        session = new inspector.Session();
-        session.connect();
-        const postAsync = util.promisify(session.post.bind(session));
-        await postAsync('Debugger.enable');
-        const setBreakpointCommands = [];
-        const N = t.body().toString().split('\n').length;
-        const location = t.location();
-        const lines = (await readFileAsync(location.filePath(), 'utf8')).split('\n');
-        for (let line = 0; line < N; ++line) {
-          const lineNumber = line + location.lineNumber();
-          setBreakpointCommands.push(postAsync('Debugger.setBreakpointByUrl', {
-            url: url.pathToFileURL(location.filePath()),
-            lineNumber,
-            condition: `console.log('${String(lineNumber + 1).padStart(6, ' ')} | ' + ${JSON.stringify(lines[lineNumber])})`,
-          }).catch(e => {}));
-        }
-        await Promise.all(setBreakpointCommands);
-      });
-
-      t.environment().afterEach(async () => {
-        session.disconnect();
-      });
-    });
-    testRunner.api().fdescribe = testRunner.api().describe.only;
-    testRunner.api().xdescribe = testRunner.api().describe.skip(true);
-    testRunner.api().fit = testRunner.api().it.only;
-    testRunner.api().xit = testRunner.api().it.skip(true);
-    testRunner.api().dit = testRunner.api().it.only.debug;
   },
 
   testOptions(browserType) {
