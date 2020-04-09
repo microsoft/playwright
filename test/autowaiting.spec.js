@@ -103,7 +103,7 @@ describe('Auto waiting', () => {
     ]);
     expect(messages.join('|')).toBe('route|domcontentloaded|evaluate');
   });
-  it.fail(CHROMIUM)('should await navigation when assigning location twice', async({page, server}) => {
+  it('should await navigation when assigning location twice', async({page, server}) => {
     const messages = [];
     server.setRoute('/empty.html?cancel', async (req, res) => { res.end('done'); });
     server.setRoute('/empty.html?override', async (req, res) => { messages.push('routeoverride'); res.end('done'); });
@@ -196,10 +196,7 @@ describe('Auto waiting should not hang when', () => {
         setTimeout(() => window.stop(), 100);
       }, server.EMPTY_PAGE);
   });
-  it.fail(CHROMIUM)('calling window.stop sync', async({page, server, httpsServer}) => {
-    // Flaky, see https://github.com/microsoft/playwright/pull/1630/checks?check_run_id=553475173.
-    // We only get Page.frameStoppedLoading, but do not know that navigation was aborted or
-    // that navigation request was cancelled.
+  it('calling window.stop sync', async({page, server, httpsServer}) => {
     await page.evaluate((url) => {
         window.location.href = url;
         window.stop();

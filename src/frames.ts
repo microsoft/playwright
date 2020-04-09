@@ -127,12 +127,20 @@ export class FrameManager {
       barrier.release();
   }
 
-  frameRequestedNavigation(frameId: string) {
+  frameRequestedNavigation(frameId: string, documentId: string) {
     const frame = this._frames.get(frameId);
     if (!frame)
       return;
     for (const barrier of this._pendingNavigationBarriers)
       barrier.addFrame(frame);
+    frame._pendingDocumentId = documentId;
+  }
+
+  frameUpdatedDocumentIdForNavigation(frameId: string, documentId: string) {
+    const frame = this._frames.get(frameId);
+    if (!frame)
+      return;
+    frame._pendingDocumentId = documentId;
   }
 
   frameCommittedNewDocumentNavigation(frameId: string, url: string, name: string, documentId: string, initial: boolean) {
@@ -140,7 +148,9 @@ export class FrameManager {
     this.removeChildFramesRecursively(frame);
     frame._url = url;
     frame._name = name;
+    assert(!frame._pendingDocumentId || frame._pendingDocumentId === documentId);
     frame._lastDocumentId = documentId;
+    frame._pendingDocumentId = '';
     for (const task of frame._frameTasks)
       task.onNewDocument(documentId);
     this.clearFrameLifecycle(frame);
@@ -225,8 +235,9 @@ export class FrameManager {
   requestFailed(request: network.Request, canceled: boolean) {
     this._inflightRequestFinished(request);
     if (request._documentId) {
-      const isCurrentDocument = request.frame()._lastDocumentId === request._documentId;
-      if (!isCurrentDocument) {
+      const isPendingDocument = request.frame()._pendingDocumentId === request._documentId;
+      if (isPendingDocument) {
+        request.frame()._pendingDocumentId = '';
         let errorText = request.failure()!.errorText;
         if (canceled)
           errorText += '; maybe frame was detached?';
@@ -319,6 +330,7 @@ export class Frame {
   _id: string;
   readonly _firedLifecycleEvents: Set<types.LifecycleEvent>;
   _lastDocumentId = '';
+  _pendingDocumentId = '';
   _frameTasks = new Set<FrameTask>();
   readonly _page: Page;
   private _parentFrame: Frame | null;

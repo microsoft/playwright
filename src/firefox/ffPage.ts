@@ -65,7 +65,7 @@ export class FFPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.frameDetached', this._onFrameDetached.bind(this)),
       helper.addEventListener(this._session, 'Page.navigationAborted', this._onNavigationAborted.bind(this)),
       helper.addEventListener(this._session, 'Page.navigationCommitted', this._onNavigationCommitted.bind(this)),
-      helper.addEventListener(this._session, 'Page.navigationStarted', event => this._onNavigationStarted(event.frameId)),
+      helper.addEventListener(this._session, 'Page.navigationStarted', this._onNavigationStarted.bind(this)),
       helper.addEventListener(this._session, 'Page.sameDocumentNavigation', this._onSameDocumentNavigation.bind(this)),
       helper.addEventListener(this._session, 'Runtime.executionContextCreated', this._onExecutionContextCreated.bind(this)),
       helper.addEventListener(this._session, 'Runtime.executionContextDestroyed', this._onExecutionContextDestroyed.bind(this)),
@@ -136,8 +136,8 @@ export class FFPage implements PageDelegate {
       this._page._frameManager.frameDidPotentiallyRequestNavigation();
   }
 
-  _onNavigationStarted(frameId: string) {
-    this._page._frameManager.frameRequestedNavigation(frameId);
+  _onNavigationStarted(params: Protocol.Page.navigationStartedPayload) {
+    this._page._frameManager.frameRequestedNavigation(params.frameId, params.navigationId);
   }
 
   _onNavigationAborted(params: Protocol.Page.navigationAbortedPayload) {
