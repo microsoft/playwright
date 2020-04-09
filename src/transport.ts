@@ -18,6 +18,7 @@
 import * as debug from 'debug';
 import * as WebSocket from 'ws';
 import { helper } from './helper';
+import * as pkg from '../package.json';
 
 export type ProtocolRequest = {
   id: number;
@@ -138,6 +139,9 @@ export class WebSocketTransport implements ConnectionTransport {
     this._ws = new WebSocket(url, [], {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb
+      headers: {
+        'User-Agent' : `Playwright ${pkg.version}`,
+      }
     });
     // The 'ws' module in node sometimes sends us multiple messages in a single task.
     // In Web, all IO callbacks (e.g. WebSocket callbacks)
