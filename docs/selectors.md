@@ -61,7 +61,7 @@ const handle = await divHandle.$('css=span');
 
 CSS engine is equivalent to [`Document.querySelector`](https://developer.mozilla.org/en/docs/Web/API/Document/querySelector). Example: `css=.article > span:nth-child(2) li`.
 
-> **NOTE** Malformed selector not starting with `//` nor with `#` is automatically transformed to css selector. For example, Playwright converts `page.$('span > button')` to `page.$('css=span > button')`. Selectors starting with `#` are converted to [text](#text). Selectors starting with `//` are converted to [xpath](#xpath).
+> **NOTE** Malformed selector not starting with `//` nor with `"` is automatically transformed to css selector. For example, Playwright converts `page.$('span > button')` to `page.$('css=span > button')`. Selectors starting with `"` are converted to [text](#text). Selectors starting with `//` are converted to [xpath](#xpath).
 
 ### xpath
 
@@ -76,17 +76,52 @@ Text engine finds an element that contains a text node with passed text. Example
 - Text body can be escaped with double quotes for precise matching, insisting on exact match, including specified whitespace and case. This means `text="Login "` will only match `<button>Login </button>` with exactly one space after "Login".
 - Text body can also be a JavaScript-like regex wrapped in `/` symbols. This means `text=/^\\s*Login$/i` will match `<button> loGIN</button>` with any number of spaces before "Login" and no spaces after.
 
-> **NOTE** Text engine searches for elements in the light dom in the iteration order, and then recursively inside open shadow roots in the iteration order. It does not search inside closed shadow roots or iframes.
+> **NOTE** Text engine first searches for elements in the light dom in the iteration order, and then recursively inside open shadow roots in the iteration order. It does not search inside closed shadow roots or iframes.
 
 > **NOTE** Input elements of the type `button` and `submit` are rendered with their value as text, and text engine finds them. For example, `text=Login` matches `<input type=button value="Login">`.
 
 > **NOTE** Malformed selector starting with `"` is automatically transformed to text selector. For example, Playwright converts `page.click('"Login"')` to `page.click('text="Login"')`.
 
+### deep
+
+Deep engine is equivalent to CSS, but with every [Descendant combinator](https://developer.mozilla.org/en-US/docs/Web/CSS/Descendant_combinator) piercing open shadow roots, including the implicit descendant combinator at the start of the selector. [See this article](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM) for high-level overview of Shadow DOM.
+
+```html
+<article>
+  <div>In the light dom</div>
+  <div slot='myslot'>In the light dom, but goes into the shadow slot</div>
+  <open mode shadow root>
+    <div class='in-the-shadow'>
+      <span class='content'>
+        In the shadow dom
+        <open mode shadow root>
+          <li id='target'>Deep in the shadow</li>
+        </open mode shadow root>
+      </span>
+    </div>
+    <slot name='myslot'></slot>
+  </open mode shadow root>
+</article>
+```
+
+Note that `<open mode shadow root>` is not an html element, but rather a shadow root created with `element.attachShadow({mode: 'open'})`.
+
+- `"deep=article div"` matches the first `<div>In the light dom</div>`
+- `"deep=article > div"` matches two `div` elements that are direct children of the `article`
+- `"deep=article .in-the-shadow"` matches the `<div class='in-the-shadow'>`, piercing the shadow root
+- `"deep=article div > span"` matches the `<span class='content'>`, piercing the shadow root
+- `"deep=article > .in-the-shadow"` does not match anything, because `<div class='in-the-shadow'>` is not a direct child of `article`
+- `"deep=article li#target"` matches the `<li id='target'>Deep in the shadow</li>`, piercing two shadow roots
+
+> **NOTE** Only use deep engine if you need to pierce shadow roots. Otherwise, prefer the more effective CSS engine.
+
+> **NOTE** Deep engine first searches for elements in the light dom in the iteration order, and then recursively inside open shadow roots in the iteration order. It does not search inside closed shadow roots or iframes.
+
 ### id, data-testid, data-test-id, data-test
 
-Attribute engines are selecting based on the corresponding atrribute value. For example: `data-test-id=foo` is similar to `querySelector('*[data-test-id=foo]')`.
+Attribute engines are selecting based on the corresponding atrribute value. For example: `data-test-id=foo` is similar to `deep=[data-test-id="foo"]`.
 
-> **NOTE** Attribute engine searches for elements in the light dom in the iteration order, and then recursively inside open shadow roots in the iteration order. It does not search inside closed shadow roots or iframes.
+> **NOTE** Attribute engine first searches for elements in the light dom in the iteration order, and then recursively inside open shadow roots in the iteration order. It does not search inside closed shadow roots or iframes.
 
 ## Custom selector engines
 

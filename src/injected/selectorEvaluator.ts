@@ -15,6 +15,7 @@
  */
 
 import { CSSEngine } from './cssSelectorEngine';
+import { DeepEngine } from './deepSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 import { TextEngine } from './textSelectorEngine';
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
@@ -33,6 +34,7 @@ class SelectorEvaluator {
     this.engines.set('css', CSSEngine);
     this.engines.set('xpath', XPathEngine);
     this.engines.set('text', TextEngine);
+    this.engines.set('deep', DeepEngine);
     this.engines.set('id', createAttributeEngine('id'));
     this.engines.set('data-testid', createAttributeEngine('data-testid'));
     this.engines.set('data-test-id', createAttributeEngine('data-test-id'));

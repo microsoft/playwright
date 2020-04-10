@@ -35,7 +35,7 @@ export class Selectors {
 
   constructor() {
     // Note: keep in sync with SelectorEvaluator class.
-    this._builtinEngines = new Set(['css', 'xpath', 'text', 'id', 'data-testid', 'data-test-id', 'data-test']);
+    this._builtinEngines = new Set(['css', 'xpath', 'text', 'deep', 'id', 'data-testid', 'data-test-id', 'data-test']);
     this._engines = new Map();
   }
 
