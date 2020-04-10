@@ -17,7 +17,7 @@ We have a [pre-built Docker image](docker/README.md) which can either be used di
 
 ## GitHub Actions
 
-We run our tests on GitHub Actions, across a matrix of 3 platforms (Windows, Linux, macOS) and 3 browsers (Chromium, Firefox, WebKit). Use our [Actions configuration](/.github/workflows/tests.yml) to bootstrap your own.
+We run [our tests](/.github/workflows/tests.yml) on GitHub Actions, across a matrix of 3 platforms (Windows, Linux, macOS) and 3 browsers (Chromium, Firefox, WebKit). Use the [microsoft/playwright-github-action](https://github.com/microsoft/playwright-github-action) to bootstrap your GitHub Actions configuration.
 
 ## Azure Pipelines
 
