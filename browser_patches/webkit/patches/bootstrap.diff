@@ -13174,713 +13174,6 @@ index 4c5147dcd38a53e2feaeaae0fce38f92dc60eba6..77d031add801b2f45c9d90e74afab880
  
      return 0;
  }
-diff --git a/Tools/MiniBrowser/win/Common.cpp b/Tools/MiniBrowser/win/Common.cpp
-index a3960e9adb44d7a625cf384b3d3f661e3c03f58d..189cb111599f17299ff96ac72fa8354e70b3dd13 100644
---- a/Tools/MiniBrowser/win/Common.cpp
-+++ b/Tools/MiniBrowser/win/Common.cpp
-@@ -278,6 +278,14 @@ CommandLineOptions parseCommandLine()
- #if ENABLE(WEBKIT)
-         else if (!wcsicmp(argv[i], L"--wk2") || !wcsicmp(argv[i], L"--webkit"))
-             options.windowType = BrowserWindowType::WebKit;
-+        else if (!wcsicmp(argv[i], L"--inspector-pipe"))
-+            options.inspectorPipe = true;
-+        else if (!wcsncmp(argv[i], L"--user-data-dir=", 16))
-+            options.userDataDir = argv[i] + 16;
-+        else if (!wcsicmp(argv[i], L"--headless"))
-+            options.headless = true;
-+        else if (!wcsicmp(argv[i], L"--no-startup-window"))
-+            options.noStartupWindow = true;
- #endif
-         else if (!options.requestedURL)
-             options.requestedURL = argv[i];
-diff --git a/Tools/MiniBrowser/win/Common.h b/Tools/MiniBrowser/win/Common.h
-index 6c421cee66a907b865e785258d06d9122b05037a..0afaddc91cc07ce7c37f4edb66c7b020a74d8322 100644
---- a/Tools/MiniBrowser/win/Common.h
-+++ b/Tools/MiniBrowser/win/Common.h
-@@ -36,8 +36,12 @@ enum class BrowserWindowType {
- struct CommandLineOptions {
-     bool usesLayeredWebView { };
-     bool useFullDesktop { };
-+    bool inspectorPipe { };
-+    bool headless { };
-+    bool noStartupWindow { };
-     BrowserWindowType windowType;
-     _bstr_t requestedURL;
-+    _bstr_t userDataDir;
- 
-     CommandLineOptions()
- #if ENABLE(WEBKIT)
-diff --git a/Tools/MiniBrowser/win/MainWindow.cpp b/Tools/MiniBrowser/win/MainWindow.cpp
-index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..d157cb5c13bf61ad2593989353237629ae60d710 100644
---- a/Tools/MiniBrowser/win/MainWindow.cpp
-+++ b/Tools/MiniBrowser/win/MainWindow.cpp
-@@ -60,6 +60,14 @@ static INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
- std::wstring MainWindow::s_windowClass;
- size_t MainWindow::s_numInstances;
- 
-+bool MainWindow::s_headless = false;
-+bool MainWindow::s_noStartupWindow = false;
-+
-+void MainWindow::configure(bool headless, bool noStartupWindow) {
-+    s_headless = headless;
-+    s_noStartupWindow = noStartupWindow;
-+}
-+
- static std::wstring loadString(int id)
- {
-     constexpr size_t length = 100;
-@@ -102,7 +110,9 @@ bool MainWindow::isInstance(HWND hwnd)
-     return s_windowClass == buff;
- }
- 
--MainWindow::MainWindow()
-+MainWindow::MainWindow(WKContextRef context, WKWebsiteDataStoreRef dataStore)
-+    : m_context(context)
-+    , m_dataStore(dataStore)
- {
-     s_numInstances++;
- }
-@@ -112,9 +122,9 @@ MainWindow::~MainWindow()
-     s_numInstances--;
- }
- 
--Ref<MainWindow> MainWindow::create()
-+Ref<MainWindow> MainWindow::create(WKContextRef context, WKWebsiteDataStoreRef dataStore)
- {
--    return adoptRef(*new MainWindow());
-+    return adoptRef(*new MainWindow(context, dataStore));
- }
- 
- void MainWindow::createToolbar(HINSTANCE hInstance)
-@@ -202,24 +212,26 @@ bool MainWindow::init(BrowserWindowFactory factory, HINSTANCE hInstance, bool us
- 
-     auto title = loadString(IDS_APP_TITLE);
- 
--    m_hMainWnd = CreateWindow(s_windowClass.c_str(), title.c_str(), WS_OVERLAPPEDWINDOW,
--        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 0, hInstance, this);
-+    m_hMainWnd = CreateWindowExW(s_headless ? WS_EX_NOACTIVATE : 0, s_windowClass.c_str(), title.c_str(),
-+        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 0, hInstance, this);
- 
-     if (!m_hMainWnd)
-         return false;
- 
-+    if (!s_headless) {
- #if !ENABLE(WEBKIT)
--    EnableMenuItem(GetMenu(m_hMainWnd), IDM_NEW_WEBKIT_WINDOW, MF_GRAYED);
-+        EnableMenuItem(GetMenu(m_hMainWnd), IDM_NEW_WEBKIT_WINDOW, MF_GRAYED);
- #endif
- #if !ENABLE(WEBKIT_LEGACY)
--    EnableMenuItem(GetMenu(m_hMainWnd), IDM_NEW_WEBKITLEGACY_WINDOW, MF_GRAYED);
-+        EnableMenuItem(GetMenu(m_hMainWnd), IDM_NEW_WEBKITLEGACY_WINDOW, MF_GRAYED);
- #endif
- 
--    createToolbar(hInstance);
--    if (!m_hToolbarWnd)
--        return false;
-+      createToolbar(hInstance);
-+      if (!m_hToolbarWnd)
-+          return false;
-+    }
- 
--    m_browserWindow = factory(*this, m_hMainWnd, usesLayeredWebView);
-+    m_browserWindow = factory(*this, m_hMainWnd, m_context.get(), m_dataStore.get(), usesLayeredWebView);
-     if (!m_browserWindow)
-         return false;
-     HRESULT hr = m_browserWindow->init();
-@@ -228,7 +240,13 @@ bool MainWindow::init(BrowserWindowFactory factory, HINSTANCE hInstance, bool us
- 
-     updateDeviceScaleFactor();
-     resizeSubViews();
--    SetFocus(m_hURLBarWnd);
-+
-+    if (s_headless) {
-+        SetMenu(m_hMainWnd, NULL);
-+    } else {
-+        SetFocus(m_hURLBarWnd);
-+        ShowWindow(m_hMainWnd, SW_SHOW);
-+    }
-     return true;
- }
- 
-@@ -236,6 +254,10 @@ void MainWindow::resizeSubViews()
- {
-     RECT rcClient;
-     GetClientRect(m_hMainWnd, &rcClient);
-+    if (s_headless) {
-+        MoveWindow(m_browserWindow->hwnd(), 0, 0, rcClient.right, rcClient.bottom, true);
-+        return;
-+    }
- 
-     resizeToolbar(rcClient.right);
- 
-@@ -254,6 +276,9 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
- {
-     LRESULT result = 0;
-     RefPtr<MainWindow> thisWindow = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-+    if (!thisWindow && message != WM_CREATE)
-+        return DefWindowProc(hWnd, message, wParam, lParam);
-+
-     switch (message) {
-     case WM_ACTIVATE:
-         switch (LOWORD(wParam)) {
-@@ -309,17 +334,15 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
-             break;
- #if ENABLE(WEBKIT)
-         case IDM_NEW_WEBKIT_WINDOW: {
--            auto& newWindow = MainWindow::create().leakRef();
-+            auto& newWindow = MainWindow::create(thisWindow->m_context.get(), thisWindow->m_dataStore.get()).leakRef();
-             newWindow.init(WebKitBrowserWindow::create, hInst);
--            ShowWindow(newWindow.hwnd(), SW_SHOW);
-             break;
-         }
- #endif
- #if ENABLE(WEBKIT_LEGACY)
-         case IDM_NEW_WEBKITLEGACY_WINDOW: {
--            auto& newWindow = MainWindow::create().leakRef();
-+            auto& newWindow = MainWindow::create(thisWindow->m_context.get(), thisWindow->m_dataStore.get()).leakRef();
-             newWindow.init(WebKitLegacyBrowserWindow::create, hInst);
--            ShowWindow(newWindow.hwnd(), SW_SHOW);
-             break;
-         }
- #endif
-@@ -384,7 +407,7 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
-     case WM_DESTROY:
-         SetWindowLongPtr(hWnd, GWLP_USERDATA, 0);
-         thisWindow->deref();
--        if (s_numInstances > 1)
-+        if (s_noStartupWindow || s_numInstances > 1)
-             return 0;
- #if USE(CF)
-         CFRunLoopStop(CFRunLoopGetMain());
-@@ -443,6 +466,9 @@ void MainWindow::setDefaultURLToCurrentURL()
- 
- bool MainWindow::toggleMenuItem(UINT menuID)
- {
-+    if (s_headless)
-+        return (INT_PTR)FALSE;
-+
-     HMENU menu = ::GetMenu(hwnd());
- 
-     switch (menuID) {
-@@ -518,6 +544,8 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
- 
- INT_PTR CALLBACK MainWindow::cachesDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
- {
-+    if (s_headless)
-+        return (INT_PTR)FALSE;
-     MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(GetWindowLongPtr(hDlg, DWLP_USER));
-     switch (message) {
-     case WM_INITDIALOG:
-@@ -548,6 +576,8 @@ INT_PTR CALLBACK MainWindow::cachesDialogProc(HWND hDlg, UINT message, WPARAM wP
- 
- INT_PTR CALLBACK MainWindow::customUserAgentDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
- {
-+    if (s_headless)
-+        return (INT_PTR)FALSE;
-     MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(GetWindowLongPtr(hDlg, DWLP_USER));
-     switch (message) {
-     case WM_INITDIALOG: {
-@@ -594,27 +624,26 @@ void MainWindow::loadURL(std::wstring url)
-         if (SUCCEEDED(::UrlCreateFromPath(url.c_str(), fileURL, &fileURLLength, 0)))
-             url = fileURL;
-     }
--    if (url.find(L"://") == url.npos)
-+    if (url.find(L"://") == url.npos && url.find(L"about:blank") == url.npos)
-         url = L"http://" + url;
- 
-     if (FAILED(m_browserWindow->loadURL(_bstr_t(url.c_str()))))
-         return;
- 
--    SetFocus(m_browserWindow->hwnd());
-+    if (!s_headless)
-+        SetFocus(m_browserWindow->hwnd());
- }
- 
- void MainWindow::goHome()
- {
--    std::wstring defaultURL = L"https://www.webkit.org/";
--    wchar_t url[INTERNET_MAX_URL_LENGTH];
--    DWORD urlLength = sizeof(url);
--    if (!RegGetValue(HKEY_CURRENT_USER, kMiniBrowserRegistryKey, L"DefaultURL", RRF_RT_REG_SZ, nullptr, &url, &urlLength))
--        defaultURL = url;
-+    std::wstring defaultURL = L"about:blank";
-     loadURL(defaultURL);
- }
- 
- void MainWindow::onURLBarEnter()
- {
-+    if (s_headless)
-+        return;
-     wchar_t url[INTERNET_MAX_URL_LENGTH];
-     GetWindowText(m_hURLBarWnd, url, INTERNET_MAX_URL_LENGTH);
-     loadURL(url);
-@@ -622,6 +651,8 @@ void MainWindow::onURLBarEnter()
- 
- void MainWindow::updateDeviceScaleFactor()
- {
-+    if (s_headless)
-+        return;
-     if (m_hURLBarFont)
-         ::DeleteObject(m_hURLBarFont);
- 
-@@ -638,6 +669,8 @@ void MainWindow::updateDeviceScaleFactor()
- 
- void MainWindow::progressChanged(double progress)
- {
-+    if (s_headless)
-+        return;
-     std::wostringstream text;
-     text << static_cast<int>(progress * 100) << L'%';
-     SetWindowText(m_hProgressIndicator, text.str().c_str());
-@@ -645,10 +678,14 @@ void MainWindow::progressChanged(double progress)
- 
- void MainWindow::progressFinished()
- {
-+    if (s_headless)
-+        return;
-     SetWindowText(m_hProgressIndicator, L"");
- }
- 
- void MainWindow::activeURLChanged(std::wstring url)
- {
-+    if (s_headless)
-+        return;
-     SetWindowText(m_hURLBarWnd, url.c_str());
- }
-diff --git a/Tools/MiniBrowser/win/MainWindow.h b/Tools/MiniBrowser/win/MainWindow.h
-index d79c6fdc4fa05e1e4b9acdcc6932e571163320eb..99718b19797788634f4233a8892729b57ae642d0 100644
---- a/Tools/MiniBrowser/win/MainWindow.h
-+++ b/Tools/MiniBrowser/win/MainWindow.h
-@@ -26,6 +26,8 @@
- #pragma once
- 
- #include "BrowserWindow.h"
-+#include <WebKit/WKBase.h>
-+#include <WebKit/WKRetainPtr.h>
- #include <functional>
- #include <memory>
- #include <string>
-@@ -33,9 +35,10 @@
- 
- class MainWindow final : public RefCounted<MainWindow>, public BrowserWindowClient {
- public:
--    using BrowserWindowFactory = std::function<Ref<BrowserWindow>(BrowserWindowClient&, HWND mainWnd, bool usesLayeredWebView)>;
-+    using BrowserWindowFactory = std::function<Ref<BrowserWindow>(BrowserWindowClient&, HWND mainWnd, WKContextRef, WKWebsiteDataStoreRef, bool usesLayeredWebView)>;
-+    static void configure(bool headless, bool noStartupWindow);
- 
--    static Ref<MainWindow> create();
-+    static Ref<MainWindow> create(WKContextRef context, WKWebsiteDataStoreRef dataStore);
- 
-     ~MainWindow();
-     bool init(BrowserWindowFactory, HINSTANCE hInstance, bool usesLayeredWebView = false);
-@@ -56,8 +59,10 @@ private:
-     static void registerClass(HINSTANCE hInstance);
-     static std::wstring s_windowClass;
-     static size_t s_numInstances;
-+    static bool s_headless;
-+    static bool s_noStartupWindow;
- 
--    MainWindow();
-+    MainWindow(WKContextRef context, WKWebsiteDataStoreRef dataStore);
-     void setDefaultURLToCurrentURL();
-     bool toggleMenuItem(UINT menuID);
-     void onURLBarEnter();
-@@ -78,6 +83,8 @@ private:
-     HWND m_hProgressIndicator { nullptr };
-     HWND m_hCacheWnd { nullptr };
-     HGDIOBJ m_hURLBarFont { nullptr };
-+    WKRetainPtr<WKContextRef> m_context; 
-+    WKRetainPtr<WKWebsiteDataStoreRef> m_dataStore;
-     RefPtr<BrowserWindow> m_browserWindow;
-     int m_toolbarItemsWidth { };
- };
-diff --git a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
-index 1e4fb27884034dcca333f77efd24150d4c9dc2ec..30eaa65b5600fce08e6153bbd47fdbca900bbd7b 100644
---- a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
-+++ b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
-@@ -32,6 +32,7 @@
- #include <WebKit/WKAuthenticationDecisionListener.h>
- #include <WebKit/WKCertificateInfoCurl.h>
- #include <WebKit/WKCredential.h>
-+#include <WebKit/WKFramePolicyListener.h>
- #include <WebKit/WKInspector.h>
- #include <WebKit/WKProtectionSpace.h>
- #include <WebKit/WKProtectionSpaceCurl.h>
-@@ -106,7 +107,7 @@ WKRetainPtr<WKURLRef> createWKURL(const std::wstring& str)
-     return adoptWK(WKURLCreateWithUTF8CString(utf8.data()));
- }
- 
--Ref<BrowserWindow> WebKitBrowserWindow::create(BrowserWindowClient& client, HWND mainWnd, bool)
-+Ref<BrowserWindow> WebKitBrowserWindow::create(BrowserWindowClient& client, HWND mainWnd, WKContextRef context, WKWebsiteDataStoreRef dataStore, bool)
- {
-     auto conf = adoptWK(WKPageConfigurationCreate());
- 
-@@ -120,8 +121,8 @@ Ref<BrowserWindow> WebKitBrowserWindow::create(BrowserWindowClient& client, HWND
-     WKPreferencesSetDeveloperExtrasEnabled(prefs.get(), true);
-     WKPageConfigurationSetPreferences(conf.get(), prefs.get());
- 
--    auto context =adoptWK(WKContextCreateWithConfiguration(nullptr));
--    WKPageConfigurationSetContext(conf.get(), context.get());
-+    WKPageConfigurationSetContext(conf.get(), context);
-+    WKPageConfigurationSetWebsiteDataStore(conf.get(), dataStore);
- 
-     return adoptRef(*new WebKitBrowserWindow(client, conf.get(), mainWnd));
- }
-@@ -142,11 +143,17 @@ WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, WKPageConf
-     navigationClient.didReceiveAuthenticationChallenge = didReceiveAuthenticationChallenge;
-     WKPageSetPageNavigationClient(page, &navigationClient.base);
- 
--    WKPageUIClientV13 uiClient = { };
--    uiClient.base.version = 13;
-+    WKPageUIClientV14 uiClient = { };
-+    uiClient.base.version = 14;
-     uiClient.base.clientInfo = this;
-     uiClient.createNewPage = createNewPage;
-     uiClient.didNotHandleKeyEvent = didNotHandleKeyEvent;
-+    uiClient.close = closeWindow;
-+    uiClient.runJavaScriptAlert = runJavaScriptAlert;
-+    uiClient.runJavaScriptConfirm = runJavaScriptConfirm;
-+    uiClient.runJavaScriptPrompt = runJavaScriptPrompt;
-+    uiClient.runBeforeUnloadConfirmPanel = runBeforeUnloadConfirmPanel;
-+    uiClient.handleJavaScriptDialog = handleJavaScriptDialog;
-     WKPageSetPageUIClient(page, &uiClient.base);
- 
-     WKPageStateClientV0 stateClient = { };
-@@ -158,7 +165,11 @@ WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, WKPageConf
-     stateClient.didChangeActiveURL = didChangeActiveURL;
-     WKPageSetPageStateClient(page, &stateClient.base);
- 
--    updateProxySettings();
-+    WKPagePolicyClientV1 policyClient = { };
-+    policyClient.base.version = 1;
-+    policyClient.base.clientInfo = this;
-+    policyClient.decidePolicyForResponse_deprecatedForUseWithV0 = decidePolicyForResponse;
-+    WKPageSetPagePolicyClient(page, &policyClient.base);
-     resetZoom();
- }
- 
-@@ -182,6 +193,29 @@ void WebKitBrowserWindow::updateProxySettings()
-     WKWebsiteDataStoreEnableCustomNetworkProxySettings(store, url.get(), excludeHosts.get());
- }
- 
-+WebKitBrowserWindow::~WebKitBrowserWindow()
-+{
-+    if (m_alertDialog) {
-+        WKRelease(m_alertDialog);
-+        m_alertDialog = NULL;
-+    }
-+
-+    if (m_confirmDialog) {
-+        WKRelease(m_confirmDialog);
-+        m_confirmDialog = NULL;
-+    }
-+
-+    if (m_promptDialog) {
-+        WKRelease(m_promptDialog);
-+        m_promptDialog = NULL;
-+    }
-+
-+    if (m_beforeUnloadDialog) {
-+        WKRelease(m_beforeUnloadDialog);
-+        m_beforeUnloadDialog = NULL;
-+    }
-+}
-+
- HRESULT WebKitBrowserWindow::init()
- {
-     return S_OK;
-@@ -250,7 +284,6 @@ void WebKitBrowserWindow::openProxySettings()
- {
-     if (askProxySettings(m_hMainWnd, m_proxy))
-         updateProxySettings();
--
- }
- 
- void WebKitBrowserWindow::setUserAgent(_bstr_t& customUAString)
-@@ -388,18 +421,94 @@ bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protect
-     return false;
- }
- 
--WKPageRef WebKitBrowserWindow::createNewPage(WKPageRef page, WKPageConfigurationRef configuration, WKNavigationActionRef navigationAction, WKWindowFeaturesRef windowFeatures, const void *clientInfo)
-+void WebKitBrowserWindow::closeWindow(WKPageRef page, const void* clientInfo)
-+{
-+    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
-+    PostMessage(thisWindow.m_hMainWnd, WM_CLOSE, 0, 0);
-+}
-+
-+void WebKitBrowserWindow::runJavaScriptAlert(WKPageRef page, WKStringRef alertText, WKFrameRef frame, WKSecurityOriginRef securityOrigin, WKPageRunJavaScriptAlertResultListenerRef listener, const void *clientInfo)
-+{
-+    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
-+    WKRetain(listener);
-+    thisWindow.m_alertDialog = listener;
-+}
-+
-+void WebKitBrowserWindow::runJavaScriptConfirm(WKPageRef page, WKStringRef message, WKFrameRef frame, WKSecurityOriginRef securityOrigin, WKPageRunJavaScriptConfirmResultListenerRef listener, const void *clientInfo)
-+{
-+    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
-+    WKRetain(listener);
-+    thisWindow.m_confirmDialog = listener;
-+}
-+
-+void WebKitBrowserWindow::runJavaScriptPrompt(WKPageRef page, WKStringRef message, WKStringRef defaultValue, WKFrameRef frame, WKSecurityOriginRef securityOrigin, WKPageRunJavaScriptPromptResultListenerRef listener, const void *clientInfo)
-+{
-+    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
-+    WKRetain(listener);
-+    thisWindow.m_promptDialog = listener;
-+}
-+
-+void WebKitBrowserWindow::runBeforeUnloadConfirmPanel(WKPageRef page, WKStringRef message, WKFrameRef frame, WKPageRunBeforeUnloadConfirmPanelResultListenerRef listener, const void *clientInfo)
- {
--    auto& newWindow = MainWindow::create().leakRef();
--    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, bool) -> auto {
-+    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
-+    WKRetain(listener);
-+    thisWindow.m_beforeUnloadDialog = listener;
-+}
-+    
-+void WebKitBrowserWindow::handleJavaScriptDialog(WKPageRef page, bool accept, WKStringRef value, const void *clientInfo)
-+{
-+    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
-+    if (thisWindow.m_alertDialog) {
-+        WKPageRunJavaScriptAlertResultListenerCall(thisWindow.m_alertDialog);
-+        WKRelease(thisWindow.m_alertDialog);
-+        thisWindow.m_alertDialog = NULL;
-+    }
-+
-+    if (thisWindow.m_confirmDialog) {
-+        WKPageRunJavaScriptConfirmResultListenerCall(thisWindow.m_confirmDialog, accept);
-+        WKRelease(thisWindow.m_confirmDialog);
-+        thisWindow.m_confirmDialog = NULL;
-+    }
-+
-+    if (thisWindow.m_promptDialog) {
-+        WKPageRunJavaScriptPromptResultListenerCall(thisWindow.m_promptDialog, accept ? value : NULL);
-+        WKRelease(thisWindow.m_promptDialog);
-+        thisWindow.m_promptDialog = NULL;
-+    }
-+
-+    if (thisWindow.m_beforeUnloadDialog) {
-+        WKPageRunBeforeUnloadConfirmPanelResultListenerCall(thisWindow.m_beforeUnloadDialog, accept);
-+        WKRelease(thisWindow.m_beforeUnloadDialog);
-+        thisWindow.m_beforeUnloadDialog = NULL;
-+    }
-+}
-+
-+WKPageRef WebKitBrowserWindow::createPageCallback(WKPageConfigurationRef configuration)
-+{
-+    return WebKitBrowserWindow::createViewCallback(configuration, true);
-+}
-+
-+WKPageRef WebKitBrowserWindow::createViewCallback(WKPageConfigurationRef configuration, bool navigate)
-+{
-+    auto context = WKPageConfigurationGetContext(configuration);
-+    auto dataStore = WKPageConfigurationGetWebsiteDataStore(configuration);
-+    auto& newWindow = MainWindow::create(context, dataStore).leakRef();
-+    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, WKContextRef, WKWebsiteDataStoreRef, bool) -> auto {
-         return adoptRef(*new WebKitBrowserWindow(client, configuration, mainWnd));
-     };
-     bool ok = newWindow.init(factory, hInst);
--    if (!ok)
--        return nullptr;
--    ShowWindow(newWindow.hwnd(), SW_SHOW);
-+    if (navigate)
-+        newWindow.browserWindow()->loadURL(_bstr_t("about:blank").GetBSTR());
-+
-     auto& newBrowserWindow = *static_cast<WebKitBrowserWindow*>(newWindow.browserWindow());
--    WKRetainPtr<WKPageRef> newPage = WKViewGetPage(newBrowserWindow.m_view.get());
-+    return WKViewGetPage(newBrowserWindow.m_view.get());
-+}
-+
-+
-+WKPageRef WebKitBrowserWindow::createNewPage(WKPageRef, WKPageConfigurationRef configuration, WKNavigationActionRef, WKWindowFeaturesRef, const void*)
-+{
-+    // Retain popups as per API contract.
-+    WKRetainPtr<WKPageRef> newPage = createViewCallback(configuration, false);
-     return newPage.leakRef();
- }
- 
-@@ -408,3 +517,11 @@ void WebKitBrowserWindow::didNotHandleKeyEvent(WKPageRef, WKNativeEventPtr event
-     auto& thisWindow = toWebKitBrowserWindow(clientInfo);
-     PostMessage(thisWindow.m_hMainWnd, event->message, event->wParam, event->lParam);
- }
-+
-+void WebKitBrowserWindow::decidePolicyForResponse(WKPageRef page, WKFrameRef frame, WKURLResponseRef response, WKURLRequestRef request, WKFramePolicyListenerRef listener, WKTypeRef userData, const void* clientInfo)
-+{
-+    if (WKURLResponseIsAttachment(response))
-+        WKFramePolicyListenerDownload(listener);
-+    else
-+        WKFramePolicyListenerUse(listener);
-+}
-diff --git a/Tools/MiniBrowser/win/WebKitBrowserWindow.h b/Tools/MiniBrowser/win/WebKitBrowserWindow.h
-index 373d0de77e852c673a6615e0acedd5195e3c021b..2f25d60c366efa428197dba4a7e0aea6de86af6c 100644
---- a/Tools/MiniBrowser/win/WebKitBrowserWindow.h
-+++ b/Tools/MiniBrowser/win/WebKitBrowserWindow.h
-@@ -26,6 +26,7 @@
- 
- #include "BrowserWindow.h"
- #include "Common.h"
-+#include <WebKit/WKBase.h>
- #include <WebKit/WKRetainPtr.h>
- #include <WebKit/WebKit2_C.h>
- #include <unordered_map>
-@@ -33,10 +34,13 @@
- 
- class WebKitBrowserWindow : public BrowserWindow {
- public:
--    static Ref<BrowserWindow> create(BrowserWindowClient&, HWND mainWnd, bool useLayeredWebView = false);
-+    static Ref<BrowserWindow> create(BrowserWindowClient&, HWND mainWnd, WKContextRef, WKWebsiteDataStoreRef, bool useLayeredWebView = false);
-+    static WKPageRef createPageCallback(WKPageConfigurationRef);
- 
- private:
-+    static WKPageRef createViewCallback(WKPageConfigurationRef, bool navigate);
-     WebKitBrowserWindow(BrowserWindowClient&, WKPageConfigurationRef, HWND mainWnd);
-+    ~WebKitBrowserWindow() override;
- 
-     HRESULT init() override;
-     HWND hwnd() override;
-@@ -71,11 +75,22 @@ private:
-     static void didChangeActiveURL(const void*);
-     static void didReceiveAuthenticationChallenge(WKPageRef, WKAuthenticationChallengeRef, const void*);
-     static WKPageRef createNewPage(WKPageRef, WKPageConfigurationRef, WKNavigationActionRef, WKWindowFeaturesRef, const void *);
-+    static void closeWindow(WKPageRef, const void*);
-+    static void runJavaScriptAlert(WKPageRef page, WKStringRef alertText, WKFrameRef frame, WKSecurityOriginRef securityOrigin, WKPageRunJavaScriptAlertResultListenerRef listener, const void *clientInfo);
-+    static void runJavaScriptConfirm(WKPageRef page, WKStringRef message, WKFrameRef frame, WKSecurityOriginRef securityOrigin, WKPageRunJavaScriptConfirmResultListenerRef listener, const void *clientInfo);
-+    static void runJavaScriptPrompt(WKPageRef page, WKStringRef message, WKStringRef defaultValue, WKFrameRef frame, WKSecurityOriginRef securityOrigin, WKPageRunJavaScriptPromptResultListenerRef listener, const void *clientInfo);
-+    static void runBeforeUnloadConfirmPanel(WKPageRef page, WKStringRef message, WKFrameRef frame, WKPageRunBeforeUnloadConfirmPanelResultListenerRef listener, const void *clientInfo);
-+    static void handleJavaScriptDialog(WKPageRef page, bool accept, WKStringRef value, const void *clientInfo);
-     static void didNotHandleKeyEvent(WKPageRef, WKNativeEventPtr, const void*);
-+    static void decidePolicyForResponse(WKPageRef, WKFrameRef, WKURLResponseRef, WKURLRequestRef, WKFramePolicyListenerRef, WKTypeRef, const void*);
- 
-     BrowserWindowClient& m_client;
-     WKRetainPtr<WKViewRef> m_view;
-     HWND m_hMainWnd { nullptr };
-     ProxySettings m_proxy { };
-     std::unordered_map<std::wstring, std::wstring> m_acceptedServerTrustCerts;
-+    WKPageRunJavaScriptAlertResultListenerRef m_alertDialog = { };
-+    WKPageRunJavaScriptConfirmResultListenerRef m_confirmDialog = { };
-+    WKPageRunJavaScriptPromptResultListenerRef m_promptDialog = { };
-+    WKPageRunBeforeUnloadConfirmPanelResultListenerRef m_beforeUnloadDialog = { };
- };
-diff --git a/Tools/MiniBrowser/win/WinMain.cpp b/Tools/MiniBrowser/win/WinMain.cpp
-index 6008ca19e26a938cf962c0c336299fff7d13f9a3..8005d72f8c0d9ef82efda8aec1ff0e7d96501ae8 100644
---- a/Tools/MiniBrowser/win/WinMain.cpp
-+++ b/Tools/MiniBrowser/win/WinMain.cpp
-@@ -31,6 +31,10 @@
- #include "stdafx.h"
- #include "Common.h"
- #include "MiniBrowserLibResource.h"
-+#include "MiniBrowserReplace.h"
-+#include <WebKit/WKContext.h>
-+#include <WebKit/WKWebsiteDataStoreConfigurationRef.h>
-+#include <WebKit/WKWebsiteDataStoreRef.h>
- #include <wtf/win/SoftLinking.h>
- 
- #if USE(CF)
-@@ -46,9 +50,25 @@
- #include <WebKitLegacy/WebKitCOMAPI.h>
- #endif
- 
-+#include <wtf/MainThread.h>
-+#include <WebKit/WKInspector.h>
-+
- SOFT_LINK_LIBRARY(user32);
- SOFT_LINK_OPTIONAL(user32, SetProcessDpiAwarenessContext, BOOL, STDAPICALLTYPE, (DPI_AWARENESS_CONTEXT));
- 
-+WKRetainPtr<WKStringRef> toWK(const std::string& string)
-+{
-+    return adoptWK(WKStringCreateWithUTF8CString(string.c_str()));
-+}
-+
-+std::string toUTF8String(const wchar_t* src, size_t srcLength)
-+{
-+    int length = WideCharToMultiByte(CP_UTF8, 0, src, srcLength, 0, 0, nullptr, nullptr);
-+    std::vector<char> buffer(length);
-+    size_t actualLength = WideCharToMultiByte(CP_UTF8, 0, src, srcLength, buffer.data(), length, nullptr, nullptr);
-+    return { buffer.data(), actualLength };
-+}
-+
- int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpstrCmdLine, _In_ int nCmdShow)
- {
- #ifdef _CRTDBG_MAP_ALLOC
-@@ -66,6 +86,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
-     InitCommonControlsEx(&InitCtrlEx);
- 
-     auto options = parseCommandLine();
-+    if (options.inspectorPipe) {
-+        WKInspectorInitializeRemoteInspectorPipe(
-+            WebKitBrowserWindow::createPageCallback,
-+            []() { PostQuitMessage(0); });
-+    }
- 
-     if (options.useFullDesktop)
-         computeFullDesktopFrame();
-@@ -74,32 +99,50 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
-     OleInitialize(nullptr);
- 
-     if (SetProcessDpiAwarenessContextPtr())
--        SetProcessDpiAwarenessContextPtr()(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
--    else
--        ::SetProcessDPIAware();
-+        SetProcessDpiAwarenessContextPtr()(DPI_AWARENESS_CONTEXT_UNAWARE);
-+
-+    MainWindow::configure(options.headless, options.noStartupWindow);
- 
-+    if (!options.noStartupWindow) {
- #if !ENABLE(WEBKIT_LEGACY)
--    auto factory = WebKitBrowserWindow::create;
-+        auto factory = WebKitBrowserWindow::create;
- #elif !ENABLE(WEBKIT)
--    auto factory = WebKitLegacyBrowserWindow::create;
-+        auto factory = WebKitLegacyBrowserWindow::create;
- #else
--    auto factory = options.windowType == BrowserWindowType::WebKit ? WebKitBrowserWindow::create : WebKitLegacyBrowserWindow::create;
-+        auto factory = options.windowType == BrowserWindowType::WebKit ? WebKitBrowserWindow::create : WebKitLegacyBrowserWindow::create;
- #endif
--    auto& mainWindow = MainWindow::create().leakRef();
--    HRESULT hr = mainWindow.init(factory, hInst, options.usesLayeredWebView);
--    if (FAILED(hr))
--        goto exit;
- 
--    ShowWindow(mainWindow.hwnd(), nCmdShow);
-+        auto configuration = adoptWK(WKWebsiteDataStoreConfigurationCreate());
-+        if (options.userDataDir.length()) {
-+            std::string profileFolder = toUTF8String(options.userDataDir, options.userDataDir.length());
-+            WKWebsiteDataStoreConfigurationSetApplicationCacheDirectory(configuration.get(), toWK(profileFolder + "\\ApplicationCache").get());
-+            WKWebsiteDataStoreConfigurationSetNetworkCacheDirectory(configuration.get(), toWK(profileFolder + "\\Cache").get());
-+            WKWebsiteDataStoreConfigurationSetCacheStorageDirectory(configuration.get(), toWK(profileFolder + "\\CacheStorage").get());
-+            WKWebsiteDataStoreConfigurationSetIndexedDBDatabaseDirectory(configuration.get(), toWK(profileFolder + "\\Databases" + "\\IndexedDB").get());
-+            WKWebsiteDataStoreConfigurationSetLocalStorageDirectory(configuration.get(), toWK(profileFolder + "\\LocalStorage").get());
-+            WKWebsiteDataStoreConfigurationSetWebSQLDatabaseDirectory(configuration.get(), toWK(profileFolder + "\\Databases" + "\\WebSQL").get());
-+            WKWebsiteDataStoreConfigurationSetMediaKeysStorageDirectory(configuration.get(), toWK(profileFolder + "\\MediaKeys").get());
-+            WKWebsiteDataStoreConfigurationSetResourceLoadStatisticsDirectory(configuration.get(), toWK(profileFolder + "\\ResourceLoadStatistics").get());
-+            WKWebsiteDataStoreConfigurationSetServiceWorkerRegistrationDirectory(configuration.get(), toWK(profileFolder + "\\ServiceWorkers").get());
-+        }
-+        auto context = adoptWK(WKContextCreateWithConfiguration(nullptr));
-+        auto dataStore = adoptWK(WKWebsiteDataStoreCreateWithConfiguration(configuration.get()));
-+        WKContextSetPrimaryDataStore(context.get(), dataStore.get());
-+
-+        auto& mainWindow = MainWindow::create(context.get(), dataStore.get()).leakRef();
-+        HRESULT hr = mainWindow.init(factory, hInst, options.usesLayeredWebView);
-+        if (FAILED(hr))
-+            goto exit;
-+
-+        if (options.requestedURL.length())
-+            mainWindow.loadURL(options.requestedURL.GetBSTR());
-+        else
-+            mainWindow.goHome();
-+    }
- 
-     hAccelTable = LoadAccelerators(hInst, MAKEINTRESOURCE(IDC_MINIBROWSER));
-     hPreAccelTable = LoadAccelerators(hInst, MAKEINTRESOURCE(IDR_ACCELERATORS_PRE));
- 
--    if (options.requestedURL.length())
--        mainWindow.loadURL(options.requestedURL.GetBSTR());
--    else
--        mainWindow.goHome();
--
- #pragma warning(disable:4509)
- 
-     // Main message loop:
 diff --git a/Tools/MiniBrowser/wpe/CMakeLists.txt b/Tools/MiniBrowser/wpe/CMakeLists.txt
 index 04d3630dc2b0f5e937af173046268001da003753..ba0a60b832cd353776bb50b8198df2d8c4ee9f68 100644
 --- a/Tools/MiniBrowser/wpe/CMakeLists.txt
@@ -14090,6 +13383,16 @@ index a8cccb6c1d567823fe8e6503f1a137856b0a9975..00b39f96b6b48dc0bd3df54659850dfc
      g_main_loop_unref(loop);
  
      return 0;
+diff --git a/Tools/PlatformWin.cmake b/Tools/PlatformWin.cmake
+index 44301d5fef9c977dc0228b9de1ae75263efd9014..0c8c7e176a6e02ca04872cdd362d0a8927728557 100644
+--- a/Tools/PlatformWin.cmake
++++ b/Tools/PlatformWin.cmake
+@@ -10,4 +10,5 @@ endif ()
+ 
+ if (ENABLE_WEBKIT)
+     add_subdirectory(WebKitTestRunner)
++    add_subdirectory(Playwright/win)
+ endif ()
 diff --git a/Tools/Playwright/Configurations/Base.xcconfig b/Tools/Playwright/Configurations/Base.xcconfig
 new file mode 100644
 index 0000000000000000000000000000000000000000..fc61d5227c8608488514cbd92a28dc7c1c2efaf4
@@ -16869,6 +16172,3199 @@ index 0000000000000000000000000000000000000000..ba2ca12482c0ab809998131f693c8760
 +
 +    return NSApplicationMain(argc,  (const char **) argv);
 +}
+diff --git a/Tools/Playwright/win/BrowserWindow.cpp b/Tools/Playwright/win/BrowserWindow.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..b321d70e87b957fe4b948f09b796b7161189ba17
+--- /dev/null
++++ b/Tools/Playwright/win/BrowserWindow.cpp
+@@ -0,0 +1,73 @@
++/*
++ * Copyright (C) 2018 Sony Interactive Entertainment Inc.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
++ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
++ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "stdafx.h"
++#include "BrowserWindow.h"
++
++#include "PlaywrightLibResource.h"
++
++void BrowserWindow::setUserAgent(UINT menuID)
++{
++    _bstr_t customUserAgent;
++
++    switch (menuID) {
++    case IDM_UA_DEFAULT:
++        // Set to null user agent
++        break;
++    case IDM_UA_SAFARI:
++        customUserAgent = L"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.2 Safari/605.1.15";
++        break;
++    case IDM_UA_SAFARI_IOS_IPHONE:
++        customUserAgent = L"Mozilla/5.0 (iPhone; CPU iPhone OS 11_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.0 Mobile/15E148 Safari/604.1";
++        break;
++    case IDM_UA_SAFARI_IOS_IPAD:
++        customUserAgent = L"Mozilla/5.0 (iPad; CPU iPhone OS 11_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.0 Mobile/15E148 Safari/604.1";
++        break;
++    case IDM_UA_IE_11:
++        customUserAgent = L"Mozilla/5.0 (Windows NT 10.0; Win64; x64; Trident/7.0; rv:11.0) like Gecko";
++        break;
++    case IDM_UA_EDGE:
++        customUserAgent = L"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
++        break;
++    case IDM_UA_CHROME_MAC:
++        customUserAgent = L"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36";
++        break;
++    case IDM_UA_CHROME_WIN:
++        customUserAgent = L"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36";
++        break;
++    case IDM_UA_FIREFOX_MAC:
++        customUserAgent = L"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:61.0) Gecko/20100101 Firefox/61.0";
++        break;
++    case IDM_UA_FIREFOX_WIN:
++        customUserAgent = L"Mozilla/5.0 (Windows NT 10.0; WOW64; rv:61.0) Gecko/20100101 Firefox/61.0";
++        break;
++    case IDM_UA_OTHER:
++    default:
++        ASSERT(0); // We should never hit this case
++        return;
++    }
++
++    setUserAgent(customUserAgent);
++}
+diff --git a/Tools/Playwright/win/BrowserWindow.h b/Tools/Playwright/win/BrowserWindow.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..0989d7b1470eaf6b1453861bf482ae68f287aa8d
+--- /dev/null
++++ b/Tools/Playwright/win/BrowserWindow.h
+@@ -0,0 +1,66 @@
++/*
++ * Copyright (C) 2018 Sony Interactive Entertainment Inc.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
++ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
++ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#pragma once
++
++#include <windows.h>
++#include <wtf/RefCounted.h>
++
++class BrowserWindowClient {
++public:
++    virtual void progressChanged(double) = 0;
++    virtual void progressFinished() = 0;
++    virtual void activeURLChanged(std::wstring) = 0;
++};
++
++class BrowserWindow : public RefCounted<BrowserWindow> {
++public:
++    virtual ~BrowserWindow() { };
++
++    virtual HRESULT init() = 0;
++    virtual HWND hwnd() = 0;
++
++    virtual HRESULT loadURL(const BSTR& passedURL) = 0;
++    virtual void reload() = 0;
++    virtual void navigateForwardOrBackward(bool forward) = 0;
++    virtual void navigateToHistory(UINT menuID) = 0;
++    virtual void setPreference(UINT menuID, bool enable) = 0;
++    virtual bool usesLayeredWebView() const { return false; }
++
++    virtual void print() = 0;
++    virtual void launchInspector() = 0;
++    virtual void openProxySettings() = 0;
++
++    virtual _bstr_t userAgent() = 0;
++    void setUserAgent(UINT menuID);
++    virtual void setUserAgent(_bstr_t& customUAString) = 0;
++
++    virtual void showLayerTree() = 0;
++    virtual void updateStatistics(HWND dialog) = 0;
++
++    virtual void resetZoom() = 0;
++    virtual void zoomIn() = 0;
++    virtual void zoomOut() = 0;
++};
+diff --git a/Tools/Playwright/win/CMakeLists.txt b/Tools/Playwright/win/CMakeLists.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..bf12f0401d62e4a0f5c06d211dbc9fa5014551d6
+--- /dev/null
++++ b/Tools/Playwright/win/CMakeLists.txt
+@@ -0,0 +1,43 @@
++set(Playwright_INCLUDE_DIRECTORIES
++    ${PAL_FRAMEWORK_HEADERS_DIR}
++    ${WebCore_PRIVATE_FRAMEWORK_HEADERS_DIR}
++    ${WebKit_FRAMEWORK_HEADERS_DIR}
++    ${WebKit_PRIVATE_FRAMEWORK_HEADERS_DIR}
++)
++
++set(Playwright_SOURCES
++    BrowserWindow.cpp
++    Common.cpp
++    MainWindow.cpp
++    PlaywrightLib.rc
++    WebKitBrowserWindow.cpp
++    WinMain.cpp
++    stdafx.cpp
++)
++
++set(Playwright_LIBRARIES
++    DbgHelp
++    WebKit::WTF
++    comctl32
++    comsupp
++    comsuppw
++    shlwapi
++    WebKit
++)
++
++set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${MSVC_RUNTIME_LINKER_FLAGS}")
++set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:wWinMainCRTStartup")
++
++if (${WTF_PLATFORM_WIN_CAIRO})
++    add_definitions(-DWIN_CAIRO)
++endif ()
++add_definitions(-D_UNICODE)
++include_directories(${Playwright_INCLUDE_DIRECTORIES})
++add_library(PlaywrightLib SHARED ${Playwright_SOURCES})
++target_link_libraries(PlaywrightLib ${Playwright_LIBRARIES})
++
++add_executable(Playwright WIN32 ${TOOLS_DIR}/win/DLLLauncher/DLLLauncherMain.cpp Playwright.rc)
++target_link_libraries(Playwright shlwapi)
++set_target_properties(Playwright PROPERTIES OUTPUT_NAME "Playwright")
++
++add_dependencies(Playwright PlaywrightLib)
+diff --git a/Tools/Playwright/win/Common.cpp b/Tools/Playwright/win/Common.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..7f3caf88fc00ba491930ad2e8068c4328d761825
+--- /dev/null
++++ b/Tools/Playwright/win/Common.cpp
+@@ -0,0 +1,301 @@
++/*
++ * Copyright (C) 2006, 2008, 2013-2015 Apple Inc.  All rights reserved.
++ * Copyright (C) 2009, 2011 Brent Fulgham.  All rights reserved.
++ * Copyright (C) 2009, 2010, 2011 Appcelerator, Inc. All rights reserved.
++ * Copyright (C) 2013 Alex Christensen. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
++ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
++ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
++ */
++
++#include "stdafx.h"
++#include "Common.h"
++
++#include "DialogHelper.h"
++#include "PlaywrightLibResource.h"
++#include "PlaywrightReplace.h"
++#include <dbghelp.h>
++#include <shlobj.h>
++#include <wtf/Optional.h>
++#include <wtf/StdLibExtras.h>
++
++// Global Variables:
++HINSTANCE hInst;
++
++// Support moving the transparent window
++POINT s_windowPosition = { 100, 100 };
++SIZE s_windowSize = { 500, 200 };
++
++namespace WebCore {
++float deviceScaleFactorForWindow(HWND);
++}
++
++void computeFullDesktopFrame()
++{
++    RECT desktop;
++    if (!::SystemParametersInfo(SPI_GETWORKAREA, 0, static_cast<void*>(&desktop), 0))
++        return;
++
++    float scaleFactor = WebCore::deviceScaleFactorForWindow(nullptr);
++
++    s_windowPosition.x = 0;
++    s_windowPosition.y = 0;
++    s_windowSize.cx = scaleFactor * (desktop.right - desktop.left);
++    s_windowSize.cy = scaleFactor * (desktop.bottom - desktop.top);
++}
++
++BOOL WINAPI DllMain(HINSTANCE dllInstance, DWORD reason, LPVOID)
++{
++    if (reason == DLL_PROCESS_ATTACH)
++        hInst = dllInstance;
++
++    return TRUE;
++}
++
++bool getAppDataFolder(_bstr_t& directory)
++{
++    wchar_t appDataDirectory[MAX_PATH];
++    if (FAILED(SHGetFolderPathW(0, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, 0, 0, appDataDirectory)))
++        return false;
++
++    wchar_t executablePath[MAX_PATH];
++    if (!::GetModuleFileNameW(0, executablePath, MAX_PATH))
++        return false;
++
++    ::PathRemoveExtensionW(executablePath);
++
++    directory = _bstr_t(appDataDirectory) + L"\\" + ::PathFindFileNameW(executablePath);
++
++    return true;
++}
++
++void createCrashReport(EXCEPTION_POINTERS* exceptionPointers)
++{
++    _bstr_t directory;
++
++    if (!getAppDataFolder(directory))
++        return;
++
++    if (::SHCreateDirectoryEx(0, directory, 0) != ERROR_SUCCESS
++        && ::GetLastError() != ERROR_FILE_EXISTS
++        && ::GetLastError() != ERROR_ALREADY_EXISTS)
++        return;
++
++    std::wstring fileName = std::wstring(static_cast<const wchar_t*>(directory)) + L"\\CrashReport.dmp";
++    HANDLE miniDumpFile = ::CreateFile(fileName.c_str(), GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
++
++    if (miniDumpFile && miniDumpFile != INVALID_HANDLE_VALUE) {
++
++        MINIDUMP_EXCEPTION_INFORMATION mdei;
++        mdei.ThreadId = ::GetCurrentThreadId();
++        mdei.ExceptionPointers  = exceptionPointers;
++        mdei.ClientPointers = 0;
++
++#ifdef _DEBUG
++        MINIDUMP_TYPE dumpType = MiniDumpWithFullMemory;
++#else
++        MINIDUMP_TYPE dumpType = MiniDumpNormal;
++#endif
++
++        ::MiniDumpWriteDump(::GetCurrentProcess(), ::GetCurrentProcessId(), miniDumpFile, dumpType, &mdei, 0, 0);
++        ::CloseHandle(miniDumpFile);
++        processCrashReport(fileName.c_str());
++    }
++}
++
++bool askProxySettings(HWND hwnd, ProxySettings& settings)
++{
++    class ProxyDialog : public Dialog {
++    public:
++        ProxyDialog(ProxySettings& settings)
++            : settings { settings }
++        {
++        }
++
++    protected:
++        ProxySettings& settings;
++
++        void setup() final
++        {
++            auto command = commandForProxyChoice();
++            proxyChoice().set(command);
++            setText(IDC_PROXY_URL, settings.url);
++            setText(IDC_PROXY_EXCLUDE, settings.excludeHosts);
++        }
++
++        void ok() final
++        {
++            settings.url = getText(IDC_PROXY_URL);
++            settings.excludeHosts = getText(IDC_PROXY_EXCLUDE);
++            updateProxyChoice(proxyChoice().get());
++        }
++
++        bool validate() final
++        {
++            bool valid = true;
++
++            if (proxyChoice().get() == IDC_PROXY_CUSTOM) {
++                setEnabled(IDC_PROXY_URL, true);
++                setEnabled(IDC_PROXY_EXCLUDE, true);
++
++                if (!getTextLength(IDC_PROXY_URL))
++                    valid = false;
++            } else {
++                setEnabled(IDC_PROXY_URL, false);
++                setEnabled(IDC_PROXY_EXCLUDE, false);
++            }
++
++            return valid;
++        }
++
++        RadioGroup proxyChoice()
++        {
++            return radioGroup(IDC_PROXY_DEFAULT, IDC_PROXY_DISABLE);
++        }
++
++        int commandForProxyChoice()
++        {
++            if (!settings.enable)
++                return IDC_PROXY_DISABLE;
++            if (settings.custom)
++                return IDC_PROXY_CUSTOM;
++            return IDC_PROXY_DEFAULT;
++        }
++
++        void updateProxyChoice(int command)
++        {
++            switch (command) {
++            case IDC_PROXY_DEFAULT:
++                settings.enable = true;
++                settings.custom = false;
++                break;
++            case IDC_PROXY_CUSTOM:
++                settings.enable = true;
++                settings.custom = true;
++                break;
++            case IDC_PROXY_DISABLE:
++                settings.enable = false;
++                settings.custom = false;
++                break;
++            default:
++                break;
++            }
++        }
++    };
++
++    ProxyDialog dialog { settings };
++    return dialog.run(hInst, hwnd, IDD_PROXY);
++}
++
++Optional<Credential> askCredential(HWND hwnd, const std::wstring& realm)
++{
++    struct AuthDialog : public Dialog {
++        std::wstring realm;
++        Credential credential;
++
++    protected:
++        void setup()
++        {
++            setText(IDC_REALM_TEXT, realm);
++        }
++
++        void ok() final
++        {
++            credential.username = getText(IDC_AUTH_USER);
++            credential.password = getText(IDC_AUTH_PASSWORD);
++        }
++    };
++
++    AuthDialog dialog;
++    dialog.realm = realm;
++
++    if (dialog.run(hInst, hwnd, IDD_AUTH))
++        return dialog.credential;
++    return WTF::nullopt;
++}
++
++bool askServerTrustEvaluation(HWND hwnd, const std::wstring& text)
++{
++    class ServerTrustEvaluationDialog : public Dialog {
++    public:
++        ServerTrustEvaluationDialog(const std::wstring& text)
++            : m_text { text }
++        {
++            SendMessage(GetDlgItem(this->hDlg(), IDC_SERVER_TRUST_TEXT), WM_SETFONT, (WPARAM)GetStockObject(ANSI_FIXED_FONT), TRUE);
++        }
++
++    protected:
++        std::wstring m_text;
++
++        void setup()
++        {
++            setText(IDC_SERVER_TRUST_TEXT, m_text);
++        }
++
++        void ok() final
++        {
++
++        }
++    };
++
++    ServerTrustEvaluationDialog dialog { text };
++    return dialog.run(hInst, hwnd, IDD_SERVER_TRUST);
++}
++
++CommandLineOptions parseCommandLine()
++{
++    CommandLineOptions options;
++
++    int argc = 0;
++    WCHAR** argv = CommandLineToArgvW(GetCommandLineW(), &argc);
++    for (int i = 1; i < argc; ++i) {
++        if (!wcsicmp(argv[i], L"--transparent"))
++            options.usesLayeredWebView = true;
++        else if (!wcsicmp(argv[i], L"--desktop"))
++            options.useFullDesktop = true;
++        else if (!wcsicmp(argv[i], L"--inspector-pipe"))
++            options.inspectorPipe = true;
++        else if (!wcsncmp(argv[i], L"--user-data-dir=", 16))
++            options.userDataDir = argv[i] + 16;
++        else if (!wcsicmp(argv[i], L"--headless"))
++            options.headless = true;
++        else if (!wcsicmp(argv[i], L"--no-startup-window"))
++            options.noStartupWindow = true;
++        else if (!options.requestedURL)
++            options.requestedURL = argv[i];
++    }
++
++    return options;
++}
++
++std::wstring replaceString(std::wstring src, const std::wstring& oldValue, const std::wstring& newValue)
++{
++    if (src.empty() || oldValue.empty())
++        return src;
++
++    size_t pos = 0;
++    while ((pos = src.find(oldValue, pos)) != src.npos) {
++        src.replace(pos, oldValue.length(), newValue);
++        pos += newValue.length();
++    }
++
++    return src;
++}
+diff --git a/Tools/Playwright/win/Common.h b/Tools/Playwright/win/Common.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..0153d4e9656b62ebf9bd51556a39c14b16871682
+--- /dev/null
++++ b/Tools/Playwright/win/Common.h
+@@ -0,0 +1,69 @@
++/*
++ * Copyright (C) 2018 Sony Interactive Entertainment Inc.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
++ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
++ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#pragma once
++
++#include "stdafx.h"
++#include "MainWindow.h"
++
++struct CommandLineOptions {
++    bool usesLayeredWebView { };
++    bool useFullDesktop { };
++    bool inspectorPipe { };
++    bool headless { };
++    bool noStartupWindow { };
++    _bstr_t requestedURL;
++    _bstr_t userDataDir;
++
++    CommandLineOptions()
++    {
++    }
++};
++
++struct Credential {
++    std::wstring username;
++    std::wstring password;
++};
++
++struct ProxySettings {
++    bool enable { true };
++    bool custom { false };
++    std::wstring url;
++    std::wstring excludeHosts;
++};
++
++void computeFullDesktopFrame();
++bool getAppDataFolder(_bstr_t& directory);
++CommandLineOptions parseCommandLine();
++void createCrashReport(EXCEPTION_POINTERS*);
++Optional<Credential> askCredential(HWND, const std::wstring& realm);
++bool askProxySettings(HWND, ProxySettings&);
++
++bool askServerTrustEvaluation(HWND, const std::wstring& text);
++std::wstring replaceString(std::wstring src, const std::wstring& oldValue, const std::wstring& newValue);
++
++extern HINSTANCE hInst;
++extern POINT s_windowPosition;
++extern SIZE s_windowSize;
+diff --git a/Tools/Playwright/win/DialogHelper.h b/Tools/Playwright/win/DialogHelper.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..6590fe00255841fa93a0fe7c6bffbc0dc13fd2d0
+--- /dev/null
++++ b/Tools/Playwright/win/DialogHelper.h
+@@ -0,0 +1,153 @@
++/*
++ * Copyright (C) 2018 Sony Interactive Entertainment Inc.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
++ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
++ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#pragma once
++
++#include "stdafx.h"
++#include <string>
++#include <vector>
++
++class Dialog {
++public:
++    bool run(HINSTANCE hInst, HWND hwnd, int dialogId)
++    {
++        auto result = DialogBoxParam(hInst, MAKEINTRESOURCE(dialogId), hwnd, doalogProc, reinterpret_cast<LPARAM>(this));
++        return (result > 0);
++    }
++
++    static INT_PTR CALLBACK doalogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
++    {
++        if (message == WM_INITDIALOG)
++            SetWindowLongPtr(hDlg, DWLP_USER, lParam);
++        else
++            lParam = GetWindowLongPtr(hDlg, DWLP_USER);
++
++        auto* dialog = reinterpret_cast<Dialog*>(lParam);
++        return dialog->handle(hDlg, message, wParam);
++    }
++
++protected:
++    INT_PTR handle(HWND hDlg, UINT message, WPARAM wParam)
++    {
++        switch (message) {
++        case WM_INITDIALOG: {
++            m_hDlg = hDlg;
++            setup();
++            update();
++            return TRUE;
++        }
++        case WM_COMMAND:
++            int wmId = LOWORD(wParam);
++            switch (wmId) {
++            case IDOK:
++                ok();
++                close(true);
++                return TRUE;
++            case IDCANCEL:
++                cancel();
++                close(false);
++                return TRUE;
++            default:
++                auto handled = command(wmId);
++                update();
++                return handled;
++            }
++        }
++        return FALSE;
++    }
++
++    virtual void setup() { }
++    virtual void update() { updateOkButton(validate()); }
++    virtual bool validate() { return true; }
++    virtual void updateOkButton(bool isValid) { setEnabled(IDOK, isValid); }
++    virtual bool command(int wmId) { return false; }
++    virtual void ok() { }
++    virtual void cancel() { }
++
++    void close(bool success) { EndDialog(m_hDlg, success); }
++
++    HWND hDlg() { return m_hDlg; }
++
++    HWND item(int itemId) { return GetDlgItem(m_hDlg, itemId); }
++
++    void setEnabled(int itemId, bool enabled)
++    {
++        EnableWindow(item(itemId), enabled);
++    }
++
++    void setText(int itemId, const std::wstring& str)
++    {
++        SetDlgItemText(m_hDlg, itemId, _bstr_t(str.c_str()));
++    }
++
++    std::wstring getText(int itemId)
++    {
++        auto length = getTextLength(itemId);
++        std::vector<TCHAR> buffer(length + 1, 0);
++        GetWindowText(item(itemId), buffer.data(), length + 1);
++        return std::wstring { buffer.data() };
++    }
++
++    int getTextLength(int itemId)
++    {
++        return GetWindowTextLength(item(itemId));
++    }
++
++    class RadioGroup {
++    public:
++        RadioGroup(Dialog& dialog, int first, int last)
++            : m_dialog(dialog)
++            , m_first(first)
++            , m_last(last)
++        {
++        }
++
++        void set(int item)
++        {
++            CheckRadioButton(m_dialog.hDlg(), m_first, m_last, item);
++        }
++
++        int get()
++        {
++            for (int id = m_first; id <= m_last; id++) {
++                if (IsDlgButtonChecked(m_dialog.hDlg(), id) == BST_CHECKED)
++                    return id;
++            }
++            return 0;
++        }
++
++    private:
++        Dialog& m_dialog;
++        int m_first;
++        int m_last;
++    };
++
++    RadioGroup radioGroup(int first, int last)
++    {
++        return RadioGroup(*this, first, last);
++    }
++
++    HWND m_hDlg { };
++};
+diff --git a/Tools/Playwright/win/MainWindow.cpp b/Tools/Playwright/win/MainWindow.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..dcea44aea84c7f2603e07da88cbee374c0b6c92c
+--- /dev/null
++++ b/Tools/Playwright/win/MainWindow.cpp
+@@ -0,0 +1,661 @@
++/*
++ * Copyright (C) 2018 Sony Interactive Entertainment Inc.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
++ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
++ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "stdafx.h"
++#include "MainWindow.h"
++
++#include "Common.h"
++#include "PlaywrightLibResource.h"
++#include <sstream>
++#include "WebKitBrowserWindow.h"
++
++namespace WebCore {
++float deviceScaleFactorForWindow(HWND);
++}
++
++static const wchar_t* kPlaywrightRegistryKey = L"Software\\WebKit\\Playwright";
++
++static constexpr int kToolbarImageSize = 32;
++static constexpr int kToolbarURLBarIndex = 4;
++static constexpr int kToolbarProgressIndicatorIndex = 5;
++
++static WNDPROC DefEditProc = nullptr;
++
++static LRESULT CALLBACK EditProc(HWND, UINT, WPARAM, LPARAM);
++static INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
++
++std::wstring MainWindow::s_windowClass;
++size_t MainWindow::s_numInstances;
++
++bool MainWindow::s_headless = false;
++bool MainWindow::s_noStartupWindow = false;
++
++void MainWindow::configure(bool headless, bool noStartupWindow) {
++    s_headless = headless;
++    s_noStartupWindow = noStartupWindow;
++}
++
++static std::wstring loadString(int id)
++{
++    constexpr size_t length = 100;
++    wchar_t buff[length];
++    LoadString(hInst, id, buff, length);
++    return buff;
++}
++
++void MainWindow::registerClass(HINSTANCE hInstance)
++{
++    static bool initialized = false;
++    if (initialized)
++        return;
++    initialized = true;
++
++    s_windowClass = loadString(IDC_PLAYWRIGHT);
++
++    WNDCLASSEX wcex;
++    wcex.cbSize = sizeof(WNDCLASSEX);
++    wcex.style          = CS_HREDRAW | CS_VREDRAW;
++    wcex.lpfnWndProc    = WndProc;
++    wcex.cbClsExtra     = 0;
++    wcex.cbWndExtra     = 0;
++    wcex.hInstance      = hInstance;
++    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_PLAYWRIGHT));
++    wcex.hCursor        = LoadCursor(0, IDC_ARROW);
++    wcex.hbrBackground  = 0;
++    wcex.lpszMenuName   = MAKEINTRESOURCE(IDC_PLAYWRIGHT);
++    wcex.lpszClassName  = s_windowClass.c_str();
++    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
++
++    RegisterClassEx(&wcex);
++}
++
++bool MainWindow::isInstance(HWND hwnd)
++{
++    wchar_t buff[64];
++    if (!GetClassName(hwnd, buff, _countof(buff)))
++        return false;
++    return s_windowClass == buff;
++}
++
++MainWindow::MainWindow(WKContextRef context, WKWebsiteDataStoreRef dataStore)
++    : m_context(context)
++    , m_dataStore(dataStore)
++{
++    s_numInstances++;
++}
++
++MainWindow::~MainWindow()
++{
++    s_numInstances--;
++}
++
++Ref<MainWindow> MainWindow::create(WKContextRef context, WKWebsiteDataStoreRef dataStore)
++{
++    return adoptRef(*new MainWindow(context, dataStore));
++}
++
++void MainWindow::createToolbar(HINSTANCE hInstance)
++{
++    m_hToolbarWnd = CreateWindowEx(0, TOOLBARCLASSNAME, nullptr, 
++        WS_CHILD | WS_BORDER | TBSTYLE_FLAT | TBSTYLE_LIST | TBSTYLE_TOOLTIPS, 0, 0, 0, 0, 
++        m_hMainWnd, nullptr, hInstance, nullptr);
++        
++    if (!m_hToolbarWnd)
++        return;
++
++    const int ImageListID = 0;
++    const int numButtons = 4;
++
++    HIMAGELIST hImageList;
++    hImageList = ImageList_LoadImage(hInstance, MAKEINTRESOURCE(IDB_TOOLBAR), kToolbarImageSize, 0, CLR_DEFAULT, IMAGE_BITMAP, 0);
++
++    SendMessage(m_hToolbarWnd, TB_SETIMAGELIST, ImageListID, reinterpret_cast<LPARAM>(hImageList));
++    SendMessage(m_hToolbarWnd, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_DRAWDDARROWS | TBSTYLE_EX_MIXEDBUTTONS);
++
++    const DWORD buttonStyles = BTNS_AUTOSIZE;
++
++    TBBUTTON tbButtons[] = {
++        { MAKELONG(0, ImageListID), IDM_HISTORY_BACKWARD, TBSTATE_ENABLED, buttonStyles | BTNS_DROPDOWN, { }, 0, (INT_PTR)L"Back" },
++        { MAKELONG(1, ImageListID), IDM_HISTORY_FORWARD, TBSTATE_ENABLED, buttonStyles | BTNS_DROPDOWN, { }, 0, (INT_PTR)L"Forward"},
++        { MAKELONG(2, ImageListID), IDM_RELOAD, TBSTATE_ENABLED, buttonStyles, { }, 0, (INT_PTR)L"Reload"},
++        { MAKELONG(3, ImageListID), IDM_GO_HOME, TBSTATE_ENABLED, buttonStyles, { }, 0, (INT_PTR)L"Home"},
++        { 0, 0, TBSTATE_ENABLED, BTNS_SEP, { }, 0, 0}, // URL bar
++        { 0, 0, TBSTATE_ENABLED, BTNS_SEP, { }, 0, 0}, // Progress indicator
++    };
++    ASSERT(tbButtons[kToolbarURLBarIndex].fsStyle == BTNS_SEP);
++    ASSERT(tbButtons[kToolbarProgressIndicatorIndex].fsStyle == BTNS_SEP);
++
++    SendMessage(m_hToolbarWnd, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
++    SendMessage(m_hToolbarWnd, TB_ADDBUTTONS, _countof(tbButtons), reinterpret_cast<LPARAM>(&tbButtons));
++    ShowWindow(m_hToolbarWnd, true);
++
++    m_hURLBarWnd = CreateWindow(L"EDIT", 0, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT | ES_AUTOVSCROLL, 0, 0, 0, 0, m_hToolbarWnd, 0, hInstance, 0);
++    m_hProgressIndicator = CreateWindow(L"STATIC", 0, WS_CHILD | WS_VISIBLE | SS_CENTER | SS_CENTERIMAGE, 0, 0, 0, 0, m_hToolbarWnd, 0, hInstance, 0);
++
++    DefEditProc = reinterpret_cast<WNDPROC>(GetWindowLongPtr(m_hURLBarWnd, GWLP_WNDPROC));
++    SetWindowLongPtr(m_hURLBarWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(EditProc));
++}
++
++void MainWindow::resizeToolbar(int parentWidth)
++{
++    TBBUTTONINFO info { sizeof(TBBUTTONINFO), TBIF_BYINDEX | TBIF_SIZE };
++    info.cx = parentWidth - m_toolbarItemsWidth;
++    SendMessage(m_hToolbarWnd, TB_SETBUTTONINFO, kToolbarURLBarIndex, reinterpret_cast<LPARAM>(&info));
++
++    SendMessage(m_hToolbarWnd, TB_AUTOSIZE, 0, 0);
++
++    RECT rect;
++    SendMessage(m_hToolbarWnd, TB_GETITEMRECT, kToolbarURLBarIndex, reinterpret_cast<LPARAM>(&rect));
++    MoveWindow(m_hURLBarWnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, true);
++
++    SendMessage(m_hToolbarWnd, TB_GETITEMRECT, kToolbarProgressIndicatorIndex, reinterpret_cast<LPARAM>(&rect));
++    MoveWindow(m_hProgressIndicator, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, true);
++}
++
++void MainWindow::rescaleToolbar()
++{
++    const float scaleFactor = WebCore::deviceScaleFactorForWindow(m_hMainWnd);
++    const int scaledImageSize = kToolbarImageSize * scaleFactor;
++
++    TBBUTTONINFO info { sizeof(TBBUTTONINFO), TBIF_BYINDEX | TBIF_SIZE };
++
++    info.cx = 0;
++    SendMessage(m_hToolbarWnd, TB_SETBUTTONINFO, kToolbarURLBarIndex, reinterpret_cast<LPARAM>(&info));
++    info.cx = scaledImageSize * 2;
++    SendMessage(m_hToolbarWnd, TB_SETBUTTONINFO, kToolbarProgressIndicatorIndex, reinterpret_cast<LPARAM>(&info));
++
++    SendMessage(m_hToolbarWnd, TB_AUTOSIZE, 0, 0);
++
++    int numItems = SendMessage(m_hToolbarWnd, TB_BUTTONCOUNT, 0, 0);
++
++    RECT rect;
++    SendMessage(m_hToolbarWnd, TB_GETITEMRECT, numItems-1, reinterpret_cast<LPARAM>(&rect));
++    m_toolbarItemsWidth = rect.right;
++}
++
++bool MainWindow::init(BrowserWindowFactory factory, HINSTANCE hInstance, bool usesLayeredWebView)
++{
++    registerClass(hInstance);
++
++    auto title = loadString(IDS_APP_TITLE);
++
++    m_hMainWnd = CreateWindowExW(s_headless ? WS_EX_NOACTIVATE : 0, s_windowClass.c_str(), title.c_str(),
++        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 0, hInstance, this);
++
++    if (!m_hMainWnd)
++        return false;
++
++    if (!s_headless) {
++      createToolbar(hInstance);
++      if (!m_hToolbarWnd)
++          return false;
++    }
++
++    m_browserWindow = factory(*this, m_hMainWnd, m_context.get(), m_dataStore.get(), usesLayeredWebView);
++    if (!m_browserWindow)
++        return false;
++    HRESULT hr = m_browserWindow->init();
++    if (FAILED(hr))
++        return false;
++
++    updateDeviceScaleFactor();
++    resizeSubViews();
++
++    if (s_headless) {
++        SetMenu(m_hMainWnd, NULL);
++    } else {
++        SetFocus(m_hURLBarWnd);
++        ShowWindow(m_hMainWnd, SW_SHOW);
++    }
++    return true;
++}
++
++void MainWindow::resizeSubViews()
++{
++    RECT rcClient;
++    GetClientRect(m_hMainWnd, &rcClient);
++    if (s_headless) {
++        MoveWindow(m_browserWindow->hwnd(), 0, 0, rcClient.right, rcClient.bottom, true);
++        return;
++    }
++
++    resizeToolbar(rcClient.right);
++
++    if (m_browserWindow->usesLayeredWebView() || !m_browserWindow->hwnd())
++        return;
++
++    RECT rect;
++    GetWindowRect(m_hToolbarWnd, &rect);
++    POINT toolbarBottom = { 0, rect.bottom };
++    ScreenToClient(m_hMainWnd, &toolbarBottom);
++    auto height = toolbarBottom.y;
++    MoveWindow(m_browserWindow->hwnd(), 0, height, rcClient.right, rcClient.bottom - height, true);
++}
++
++LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
++{
++    LRESULT result = 0;
++    RefPtr<MainWindow> thisWindow = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
++    if (!thisWindow && message != WM_CREATE)
++        return DefWindowProc(hWnd, message, wParam, lParam);
++
++    switch (message) {
++    case WM_ACTIVATE:
++        switch (LOWORD(wParam)) {
++        case WA_ACTIVE:
++        case WA_CLICKACTIVE:
++            SetFocus(thisWindow->browserWindow()->hwnd());
++        }
++        break;
++    case WM_CREATE:
++        SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(reinterpret_cast<LPCREATESTRUCT>(lParam)->lpCreateParams));
++        break;
++    case WM_APPCOMMAND: {
++        auto cmd = GET_APPCOMMAND_LPARAM(lParam);
++        switch (cmd) {
++        case APPCOMMAND_BROWSER_BACKWARD:
++            thisWindow->browserWindow()->navigateForwardOrBackward(false);
++            result = 1;
++            break;
++        case APPCOMMAND_BROWSER_FORWARD:
++            thisWindow->browserWindow()->navigateForwardOrBackward(true);
++            result = 1;
++            break;
++        case APPCOMMAND_BROWSER_HOME:
++            thisWindow->goHome();
++            break;
++        case APPCOMMAND_BROWSER_REFRESH:
++            thisWindow->browserWindow()->reload();
++            result = 1;
++            break;
++        case APPCOMMAND_BROWSER_STOP:
++            break;
++        }
++        break;
++    }
++    case WM_COMMAND: {
++        int wmId = LOWORD(wParam);
++        int wmEvent = HIWORD(wParam);
++        switch (wmEvent) {
++        case 0: // Menu or BN_CLICKED
++        case 1: // Accelerator
++            break;
++        default:
++            return DefWindowProc(hWnd, message, wParam, lParam);
++        }
++        if (wmId >= IDM_HISTORY_LINK0 && wmId <= IDM_HISTORY_LINK9) {
++            thisWindow->browserWindow()->navigateToHistory(wmId);
++            break;
++        }
++        // Parse the menu selections:
++        switch (wmId) {
++        case IDC_URL_BAR:
++            thisWindow->onURLBarEnter();
++            break;
++        case IDM_NEW_WEBKIT_WINDOW: {
++            auto& newWindow = MainWindow::create(thisWindow->m_context.get(), thisWindow->m_dataStore.get()).leakRef();
++            newWindow.init(WebKitBrowserWindow::create, hInst);
++            break;
++        }
++        case IDM_CLOSE_WINDOW:
++            PostMessage(hWnd, WM_CLOSE, 0, 0);
++            break;
++        case IDM_ABOUT:
++            DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
++            break;
++        case IDM_GO_HOME:
++            thisWindow->goHome();
++            break;
++        case IDM_EXIT:
++            DestroyWindow(hWnd);
++            break;
++        case IDM_PRINT:
++            thisWindow->browserWindow()->print();
++            break;
++        case IDM_WEB_INSPECTOR:
++            thisWindow->browserWindow()->launchInspector();
++            break;
++        case IDM_PROXY_SETTINGS:
++            thisWindow->browserWindow()->openProxySettings();
++            break;
++        case IDM_SET_DEFAULT_URL:
++            thisWindow->setDefaultURLToCurrentURL();
++            break;
++        case IDM_CACHES:
++            if (!::IsWindow(thisWindow->m_hCacheWnd)) {
++                thisWindow->m_hCacheWnd = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_CACHES), hWnd, cachesDialogProc, reinterpret_cast<LPARAM>(thisWindow.get()));
++                ::ShowWindow(thisWindow->m_hCacheWnd, SW_SHOW);
++            }
++            break;
++        case IDM_HISTORY_BACKWARD:
++        case IDM_HISTORY_FORWARD:
++            thisWindow->browserWindow()->navigateForwardOrBackward(wmId == IDM_HISTORY_FORWARD);
++            break;
++        case IDM_UA_OTHER:
++            DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_USER_AGENT), hWnd, customUserAgentDialogProc, reinterpret_cast<LPARAM>(thisWindow.get()));
++            break;
++        case IDM_ACTUAL_SIZE:
++            thisWindow->browserWindow()->resetZoom();
++            break;
++        case IDM_RELOAD:
++            thisWindow->browserWindow()->reload();
++            break;
++        case IDM_ZOOM_IN:
++            thisWindow->browserWindow()->zoomIn();
++            break;
++        case IDM_ZOOM_OUT:
++            thisWindow->browserWindow()->zoomOut();
++            break;
++        case IDM_SHOW_LAYER_TREE:
++            thisWindow->browserWindow()->showLayerTree();
++            break;
++        default:
++            if (!thisWindow->toggleMenuItem(wmId))
++                return DefWindowProc(hWnd, message, wParam, lParam);
++        }
++        }
++        break;
++    case WM_DESTROY:
++        SetWindowLongPtr(hWnd, GWLP_USERDATA, 0);
++        thisWindow->deref();
++        if (s_noStartupWindow || s_numInstances > 1)
++            return 0;
++        PostQuitMessage(0);
++        break;
++    case WM_SIZE:
++        thisWindow->resizeSubViews();
++        break;
++    case WM_DPICHANGED: {
++        thisWindow->updateDeviceScaleFactor();
++        auto& rect = *reinterpret_cast<RECT*>(lParam);
++        SetWindowPos(hWnd, nullptr, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, SWP_NOZORDER | SWP_NOACTIVATE);
++        break;
++    }
++    default:
++        return DefWindowProc(hWnd, message, wParam, lParam);
++    }
++
++    return result;
++}
++
++static bool menuItemIsChecked(const MENUITEMINFO& info)
++{
++    return info.fState & MFS_CHECKED;
++}
++
++static void turnOffOtherUserAgents(HMENU menu)
++{
++    MENUITEMINFO info;
++    ::memset(&info, 0x00, sizeof(info));
++    info.cbSize = sizeof(info);
++    info.fMask = MIIM_STATE;
++
++    // Must unset the other menu items:
++    for (UINT menuToClear = IDM_UA_DEFAULT; menuToClear <= IDM_UA_OTHER; ++menuToClear) {
++        if (!::GetMenuItemInfo(menu, menuToClear, FALSE, &info))
++            continue;
++        if (!menuItemIsChecked(info))
++            continue;
++
++        info.fState = MFS_UNCHECKED;
++        ::SetMenuItemInfo(menu, menuToClear, FALSE, &info);
++    }
++}
++
++void MainWindow::setDefaultURLToCurrentURL()
++{
++    wchar_t url[INTERNET_MAX_URL_LENGTH];
++    GetWindowText(m_hURLBarWnd, url, INTERNET_MAX_URL_LENGTH);
++    auto length = wcslen(url);
++    if (!length)
++        return;
++    RegSetKeyValue(HKEY_CURRENT_USER, kPlaywrightRegistryKey, L"DefaultURL", REG_SZ, url, (length + 1) * sizeof(wchar_t));
++}
++
++bool MainWindow::toggleMenuItem(UINT menuID)
++{
++    if (s_headless)
++        return (INT_PTR)FALSE;
++
++    HMENU menu = ::GetMenu(hwnd());
++
++    switch (menuID) {
++    case IDM_UA_DEFAULT:
++    case IDM_UA_SAFARI:
++    case IDM_UA_SAFARI_IOS_IPHONE:
++    case IDM_UA_SAFARI_IOS_IPAD:
++    case IDM_UA_EDGE:
++    case IDM_UA_IE_11:
++    case IDM_UA_CHROME_MAC:
++    case IDM_UA_CHROME_WIN:
++    case IDM_UA_FIREFOX_MAC:
++    case IDM_UA_FIREFOX_WIN:
++        m_browserWindow->setUserAgent(menuID);
++        turnOffOtherUserAgents(menu);
++        break;
++    case IDM_UA_OTHER:
++        // The actual user agent string will be set by the custom user agent dialog
++        turnOffOtherUserAgents(menu);
++        break;
++    }
++
++    MENUITEMINFO info = { };
++    info.cbSize = sizeof(info);
++    info.fMask = MIIM_STATE;
++
++    if (!::GetMenuItemInfo(menu, menuID, FALSE, &info))
++        return false;
++
++    BOOL newState = !menuItemIsChecked(info);
++    info.fState = (newState) ? MFS_CHECKED : MFS_UNCHECKED;
++    ::SetMenuItemInfo(menu, menuID, FALSE, &info);
++
++    m_browserWindow->setPreference(menuID, newState);
++
++    return true;
++}
++
++LRESULT CALLBACK EditProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
++{
++    switch (message) {
++    case WM_SETFOCUS:
++        PostMessage(hWnd, EM_SETSEL, 0, -1);
++        break;
++    case WM_CHAR:
++        if (wParam == 13) {
++            // Enter Key
++            ::PostMessage(GetParent(hWnd), static_cast<UINT>(WM_COMMAND), MAKELPARAM(IDC_URL_BAR, 0), 0);
++            return 0;
++        }
++        break;
++    }
++    return CallWindowProc(DefEditProc, hWnd, message, wParam, lParam);
++}
++
++// Message handler for about box.
++INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
++{
++    UNREFERENCED_PARAMETER(lParam);
++    switch (message) {
++    case WM_INITDIALOG:
++        return (INT_PTR)TRUE;
++
++    case WM_COMMAND:
++        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) {
++            EndDialog(hDlg, LOWORD(wParam));
++            return (INT_PTR)TRUE;
++        }
++        break;
++    }
++    return (INT_PTR)FALSE;
++}
++
++INT_PTR CALLBACK MainWindow::cachesDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
++{
++    if (s_headless)
++        return (INT_PTR)FALSE;
++    MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(GetWindowLongPtr(hDlg, DWLP_USER));
++    switch (message) {
++    case WM_INITDIALOG:
++        SetWindowLongPtr(hDlg, DWLP_USER, lParam);
++        ::SetTimer(hDlg, IDT_UPDATE_STATS, 1000, nullptr);
++        return (INT_PTR)TRUE;
++
++    case WM_COMMAND:
++        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) {
++            ::KillTimer(hDlg, IDT_UPDATE_STATS);
++            ::DestroyWindow(hDlg);
++            thisWindow.m_hCacheWnd = 0;
++            return (INT_PTR)TRUE;
++        }
++        break;
++
++    case IDT_UPDATE_STATS:
++        ::InvalidateRect(hDlg, nullptr, FALSE);
++        return (INT_PTR)TRUE;
++
++    case WM_PAINT:
++        thisWindow.browserWindow()->updateStatistics(hDlg);
++        break;
++    }
++
++    return (INT_PTR)FALSE;
++}
++
++INT_PTR CALLBACK MainWindow::customUserAgentDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
++{
++    if (s_headless)
++        return (INT_PTR)FALSE;
++    MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(GetWindowLongPtr(hDlg, DWLP_USER));
++    switch (message) {
++    case WM_INITDIALOG: {
++        MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(lParam);
++        SetWindowLongPtr(hDlg, DWLP_USER, lParam);
++        HWND edit = ::GetDlgItem(hDlg, IDC_USER_AGENT_INPUT);
++        _bstr_t userAgent;
++        userAgent = thisWindow.browserWindow()->userAgent();
++
++        ::SetWindowText(edit, static_cast<LPCTSTR>(userAgent));
++        return (INT_PTR)TRUE;
++    }
++
++    case WM_COMMAND:
++        if (LOWORD(wParam) == IDOK) {
++            HWND edit = ::GetDlgItem(hDlg, IDC_USER_AGENT_INPUT);
++
++            TCHAR buffer[1024];
++            int strLen = ::GetWindowText(edit, buffer, 1024);
++            buffer[strLen] = 0;
++
++            _bstr_t bstr(buffer);
++            if (bstr.length()) {
++                thisWindow.browserWindow()->setUserAgent(bstr);
++                thisWindow.toggleMenuItem(IDM_UA_OTHER);
++            }
++        }
++
++        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) {
++            ::EndDialog(hDlg, LOWORD(wParam));
++            return (INT_PTR)TRUE;
++        }
++        break;
++    }
++    return (INT_PTR)FALSE;
++}
++
++void MainWindow::loadURL(std::wstring url)
++{
++    if (::PathFileExists(url.c_str()) || ::PathIsUNC(url.c_str())) {
++        wchar_t fileURL[INTERNET_MAX_URL_LENGTH];
++        DWORD fileURLLength = _countof(fileURL);
++
++        if (SUCCEEDED(::UrlCreateFromPath(url.c_str(), fileURL, &fileURLLength, 0)))
++            url = fileURL;
++    }
++    if (url.find(L"://") == url.npos && url.find(L"about:blank") == url.npos)
++        url = L"http://" + url;
++
++    if (FAILED(m_browserWindow->loadURL(_bstr_t(url.c_str()))))
++        return;
++
++    if (!s_headless)
++        SetFocus(m_browserWindow->hwnd());
++}
++
++void MainWindow::goHome()
++{
++    std::wstring defaultURL = L"about:blank";
++    loadURL(defaultURL);
++}
++
++void MainWindow::onURLBarEnter()
++{
++    if (s_headless)
++        return;
++    wchar_t url[INTERNET_MAX_URL_LENGTH];
++    GetWindowText(m_hURLBarWnd, url, INTERNET_MAX_URL_LENGTH);
++    loadURL(url);
++}
++
++void MainWindow::updateDeviceScaleFactor()
++{
++    if (s_headless)
++        return;
++    if (m_hURLBarFont)
++        ::DeleteObject(m_hURLBarFont);
++
++    rescaleToolbar();
++
++    RECT rect;
++    GetClientRect(m_hToolbarWnd, &rect);
++    int fontHeight = rect.bottom * 3. / 4;
++
++    m_hURLBarFont = ::CreateFont(fontHeight, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
++        OUT_TT_ONLY_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, FF_DONTCARE, L"Tahoma");
++    ::SendMessage(m_hURLBarWnd, static_cast<UINT>(WM_SETFONT), reinterpret_cast<WPARAM>(m_hURLBarFont), TRUE);
++}
++
++void MainWindow::progressChanged(double progress)
++{
++    if (s_headless)
++        return;
++    std::wostringstream text;
++    text << static_cast<int>(progress * 100) << L'%';
++    SetWindowText(m_hProgressIndicator, text.str().c_str());
++}
++
++void MainWindow::progressFinished()
++{
++    if (s_headless)
++        return;
++    SetWindowText(m_hProgressIndicator, L"");
++}
++
++void MainWindow::activeURLChanged(std::wstring url)
++{
++    if (s_headless)
++        return;
++    SetWindowText(m_hURLBarWnd, url.c_str());
++}
+diff --git a/Tools/Playwright/win/MainWindow.h b/Tools/Playwright/win/MainWindow.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..99718b19797788634f4233a8892729b57ae642d0
+--- /dev/null
++++ b/Tools/Playwright/win/MainWindow.h
+@@ -0,0 +1,90 @@
++/*
++ * Copyright (C) 2018 Sony Interactive Entertainment Inc.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
++ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
++ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#pragma once
++
++#include "BrowserWindow.h"
++#include <WebKit/WKBase.h>
++#include <WebKit/WKRetainPtr.h>
++#include <functional>
++#include <memory>
++#include <string>
++#include <wtf/RefPtr.h>
++
++class MainWindow final : public RefCounted<MainWindow>, public BrowserWindowClient {
++public:
++    using BrowserWindowFactory = std::function<Ref<BrowserWindow>(BrowserWindowClient&, HWND mainWnd, WKContextRef, WKWebsiteDataStoreRef, bool usesLayeredWebView)>;
++    static void configure(bool headless, bool noStartupWindow);
++
++    static Ref<MainWindow> create(WKContextRef context, WKWebsiteDataStoreRef dataStore);
++
++    ~MainWindow();
++    bool init(BrowserWindowFactory, HINSTANCE hInstance, bool usesLayeredWebView = false);
++
++    void resizeSubViews();
++    HWND hwnd() const { return m_hMainWnd; }
++    BrowserWindow* browserWindow() const { return m_browserWindow.get(); }
++
++    void loadURL(std::wstring);
++    void goHome();
++
++    static bool isInstance(HWND);
++    
++private:
++    static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
++    static INT_PTR CALLBACK customUserAgentDialogProc(HWND, UINT, WPARAM, LPARAM);
++    static INT_PTR CALLBACK cachesDialogProc(HWND, UINT, WPARAM, LPARAM);
++    static void registerClass(HINSTANCE hInstance);
++    static std::wstring s_windowClass;
++    static size_t s_numInstances;
++    static bool s_headless;
++    static bool s_noStartupWindow;
++
++    MainWindow(WKContextRef context, WKWebsiteDataStoreRef dataStore);
++    void setDefaultURLToCurrentURL();
++    bool toggleMenuItem(UINT menuID);
++    void onURLBarEnter();
++    void updateDeviceScaleFactor();
++
++    void createToolbar(HINSTANCE);
++    void resizeToolbar(int);
++    void rescaleToolbar();
++
++    // BrowserWindowClient
++    void progressChanged(double) final;
++    void progressFinished() final;
++    void activeURLChanged(std::wstring) final;
++
++    HWND m_hMainWnd { nullptr };
++    HWND m_hToolbarWnd { nullptr };
++    HWND m_hURLBarWnd { nullptr };
++    HWND m_hProgressIndicator { nullptr };
++    HWND m_hCacheWnd { nullptr };
++    HGDIOBJ m_hURLBarFont { nullptr };
++    WKRetainPtr<WKContextRef> m_context; 
++    WKRetainPtr<WKWebsiteDataStoreRef> m_dataStore;
++    RefPtr<BrowserWindow> m_browserWindow;
++    int m_toolbarItemsWidth { };
++};
+diff --git a/Tools/Playwright/win/Playwright.ico b/Tools/Playwright/win/Playwright.ico
+new file mode 100644
+index 0000000000000000000000000000000000000000..d551aa3aaf80adf9b7760e2eb8de95a5c3e53df6
+Binary files /dev/null and b/Tools/Playwright/win/Playwright.ico differ
+diff --git a/Tools/Playwright/win/Playwright.rc b/Tools/Playwright/win/Playwright.rc
+new file mode 100644
+index 0000000000000000000000000000000000000000..4430f19062cc9fd048e4b1d5d8d33c5a119a8409
+--- /dev/null
++++ b/Tools/Playwright/win/Playwright.rc
+@@ -0,0 +1,76 @@
++// Microsoft Visual C++ generated resource script.
++//
++#include "PlaywrightResource.h"
++
++#define APSTUDIO_READONLY_SYMBOLS
++/////////////////////////////////////////////////////////////////////////////
++//
++// Generated from the TEXTINCLUDE 2 resource.
++//
++#define APSTUDIO_HIDDEN_SYMBOLS
++#include "windows.h"
++#undef APSTUDIO_HIDDEN_SYMBOLS
++
++/////////////////////////////////////////////////////////////////////////////
++#undef APSTUDIO_READONLY_SYMBOLS
++
++/////////////////////////////////////////////////////////////////////////////
++// English (U.S.) resources
++
++#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
++#ifdef _WIN32
++LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
++#pragma code_page(1252)
++#endif //_WIN32
++
++/////////////////////////////////////////////////////////////////////////////
++//
++// Icon
++//
++
++// Icon with lowest ID value placed first to ensure application icon
++// remains consistent on all systems.
++IDI_PLAYWRIGHT         ICON                    "Playwright.ico"
++
++#ifdef APSTUDIO_INVOKED
++/////////////////////////////////////////////////////////////////////////////
++//
++// TEXTINCLUDE
++//
++
++1 TEXTINCLUDE 
++BEGIN
++    "PlaywrightResource.\0"
++END
++
++2 TEXTINCLUDE 
++BEGIN
++    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
++    "#include ""windows.h""\r\n"
++    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
++    "\0"
++END
++
++3 TEXTINCLUDE 
++BEGIN
++    "\r\n"
++    "\0"
++END
++
++#endif    // APSTUDIO_INVOKED
++
++#endif    // English (U.S.) resources
++/////////////////////////////////////////////////////////////////////////////
++
++
++
++#ifndef APSTUDIO_INVOKED
++/////////////////////////////////////////////////////////////////////////////
++//
++// Generated from the TEXTINCLUDE 3 resource.
++//
++
++
++/////////////////////////////////////////////////////////////////////////////
++#endif    // not APSTUDIO_INVOKED
++
+diff --git a/Tools/Playwright/win/PlaywrightLib.rc b/Tools/Playwright/win/PlaywrightLib.rc
+new file mode 100644
+index 0000000000000000000000000000000000000000..46912747715c34753c6e2292500858c940edc071
+--- /dev/null
++++ b/Tools/Playwright/win/PlaywrightLib.rc
+@@ -0,0 +1,428 @@
++// Microsoft Visual C++ generated resource script.
++//
++#include "PlaywrightLibResource.h"
++
++#define APSTUDIO_READONLY_SYMBOLS
++/////////////////////////////////////////////////////////////////////////////
++//
++// Generated from the TEXTINCLUDE 2 resource.
++//
++#define APSTUDIO_HIDDEN_SYMBOLS
++#include "windows.h"
++#undef APSTUDIO_HIDDEN_SYMBOLS
++
++/////////////////////////////////////////////////////////////////////////////
++#undef APSTUDIO_READONLY_SYMBOLS
++
++/////////////////////////////////////////////////////////////////////////////
++// English (United States) resources
++
++#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
++LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
++#pragma code_page(1252)
++
++/////////////////////////////////////////////////////////////////////////////
++//
++// Icon
++//
++
++// Icon with lowest ID value placed first to ensure application icon
++// remains consistent on all systems.
++IDI_PLAYWRIGHT         ICON                    "Playwright.ico"
++
++IDI_SMALL               ICON                    "small.ico"
++
++
++/////////////////////////////////////////////////////////////////////////////
++//
++// Menu
++//
++
++IDC_PLAYWRIGHT MENU
++BEGIN
++    POPUP "&File"
++    BEGIN
++        MENUITEM "&Print\tCtrl-P",              IDM_PRINT
++        MENUITEM "E&xit",                       IDM_EXIT
++        MENUITEM "New WebKit Window",           IDM_NEW_WEBKIT_WINDOW
++        MENUITEM "Close\tCtrl-W",               IDM_CLOSE_WINDOW
++    END
++    POPUP "&View"
++    BEGIN
++        MENUITEM "Reload\tCtrl-R",              IDM_RELOAD
++        MENUITEM "Actual Size\tCtrl+0",         IDM_ACTUAL_SIZE
++        MENUITEM "Zoom In\tCtrl++",             IDM_ZOOM_IN
++        MENUITEM "Zoom Out\tCtrl+-",            IDM_ZOOM_OUT
++        MENUITEM "Invert Colors",               IDM_INVERT_COLORS
++        MENUITEM "Go Home",                     IDM_GO_HOME
++    END
++    POPUP "&History"
++    BEGIN
++        MENUITEM "Back",                        IDM_HISTORY_BACKWARD
++        MENUITEM "Forward",                     IDM_HISTORY_FORWARD
++        MENUITEM SEPARATOR
++        MENUITEM "Unused History 0",            IDM_HISTORY_LINK0
++        MENUITEM "Unused History 1",            IDM_HISTORY_LINK1
++        MENUITEM "Unused History 2",            IDM_HISTORY_LINK2
++        MENUITEM "Unused History 3",            IDM_HISTORY_LINK3
++        MENUITEM "Unused History 4",            IDM_HISTORY_LINK4
++        MENUITEM "Unused History 5",            IDM_HISTORY_LINK5
++        MENUITEM "Unused History 6",            IDM_HISTORY_LINK6
++        MENUITEM "Unused History 7",            IDM_HISTORY_LINK7
++        MENUITEM "Unused History 8",            IDM_HISTORY_LINK8
++        MENUITEM "Unused History 9",            IDM_HISTORY_LINK9
++    END
++    POPUP "D&evelop"
++    BEGIN
++        MENUITEM "Show Web Inspector",          IDM_WEB_INSPECTOR
++        POPUP "User Agent"
++        BEGIN
++            MENUITEM "Default (Automatically Chosen)", IDM_UA_DEFAULT
++            MENUITEM SEPARATOR
++            MENUITEM "Safari",                      IDM_UA_SAFARI
++            MENUITEM SEPARATOR
++            MENUITEM "Safari iOS - iPhone",         IDM_UA_SAFARI_IOS_IPHONE
++            MENUITEM "Safari iOS - iPad",           IDM_UA_SAFARI_IOS_IPAD
++            MENUITEM SEPARATOR
++            MENUITEM "Microsoft Edge",              IDM_UA_EDGE
++            MENUITEM "Internet Explorer 11.0",      IDM_UA_IE_11
++            MENUITEM SEPARATOR
++            MENUITEM "Google Chrome - Mac",         IDM_UA_CHROME_MAC
++            MENUITEM "Google Chrome - Windows",     IDM_UA_CHROME_WIN
++            MENUITEM SEPARATOR
++            MENUITEM "Firefox - Mac",               IDM_UA_FIREFOX_MAC
++            MENUITEM "Firefox - Windows",           IDM_UA_FIREFOX_WIN
++            MENUITEM SEPARATOR
++            MENUITEM "Other",                       IDM_UA_OTHER
++        END
++        MENUITEM "Proxy Settings...",           IDM_PROXY_SETTINGS
++        MENUITEM "Set Default URL to Current URL", IDM_SET_DEFAULT_URL
++        MENUITEM SEPARATOR
++        MENUITEM "Disable Images",              IDM_DISABLE_IMAGES
++        MENUITEM "Disable Styles",              IDM_DISABLE_STYLES
++        MENUITEM "Disable JavaScript",          IDM_DISABLE_JAVASCRIPT
++        MENUITEM "Disable Local File Restrictions", IDM_DISABLE_LOCAL_FILE_RESTRICTIONS
++    END
++    POPUP "&Help"
++    BEGIN
++        MENUITEM "&About ...",                  IDM_ABOUT
++    END
++    POPUP "&Debug"
++    BEGIN
++        MENUITEM "Use AVFoundation",            IDM_AVFOUNDATION, CHECKED
++        MENUITEM "Use Accelerated Compositing", IDM_ACC_COMPOSITING, CHECKED
++        MENUITEM "Enable WebKit Full Screen",   IDM_WK_FULLSCREEN, CHECKED
++        MENUITEM SEPARATOR
++        MENUITEM "Show Compositing Borders",    IDM_COMPOSITING_BORDERS
++        MENUITEM "Show Tiled Drawing indicator", IDM_DEBUG_INFO_LAYER
++        MENUITEM SEPARATOR
++        MENUITEM "Show Caches Window",          IDM_CACHES
++        MENUITEM "Show Layer Tree",             IDM_SHOW_LAYER_TREE
++    END
++END
++
++
++/////////////////////////////////////////////////////////////////////////////
++//
++// Accelerator
++//
++
++IDC_PLAYWRIGHT ACCELERATORS
++BEGIN
++    "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
++    "0",            IDM_ACTUAL_SIZE,        VIRTKEY, CONTROL, NOINVERT
++    "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
++    "R",            IDM_RELOAD,             VIRTKEY, CONTROL, NOINVERT
++    VK_ADD,         IDM_ZOOM_IN,            VIRTKEY, CONTROL, NOINVERT
++    VK_OEM_MINUS,   IDM_ZOOM_OUT,           VIRTKEY, CONTROL, NOINVERT
++    VK_OEM_PLUS,    IDM_ZOOM_IN,            VIRTKEY, CONTROL, NOINVERT
++    VK_SUBTRACT,    IDM_ZOOM_OUT,           VIRTKEY, CONTROL, NOINVERT
++END
++
++IDR_ACCELERATORS_PRE ACCELERATORS
++BEGIN
++    "W",            IDM_CLOSE_WINDOW,       VIRTKEY, CONTROL, NOINVERT
++END
++
++
++/////////////////////////////////////////////////////////////////////////////
++//
++// Dialog
++//
++
++IDD_ABOUTBOX DIALOGEX 22, 17, 230, 41
++STYLE DS_SETFONT | DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
++CAPTION "About"
++FONT 8, "MS Shell Dlg", 0, 0, 0x0
++BEGIN
++    ICON            IDI_PLAYWRIGHT,IDC_MYICON,14,9,20,20
++    LTEXT           "Playwright Version 1.1",IDC_STATIC,49,10,119,8
++    LTEXT           "Copyright (C) 2015-2019",IDC_STATIC,49,20,119,8
++    DEFPUSHBUTTON   "OK",IDOK,186,10,30,11,WS_GROUP
++END
++
++IDD_CACHES DIALOGEX 0, 0, 401, 456
++STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
++CAPTION "Dialog"
++FONT 8, "MS Shell Dlg", 400, 0, 0x1
++BEGIN
++    DEFPUSHBUTTON   "OK",IDOK,287,435,50,14
++    PUSHBUTTON      "Cancel",IDCANCEL,344,435,50,14
++    GROUPBOX        "FastMalloc",IDC_STATIC,208,14,186,67
++    GROUPBOX        "WebCore Cache",IDC_STATIC,17,83,376,105
++    GROUPBOX        "JavaScript Heap",IDC_STATIC,18,193,376,168
++    GROUPBOX        "Site Icon Database",IDC_STATIC,18,366,142,65
++    GROUPBOX        "Font and Glyph Caches",IDC_STATIC,168,366,226,66
++    GROUPBOX        "CFURLCache",IDC_STATIC,7,14,197,67
++    PUSHBUTTON      "Empty URLCache",IDC_EMPTY_URL_CACHE,131,63,69,14,WS_DISABLED
++    PUSHBUTTON      "Return Free Memory",IDC_RETURN_FREE_MEMORY,308,63,76,14,WS_DISABLED
++    PUSHBUTTON      "Empty WebCore Cache",IDC_EMPTY_WEBCORE_CACHE,21,170,83,14,WS_DISABLED
++    CONTROL         "Disable WebCore Cache",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,119,172,93,10
++    PUSHBUTTON      "Garbage Collect JavaScript Objects",IDC_GC_JSC,253,343,135,14,WS_DISABLED
++    RTEXT           "Reserved VM",IDC_STATIC,212,26,67,9
++    RTEXT           "0",IDC_RESERVED_VM,290,26,94,8
++    RTEXT           "Committed VM",IDC_STATIC,211,39,67,8
++    RTEXT           "0",IDC_COMMITTED_VM,290,39,94,8
++    RTEXT           "Free List Bytes",IDC_STATIC,211,52,67,8
++    RTEXT           "0",IDC_FREE_LIST_BYTES,290,52,94,8
++    RTEXT           "Images",IDC_STATIC,37,106,24,8
++    RTEXT           "CSS",IDC_STATIC,47,116,14,8
++    RTEXT           "XSL",IDC_STATIC,49,126,12,8
++    RTEXT           "JavaScript",IDC_STATIC,27,135,34,8
++    RTEXT           "Total",IDC_STATIC,43,146,17,8
++    LTEXT           "Objects",IDC_STATIC,111,96,26,8
++    LTEXT           "Bytes",IDC_STATIC,175,96,19,8
++    LTEXT           "Live",IDC_STATIC,232,96,14,8
++    LTEXT           "Decoded",IDC_STATIC,284,96,29,8
++    LTEXT           "Purgeable",IDC_STATIC,351,96,33,8
++    RTEXT           "0",IDC_IMAGES_OBJECT_COUNT,100,106,32,8
++    RTEXT           "0",IDC_CSS_OBJECT_COUNT,100,116,32,8
++    RTEXT           "0",IDC_XSL_OBJECT_COUNT,100,126,32,8
++    RTEXT           "0",IDC_JSC_OBJECT_COUNT,100,135,32,8
++    RTEXT           "0",IDC_TOTAL_OBJECT_COUNT,100,146,32,8
++    RTEXT           "0",IDC_IMAGES_BYTES,162,106,32,8
++    RTEXT           "0",IDC_CSS_BYTES,162,116,32,8
++    RTEXT           "0",IDC_XSL_BYTES,162,126,32,8
++    RTEXT           "0",IDC_JSC_BYTES,162,135,32,8
++    RTEXT           "0",IDC_TOTAL_BYTES,162,146,32,8
++    RTEXT           "0",IDC_IMAGES_LIVE_COUNT,221,106,32,8
++    RTEXT           "0",IDC_CSS_LIVE_COUNT,221,116,32,8
++    RTEXT           "0",IDC_XSL_LIVE_COUNT,221,126,32,8
++    RTEXT           "0",IDC_JSC_LIVE_COUNT,221,135,32,8
++    RTEXT           "0",IDC_TOTAL_LIVE_COUNT,221,146,32,8
++    RTEXT           "0",IDC_IMAGES_DECODED_COUNT,284,106,32,8
++    RTEXT           "0",IDC_CSS_DECODED_COUNT,284,116,32,8
++    RTEXT           "0",IDC_XSL_DECODED_COUNT,284,126,32,8
++    RTEXT           "0",IDC_JSC_DECODED_COUNT,284,135,32,8
++    RTEXT           "0",IDC_TOTAL_DECODED,284,146,32,8
++    RTEXT           "0",IDC_IMAGES_PURGEABLE_COUNT,354,106,32,8
++    RTEXT           "0",IDC_CSS_PURGEABLE_COUNT,354,116,32,8
++    RTEXT           "0",IDC_XSL_PURGEABLE_COUNT,354,126,32,8
++    RTEXT           "0",IDC_JSC_PURGEABLE_COUNT,354,135,32,8
++    RTEXT           "0",IDC_TOTAL_PURGEABLE,354,146,32,8
++    RTEXT           "Total Objects",IDC_STATIC,63,207,44,8
++    RTEXT           "Global Objects",IDC_STATIC,56,217,51,8
++    RTEXT           "Protected Objects",IDC_STATIC,48,227,59,8
++    RTEXT           "0",IDC_TOTAL_JSC_HEAP_OBJECTS,127,207,56,8
++    RTEXT           "0",IDC_GLOBAL_JSC_HEAP_OBJECTS,127,217,56,8
++    RTEXT           "0",IDC_PROTECTED_JSC_HEAP_OBJECTS,127,227,56,8
++    RTEXT           "Size",IDC_STATIC56,223,207,14,8
++    RTEXT           "Free",IDC_STATIC57,222,217,16,8
++    RTEXT           "0",IDC_JSC_HEAP_SIZE,270,207,56,8
++    RTEXT           "0",IDC_JSC_HEAP_FREE,270,217,56,8
++    PUSHBUTTON      "Purge Inactive Font Data",IDC_BUTTON5,293,415,95,14,WS_DISABLED
++    LTEXT           "Total Font Data Objects",IDC_STATIC,208,379,78,8
++    LTEXT           "Inactive Font Data Objects",IDC_STATIC,198,390,88,8
++    LTEXT           "Glyph Pages",IDC_STATIC,246,402,40,8
++    RTEXT           "0",IDC_TOTAL_FONT_OBJECTS,329,379,56,8
++    RTEXT           "0",IDC_INACTIVE_FONT_OBJECTS,329,390,56,8
++    RTEXT           "0",IDC_GLYPH_PAGES,329,402,56,8
++    LTEXT           "Page URL Mappings",IDC_STATIC,33,380,64,8
++    LTEXT           "Retained Page URLs",IDC_STATIC,31,390,66,8
++    LTEXT           "Site Icon Records",IDC_STATIC,40,400,57,8
++    LTEXT           "Site Icons with Data",IDC_STATIC,32,410,65,8
++    RTEXT           "0",IDC_PAGE_URL_MAPPINGS,101,380,52,8
++    RTEXT           "0",IDC_RETAINED_PAGE_URLS,101,390,52,8
++    RTEXT           "0",IDC_SITE_ICON_RECORDS,101,400,52,8
++    RTEXT           "0",IDC_SITE_ICONS_WITH_DATA,101,410,52,8
++END
++
++IDD_USER_AGENT DIALOGEX 0, 0, 309, 176
++STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
++CAPTION "Dialog"
++FONT 8, "MS Shell Dlg", 400, 0, 0x1
++BEGIN
++    LTEXT           "Type a custom user agent string for this page.",IDC_Message,7,7,295,19
++    EDITTEXT        IDC_USER_AGENT_INPUT,7,34,295,117,ES_AUTOHSCROLL
++    DEFPUSHBUTTON   "OK",IDOK,198,155,50,14
++    PUSHBUTTON      "Cancel",IDCANCEL,252,155,50,14
++END
++
++IDD_AUTH DIALOGEX 0, 0, 231, 119
++STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
++CAPTION "Authentication Required"
++FONT 8, "MS Shell Dlg", 400, 0, 0x1
++BEGIN
++    DEFPUSHBUTTON   "Sign In",IDOK,116,98,50,14
++    PUSHBUTTON      "Cancel",IDCANCEL,174,98,50,14
++    LTEXT           "Realm",IDC_REALM_TEXT,67,21,157,8
++    RTEXT           "User Name:",IDC_STATIC,7,41,57,8
++    EDITTEXT        IDC_AUTH_USER,67,39,157,14,ES_AUTOHSCROLL
++    RTEXT           "Password:",IDC_STATIC,7,66,57,8
++    EDITTEXT        IDC_AUTH_PASSWORD,67,64,157,14,ES_PASSWORD | ES_AUTOHSCROLL
++END
++
++IDD_PROXY DIALOGEX 0, 0, 310, 176
++STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
++CAPTION "Proxy Configuration"
++FONT 8, "MS Shell Dlg", 400, 0, 0x1
++BEGIN
++    DEFPUSHBUTTON   "OK",IDOK,199,155,50,14
++    PUSHBUTTON      "Cancel",IDCANCEL,253,155,50,14
++    CONTROL         "Use system default proxy configuration.",IDC_PROXY_DEFAULT,
++                    "Button",BS_AUTORADIOBUTTON | WS_GROUP,22,15,226,10
++    CONTROL         "Use custom proxy configuration:",IDC_PROXY_CUSTOM,
++                    "Button",BS_AUTORADIOBUTTON,22,33,226,10
++    CONTROL         "Don't use proxy.",IDC_PROXY_DISABLE,"Button",BS_AUTORADIOBUTTON,22,117,226,10
++    EDITTEXT        IDC_PROXY_URL,76,52,193,14,ES_AUTOHSCROLL
++    EDITTEXT        IDC_PROXY_EXCLUDE,76,85,193,14,ES_AUTOHSCROLL
++    LTEXT           "URL:",IDC_STATIC,30,55,43,8,0,WS_EX_RIGHT
++    LTEXT           "Excude list:",IDC_STATIC,30,88,43,8,0,WS_EX_RIGHT
++    LTEXT           "Example: http://192.168.0.2:8000",IDC_STATIC,80,68,194,8
++    LTEXT           "Comma separated hostnames.",IDC_STATIC,80,101,194,8
++END
++
++IDD_SERVER_TRUST DIALOGEX 0, 0, 319, 184
++STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
++CAPTION "Server Trust Evaluation Request"
++FONT 8, "MS Shell Dlg", 400, 0, 0x1
++BEGIN
++    DEFPUSHBUTTON   "Yes",IDOK,197,163,50,14
++    PUSHBUTTON      "No",IDCANCEL,262,163,50,14
++    LTEXT           "Certificate information",IDC_STATIC,7,7,294,17
++    EDITTEXT        IDC_SERVER_TRUST_TEXT,7,24,305,130,ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL | NOT WS_TABSTOP
++END
++
++
++#ifdef APSTUDIO_INVOKED
++/////////////////////////////////////////////////////////////////////////////
++//
++// TEXTINCLUDE
++//
++
++1 TEXTINCLUDE 
++BEGIN
++    "PlaywrightLibResource.h\0"
++END
++
++2 TEXTINCLUDE 
++BEGIN
++    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
++    "#include ""windows.h""\r\n"
++    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
++    "\0"
++END
++
++3 TEXTINCLUDE 
++BEGIN
++    "\r\n"
++    "\0"
++END
++
++#endif    // APSTUDIO_INVOKED
++
++
++/////////////////////////////////////////////////////////////////////////////
++//
++// DESIGNINFO
++//
++
++#ifdef APSTUDIO_INVOKED
++GUIDELINES DESIGNINFO
++BEGIN
++    IDD_ABOUTBOX, DIALOG
++    BEGIN
++    END
++
++    IDD_CACHES, DIALOG
++    BEGIN
++        LEFTMARGIN, 7
++        RIGHTMARGIN, 394
++        TOPMARGIN, 7
++        BOTTOMMARGIN, 449
++    END
++
++    IDD_USER_AGENT, DIALOG
++    BEGIN
++        LEFTMARGIN, 7
++        RIGHTMARGIN, 302
++        TOPMARGIN, 7
++        BOTTOMMARGIN, 169
++    END
++
++    IDD_AUTH, DIALOG
++    BEGIN
++        LEFTMARGIN, 7
++        RIGHTMARGIN, 224
++        VERTGUIDE, 64
++        VERTGUIDE, 67
++        TOPMARGIN, 7
++        BOTTOMMARGIN, 92
++        HORZGUIDE, 25
++        HORZGUIDE, 50
++    END
++
++    IDD_PROXY, DIALOG
++    BEGIN
++        LEFTMARGIN, 7
++        RIGHTMARGIN, 303
++        VERTGUIDE, 22
++        TOPMARGIN, 7
++        BOTTOMMARGIN, 169
++    END
++
++    IDD_SERVER_TRUST, DIALOG
++    BEGIN
++        LEFTMARGIN, 7
++        RIGHTMARGIN, 312
++        TOPMARGIN, 7
++        BOTTOMMARGIN, 177
++    END
++END
++#endif    // APSTUDIO_INVOKED
++
++
++/////////////////////////////////////////////////////////////////////////////
++//
++// Bitmap
++//
++
++IDB_TOOLBAR             BITMAP                  "toolbar.bmp"
++
++
++/////////////////////////////////////////////////////////////////////////////
++//
++// String Table
++//
++
++STRINGTABLE
++BEGIN
++    IDS_APP_TITLE           "Playwright"
++    IDC_PLAYWRIGHT          "Playwright"
++END
++
++#endif    // English (United States) resources
++/////////////////////////////////////////////////////////////////////////////
++
++
++
++#ifndef APSTUDIO_INVOKED
++/////////////////////////////////////////////////////////////////////////////
++//
++// Generated from the TEXTINCLUDE 3 resource.
++//
++
++
++/////////////////////////////////////////////////////////////////////////////
++#endif    // not APSTUDIO_INVOKED
++
+diff --git a/Tools/Playwright/win/PlaywrightLibResource.h b/Tools/Playwright/win/PlaywrightLibResource.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..83c94a6e2d15a40e9efa6aea85876c0766c07664
+--- /dev/null
++++ b/Tools/Playwright/win/PlaywrightLibResource.h
+@@ -0,0 +1,144 @@
++//{{NO_DEPENDENCIES}}
++// Microsoft Visual C++ generated include file.
++// Used by PlaywrightLib.rc
++//
++#define IDC_MYICON                      2
++#define IDD_PLAYWRIGHT_DIALOG          102
++#define IDS_APP_TITLE                   103
++#define IDD_ABOUTBOX                    103
++#define IDM_ABOUT                       104
++#define IDM_EXIT                        105
++#define IDM_PRINT                       106
++#define IDI_PLAYWRIGHT                 107
++#define IDI_SMALL                       108
++#define IDC_PLAYWRIGHT                 109
++#define IDM_AVFOUNDATION                110
++#define IDM_ACC_COMPOSITING             111
++#define IDM_WK_FULLSCREEN               112
++#define IDM_COMPOSITING_BORDERS         113
++#define IDM_CACHES                      114
++#define IDM_WEB_INSPECTOR               120
++#define IDM_DISABLE_IMAGES              121
++#define IDM_DISABLE_STYLES              122
++#define IDM_DISABLE_JAVASCRIPT          123
++#define IDM_DISABLE_LOCAL_FILE_RESTRICTIONS 124
++#define IDM_INVERT_COLORS               125
++#define IDR_MAINFRAME                   128
++#define IDD_CACHES                      129
++#define IDM_HISTORY_BACKWARD            130
++#define IDD_USER_AGENT                  130
++#define IDM_HISTORY_FORWARD             131
++#define IDM_HISTORY_LINK0               150
++#define IDM_HISTORY_LINK1               151
++#define IDM_HISTORY_LINK2               152
++#define IDM_HISTORY_LINK3               153
++#define IDM_HISTORY_LINK4               154
++#define IDM_HISTORY_LINK5               155
++#define IDM_HISTORY_LINK6               156
++#define IDM_HISTORY_LINK7               157
++#define IDM_HISTORY_LINK8               158
++#define IDM_HISTORY_LINK9               159
++#define IDT_UPDATE_STATS                160
++#define IDM_UA_DEFAULT                  161
++#define IDM_UA_SAFARI                   162
++#define IDM_UA_SAFARI_IOS_IPHONE        163
++#define IDM_UA_SAFARI_IOS_IPAD          164
++#define IDM_UA_EDGE                     165
++#define IDM_UA_IE_11                    166
++#define IDM_UA_CHROME_MAC               167
++#define IDM_UA_CHROME_WIN               168
++#define IDM_UA_FIREFOX_MAC              169
++#define IDM_UA_FIREFOX_WIN              170
++#define IDM_UA_OTHER                    171
++#define IDM_ACTUAL_SIZE                 172
++#define IDM_ZOOM_IN                     173
++#define IDM_ZOOM_OUT                    174
++#define IDM_SHOW_LAYER_TREE             175
++#define IDD_AUTH                        176
++#define IDM_DEBUG_INFO_LAYER            177
++#define IDD_PROXY                       178
++#define IDD_SERVER_TRUST                179
++#define IDR_ACCELERATORS_PRE            180
++#define IDB_TOOLBAR                     181
++#define IDC_EMPTY_URL_CACHE             1000
++#define IDC_RETURN_FREE_MEMORY          1001
++#define IDC_EMPTY_WEBCORE_CACHE         1002
++#define IDC_CHECK1                      1003
++#define IDC_HEAP_OBJECTS                1005
++#define IDC_GC_JSC                      1006
++#define IDC_RESERVED_VM                 1007
++#define IDC_COMMITTED_VM                1008
++#define IDC_FREE_LIST_BYTES             1009
++#define IDC_IMAGES_OBJECT_COUNT         1011
++#define IDC_CSS_OBJECT_COUNT            1012
++#define IDC_XSL_OBJECT_COUNT            1013
++#define IDC_JSC_OBJECT_COUNT            1014
++#define IDC_TOTAL_OBJECT_COUNT          1015
++#define IDC_IMAGES_BYTES                1016
++#define IDC_CSS_BYTES                   1017
++#define IDC_XSL_BYTES                   1018
++#define IDC_JSC_BYTES                   1019
++#define IDC_TOTAL_BYTES                 1020
++#define IDC_IMAGES_LIVE_COUNT           1021
++#define IDC_CSS_LIVE_COUNT              1022
++#define IDC_XSL_LIVE_COUNT              1023
++#define IDC_JSC_LIVE_COUNT              1024
++#define IDC_TOTAL_LIVE_COUNT            1025
++#define IDC_IMAGES_DECODED_COUNT        1026
++#define IDC_CSS_DECODED_COUNT           1027
++#define IDC_XSL_DECODED_COUNT           1028
++#define IDC_JSC_DECODED_COUNT           1029
++#define IDC_TOTAL_DECODED               1030
++#define IDC_IMAGES_PURGEABLE_COUNT      1031
++#define IDC_CSS_PURGEABLE_COUNT         1032
++#define IDC_XSL_PURGEABLE_COUNT         1033
++#define IDC_JSC_PURGEABLE_COUNT         1034
++#define IDC_TOTAL_PURGEABLE             1035
++#define IDC_TOTAL_JSC_HEAP_OBJECTS      1036
++#define IDC_GLOBAL_JSC_HEAP_OBJECTS     1037
++#define IDC_PROTECTED_JSC_HEAP_OBJECTS  1038
++#define IDC_STATIC56                    1039
++#define IDC_STATIC57                    1040
++#define IDC_JSC_HEAP_SIZE               1041
++#define IDC_JSC_HEAP_FREE               1042
++#define IDC_BUTTON5                     1043
++#define IDC_TOTAL_FONT_OBJECTS          1044
++#define IDC_Message                     1044
++#define IDC_INACTIVE_FONT_OBJECTS       1045
++#define IDC_GLYPH_PAGES                 1046
++#define IDC_PAGE_URL_MAPPINGS           1047
++#define IDC_RETAINED_PAGE_URLS          1048
++#define IDC_SITE_ICON_RECORDS           1049
++#define IDC_TOTAL_FONT_OBJECTS5         1050
++#define IDC_SITE_ICONS_WITH_DATA        1051
++#define IDC_USER_AGENT_INPUT            1052
++#define IDC_AUTH_USER                   1053
++#define IDC_AUTH_PASSWORD               1054
++#define IDC_URL_BAR                     1055
++#define IDC_REALM_TEXT                  1056
++#define IDC_PROXY_URL                   1057
++#define IDC_PROXY_DEFAULT               1058
++#define IDC_PROXY_CUSTOM                1059
++#define IDC_PROXY_EXCLUDE               1060
++#define IDC_PROXY_DISABLE               1061
++#define IDC_SERVER_TRUST_TEXT           1062
++#define IDM_NEW_WEBKIT_WINDOW           32776
++#define IDM_NEW_WEBKITLEGACY_WINDOW     32777
++#define IDM_PROXY_SETTINGS              32778
++#define IDM_RELOAD                      32779
++#define IDM_CLOSE_WINDOW                32780
++#define IDM_GO_HOME                     32781
++#define IDM_SET_DEFAULT_URL             32782
++#define IDC_STATIC                      -1
++
++// Next default values for new objects
++// 
++#ifdef APSTUDIO_INVOKED
++#ifndef APSTUDIO_READONLY_SYMBOLS
++#define _APS_NO_MFC                     1
++#define _APS_NEXT_RESOURCE_VALUE        182
++#define _APS_NEXT_COMMAND_VALUE         32783
++#define _APS_NEXT_CONTROL_VALUE         1063
++#define _APS_NEXT_SYMED_VALUE           110
++#endif
++#endif
+diff --git a/Tools/Playwright/win/PlaywrightReplace.h b/Tools/Playwright/win/PlaywrightReplace.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..dd134b879ea6aee23826e9ed2f6773d8c1466118
+--- /dev/null
++++ b/Tools/Playwright/win/PlaywrightReplace.h
+@@ -0,0 +1,29 @@
++/*
++ * Copyright (C) 2013 Alex Christensen. All rights reserved.
++ * 
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1.  Redistributions of source code must retain the above copyright
++ *     notice, this list of conditions and the following disclaimer.
++ * 2.  Redistributions in binary form must reproduce the above copyright
++ *     notice, this list of conditions and the following disclaimer in the
++ *     documentation and/or other materials provided with the distribution.
++ * 
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++ * DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS BE LIABLE FOR ANY
++ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
++ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#pragma once
++
++// This file is to make it easier for users to manage changes to the internals of Playwright
++
++static void processCrashReport(const wchar_t* fileName) { ::MessageBox(0, fileName, L"Crash Report", MB_OK); }
+diff --git a/Tools/Playwright/win/PlaywrightResource.h b/Tools/Playwright/win/PlaywrightResource.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..c60d7b73f18d0e7f220e68c2a22e5d9911bf8960
+--- /dev/null
++++ b/Tools/Playwright/win/PlaywrightResource.h
+@@ -0,0 +1,20 @@
++//{{NO_DEPENDENCIES}}
++// Microsoft Visual C++ generated include file.
++// Used by PlaywrightLauncher.rc
++//
++#define IDD_PLAYWRIGHT_DIALOG          102
++#define IDI_PLAYWRIGHT                 107
++#define IDR_MAINFRAME                   128
++#define IDC_STATIC                      -1
++
++// Next default values for new objects
++// 
++#ifdef APSTUDIO_INVOKED
++#ifndef APSTUDIO_READONLY_SYMBOLS
++#define _APS_NO_MFC                     1
++#define _APS_NEXT_RESOURCE_VALUE        129
++#define _APS_NEXT_COMMAND_VALUE         32771
++#define _APS_NEXT_CONTROL_VALUE         1000
++#define _APS_NEXT_SYMED_VALUE           110
++#endif
++#endif
+diff --git a/Tools/Playwright/win/WebKitBrowserWindow.cpp b/Tools/Playwright/win/WebKitBrowserWindow.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..0fb5e0415d99273ed9f461032b2d77617376355a
+--- /dev/null
++++ b/Tools/Playwright/win/WebKitBrowserWindow.cpp
+@@ -0,0 +1,527 @@
++/*
++ * Copyright (C) 2018 Sony Interactive Entertainment Inc.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
++ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
++ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++#include "stdafx.h"
++#include "WebKitBrowserWindow.h"
++
++#include "PlaywrightLibResource.h"
++#include "common.h"
++#include <WebCore/GDIUtilities.h>
++#include <WebKit/WKAuthenticationChallenge.h>
++#include <WebKit/WKAuthenticationDecisionListener.h>
++#include <WebKit/WKCertificateInfoCurl.h>
++#include <WebKit/WKCredential.h>
++#include <WebKit/WKFramePolicyListener.h>
++#include <WebKit/WKInspector.h>
++#include <WebKit/WKProtectionSpace.h>
++#include <WebKit/WKProtectionSpaceCurl.h>
++#include <WebKit/WKWebsiteDataStoreRef.h>
++#include <WebKit/WKWebsiteDataStoreRefCurl.h>
++#include <vector>
++
++std::wstring createString(WKStringRef wkString)
++{
++    size_t maxSize = WKStringGetLength(wkString);
++
++    std::vector<WKChar> wkCharBuffer(maxSize);
++    size_t actualLength = WKStringGetCharacters(wkString, wkCharBuffer.data(), maxSize);
++    return std::wstring(wkCharBuffer.data(), actualLength);
++}
++
++std::wstring createString(WKURLRef wkURL)
++{
++    if (!wkURL)
++        return { };
++    WKRetainPtr<WKStringRef> url = adoptWK(WKURLCopyString(wkURL));
++    return createString(url.get());
++}
++
++std::string createUTF8String(const wchar_t* src, size_t srcLength)
++{
++    int length = WideCharToMultiByte(CP_UTF8, 0, src, srcLength, 0, 0, nullptr, nullptr);
++    std::vector<char> buffer(length);
++    size_t actualLength = WideCharToMultiByte(CP_UTF8, 0, src, srcLength, buffer.data(), length, nullptr, nullptr);
++    return { buffer.data(), actualLength };
++}
++
++std::wstring createPEMString(WKCertificateInfoRef certificateInfo)
++{
++    auto chainSize = WKCertificateInfoGetCertificateChainSize(certificateInfo);
++
++    std::wstring pems;
++
++    for (auto i = 0; i < chainSize; i++) {
++        auto certificate = adoptWK(WKCertificateInfoCopyCertificateAtIndex(certificateInfo, i));
++        auto size = WKDataGetSize(certificate.get());
++        auto data = WKDataGetBytes(certificate.get());
++
++        for (size_t i = 0; i < size; i++)
++            pems.push_back(data[i]);
++    }
++
++    return replaceString(pems, L"\n", L"\r\n");
++}
++
++WKRetainPtr<WKStringRef> createWKString(_bstr_t str)
++{
++    auto utf8 = createUTF8String(str, str.length());
++    return adoptWK(WKStringCreateWithUTF8CString(utf8.data()));
++}
++
++WKRetainPtr<WKStringRef> createWKString(const std::wstring& str)
++{
++    auto utf8 = createUTF8String(str.c_str(), str.length());
++    return adoptWK(WKStringCreateWithUTF8CString(utf8.data()));
++}
++
++WKRetainPtr<WKURLRef> createWKURL(_bstr_t str)
++{
++    auto utf8 = createUTF8String(str, str.length());
++    return adoptWK(WKURLCreateWithUTF8CString(utf8.data()));
++}
++
++WKRetainPtr<WKURLRef> createWKURL(const std::wstring& str)
++{
++    auto utf8 = createUTF8String(str.c_str(), str.length());
++    return adoptWK(WKURLCreateWithUTF8CString(utf8.data()));
++}
++
++Ref<BrowserWindow> WebKitBrowserWindow::create(BrowserWindowClient& client, HWND mainWnd, WKContextRef context, WKWebsiteDataStoreRef dataStore, bool)
++{
++    auto conf = adoptWK(WKPageConfigurationCreate());
++
++    auto prefs = adoptWK(WKPreferencesCreate());
++
++    auto pageGroup = adoptWK(WKPageGroupCreateWithIdentifier(createWKString("WinPlaywright").get()));
++    WKPageConfigurationSetPageGroup(conf.get(), pageGroup.get());
++    WKPageGroupSetPreferences(pageGroup.get(), prefs.get());
++
++    WKPreferencesSetMediaCapabilitiesEnabled(prefs.get(), false);
++    WKPreferencesSetDeveloperExtrasEnabled(prefs.get(), true);
++    WKPageConfigurationSetPreferences(conf.get(), prefs.get());
++
++    WKPageConfigurationSetContext(conf.get(), context);
++    WKPageConfigurationSetWebsiteDataStore(conf.get(), dataStore);
++
++    return adoptRef(*new WebKitBrowserWindow(client, conf.get(), mainWnd));
++}
++
++WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, WKPageConfigurationRef conf, HWND mainWnd)
++    : m_client(client)
++    , m_hMainWnd(mainWnd)
++{
++    RECT rect = { };
++    m_view = adoptWK(WKViewCreate(rect, conf, mainWnd));
++    WKViewSetIsInWindow(m_view.get(), true);
++
++    auto page = WKViewGetPage(m_view.get());
++
++    WKPageNavigationClientV0 navigationClient = { };
++    navigationClient.base.version = 0;
++    navigationClient.base.clientInfo = this;
++    navigationClient.didReceiveAuthenticationChallenge = didReceiveAuthenticationChallenge;
++    WKPageSetPageNavigationClient(page, &navigationClient.base);
++
++    WKPageUIClientV14 uiClient = { };
++    uiClient.base.version = 14;
++    uiClient.base.clientInfo = this;
++    uiClient.createNewPage = createNewPage;
++    uiClient.didNotHandleKeyEvent = didNotHandleKeyEvent;
++    uiClient.close = closeWindow;
++    uiClient.runJavaScriptAlert = runJavaScriptAlert;
++    uiClient.runJavaScriptConfirm = runJavaScriptConfirm;
++    uiClient.runJavaScriptPrompt = runJavaScriptPrompt;
++    uiClient.runBeforeUnloadConfirmPanel = runBeforeUnloadConfirmPanel;
++    uiClient.handleJavaScriptDialog = handleJavaScriptDialog;
++    WKPageSetPageUIClient(page, &uiClient.base);
++
++    WKPageStateClientV0 stateClient = { };
++    stateClient.base.version = 0;
++    stateClient.base.clientInfo = this;
++    stateClient.didChangeTitle = didChangeTitle;
++    stateClient.didChangeIsLoading = didChangeIsLoading;
++    stateClient.didChangeEstimatedProgress = didChangeEstimatedProgress;
++    stateClient.didChangeActiveURL = didChangeActiveURL;
++    WKPageSetPageStateClient(page, &stateClient.base);
++
++    WKPagePolicyClientV1 policyClient = { };
++    policyClient.base.version = 1;
++    policyClient.base.clientInfo = this;
++    policyClient.decidePolicyForResponse_deprecatedForUseWithV0 = decidePolicyForResponse;
++    WKPageSetPagePolicyClient(page, &policyClient.base);
++    resetZoom();
++}
++
++void WebKitBrowserWindow::updateProxySettings()
++{
++    auto context = WKPageGetContext(WKViewGetPage(m_view.get()));
++    auto store = WKWebsiteDataStoreGetDefaultDataStore();
++
++    if (!m_proxy.enable) {
++        WKWebsiteDataStoreDisableNetworkProxySettings(store);
++        return;
++    }
++
++    if (!m_proxy.custom) {
++        WKWebsiteDataStoreEnableDefaultNetworkProxySettings(store);
++        return;
++    }
++
++    auto url = createWKURL(m_proxy.url);
++    auto excludeHosts = createWKString(m_proxy.excludeHosts);
++    WKWebsiteDataStoreEnableCustomNetworkProxySettings(store, url.get(), excludeHosts.get());
++}
++
++WebKitBrowserWindow::~WebKitBrowserWindow()
++{
++    if (m_alertDialog) {
++        WKRelease(m_alertDialog);
++        m_alertDialog = NULL;
++    }
++
++    if (m_confirmDialog) {
++        WKRelease(m_confirmDialog);
++        m_confirmDialog = NULL;
++    }
++
++    if (m_promptDialog) {
++        WKRelease(m_promptDialog);
++        m_promptDialog = NULL;
++    }
++
++    if (m_beforeUnloadDialog) {
++        WKRelease(m_beforeUnloadDialog);
++        m_beforeUnloadDialog = NULL;
++    }
++}
++
++HRESULT WebKitBrowserWindow::init()
++{
++    return S_OK;
++}
++
++HWND WebKitBrowserWindow::hwnd()
++{
++    return WKViewGetWindow(m_view.get());
++}
++
++HRESULT WebKitBrowserWindow::loadURL(const BSTR& url)
++{
++    auto page = WKViewGetPage(m_view.get());
++    WKPageLoadURL(page, createWKURL(_bstr_t(url)).get());
++    return true;
++}
++
++void WebKitBrowserWindow::reload()
++{
++    auto page = WKViewGetPage(m_view.get());
++    WKPageReload(page);
++}
++
++void WebKitBrowserWindow::navigateForwardOrBackward(bool forward)
++{
++    auto page = WKViewGetPage(m_view.get());
++    if (forward)
++        WKPageGoForward(page);
++    else
++        WKPageGoBack(page);
++}
++
++void WebKitBrowserWindow::navigateToHistory(UINT menuID)
++{
++    // Not implemented
++}
++
++void WebKitBrowserWindow::setPreference(UINT menuID, bool enable)
++{
++    auto page = WKViewGetPage(m_view.get());
++    auto pgroup = WKPageGetPageGroup(page);
++    auto pref = WKPageGroupGetPreferences(pgroup);
++    switch (menuID) {
++    case IDM_DISABLE_IMAGES:
++        WKPreferencesSetLoadsImagesAutomatically(pref, !enable);
++        break;
++    case IDM_DISABLE_JAVASCRIPT:
++        WKPreferencesSetJavaScriptEnabled(pref, !enable);
++        break;
++    }
++}
++
++void WebKitBrowserWindow::print()
++{
++    // Not implemented
++}
++
++void WebKitBrowserWindow::launchInspector()
++{
++    auto page = WKViewGetPage(m_view.get());
++    auto inspector = WKPageGetInspector(page);
++    WKInspectorShow(inspector);
++}
++
++void WebKitBrowserWindow::openProxySettings()
++{
++    if (askProxySettings(m_hMainWnd, m_proxy))
++        updateProxySettings();
++}
++
++void WebKitBrowserWindow::setUserAgent(_bstr_t& customUAString)
++{
++    auto page = WKViewGetPage(m_view.get());
++    auto ua = createWKString(customUAString);
++    WKPageSetCustomUserAgent(page, ua.get());
++}
++
++_bstr_t WebKitBrowserWindow::userAgent()
++{
++    auto page = WKViewGetPage(m_view.get());
++    auto ua = adoptWK(WKPageCopyUserAgent(page));
++    return createString(ua.get()).c_str();
++}
++
++void WebKitBrowserWindow::showLayerTree()
++{
++    // Not implemented
++}
++
++void WebKitBrowserWindow::updateStatistics(HWND hDlg)
++{
++    // Not implemented
++}
++
++
++void WebKitBrowserWindow::resetZoom()
++{
++    auto page = WKViewGetPage(m_view.get());
++    WKPageSetPageZoomFactor(page, WebCore::deviceScaleFactorForWindow(hwnd()));
++}
++
++void WebKitBrowserWindow::zoomIn()
++{
++    auto page = WKViewGetPage(m_view.get());
++    double s = WKPageGetPageZoomFactor(page);
++    WKPageSetPageZoomFactor(page, s * 1.25);
++}
++
++void WebKitBrowserWindow::zoomOut()
++{
++    auto page = WKViewGetPage(m_view.get());
++    double s = WKPageGetPageZoomFactor(page);
++    WKPageSetPageZoomFactor(page, s * 0.8);
++}
++
++static WebKitBrowserWindow& toWebKitBrowserWindow(const void *clientInfo)
++{
++    return *const_cast<WebKitBrowserWindow*>(static_cast<const WebKitBrowserWindow*>(clientInfo));
++}
++
++void WebKitBrowserWindow::didChangeTitle(const void* clientInfo)
++{
++    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
++    auto page = WKViewGetPage(thisWindow.m_view.get());
++    WKRetainPtr<WKStringRef> title = adoptWK(WKPageCopyTitle(page));
++    std::wstring titleString = createString(title.get()) + L" [WebKit]";
++    SetWindowText(thisWindow.m_hMainWnd, titleString.c_str());
++}
++
++void WebKitBrowserWindow::didChangeIsLoading(const void* clientInfo)
++{
++    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
++    thisWindow.m_client.progressFinished();
++}
++
++void WebKitBrowserWindow::didChangeEstimatedProgress(const void* clientInfo)
++{
++    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
++    auto page = WKViewGetPage(thisWindow.m_view.get());
++    thisWindow.m_client.progressChanged(WKPageGetEstimatedProgress(page));
++}
++
++void WebKitBrowserWindow::didChangeActiveURL(const void* clientInfo)
++{
++    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
++    auto page = WKViewGetPage(thisWindow.m_view.get());
++    WKRetainPtr<WKURLRef> url = adoptWK(WKPageCopyActiveURL(page));
++    thisWindow.m_client.activeURLChanged(createString(url.get()));
++}
++
++void WebKitBrowserWindow::didReceiveAuthenticationChallenge(WKPageRef page, WKAuthenticationChallengeRef challenge, const void* clientInfo)
++{
++    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
++    auto protectionSpace = WKAuthenticationChallengeGetProtectionSpace(challenge);
++    auto decisionListener = WKAuthenticationChallengeGetDecisionListener(challenge);
++    auto authenticationScheme = WKProtectionSpaceGetAuthenticationScheme(protectionSpace);
++
++    if (authenticationScheme == kWKProtectionSpaceAuthenticationSchemeServerTrustEvaluationRequested) {
++        if (thisWindow.canTrustServerCertificate(protectionSpace)) {
++            WKRetainPtr<WKStringRef> username = createWKString("accept server trust");
++            WKRetainPtr<WKStringRef> password = createWKString("");
++            WKRetainPtr<WKCredentialRef> wkCredential = adoptWK(WKCredentialCreate(username.get(), password.get(), kWKCredentialPersistenceForSession));
++            WKAuthenticationDecisionListenerUseCredential(decisionListener, wkCredential.get());
++            return;
++        }
++    } else {
++        WKRetainPtr<WKStringRef> realm(WKProtectionSpaceCopyRealm(protectionSpace));
++
++        if (auto credential = askCredential(thisWindow.hwnd(), createString(realm.get()))) {
++            WKRetainPtr<WKStringRef> username = createWKString(credential->username);
++            WKRetainPtr<WKStringRef> password = createWKString(credential->password);
++            WKRetainPtr<WKCredentialRef> wkCredential = adoptWK(WKCredentialCreate(username.get(), password.get(), kWKCredentialPersistenceForSession));
++            WKAuthenticationDecisionListenerUseCredential(decisionListener, wkCredential.get());
++            return;
++        }
++    }
++
++    WKAuthenticationDecisionListenerUseCredential(decisionListener, nullptr);
++}
++
++bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protectionSpace)
++{
++    auto host = createString(adoptWK(WKProtectionSpaceCopyHost(protectionSpace)).get());
++    auto certificateInfo = adoptWK(WKProtectionSpaceCopyCertificateInfo(protectionSpace));
++    auto verificationError = WKCertificateInfoGetVerificationError(certificateInfo.get());
++    auto description = createString(adoptWK(WKCertificateInfoCopyVerificationErrorDescription(certificateInfo.get())).get());
++    auto pem = createPEMString(certificateInfo.get());
++
++    auto it = m_acceptedServerTrustCerts.find(host);
++    if (it != m_acceptedServerTrustCerts.end() && it->second == pem)
++        return true;
++
++    std::wstring textString = L"[HOST] " + host + L"\r\n";
++    textString.append(L"[ERROR] " + std::to_wstring(verificationError) + L"\r\n");
++    textString.append(L"[DESCRIPTION] " + description + L"\r\n");
++    textString.append(pem);
++
++    if (askServerTrustEvaluation(hwnd(), textString)) {
++        m_acceptedServerTrustCerts.emplace(host, pem);
++        return true;
++    }
++
++    return false;
++}
++
++void WebKitBrowserWindow::closeWindow(WKPageRef page, const void* clientInfo)
++{
++    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
++    PostMessage(thisWindow.m_hMainWnd, WM_CLOSE, 0, 0);
++}
++
++void WebKitBrowserWindow::runJavaScriptAlert(WKPageRef page, WKStringRef alertText, WKFrameRef frame, WKSecurityOriginRef securityOrigin, WKPageRunJavaScriptAlertResultListenerRef listener, const void *clientInfo)
++{
++    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
++    WKRetain(listener);
++    thisWindow.m_alertDialog = listener;
++}
++
++void WebKitBrowserWindow::runJavaScriptConfirm(WKPageRef page, WKStringRef message, WKFrameRef frame, WKSecurityOriginRef securityOrigin, WKPageRunJavaScriptConfirmResultListenerRef listener, const void *clientInfo)
++{
++    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
++    WKRetain(listener);
++    thisWindow.m_confirmDialog = listener;
++}
++
++void WebKitBrowserWindow::runJavaScriptPrompt(WKPageRef page, WKStringRef message, WKStringRef defaultValue, WKFrameRef frame, WKSecurityOriginRef securityOrigin, WKPageRunJavaScriptPromptResultListenerRef listener, const void *clientInfo)
++{
++    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
++    WKRetain(listener);
++    thisWindow.m_promptDialog = listener;
++}
++
++void WebKitBrowserWindow::runBeforeUnloadConfirmPanel(WKPageRef page, WKStringRef message, WKFrameRef frame, WKPageRunBeforeUnloadConfirmPanelResultListenerRef listener, const void *clientInfo)
++{
++    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
++    WKRetain(listener);
++    thisWindow.m_beforeUnloadDialog = listener;
++}
++    
++void WebKitBrowserWindow::handleJavaScriptDialog(WKPageRef page, bool accept, WKStringRef value, const void *clientInfo)
++{
++    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
++    if (thisWindow.m_alertDialog) {
++        WKPageRunJavaScriptAlertResultListenerCall(thisWindow.m_alertDialog);
++        WKRelease(thisWindow.m_alertDialog);
++        thisWindow.m_alertDialog = NULL;
++    }
++
++    if (thisWindow.m_confirmDialog) {
++        WKPageRunJavaScriptConfirmResultListenerCall(thisWindow.m_confirmDialog, accept);
++        WKRelease(thisWindow.m_confirmDialog);
++        thisWindow.m_confirmDialog = NULL;
++    }
++
++    if (thisWindow.m_promptDialog) {
++        WKPageRunJavaScriptPromptResultListenerCall(thisWindow.m_promptDialog, accept ? value : NULL);
++        WKRelease(thisWindow.m_promptDialog);
++        thisWindow.m_promptDialog = NULL;
++    }
++
++    if (thisWindow.m_beforeUnloadDialog) {
++        WKPageRunBeforeUnloadConfirmPanelResultListenerCall(thisWindow.m_beforeUnloadDialog, accept);
++        WKRelease(thisWindow.m_beforeUnloadDialog);
++        thisWindow.m_beforeUnloadDialog = NULL;
++    }
++}
++
++WKPageRef WebKitBrowserWindow::createPageCallback(WKPageConfigurationRef configuration)
++{
++    return WebKitBrowserWindow::createViewCallback(configuration, true);
++}
++
++WKPageRef WebKitBrowserWindow::createViewCallback(WKPageConfigurationRef configuration, bool navigate)
++{
++    auto context = WKPageConfigurationGetContext(configuration);
++    auto dataStore = WKPageConfigurationGetWebsiteDataStore(configuration);
++    auto& newWindow = MainWindow::create(context, dataStore).leakRef();
++    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, WKContextRef, WKWebsiteDataStoreRef, bool) -> auto {
++        return adoptRef(*new WebKitBrowserWindow(client, configuration, mainWnd));
++    };
++    bool ok = newWindow.init(factory, hInst);
++    if (navigate)
++        newWindow.browserWindow()->loadURL(_bstr_t("about:blank").GetBSTR());
++
++    auto& newBrowserWindow = *static_cast<WebKitBrowserWindow*>(newWindow.browserWindow());
++    return WKViewGetPage(newBrowserWindow.m_view.get());
++}
++
++
++WKPageRef WebKitBrowserWindow::createNewPage(WKPageRef, WKPageConfigurationRef configuration, WKNavigationActionRef, WKWindowFeaturesRef, const void*)
++{
++    // Retain popups as per API contract.
++    WKRetainPtr<WKPageRef> newPage = createViewCallback(configuration, false);
++    return newPage.leakRef();
++}
++
++void WebKitBrowserWindow::didNotHandleKeyEvent(WKPageRef, WKNativeEventPtr event, const void* clientInfo)
++{
++    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
++    PostMessage(thisWindow.m_hMainWnd, event->message, event->wParam, event->lParam);
++}
++
++void WebKitBrowserWindow::decidePolicyForResponse(WKPageRef page, WKFrameRef frame, WKURLResponseRef response, WKURLRequestRef request, WKFramePolicyListenerRef listener, WKTypeRef userData, const void* clientInfo)
++{
++    if (WKURLResponseIsAttachment(response))
++        WKFramePolicyListenerDownload(listener);
++    else
++        WKFramePolicyListenerUse(listener);
++}
+diff --git a/Tools/Playwright/win/WebKitBrowserWindow.h b/Tools/Playwright/win/WebKitBrowserWindow.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..2f25d60c366efa428197dba4a7e0aea6de86af6c
+--- /dev/null
++++ b/Tools/Playwright/win/WebKitBrowserWindow.h
+@@ -0,0 +1,96 @@
++/*
++ * Copyright (C) 2018 Sony Interactive Entertainment Inc.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
++ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
++ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++#pragma once
++
++#include "BrowserWindow.h"
++#include "Common.h"
++#include <WebKit/WKBase.h>
++#include <WebKit/WKRetainPtr.h>
++#include <WebKit/WebKit2_C.h>
++#include <unordered_map>
++#include <wtf/Ref.h>
++
++class WebKitBrowserWindow : public BrowserWindow {
++public:
++    static Ref<BrowserWindow> create(BrowserWindowClient&, HWND mainWnd, WKContextRef, WKWebsiteDataStoreRef, bool useLayeredWebView = false);
++    static WKPageRef createPageCallback(WKPageConfigurationRef);
++
++private:
++    static WKPageRef createViewCallback(WKPageConfigurationRef, bool navigate);
++    WebKitBrowserWindow(BrowserWindowClient&, WKPageConfigurationRef, HWND mainWnd);
++    ~WebKitBrowserWindow() override;
++
++    HRESULT init() override;
++    HWND hwnd() override;
++
++    HRESULT loadURL(const BSTR& url) override;
++    void reload() override;
++    void navigateForwardOrBackward(bool forward) override;
++    void navigateToHistory(UINT menuID) override;
++    void setPreference(UINT menuID, bool enable) override;
++
++    void print() override;
++    void launchInspector() override;
++    void openProxySettings() override;
++
++    _bstr_t userAgent() override;
++    void setUserAgent(_bstr_t&) override;
++
++    void showLayerTree() override;
++    void updateStatistics(HWND dialog) override;
++
++    void resetZoom() override;
++    void zoomIn() override;
++    void zoomOut() override;
++
++    void updateProxySettings();
++
++    bool canTrustServerCertificate(WKProtectionSpaceRef);
++
++    static void didChangeTitle(const void*);
++    static void didChangeIsLoading(const void*);
++    static void didChangeEstimatedProgress(const void*);
++    static void didChangeActiveURL(const void*);
++    static void didReceiveAuthenticationChallenge(WKPageRef, WKAuthenticationChallengeRef, const void*);
++    static WKPageRef createNewPage(WKPageRef, WKPageConfigurationRef, WKNavigationActionRef, WKWindowFeaturesRef, const void *);
++    static void closeWindow(WKPageRef, const void*);
++    static void runJavaScriptAlert(WKPageRef page, WKStringRef alertText, WKFrameRef frame, WKSecurityOriginRef securityOrigin, WKPageRunJavaScriptAlertResultListenerRef listener, const void *clientInfo);
++    static void runJavaScriptConfirm(WKPageRef page, WKStringRef message, WKFrameRef frame, WKSecurityOriginRef securityOrigin, WKPageRunJavaScriptConfirmResultListenerRef listener, const void *clientInfo);
++    static void runJavaScriptPrompt(WKPageRef page, WKStringRef message, WKStringRef defaultValue, WKFrameRef frame, WKSecurityOriginRef securityOrigin, WKPageRunJavaScriptPromptResultListenerRef listener, const void *clientInfo);
++    static void runBeforeUnloadConfirmPanel(WKPageRef page, WKStringRef message, WKFrameRef frame, WKPageRunBeforeUnloadConfirmPanelResultListenerRef listener, const void *clientInfo);
++    static void handleJavaScriptDialog(WKPageRef page, bool accept, WKStringRef value, const void *clientInfo);
++    static void didNotHandleKeyEvent(WKPageRef, WKNativeEventPtr, const void*);
++    static void decidePolicyForResponse(WKPageRef, WKFrameRef, WKURLResponseRef, WKURLRequestRef, WKFramePolicyListenerRef, WKTypeRef, const void*);
++
++    BrowserWindowClient& m_client;
++    WKRetainPtr<WKViewRef> m_view;
++    HWND m_hMainWnd { nullptr };
++    ProxySettings m_proxy { };
++    std::unordered_map<std::wstring, std::wstring> m_acceptedServerTrustCerts;
++    WKPageRunJavaScriptAlertResultListenerRef m_alertDialog = { };
++    WKPageRunJavaScriptConfirmResultListenerRef m_confirmDialog = { };
++    WKPageRunJavaScriptPromptResultListenerRef m_promptDialog = { };
++    WKPageRunBeforeUnloadConfirmPanelResultListenerRef m_beforeUnloadDialog = { };
++};
+diff --git a/Tools/Playwright/win/WinMain.cpp b/Tools/Playwright/win/WinMain.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..03e82fed0c0d07166b52700b15b16e4ab0f76c1e
+--- /dev/null
++++ b/Tools/Playwright/win/WinMain.cpp
+@@ -0,0 +1,157 @@
++/*
++ * Copyright (C) 2006, 2008, 2013-2015 Apple Inc.  All rights reserved.
++ * Copyright (C) 2009, 2011 Brent Fulgham.  All rights reserved.
++ * Copyright (C) 2009, 2010, 2011 Appcelerator, Inc. All rights reserved.
++ * Copyright (C) 2013 Alex Christensen. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
++ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
++ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
++ */
++
++#pragma warning(disable: 4091)
++
++#include "stdafx.h"
++#include "Common.h"
++#include "PlaywrightLibResource.h"
++#include "PlaywrightReplace.h"
++#include <WebKit/WKContext.h>
++#include <WebKit/WKWebsiteDataStoreConfigurationRef.h>
++#include <WebKit/WKWebsiteDataStoreRef.h>
++#include <wtf/win/SoftLinking.h>
++#include "WebKitBrowserWindow.h"
++#include <wtf/MainThread.h>
++#include <WebKit/WKInspector.h>
++
++SOFT_LINK_LIBRARY(user32);
++SOFT_LINK_OPTIONAL(user32, SetProcessDpiAwarenessContext, BOOL, STDAPICALLTYPE, (DPI_AWARENESS_CONTEXT));
++
++WKRetainPtr<WKStringRef> toWK(const std::string& string)
++{
++    return adoptWK(WKStringCreateWithUTF8CString(string.c_str()));
++}
++
++std::string toUTF8String(const wchar_t* src, size_t srcLength)
++{
++    int length = WideCharToMultiByte(CP_UTF8, 0, src, srcLength, 0, 0, nullptr, nullptr);
++    std::vector<char> buffer(length);
++    size_t actualLength = WideCharToMultiByte(CP_UTF8, 0, src, srcLength, buffer.data(), length, nullptr, nullptr);
++    return { buffer.data(), actualLength };
++}
++
++int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpstrCmdLine, _In_ int nCmdShow)
++{
++#ifdef _CRTDBG_MAP_ALLOC
++    _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
++    _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
++#endif
++
++    MSG msg { };
++    HACCEL hAccelTable, hPreAccelTable;
++
++    INITCOMMONCONTROLSEX InitCtrlEx;
++
++    InitCtrlEx.dwSize = sizeof(INITCOMMONCONTROLSEX);
++    InitCtrlEx.dwICC  = 0x00004000; // ICC_STANDARD_CLASSES;
++    InitCommonControlsEx(&InitCtrlEx);
++
++    auto options = parseCommandLine();
++    if (options.inspectorPipe) {
++        WKInspectorInitializeRemoteInspectorPipe(
++            WebKitBrowserWindow::createPageCallback,
++            []() { PostQuitMessage(0); });
++    }
++
++    if (options.useFullDesktop)
++        computeFullDesktopFrame();
++
++    // Init COM
++    OleInitialize(nullptr);
++
++    if (SetProcessDpiAwarenessContextPtr())
++        SetProcessDpiAwarenessContextPtr()(DPI_AWARENESS_CONTEXT_UNAWARE);
++
++    MainWindow::configure(options.headless, options.noStartupWindow);
++
++    if (!options.noStartupWindow) {
++        auto factory = WebKitBrowserWindow::create;
++        auto configuration = adoptWK(WKWebsiteDataStoreConfigurationCreate());
++        if (options.userDataDir.length()) {
++            std::string profileFolder = toUTF8String(options.userDataDir, options.userDataDir.length());
++            WKWebsiteDataStoreConfigurationSetApplicationCacheDirectory(configuration.get(), toWK(profileFolder + "\\ApplicationCache").get());
++            WKWebsiteDataStoreConfigurationSetNetworkCacheDirectory(configuration.get(), toWK(profileFolder + "\\Cache").get());
++            WKWebsiteDataStoreConfigurationSetCacheStorageDirectory(configuration.get(), toWK(profileFolder + "\\CacheStorage").get());
++            WKWebsiteDataStoreConfigurationSetIndexedDBDatabaseDirectory(configuration.get(), toWK(profileFolder + "\\Databases" + "\\IndexedDB").get());
++            WKWebsiteDataStoreConfigurationSetLocalStorageDirectory(configuration.get(), toWK(profileFolder + "\\LocalStorage").get());
++            WKWebsiteDataStoreConfigurationSetWebSQLDatabaseDirectory(configuration.get(), toWK(profileFolder + "\\Databases" + "\\WebSQL").get());
++            WKWebsiteDataStoreConfigurationSetMediaKeysStorageDirectory(configuration.get(), toWK(profileFolder + "\\MediaKeys").get());
++            WKWebsiteDataStoreConfigurationSetResourceLoadStatisticsDirectory(configuration.get(), toWK(profileFolder + "\\ResourceLoadStatistics").get());
++            WKWebsiteDataStoreConfigurationSetServiceWorkerRegistrationDirectory(configuration.get(), toWK(profileFolder + "\\ServiceWorkers").get());
++        }
++        auto context = adoptWK(WKContextCreateWithConfiguration(nullptr));
++        auto dataStore = adoptWK(WKWebsiteDataStoreCreateWithConfiguration(configuration.get()));
++        WKContextSetPrimaryDataStore(context.get(), dataStore.get());
++
++        auto& mainWindow = MainWindow::create(context.get(), dataStore.get()).leakRef();
++        HRESULT hr = mainWindow.init(factory, hInst, options.usesLayeredWebView);
++        if (FAILED(hr))
++            goto exit;
++
++        if (options.requestedURL.length())
++            mainWindow.loadURL(options.requestedURL.GetBSTR());
++        else
++            mainWindow.goHome();
++    }
++
++    hAccelTable = LoadAccelerators(hInst, MAKEINTRESOURCE(IDC_PLAYWRIGHT));
++    hPreAccelTable = LoadAccelerators(hInst, MAKEINTRESOURCE(IDR_ACCELERATORS_PRE));
++
++#pragma warning(disable:4509)
++
++    // Main message loop:
++    __try {
++        while (GetMessage(&msg, nullptr, 0, 0)) {
++            if (TranslateAccelerator(msg.hwnd, hPreAccelTable, &msg))
++                continue;
++            bool processed = false;
++            if (MainWindow::isInstance(msg.hwnd))
++                processed = TranslateAccelerator(msg.hwnd, hAccelTable, &msg);
++            if (!processed) {
++                TranslateMessage(&msg);
++                DispatchMessage(&msg);
++            }
++        }
++    } __except(createCrashReport(GetExceptionInformation()), EXCEPTION_EXECUTE_HANDLER) { }
++
++exit:
++#ifdef _CRTDBG_MAP_ALLOC
++    _CrtDumpMemoryLeaks();
++#endif
++
++    // Shut down COM.
++    OleUninitialize();
++
++    return static_cast<int>(msg.wParam);
++}
++
++extern "C" __declspec(dllexport) int WINAPI dllLauncherEntryPoint(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpstrCmdLine, int nCmdShow)
++{
++    return wWinMain(hInstance, hPrevInstance, lpstrCmdLine, nCmdShow);
++}
+diff --git a/Tools/Playwright/win/resource.h b/Tools/Playwright/win/resource.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..c98fac7ea8dc19b32f49cd64d9174fb00f60f927
+--- /dev/null
++++ b/Tools/Playwright/win/resource.h
+@@ -0,0 +1,28 @@
++//{{NO_DEPENDENCIES}}
++// Microsoft Visual C++ generated include file.
++// Used by WinLauncher.rc
++//
++#define IDC_MYICON                      2
++#define IDD_WINLAUNCHER_DIALOG          102
++#define IDS_APP_TITLE                   103
++#define IDD_ABOUTBOX                    103
++#define IDM_ABOUT                       104
++#define IDM_EXIT                        105
++#define IDM_PRINT                       106
++#define IDI_WINLAUNCHER                 107
++#define IDI_SMALL                       108
++#define IDC_WINLAUNCHER                 109
++#define IDR_MAINFRAME                   128
++#define IDC_STATIC                      -1
++
++// Next default values for new objects
++// 
++#ifdef APSTUDIO_INVOKED
++#ifndef APSTUDIO_READONLY_SYMBOLS
++#define _APS_NO_MFC                     1
++#define _APS_NEXT_RESOURCE_VALUE        129
++#define _APS_NEXT_COMMAND_VALUE         32771
++#define _APS_NEXT_CONTROL_VALUE         1000
++#define _APS_NEXT_SYMED_VALUE           110
++#endif
++#endif
+diff --git a/Tools/Playwright/win/small.ico b/Tools/Playwright/win/small.ico
+new file mode 100644
+index 0000000000000000000000000000000000000000..d551aa3aaf80adf9b7760e2eb8de95a5c3e53df6
+Binary files /dev/null and b/Tools/Playwright/win/small.ico differ
+diff --git a/Tools/Playwright/win/stdafx.cpp b/Tools/Playwright/win/stdafx.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..3c4e5e52a16a300e36f4f9d8c5c490634ed02257
+--- /dev/null
++++ b/Tools/Playwright/win/stdafx.cpp
+@@ -0,0 +1,33 @@
++/*
++ * Copyright (C) 2006 Apple Inc.  All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
++ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
++ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
++ */
++
++// stdafx.cpp : source file that includes just the standard includes
++// Spinneret.pch will be the pre-compiled header
++// stdafx.obj will contain the pre-compiled type information
++
++#include "stdafx.h"
++
++// TODO: reference any additional headers you need in STDAFX.H
++// and not in this file
+diff --git a/Tools/Playwright/win/stdafx.h b/Tools/Playwright/win/stdafx.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..8436fba636da15aa7a9f2f9e6b6667908d7c7b85
+--- /dev/null
++++ b/Tools/Playwright/win/stdafx.h
+@@ -0,0 +1,73 @@
++/*
++ * Copyright (C) 2006 Apple Inc.  All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
++ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
++ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
++ */
++
++// stdafx.h : include file for standard system include files,
++// or project specific include files that are used frequently, but
++// are changed infrequently
++//
++
++#pragma once
++
++#if defined(HAVE_CONFIG_H) && HAVE_CONFIG_H && defined(BUILDING_WITH_CMAKE)
++#include "cmakeconfig.h"
++#endif
++
++#define WIN32_LEAN_AND_MEAN        // Exclude rarely-used stuff from Windows headers
++
++// Needed for limit defines, like INTMAX_MAX, which is used by the std C++ library
++#ifndef __STDC_LIMIT_MACROS
++#define __STDC_LIMIT_MACROS
++#endif
++
++#include <assert.h>
++#include <comdef.h>
++#include <comip.h>
++#include <commctrl.h>
++#include <commdlg.h>
++#include <comutil.h>
++#include <malloc.h>
++#include <memory.h>
++#include <objbase.h>
++#include <shellapi.h>
++#include <shlwapi.h>
++#include <stdlib.h>
++#include <string>
++#include <tchar.h>
++#include <windows.h>
++#include <wininet.h>
++#include <wtf/Platform.h>
++
++#include <JavaScriptCore/JSExportMacros.h>
++#include <WebCore/PlatformExportMacros.h>
++
++#if 0
++// Visual Studio Leak Detection
++// <http://msdn2.microsoft.com/en-US/library/e5ewb1h3.aspx>
++#if defined(_MSC_VER) && defined(_DEBUG)
++#define _CRTDBG_MAP_ALLOC
++#include <stdlib.h>
++#include <crtdbg.h>
++#endif
++#endif
+diff --git a/Tools/Playwright/win/toolbar.bmp b/Tools/Playwright/win/toolbar.bmp
+new file mode 100644
+index 0000000000000000000000000000000000000000..f06d7f785a8743513db6aeb3361f4094237c2c3d
+Binary files /dev/null and b/Tools/Playwright/win/toolbar.bmp differ
 diff --git a/Tools/Scripts/build-webkit b/Tools/Scripts/build-webkit
 index 099d33a4b9b9cdf432cd1026ea6aae0cb9257a77..0d771ef83c5e53e3d1525b19aa6ccb8687e01c76 100755
 --- a/Tools/Scripts/build-webkit
