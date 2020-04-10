@@ -62,6 +62,7 @@ describe('Download', function() {
     expect(fs.existsSync(path)).toBeTruthy();
     await download.delete();
     expect(fs.existsSync(path)).toBeFalsy();
+    await page.close();
   });
   it('should expose stream', async({browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
@@ -76,6 +77,7 @@ describe('Download', function() {
     await new Promise(f => stream.on('end', f));
     expect(content).toBe('Hello world');
     stream.close();
+    await page.close();
   });
   it('should delete downloads on context destruction', async({browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
