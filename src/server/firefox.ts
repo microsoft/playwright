@@ -185,8 +185,13 @@ export class Firefox implements BrowserType<FFBrowser> {
     firefoxArguments.push('-juggler', String(port));
     firefoxArguments.push(...args);
 
-    if (args.every(arg => arg.startsWith('-')))
-      firefoxArguments.push('about:blank');
+    if (launchType === 'persistent') {
+      if (args.every(arg => arg.startsWith('-')))
+        firefoxArguments.push('about:blank');
+    } else {
+      firefoxArguments.push('-silent');
+    }
+
     return firefoxArguments;
   }
 }
