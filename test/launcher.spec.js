@@ -316,8 +316,7 @@ describe('browserType.launchPersistentContext', function() {
     await removeUserDataDir(userDataDir);
     await removeUserDataDir(userDataDir2);
   });
-  // See https://github.com/microsoft/playwright/issues/717
-  it.slow().fail(WIN && CHROMIUM)('userDataDir option should restore cookies', async({browserType, server}) => {
+  it.slow()('userDataDir option should restore cookies', async({browserType, server}) => {
     const userDataDir = await makeUserDataDir();
     const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
     const page = await browserContext.newPage();

@@ -329,7 +329,7 @@ export class WKPage implements PageDelegate {
   }
 
   private _onFrameScheduledNavigation(frameId: string) {
-    this._page._frameManager.frameRequestedNavigation(frameId);
+    this._page._frameManager.frameRequestedNavigation(frameId, '');
   }
 
   private _onFrameStoppedLoading(frameId: string) {
@@ -761,6 +761,8 @@ export class WKPage implements PageDelegate {
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
+    if (isNavigationRequest)
+      this._page._frameManager.frameUpdatedDocumentIdForNavigation(event.frameId, documentId!);
     const request = new WKInterceptableRequest(session, this._page._needsRequestInterception(), frame, event, redirectedFrom, documentId);
     this._requestIdToRequest.set(event.requestId, request);
     this._page._frameManager.requestStarted(request.request);
