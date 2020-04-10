@@ -128,6 +128,10 @@ export class WKBrowser extends BrowserBase {
     const wkPage = new WKPage(context, pageProxySession, opener || null);
     this._wkPages.set(pageProxyId, wkPage);
 
+    if (opener && opener._initializedPage) {
+      for (const signalBarrier of opener._initializedPage._frameManager._signalBarriers)
+        signalBarrier.addPopup(wkPage.pageOrError());
+    }
     wkPage.pageOrError().then(async () => {
       this._firstPageCallback();
       const page = wkPage._page;
@@ -216,7 +220,7 @@ export class WKBrowserContext extends BrowserContextBase {
   }
 
   pages(): Page[] {
-    return this._wkPages().map(wkPage => wkPage._initializedPage()).filter(pageOrNull => !!pageOrNull) as Page[];
+    return this._wkPages().map(wkPage => wkPage._initializedPage).filter(pageOrNull => !!pageOrNull) as Page[];
   }
 
   async newPage(): Promise<Page> {

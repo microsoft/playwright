@@ -43,7 +43,7 @@ export class FFPage implements PageDelegate {
   readonly _browserContext: FFBrowserContext;
   private _pagePromise: Promise<Page | Error>;
   private _pageCallback: (pageOrError: Page | Error) => void = () => {};
-  private _initialized = false;
+  _initializedPage: Page | null = null;
   private readonly _opener: FFPage | null;
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
@@ -70,6 +70,7 @@ export class FFPage implements PageDelegate {
       helper.addEventListener(this._session, 'Runtime.executionContextCreated', this._onExecutionContextCreated.bind(this)),
       helper.addEventListener(this._session, 'Runtime.executionContextDestroyed', this._onExecutionContextDestroyed.bind(this)),
       helper.addEventListener(this._session, 'Page.linkClicked', event => this._onLinkClicked(event.phase)),
+      helper.addEventListener(this._session, 'Page.willOpenNewWindowAsynchronously', this._onWillOpenNewWindowAsynchronously.bind(this)),
       helper.addEventListener(this._session, 'Page.uncaughtError', this._onUncaughtError.bind(this)),
       helper.addEventListener(this._session, 'Runtime.console', this._onConsole.bind(this)),
       helper.addEventListener(this._session, 'Page.dialogOpened', this._onDialogOpened.bind(this)),
@@ -84,15 +85,11 @@ export class FFPage implements PageDelegate {
     session.once(FFSessionEvents.Disconnected, () => this._page._didDisconnect());
     this._session.once('Page.ready', () => {
       this._pageCallback(this._page);
-      this._initialized = true;
+      this._initializedPage = this._page;
     });
     // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
     // Therefore, we can end up with an initialized page without utility world, although very unlikely.
     this._session.send('Page.addScriptToEvaluateOnNewDocument', { script: '', worldName: UTILITY_WORLD_NAME }).catch(this._pageCallback);
-  }
-
-  _initializedPage(): Page | null {
-    return this._initialized ? this._page : null;
   }
 
   async pageOrError(): Promise<Page | Error> {
@@ -136,12 +133,21 @@ export class FFPage implements PageDelegate {
       this._page._frameManager.frameDidPotentiallyRequestNavigation();
   }
 
+  _onWillOpenNewWindowAsynchronously() {
+    for (const barrier of this._page._frameManager._signalBarriers)
+      barrier.expectPopup();
+  }
+
   _onNavigationStarted(params: Protocol.Page.navigationStartedPayload) {
     this._page._frameManager.frameRequestedNavigation(params.frameId, params.navigationId);
   }
 
   _onNavigationAborted(params: Protocol.Page.navigationAbortedPayload) {
     const frame = this._page._frameManager.frame(params.frameId)!;
+    if (params.errorText === 'Will download to file') {
+      for (const barrier of this._page._frameManager._signalBarriers)
+        barrier.expectDownload();
+    }
     for (const task of frame._frameTasks)
       task.onNewDocument(params.navigationId, new Error(params.errorText));
   }

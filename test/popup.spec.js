@@ -217,6 +217,20 @@ describe('Page.Events.Popup', function() {
     expect(popup).toBeTruthy();
     await context.close();
   });
+  it('should emit for immediately closed popups', async({browser, server}) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.evaluate(() => {
+        const win = window.open(window.location.href);
+        win.close();
+      }),
+    ]);
+    expect(popup).toBeTruthy();
+    await context.close();
+  });
   it('should be able to capture alert', async({browser}) => {
     const context = await browser.newContext();
     const page = await context.newPage();

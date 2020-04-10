@@ -630,7 +630,6 @@ describe('Events.BrowserContext.Page', function() {
       context.waitForEvent('page'),
       page.goto(server.PREFIX + '/popup/window-open.html')
     ]);
-    // The url is still about:blank in FF when 'page' event is fired.
     expect(popup.url()).toBe(server.PREFIX + '/popup/popup.html');
     expect(await popup.opener()).toBe(page);
     expect(await page.opener()).toBe(null);
