@@ -27,6 +27,8 @@ const PROJECT_ROOT = fs.existsSync(path.join(__dirname, '..', 'package.json')) ?
 const mkdtempAsync = util.promisify(require('fs').mkdtemp);
 const removeFolderAsync = util.promisify(removeFolder);
 
+let platform = os.platform();
+
 const utils = module.exports = {
   /**
    * @return {string}
@@ -182,9 +184,9 @@ const utils = module.exports = {
       FFOX: browserType.name() === 'firefox',
       WEBKIT: browserType.name() === 'webkit',
       CHROMIUM: browserType.name() === 'chromium',
-      MAC: os.platform() === 'darwin',
-      LINUX: os.platform() === 'linux',
-      WIN: os.platform() === 'win32',
+      MAC: platform === 'darwin',
+      LINUX: platform === 'linux',
+      WIN: platform === 'win32',
       browserType,
       defaultBrowserOptions,
       playwrightPath: PROJECT_ROOT,
@@ -192,6 +194,11 @@ const utils = module.exports = {
       GOLDEN_DIR,
       OUTPUT_DIR,
     };
+  },
+
+  setPlatform(p) {
+    // To support isplaywrightready.
+    platform = p;
   },
 };
 
