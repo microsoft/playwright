@@ -85,8 +85,8 @@ const RELATIVE_EXECUTABLE_PATHS = {
     'mac10.13': undefined,
     'mac10.14': ['pw_run.sh'],
     'mac10.15': ['pw_run.sh'],
-    'win32': ['MiniBrowser.exe'],
-    'win64': ['MiniBrowser.exe'],
+    'win32': ['Playwright.exe'],
+    'win64': ['Playwright.exe'],
   },
 };
 
