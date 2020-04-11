@@ -12141,6 +12141,30 @@ index 18f9e93932793b7c3e44e6346be0f13ed6dbf233..acb0617bcded07029665d4949659c73a
 +}
 +
  } // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/win/WebView.cpp b/Source/WebKit/UIProcess/win/WebView.cpp
+index 4a96b5e998800bb7b1ca104f860e96dcf418d178..d04d3be8e814b6994a3cc390fa1b17a87a3b06b9 100644
+--- a/Source/WebKit/UIProcess/win/WebView.cpp
++++ b/Source/WebKit/UIProcess/win/WebView.cpp
+@@ -114,6 +114,8 @@ LRESULT WebView::wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+         m_page->tryClose();
+         break;
+     case WM_DESTROY:
++        if (!m_page)
++            return ::DefWindowProc(hWnd, message, wParam, lParam);
+         m_isBeingDestroyed = true;
+         close();
+         break;
+@@ -275,6 +277,10 @@ WebView::WebView(RECT rect, const API::PageConfiguration& configuration, HWND pa
+ 
+ WebView::~WebView()
+ {
++    // We must close the page here since page expects pageClient to outlive it. Even though page
++    // client is a weak-ref in the page, the expectations are that it is available at least until
++    // the page.close.
++    m_page->close();
+     // Tooltip window needs to be explicitly destroyed since it isn't a WS_CHILD.
+     if (::IsWindow(m_toolTipWindow))
+         ::DestroyWindow(m_toolTipWindow);
 diff --git a/Source/WebKit/UIProcess/wpe/InspectorTargetProxyWPE.cpp b/Source/WebKit/UIProcess/wpe/InspectorTargetProxyWPE.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..7453194ca6f032ba86a4c67f5bf12688ab6ec1be
@@ -16172,163 +16196,12 @@ index 0000000000000000000000000000000000000000..ba2ca12482c0ab809998131f693c8760
 +
 +    return NSApplicationMain(argc,  (const char **) argv);
 +}
-diff --git a/Tools/Playwright/win/BrowserWindow.cpp b/Tools/Playwright/win/BrowserWindow.cpp
-new file mode 100644
-index 0000000000000000000000000000000000000000..b321d70e87b957fe4b948f09b796b7161189ba17
---- /dev/null
-+++ b/Tools/Playwright/win/BrowserWindow.cpp
-@@ -0,0 +1,73 @@
-+/*
-+ * Copyright (C) 2018 Sony Interactive Entertainment Inc.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
-+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
-+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
-+#include "stdafx.h"
-+#include "BrowserWindow.h"
-+
-+#include "PlaywrightLibResource.h"
-+
-+void BrowserWindow::setUserAgent(UINT menuID)
-+{
-+    _bstr_t customUserAgent;
-+
-+    switch (menuID) {
-+    case IDM_UA_DEFAULT:
-+        // Set to null user agent
-+        break;
-+    case IDM_UA_SAFARI:
-+        customUserAgent = L"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.2 Safari/605.1.15";
-+        break;
-+    case IDM_UA_SAFARI_IOS_IPHONE:
-+        customUserAgent = L"Mozilla/5.0 (iPhone; CPU iPhone OS 11_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.0 Mobile/15E148 Safari/604.1";
-+        break;
-+    case IDM_UA_SAFARI_IOS_IPAD:
-+        customUserAgent = L"Mozilla/5.0 (iPad; CPU iPhone OS 11_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.0 Mobile/15E148 Safari/604.1";
-+        break;
-+    case IDM_UA_IE_11:
-+        customUserAgent = L"Mozilla/5.0 (Windows NT 10.0; Win64; x64; Trident/7.0; rv:11.0) like Gecko";
-+        break;
-+    case IDM_UA_EDGE:
-+        customUserAgent = L"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
-+        break;
-+    case IDM_UA_CHROME_MAC:
-+        customUserAgent = L"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36";
-+        break;
-+    case IDM_UA_CHROME_WIN:
-+        customUserAgent = L"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36";
-+        break;
-+    case IDM_UA_FIREFOX_MAC:
-+        customUserAgent = L"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:61.0) Gecko/20100101 Firefox/61.0";
-+        break;
-+    case IDM_UA_FIREFOX_WIN:
-+        customUserAgent = L"Mozilla/5.0 (Windows NT 10.0; WOW64; rv:61.0) Gecko/20100101 Firefox/61.0";
-+        break;
-+    case IDM_UA_OTHER:
-+    default:
-+        ASSERT(0); // We should never hit this case
-+        return;
-+    }
-+
-+    setUserAgent(customUserAgent);
-+}
-diff --git a/Tools/Playwright/win/BrowserWindow.h b/Tools/Playwright/win/BrowserWindow.h
-new file mode 100644
-index 0000000000000000000000000000000000000000..0989d7b1470eaf6b1453861bf482ae68f287aa8d
---- /dev/null
-+++ b/Tools/Playwright/win/BrowserWindow.h
-@@ -0,0 +1,66 @@
-+/*
-+ * Copyright (C) 2018 Sony Interactive Entertainment Inc.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
-+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
-+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
-+#pragma once
-+
-+#include <windows.h>
-+#include <wtf/RefCounted.h>
-+
-+class BrowserWindowClient {
-+public:
-+    virtual void progressChanged(double) = 0;
-+    virtual void progressFinished() = 0;
-+    virtual void activeURLChanged(std::wstring) = 0;
-+};
-+
-+class BrowserWindow : public RefCounted<BrowserWindow> {
-+public:
-+    virtual ~BrowserWindow() { };
-+
-+    virtual HRESULT init() = 0;
-+    virtual HWND hwnd() = 0;
-+
-+    virtual HRESULT loadURL(const BSTR& passedURL) = 0;
-+    virtual void reload() = 0;
-+    virtual void navigateForwardOrBackward(bool forward) = 0;
-+    virtual void navigateToHistory(UINT menuID) = 0;
-+    virtual void setPreference(UINT menuID, bool enable) = 0;
-+    virtual bool usesLayeredWebView() const { return false; }
-+
-+    virtual void print() = 0;
-+    virtual void launchInspector() = 0;
-+    virtual void openProxySettings() = 0;
-+
-+    virtual _bstr_t userAgent() = 0;
-+    void setUserAgent(UINT menuID);
-+    virtual void setUserAgent(_bstr_t& customUAString) = 0;
-+
-+    virtual void showLayerTree() = 0;
-+    virtual void updateStatistics(HWND dialog) = 0;
-+
-+    virtual void resetZoom() = 0;
-+    virtual void zoomIn() = 0;
-+    virtual void zoomOut() = 0;
-+};
 diff --git a/Tools/Playwright/win/CMakeLists.txt b/Tools/Playwright/win/CMakeLists.txt
 new file mode 100644
-index 0000000000000000000000000000000000000000..bf12f0401d62e4a0f5c06d211dbc9fa5014551d6
+index 0000000000000000000000000000000000000000..b8076d8a4caa71c078499e03220fbd3b5ca77f3f
 --- /dev/null
 +++ b/Tools/Playwright/win/CMakeLists.txt
-@@ -0,0 +1,43 @@
+@@ -0,0 +1,42 @@
 +set(Playwright_INCLUDE_DIRECTORIES
 +    ${PAL_FRAMEWORK_HEADERS_DIR}
 +    ${WebCore_PRIVATE_FRAMEWORK_HEADERS_DIR}
@@ -16337,7 +16210,6 @@ index 0000000000000000000000000000000000000000..bf12f0401d62e4a0f5c06d211dbc9fa5
 +)
 +
 +set(Playwright_SOURCES
-+    BrowserWindow.cpp
 +    Common.cpp
 +    MainWindow.cpp
 +    PlaywrightLib.rc
@@ -16374,10 +16246,10 @@ index 0000000000000000000000000000000000000000..bf12f0401d62e4a0f5c06d211dbc9fa5
 +add_dependencies(Playwright PlaywrightLib)
 diff --git a/Tools/Playwright/win/Common.cpp b/Tools/Playwright/win/Common.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..7f3caf88fc00ba491930ad2e8068c4328d761825
+index 0000000000000000000000000000000000000000..969425bec9f9fc0bef0330224b9e6d6b853222e5
 --- /dev/null
 +++ b/Tools/Playwright/win/Common.cpp
-@@ -0,0 +1,301 @@
+@@ -0,0 +1,349 @@
 +/*
 + * Copyright (C) 2006, 2008, 2013-2015 Apple Inc.  All rights reserved.
 + * Copyright (C) 2009, 2011 Brent Fulgham.  All rights reserved.
@@ -16416,6 +16288,7 @@ index 0000000000000000000000000000000000000000..7f3caf88fc00ba491930ad2e8068c432
 +#include <shlobj.h>
 +#include <wtf/Optional.h>
 +#include <wtf/StdLibExtras.h>
++#include <vector>
 +
 +// Global Variables:
 +HINSTANCE hInst;
@@ -16647,9 +16520,7 @@ index 0000000000000000000000000000000000000000..7f3caf88fc00ba491930ad2e8068c432
 +    int argc = 0;
 +    WCHAR** argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 +    for (int i = 1; i < argc; ++i) {
-+        if (!wcsicmp(argv[i], L"--transparent"))
-+            options.usesLayeredWebView = true;
-+        else if (!wcsicmp(argv[i], L"--desktop"))
++        if (!wcsicmp(argv[i], L"--desktop"))
 +            options.useFullDesktop = true;
 +        else if (!wcsicmp(argv[i], L"--inspector-pipe"))
 +            options.inspectorPipe = true;
@@ -16679,12 +16550,61 @@ index 0000000000000000000000000000000000000000..7f3caf88fc00ba491930ad2e8068c432
 +
 +    return src;
 +}
++
++std::wstring createString(WKStringRef wkString)
++{
++    size_t maxSize = WKStringGetLength(wkString);
++
++    std::vector<WKChar> wkCharBuffer(maxSize);
++    size_t actualLength = WKStringGetCharacters(wkString, wkCharBuffer.data(), maxSize);
++    return std::wstring(wkCharBuffer.data(), actualLength);
++}
++
++std::wstring createString(WKURLRef wkURL)
++{
++    if (!wkURL)
++        return { };
++    WKRetainPtr<WKStringRef> url = adoptWK(WKURLCopyString(wkURL));
++    return createString(url.get());
++}
++
++std::string createUTF8String(const wchar_t* src, size_t srcLength)
++{
++    int length = WideCharToMultiByte(CP_UTF8, 0, src, srcLength, 0, 0, nullptr, nullptr);
++    std::vector<char> buffer(length);
++    size_t actualLength = WideCharToMultiByte(CP_UTF8, 0, src, srcLength, buffer.data(), length, nullptr, nullptr);
++    return { buffer.data(), actualLength };
++}
++
++WKRetainPtr<WKStringRef> createWKString(_bstr_t str)
++{
++    auto utf8 = createUTF8String(str, str.length());
++    return adoptWK(WKStringCreateWithUTF8CString(utf8.data()));
++}
++
++WKRetainPtr<WKStringRef> createWKString(const std::wstring& str)
++{
++    auto utf8 = createUTF8String(str.c_str(), str.length());
++    return adoptWK(WKStringCreateWithUTF8CString(utf8.data()));
++}
++
++WKRetainPtr<WKURLRef> createWKURL(_bstr_t str)
++{
++    auto utf8 = createUTF8String(str, str.length());
++    return adoptWK(WKURLCreateWithUTF8CString(utf8.data()));
++}
++
++WKRetainPtr<WKURLRef> createWKURL(const std::wstring& str)
++{
++    auto utf8 = createUTF8String(str.c_str(), str.length());
++    return adoptWK(WKURLCreateWithUTF8CString(utf8.data()));
++}
 diff --git a/Tools/Playwright/win/Common.h b/Tools/Playwright/win/Common.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..0153d4e9656b62ebf9bd51556a39c14b16871682
+index 0000000000000000000000000000000000000000..da9b00c96f9bc9c3c52e76a719650e8d604b1e0a
 --- /dev/null
 +++ b/Tools/Playwright/win/Common.h
-@@ -0,0 +1,69 @@
+@@ -0,0 +1,79 @@
 +/*
 + * Copyright (C) 2018 Sony Interactive Entertainment Inc.
 + *
@@ -16713,10 +16633,12 @@ index 0000000000000000000000000000000000000000..0153d4e9656b62ebf9bd51556a39c14b
 +#pragma once
 +
 +#include "stdafx.h"
-+#include "MainWindow.h"
++#include <WebKit/WKRetainPtr.h>
++#include <WebKit/WKString.h>
++#include <WebKit/WKURL.h>
++#include <wtf/Optional.h>
 +
 +struct CommandLineOptions {
-+    bool usesLayeredWebView { };
 +    bool useFullDesktop { };
 +    bool inspectorPipe { };
 +    bool headless { };
@@ -16754,6 +16676,14 @@ index 0000000000000000000000000000000000000000..0153d4e9656b62ebf9bd51556a39c14b
 +extern HINSTANCE hInst;
 +extern POINT s_windowPosition;
 +extern SIZE s_windowSize;
++
++std::wstring createString(WKStringRef wkString);
++std::wstring createString(WKURLRef wkURL);
++std::string createUTF8String(const wchar_t* src, size_t srcLength);
++WKRetainPtr<WKStringRef> createWKString(_bstr_t str);
++WKRetainPtr<WKStringRef> createWKString(const std::wstring& str);
++WKRetainPtr<WKURLRef> createWKURL(_bstr_t str);
++WKRetainPtr<WKURLRef> createWKURL(const std::wstring& str);
 diff --git a/Tools/Playwright/win/DialogHelper.h b/Tools/Playwright/win/DialogHelper.h
 new file mode 100644
 index 0000000000000000000000000000000000000000..6590fe00255841fa93a0fe7c6bffbc0dc13fd2d0
@@ -16915,10 +16845,10 @@ index 0000000000000000000000000000000000000000..6590fe00255841fa93a0fe7c6bffbc0d
 +};
 diff --git a/Tools/Playwright/win/MainWindow.cpp b/Tools/Playwright/win/MainWindow.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..dcea44aea84c7f2603e07da88cbee374c0b6c92c
+index 0000000000000000000000000000000000000000..690c5e1d1fbef1f9420392b241a9f2c0247081c2
 --- /dev/null
 +++ b/Tools/Playwright/win/MainWindow.cpp
-@@ -0,0 +1,661 @@
+@@ -0,0 +1,517 @@
 +/*
 + * Copyright (C) 2018 Sony Interactive Entertainment Inc.
 + *
@@ -16945,12 +16875,11 @@ index 0000000000000000000000000000000000000000..dcea44aea84c7f2603e07da88cbee374
 + */
 +
 +#include "stdafx.h"
-+#include "MainWindow.h"
-+
 +#include "Common.h"
++#include "MainWindow.h"
 +#include "PlaywrightLibResource.h"
-+#include <sstream>
 +#include "WebKitBrowserWindow.h"
++#include <sstream>
 +
 +namespace WebCore {
 +float deviceScaleFactorForWindow(HWND);
@@ -17020,9 +16949,7 @@ index 0000000000000000000000000000000000000000..dcea44aea84c7f2603e07da88cbee374
 +    return s_windowClass == buff;
 +}
 +
-+MainWindow::MainWindow(WKContextRef context, WKWebsiteDataStoreRef dataStore)
-+    : m_context(context)
-+    , m_dataStore(dataStore)
++MainWindow::MainWindow()
 +{
 +    s_numInstances++;
 +}
@@ -17030,11 +16957,6 @@ index 0000000000000000000000000000000000000000..dcea44aea84c7f2603e07da88cbee374
 +MainWindow::~MainWindow()
 +{
 +    s_numInstances--;
-+}
-+
-+Ref<MainWindow> MainWindow::create(WKContextRef context, WKWebsiteDataStoreRef dataStore)
-+{
-+    return adoptRef(*new MainWindow(context, dataStore));
 +}
 +
 +void MainWindow::createToolbar(HINSTANCE hInstance)
@@ -17116,8 +17038,29 @@ index 0000000000000000000000000000000000000000..dcea44aea84c7f2603e07da88cbee374
 +    m_toolbarItemsWidth = rect.right;
 +}
 +
-+bool MainWindow::init(BrowserWindowFactory factory, HINSTANCE hInstance, bool usesLayeredWebView)
++bool MainWindow::init(HINSTANCE hInstance, WKContextRef context, WKWebsiteDataStoreRef dataStore)
 +{
++    auto conf = adoptWK(WKPageConfigurationCreate());
++    auto prefs = adoptWK(WKPreferencesCreate());
++
++    auto pageGroup = adoptWK(WKPageGroupCreateWithIdentifier(createWKString("WinPlaywright").get()));
++    WKPageConfigurationSetPageGroup(conf.get(), pageGroup.get());
++    WKPageGroupSetPreferences(pageGroup.get(), prefs.get());
++
++    WKPreferencesSetMediaCapabilitiesEnabled(prefs.get(), false);
++    WKPreferencesSetDeveloperExtrasEnabled(prefs.get(), true);
++    WKPageConfigurationSetPreferences(conf.get(), prefs.get());
++
++    WKPageConfigurationSetContext(conf.get(), context);
++    WKPageConfigurationSetWebsiteDataStore(conf.get(), dataStore);
++
++    return init(hInstance, conf.get());
++}
++
++bool MainWindow::init(HINSTANCE hInstance, WKPageConfigurationRef conf)
++{
++    m_configuration = conf;
++
 +    registerClass(hInstance);
 +
 +    auto title = loadString(IDS_APP_TITLE);
@@ -17134,12 +17077,7 @@ index 0000000000000000000000000000000000000000..dcea44aea84c7f2603e07da88cbee374
 +          return false;
 +    }
 +
-+    m_browserWindow = factory(*this, m_hMainWnd, m_context.get(), m_dataStore.get(), usesLayeredWebView);
-+    if (!m_browserWindow)
-+        return false;
-+    HRESULT hr = m_browserWindow->init();
-+    if (FAILED(hr))
-+        return false;
++    m_browserWindow.reset(new WebKitBrowserWindow(*this, m_hMainWnd, conf));
 +
 +    updateDeviceScaleFactor();
 +    resizeSubViews();
@@ -17164,9 +17102,6 @@ index 0000000000000000000000000000000000000000..dcea44aea84c7f2603e07da88cbee374
 +
 +    resizeToolbar(rcClient.right);
 +
-+    if (m_browserWindow->usesLayeredWebView() || !m_browserWindow->hwnd())
-+        return;
-+
 +    RECT rect;
 +    GetWindowRect(m_hToolbarWnd, &rect);
 +    POINT toolbarBottom = { 0, rect.bottom };
@@ -17178,7 +17113,7 @@ index 0000000000000000000000000000000000000000..dcea44aea84c7f2603e07da88cbee374
 +LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 +{
 +    LRESULT result = 0;
-+    RefPtr<MainWindow> thisWindow = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
++    MainWindow* thisWindow = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 +    if (!thisWindow && message != WM_CREATE)
 +        return DefWindowProc(hWnd, message, wParam, lParam);
 +
@@ -17226,18 +17161,14 @@ index 0000000000000000000000000000000000000000..dcea44aea84c7f2603e07da88cbee374
 +        default:
 +            return DefWindowProc(hWnd, message, wParam, lParam);
 +        }
-+        if (wmId >= IDM_HISTORY_LINK0 && wmId <= IDM_HISTORY_LINK9) {
-+            thisWindow->browserWindow()->navigateToHistory(wmId);
-+            break;
-+        }
 +        // Parse the menu selections:
 +        switch (wmId) {
 +        case IDC_URL_BAR:
 +            thisWindow->onURLBarEnter();
 +            break;
 +        case IDM_NEW_WEBKIT_WINDOW: {
-+            auto& newWindow = MainWindow::create(thisWindow->m_context.get(), thisWindow->m_dataStore.get()).leakRef();
-+            newWindow.init(WebKitBrowserWindow::create, hInst);
++            auto* newWindow = new MainWindow();
++            newWindow->init(hInst, thisWindow->m_configuration.get());
 +            break;
 +        }
 +        case IDM_CLOSE_WINDOW:
@@ -17252,30 +17183,12 @@ index 0000000000000000000000000000000000000000..dcea44aea84c7f2603e07da88cbee374
 +        case IDM_EXIT:
 +            DestroyWindow(hWnd);
 +            break;
-+        case IDM_PRINT:
-+            thisWindow->browserWindow()->print();
-+            break;
 +        case IDM_WEB_INSPECTOR:
 +            thisWindow->browserWindow()->launchInspector();
-+            break;
-+        case IDM_PROXY_SETTINGS:
-+            thisWindow->browserWindow()->openProxySettings();
-+            break;
-+        case IDM_SET_DEFAULT_URL:
-+            thisWindow->setDefaultURLToCurrentURL();
-+            break;
-+        case IDM_CACHES:
-+            if (!::IsWindow(thisWindow->m_hCacheWnd)) {
-+                thisWindow->m_hCacheWnd = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_CACHES), hWnd, cachesDialogProc, reinterpret_cast<LPARAM>(thisWindow.get()));
-+                ::ShowWindow(thisWindow->m_hCacheWnd, SW_SHOW);
-+            }
 +            break;
 +        case IDM_HISTORY_BACKWARD:
 +        case IDM_HISTORY_FORWARD:
 +            thisWindow->browserWindow()->navigateForwardOrBackward(wmId == IDM_HISTORY_FORWARD);
-+            break;
-+        case IDM_UA_OTHER:
-+            DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_USER_AGENT), hWnd, customUserAgentDialogProc, reinterpret_cast<LPARAM>(thisWindow.get()));
 +            break;
 +        case IDM_ACTUAL_SIZE:
 +            thisWindow->browserWindow()->resetZoom();
@@ -17289,9 +17202,6 @@ index 0000000000000000000000000000000000000000..dcea44aea84c7f2603e07da88cbee374
 +        case IDM_ZOOM_OUT:
 +            thisWindow->browserWindow()->zoomOut();
 +            break;
-+        case IDM_SHOW_LAYER_TREE:
-+            thisWindow->browserWindow()->showLayerTree();
-+            break;
 +        default:
 +            if (!thisWindow->toggleMenuItem(wmId))
 +                return DefWindowProc(hWnd, message, wParam, lParam);
@@ -17300,7 +17210,7 @@ index 0000000000000000000000000000000000000000..dcea44aea84c7f2603e07da88cbee374
 +        break;
 +    case WM_DESTROY:
 +        SetWindowLongPtr(hWnd, GWLP_USERDATA, 0);
-+        thisWindow->deref();
++        delete thisWindow;
 +        if (s_noStartupWindow || s_numInstances > 1)
 +            return 0;
 +        PostQuitMessage(0);
@@ -17326,61 +17236,12 @@ index 0000000000000000000000000000000000000000..dcea44aea84c7f2603e07da88cbee374
 +    return info.fState & MFS_CHECKED;
 +}
 +
-+static void turnOffOtherUserAgents(HMENU menu)
-+{
-+    MENUITEMINFO info;
-+    ::memset(&info, 0x00, sizeof(info));
-+    info.cbSize = sizeof(info);
-+    info.fMask = MIIM_STATE;
-+
-+    // Must unset the other menu items:
-+    for (UINT menuToClear = IDM_UA_DEFAULT; menuToClear <= IDM_UA_OTHER; ++menuToClear) {
-+        if (!::GetMenuItemInfo(menu, menuToClear, FALSE, &info))
-+            continue;
-+        if (!menuItemIsChecked(info))
-+            continue;
-+
-+        info.fState = MFS_UNCHECKED;
-+        ::SetMenuItemInfo(menu, menuToClear, FALSE, &info);
-+    }
-+}
-+
-+void MainWindow::setDefaultURLToCurrentURL()
-+{
-+    wchar_t url[INTERNET_MAX_URL_LENGTH];
-+    GetWindowText(m_hURLBarWnd, url, INTERNET_MAX_URL_LENGTH);
-+    auto length = wcslen(url);
-+    if (!length)
-+        return;
-+    RegSetKeyValue(HKEY_CURRENT_USER, kPlaywrightRegistryKey, L"DefaultURL", REG_SZ, url, (length + 1) * sizeof(wchar_t));
-+}
-+
 +bool MainWindow::toggleMenuItem(UINT menuID)
 +{
 +    if (s_headless)
 +        return (INT_PTR)FALSE;
 +
 +    HMENU menu = ::GetMenu(hwnd());
-+
-+    switch (menuID) {
-+    case IDM_UA_DEFAULT:
-+    case IDM_UA_SAFARI:
-+    case IDM_UA_SAFARI_IOS_IPHONE:
-+    case IDM_UA_SAFARI_IOS_IPAD:
-+    case IDM_UA_EDGE:
-+    case IDM_UA_IE_11:
-+    case IDM_UA_CHROME_MAC:
-+    case IDM_UA_CHROME_WIN:
-+    case IDM_UA_FIREFOX_MAC:
-+    case IDM_UA_FIREFOX_WIN:
-+        m_browserWindow->setUserAgent(menuID);
-+        turnOffOtherUserAgents(menu);
-+        break;
-+    case IDM_UA_OTHER:
-+        // The actual user agent string will be set by the custom user agent dialog
-+        turnOffOtherUserAgents(menu);
-+        break;
-+    }
 +
 +    MENUITEMINFO info = { };
 +    info.cbSize = sizeof(info);
@@ -17392,8 +17253,6 @@ index 0000000000000000000000000000000000000000..dcea44aea84c7f2603e07da88cbee374
 +    BOOL newState = !menuItemIsChecked(info);
 +    info.fState = (newState) ? MFS_CHECKED : MFS_UNCHECKED;
 +    ::SetMenuItemInfo(menu, menuID, FALSE, &info);
-+
-+    m_browserWindow->setPreference(menuID, newState);
 +
 +    return true;
 +}
@@ -17426,79 +17285,6 @@ index 0000000000000000000000000000000000000000..dcea44aea84c7f2603e07da88cbee374
 +    case WM_COMMAND:
 +        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) {
 +            EndDialog(hDlg, LOWORD(wParam));
-+            return (INT_PTR)TRUE;
-+        }
-+        break;
-+    }
-+    return (INT_PTR)FALSE;
-+}
-+
-+INT_PTR CALLBACK MainWindow::cachesDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-+{
-+    if (s_headless)
-+        return (INT_PTR)FALSE;
-+    MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(GetWindowLongPtr(hDlg, DWLP_USER));
-+    switch (message) {
-+    case WM_INITDIALOG:
-+        SetWindowLongPtr(hDlg, DWLP_USER, lParam);
-+        ::SetTimer(hDlg, IDT_UPDATE_STATS, 1000, nullptr);
-+        return (INT_PTR)TRUE;
-+
-+    case WM_COMMAND:
-+        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) {
-+            ::KillTimer(hDlg, IDT_UPDATE_STATS);
-+            ::DestroyWindow(hDlg);
-+            thisWindow.m_hCacheWnd = 0;
-+            return (INT_PTR)TRUE;
-+        }
-+        break;
-+
-+    case IDT_UPDATE_STATS:
-+        ::InvalidateRect(hDlg, nullptr, FALSE);
-+        return (INT_PTR)TRUE;
-+
-+    case WM_PAINT:
-+        thisWindow.browserWindow()->updateStatistics(hDlg);
-+        break;
-+    }
-+
-+    return (INT_PTR)FALSE;
-+}
-+
-+INT_PTR CALLBACK MainWindow::customUserAgentDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-+{
-+    if (s_headless)
-+        return (INT_PTR)FALSE;
-+    MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(GetWindowLongPtr(hDlg, DWLP_USER));
-+    switch (message) {
-+    case WM_INITDIALOG: {
-+        MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(lParam);
-+        SetWindowLongPtr(hDlg, DWLP_USER, lParam);
-+        HWND edit = ::GetDlgItem(hDlg, IDC_USER_AGENT_INPUT);
-+        _bstr_t userAgent;
-+        userAgent = thisWindow.browserWindow()->userAgent();
-+
-+        ::SetWindowText(edit, static_cast<LPCTSTR>(userAgent));
-+        return (INT_PTR)TRUE;
-+    }
-+
-+    case WM_COMMAND:
-+        if (LOWORD(wParam) == IDOK) {
-+            HWND edit = ::GetDlgItem(hDlg, IDC_USER_AGENT_INPUT);
-+
-+            TCHAR buffer[1024];
-+            int strLen = ::GetWindowText(edit, buffer, 1024);
-+            buffer[strLen] = 0;
-+
-+            _bstr_t bstr(buffer);
-+            if (bstr.length()) {
-+                thisWindow.browserWindow()->setUserAgent(bstr);
-+                thisWindow.toggleMenuItem(IDM_UA_OTHER);
-+            }
-+        }
-+
-+        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) {
-+            ::EndDialog(hDlg, LOWORD(wParam));
 +            return (INT_PTR)TRUE;
 +        }
 +        break;
@@ -17582,10 +17368,10 @@ index 0000000000000000000000000000000000000000..dcea44aea84c7f2603e07da88cbee374
 +}
 diff --git a/Tools/Playwright/win/MainWindow.h b/Tools/Playwright/win/MainWindow.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..99718b19797788634f4233a8892729b57ae642d0
+index 0000000000000000000000000000000000000000..b173f44a96dee7f0b80c8689b007754920fc64a3
 --- /dev/null
 +++ b/Tools/Playwright/win/MainWindow.h
-@@ -0,0 +1,90 @@
+@@ -0,0 +1,87 @@
 +/*
 + * Copyright (C) 2018 Sony Interactive Entertainment Inc.
 + *
@@ -17613,27 +17399,27 @@ index 0000000000000000000000000000000000000000..99718b19797788634f4233a8892729b5
 +
 +#pragma once
 +
-+#include "BrowserWindow.h"
++#include "WebKitBrowserWindow.h"
++
 +#include <WebKit/WKBase.h>
 +#include <WebKit/WKRetainPtr.h>
 +#include <functional>
 +#include <memory>
 +#include <string>
-+#include <wtf/RefPtr.h>
 +
-+class MainWindow final : public RefCounted<MainWindow>, public BrowserWindowClient {
++class MainWindow : public BrowserWindowClient {
 +public:
-+    using BrowserWindowFactory = std::function<Ref<BrowserWindow>(BrowserWindowClient&, HWND mainWnd, WKContextRef, WKWebsiteDataStoreRef, bool usesLayeredWebView)>;
 +    static void configure(bool headless, bool noStartupWindow);
 +
-+    static Ref<MainWindow> create(WKContextRef context, WKWebsiteDataStoreRef dataStore);
++    MainWindow();
 +
 +    ~MainWindow();
-+    bool init(BrowserWindowFactory, HINSTANCE hInstance, bool usesLayeredWebView = false);
++    bool init(HINSTANCE hInstance, WKContextRef, WKWebsiteDataStoreRef);
++    bool init(HINSTANCE hInstance, WKPageConfigurationRef);
 +
 +    void resizeSubViews();
 +    HWND hwnd() const { return m_hMainWnd; }
-+    BrowserWindow* browserWindow() const { return m_browserWindow.get(); }
++    WebKitBrowserWindow* browserWindow() const { return m_browserWindow.get(); }
 +
 +    void loadURL(std::wstring);
 +    void goHome();
@@ -17642,16 +17428,12 @@ index 0000000000000000000000000000000000000000..99718b19797788634f4233a8892729b5
 +    
 +private:
 +    static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-+    static INT_PTR CALLBACK customUserAgentDialogProc(HWND, UINT, WPARAM, LPARAM);
-+    static INT_PTR CALLBACK cachesDialogProc(HWND, UINT, WPARAM, LPARAM);
 +    static void registerClass(HINSTANCE hInstance);
 +    static std::wstring s_windowClass;
 +    static size_t s_numInstances;
 +    static bool s_headless;
 +    static bool s_noStartupWindow;
 +
-+    MainWindow(WKContextRef context, WKWebsiteDataStoreRef dataStore);
-+    void setDefaultURLToCurrentURL();
 +    bool toggleMenuItem(UINT menuID);
 +    void onURLBarEnter();
 +    void updateDeviceScaleFactor();
@@ -17671,9 +17453,10 @@ index 0000000000000000000000000000000000000000..99718b19797788634f4233a8892729b5
 +    HWND m_hProgressIndicator { nullptr };
 +    HWND m_hCacheWnd { nullptr };
 +    HGDIOBJ m_hURLBarFont { nullptr };
-+    WKRetainPtr<WKContextRef> m_context; 
-+    WKRetainPtr<WKWebsiteDataStoreRef> m_dataStore;
-+    RefPtr<BrowserWindow> m_browserWindow;
++    // WKPageConfigurationRef retains page and WebKitBrowserWindow retains page via view
++    // make sure view is deleted after the page.
++    std::unique_ptr<WebKitBrowserWindow> m_browserWindow;
++    WKRetainPtr<WKPageConfigurationRef> m_configuration;
 +    int m_toolbarItemsWidth { };
 +};
 diff --git a/Tools/Playwright/win/Playwright.ico b/Tools/Playwright/win/Playwright.ico
@@ -17764,10 +17547,10 @@ index 0000000000000000000000000000000000000000..4430f19062cc9fd048e4b1d5d8d33c5a
 +
 diff --git a/Tools/Playwright/win/PlaywrightLib.rc b/Tools/Playwright/win/PlaywrightLib.rc
 new file mode 100644
-index 0000000000000000000000000000000000000000..46912747715c34753c6e2292500858c940edc071
+index 0000000000000000000000000000000000000000..24192b98bdd5b55e94a7fd33c13d8301ee4ddc42
 --- /dev/null
 +++ b/Tools/Playwright/win/PlaywrightLib.rc
-@@ -0,0 +1,428 @@
+@@ -0,0 +1,358 @@
 +// Microsoft Visual C++ generated resource script.
 +//
 +#include "PlaywrightLibResource.h"
@@ -17812,7 +17595,6 @@ index 0000000000000000000000000000000000000000..46912747715c34753c6e2292500858c9
 +BEGIN
 +    POPUP "&File"
 +    BEGIN
-+        MENUITEM "&Print\tCtrl-P",              IDM_PRINT
 +        MENUITEM "E&xit",                       IDM_EXIT
 +        MENUITEM "New WebKit Window",           IDM_NEW_WEBKIT_WINDOW
 +        MENUITEM "Close\tCtrl-W",               IDM_CLOSE_WINDOW
@@ -17830,64 +17612,14 @@ index 0000000000000000000000000000000000000000..46912747715c34753c6e2292500858c9
 +    BEGIN
 +        MENUITEM "Back",                        IDM_HISTORY_BACKWARD
 +        MENUITEM "Forward",                     IDM_HISTORY_FORWARD
-+        MENUITEM SEPARATOR
-+        MENUITEM "Unused History 0",            IDM_HISTORY_LINK0
-+        MENUITEM "Unused History 1",            IDM_HISTORY_LINK1
-+        MENUITEM "Unused History 2",            IDM_HISTORY_LINK2
-+        MENUITEM "Unused History 3",            IDM_HISTORY_LINK3
-+        MENUITEM "Unused History 4",            IDM_HISTORY_LINK4
-+        MENUITEM "Unused History 5",            IDM_HISTORY_LINK5
-+        MENUITEM "Unused History 6",            IDM_HISTORY_LINK6
-+        MENUITEM "Unused History 7",            IDM_HISTORY_LINK7
-+        MENUITEM "Unused History 8",            IDM_HISTORY_LINK8
-+        MENUITEM "Unused History 9",            IDM_HISTORY_LINK9
 +    END
 +    POPUP "D&evelop"
 +    BEGIN
 +        MENUITEM "Show Web Inspector",          IDM_WEB_INSPECTOR
-+        POPUP "User Agent"
-+        BEGIN
-+            MENUITEM "Default (Automatically Chosen)", IDM_UA_DEFAULT
-+            MENUITEM SEPARATOR
-+            MENUITEM "Safari",                      IDM_UA_SAFARI
-+            MENUITEM SEPARATOR
-+            MENUITEM "Safari iOS - iPhone",         IDM_UA_SAFARI_IOS_IPHONE
-+            MENUITEM "Safari iOS - iPad",           IDM_UA_SAFARI_IOS_IPAD
-+            MENUITEM SEPARATOR
-+            MENUITEM "Microsoft Edge",              IDM_UA_EDGE
-+            MENUITEM "Internet Explorer 11.0",      IDM_UA_IE_11
-+            MENUITEM SEPARATOR
-+            MENUITEM "Google Chrome - Mac",         IDM_UA_CHROME_MAC
-+            MENUITEM "Google Chrome - Windows",     IDM_UA_CHROME_WIN
-+            MENUITEM SEPARATOR
-+            MENUITEM "Firefox - Mac",               IDM_UA_FIREFOX_MAC
-+            MENUITEM "Firefox - Windows",           IDM_UA_FIREFOX_WIN
-+            MENUITEM SEPARATOR
-+            MENUITEM "Other",                       IDM_UA_OTHER
-+        END
-+        MENUITEM "Proxy Settings...",           IDM_PROXY_SETTINGS
-+        MENUITEM "Set Default URL to Current URL", IDM_SET_DEFAULT_URL
-+        MENUITEM SEPARATOR
-+        MENUITEM "Disable Images",              IDM_DISABLE_IMAGES
-+        MENUITEM "Disable Styles",              IDM_DISABLE_STYLES
-+        MENUITEM "Disable JavaScript",          IDM_DISABLE_JAVASCRIPT
-+        MENUITEM "Disable Local File Restrictions", IDM_DISABLE_LOCAL_FILE_RESTRICTIONS
 +    END
 +    POPUP "&Help"
 +    BEGIN
 +        MENUITEM "&About ...",                  IDM_ABOUT
-+    END
-+    POPUP "&Debug"
-+    BEGIN
-+        MENUITEM "Use AVFoundation",            IDM_AVFOUNDATION, CHECKED
-+        MENUITEM "Use Accelerated Compositing", IDM_ACC_COMPOSITING, CHECKED
-+        MENUITEM "Enable WebKit Full Screen",   IDM_WK_FULLSCREEN, CHECKED
-+        MENUITEM SEPARATOR
-+        MENUITEM "Show Compositing Borders",    IDM_COMPOSITING_BORDERS
-+        MENUITEM "Show Tiled Drawing indicator", IDM_DEBUG_INFO_LAYER
-+        MENUITEM SEPARATOR
-+        MENUITEM "Show Caches Window",          IDM_CACHES
-+        MENUITEM "Show Layer Tree",             IDM_SHOW_LAYER_TREE
 +    END
 +END
 +
@@ -18017,17 +17749,6 @@ index 0000000000000000000000000000000000000000..46912747715c34753c6e2292500858c9
 +    RTEXT           "0",IDC_SITE_ICONS_WITH_DATA,101,410,52,8
 +END
 +
-+IDD_USER_AGENT DIALOGEX 0, 0, 309, 176
-+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-+CAPTION "Dialog"
-+FONT 8, "MS Shell Dlg", 400, 0, 0x1
-+BEGIN
-+    LTEXT           "Type a custom user agent string for this page.",IDC_Message,7,7,295,19
-+    EDITTEXT        IDC_USER_AGENT_INPUT,7,34,295,117,ES_AUTOHSCROLL
-+    DEFPUSHBUTTON   "OK",IDOK,198,155,50,14
-+    PUSHBUTTON      "Cancel",IDCANCEL,252,155,50,14
-+END
-+
 +IDD_AUTH DIALOGEX 0, 0, 231, 119
 +STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 +CAPTION "Authentication Required"
@@ -18122,14 +17843,6 @@ index 0000000000000000000000000000000000000000..46912747715c34753c6e2292500858c9
 +        BOTTOMMARGIN, 449
 +    END
 +
-+    IDD_USER_AGENT, DIALOG
-+    BEGIN
-+        LEFTMARGIN, 7
-+        RIGHTMARGIN, 302
-+        TOPMARGIN, 7
-+        BOTTOMMARGIN, 169
-+    END
-+
 +    IDD_AUTH, DIALOG
 +    BEGIN
 +        LEFTMARGIN, 7
@@ -18198,34 +17911,24 @@ index 0000000000000000000000000000000000000000..46912747715c34753c6e2292500858c9
 +
 diff --git a/Tools/Playwright/win/PlaywrightLibResource.h b/Tools/Playwright/win/PlaywrightLibResource.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..83c94a6e2d15a40e9efa6aea85876c0766c07664
+index 0000000000000000000000000000000000000000..6b1409e2d95a9a64af763915871eea5fed579e78
 --- /dev/null
 +++ b/Tools/Playwright/win/PlaywrightLibResource.h
-@@ -0,0 +1,144 @@
+@@ -0,0 +1,119 @@
 +//{{NO_DEPENDENCIES}}
 +// Microsoft Visual C++ generated include file.
 +// Used by PlaywrightLib.rc
 +//
 +#define IDC_MYICON                      2
-+#define IDD_PLAYWRIGHT_DIALOG          102
++#define IDD_PLAYWRIGHT_DIALOG           102
 +#define IDS_APP_TITLE                   103
 +#define IDD_ABOUTBOX                    103
 +#define IDM_ABOUT                       104
 +#define IDM_EXIT                        105
-+#define IDM_PRINT                       106
-+#define IDI_PLAYWRIGHT                 107
++#define IDI_PLAYWRIGHT                  107
 +#define IDI_SMALL                       108
-+#define IDC_PLAYWRIGHT                 109
-+#define IDM_AVFOUNDATION                110
-+#define IDM_ACC_COMPOSITING             111
-+#define IDM_WK_FULLSCREEN               112
-+#define IDM_COMPOSITING_BORDERS         113
-+#define IDM_CACHES                      114
++#define IDC_PLAYWRIGHT                  109
 +#define IDM_WEB_INSPECTOR               120
-+#define IDM_DISABLE_IMAGES              121
-+#define IDM_DISABLE_STYLES              122
-+#define IDM_DISABLE_JAVASCRIPT          123
-+#define IDM_DISABLE_LOCAL_FILE_RESTRICTIONS 124
 +#define IDM_INVERT_COLORS               125
 +#define IDR_MAINFRAME                   128
 +#define IDD_CACHES                      129
@@ -18243,23 +17946,10 @@ index 0000000000000000000000000000000000000000..83c94a6e2d15a40e9efa6aea85876c07
 +#define IDM_HISTORY_LINK8               158
 +#define IDM_HISTORY_LINK9               159
 +#define IDT_UPDATE_STATS                160
-+#define IDM_UA_DEFAULT                  161
-+#define IDM_UA_SAFARI                   162
-+#define IDM_UA_SAFARI_IOS_IPHONE        163
-+#define IDM_UA_SAFARI_IOS_IPAD          164
-+#define IDM_UA_EDGE                     165
-+#define IDM_UA_IE_11                    166
-+#define IDM_UA_CHROME_MAC               167
-+#define IDM_UA_CHROME_WIN               168
-+#define IDM_UA_FIREFOX_MAC              169
-+#define IDM_UA_FIREFOX_WIN              170
-+#define IDM_UA_OTHER                    171
 +#define IDM_ACTUAL_SIZE                 172
 +#define IDM_ZOOM_IN                     173
 +#define IDM_ZOOM_OUT                    174
-+#define IDM_SHOW_LAYER_TREE             175
 +#define IDD_AUTH                        176
-+#define IDM_DEBUG_INFO_LAYER            177
 +#define IDD_PROXY                       178
 +#define IDD_SERVER_TRUST                179
 +#define IDR_ACCELERATORS_PRE            180
@@ -18328,11 +18018,9 @@ index 0000000000000000000000000000000000000000..83c94a6e2d15a40e9efa6aea85876c07
 +#define IDC_SERVER_TRUST_TEXT           1062
 +#define IDM_NEW_WEBKIT_WINDOW           32776
 +#define IDM_NEW_WEBKITLEGACY_WINDOW     32777
-+#define IDM_PROXY_SETTINGS              32778
 +#define IDM_RELOAD                      32779
 +#define IDM_CLOSE_WINDOW                32780
 +#define IDM_GO_HOME                     32781
-+#define IDM_SET_DEFAULT_URL             32782
 +#define IDC_STATIC                      -1
 +
 +// Next default values for new objects
@@ -18409,10 +18097,10 @@ index 0000000000000000000000000000000000000000..c60d7b73f18d0e7f220e68c2a22e5d99
 +#endif
 diff --git a/Tools/Playwright/win/WebKitBrowserWindow.cpp b/Tools/Playwright/win/WebKitBrowserWindow.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..0fb5e0415d99273ed9f461032b2d77617376355a
+index 0000000000000000000000000000000000000000..742a817f8bb8934751d057eca55d11e050255487
 --- /dev/null
 +++ b/Tools/Playwright/win/WebKitBrowserWindow.cpp
-@@ -0,0 +1,527 @@
+@@ -0,0 +1,386 @@
 +/*
 + * Copyright (C) 2018 Sony Interactive Entertainment Inc.
 + *
@@ -18438,10 +18126,10 @@ index 0000000000000000000000000000000000000000..0fb5e0415d99273ed9f461032b2d7761
 + * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 + */
 +#include "stdafx.h"
-+#include "WebKitBrowserWindow.h"
-+
++#include "Common.h"
++#include "MainWindow.h"
 +#include "PlaywrightLibResource.h"
-+#include "common.h"
++#include "WebKitBrowserWindow.h"
 +#include <WebCore/GDIUtilities.h>
 +#include <WebKit/WKAuthenticationChallenge.h>
 +#include <WebKit/WKAuthenticationDecisionListener.h>
@@ -18454,31 +18142,6 @@ index 0000000000000000000000000000000000000000..0fb5e0415d99273ed9f461032b2d7761
 +#include <WebKit/WKWebsiteDataStoreRef.h>
 +#include <WebKit/WKWebsiteDataStoreRefCurl.h>
 +#include <vector>
-+
-+std::wstring createString(WKStringRef wkString)
-+{
-+    size_t maxSize = WKStringGetLength(wkString);
-+
-+    std::vector<WKChar> wkCharBuffer(maxSize);
-+    size_t actualLength = WKStringGetCharacters(wkString, wkCharBuffer.data(), maxSize);
-+    return std::wstring(wkCharBuffer.data(), actualLength);
-+}
-+
-+std::wstring createString(WKURLRef wkURL)
-+{
-+    if (!wkURL)
-+        return { };
-+    WKRetainPtr<WKStringRef> url = adoptWK(WKURLCopyString(wkURL));
-+    return createString(url.get());
-+}
-+
-+std::string createUTF8String(const wchar_t* src, size_t srcLength)
-+{
-+    int length = WideCharToMultiByte(CP_UTF8, 0, src, srcLength, 0, 0, nullptr, nullptr);
-+    std::vector<char> buffer(length);
-+    size_t actualLength = WideCharToMultiByte(CP_UTF8, 0, src, srcLength, buffer.data(), length, nullptr, nullptr);
-+    return { buffer.data(), actualLength };
-+}
 +
 +std::wstring createPEMString(WKCertificateInfoRef certificateInfo)
 +{
@@ -18498,51 +18161,7 @@ index 0000000000000000000000000000000000000000..0fb5e0415d99273ed9f461032b2d7761
 +    return replaceString(pems, L"\n", L"\r\n");
 +}
 +
-+WKRetainPtr<WKStringRef> createWKString(_bstr_t str)
-+{
-+    auto utf8 = createUTF8String(str, str.length());
-+    return adoptWK(WKStringCreateWithUTF8CString(utf8.data()));
-+}
-+
-+WKRetainPtr<WKStringRef> createWKString(const std::wstring& str)
-+{
-+    auto utf8 = createUTF8String(str.c_str(), str.length());
-+    return adoptWK(WKStringCreateWithUTF8CString(utf8.data()));
-+}
-+
-+WKRetainPtr<WKURLRef> createWKURL(_bstr_t str)
-+{
-+    auto utf8 = createUTF8String(str, str.length());
-+    return adoptWK(WKURLCreateWithUTF8CString(utf8.data()));
-+}
-+
-+WKRetainPtr<WKURLRef> createWKURL(const std::wstring& str)
-+{
-+    auto utf8 = createUTF8String(str.c_str(), str.length());
-+    return adoptWK(WKURLCreateWithUTF8CString(utf8.data()));
-+}
-+
-+Ref<BrowserWindow> WebKitBrowserWindow::create(BrowserWindowClient& client, HWND mainWnd, WKContextRef context, WKWebsiteDataStoreRef dataStore, bool)
-+{
-+    auto conf = adoptWK(WKPageConfigurationCreate());
-+
-+    auto prefs = adoptWK(WKPreferencesCreate());
-+
-+    auto pageGroup = adoptWK(WKPageGroupCreateWithIdentifier(createWKString("WinPlaywright").get()));
-+    WKPageConfigurationSetPageGroup(conf.get(), pageGroup.get());
-+    WKPageGroupSetPreferences(pageGroup.get(), prefs.get());
-+
-+    WKPreferencesSetMediaCapabilitiesEnabled(prefs.get(), false);
-+    WKPreferencesSetDeveloperExtrasEnabled(prefs.get(), true);
-+    WKPageConfigurationSetPreferences(conf.get(), prefs.get());
-+
-+    WKPageConfigurationSetContext(conf.get(), context);
-+    WKPageConfigurationSetWebsiteDataStore(conf.get(), dataStore);
-+
-+    return adoptRef(*new WebKitBrowserWindow(client, conf.get(), mainWnd));
-+}
-+
-+WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, WKPageConfigurationRef conf, HWND mainWnd)
++WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, HWND mainWnd, WKPageConfigurationRef conf)
 +    : m_client(client)
 +    , m_hMainWnd(mainWnd)
 +{
@@ -18588,26 +18207,6 @@ index 0000000000000000000000000000000000000000..0fb5e0415d99273ed9f461032b2d7761
 +    resetZoom();
 +}
 +
-+void WebKitBrowserWindow::updateProxySettings()
-+{
-+    auto context = WKPageGetContext(WKViewGetPage(m_view.get()));
-+    auto store = WKWebsiteDataStoreGetDefaultDataStore();
-+
-+    if (!m_proxy.enable) {
-+        WKWebsiteDataStoreDisableNetworkProxySettings(store);
-+        return;
-+    }
-+
-+    if (!m_proxy.custom) {
-+        WKWebsiteDataStoreEnableDefaultNetworkProxySettings(store);
-+        return;
-+    }
-+
-+    auto url = createWKURL(m_proxy.url);
-+    auto excludeHosts = createWKString(m_proxy.excludeHosts);
-+    WKWebsiteDataStoreEnableCustomNetworkProxySettings(store, url.get(), excludeHosts.get());
-+}
-+
 +WebKitBrowserWindow::~WebKitBrowserWindow()
 +{
 +    if (m_alertDialog) {
@@ -18629,11 +18228,6 @@ index 0000000000000000000000000000000000000000..0fb5e0415d99273ed9f461032b2d7761
 +        WKRelease(m_beforeUnloadDialog);
 +        m_beforeUnloadDialog = NULL;
 +    }
-+}
-+
-+HRESULT WebKitBrowserWindow::init()
-+{
-+    return S_OK;
 +}
 +
 +HWND WebKitBrowserWindow::hwnd()
@@ -18663,42 +18257,11 @@ index 0000000000000000000000000000000000000000..0fb5e0415d99273ed9f461032b2d7761
 +        WKPageGoBack(page);
 +}
 +
-+void WebKitBrowserWindow::navigateToHistory(UINT menuID)
-+{
-+    // Not implemented
-+}
-+
-+void WebKitBrowserWindow::setPreference(UINT menuID, bool enable)
-+{
-+    auto page = WKViewGetPage(m_view.get());
-+    auto pgroup = WKPageGetPageGroup(page);
-+    auto pref = WKPageGroupGetPreferences(pgroup);
-+    switch (menuID) {
-+    case IDM_DISABLE_IMAGES:
-+        WKPreferencesSetLoadsImagesAutomatically(pref, !enable);
-+        break;
-+    case IDM_DISABLE_JAVASCRIPT:
-+        WKPreferencesSetJavaScriptEnabled(pref, !enable);
-+        break;
-+    }
-+}
-+
-+void WebKitBrowserWindow::print()
-+{
-+    // Not implemented
-+}
-+
 +void WebKitBrowserWindow::launchInspector()
 +{
 +    auto page = WKViewGetPage(m_view.get());
 +    auto inspector = WKPageGetInspector(page);
 +    WKInspectorShow(inspector);
-+}
-+
-+void WebKitBrowserWindow::openProxySettings()
-+{
-+    if (askProxySettings(m_hMainWnd, m_proxy))
-+        updateProxySettings();
 +}
 +
 +void WebKitBrowserWindow::setUserAgent(_bstr_t& customUAString)
@@ -18714,17 +18277,6 @@ index 0000000000000000000000000000000000000000..0fb5e0415d99273ed9f461032b2d7761
 +    auto ua = adoptWK(WKPageCopyUserAgent(page));
 +    return createString(ua.get()).c_str();
 +}
-+
-+void WebKitBrowserWindow::showLayerTree()
-+{
-+    // Not implemented
-+}
-+
-+void WebKitBrowserWindow::updateStatistics(HWND hDlg)
-+{
-+    // Not implemented
-+}
-+
 +
 +void WebKitBrowserWindow::resetZoom()
 +{
@@ -18905,18 +18457,13 @@ index 0000000000000000000000000000000000000000..0fb5e0415d99273ed9f461032b2d7761
 +
 +WKPageRef WebKitBrowserWindow::createViewCallback(WKPageConfigurationRef configuration, bool navigate)
 +{
-+    auto context = WKPageConfigurationGetContext(configuration);
-+    auto dataStore = WKPageConfigurationGetWebsiteDataStore(configuration);
-+    auto& newWindow = MainWindow::create(context, dataStore).leakRef();
-+    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, WKContextRef, WKWebsiteDataStoreRef, bool) -> auto {
-+        return adoptRef(*new WebKitBrowserWindow(client, configuration, mainWnd));
-+    };
-+    bool ok = newWindow.init(factory, hInst);
++    auto* newWindow = new MainWindow();
++    bool ok = newWindow->init(hInst, configuration);
 +    if (navigate)
-+        newWindow.browserWindow()->loadURL(_bstr_t("about:blank").GetBSTR());
++        newWindow->browserWindow()->loadURL(_bstr_t("about:blank").GetBSTR());
 +
-+    auto& newBrowserWindow = *static_cast<WebKitBrowserWindow*>(newWindow.browserWindow());
-+    return WKViewGetPage(newBrowserWindow.m_view.get());
++    auto* newBrowserWindow = newWindow->browserWindow();
++    return WKViewGetPage(newBrowserWindow->m_view.get());
 +}
 +
 +
@@ -18942,10 +18489,10 @@ index 0000000000000000000000000000000000000000..0fb5e0415d99273ed9f461032b2d7761
 +}
 diff --git a/Tools/Playwright/win/WebKitBrowserWindow.h b/Tools/Playwright/win/WebKitBrowserWindow.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..2f25d60c366efa428197dba4a7e0aea6de86af6c
+index 0000000000000000000000000000000000000000..29e11623eac55a979db444df1d5a04106caf5431
 --- /dev/null
 +++ b/Tools/Playwright/win/WebKitBrowserWindow.h
-@@ -0,0 +1,96 @@
+@@ -0,0 +1,87 @@
 +/*
 + * Copyright (C) 2018 Sony Interactive Entertainment Inc.
 + *
@@ -18972,50 +18519,41 @@ index 0000000000000000000000000000000000000000..2f25d60c366efa428197dba4a7e0aea6
 + */
 +#pragma once
 +
-+#include "BrowserWindow.h"
 +#include "Common.h"
 +#include <WebKit/WKBase.h>
-+#include <WebKit/WKRetainPtr.h>
 +#include <WebKit/WebKit2_C.h>
 +#include <unordered_map>
-+#include <wtf/Ref.h>
 +
-+class WebKitBrowserWindow : public BrowserWindow {
++class BrowserWindowClient {
 +public:
-+    static Ref<BrowserWindow> create(BrowserWindowClient&, HWND mainWnd, WKContextRef, WKWebsiteDataStoreRef, bool useLayeredWebView = false);
++    virtual void progressChanged(double) = 0;
++    virtual void progressFinished() = 0;
++    virtual void activeURLChanged(std::wstring) = 0;
++};
++
++class WebKitBrowserWindow {
++public:
 +    static WKPageRef createPageCallback(WKPageConfigurationRef);
++    WebKitBrowserWindow(BrowserWindowClient&, HWND mainWnd, WKPageConfigurationRef);
++    ~WebKitBrowserWindow();
++
++    HRESULT loadURL(const BSTR& url);
++    void reload();
++    void navigateForwardOrBackward(bool forward);
++    void launchInspector();
++
++    _bstr_t userAgent();
++    void setUserAgent(_bstr_t&);
++
++    void resetZoom();
++    void zoomIn();
++    void zoomOut();
++
++    bool canTrustServerCertificate(WKProtectionSpaceRef);
++    HWND hwnd();
 +
 +private:
 +    static WKPageRef createViewCallback(WKPageConfigurationRef, bool navigate);
-+    WebKitBrowserWindow(BrowserWindowClient&, WKPageConfigurationRef, HWND mainWnd);
-+    ~WebKitBrowserWindow() override;
-+
-+    HRESULT init() override;
-+    HWND hwnd() override;
-+
-+    HRESULT loadURL(const BSTR& url) override;
-+    void reload() override;
-+    void navigateForwardOrBackward(bool forward) override;
-+    void navigateToHistory(UINT menuID) override;
-+    void setPreference(UINT menuID, bool enable) override;
-+
-+    void print() override;
-+    void launchInspector() override;
-+    void openProxySettings() override;
-+
-+    _bstr_t userAgent() override;
-+    void setUserAgent(_bstr_t&) override;
-+
-+    void showLayerTree() override;
-+    void updateStatistics(HWND dialog) override;
-+
-+    void resetZoom() override;
-+    void zoomIn() override;
-+    void zoomOut() override;
-+
-+    void updateProxySettings();
-+
-+    bool canTrustServerCertificate(WKProtectionSpaceRef);
 +
 +    static void didChangeTitle(const void*);
 +    static void didChangeIsLoading(const void*);
@@ -19044,7 +18582,7 @@ index 0000000000000000000000000000000000000000..2f25d60c366efa428197dba4a7e0aea6
 +};
 diff --git a/Tools/Playwright/win/WinMain.cpp b/Tools/Playwright/win/WinMain.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..03e82fed0c0d07166b52700b15b16e4ab0f76c1e
+index 0000000000000000000000000000000000000000..b19855c53902fd161f3e42858d5828adae1af464
 --- /dev/null
 +++ b/Tools/Playwright/win/WinMain.cpp
 @@ -0,0 +1,157 @@
@@ -19080,6 +18618,7 @@ index 0000000000000000000000000000000000000000..03e82fed0c0d07166b52700b15b16e4a
 +
 +#include "stdafx.h"
 +#include "Common.h"
++#include "MainWindow.h"
 +#include "PlaywrightLibResource.h"
 +#include "PlaywrightReplace.h"
 +#include <WebKit/WKContext.h>
@@ -19141,7 +18680,6 @@ index 0000000000000000000000000000000000000000..03e82fed0c0d07166b52700b15b16e4a
 +    MainWindow::configure(options.headless, options.noStartupWindow);
 +
 +    if (!options.noStartupWindow) {
-+        auto factory = WebKitBrowserWindow::create;
 +        auto configuration = adoptWK(WKWebsiteDataStoreConfigurationCreate());
 +        if (options.userDataDir.length()) {
 +            std::string profileFolder = toUTF8String(options.userDataDir, options.userDataDir.length());
@@ -19159,15 +18697,15 @@ index 0000000000000000000000000000000000000000..03e82fed0c0d07166b52700b15b16e4a
 +        auto dataStore = adoptWK(WKWebsiteDataStoreCreateWithConfiguration(configuration.get()));
 +        WKContextSetPrimaryDataStore(context.get(), dataStore.get());
 +
-+        auto& mainWindow = MainWindow::create(context.get(), dataStore.get()).leakRef();
-+        HRESULT hr = mainWindow.init(factory, hInst, options.usesLayeredWebView);
++        auto* mainWindow = new MainWindow();
++        HRESULT hr = mainWindow->init(hInst, context.get(), dataStore.get());
 +        if (FAILED(hr))
 +            goto exit;
 +
 +        if (options.requestedURL.length())
-+            mainWindow.loadURL(options.requestedURL.GetBSTR());
++            mainWindow->loadURL(options.requestedURL.GetBSTR());
 +        else
-+            mainWindow.goHome();
++            mainWindow->goHome();
 +    }
 +
 +    hAccelTable = LoadAccelerators(hInst, MAKEINTRESOURCE(IDC_PLAYWRIGHT));
@@ -19207,10 +18745,10 @@ index 0000000000000000000000000000000000000000..03e82fed0c0d07166b52700b15b16e4a
 +}
 diff --git a/Tools/Playwright/win/resource.h b/Tools/Playwright/win/resource.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..c98fac7ea8dc19b32f49cd64d9174fb00f60f927
+index 0000000000000000000000000000000000000000..6a2168457084e26663486a741d39f84beb38e0b5
 --- /dev/null
 +++ b/Tools/Playwright/win/resource.h
-@@ -0,0 +1,28 @@
+@@ -0,0 +1,27 @@
 +//{{NO_DEPENDENCIES}}
 +// Microsoft Visual C++ generated include file.
 +// Used by WinLauncher.rc
@@ -19221,7 +18759,6 @@ index 0000000000000000000000000000000000000000..c98fac7ea8dc19b32f49cd64d9174fb0
 +#define IDD_ABOUTBOX                    103
 +#define IDM_ABOUT                       104
 +#define IDM_EXIT                        105
-+#define IDM_PRINT                       106
 +#define IDI_WINLAUNCHER                 107
 +#define IDI_SMALL                       108
 +#define IDC_WINLAUNCHER                 109
