@@ -40,6 +40,7 @@ type KeyDescription = {
   text: string,
   code: string,
   location: number,
+  shifted?: KeyDescription;
 };
 
 const kModifiers: Modifier[] = ['Alt', 'Control', 'Meta', 'Shift'];
@@ -70,51 +71,14 @@ export class Keyboard {
   }
 
   private _keyDescriptionForString(keyString: string): KeyDescription {
+    let description = usKeyboardLayout.get(keyString);
+    assert(description, `Unknown key: "${keyString}"`);
     const shift = this._pressedModifiers.has('Shift');
-    const description: KeyDescription = {
-      key: '',
-      keyCode: 0,
-      keyCodeWithoutLocation: 0,
-      code: '',
-      text: '',
-      location: 0
-    };
-
-    const definition = keyboardLayout.keyDefinitions[keyString];
-    assert(definition, `Unknown key: "${keyString}"`);
-
-    if (definition.key)
-      description.key = definition.key;
-    if (shift && definition.shiftKey)
-      description.key = definition.shiftKey;
-
-    if (definition.keyCode)
-      description.keyCode = definition.keyCode;
-    if (shift && definition.shiftKeyCode)
-      description.keyCode = definition.shiftKeyCode;
-
-    if (definition.code)
-      description.code = definition.code;
-
-    if (definition.location)
-      description.location = definition.location;
-
-    if (description.key.length === 1)
-      description.text = description.key;
-
-    if (definition.text)
-      description.text = definition.text;
-    if (shift && definition.shiftText)
-      description.text = definition.shiftText;
+    description = shift && description.shifted ? description.shifted : description;
 
     // if any modifiers besides shift are pressed, no text should be sent
     if (this._pressedModifiers.size > 1 || (!this._pressedModifiers.has('Shift') && this._pressedModifiers.size === 1))
-      description.text = '';
-
-    if (definition.keyCodeWithoutLocation)
-      description.keyCodeWithoutLocation = definition.keyCodeWithoutLocation;
-    else
-      description.keyCodeWithoutLocation = description.keyCode;
+      return { ...description, text: '' };
     return description;
   }
 
@@ -133,7 +97,7 @@ export class Keyboard {
   async type(text: string, options?: { delay?: number }) {
     const delay = (options && options.delay) || undefined;
     for (const char of text) {
-      if (keyboardLayout.keyDefinitions[char]) {
+      if (usKeyboardLayout.has(char)) {
         await this.press(char, { delay });
       } else {
         if (delay)
@@ -144,10 +108,31 @@ export class Keyboard {
   }
 
   async press(key: string, options: { delay?: number } = {}) {
+    function split(keyString: string) {
+      const keys = [];
+      let building = '';
+      for (const char of keyString) {
+        if (char === '+' && building) {
+          keys.push(building);
+          building = '';
+        } else {
+          building += char;
+        }
+      }
+      keys.push(building);
+      return keys;
+    }
+
+    const tokens = split(key);
+    key = tokens[tokens.length - 1];
+    for (let i = 0; i < tokens.length - 1; ++i)
+      await this.down(tokens[i]);
     await this.down(key);
     if (options.delay)
       await new Promise(f => setTimeout(f, options.delay));
     await this.up(key);
+    for (let i = tokens.length - 2; i >= 0; --i)
+      await this.up(tokens[i]);
   }
 
   async _ensureModifiers(modifiers: Modifier[]): Promise<Modifier[]> {
@@ -245,4 +230,64 @@ export class Mouse {
   async dblclick(x: number, y: number, options: MouseMultiClickOptions = {}) {
     await this.click(x, y, { ...options, clickCount: 2 });
   }
+}
+
+const aliases = new Map<string, string[]>([
+  ['ShiftLeft', ['Shift']],
+  ['ControlLeft', ['Control']],
+  ['AltLeft', ['Alt']],
+  ['MetaLeft', ['Meta']],
+  ['Enter', ['\n', '\r']],
+]);
+
+const usKeyboardLayout = buildLayoutClosure(keyboardLayout.USKeyboardLayout);
+
+function buildLayoutClosure(layout: keyboardLayout.KeyboardLayout): Map<string, KeyDescription> {
+  const result = new Map<string, KeyDescription>();
+  for (const code in layout) {
+    const definition = layout[code];
+    const description: KeyDescription = {
+      key: definition.key || '',
+      keyCode: definition.keyCode || 0,
+      keyCodeWithoutLocation: definition.keyCodeWithoutLocation || definition.keyCode || 0,
+      code,
+      text: definition.text || '',
+      location: definition.location || 0,
+    };
+    if (definition.key.length === 1)
+      description.text = description.key;
+
+    // Generate shifted definition.
+    let shiftedDescription: KeyDescription | undefined;
+    if (definition.shiftKey) {
+      assert(definition.shiftKey.length === 1);
+      shiftedDescription = { ...description };
+      shiftedDescription.key = definition.shiftKey;
+      shiftedDescription.text = definition.shiftKey;
+      if (definition.shiftKeyCode)
+        shiftedDescription.keyCode = definition.shiftKeyCode;
+    }
+
+    // Map from code: Digit3 -> { ... descrption, shifted }
+    result.set(code, { ...description, shifted: shiftedDescription });
+
+    // Map from aliases: Shift -> non-shiftable definition
+    if (aliases.has(code)) {
+      for (const alias of aliases.get(code)!)
+        result.set(alias, description);
+    }
+
+    // Do not use numpad when converting keys to codes.
+    if (definition.location)
+      continue;
+
+    // Map from key, no shifted
+    if (description.key.length === 1)
+      result.set(description.key, description);
+
+    // Map from shiftKey, no shifted
+    if (shiftedDescription)
+      result.set(shiftedDescription.key, { ...shiftedDescription, shifted: undefined });
+  }
+  return result;
 }
