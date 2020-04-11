@@ -286,13 +286,57 @@ playwright.chromium.launch().then(async browser => {
     console.log(elements.map(x => x)[0].textContent);
     return elements[3].innerHTML;
   });
-  {
-    const value = await page.$eval('input', i => i.disabled);
-    const assertion: AssertType<boolean, typeof value> = true;
-  }
-  {
-    const value = await page.$$eval('input', i => i[0].defaultValue);
-    const assertion: AssertType<string, typeof value> = true;
+  const frame = page.frames()[0];
+  const handle = await page.evaluateHandle(() => document.body);
+  for (const object of [frame, handle, page]) {
+    {
+      const value = await object.$eval('*[foo=bar]', i => i.textContent);
+      const assertion: AssertType<string, typeof value> = true;
+    }
+    {
+      const value = await object.$eval('input', i => i.disabled);
+      const assertion: AssertType<boolean, typeof value> = true;
+    }
+    {
+      const value = await object.$eval('input[foo=bar]', (i: HTMLInputElement) => i.disabled);
+      const assertion: AssertType<boolean, typeof value> = true;
+    }
+    {
+      const value = await object.$eval('*[foo=bar]', (i, dummy) => i.textContent, 2);
+      const assertion: AssertType<string, typeof value> = true;
+    }
+    {
+      const value = await object.$eval('input', (i, dummy) => i.disabled, 2);
+      const assertion: AssertType<boolean, typeof value> = true;
+    }
+    {
+      const value = await object.$eval('input[foo=bar]', (i: HTMLInputElement, dummy: number) => i.disabled, 2);
+      const assertion: AssertType<boolean, typeof value> = true;
+    }
+    {
+      const value = await object.$$eval('*[foo=bar]', i => i[0].textContent);
+      const assertion: AssertType<string, typeof value> = true;
+    }
+    {
+      const value = await object.$$eval('input', i => i[0].defaultValue);
+      const assertion: AssertType<string, typeof value> = true;
+    }
+    {
+      const value = await object.$$eval('input[foo=bar]', (i: HTMLInputElement[]) => i[0].defaultValue);
+      const assertion: AssertType<string, typeof value> = true;
+    }
+    {
+      const value = await object.$$eval('*[foo=bar]', (i, dummy) => i[0].textContent, 2);
+      const assertion: AssertType<string, typeof value> = true;
+    }
+    {
+      const value = await object.$$eval('input', (i, dummy) => i[0].defaultValue, 2);
+      const assertion: AssertType<string, typeof value> = true;
+    }
+    {
+      const value = await object.$$eval('input[foo=bar]', (i: HTMLInputElement[], dummy: number) => i[0].defaultValue, 2);
+      const assertion: AssertType<string, typeof value> = true;
+    }
   }
   browser.close();
 })();
@@ -343,7 +387,69 @@ playwright.chromium.launch().then(async browser => {
     const value = await windowHandle.evaluate((x: Window, b) => b, 'world');
     const assertion: AssertType<string, typeof value> = true;
   }
+  {
+    const value = await page.evaluate(({a, b}) => b ? a : '123', { a: 3, b: true });
+    const assertion: AssertType<number | string, typeof value> = true;
+  }
+  {
+    const value = await page.evaluate(([a, b, c]) => ({a, b, c}), [3, '123', true]);
+    const assertion: AssertType<{a: string | number | boolean, b: string | number | boolean, c: string | number | boolean}, typeof value> = true;
+  }
+  {
+    const value = await page.evaluate(([a, b, c]) => ({a, b, c}), [3, '123', true] as const);
+    const assertion: AssertType<{a: 3, b: '123', c: true}, typeof value> = true;
+  }
 
+  {
+    const handle = await page.evaluateHandle(() => ([{a: '123'}]));
+    const value = await handle.evaluate(h => h[1].a);
+    const assertion: AssertType<string, typeof value> = true;
+  }
+  {
+    const handle = await page.evaluateHandle(() => ([{a: '123'}]));
+    const value = await handle.evaluate((h, p) => ({ a: h[1].a, p}), 123);
+    const assertion: AssertType<{a: string, p: number}, typeof value> = true;
+  }
+  {
+    const handle = await page.evaluateHandle(() => ([{a: '123'}]));
+    const value = await handle.evaluate((h: ({a: string, b: number})[]) => h[1].b);
+    const assertion: AssertType<number, typeof value> = true;
+  }
+  {
+    const handle = await page.evaluateHandle(() => ([{a: '123'}]));
+    const value = await handle.evaluate((h: ({a: string, b: number})[], prop) => h[1][prop], 'b' as const);
+    const assertion: AssertType<number, typeof value> = true;
+  }
+  {
+    const handle = await page.evaluateHandle(() => ([{a: '123'}]));
+    const value = await handle.evaluateHandle(h => h[1].a);
+    const assertion: AssertType<playwright.JSHandle<string>, typeof value> = true;
+  }
+  {
+    const handle = await page.evaluateHandle(() => ([{a: '123'}]));
+    const value = await handle.evaluateHandle((h, p) => ({ a: h[1].a, p}), 123);
+    const assertion: AssertType<playwright.JSHandle<{a: string, p: number}>, typeof value> = true;
+  }
+  {
+    const handle = await page.evaluateHandle(() => ([{a: '123'}]));
+    const value = await handle.evaluateHandle((h: ({a: string, b: number})[]) => h[1].b);
+    const assertion: AssertType<playwright.JSHandle<number>, typeof value> = true;
+  }
+  {
+    const handle = await page.waitForSelector('*');
+    const value = await handle.evaluate((e: HTMLInputElement) => e.disabled);
+    const assertion: AssertType<boolean, typeof value> = true;
+  }
+  {
+    const handle = await page.waitForSelector('*');
+    const value = await handle.evaluate((e: HTMLInputElement, x) => e.disabled || x, 123);
+    const assertion: AssertType<boolean | number, typeof value> = true;
+  }
+  {
+    const handle = await page.waitForSelector('*');
+    const value = await handle.evaluateHandle((e: HTMLInputElement, x) => e.disabled || x, 123);
+    const assertion: AssertType<playwright.JSHandle<boolean> | playwright.JSHandle<number>, typeof value> = true;
+  }
 
   {
     const handle = await page.evaluateHandle(() => 'hello');
