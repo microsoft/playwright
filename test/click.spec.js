@@ -16,7 +16,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN} = utils.testOptions(browserType);
 
 describe('Page.click', function() {
   it('should click the button', async({page, server}) => {
@@ -383,7 +383,7 @@ describe('Page.click', function() {
     await context.close();
   });
 
-  it('should wait for stable position', async({page, server}) => {
+  it.fail(WEBKIT && WIN)('should wait for stable position', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', button => {
       button.style.transition = 'margin 500ms linear 0s';
@@ -401,7 +401,7 @@ describe('Page.click', function() {
     expect(await page.evaluate(() => pageX)).toBe(300);
     expect(await page.evaluate(() => pageY)).toBe(10);
   });
-  it('should timeout waiting for stable position', async({page, server}) => {
+  it.fail(WEBKIT && WIN)('should timeout waiting for stable position', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     const button = await page.$('button');
     await button.evaluate(button => {
