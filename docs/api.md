@@ -211,7 +211,7 @@ Indicates that the browser is connected.
     - `accuracy` <[number]> Non-negative accuracy value. Defaults to `0`.
   - `locale` <[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
   - `permissions` <[Array]<[string]>> A list of permissions to grant to all pages in this context. See [browserContext.grantPermissions](#browsercontextgrantpermissionspermissions-options) for more details.
-  - `extraHTTPHeaders` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+  - `extraHTTPHeaders` <[Object]<[string], [string]>> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
   - `offline` <[boolean]> Whether to emulate network being offline. Defaults to `false`.
   - `httpCredentials` <[Object]> Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
     - `username` <[string]>
@@ -253,7 +253,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
     - `accuracy` <[number]> Non-negative accuracy value. Defaults to `0`.
   - `locale` <[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
   - `permissions` <[Array]<[string]>> A list of permissions to grant to all pages in this context. See [browserContext.grantPermissions](#browsercontextgrantpermissionspermissions-options) for more details.
-  - `extraHTTPHeaders` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+  - `extraHTTPHeaders` <[Object]<[string], [string]>> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
   - `offline` <[boolean]> Whether to emulate network being offline. Defaults to `false`.
   - `httpCredentials` <[Object]> Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
     - `username` <[string]>
@@ -544,7 +544,7 @@ This setting will change the default maximum time for all the methods accepting 
 > **NOTE** [`page.setDefaultNavigationTimeout`](#pagesetdefaultnavigationtimeouttimeout), [`page.setDefaultTimeout`](#pagesetdefaulttimeouttimeout) and [`browserContext.setDefaultNavigationTimeout`](#browsercontextsetdefaultnavigationtimeouttimeout) take priority over [`browserContext.setDefaultTimeout`](#browsercontextsetdefaulttimeouttimeout).
 
 #### browserContext.setExtraHTTPHeaders(headers)
-- `headers` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+- `headers` <[Object]<[string], [string]>> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
 - returns: <[Promise]>
 
 The extra HTTP headers will be sent with every request initiated by any page in the context. These headers are merged with page-specific extra HTTP headers set with [page.setExtraHTTPHeaders()](#pagesetextrahttpheadersheaders). If page overrides a particular header, page-specific header value will be used instead of the browser context header value.
@@ -1552,7 +1552,7 @@ This setting will change the default maximum time for all the methods accepting 
 > **NOTE** [`page.setDefaultNavigationTimeout`](#pagesetdefaultnavigationtimeouttimeout) takes priority over [`page.setDefaultTimeout`](#pagesetdefaulttimeouttimeout).
 
 #### page.setExtraHTTPHeaders(headers)
-- `headers` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+- `headers` <[Object]<[string], [string]>> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
 - returns: <[Promise]>
 
 The extra HTTP headers will be sent with every request the page initiates.
@@ -3308,7 +3308,7 @@ page.on('requestfailed', request => {
 - returns: <[Frame]> A [Frame] that initiated this request.
 
 #### request.headers()
-- returns: <[Object]> An object with HTTP headers associated with the request. All header names are lower-case.
+- returns: <[Object]<[string], [string]>> An object with HTTP headers associated with the request. All header names are lower-case.
 
 #### request.isNavigationRequest()
 - returns: <[boolean]>
@@ -3516,7 +3516,7 @@ Aborts the route's request.
 - `overrides` <[Object]> Optional request overrides, which can be one of the following:
   - `method` <[string]> If set changes the request method (e.g. GET or POST)
   - `postData` <[string]> If set changes the post data of request
-  - `headers` <[Object]> If set changes the request HTTP headers. Header values will be converted to a string.
+  - `headers` <[Object]<[string], [string]>> If set changes the request HTTP headers. Header values will be converted to a string.
 - returns: <[Promise]>
 
 Continues route's request with optional overrides.
@@ -3535,7 +3535,7 @@ await page.route('**/*', (route, request) => {
 #### route.fulfill(response)
 - `response` <[Object]> Response that will fulfill this route's request.
   - `status` <[number]> Response status code, defaults to `200`.
-  - `headers` <[Object]> Optional response headers. Header values will be converted to a string.
+  - `headers` <[Object]<[string], [string]>> Optional response headers. Header values will be converted to a string.
   - `contentType` <[string]> If set, equals to setting `Content-Type` response header.
   - `body` <[string]|[Buffer]> Optional response body.
   - `path` <[string]> Optional file path to respond with. The content type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
@@ -3777,7 +3777,7 @@ This methods attaches Playwright to an existing browser instance.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
   - `logger` <[Logger]> Logger sink for Playwright logging.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
-  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+  - `env` <[Object]<[string], [string]|[number]|[boolean]>> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
 - returns: <[Promise]<[Browser]>> Promise which resolves to browser instance.
@@ -3810,7 +3810,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
   - `logger` <[Logger]> Logger sink for Playwright logging.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
-  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+  - `env` <[Object]<[string], [string]|[number]|[boolean]>> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
 - returns: <[Promise]<[BrowserContext]>> Promise which resolves to the browser app instance.
@@ -3829,7 +3829,7 @@ Launches browser instance that uses persistent storage located at `userDataDir`.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
   - `logger` <[Logger]> Logger sink for Playwright logging.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
-  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+  - `env` <[Object]<[string], [string]|[number]|[boolean]>> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
 - returns: <[Promise]<[BrowserServer]>> Promise which resolves to the browser app instance.
 
