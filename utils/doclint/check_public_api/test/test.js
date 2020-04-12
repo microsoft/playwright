@@ -61,30 +61,27 @@ runner.run();
 
 async function testLint(state, testRun) {
   const dirPath = path.join(__dirname, testRun.test().name());
-  expect.setupGolden(dirPath);
   const mdSources = await Source.readdir(dirPath, '.md');
   const tsSources = await Source.readdir(dirPath, '.ts');
   const jsSources = await Source.readdir(dirPath, '.js');
   const messages = await checkPublicAPI(page, mdSources, jsSources.concat(tsSources));
   const errors = messages.map(message => message.text);
-  expect(errors.join('\n')).toBeGolden('result.txt');
+  expect(errors.join('\n')).toBeGolden({goldenPath: dirPath, outputPath: dirPath, goldenName: 'result.txt'});
 }
 
 async function testMDBuilder(state, testRun) {
   const dirPath = path.join(__dirname, testRun.test().name());
-  expect.setupGolden(dirPath);
   const sources = await Source.readdir(dirPath, '.md');
   const {documentation} = await mdBuilder(page, sources);
-  expect(serialize(documentation)).toBeGolden('result.txt');
+  expect(serialize(documentation)).toBeGolden({goldenPath: dirPath, outputPath: dirPath, goldenName: 'result.txt'});
 }
 
 async function testJSBuilder(state, testRun) {
   const dirPath = path.join(__dirname, testRun.test().name());
-  expect.setupGolden(dirPath);
   const jsSources = await Source.readdir(dirPath, '.js');
   const tsSources = await Source.readdir(dirPath, '.ts');
   const {documentation} = await jsBuilder.checkSources(jsSources.concat(tsSources));
-  expect(serialize(documentation)).toBeGolden('result.txt');
+  expect(serialize(documentation)).toBeGolden({goldenPath: dirPath, outputPath: dirPath, goldenName: 'result.txt'});
 }
 
 /**

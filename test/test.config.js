@@ -54,12 +54,15 @@ serverEnvironment.beforeEach(async({server, httpsServer}) => {
 });
 
 const customEnvironment = new Environment('Golden+CheckContexts');
-customEnvironment.beforeAll(async ({browserType}) => {
-  const { OUTPUT_DIR, GOLDEN_DIR } = require('./utils').testOptions(browserType);
+customEnvironment.beforeAll(async state => {
+  const { OUTPUT_DIR, GOLDEN_DIR } = require('./utils').testOptions(state.browserType);
   if (fs.existsSync(OUTPUT_DIR))
     rm(OUTPUT_DIR);
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-  expect.setupGolden(GOLDEN_DIR, OUTPUT_DIR);
+  state.golden = goldenName => ({ goldenPath: GOLDEN_DIR, outputPath: OUTPUT_DIR, goldenName });
+});
+customEnvironment.afterAll(async state => {
+  delete state.golden;
 });
 customEnvironment.afterEach(async (state, testRun) => {
   if (state.browser && state.browser.contexts().length !== 0) {

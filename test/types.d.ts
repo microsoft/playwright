@@ -17,7 +17,7 @@ interface Expect<T> {
     toBeLessThanOrEqual(other: number, message?: string): void;
     toBeCloseTo(other: number, precision: number, message?: string): void;
 
-    toBeGolden(path: string): void;
+    toBeGolden(golden: {goldenPath: string, outputPath: string, goldenName: string}): void;
 
     not: Expect<T>;
 }

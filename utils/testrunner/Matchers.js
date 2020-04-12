@@ -25,9 +25,6 @@ class Matchers {
     Object.assign(this._matchers, DefaultMatchers);
     Object.assign(this._matchers, customMatchers);
     this.expect = this.expect.bind(this);
-    this.expect.setupGolden = (expected, output = expected) => {
-      this._matchers.toBeGolden = GoldenUtils.compare.bind(null, expected, output);
-    };
   }
 
   addMatcher(name, matcher) {
@@ -227,6 +224,10 @@ const DefaultMatchers = {
   toBeInstanceOf: function(received, other, message) {
     message = message || `${received.constructor.name} instanceof ${other.name}`;
     return { pass: received instanceof other, message };
+  },
+
+  toBeGolden: function(received, golden) {
+    return GoldenUtils.compare(received, golden);
   },
 };
 

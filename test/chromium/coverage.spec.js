@@ -135,11 +135,11 @@ describe('CSSCoverage', function() {
       {start: 17, end: 38}
     ]);
   });
-  it('should work with complicated usecases', async function({page, server}) {
+  it('should work with complicated usecases', async function({page, server, golden}) {
     await page.coverage.startCSSCoverage();
     await page.goto(server.PREFIX + '/csscoverage/involved.html');
     const coverage = await page.coverage.stopCSSCoverage();
-    expect(JSON.stringify(coverage, null, 2).replace(/:\d{4}\//g, ':<PORT>/')).toBeGolden('csscoverage-involved.txt');
+    expect(JSON.stringify(coverage, null, 2).replace(/:\d{4}\//g, ':<PORT>/')).toBeGolden(golden('csscoverage-involved.txt'));
   });
   it('should ignore injected stylesheets', async function({page, server}) {
     await page.coverage.startCSSCoverage();
