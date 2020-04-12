@@ -251,8 +251,12 @@ describe('browserType.launch |webSocket| option', function() {
     const browserServer = await browserType.launchServer(defaultBrowserOptions);
     const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
     const disconnectedEventPromise = new Promise(resolve => browser.once('disconnected', resolve));
+    const closedPromise = new Promise(f => browserServer.on('close', f));
     browserServer.kill();
-    await disconnectedEventPromise;
+    await Promise.all([
+      disconnectedEventPromise,
+      closedPromise,
+    ]);
   });
 });
 

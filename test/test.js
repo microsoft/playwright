@@ -105,15 +105,12 @@ function collect(browserNames) {
     const browserEnvironment = new Environment(browserName);
     browserEnvironment.beforeAll(async state => {
       state.browser = await state.browserType.launch(launchOptions);
-      // TODO: remove browserServer from state.
-      state.browserServer = state.browser._ownedServer;
-      state._stdout = readline.createInterface({ input: state.browserServer.process().stdout });
-      state._stderr = readline.createInterface({ input: state.browserServer.process().stderr });
+      state._stdout = readline.createInterface({ input: state.browser._ownedServer.process().stdout });
+      state._stderr = readline.createInterface({ input: state.browser._ownedServer.process().stderr });
     });
     browserEnvironment.afterAll(async state => {
-      await state.browserServer.close();
+      await state.browser.close();
       delete state.browser;
-      delete state.browserServer;
       state._stdout.close();
       state._stderr.close();
       delete state._stdout;
