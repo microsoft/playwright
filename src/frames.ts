@@ -580,7 +580,7 @@ export class Frame {
         script.type = options.type;
       const promise = new Promise((res, rej) => {
         script.onload = res;
-        script.onerror = rej;
+        script.onerror = e => rej(typeof e === 'string' ? new Error(e) : new Error(`Failed to load script at ${script.src}`));
       });
       document.head.appendChild(script);
       await promise;

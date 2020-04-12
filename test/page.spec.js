@@ -654,6 +654,12 @@ describe('Page.addScriptTag', function() {
     await page.addScriptTag({ url: server.CROSS_PROCESS_PREFIX + '/injectedfile.js' }).catch(e => error = e);
     expect(error).toBeTruthy();
   });
+  it('should throw a nice error when the request fails', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    const url = server.PREFIX + '/this_does_not_exist.js';
+    const error = await page.addScriptTag({url}).catch(e => e);
+    expect(error.message).toContain(url);
+  });
 });
 
 describe('Page.addStyleTag', function() {
