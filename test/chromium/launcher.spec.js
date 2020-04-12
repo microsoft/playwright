@@ -72,6 +72,7 @@ describe('extensions', () => {
     expect(backgroundPage).toBeTruthy();
     expect(context.backgroundPages()).toContain(backgroundPage);
     expect(context.pages()).not.toContain(backgroundPage);
+    await context.close();
     await removeUserDataDir(userDataDir);
   });
 });
