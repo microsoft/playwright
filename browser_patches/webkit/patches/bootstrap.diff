@@ -10869,16 +10869,27 @@ index 36db1a04b0a523b3adbdf4d3b8ca8b1be651d8f0..fbbc6a4e17f3e755917ff6752dd10ae1
  
      bool m_memoryCacheDisabled { false };
 diff --git a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
-index be5f17ff03bacc1e2522ee03f86fddf4767a278f..1367ac17f2eb9cc1219ec682f6766906f5010ef4 100644
+index be5f17ff03bacc1e2522ee03f86fddf4767a278f..6780955d1cca37a224f9c2bcbf6faa538a72e30a 100644
 --- a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
 +++ b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
-@@ -2376,4 +2376,15 @@ void WebsiteDataStore::setInAppBrowserPrivacyEnabled(bool enabled, CompletionHan
+@@ -185,6 +185,8 @@ void WebsiteDataStore::registerProcess(WebProcessProxy& process)
+ {
+     ASSERT(process.pageCount() || process.provisionalPageCount());
+     m_processes.add(process);
++    if (m_languagesForAutomation.size())
++        process.send(Messages::WebProcess::UserPreferredLanguagesChanged(m_languagesForAutomation), 0);
+ }
+ 
+ void WebsiteDataStore::unregisterProcess(WebProcessProxy& process)
+@@ -2376,4 +2378,17 @@ void WebsiteDataStore::setInAppBrowserPrivacyEnabled(bool enabled, CompletionHan
      }
  }
  
 +void WebsiteDataStore::setLanguagesForAutomation(Vector<String>&& languages)
 +{
 +    m_languagesForAutomation = WTFMove(languages);
++    for (auto& process : processes())
++        process.send(Messages::WebProcess::UserPreferredLanguagesChanged(languages), 0);
 +}
 +
 +void WebsiteDataStore::setDownloadForAutomation(Optional<bool> allow, const String& downloadPath)
