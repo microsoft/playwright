@@ -336,6 +336,26 @@ describe('Page.route', function() {
     expect(response.ok()).toBe(true);
     expect(intercepted).toBe(true);
   });
+  // WebKit crashes. Firefox succeeds, but then fails to close.
+  it.fail(FFOX || WEBKIT)('should create a redirect', async({page, server}) => {
+    await page.goto(server.PREFIX + '/empty.html');
+    await page.route('**/*', async(route, request) => {
+      if (request.url() !== server.PREFIX + '/redirect_this')
+        return route.continue();
+      await route.fulfill({
+        status: 301,
+        headers: {
+          'location': '/empty.html',
+        }  
+      });
+    });
+
+    const text = await page.evaluate(async url => {
+      const data = await fetch(url);
+      return data.text();
+    }, server.PREFIX + '/redirect_this');
+    expect(text).toBe('');
+  });
 });
 
 describe('Request.continue', function() {
