@@ -622,6 +622,68 @@ index 249580e733d1b05e35205cd2f7b4ccbe91c9cb54..765e3f58e0a359c622f68d371c5089bc
    return Nothing();
  }
  
+diff --git a/dom/base/nsINode.cpp b/dom/base/nsINode.cpp
+index 41c8b8dad90e0b322bb941a714ca332760176259..630e309cb97cd7376211020dfd5f5e64e6e7d3e2 100644
+--- a/dom/base/nsINode.cpp
++++ b/dom/base/nsINode.cpp
+@@ -1221,6 +1221,42 @@ void nsINode::GetBoxQuadsFromWindowOrigin(const BoxQuadOptions& aOptions,
+   mozilla::GetBoxQuadsFromWindowOrigin(this, aOptions, aResult, aRv);
+ }
+ 
++void nsINode::ScrollRectIntoViewIfNeeded(int32_t x, int32_t y,
++                                         int32_t w, int32_t h,
++                                         ErrorResult& aRv) {
++  aRv = NS_ERROR_UNEXPECTED;
++  nsCOMPtr<Document> document = OwnerDoc();
++  if (!document) {
++    return;
++  }
++  PresShell* presShell = document->GetPresShell();
++  if (!presShell) {
++    return;
++  }
++  if (!IsContent()) {
++    return;
++  }
++  aRv = NS_OK;
++  nsIFrame* primaryFrame = AsContent()->GetPrimaryFrame(FlushType::Frames);
++  if (!primaryFrame){
++    return;
++  }
++  nsRect rect;
++  if (x == -1 && y == -1 && w == -1 && h == -1) {
++    rect = primaryFrame->GetRectRelativeToSelf();
++  } else {
++    rect = nsRect(nsPresContext::CSSPixelsToAppUnits(x),
++                  nsPresContext::CSSPixelsToAppUnits(y),
++                  nsPresContext::CSSPixelsToAppUnits(w),
++                  nsPresContext::CSSPixelsToAppUnits(h));
++  }
++  presShell->ScrollFrameRectIntoView(
++      primaryFrame, rect,
++      ScrollAxis(kScrollToCenter, WhenToScroll::Always),
++      ScrollAxis(kScrollToCenter, WhenToScroll::Always),
++      ScrollFlags::ScrollOverflowHidden);
++}
++
+ already_AddRefed<DOMQuad> nsINode::ConvertQuadFromNode(
+     DOMQuad& aQuad, const GeometryNode& aFrom,
+     const ConvertCoordinateOptions& aOptions, CallerType aCallerType,
+diff --git a/dom/base/nsINode.h b/dom/base/nsINode.h
+index 4defead205d06f633f5b9df1241d9dc18888c2de..49544e722d7e354e9e467a89aa5eabdaa392836a 100644
+--- a/dom/base/nsINode.h
++++ b/dom/base/nsINode.h
+@@ -2008,6 +2008,10 @@ class nsINode : public mozilla::dom::EventTarget {
+                                    nsTArray<RefPtr<DOMQuad>>& aResult,
+                                    ErrorResult& aRv);
+ 
++  void ScrollRectIntoViewIfNeeded(int32_t x, int32_t y,
++                                  int32_t w, int32_t h,
++                                  ErrorResult& aRv);
++
+   already_AddRefed<DOMQuad> ConvertQuadFromNode(
+       DOMQuad& aQuad, const TextOrElementOrDocument& aFrom,
+       const ConvertCoordinateOptions& aOptions, CallerType aCallerType,
 diff --git a/dom/base/nsJSUtils.cpp b/dom/base/nsJSUtils.cpp
 index ac68cf67ecc61f0960b276c5380abb131c4bfc4f..3b9fd67742db591bb0e02c5f1f64127fa77d420f 100644
 --- a/dom/base/nsJSUtils.cpp
@@ -837,6 +899,20 @@ index 1782a10a26f51c3bf79efe6713a493c4f058898c..bd2f13802731aa8db42c016d8a91de68
    nsAutoString policyStr(
        nsContentUtils::TrimWhitespace<nsContentUtils::IsHTMLWhitespace>(
            aPolicyStr));
+diff --git a/dom/webidl/GeometryUtils.webidl b/dom/webidl/GeometryUtils.webidl
+index 2f71b284ee5f7e11f117c447834b48355784448c..d996e0a3cbbb19c1dc320c305c6d74037bffa0d3 100644
+--- a/dom/webidl/GeometryUtils.webidl
++++ b/dom/webidl/GeometryUtils.webidl
+@@ -27,6 +27,9 @@ interface mixin GeometryUtils {
+   [Throws, Func="nsINode::HasBoxQuadsSupport", NeedsCallerType]
+   sequence<DOMQuad> getBoxQuads(optional BoxQuadOptions options = {});
+ 
++  [ChromeOnly, Throws, Func="nsINode::HasBoxQuadsSupport"]
++  void scrollRectIntoViewIfNeeded(long x, long y, long w, long h);
++
+   /* getBoxQuadsFromWindowOrigin is similar to getBoxQuads, but the
+    * returned quads are further translated relative to the window
+    * origin -- which is not the layout origin. Further translation
 diff --git a/dom/workers/RuntimeService.cpp b/dom/workers/RuntimeService.cpp
 index b20abd71cbb825b17ea3cef1791a2d8b0185b5b2..b8c36d9948647a39d69fc9305961e39eb3613e72 100644
 --- a/dom/workers/RuntimeService.cpp
@@ -3511,10 +3587,10 @@ index 0000000000000000000000000000000000000000..155d0770ddf704728829272a41a31ce8
 +
 diff --git a/juggler/content/PageAgent.js b/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..7f1958121f24c5f5360f24d7580ebf1132f91e83
+index 0000000000000000000000000000000000000000..c3f3f86b9fbba170a25abb681b372d0ed5492155
 --- /dev/null
 +++ b/juggler/content/PageAgent.js
-@@ -0,0 +1,932 @@
+@@ -0,0 +1,905 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -4115,39 +4191,12 @@ index 0000000000000000000000000000000000000000..7f1958121f24c5f5360f24d7580ebf11
 +    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
 +    if (!unsafeObject.isConnected)
 +      throw new Error('Node is detached from document');
-+    await this._scrollNodeIntoViewIfNeeded(unsafeObject);
-+    const box = this._getNodeBoundingBox(unsafeObject);
-+    if (rect) {
-+      box.x += rect.x;
-+      box.y += rect.y;
-+      box.width = rect.width;
-+      box.height = rect.height;
-+    }
-+    this._scrollRectIntoViewIfNeeded(unsafeObject, box);
-+  }
-+
-+  async _scrollNodeIntoViewIfNeeded(node) {
-+    if (node.nodeType !== 1)
-+      node = node.parentElement;
-+    if (!node.ownerDocument || !node.ownerDocument.defaultView)
-+      return;
-+    const global = node.ownerDocument.defaultView;
-+    const visibleRatio = await new Promise(resolve => {
-+      const observer = new global.IntersectionObserver(entries => {
-+        resolve(entries[0].intersectionRatio);
-+        observer.disconnect();
-+      });
-+      observer.observe(node);
-+      // Firefox doesn't call IntersectionObserver callback unless
-+      // there are rafs.
-+      global.requestAnimationFrame(() => {});
-+    });
-+    if (visibleRatio !== 1.0)
-+      node.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
-+  }
-+
-+  _scrollRectIntoViewIfNeeded(node, rect) {
-+    // TODO: implement.
++    if (!rect)
++      rect = { x: -1, y: -1, width: -1, height: -1};
++    if (unsafeObject.scrollRectIntoViewIfNeeded)
++      unsafeObject.scrollRectIntoViewIfNeeded(rect.x, rect.y, rect.width, rect.height);
++    else
++      throw new Error('Node type does not support scrollRectIntoViewIfNeeded');
 +  }
 +
 +  _getNodeBoundingBox(unsafeObject) {
