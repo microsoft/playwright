@@ -3467,21 +3467,21 @@ Whenever a network route is set up with [page.route(url, handler)](#pagerouteurl
 #### route.abort([errorCode])
 - `errorCode` <[string]> Optional error code. Defaults to `failed`, could be
   one of the following:
-  - `aborted` - An operation was aborted (due to user action)
-  - `accessdenied` - Permission to access a resource, other than the network, was denied
-  - `addressunreachable` - The IP address is unreachable. This usually means
+  - `'aborted'` - An operation was aborted (due to user action)
+  - `'accessdenied'` - Permission to access a resource, other than the network, was denied
+  - `'addressunreachable'` - The IP address is unreachable. This usually means
     that there is no route to the specified host or network.
-  - `blockedbyclient` - The client chose to block the request.
-  - `blockedbyresponse` - The request failed because the response was delivered along with requirements which are not met ('X-Frame-Options' and 'Content-Security-Policy' ancestor checks, for instance).
-  - `connectionaborted` - A connection timed out as a result of not receiving an ACK for data sent.
-  - `connectionclosed` - A connection was closed (corresponding to a TCP FIN).
-  - `connectionfailed` - A connection attempt failed.
-  - `connectionrefused` - A connection attempt was refused.
-  - `connectionreset` - A connection was reset (corresponding to a TCP RST).
-  - `internetdisconnected` - The Internet connection has been lost.
-  - `namenotresolved` - The host name could not be resolved.
-  - `timedout` - An operation timed out.
-  - `failed` - A generic failure occurred.
+  - `'blockedbyclient'` - The client chose to block the request.
+  - `'blockedbyresponse'` - The request failed because the response was delivered along with requirements which are not met ('X-Frame-Options' and 'Content-Security-Policy' ancestor checks, for instance).
+  - `'connectionaborted'` - A connection timed out as a result of not receiving an ACK for data sent.
+  - `'connectionclosed'` - A connection was closed (corresponding to a TCP FIN).
+  - `'connectionfailed'` - A connection attempt failed.
+  - `'connectionrefused'` - A connection attempt was refused.
+  - `'connectionreset'` - A connection was reset (corresponding to a TCP RST).
+  - `'internetdisconnected'` - The Internet connection has been lost.
+  - `'namenotresolved'` - The host name could not be resolved.
+  - `'timedout'` - An operation timed out.
+  - `'failed'` - A generic failure occurred.
 - returns: <[Promise]>
 
 Aborts the route's request.
