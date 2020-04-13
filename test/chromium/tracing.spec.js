@@ -16,12 +16,12 @@
 
 const fs = require('fs');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, OUTPUT_DIR, defaultBrowserOptions} = require('../utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, OUTPUT_DIR} = require('../utils').testOptions(browserType);
 
 describe('Chromium.startTracing', function() {
   beforeEach(async function(state) {
     state.outputFile = path.join(OUTPUT_DIR, `trace-${state.parallelIndex}.json`);
-    state.browser = await state.browserType.launch(defaultBrowserOptions);
+    state.browser = await state.browserType.launch(state.defaultBrowserOptions);
     state.page = await state.browser.newPage();
   });
   afterEach(async function(state) {

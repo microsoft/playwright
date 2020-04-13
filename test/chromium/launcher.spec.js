@@ -17,35 +17,23 @@
 const path = require('path');
 const utils = require('../utils');
 const {makeUserDataDir, removeUserDataDir} = utils;
-const {FFOX, CHROMIUM, WEBKIT, WIN, defaultBrowserOptions} = utils.testOptions(browserType);
-
-const headfulOptions = Object.assign({}, defaultBrowserOptions, {
-  headless: false
-});
-const extensionPath = path.join(__dirname, '..', 'assets', 'simple-extension');
-const extensionOptions = Object.assign({}, defaultBrowserOptions, {
-  headless: false,
-  args: [
-    `--disable-extensions-except=${extensionPath}`,
-    `--load-extension=${extensionPath}`,
-  ],
-});
+const {FFOX, CHROMIUM, WEBKIT, WIN} = utils.testOptions(browserType);
 
 describe('launcher', function() {
-  it('should throw with remote-debugging-pipe argument', async({browserType}) => {
+  it('should throw with remote-debugging-pipe argument', async({browserType, defaultBrowserOptions}) => {
     const options = Object.assign({}, defaultBrowserOptions);
     options.args = ['--remote-debugging-pipe'].concat(options.args || []);
     const error = await browserType.launchServer(options).catch(e => e);
     expect(error.message).toContain('Playwright manages remote debugging connection itself');
   });
-  it('should throw with remote-debugging-port argument', async({browserType}) => {
+  it('should throw with remote-debugging-port argument', async({browserType, defaultBrowserOptions}) => {
     const options = Object.assign({}, defaultBrowserOptions);
     options.args = ['--remote-debugging-port=9222'].concat(options.args || []);
     const error = await browserType.launchServer(options).catch(e => e);
     expect(error.message).toContain('Playwright manages remote debugging connection itself');
   });
-  it('should open devtools when "devtools: true" option is given', async({browserType}) => {
-    const browser = await browserType.launch(Object.assign({devtools: true}, headfulOptions));
+  it('should open devtools when "devtools: true" option is given', async({browserType, defaultBrowserOptions}) => {
+    const browser = await browserType.launch(Object.assign({devtools: true}, {...defaultBrowserOptions, headless: false}));
     const context = await browser.newContext();
     const browserSession = await browser.newBrowserCDPSession();
     await browserSession.send('Target.setDiscoverTargets', { discover: true });
@@ -62,8 +50,16 @@ describe('launcher', function() {
 });
 
 describe('extensions', () => {
-  it('should return background pages', async({browserType}) => {
+  it('should return background pages', async({browserType, defaultBrowserOptions}) => {
     const userDataDir = await makeUserDataDir();
+    const extensionPath = path.join(__dirname, '..', 'assets', 'simple-extension');
+    const extensionOptions = {...defaultBrowserOptions,
+      headless: false,
+      args: [
+        `--disable-extensions-except=${extensionPath}`,
+        `--load-extension=${extensionPath}`,
+      ],
+    };
     const context = await browserType.launchPersistentContext(userDataDir, extensionOptions);
     const backgroundPages = context.backgroundPages();
     let backgroundPage = backgroundPages.length

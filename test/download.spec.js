@@ -16,7 +16,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, defaultBrowserOptions} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
 
 describe('Download', function() {
   beforeEach(async(state) => {
@@ -98,7 +98,7 @@ describe('Download', function() {
     expect(fs.existsSync(path1)).toBeFalsy();
     expect(fs.existsSync(path2)).toBeFalsy();
   });
-  it('should delete downloads on browser gone', async ({ server, browserType }) => {
+  it('should delete downloads on browser gone', async ({ server, browserType, defaultBrowserOptions }) => {
     const browser = await browserType.launch(defaultBrowserOptions);
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);

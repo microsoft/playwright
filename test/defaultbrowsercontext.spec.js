@@ -17,12 +17,12 @@
 
 const utils = require('./utils');
 const {makeUserDataDir, removeUserDataDir} = utils;
-const {FFOX, CHROMIUM, WEBKIT, defaultBrowserOptions} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
 
 describe('launchPersistentContext()', function() {
   beforeEach(async state => {
     state.userDataDir = await makeUserDataDir();
-    state.browserContext = await state.browserType.launchPersistentContext(state.userDataDir, defaultBrowserOptions);
+    state.browserContext = await state.browserType.launchPersistentContext(state.userDataDir, state.defaultBrowserOptions);
     state.page = await state.browserContext.newPage();
   });
   afterEach(async state => {

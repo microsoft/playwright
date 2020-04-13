@@ -172,12 +172,6 @@ const utils = module.exports = {
   },
 
   testOptions(browserType) {
-    const headless = !!valueFromEnv('HEADLESS', true);
-    const defaultBrowserOptions = {
-      handleSIGINT: false,
-      slowMo: valueFromEnv('SLOW_MO', 0),
-      headless,
-    };
     const GOLDEN_DIR = path.join(__dirname, 'golden-' + browserType.name());
     const OUTPUT_DIR = path.join(__dirname, 'output-' + browserType.name());
     return {
@@ -188,9 +182,6 @@ const utils = module.exports = {
       LINUX: platform === 'linux',
       WIN: platform === 'win32',
       browserType,
-      defaultBrowserOptions,
-      playwrightPath: PROJECT_ROOT,
-      headless,
       GOLDEN_DIR,
       OUTPUT_DIR,
     };
