@@ -85,12 +85,13 @@ function compareText(actual, expectedBuffer) {
 
 /**
  * @param {?Object} actual
- * @param {string} goldenName
+ * @param {!{goldenPath: string, outputPath: string, goldenName: string}} golden
  * @return {!{pass: boolean, message: (undefined|string)}}
  */
-function compare(goldenPath, outputPath, actual, goldenName) {
-  goldenPath = path.normalize(goldenPath);
-  outputPath = path.normalize(outputPath);
+function compare(actual, golden) {
+  const goldenPath = path.normalize(golden.goldenPath);
+  const outputPath = path.normalize(golden.outputPath);
+  const goldenName = golden.goldenName;
   const expectedPath = path.join(goldenPath, goldenName);
   const actualPath = path.join(outputPath, goldenName);
 
