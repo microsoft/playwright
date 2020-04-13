@@ -16,35 +16,28 @@
 
 const utils = require('./utils');
 const { makeUserDataDir, removeUserDataDir } = utils;
-const {FFOX, CHROMIUM, WEBKIT, WIN, defaultBrowserOptions} = utils.testOptions(browserType);
-
-const headfulOptions = Object.assign({}, defaultBrowserOptions, {
-  headless: false
-});
-const headlessOptions = Object.assign({}, defaultBrowserOptions, {
-  headless: true
-});
+const {FFOX, CHROMIUM, WEBKIT, WIN} = utils.testOptions(browserType);
 
 describe('Headful', function() {
-  it('should have default url when launching browser', async ({browserType}) => {
+  it('should have default url when launching browser', async ({browserType, defaultBrowserOptions}) => {
     const userDataDir = await makeUserDataDir();
-    const browserContext = await browserType.launchPersistentContext(userDataDir, headfulOptions);
+    const browserContext = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, headless: false });
     const urls = browserContext.pages().map(page => page.url());
     expect(urls).toEqual(['about:blank']);
     await browserContext.close();
     await removeUserDataDir(userDataDir);
   });
-  it.slow().fail(WIN && CHROMIUM)('headless should be able to read cookies written by headful', async({browserType, server}) => {
+  it.slow().fail(WIN && CHROMIUM)('headless should be able to read cookies written by headful', async({browserType, defaultBrowserOptions, server}) => {
     // see https://github.com/microsoft/playwright/issues/717
     const userDataDir = await makeUserDataDir();
     // Write a cookie in headful chrome
-    const headfulContext = await browserType.launchPersistentContext(userDataDir, headfulOptions);
+    const headfulContext = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, headless: false});
     const headfulPage = await headfulContext.newPage();
     await headfulPage.goto(server.EMPTY_PAGE);
     await headfulPage.evaluate(() => document.cookie = 'foo=true; expires=Fri, 31 Dec 9999 23:59:59 GMT');
     await headfulContext.close();
     // Read the cookie from headless chrome
-    const headlessContext = await browserType.launchPersistentContext(userDataDir, headlessOptions);
+    const headlessContext = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, headless: true});
     const headlessPage = await headlessContext.newPage();
     await headlessPage.goto(server.EMPTY_PAGE);
     const cookie = await headlessPage.evaluate(() => document.cookie);
@@ -53,9 +46,9 @@ describe('Headful', function() {
     await removeUserDataDir(userDataDir);
     expect(cookie).toBe('foo=true');
   });
-  it.slow()('should close browser with beforeunload page', async({browserType, server}) => {
+  it.slow()('should close browser with beforeunload page', async({browserType, defaultBrowserOptions, server}) => {
     const userDataDir = await makeUserDataDir();
-    const browserContext = await browserType.launchPersistentContext(userDataDir, headfulOptions);
+    const browserContext = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, headless: false});
     const page = await browserContext.newPage();
     await page.goto(server.PREFIX + '/beforeunload.html');
     // We have to interact with a page so that 'beforeunload' handlers

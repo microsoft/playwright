@@ -21,6 +21,8 @@ const rm = require('rimraf').sync;
 const {TestServer} = require('../utils/testserver/');
 const {Environment} = require('../utils/testrunner/Test');
 
+const playwrightPath = path.join(__dirname, '..');
+
 const serverEnvironment = new Environment('TestServer');
 serverEnvironment.beforeAll(async state => {
   const assetsPath = path.join(__dirname, 'assets');
@@ -41,6 +43,13 @@ serverEnvironment.beforeAll(async state => {
   state.httpsServer.PREFIX = `https://localhost:${httpsPort}`;
   state.httpsServer.CROSS_PROCESS_PREFIX = `https://127.0.0.1:${httpsPort}`;
   state.httpsServer.EMPTY_PAGE = `https://localhost:${httpsPort}/empty.html`;
+
+  state.defaultBrowserOptions = {
+    handleSIGINT: false,
+    slowMo: valueFromEnv('SLOW_MO', 0),
+    headless: !!valueFromEnv('HEADLESS', true),
+  };
+  state.playwrightPath = playwrightPath;
 });
 serverEnvironment.afterAll(async({server, httpsServer}) => {
   await Promise.all([
@@ -123,7 +132,7 @@ function setupTestRunner(testRunner) {
 }
 
 module.exports = {
-  playwrightPath: '..',
+  playwrightPath,
   dumpProtocolOnFailure: valueFromEnv('DEBUGP', false),
   launchOptions: {
     executablePath: {

@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, defaultBrowserOptions} = require('../utils').testOptions(browserType);
-
-const headfulOptions = Object.assign({}, defaultBrowserOptions, {
-  headless: false
-});
+const {FFOX, CHROMIUM, WEBKIT} = require('../utils').testOptions(browserType);
 
 describe('OOPIF', function() {
   beforeAll(async function(state) {
-    state.browser = await state.browserType.launch(Object.assign({}, defaultBrowserOptions, {
-      args: (defaultBrowserOptions.args || []).concat(['--site-per-process']),
+    state.browser = await state.browserType.launch(Object.assign({}, state.defaultBrowserOptions, {
+      args: (state.defaultBrowserOptions.args || []).concat(['--site-per-process']),
     }));
   });
   beforeEach(async function(state) {
@@ -72,10 +68,10 @@ describe('OOPIF', function() {
     await page.click('button');
     expect(await page.evaluate(() => window.BUTTON_CLICKED)).toBe(true);
   });
-  it('should report google.com frame with headful', async({browserType, server}) => {
+  it('should report google.com frame with headful', async({browserType, defaultBrowserOptions, server}) => {
     // TODO: Support OOOPIF. @see https://github.com/GoogleChrome/puppeteer/issues/2548
     // https://google.com is isolated by default in Chromium embedder.
-    const browser = await browserType.launch(headfulOptions);
+    const browser = await browserType.launch({...defaultBrowserOptions, headless: false});
     const page = await browser.newPage();
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/*', route => {

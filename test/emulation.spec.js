@@ -16,7 +16,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, headless} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
 const iPhone = playwright.devices['iPhone 6'];
 const iPhoneLandscape = playwright.devices['iPhone 6 landscape'];
 
@@ -446,7 +446,7 @@ describe('BrowserContext({locale})', function() {
   });
 });
 
-describe.fail(!headless)('focus', function() {
+describe('focus', function() {
   it('should think that it is focused by default', async({page}) => {
     expect(await page.evaluate('document.hasFocus()')).toBe(true);
   });

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, MAC, defaultBrowserOptions} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, MAC} = require('./utils').testOptions(browserType);
 
 describe('BrowserContext.cookies', function() {
   it('should return no cookies in pristine browser context', async({context, page, server}) => {
@@ -269,7 +269,7 @@ describe('BrowserContext.addCookies', function() {
       await context.close();
     }
   });
-  it.slow()('should isolate cookies between launches', async({browserType, server}) => {
+  it.slow()('should isolate cookies between launches', async({browserType, server, defaultBrowserOptions}) => {
     const browser1 = await browserType.launch(defaultBrowserOptions);
     const context1 = await browser1.newContext();
     await context1.addCookies([{url: server.EMPTY_PAGE, name: 'cookie-in-context-1', value: 'value', expires: Date.now() / 1000 + 10000}]);

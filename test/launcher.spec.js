@@ -19,11 +19,11 @@ const path = require('path');
 const fs = require('fs');
 const utils = require('./utils');
 const { makeUserDataDir, removeUserDataDir } = utils;
-const {FFOX, CHROMIUM, WEBKIT, WIN, defaultBrowserOptions, playwrightPath} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN} = utils.testOptions(browserType);
 
 describe('Playwright', function() {
   describe('browserType.launch', function() {
-    it('should reject all promises when browser is closed', async({browserType}) => {
+    it('should reject all promises when browser is closed', async({browserType, defaultBrowserOptions}) => {
       const browser = await browserType.launch(defaultBrowserOptions);
       const page = await (await browser.newContext()).newPage();
       let error = null;
@@ -32,19 +32,19 @@ describe('Playwright', function() {
       await neverResolves;
       expect(error.message).toContain('Protocol error');
     });
-    it('should throw if userDataDir option is passed', async({browserType}) => {
+    it('should throw if userDataDir option is passed', async({browserType, defaultBrowserOptions}) => {
       let waitError = null;
       const options = Object.assign({}, defaultBrowserOptions, {userDataDir: 'random-path'});
       await browserType.launch(options).catch(e => waitError = e);
       expect(waitError.message).toContain('launchPersistentContext');
     });
-    it('should throw if page argument is passed', async({browserType}) => {
+    it('should throw if page argument is passed', async({browserType, defaultBrowserOptions}) => {
       let waitError = null;
       const options = Object.assign({}, defaultBrowserOptions, { args: ['http://example.com'] });
       await browserType.launch(options).catch(e => waitError = e);
       expect(waitError.message).toContain('can not specify page');
     });
-    it('should reject if executable path is invalid', async({browserType}) => {
+    it('should reject if executable path is invalid', async({browserType, defaultBrowserOptions}) => {
       let waitError = null;
       const options = Object.assign({}, defaultBrowserOptions, {executablePath: 'random-invalid-path'});
       await browserType.launch(options).catch(e => waitError = e);
@@ -53,7 +53,7 @@ describe('Playwright', function() {
   });
 
   describe('browserType.launchPersistentContext', function() {
-    it('should have default URL when launching browser', async ({browserType}) => {
+    it('should have default URL when launching browser', async ({browserType, defaultBrowserOptions}) => {
       const userDataDir = await makeUserDataDir();
       const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
       const urls = browserContext.pages().map(page => page.url());
@@ -61,7 +61,7 @@ describe('Playwright', function() {
       await browserContext.close();
       await removeUserDataDir(userDataDir);
     });
-    it('should have custom URL when launching browser', async ({browserType, server}) => {
+    it('should have custom URL when launching browser', async ({browserType, defaultBrowserOptions, server}) => {
       const userDataDir = await makeUserDataDir();
       const options = Object.assign({}, defaultBrowserOptions);
       options.args = [server.EMPTY_PAGE].concat(options.args || []);
@@ -79,12 +79,12 @@ describe('Playwright', function() {
   });
 
   describe('browserType.launchServer', function() {
-    it('should return child_process instance', async ({browserType}) => {
+    it('should return child_process instance', async ({browserType, defaultBrowserOptions}) => {
       const browserServer = await browserType.launchServer(defaultBrowserOptions);
       expect(browserServer.process().pid).toBeGreaterThan(0);
       await browserServer.close();
     });
-    it('should fire close event', async ({browserType}) => {
+    it('should fire close event', async ({browserType, defaultBrowserOptions}) => {
       const browserServer = await browserType.launchServer(defaultBrowserOptions);
       await Promise.all([
         new Promise(f => browserServer.on('close', f)),
@@ -124,13 +124,12 @@ describe('Top-level requires', function() {
     const Devices = require(path.join(utils.projectRoot(), '/lib/deviceDescriptors.js')).DeviceDescriptors;
     expect(Devices['iPhone 6']).toBeTruthy();
     expect(Devices['iPhone 6']).toBe(playwright.devices['iPhone 6']);
-    expect(Devices['iPhone 6']).toBe(require(playwrightPath).devices['iPhone 6']);
   });
 });
 
 describe('Browser.isConnected', () => {
-  it('should set the browser connected state', async ({browserType}) => {
-    const browserServer = await browserType.launchServer({...defaultBrowserOptions });
+  it('should set the browser connected state', async ({browserType, defaultBrowserOptions}) => {
+    const browserServer = await browserType.launchServer(defaultBrowserOptions);
     const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
     expect(remote.isConnected()).toBe(true);
     await remote.close();
@@ -138,8 +137,8 @@ describe('Browser.isConnected', () => {
     await browserServer._checkLeaks();
     await browserServer.close();
   });
-  it('should throw when used after isConnected returns false', async({browserType}) => {
-    const browserServer = await browserType.launchServer({...defaultBrowserOptions });
+  it('should throw when used after isConnected returns false', async({browserType, defaultBrowserOptions}) => {
+    const browserServer = await browserType.launchServer(defaultBrowserOptions);
     const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
     const page = await remote.newPage();
     await Promise.all([
@@ -153,9 +152,9 @@ describe('Browser.isConnected', () => {
 });
 
 describe('Browser.disconnect', function() {
-  it('should reject navigation when browser closes', async({browserType, server}) => {
+  it('should reject navigation when browser closes', async({browserType, defaultBrowserOptions, server}) => {
     server.setRoute('/one-style.css', () => {});
-    const browserServer = await browserType.launchServer({...defaultBrowserOptions });
+    const browserServer = await browserType.launchServer(defaultBrowserOptions);
     const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
     const page = await remote.newPage();
     const navigationPromise = page.goto(server.PREFIX + '/one-style.html', {timeout: 60000}).catch(e => e);
@@ -166,9 +165,9 @@ describe('Browser.disconnect', function() {
     await browserServer._checkLeaks();
     await browserServer.close();
   });
-  it('should reject waitForSelector when browser closes', async({browserType, server}) => {
+  it('should reject waitForSelector when browser closes', async({browserType, defaultBrowserOptions, server}) => {
     server.setRoute('/empty.html', () => {});
-    const browserServer = await browserType.launchServer({...defaultBrowserOptions });
+    const browserServer = await browserType.launchServer(defaultBrowserOptions);
     const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
     const page = await remote.newPage();
     const watchdog = page.waitForSelector('div', { timeout: 60000 }).catch(e => e);
@@ -182,8 +181,8 @@ describe('Browser.disconnect', function() {
     await browserServer._checkLeaks();
     await browserServer.close();
   });
-  it('should throw if used after disconnect', async({browserType}) => {
-    const browserServer = await browserType.launchServer({...defaultBrowserOptions });
+  it('should throw if used after disconnect', async({browserType, defaultBrowserOptions}) => {
+    const browserServer = await browserType.launchServer(defaultBrowserOptions);
     const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
     const page = await remote.newPage();
     await remote.close();
@@ -192,8 +191,8 @@ describe('Browser.disconnect', function() {
     await browserServer._checkLeaks();
     await browserServer.close();
   });
-  it('should emit close events on pages and contexts', async({browserType}) => {
-    const browserServer = await browserType.launchServer({...defaultBrowserOptions });
+  it('should emit close events on pages and contexts', async({browserType, defaultBrowserOptions}) => {
+    const browserServer = await browserType.launchServer(defaultBrowserOptions);
     const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
     const context = await remote.newContext();
     const page = await context.newPage();
@@ -208,8 +207,8 @@ describe('Browser.disconnect', function() {
 });
 
 describe('Browser.close', function() {
-  it('should terminate network waiters', async({browserType, server}) => {
-    const browserServer = await browserType.launchServer({...defaultBrowserOptions });
+  it('should terminate network waiters', async({browserType, defaultBrowserOptions, server}) => {
+    const browserServer = await browserType.launchServer(defaultBrowserOptions);
     const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
     const newPage = await remote.newPage();
     const results = await Promise.all([
@@ -223,7 +222,7 @@ describe('Browser.close', function() {
       expect(message).not.toContain('Timeout');
     }
   });
-  it('should fire close event for all contexts', async({browserType}) => {
+  it('should fire close event for all contexts', async({browserType, defaultBrowserOptions}) => {
     const browser = await browserType.launch(defaultBrowserOptions);
     const context = await browser.newContext();
     let closed = false;
@@ -234,7 +233,7 @@ describe('Browser.close', function() {
 });
 
 describe('browserType.launch |webSocket| option', function() {
-  it('should support the webSocket option', async({browserType}) => {
+  it('should support the webSocket option', async({browserType, defaultBrowserOptions}) => {
     const browserServer = await browserType.launchServer(defaultBrowserOptions);
     const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
     const browserContext = await browser.newContext();
@@ -247,7 +246,7 @@ describe('browserType.launch |webSocket| option', function() {
     await browserServer._checkLeaks();
     await browserServer.close();
   });
-  it('should fire "disconnected" when closing with webSocket', async({browserType}) => {
+  it('should fire "disconnected" when closing with webSocket', async({browserType, defaultBrowserOptions}) => {
     const browserServer = await browserType.launchServer(defaultBrowserOptions);
     const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
     const disconnectedEventPromise = new Promise(resolve => browser.once('disconnected', resolve));
@@ -261,7 +260,7 @@ describe('browserType.launch |webSocket| option', function() {
 });
 
 describe('browserType.connect', function() {
-  it.slow()('should be able to reconnect to a browser', async({browserType, server}) => {
+  it.slow()('should be able to reconnect to a browser', async({browserType, defaultBrowserOptions, server}) => {
     const browserServer = await browserType.launchServer(defaultBrowserOptions);
     {
       const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
@@ -283,10 +282,9 @@ describe('browserType.connect', function() {
 });
 
 describe('browserType.launchPersistentContext', function() {
-  it('userDataDir option', async({browserType}) => {
+  it('userDataDir option', async({browserType, defaultBrowserOptions}) => {
     const userDataDir = await makeUserDataDir();
-    const options = Object.assign(defaultBrowserOptions);
-    const browserContext = await browserType.launchPersistentContext(userDataDir, options);
+    const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
     // Open a page to make sure its functional.
     await browserContext.newPage();
     expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
@@ -295,7 +293,7 @@ describe('browserType.launchPersistentContext', function() {
     // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
     await removeUserDataDir(userDataDir);
   });
-  it.slow()('userDataDir option should restore state', async({browserType, server}) => {
+  it.slow()('userDataDir option should restore state', async({browserType, defaultBrowserOptions, server}) => {
     const userDataDir = await makeUserDataDir();
     const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
     const page = await browserContext.newPage();
@@ -320,7 +318,7 @@ describe('browserType.launchPersistentContext', function() {
     await removeUserDataDir(userDataDir);
     await removeUserDataDir(userDataDir2);
   });
-  it.slow()('userDataDir option should restore cookies', async({browserType, server}) => {
+  it.slow()('userDataDir option should restore cookies', async({browserType, defaultBrowserOptions,  server}) => {
     const userDataDir = await makeUserDataDir();
     const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
     const page = await browserContext.newPage();
