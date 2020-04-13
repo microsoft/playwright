@@ -27,5 +27,9 @@ window.addEventListener('DOMContentLoaded', () => {
   span3.setAttribute('data-testid', 'foo');
   span3.textContent = 'Hello from root3';
   shadowRoot3.appendChild(span3);
+  const span4 = document.createElement('span');
+  span4.textContent = 'Hello from root3 #2';
+  span4.setAttribute('attr', 'value space');
+  shadowRoot3.appendChild(span4);
 });
 </script>
