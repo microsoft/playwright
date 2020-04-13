@@ -384,7 +384,7 @@ class TestRunner {
       onTestRunFinished = async (testRun) => {},
     } = options;
     this._breakOnFailure = breakOnFailure;
-    this._hookTimeout = hookTimeout;
+    this._hookTimeout = hookTimeout === 0 ? 100000000 : hookTimeout;
     this._delegate = {
       onStarted,
       onFinished,
