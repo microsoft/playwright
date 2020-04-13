@@ -63,7 +63,7 @@ async function downloadBrowserWithProgressBar(options) {
     progressBar.tick(delta);
   }
   await browserFetcher.downloadBrowser({...options, progress}).catch(e => {
-    process.exitCode = 17;
+    process.exitCode = 1;
     throw e;
   });
   logPolitely(`${options.progressBarBrowserName} downloaded to ${options.downloadPath}`);
