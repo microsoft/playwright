@@ -21,4 +21,16 @@ describe('Capabilities', function() {
     await page.goto(server.PREFIX + '/wasm/table2.html');
     expect(await page.evaluate(() => loadTable())).toBe('42, 83');
   });
+
+  it('WebSocket should work', async({page, server}) => {
+    const value = await page.evaluate((port) => {
+      let cb;
+      const result = new Promise(f => cb = f);
+      const ws = new WebSocket('ws://localhost:' + port + '/ws');
+      ws.addEventListener('message', data => { ws.close(); cb(data.data); });
+      ws.addEventListener('error', error => cb('Error'));
+      return result;
+    }, server.PORT);
+    expect(value).toBe('incoming');
+  });
 });
