@@ -4565,6 +4565,22 @@ index a9d228ca404918860c40651994db78a1e76db5ca..1fc3c345308dfed8384d1c02334f2030
      return static_cast<unsigned>(width);
  }
  
+diff --git a/Source/WebCore/page/SocketProvider.cpp b/Source/WebCore/page/SocketProvider.cpp
+index 803ac83155ff4df1becf75cd4710f6fbf7bbc32a..54fb28427e8b2b7da2ea3204673414f8e1bd24d7 100644
+--- a/Source/WebCore/page/SocketProvider.cpp
++++ b/Source/WebCore/page/SocketProvider.cpp
+@@ -33,7 +33,11 @@ namespace WebCore {
+     
+ Ref<SocketStreamHandle> SocketProvider::createSocketStreamHandle(const URL& url, SocketStreamHandleClient& client, PAL::SessionID sessionID, const String& credentialPartition, const StorageSessionProvider* provider)
+ {
++#if OS(WINDOWS)
++    return SocketStreamHandleImpl::create(url, false, client, sessionID, credentialPartition, { }, provider);
++#else
+     return SocketStreamHandleImpl::create(url, client, sessionID, credentialPartition, { }, provider);
++#endif
+ }
+ 
+ RefPtr<ThreadableWebSocketChannel> SocketProvider::createWebSocketChannel(Document&, WebSocketChannelClient&)
 diff --git a/Source/WebCore/page/csp/ContentSecurityPolicy.cpp b/Source/WebCore/page/csp/ContentSecurityPolicy.cpp
 index ad6f5209c52e0842d93be267f8f5e99551dfe07c..0fcf4fe9877ba8a89a8dfb321e120f7954c6f69b 100644
 --- a/Source/WebCore/page/csp/ContentSecurityPolicy.cpp
@@ -5178,6 +5194,130 @@ index 87930048f4fd18d6098af7de4da25be532df5931..2bb2afcf9473b0d5d97efbe18dd7b814
      Vector<WTF::Function<void(bool)>> m_listeners;
      Timer m_updateStateTimer;
  
+diff --git a/Source/WebCore/platform/network/curl/CurlStream.cpp b/Source/WebCore/platform/network/curl/CurlStream.cpp
+index 26dc7bef4b74bc6b4e2e526dec6523c3ad6d3643..c783aa5a7984f3966312e5e0ffd76f93ed6208f8 100644
+--- a/Source/WebCore/platform/network/curl/CurlStream.cpp
++++ b/Source/WebCore/platform/network/curl/CurlStream.cpp
+@@ -33,7 +33,7 @@
+ 
+ namespace WebCore {
+ 
+-CurlStream::CurlStream(CurlStreamScheduler& scheduler, CurlStreamID streamID, URL&& url)
++CurlStream::CurlStream(CurlStreamScheduler& scheduler, CurlStreamID streamID, bool ignoreCertificateErrors, URL&& url)
+     : m_scheduler(scheduler)
+     , m_streamID(streamID)
+ {
+@@ -49,6 +49,9 @@ CurlStream::CurlStream(CurlStreamScheduler& scheduler, CurlStreamID streamID, UR
+     m_curlHandle->setUrl(urlForConnection);
+ 
+     m_curlHandle->enableConnectionOnly();
++    if (ignoreCertificateErrors)
++        m_curlHandle->disableServerTrustEvaluation();
++
+ 
+     auto errorCode = m_curlHandle->perform();
+     if (errorCode != CURLE_OK) {
+diff --git a/Source/WebCore/platform/network/curl/CurlStream.h b/Source/WebCore/platform/network/curl/CurlStream.h
+index 313b0173da5cd404a1e3fcad9573b8ff7c3abd4f..020980a0f61d47e8c7929bfaab2f8394d014766d 100644
+--- a/Source/WebCore/platform/network/curl/CurlStream.h
++++ b/Source/WebCore/platform/network/curl/CurlStream.h
+@@ -50,12 +50,12 @@ public:
+         virtual void didFail(CurlStreamID, CURLcode) = 0;
+     };
+ 
+-    static std::unique_ptr<CurlStream> create(CurlStreamScheduler& scheduler, CurlStreamID streamID, URL&& url)
++    static std::unique_ptr<CurlStream> create(CurlStreamScheduler& scheduler, CurlStreamID streamID, bool ignoreCertificateErrors, URL&& url)
+     {
+-        return WTF::makeUnique<CurlStream>(scheduler, streamID, WTFMove(url));
++        return WTF::makeUnique<CurlStream>(scheduler, streamID, ignoreCertificateErrors, WTFMove(url));
+     }
+ 
+-    CurlStream(CurlStreamScheduler&, CurlStreamID, URL&&);
++    CurlStream(CurlStreamScheduler&, CurlStreamID, bool ignoreCertificateErrors, URL&&);
+     virtual ~CurlStream();
+ 
+     void send(UniqueArray<uint8_t>&&, size_t);
+diff --git a/Source/WebCore/platform/network/curl/CurlStreamScheduler.cpp b/Source/WebCore/platform/network/curl/CurlStreamScheduler.cpp
+index 3fb8759984aa31a7d44baa2f69afe2fee461ea4f..bb7ad47477d97fa1eaff5d3da6b9a3705ff1e32f 100644
+--- a/Source/WebCore/platform/network/curl/CurlStreamScheduler.cpp
++++ b/Source/WebCore/platform/network/curl/CurlStreamScheduler.cpp
+@@ -40,7 +40,7 @@ CurlStreamScheduler::~CurlStreamScheduler()
+     ASSERT(isMainThread());
+ }
+ 
+-CurlStreamID CurlStreamScheduler::createStream(const URL& url, CurlStream::Client& client)
++CurlStreamID CurlStreamScheduler::createStream(const URL& url, bool ignoreCertificateErrors, CurlStream::Client& client)
+ {
+     ASSERT(isMainThread());
+ 
+@@ -51,8 +51,8 @@ CurlStreamID CurlStreamScheduler::createStream(const URL& url, CurlStream::Clien
+     auto streamID = m_currentStreamID;
+     m_clientList.add(streamID, &client);
+ 
+-    callOnWorkerThread([this, streamID, url = url.isolatedCopy()]() mutable {
+-        m_streamList.add(streamID, CurlStream::create(*this, streamID, WTFMove(url)));
++    callOnWorkerThread([this, streamID, ignoreCertificateErrors, url = url.isolatedCopy()]() mutable {
++        m_streamList.add(streamID, CurlStream::create(*this, streamID, ignoreCertificateErrors, WTFMove(url)));
+     });
+ 
+     return streamID;
+diff --git a/Source/WebCore/platform/network/curl/CurlStreamScheduler.h b/Source/WebCore/platform/network/curl/CurlStreamScheduler.h
+index 7d881206c9689f433227969c9b7f9ff268bdaaed..2e8118f11f87fa5f32adcedc165aec8220b36d58 100644
+--- a/Source/WebCore/platform/network/curl/CurlStreamScheduler.h
++++ b/Source/WebCore/platform/network/curl/CurlStreamScheduler.h
+@@ -38,7 +38,7 @@ public:
+     CurlStreamScheduler();
+     virtual ~CurlStreamScheduler();
+ 
+-    CurlStreamID createStream(const URL&, CurlStream::Client&);
++    CurlStreamID createStream(const URL&, bool ignoreCertificateErrors, CurlStream::Client&);
+     void destroyStream(CurlStreamID);
+     void send(CurlStreamID, UniqueArray<uint8_t>&&, size_t);
+ 
+diff --git a/Source/WebCore/platform/network/curl/SocketStreamHandleImpl.h b/Source/WebCore/platform/network/curl/SocketStreamHandleImpl.h
+index fad4ef9198118f5e6e5ed7d3c14b99e574593451..a2d59843896f252fccdddbb94c5275eec6300f1b 100644
+--- a/Source/WebCore/platform/network/curl/SocketStreamHandleImpl.h
++++ b/Source/WebCore/platform/network/curl/SocketStreamHandleImpl.h
+@@ -44,7 +44,7 @@ class StorageSessionProvider;
+ 
+ class SocketStreamHandleImpl : public SocketStreamHandle, public CurlStream::Client {
+ public:
+-    static Ref<SocketStreamHandleImpl> create(const URL& url, SocketStreamHandleClient& client, PAL::SessionID, const String&, SourceApplicationAuditToken&&, const StorageSessionProvider* provider) { return adoptRef(*new SocketStreamHandleImpl(url, client, provider)); }
++    static Ref<SocketStreamHandleImpl> create(const URL& url, bool ignoreCertificateErrors, SocketStreamHandleClient& client, PAL::SessionID, const String&, SourceApplicationAuditToken&&, const StorageSessionProvider* provider) { return adoptRef(*new SocketStreamHandleImpl(url, ignoreCertificateErrors, client, provider)); }
+ 
+     virtual ~SocketStreamHandleImpl();
+ 
+@@ -53,7 +53,7 @@ public:
+     WEBCORE_EXPORT void platformClose() final;
+ 
+ private:
+-    WEBCORE_EXPORT SocketStreamHandleImpl(const URL&, SocketStreamHandleClient&, const StorageSessionProvider*);
++    WEBCORE_EXPORT SocketStreamHandleImpl(const URL&, bool ignoreCertificateErrors, SocketStreamHandleClient&, const StorageSessionProvider*);
+ 
+     size_t bufferedAmount() final;
+     Optional<size_t> platformSendInternal(const uint8_t*, size_t);
+diff --git a/Source/WebCore/platform/network/curl/SocketStreamHandleImplCurl.cpp b/Source/WebCore/platform/network/curl/SocketStreamHandleImplCurl.cpp
+index 3b6dea9ed2552d81aaf7e694a5f922e96dbf94d6..6b5bd9b9782b0fb55341e76fc3cff8625f7a30a8 100644
+--- a/Source/WebCore/platform/network/curl/SocketStreamHandleImplCurl.cpp
++++ b/Source/WebCore/platform/network/curl/SocketStreamHandleImplCurl.cpp
+@@ -43,7 +43,7 @@
+ 
+ namespace WebCore {
+ 
+-SocketStreamHandleImpl::SocketStreamHandleImpl(const URL& url, SocketStreamHandleClient& client, const StorageSessionProvider* provider)
++SocketStreamHandleImpl::SocketStreamHandleImpl(const URL& url, bool ignoreCertificateErrors, SocketStreamHandleClient& client, const StorageSessionProvider* provider)
+     : SocketStreamHandle(url, client)
+     , m_storageSessionProvider(provider)
+     , m_scheduler(CurlContext::singleton().streamScheduler())
+@@ -52,7 +52,7 @@ SocketStreamHandleImpl::SocketStreamHandleImpl(const URL& url, SocketStreamHandl
+     if (m_url.protocolIs("wss") && DeprecatedGlobalSettings::allowsAnySSLCertificate())
+         CurlContext::singleton().sslHandle().setIgnoreSSLErrors(true);
+ 
+-    m_streamID = m_scheduler.createStream(m_url, *this);
++    m_streamID = m_scheduler.createStream(m_url, ignoreCertificateErrors, *this);
+ }
+ 
+ SocketStreamHandleImpl::~SocketStreamHandleImpl()
 diff --git a/Source/WebCore/platform/win/KeyEventWin.cpp b/Source/WebCore/platform/win/KeyEventWin.cpp
 index 44737686187a06a92c408ea60b63a48ac8481334..c754a763688b52e7ddd47493296ef9b0c6adc527 100644
 --- a/Source/WebCore/platform/win/KeyEventWin.cpp
@@ -5203,7 +5343,7 @@ index 44737686187a06a92c408ea60b63a48ac8481334..c754a763688b52e7ddd47493296ef9b0
  
  bool PlatformKeyboardEvent::currentCapsLockState()
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.cpp b/Source/WebKit/NetworkProcess/NetworkProcess.cpp
-index fc05cff928d150dc5083081fea4be915ea2233f9..b40c28a9585b1ae917412ed2339808aca69a237d 100644
+index fc05cff928d150dc5083081fea4be915ea2233f9..69786c2d48ffc18b0d8729d49389434161de08a3 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.cpp
 +++ b/Source/WebKit/NetworkProcess/NetworkProcess.cpp
 @@ -26,7 +26,6 @@
@@ -5214,7 +5354,7 @@ index fc05cff928d150dc5083081fea4be915ea2233f9..b40c28a9585b1ae917412ed2339808ac
  #include "ArgumentCoders.h"
  #include "Attachment.h"
  #include "AuthenticationManager.h"
-@@ -595,6 +594,35 @@ void NetworkProcess::destroySession(PAL::SessionID sessionID)
+@@ -595,6 +594,41 @@ void NetworkProcess::destroySession(PAL::SessionID sessionID)
          webIDBServer->close();
  }
  
@@ -5247,11 +5387,17 @@ index fc05cff928d150dc5083081fea4be915ea2233f9..b40c28a9585b1ae917412ed2339808ac
 +    completionHandler(false);
 +}
 +
++void NetworkProcess::setIgnoreCertificateErrors(PAL::SessionID sessionID, bool ignore)
++{
++    if (auto* networkSession = this->networkSession(sessionID))
++        networkSession->setIgnoreCertificateErrors(ignore);
++}
++
  #if ENABLE(RESOURCE_LOAD_STATISTICS)
  void NetworkProcess::dumpResourceLoadStatistics(PAL::SessionID sessionID, CompletionHandler<void(String)>&& completionHandler)
  {
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.h b/Source/WebKit/NetworkProcess/NetworkProcess.h
-index ed5e11fcb061f6ecb3bfbd87ce83ef257563310c..3067e476375a702b47099e3df5683f75b8474a37 100644
+index ed5e11fcb061f6ecb3bfbd87ce83ef257563310c..bdfa56cc28c87a4f91df384e8bebb6dc997687bc 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.h
 +++ b/Source/WebKit/NetworkProcess/NetworkProcess.h
 @@ -75,6 +75,7 @@ class SessionID;
@@ -5262,135 +5408,74 @@ index ed5e11fcb061f6ecb3bfbd87ce83ef257563310c..3067e476375a702b47099e3df5683f75
  class CurlProxySettings;
  class DownloadID;
  class ProtectionSpace;
-@@ -203,6 +204,10 @@ public:
+@@ -203,6 +204,11 @@ public:
  
      void addWebsiteDataStore(WebsiteDataStoreParameters&&);
  
 +    void getAllCookies(PAL::SessionID, CompletionHandler<void(Vector<WebCore::Cookie>&&)>&&);
 +    void setCookies(PAL::SessionID, Vector<WebCore::Cookie>, CompletionHandler<void(bool)>&&);
 +    void deleteAllCookies(PAL::SessionID, CompletionHandler<void(bool)>&&);
++    void setIgnoreCertificateErrors(PAL::SessionID, bool);
 +
  #if ENABLE(RESOURCE_LOAD_STATISTICS)
      void clearPrevalentResource(PAL::SessionID, const RegistrableDomain&, CompletionHandler<void()>&&);
      void clearUserInteraction(PAL::SessionID, const RegistrableDomain&, CompletionHandler<void()>&&);
-@@ -311,6 +316,7 @@ public:
- 
- #if PLATFORM(COCOA)
-     NetworkHTTPSUpgradeChecker& networkHTTPSUpgradeChecker();
-+    bool ignoreTLSErrors() const { return m_ignoreTLSErrors; }
- #endif
- 
-     const String& uiProcessBundleIdentifier() const { return m_uiProcessBundleIdentifier; }
-@@ -425,8 +431,10 @@ private:
-     void syncAllCookies();
-     void didSyncAllCookies();
- 
--#if USE(SOUP)
-+#if PLATFORM(COCOA) || USE(CURL) || USE(SOUP)
-     void setIgnoreTLSErrors(bool);
-+#endif
-+#if USE(SOUP)
-     void userPreferredLanguagesChanged(const Vector<String>&);
-     void setNetworkProxySettings(const WebCore::SoupNetworkProxySettings&);
- #endif
-@@ -573,6 +581,7 @@ private:
- 
- #if PLATFORM(COCOA)
-     std::unique_ptr<NetworkHTTPSUpgradeChecker> m_networkHTTPSUpgradeChecker;
-+    bool m_ignoreTLSErrors { false };
- #endif
- 
- #if ENABLE(RESOURCE_LOAD_STATISTICS)
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.messages.in b/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
-index dfd6244249ccfb08dacc07bb6b157638c8ae0a4b..159a3c89ff00ceeec086cda6088850bc79b2e5f0 100644
+index dfd6244249ccfb08dacc07bb6b157638c8ae0a4b..f8697eb4a7162da4acf29972401f503357c72d48 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
 +++ b/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
-@@ -27,8 +27,10 @@ messages -> NetworkProcess LegacyReceiver {
-     # Creates a connection for communication with a WebProcess
-     CreateNetworkConnectionToWebProcess(WebCore::ProcessIdentifier processIdentifier, PAL::SessionID sessionID) -> (Optional<IPC::Attachment> connectionIdentifier, enum:uint8_t WebCore::HTTPCookieAcceptPolicy cookieAcceptPolicy) Async
- 
--#if USE(SOUP)
-+#if USE(SOUP) || PLATFORM(COCOA) || USE(CURL)
-     SetIgnoreTLSErrors(bool ignoreTLSErrors)
-+#endif
-+#if USE(SOUP)
-     UserPreferredLanguagesChanged(Vector<String> languages)
-     SetNetworkProxySettings(struct WebCore::SoupNetworkProxySettings settings)
-     PrefetchDNS(String hostname)
-@@ -81,6 +83,10 @@ messages -> NetworkProcess LegacyReceiver {
+@@ -81,6 +81,11 @@ messages -> NetworkProcess LegacyReceiver {
  
      PreconnectTo(PAL::SessionID sessionID, URL url, String userAgent, enum:uint8_t WebCore::StoredCredentialsPolicy storedCredentialsPolicy, enum:bool WebKit::NavigatingToAppBoundDomain isNavigatingToAppBoundDomain);
  
 +    GetAllCookies(PAL::SessionID sessionID) -> (Vector<WebCore::Cookie> cookies) Async
 +    SetCookies(PAL::SessionID sessionID, Vector<WebCore::Cookie> cookies) -> (bool success) Async
 +    DeleteAllCookies(PAL::SessionID sessionID) -> (bool success) Async
++    SetIgnoreCertificateErrors(PAL::SessionID sessionID, bool ignoreTLSErrors)
 +
  #if ENABLE(RESOURCE_LOAD_STATISTICS)
      ClearPrevalentResource(PAL::SessionID sessionID, WebCore::RegistrableDomain resourceDomain) -> () Async
      ClearUserInteraction(PAL::SessionID sessionID, WebCore::RegistrableDomain resourceDomain) -> () Async
-diff --git a/Source/WebKit/NetworkProcess/NetworkProcessCreationParameters.h b/Source/WebKit/NetworkProcess/NetworkProcessCreationParameters.h
-index bdc2cae74892db1b0a26d22afbe2a4bb7a6c0ab0..7c45a71befbcd531e724a816d606f81fe6061a2f 100644
---- a/Source/WebKit/NetworkProcess/NetworkProcessCreationParameters.h
-+++ b/Source/WebKit/NetworkProcess/NetworkProcessCreationParameters.h
-@@ -74,9 +74,9 @@ struct NetworkProcessCreationParameters {
+diff --git a/Source/WebKit/NetworkProcess/NetworkSession.h b/Source/WebKit/NetworkProcess/NetworkSession.h
+index 46342935377111aebb2847dca80dde5b4972f270..9d6756747082c6044c13e5df1f65db9554fa5655 100644
+--- a/Source/WebKit/NetworkProcess/NetworkSession.h
++++ b/Source/WebKit/NetworkProcess/NetworkSession.h
+@@ -137,6 +137,9 @@ public:
  
-     WebsiteDataStoreParameters defaultDataStoreParameters;
-     
-+    bool ignoreTLSErrors { false };
- #if USE(SOUP)
-     WebCore::HTTPCookieAcceptPolicy cookieAcceptPolicy { WebCore::HTTPCookieAcceptPolicy::AlwaysAccept };
--    bool ignoreTLSErrors { false };
-     Vector<String> languages;
-     WebCore::SoupNetworkProxySettings proxySettings;
- #endif
-diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkProcessCocoa.mm b/Source/WebKit/NetworkProcess/cocoa/NetworkProcessCocoa.mm
-index 9b02788ebf8c89aa10f949b91fa81528d2effb3e..09082b761c3bd874cf2f86c4dd2fb75177a85718 100644
---- a/Source/WebKit/NetworkProcess/cocoa/NetworkProcessCocoa.mm
-+++ b/Source/WebKit/NetworkProcess/cocoa/NetworkProcessCocoa.mm
-@@ -90,6 +90,8 @@ void NetworkProcess::platformInitializeNetworkProcessCocoa(const NetworkProcessC
- #endif
- #endif
+     bool isStaleWhileRevalidateEnabled() const { return m_isStaleWhileRevalidateEnabled; }
  
-+    setIgnoreTLSErrors(parameters.ignoreTLSErrors);
++    void setIgnoreCertificateErrors(bool ignore) { m_ignoreCertificateErrors = ignore; }
++    bool ignoreCertificateErrors() { return m_ignoreCertificateErrors; }
 +
-     _CFNetworkSetATSContext(parameters.networkATSContext.get());
+ #if ENABLE(SERVICE_WORKER)
+     void addSoftUpdateLoader(std::unique_ptr<ServiceWorkerSoftUpdateLoader>&& loader) { m_softUpdateLoaders.add(WTFMove(loader)); }
+     void removeSoftUpdateLoader(ServiceWorkerSoftUpdateLoader* loader) { m_softUpdateLoaders.remove(loader); }
+@@ -167,6 +170,7 @@ protected:
+ #endif
+     bool m_isStaleWhileRevalidateEnabled { false };
+     UniqueRef<AdClickAttributionManager> m_adClickAttribution;
++    bool m_ignoreCertificateErrors { false };
  
-     m_uiProcessBundleIdentifier = parameters.uiProcessBundleIdentifier;
-@@ -210,6 +212,7 @@ void NetworkProcess::syncAllCookies()
-     });
- }
+     HashSet<Ref<NetworkResourceLoader>> m_keptAliveLoads;
  
-+
- #if HAVE(FOUNDATION_WITH_SAVE_COOKIES_WITH_COMPLETION_HANDLER)
- static void saveCookies(NSHTTPCookieStorage *cookieStorage, CompletionHandler<void()>&& completionHandler)
+diff --git a/Source/WebKit/NetworkProcess/NetworkSocketStream.cpp b/Source/WebKit/NetworkProcess/NetworkSocketStream.cpp
+index d1fa427d82884fc43569d1bf0df7d728921502fc..59790afe7f4deedc69b3f020e23f2b50a38595cf 100644
+--- a/Source/WebKit/NetworkProcess/NetworkSocketStream.cpp
++++ b/Source/WebKit/NetworkProcess/NetworkSocketStream.cpp
+@@ -43,7 +43,11 @@ Ref<NetworkSocketStream> NetworkSocketStream::create(NetworkProcess& networkProc
+ NetworkSocketStream::NetworkSocketStream(NetworkProcess& networkProcess, URL&& url, PAL::SessionID sessionID, const String& credentialPartition, WebSocketIdentifier identifier, IPC::Connection& connection, SourceApplicationAuditToken&& auditData)
+     : m_identifier(identifier)
+     , m_connection(connection)
++#if OS(WINDOWS)
++    , m_impl(SocketStreamHandleImpl::create(url, networkProcess.networkSession(sessionID)->ignoreCertificateErrors(), *this, sessionID, credentialPartition, WTFMove(auditData), NetworkStorageSessionProvider::create(networkProcess, sessionID).ptr()))
++#else
+     , m_impl(SocketStreamHandleImpl::create(url, *this, sessionID, credentialPartition, WTFMove(auditData), NetworkStorageSessionProvider::create(networkProcess, sessionID).ptr()))
++#endif
  {
-@@ -240,6 +243,11 @@ void NetworkProcess::platformSyncAllCookies(CompletionHandler<void()>&& completi
-     ALLOW_DEPRECATED_DECLARATIONS_END
  }
- 
-+void NetworkProcess::setIgnoreTLSErrors(bool ignoreTLSErrors)
-+{
-+    m_ignoreTLSErrors = ignoreTLSErrors;
-+}
-+
- void NetworkProcess::platformPrepareToSuspend(CompletionHandler<void()>&& completionHandler)
- {
-     completionHandler();
-diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.h b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.h
-index 60b35817d08a973770ca9eb5a39cee34b9b48dde..cca0c6fb7b766fc3a1a5bb84461234c2a61aa988 100644
---- a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.h
-+++ b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.h
-@@ -77,7 +77,7 @@ public:
-     const String& dataConnectionServiceType() const;
- #endif
- 
--    static bool allowsSpecificHTTPSCertificateForHost(const WebCore::AuthenticationChallenge&);
-+    bool allowsSpecificHTTPSCertificateForHost(const WebCore::AuthenticationChallenge&);
- 
-     void continueDidReceiveChallenge(SessionWrapper&, const WebCore::AuthenticationChallenge&, NegotiatedLegacyTLS, NetworkDataTaskCocoa::TaskIdentifier, NetworkDataTaskCocoa*, CompletionHandler<void(WebKit::AuthenticationChallengeDisposition, const WebCore::Credential&)>&&);
  
 diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
-index 9b0104d46e55ac8d4b2bba1c9c2e9a631cbae0cb..b3bc5cfaadbf8685b29ee90dfc719bddfcae5183 100644
+index 9b0104d46e55ac8d4b2bba1c9c2e9a631cbae0cb..5eeeabb53e0039aa12789ecf490db0319a356d23 100644
 --- a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
 +++ b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
 @@ -654,7 +654,7 @@ static inline void processServerTrustEvaluation(NetworkSessionCocoa& session, Se
@@ -5398,22 +5483,12 @@ index 9b0104d46e55ac8d4b2bba1c9c2e9a631cbae0cb..b3bc5cfaadbf8685b29ee90dfc719bdd
  
      if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
 -        if (NetworkSessionCocoa::allowsSpecificHTTPSCertificateForHost(challenge))
-+        if (sessionCocoa->allowsSpecificHTTPSCertificateForHost(challenge))
++        if (sessionCocoa->ignoreCertificateErrors() || sessionCocoa->allowsSpecificHTTPSCertificateForHost(challenge))
              return completionHandler(NSURLSessionAuthChallengeUseCredential, [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]);
  
  #if HAVE(TLS_PROTOCOL_VERSION_T)
-@@ -1375,6 +1375,9 @@ static bool certificatesMatch(SecTrustRef trust1, SecTrustRef trust2)
- 
- bool NetworkSessionCocoa::allowsSpecificHTTPSCertificateForHost(const WebCore::AuthenticationChallenge& challenge)
- {
-+    if (networkProcess().ignoreTLSErrors())
-+        return true;
-+
-     const String& host = challenge.protectionSpace().host();
-     NSArray *certificates = [NSURLRequest allowsSpecificHTTPSCertificateForHost:host];
-     if (!certificates)
 diff --git a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
-index 977a403be8dc962a9ccfa6428bc1d3e7c4682f86..5fb2c30136bffda04d4d5ffacea4511ef86ca427 100644
+index 977a403be8dc962a9ccfa6428bc1d3e7c4682f86..53753443288519bd229aed3a848aa3bca53ad496 100644
 --- a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
 +++ b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
 @@ -26,9 +26,13 @@
@@ -5438,7 +5513,16 @@ index 977a403be8dc962a9ccfa6428bc1d3e7c4682f86..5fb2c30136bffda04d4d5ffacea4511e
  
  namespace WebKit {
  
-@@ -177,7 +182,12 @@ void NetworkDataTaskCurl::curlDidReceiveBuffer(CurlRequest&, Ref<SharedBuffer>&&
+@@ -71,6 +76,8 @@ NetworkDataTaskCurl::NetworkDataTaskCurl(NetworkSession& session, NetworkDataTas
+         m_curlRequest->setUserPass(m_initialCredential.user(), m_initialCredential.password());
+         m_curlRequest->setAuthenticationScheme(ProtectionSpaceAuthenticationSchemeHTTPBasic);
+     }
++    if (m_session->ignoreCertificateErrors())
++        m_curlRequest->disableServerTrustEvaluation();
+     m_curlRequest->setStartTime(m_startTime);
+     m_curlRequest->start();
+ }
+@@ -177,7 +184,12 @@ void NetworkDataTaskCurl::curlDidReceiveBuffer(CurlRequest&, Ref<SharedBuffer>&&
      auto protectedThis = makeRef(*this);
      if (state() == State::Canceling || state() == State::Completed || (!m_client && !isDownload()))
          return;
@@ -5452,7 +5536,7 @@ index 977a403be8dc962a9ccfa6428bc1d3e7c4682f86..5fb2c30136bffda04d4d5ffacea4511e
      m_client->didReceiveData(WTFMove(buffer));
  }
  
-@@ -186,6 +196,12 @@ void NetworkDataTaskCurl::curlDidComplete(CurlRequest&, NetworkLoadMetrics&& net
+@@ -186,6 +198,12 @@ void NetworkDataTaskCurl::curlDidComplete(CurlRequest&, NetworkLoadMetrics&& net
      if (state() == State::Canceling || state() == State::Completed || (!m_client && !isDownload()))
          return;
  
@@ -5465,7 +5549,7 @@ index 977a403be8dc962a9ccfa6428bc1d3e7c4682f86..5fb2c30136bffda04d4d5ffacea4511e
      m_client->didCompleteWithError({ }, WTFMove(networkLoadMetrics));
  }
  
-@@ -199,6 +215,13 @@ void NetworkDataTaskCurl::curlDidFailWithError(CurlRequest& request, ResourceErr
+@@ -199,6 +217,13 @@ void NetworkDataTaskCurl::curlDidFailWithError(CurlRequest& request, ResourceErr
          return;
      }
  
@@ -5479,7 +5563,7 @@ index 977a403be8dc962a9ccfa6428bc1d3e7c4682f86..5fb2c30136bffda04d4d5ffacea4511e
      m_client->didCompleteWithError(resourceError);
  }
  
-@@ -235,6 +258,18 @@ void NetworkDataTaskCurl::invokeDidReceiveResponse()
+@@ -235,6 +260,18 @@ void NetworkDataTaskCurl::invokeDidReceiveResponse()
              break;
          case PolicyAction::Ignore:
              break;
@@ -5498,20 +5582,74 @@ index 977a403be8dc962a9ccfa6428bc1d3e7c4682f86..5fb2c30136bffda04d4d5ffacea4511e
          default:
              notImplemented();
              break;
-diff --git a/Source/WebKit/NetworkProcess/curl/NetworkProcessCurl.cpp b/Source/WebKit/NetworkProcess/curl/NetworkProcessCurl.cpp
-index 20b659f5cf4895e75a2762a9260611cd5f2fff80..ef094ae0d772f9884fd3021ba0eb4f491264ddbf 100644
---- a/Source/WebKit/NetworkProcess/curl/NetworkProcessCurl.cpp
-+++ b/Source/WebKit/NetworkProcess/curl/NetworkProcessCurl.cpp
-@@ -89,4 +89,9 @@ void NetworkProcess::setNetworkProxySettings(PAL::SessionID sessionID, WebCore::
-         ASSERT_NOT_REACHED();
+@@ -312,6 +349,8 @@ void NetworkDataTaskCurl::willPerformHTTPRedirection()
+             m_curlRequest->setUserPass(m_initialCredential.user(), m_initialCredential.password());
+             m_curlRequest->setAuthenticationScheme(ProtectionSpaceAuthenticationSchemeHTTPBasic);
+         }
++        if (m_session->ignoreCertificateErrors())
++            m_curlRequest->disableServerTrustEvaluation();
+         m_curlRequest->setStartTime(m_startTime);
+         m_curlRequest->start();
+ 
+diff --git a/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp b/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
+index 1de5ad90f434b50025dcb97dfaa01694c39f8a13..0bace7ed07af493570ef11d29ad29be590bccea1 100644
+--- a/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
++++ b/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
+@@ -434,6 +434,8 @@ bool NetworkDataTaskSoup::tlsConnectionAcceptCertificate(GTlsCertificate* certif
+ {
+     ASSERT(m_soupRequest);
+     URL url = soupURIToURL(soup_request_get_uri(m_soupRequest.get()));
++    if (m_session->ignoreCertificateErrors())
++        return true;
+     auto error = SoupNetworkSession::checkTLSErrors(url, certificate, tlsErrors);
+     if (!error)
+         return true;
+diff --git a/Source/WebKit/NetworkProcess/soup/NetworkSessionSoup.cpp b/Source/WebKit/NetworkProcess/soup/NetworkSessionSoup.cpp
+index 407361f036e79891767d807fbb63c9044b260a70..24773d8f349d441e2b6b1981baa5af170a96b384 100644
+--- a/Source/WebKit/NetworkProcess/soup/NetworkSessionSoup.cpp
++++ b/Source/WebKit/NetworkProcess/soup/NetworkSessionSoup.cpp
+@@ -106,6 +106,11 @@ static gboolean webSocketAcceptCertificateCallback(GTlsConnection*, GTlsCertific
+     return !SoupNetworkSession::checkTLSErrors(soupURIToURL(soup_message_get_uri(soupMessage)), certificate, errors);
  }
  
-+void NetworkProcess::setIgnoreTLSErrors(bool ignoreTLSErrors)
++static gboolean webSocketAcceptCertificateCallbackIgnoreTLSErrors(GTlsConnection*, GTlsCertificate* certificate, GTlsCertificateFlags errors, SoupMessage* soupMessage)
 +{
-+    CurlContext::singleton().sslHandle().setIgnoreSSLErrors(ignoreTLSErrors);
++    return TRUE;
 +}
 +
- } // namespace WebKit
+ static void webSocketMessageNetworkEventCallback(SoupMessage* soupMessage, GSocketClientEvent event, GIOStream* connection)
+ {
+     if (event != G_SOCKET_CLIENT_TLS_HANDSHAKING)
+@@ -114,6 +119,14 @@ static void webSocketMessageNetworkEventCallback(SoupMessage* soupMessage, GSock
+     g_signal_connect(connection, "accept-certificate", G_CALLBACK(webSocketAcceptCertificateCallback), soupMessage);
+ }
+ 
++static void webSocketMessageNetworkEventCallbackIgnoreTLSErrors(SoupMessage* soupMessage, GSocketClientEvent event, GIOStream* connection)
++{
++    if (event != G_SOCKET_CLIENT_TLS_HANDSHAKING)
++        return;
++
++    g_signal_connect(connection, "accept-certificate", G_CALLBACK(webSocketAcceptCertificateCallbackIgnoreTLSErrors), soupMessage);
++}
++
+ std::unique_ptr<WebSocketTask> NetworkSessionSoup::createWebSocketTask(NetworkSocketChannel& channel, const ResourceRequest& request, const String& protocol)
+ {
+     GUniquePtr<SoupURI> soupURI = request.createSoupURI();
+@@ -122,8 +135,12 @@ std::unique_ptr<WebSocketTask> NetworkSessionSoup::createWebSocketTask(NetworkSo
+ 
+     GRefPtr<SoupMessage> soupMessage = adoptGRef(soup_message_new_from_uri(SOUP_METHOD_GET, soupURI.get()));
+     request.updateSoupMessage(soupMessage.get(), blobRegistry());
+-    if (request.url().protocolIs("wss"))
+-        g_signal_connect(soupMessage.get(), "network-event", G_CALLBACK(webSocketMessageNetworkEventCallback), nullptr);
++    if (request.url().protocolIs("wss")) {
++        if (ignoreCertificateErrors())
++          g_signal_connect(soupMessage.get(), "network-event", G_CALLBACK(webSocketMessageNetworkEventCallbackIgnoreTLSErrors), nullptr);
++        else
++          g_signal_connect(soupMessage.get(), "network-event", G_CALLBACK(webSocketMessageNetworkEventCallback), nullptr);
++    }
+     return makeUnique<WebSocketTask>(channel, soupSession(), soupMessage.get(), protocol);
+ }
+ 
 diff --git a/Source/WebKit/PlatformWPE.cmake b/Source/WebKit/PlatformWPE.cmake
 index 1ad03e9ce3b4a94bf761eaf8ecc2fb1b7a39a221..a7646e30d99da5fa840e5e3f57b6c1b37876f38a 100644
 --- a/Source/WebKit/PlatformWPE.cmake
@@ -7601,24 +7739,10 @@ index 216295e4568dfa4e80e9682ae88fc10685a7d7b3..085e568d7a80386c53a324f42c88be48
  {
      auto delegate = m_uiDelegate.m_delegate.get();
 diff --git a/Source/WebKit/UIProcess/Cocoa/WebProcessPoolCocoa.mm b/Source/WebKit/UIProcess/Cocoa/WebProcessPoolCocoa.mm
-index 65cf4713050692ccbdb91b6733e89e2e93895f27..b19917af83285797e2103b406f6665c1b0d9cd65 100644
+index 65cf4713050692ccbdb91b6733e89e2e93895f27..255067036cb163496595605904775437ed4b05a7 100644
 --- a/Source/WebKit/UIProcess/Cocoa/WebProcessPoolCocoa.mm
 +++ b/Source/WebKit/UIProcess/Cocoa/WebProcessPoolCocoa.mm
-@@ -138,6 +138,13 @@ static void registerUserDefaultsIfNeeded()
-     [[NSUserDefaults standardUserDefaults] registerDefaults:registrationDictionary];
- }
- 
-+void WebProcessPool::setIgnoreTLSErrors(bool ignoreTLSErrors)
-+{
-+    m_ignoreTLSErrors = ignoreTLSErrors;
-+    if (m_networkProcess)
-+        m_networkProcess->send(Messages::NetworkProcess::SetIgnoreTLSErrors(m_ignoreTLSErrors), 0);
-+}
-+
- void WebProcessPool::updateProcessSuppressionState()
- {
-     if (m_networkProcess)
-@@ -357,7 +364,7 @@ void WebProcessPool::platformInitializeWebProcess(const WebProcessProxy& process
+@@ -357,7 +357,7 @@ void WebProcessPool::platformInitializeWebProcess(const WebProcessProxy& process
      auto screenProperties = WebCore::collectScreenProperties();
      parameters.screenProperties = WTFMove(screenProperties);
  #if PLATFORM(MAC)
@@ -7627,16 +7751,7 @@ index 65cf4713050692ccbdb91b6733e89e2e93895f27..b19917af83285797e2103b406f6665c1
  #endif
      
  #if PLATFORM(IOS)
-@@ -480,6 +487,8 @@ void WebProcessPool::platformInitializeNetworkProcess(NetworkProcessCreationPara
-         }
-     }
- 
-+    parameters.ignoreTLSErrors = m_ignoreTLSErrors;
-+
-     parameters.networkATSContext = adoptCF(_CFNetworkCopyATSContext());
- 
-     parameters.shouldSuppressMemoryPressureHandler = [defaults boolForKey:WebKitSuppressMemoryPressureHandlerDefaultsKey];
-@@ -657,8 +666,8 @@ void WebProcessPool::registerNotificationObservers()
+@@ -657,8 +657,8 @@ void WebProcessPool::registerNotificationObservers()
  
  #if ENABLE(WEBPROCESS_WINDOWSERVER_BLOCKING)
      m_scrollerStyleNotificationObserver = [[NSNotificationCenter defaultCenter] addObserverForName:NSPreferredScrollerStyleDidChangeNotification object:nil queue:[NSOperationQueue currentQueue] usingBlock:^(NSNotification *notification) {
@@ -7712,7 +7827,7 @@ index d7695088e7cfc4f638f157338754f9f157489749..ba114d47ac079661702e44f19853398f
      bool m_isBackingStoreDiscardable { true };
      std::unique_ptr<BackingStore> m_backingStore;
 diff --git a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
-index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..a016c4b86ea4cf6db0c76e77a42abe9189233573 100644
+index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..4b0fe2f5a562fbcd3250dc4749072ddfa7c7be4f 100644
 --- a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
 +++ b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
 @@ -42,8 +42,10 @@
@@ -7732,7 +7847,7 @@ index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..a016c4b86ea4cf6db0c76e77a42abe91
      , m_frameInfo(API::FrameInfo::create(FrameInfoData { frameInfoData }, originatingPage))
 +    , m_uuid(createCanonicalUUIDString())
  {
-+    if (auto* instrumentation = m_processPool->downloadInstrumentation())
++    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
 +      instrumentation->downloadCreated(m_uuid, m_request, originatingPage);
  }
  
@@ -7743,11 +7858,11 @@ index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..a016c4b86ea4cf6db0c76e77a42abe91
          return;
 -    
 +
-+    if (m_processPool->networkProcess() && m_processPool->allowDownloadForAutomation()) {
++    if (m_processPool->networkProcess() && m_dataStore->allowDownloadForAutomation()) {
 +        SandboxExtension::Handle sandboxExtensionHandle;
 +        String destination;
-+        if (*m_processPool->allowDownloadForAutomation()) {
-+            destination = FileSystem::pathByAppendingComponent(m_processPool->downloadPathForAutomation(), m_uuid);
++        if (*m_dataStore->allowDownloadForAutomation()) {
++            destination = FileSystem::pathByAppendingComponent(m_dataStore->downloadPathForAutomation(), m_uuid);
 +            SandboxExtension::createHandle(destination, SandboxExtension::Type::ReadWrite, sandboxExtensionHandle);
 +        }
 +        m_processPool->networkProcess()->send(Messages::NetworkProcess::ContinueDecidePendingDownloadDestination(downloadID, destination, sandboxExtensionHandle, true), 0);
@@ -7761,7 +7876,7 @@ index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..a016c4b86ea4cf6db0c76e77a42abe91
          return;
  
      m_processPool->downloadClient().didFinish(*this);
-+    if (auto* instrumentation = m_processPool->downloadInstrumentation())
++    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
 +      instrumentation->downloadFinished(m_uuid, String());
  
      // This can cause the DownloadProxy object to be deleted.
@@ -7770,7 +7885,7 @@ index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..a016c4b86ea4cf6db0c76e77a42abe91
      m_resumeData = createData(resumeData);
  
      m_processPool->downloadClient().didFail(*this, error);
-+    if (auto* instrumentation = m_processPool->downloadInstrumentation())
++    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
 +      instrumentation->downloadFinished(m_uuid, error.localizedDescription());
  
      // This can cause the DownloadProxy object to be deleted.
@@ -7779,7 +7894,7 @@ index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..a016c4b86ea4cf6db0c76e77a42abe91
      m_resumeData = createData(resumeData);
  
      m_processPool->downloadClient().didCancel(*this);
-+    if (auto* instrumentation = m_processPool->downloadInstrumentation())
++    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
 +      instrumentation->downloadFinished(m_uuid, "canceled"_s);
  
      // This can cause the DownloadProxy object to be deleted.
@@ -8543,10 +8658,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..cac12beb34ef7a3b8ac5564140e9a9122da66cdc
+index 0000000000000000000000000000000000000000..7a01022782fd1584fa2a628166b5f7d3e342d6b4
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,634 @@
+@@ -0,0 +1,645 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -8769,8 +8884,11 @@ index 0000000000000000000000000000000000000000..cac12beb34ef7a3b8ac5564140e9a912
 +void InspectorPlaywrightAgent::didCreateFrontendAndBackend(FrontendRouter*, BackendDispatcher*)
 +{
 +    m_isConnected = true;
-+    for (auto& pool : WebProcessPool::allProcessPools())
-+        pool->setDownloadInstrumentation(this);
++    for (auto& pool : WebProcessPool::allProcessPools()) {
++        auto* dataStore = pool->websiteDataStore();
++        if (dataStore)
++            dataStore->setDownloadInstrumentation(this);
++    }
 +}
 +
 +void InspectorPlaywrightAgent::didFailProvisionalLoad(WebPageProxy& page, uint64_t navigationID, const String& error)
@@ -8793,9 +8911,14 @@ index 0000000000000000000000000000000000000000..cac12beb34ef7a3b8ac5564140e9a912
 +{
 +    m_isConnected = false;
 +    for (auto& pool : WebProcessPool::allProcessPools()) {
-+        pool->setDownloadInstrumentation(nullptr);
-+        pool->setDownloadForAutomation(Optional<bool>(), String());
++        auto* dataStore = pool->websiteDataStore();
++        if (dataStore) {
++            dataStore->setDownloadInstrumentation(nullptr);
++            dataStore->setDownloadForAutomation(Optional<bool>(), String());
++        }
 +    }
++    for (auto& it : m_browserContexts)
++        it.value.dataStore->setDownloadInstrumentation(nullptr);
 +    m_browserContextDeletions.clear();
 +}
 +
@@ -8839,7 +8962,7 @@ index 0000000000000000000000000000000000000000..cac12beb34ef7a3b8ac5564140e9a912
 +        return;
 +    browserContext.processPool->setPrimaryDataStore(*browserContext.dataStore);
 +    browserContext.processPool->ensureNetworkProcess(browserContext.dataStore.get());
-+    browserContext.processPool->setDownloadInstrumentation(this);
++    browserContext.dataStore->setDownloadInstrumentation(this);
 +
 +    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
 +    *browserContextID = toBrowserContextIDProtocolString(sessionID);
@@ -8964,7 +9087,10 @@ index 0000000000000000000000000000000000000000..cac12beb34ef7a3b8ac5564140e9a912
 +    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
 +    if (!errorString.isEmpty())
 +        return;
-+    browserContext.processPool->setIgnoreTLSErrors(ignore);
++
++    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
++    NetworkProcessProxy* networkProcess = browserContext.processPool->networkProcess();
++    networkProcess->send(Messages::NetworkProcess::SetIgnoreCertificateErrors(sessionID, ignore), 0);
 +}
 +
 +void InspectorPlaywrightAgent::getAllCookies(const String* browserContextID, Ref<GetAllCookiesCallback>&& callback) {
@@ -9085,7 +9211,7 @@ index 0000000000000000000000000000000000000000..cac12beb34ef7a3b8ac5564140e9a912
 +        items.append(language);
 +    }
 +
-+    browserContext.processPool->setLanguagesForAutomation(WTFMove(items));
++    browserContext.dataStore->setLanguagesForAutomation(WTFMove(items));
 +}
 +
 +void InspectorPlaywrightAgent::setDownloadBehavior(Inspector::ErrorString& errorString, const String* behavior, const String* downloadPath, const String* browserContextID)
@@ -9098,7 +9224,7 @@ index 0000000000000000000000000000000000000000..cac12beb34ef7a3b8ac5564140e9a912
 +      allow = true;
 +    if (behavior && *behavior == "deny"_s)
 +      allow = false;
-+    browserContext.processPool->setDownloadForAutomation(allow, downloadPath ? *downloadPath : String());
++    browserContext.dataStore->setDownloadForAutomation(allow, downloadPath ? *downloadPath : String());
 +}
 +
 +void InspectorPlaywrightAgent::setGeolocationOverride(Inspector::ErrorString& errorString, const String* browserContextID, const JSON::Object* geolocation)
@@ -10712,103 +10838,26 @@ index f33b2e34be8a5bcc1381fc101cb8b1c5d59a3c95..99e8a120099716278bb73192e641f78b
      PluginZoomFactorDidChange(double zoomFactor)
  
 diff --git a/Source/WebKit/UIProcess/WebProcessPool.cpp b/Source/WebKit/UIProcess/WebProcessPool.cpp
-index 8d2580a5c96fb53ce4f85dbb1b89d079ecbd6f2e..f04a3779bdb756195464ce24952469c155bf5138 100644
+index 8d2580a5c96fb53ce4f85dbb1b89d079ecbd6f2e..a77ae49b4cc2c7f811233cad5fb6b38a3064734e 100644
 --- a/Source/WebKit/UIProcess/WebProcessPool.cpp
 +++ b/Source/WebKit/UIProcess/WebProcessPool.cpp
-@@ -439,12 +439,25 @@ void WebProcessPool::languageChanged(void* context)
-     static_cast<WebProcessPool*>(context)->languageChanged();
- }
- 
-+void WebProcessPool::setLanguagesForAutomation(Vector<String>&& languages)
-+{
-+    m_languagesForAutomation = WTFMove(languages);
-+    languageChanged();
-+}
-+
-+void WebProcessPool::setDownloadForAutomation(Optional<bool> allow, const String& downloadPath)
-+{
-+    m_allowDownloadForAutomation = allow;
-+    m_downloadPathForAutomation = downloadPath;
-+}
-+
- void WebProcessPool::languageChanged()
- {
--    sendToAllProcesses(Messages::WebProcess::UserPreferredLanguagesChanged(userPreferredLanguages()));
-+    const Vector<String>& languages = m_languagesForAutomation.size() ? m_languagesForAutomation : userPreferredLanguages();
-+    sendToAllProcesses(Messages::WebProcess::UserPreferredLanguagesChanged(languages));
- #if USE(SOUP)
-     if (m_networkProcess)
--        m_networkProcess->send(Messages::NetworkProcess::UserPreferredLanguagesChanged(userPreferredLanguages()), 0);
-+        m_networkProcess->send(Messages::NetworkProcess::UserPreferredLanguagesChanged(languages), 0);
- #endif
- }
- 
-@@ -1017,7 +1030,10 @@ void WebProcessPool::initializeNewWebProcess(WebProcessProxy& process, WebsiteDa
+@@ -1017,7 +1017,10 @@ void WebProcessPool::initializeNewWebProcess(WebProcessProxy& process, WebsiteDa
  #endif
  
      parameters.cacheModel = LegacyGlobalSettings::singleton().cacheModel();
 -    parameters.languages = configuration().overrideLanguages().isEmpty() ? userPreferredLanguages() : configuration().overrideLanguages();
-+    if (m_languagesForAutomation.size())
-+        parameters.languages = m_languagesForAutomation;
++    if (websiteDataStore && websiteDataStore->languagesForAutomation().size())
++        parameters.languages = websiteDataStore->languagesForAutomation();
 +    else
 +        parameters.languages = configuration().overrideLanguages().isEmpty() ? userPreferredLanguages() : configuration().overrideLanguages();
  
      parameters.urlSchemesRegisteredAsEmptyDocument = copyToVector(m_schemesToRegisterAsEmptyDocument);
      parameters.urlSchemesRegisteredAsSecure = copyToVector(LegacyGlobalSettings::singleton().schemesToRegisterAsSecure());
 diff --git a/Source/WebKit/UIProcess/WebProcessPool.h b/Source/WebKit/UIProcess/WebProcessPool.h
-index 36db1a04b0a523b3adbdf4d3b8ca8b1be651d8f0..95cd3a90bd03fa9621b13770127a85b49154ea31 100644
+index 36db1a04b0a523b3adbdf4d3b8ca8b1be651d8f0..fbbc6a4e17f3e755917ff6752dd10ae13741aae8 100644
 --- a/Source/WebKit/UIProcess/WebProcessPool.h
 +++ b/Source/WebKit/UIProcess/WebProcessPool.h
-@@ -123,6 +123,13 @@ int webProcessThroughputQOS();
- 
- enum class ProcessSwapRequestedByClient : bool;
- 
-+class DownloadInstrumentation {
-+public:
-+    virtual void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, WebPageProxy* page) = 0;
-+    virtual void downloadFinished(const String& uuid, const String& error) = 0;
-+    virtual ~DownloadInstrumentation() = default;
-+};
-+
- class WebProcessPool final : public API::ObjectImpl<API::Object::Type::ProcessPool>, public CanMakeWeakPtr<WebProcessPool>, private IPC::MessageReceiver {
- public:
-     static Ref<WebProcessPool> create(API::ProcessPoolConfiguration&);
-@@ -413,7 +420,7 @@ public:
- 
-     void windowServerConnectionStateChanged();
- 
--#if USE(SOUP)
-+#if USE(SOUP) || PLATFORM(COCOA) || PLATFORM(WIN)
-     void setIgnoreTLSErrors(bool);
-     bool ignoreTLSErrors() const { return m_ignoreTLSErrors; }
- #endif
-@@ -534,6 +541,14 @@ public:
-     
-     PlugInAutoStartProvider& plugInAutoStartProvider() { return m_plugInAutoStartProvider; }
- 
-+    void setLanguagesForAutomation(Vector<String>&&);
-+    void setDownloadForAutomation(Optional<bool> allow, const String& downloadPath);
-+    Optional<bool> allowDownloadForAutomation() { return m_allowDownloadForAutomation; };
-+    String downloadPathForAutomation() { return m_downloadPathForAutomation; };
-+
-+    void setDownloadInstrumentation(DownloadInstrumentation* instrumentation) { m_downloadInstrumentation = instrumentation; };
-+    DownloadInstrumentation* downloadInstrumentation() { return m_downloadInstrumentation; };
-+
-     void setUseSeparateServiceWorkerProcess(bool);
-     bool useSeparateServiceWorkerProcess() const { return m_useSeparateServiceWorkerProcess; }
- 
-@@ -646,6 +661,10 @@ private:
-     std::unique_ptr<API::CustomProtocolManagerClient> m_customProtocolManagerClient;
- 
-     RefPtr<WebAutomationSession> m_automationSession;
-+    Vector<String> m_languagesForAutomation;
-+    Optional<bool> m_allowDownloadForAutomation;
-+    String m_downloadPathForAutomation;
-+    DownloadInstrumentation* m_downloadInstrumentation { nullptr };
- 
- #if ENABLE(NETSCAPE_PLUGIN_API)
-     PluginInfoStore m_pluginInfoStore;
-@@ -714,8 +733,8 @@ private:
+@@ -714,8 +714,8 @@ private:
  
      HashMap<uint64_t, RefPtr<DictionaryCallback>> m_dictionaryCallbacks;
  
@@ -10819,6 +10868,71 @@ index 36db1a04b0a523b3adbdf4d3b8ca8b1be651d8f0..95cd3a90bd03fa9621b13770127a85b4
  #endif
  
      bool m_memoryCacheDisabled { false };
+diff --git a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
+index be5f17ff03bacc1e2522ee03f86fddf4767a278f..1367ac17f2eb9cc1219ec682f6766906f5010ef4 100644
+--- a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
++++ b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
+@@ -2376,4 +2376,15 @@ void WebsiteDataStore::setInAppBrowserPrivacyEnabled(bool enabled, CompletionHan
+     }
+ }
+ 
++void WebsiteDataStore::setLanguagesForAutomation(Vector<String>&& languages)
++{
++    m_languagesForAutomation = WTFMove(languages);
++}
++
++void WebsiteDataStore::setDownloadForAutomation(Optional<bool> allow, const String& downloadPath)
++{
++    m_allowDownloadForAutomation = allow;
++    m_downloadPathForAutomation = downloadPath;
++}
++
+ }
+diff --git a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
+index e842313256ba31bdd8a750ca55b33abdab2c0092..6fa4e7ff97db4dd9565b4834de2257a6966ed56a 100644
+--- a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
++++ b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
+@@ -96,6 +96,13 @@ enum class StorageAccessPromptStatus;
+ struct PluginModuleInfo;
+ #endif
+ 
++class DownloadInstrumentation {
++public:
++    virtual void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, WebPageProxy* page) = 0;
++    virtual void downloadFinished(const String& uuid, const String& error) = 0;
++    virtual ~DownloadInstrumentation() = default;
++};
++
+ class WebsiteDataStore : public API::ObjectImpl<API::Object::Type::WebsiteDataStore>, public Identified<WebsiteDataStore>, public CanMakeWeakPtr<WebsiteDataStore>  {
+ public:
+     static Ref<WebsiteDataStore> defaultDataStore();
+@@ -282,6 +289,14 @@ public:
+     static WTF::String defaultJavaScriptConfigurationDirectory();
+     static bool http3Enabled();
+ 
++    void setLanguagesForAutomation(Vector<String>&&);
++    Vector<String>& languagesForAutomation() { return m_languagesForAutomation; };
++    void setDownloadForAutomation(Optional<bool> allow, const String& downloadPath);
++    Optional<bool> allowDownloadForAutomation() { return m_allowDownloadForAutomation; };
++    String downloadPathForAutomation() { return m_downloadPathForAutomation; };
++    void setDownloadInstrumentation(DownloadInstrumentation* instrumentation) { m_downloadInstrumentation = instrumentation; };
++    DownloadInstrumentation* downloadInstrumentation() { return m_downloadInstrumentation; };
++
+     void resetQuota(CompletionHandler<void()>&&);
+     void hasAppBoundSession(CompletionHandler<void(bool)>&&) const;
+     void setInAppBrowserPrivacyEnabled(bool enabled, CompletionHandler<void()>&&);
+@@ -372,6 +387,11 @@ private:
+ 
+     RefPtr<API::HTTPCookieStore> m_cookieStore;
+ 
++    Vector<String> m_languagesForAutomation;
++    Optional<bool> m_allowDownloadForAutomation;
++    String m_downloadPathForAutomation;
++    DownloadInstrumentation* m_downloadInstrumentation { nullptr };
++
+ #if HAVE(APP_SSO)
+     UniqueRef<SOAuthorizationCoordinator> m_soAuthorizationCoordinator;
+ #endif
 diff --git a/Source/WebKit/UIProcess/geoclue/GeoclueGeolocationProvider.cpp b/Source/WebKit/UIProcess/geoclue/GeoclueGeolocationProvider.cpp
 index 7ba39332bce6e28f0f4b2f7acf636f835c54f486..7c3d8125df147b6049075491b12cce1dc84bf514 100644
 --- a/Source/WebKit/UIProcess/geoclue/GeoclueGeolocationProvider.cpp
@@ -12117,30 +12231,17 @@ index 0000000000000000000000000000000000000000..a299240b1fea96694cb47fa11fc6a641
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/win/WebProcessPoolWin.cpp b/Source/WebKit/UIProcess/win/WebProcessPoolWin.cpp
-index 18f9e93932793b7c3e44e6346be0f13ed6dbf233..acb0617bcded07029665d4949659c73adf2fd633 100644
+index 18f9e93932793b7c3e44e6346be0f13ed6dbf233..bd056b2ab34f0059d6477c955f51d71136f2a252 100644
 --- a/Source/WebKit/UIProcess/win/WebProcessPoolWin.cpp
 +++ b/Source/WebKit/UIProcess/win/WebProcessPoolWin.cpp
-@@ -26,7 +26,7 @@
+@@ -26,7 +26,6 @@
  
  #include "config.h"
  #include "WebProcessPool.h"
 -
-+#include "NetworkProcessMessages.h"
  #include "WebProcessCreationParameters.h"
  #include <WebCore/NotImplemented.h>
  
-@@ -97,4 +97,11 @@ void WebProcessPool::platformResolvePathsForSandboxExtensions()
- {
- }
- 
-+void WebProcessPool::setIgnoreTLSErrors(bool ignoreTLSErrors)
-+{
-+    m_ignoreTLSErrors = ignoreTLSErrors;
-+    if (networkProcess())
-+        networkProcess()->send(Messages::NetworkProcess::SetIgnoreTLSErrors(m_ignoreTLSErrors), 0);
-+}
-+
- } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/win/WebView.cpp b/Source/WebKit/UIProcess/win/WebView.cpp
 index 4a96b5e998800bb7b1ca104f860e96dcf418d178..d04d3be8e814b6994a3cc390fa1b17a87a3b06b9 100644
 --- a/Source/WebKit/UIProcess/win/WebView.cpp
