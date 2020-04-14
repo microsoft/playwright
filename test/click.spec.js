@@ -290,7 +290,7 @@ describe('Page.click', function() {
   // @see https://github.com/GoogleChrome/puppeteer/issues/4110
   // @see https://bugs.chromium.org/p/chromium/issues/detail?id=986390
   // @see https://chromium-review.googlesource.com/c/chromium/src/+/1742784
-  it.fail(true)('should click the button with fixed position inside an iframe', async({page, server}) => {
+  it.fail(CHROMIUM || WEBKIT)('should click the button with fixed position inside an iframe', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await page.setViewportSize({width: 500, height: 500});
     await page.setContent('<div style="width:100px;height:2000px">spacer</div>');
@@ -331,7 +331,7 @@ describe('Page.click', function() {
     expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 12 * 2 + 20 : 20);
     expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 12 * 2 + 10 : 10);
   });
-  it.fail(FFOX)('should click a very large button with offset', async({page, server}) => {
+  it('should click a very large button with offset', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', button => button.style.borderWidth = '8px');
     await page.$eval('button', button => button.style.height = button.style.width = '2000px');
@@ -341,7 +341,7 @@ describe('Page.click', function() {
     expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 1900 + 8 : 1900);
     expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 1910 + 8 : 1910);
   });
-  it.fail(FFOX)('should click a button in scrolling container with offset', async({page, server}) => {
+  it('should click a button in scrolling container with offset', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', button => {
       const container = document.createElement('div');
