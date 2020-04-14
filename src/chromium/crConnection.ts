@@ -121,7 +121,6 @@ export class CRSession extends EventEmitter {
   private readonly _targetType: string;
   private readonly _sessionId: string;
   private readonly _rootSessionId: string;
-  private _unhandledException: Error | undefined;
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
@@ -146,8 +145,6 @@ export class CRSession extends EventEmitter {
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
-    if (this._unhandledException)
-      throw this._unhandledException;
     if (!this._connection)
       throw new Error(`Protocol error (${method}): Session closed. Most likely the ${this._targetType} has been closed.`);
     const id = this._connection._rawSend(this._sessionId, method, params);
@@ -166,7 +163,7 @@ export class CRSession extends EventEmitter {
         callback.resolve(object.result);
     } else {
       assert(!object.id);
-      Promise.resolve().then(() => this.emit(object.method!, object.params)).catch(e => this._unhandledException = this._unhandledException || e);
+      Promise.resolve().then(() => this.emit(object.method!, object.params));
     }
   }
 
