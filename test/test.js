@@ -42,7 +42,7 @@ function collect(browserNames) {
 
   const testRunner = new TestRunner({
     timeout,
-    totalTimeout: process.env.CI ? 15 * 60 * 1000 : 0,
+    totalTimeout: process.env.CI ? 30 * 60 * 1000 : 0, // 30 minutes on CI
     parallel,
     breakOnFailure: process.argv.indexOf('--break-on-failure') !== -1,
     verbose: process.argv.includes('--verbose'),
