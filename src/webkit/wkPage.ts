@@ -59,14 +59,12 @@ export class WKPage implements PageDelegate {
   private readonly _evaluateOnNewDocumentSources: string[] = [];
   readonly _browserContext: WKBrowserContext;
   private _initialized = false;
-  private _hasInitialAboutBlank: boolean;
   private _firstNonInitialNavigationCommittedPromise: Promise<void>;
   private _firstNonInitialNavigationCommittedCallback = () => {};
 
-  constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null, hasInitialAboutBlank: boolean) {
+  constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null) {
     this._pageProxySession = pageProxySession;
     this._opener = opener;
-    this._hasInitialAboutBlank = hasInitialAboutBlank;
     this.rawKeyboard = new RawKeyboardImpl(pageProxySession);
     this.rawMouse = new RawMouseImpl(pageProxySession);
     this._contextIdToContext = new Map();
@@ -262,8 +260,12 @@ export class WKPage implements PageDelegate {
       }
       if (targetInfo.isPaused)
         this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
-      if (this._hasInitialAboutBlank)
+      if (this._page.mainFrame().url() === '') {
+        // Initial empty page has an empty url. We should wait until the first real url has been loaded,
+        // even if that url is about:blank. This is especially important for popups, where we need the
+        // actual url before interacting with it.
         await this._firstNonInitialNavigationCommittedPromise;
+      }
       this._initialized = true;
       this._pagePromiseCallback(pageOrError);
     } else {

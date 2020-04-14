@@ -37,8 +37,6 @@ export class WKBrowser extends BrowserBase {
   readonly _contexts = new Map<string, WKBrowserContext>();
   readonly _wkPages = new Map<string, WKPage>();
   private readonly _eventListeners: RegisteredListener[];
-  private _popupOpeners: string[] = [];
-  private _closeOverride?: () => Promise<void>;
 
   private _firstPageCallback: () => void = () => {};
   private readonly _firstPagePromise: Promise<void>;
@@ -60,7 +58,6 @@ export class WKBrowser extends BrowserBase {
       helper.addEventListener(this._browserSession, 'Playwright.pageProxyCreated', this._onPageProxyCreated.bind(this)),
       helper.addEventListener(this._browserSession, 'Playwright.pageProxyDestroyed', this._onPageProxyDestroyed.bind(this)),
       helper.addEventListener(this._browserSession, 'Playwright.provisionalLoadFailed', event => this._onProvisionalLoadFailed(event)),
-      helper.addEventListener(this._browserSession, 'Playwright.windowOpen', this._onWindowOpen.bind(this)),
       helper.addEventListener(this._browserSession, 'Playwright.downloadCreated', this._onDownloadCreated.bind(this)),
       helper.addEventListener(this._browserSession, 'Playwright.downloadFinished', this._onDownloadFinished.bind(this)),
       helper.addEventListener(this._browserSession, kPageProxyMessageReceived, this._onPageProxyMessageReceived.bind(this)),
@@ -98,10 +95,6 @@ export class WKBrowser extends BrowserBase {
     return this._firstPagePromise;
   }
 
-  _onWindowOpen(payload: Protocol.Playwright.windowOpenPayload) {
-    this._popupOpeners.push(payload.pageProxyId);
-  }
-
   _onDownloadCreated(payload: Protocol.Playwright.downloadCreatedPayload) {
     const page = this._wkPages.get(payload.pageProxyId);
     if (!page)
@@ -132,18 +125,7 @@ export class WKBrowser extends BrowserBase {
       this._connection.rawSend({ ...message, pageProxyId });
     });
     const opener = pageProxyInfo.openerId ? this._wkPages.get(pageProxyInfo.openerId) : undefined;
-    let hasInitialAboutBlank = false;
-    if (pageProxyInfo.openerId) {
-      const openerIndex = this._popupOpeners.indexOf(pageProxyInfo.openerId);
-      if (openerIndex !== -1) {
-        this._popupOpeners.splice(openerIndex, 1);
-        // When this page is a result of window.open($url) call, we should have it's opener
-        // in the list of popup openers. In this case we know there is an initial
-        // about:blank navigation, followed by a navigation to $url.
-        hasInitialAboutBlank = true;
-      }
-    }
-    const wkPage = new WKPage(context, pageProxySession, opener || null, hasInitialAboutBlank);
+    const wkPage = new WKPage(context, pageProxySession, opener || null);
     this._wkPages.set(pageProxyId, wkPage);
 
     wkPage.pageOrError().then(async () => {
