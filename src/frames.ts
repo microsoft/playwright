@@ -27,6 +27,7 @@ import * as network from './network';
 import { Page } from './page';
 import { selectors } from './selectors';
 import * as types from './types';
+import { waitForTimeWasUsed } from './hints';
 
 type ContextType = 'main' | 'utility';
 type ContextData = {
@@ -744,8 +745,10 @@ export class Frame {
   async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: types.WaitForFunctionOptions & types.WaitForElementOptions = {}, arg?: any): Promise<js.JSHandle | null> {
     if (helper.isString(selectorOrFunctionOrTimeout))
       return this.waitForSelector(selectorOrFunctionOrTimeout, options) as any;
-    if (helper.isNumber(selectorOrFunctionOrTimeout))
+    if (helper.isNumber(selectorOrFunctionOrTimeout)) {
+      waitForTimeWasUsed();
       return new Promise(fulfill => setTimeout(fulfill, selectorOrFunctionOrTimeout));
+    }
     if (typeof selectorOrFunctionOrTimeout === 'function')
       return this.waitForFunction(selectorOrFunctionOrTimeout as any, arg, options);
     return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
