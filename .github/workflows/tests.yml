@@ -34,6 +34,7 @@ jobs:
         DEBUG: "*"
     # Ensure output folder exists just in case it was not created by the test run.
     - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-chromium'), {recursive:true})"
+      if: failure()
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -60,6 +61,7 @@ jobs:
         DEBUG: "*"
     # Ensure output folder exists just in case it was not created by the test run.
     - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-chromium'), {recursive:true})"
+      if: failure()
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -87,6 +89,7 @@ jobs:
         DEBUG: "*"
     # Ensure output folder exists just in case it was not created by the test run.
     - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-chromium'), {recursive:true})"
+      if: failure()
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -118,6 +121,7 @@ jobs:
         DEBUG: "*,-pw:wrapped*"
     # Ensure output folder exists just in case it was not created by the test run.
     - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-webkit'), {recursive:true})"
+      if: failure()
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -144,6 +148,7 @@ jobs:
         DEBUG: "*,-pw:wrapped*"
     # Ensure output folder exists just in case it was not created by the test run.
     - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-webkit'), {recursive:true})"
+      if: failure()
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -171,6 +176,7 @@ jobs:
         DEBUG: "*,-pw:wrapped*"
     # Ensure output folder exists just in case it was not created by the test run.
     - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-webkit'), {recursive:true})"
+      if: failure()
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -202,6 +208,7 @@ jobs:
         DEBUG: "*"
     # Ensure output folder exists just in case it was not created by the test run.
     - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-firefox'), {recursive:true})"
+      if: failure()
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -228,6 +235,7 @@ jobs:
         DEBUG: "*"
     # Ensure output folder exists just in case it was not created by the test run.
     - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-firefox'), {recursive:true})"
+      if: failure()
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -255,6 +263,7 @@ jobs:
         DEBUG: "*"
     # Ensure output folder exists just in case it was not created by the test run.
     - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-firefox'), {recursive:true})"
+      if: failure()
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
