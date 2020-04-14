@@ -2666,7 +2666,7 @@ index b578660fbb3ce176e4e0aeb5a22021dc880e47f0..a7c968bc9f88c7d26e1887bb53106b4a
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index ee9edb30dd7b3461c4d491dfaf7929011d498bc9..71b51b0261494112b23800fe02f5e31bb90769bb 100644
+index ee9edb30dd7b3461c4d491dfaf7929011d498bc9..53872c5dc1487e08cdc2a14ef0738ad0499cb1b6 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -44,6 +44,7 @@
@@ -2758,7 +2758,7 @@ index ee9edb30dd7b3461c4d491dfaf7929011d498bc9..71b51b0261494112b23800fe02f5e31b
  }
  
  void InspectorNetworkAgent::addInterception(ErrorString& errorString, const String& url, const bool* optionalCaseSensitive, const bool* optionalIsRegex, const String* networkStageString)
-@@ -1112,19 +1135,128 @@ void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response,
+@@ -1112,19 +1135,133 @@ void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response,
      m_frontendDispatcher->responseIntercepted(requestId, buildObjectForResourceResponse(response, nullptr));
  }
  
@@ -2881,19 +2881,24 @@ index ee9edb30dd7b3461c4d491dfaf7929011d498bc9..71b51b0261494112b23800fe02f5e31b
 +        }
 +        response.setHTTPHeaderFields(WTFMove(explicitHeaders));
 +        response.setHTTPHeaderField(HTTPHeaderName::ContentType, response.mimeType());
-+        loader->didReceiveResponse(response, [loader, data = data.releaseNonNull()]() mutable {
-+            if (data->size())
-+                loader->didReceiveBuffer(WTFMove(data), data->size(), DataPayloadWholeResource);
-+            loader->didFinishLoading(NetworkLoadMetrics());
-+        });
-+        pendingRequest->m_callback(true);
++        if (response.isRedirection()) {
++            loader->setRequest(loader->request().redirectedRequest(response, false));
++            pendingRequest->m_callback(false);
++        } else {
++            loader->didReceiveResponse(response, [loader, data = data.releaseNonNull()]() mutable {
++                if (data->size())
++                    loader->didReceiveBuffer(WTFMove(data), data->size(), DataPayloadWholeResource);
++                loader->didFinishLoading(NetworkLoadMetrics());
++            });
++            pendingRequest->m_callback(true);
++        }
 +        return;
 +    }
 +
      auto pendingInterceptResponse = m_pendingInterceptResponses.take(requestId);
      if (!pendingInterceptResponse) {
          errorString = "Missing pending intercept response for given requestId"_s;
-@@ -1152,20 +1284,26 @@ void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, cons
+@@ -1152,20 +1289,26 @@ void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, cons
      }
  
      RefPtr<SharedBuffer> overrideData;
@@ -2924,7 +2929,7 @@ index ee9edb30dd7b3461c4d491dfaf7929011d498bc9..71b51b0261494112b23800fe02f5e31b
  bool InspectorNetworkAgent::shouldTreatAsText(const String& mimeType)
  {
      return startsWithLettersIgnoringASCIICase(mimeType, "text/")
-@@ -1295,6 +1433,11 @@ void InspectorNetworkAgent::searchInRequest(ErrorString& errorString, const Stri
+@@ -1295,6 +1438,11 @@ void InspectorNetworkAgent::searchInRequest(ErrorString& errorString, const Stri
      results = ContentSearchUtilities::searchInTextByLines(resourceData->content(), query, caseSensitive, isRegex);
  }
  
