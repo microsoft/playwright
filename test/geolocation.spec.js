@@ -39,6 +39,36 @@ describe('Overrides.setGeolocation', function() {
     }
     expect(error.message).toContain('Invalid longitude "200"');
   });
+  it('should isolate contexts', async({page, server, context, browser}) => {
+    await context.grantPermissions(['geolocation']);
+    await context.setGeolocation({longitude: 10, latitude: 10});
+    await page.goto(server.EMPTY_PAGE);
+
+    const context2 = await browser.newContext({
+      permissions: ['geolocation'],
+      geolocation: {longitude: 20, latitude: 20}
+    });
+    const page2 = await context2.newPage();
+    await page2.goto(server.EMPTY_PAGE);
+
+    const geolocation = await page.evaluate(() => new Promise(resolve => navigator.geolocation.getCurrentPosition(position => {
+      resolve({latitude: position.coords.latitude, longitude: position.coords.longitude});
+    })));
+    expect(geolocation).toEqual({
+      latitude: 10,
+      longitude: 10
+    });
+
+    const geolocation2 = await page2.evaluate(() => new Promise(resolve => navigator.geolocation.getCurrentPosition(position => {
+      resolve({latitude: position.coords.latitude, longitude: position.coords.longitude});
+    })));
+    expect(geolocation2).toEqual({
+      latitude: 20,
+      longitude: 20
+    });
+
+    await context2.close();
+  });
   it('should throw with missing latitude', async({context}) => {
     let error = null;
     try {
