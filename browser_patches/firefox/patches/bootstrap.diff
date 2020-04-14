@@ -623,10 +623,10 @@ index 249580e733d1b05e35205cd2f7b4ccbe91c9cb54..765e3f58e0a359c622f68d371c5089bc
  }
  
 diff --git a/dom/base/nsINode.cpp b/dom/base/nsINode.cpp
-index 41c8b8dad90e0b322bb941a714ca332760176259..630e309cb97cd7376211020dfd5f5e64e6e7d3e2 100644
+index 41c8b8dad90e0b322bb941a714ca332760176259..ec393547a7710840fdd07649fe9936bacffe37d3 100644
 --- a/dom/base/nsINode.cpp
 +++ b/dom/base/nsINode.cpp
-@@ -1221,6 +1221,42 @@ void nsINode::GetBoxQuadsFromWindowOrigin(const BoxQuadOptions& aOptions,
+@@ -1221,6 +1221,48 @@ void nsINode::GetBoxQuadsFromWindowOrigin(const BoxQuadOptions& aOptions,
    mozilla::GetBoxQuadsFromWindowOrigin(this, aOptions, aResult, aRv);
  }
  
@@ -664,6 +664,12 @@ index 41c8b8dad90e0b322bb941a714ca332760176259..630e309cb97cd7376211020dfd5f5e64
 +      ScrollAxis(kScrollToCenter, WhenToScroll::Always),
 +      ScrollAxis(kScrollToCenter, WhenToScroll::Always),
 +      ScrollFlags::ScrollOverflowHidden);
++  // If a _visual_ scroll update is pending, cancel it; otherwise, it will
++  // clobber next scroll (e.g. subsequent window.scrollTo(0, 0) wlll break).
++  if (presShell->GetPendingVisualScrollUpdate()) {
++    presShell->AcknowledgePendingVisualScrollUpdate();
++    presShell->ClearPendingVisualScrollUpdate();
++  }
 +}
 +
  already_AddRefed<DOMQuad> nsINode::ConvertQuadFromNode(
