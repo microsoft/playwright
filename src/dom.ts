@@ -290,6 +290,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, deadline, options, true);
   }
 
+  async selectText(): Promise<void> {
+    const error = await this._evaluateInUtility(({ injected, node }) => injected.selectText(node), {});
+    if (typeof error === 'string')
+      throw new Error(error);
+  }
+
   async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options?: types.NavigatingActionWaitOptions) {
     const deadline = this._page._timeoutSettings.computeDeadline(options);
     const multiple = await this._evaluateInUtility(({ node }) => {

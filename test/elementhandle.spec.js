@@ -327,6 +327,30 @@ describe('ElementHandle.fill', function() {
   });
 });
 
+describe('ElementHandle.selectText', function() {
+  it.fail(FFOX)('should select textarea', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/textarea.html');
+    const textarea = await page.$('textarea');
+    await textarea.evaluate(textarea => textarea.value = 'some value');
+    await textarea.selectText();
+    expect(await page.evaluate(() => window.getSelection().toString())).toBe('some value');
+  });
+  it.fail(FFOX)('should select input', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/textarea.html');
+    const input = await page.$('input');
+    await input.evaluate(input => input.value = 'some value');
+    await input.selectText();
+    expect(await page.evaluate(() => window.getSelection().toString())).toBe('some value');
+  });
+  it('should select plain div', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/textarea.html');
+    const div = await page.$('div.plain');
+    await div.selectText();
+    expect(await page.evaluate(() => window.getSelection().toString())).toBe('Plain div');
+  });
+});
+
+
 describe('ElementHandle convenience API', function() {
   it('getAttribute should work', async({page, server}) => {
     await page.goto(`${server.PREFIX}/dom.html`);

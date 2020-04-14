@@ -183,33 +183,46 @@ class Injected {
         element.dispatchEvent(new Event('change', { 'bubbles': true }));
         return false;  // We have already changed the value, no need to input it.
       }
+    } else if (element.nodeName.toLowerCase() === 'textarea') {
+      const textarea = element as HTMLTextAreaElement;
+      if (textarea.disabled)
+        return 'Cannot fill a disabled textarea.';
+      if (textarea.readOnly)
+        return 'Cannot fill a readonly textarea.';
+    } else if (!element.isContentEditable) {
+      return 'Element is not an <input>, <textarea> or [contenteditable] element.';
+    }
+    return this.selectText(node);
+  }
+
+  selectText(node: Node) {
+    if (node.nodeType !== Node.ELEMENT_NODE)
+      return 'Node is not of type HTMLElement';
+    const element = node as HTMLElement;
+    if (!this.isVisible(element))
+      return 'Element is not visible';
+    if (element.nodeName.toLowerCase() === 'input') {
+      const input = element as HTMLInputElement;
       input.select();
       input.focus();
       return true;
     }
     if (element.nodeName.toLowerCase() === 'textarea') {
       const textarea = element as HTMLTextAreaElement;
-      if (textarea.disabled)
-        return 'Cannot fill a disabled textarea.';
-      if (textarea.readOnly)
-        return 'Cannot fill a readonly textarea.';
       textarea.selectionStart = 0;
       textarea.selectionEnd = textarea.value.length;
       textarea.focus();
       return true;
     }
-    if (element.isContentEditable) {
-      const range = element.ownerDocument!.createRange();
-      range.selectNodeContents(element);
-      const selection = element.ownerDocument!.defaultView!.getSelection();
-      if (!selection)
-        return 'Element belongs to invisible iframe.';
-      selection.removeAllRanges();
-      selection.addRange(range);
-      element.focus();
-      return true;
-    }
-    return 'Element is not an <input>, <textarea> or [contenteditable] element.';
+    const range = element.ownerDocument!.createRange();
+    range.selectNodeContents(element);
+    const selection = element.ownerDocument!.defaultView!.getSelection();
+    if (!selection)
+      return 'Element belongs to invisible iframe.';
+    selection.removeAllRanges();
+    selection.addRange(range);
+    element.focus();
+    return true;
   }
 
   isCheckboxChecked(node: Node) {
