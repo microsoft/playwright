@@ -16,30 +16,34 @@
 
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
 
-export function createAttributeEngine(attribute: string): SelectorEngine {
+export function createAttributeEngine(attribute: string, shadow: boolean): SelectorEngine {
   const engine: SelectorEngine = {
     create(root: SelectorRoot, target: Element): string | undefined {
       const value = target.getAttribute(attribute);
       if (!value)
         return;
-      if (queryInternal(root, attribute, value) === target)
+      if (engine.query(root, value) === target)
         return value;
     },
 
     query(root: SelectorRoot, selector: string): Element | undefined {
-      return queryInternal(root, attribute, selector);
+      if (!shadow)
+        return root.querySelector(`[${attribute}=${JSON.stringify(selector)}]`) || undefined;
+      return queryShadowInternal(root, attribute, selector);
     },
 
     queryAll(root: SelectorRoot, selector: string): Element[] {
+      if (!shadow)
+        return Array.from(root.querySelectorAll(`[${attribute}=${JSON.stringify(selector)}]`));
       const result: Element[] = [];
-      queryAllInternal(root, attribute, selector, result);
+      queryShadowAllInternal(root, attribute, selector, result);
       return result;
     }
   };
   return engine;
 }
 
-function queryInternal(root: SelectorRoot, attribute: string, value: string): Element | undefined {
+function queryShadowInternal(root: SelectorRoot, attribute: string, value: string): Element | undefined {
   const single = root.querySelector(`[${attribute}=${JSON.stringify(value)}]`);
   if (single)
     return single;
@@ -47,14 +51,14 @@ function queryInternal(root: SelectorRoot, attribute: string, value: string): El
   for (let i = 0; i < all.length; i++) {
     const shadowRoot = all[i].shadowRoot;
     if (shadowRoot) {
-      const single = queryInternal(shadowRoot, attribute, value);
+      const single = queryShadowInternal(shadowRoot, attribute, value);
       if (single)
         return single;
     }
   }
 }
 
-function queryAllInternal(root: SelectorRoot, attribute: string, value: string, result: Element[]) {
+function queryShadowAllInternal(root: SelectorRoot, attribute: string, value: string, result: Element[]) {
   const document = root instanceof Document ? root : root.ownerDocument!;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
   const shadowRoots = [];
@@ -66,5 +70,5 @@ function queryAllInternal(root: SelectorRoot, attribute: string, value: string, 
       shadowRoots.push(element.shadowRoot);
   }
   for (const shadowRoot of shadowRoots)
-    queryAllInternal(shadowRoot, attribute, value, result);
+    queryShadowAllInternal(shadowRoot, attribute, value, result);
 }

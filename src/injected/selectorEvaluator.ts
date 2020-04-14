@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-import { CSSEngine } from './cssSelectorEngine';
-import { DeepEngine } from './deepSelectorEngine';
-import { XPathEngine } from './xpathSelectorEngine';
-import { TextEngine } from './textSelectorEngine';
-import { SelectorEngine, SelectorRoot } from './selectorEngine';
-import Injected from './injected';
 import * as types from '../types';
 import { createAttributeEngine } from './attributeSelectorEngine';
+import { createCSSEngine } from './cssSelectorEngine';
+import Injected from './injected';
+import { SelectorEngine, SelectorRoot } from './selectorEngine';
+import { createTextSelector } from './textSelectorEngine';
+import { XPathEngine } from './xpathSelectorEngine';
 
 class SelectorEvaluator {
   readonly engines: Map<string, SelectorEngine>;
@@ -31,14 +30,20 @@ class SelectorEvaluator {
     this.injected = new Injected();
     this.engines = new Map();
     // Note: keep predefined names in sync with Selectors class.
-    this.engines.set('css', CSSEngine);
+    this.engines.set('css', createCSSEngine(true));
+    this.engines.set('css:light', createCSSEngine(false));
     this.engines.set('xpath', XPathEngine);
-    this.engines.set('text', TextEngine);
-    this.engines.set('deep', DeepEngine);
-    this.engines.set('id', createAttributeEngine('id'));
-    this.engines.set('data-testid', createAttributeEngine('data-testid'));
-    this.engines.set('data-test-id', createAttributeEngine('data-test-id'));
-    this.engines.set('data-test', createAttributeEngine('data-test'));
+    this.engines.set('xpath:light', XPathEngine);
+    this.engines.set('text', createTextSelector(true));
+    this.engines.set('text:light', createTextSelector(false));
+    this.engines.set('id', createAttributeEngine('id', true));
+    this.engines.set('id:light', createAttributeEngine('id', false));
+    this.engines.set('data-testid', createAttributeEngine('data-testid', true));
+    this.engines.set('data-testid:light', createAttributeEngine('data-testid', false));
+    this.engines.set('data-test-id', createAttributeEngine('data-test-id', true));
+    this.engines.set('data-test-id:light', createAttributeEngine('data-test-id', false));
+    this.engines.set('data-test', createAttributeEngine('data-test', true));
+    this.engines.set('data-test:light', createAttributeEngine('data-test', false));
     for (const {name, engine} of customEngines)
       this.engines.set(name, engine);
   }

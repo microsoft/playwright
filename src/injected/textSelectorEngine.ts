@@ -16,34 +16,37 @@
 
 import { SelectorEngine, SelectorType, SelectorRoot } from './selectorEngine';
 
-export const TextEngine: SelectorEngine = {
-  create(root: SelectorRoot, targetElement: Element, type: SelectorType): string | undefined {
-    const document = root instanceof Document ? root : root.ownerDocument;
-    if (!document)
-      return;
-    for (let child = targetElement.firstChild; child; child = child.nextSibling) {
-      if (child.nodeType === 3 /* Node.TEXT_NODE */) {
-        const text = child.nodeValue;
-        if (!text)
-          continue;
-        if (text.match(/^\s*[a-zA-Z0-9]+\s*$/) && TextEngine.query(root, text.trim()) === targetElement)
-          return text.trim();
-        if (queryInternal(root, createMatcher(JSON.stringify(text))) === targetElement)
-          return JSON.stringify(text);
+export function createTextSelector(shadow: boolean): SelectorEngine {
+  const engine: SelectorEngine = {
+    create(root: SelectorRoot, targetElement: Element, type: SelectorType): string | undefined {
+      const document = root instanceof Document ? root : root.ownerDocument;
+      if (!document)
+        return;
+      for (let child = targetElement.firstChild; child; child = child.nextSibling) {
+        if (child.nodeType === 3 /* Node.TEXT_NODE */) {
+          const text = child.nodeValue;
+          if (!text)
+            continue;
+          if (text.match(/^\s*[a-zA-Z0-9]+\s*$/) && engine.query(root, text.trim()) === targetElement)
+            return text.trim();
+          if (queryInternal(root, createMatcher(JSON.stringify(text)), shadow) === targetElement)
+            return JSON.stringify(text);
+        }
       }
+    },
+
+    query(root: SelectorRoot, selector: string): Element | undefined {
+      return queryInternal(root, createMatcher(selector), shadow);
+    },
+
+    queryAll(root: SelectorRoot, selector: string): Element[] {
+      const result: Element[] = [];
+      queryAllInternal(root, createMatcher(selector), shadow, result);
+      return result;
     }
-  },
-
-  query(root: SelectorRoot, selector: string): Element | undefined {
-    return queryInternal(root, createMatcher(selector));
-  },
-
-  queryAll(root: SelectorRoot, selector: string): Element[] {
-    const result: Element[] = [];
-    queryAllInternal(root, createMatcher(selector), result);
-    return result;
-  }
-};
+  };
+  return engine;
+}
 
 type Matcher = (text: string) => boolean;
 function createMatcher(selector: string): Matcher {
@@ -60,17 +63,19 @@ function createMatcher(selector: string): Matcher {
   return text => text.toLowerCase().includes(selector);
 }
 
-function queryInternal(root: SelectorRoot, matcher: Matcher): Element | undefined {
+function queryInternal(root: SelectorRoot, matcher: Matcher, shadow: boolean): Element | undefined {
   const document = root instanceof Document ? root : root.ownerDocument!;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
-  const shadowRoots = [];
+  const shadowRoots: ShadowRoot[] = [];
+  if (shadow && (root as Element).shadowRoot)
+    shadowRoots.push((root as Element).shadowRoot!);
   while (walker.nextNode()) {
     const node = walker.currentNode;
     if (node.nodeType === Node.ELEMENT_NODE) {
       const element = node as Element;
       if ((element instanceof HTMLInputElement) && (element.type === 'submit' || element.type === 'button') && matcher(element.value))
         return element;
-      if (element.shadowRoot)
+      if (shadow && element.shadowRoot)
         shadowRoots.push(element.shadowRoot);
     } else {
       const element = node.parentElement;
@@ -80,23 +85,25 @@ function queryInternal(root: SelectorRoot, matcher: Matcher): Element | undefine
     }
   }
   for (const shadowRoot of shadowRoots) {
-    const element = queryInternal(shadowRoot, matcher);
+    const element = queryInternal(shadowRoot, matcher, shadow);
     if (element)
       return element;
   }
 }
 
-function queryAllInternal(root: SelectorRoot, matcher: Matcher, result: Element[]) {
+function queryAllInternal(root: SelectorRoot, matcher: Matcher, shadow: boolean, result: Element[]) {
   const document = root instanceof Document ? root : root.ownerDocument!;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
-  const shadowRoots = [];
+  const shadowRoots: ShadowRoot[] = [];
+  if (shadow && (root as Element).shadowRoot)
+    shadowRoots.push((root as Element).shadowRoot!);
   while (walker.nextNode()) {
     const node = walker.currentNode;
     if (node.nodeType === Node.ELEMENT_NODE) {
       const element = node as Element;
       if ((element instanceof HTMLInputElement) && (element.type === 'submit' || element.type === 'button') && matcher(element.value))
         result.push(element);
-      if (element.shadowRoot)
+      if (shadow && element.shadowRoot)
         shadowRoots.push(element.shadowRoot);
     } else {
       const element = node.parentElement;
@@ -106,5 +113,5 @@ function queryAllInternal(root: SelectorRoot, matcher: Matcher, result: Element[
     }
   }
   for (const shadowRoot of shadowRoots)
-    queryAllInternal(shadowRoot, matcher, result);
+    queryAllInternal(shadowRoot, matcher, shadow, result);
 }
