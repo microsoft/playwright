@@ -440,13 +440,4 @@ describe('Frame.evaluate', function() {
     const error = await page.evaluate(body => body.innerHTML, bodyHandle).catch(e => e);
     expect(error.message).toContain('Unable to adopt element handle from a different document');
   });
-  it.fail(FFOX)('should return non-empty Node.constructor.name in utility context', async({page,server}) => {
-    await page.goto(server.EMPTY_PAGE);
-    await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
-    const frame = page.frames()[1];
-    const context = await frame._utilityContext();
-    const elementHandle = await context.evaluateHandleInternal(() => window.top.document.querySelector('#frame1'));
-    const constructorName = await context.evaluateInternal(node => node.constructor.name, elementHandle);
-    expect(constructorName).toBe('HTMLIFrameElement');
-  });
 });
