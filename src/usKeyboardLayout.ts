@@ -112,6 +112,7 @@ export const USKeyboardLayout: KeyboardLayout = {
   'AltLeft': { 'keyCode': 164, 'keyCodeWithoutLocation': 18, 'key': 'Alt', 'location': 1 },
   'Space': { 'keyCode': 32, 'key': ' ' },
   'AltRight': { 'keyCode': 165, 'keyCodeWithoutLocation': 18, 'key': 'Alt', 'location': 2 },
+  'AltGraph': { 'keyCode': 225, 'key': 'AltGraph' },
   'MetaRight': { 'keyCode': 92, 'key': 'Meta', 'location': 2 },
   'ContextMenu': { 'keyCode': 93, 'key': 'ContextMenu' },
   'ControlRight': { 'keyCode': 163, 'keyCodeWithoutLocation': 17, 'key': 'Control', 'location': 2 },

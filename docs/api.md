@@ -1410,7 +1410,7 @@ The `format` options are:
 
 #### page.press(selector, key[, options])
 - `selector` <[string]> A selector of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
-- `key` <[string]> Name of key to press, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.
+- `key` <[string]> Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 - `options` <[Object]>
   - `delay` <[number]> Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
@@ -1424,9 +1424,23 @@ The `format` options are:
 
 Focuses the element, and then uses [`keyboard.down`](#keyboarddownkey) and [`keyboard.up`](#keyboardupkey).
 
-If `key` is a single character and no modifier keys besides `Shift` are being held down, a `keypress`/`input` event will also be generated. The `text` option can be specified to force an input event to be generated.
+`key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to generate the text for. A superset of the `key` values can be found [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Note that only those present on a typical full computer keyboard are supported. Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
 
-> **NOTE** Modifier keys DO affect `page.press`. Holding down `Shift` will type the text in upper case.
+If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective texts.
+
+Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
+
+```js
+const page = await browser.newPage();
+await page.goto('https://keycode.info');
+await page.press('body', 'A');
+await page.screenshot({ path: 'A.png' });
+await page.press('body', 'ArrowLeft');
+await page.screenshot({ path: 'ArrowLeft.png' });
+await page.press('body', 'Shift+O');
+await page.screenshot({ path: 'O.png' });
+await browser.close();
+```
 
 #### page.reload([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
@@ -2216,7 +2230,7 @@ If the name is empty, returns the id attribute instead.
 
 #### frame.press(selector, key[, options])
 - `selector` <[string]> A selector of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
-- `key` <[string]> Name of key to press, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.
+- `key` <[string]> Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 - `options` <[Object]>
   - `delay` <[number]> Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
@@ -2228,11 +2242,11 @@ If the name is empty, returns the id attribute instead.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
 
-Focuses the element, and then uses [`keyboard.down`](#keyboarddownkey) and [`keyboard.up`](#keyboardupkey).
+`key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to generate the text for. A superset of the `key` values can be found [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Note that only those present on a typical full computer keyboard are supported. Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
 
-If `key` is a single character and no modifier keys besides `Shift` are being held down, a `keypress`/`input` event will also be generated. The `text` option can be specified to force an input event to be generated.
+If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective texts.
 
-> **NOTE** Modifier keys DO affect `frame.press`. Holding down `Shift` will type the text in upper case.
+Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
 
 #### frame.selectOption(selector, values[, options])
 - `selector` <[string]> A selector to query frame for.
@@ -2708,7 +2722,7 @@ If the element is detached from DOM, the method throws an error.
 - returns: <[Promise]<?[Frame]>> Returns the frame containing the given element.
 
 #### elementHandle.press(key[, options])
-- `key` <[string]> Name of key to press, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.
+- `key` <[string]> Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 - `options` <[Object]>
   - `delay` <[number]> Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
@@ -2722,9 +2736,11 @@ If the element is detached from DOM, the method throws an error.
 
 Focuses the element, and then uses [`keyboard.down`](#keyboarddownkey) and [`keyboard.up`](#keyboardupkey).
 
-If `key` is a single character and no modifier keys besides `Shift` are being held down, a `keypress`/`input` event will also be generated. The `text` option can be specified to force an input event to be generated.
+`key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to generate the text for. A superset of the `key` values can be found [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Note that only those present on a typical full computer keyboard are supported. Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
 
-> **NOTE** Modifier keys DO affect `elementHandle.press`. Holding down `Shift` will type the text in upper case.
+If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective texts.
+
+Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
 
 #### elementHandle.screenshot([options])
 - `options` <[Object]> Screenshot options.
@@ -3088,9 +3104,9 @@ await page.keyboard.press('Backspace');
 
 An example of pressing `A`
 ```js
-await page.keyboard.down('Shift');
-await page.keyboard.press('KeyA');
-await page.keyboard.up('Shift');
+await page.keyboard.press('Shift+KeyA');
+// or
+await page.keyboard.press('Shift+A');
 ```
 
 > **NOTE** On MacOS, keyboard shortcuts like `⌘ A` -> Select All do not work. See [#1313](https://github.com/GoogleChrome/puppeteer/issues/1313)
@@ -3104,12 +3120,14 @@ await page.keyboard.up('Shift');
 <!-- GEN:stop -->
 
 #### keyboard.down(key)
-- `key` <[string]> Name of key to press, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.
+- `key` <[string]> Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 - returns: <[Promise]>
 
 Dispatches a `keydown` event.
 
-If `key` is a single character and no modifier keys besides `Shift` are being held down, a `keypress`/`input` event will also generated.
+`key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to generate the text for. A superset of the `key` values can be found [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Note that only those present on a typical full computer keyboard are supported. Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
+
+If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective texts.
 
 If `key` is a modifier key, `Shift`, `Meta`, `Control`, or `Alt`, subsequent key presses will be sent with that modifier active. To release the modifier key, use [`keyboard.up`](#keyboardupkey).
 
@@ -3130,14 +3148,28 @@ page.keyboard.insertText('嗨');
 > **NOTE** Modifier keys DO NOT effect `keyboard.insertText`. Holding down `Shift` will not type the text in upper case.
 
 #### keyboard.press(key[, options])
-- `key` <[string]> Name of key to press, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.
+- `key` <[string]> Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 - `options` <[Object]>
   - `delay` <[number]> Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 - returns: <[Promise]>
 
-If `key` is a single character and no modifier keys besides `Shift` are being held down, a `keypress`/`input` event will also generated. The `text` option can be specified to force an input event to be generated.
+`key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to generate the text for. A superset of the `key` values can be found [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Note that only those present on a typical full computer keyboard are supported. Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
 
-> **NOTE** Modifier keys DO effect `keyboard.press`. Holding down `Shift` will type the text in upper case.
+If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective texts.
+
+Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
+
+```js
+const page = await browser.newPage();
+await page.goto('https://keycode.info');
+await page.keyboard.press('A');
+await page.screenshot({ path: 'A.png' });
+await page.keyboard.press('ArrowLeft');
+await page.screenshot({ path: 'ArrowLeft.png' });
+await page.keyboard.press('Shift+O');
+await page.screenshot({ path: 'O.png' });
+await browser.close();
+```
 
 Shortcut for [`keyboard.down`](#keyboarddownkey) and [`keyboard.up`](#keyboardupkey).
 
@@ -3159,7 +3191,7 @@ await page.keyboard.type('World', {delay: 100}); // Types slower, like a user
 > **NOTE** Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
 
 #### keyboard.up(key)
-- `key` <[string]> Name of key to release, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.
+- `key` <[string]> Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 - returns: <[Promise]>
 
 Dispatches a `keyup` event.
