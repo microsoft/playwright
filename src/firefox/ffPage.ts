@@ -251,6 +251,7 @@ export class FFPage implements PageDelegate {
   }
 
   async _onCrashed(event: Protocol.Page.crashedPayload) {
+    this._session.markAsCrashed();
     this._page._didCrash();
   }
 

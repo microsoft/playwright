@@ -632,6 +632,7 @@ page.removeListener('request', logRequest);
 <!-- GEN:toc -->
 - [event: 'close'](#event-close-1)
 - [event: 'console'](#event-console)
+- [event: 'crash'](#event-crash)
 - [event: 'dialog'](#event-dialog)
 - [event: 'domcontentloaded'](#event-domcontentloaded)
 - [event: 'download'](#event-download)
@@ -725,6 +726,10 @@ page.on('console', msg => {
 });
 page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
 ```
+
+#### event: 'crash'
+
+Emitted when the page crashes. Browser pages might crash if they try to allocate too much memory.
 
 #### event: 'dialog'
 - <[Dialog]>
