@@ -19,4 +19,6 @@ jobs:
 
       - run:
           command: |
-            xvfb-run --auto-servernum npm run test
+            xvfb-run --auto-servernum npm run ctest
+            xvfb-run --auto-servernum npm run wtest
+            xvfb-run --auto-servernum npm run ftest
