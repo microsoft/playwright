@@ -613,7 +613,8 @@ class FrameSession {
     this._page.emit(Events.Page.PageError, exceptionToError(exceptionDetails));
   }
 
-  _onTargetCrashed() {
+  async _onTargetCrashed() {
+    this._client._markAsCrashed();
     this._page._didCrash();
   }
 

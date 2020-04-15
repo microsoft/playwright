@@ -97,6 +97,7 @@ export class WKSession extends EventEmitter {
   private _disposed = false;
   private readonly _rawSend: (message: any) => void;
   private readonly _callbacks = new Map<number, {resolve: (o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
+  private _crashed: boolean = false;
 
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
@@ -122,6 +123,8 @@ export class WKSession extends EventEmitter {
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
+    if (this._crashed)
+      throw new Error('Target crashed');
     if (this._disposed)
       throw new Error(`Protocol error (${method}): ${this.errorText}`);
     const id = this.connection.nextMessageId();
@@ -131,6 +134,10 @@ export class WKSession extends EventEmitter {
     return new Promise<Protocol.CommandReturnValues[T]>((resolve, reject) => {
       this._callbacks.set(id, {resolve, reject, error: new Error(), method});
     });
+  }
+
+  markAsCrashed() {
+    this._crashed = true;
   }
 
   isDisposed(): boolean {

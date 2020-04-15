@@ -31,6 +31,7 @@ export const Events = {
 
   Page: {
     Close: 'close',
+    Crash: 'crash',
     Console: 'console',
     Dialog: 'dialog',
     Download: 'download',

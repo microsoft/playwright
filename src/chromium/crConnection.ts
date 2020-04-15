@@ -121,6 +121,7 @@ export class CRSession extends EventEmitter {
   private readonly _targetType: string;
   private readonly _sessionId: string;
   private readonly _rootSessionId: string;
+  private _crashed: boolean = false;
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
@@ -141,10 +142,16 @@ export class CRSession extends EventEmitter {
     this.once = super.once;
   }
 
+  _markAsCrashed() {
+    this._crashed = true;
+  }
+
   async send<T extends keyof Protocol.CommandParameters>(
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
+    if (this._crashed)
+      throw new Error('Target crashed');
     if (!this._connection)
       throw new Error(`Protocol error (${method}): Session closed. Most likely the ${this._targetType} has been closed.`);
     const id = this._connection._rawSend(this._sessionId, method, params);

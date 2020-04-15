@@ -104,19 +104,28 @@ describe('Async stacks', () => {
   });
 });
 
-describe('Page.Events.error', function() {
-  it('should throw when page crashes', async({page}) => {
-    await page.setContent(`<div>This page should crash</div>`);
-    let error = null;
-    page.on('error', err => error = err);
+describe('Page.Events.Crash', function() {
+  function crash(page) {
     if (CHROMIUM)
       page.goto('chrome://crash').catch(e => {});
     else if (WEBKIT)
       page._delegate._session.send('Page.crash', {}).catch(e => {});
     else if (FFOX)
       page._delegate._session.send('Page.crash', {}).catch(e => {});
-    await new Promise(f => page.on('error', f));
-    expect(error.message).toBe('Page crashed!');
+  }
+
+  it('should emit crash event when page crashes', async({page}) => {
+    await page.setContent(`<div>This page should crash</div>`);
+    crash(page);
+    await new Promise(f => page.on('crash', f));
+  });
+  it('should throw on any action after page crashes', async({page}) => {
+    await page.setContent(`<div>This page should crash</div>`);
+    crash(page);
+    await page.waitForEvent('crash');
+    const err = await page.evaluate(() => {}).then(() => null, e => e);
+    expect(err).toBeTruthy();
+    expect(err.message).toContain('crash');
   });
 });
 

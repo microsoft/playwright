@@ -194,8 +194,10 @@ export class WKPage implements PageDelegate {
     } else if (this._session.sessionId === targetId) {
       this._session.dispose();
       helper.removeEventListeners(this._sessionListeners);
-      if (crashed)
+      if (crashed) {
+        this._session.markAsCrashed();
         this._page._didCrash();
+      }
     }
   }
 
