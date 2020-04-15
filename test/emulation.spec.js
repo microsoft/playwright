@@ -534,4 +534,52 @@ describe('focus', function() {
     expect(screenshots[0]).toBeGolden(golden('screenshot-sanity.png'));
     expect(screenshots[1]).toBeGolden(golden('grid-cell-0.png'));
   });
+  it('should change focused iframe', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    const [frame1, frame2] = await Promise.all([
+      utils.attachFrame(page, 'frame1', server.PREFIX + '/input/textarea.html'),
+      utils.attachFrame(page, 'frame2', server.PREFIX + '/input/textarea.html'),
+    ]);
+    function logger() {
+      self._events = [];
+      const element = document.querySelector('input');
+      element.onfocus = element.onblur = (e) => self._events.push(e.type);
+    }
+    await Promise.all([
+      frame1.evaluate(logger),
+      frame2.evaluate(logger),
+    ]);
+    const focused = await Promise.all([
+      frame1.evaluate('document.hasFocus()'),
+      frame2.evaluate('document.hasFocus()'),
+    ]);
+    expect(focused).toEqual([false, false]);
+    {
+      await frame1.focus('input');
+      const events = await Promise.all([
+        frame1.evaluate('self._events'),
+        frame2.evaluate('self._events'),
+      ]);
+      expect(events).toEqual([['focus'], []]);
+      const focused = await Promise.all([
+        frame1.evaluate('document.hasFocus()'),
+        frame2.evaluate('document.hasFocus()'),
+      ]);
+      expect(focused).toEqual([true, false]);
+    }
+    {
+      await frame2.focus('input');
+      const events = await Promise.all([
+        frame1.evaluate('self._events'),
+        frame2.evaluate('self._events'),
+      ]);
+      expect(events).toEqual([['focus', 'blur'], ['focus']]);
+      const focused = await Promise.all([
+        frame1.evaluate('document.hasFocus()'),
+        frame2.evaluate('document.hasFocus()'),
+      ]);
+      expect(focused).toEqual([false, true]);
+    }
+  });
+
 });
