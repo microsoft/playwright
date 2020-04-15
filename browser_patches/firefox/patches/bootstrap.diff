@@ -138,7 +138,7 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 514a4f2890a20558afe0d9c1aec697612fc8e873..908452a13d639146e3c649c61da39923bf90c178 100644
+index 514a4f2890a20558afe0d9c1aec697612fc8e873..b17b8aec04778e63888aebfd122d96f6a0d03419 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -15,6 +15,12 @@
@@ -186,18 +186,19 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..908452a13d639146e3c649c61da39923
  #include "nsNetCID.h"
  #include "nsNetUtil.h"
  #include "nsObjectLoadingContent.h"
-@@ -350,6 +360,10 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
+@@ -350,6 +360,11 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
        mUseErrorPages(false),
        mObserveErrorPages(true),
        mCSSErrorReportingEnabled(false),
 +      mFileInputInterceptionEnabled(false),
++      mOverrideHasFocus(false),
 +      mBypassCSPEnabled(false),
 +      mOnlineOverride(nsIDocShell::ONLINE_OVERRIDE_NONE),
 +      mColorSchemeOverride(COLOR_SCHEME_OVERRIDE_NONE),
        mAllowAuth(mItemType == typeContent),
        mAllowKeywordFixup(false),
        mIsOffScreenBrowser(false),
-@@ -1219,6 +1233,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
+@@ -1219,6 +1234,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
      isSubFrame = mLSHE->GetIsSubFrame();
    }
  
@@ -205,7 +206,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..908452a13d639146e3c649c61da39923
    if (!isSubFrame && !isRoot) {
      /*
       * We don't want to send OnLocationChange notifications when
-@@ -3340,6 +3355,167 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
+@@ -3340,6 +3356,184 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
    return NS_OK;
  }
  
@@ -233,6 +234,23 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..908452a13d639146e3c649c61da39923
 +
 +bool nsDocShell::IsBypassCSPEnabled() {
 +  return GetRootDocShell()->mBypassCSPEnabled;
++}
++
++NS_IMETHODIMP
++nsDocShell::GetOverrideHasFocus(bool* aEnabled) {
++  MOZ_ASSERT(aEnabled);
++  *aEnabled = mOverrideHasFocus;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsDocShell::SetOverrideHasFocus(bool aEnabled) {
++  mOverrideHasFocus = aEnabled;
++  return NS_OK;
++}
++
++bool nsDocShell::ShouldOverrideHasFocus() const {
++  return mOverrideHasFocus;
 +}
 +
 +NS_IMETHODIMP
@@ -373,7 +391,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..908452a13d639146e3c649c61da39923
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
-@@ -8394,6 +8570,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState,
+@@ -8394,6 +8588,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState,
                       true,  // aForceNoOpener
                       getter_AddRefs(newBC));
        MOZ_ASSERT(!newBC);
@@ -386,7 +404,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..908452a13d639146e3c649c61da39923
        return rv;
      }
  
-@@ -12137,6 +12319,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12137,6 +12337,9 @@ class OnLinkClickEvent : public Runnable {
                                  mNoOpenerImplied, nullptr, nullptr,
                                  mIsUserTriggered, mTriggeringPrincipal, mCsp);
      }
@@ -396,7 +414,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..908452a13d639146e3c649c61da39923
      return NS_OK;
    }
  
-@@ -12226,6 +12411,9 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12226,6 +12429,9 @@ nsresult nsDocShell::OnLinkClick(
        this, aContent, aURI, target, aFileName, aPostDataStream,
        aHeadersDataStream, noOpenerImplied, aIsUserTriggered, aIsTrusted,
        aTriggeringPrincipal, aCsp);
@@ -407,7 +425,7 @@ index 514a4f2890a20558afe0d9c1aec697612fc8e873..908452a13d639146e3c649c61da39923
  }
  
 diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
-index cc88045201371eb2195a28c60fcd3b6d940e8b72..2ea1e4825849c3bf42d0ab2c06a73ce79363922a 100644
+index cc88045201371eb2195a28c60fcd3b6d940e8b72..9f5c3558678ef5fab9ca8416b381269737981fa6 100644
 --- a/docshell/base/nsDocShell.h
 +++ b/docshell/base/nsDocShell.h
 @@ -13,6 +13,7 @@
@@ -426,12 +444,14 @@ index cc88045201371eb2195a28c60fcd3b6d940e8b72..2ea1e4825849c3bf42d0ab2c06a73ce7
  #include "mozilla/dom/ChildSHistory.h"
  #include "mozilla/dom/ProfileTimelineMarkerBinding.h"
  #include "mozilla/dom/WindowProxyHolder.h"
-@@ -479,6 +481,13 @@ class nsDocShell final : public nsDocLoader,
+@@ -479,6 +481,15 @@ class nsDocShell final : public nsDocLoader,
  
    void SetWillChangeProcess() { mWillChangeProcess = true; }
  
 +  bool IsFileInputInterceptionEnabled();
 +  void FilePickerShown(mozilla::dom::Element* element);
++
++  bool ShouldOverrideHasFocus() const;
 +
 +  bool IsBypassCSPEnabled();
 +
@@ -440,7 +460,7 @@ index cc88045201371eb2195a28c60fcd3b6d940e8b72..2ea1e4825849c3bf42d0ab2c06a73ce7
    // Create a content viewer within this nsDocShell for the given
    // `WindowGlobalChild` actor.
    nsresult CreateContentViewerForActor(
-@@ -1038,6 +1047,8 @@ class nsDocShell final : public nsDocLoader,
+@@ -1038,6 +1049,8 @@ class nsDocShell final : public nsDocLoader,
  
    bool CSSErrorReportingEnabled() const { return mCSSErrorReportingEnabled; }
  
@@ -449,11 +469,12 @@ index cc88045201371eb2195a28c60fcd3b6d940e8b72..2ea1e4825849c3bf42d0ab2c06a73ce7
    // Handles retrieval of subframe session history for nsDocShell::LoadURI. If a
    // load is requested in a subframe of the current DocShell, the subframe
    // loadType may need to reflect the loadType of the parent document, or in
-@@ -1292,6 +1303,13 @@ class nsDocShell final : public nsDocLoader,
+@@ -1292,6 +1305,14 @@ class nsDocShell final : public nsDocLoader,
    bool mUseErrorPages : 1;
    bool mObserveErrorPages : 1;
    bool mCSSErrorReportingEnabled : 1;
 +  bool mFileInputInterceptionEnabled: 1;
++  bool mOverrideHasFocus : 1;
 +  bool mBypassCSPEnabled : 1;
 +  nsString mLanguageOverride;
 +  RefPtr<nsGeolocationService> mGeolocationServiceOverride;
@@ -464,7 +485,7 @@ index cc88045201371eb2195a28c60fcd3b6d940e8b72..2ea1e4825849c3bf42d0ab2c06a73ce7
    bool mAllowKeywordFixup : 1;
    bool mIsOffScreenBrowser : 1;
 diff --git a/docshell/base/nsIDocShell.idl b/docshell/base/nsIDocShell.idl
-index ee89208c3ada6da09ecda6147e1a372ee0562810..1d3156f00f193bd9c1173a1326a1cb140efcf7b5 100644
+index ee89208c3ada6da09ecda6147e1a372ee0562810..57628c020a66d8361387dcc9df0bedc57ffe6a99 100644
 --- a/docshell/base/nsIDocShell.idl
 +++ b/docshell/base/nsIDocShell.idl
 @@ -44,6 +44,7 @@ interface nsIURI;
@@ -475,12 +496,14 @@ index ee89208c3ada6da09ecda6147e1a372ee0562810..1d3156f00f193bd9c1173a1326a1cb14
  interface nsIDocShellLoadInfo;
  interface nsIEditor;
  interface nsIEditingSession;
-@@ -1129,4 +1130,29 @@ interface nsIDocShell : nsIDocShellTreeItem
+@@ -1129,4 +1130,31 @@ interface nsIDocShell : nsIDocShellTreeItem
     * @see nsISHEntry synchronizeLayoutHistoryState().
     */
    void synchronizeLayoutHistoryState();
 +
 +  attribute boolean fileInputInterceptionEnabled;
++
++  attribute boolean overrideHasFocus;
 +
 +  attribute boolean bypassCSPEnabled;
 +
@@ -506,7 +529,7 @@ index ee89208c3ada6da09ecda6147e1a372ee0562810..1d3156f00f193bd9c1173a1326a1cb14
 +  void setGeolocationOverride(in nsIDOMGeoPosition position);
  };
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index bc0aeaefb9ca6d7cd15fc5ad189d2d260d519997..c5f649f2b0508028955be4fa9562cfc1370b0a00 100644
+index bc0aeaefb9ca6d7cd15fc5ad189d2d260d519997..69f88532ca0b3cf2ac05e4bdec88324717cc03b3 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
 @@ -3269,6 +3269,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
@@ -531,7 +554,18 @@ index bc0aeaefb9ca6d7cd15fc5ad189d2d260d519997..c5f649f2b0508028955be4fa9562cfc1
    // If this is a data document - no need to set CSP.
    if (mLoadedAsData) {
      return NS_OK;
-@@ -16114,6 +16122,20 @@ void Document::RemoveToplevelLoadingDocument(Document* aDoc) {
+@@ -4055,6 +4063,10 @@ bool Document::HasFocus(ErrorResult& rv) const {
+     return false;
+   }
+ 
++  if (IsActive() && mDocumentContainer->ShouldOverrideHasFocus()) {
++    return true;
++  }
++
+   // Is there a focused DOMWindow?
+   nsCOMPtr<mozIDOMWindowProxy> focusedWindow;
+   fm->GetFocusedWindow(getter_AddRefs(focusedWindow));
+@@ -16114,6 +16126,20 @@ void Document::RemoveToplevelLoadingDocument(Document* aDoc) {
  }
  
  StylePrefersColorScheme Document::PrefersColorScheme() const {
@@ -2295,10 +2329,10 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..5f10371dc2f2a921cd5df2b9b038bd1a6cec2533
+index 0000000000000000000000000000000000000000..77eda904d6130ab120d8a52802ff010f537585c2
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
-@@ -0,0 +1,664 @@
+@@ -0,0 +1,670 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
@@ -2588,6 +2622,8 @@ index 0000000000000000000000000000000000000000..5f10371dc2f2a921cd5df2b9b038bd1a
 +        }
 +      });
 +    });
++    // Enforce focused state for all top level documents created via newPage.
++    target.setFocused();
 +    if (created) {
 +      window.gBrowser.removeTab(window.gBrowser.getTabForBrowser(window.gBrowser.getBrowserAtIndex(0)), {
 +        skipPermitUnload: true,
@@ -2735,6 +2771,10 @@ index 0000000000000000000000000000000000000000..5f10371dc2f2a921cd5df2b9b038bd1a
 +
 +  async hasFailedToOverrideTimezone() {
 +    return await this._channel.connect('').send('hasFailedToOverrideTimezone').catch(e => true);
++  }
++
++  async setFocused() {
++    await this._channel.connect('').send('setFocused').catch(e => true);
 +  }
 +
 +  dispose() {
@@ -5323,10 +5363,10 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/juggler/content/main.js b/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..40eb01dfb672fdb3e31d03fef83ae3210698b17c
+index 0000000000000000000000000000000000000000..2cb662684cbcf3b9feffda9ba8eef63aead39e39
 --- /dev/null
 +++ b/juggler/content/main.js
-@@ -0,0 +1,162 @@
+@@ -0,0 +1,166 @@
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
@@ -5463,6 +5503,10 @@ index 0000000000000000000000000000000000000000..40eb01dfb672fdb3e31d03fef83ae321
 +
 +    ensurePermissions() {
 +      // noop, just a rountrip.
++    },
++
++    setFocused() {
++      docShell.overrideHasFocus = true;
 +    },
 +
 +    hasFailedToOverrideTimezone() {
