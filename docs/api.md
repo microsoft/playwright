@@ -1534,13 +1534,11 @@ If there's no `<select>` element matching `selector`, the method throws an error
 page.selectOption('select#colors', 'blue');
 
 // single selection matching both the value and the label
-page.selectOption('select#colors', { value: 'blue', label: 'Blue' });
+page.selectOption('select#colors', { label: 'Blue' });
 
 // multiple selection
-page.selectOption('select#colors', 'red', 'green', 'blue');
+page.selectOption('select#colors', ['red', 'green', 'blue']);
 
-// multiple selection for blue, red and second option
-page.selectOption('select#colors', { value: 'blue' }, { index: 2 }, 'red');
 ```
 
 Shortcut for [page.mainFrame().selectOption()](#frameselectoptionselector-values-options)
@@ -2289,13 +2287,10 @@ If there's no `<select>` element matching `selector`, the method throws an error
 frame.selectOption('select#colors', 'blue');
 
 // single selection matching both the value and the label
-frame.selectOption('select#colors', { value: 'blue', label: 'Blue' });
+frame.selectOption('select#colors', { label: 'Blue' });
 
 // multiple selection
 frame.selectOption('select#colors', 'red', 'green', 'blue');
-
-// multiple selection matching blue, red and second option
-frame.selectOption('select#colors', { value: 'blue' }, { index: 2 }, 'red');
 ```
 
 #### frame.setContent(html[, options])
@@ -2808,7 +2803,7 @@ If element is not a `<select>` element, the method throws an error.
 handle.selectOption('blue');
 
 // single selection matching both the value and the label
-handle.selectOption({ value: 'blue', label: 'Blue' });
+handle.selectOption({ label: 'Blue' });
 
 // multiple selection
 handle.selectOption('red', 'green', 'blue');
