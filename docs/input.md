@@ -27,6 +27,8 @@ await page.fill('#local', '2020-03-02T05:15');
 - [`frame.fill(selector, value[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framefillselector-value-options) — on a specific frame
 - [`elementHandle.fill(value[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandlefillvalue-options) — on a particular element
 
+<br/>
+<br/>
 
 ## Check / uncheck the checkbox
 
@@ -49,7 +51,8 @@ This is the easiest way to check and uncheck a checkbox. This method can be used
 - [`elementHandle.check(value[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandleuncheckoptions) — on a particular element
 - [`elementHandle.uncheck(value[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandleuncheckoptions) — on a particular element
 
-
+<br/>
+<br/>
 
 ## Select an option
 
@@ -89,7 +92,8 @@ page.selectOption('select#colors', option);
 - [`frame.selectOption(selector, values[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameselectoptionselector-values-options) — on a specific frame
 - [`elementHandle.selectOption(values[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandleselectoptionvalues-options) — on a particular element
 
-
+<br/>
+<br/>
 
 ## Type character by character
 
@@ -107,7 +111,8 @@ Sometimes it is important to type into the focused field character by character,
 - [`elementHandle.type(text[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandletypetext-options) — on a particular element
 - [`keyboard.type(text[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardtypetext-options) — wherever the current focus is
 
-
+<br/>
+<br/>
 
 ## Press a key, enter keyboard shortcut
 
