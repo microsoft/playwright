@@ -456,7 +456,7 @@ describe('focus', function() {
     expect(await page2.evaluate('document.hasFocus()')).toBe(true);
     await page2.close();
   });
-  fit('should focus popups by default', async({page, server}) => {
+  it('should focus popups by default', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [popup] = await Promise.all([
       page.waitForEvent('popup'),
