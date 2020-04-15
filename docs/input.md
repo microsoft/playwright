@@ -5,9 +5,9 @@
 await page.fill('#name', 'Peter');
 ```
 
-This is the easiest way to fill out the form fields. It focuses the element and triggers an `input` event with the entered text. It works for `<input>`, `<textarea>` and `[contenteditable]` elements with the given `selector`.
+This is the easiest way to fill out the form fields. It focuses the element and triggers an `input` event with the entered text. It works for `<input>`, `<textarea>` and `[contenteditable]` elements.
 
-### Variations
+#### Variations
 
 ```js
 // <input id=date type=date>
@@ -16,12 +16,12 @@ await page.fill('#date', '2020-02-02');
 // <input id=date type=time>
 await page.fill('#time', '13-15');
 
-// <input id=local type=time>
+// <input id=local type=datetime-local>
 await page.fill('#local', '2020-03-02T05:15');
 
 ```
 
-### API reference
+#### API reference
 
 - [`page.fill(selector, value[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagefillselector-value-options) — on the main frame
 - [`frame.fill(selector, value[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framefillselector-value-options) — on a specific frame
@@ -35,13 +35,13 @@ await page.fill('#local', '2020-03-02T05:15');
 // <input id=agree type=checkbox></input>
 await page.check('#agree');
 
-// <label for='subscribe'><input id=subscribe type=checkbox checked></input></label>
-await page.uncheck('label');
+// <label id=subscribe-label for=subscribe><input id=subscribe type=checkbox checked></input></label>
+await page.uncheck('#subscribe-label');
 ```
 
-This is the easiest way to check and uncheck a checkbox. This method can be used on the `input[type=checkbox]` and `label`s associated with these inputs.
+This is the easiest way to check and uncheck a checkbox. This method can be used on the `input[type=checkbox]` and on the `label` associated with that input.
 
-### API reference
+#### API reference
 
 - [`page.check(selector[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagecheckselector-options) — on the main frame
 - [`page.uncheck(selector[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageuncheckselector-options) — on the main frame
@@ -65,9 +65,10 @@ This is the easiest way to check and uncheck a checkbox. This method can be used
 await page.selectOption('select#colors', 'green');
 ```
 
-`selectOption` selects one or multiple options in the `<select>` element. You can specify option values, labels or element handles to select. Under the hood, it triggers a `change` and `input` events once all the provided `select` options have been selected.
+Selects one or multiple options in the `<select>` element.
+You can specify option `value`, `label` or `elementHandle` to select. Multiple options can be selected.
 
-### Variations
+#### Variations
 
 ```js
 // Single selection matching the value
@@ -84,7 +85,7 @@ const option = await page.$('#best-option");
 page.selectOption('select#colors', option);
 ```
 
-### API reference
+#### API reference
 
 - [`page.selectOption(selector, values[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageselectoptionselector-values-options) — on the main frame
 - [`frame.selectOption(selector, values[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameselectoptionselector-values-options) — on a specific frame
@@ -100,9 +101,9 @@ page.selectOption('select#colors', option);
 await page.type('#area', 'Hello World!');
 ```
 
-Sometimes it is important to type into the focused field character by character, as if it was the user with the real keyboard. This method will emit all the necessary keyboard events, with all the `keydown`, `keyup`, `keypress` events in place. You can optionally specify delay between the key presses to simulate real user behavior.
+Sometimes it is important to type into the focused field character by character, as if it was the user with the real keyboard. This method will emit all the necessary keyboard events, with all the `keydown`, `keyup`, `keypress` events in place. You can even specify the optional `delay` between the key presses to simulate real user behavior.
 
-### API reference
+#### API reference
 
 - [`page.type(selector, text[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagetypeselector-text-options) — on the main frame
 - [`frame.type(selector, text[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frametypeselector-text-options) — on a specific frame
@@ -112,7 +113,7 @@ Sometimes it is important to type into the focused field character by character,
 
 
 ---
-## Press a key or use a keyboard shortcut
+## Press a key, enter keyboard shortcut
 
 ```js
 // <button id=submit></button>
@@ -128,15 +129,17 @@ await page.press('#value', '$');
 This method focuses the selected element and produces a single keystroke. It accepts the logical key names that are emitted in the [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) property of the keyboard events:
 
 ```
-Backquote, Minus, Equal, Backslash, Backspace, Tab, Delete, Escape, ArrowDown, End, Enter, Home, Insert, PageDown, PageUp, ArrayRight, ArrowUp, F1 - F12, Digit0 - Digit9, KeyA - KeyZ, etc.
+Backquote, Minus, Equal, Backslash, Backspace, Tab, Delete, Escape,
+ArrowDown, End, Enter, Home, Insert, PageDown, PageUp, ArrayRight,
+ArrowUp, F1 - F12, Digit0 - Digit9, KeyA - KeyZ, etc.
 ```
 
 - You can alternatively specify a single character you'd like to produce such as `"a"` or `"#"`.
 
-- Following modification shortcuts are also suported: `Shift, Control, Alt, Meta, ShiftLeft`.
+- Following modification shortcuts are also suported: `Shift, Control, Alt, Meta`.
 
 
-### Variations
+#### Variations
 
 ```js
 // <input id=name></input>
@@ -159,7 +162,7 @@ Shortcuts such as `"Control+o"` or `"Control+Shift+T"` are supported as well. Wh
 Note that you still need to specify the capital `A` in `Shift-A` to produce the capital character. `Shift-a` produces a lower-case one as if you had the `CapsLock` toggled.
 
 
-### API reference
+#### API reference
 
 - [`page.press(selector, key[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagepressselector-key-options) — on the main frame
 - [`frame.press(selector, key[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framepressselector-key-options) — on a specific frame
