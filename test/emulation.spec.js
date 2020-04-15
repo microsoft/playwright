@@ -499,13 +499,21 @@ describe('focus', function() {
     ]);
     expect(counters ).toEqual([1,1]);
   });
-  it('should not affect visibilityState', async({page, server}) => {
+  it('should change document.activeElement', async({page, server}) => {
     const page2 = await page.context().newPage();
-    const counters = await Promise.all([
-      page.evaluate('document.visibilityState'),
-      page2.evaluate('document.visibilityState'),
+    await Promise.all([
+      page.goto(server.PREFIX + '/input/textarea.html'),
+      page2.goto(server.PREFIX + '/input/textarea.html'),
     ]);
-    expect(counters ).toEqual(['visible', 'visible']);
+    await Promise.all([
+      page.focus('input'),
+      page2.focus('textarea'),
+    ]);
+    const active = await Promise.all([
+      page.evaluate('document.activeElement.tagName'),
+      page2.evaluate('document.activeElement.tagName'),
+    ]);
+    expect(active).toEqual(['INPUT', 'TEXTAREA']);
   });
   it('should not affect screenshots', async({page, server, golden}) => {
     const page2 = await page.context().newPage();
