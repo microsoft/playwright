@@ -142,7 +142,7 @@ export class CRSession extends EventEmitter {
     this.once = super.once;
   }
 
-  markAsCrashed() {
+  _markAsCrashed() {
     this._crashed = true;
   }
 

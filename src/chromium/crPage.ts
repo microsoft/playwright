@@ -614,7 +614,7 @@ class FrameSession {
   }
 
   async _onTargetCrashed() {
-    this._client.markAsCrashed();
+    this._client._markAsCrashed();
     this._page._didCrash();
   }
 
