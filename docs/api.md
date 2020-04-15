@@ -305,6 +305,7 @@ await context.close();
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setHTTPCredentials(httpCredentials)](#browsercontextsethttpcredentialshttpcredentials)
 - [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
+- [browserContext.unroute(url[, handler])](#browsercontextunrouteurl-handler)
 - [browserContext.waitForEvent(event[, optionsOrPredicate])](#browsercontextwaitforeventevent-optionsorpredicate)
 <!-- GEN:stop -->
 
@@ -576,6 +577,13 @@ To disable authentication, pass `null`.
 - `offline` <[boolean]> Whether to emulate network being offline for the browser context.
 - returns: <[Promise]>
 
+#### browserContext.unroute(url[, handler])
+- `url` <[string]|[RegExp]|[function]\([string]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+- `handler` <[function]\([Route], [Request]\)> Handler function to route the request.
+- returns: <[Promise]>
+
+Removes a route created with [browserContext.route(url, handler)](#browsercontextrouteurl-handler). When `handler` is not specified, removes all routes for the `url`.
+
 #### browserContext.waitForEvent(event[, optionsOrPredicate])
 - `event` <[string]> Event name, same one would pass into `browserContext.on(event)`.
 - `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object.
@@ -694,6 +702,7 @@ page.removeListener('request', logRequest);
 - [page.title()](#pagetitle)
 - [page.type(selector, text[, options])](#pagetypeselector-text-options)
 - [page.uncheck(selector, [options])](#pageuncheckselector-options)
+- [page.unroute(url[, handler])](#pageunrouteurl-handler)
 - [page.url()](#pageurl)
 - [page.viewportSize()](#pageviewportsize)
 - [page.waitFor(selectorOrFunctionOrTimeout[, options[, arg]])](#pagewaitforselectororfunctionortimeout-options-arg)
@@ -1653,6 +1662,13 @@ This method fetches an element with `selector`, if element is not already unchec
 If there's no element matching `selector`, the method throws an error.
 
 Shortcut for [page.mainFrame().uncheck(selector[, options])](#frameuncheckselector-options).
+
+#### page.unroute(url[, handler])
+- `url` <[string]|[RegExp]|[function]\([string]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+- `handler` <[function]\([Route], [Request]\)> Handler function to route the request.
+- returns: <[Promise]>
+
+Removes a route created with [page.route(url, handler)](#pagerouteurl-handler). When `handler` is not specified, removes all routes for the `url`.
 
 #### page.url()
 - returns: <[string]>
@@ -3976,6 +3992,7 @@ const backgroundPage = await context.waitForEvent('backgroundpage');
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setHTTPCredentials(httpCredentials)](#browsercontextsethttpcredentialshttpcredentials)
 - [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
+- [browserContext.unroute(url[, handler])](#browsercontextunrouteurl-handler)
 - [browserContext.waitForEvent(event[, optionsOrPredicate])](#browsercontextwaitforeventevent-optionsorpredicate)
 <!-- GEN:stop -->
 

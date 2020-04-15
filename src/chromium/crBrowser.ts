@@ -422,6 +422,12 @@ export class CRBrowserContext extends BrowserContextBase {
       await (page._delegate as CRPage).updateRequestInterception();
   }
 
+  async unroute(url: types.URLMatch, handler?: network.RouteHandler): Promise<void> {
+    this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
+    for (const page of this.pages())
+      await (page._delegate as CRPage).updateRequestInterception();
+  }
+
   async close() {
     if (this._closed)
       return;

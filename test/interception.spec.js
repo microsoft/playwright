@@ -41,6 +41,38 @@ describe('Page.route', function() {
     expect(response.ok()).toBe(true);
     expect(intercepted).toBe(true);
   });
+  it('should unroute', async({page, server}) => {
+    let intercepted = [];
+    const handler1 = route => {
+      intercepted.push(1);
+      route.continue();
+    };
+    await page.route('**/empty.html', handler1);
+    await page.route('**/empty.html', route => {
+      intercepted.push(2);
+      route.continue();
+    });
+    await page.route('**/empty.html', route => {
+      intercepted.push(3);
+      route.continue();
+    });
+    await page.route('**/*', route => {
+      intercepted.push(4);
+      route.continue();
+    });
+    await page.goto(server.EMPTY_PAGE);
+    expect(intercepted).toEqual([1]);
+
+    intercepted = [];
+    await page.unroute('**/empty.html', handler1);
+    await page.goto(server.EMPTY_PAGE);
+    expect(intercepted).toEqual([2]);
+
+    intercepted = [];
+    await page.unroute('**/empty.html');
+    await page.goto(server.EMPTY_PAGE);
+    expect(intercepted).toEqual([4]);
+  });
   it('should work when POST is redirected with 302', async({page, server}) => {
     server.setRedirect('/rredirect', '/empty.html');
     await page.goto(server.EMPTY_PAGE);
@@ -346,7 +378,7 @@ describe('Page.route', function() {
         status: 301,
         headers: {
           'location': '/empty.html',
-        }  
+        }
       });
     });
 

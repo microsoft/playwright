@@ -383,6 +383,43 @@ describe('BrowserContext.route', () => {
     expect(intercepted).toBe(true);
     await context.close();
   });
+  it('should unroute', async({browser, server}) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
+    let intercepted = [];
+    const handler1 = route => {
+      intercepted.push(1);
+      route.continue();
+    };
+    await context.route('**/empty.html', handler1);
+    await context.route('**/empty.html', route => {
+      intercepted.push(2);
+      route.continue();
+    });
+    await context.route('**/empty.html', route => {
+      intercepted.push(3);
+      route.continue();
+    });
+    await context.route('**/*', route => {
+      intercepted.push(4);
+      route.continue();
+    });
+    await page.goto(server.EMPTY_PAGE);
+    expect(intercepted).toEqual([1]);
+
+    intercepted = [];
+    await context.unroute('**/empty.html', handler1);
+    await page.goto(server.EMPTY_PAGE);
+    expect(intercepted).toEqual([2]);
+
+    intercepted = [];
+    await context.unroute('**/empty.html');
+    await page.goto(server.EMPTY_PAGE);
+    expect(intercepted).toEqual([4]);
+
+    await context.close();
+  });
   it('should yield to page.route', async({browser, server}) => {
     const context = await browser.newContext();
     await context.route('**/empty.html', route => {
