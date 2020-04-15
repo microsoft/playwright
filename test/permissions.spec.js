@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, LINUX} = require('./utils').testOptions(browserType);
 
 // Permissions API is not implemented in WebKit (see https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API)
 describe.skip(WEBKIT)('Permissions', function() {
@@ -82,7 +82,8 @@ describe.skip(WEBKIT)('Permissions', function() {
     await context.clearPermissions();
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
-  it('should trigger permission onchange', async({page, server, context}) => {
+  //TODO: flaky on Linux. https://github.com/microsoft/playwright/pull/1790/checks?check_run_id=587327883
+  it.fail(FFOX && LINUX)('should trigger permission onchange', async({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => {
       window['events'] = [];
