@@ -104,8 +104,8 @@ export class CRPage implements PageDelegate {
       return;
     // Frame id equals target id.
     const frame = this._page._frameManager.frame(targetId);
-    assert(frame);
-    this._page._frameManager.removeChildFramesRecursively(frame);
+    if (frame)
+      this._page._frameManager.removeChildFramesRecursively(frame);
     frameSession.dispose();
     this._sessions.delete(targetId);
   }
