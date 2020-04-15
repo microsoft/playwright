@@ -5,7 +5,8 @@
   "repository": "github:Microsoft/playwright",
   "main": "index.js",
   "scripts": {
-    "install": "node install.js"
+    "install": "node install.js",
+    "prepublishOnly": "cp ../../README.md ."
   },
   "author": {
     "name": "Microsoft Corporation"
