@@ -318,7 +318,8 @@ describe('browserType.launchPersistentContext', function() {
     await removeUserDataDir(userDataDir);
     await removeUserDataDir(userDataDir2);
   });
-  it.slow()('userDataDir option should restore cookies', async({browserType, defaultBrowserOptions,  server}) => {
+  // TODO: Flaky! See https://github.com/microsoft/playwright/pull/1795/checks?check_run_id=587685496
+  it.slow().fail(WIN && CHROMIUM)('userDataDir option should restore cookies', async({browserType, defaultBrowserOptions,  server}) => {
     const userDataDir = await makeUserDataDir();
     const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
     const page = await browserContext.newPage();
