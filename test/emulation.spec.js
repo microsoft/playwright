@@ -456,4 +456,130 @@ describe('focus', function() {
     expect(await page2.evaluate('document.hasFocus()')).toBe(true);
     await page2.close();
   });
+  it('should provide target for keyboard events', async({page, server}) => {
+    const page2 = await page.context().newPage();
+    await Promise.all([
+      page.goto(server.PREFIX + '/input/textarea.html'),
+      page2.goto(server.PREFIX + '/input/textarea.html'),
+    ]);
+    await Promise.all([
+      page.focus('input'),
+      page2.focus('input'),
+    ]);
+    const text = 'first';
+    const text2 = 'second';
+    await Promise.all([
+      page.keyboard.type(text),
+      page2.keyboard.type(text2),
+    ]);
+    const results = await Promise.all([
+      page.evaluate('result'),
+      page2.evaluate('result'),
+    ]);
+    expect(results).toEqual([text, text2]);
+  });
+  it('should not affect mouse event target page', async({page, server}) => {
+    const page2 = await page.context().newPage();
+    function clickCounter() {
+      document.onclick = () => window.clickCount  = (window.clickCount || 0) + 1;
+    }
+    await Promise.all([
+      page.evaluate(clickCounter),
+      page2.evaluate(clickCounter),
+      page.focus('body'),
+      page2.focus('body'),
+    ]);
+    await Promise.all([
+      page.mouse.click(1, 1),
+      page2.mouse.click(1, 1),
+    ]);
+    const counters = await Promise.all([
+      page.evaluate('window.clickCount'),
+      page2.evaluate('window.clickCount'),
+    ]);
+    expect(counters ).toEqual([1,1]);
+  });
+  it('should change document.activeElement', async({page, server}) => {
+    const page2 = await page.context().newPage();
+    await Promise.all([
+      page.goto(server.PREFIX + '/input/textarea.html'),
+      page2.goto(server.PREFIX + '/input/textarea.html'),
+    ]);
+    await Promise.all([
+      page.focus('input'),
+      page2.focus('textarea'),
+    ]);
+    const active = await Promise.all([
+      page.evaluate('document.activeElement.tagName'),
+      page2.evaluate('document.activeElement.tagName'),
+    ]);
+    expect(active).toEqual(['INPUT', 'TEXTAREA']);
+  });
+  it('should not affect screenshots', async({page, server, golden}) => {
+    const page2 = await page.context().newPage();
+    await Promise.all([
+      page.setViewportSize({width: 500, height: 500}),
+      page.goto(server.PREFIX + '/grid.html'),
+      page2.setViewportSize({width: 50, height: 50}),
+      page2.goto(server.PREFIX + '/grid.html'),
+    ]);
+    await Promise.all([
+      page.focus('body'),
+      page2.focus('body'),
+    ]);
+    const screenshots = await Promise.all([
+      page.screenshot(),
+      page2.screenshot(),
+    ]);
+    expect(screenshots[0]).toBeGolden(golden('screenshot-sanity.png'));
+    expect(screenshots[1]).toBeGolden(golden('grid-cell-0.png'));
+  });
+  it('should change focused iframe', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    const [frame1, frame2] = await Promise.all([
+      utils.attachFrame(page, 'frame1', server.PREFIX + '/input/textarea.html'),
+      utils.attachFrame(page, 'frame2', server.PREFIX + '/input/textarea.html'),
+    ]);
+    function logger() {
+      self._events = [];
+      const element = document.querySelector('input');
+      element.onfocus = element.onblur = (e) => self._events.push(e.type);
+    }
+    await Promise.all([
+      frame1.evaluate(logger),
+      frame2.evaluate(logger),
+    ]);
+    const focused = await Promise.all([
+      frame1.evaluate('document.hasFocus()'),
+      frame2.evaluate('document.hasFocus()'),
+    ]);
+    expect(focused).toEqual([false, false]);
+    {
+      await frame1.focus('input');
+      const events = await Promise.all([
+        frame1.evaluate('self._events'),
+        frame2.evaluate('self._events'),
+      ]);
+      expect(events).toEqual([['focus'], []]);
+      const focused = await Promise.all([
+        frame1.evaluate('document.hasFocus()'),
+        frame2.evaluate('document.hasFocus()'),
+      ]);
+      expect(focused).toEqual([true, false]);
+    }
+    {
+      await frame2.focus('input');
+      const events = await Promise.all([
+        frame1.evaluate('self._events'),
+        frame2.evaluate('self._events'),
+      ]);
+      expect(events).toEqual([['focus', 'blur'], ['focus']]);
+      const focused = await Promise.all([
+        frame1.evaluate('document.hasFocus()'),
+        frame2.evaluate('document.hasFocus()'),
+      ]);
+      expect(focused).toEqual([false, true]);
+    }
+  });
+
 });
