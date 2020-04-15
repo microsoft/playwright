@@ -17,7 +17,7 @@
 import * as dom from './dom';
 import * as frames from './frames';
 import * as selectorEvaluatorSource from './generated/selectorEvaluatorSource';
-import { helper } from './helper';
+import { helper, assert } from './helper';
 import SelectorEvaluator from './injected/selectorEvaluator';
 import * as js from './javascript';
 import * as types from './types';
@@ -163,6 +163,7 @@ export class Selectors {
   }
 
   private _parseSelector(selector: string): types.ParsedSelector {
+    assert(helper.isString(selector), `selector must be a string`);
     let index = 0;
     let quote: string | undefined;
     let start = 0;
