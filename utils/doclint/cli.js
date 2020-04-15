@@ -70,8 +70,6 @@ async function run() {
       await source.save();
       changedFiles = true;
     }
-
-    await readme.saveAs(path.join(PROJECT_DIR, 'packages', 'playwright', 'README.md'));
   }
 
   // Report results.
