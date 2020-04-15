@@ -56,7 +56,6 @@ class SelectorEvaluator {
 
   private _querySelectorRecursively(root: SelectorRoot, selector: types.ParsedSelector, index: number): Element | undefined {
     const current = selector[index];
-    root = (root as Element).shadowRoot || root;
     if (index === selector.length - 1)
       return this.engines.get(current.name)!.query(root, current.body);
     const all = this.engines.get(current.name)!.queryAll(root, current.body);
@@ -74,7 +73,7 @@ class SelectorEvaluator {
     for (const { name, body } of selector) {
       const newSet = new Set<Element>();
       for (const prev of set) {
-        for (const next of this.engines.get(name)!.queryAll((prev as Element).shadowRoot || prev, body)) {
+        for (const next of this.engines.get(name)!.queryAll(prev, body)) {
           if (newSet.has(next))
             continue;
           newSet.add(next);
