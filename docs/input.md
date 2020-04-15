@@ -28,7 +28,6 @@ await page.fill('#local', '2020-03-02T05:15');
 - [`elementHandle.fill(value[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandlefillvalue-options) — on a particular element
 
 
----
 ## Check / uncheck the checkbox
 
 ```js
@@ -52,7 +51,6 @@ This is the easiest way to check and uncheck a checkbox. This method can be used
 
 
 
----
 ## Select an option
 
 ```js
@@ -93,7 +91,6 @@ page.selectOption('select#colors', option);
 
 
 
----
 ## Type character by character
 
 ```js
@@ -112,7 +109,6 @@ Sometimes it is important to type into the focused field character by character,
 
 
 
----
 ## Press a key, enter keyboard shortcut
 
 ```js
