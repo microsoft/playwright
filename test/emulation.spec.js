@@ -456,4 +456,74 @@ describe('focus', function() {
     expect(await page2.evaluate('document.hasFocus()')).toBe(true);
     await page2.close();
   });
+  it('should provide target for keyboard events', async({page, server}) => {
+    const page2 = await page.context().newPage();
+    await Promise.all([
+      page.goto(server.PREFIX + '/input/textarea.html'),
+      page2.goto(server.PREFIX + '/input/textarea.html'),
+    ]);
+    await Promise.all([
+      page.focus('input'),
+      page2.focus('input'),
+    ]);
+    const text = 'first';
+    const text2 = 'second';
+    await Promise.all([
+      page.keyboard.type(text),
+      page2.keyboard.type(text2),
+    ]);
+    const results = await Promise.all([
+      page.evaluate('result'),
+      page2.evaluate('result'),
+    ]);
+    expect(results).toEqual([text, text2]);
+  });
+  it('should not affect mouse event target page', async({page, server}) => {
+    const page2 = await page.context().newPage();
+    function clickCounter() {
+      document.onclick = () => window.clickCount  = (window.clickCount || 0) + 1;
+    }
+    await Promise.all([
+      page.evaluate(clickCounter),
+      page2.evaluate(clickCounter),
+      page.focus('body'),
+      page2.focus('body'),
+    ]);
+    await Promise.all([
+      page.mouse.click(1, 1),
+      page2.mouse.click(1, 1),
+    ]);
+    const counters = await Promise.all([
+      page.evaluate('window.clickCount'),
+      page2.evaluate('window.clickCount'),
+    ]);
+    expect(counters ).toEqual([1,1]);
+  });
+  it('should not affect visibilityState', async({page, server}) => {
+    const page2 = await page.context().newPage();
+    const counters = await Promise.all([
+      page.evaluate('document.visibilityState'),
+      page2.evaluate('document.visibilityState'),
+    ]);
+    expect(counters ).toEqual(['visible', 'visible']);
+  });
+  it('should not affect screenshots', async({page, server, golden}) => {
+    const page2 = await page.context().newPage();
+    await Promise.all([
+      page.setViewportSize({width: 500, height: 500}),
+      page.goto(server.PREFIX + '/grid.html'),
+      page2.setViewportSize({width: 50, height: 50}),
+      page2.goto(server.PREFIX + '/grid.html'),
+    ]);
+    await Promise.all([
+      page.focus('body'),
+      page2.focus('body'),
+    ]);
+    const screenshots = await Promise.all([
+      page.screenshot(),
+      page2.screenshot(),
+    ]);
+    expect(screenshots[0]).toBeGolden(golden('screenshot-sanity.png'));
+    expect(screenshots[1]).toBeGolden(golden('grid-cell-0.png'));
+  });
 });
