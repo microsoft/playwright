@@ -2329,10 +2329,10 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..77eda904d6130ab120d8a52802ff010f537585c2
+index 0000000000000000000000000000000000000000..5f10371dc2f2a921cd5df2b9b038bd1a6cec2533
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
-@@ -0,0 +1,670 @@
+@@ -0,0 +1,664 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
@@ -2622,8 +2622,6 @@ index 0000000000000000000000000000000000000000..77eda904d6130ab120d8a52802ff010f
 +        }
 +      });
 +    });
-+    // Enforce focused state for all top level documents created via newPage.
-+    target.setFocused();
 +    if (created) {
 +      window.gBrowser.removeTab(window.gBrowser.getTabForBrowser(window.gBrowser.getBrowserAtIndex(0)), {
 +        skipPermitUnload: true,
@@ -2771,10 +2769,6 @@ index 0000000000000000000000000000000000000000..77eda904d6130ab120d8a52802ff010f
 +
 +  async hasFailedToOverrideTimezone() {
 +    return await this._channel.connect('').send('hasFailedToOverrideTimezone').catch(e => true);
-+  }
-+
-+  async setFocused() {
-+    await this._channel.connect('').send('setFocused').catch(e => true);
 +  }
 +
 +  dispose() {
@@ -5363,10 +5357,10 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/juggler/content/main.js b/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..2cb662684cbcf3b9feffda9ba8eef63aead39e39
+index 0000000000000000000000000000000000000000..848b8daab8655df61ba2aaebc1abf02ffdc94b6d
 --- /dev/null
 +++ b/juggler/content/main.js
-@@ -0,0 +1,166 @@
+@@ -0,0 +1,165 @@
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
@@ -5458,6 +5452,9 @@ index 0000000000000000000000000000000000000000..2cb662684cbcf3b9feffda9ba8eef63a
 +    scrollbarManager.setFloatingScrollbars(viewport.isMobile);
 +  }
 +
++  // Enforce focused state for all top level documents.
++  docShell.overrideHasFocus = true;
++
 +  frameTree = new FrameTree(docShell);
 +  if (colorScheme !== undefined)
 +    frameTree.setColorScheme(colorScheme);
@@ -5503,10 +5500,6 @@ index 0000000000000000000000000000000000000000..2cb662684cbcf3b9feffda9ba8eef63a
 +
 +    ensurePermissions() {
 +      // noop, just a rountrip.
-+    },
-+
-+    setFocused() {
-+      docShell.overrideHasFocus = true;
 +    },
 +
 +    hasFailedToOverrideTimezone() {
