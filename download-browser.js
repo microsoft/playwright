@@ -62,7 +62,10 @@ async function downloadBrowserWithProgressBar(options) {
     lastDownloadedBytes = downloadedBytes;
     progressBar.tick(delta);
   }
-  await browserFetcher.downloadBrowser({...options, progress});
+  await browserFetcher.downloadBrowser({...options, progress}).catch(e => {
+    process.exitCode = 1;
+    throw e;
+  });
   logPolitely(`${options.progressBarBrowserName} downloaded to ${options.downloadPath}`);
 }
 
