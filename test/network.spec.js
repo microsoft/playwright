@@ -80,6 +80,23 @@ describe('Request.headers', function() {
     else if (WEBKIT)
       expect(response.request().headers()['user-agent']).toContain('WebKit');
   });
+  it.fail(CHROMIUM||WEBKIT)('should get the same headers as the server', async({page, server}) => {
+    await page.goto(server.PREFIX + '/empty.html');
+    let serverRequest;
+    await server.setRoute('/something', (request, response) => {
+      serverRequest = request;
+      response.writeHead(200, { 'Access-Control-Allow-Origin': '*' });
+      response.end('done');
+    });
+    const requestPromise = page.waitForEvent('request');
+    const text = await page.evaluate(async url => {
+      const data = await fetch(url);
+      return data.text();
+    }, server.CROSS_PROCESS_PREFIX + '/something');
+    const request = await requestPromise;
+    expect(text).toBe('done');
+    expect(request.headers()).toEqual(serverRequest.headers);
+  });
 });
 
 describe('Response.headers', function() {
