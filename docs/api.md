@@ -1424,7 +1424,13 @@ The `format` options are:
 
 Focuses the element, and then uses [`keyboard.down`](#keyboarddownkey) and [`keyboard.up`](#keyboardupkey).
 
-`key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to generate the text for. A superset of the `key` values can be found [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Note that only those present on a typical full computer keyboard are supported. Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
+`key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to generate the text for. A superset of the `key` values can be found [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
+
+  `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`, `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrayRight`, `ArrowUp`, etc.
+
+Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+
+Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
 
 If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective texts.
 
@@ -2242,7 +2248,13 @@ If the name is empty, returns the id attribute instead.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
 
-`key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to generate the text for. A superset of the `key` values can be found [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Note that only those present on a typical full computer keyboard are supported. Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
+`key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to generate the text for. A superset of the `key` values can be found [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
+
+  `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`, `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrayRight`, `ArrowUp`, etc.
+
+Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+
+Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
 
 If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective texts.
 
@@ -2517,6 +2529,7 @@ ElementHandle instances can be used as an argument in [`page.$eval()`](#pageeval
 - [elementHandle.screenshot([options])](#elementhandlescreenshotoptions)
 - [elementHandle.scrollIntoViewIfNeeded()](#elementhandlescrollintoviewifneeded)
 - [elementHandle.selectOption(values[, options])](#elementhandleselectoptionvalues-options)
+- [elementHandle.selectText()](#elementhandleselecttext)
 - [elementHandle.setInputFiles(files[, options])](#elementhandlesetinputfilesfiles-options)
 - [elementHandle.textContent()](#elementhandletextcontent)
 - [elementHandle.toString()](#elementhandletostring)
@@ -2736,7 +2749,13 @@ If the element is detached from DOM, the method throws an error.
 
 Focuses the element, and then uses [`keyboard.down`](#keyboarddownkey) and [`keyboard.up`](#keyboardupkey).
 
-`key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to generate the text for. A superset of the `key` values can be found [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Note that only those present on a typical full computer keyboard are supported. Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
+`key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to generate the text for. A superset of the `key` values can be found [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
+
+  `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`, `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrayRight`, `ArrowUp`, etc.
+
+Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+
+Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
 
 If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective texts.
 
@@ -2792,6 +2811,11 @@ handle.selectOption('red', 'green', 'blue');
 // multiple selection for blue, red and second option
 handle.selectOption({ value: 'blue' }, { index: 2 }, 'red');
 ```
+
+#### elementHandle.selectText()
+- returns: <[Promise]> Promise which resolves when the element is successfully selected.
+
+This method focuses the element and selects all its text content.
 
 #### elementHandle.setInputFiles(files[, options])
 - `files` <[string]|[Array]<[string]>|[Object]|[Array]<[Object]>>
@@ -3125,7 +3149,13 @@ await page.keyboard.press('Shift+A');
 
 Dispatches a `keydown` event.
 
-`key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to generate the text for. A superset of the `key` values can be found [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Note that only those present on a typical full computer keyboard are supported. Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
+`key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to generate the text for. A superset of the `key` values can be found [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
+
+  `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`, `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrayRight`, `ArrowUp`, etc.
+
+Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+
+Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
 
 If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective texts.
 
@@ -3153,7 +3183,13 @@ page.keyboard.insertText('嗨');
   - `delay` <[number]> Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 - returns: <[Promise]>
 
-`key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to generate the text for. A superset of the `key` values can be found [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Note that only those present on a typical full computer keyboard are supported. Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
+`key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to generate the text for. A superset of the `key` values can be found [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
+
+  `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`, `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrayRight`, `ArrowUp`, etc.
+
+Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+
+Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
 
 If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective texts.
 
