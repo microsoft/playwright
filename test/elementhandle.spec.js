@@ -293,7 +293,7 @@ describe('ElementHandle.hover', function() {
 });
 
 describe('ElementHandle.scrollIntoViewIfNeeded', function() {
-  it.fail(FFOX)('should work', async({page, server}) => {
+  it('should work', async({page, server}) => {
     await page.goto(server.PREFIX + '/offscreenbuttons.html');
     for (let i = 0; i < 11; ++i) {
       const button = await page.$('#btn' + i);
