@@ -23,6 +23,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
   echo "-- building on Mac"
 elif [[ "$(uname)" == "Linux" ]]; then
   echo "-- building on Linux"
+  echo "ac_add_options --disable-av1" > .mozconfig
 elif [[ "$(uname)" == MINGW* ]]; then
   if [[ $1 == "--win64" ]]; then
     echo "-- building win64 build on MINGW"
