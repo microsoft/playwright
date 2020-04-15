@@ -35,7 +35,15 @@ export class Selectors {
 
   constructor() {
     // Note: keep in sync with SelectorEvaluator class.
-    this._builtinEngines = new Set(['css', 'xpath', 'text', 'deep', 'id', 'data-testid', 'data-test-id', 'data-test']);
+    this._builtinEngines = new Set([
+      'css', 'css:light',
+      'xpath', 'xpath:light',
+      'text', 'text:light',
+      'id', 'id:light',
+      'data-testid', 'data-testid:light',
+      'data-test-id', 'data-test-id:light',
+      'data-test', 'data-test:light'
+    ]);
     this._engines = new Map();
   }
 
@@ -44,7 +52,7 @@ export class Selectors {
     if (!name.match(/^[a-zA-Z_0-9-]+$/))
       throw new Error('Selector engine name may only contain [a-zA-Z0-9_] characters');
     // Note: we keep 'zs' for future use.
-    if (this._builtinEngines.has(name) || name === 'zs')
+    if (this._builtinEngines.has(name) || name === 'zs' || name === 'zs:light')
       throw new Error(`"${name}" is a predefined selector engine`);
     const source = await helper.evaluationScript(script, undefined, false);
     if (this._engines.has(name))
@@ -173,7 +181,7 @@ export class Selectors {
       const eqIndex = part.indexOf('=');
       let name: string;
       let body: string;
-      if (eqIndex !== -1 && part.substring(0, eqIndex).trim().match(/^[a-zA-Z_0-9-]+$/)) {
+      if (eqIndex !== -1 && part.substring(0, eqIndex).trim().match(/^[a-zA-Z_0-9-+:]+$/)) {
         name = part.substring(0, eqIndex).trim();
         body = part.substring(eqIndex + 1);
       } else if (part.startsWith('"')) {

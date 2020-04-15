@@ -103,20 +103,20 @@ describe('Page.$eval', function() {
   });
   it('should support spaces with >> syntax', async({page, server}) => {
     await page.goto(server.PREFIX + '/deep-shadow.html');
-    const text = await page.$eval(' css = div >>css=div>>css   = span  ', e => e.textContent);
+    const text = await page.$eval(' css:light = div >>css:light=div>>css:light   = span  ', e => e.textContent);
     expect(text).toBe('Hello from root2');
   });
   it('should enter shadow roots with >> syntax', async({page, server}) => {
     await page.goto(server.PREFIX + '/deep-shadow.html');
-    const text1 = await page.$eval('css=div >> css=span', e => e.textContent);
+    const text1 = await page.$eval('css:light=div >> css:light=span', e => e.textContent);
     expect(text1).toBe('Hello from root1');
-    const text2 = await page.$eval('css=div >> css=*:nth-child(2) >> css=span', e => e.textContent);
+    const text2 = await page.$eval('css:light=div >> css:light=*:nth-child(2) >> css:light=span', e => e.textContent);
     expect(text2).toBe('Hello from root2');
-    const nonExisting = await page.$('css=div div >> css=span');
+    const nonExisting = await page.$('css:light=div div >> css:light=span');
     expect(nonExisting).not.toBeTruthy();
-    const text3 = await page.$eval('css=section div >> css=span', e => e.textContent);
+    const text3 = await page.$eval('css:light=section div >> css:light=span', e => e.textContent);
     expect(text3).toBe('Hello from root1');
-    const text4 = await page.$eval('xpath=/html/body/section/div >> css=div >> css=span', e => e.textContent);
+    const text4 = await page.$eval('xpath=/html/body/section/div >> css:light=div >> css:light=span', e => e.textContent);
     expect(text4).toBe('Hello from root2');
   });
   it('should not stop at first failure with >> syntax', async({page, server}) => {
@@ -154,7 +154,7 @@ describe('Page.$$eval', function() {
   });
   it('should enter shadow roots with >> syntax', async({page, server}) => {
     await page.goto(server.PREFIX + '/deep-shadow.html');
-    const spansCount = await page.$$eval('css=div >> css=div >> css=span', spans => spans.length);
+    const spansCount = await page.$$eval('css:light=div >> css:light=div >> css:light=span', spans => spans.length);
     expect(spansCount).toBe(3);
   });
 });
@@ -545,26 +545,38 @@ describe('text selector', () => {
     expect(await page.$eval(`text=root1`, e => e.textContent)).toBe('Hello from root1');
     expect(await page.$eval(`text=root2`, e => e.textContent)).toBe('Hello from root2');
     expect(await page.$eval(`text=root3`, e => e.textContent)).toBe('Hello from root3');
+    expect(await page.$(`text:light=root1`)).toBe(null);
+    expect(await page.$(`text:light=root2`)).toBe(null);
+    expect(await page.$(`text:light=root3`)).toBe(null);
   });
 });
 
-describe('deep selector', () => {
+describe('css selector', () => {
   it('should work for open shadow roots', async({page, server}) => {
     await page.goto(server.PREFIX + '/deep-shadow.html');
-    expect(await page.$eval(`deep=span`, e => e.textContent)).toBe('Hello from root1');
-    expect(await page.$eval(`deep=[attr="value\\ space"]`, e => e.textContent)).toBe('Hello from root3 #2');
-    expect(await page.$eval(`deep=[attr='value\\ \\space']`, e => e.textContent)).toBe('Hello from root3 #2');
-    expect(await page.$eval(`deep=div div span`, e => e.textContent)).toBe('Hello from root2');
-    expect(await page.$eval(`deep=div span + span`, e => e.textContent)).toBe('Hello from root3 #2');
-    expect(await page.$eval(`deep=span + [attr*="value"]`, e => e.textContent)).toBe('Hello from root3 #2');
-    expect(await page.$eval(`deep=[data-testid="foo"] + [attr*="value"]`, e => e.textContent)).toBe('Hello from root3 #2');
-    expect(await page.$eval(`deep=#target`, e => e.textContent)).toBe('Hello from root2');
-    expect(await page.$eval(`deep=div #target`, e => e.textContent)).toBe('Hello from root2');
-    expect(await page.$eval(`deep=div div #target`, e => e.textContent)).toBe('Hello from root2');
-    expect(await page.$(`deep=div div div #target`)).toBe(null);
-    expect(await page.$eval(`deep=section > div div span`, e => e.textContent)).toBe('Hello from root2');
-    expect(await page.$eval(`deep=section > div div span:nth-child(2)`, e => e.textContent)).toBe('Hello from root3 #2');
-    expect(await page.$(`deep=section div div div div`)).toBe(null);
+    expect(await page.$eval(`css=span`, e => e.textContent)).toBe('Hello from root1');
+    expect(await page.$eval(`css=[attr="value\\ space"]`, e => e.textContent)).toBe('Hello from root3 #2');
+    expect(await page.$eval(`css=[attr='value\\ \\space']`, e => e.textContent)).toBe('Hello from root3 #2');
+    expect(await page.$eval(`css=div div span`, e => e.textContent)).toBe('Hello from root2');
+    expect(await page.$eval(`css=div span + span`, e => e.textContent)).toBe('Hello from root3 #2');
+    expect(await page.$eval(`css=span + [attr*="value"]`, e => e.textContent)).toBe('Hello from root3 #2');
+    expect(await page.$eval(`css=[data-testid="foo"] + [attr*="value"]`, e => e.textContent)).toBe('Hello from root3 #2');
+    expect(await page.$eval(`css=#target`, e => e.textContent)).toBe('Hello from root2');
+    expect(await page.$eval(`css=div #target`, e => e.textContent)).toBe('Hello from root2');
+    expect(await page.$eval(`css=div div #target`, e => e.textContent)).toBe('Hello from root2');
+    expect(await page.$(`css=div div div #target`)).toBe(null);
+    expect(await page.$eval(`css=section > div div span`, e => e.textContent)).toBe('Hello from root2');
+    expect(await page.$eval(`css=section > div div span:nth-child(2)`, e => e.textContent)).toBe('Hello from root3 #2');
+    expect(await page.$(`css=section div div div div`)).toBe(null);
+
+    const root2 = await page.$(`css=div div`);
+    expect(await root2.$eval(`css=#target`, e => e.textContent)).toBe('Hello from root2');
+    expect(await root2.$eval(`css:light=#target`, e => e.textContent)).toBe('Hello from root2');
+    const root3 = (await page.$$(`css=div div`))[1];
+    expect(await root3.$eval(`text=root3`, e => e.textContent)).toBe('Hello from root3');
+    expect(await root3.$eval(`css=[attr*="value"]`, e => e.textContent)).toBe('Hello from root3 #2');
+    // TODO: the following should be null, but we implicitly enter shadow root.
+    expect(await root3.$(`css:light=[attr*="value"]`)).not.toBe(null);
   });
 });
 
@@ -574,6 +586,9 @@ describe('attribute selector', () => {
     expect(await page.$eval(`id=target`, e => e.textContent)).toBe('Hello from root2');
     expect(await page.$eval(`data-testid=foo`, e => e.textContent)).toBe('Hello from root1');
     expect(await page.$$eval(`data-testid=foo`, els => els.length)).toBe(3);
+    expect(await page.$(`id:light=target`)).toBe(null);
+    expect(await page.$(`data-testid:light=foo`)).toBe(null);
+    expect(await page.$$(`data-testid:light=foo`)).toEqual([]);
   });
 });
 
