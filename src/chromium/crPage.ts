@@ -315,7 +315,8 @@ class FrameSession {
   private _eventListeners: RegisteredListener[] = [];
   readonly _targetId: string;
   private _firstNonInitialNavigationCommittedPromise: Promise<void>;
-  private _firstNonInitialNavigationCommittedCallback = () => {};
+  private _firstNonInitialNavigationCommittedFulfill = () => {};
+  private _firstNonInitialNavigationCommittedReject = (e: Error) => {};
 
   constructor(crPage: CRPage, client: CRSession, targetId: string) {
     this._client = client;
@@ -323,7 +324,13 @@ class FrameSession {
     this._page = crPage._page;
     this._targetId = targetId;
     this._networkManager = new CRNetworkManager(client, this._page);
-    this._firstNonInitialNavigationCommittedPromise = new Promise(f => this._firstNonInitialNavigationCommittedCallback = f);
+    this._firstNonInitialNavigationCommittedPromise = new Promise((f, r) => {
+      this._firstNonInitialNavigationCommittedFulfill = f;
+      this._firstNonInitialNavigationCommittedReject = r;
+    });
+    client.once(CRSessionEvents.Disconnected, () => {
+      this._firstNonInitialNavigationCommittedReject(new Error('Page closed'));
+    });
   }
 
   private _isMainFrame(): boolean {
@@ -386,7 +393,7 @@ class FrameSession {
             this._eventListeners.push(helper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
           });
         } else {
-          this._firstNonInitialNavigationCommittedCallback();
+          this._firstNonInitialNavigationCommittedFulfill();
           this._eventListeners.push(helper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
         }
       }),
@@ -479,7 +486,7 @@ class FrameSession {
   _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
     this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url, framePayload.name || '', framePayload.loaderId, initial);
     if (!initial)
-      this._firstNonInitialNavigationCommittedCallback();
+      this._firstNonInitialNavigationCommittedFulfill();
   }
 
   _onFrameRequestedNavigation(payload: Protocol.Page.frameRequestedNavigationPayload) {

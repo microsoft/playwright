@@ -51,7 +51,7 @@ export class FrameManager {
   private _frames = new Map<string, Frame>();
   private _mainFrame: Frame;
   readonly _consoleMessageTags = new Map<string, ConsoleTagHandler>();
-  private _pendingNavigationBarriers = new Set<PendingNavigationBarrier>();
+  readonly _signalBarriers = new Set<SignalBarrier>();
 
   constructor(page: Page) {
     this._page = page;
@@ -100,11 +100,11 @@ export class FrameManager {
     }
   }
 
-  async waitForNavigationsCreatedBy<T>(action: () => Promise<T>, deadline: number, options: types.NavigatingActionWaitOptions = {}, input?: boolean): Promise<T> {
+  async waitForSignalsCreatedBy<T>(action: () => Promise<T>, deadline: number, options: types.NavigatingActionWaitOptions = {}, input?: boolean): Promise<T> {
     if (options.waitUntil === 'nowait')
       return action();
-    const barrier = new PendingNavigationBarrier({ waitUntil: 'domcontentloaded', ...options }, deadline);
-    this._pendingNavigationBarriers.add(barrier);
+    const barrier = new SignalBarrier({ waitUntil: 'domcontentloaded', ...options }, deadline);
+    this._signalBarriers.add(barrier);
     try {
       const result = await action();
       if (input)
@@ -114,17 +114,17 @@ export class FrameManager {
       await new Promise(helper.makeWaitForNextTask());
       return result;
     } finally {
-      this._pendingNavigationBarriers.delete(barrier);
+      this._signalBarriers.delete(barrier);
     }
   }
 
   frameWillPotentiallyRequestNavigation() {
-    for (const barrier of this._pendingNavigationBarriers)
+    for (const barrier of this._signalBarriers)
       barrier.retain();
   }
 
   frameDidPotentiallyRequestNavigation() {
-    for (const barrier of this._pendingNavigationBarriers)
+    for (const barrier of this._signalBarriers)
       barrier.release();
   }
 
@@ -132,8 +132,8 @@ export class FrameManager {
     const frame = this._frames.get(frameId);
     if (!frame)
       return;
-    for (const barrier of this._pendingNavigationBarriers)
-      barrier.addFrame(frame);
+    for (const barrier of this._signalBarriers)
+      barrier.addFrameNavigation(frame);
     frame._pendingDocumentId = documentId;
   }
 
@@ -939,10 +939,12 @@ function selectorToString(selector: string, waitFor: 'attached' | 'detached' | '
   return `${label}${selector}`;
 }
 
-class PendingNavigationBarrier {
+export class SignalBarrier {
   private _frameIds = new Map<string, number>();
   private _options: types.NavigatingActionWaitOptions;
   private _protectCount = 0;
+  private _expectedPopups = 0;
+  private _expectedDownloads = 0;
   private _promise: Promise<void>;
   private _promiseCallback = () => {};
   private _deadline: number;
@@ -959,12 +961,39 @@ class PendingNavigationBarrier {
     return this._promise;
   }
 
-  async addFrame(frame: Frame) {
+  async addFrameNavigation(frame: Frame) {
     this.retain();
     const timeout = helper.timeUntilDeadline(this._deadline);
     const options = { ...this._options, timeout } as types.NavigateOptions;
     await frame.waitForNavigation(options).catch(e => {});
     this.release();
+  }
+
+  async expectPopup() {
+    ++this._expectedPopups;
+  }
+
+  async unexpectPopup() {
+    --this._expectedPopups;
+    this._maybeResolve();
+  }
+
+  async addPopup(pageOrError: Promise<Page | Error>) {
+    if (this._expectedPopups)
+      --this._expectedPopups;
+    this.retain();
+    await pageOrError;
+    this.release();
+  }
+
+  async expectDownload() {
+    ++this._expectedDownloads;
+  }
+
+  async addDownload() {
+    if (this._expectedDownloads)
+      --this._expectedDownloads;
+    this._maybeResolve();
   }
 
   retain() {
@@ -977,7 +1006,7 @@ class PendingNavigationBarrier {
   }
 
   private async _maybeResolve() {
-    if (!this._protectCount && !this._frameIds.size)
+    if (!this._protectCount && !this._expectedPopups && !this._expectedDownloads && !this._frameIds.size)
       this._promiseCallback();
   }
 }

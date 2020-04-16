@@ -34,6 +34,40 @@ describe('Auto waiting', () => {
     ]);
     expect(messages.join('|')).toBe('route|domcontentloaded|click');
   });
+  it('should await popup when clicking anchor', async function({page, server}) {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<a target=_blank rel=opener href="/empty.html">link</a>');
+    const messages = [];
+    await Promise.all([
+      page.waitForEvent('popup').then(() => messages.push('popup')),
+      page.click('a').then(() => messages.push('click')),
+    ]);
+    expect(messages.join('|')).toBe('popup|click');
+  });
+  it('should await popup when clicking anchor with noopener', async function({page, server}) {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<a target=_blank rel=noopener href="/empty.html">link</a>');
+    const messages = [];
+    await Promise.all([
+      page.waitForEvent('popup').then(() => messages.push('popup')),
+      page.click('a').then(() => messages.push('click')),
+    ]);
+    expect(messages.join('|')).toBe('popup|click');
+  });
+  it('should await download when clicking anchor', async function({page, server}) {
+    server.setRoute('/download', (req, res) => {
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', 'attachment');
+      res.end(`Hello world`);
+    });
+    await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);
+    const messages = [];
+    await Promise.all([
+      page.waitForEvent('download').then(() => messages.push('download')),
+      page.click('a').then(() => messages.push('click')),
+    ]);
+    expect(messages.join('|')).toBe('download|click');
+  });
   it('should await cross-process navigation when clicking anchor', async({page, server}) => {
     const messages = [];
     server.setRoute('/empty.html', async (req, res) => {
@@ -129,6 +163,15 @@ describe('Auto waiting', () => {
       page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
     ]);
     expect(messages.join('|')).toBe('route|domcontentloaded|evaluate');
+  });
+  it('should await new popup when evaluating', async function({page, server}) {
+    await page.goto(server.EMPTY_PAGE);
+    const messages = [];
+    await Promise.all([
+      page.waitForEvent('popup').then(() => messages.push('popup')),
+      page.evaluate(() => window._popup = window.open(window.location.href)).then(() => messages.push('evaluate')),
+    ]);
+    expect(messages.join('|')).toBe('popup|evaluate');
   });
   it('should await navigating specified target', async({page, server}) => {
     const messages = [];

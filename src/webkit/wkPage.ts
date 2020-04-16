@@ -58,9 +58,10 @@ export class WKPage implements PageDelegate {
   private _eventListeners: RegisteredListener[];
   private readonly _evaluateOnNewDocumentSources: string[] = [];
   readonly _browserContext: WKBrowserContext;
-  private _initialized = false;
+  _initializedPage: Page | null = null;
   private _firstNonInitialNavigationCommittedPromise: Promise<void>;
-  private _firstNonInitialNavigationCommittedCallback = () => {};
+  private _firstNonInitialNavigationCommittedFulfill = () => {};
+  private _firstNonInitialNavigationCommittedReject = (e: Error) => {};
 
   constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null) {
     this._pageProxySession = pageProxySession;
@@ -80,11 +81,10 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._pageProxySession, 'Target.didCommitProvisionalTarget', this._onDidCommitProvisionalTarget.bind(this)),
     ];
     this._pagePromise = new Promise(f => this._pagePromiseCallback = f);
-    this._firstNonInitialNavigationCommittedPromise = new Promise(f => this._firstNonInitialNavigationCommittedCallback = f);
-  }
-
-  _initializedPage(): Page | null {
-    return this._initialized ? this._page : null;
+    this._firstNonInitialNavigationCommittedPromise = new Promise((f, r) => {
+      this._firstNonInitialNavigationCommittedFulfill = f;
+      this._firstNonInitialNavigationCommittedReject = r;
+    });
   }
 
   private async _initializePageProxySession() {
@@ -217,6 +217,7 @@ export class WKPage implements PageDelegate {
       this._provisionalPage = null;
     }
     this._page._didDisconnect();
+    this._firstNonInitialNavigationCommittedReject(new Error('Page closed'));
   }
 
   dispatchMessageToSession(message: any) {
@@ -224,7 +225,11 @@ export class WKPage implements PageDelegate {
   }
 
   handleProvisionalLoadFailed(event: Protocol.Playwright.provisionalLoadFailedPayload) {
-    if (!this._initialized || !this._provisionalPage)
+    if (!this._initializedPage) {
+      this._firstNonInitialNavigationCommittedReject(new Error('Initial load failed'));
+      return;
+    }
+    if (!this._provisionalPage)
       return;
     let errorText = event.error;
     if (errorText.includes('cancelled'))
@@ -247,7 +252,7 @@ export class WKPage implements PageDelegate {
     });
     assert(targetInfo.type === 'page', 'Only page targets are expected in WebKit, received: ' + targetInfo.type);
 
-    if (!this._initialized) {
+    if (!this._initializedPage) {
       assert(!targetInfo.isProvisional);
       let pageOrError: Page | Error;
       try {
@@ -263,12 +268,19 @@ export class WKPage implements PageDelegate {
       if (targetInfo.isPaused)
         this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
       if ((pageOrError instanceof Page) && this._page.mainFrame().url() === '') {
-        // Initial empty page has an empty url. We should wait until the first real url has been loaded,
-        // even if that url is about:blank. This is especially important for popups, where we need the
-        // actual url before interacting with it.
-        await this._firstNonInitialNavigationCommittedPromise;
+        try {
+          // Initial empty page has an empty url. We should wait until the first real url has been loaded,
+          // even if that url is about:blank. This is especially important for popups, where we need the
+          // actual url before interacting with it.
+          await this._firstNonInitialNavigationCommittedPromise;
+        } catch (e) {
+          pageOrError = e;
+        }
+      } else {
+        // Avoid rejection on disconnect.
+        this._firstNonInitialNavigationCommittedPromise.catch(() => {});
       }
-      this._initialized = true;
+      this._initializedPage = pageOrError instanceof Page ? pageOrError : null;
       this._pagePromiseCallback(pageOrError);
     } else {
       assert(targetInfo.isProvisional);
@@ -302,6 +314,8 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
       helper.addEventListener(this._session, 'Page.loadEventFired', event => this._onLifecycleEvent(event.frameId, 'load')),
       helper.addEventListener(this._session, 'Page.domContentEventFired', event => this._onLifecycleEvent(event.frameId, 'domcontentloaded')),
+      helper.addEventListener(this._session, 'Page.willRequestOpenWindow', event => this._onWillRequestOpenWindow()),
+      helper.addEventListener(this._session, 'Page.didRequestOpenWindow', event => this._onDidRequestOpenWindow(event)),
       helper.addEventListener(this._session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
       helper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
       helper.addEventListener(this._pageProxySession, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
@@ -344,6 +358,18 @@ export class WKPage implements PageDelegate {
     this._page._frameManager.frameLifecycleEvent(frameId, event);
   }
 
+  private _onWillRequestOpenWindow() {
+    for (const barrier of this._page._frameManager._signalBarriers)
+      barrier.expectPopup();
+  }
+
+  private _onDidRequestOpenWindow(event: Protocol.Page.didRequestOpenWindowPayload) {
+    if (!event.opened) {
+      for (const barrier of this._page._frameManager._signalBarriers)
+        barrier.unexpectPopup();
+    }
+  }
+
   private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {
     this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
     this._onFrameNavigated(frameTree.frame, true);
@@ -368,7 +394,7 @@ export class WKPage implements PageDelegate {
       this._workers.clear();
     this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url, framePayload.name || '', framePayload.loaderId, initial);
     if (!initial)
-      this._firstNonInitialNavigationCommittedCallback();
+      this._firstNonInitialNavigationCommittedFulfill();
   }
 
   private _onFrameNavigatedWithinDocument(frameId: string, url: string) {

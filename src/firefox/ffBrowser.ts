@@ -129,6 +129,10 @@ export class FFBrowser extends BrowserBase {
     const ffPage = new FFPage(session, context, opener);
     this._ffPages.set(targetId, ffPage);
 
+    if (opener && opener._initializedPage) {
+      for (const signalBarrier of opener._initializedPage._frameManager._signalBarriers)
+        signalBarrier.addPopup(ffPage.pageOrError());
+    }
     ffPage.pageOrError().then(async () => {
       this._firstPageCallback();
       const page = ffPage._page;
@@ -200,7 +204,7 @@ export class FFBrowserContext extends BrowserContextBase {
   }
 
   pages(): Page[] {
-    return this._ffPages().map(ffPage => ffPage._initializedPage()).filter(pageOrNull => !!pageOrNull) as Page[];
+    return this._ffPages().map(ffPage => ffPage._initializedPage).filter(pageOrNull => !!pageOrNull) as Page[];
   }
 
   async newPage(): Promise<Page> {
