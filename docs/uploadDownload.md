@@ -73,9 +73,9 @@ Note that handling the event forks the control flow and makes script harder to f
 ## Handle file downloads
 
 ```js
-const [ dowload ] = await Promise.all([
-	page.waitForEvent('dowload'), // <-- start waiting for the download
-	page.click('button#delayed-dowload') // <-- perform the action that directly or indirectly initiates it.
+const [ download ] = await Promise.all([
+	page.waitForEvent('download'), // <-- start waiting for the download
+	page.click('button#delayed-download') // <-- perform the action that directly or indirectly initiates it.
 ]);
 const path = await download.path();
 ```
