@@ -1,4 +1,4 @@
-# Input cheat sheet
+# Working with input
 
 ## Fill out the form, enter text
 ```js
@@ -23,11 +23,10 @@ await page.fill('#local', '2020-03-02T05:15');
 
 #### API reference
 
-- [`page.fill(selector, value[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagefillselector-value-options) — on the main frame
-- [`frame.fill(selector, value[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framefillselector-value-options) — on a specific frame
-- [`elementHandle.fill(value[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandlefillvalue-options) — on a particular element
+- [`page.fill(selector, value[, options])`](./api.md#pagefillselector-value-options) — on the main frame
+- [`frame.fill(selector, value[, options])`](./api.md#framefillselector-value-options) — on a specific frame
+- [`elementHandle.fill(value[, options])`](./api.md#elementhandlefillvalue-options) — on a particular element
 
-<br/>
 <br/>
 
 ## Check / uncheck the checkbox
@@ -44,14 +43,13 @@ This is the easiest way to check and uncheck a checkbox. This method can be used
 
 #### API reference
 
-- [`page.check(selector[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagecheckselector-options) — on the main frame
-- [`page.uncheck(selector[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageuncheckselector-options) — on the main frame
-- [`frame.check(selector[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framecheckselector-options) — on a specific frame
-- [`frame.uncheck(selector[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameuncheckselector-options) — on a specific frame
-- [`elementHandle.check(value[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandleuncheckoptions) — on a particular element
-- [`elementHandle.uncheck(value[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandleuncheckoptions) — on a particular element
+- [`page.check(selector[, options])`](./api.md#pagecheckselector-options) — on the main frame
+- [`page.uncheck(selector[, options])`](./api.md#pageuncheckselector-options) — on the main frame
+- [`frame.check(selector[, options])`](./api.md#framecheckselector-options) — on a specific frame
+- [`frame.uncheck(selector[, options])`](./api.md#frameuncheckselector-options) — on a specific frame
+- [`elementHandle.check(value[, options])`](./api.md#elementhandleuncheckoptions) — on a particular element
+- [`elementHandle.uncheck(value[, options])`](./api.md#elementhandleuncheckoptions) — on a particular element
 
-<br/>
 <br/>
 
 ## Select an option
@@ -88,11 +86,10 @@ page.selectOption('select#colors', option);
 
 #### API reference
 
-- [`page.selectOption(selector, values[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageselectoptionselector-values-options) — on the main frame
-- [`frame.selectOption(selector, values[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameselectoptionselector-values-options) — on a specific frame
-- [`elementHandle.selectOption(values[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandleselectoptionvalues-options) — on a particular element
+- [`page.selectOption(selector, values[, options])`](./api.md#pageselectoptionselector-values-options) — on the main frame
+- [`frame.selectOption(selector, values[, options])`](./api.md#frameselectoptionselector-values-options) — on a specific frame
+- [`elementHandle.selectOption(values[, options])`](./api.md#elementhandleselectoptionvalues-options) — on a particular element
 
-<br/>
 <br/>
 
 ## Type character by character
@@ -106,12 +103,11 @@ Sometimes it is important to type into the focused field character by character,
 
 #### API reference
 
-- [`page.type(selector, text[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagetypeselector-text-options) — on the main frame
-- [`frame.type(selector, text[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frametypeselector-text-options) — on a specific frame
-- [`elementHandle.type(text[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandletypetext-options) — on a particular element
-- [`keyboard.type(text[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardtypetext-options) — wherever the current focus is
+- [`page.type(selector, text[, options])`](./api.md#pagetypeselector-text-options) — on the main frame
+- [`frame.type(selector, text[, options])`](./api.md#frametypeselector-text-options) — on a specific frame
+- [`elementHandle.type(text[, options])`](./api.md#elementhandletypetext-options) — on a particular element
+- [`keyboard.type(text[, options])`](./api.md#keyboardtypetext-options) — wherever the current focus is
 
-<br/>
 <br/>
 
 ## Press a key, enter keyboard shortcut
@@ -165,7 +161,7 @@ Note that you still need to specify the capital `A` in `Shift-A` to produce the 
 
 #### API reference
 
-- [`page.press(selector, key[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagepressselector-key-options) — on the main frame
-- [`frame.press(selector, key[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framepressselector-key-options) — on a specific frame
-- [`elementHandle.press(key[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandlepresskey-options) — on a particular element
-- [`keyboard.press(key[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardpresskey-options) — wherever the current focus is
+- [`page.press(selector, key[, options])`](./api.md#pagepressselector-key-options) — on the main frame
+- [`frame.press(selector, key[, options])`](./api.md#framepressselector-key-options) — on a specific frame
+- [`elementHandle.press(key[, options])`](./api.md#elementhandlepresskey-options) — on a particular element
+- [`keyboard.press(key[, options])`](./api.md#keyboardpresskey-options) — wherever the current focus is

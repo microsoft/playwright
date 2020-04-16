@@ -151,7 +151,7 @@ export class Request {
   }
 
   headers(): {[key: string]: string} {
-    return this._headers;
+    return { ...this._headers };
   }
 
   response(): Promise<Response | null> {
@@ -291,7 +291,7 @@ export class Response {
   }
 
   headers(): object {
-    return this._headers;
+    return { ...this._headers };
   }
 
   finished(): Promise<Error | null> {
