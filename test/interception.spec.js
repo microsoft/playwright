@@ -368,8 +368,7 @@ describe('Page.route', function() {
     expect(response.ok()).toBe(true);
     expect(intercepted).toBe(true);
   });
-  // WebKit crashes. Firefox succeeds, but then fails to close.
-  it.fail(FFOX || WEBKIT)('should create a redirect', async({page, server}) => {
+  it('should create a redirect', async({page, server}) => {
     await page.goto(server.PREFIX + '/empty.html');
     await page.route('**/*', async(route, request) => {
       if (request.url() !== server.PREFIX + '/redirect_this')
