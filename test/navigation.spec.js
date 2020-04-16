@@ -557,9 +557,7 @@ describe('Page.goto', function() {
         return page.setContent(`<script src='networkidle.js'></script>`, { waitUntil: 'networkidle2' });
       }, true);
     });
-    it.fail(FFOX)('should wait for networkidle0 in setContent with request from previous navigation', async({page, server}) => {
-      // TODO: in Firefox window.stop() does not cancel outstanding requests, and we also lack 'init' lifecycle,
-      // therefore we don't clear inflight requests at the right time.
+    it('should wait for networkidle0 in setContent with request from previous navigation', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       server.setRoute('/foo.js', () => {});
       await page.setContent(`<script>fetch('foo.js');</script>`);
@@ -567,9 +565,7 @@ describe('Page.goto', function() {
         return page.setContent(`<script src='networkidle.js'></script>`, { waitUntil: 'networkidle0' });
       }, true);
     });
-    it.fail(FFOX)('should wait for networkidle2 in setContent with request from previous navigation', async({page, server}) => {
-      // TODO: in Firefox window.stop() does not cancel outstanding requests, and we also lack 'init' lifecycle,
-      // therefore we don't clear inflight requests at the right time.
+    it('should wait for networkidle2 in setContent with request from previous navigation', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       server.setRoute('/foo.js', () => {});
       await page.setContent(`<script>fetch('foo.js');</script>`);
