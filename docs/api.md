@@ -814,7 +814,7 @@ console.log(await popup.evaluate('location.href'));
 - <[Request]>
 
 Emitted when a page issues a request. The [request] object is read-only.
-In order to intercept and mutate requests, see !!!`page.route()` or `brows.
+In order to intercept and mutate requests, see [`page.route()`](#pagerouteurl-handler) or [`browserContext.route()`](#browsercontextrouteurl-handler).
 
 #### event: 'requestfailed'
 - <[Request]>
