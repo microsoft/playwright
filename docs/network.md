@@ -1,4 +1,4 @@
-# Network Interception
+# Working With Network
 
 ![playwright network](https://user-images.githubusercontent.com/746130/79428385-f0264900-7f7a-11ea-86e6-cd03190b8de7.png)
 
