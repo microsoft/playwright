@@ -162,6 +162,11 @@ function collect(browserNames) {
       testRunner.collector().useEnvironment(browserTypeEnvironment);
 
       for (const spec of config.specs || []) {
+        for (const [key, value] of Object.entries(spec.globals || {}))
+          global[key] = undefined;
+      }
+
+      for (const spec of config.specs || []) {
         const skip = spec.browsers && !spec.browsers.includes(browserName);
         (skip ? xdescribe : describe)(spec.title || '', () => {
           for (const e of spec.environments || ['page']) {
@@ -174,10 +179,14 @@ function collect(browserNames) {
               testRunner.collector().useEnvironment(e);
             }
           }
+          for (const [key, value] of Object.entries(spec.globals || {}))
+            global[key] = value;
           for (const file of spec.files || []) {
             require(file);
             delete require.cache[require.resolve(file)];
           }
+          for (const [key, value] of Object.entries(spec.globals || {}))
+            global[key] = undefined;
         });
       }
 

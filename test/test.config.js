@@ -81,6 +81,25 @@ customEnvironment.afterEach(async (state, testRun) => {
   }
 });
 
+const mainFrameEnvironment = new Environment('MainFrame');
+mainFrameEnvironment.beforeEach(async state => {
+  state.frame = state.page.mainFrame();
+});
+mainFrameEnvironment.afterEach(async state => {
+  delete state.frame;
+});
+
+const childFrameEnvironment = new Environment('ChildFrame');
+childFrameEnvironment.beforeEach(async state => {
+  await state.page.goto(state.server.PREFIX + '/child-frame-environment.html');
+  if (state.page.frames().length !== 2)
+    throw new Error('Failed to setup child frame environment');
+  state.frame = state.page.frames()[1];
+});
+childFrameEnvironment.afterEach(async state => {
+  delete state.frame;
+});
+
 function valueFromEnv(name, defaultValue) {
   if (!(name in process.env))
     return defaultValue;
@@ -168,7 +187,6 @@ module.exports = {
         './jshandle.spec.js',
         './keyboard.spec.js',
         './mouse.spec.js',
-        './navigation.spec.js',
         './network.spec.js',
         './page.spec.js',
         './queryselector.spec.js',
@@ -181,6 +199,24 @@ module.exports = {
         './permissions.spec.js',
       ],
       environments: [customEnvironment,  'page'],
+    },
+
+    {
+      files: [
+        './navigation.spec.js',
+      ],
+      environments: [customEnvironment,  'page', mainFrameEnvironment],
+    },
+
+    {
+      files: [
+        './navigation.spec.js',
+      ],
+      title: '[IFRAME]',
+      globals: {
+        IFRAME: true,
+      },
+      environments: [customEnvironment,  'page', childFrameEnvironment],
     },
 
     {

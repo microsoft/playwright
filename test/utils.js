@@ -38,13 +38,14 @@ const utils = module.exports = {
   },
 
   /**
-   * @param {!Page} page
+   * @param {!Page | !Frame} pageOrFrame
    * @param {string} frameId
    * @param {string} url
    * @return {!Playwright.Frame}
    */
-  attachFrame: async function(page, frameId, url) {
-    const handle = await page.evaluateHandle(async ({ frameId, url }) => {
+  attachFrame: async function(pageOrFrame, frameId, url) {
+    const frame = typeof pageOrFrame.mainFrame === 'function' ? pageOrFrame.mainFrame() : pageOrFrame;
+    const handle = await frame.evaluateHandle(async ({ frameId, url }) => {
       const frame = document.createElement('iframe');
       frame.src = url;
       frame.id = frameId;
@@ -56,11 +57,12 @@ const utils = module.exports = {
   },
 
   /**
-   * @param {!Page} page
+   * @param {!Page | !Frame} pageOrFrame
    * @param {string} frameId
    */
-  detachFrame: async function(page, frameId) {
-    await page.evaluate(frameId => {
+  detachFrame: async function(pageOrFrame, frameId) {
+    const frame = typeof pageOrFrame.mainFrame === 'function' ? pageOrFrame.mainFrame() : pageOrFrame;
+    await frame.evaluate(frameId => {
       document.getElementById(frameId).remove();
     }, frameId);
   },
