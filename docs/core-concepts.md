@@ -24,16 +24,12 @@ const browser = await chromium.launch({ headless: false });
 await browser.close();
 ```
 
-After launching a browser, Playwright establishes a **bi-directional RPC channel**
-between the Playwright script executing in Node.js and the browser instance.
-Read more about [execution contexts](#execution-contexts).
-
 Launching a browser instance can be expensive, and Playwright is designed to
 maximize what a single instance can do through multiple browser contexts.
 
 ### Browser Context
 
-A [`BrowserContext`](../api.md#class-browsercontext) is an isolated incognito
+A [`BrowserContext`](../api.md#class-browsercontext) is an isolated incognito-alike
 session within a browser instance. Browser contexts are fast and cheap to create.
 Browser contexts can be used to parallelize isolated test executions.
 
@@ -61,7 +57,7 @@ const context = await browser.newContext({
 ### Pages and Frames
 
 A Browser context can have multiple pages. A [`Page`](../api.md#class-page)
-refers to a single tab within a browser context. A page can be used to navigate
+refers to a single tab or a popup window within a browser context. A page can be used to navigate
 to URLs and then interact with elements.
 
 ```js
@@ -83,7 +79,7 @@ const frame = page.frame('frame-name');
 await frame.fill('#username-input');
 ```
 
-#### Single Page Scenarios
+### Single Page Scenarios
 
 For scenarios involving just one page, it is possible to create a new page
 without explicitly creating a browser context through a convenience API. This
@@ -97,22 +93,37 @@ const page = await browser.newPage();
 
 ## Execution contexts
 
-The Playwright API can be used in a JavaScript file running in a Node.js
-environment. When a browser instance is created, Playwright creates a
-bi-directional communication channel between the Node.js script and the browser.
+Playwright scripts run in your Node.js environment. You page scripts run in the page environment. Those environments don't intersect, they are running in different virtual machines in different processes and potentially on different computers.
 
-With this channel in place, Playwright can also execute JavaScript code in the
-context of the web page. This enables another execution context for automation
-scripts.
+IMAGE PLACEHOLDER
+
+Playwright exposes APIs to execute the JavaScript code in the context of the web page and allows calling back into the Node.js environment from your web page.
 
 ### Using the Evaluate API
 
 The [`page.evaluate`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatepagefunction-arg) API can run a JavaScript function in the context
 of the web page and bring results back to the Node.js environment. Globals like
-`window` and `document` can be used in `evaluate`.
+`window` and `document` along with the web page runtime can be used in `evaluate`.
+
+Right:
 
 ```js
-const result = await page.evaluate(() => {
-  return { width: window.innerWidth, height: window.innerHeight };
-})
+const data = { text: 'some data', value: 1 };
+// Pass |data| as a parameter.
+const result = await page.evaluate(data => {
+  window.myApp.use(data);
+}, data);
 ```
+
+Wrong:
+
+```js
+const data = { text: 'some data', value: 1 };
+const result = await page.evaluate(() => {
+  // There is no |data| in the web page.
+  window.myApp.use(data);
+});
+```
+
+Evaluation parameters are serialized and sent into your web page over the wire.
+You can pass primitive types, JSON-alike objects and remote object handles received from the page.
