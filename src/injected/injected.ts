@@ -248,6 +248,29 @@ class Injected {
     throw new Error('Not a checkbox');
   }
 
+  async setInputFiles(node: Node, payloads: types.FileTransferPayload[]) {
+    if (node.nodeType !== Node.ELEMENT_NODE)
+      return 'Node is not of type HTMLElement';
+    const element: Element | undefined = node as Element;
+    if (element.nodeName !== 'INPUT')
+      return 'Not an <input> element';
+    const input = element as HTMLInputElement;
+    const type = (input.getAttribute('type') || '').toLowerCase();
+    if (type !== 'file')
+      return 'Not an input[type=file] element';
+
+    const files = await Promise.all(payloads.map(async file => {
+      const result = await fetch(`data:${file.type};base64,${file.data}`);
+      return new File([await result.blob()], file.name, {type: file.type});
+    }));
+    const dt = new DataTransfer();
+    for (const file of files)
+      dt.items.add(file);
+    input.files = dt.files;
+    input.dispatchEvent(new Event('input', { 'bubbles': true }));
+    input.dispatchEvent(new Event('change', { 'bubbles': true }));
+  }
+
   async waitForDisplayedAtStablePosition(node: Node, timeout: number) {
     if (!node.isConnected)
       throw new Error('Element is not attached to the DOM');

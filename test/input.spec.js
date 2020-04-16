@@ -38,6 +38,25 @@ describe('input', function() {
   });
 });
 
+describe('Page.setInputFiles', function() {
+  it('should work', async({page}) => {
+    await page.setContent(`<input type=file>`);
+    await page.setInputFiles('input', path.join(__dirname, '/assets/file-to-upload.txt'));
+    expect(await page.$eval('input', input => input.files.length)).toBe(1);
+    expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
+  });
+  it('should set from memory', async({page}) => {
+    await page.setContent(`<input type=file>`);
+    await page.setInputFiles('input', {
+      name: 'test.txt',
+      mimeType: 'text/plain',
+      buffer: Buffer.from('this is a test')
+    });
+    expect(await page.$eval('input', input => input.files.length)).toBe(1);
+    expect(await page.$eval('input', input => input.files[0].name)).toBe('test.txt');
+  });
+});
+
 describe('Page.waitForFileChooser', function() {
   it('should emit event', async({page, server}) => {
     await page.setContent(`<input type=file>`);
@@ -105,11 +124,13 @@ describe('Page.waitForFileChooser', function() {
   });
   it('should accept single file', async({page, server}) => {
     await page.setContent(`<input type=file oninput='javascript:console.timeStamp()'>`);
-    const [{ element }] = await Promise.all([
+    const [fileChooser] = await Promise.all([
       page.waitForEvent('filechooser'),
       page.click('input'),
     ]);
-    await element.setInputFiles(FILE_TO_UPLOAD);
+    expect(fileChooser.page()).toBe(page);
+    expect(fileChooser.element()).toBeTruthy();
+    await fileChooser.setFiles(FILE_TO_UPLOAD);
     expect(await page.$eval('input', input => input.files.length)).toBe(1);
     expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
   });
@@ -151,7 +172,7 @@ describe('Page.waitForFileChooser', function() {
   it('should be able to read selected file', async({page, server}) => {
     await page.setContent(`<input type=file>`);
     const [, content] = await Promise.all([
-      page.waitForEvent('filechooser').then(({element}) => element.setInputFiles(FILE_TO_UPLOAD)),
+      page.waitForEvent('filechooser').then(fileChooser => fileChooser.setFiles(FILE_TO_UPLOAD)),
       page.$eval('input', async picker => {
         picker.click();
         await new Promise(x => picker.oninput = x);
@@ -166,7 +187,7 @@ describe('Page.waitForFileChooser', function() {
   it('should be able to reset selected files with empty file list', async({page, server}) => {
     await page.setContent(`<input type=file>`);
     const [, fileLength1] = await Promise.all([
-      page.waitForEvent('filechooser').then(({element}) => element.setInputFiles(FILE_TO_UPLOAD)),
+      page.waitForEvent('filechooser').then(fileChooser => fileChooser.setFiles(FILE_TO_UPLOAD)),
       page.$eval('input', async picker => {
         picker.click();
         await new Promise(x => picker.oninput = x);
@@ -175,7 +196,7 @@ describe('Page.waitForFileChooser', function() {
     ]);
     expect(fileLength1).toBe(1);
     const [, fileLength2] = await Promise.all([
-      page.waitForEvent('filechooser').then(({element}) => element.setInputFiles([])),
+      page.waitForEvent('filechooser').then(fileChooser => fileChooser.setFiles([])),
       page.$eval('input', async picker => {
         picker.click();
         await new Promise(x => picker.oninput = x);
@@ -186,12 +207,12 @@ describe('Page.waitForFileChooser', function() {
   });
   it('should not accept multiple files for single-file input', async({page, server}) => {
     await page.setContent(`<input type=file>`);
-    const [{ element }] = await Promise.all([
+    const [fileChooser] = await Promise.all([
       page.waitForEvent('filechooser'),
       page.click('input'),
     ]);
     let error = null;
-    await element.setInputFiles([
+    await fileChooser.setFiles([
       path.relative(process.cwd(), __dirname + '/assets/file-to-upload.txt'),
       path.relative(process.cwd(), __dirname + '/assets/pptr.png')
     ]).catch(e => error = e);
@@ -216,26 +237,26 @@ describe('Page.waitForFileChooser', function() {
 describe('Page.waitForFileChooser isMultiple', () => {
   it('should work for single file pick', async({page, server}) => {
     await page.setContent(`<input type=file>`);
-    const [{ multiple }] = await Promise.all([
+    const [fileChooser] = await Promise.all([
       page.waitForEvent('filechooser'),
       page.click('input'),
     ]);
-    expect(multiple).toBe(false);
+    expect(fileChooser.isMultiple()).toBe(false);
   });
   it('should work for "multiple"', async({page, server}) => {
     await page.setContent(`<input multiple type=file>`);
-    const [{ multiple }] = await Promise.all([
+    const [fileChooser] = await Promise.all([
       page.waitForEvent('filechooser'),
       page.click('input'),
     ]);
-    expect(multiple).toBe(true);
+    expect(fileChooser.isMultiple()).toBe(true);
   });
   it('should work for "webkitdirectory"', async({page, server}) => {
     await page.setContent(`<input multiple webkitdirectory type=file>`);
-    const [{ multiple }] = await Promise.all([
+    const [fileChooser] = await Promise.all([
       page.waitForEvent('filechooser'),
       page.click('input'),
     ]);
-    expect(multiple).toBe(true);
+    expect(fileChooser.isMultiple()).toBe(true);
   });
 });

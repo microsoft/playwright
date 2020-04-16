@@ -30,6 +30,7 @@ import { ConsoleMessage, ConsoleMessageLocation } from './console';
 import * as accessibility from './accessibility';
 import { ExtendedEventEmitter } from './extendedEventEmitter';
 import { EventEmitter } from 'events';
+import { FileChooser } from './fileChooser';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -81,11 +82,6 @@ type PageState = {
   mediaType: types.MediaType | null;
   colorScheme: types.ColorScheme | null;
   extraHTTPHeaders: network.Headers | null;
-};
-
-export type FileChooser = {
-  element: dom.ElementHandle,
-  multiple: boolean
 };
 
 export class Page extends ExtendedEventEmitter {
@@ -174,7 +170,7 @@ export class Page extends ExtendedEventEmitter {
       handle.dispose();
       return;
     }
-    const fileChooser: FileChooser = { element: handle, multiple };
+    const fileChooser = new FileChooser(this, handle, multiple);
     this.emit(Events.Page.FileChooser, fileChooser);
   }
 
@@ -456,6 +452,10 @@ export class Page extends ExtendedEventEmitter {
 
   async selectOption(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options?: types.NavigatingActionWaitOptions): Promise<string[]> {
     return this.mainFrame().selectOption(selector, values, options);
+  }
+
+  async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options?: types.NavigatingActionWaitOptions): Promise<void> {
+    return this.mainFrame().setInputFiles(selector, files, options);
   }
 
   async type(selector: string, text: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {

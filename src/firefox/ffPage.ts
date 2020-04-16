@@ -433,7 +433,8 @@ export class FFPage implements PageDelegate {
   }
 
   async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
-    await handle.evaluate(dom.setFileInputFunction, files);
+    await handle._evaluateInUtility(({ injected, node }, files) =>
+      injected.setInputFiles(node, files), dom.toFileTransferPayload(files));
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
