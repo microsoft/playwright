@@ -241,10 +241,10 @@ describe('Network Events', function() {
     expect(responses[0].request()).toBeTruthy();
   });
 
-  it.fail(FFOX)('Page.Events.RequestFailed', async({page, server}) => {
+  it('Page.Events.RequestFailed', async({page, server}) => {
     server.setRoute('/one-style.css', (req, res) => {
-      req.socket.write('deadbeef');
-      req.socket.end();
+      res.setHeader('Content-Type', 'text/css');
+      res.socket.destroy();
     });
     const failedRequests = [];
     page.on('requestfailed', request => failedRequests.push(request));
@@ -254,7 +254,7 @@ describe('Network Events', function() {
     expect(await failedRequests[0].response()).toBe(null);
     expect(failedRequests[0].resourceType()).toBe('stylesheet');
     if (CHROMIUM) {
-      expect(failedRequests[0].failure().errorText).toBe('net::ERR_INVALID_HTTP_RESPONSE');
+      expect(failedRequests[0].failure().errorText).toBe('net::ERR_EMPTY_RESPONSE');
     } else if (WEBKIT) {
       if (MAC)
         expect(failedRequests[0].failure().errorText).toBe('The network connection was lost.');
@@ -263,7 +263,7 @@ describe('Network Events', function() {
       else
         expect(failedRequests[0].failure().errorText).toBe('Message Corrupt');
     } else {
-      expect(failedRequests[0].failure().errorText).toBe('NS_ERROR_FAILURE');
+      expect(failedRequests[0].failure().errorText).toBe('NS_ERROR_NET_RESET');
     }
     expect(failedRequests[0].frame()).toBeTruthy();
   });
