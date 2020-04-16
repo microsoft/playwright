@@ -219,6 +219,12 @@ describe('Page.screenshot', function() {
     expect(screenshot).toBeGolden(golden('screenshot-device-scale-factor.png'));
     await context.close();
   });
+  it('should work with iframes', async({page, server, golden}) => {
+    await page.setViewportSize({width: 500, height: 500});
+    await page.goto(server.PREFIX + '/frames/grid-frame.html');
+    expect(page.frames().length).toBe(2);
+    expect(await page.screenshot()).toBeGolden(golden('screenshot-iframe.png'));
+  });
 });
 
 describe('ElementHandle.screenshot', function() {

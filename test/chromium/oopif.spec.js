@@ -59,23 +59,34 @@ describe('OOPIF', function() {
     expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
     expect(await countOOPIFs(browser)).toBe(1);
   });
-  it.fail(CHROMIUM)('should get the proper viewport', async({browser, page, server}) => {
+  it('should keep the iframe size after viewport resize', async({browser, page, server}) => {
     expect(page.viewportSize()).toEqual({width: 1280, height: 720});
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(page.frames().length).toBe(2);
     expect(await countOOPIFs(browser)).toBe(1);
     const oopif = page.frames()[1];
-    expect(await oopif.evaluate(() => screen.width)).toBe(1280);
-    expect(await oopif.evaluate(() => screen.height)).toBe(720);
-    expect(await oopif.evaluate(() => matchMedia('(device-width: 1280px)').matches)).toBe(true);
-    expect(await oopif.evaluate(() => matchMedia('(device-height: 720px)').matches)).toBe(true);
+    expect(await oopif.evaluate(() => matchMedia('(width: 300px)').matches)).toBe(true);
+    expect(await oopif.evaluate(() => matchMedia('(height: 300px)').matches)).toBe(true);
+    expect(await oopif.evaluate(() => window.innerHeight)).toBe(300);
+    expect(await oopif.evaluate(() => window.innerWidth)).toBe(300);
     expect(await oopif.evaluate(() => 'ontouchstart' in window)).toBe(false);
     await page.setViewportSize({width: 123, height: 456});
+    expect(await oopif.evaluate(() => matchMedia('(width: 300px)').matches)).toBe(true);
+    expect(await oopif.evaluate(() => matchMedia('(height: 300px)').matches)).toBe(true);
+    expect(await oopif.evaluate(() => window.innerHeight)).toBe(300);
+    expect(await oopif.evaluate(() => window.innerWidth)).toBe(300);
+    expect(await oopif.evaluate(() => 'ontouchstart' in window)).toBe(false);
+  });
+  it.fail(CHROMIUM)('should get the screen size', async({browser, page, server}) => {
+    await page.goto(server.PREFIX + '/dynamic-oopif.html');
+    await page.setViewportSize({width: 123, height: 456});
+    expect(page.frames().length).toBe(2);
+    expect(await countOOPIFs(browser)).toBe(1);
+    expect(await page.evaluate(() => screen.width)).toBe(123);
+    expect(await page.evaluate(() => screen.height)).toBe(456);
+    const oopif = page.frames()[1];
     expect(await oopif.evaluate(() => screen.width)).toBe(123);
     expect(await oopif.evaluate(() => screen.height)).toBe(456);
-    expect(await oopif.evaluate(() => matchMedia('(device-width: 123px)').matches)).toBe(true);
-    expect(await oopif.evaluate(() => matchMedia('(device-height: 456px)').matches)).toBe(true);
-    expect(await oopif.evaluate(() => 'ontouchstart' in window)).toBe(false);
   });
   it('should expose function', async({browser, page, server}) => {
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
@@ -138,13 +149,13 @@ describe('OOPIF', function() {
     expect(await countOOPIFs(browser)).toBe(1);
     expect(intercepted).toBe(true);
   });
-  it.fail(CHROMIUM)('should take screenshot', async({browser, page, server}) => {
+  it.fail(CHROMIUM)('should take screenshot', async({browser, page, server, golden}) => {
     // Screenshot differs on the bots, needs debugging.
     await page.setViewportSize({width: 500, height: 500});
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(page.frames().length).toBe(2);
     expect(await countOOPIFs(browser)).toBe(1);
-    expect(await page.screenshot()).toBeGolden('screenshot-iframe.png');
+    expect(await page.screenshot()).toBeGolden(golden('screenshot-oopif.png'));
   });
   it('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {
     await page.route('**/*', route => route.continue());
@@ -189,7 +200,7 @@ async function countOOPIFs(browser) {
   const oopifs = [];
   browserSession.on('Target.targetCreated', async ({targetInfo}) => {
     if (targetInfo.type === 'iframe')
-       oopifs.push(targetInfo);
+      oopifs.push(targetInfo);
   });
   await browserSession.send('Target.setDiscoverTargets', { discover: true });
   await browserSession.detach();
