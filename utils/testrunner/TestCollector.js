@@ -92,15 +92,48 @@ class Repeater {
   }
 
   createTestRuns(tests) {
-    const testRuns = [];
+    const suiteToChildren = new Map();
+    const rootSuites = new Set();
     for (const test of tests) {
-      let repeat = this._get(test);
-      for (let suite = test.suite(); suite; suite = suite.parentSuite())
-        repeat *= this._get(suite);
-      for (let i = 0; i < repeat; i++)
-        testRuns.push(new TestRun(test));
+      let children = suiteToChildren.get(test.suite());
+      if (!children) {
+        children = new Set();
+        suiteToChildren.set(test.suite(), children);
+      }
+      children.add(test);
+      for (let suite = test.suite(); suite; suite = suite.parentSuite()) {
+        let children = suiteToChildren.get(suite.parentSuite());
+        if (!children) {
+          children = new Set();
+          suiteToChildren.set(suite.parentSuite(), children);
+        }
+        children.add(suite);
+        // Add root suites.
+        if (!suite.parentSuite())
+          rootSuites.add(suite);
+      }
     }
-    return testRuns;
+
+    const collectTests = (testOrSuite) => {
+      const testOrder = [];
+      if (testOrSuite instanceof Test) {
+        testOrder.push(testOrSuite);
+      } else {
+        for (const child of suiteToChildren.get(testOrSuite))
+          testOrder.push(...collectTests(child));
+      }
+      const repeat = this._repeatCount.has(testOrSuite) ? this._repeatCount.get(testOrSuite) : 1;
+      const result = [];
+      for (let i = 0; i < repeat; ++i)
+        result.push(...testOrder);
+      return result;
+    }
+
+    const testOrder = [];
+    for (const rootSuite of rootSuites)
+      testOrder.push(...collectTests(rootSuite));
+    return testOrder.map(test => new TestRun(test));
+
   }
 }
 

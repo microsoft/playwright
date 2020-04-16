@@ -516,6 +516,17 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
       expect(beforeEach).toBe(6);
       expect(test).toBe(6);
     });
+    it('should repeat without breaking test order', async() => {
+      const t = new Runner();
+      const log = [];
+      t.describe.repeat(2)('suite', () => {
+        t.it('uno', () => log.push(1));
+        t.it.repeat(2)('dos', () => log.push(2));
+      });
+      t.it('tres', () => log.push(3));
+      await t.run();
+      expect(log.join()).toBe('1,2,2,1,2,2,3');
+    });
     it('should run tests if some fail', async() => {
       const t = new Runner();
       const log = [];
