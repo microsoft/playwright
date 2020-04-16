@@ -450,11 +450,20 @@ describe('focus', function() {
   it('should think that it is focused by default', async({page}) => {
     expect(await page.evaluate('document.hasFocus()')).toBe(true);
   });
-  it.fail(FFOX)('should think that all pages are focused', async({page}) => {
+  it('should think that all pages are focused', async({page}) => {
     const page2 = await page.context().newPage();
     expect(await page.evaluate('document.hasFocus()')).toBe(true);
     expect(await page2.evaluate('document.hasFocus()')).toBe(true);
     await page2.close();
+  });
+  it('should focus popups by default', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.evaluate(url => { window.open(url); }, server.EMPTY_PAGE),
+    ]);
+    expect(await popup.evaluate('document.hasFocus()')).toBe(true);
+    expect(await page.evaluate('document.hasFocus()')).toBe(true);
   });
   it('should provide target for keyboard events', async({page, server}) => {
     const page2 = await page.context().newPage();
