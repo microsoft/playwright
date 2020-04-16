@@ -152,7 +152,7 @@ describe('OOPIF', function() {
     expect(await countOOPIFs(browser)).toBe(1);
   });
   // @see https://github.com/microsoft/playwright/issues/1240
-  it.fail(CHROMIUM)('should click a button when it overlays oopif', async function({browser, page, server, context}) {
+  it('should click a button when it overlays oopif', async function({browser, page, server, context}) {
     await page.goto(server.PREFIX + '/button-overlay-oopif.html');
     expect(await countOOPIFs(browser)).toBe(1);
     await page.click('button');
