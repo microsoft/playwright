@@ -554,6 +554,25 @@ describe('Page.click', function() {
     if (error2)
       expect(error2.message).toContain('timeout exceeded');
   });
+  it('should fail when element detaches after animation', async({page, server}) => {
+    await page.setContent(`<style>body, html { margin: 0; padding: 0; }</style><button onclick="window.clicked=true">Click me</button>`);
+    await page.$eval('button', button => {
+      button.style.transition = 'margin-left 100000ms linear';
+    });
+    await page.$eval('button', button => {
+      button.style.marginLeft = '100000px';
+    });
+    const handle = await page.$('button');
+    const promise = handle.click().catch(e => e);
+    await page.$eval('button', button => {
+      button.style.marginLeft = button.getBoundingClientRect().left + 'px';
+      button.style.transition = '';
+      button.remove();
+    });
+    const error = await promise;
+    expect(await page.evaluate(() => window.clicked)).toBe(undefined);
+    expect(error.message).toContain('Element is not attached to the DOM');
+  });
 });
 
 describe('Page.check', function() {

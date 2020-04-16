@@ -286,12 +286,16 @@ class Injected {
       // and only force layout during actual rafs as a small optimisation.
       if (++counter === 1)
         return false;
+      if (!node.isConnected)
+        return 'Element is not attached to the DOM';
       const clientRect = element.getBoundingClientRect();
       const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
       const isDisplayedAndStable = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height && rect.width > 0 && rect.height > 0;
       lastRect = rect;
       return isDisplayedAndStable;
     });
+    if (typeof result === 'string')
+      throw new Error(result);
     if (!result)
       throw new Error(`waiting for element to be displayed and not moving failed: timeout exceeded`);
   }
@@ -303,11 +307,15 @@ class Injected {
     if (!element)
       throw new Error('Element is not attached to the DOM');
     const result = await this.poll('raf', timeout, () => {
+      if (!element!.isConnected)
+        return 'Element is not attached to the DOM';
       let hitElement = this._deepElementFromPoint(document, point.x, point.y);
       while (hitElement && hitElement !== element)
         hitElement = this._parentElementOrShadowHost(hitElement);
       return hitElement === element;
     });
+    if (typeof result === 'string')
+      throw new Error(result);
     if (!result)
       throw new Error(`waiting for element to receive mouse events failed: timeout exceeded`);
   }
