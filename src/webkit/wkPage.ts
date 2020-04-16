@@ -262,7 +262,7 @@ export class WKPage implements PageDelegate {
       }
       if (targetInfo.isPaused)
         this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
-      if (this._page.mainFrame().url() === '') {
+      if ((pageOrError instanceof Page) && this._page.mainFrame().url() === '') {
         // Initial empty page has an empty url. We should wait until the first real url has been loaded,
         // even if that url is about:blank. This is especially important for popups, where we need the
         // actual url before interacting with it.
