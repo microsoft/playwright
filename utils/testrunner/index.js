@@ -89,6 +89,10 @@ class DefaultTestRunner {
     }
   }
 
+  repeatAll(repeatCount) {
+    this._repeater.repeat(this._collector.rootSuite(), repeatCount);
+  }
+
   async run() {
     let reporter = null;
 

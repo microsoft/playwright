@@ -167,6 +167,7 @@ class TestCollector {
     this._api = {};
 
     this._currentSuite = new Suite(null, '', new Location());
+    this._rootSuite = this._currentSuite;
 
     this._api.describe = specBuilder(this._suiteModifiers, this._suiteAttributes, (specs, name, suiteCallback, ...suiteArgs) => {
       const location = Location.getCallerLocation();
@@ -222,6 +223,10 @@ class TestCollector {
 
   suites() {
     return this._suites;
+  }
+
+  rootSuite() {
+    return this._rootSuite;
   }
 }
 
