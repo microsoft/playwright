@@ -69,7 +69,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     await this._interceptedPromise;
 
     const base64Encoded = !!response.body && !helper.isString(response.body);
-    const responseBody = response.body ? (base64Encoded ? response.body.toString('base64') : response.body as string) : undefined;
+    const responseBody = response.body ? (base64Encoded ? response.body.toString('base64') : response.body as string) : '';
 
     const responseHeaders: { [s: string]: string; } = {};
     if (response.headers) {
