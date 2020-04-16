@@ -1,8 +1,20 @@
 # Device and environment emulation
-Playwright allows overriding various parameters that depend on the device where the browser is running (such as viewport size, touch support, dpr etc.) as well as custom system settings such as locale and timezone. Most of these parameters are configured during context construction but some of them (e.g. viewport size) can be changed for individual pages.
+
+Playwright allows overriding various parameters of the device where the browser is running:
+  - viewport size, device scale factor, touch support
+  - locale, timezone
+  - color scheme
+  - geolocation
+  - etc
+
+Most of these parameters are configured during the browser context construction, but some of them such as viewport size can be changed for individual pages.
+
+<br/>
 
 ## Emulating popular devices
-Playwright comes with a registry of device parameters for some popular mobile devices. It can be used to simulate browser behavior on a mobile device like this:
+
+Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser behavior on a mobile device:
+
 ```js
   const { chromium, devices } = require('playwright');
   const browser = await chromium.launch();
@@ -12,6 +24,7 @@ Playwright comes with a registry of device parameters for some popular mobile de
     ...pixel2,
   });
 ```
+
 All pages created in the context above will share the same device parameters.
 
 #### API reference
@@ -20,10 +33,11 @@ All pages created in the context above will share the same device parameters.
 - [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
 
 <br/>
-<br/>
 
-## Configuring screen size(viewport), touch support, isMobile ...
+## Configuring screen size, touch support, mobile viewport
+
 Create a context with custom viewport size:
+
 ```js
   const context = await browser.newContext({
     viewport: {
@@ -31,6 +45,7 @@ Create a context with custom viewport size:
       height: 1024
     }
   });
+
 ```
 Resize viewport for individual pages:
 
@@ -38,16 +53,16 @@ Resize viewport for individual pages:
   await page.setViewportSize({ 'width': 1600, 'height': 1200 });
 ```
 
-Emulate custom mobile device _without_ touch support:
+Emulate desktop device with the high-DPI screen and touch support:
+
 ```js
   const context = await browser.newContext({
     viewport: {
-      width: 400,
-      height: 900,
+      width: 2560,
+      height: 1440,
     },
     deviceScaleFactor: 2,
-    isMobile: true,
-    hasTouch: false
+    hasTouch: true
   });
 ```
 
@@ -57,11 +72,48 @@ Emulate custom mobile device _without_ touch support:
 - [`page.setViewportSize(viewportSize)`](./api.md#pagesetviewportsizeviewportsize)
 
 <br/>
+
+## Configuring color scheme
+
+Create device with the dark color scheme:
+
+
+```js
+  const context = await browser.newContext({
+    colorScheme: 'dark'
+  });
+```
+
+Change color scheme for individual pages:
+
+```js
+  await page.emulateMedia({ colorScheme: 'dark' });
+```
+
+#### API reference
+
+- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
+- [`page.emulateMedia([options])`](./api.md#pageemulatemediaoptions)
+
 <br/>
 
+## Locale and timezone
+
+```js
+  const context = await browser.newContext({
+    locale: 'de-DE',
+    timezoneId: 'Europe/Berlin',
+  });
+```
+
+#### API reference
+
+- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
+
+<br/>
 
 ## Geolocation
-Create a context with 'geolocation' permissions granted:
+Create a context with `"geolocation"` permissions granted:
 ```js
   const context = await browser.newContext({
     geolocation: { longitude: 48.858455, latitude: 2.294474 },
@@ -81,7 +133,6 @@ Change the location later:
 - [`browserContext.setGeolocation(geolocation)`](./api.md#browsercontextsetgeolocationgeolocation)
 
 <br/>
-<br/>
 
 ## Permissions
 Allow all pages in the context to show system notifications:
@@ -96,9 +147,9 @@ Grant all pages in the existing context access to current location:
   await context.grantPermissions(['geolocation']);
 ```
 
-Grant camera and mic access from a specific domain:
+Grant notifications access from a specific domain:
 ```js
-  await context.grantPermissions(['camera', 'microphone'], {origin: 'https://skype.com'} );
+  await context.grantPermissions(['notifications'], {origin: 'https://skype.com'} );
 ```
 Revoke all permissions:
 ```js
@@ -112,21 +163,3 @@ Revoke all permissions:
 - [`browserContext.clearPermissions()`](./api.md#browsercontextclearpermissions)
 
 <br/>
-<br/>
-
-## Locale and timzeone
-
-```js
-  const context = await browser.newContext({
-    locale: 'ru-RU',
-    timezoneId: 'Europe/Moscow',
-  });
-```
-
-#### API reference
-
-- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
-
-<br/>
-<br/>
-
