@@ -1400,10 +1400,10 @@ index 0000000000000000000000000000000000000000..b8e6649fb91be6cd72b000426fb4d582
 +
 diff --git a/juggler/NetworkObserver.js b/juggler/NetworkObserver.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..b8a98b058ea36f85fddfa21e992e2d0674c11e3d
+index 0000000000000000000000000000000000000000..1a55b5498c18d2403eab21fe9149242f286157d4
 --- /dev/null
 +++ b/juggler/NetworkObserver.js
-@@ -0,0 +1,789 @@
+@@ -0,0 +1,794 @@
 +"use strict";
 +
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
@@ -2024,9 +2024,14 @@ index 0000000000000000000000000000000000000000..b8a98b058ea36f85fddfa21e992e2d06
 +    if (this._disposed)
 +      return;
 +
-+    const body = this._chunks.join('');
++    if (aStatusCode === 0) {
++      const body = this._chunks.join('');
++      this._networkObserver._onResponseFinished(this._pageNetwork, this._httpChannel, body);
++    } else {
++      this._networkObserver._sendOnRequestFailed(this._pageNetwork, this._httpChannel, aStatusCode);
++    }
++
 +    delete this._chunks;
-+    this._networkObserver._onResponseFinished(this._pageNetwork, this._httpChannel, body);
 +    this.dispose();
 +  }
 +
