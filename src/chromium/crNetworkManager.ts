@@ -33,7 +33,7 @@ export class CRNetworkManager {
   private _attemptedAuthentications = new Set<string>();
   private _userRequestInterceptionEnabled = false;
   private _protocolRequestInterceptionEnabled = false;
-  private _requestIdToInterceptionId = new Map<string, string>();
+  private _requestIdToRequestPausedEvent = new Map<string, Protocol.Fetch.requestPausedPayload>();
   private _eventListeners: RegisteredListener[];
 
   constructor(client: CRSession, page: Page) {
@@ -106,10 +106,10 @@ export class CRNetworkManager {
     // Request interception doesn't happen for data URLs with Network Service.
     if (this._protocolRequestInterceptionEnabled && !event.request.url.startsWith('data:')) {
       const requestId = event.requestId;
-      const interceptionId = this._requestIdToInterceptionId.get(requestId);
-      if (interceptionId) {
-        this._onRequest(workerFrame, event, interceptionId);
-        this._requestIdToInterceptionId.delete(requestId);
+      const requestPausedEvent = this._requestIdToRequestPausedEvent.get(requestId);
+      if (requestPausedEvent) {
+        this._onRequest(workerFrame, event, requestPausedEvent);
+        this._requestIdToRequestPausedEvent.delete(requestId);
       } else {
         this._requestIdToRequestWillBeSentEvent.set(event.requestId, event);
       }
@@ -143,49 +143,56 @@ export class CRNetworkManager {
       return;
 
     const requestId = event.networkId;
-    const interceptionId = event.requestId;
     const requestWillBeSentEvent = this._requestIdToRequestWillBeSentEvent.get(requestId);
     if (requestWillBeSentEvent) {
-      this._onRequest(workerFrame, requestWillBeSentEvent, interceptionId);
+      this._onRequest(workerFrame, requestWillBeSentEvent, event);
       this._requestIdToRequestWillBeSentEvent.delete(requestId);
     } else {
-      this._requestIdToInterceptionId.set(requestId, interceptionId);
+      this._requestIdToRequestPausedEvent.set(requestId, event);
     }
   }
 
-  _onRequest(workerFrame: frames.Frame | undefined, event: Protocol.Network.requestWillBeSentPayload, interceptionId: string | null) {
-    if (event.request.url.startsWith('data:'))
+  _onRequest(workerFrame: frames.Frame | undefined, requestWillBeSentEvent: Protocol.Network.requestWillBeSentPayload, requestPausedEvent: Protocol.Fetch.requestPausedPayload | null) {
+    if (requestWillBeSentEvent.request.url.startsWith('data:'))
       return;
     let redirectedFrom: network.Request | null = null;
-    if (event.redirectResponse) {
-      const request = this._requestIdToRequest.get(event.requestId);
+    if (requestWillBeSentEvent.redirectResponse) {
+      const request = this._requestIdToRequest.get(requestWillBeSentEvent.requestId);
       // If we connect late to the target, we could have missed the requestWillBeSent event.
       if (request) {
-        this._handleRequestRedirect(request, event.redirectResponse);
+        this._handleRequestRedirect(request, requestWillBeSentEvent.redirectResponse);
         redirectedFrom = request.request;
       }
     }
-    let frame = event.frameId ? this._page._frameManager.frame(event.frameId) : workerFrame;
+    let frame = requestWillBeSentEvent.frameId ? this._page._frameManager.frame(requestWillBeSentEvent.frameId) : workerFrame;
 
     // Check if it's main resource request interception (targetId === main frame id).
-    if (!frame && interceptionId && event.frameId === (this._page._delegate as CRPage)._targetId) {
+    if (!frame && requestPausedEvent && requestWillBeSentEvent.frameId === (this._page._delegate as CRPage)._targetId) {
       // Main resource request for the page is being intercepted so the Frame is not created
       // yet. Precreate it here for the purposes of request interception. It will be updated
       // later as soon as the request contnues and we receive frame tree from the page.
-      frame = this._page._frameManager.frameAttached(event.frameId, null);
+      frame = this._page._frameManager.frameAttached(requestWillBeSentEvent.frameId, null);
     }
 
     if (!frame) {
-      if (interceptionId)
-        this._client.send('Fetch.continueRequest', { requestId: interceptionId }).catch(debugError);
+      if (requestPausedEvent)
+        this._client.send('Fetch.continueRequest', { requestId: requestPausedEvent.requestId }).catch(debugError);
       return;
     }
-    const isNavigationRequest = event.requestId === event.loaderId && event.type === 'Document';
-    const documentId = isNavigationRequest ? event.loaderId : undefined;
+    const isNavigationRequest = requestWillBeSentEvent.requestId === requestWillBeSentEvent.loaderId && requestWillBeSentEvent.type === 'Document';
+    const documentId = isNavigationRequest ? requestWillBeSentEvent.loaderId : undefined;
     if (isNavigationRequest)
-      this._page._frameManager.frameUpdatedDocumentIdForNavigation(event.frameId!, documentId!);
-    const request = new InterceptableRequest(this._client, frame, interceptionId, documentId, this._userRequestInterceptionEnabled, event, redirectedFrom);
-    this._requestIdToRequest.set(event.requestId, request);
+      this._page._frameManager.frameUpdatedDocumentIdForNavigation(requestWillBeSentEvent.frameId!, documentId!);
+    const request = new InterceptableRequest({
+      client: this._client,
+      frame,
+      documentId,
+      allowInterception: this._userRequestInterceptionEnabled,
+      requestWillBeSentEvent,
+      requestPausedEvent,
+      redirectedFrom
+    });
+    this._requestIdToRequest.set(requestWillBeSentEvent.requestId, request);
     this._page._frameManager.requestStarted(request.request);
   }
 
@@ -258,14 +265,29 @@ class InterceptableRequest implements network.RouteDelegate {
   _documentId: string | undefined;
   private _client: CRSession;
 
-  constructor(client: CRSession, frame: frames.Frame, interceptionId: string | null, documentId: string | undefined, allowInterception: boolean, event: Protocol.Network.requestWillBeSentPayload, redirectedFrom: network.Request | null) {
+  constructor(options: {
+    client: CRSession;
+    frame: frames.Frame;
+    documentId?: string;
+    allowInterception: boolean;
+    requestWillBeSentEvent: Protocol.Network.requestWillBeSentPayload;
+    requestPausedEvent: Protocol.Fetch.requestPausedPayload | null;
+    redirectedFrom: network.Request | null;
+  }) {
+    const { client, frame, documentId, allowInterception, requestWillBeSentEvent, requestPausedEvent, redirectedFrom } = options;
     this._client = client;
-    this._requestId = event.requestId;
-    this._interceptionId = interceptionId;
+    this._requestId = requestWillBeSentEvent.requestId;
+    this._interceptionId = requestPausedEvent && requestPausedEvent.requestId;
     this._documentId = documentId;
 
-    this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId,
-        event.request.url, (event.type || '').toLowerCase(), event.request.method, event.request.postData || null, headersObject(event.request.headers));
+    const {
+      headers,
+      method,
+      url,
+      postData = null,
+    } = requestPausedEvent ? requestPausedEvent.request : requestWillBeSentEvent.request;
+    const type = (requestWillBeSentEvent.type || '').toLowerCase();
+    this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId, url, type, method, postData, headersObject(headers));
   }
 
   async continue(overrides: { method?: string; headers?: network.Headers; postData?: string } = {}) {

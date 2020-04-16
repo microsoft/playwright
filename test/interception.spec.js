@@ -511,6 +511,65 @@ describe('Request.fulfill', function() {
     expect(headers.foo).toBe('true');
     expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
   });
+  it('should not modify the headers sent to the server', async({page, server}) => {
+    await page.goto(server.PREFIX + '/empty.html');
+    const interceptedRequests = [];
+
+    //this is just to enable request interception, which disables caching in chromium
+    await page.route(server.PREFIX + '/unused');
+
+    server.setRoute('/something', (request, response) => {
+      interceptedRequests.push(request);
+      response.writeHead(200, { 'Access-Control-Allow-Origin': '*' });
+      response.end('done');
+    });
+
+    const text = await page.evaluate(async url => {
+      const data = await fetch(url);
+      return data.text();
+    }, server.CROSS_PROCESS_PREFIX + '/something');
+    expect(text).toBe('done');
+
+    let playwrightRequest;
+    await page.route(server.CROSS_PROCESS_PREFIX + '/something', (route, request) => {
+      playwrightRequest = request;
+      route.continue({
+        headers: {
+          ...request.headers()
+        }
+      });
+    });
+
+    const textAfterRoute = await page.evaluate(async url => {
+      const data = await fetch(url);
+      return data.text();
+    }, server.CROSS_PROCESS_PREFIX + '/something');
+    expect(textAfterRoute).toBe('done');
+
+    expect(interceptedRequests.length).toBe(2);
+    expect(interceptedRequests[1].headers).toEqual(interceptedRequests[0].headers);
+  });
+  it('should include the origin header', async({page, server}) => {
+    await page.goto(server.PREFIX + '/empty.html');
+    let interceptedRequest;
+    await page.route(server.CROSS_PROCESS_PREFIX + '/something', (route, request) => {
+      interceptedRequest = request;
+      route.fulfill({
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+        },
+        contentType: 'text/plain',
+        body: 'done'
+      });
+    });
+
+    const text = await page.evaluate(async url => {
+      const data = await fetch(url);
+      return data.text();
+    }, server.CROSS_PROCESS_PREFIX + '/something');
+    expect(text).toBe('done');
+    expect(interceptedRequest.headers()['origin']).toEqual(server.PREFIX);
+  });
 });
 
 describe('Interception vs isNavigationRequest', () => {
