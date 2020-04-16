@@ -315,8 +315,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (typeof item === 'string') {
         const file: types.FilePayload = {
           name: path.basename(item),
-          type: mime.getType(item) || 'application/octet-stream',
-          data: await util.promisify(fs.readFile)(item, 'base64')
+          mimeType: mime.getType(item) || 'application/octet-stream',
+          buffer: await util.promisify(fs.readFile)(item)
         };
         filePayloads.push(file);
       } else {
@@ -439,15 +439,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 }
 
-export const setFileInputFunction = async (element: HTMLInputElement, payloads: types.FilePayload[]) => {
-  const files = await Promise.all(payloads.map(async (file: types.FilePayload) => {
-    const result = await fetch(`data:${file.type};base64,${file.data}`);
-    return new File([await result.blob()], file.name, {type: file.type});
+export function toFileTransferPayload(files: types.FilePayload[]): types.FileTransferPayload[] {
+  return files.map(file => ({
+    name: file.name,
+    type: file.mimeType,
+    data: file.buffer.toString('base64')
   }));
-  const dt = new DataTransfer();
-  for (const file of files)
-    dt.items.add(file);
-  element.files = dt.files;
-  element.dispatchEvent(new Event('input', { 'bubbles': true }));
-  element.dispatchEvent(new Event('change', { 'bubbles': true }));
-};
+}

@@ -21,12 +21,13 @@ export { ConsoleMessage } from './console';
 export { Dialog } from './dialog';
 export { Download } from './download';
 export { ElementHandle } from './dom';
+export { FileChooser } from './fileChooser';
 export { TimeoutError } from './errors';
 export { Frame } from './frames';
 export { Keyboard, Mouse } from './input';
 export { JSHandle } from './javascript';
 export { Request, Response, Route } from './network';
-export { FileChooser, Page, Worker } from './page';
+export { Page, Worker } from './page';
 export { Selectors } from './selectors';
 
 export { CRBrowser as ChromiumBrowser } from './chromium/crBrowser';

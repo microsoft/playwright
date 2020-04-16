@@ -718,6 +718,13 @@ export class Frame {
     return result;
   }
 
+  async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options?: types.NavigatingActionWaitOptions): Promise<void> {
+    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
+    const result = await handle.setInputFiles(files, helper.optionsWithUpdatedTimeout(options, deadline));
+    handle.dispose();
+    return result;
+  }
+
   async type(selector: string, text: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
     const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
     await handle.type(text, helper.optionsWithUpdatedTimeout(options, deadline));

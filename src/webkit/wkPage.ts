@@ -713,7 +713,7 @@ export class WKPage implements PageDelegate {
 
   async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
     const objectId = toRemoteObject(handle).objectId!;
-    await this._session.send('DOM.setInputFiles', { objectId, files });
+    await this._session.send('DOM.setInputFiles', { objectId, files: dom.toFileTransferPayload(files) });
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {

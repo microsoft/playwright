@@ -15,6 +15,7 @@
 - [class: ConsoleMessage](#class-consolemessage)
 - [class: Dialog](#class-dialog)
 - [class: Download](#class-download)
+- [class: FileChooser](#class-filechooser)
 - [class: Keyboard](#class-keyboard)
 - [class: Mouse](#class-mouse)
 - [class: Request](#class-request)
@@ -698,6 +699,7 @@ page.removeListener('request', logRequest);
 - [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout)
 - [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout)
 - [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
+- [page.setInputFiles(selector, files[, options])](#pagesetinputfilesselector-files-options)
 - [page.setViewportSize(viewportSize)](#pagesetviewportsizeviewportsize)
 - [page.title()](#pagetitle)
 - [page.type(selector, text[, options])](#pagetypeselector-text-options)
@@ -757,15 +759,13 @@ Emitted when attachment download started. User can access basic file operations 
 > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
 
 #### event: 'filechooser'
-- <[Object]>
-  - `element` <[ElementHandle]> handle to the input element that was clicked
-  - `multiple` <[boolean]> Whether file chooser allow for [multiple](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#attr-multiple) file selection.
+- <[FileChooser]>
 
-Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can respond to it via setting the input files using [`elementHandle.setInputFiles`](#elementhandlesetinputfilesfiles-options) which can be uploaded in the end.
+Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can respond to it via setting the input files using [`fileChooser.setFiles`](#filechoosersetfilesfiles-options) that can be uploaded after that.
 
 ```js
-page.on('filechooser', async ({element, multiple}) => {
-  await element.setInputFiles('/tmp/myfile.pdf');
+page.on('filechooser', async (fileChooser) => {
+  await fileChooser.setFiles('/tmp/myfile.pdf');
 });
 ```
 
@@ -1592,6 +1592,27 @@ The extra HTTP headers will be sent with every request the page initiates.
 
 > **NOTE** page.setExtraHTTPHeaders does not guarantee the order of headers in the outgoing requests.
 
+#### page.setInputFiles(selector, files[, options])
+- `selector` <[string]> A selector to search for element to click. If there are multiple elements satisfying the selector, the first will be clicked.
+- `files` <[string]|[Array]<[string]>|[Object]|[Array]<[Object]>>
+  - `name` <[string]> [File] name **required**
+  - `mimeType` <[string]> [File] type **required**
+  - `buffer` <[Buffer]> File content **required**
+- `options` <[Object]>
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
+    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
+    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'nowait'` - do not wait.
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]>
+
+This method expects `selector` to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
+
+Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). For empty array, clears the selected files.
+
+
 #### page.setViewportSize(viewportSize)
 - `viewportSize` <[Object]>
   - `width` <[number]> page width in pixels. **required**
@@ -1936,6 +1957,7 @@ An example of getting text from an iframe element:
 - [frame.press(selector, key[, options])](#framepressselector-key-options)
 - [frame.selectOption(selector, values[, options])](#frameselectoptionselector-values-options)
 - [frame.setContent(html[, options])](#framesetcontenthtml-options)
+- [frame.setInputFiles(selector, files[, options])](#framesetinputfilesselector-files-options)
 - [frame.title()](#frametitle)
 - [frame.type(selector, text[, options])](#frametypeselector-text-options)
 - [frame.uncheck(selector, [options])](#frameuncheckselector-options)
@@ -2319,6 +2341,26 @@ frame.selectOption('select#colors', 'red', 'green', 'blue');
     - `'networkidle0'` - consider setting content to be finished when there are no more than 0 network connections for at least `500` ms.
     - `'networkidle2'` - consider setting content to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]>
+
+#### frame.setInputFiles(selector, files[, options])
+- `selector` <[string]> A selector to search for element to click. If there are multiple elements satisfying the selector, the first will be clicked.
+- `files` <[string]|[Array]<[string]>|[Object]|[Array]<[Object]>>
+  - `name` <[string]> [File] name **required**
+  - `mimeType` <[string]> [File] type **required**
+  - `buffer` <[Buffer]> File content **required**
+- `options` <[Object]>
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
+    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
+    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'nowait'` - do not wait.
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]>
+
+This method expects `selector` to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
+
+Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). For empty array, clears the selected files.
 
 #### frame.title()
 - returns: <[Promise]<[string]>> The page's title.
@@ -2836,8 +2878,8 @@ This method focuses the element and selects all its text content.
 #### elementHandle.setInputFiles(files[, options])
 - `files` <[string]|[Array]<[string]>|[Object]|[Array]<[Object]>>
   - `name` <[string]> [File] name **required**
-  - `type` <[string]> [File] type **required**
-  - `data` <[string]> Base64-encoded data **required**
+  - `mimeType` <[string]> [File] type **required**
+  - `buffer` <[Buffer]> File content **required**
 - `options` <[Object]>
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
@@ -2850,7 +2892,7 @@ This method focuses the element and selects all its text content.
 
 This method expects `elementHandle` to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
 
-Sets the value of the file input to these file paths or files. If some of the  `filePaths` are relative paths, then they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). For empty array, clears the selected files.
+Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). For empty array, clears the selected files.
 
 #### elementHandle.textContent()
 - returns: <[Promise]<null|[string]>> Resolves to the `node.textContent`.
@@ -3121,6 +3163,55 @@ Returns path to the downloaded file in case of successful download.
 
 Returns downloaded url.
 
+
+### class: FileChooser
+
+[FileChooser] objects are dispatched by the page in the ['filechooser'](#event-filechooser) event.
+
+```js
+page.on('filechooser', async (fileChooser) => {
+  await fileChooser.setFiles('/tmp/myfile.pdf');
+});
+```
+
+<!-- GEN:toc -->
+- [fileChooser.element()](#filechooserelement)
+- [fileChooser.isMultiple()](#filechooserismultiple)
+- [fileChooser.page()](#filechooserpage)
+- [fileChooser.setFiles(files[, options])](#filechoosersetfilesfiles-options)
+<!-- GEN:stop -->
+
+#### fileChooser.element()
+- returns: <[ElementHandle]>
+
+Returns input element associated with this file chooser.
+
+#### fileChooser.isMultiple()
+- returns: <[boolean]>
+
+Returns whether this file chooser accepts multiple files.
+
+#### fileChooser.page()
+- returns: <[Page]>
+
+Returns page this file chooser belongs to.
+
+#### fileChooser.setFiles(files[, options])
+- `files` <[string]|[Array]<[string]>|[Object]|[Array]<[Object]>>
+  - `name` <[string]> [File] name **required**
+  - `mimeType` <[string]> [File] type **required**
+  - `buffer` <[Buffer]> File content **required**
+- `options` <[Object]>
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|"nowait"> Actions that cause navigations are waiting for those navigations to fire `domcontentloaded` by default. This behavior can be changed to either wait for another load phase or to omit the waiting altogether using `nowait`:
+    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
+    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'nowait'` - do not wait.
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]>
+
+Sets the value of the file input this chooser is associated with. If some of the `filePaths` are relative paths, then they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). For empty array, clears the selected files.
 
 ### class: Keyboard
 
