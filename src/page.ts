@@ -108,7 +108,7 @@ export class Page extends ExtendedEventEmitter {
   private _workers = new Map<string, Worker>();
   readonly pdf: ((options?: types.PDFOptions) => Promise<Buffer>) | undefined;
   readonly coverage: any;
-  readonly _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
+  _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
   _ownedContext: BrowserContext | undefined;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContextBase) {
@@ -382,6 +382,11 @@ export class Page extends ExtendedEventEmitter {
 
   async route(url: types.URLMatch, handler: network.RouteHandler): Promise<void> {
     this._routes.push({ url, handler });
+    await this._delegate.updateRequestInterception();
+  }
+
+  async unroute(url: types.URLMatch, handler?: network.RouteHandler): Promise<void> {
+    this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
     await this._delegate.updateRequestInterception();
   }
 

@@ -61,6 +61,7 @@ export interface BrowserContext {
   addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any): Promise<void>;
   exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
   route(url: types.URLMatch, handler: network.RouteHandler): Promise<void>;
+  unroute(url: types.URLMatch, handler?: network.RouteHandler): Promise<void>;
   waitForEvent(event: string, optionsOrPredicate?: Function | (types.TimeoutOptions & { predicate?: Function })): Promise<any>;
   close(): Promise<void>;
 }
@@ -69,7 +70,7 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: BrowserContextOptions;
-  readonly _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
+  _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
   _closed = false;
   private readonly _closePromise: Promise<Error>;
   private _closePromiseFulfill: ((error: Error) => void) | undefined;
@@ -120,6 +121,7 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
   abstract addInitScript(script: string | Function | { path?: string | undefined; content?: string | undefined; }, arg?: any): Promise<void>;
   abstract exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
   abstract route(url: types.URLMatch, handler: network.RouteHandler): Promise<void>;
+  abstract unroute(url: types.URLMatch, handler?: network.RouteHandler): Promise<void>;
   abstract close(): Promise<void>;
 
   async grantPermissions(permissions: string[], options?: { origin?: string }) {
