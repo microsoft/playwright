@@ -137,7 +137,16 @@ describe.skip(FFOX)('viewport.isMobile', () => {
     await context1.close();
     await context2.close();
   });
-  it.fail(WEBKIT)('should fire orientationchange event', async({browser, server}) => {
+  it('should support window.orientation emulation', async({browser, server}) => {
+    const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/mobile.html');
+    expect(await page.evaluate(() => window.orientation)).toBe(0);
+    await page.setViewportSize({width: 400, height: 300});
+    expect(await page.evaluate(() => window.orientation)).toBe(90);
+    await context.close();
+  });
+  it('should fire orientationchange event', async({browser, server}) => {
     const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/mobile.html');
