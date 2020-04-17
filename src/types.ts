@@ -50,7 +50,7 @@ export type NavigateOptions = TimeoutOptions & {
 };
 
 export type NavigatingActionWaitOptions = TimeoutOptions & {
-  waitUntil?: LifecycleEvent | 'nowait',
+  noWaitAfter?: boolean,
 };
 
 export type PointerActionWaitOptions = TimeoutOptions & {
@@ -59,6 +59,11 @@ export type PointerActionWaitOptions = TimeoutOptions & {
 
 export type WaitForNavigationOptions = TimeoutOptions & {
   waitUntil?: LifecycleEvent,
+  url?: URLMatch
+};
+
+export type ExtendedWaitForNavigationOptions = TimeoutOptions & {
+  waitUntil?: LifecycleEvent | 'commit',
   url?: URLMatch
 };
 
