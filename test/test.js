@@ -197,6 +197,13 @@ function collect(browserNames) {
     testRunner.focusMatchingTests(new RegExp(filter, 'i'));
   }
 
+  const repeatArgIndex = process.argv.indexOf('--repeat');
+  if (repeatArgIndex !== -1) {
+    const repeat = parseInt(process.argv[repeatArgIndex + 1], 10);
+    if (!isNaN(repeat))
+      testRunner.repeatAll(repeat);
+  }
+
   return testRunner;
 }
 
