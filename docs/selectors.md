@@ -119,7 +119,7 @@ Malformed selector starting with `"` is assumed to be a text selector. For examp
 
 ### id, data-testid, data-test-id, data-test and their :light counterparts
 
-Attribute engines are selecting based on the corresponding atrribute value. For example: `data-test-id=foo` is equivalent to `css=[data-test-id="foo"]`, and `id:light=foo` is equivalent to `css:light=[id="foo"]`.
+Attribute engines are selecting based on the corresponding attribute value. For example: `data-test-id=foo` is equivalent to `css=[data-test-id="foo"]`, and `id:light=foo` is equivalent to `css:light=[id="foo"]`.
 
 ## Custom selector engines
 
