@@ -836,7 +836,7 @@ index 777a54166ed6664561b3f8249a6abb4ac59d0480..e738f34f65fa8137a16bf7b66bc237b8
              "name": "webSocketWillSendHandshakeRequest",
              "description": "Fired when WebSocket is about to initiate handshake.",
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index 78980810141a9e9b65b93e6cebe80daff9a52dc1..4b25429daecf6743e2a52966e64a23e0257d505a 100644
+index 78980810141a9e9b65b93e6cebe80daff9a52dc1..4818c82fff8b19e060e129275ef5f95f1db2fcb0 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -109,6 +109,41 @@
@@ -925,7 +925,7 @@ index 78980810141a9e9b65b93e6cebe80daff9a52dc1..4b25429daecf6743e2a52966e64a23e0
          {
              "name": "snapshotNode",
              "description": "Capture a snapshot of the specified node that does not include unrelated layers.",
-@@ -282,19 +341,78 @@
+@@ -282,19 +341,85 @@
              "returns": [
                  { "name": "data", "type": "string", "description": "Base64-encoded web archive." }
              ]
@@ -986,6 +986,13 @@ index 78980810141a9e9b65b93e6cebe80daff9a52dc1..4b25429daecf6743e2a52966e64a23e0
 +                { "name": "width", "type": "integer" },
 +                { "name": "height", "type": "integer" }
 +            ]
++        },
++        {
++            "name": "setOrientationOverride",
++            "description": "Overrides window.orientation with provided value.",
++            "parameters": [
++                { "name": "angle", "type": "integer", "optional": true }
++            ]
          }
      ],
      "events": [
@@ -1006,7 +1013,7 @@ index 78980810141a9e9b65b93e6cebe80daff9a52dc1..4b25429daecf6743e2a52966e64a23e0
              ]
          },
          {
-@@ -304,6 +422,14 @@
+@@ -304,6 +429,14 @@
                  { "name": "frame", "$ref": "Frame", "description": "Frame object." }
              ]
          },
@@ -1021,7 +1028,7 @@ index 78980810141a9e9b65b93e6cebe80daff9a52dc1..4b25429daecf6743e2a52966e64a23e0
          {
              "name": "frameDetached",
              "description": "Fired when frame has been detached from its parent.",
-@@ -340,12 +466,50 @@
+@@ -340,12 +473,50 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -3052,7 +3059,7 @@ index b038a1879c043aa17dae97425693f29be42e3258..d60716b837663004675ffd90bceede4c
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index 0e2e3c2bcc2fe167c246a5f55c4de3b52282a516..2e7900ccbb92566b4c5e33e0e7ec7c0c8e440832 100644
+index 0e2e3c2bcc2fe167c246a5f55c4de3b52282a516..848df344e9a3b4b00883db8010be0de39844f3cc 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -3375,7 +3382,7 @@ index 0e2e3c2bcc2fe167c246a5f55c4de3b52282a516..2e7900ccbb92566b4c5e33e0e7ec7c0c
  void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  {
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
-@@ -1047,4 +1167,531 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -1047,4 +1167,538 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -3905,10 +3912,17 @@ index 0e2e3c2bcc2fe167c246a5f55c4de3b52282a516..2e7900ccbb92566b4c5e33e0e7ec7c0c
 +    m_inspectedPage.setOverrideScreenSize(size);
 +}
 +
++void InspectorPageAgent::setOrientationOverride(Inspector::ErrorString&, const int* angle)
++{
++    Optional<int> orientation;
++    if (angle)
++        orientation = *angle;
++    m_inspectedPage.setOverrideOrientation(orientation);
++}
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 6c75829502336b0806db2531e78186d2c559e44c..b2965f34e7ec1297b855ce0304adc2481baf2dc7 100644
+index 6c75829502336b0806db2531e78186d2c559e44c..7b3c952fb5c8e60620d605bd2b9b4989554ae91c 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,11 +40,16 @@
@@ -3939,7 +3953,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..b2965f34e7ec1297b855ce0304adc248
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
      void getCookies(ErrorString&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::Cookie>>& cookies) override;
-@@ -112,20 +119,30 @@ public:
+@@ -112,20 +119,31 @@ public:
      void setShowPaintRects(ErrorString&, bool show) override;
      void setEmulatedMedia(ErrorString&, const String&) override;
      void setForcedAppearance(ErrorString&, const String&) override;
@@ -3957,6 +3971,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..b2965f34e7ec1297b855ce0304adc248
 +    void setBypassCSP(ErrorString&, bool) override;
 +    void crash(ErrorString&) override;
 +    void setScreenSizeOverride(ErrorString&, int width, int height) override;
++    void setOrientationOverride(Inspector::ErrorString&, const int* angle) override;
  
      // InspectorInstrumentation
 -    void domContentEventFired();
@@ -3974,7 +3989,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..b2965f34e7ec1297b855ce0304adc248
      void defaultAppearanceDidChange(bool useDarkAppearance);
      void applyUserAgentOverride(String&);
      void applyEmulatedMedia(String&);
-@@ -134,6 +151,12 @@ public:
+@@ -134,6 +152,12 @@ public:
      void didLayout();
      void didScroll();
      void didRecalculateStyle();
@@ -3987,7 +4002,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..b2965f34e7ec1297b855ce0304adc248
  
      Frame* frameForId(const String& frameId);
      WEBCORE_EXPORT String frameId(Frame*);
-@@ -142,6 +165,7 @@ public:
+@@ -142,6 +166,7 @@ public:
  
  private:
      double timestamp();
@@ -3995,7 +4010,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..b2965f34e7ec1297b855ce0304adc248
  
      static bool mainResourceContent(Frame*, bool withBase64Encode, String* result);
      static bool dataContent(const char* data, unsigned size, const String& textEncodingName, bool withBase64Encode, String* result);
-@@ -153,18 +177,20 @@ private:
+@@ -153,18 +178,20 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -4512,7 +4527,7 @@ index adb15dbb4c53f8d1c4957a646eff30fe8c9cc659..a596843b0779b912688c2c029cc073e6
      Timer m_cursorUpdateTimer;
  
 diff --git a/Source/WebCore/page/Frame.cpp b/Source/WebCore/page/Frame.cpp
-index e6271d7e86023bce03193752805f21ee96d235fa..675ed534b6a692cd34563cac00a4e5e3d431d245 100644
+index e6271d7e86023bce03193752805f21ee96d235fa..37841e631f6837bb49dc82cc4213598cb2a862c2 100644
 --- a/Source/WebCore/page/Frame.cpp
 +++ b/Source/WebCore/page/Frame.cpp
 @@ -184,6 +184,7 @@ Frame::Frame(Page& page, HTMLFrameOwnerElement* ownerElement, UniqueRef<FrameLoa
@@ -4523,6 +4538,15 @@ index e6271d7e86023bce03193752805f21ee96d235fa..675ed534b6a692cd34563cac00a4e5e3
  }
  
  Ref<Frame> Frame::create(Page* page, HTMLFrameOwnerElement* ownerElement, UniqueRef<FrameLoaderClient>&& client)
+@@ -322,7 +323,7 @@ void Frame::orientationChanged()
+ int Frame::orientation() const
+ {
+     if (m_page)
+-        return m_page->chrome().client().deviceOrientation();
++        return m_page->orientation();
+     return 0;
+ }
+ #endif // ENABLE(ORIENTATION_EVENTS)
 diff --git a/Source/WebCore/page/FrameSnapshotting.cpp b/Source/WebCore/page/FrameSnapshotting.cpp
 index 73587787f88a6ad4e4baffb0beb0b87e7782916f..88492f501e6ec9e38455dbe6fd27537bf0ee6970 100644
 --- a/Source/WebCore/page/FrameSnapshotting.cpp
@@ -4578,7 +4602,7 @@ index 9c58b06f4c471130ce4815f11d14cb78f81b49a0..3d624733c36f09518b12095d91e67a2a
      if (stateObjectType == StateObjectType::Push) {
          frame->loader().history().pushState(WTFMove(data), title, fullURL.string());
 diff --git a/Source/WebCore/page/Page.cpp b/Source/WebCore/page/Page.cpp
-index 232fd43079726422402ae646c4fa803eb5604568..21224e5e132b1f78c40d225db24426507b4b2819 100644
+index 232fd43079726422402ae646c4fa803eb5604568..2d06753c2c85c245e6a3a38385ca2efdd1f6097f 100644
 --- a/Source/WebCore/page/Page.cpp
 +++ b/Source/WebCore/page/Page.cpp
 @@ -87,6 +87,7 @@
@@ -4589,7 +4613,7 @@ index 232fd43079726422402ae646c4fa803eb5604568..21224e5e132b1f78c40d225db2442650
  #include "PlatformStrategies.h"
  #include "PlugInClient.h"
  #include "PluginData.h"
-@@ -428,6 +429,21 @@ void Page::setOverrideViewportArguments(const Optional<ViewportArguments>& viewp
+@@ -428,6 +429,37 @@ void Page::setOverrideViewportArguments(const Optional<ViewportArguments>& viewp
          document->updateViewportArguments();
  }
  
@@ -4608,11 +4632,27 @@ index 232fd43079726422402ae646c4fa803eb5604568..21224e5e132b1f78c40d225db2442650
 +        document->updateViewportArguments();
 +}
 +
++#if ENABLE(ORIENTATION_EVENTS)
++int Page::orientation() const
++{
++    return m_overrideOrientation.valueOr(chrome().client().deviceOrientation());
++}
++
++void Page::setOverrideOrientation(Optional<int> orientation)
++{
++    if (orientation == m_overrideOrientation)
++        return;
++
++    m_overrideOrientation = orientation;
++    mainFrame().orientationChanged();
++}
++#endif
++
  ScrollingCoordinator* Page::scrollingCoordinator()
  {
      if (!m_scrollingCoordinator && m_settings->scrollingCoordinatorEnabled()) {
 diff --git a/Source/WebCore/page/Page.h b/Source/WebCore/page/Page.h
-index 0c2244aa22e4742b1b57b9f47d1649519735226d..a51827796ee3272188617cefff1d426dd3fd9131 100644
+index 0c2244aa22e4742b1b57b9f47d1649519735226d..5f090a00532862204dd1bb203965424807e292af 100644
 --- a/Source/WebCore/page/Page.h
 +++ b/Source/WebCore/page/Page.h
 @@ -187,6 +187,9 @@ public:
@@ -4620,16 +4660,32 @@ index 0c2244aa22e4742b1b57b9f47d1649519735226d..a51827796ee3272188617cefff1d426d
      WEBCORE_EXPORT void setOverrideViewportArguments(const Optional<ViewportArguments>&);
  
 +    WEBCORE_EXPORT FloatSize screenSize();
-+    WEBCORE_EXPORT void setOverrideScreenSize(Optional<FloatSize> size);
++    void setOverrideScreenSize(Optional<FloatSize> size);
 +
      static void refreshPlugins(bool reload);
      WEBCORE_EXPORT PluginData& pluginData();
      void clearPluginData();
-@@ -1010,6 +1013,7 @@ private:
+@@ -720,6 +723,11 @@ public:
+ 
+     WEBCORE_EXPORT Vector<Ref<Element>> editableElementsInRect(const FloatRect&) const;
+ 
++#if ENABLE(ORIENTATION_EVENTS)
++    int orientation() const;
++    void setOverrideOrientation(Optional<int>);
++#endif
++
+ #if ENABLE(DEVICE_ORIENTATION) && PLATFORM(IOS_FAMILY)
+     DeviceOrientationUpdateProvider* deviceOrientationUpdateProvider() const { return m_deviceOrientationUpdateProvider.get(); }
+ #endif
+@@ -1010,6 +1018,11 @@ private:
  #endif
  
      Optional<ViewportArguments> m_overrideViewportArguments;
 +    Optional<FloatSize> m_overrideScreenSize;
++
++#if ENABLE(ORIENTATION_EVENTS)
++    Optional<int> m_overrideOrientation;
++#endif
  
  #if ENABLE(DEVICE_ORIENTATION) && PLATFORM(IOS_FAMILY)
      RefPtr<DeviceOrientationUpdateProvider> m_deviceOrientationUpdateProvider;
@@ -12736,7 +12792,7 @@ index 22f644fd7f450d32ea45f97e27488ef5f34c153a..9ac93959568cb4561c039cc0ce7b28c4
  };
  
 diff --git a/Source/WebKit/WebProcess/WebCoreSupport/WebChromeClient.cpp b/Source/WebKit/WebProcess/WebCoreSupport/WebChromeClient.cpp
-index 543de23da89e1b74dba97aa1a3953f2cf69a4d1c..1f3483bd5d466b7a776efa5b5e1e0d3675ad5638 100644
+index 543de23da89e1b74dba97aa1a3953f2cf69a4d1c..25029c335bd13396b1bc6e14fbc4e6fbc9009fb3 100644
 --- a/Source/WebKit/WebProcess/WebCoreSupport/WebChromeClient.cpp
 +++ b/Source/WebKit/WebProcess/WebCoreSupport/WebChromeClient.cpp
 @@ -409,6 +409,8 @@ void WebChromeClient::setResizable(bool resizable)
@@ -12748,6 +12804,20 @@ index 543de23da89e1b74dba97aa1a3953f2cf69a4d1c..1f3483bd5d466b7a776efa5b5e1e0d36
      // Notify the bundle client.
      m_page.injectedBundleUIClient().willAddMessageToConsole(&m_page, source, level, message, lineNumber, columnNumber, sourceID);
  }
+@@ -807,6 +809,13 @@ bool WebChromeClient::canShowDataListSuggestionLabels() const
+ 
+ #endif
+ 
++#if ENABLE(ORIENTATION_EVENTS) && !PLATFORM(IOS_FAMILY)
++int WebChromeClient::deviceOrientation() const {
++    // Only overrides are supported for non-iOS platforms.
++    return 0;
++}
++#endif
++
+ void WebChromeClient::runOpenPanel(Frame& frame, FileChooser& fileChooser)
+ {
+     if (m_page.activeOpenPanelResultListener())
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 index ef1c8cdbbad2ef5ada3212c851c62a149f9fea0e..142e2ffdc95646eea469c3a51e3c329be10bd57c 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
