@@ -101,9 +101,9 @@ export class FrameManager {
   }
 
   async waitForSignalsCreatedBy<T>(action: () => Promise<T>, deadline: number, options: types.NavigatingActionWaitOptions = {}, input?: boolean): Promise<T> {
-    if (options.noWaitAfter)
+    if (options.waitUntil === 'nowait')
       return action();
-    const barrier = new SignalBarrier(options, deadline);
+    const barrier = new SignalBarrier({ waitUntil: 'domcontentloaded', ...options }, deadline);
     this._signalBarriers.add(barrier);
     try {
       const result = await action();
@@ -394,10 +394,6 @@ export class Frame {
   }
 
   async waitForNavigation(options: types.WaitForNavigationOptions = {}): Promise<network.Response | null> {
-    return this._waitForNavigation(options);
-  }
-
-  async _waitForNavigation(options: types.ExtendedWaitForNavigationOptions = {}): Promise<network.Response | null> {
     const frameTask = new FrameTask(this, options);
     let documentId: string | undefined;
     await Promise.race([
@@ -405,8 +401,7 @@ export class Frame {
       frameTask.waitForSameDocumentNavigation(options.url),
     ]);
     const request = documentId ? frameTask.request(documentId) : null;
-    if (options.waitUntil !== 'commit')
-      await frameTask.waitForLifecycle(options.waitUntil === undefined ? 'load' : options.waitUntil);
+    await frameTask.waitForLifecycle(options.waitUntil === undefined ? 'load' : options.waitUntil);
     frameTask.done();
     return request ? request._finalRequest().response() : null;
   }
@@ -968,8 +963,9 @@ export class SignalBarrier {
 
   async addFrameNavigation(frame: Frame) {
     this.retain();
-    const options = helper.optionsWithUpdatedTimeout(this._options, this._deadline);
-    await frame._waitForNavigation({...options, waitUntil: 'commit'}).catch(e => {});
+    const timeout = helper.timeUntilDeadline(this._deadline);
+    const options = { ...this._options, timeout } as types.NavigateOptions;
+    await frame.waitForNavigation(options).catch(e => {});
     this.release();
   }
 
