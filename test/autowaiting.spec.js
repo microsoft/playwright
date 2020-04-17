@@ -30,10 +30,9 @@ describe('Auto waiting', () => {
 
     await Promise.all([
       page.click('a').then(() => messages.push('click')),
-      page.waitForEvent('framenavigated').then(() => messages.push('navigated')),
       page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
     ]);
-    expect(messages.join('|')).toBe('route|navigated|click|domcontentloaded');
+    expect(messages.join('|')).toBe('route|domcontentloaded|click');
   });
   it('should await popup when clicking anchor', async function({page, server}) {
     await page.goto(server.EMPTY_PAGE);
@@ -81,10 +80,9 @@ describe('Auto waiting', () => {
 
     await Promise.all([
       page.click('a').then(() => messages.push('click')),
-      page.waitForEvent('framenavigated').then(() => messages.push('navigated')),
       page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
     ]);
-    expect(messages.join('|')).toBe('route|navigated|click|domcontentloaded');
+    expect(messages.join('|')).toBe('route|domcontentloaded|click');
   });
   it('should await form-get on click', async({page, server}) => {
     const messages = [];
@@ -102,10 +100,9 @@ describe('Auto waiting', () => {
 
     await Promise.all([
       page.click('input[type=submit]').then(() => messages.push('click')),
-      page.waitForEvent('framenavigated').then(() => messages.push('navigated')),
       page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
     ]);
-    expect(messages.join('|')).toBe('route|navigated|click|domcontentloaded');
+    expect(messages.join('|')).toBe('route|domcontentloaded|click');
   });
   it('should await form-post on click', async({page, server}) => {
     const messages = [];
@@ -125,7 +122,7 @@ describe('Auto waiting', () => {
       page.click('input[type=submit]').then(() => messages.push('click')),
       page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
     ]);
-    expect(messages.join('|')).toBe('route|click|domcontentloaded');
+    expect(messages.join('|')).toBe('route|domcontentloaded|click');
   });
   it('should await navigation when assigning location', async({page, server}) => {
     const messages = [];
@@ -136,10 +133,9 @@ describe('Auto waiting', () => {
     });
     await Promise.all([
       page.evaluate(`window.location.href = "${server.EMPTY_PAGE}"`).then(() => messages.push('evaluate')),
-      page.waitForEvent('framenavigated').then(() => messages.push('navigated')),
       page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
     ]);
-    expect(messages.join('|')).toBe('route|navigated|evaluate|domcontentloaded');
+    expect(messages.join('|')).toBe('route|domcontentloaded|evaluate');
   });
   it('should await navigation when assigning location twice', async({page, server}) => {
     const messages = [];
@@ -164,10 +160,9 @@ describe('Auto waiting', () => {
 
     await Promise.all([
       page.evaluate(`window.location.reload()`).then(() => messages.push('evaluate')),
-      page.waitForEvent('framenavigated').then(() => messages.push('navigated')),
       page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
     ]);
-    expect(messages.join('|')).toBe('route|navigated|evaluate|domcontentloaded');
+    expect(messages.join('|')).toBe('route|domcontentloaded|evaluate');
   });
   it('should await new popup when evaluating', async function({page, server}) {
     await page.goto(server.EMPTY_PAGE);
@@ -193,18 +188,27 @@ describe('Auto waiting', () => {
     const frame = page.frame({ name: 'target' });
     await Promise.all([
       page.click('a').then(() => messages.push('click')),
-      page.waitForEvent('framenavigated').then(() => messages.push('navigated')),
       frame.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
     ]);
     expect(frame.url()).toBe(server.EMPTY_PAGE);
-    expect(messages.join('|')).toBe('route|navigated|click|domcontentloaded');
+    expect(messages.join('|')).toBe('route|domcontentloaded|click');
   });
-  it('should work with noWaitAfter: true', async({page, server}) => {
-    server.setRoute('/empty.html', async () => {});
+  it('should work with waitUntil: nowait', async({page, server}) => {
+    const messages = [];
+    server.setRoute('/empty.html', async (req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.end(`<link rel='stylesheet' href='./one-style.css'>`);
+    });
+
     await page.setContent(`<a href="${server.EMPTY_PAGE}">empty.html</a>`);
-    await page.click('a', { noWaitAfter: true });
+    await Promise.all([
+      page.click('a', { waitUntil: 'nowait' }).then(() => messages.push('click')),
+      page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+      page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
+    ]);
+    expect(messages.join('|')).toBe('click|domcontentloaded|load');
   });
-  it('should work with waitForLoadState(load)', async({page, server}) => {
+  it('should work with waitUntil: load', async({page, server}) => {
     const messages = [];
     server.setRoute('/empty.html', async (req, res) => {
       messages.push('route');
@@ -214,10 +218,11 @@ describe('Auto waiting', () => {
 
     await page.setContent(`<a href="${server.EMPTY_PAGE}">empty.html</a>`);
     await Promise.all([
-      page.click('a').then(() => page.waitForLoadState('load')).then(() => messages.push('clickload')),
+      page.click('a', { waitUntil: 'load' }).then(() => messages.push('click')),
       page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+      page.waitForNavigation({ waitUntil: 'load' }).then(() => messages.push('load')),
     ]);
-    expect(messages.join('|')).toBe('route|domcontentloaded|clickload');
+    expect(messages.join('|')).toBe('route|domcontentloaded|load|click');
   });
 });
 
