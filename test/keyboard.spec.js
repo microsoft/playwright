@@ -78,7 +78,7 @@ describe('Keyboard', function() {
     await page.keyboard.insertText('hello world');
     expect(await page.evaluate('window.events')).toEqual(['input']);
   });
-  it('should report shiftKey', async({page, server}) => {
+  it.fail(FFOX && MAC)('should report shiftKey', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/keyboard.html');
     const keyboard = page.keyboard;
     const codeForKey = {'Shift': 16, 'Alt': 18, 'Control': 17};
