@@ -16,7 +16,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, MAC} = utils.testOptions(browserType);
 
 describe('BrowserContext', function() {
   it('should create new context', async function({browser}) {
@@ -649,6 +649,38 @@ describe('Events.BrowserContext.Page', function() {
       'CREATED: about:blank',
       `DESTROYED: ${server.EMPTY_PAGE}`
     ]);
+    await context.close();
+  });
+  it.fail(CHROMIUM || WEBKIT)('should work with Shift-clicking', async({browser, server}) => {
+    // Chromium: Shift+Click fires frameRequestedNavigation that never materializes
+    // because it actually opens a new window.
+    // WebKit: Shift+Click does not open a new window.
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<a href="/one-style.html">yo</a>');
+    const [popup] = await Promise.all([
+      context.waitForEvent('page'),
+      page.click('a', { modifiers: ['Shift'] }),
+    ]);
+    expect(await page.evaluate(() => !!window.opener)).toBe(false);
+    expect(await popup.evaluate(() => !!window.opener)).toBe(false);
+    await context.close();
+  });
+  it.fail(CHROMIUM || WEBKIT)('should work with Ctrl-clicking', async({browser, server}) => {
+    // Chromium: Ctrl+Click fires frameRequestedNavigation that never materializes
+    // because it actually opens a new tab.
+    // WebKit: Ctrl+Click does not open a new tab.
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<a href="/one-style.html">yo</a>');
+    const [popup] = await Promise.all([
+      context.waitForEvent('page'),
+      page.click('a', { modifiers: [ MAC ? 'Meta' : 'Control'] }),
+    ]);
+    expect(await page.evaluate(() => !!window.opener)).toBe(false);
+    expect(await popup.evaluate(() => !!window.opener)).toBe(false);
     await context.close();
   });
 });
