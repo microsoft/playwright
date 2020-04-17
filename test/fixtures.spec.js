@@ -17,7 +17,7 @@
 
 const path = require('path');
 const {spawn, execSync} = require('child_process');
-const {FFOX, CHROMIUM, WEBKIT, WIN} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX} = require('./utils').testOptions(browserType);
 
 async function testSignal(state, action, exitOnClose) {
   const options = Object.assign({}, state.defaultBrowserOptions, {
@@ -123,7 +123,8 @@ describe('Fixtures', function() {
       // TODO: ideally, we would expect the SIGKILL on the browser from
       // force kill, but that's racy with sending two signals.
     });
-    it.slow()('should kill the browser on SIGINT + SIGTERM', async state => {
+    // TODO: flaky - https://app.circleci.com/pipelines/github/microsoft/playwright/582/workflows/b49033ce-fe20-4029-b665-13fb331f842e/jobs/579
+    it.slow().fail(FFOX && LINUX)('should kill the browser on SIGINT + SIGTERM', async state => {
       const result = await testSignal(state, child => {
         process.kill(child.pid, 'SIGINT');
         process.kill(child.pid, 'SIGTERM');
