@@ -23,4 +23,10 @@ class CustomError extends Error {
   }
 }
 
+export class NotConnectedError extends CustomError {
+  constructor() {
+    super('Element is not attached to the DOM');
+  }
+}
+
 export class TimeoutError extends CustomError {}

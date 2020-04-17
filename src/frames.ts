@@ -19,9 +19,9 @@ import * as fs from 'fs';
 import * as util from 'util';
 import { ConsoleMessage } from './console';
 import * as dom from './dom';
-import { TimeoutError } from './errors';
+import { TimeoutError, NotConnectedError } from './errors';
 import { Events } from './events';
-import { assert, helper, RegisteredListener } from './helper';
+import { assert, helper, RegisteredListener, debugInput } from './helper';
 import * as js from './javascript';
 import * as network from './network';
 import { Page } from './page';
@@ -693,72 +693,82 @@ export class Frame {
     return result!;
   }
 
+  private async _retryWithSelectorIfNotConnected<R>(
+    selector: string, options: types.TimeoutOptions,
+    action: (handle: dom.ElementHandle<Element>, deadline: number) => Promise<R>): Promise<R> {
+    const deadline = this._page._timeoutSettings.computeDeadline(options);
+    while (!helper.isPastDeadline(deadline)) {
+      try {
+        const { world, task } = selectors._waitForSelectorTask(selector, 'attached', deadline);
+        const handle = await this._scheduleRerunnableTask(task, world, deadline, `selector "${selector}"`);
+        const element = handle.asElement() as dom.ElementHandle<Element>;
+        try {
+          return await action(element, deadline);
+        } finally {
+          element.dispose();
+        }
+      } catch (e) {
+        if (!(e instanceof NotConnectedError))
+          throw e;
+        debugInput('Element was detached from the DOM, retrying');
+      }
+    }
+    throw new TimeoutError(`waiting for selector "${selector}" failed: timeout exceeded`);
+  }
+
   async click(selector: string, options: dom.ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.click(helper.optionsWithUpdatedTimeout(options, deadline));
-    handle.dispose();
+    await this._retryWithSelectorIfNotConnected(selector, options,
+        (handle, deadline) => handle.click(helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
   async dblclick(selector: string, options: dom.MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.dblclick(helper.optionsWithUpdatedTimeout(options, deadline));
-    handle.dispose();
+    await this._retryWithSelectorIfNotConnected(selector, options,
+        (handle, deadline) => handle.dblclick(helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
   async fill(selector: string, value: string, options: types.NavigatingActionWaitOptions = {}) {
-    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.fill(value, helper.optionsWithUpdatedTimeout(options, deadline));
-    handle.dispose();
+    await this._retryWithSelectorIfNotConnected(selector, options,
+        (handle, deadline) => handle.fill(value, helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
-  async focus(selector: string, options?: types.TimeoutOptions) {
-    const { handle } = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.focus();
-    handle.dispose();
+  async focus(selector: string, options: types.TimeoutOptions = {}) {
+    await this._retryWithSelectorIfNotConnected(selector, options,
+        (handle, deadline) => handle.focus());
   }
 
-  async hover(selector: string, options?: dom.PointerActionOptions & types.PointerActionWaitOptions) {
-    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.hover(helper.optionsWithUpdatedTimeout(options, deadline));
-    handle.dispose();
+  async hover(selector: string, options: dom.PointerActionOptions & types.PointerActionWaitOptions = {}) {
+    await this._retryWithSelectorIfNotConnected(selector, options,
+        (handle, deadline) => handle.hover(helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
-  async selectOption(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options?: types.NavigatingActionWaitOptions): Promise<string[]> {
-    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
-    const result = await handle.selectOption(values, helper.optionsWithUpdatedTimeout(options, deadline));
-    handle.dispose();
-    return result;
+  async selectOption(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
+    return await this._retryWithSelectorIfNotConnected(selector, options,
+        (handle, deadline) => handle.selectOption(values, helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
-  async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options?: types.NavigatingActionWaitOptions): Promise<void> {
-    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
-    const result = await handle.setInputFiles(files, helper.optionsWithUpdatedTimeout(options, deadline));
-    handle.dispose();
-    return result;
+  async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
+    await this._retryWithSelectorIfNotConnected(selector, options,
+        (handle, deadline) => handle.setInputFiles(files, helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
-  async type(selector: string, text: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
-    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.type(text, helper.optionsWithUpdatedTimeout(options, deadline));
-    handle.dispose();
+  async type(selector: string, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
+    await this._retryWithSelectorIfNotConnected(selector, options,
+        (handle, deadline) => handle.type(text, helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
-  async press(selector: string, key: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
-    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.press(key, helper.optionsWithUpdatedTimeout(options, deadline));
-    handle.dispose();
+  async press(selector: string, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
+    await this._retryWithSelectorIfNotConnected(selector, options,
+        (handle, deadline) => handle.press(key, helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
-  async check(selector: string, options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.check(helper.optionsWithUpdatedTimeout(options, deadline));
-    handle.dispose();
+  async check(selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+    await this._retryWithSelectorIfNotConnected(selector, options,
+        (handle, deadline) => handle.check(helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
-  async uncheck(selector: string, options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    const { handle, deadline } = await this._waitForSelectorInUtilityContext(selector, options);
-    await handle.uncheck(helper.optionsWithUpdatedTimeout(options, deadline));
-    handle.dispose();
+  async uncheck(selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+    await this._retryWithSelectorIfNotConnected(selector, options,
+        (handle, deadline) => handle.uncheck(helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
   async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: types.WaitForFunctionOptions & types.WaitForElementOptions = {}, arg?: any): Promise<js.JSHandle | null> {
@@ -771,14 +781,6 @@ export class Frame {
     if (typeof selectorOrFunctionOrTimeout === 'function')
       return this.waitForFunction(selectorOrFunctionOrTimeout as any, arg, options);
     return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
-  }
-
-  private async _waitForSelectorInUtilityContext(selector: string, options?: types.WaitForElementOptions): Promise<{ handle: dom.ElementHandle<Element>, deadline: number }> {
-    const { waitFor = 'attached' } = options || {};
-    const deadline = this._page._timeoutSettings.computeDeadline(options);
-    const { world, task } = selectors._waitForSelectorTask(selector, waitFor, deadline);
-    const result = await this._scheduleRerunnableTask(task, world, deadline, `selector "${selectorToString(selector, waitFor)}"`);
-    return { handle: result.asElement() as dom.ElementHandle<Element>, deadline };
   }
 
   async waitForFunction<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>>;

@@ -36,6 +36,7 @@ import { WKBrowserContext } from './wkBrowser';
 import { selectors } from '../selectors';
 import * as jpeg from 'jpeg-js';
 import * as png from 'pngjs';
+import { NotConnectedError } from '../errors';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
@@ -713,6 +714,8 @@ export class WKPage implements PageDelegate {
       objectId: toRemoteObject(handle).objectId!,
       rect,
     }).catch(e => {
+      if (e instanceof Error && e.message.includes('Node is detached from document'))
+        throw new NotConnectedError();
       if (e instanceof Error && e.message.includes('Node does not have a layout object'))
         e.message = 'Node is either not visible or not an HTMLElement';
       throw e;
