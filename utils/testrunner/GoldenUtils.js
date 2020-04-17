@@ -57,7 +57,7 @@ function compareImages(actualBuffer, expectedBuffer, mimeType) {
   }
   const diff = new PNG({width: expected.width, height: expected.height});
   const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, {threshold: 0.2});
-  return count > 0 ? { diff: PNG.sync.write(diff) } : null;
+  return count > 0 ? { diff: PNG.sync.write(diff), base64: actualBuffer.toString('base64') } : null;
 }
 
 /**
@@ -140,6 +140,9 @@ function compare(actual, golden) {
     const diffPath = addSuffix(actualPath, '-diff', result.diffExtension);
     fs.writeFileSync(diffPath, result.diff);
     output.push(`    Diff: ${c.yellow(diffPath)}`);
+  }
+  if (result.base64) {
+    output.push(`    Base64: ${result.base64}`);
   }
 
   let message = goldenName + ' mismatch!';

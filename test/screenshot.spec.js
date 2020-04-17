@@ -219,6 +219,12 @@ describe('Page.screenshot', function() {
     expect(screenshot).toBeGolden(golden('screenshot-device-scale-factor.png'));
     await context.close();
   });
+  it('should capture text', async({page, server, golden}) => {
+    await page.goto(server.PREFIX + '/screenshots/screenshot-text.html');
+    await page.fill('input', 'some value');
+    const screenshot = await page.screenshot();
+    expect(screenshot).toBeGolden(golden(`screenshot-text-${process.platform}.png`));
+  });
 });
 
 describe('ElementHandle.screenshot', function() {
