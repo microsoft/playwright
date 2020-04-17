@@ -57,7 +57,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
   async _doEvaluateInternal(returnByValue: boolean, waitForNavigations: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(async () => {
       return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
-    }, Number.MAX_SAFE_INTEGER, waitForNavigations ? undefined : { waitUntil: 'nowait' });
+    }, Number.MAX_SAFE_INTEGER, waitForNavigations ? undefined : { noWaitAfter: true });
   }
 
   _createHandle(remoteObject: any): js.JSHandle {
