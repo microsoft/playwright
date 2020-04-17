@@ -571,12 +571,19 @@ export class Frame {
     return this._raceWithCSPError(async () => {
       if (url !== null)
         return (await context.evaluateHandleInternal(addScriptUrl, { url, type })).asElement()!;
+      let result;
       if (path !== null) {
         let contents = await util.promisify(fs.readFile)(path, 'utf8');
         contents += '//# sourceURL=' + path.replace(/\n/g, '');
-        return (await context.evaluateHandleInternal(addScriptContent, { content: contents, type })).asElement()!;
+        result = (await context.evaluateHandleInternal(addScriptContent, { content: contents, type })).asElement()!;
+      } else {
+        result = (await context.evaluateHandleInternal(addScriptContent, { content: content!, type })).asElement()!;
       }
-      return (await context.evaluateHandleInternal(addScriptContent, { content: content!, type })).asElement()!;
+      // Another round trip to the browser to ensure that we receive CSP error messages
+      // (if any) logged asynchronously in a separate task on the content main thread.
+      if (this._page._delegate.cspErrorsAsynchronousForInlineScipts)
+        await context.evaluateInternal(() => true);
+      return result;
     });
 
     async function addScriptUrl(options: { url: string, type: string }): Promise<HTMLElement> {

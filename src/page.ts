@@ -75,6 +75,8 @@ export interface PageDelegate {
 
   // Work around Chrome's non-associated input and protocol.
   inputActionEpilogue(): Promise<void>;
+  // Work around for asynchronously dispatched CSP errors in Firefox.
+  readonly cspErrorsAsynchronousForInlineScipts?: boolean;
 }
 
 type PageState = {
