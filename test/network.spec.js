@@ -259,7 +259,7 @@ describe('Network Events', function() {
       if (MAC)
         expect(failedRequests[0].failure().errorText).toBe('The network connection was lost.');
       else if (WIN)
-        expect(failedRequests[0].failure().errorText).toBe('Unsupported protocol');
+        expect(failedRequests[0].failure().errorText).toBe('Server returned nothing (no headers, no data)');
       else
         expect(failedRequests[0].failure().errorText).toBe('Message Corrupt');
     } else {
