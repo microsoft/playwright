@@ -67,7 +67,7 @@ export class WebKit implements BrowserType<WKBrowser> {
     const browser = await WKBrowser.connect(transport!, slowMo, true);
     browser._ownedServer = browserServer;
     await helper.waitWithTimeout(browser._waitForFirstPageTarget(), 'first page', timeout);
-    return browser._defaultContext;
+    return browser._defaultContext!;
   }
 
   private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport, downloadsPath: string }> {

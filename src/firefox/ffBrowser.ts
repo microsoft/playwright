@@ -31,7 +31,7 @@ import { Protocol } from './protocol';
 export class FFBrowser extends BrowserBase {
   _connection: FFConnection;
   readonly _ffPages: Map<string, FFPage>;
-  readonly _defaultContext: FFBrowserContext;
+  readonly _defaultContext: FFBrowserContext | null = null;
   readonly _contexts: Map<string, FFBrowserContext>;
   private _eventListeners: RegisteredListener[];
   readonly _firstPagePromise: Promise<void>;
@@ -39,17 +39,18 @@ export class FFBrowser extends BrowserBase {
 
   static async connect(transport: ConnectionTransport, attachToDefaultContext: boolean, slowMo?: number): Promise<FFBrowser> {
     const connection = new FFConnection(SlowMoTransport.wrap(transport, slowMo));
-    const browser = new FFBrowser(connection);
+    const browser = new FFBrowser(connection, attachToDefaultContext);
     await connection.send('Browser.enable', { attachToDefaultContext });
     return browser;
   }
 
-  constructor(connection: FFConnection) {
+  constructor(connection: FFConnection, isPersistent: boolean) {
     super();
     this._connection = connection;
     this._ffPages = new Map();
 
-    this._defaultContext = new FFBrowserContext(this, null, validateBrowserContextOptions({}));
+    if (isPersistent)
+      this._defaultContext = new FFBrowserContext(this, null, validateBrowserContextOptions({}));
     this._contexts = new Map();
     this._connection.on(ConnectionEvents.Disconnected, () => {
       for (const context of this._contexts.values())
@@ -124,6 +125,7 @@ export class FFBrowser extends BrowserBase {
     const {targetId, browserContextId, openerId, type} = payload.targetInfo;
     assert(type === 'page');
     const context = browserContextId ? this._contexts.get(browserContextId)! : this._defaultContext;
+    assert(context, `Unknown context id:${browserContextId}, _defaultContext: ${this._defaultContext}`);
     const session = this._connection.createSession(payload.sessionId, type);
     const opener = openerId ? this._ffPages.get(openerId)! : null;
     const ffPage = new FFPage(session, context, opener);

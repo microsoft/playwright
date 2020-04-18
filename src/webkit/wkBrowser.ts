@@ -31,9 +31,8 @@ const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) Appl
 
 export class WKBrowser extends BrowserBase {
   private readonly _connection: WKConnection;
-  private readonly _attachToDefaultContext: boolean;
   readonly _browserSession: WKSession;
-  readonly _defaultContext: WKBrowserContext;
+  readonly _defaultContext: WKBrowserContext | null = null;
   readonly _contexts = new Map<string, WKBrowserContext>();
   readonly _wkPages = new Map<string, WKPage>();
   private readonly _eventListeners: RegisteredListener[];
@@ -49,10 +48,10 @@ export class WKBrowser extends BrowserBase {
   constructor(transport: ConnectionTransport, attachToDefaultContext: boolean) {
     super();
     this._connection = new WKConnection(transport, this._onDisconnect.bind(this));
-    this._attachToDefaultContext = attachToDefaultContext;
     this._browserSession = this._connection.browserSession;
 
-    this._defaultContext = new WKBrowserContext(this, undefined, validateBrowserContextOptions({}));
+    if (attachToDefaultContext)
+      this._defaultContext = new WKBrowserContext(this, undefined, validateBrowserContextOptions({}));
 
     this._eventListeners = [
       helper.addEventListener(this._browserSession, 'Playwright.pageProxyCreated', this._onPageProxyCreated.bind(this)),
@@ -117,10 +116,10 @@ export class WKBrowser extends BrowserBase {
       // lifecycle events.
       context = this._contexts.get(pageProxyInfo.browserContextId) || null;
     }
-    if (!context && !this._attachToDefaultContext)
-      return;
     if (!context)
-      context =  this._defaultContext;
+      context = this._defaultContext;
+    if (!context)
+      return;
     const pageProxySession = new WKSession(this._connection, pageProxyId, `The page has been closed.`, (message: any) => {
       this._connection.rawSend({ ...message, pageProxyId });
     });
