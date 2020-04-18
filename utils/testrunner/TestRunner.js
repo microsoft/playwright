@@ -395,16 +395,17 @@ class TestRunner {
     this._result = new Result();
     this._result.runs = testRuns;
 
+    const terminationPromises = [];
     const handleSIGINT = () => this._terminate(TestResult.Terminated, 'SIGINT received', false, null);
     const handleSIGHUP = () => this._terminate(TestResult.Terminated, 'SIGHUP received', false, null);
     const handleSIGTERM = () => this._terminate(TestResult.Terminated, 'SIGTERM received', true, null);
     const handleRejection = e => {
       const { message, error } = this._toError('UNHANDLED PROMISE REJECTION', e);
-      this._terminate(TestResult.Crashed, message, false, error);
+      terminationPromises.push(this._terminate(TestResult.Crashed, message, false, error));
     };
     const handleException = e => {
       const { message, error } = this._toError('UNHANDLED ERROR', e);
-      this._terminate(TestResult.Crashed, message, false, error);
+      terminationPromises.push(this._terminate(TestResult.Crashed, message, false, error));
     };
     process.on('SIGINT', handleSIGINT);
     process.on('SIGHUP', handleSIGHUP);
@@ -415,7 +416,7 @@ class TestRunner {
     let timeoutId;
     if (totalTimeout) {
       timeoutId = setTimeout(() => {
-        this._terminate(TestResult.Terminated, `Total timeout of ${totalTimeout}ms reached.`, true /* force */, null /* error */);
+        terminationPromises.push(this._terminate(TestResult.Terminated, `Total timeout of ${totalTimeout}ms reached.`, true /* force */, null /* error */));
       }, totalTimeout);
     }
     await this._runDelegateCallback(this._delegate.onStarted, [testRuns]);
@@ -427,6 +428,7 @@ class TestRunner {
       workerPromises.push(this._runWorker(initialTestRunIndex, testRuns, i));
     }
     await Promise.all(workerPromises);
+    await Promise.all(terminationPromises);
 
     if (testRuns.some(run => run.isFailure()))
       this._result.setResult(TestResult.Failed, '');
