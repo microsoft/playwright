@@ -63,13 +63,6 @@ async function testSignal(state, action, exitOnClose) {
 }
 
 describe('Fixtures', function() {
-  it.slow()('should dump browser process stderr', async state => {
-    let dumpioData = '';
-    const res = spawn('node', [path.join(__dirname, 'fixtures', 'dumpio.js'), state.playwrightPath, state.browserType.name()]);
-    res.stdout.on('data', data => dumpioData += data.toString('utf8'));
-    await new Promise(resolve => res.on('close', resolve));
-    expect(dumpioData).toContain('message from dumpio');
-  });
   it.slow()('should close the browser when the node process closes', async state => {
     const result = await testSignal(state, child => {
       if (WIN)

@@ -18,7 +18,7 @@
 import * as dom from '../dom';
 import * as js from '../javascript';
 import * as frames from '../frames';
-import { debugError, helper, RegisteredListener, assert } from '../helper';
+import { helper, RegisteredListener, assert } from '../helper';
 import * as network from '../network';
 import { CRSession, CRConnection, CRSessionEvents } from './crConnection';
 import { EVALUATION_SCRIPT_URL, CRExecutionContext } from './crExecutionContext';
@@ -37,6 +37,7 @@ import { CRBrowserContext } from './crBrowser';
 import * as types from '../types';
 import { ConsoleMessage } from '../console';
 import { NotConnectedError } from '../errors';
+import { logError } from '../logger';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -60,7 +61,7 @@ export class CRPage implements PageDelegate {
     this.rawKeyboard = new RawKeyboardImpl(client);
     this.rawMouse = new RawMouseImpl(client);
     this._pdf = new CRPDF(client);
-    this._coverage = new CRCoverage(client);
+    this._coverage = new CRCoverage(client, browserContext);
     this._browserContext = browserContext;
     this._page = new Page(this, browserContext);
     this._mainFrameSession = new FrameSession(this, client, targetId);
@@ -127,7 +128,7 @@ export class CRPage implements PageDelegate {
 
   async exposeBinding(binding: PageBinding) {
     await this._forAllFrameSessions(frame => frame._initBinding(binding));
-    await Promise.all(this._page.frames().map(frame => frame.evaluate(binding.source).catch(debugError)));
+    await Promise.all(this._page.frames().map(frame => frame.evaluate(binding.source).catch(logError(this._page))));
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
@@ -381,9 +382,9 @@ class FrameSession {
             frameId: frame._id,
             grantUniveralAccess: true,
             worldName: UTILITY_WORLD_NAME,
-          }).catch(debugError);
+          }).catch(logError(this._page));
           for (const binding of this._crPage._browserContext._pageBindings.values())
-            frame.evaluate(binding.source).catch(debugError);
+            frame.evaluate(binding.source).catch(logError(this._page));
         }
         const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
         if (isInitialEmptyPage) {
@@ -543,14 +544,14 @@ class FrameSession {
 
     if (event.targetInfo.type !== 'worker') {
       // Ideally, detaching should resume any target, but there is a bug in the backend.
-      session.send('Runtime.runIfWaitingForDebugger').catch(debugError).then(() => {
-        this._client.send('Target.detachFromTarget', { sessionId: event.sessionId }).catch(debugError);
+      session.send('Runtime.runIfWaitingForDebugger').catch(logError(this._page)).then(() => {
+        this._client.send('Target.detachFromTarget', { sessionId: event.sessionId }).catch(logError(this._page));
       });
       return;
     }
 
     const url = event.targetInfo.url;
-    const worker = new Worker(url);
+    const worker = new Worker(this._page, url);
     this._page._addWorker(event.sessionId, worker);
     session.once('Runtime.executionContextCreated', async event => {
       worker._createExecutionContext(new CRExecutionContext(session, event.context));
@@ -559,7 +560,7 @@ class FrameSession {
       session.send('Runtime.enable'),
       session.send('Network.enable'),
       session.send('Runtime.runIfWaitingForDebugger'),
-    ]).catch(debugError);  // This might fail if the target is closed before we initialize.
+    ]).catch(logError(this._page));  // This might fail if the target is closed before we initialize.
     session.on('Runtime.consoleAPICalled', event => {
       const args = event.args.map(o => worker._existingExecutionContext!._createHandle(o));
       this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
@@ -750,7 +751,7 @@ class FrameSession {
   async _getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
     const result = await this._client.send('DOM.getBoxModel', {
       objectId: toRemoteObject(handle).objectId
-    }).catch(debugError);
+    }).catch(logError(this._page));
     if (!result)
       return null;
     const quad = result.model.border;
@@ -777,7 +778,7 @@ class FrameSession {
   async _getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     const result = await this._client.send('DOM.getContentQuads', {
       objectId: toRemoteObject(handle).objectId
-    }).catch(debugError);
+    }).catch(logError(this._page));
     if (!result)
       return null;
     return result.quads.map(quad => [
@@ -799,7 +800,7 @@ class FrameSession {
     const result = await this._client.send('DOM.resolveNode', {
       backendNodeId,
       executionContextId: (to._delegate as CRExecutionContext)._contextId,
-    }).catch(debugError);
+    }).catch(logError(this._page));
     if (!result || result.object.subtype === 'null')
       throw new Error('Unable to adopt element handle from a different document');
     return to._createHandle(result.object).asElement()!;

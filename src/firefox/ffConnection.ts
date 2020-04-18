@@ -17,8 +17,9 @@
 
 import { EventEmitter } from 'events';
 import { assert } from '../helper';
-import { ConnectionTransport, ProtocolRequest, ProtocolResponse, debugProtocol } from '../transport';
+import { ConnectionTransport, ProtocolRequest, ProtocolResponse, protocolLog } from '../transport';
 import { Protocol } from './protocol';
+import { Logger } from '../logger';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('Disconnected'),
@@ -32,6 +33,7 @@ export class FFConnection extends EventEmitter {
   private _lastId: number;
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
   private _transport: ConnectionTransport;
+  private _logger: Logger;
   readonly _sessions: Map<string, FFSession>;
   _closed: boolean;
 
@@ -41,9 +43,10 @@ export class FFConnection extends EventEmitter {
   removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
-  constructor(transport: ConnectionTransport) {
+  constructor(transport: ConnectionTransport, logger: Logger) {
     super();
     this._transport = transport;
+    this._logger = logger;
     this._lastId = 0;
     this._callbacks = new Map();
 
@@ -75,14 +78,14 @@ export class FFConnection extends EventEmitter {
   }
 
   _rawSend(message: ProtocolRequest) {
-    if (debugProtocol.enabled)
-      debugProtocol('SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
+    if (this._logger._isLogEnabled(protocolLog))
+      this._logger._log(protocolLog, 'SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
     this._transport.send(message);
   }
 
   async _onMessage(message: ProtocolResponse) {
-    if (debugProtocol.enabled)
-      debugProtocol('◀ RECV ' + JSON.stringify(message));
+    if (this._logger._isLogEnabled(protocolLog))
+      this._logger._log(protocolLog, '◀ RECV ' + JSON.stringify(message));
     if (message.id === kBrowserCloseMessageId)
       return;
     if (message.sessionId) {

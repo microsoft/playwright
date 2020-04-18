@@ -16,7 +16,7 @@
  */
 
 import * as frames from '../frames';
-import { debugError, helper, RegisteredListener, assert } from '../helper';
+import { helper, RegisteredListener, assert } from '../helper';
 import * as dom from '../dom';
 import * as network from '../network';
 import { WKSession } from './wkConnection';
@@ -37,6 +37,7 @@ import { selectors } from '../selectors';
 import * as jpeg from 'jpeg-js';
 import * as png from 'pngjs';
 import { NotConnectedError } from '../errors';
+import { logError } from '../logger';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
@@ -267,7 +268,7 @@ export class WKPage implements PageDelegate {
         pageOrError = e;
       }
       if (targetInfo.isPaused)
-        this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
+        this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(logError(this._page));
       if ((pageOrError instanceof Page) && this._page.mainFrame().url() === '') {
         try {
           // Initial empty page has an empty url. We should wait until the first real url has been loaded,
@@ -289,7 +290,7 @@ export class WKPage implements PageDelegate {
       this._provisionalPage = new WKProvisionalPage(session, this);
       if (targetInfo.isPaused) {
         this._provisionalPage.initializationPromise.then(() => {
-          this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
+          this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(logError(this._page));
         });
       }
     }
@@ -344,7 +345,7 @@ export class WKPage implements PageDelegate {
     // as well to always be in sync with the backend.
     if (this._provisionalPage)
       sessions.push(this._provisionalPage._session);
-    await Promise.all(sessions.map(session => callback(session).catch(debugError)));
+    await Promise.all(sessions.map(session => callback(session).catch(logError(this._page))));
   }
 
   private _onFrameScheduledNavigation(frameId: string) {
@@ -608,7 +609,7 @@ export class WKPage implements PageDelegate {
 
   private async _evaluateBindingScript(binding: PageBinding): Promise<void> {
     const script = this._bindingToScript(binding);
-    await Promise.all(this._page.frames().map(frame => frame.evaluate(script).catch(debugError)));
+    await Promise.all(this._page.frames().map(frame => frame.evaluate(script).catch(logError(this._page))));
   }
 
   async evaluateOnNewDocument(script: string): Promise<void> {
@@ -639,7 +640,7 @@ export class WKPage implements PageDelegate {
     this._pageProxySession.send('Target.close', {
       targetId: this._session.sessionId,
       runBeforeUnload
-    }).catch(debugError);
+    }).catch(logError(this._page));
   }
 
   canScreenshotOutsideViewport(): boolean {
@@ -725,7 +726,7 @@ export class WKPage implements PageDelegate {
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     const result = await this._session.send('DOM.getContentQuads', {
       objectId: toRemoteObject(handle).objectId!
-    }).catch(debugError);
+    }).catch(logError(this._page));
     if (!result)
       return null;
     return result.quads.map(quad => [
@@ -749,7 +750,7 @@ export class WKPage implements PageDelegate {
     const result = await this._session.send('DOM.resolveNode', {
       objectId: toRemoteObject(handle).objectId,
       executionContextId: (to._delegate as WKExecutionContext)._contextId
-    }).catch(debugError);
+    }).catch(logError(this._page));
     if (!result || result.object.subtype === 'null')
       throw new Error('Unable to adopt element handle from a different document');
     return to._createHandle(result.object) as dom.ElementHandle<T>;

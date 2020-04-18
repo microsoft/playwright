@@ -21,7 +21,7 @@ import { ConsoleMessage } from './console';
 import * as dom from './dom';
 import { TimeoutError, NotConnectedError } from './errors';
 import { Events } from './events';
-import { assert, helper, RegisteredListener, debugInput } from './helper';
+import { assert, helper, RegisteredListener } from './helper';
 import * as js from './javascript';
 import * as network from './network';
 import { Page } from './page';
@@ -710,7 +710,7 @@ export class Frame {
       } catch (e) {
         if (!(e instanceof NotConnectedError))
           throw e;
-        debugInput('Element was detached from the DOM, retrying');
+        this._page._log(dom.inputLog, 'Element was detached from the DOM, retrying');
       }
     }
     throw new TimeoutError(`waiting for selector "${selector}" failed: timeout exceeded`);
@@ -775,7 +775,7 @@ export class Frame {
     if (helper.isString(selectorOrFunctionOrTimeout))
       return this.waitForSelector(selectorOrFunctionOrTimeout, options) as any;
     if (helper.isNumber(selectorOrFunctionOrTimeout)) {
-      waitForTimeWasUsed();
+      waitForTimeWasUsed(this._page);
       return new Promise(fulfill => setTimeout(fulfill, selectorOrFunctionOrTimeout));
     }
     if (typeof selectorOrFunctionOrTimeout === 'function')

@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-import { debugError, helper, RegisteredListener } from '../helper';
+import { helper, RegisteredListener } from '../helper';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
+import { logError, Logger } from '../logger';
 
 export class PipeTransport implements ConnectionTransport {
   private _pipeWrite: NodeJS.WritableStream | null;
@@ -27,7 +28,7 @@ export class PipeTransport implements ConnectionTransport {
   onmessage?: (message: ProtocolResponse) => void;
   onclose?: () => void;
 
-  constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream) {
+  constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream, logger: Logger) {
     this._pipeWrite = pipeWrite;
     this._eventListeners = [
       helper.addEventListener(pipeRead, 'data', buffer => this._dispatch(buffer)),
@@ -36,8 +37,8 @@ export class PipeTransport implements ConnectionTransport {
         if (this.onclose)
           this.onclose.call(null);
       }),
-      helper.addEventListener(pipeRead, 'error', debugError),
-      helper.addEventListener(pipeWrite, 'error', debugError),
+      helper.addEventListener(pipeRead, 'error', logError(logger)),
+      helper.addEventListener(pipeWrite, 'error', logError(logger)),
     ];
     this.onmessage = undefined;
     this.onclose = undefined;

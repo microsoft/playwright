@@ -17,12 +17,13 @@
 
 import { CRSession } from './crConnection';
 import { Page } from '../page';
-import { assert, debugError, helper, RegisteredListener } from '../helper';
+import { assert, helper, RegisteredListener } from '../helper';
 import { Protocol } from './protocol';
 import * as network from '../network';
 import * as frames from '../frames';
 import { Credentials } from '../types';
 import { CRPage } from './crPage';
+import { logError } from '../logger';
 
 export class CRNetworkManager {
   private _client: CRSession;
@@ -130,14 +131,14 @@ export class CRNetworkManager {
     this._client.send('Fetch.continueWithAuth', {
       requestId: event.requestId,
       authChallengeResponse: { response, username, password },
-    }).catch(debugError);
+    }).catch(logError(this._page));
   }
 
   _onRequestPaused(workerFrame: frames.Frame | undefined, event: Protocol.Fetch.requestPausedPayload) {
     if (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled) {
       this._client.send('Fetch.continueRequest', {
         requestId: event.requestId
-      }).catch(debugError);
+      }).catch(logError(this._page));
     }
     if (!event.networkId || event.request.url.startsWith('data:'))
       return;
@@ -176,7 +177,7 @@ export class CRNetworkManager {
 
     if (!frame) {
       if (requestPausedEvent)
-        this._client.send('Fetch.continueRequest', { requestId: requestPausedEvent.requestId }).catch(debugError);
+        this._client.send('Fetch.continueRequest', { requestId: requestPausedEvent.requestId }).catch(logError(this._page));
       return;
     }
     const isNavigationRequest = requestWillBeSentEvent.requestId === requestWillBeSentEvent.loaderId && requestWillBeSentEvent.type === 'Document';
@@ -299,7 +300,7 @@ class InterceptableRequest implements network.RouteDelegate {
     }).catch(error => {
       // In certain cases, protocol will return error if the request was already canceled
       // or the page was closed. We should tolerate these errors.
-      debugError(error);
+      logError(this.request._page)(error);
     });
   }
 
@@ -325,7 +326,7 @@ class InterceptableRequest implements network.RouteDelegate {
     }).catch(error => {
       // In certain cases, protocol will return error if the request was already canceled
       // or the page was closed. We should tolerate these errors.
-      debugError(error);
+      logError(this.request._page)(error);
     });
   }
 
@@ -338,7 +339,7 @@ class InterceptableRequest implements network.RouteDelegate {
     }).catch(error => {
       // In certain cases, protocol will return error if the request was already canceled
       // or the page was closed. We should tolerate these errors.
-      debugError(error);
+      logError(this.request._page)(error);
     });
   }
 }

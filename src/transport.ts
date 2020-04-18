@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import * as debug from 'debug';
 import * as WebSocket from 'ws';
 import { helper } from './helper';
+import { Log } from './logger';
 
 export type ProtocolRequest = {
   id: number;
@@ -221,5 +221,8 @@ export class InterceptingTransport implements ConnectionTransport {
   }
 }
 
-export const debugProtocol = debug('pw:protocol');
-(debugProtocol as any).color = '34';
+export const protocolLog: Log = {
+  name: 'protocol',
+  severity: 'verbose',
+  color: 'green'
+};

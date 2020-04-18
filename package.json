@@ -43,7 +43,6 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "debug": "^4.1.0",
     "extract-zip": "^2.0.0",
     "https-proxy-agent": "^3.0.0",
     "jpeg-js": "^0.3.7",
@@ -68,6 +67,7 @@
     "colors": "^1.4.0",
     "commonmark": "^0.28.1",
     "cross-env": "^5.0.5",
+    "debug": "^4.1.0",
     "eslint": "^6.6.0",
     "esprima": "^4.0.0",
     "formidable": "^1.2.1",

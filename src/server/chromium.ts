@@ -19,7 +19,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
-import { debugError, helper, assert } from '../helper';
+import { helper, assert } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
 import * as ws from 'ws';
 import { launchProcess } from './processLauncher';
@@ -31,6 +31,7 @@ import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { Events } from '../events';
 import { ConnectionTransport, ProtocolRequest, WebSocketTransport } from '../transport';
 import { BrowserContext } from '../browserContext';
+import { Logger, logError, RootLogger } from '../logger';
 
 export class Chromium implements BrowserType<CRBrowser> {
   private _executablePath: (string|undefined);
@@ -47,8 +48,8 @@ export class Chromium implements BrowserType<CRBrowser> {
 
   async launch(options: LaunchOptions = {}): Promise<CRBrowser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
-    const { browserServer, transport, downloadsPath } = await this._launchServer(options, 'local');
-    const browser = await CRBrowser.connect(transport!, false, options.slowMo);
+    const { browserServer, transport, downloadsPath, logger } = await this._launchServer(options, 'local');
+    const browser = await CRBrowser.connect(transport!, false, logger, options.slowMo);
     browser._ownedServer = browserServer;
     browser._downloadsPath = downloadsPath;
     return browser;
@@ -61,20 +62,19 @@ export class Chromium implements BrowserType<CRBrowser> {
   async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
     const {
       timeout = 30000,
-      slowMo = 0
+      slowMo = 0,
     } = options;
-    const { transport, browserServer } = await this._launchServer(options, 'persistent', userDataDir);
-    const browser = await CRBrowser.connect(transport!, true, slowMo);
+    const { transport, browserServer, logger } = await this._launchServer(options, 'persistent', userDataDir);
+    const browser = await CRBrowser.connect(transport!, true, logger, slowMo);
     browser._ownedServer = browserServer;
     await helper.waitWithTimeout(browser._firstPagePromise, 'first page', timeout);
     return browser._defaultContext!;
   }
 
-  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport, downloadsPath: string }> {
+  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport, downloadsPath: string, logger: Logger }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
-      dumpio = false,
       executablePath = null,
       env = process.env,
       handleSIGINT = true,
@@ -83,6 +83,7 @@ export class Chromium implements BrowserType<CRBrowser> {
       port = 0,
     } = options;
     assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
+    const logger = new RootLogger(options.loggerSink);
 
     let temporaryUserDataDir: string | null = null;
     if (!userDataDir) {
@@ -108,7 +109,7 @@ export class Chromium implements BrowserType<CRBrowser> {
       handleSIGINT,
       handleSIGTERM,
       handleSIGHUP,
-      dumpio,
+      logger,
       pipe: true,
       tempDir: temporaryUserDataDir || undefined,
       attemptToGracefullyClose: async () => {
@@ -129,14 +130,14 @@ export class Chromium implements BrowserType<CRBrowser> {
     let transport: PipeTransport | undefined = undefined;
     let browserServer: BrowserServer | undefined = undefined;
     const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
-    transport = new PipeTransport(stdio[3], stdio[4]);
-    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, port) : null);
-    return { browserServer, transport, downloadsPath };
+    transport = new PipeTransport(stdio[3], stdio[4], logger);
+    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, logger, port) : null);
+    return { browserServer, transport, downloadsPath, logger };
   }
 
   async connect(options: ConnectOptions): Promise<CRBrowser> {
     return await WebSocketTransport.connect(options.wsEndpoint, transport => {
-      return CRBrowser.connect(transport, false, options.slowMo);
+      return CRBrowser.connect(transport, false, new RootLogger(options.loggerSink), options.slowMo);
     });
   }
 
@@ -178,7 +179,7 @@ export class Chromium implements BrowserType<CRBrowser> {
   }
 }
 
-function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number): WebSocketWrapper {
+function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Logger, port: number): WebSocketWrapper {
   const server = new ws.Server({ port });
   const guid = helper.guid();
 
@@ -275,7 +276,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
       session.queue!.push(parsedMessage);
     });
 
-    socket.on('error', error => debugError(error));
+    socket.on('error', logError(logger));
 
     socket.on('close', (socket as any).__closeListener = () => {
       const session = socketToBrowserSession.get(socket);

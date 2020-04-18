@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-import * as debug from 'debug';
 import { EventEmitter } from 'events';
 import { assert } from '../helper';
-import { ConnectionTransport, ProtocolRequest, ProtocolResponse, debugProtocol } from '../transport';
+import { ConnectionTransport, ProtocolRequest, ProtocolResponse, protocolLog } from '../transport';
 import { Protocol } from './protocol';
+import { Logger } from '../logger';
 
 // WKPlaywright uses this special id to issue Browser.close command which we
 // should ignore.
@@ -37,9 +37,11 @@ export class WKConnection {
   private _closed = false;
 
   readonly browserSession: WKSession;
+  private _logger: Logger;
 
-  constructor(transport: ConnectionTransport, onDisconnect: () => void) {
+  constructor(transport: ConnectionTransport, logger: Logger, onDisconnect: () => void) {
     this._transport = transport;
+    this._logger = logger;
     this._transport.onmessage = this._dispatchMessage.bind(this);
     this._transport.onclose = this._onClose.bind(this);
     this._onDisconnect = onDisconnect;
@@ -53,14 +55,14 @@ export class WKConnection {
   }
 
   rawSend(message: ProtocolRequest) {
-    if (debugProtocol.enabled)
-      debugProtocol('SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
+    if (this._logger._isLogEnabled(protocolLog))
+      this._logger._log(protocolLog, 'SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
     this._transport.send(message);
   }
 
   private _dispatchMessage(message: ProtocolResponse) {
-    if (debugProtocol.enabled)
-      debugProtocol('◀ RECV ' + JSON.stringify(message));
+    if (this._logger._isLogEnabled(protocolLog))
+      this._logger._log(protocolLog, '◀ RECV ' + JSON.stringify(message));
     if (message.id === kBrowserCloseMessageId)
       return;
     if (message.pageProxyId) {
@@ -129,7 +131,6 @@ export class WKSession extends EventEmitter {
       throw new Error(`Protocol error (${method}): ${this.errorText}`);
     const id = this.connection.nextMessageId();
     const messageObj = { id, method, params };
-    debug('pw:wrapped:' + this.sessionId)('SEND ► ' + JSON.stringify(messageObj, null, 2));
     this._rawSend(messageObj);
     return new Promise<Protocol.CommandReturnValues[T]>((resolve, reject) => {
       this._callbacks.set(id, {resolve, reject, error: new Error(), method});
@@ -152,7 +153,6 @@ export class WKSession extends EventEmitter {
   }
 
   dispatchMessage(object: any) {
-    debug('pw:wrapped:' + this.sessionId)('◀ RECV ' + JSON.stringify(object, null, 2));
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);

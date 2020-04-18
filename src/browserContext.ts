@@ -23,6 +23,8 @@ import * as types from './types';
 import { Events } from './events';
 import { ExtendedEventEmitter } from './extendedEventEmitter';
 import { Download } from './download';
+import { BrowserBase } from './browser';
+import { Log, Logger } from './logger';
 
 export type BrowserContextOptions = {
   viewport?: types.Size | null,
@@ -44,7 +46,7 @@ export type BrowserContextOptions = {
   acceptDownloads?: boolean
 };
 
-export interface BrowserContext {
+export interface BrowserContext extends Logger {
   setDefaultNavigationTimeout(timeout: number): void;
   setDefaultTimeout(timeout: number): void;
   pages(): Page[];
@@ -76,9 +78,11 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
   private _closePromiseFulfill: ((error: Error) => void) | undefined;
   readonly _permissions = new Map<string, string[]>();
   readonly _downloads = new Set<Download>();
+  readonly _browserBase: BrowserBase;
 
-  constructor(options: BrowserContextOptions) {
+  constructor(browserBase: BrowserBase, options: BrowserContextOptions) {
     super();
+    this._browserBase = browserBase;
     this._options = options;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
   }
@@ -148,6 +152,14 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
+  }
+
+  _isLogEnabled(log: Log): boolean {
+    return this._browserBase._isLogEnabled(log);
+  }
+
+  _log(log: Log, message: string | Error, ...args: any[]) {
+    return this._browserBase._log(log, message, ...args);
   }
 }
 

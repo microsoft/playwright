@@ -26,11 +26,12 @@ import { TimeoutError } from '../errors';
 import { Events } from '../events';
 import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
-import { debugError, helper, assert } from '../helper';
+import { helper, assert } from '../helper';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { BrowserArgOptions, BrowserType, LaunchOptions, LaunchServerOptions, ConnectOptions } from './browserType';
 import { launchProcess, waitForLine } from './processLauncher';
 import { ConnectionTransport, SequenceNumberMixer, WebSocketTransport } from '../transport';
+import { RootLogger, Logger, logError } from '../logger';
 
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 
@@ -49,9 +50,9 @@ export class Firefox implements BrowserType<FFBrowser> {
 
   async launch(options: LaunchOptions = {}): Promise<FFBrowser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
-    const {browserServer, downloadsPath} = await this._launchServer(options, 'local');
+    const { browserServer, downloadsPath, logger } = await this._launchServer(options, 'local');
     const browser = await WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
-      return FFBrowser.connect(transport, false, options.slowMo);
+      return FFBrowser.connect(transport, logger, false, options.slowMo);
     });
     browser._ownedServer = browserServer;
     browser._downloadsPath = downloadsPath;
@@ -67,9 +68,9 @@ export class Firefox implements BrowserType<FFBrowser> {
       timeout = 30000,
       slowMo = 0,
     } = options;
-    const {browserServer, downloadsPath} = await this._launchServer(options, 'persistent', userDataDir);
+    const { browserServer, downloadsPath, logger } = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
-      return FFBrowser.connect(transport, true, slowMo);
+      return FFBrowser.connect(transport, logger, true, slowMo);
     });
     browser._ownedServer = browserServer;
     browser._downloadsPath = downloadsPath;
@@ -78,11 +79,10 @@ export class Firefox implements BrowserType<FFBrowser> {
     return browserContext;
   }
 
-  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, downloadsPath: string }> {
+  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, downloadsPath: string, logger: Logger }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
-      dumpio = false,
       executablePath = null,
       env = process.env,
       handleSIGHUP = true,
@@ -92,6 +92,7 @@ export class Firefox implements BrowserType<FFBrowser> {
       port = 0,
     } = options;
     assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
+    const logger = new RootLogger(options.loggerSink);
 
     const firefoxArguments = [];
 
@@ -123,7 +124,7 @@ export class Firefox implements BrowserType<FFBrowser> {
       handleSIGINT,
       handleSIGTERM,
       handleSIGHUP,
-      dumpio,
+      logger,
       pipe: false,
       tempDir: temporaryProfileDir || undefined,
       attemptToGracefullyClose: async () => {
@@ -145,15 +146,16 @@ export class Firefox implements BrowserType<FFBrowser> {
 
     let browserServer: BrowserServer | undefined = undefined;
     let browserWSEndpoint: string | undefined = undefined;
-    const webSocketWrapper = launchType === 'server' ? (await WebSocketTransport.connect(innerEndpoint, t => wrapTransportWithWebSocket(t, port))) : new WebSocketWrapper(innerEndpoint, []);
+    const webSocketWrapper = launchType === 'server' ? (await WebSocketTransport.connect(innerEndpoint, t => wrapTransportWithWebSocket(t, logger, port))) : new WebSocketWrapper(innerEndpoint, []);
     browserWSEndpoint = webSocketWrapper.wsEndpoint;
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, webSocketWrapper);
-    return {browserServer, downloadsPath};
+    return { browserServer, downloadsPath, logger };
   }
 
   async connect(options: ConnectOptions): Promise<FFBrowser> {
+    const logger = new RootLogger(options.loggerSink);
     return await WebSocketTransport.connect(options.wsEndpoint, transport => {
-      return FFBrowser.connect(transport, false, options.slowMo);
+      return FFBrowser.connect(transport, logger, false, options.slowMo);
     });
   }
 
@@ -196,7 +198,7 @@ export class Firefox implements BrowserType<FFBrowser> {
   }
 }
 
-function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number): WebSocketWrapper {
+function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Logger, port: number): WebSocketWrapper {
   const server = new ws.Server({ port });
   const guid = helper.guid();
   const idMixer = new SequenceNumberMixer<{id: number, socket: ws}>();
@@ -302,7 +304,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
         pendingBrowserContextDeletions.set(seqNum, params.browserContextId);
     });
 
-    socket.on('error', error => debugError(error));
+    socket.on('error', logError(logger));
 
     socket.on('close', (socket as any).__closeListener = () => {
       for (const [browserContextId, s] of browserContextIds) {

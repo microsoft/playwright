@@ -18,9 +18,9 @@ import { BrowserContext, BrowserContextOptions } from './browserContext';
 import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Download } from './download';
-import { debugProtocol } from './transport';
 import type { BrowserServer } from './server/browserServer';
 import { Events } from './events';
+import { Logger, Log } from './logger';
 
 export interface Browser extends EventEmitter {
   newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
@@ -30,11 +30,16 @@ export interface Browser extends EventEmitter {
   close(): Promise<void>;
 }
 
-export abstract class BrowserBase extends EventEmitter implements Browser {
+export abstract class BrowserBase extends EventEmitter implements Browser, Logger {
   _downloadsPath: string = '';
   private _downloads = new Map<string, Download>();
-  _debugProtocol = debugProtocol;
   _ownedServer: BrowserServer | null = null;
+  readonly _logger: Logger;
+
+  constructor(logger: Logger) {
+    super();
+    this._logger = logger;
+  }
 
   abstract newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
   abstract contexts(): BrowserContext[];
@@ -70,6 +75,14 @@ export abstract class BrowserBase extends EventEmitter implements Browser {
     }
     if (this.isConnected())
       await new Promise(x => this.once(Events.Browser.Disconnected, x));
+  }
+
+  _isLogEnabled(log: Log): boolean {
+    return this._logger._isLogEnabled(log);
+  }
+
+  _log(log: Log, message: string | Error, ...args: any[]) {
+    return this._logger._log(log, message, ...args);
   }
 }
 

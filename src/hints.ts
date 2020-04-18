@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-import * as debug from 'debug';
+import { Page } from './page';
+import { Log } from './logger';
 
-export const debugHints = debug('pw:hints');
-(debugHints as any).color = '11';
+const hintsLog: Log = {
+  name: 'hint',
+  severity: 'warning'
+};
 
 let waitForTimeWasUsedReported = false;
-export function waitForTimeWasUsed() {
+export function waitForTimeWasUsed(page: Page) {
   if (waitForTimeWasUsedReported)
     return;
   waitForTimeWasUsedReported = true;
-  debugHints(`WARNING: page.waitFor(timeout) should only be used for debugging.
+  page._log(hintsLog, `WARNING: page.waitFor(timeout) should only be used for debugging.
 It is likely that the tests using timer in production are going to be flaky.
 Use signals such as network events, selectors becoming visible, etc. instead.`);
 }

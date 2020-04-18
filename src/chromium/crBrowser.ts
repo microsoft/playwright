@@ -18,7 +18,7 @@
 import { BrowserBase } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, BrowserContextOptions, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { Events as CommonEvents } from '../events';
-import { assert, debugError, helper } from '../helper';
+import { assert, helper } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding, Worker } from '../page';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
@@ -29,6 +29,7 @@ import { readProtocolStream } from './crProtocolHelper';
 import { Events } from './events';
 import { Protocol } from './protocol';
 import { CRExecutionContext } from './crExecutionContext';
+import { Logger, logError } from '../logger';
 
 export class CRBrowser extends BrowserBase {
   readonly _connection: CRConnection;
@@ -46,9 +47,9 @@ export class CRBrowser extends BrowserBase {
   private _tracingPath: string | null = '';
   private _tracingClient: CRSession | undefined;
 
-  static async connect(transport: ConnectionTransport, isPersistent: boolean, slowMo?: number): Promise<CRBrowser> {
-    const connection = new CRConnection(SlowMoTransport.wrap(transport, slowMo));
-    const browser = new CRBrowser(connection, isPersistent);
+  static async connect(transport: ConnectionTransport, isPersistent: boolean, logger: Logger, slowMo?: number): Promise<CRBrowser> {
+    const connection = new CRConnection(SlowMoTransport.wrap(transport, slowMo), logger);
+    const browser = new CRBrowser(connection, logger, isPersistent);
     const session = connection.rootSession;
     if (!isPersistent) {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
@@ -83,8 +84,8 @@ export class CRBrowser extends BrowserBase {
     return browser;
   }
 
-  constructor(connection: CRConnection, isPersistent: boolean) {
-    super();
+  constructor(connection: CRConnection, logger: Logger, isPersistent: boolean) {
+    super(logger);
     this._connection = connection;
     this._session = this._connection.rootSession;
 
@@ -128,8 +129,8 @@ export class CRBrowser extends BrowserBase {
     if (targetInfo.type === 'other' || !context) {
       if (waitingForDebugger) {
         // Ideally, detaching should resume any target, but there is a bug in the backend.
-        session.send('Runtime.runIfWaitingForDebugger').catch(debugError).then(() => {
-          this._session.send('Target.detachFromTarget', { sessionId }).catch(debugError);
+        session.send('Runtime.runIfWaitingForDebugger').catch(logError(this)).then(() => {
+          this._session.send('Target.detachFromTarget', { sessionId }).catch(logError(this));
         });
       }
       return;
@@ -266,7 +267,7 @@ class CRServiceWorker extends Worker {
   readonly _browserContext: CRBrowserContext;
 
   constructor(browserContext: CRBrowserContext, session: CRSession, url: string) {
-    super(url);
+    super(browserContext, url);
     this._browserContext = browserContext;
     session.once('Runtime.executionContextCreated', event => {
       this._createExecutionContext(new CRExecutionContext(session, event.context));
@@ -283,7 +284,7 @@ export class CRBrowserContext extends BrowserContextBase {
   readonly _evaluateOnNewDocumentSources: string[];
 
   constructor(browser: CRBrowser, browserContextId: string | null, options: BrowserContextOptions) {
-    super(options);
+    super(browser, options);
     this._browser = browser;
     this._browserContextId = browserContextId;
     this._evaluateOnNewDocumentSources = [];
