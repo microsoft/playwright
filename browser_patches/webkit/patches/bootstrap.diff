@@ -1569,6 +1569,19 @@ index cfd5d75cfdcaac5b51dae96045903d812c033b8a..9fca8b41989737608274a2cca8fb78be
  // Returns combined offset in millisecond (UTC + DST).
  WTF_EXPORT_PRIVATE LocalTimeOffset calculateLocalTimeOffset(double utcInMilliseconds, TimeType = UTCTime);
  
+diff --git a/Source/WTF/wtf/PlatformEnable.h b/Source/WTF/wtf/PlatformEnable.h
+index 06b096fc9430eda6c410206bb4d19a1bd6c3636d..bc597102c661b81f35b111cc516f5e7b1bfc5526 100644
+--- a/Source/WTF/wtf/PlatformEnable.h
++++ b/Source/WTF/wtf/PlatformEnable.h
+@@ -401,7 +401,7 @@
+ #endif
+ 
+ #if !defined(ENABLE_ORIENTATION_EVENTS)
+-#define ENABLE_ORIENTATION_EVENTS 0
++#define ENABLE_ORIENTATION_EVENTS 1
+ #endif
+ 
+ #if OS(WINDOWS)
 diff --git a/Source/WTF/wtf/PlatformHave.h b/Source/WTF/wtf/PlatformHave.h
 index 166a135d7e04db3a95a4315ca03669248eb4b750..fdb45ee793c52d0306ba2150d65d4c228f9064a3 100644
 --- a/Source/WTF/wtf/PlatformHave.h
@@ -4376,6 +4389,19 @@ index e24fded2225f1c1918f454017566717e20484eab..30e4b7a986418c4b4f6c799b858b6082
  }
  
  void ProgressTracker::incrementProgress(unsigned long identifier, const ResourceResponse& response)
+diff --git a/Source/WebCore/page/ChromeClient.h b/Source/WebCore/page/ChromeClient.h
+index 4949fea85dc0178ec18984348c9e41cde3a948c6..974b1ffdc7433a86346eb73f83e41ba126dd66e8 100644
+--- a/Source/WebCore/page/ChromeClient.h
++++ b/Source/WebCore/page/ChromeClient.h
+@@ -270,7 +270,7 @@ public:
+ #endif
+ 
+ #if ENABLE(ORIENTATION_EVENTS)
+-    virtual int deviceOrientation() const = 0;
++    virtual int deviceOrientation() const { return 0; }
+ #endif
+ 
+ #if ENABLE(INPUT_TYPE_COLOR)
 diff --git a/Source/WebCore/page/EventHandler.cpp b/Source/WebCore/page/EventHandler.cpp
 index 5c24edc97732f1369da26b597944c3a9188560d0..79c7b66d0a035b40b08a202c70e616627979fbad 100644
 --- a/Source/WebCore/page/EventHandler.cpp
