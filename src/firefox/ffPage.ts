@@ -31,6 +31,7 @@ import { RawKeyboardImpl, RawMouseImpl } from './ffInput';
 import { FFNetworkManager, headersArray } from './ffNetworkManager';
 import { Protocol } from './protocol';
 import { selectors } from '../selectors';
+import { NotConnectedError } from '../errors';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -422,6 +423,10 @@ export class FFPage implements PageDelegate {
       frameId: handle._context.frame._id,
       objectId: toRemoteObject(handle).objectId!,
       rect,
+    }).catch(e => {
+      if (e instanceof Error && e.message.includes('Node is detached from document'))
+        throw new NotConnectedError();
+      throw e;
     });
   }
 

@@ -554,24 +554,47 @@ describe('Page.click', function() {
     if (error2)
       expect(error2.message).toContain('timeout exceeded');
   });
-  it('should fail when element detaches after animation', async({page, server}) => {
-    await page.setContent(`<style>body, html { margin: 0; padding: 0; }</style><button onclick="window.clicked=true">Click me</button>`);
-    await page.$eval('button', button => {
-      button.style.transition = 'margin-left 100000ms linear';
-    });
-    await page.$eval('button', button => {
-      button.style.marginLeft = '100000px';
-    });
+  it('should report nice error when element is detached and force-clicked', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/animating-button.html');
+    await page.evaluate(() => addButton());
     const handle = await page.$('button');
-    const promise = handle.click().catch(e => e);
-    await page.$eval('button', button => {
-      button.style.marginLeft = button.getBoundingClientRect().left + 'px';
-      button.style.transition = '';
-      button.remove();
-    });
+    await page.evaluate(() => stopButton(true));
+    const promise = handle.click({ force: true }).catch(e => e);
     const error = await promise;
     expect(await page.evaluate(() => window.clicked)).toBe(undefined);
     expect(error.message).toContain('Element is not attached to the DOM');
+    expect(error.name).toContain('NotConnectedError');
+  });
+  it('should fail when element detaches after animation', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/animating-button.html');
+    await page.evaluate(() => addButton());
+    const handle = await page.$('button');
+    const promise = handle.click().catch(e => e);
+    await page.evaluate(() => stopButton(true));
+    const error = await promise;
+    expect(await page.evaluate(() => window.clicked)).toBe(undefined);
+    expect(error.message).toContain('Element is not attached to the DOM');
+    expect(error.name).toContain('NotConnectedError');
+  });
+  it('should retry when element detaches after animation', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/animating-button.html');
+    await page.evaluate(() => addButton());
+    let clicked = false;
+    const promise = page.click('button').then(() => clicked = true);
+    expect(clicked).toBe(false);
+    expect(await page.evaluate(() => window.clicked)).toBe(undefined);
+    await page.evaluate(() => stopButton(true));
+    await page.evaluate(() => addButton());
+    expect(clicked).toBe(false);
+    expect(await page.evaluate(() => window.clicked)).toBe(undefined);
+    await page.evaluate(() => stopButton(true));
+    await page.evaluate(() => addButton());
+    expect(clicked).toBe(false);
+    expect(await page.evaluate(() => window.clicked)).toBe(undefined);
+    await page.evaluate(() => stopButton(false));
+    await promise;
+    expect(clicked).toBe(true);
+    expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
 });
 

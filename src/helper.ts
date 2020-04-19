@@ -24,6 +24,7 @@ import { TimeoutError } from './errors';
 import * as types from './types';
 
 export const debugError = debug(`pw:error`);
+export const debugInput = debug('pw:input');
 
 export type RegisteredListener = {
   emitter: EventEmitter;
@@ -344,6 +345,10 @@ class Helper {
   static monotonicTime(): number {
     const [seconds, nanoseconds] = process.hrtime();
     return seconds * 1000 + (nanoseconds / 1000000 | 0);
+  }
+
+  static isPastDeadline(deadline: number) {
+    return deadline !== Number.MAX_SAFE_INTEGER && this.monotonicTime() >= deadline;
   }
 
   static timeUntilDeadline(deadline: number): number {

@@ -36,6 +36,7 @@ import { CRPDF } from './crPdf';
 import { CRBrowserContext } from './crBrowser';
 import * as types from '../types';
 import { ConsoleMessage } from '../console';
+import { NotConnectedError } from '../errors';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -765,6 +766,8 @@ class FrameSession {
       objectId: toRemoteObject(handle).objectId,
       rect,
     }).catch(e => {
+      if (e instanceof Error && e.message.includes('Node is detached from document'))
+        throw new NotConnectedError();
       if (e instanceof Error && e.message.includes('Node does not have a layout object'))
         e.message = 'Node is either not visible or not an HTMLElement';
       throw e;

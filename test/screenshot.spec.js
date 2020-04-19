@@ -364,7 +364,7 @@ describe('ElementHandle.screenshot', function() {
     const elementHandle = await page.$('h1');
     await page.evaluate(element => element.remove(), elementHandle);
     const screenshotError = await elementHandle.screenshot().catch(error => error);
-    expect(screenshotError.message).toContain('Node is detached');
+    expect(screenshotError.message).toContain('Element is not attached to the DOM');
   });
   it('should not hang with zero width/height element', async({page, server}) => {
     await page.setContent('<div style="width: 50px; height: 0"></div>');

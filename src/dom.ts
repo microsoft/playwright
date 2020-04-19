@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-import * as debug from 'debug';
 import * as fs from 'fs';
 import * as mime from 'mime';
 import * as path from 'path';
 import * as util from 'util';
 import * as frames from './frames';
-import { assert, debugError, helper } from './helper';
-import Injected from './injected/injected';
+import { assert, debugError, helper, debugInput } from './helper';
+import { Injected, InjectedResult } from './injected/injected';
 import * as input from './input';
 import * as js from './javascript';
 import { Page } from './page';
 import { selectors } from './selectors';
 import * as types from './types';
+import { NotConnectedError, TimeoutError } from './errors';
 
 export type PointerActionOptions = {
   modifiers?: input.Modifier[];
@@ -36,8 +36,6 @@ export type PointerActionOptions = {
 export type ClickOptions = PointerActionOptions & input.MouseClickOptions;
 
 export type MultiClickOptions = PointerActionOptions & input.MouseMultiClickOptions;
-
-const debugInput = debug('pw:input');
 
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
@@ -220,10 +218,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const position = options ? options.position : undefined;
     await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
     const point = position ? await this._offsetPoint(position) : await this._clickablePoint();
-
     point.x = (point.x * 100 | 0) / 100;
     point.y = (point.y * 100 | 0) / 100;
-
     if (!force)
       await this._waitForHitTargetAt(point, deadline);
 
@@ -270,7 +266,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
     }
     return await this._page._frameManager.waitForSignalsCreatedBy<string[]>(async () => {
-      return this._evaluateInUtility(({ injected, node }, selectOptions) => injected.selectOptions(node, selectOptions), selectOptions);
+      const injectedResult = await this._evaluateInUtility(({ injected, node }, selectOptions) => injected.selectOptions(node, selectOptions), selectOptions);
+      return handleInjectedResult(injectedResult, '');
     }, deadline, options);
   }
 
@@ -278,10 +275,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
     const deadline = this._page._timeoutSettings.computeDeadline(options);
     await this._page._frameManager.waitForSignalsCreatedBy(async () => {
-      const errorOrNeedsInput = await this._evaluateInUtility(({ injected, node }, value) => injected.fill(node, value), value);
-      if (typeof errorOrNeedsInput === 'string')
-        throw new Error(errorOrNeedsInput);
-      if (errorOrNeedsInput) {
+      const injectedResult = await this._evaluateInUtility(({ injected, node }, value) => injected.fill(node, value), value);
+      const needsInput = handleInjectedResult(injectedResult, '');
+      if (needsInput) {
         if (value)
           await this._page.keyboard.insertText(value);
         else
@@ -291,19 +287,21 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async selectText(): Promise<void> {
-    const error = await this._evaluateInUtility(({ injected, node }) => injected.selectText(node), {});
-    if (typeof error === 'string')
-      throw new Error(error);
+    const injectedResult = await this._evaluateInUtility(({ injected, node }) => injected.selectText(node), {});
+    handleInjectedResult(injectedResult, '');
   }
 
   async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options?: types.NavigatingActionWaitOptions) {
     const deadline = this._page._timeoutSettings.computeDeadline(options);
-    const multiple = await this._evaluateInUtility(({ node }) => {
+    const injectedResult = await this._evaluateInUtility(({ node }): InjectedResult<boolean> => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node as Node as Element).tagName !== 'INPUT')
-        throw new Error('Node is not an HTMLInputElement');
+        return { status: 'error', error: 'Node is not an HTMLInputElement' };
+      if (!node.isConnected)
+        return { status: 'notconnected' };
       const input = node as Node as HTMLInputElement;
-      return input.multiple;
+      return { status: 'success', value: input.multiple };
     }, {});
+    const multiple = handleInjectedResult(injectedResult, '');
     let ff: string[] | types.FilePayload[];
     if (!Array.isArray(files))
       ff = [ files ] as string[] | types.FilePayload[];
@@ -329,14 +327,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async focus() {
-    const errorMessage = await this._evaluateInUtility(({ node }) => {
-      if (!(node as any)['focus'])
-        return 'Node is not an HTML or SVG element.';
-      (node as Node as HTMLElement | SVGElement).focus();
-      return false;
-    }, {});
-    if (errorMessage)
-      throw new Error(errorMessage);
+    const injectedResult = await this._evaluateInUtility(({ injected, node }) => injected.focusNode(node), {});
+    handleInjectedResult(injectedResult, '');
   }
 
   async type(text: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
@@ -416,7 +408,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const stablePromise = this._evaluateInUtility(({ injected, node }, timeout) => {
       return injected.waitForDisplayedAtStablePosition(node, timeout);
     }, helper.timeUntilDeadline(deadline));
-    await helper.waitWithDeadline(stablePromise, 'element to be displayed and not moving', deadline);
+    const timeoutMessage = 'element to be displayed and not moving';
+    const injectedResult = await helper.waitWithDeadline(stablePromise, timeoutMessage, deadline);
+    handleInjectedResult(injectedResult, timeoutMessage);
     debugInput('...done');
   }
 
@@ -434,7 +428,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const hitTargetPromise = this._evaluateInUtility(({ injected, node }, { timeout, point }) => {
       return injected.waitForHitTargetAt(node, timeout, point);
     }, { timeout: helper.timeUntilDeadline(deadline), point });
-    await helper.waitWithDeadline(hitTargetPromise, 'element to receive pointer events', deadline);
+    const timeoutMessage = 'element to receive pointer events';
+    const injectedResult = await helper.waitWithDeadline(hitTargetPromise, timeoutMessage, deadline);
+    handleInjectedResult(injectedResult, timeoutMessage);
     debugInput('...done');
   }
 }
@@ -445,4 +441,14 @@ export function toFileTransferPayload(files: types.FilePayload[]): types.FileTra
     type: file.mimeType,
     data: file.buffer.toString('base64')
   }));
+}
+
+function handleInjectedResult<T = undefined>(injectedResult: InjectedResult<T>, timeoutMessage: string): T {
+  if (injectedResult.status === 'notconnected')
+    throw new NotConnectedError();
+  if (injectedResult.status === 'timeout')
+    throw new TimeoutError(`waiting for ${timeoutMessage} failed: timeout exceeded`);
+  if (injectedResult.status === 'error')
+    throw new Error(injectedResult.error);
+  return injectedResult.value as T;
 }

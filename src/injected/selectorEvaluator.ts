@@ -17,7 +17,7 @@
 import * as types from '../types';
 import { createAttributeEngine } from './attributeSelectorEngine';
 import { createCSSEngine } from './cssSelectorEngine';
-import Injected from './injected';
+import { Injected } from './injected';
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { createTextSelector } from './textSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';

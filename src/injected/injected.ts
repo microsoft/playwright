@@ -16,9 +16,14 @@
 
 import * as types from '../types';
 
-type Predicate = () => any;
+type Predicate<T> = () => T;
+export type InjectedResult<T = undefined> =
+  (T extends undefined ? { status: 'success', value?: T} : { status: 'success', value: T }) |
+  { status: 'notconnected' } |
+  { status: 'timeout' } |
+  { status: 'error', error: string };
 
-class Injected {
+export class Injected {
   isVisible(element: Element): boolean {
     if (!element.ownerDocument || !element.ownerDocument.defaultView)
       return true;
@@ -29,7 +34,7 @@ class Injected {
     return !!(rect.top || rect.bottom || rect.width || rect.height);
   }
 
-  private _pollMutation(predicate: Predicate, timeout: number): Promise<any> {
+  private _pollMutation<T>(predicate: Predicate<T>, timeout: number): Promise<T | undefined> {
     let timedOut = false;
     if (timeout)
       setTimeout(() => timedOut = true, timeout);
@@ -39,7 +44,7 @@ class Injected {
       return Promise.resolve(success);
 
     let fulfill: (result?: any) => void;
-    const result = new Promise(x => fulfill = x);
+    const result = new Promise<T | undefined>(x => fulfill = x);
     const observer = new MutationObserver(() => {
       if (timedOut) {
         observer.disconnect();
@@ -60,13 +65,13 @@ class Injected {
     return result;
   }
 
-  private _pollRaf(predicate: Predicate, timeout: number): Promise<any> {
+  private _pollRaf<T>(predicate: Predicate<T>, timeout: number): Promise<T | undefined> {
     let timedOut = false;
     if (timeout)
       setTimeout(() => timedOut = true, timeout);
 
     let fulfill: (result?: any) => void;
-    const result = new Promise(x => fulfill = x);
+    const result = new Promise<T | undefined>(x => fulfill = x);
 
     const onRaf = () => {
       if (timedOut) {
@@ -84,13 +89,13 @@ class Injected {
     return result;
   }
 
-  private _pollInterval(pollInterval: number, predicate: Predicate, timeout: number): Promise<any> {
+  private _pollInterval<T>(pollInterval: number, predicate: Predicate<T>, timeout: number): Promise<T | undefined> {
     let timedOut = false;
     if (timeout)
       setTimeout(() => timedOut = true, timeout);
 
     let fulfill: (result?: any) => void;
-    const result = new Promise(x => fulfill = x);
+    const result = new Promise<T | undefined>(x => fulfill = x);
     const onTimeout = () => {
       if (timedOut) {
         fulfill();
@@ -107,7 +112,7 @@ class Injected {
     return result;
   }
 
-  poll(polling: 'raf' | 'mutation' | number, timeout: number, predicate: Predicate): Promise<any> {
+  poll<T>(polling: 'raf' | 'mutation' | number, timeout: number, predicate: Predicate<T>): Promise<T | undefined> {
     if (polling === 'raf')
       return this._pollRaf(predicate, timeout);
     if (polling === 'mutation')
@@ -122,9 +127,11 @@ class Injected {
     return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
   }
 
-  selectOptions(node: Node, optionsToSelect: (Node | types.SelectOption)[]) {
+  selectOptions(node: Node, optionsToSelect: (Node | types.SelectOption)[]): InjectedResult<string[]> {
     if (node.nodeName.toLowerCase() !== 'select')
-      throw new Error('Element is not a <select> element.');
+      return { status: 'error', error: 'Element is not a <select> element.' };
+    if (!node.isConnected)
+      return { status: 'notconnected' };
     const element = node as HTMLSelectElement;
 
     const options = Array.from(element.options);
@@ -148,81 +155,97 @@ class Injected {
     }
     element.dispatchEvent(new Event('input', { 'bubbles': true }));
     element.dispatchEvent(new Event('change', { 'bubbles': true }));
-    return options.filter(option => option.selected).map(option => option.value);
+    return { status: 'success', value: options.filter(option => option.selected).map(option => option.value) };
   }
 
-  fill(node: Node, value: string) {
+  fill(node: Node, value: string): InjectedResult<boolean> {
     if (node.nodeType !== Node.ELEMENT_NODE)
-      return 'Node is not of type HTMLElement';
+      return { status: 'error', error: 'Node is not of type HTMLElement' };
     const element = node as HTMLElement;
+    if (!element.isConnected)
+      return { status: 'notconnected' };
     if (!this.isVisible(element))
-      return 'Element is not visible';
+      return { status: 'error', error: 'Element is not visible' };
     if (element.nodeName.toLowerCase() === 'input') {
       const input = element as HTMLInputElement;
       const type = (input.getAttribute('type') || '').toLowerCase();
       const kDateTypes = new Set(['date', 'time', 'datetime', 'datetime-local']);
       const kTextInputTypes = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
       if (!kTextInputTypes.has(type) && !kDateTypes.has(type))
-        return 'Cannot fill input of type "' + type + '".';
+        return { status: 'error', error: 'Cannot fill input of type "' + type + '".' };
       if (type === 'number') {
         value = value.trim();
         if (!value || isNaN(Number(value)))
-          return 'Cannot type text into input[type=number].';
+          return { status: 'error', error: 'Cannot type text into input[type=number].' };
       }
       if (input.disabled)
-        return 'Cannot fill a disabled input.';
+        return { status: 'error', error: 'Cannot fill a disabled input.' };
       if (input.readOnly)
-        return 'Cannot fill a readonly input.';
+        return { status: 'error', error: 'Cannot fill a readonly input.' };
       if (kDateTypes.has(type)) {
         value = value.trim();
         input.focus();
         input.value = value;
         if (input.value !== value)
-          return `Malformed ${type} "${value}"`;
+          return { status: 'error', error: `Malformed ${type} "${value}"` };
         element.dispatchEvent(new Event('input', { 'bubbles': true }));
         element.dispatchEvent(new Event('change', { 'bubbles': true }));
-        return false;  // We have already changed the value, no need to input it.
+        return { status: 'success', value: false };  // We have already changed the value, no need to input it.
       }
     } else if (element.nodeName.toLowerCase() === 'textarea') {
       const textarea = element as HTMLTextAreaElement;
       if (textarea.disabled)
-        return 'Cannot fill a disabled textarea.';
+        return { status: 'error', error: 'Cannot fill a disabled textarea.' };
       if (textarea.readOnly)
-        return 'Cannot fill a readonly textarea.';
+        return { status: 'error', error: 'Cannot fill a readonly textarea.' };
     } else if (!element.isContentEditable) {
-      return 'Element is not an <input>, <textarea> or [contenteditable] element.';
+      return { status: 'error', error: 'Element is not an <input>, <textarea> or [contenteditable] element.' };
     }
-    return this.selectText(node);
+    const result = this.selectText(node);
+    if (result.status === 'success')
+      return { status: 'success', value: true };  // Still need to input the value.
+    return result;
   }
 
-  selectText(node: Node) {
+  selectText(node: Node): InjectedResult {
     if (node.nodeType !== Node.ELEMENT_NODE)
-      return 'Node is not of type HTMLElement';
+      return { status: 'error', error: 'Node is not of type HTMLElement' };
+    if (!node.isConnected)
+      return { status: 'notconnected' };
     const element = node as HTMLElement;
     if (!this.isVisible(element))
-      return 'Element is not visible';
+      return { status: 'error', error: 'Element is not visible' };
     if (element.nodeName.toLowerCase() === 'input') {
       const input = element as HTMLInputElement;
       input.select();
       input.focus();
-      return true;
+      return { status: 'success' };
     }
     if (element.nodeName.toLowerCase() === 'textarea') {
       const textarea = element as HTMLTextAreaElement;
       textarea.selectionStart = 0;
       textarea.selectionEnd = textarea.value.length;
       textarea.focus();
-      return true;
+      return { status: 'success' };
     }
     const range = element.ownerDocument!.createRange();
     range.selectNodeContents(element);
     const selection = element.ownerDocument!.defaultView!.getSelection();
     if (!selection)
-      return 'Element belongs to invisible iframe.';
+      return { status: 'error', error: 'Element belongs to invisible iframe.' };
     selection.removeAllRanges();
     selection.addRange(range);
     element.focus();
-    return true;
+    return { status: 'success' };
+  }
+
+  focusNode(node: Node): InjectedResult {
+    if (!node.isConnected)
+      return { status: 'notconnected' };
+    if (!(node as any)['focus'])
+      return { status: 'error', error: 'Node is not an HTML or SVG element.' };
+    (node as HTMLElement | SVGElement).focus();
+    return { status: 'success' };
   }
 
   isCheckboxChecked(node: Node) {
@@ -271,53 +294,47 @@ class Injected {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  async waitForDisplayedAtStablePosition(node: Node, timeout: number) {
+  async waitForDisplayedAtStablePosition(node: Node, timeout: number): Promise<InjectedResult> {
     if (!node.isConnected)
-      throw new Error('Element is not attached to the DOM');
+      return { status: 'notconnected' };
     const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
     if (!element)
-      throw new Error('Element is not attached to the DOM');
+      return { status: 'notconnected' };
 
     let lastRect: types.Rect | undefined;
     let counter = 0;
-    const result = await this.poll('raf', timeout, () => {
+    const result = await this.poll('raf', timeout, (): 'notconnected' | boolean => {
       // First raf happens in the same animation frame as evaluation, so it does not produce
       // any client rect difference compared to synchronous call. We skip the synchronous call
       // and only force layout during actual rafs as a small optimisation.
       if (++counter === 1)
         return false;
       if (!node.isConnected)
-        return 'Element is not attached to the DOM';
+        return 'notconnected';
       const clientRect = element.getBoundingClientRect();
       const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
       const isDisplayedAndStable = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height && rect.width > 0 && rect.height > 0;
       lastRect = rect;
-      return isDisplayedAndStable;
+      return !!isDisplayedAndStable;
     });
-    if (typeof result === 'string')
-      throw new Error(result);
-    if (!result)
-      throw new Error(`waiting for element to be displayed and not moving failed: timeout exceeded`);
+    return { status: result === 'notconnected' ? 'notconnected' : (result ? 'success' : 'timeout') };
   }
 
-  async waitForHitTargetAt(node: Node, timeout: number, point: types.Point) {
+  async waitForHitTargetAt(node: Node, timeout: number, point: types.Point): Promise<InjectedResult> {
     let element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
     while (element && window.getComputedStyle(element).pointerEvents === 'none')
       element = element.parentElement;
     if (!element)
-      throw new Error('Element is not attached to the DOM');
-    const result = await this.poll('raf', timeout, () => {
+      return { status: 'notconnected' };
+    const result = await this.poll('raf', timeout, (): 'notconnected' | boolean => {
       if (!element!.isConnected)
-        return 'Element is not attached to the DOM';
+        return 'notconnected';
       let hitElement = this._deepElementFromPoint(document, point.x, point.y);
       while (hitElement && hitElement !== element)
         hitElement = this._parentElementOrShadowHost(hitElement);
       return hitElement === element;
     });
-    if (typeof result === 'string')
-      throw new Error(result);
-    if (!result)
-      throw new Error(`waiting for element to receive mouse events failed: timeout exceeded`);
+    return { status: result === 'notconnected' ? 'notconnected' : (result ? 'success' : 'timeout') };
   }
 
   private _parentElementOrShadowHost(element: Element): Element | undefined {
@@ -342,5 +359,3 @@ class Injected {
     return element;
   }
 }
-
-export default Injected;
