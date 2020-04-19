@@ -26,11 +26,11 @@ describe('launcher', function() {
     const error = await browserType.launchServer(options).catch(e => e);
     expect(error.message).toContain('Playwright manages remote debugging connection itself');
   });
-  it('should throw with remote-debugging-port argument', async({browserType, defaultBrowserOptions}) => {
+  it('should not throw with remote-debugging-port argument', async({browserType, defaultBrowserOptions}) => {
     const options = Object.assign({}, defaultBrowserOptions);
-    options.args = ['--remote-debugging-port=9222'].concat(options.args || []);
-    const error = await browserType.launchServer(options).catch(e => e);
-    expect(error.message).toContain('Playwright manages remote debugging connection itself');
+    options.args = ['--remote-debugging-port=0'].concat(options.args || []);
+    const browser = await browserType.launchServer(options);
+    await browser.close();
   });
   it('should open devtools when "devtools: true" option is given', async({browserType, defaultBrowserOptions}) => {
     const browser = await browserType.launch(Object.assign({devtools: true}, {...defaultBrowserOptions, headless: false}));

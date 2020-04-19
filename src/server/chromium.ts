@@ -149,7 +149,7 @@ export class Chromium implements BrowserType<CRBrowser> {
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
       throw new Error('Pass userDataDir parameter instead of specifying --user-data-dir argument');
-    if (args.find(arg => arg.startsWith('--remote-debugging-')))
+    if (args.find(arg => arg.startsWith('--remote-debugging-pipe')))
       throw new Error('Playwright manages remote debugging connection itself.');
     if (launchType !== 'persistent' && args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
