@@ -26,7 +26,7 @@ jobs:
     - name: install xvfb
       run: |
         sudo apt-get install xvfb
-    - run: npm install
+    - run: npm ci
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     - run: xvfb-run --auto-servernum -- bash -c "npm run ccoverage 2>./chromium-linux-testrun.log"
@@ -55,7 +55,7 @@ jobs:
       with:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
-    - run: npm install
+    - run: npm ci
     - run: npm run ctest 2>./chromium-mac-testrun.log
       env:
         DEBUG: "*"
@@ -82,7 +82,7 @@ jobs:
       with:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
-    - run: npm install
+    - run: npm ci
     - run: npm run ctest 2>./chromium-win-testrun.log
       shell: bash
       env:
@@ -113,7 +113,7 @@ jobs:
     - name: install xvfb
       run: |
         sudo apt-get install xvfb
-    - run: npm install
+    - run: npm ci
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     - run: xvfb-run --auto-servernum -- bash -c "npm run wcoverage 2>./webkit-linux-testrun.log"
@@ -142,7 +142,7 @@ jobs:
       with:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
-    - run: npm install
+    - run: npm ci
     - run: npm run wtest 2>./webkit-mac-testrun.log
       env:
         DEBUG: "*,-pw:wrapped*"
@@ -169,7 +169,7 @@ jobs:
       with:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
-    - run: npm install
+    - run: npm ci
     - run: npm run wtest 2>./webkit-win-testrun.log
       shell: bash
       env:
@@ -200,7 +200,7 @@ jobs:
     - name: install xvfb
       run: |
         sudo apt-get install xvfb
-    - run: npm install
+    - run: npm ci
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     - run: xvfb-run --auto-servernum -- bash -c "npm run fcoverage 2>./firefox-linux-testrun.log"
@@ -229,7 +229,7 @@ jobs:
       with:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
-    - run: npm install
+    - run: npm ci
     - run: npm run ftest 2>./firefox-mac-testrun.log
       env:
         DEBUG: "*"
@@ -256,7 +256,7 @@ jobs:
       with:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
-    - run: npm install
+    - run: npm ci
     - run: npm run ftest 2>./firefox-win-testrun.log
       shell: bash
       env:
@@ -285,5 +285,5 @@ jobs:
         # we use in `installation-tests.sh`.
         node-version: 12
     - uses: microsoft/playwright-github-action@v1
-    - run: npm install
+    - run: npm ci
     - run: bash test/installation-tests/installation-tests.sh

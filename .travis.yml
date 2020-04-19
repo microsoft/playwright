@@ -26,6 +26,8 @@ addons:
     - xvfb
 notifications:
   email: false
+install:
+- npm ci
 cache:
   directories:
   - node_modules
