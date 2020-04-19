@@ -67,7 +67,7 @@ export class Chromium implements BrowserType<CRBrowser> {
     const browser = await CRBrowser.connect(transport!, true, slowMo);
     browser._ownedServer = browserServer;
     await helper.waitWithTimeout(browser._firstPagePromise, 'first page', timeout);
-    return browser._defaultContext;
+    return browser._defaultContext!;
   }
 
   private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport, downloadsPath: string }> {

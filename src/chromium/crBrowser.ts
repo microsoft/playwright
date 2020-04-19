@@ -34,7 +34,7 @@ export class CRBrowser extends BrowserBase {
   readonly _connection: CRConnection;
   _session: CRSession;
   private _clientRootSessionPromise: Promise<CRSession> | null = null;
-  readonly _defaultContext: CRBrowserContext;
+  readonly _defaultContext: CRBrowserContext | null = null;
   readonly _contexts = new Map<string, CRBrowserContext>();
   _crPages = new Map<string, CRPage>();
   _backgroundPages = new Map<string, CRPage>();
@@ -48,7 +48,7 @@ export class CRBrowser extends BrowserBase {
 
   static async connect(transport: ConnectionTransport, isPersistent: boolean, slowMo?: number): Promise<CRBrowser> {
     const connection = new CRConnection(SlowMoTransport.wrap(transport, slowMo));
-    const browser = new CRBrowser(connection);
+    const browser = new CRBrowser(connection, isPersistent);
     const session = connection.rootSession;
     if (!isPersistent) {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
@@ -83,12 +83,13 @@ export class CRBrowser extends BrowserBase {
     return browser;
   }
 
-  constructor(connection: CRConnection) {
+  constructor(connection: CRConnection, isPersistent: boolean) {
     super();
     this._connection = connection;
     this._session = this._connection.rootSession;
 
-    this._defaultContext = new CRBrowserContext(this, null, validateBrowserContextOptions({}));
+    if (isPersistent)
+      this._defaultContext = new CRBrowserContext(this, null, validateBrowserContextOptions({}));
     this._connection.on(ConnectionEvents.Disconnected, () => {
       for (const context of this._contexts.values())
         context._browserClosed();
@@ -113,9 +114,26 @@ export class CRBrowser extends BrowserBase {
   }
 
   _onAttachedToTarget({targetInfo, sessionId, waitingForDebugger}: Protocol.Target.attachedToTargetPayload) {
+    if (targetInfo.type === 'browser')
+      return;
     const session = this._connection.session(sessionId)!;
-    const context = (targetInfo.browserContextId && this._contexts.has(targetInfo.browserContextId)) ?
-        this._contexts.get(targetInfo.browserContextId)! : this._defaultContext;
+    assert(targetInfo.browserContextId, 'targetInfo: ' + JSON.stringify(targetInfo, null, 2));
+    let context = this._contexts.get(targetInfo.browserContextId) || null;
+    if (!context) {
+      // TODO: auto attach only to pages from our contexts.
+      // assert(this._defaultContext);
+      context = this._defaultContext;
+    }
+
+    if (targetInfo.type === 'other' || !context) {
+      if (waitingForDebugger) {
+        // Ideally, detaching should resume any target, but there is a bug in the backend.
+        session.send('Runtime.runIfWaitingForDebugger').catch(debugError).then(() => {
+          this._session.send('Target.detachFromTarget', { sessionId }).catch(debugError);
+        });
+      }
+      return;
+    }
 
     assert(!this._crPages.has(targetInfo.targetId), 'Duplicate target ' + targetInfo.targetId);
     assert(!this._backgroundPages.has(targetInfo.targetId), 'Duplicate target ' + targetInfo.targetId);
@@ -125,7 +143,7 @@ export class CRBrowser extends BrowserBase {
       const backgroundPage = new CRPage(session, targetInfo.targetId, context, null);
       this._backgroundPages.set(targetInfo.targetId, backgroundPage);
       backgroundPage.pageOrError().then(() => {
-        context.emit(Events.CRBrowserContext.BackgroundPage, backgroundPage._page);
+        context!.emit(Events.CRBrowserContext.BackgroundPage, backgroundPage._page);
       });
       return;
     }
@@ -140,7 +158,7 @@ export class CRBrowser extends BrowserBase {
       }
       crPage.pageOrError().then(() => {
         this._firstPageCallback();
-        context.emit(CommonEvents.BrowserContext.Page, crPage._page);
+        context!.emit(CommonEvents.BrowserContext.Page, crPage._page);
         if (opener) {
           opener.pageOrError().then(openerPage => {
             if (openerPage instanceof Page && !openerPage.isClosed())
@@ -158,13 +176,7 @@ export class CRBrowser extends BrowserBase {
       return;
     }
 
-    assert(targetInfo.type === 'browser' || targetInfo.type === 'other');
-    if (waitingForDebugger) {
-      // Ideally, detaching should resume any target, but there is a bug in the backend.
-      session.send('Runtime.runIfWaitingForDebugger').catch(debugError).then(() => {
-        this._session.send('Target.detachFromTarget', { sessionId }).catch(debugError);
-      });
-    }
+    assert(false, 'Unknown target type: ' + targetInfo.type);
   }
 
   _onDetachedFromTarget(payload: Protocol.Target.detachFromTargetParameters) {

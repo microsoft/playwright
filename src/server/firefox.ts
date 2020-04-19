@@ -74,7 +74,7 @@ export class Firefox implements BrowserType<FFBrowser> {
     browser._ownedServer = browserServer;
     browser._downloadsPath = downloadsPath;
     await helper.waitWithTimeout(browser._firstPagePromise, 'first page', timeout);
-    const browserContext = browser._defaultContext;
+    const browserContext = browser._defaultContext!;
     return browserContext;
   }
 
