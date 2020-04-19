@@ -25,5 +25,5 @@ jobs:
         sudo apt-get update
         sudo apt-get install libgbm-dev
         sudo apt-get install xvfb
-    - run: npm ci
+    - run: npm install
     - run: npm run lint
