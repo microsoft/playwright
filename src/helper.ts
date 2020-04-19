@@ -174,16 +174,13 @@ class Helper {
       Helper.removeEventListeners([listener]);
       clearTimeout(eventTimeout);
     }
-    const result = await Promise.race([promise, abortPromise]).then(r => {
+    return await Promise.race([promise, abortPromise]).then(r => {
       cleanup();
       return r;
     }, e => {
       cleanup();
       throw e;
     });
-    if (result instanceof Error)
-      throw result;
-    return result;
   }
 
   static async waitWithTimeout<T>(promise: Promise<T>, taskName: string, timeout: number): Promise<T> {

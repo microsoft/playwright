@@ -493,13 +493,18 @@ describe('Page.exposeFunction', function() {
 
 describe('Page.Events.PageError', function() {
   it('should fire', async({page, server}) => {
-    let error = null;
-    page.once('pageerror', e => error = e);
-    await Promise.all([
+    const [error] = await Promise.all([
+      page.waitForEvent('pageerror'),
       page.goto(server.PREFIX + '/error.html'),
-      new Promise(f => page.on('pageerror', f))
     ]);
-    expect(error.message).toContain('Fancy');
+    expect(error.name).toBe('Error');
+    expect(error.message).toBe('Fancy error!');
+    let stack = await page.evaluate(() => window.e.stack);
+    // Note that WebKit does not use sourceURL for some reason and reports the stack of the 'throw' statement
+    // instead of the Error constructor call.
+    if (WEBKIT)
+      stack = stack.replace('14:25', '15:19');
+    expect(error.stack).toBe(stack);
   });
 });
 

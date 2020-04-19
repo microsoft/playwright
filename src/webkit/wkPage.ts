@@ -453,8 +453,15 @@ export class WKPage implements PageDelegate {
       return;
     }
     if (level === 'error' && source === 'javascript') {
-      const error = new Error(text);
-      error.stack = 'Error: ' + error.message; // Nullify stack. Stack is supposed to contain error message as the first line.
+      const message = text.startsWith('Error: ') ? text.substring(7) : text;
+      const error = new Error(message);
+      if (event.message.stackTrace) {
+        error.stack = event.message.stackTrace.map(callFrame => {
+          return `${callFrame.functionName}@${callFrame.url}:${callFrame.lineNumber}:${callFrame.columnNumber}`;
+        }).join('\n');
+      } else {
+        error.stack = '';
+      }
       this._page.emit(Events.Page.PageError, error);
       return;
     }

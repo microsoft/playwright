@@ -11,6 +11,8 @@ function b() {
 }
 
 function c() {
-    throw new Error('Fancy error!');
+    window.e = new Error('Fancy error!');
+    throw window.e;
 }
+//# sourceURL=myscript.js
 </script>

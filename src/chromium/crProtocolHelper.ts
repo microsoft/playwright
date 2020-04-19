@@ -91,9 +91,21 @@ export function toConsoleMessageLocation(stackTrace: Protocol.Runtime.StackTrace
 }
 
 export function exceptionToError(exceptionDetails: Protocol.Runtime.ExceptionDetails): Error {
-  const message = getExceptionMessage(exceptionDetails);
+  const messageWithStack = getExceptionMessage(exceptionDetails);
+  const lines = messageWithStack.split('\n');
+  const firstStackTraceLine = lines.findIndex(line => line.startsWith('    at'));
+  let message = '';
+  let stack = '';
+  if (firstStackTraceLine === -1) {
+    message = messageWithStack;
+  } else {
+    message = lines.slice(0, firstStackTraceLine).join('\n');
+    stack = messageWithStack;
+  }
+  const match = message.match(/^[a-zA-Z0-0_]*Error: (.*)$/);
+  if (match)
+    message = match[1];
   const err = new Error(message);
-  // Don't report clientside error with a node stack attached
-  err.stack = 'Error: ' + err.message; // Stack is supposed to contain error message as the first line.
+  err.stack = stack;
   return err;
 }
