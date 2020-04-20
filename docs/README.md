@@ -20,7 +20,7 @@
 1. [Emulation](./emulation.md)
     - [User agent](./emulation.md#user-agent)
     - [Viewport, color scheme](./emulation.md#viewport-color-scheme)
-    - [Devices](./emulation.md#select-options)
+    - [Devices](./emulation.md#devices)
     - [Locale & Timezone](./emulation.md#locale--timezone)
     - [Permissions](./emulation.md#permissions)
     - [Geolocation](./emulation.md#geolocation)

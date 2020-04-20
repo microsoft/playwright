@@ -12,7 +12,7 @@ Most of these parameters are configured during the browser context construction,
 #### Contents
 - [User agent](#user-agent)
 - [Viewport, color scheme](#viewport-color-scheme)
-- [Devices](#select-options)
+- [Devices](#devices)
 - [Locale & Timezone](#locale--timezone)
 - [Permissions](#permissions)
 - [Geolocation](#geolocation)
