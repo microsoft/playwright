@@ -500,11 +500,17 @@ describe('Page.Events.PageError', function() {
     expect(error.name).toBe('Error');
     expect(error.message).toBe('Fancy error!');
     let stack = await page.evaluate(() => window.e.stack);
-    // Note that WebKit does not use sourceURL for some reason and reports the stack of the 'throw' statement
-    // instead of the Error constructor call.
+    // Note that WebKit reports the stack of the 'throw' statement instead of the Error constructor call.
     if (WEBKIT)
       stack = stack.replace('14:25', '15:19');
     expect(error.stack).toBe(stack);
+  });
+  it.fail(WEBKIT)('should contain sourceURL', async({page, server}) => {
+    const [error] = await Promise.all([
+      page.waitForEvent('pageerror'),
+      page.goto(server.PREFIX + '/error.html'),
+    ]);
+    expect(error.stack).toContain('myscript.js');
   });
 });
 
