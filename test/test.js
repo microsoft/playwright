@@ -103,25 +103,26 @@ function collect(browserNames) {
     }
 
     const browserEnvironment = new Environment(browserName);
-    let logger;
     browserEnvironment.beforeAll(async state => {
+      state._logger = null;
       state.browser = await state.browserType.launch({...launchOptions, loggerSink: {
         isEnabled: (name, severity) => {
           return name === 'browser' ||
               (name === 'protocol' && config.dumpProtocolOnFailure);
         },
         log: (name, severity, message, args) => {
-          if (logger)
-            logger(name, severity, message);
+          if (state._logger)
+            state._logger(name, severity, message);
         }
       }});
     });
     browserEnvironment.afterAll(async state => {
       await state.browser.close();
       delete state.browser;
+      delete state._logger;
     });
     browserEnvironment.beforeEach(async(state, testRun) => {
-      logger = (name, severity, message) => {
+      state._logger = (name, severity, message) => {
         if (name === 'browser') {
           if (severity === 'warning')
             testRun.log(`\x1b[31m[browser]\x1b[0m ${message}`)
@@ -133,7 +134,7 @@ function collect(browserNames) {
       }
     });
     browserEnvironment.afterEach(async (state, testRun) => {
-      logger = null;
+      state._logger = null;
       if (config.dumpProtocolOnFailure) {
         if (testRun.ok())
           testRun.output().splice(0);
