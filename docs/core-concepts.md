@@ -14,7 +14,7 @@ the following primitives.
   - [Pages and frames](#pages-and-frames)
   - [Selectors](#selectors)
   - [Auto-waiting](#auto-waiting)
-  - [Execution contexts](#execution-contexts)
+  - [Node.js and browser execution contexts](#node-js-and-browser-execution-contexts)
   - [Object & element handles](#object--element-handles)
 
 <br/>
@@ -199,8 +199,8 @@ You can pass primitive types, JSON-alike objects and remote object handles recei
 
 ## Object & element handles
 
-Playwright has an API to create **node.js references** to DOM elements or objects inside the page. These
-references are called "handles" and live in node.js process, whereas the actual objects reside in browser.
+Playwright has an API to create Node-side handles to the page DOM elements or any other objects inside the page.
+These handles live in the Node.js process, whereas the actual objects reside in browser.
 
 IMAGE PLACEHOLDER
 
@@ -213,33 +213,34 @@ Playwright's [`ElementHandle`](./api.md#class-elementhandle) extends
 [`JSHandle`](./api.md#class-jshandle).
 
 Handles Lifetime:
-- Handles can we aquired using page methods [`page.evaluteHandle`](./api.md#pageevaluatehandlepagefunction-arg), [`page.$`](./api.md#pageselector) or [`page.$$`](./api.md#pageselector-1) or
+- Handles can we be acquired using the page methods [`page.evaluteHandle`](./api.md#pageevaluatehandlepagefunction-arg), [`page.$`](./api.md#pageselector) or [`page.$$`](./api.md#pageselector-1) or
   their frame counterparts [`frame.evaluateHandle`](./api.md#frameevaluatehandlepagefunction-arg), [`frame.$`](./api.md#frameselector) or [`frame.$$`](./api.md#frameselector-1).
 - Once created, handles will retain object from [grabage collection](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_Management)
 - Handles will be **automatically disposed** once the page or frame they belong to navigates or closes.
 - Handles can be **manually disposed** using [`jsHandle.dispose`](./api.md#jshandledispose) method.
 
-Handles dereferencing can be done with [`jsHandle.evaluate`](./api.md#jshandleevaluatepagefunction-arg) method:
+Here is how you can use these handles:
 
 ```js
-const handle = await page.$('ul');
-await handle.evaluate(element => getComputedStyle(element).getPropertyValue('display'));
+// The first parameter of the elementHandle.evaluate callback is the element handle points to.
+const ulElementHandle = await page.$('ul');
+await ulElementHandle.evaluate(ulElement => getComputedStyle(ulElement).getPropertyValue('display'));
 ```
 
 Alternatively, handles can be passed as arguments to [`page.evaluate`](./api.md#pageevaluatepagefunction-arg) function:
+
 ```js
-const handle = await page.$('ul');
-await page.evaluate(element => getComputedStyle(element).getPropertyValue('display'), handle);
+// In the page API, you can pass handle as a parameter.
+const ulElementHandle = await page.$('ul');
+await page.evaluate(uiElement => getComputedStyle(uiElement).getPropertyValue('display'), uiElement);
 ```
 
-
 #### API reference
-- [`JSHandle`](./api.md#class-jshandle)
-- [`ElementHandle`](./api.md#class-elementhandle)
+- [class `JSHandle`](./api.md#class-jshandle)
+- [class `ElementHandle`](./api.md#class-elementhandle)
 - [`page.evaluteHandle`](./api.md#pageevaluatehandlepagefunction-arg)
 - [`page.$`](./api.md#pageselector)
 - [`page.$$`](./api.md#pageselector-1)
 - [`jsHandle.evaluate`](./api.md#jshandleevaluatepagefunction-arg)
 
 <br/>
-
