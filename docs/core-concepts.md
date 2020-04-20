@@ -88,17 +88,59 @@ frames can be accessed for interactions inside the frame.
 
 ```js
 // To interact with elements in an iframe
-const frame = page.frame('frame-name');
-await frame.fill('#username-input');
+const frame = page.frame('frame-login');
+await frame.fill('#username-input', 'John');
 ```
 
 <br/>
 
 ## Selectors
 
+Playwright APIs that interact with elements accept selectors as the first argument, used to search for the element. Playwright can search for elements with CSS selectors, XPath, HTML attributes like `id`, `data-test-id` and text content.
+
+Note that all selectors except for XPath pierce shadow DOM automatically.
+
+```js
+// Auto-detected CSS notation
+await page.click('div');
+
+// Explicit CSS notation
+await page.click('css=div');
+
+// Auto-detected XPath notation
+await page.click('xpath=//html/body/div');
+
+// Explicit XPath notation
+await page.click('//html/body/div');
+
+// Auto-detected text notation
+await page.click('"Login"');
+
+// Explicit text notation
+await page.click('text="Login"');
+```
+
+Selectors using different engines can be combined using the `>>` separator. Learn more about selectors and selector engines [here](./selectors.md).
+
 <br/>
 
 ## Auto-waiting
+
+Actions like `click` and `fill` auto-wait for the element to be visible and actionable. For example, click will:
+- wait for element with given selector to be in DOM
+- wait for it to become displayed, i.e. not `display:none`,
+- wait for it to stop moving, for example, until css transition finishes
+- scroll the element into view
+- wait for it to receive pointer events at the action point, for example, waits until element becomes non-obscured by other elements
+
+
+```js
+// Will wait for #search element to be in DOM
+await page.fill('#search', 'query');
+
+// Will wait for it to stop animating and accept clicks
+await page.click('#search');
+```
 
 <br/>
 
