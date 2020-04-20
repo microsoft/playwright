@@ -83,6 +83,7 @@ Change color scheme for individual pages:
 #### API reference
 
 - [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
+- [`page.emulateMedia([options])`](./api.md#pageemulatemediaoptions)
 - [`page.setViewportSize(viewportSize)`](./api.md#pagesetviewportsizeviewportsize)
 
 <br/>
@@ -107,13 +108,6 @@ All pages created in the context above will share the same device parameters.
 
 - [`playwright.devices`](./api.md#playwrightdevices)
 - [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
-
-<br/>
-
-#### API reference
-
-- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
-- [`page.emulateMedia([options])`](./api.md#pageemulatemediaoptions)
 
 <br/>
 
