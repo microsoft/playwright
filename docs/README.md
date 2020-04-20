@@ -34,6 +34,11 @@
 1. Scraping and verification
     - Screenshots
     - Evaluation
+1. [Navigation and loading](./loading.md)
+    - [Common scenarios](./loading.md#common-scenarios)
+    - [Loading a popup](./loading.md#loading-a-popup)
+    - [Client-side redirects](./loading.md#unusual-client-side-redirects)
+    - [Navigation after a timeout](./loading.md#click-triggers-navigation-after-a-timeout)
 1. [Continuous integration](./ci.md)
     - [Docker](./ci.md#docker)
     - [GitHub Actions](./ci.md#github-actions)
@@ -46,8 +51,7 @@
     - Mocha
     - Karma
     - Jasmine
-    - Jasmine
     - Storybooks
 1. [Extensibility](./extensibility.md)
     - [Custom selector engines](./extensibility.md#custom-selector-engines)
-
+1. [API Reference](./api.md)

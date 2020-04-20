@@ -24,7 +24,7 @@ const context = await browser.newContext({
   },
 });
 const page = await context.newPage();
-awat page.goto('https://example.com');
+await page.goto('https://example.com');
 ```
 
 You can also use [`browserContext.setHTTPCredentials`](./api.md#browsercontextsethttpcredentialshttpcredentials) to update HTTP credentials of an existing context.
@@ -77,7 +77,7 @@ const { chromium, webkit, firefox } = require('playwright');
   const browser = await chromium.launch();
   const page = await browser.newPage();
 
-  // Subscribe to 'request' and 'response' events.S
+  // Subscribe to 'request' and 'response' events.
   page.on('request', request =>
       console.log('>>', request.method(), request.url()));
   page.on('response', response =>
@@ -91,8 +91,9 @@ const { chromium, webkit, firefox } = require('playwright');
 Or wait for a network response after the button click:
 
 ```js
+// Use a glob URL pattern
 const [response] = await Promise.all([
-  page.waitForResponse('/api/fetch_data'),
+  page.waitForResponse('**/api/fetch_data'),
   page.click('button#update'),
 ]);
 ```
@@ -100,15 +101,15 @@ const [response] = await Promise.all([
 #### Variations
 
 ```js
-// User glob URL pattern
+// Use a RegExp
 const [response] = await Promise.all([
-  page.waitForResponse('**/*'),
+  page.waitForResponse(/\.jpeg$/),
   page.click('button#update'),
 ]);
 
-// User pattern predicate
+// Use a predicate taking a Response object
 const [response] = await Promise.all([
-  page.waitForResponse(url => url.includes(token)),
+  page.waitForResponse(response => response.url().includes(token)),
   page.click('button#update'),
 ]);
 ```
@@ -129,7 +130,7 @@ const [response] = await Promise.all([
 You can mock API endpoints via handling the network quests in your Playwright script.
 
 ```js
-await page.route('/api/fetch_data', route => route.fulfill({
+await page.route('**/api/fetch_data', route => route.fulfill({
   status: 200,
   body: testData,
 }));
@@ -142,7 +143,7 @@ await page.goto('https://example.com');
 // Set up route on the entire browser context.
 // It will apply to popup windows and opened links.
 
-await browserContext.route('/api/login', route => route.fulfill({
+await browserContext.route('**/api/login', route => route.fulfill({
   status: 200,
   body: 'accept',
 }));
@@ -177,8 +178,7 @@ You can continue requests with modifications. Example above removes an HTTP head
 ```js
 // Continue requests as POST.
 
-await page.route('**/*', route =>
-    route.continue({method: 'POST'}));
+await page.route('**/*', route => route.continue({method: 'POST'}));
 await page.goto('https://chromium.org');
 ```
 

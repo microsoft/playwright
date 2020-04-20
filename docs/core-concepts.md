@@ -54,7 +54,7 @@ const context = await browser.newContext();
 ```
 
 Browser contexts can also be used to emulate multi-page scenarios involving
-mobile devices, permissions, locale and color scheme. 
+mobile devices, permissions, locale and color scheme.
 
 ```js
 const { devices } = require('playwright');
@@ -78,13 +78,30 @@ const context = await browser.newContext({
 ## Pages and frames
 
 A Browser context can have multiple pages. A [`Page`](../api.md#class-page)
-refers to a single tab or a popup window within a browser context. A page can be used to navigate
-to URLs and then interact with elements.
+refers to a single tab or a popup window within a browser context. It should be used to navigate to URLs and interact with the page content.
 
 ```js
+// Create a page.
 const page = await context.newPage();
+```
+
+```js
+// Navigate explicitly, similar to entering a URL in the browser.
 await page.goto('http://example.com');
+// Fill an input.
+await page.fill('#search', 'query');
+```
+
+```js
+// Navigate implicitly by clicking a link.
 await page.click('#submit');
+// Expect a new url.
+console.log(page.url());
+```
+
+```js
+// Page can navigate from the script - this will be picked up by Playwright.
+window.location.href = 'https://example.com';
 ```
 
 A page can have one or more [Frame](../api.md#class-frame) objects attached to
@@ -104,6 +121,8 @@ await frame.fill('#username-input', 'John');
 
 - [class `Page`](./api.md#class-page)
 - [class `Frame`](./api.md#class-frame)
+
+To learn more about navigation and loading, read [this document](loading.md).
 
 <br/>
 
