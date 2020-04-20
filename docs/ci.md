@@ -1,15 +1,18 @@
-# Getting started on CI
+# Continuous integration.md
 
 Playwright tests can be executed to run on your CI environments. To simplify this, we have created sample configurations for common CI providers that can be used to bootstrap your setup.
 
+#### Contents
 - [Docker](#docker)
-- [GitHub](#github-actions)
+- [GitHub Actions](#github-actions)
 - [Azure Pipelines](#azure-pipelines)
 - [Travis CI](#travis-ci)
 - [CircleCI](#circleci)
 - [AppVeyor](#appveyor)
 
 Broadly, configuration on CI involves **ensuring system dependencies** are in place, **installing Playwright and browsers** (typically with `npm install`), and **running tests** (typically with `npm test`). Windows and macOS build agents do not require any additional system dependencies. Linux build agents can require additional dependencies, depending on the Linux distribution.
+
+<br/>
 
 ## Docker
 

@@ -109,31 +109,57 @@ await frame.fill('#username-input', 'John');
 
 ## Selectors
 
-Playwright APIs that interact with elements accept selectors as the first argument, used to search for the element. Playwright can search for elements with CSS selectors, XPath, HTML attributes like `id`, `data-test-id` and text content.
+Playwright can search for elements using CSS selectors, XPath selectors, HTML attributes like `id`, `data-test-id` and even text content.
 
-Note that all selectors except for XPath pierce shadow DOM automatically.
+You can explicitly specify the selector engine you are using or let Playwright detect it.
+
+All selector engines except for XPath pierce shadow DOM by default. If you want to enforce regular DOM selection, you can use the `*:light` versions of the selectors. You don't typically need to though.
+
+Learn more about selectors and selector engines [here](./selectors.md).
+
+Some examples below:
 
 ```js
-// Auto-detected CSS notation
-await page.click('div');
-
-// Explicit CSS notation
-await page.click('css=div');
-
-// Auto-detected XPath notation
-await page.click('xpath=//html/body/div');
-
-// Explicit XPath notation
-await page.click('//html/body/div');
-
-// Auto-detected text notation
-await page.click('"Login"');
-
-// Explicit text notation
-await page.click('text="Login"');
+// Using data-test-id= selector engine
+await page.click('data-test-id=foo');
 ```
 
-Selectors using different engines can be combined using the `>>` separator. Learn more about selectors and selector engines [here](./selectors.md).
+```js
+// CSS and XPath selector engines are automatically detected
+await page.click('div');
+await page.click('//html/body/div');
+```
+
+```js
+// Find node by text substring
+await page.click('text=Hello w');
+```
+
+```js
+// Explicit CSS and XPath notation
+await page.click('css=div');
+await page.click('xpath=//html/body/div');
+```
+
+```js
+// Only search light DOM, outside WebComponent shadow DOM:
+await page.click('css:light=div');
+```
+
+Selectors using the same or different engines can be combined using the `>>` separator. For example,
+
+```js
+await page.click('css=article >> css=.bar > .baz >> css=span[attr=value]');
+```
+
+is equivalent to
+
+```js
+document
+  .querySelector('article')
+  .querySelector('.bar > .baz')
+  .querySelector('span[attr=value]')
+```
 
 <br/>
 
@@ -148,17 +174,32 @@ Actions like `click` and `fill` auto-wait for the element to be visible and acti
 
 
 ```js
-// Will wait for #search element to be in DOM
+// Playwright waits for #search element to be in DOM
 await page.fill('#search', 'query');
-
-// Will wait for it to stop animating and accept clicks
+```
+```js
+// Playwright waits for element to stop animating
+// and accept clicks.
 await page.click('#search');
+```
+
+You can explicitly wait for element to become available in DOM and to become visible:
+
+```js
+await page.waitForSelector('#search', { waitFor: 'visible' });
+```
+
+... or to become hidden or detached
+
+```js
+await page.waitForSelector('#search', { waitFor: 'detached' });
 ```
 
 #### API reference
 
 - [page.click(selector[, options])](./api.md#pageclickselector-options)
 - [page.fill(selector, value[, options])](./api.md#pagefillselector-value-options)
+- [page.waitForSelector(selector[, options])](./api.md#pagewaitforselectorselector-options)
 
 <br/>
 

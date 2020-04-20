@@ -34,9 +34,13 @@
 1. Scraping and verification
     - Screenshots
     - Evaluation
-1. Selector engines
-    - Built-in engines
-    - Custom engines
+1. [Continuous integration](./ci.md)
+    - [Docker](./ci.md#docker)
+    - [GitHub Actions](./ci.md#github-actions)
+    - [Azure Pipelines](./ci.md#azure-pipelines)
+    - [Travis CI](./ci.md#travis-ci)
+    - [CircleCI](./ci.md#circleci)
+    - [AppVeyor](./ci.md#appveyor)
 1. Test runners
     - Jest
     - Mocha
@@ -44,7 +48,6 @@
     - Jasmine
     - Jasmine
     - Storybooks
-1. Continuous integration
-    - Git Hub Action
-    - Docker images
-    - Troubleshooting
+1. [Extensibility](./extensibility.md)
+    - [Custom selector engines](./extensibility.md#custom-selector-engines)
+
