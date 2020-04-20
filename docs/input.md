@@ -31,7 +31,6 @@ await page.fill('#time', '13-15');
 
 // <input id=local type=datetime-local>
 await page.fill('#local', '2020-03-02T05:15');
-
 ```
 
 #### API reference
@@ -131,7 +130,7 @@ await page.dblclick('#item');
 await page.click('#item', { button: 'right' });
 
 // Shift click element
-await page.click('#item', { modifiers: 'Shift' });
+await page.click('#item', { modifiers: ['Shift'] });
 
 // Hover over element without clicking
 await page.hover('#item');

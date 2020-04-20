@@ -8,23 +8,23 @@ Page navigation can be either initiated by the Playwright call:
 
 ```js
 // Load a page
-await page.goto('https://example.com')
+await page.goto('https://example.com');
 
 // Reload a page
-await page.reload()
+await page.reload();
 
 // Click a link
-await page.click('text="Continue"')
+await page.click('text="Continue"');
 ```
 
 or by the page itself:
 
 ```js
 // Programmatic navigation
-window.location.href = 'https://example.com'
+window.location.href = 'https://example.com';
 
 // Single page app navigation
-history.pushState({}, 'title', '#deep-link')
+history.pushState({}, 'title', '#deep-link');
 ```
 
 Navigation intent may result in being canceled, for example transformed into a download or hitting an unresolved DNS address. Only when the navigation succeeds, page starts **loading** the document.
@@ -66,9 +66,9 @@ Explicit loading handling may be required for more complicated scenarios though.
 
 When popup is opened, explicitly calling [`page.waitForLoadState()`](#pagewaitforloadstatestate-options) ensures that popup is loaded to the desired state.
 ```js
-const { popup } = await Promise.all([
+const [ popup ] = await Promise.all([
   page.waitForEvent('popup'),
-  page.click('a[target="_blank"]')  // <-- opens popup
+  page.click('a[target="_blank"]'),  // <-- opens popup
 ]);
 await popup.waitForLoadState('load');
 await popup.evaluate(() => window.globalVariableInitializedByOnLoadHandler);
