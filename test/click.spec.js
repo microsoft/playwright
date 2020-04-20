@@ -198,6 +198,7 @@ describe('Page.click', function() {
       'mouseover',
       'mouseenter',
       'mousemove',
+      'mousemove',
       'mousedown',
       'mouseup',
       'click',
@@ -594,6 +595,36 @@ describe('Page.click', function() {
     await page.evaluate(() => stopButton(false));
     await promise;
     expect(clicked).toBe(true);
+    expect(await page.evaluate(() => window.clicked)).toBe(true);
+  });
+  it('should fail when element is blocked on hover', async({page, server}) => {
+    await page.setContent(`<style>
+      container { display: block; position: relative; width: 200px; height: 50px; }
+      div, button { position: absolute; left: 0; top: 0; bottom: 0; right: 0; }
+      div { pointer-events: none; }
+      container:hover div { pointer-events: auto; background: red; }
+    </style>
+    <container>
+      <button onclick="window.clicked=true">Click me</button>
+      <div></div>
+    </container>`);
+    const error = await page.click('button', { timeout: 3000 }).catch(e => e);
+    expect(error.message).toBe('waiting for element to receive pointer events failed: timeout exceeded');
+    expect(await page.evaluate(() => window.clicked)).toBe(undefined);
+  });
+  it('should wait while element is blocked on hover', async({page, server}) => {
+    await page.setContent(`<style>
+      @keyframes move-out { from { marign-left: 0; } to { margin-left: 150px; } }
+      container { display: block; position: relative; width: 200px; height: 50px; }
+      div, button { position: absolute; left: 0; top: 0; bottom: 0; right: 0; }
+      div { pointer-events: none; }
+      container:hover div { pointer-events: auto; background: red; animation: 3s linear move-out; animation-fill-mode: forwards; }
+    </style>
+    <container>
+      <button onclick="window.clicked=true">Click me</button>
+      <div></div>
+    </container>`);
+    await page.click('button');
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
 });

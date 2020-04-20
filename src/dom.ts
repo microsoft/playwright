@@ -226,6 +226,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const point = position ? await this._offsetPoint(position) : await this._clickablePoint();
     point.x = (point.x * 100 | 0) / 100;
     point.y = (point.y * 100 | 0) / 100;
+    await this._page.mouse.move(point.x, point.y);  // Force any hover effects before waiting for hit target.
     if (!force)
       await this._waitForHitTargetAt(point, deadline);
 
