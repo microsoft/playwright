@@ -36,6 +36,10 @@ await browser.close();
 Launching a browser instance can be expensive, and Playwright is designed to
 maximize what a single instance can do through multiple browser contexts.
 
+#### API reference
+
+- [class `Browser`](./api.md#class-browser)
+
 <br/>
 
 ## Browser contexts
@@ -65,6 +69,10 @@ const context = await browser.newContext({
 });
 ```
 
+#### API reference
+
+- [class `BrowserContext`](./api.md#class-browser-context)
+
 <br/>
 
 ## Pages and frames
@@ -91,6 +99,11 @@ frames can be accessed for interactions inside the frame.
 const frame = page.frame('frame-login');
 await frame.fill('#username-input', 'John');
 ```
+
+#### API reference
+
+- [class `Page`](./api.md#class-page)
+- [class `Frame`](./api.md#class-frame)
 
 <br/>
 
@@ -141,6 +154,11 @@ await page.fill('#search', 'query');
 // Will wait for it to stop animating and accept clicks
 await page.click('#search');
 ```
+
+#### API reference
+
+- [page.click(selector[, options])](./api.md#pageclickselector-options)
+- [page.fill(selector, value[, options])](./api.md#pagefillselector-value-options)
 
 <br/>
 

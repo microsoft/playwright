@@ -9,32 +9,33 @@ Playwright allows overriding various parameters of the device where the browser 
 
 Most of these parameters are configured during the browser context construction, but some of them such as viewport size can be changed for individual pages.
 
+#### Contents
+- [User agent](#user-agent)
+- [Viewport, color scheme](#viewport-color-scheme)
+- [Devices](#select-options)
+- [Locale & Timezone](#locale--timezone)
+- [Permissions](#permissions)
+- [Geolocation](#geolocation)
+
 <br/>
 
-## Emulating popular devices
-
-Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser behavior on a mobile device:
+## User agent
 
 ```js
-  const { chromium, devices } = require('playwright');
-  const browser = await chromium.launch();
-
-  const pixel2 = devices['Pixel 2'];
   const context = await browser.newContext({
-    ...pixel2,
+    userAgent: 'My user agent'
   });
 ```
 
-All pages created in the context above will share the same device parameters.
+All pages created in the context above will share the user agent specified.
 
 #### API reference
 
-- [`playwright.devices`](./api.md#playwrightdevices)
 - [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
 
 <br/>
 
-## Configuring screen size, touch support, mobile viewport
+## Viewport, color scheme
 
 Create a context with custom viewport size:
 
@@ -66,18 +67,7 @@ Emulate desktop device with the high-DPI screen and touch support:
   });
 ```
 
-#### API reference
-
-- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
-- [`page.setViewportSize(viewportSize)`](./api.md#pagesetviewportsizeviewportsize)
-
-<br/>
-
-## Configuring color scheme
-
 Create device with the dark color scheme:
-
-
 ```js
   const context = await browser.newContext({
     colorScheme: 'dark'
@@ -93,11 +83,41 @@ Change color scheme for individual pages:
 #### API reference
 
 - [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
+- [`page.setViewportSize(viewportSize)`](./api.md#pagesetviewportsizeviewportsize)
+
+<br/>
+
+## Devices
+
+Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser behavior on a mobile device:
+
+```js
+  const { chromium, devices } = require('playwright');
+  const browser = await chromium.launch();
+
+  const pixel2 = devices['Pixel 2'];
+  const context = await browser.newContext({
+    ...pixel2,
+  });
+```
+
+All pages created in the context above will share the same device parameters.
+
+#### API reference
+
+- [`playwright.devices`](./api.md#playwrightdevices)
+- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
+
+<br/>
+
+#### API reference
+
+- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
 - [`page.emulateMedia([options])`](./api.md#pageemulatemediaoptions)
 
 <br/>
 
-## Locale and timezone
+## Locale & timezone
 
 ```js
   const context = await browser.newContext({
@@ -112,29 +132,8 @@ Change color scheme for individual pages:
 
 <br/>
 
-## Geolocation
-Create a context with `"geolocation"` permissions granted:
-```js
-  const context = await browser.newContext({
-    geolocation: { longitude: 48.858455, latitude: 2.294474 },
-    permissions: ['geolocation']
-  });
-```
-Change the location later:
-
-```js
-  await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 };
-```
-**Note** you can only change geolocation for all pages in the context.
-
-#### API reference
-
-- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
-- [`browserContext.setGeolocation(geolocation)`](./api.md#browsercontextsetgeolocationgeolocation)
-
-<br/>
-
 ## Permissions
+
 Allow all pages in the context to show system notifications:
 ```js
   const context = await browser.newContext({
@@ -161,5 +160,27 @@ Revoke all permissions:
 - [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
 - [`browserContext.grantPermissions(permissions[][, options])`](./api.md#browsercontextgrantpermissionspermissions-options)
 - [`browserContext.clearPermissions()`](./api.md#browsercontextclearpermissions)
+
+<br/>
+
+## Geolocation
+Create a context with `"geolocation"` permissions granted:
+```js
+  const context = await browser.newContext({
+    geolocation: { longitude: 48.858455, latitude: 2.294474 },
+    permissions: ['geolocation']
+  });
+```
+Change the location later:
+
+```js
+  await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 };
+```
+**Note** you can only change geolocation for all pages in the context.
+
+#### API reference
+
+- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
+- [`browserContext.setGeolocation(geolocation)`](./api.md#browsercontextsetgeolocationgeolocation)
 
 <br/>

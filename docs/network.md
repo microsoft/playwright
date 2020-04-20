@@ -1,14 +1,74 @@
-# Working With Network
+# Network
 
 Playwright provides APIs to **monitor** and **modify** network traffic, both HTTP and HTTPS.
 Any requests that page does, including [XHRs](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) and
-[fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) requests, can be tracked and modified.
+[fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) requests, can be tracked, modified and handled.
 
+#### Contents
+  - [HTTP Authentication](#http-authentication)
+  - [Handle file downloads](#handle-file-downloads)
+  - [Network events](#network-events)
+  - [Handle requests](#handle-requests)
+  - [Modify requests](#modify-requests)
+  - [Abort requests](#abort-requests)
 
-> **NOTE** As of playwright v0.13.0, Playwright is not yet capable of tracking websocket messages.
+<br/>
 
+## HTTP Authentication
 
-## Monitor all network activity in page
+```js
+const context = await browser.newContext({
+  httpCredentials: {
+    username: 'bill',
+    password: 'pa55w0rd',
+  },
+});
+const page = await context.newPage();
+awat page.goto('https://example.com');
+```
+
+You can also use [`browserContext.setHTTPCredentials`](./api.md#browsercontextsethttpcredentialshttpcredentials) to update HTTP credentials of an existing context.
+
+#### API reference
+
+- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
+- [`browserContext.setHTTPCredentials(httpCredentials)`](./api.md#browsercontextsethttpcredentialshttpcredentials)
+
+<br/>
+
+## Handle file downloads
+
+```js
+const [ download ] = await Promise.all([
+	page.waitForEvent('download'), // <-- start waiting for the download
+	page.click('button#delayed-download') // <-- perform the action that directly or indirectly initiates it.
+]);
+const path = await download.path();
+```
+
+For every attachment downloaded by the page, [`"download"`](https://github.com/microsoft/playwright/blob/master/docs/api.md#event-download) event is emitted. If you create a browser context with the `acceptDownloads: true`, all these attachments are going to be downloaded into a temporary folder. You can obtain the download url, file system path and payload stream using the [`Download`](https://github.com/microsoft/playwright/blob/master/docs/api.md#class-download) object from the event.
+
+#### Variations
+
+If you have no idea what initiates the download, you can still handle the event:
+
+```js
+page.on('download', download => download.path().then(console.log));
+```
+
+Note that handling the event forks the control flow and makes script harder to follow. Your scenario might end while you are downloading a file since your main control flow is not awaiting for this operation to resolve.
+
+#### API reference
+
+- [`Download`](https://github.com/microsoft/playwright/blob/master/docs/api.md#class-download)
+- [`page.on('download')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#event-download)
+- [`page.waitForEvent(event)`](https://github.com/microsoft/playwright/blob/master/docs/api.md##pagewaitforeventevent-optionsorpredicate)
+
+<br/>
+
+## Network events
+
+You can monitor all the requests and responses:
 
 ```js
 const { chromium, webkit, firefox } = require('playwright');
@@ -28,16 +88,7 @@ const { chromium, webkit, firefox } = require('playwright');
 })();
 ```
 
-#### API reference
-
-- [`Request`](./api.md#class-request)
-- [`Response`](./api.md#class-response)
-- [`event: 'request'`](./api.md#event-request)
-- [`event: 'response'`](./api.md#event-response)
-
-<br/>
-
-## Wait for a network response after the button click
+Or wait for a network response after the button click:
 
 ```js
 const [response] = await Promise.all([
@@ -45,8 +96,6 @@ const [response] = await Promise.all([
   page.click('button#update'),
 ]);
 ```
-
-The snippet above clicks a button and waits for the network response that matches the given pattern.
 
 #### Variations
 
@@ -66,12 +115,18 @@ const [response] = await Promise.all([
 
 #### API reference
 
+- [class `Request`](./api.md#class-request)
+- [class `Response`](./api.md#class-response)
+- [event `'request'`](./api.md#event-request)
+- [event `'response'`](./api.md#event-response)
 - [`page.waitForRequest(urlOrPredicate[, options])`](./api.md#pagewaitforrequesturlorpredicate-options)
 - [`page.waitForResponse(urlOrPredicate[, options])`](./api.md#pagewaitforresponseurlorpredicate-options)
 
 <br/>
 
-## Mock API endpoint with the test data
+## Handle requests
+
+You can mock API endpoints via handling the network quests in your Playwright script.
 
 ```js
 await page.route('/api/fetch_data', route => route.fulfill({
@@ -80,9 +135,6 @@ await page.route('/api/fetch_data', route => route.fulfill({
 }));
 await page.goto('https://example.com');
 ```
-
-You can also use [`browserContext.route`](./api.md#browsercontextrouteurl-handler) to mock
-API endpoints for all the pages in the context.
 
 #### Variations
 
@@ -107,7 +159,32 @@ await page.goto('https://example.com');
 
 <br/>
 
-## Abort selected requests
+## Modify requests
+
+```js
+await page.route('**/*', route => {
+  const headers = route.request().headers();
+  delete headers['X-Secret'];
+  route.continue({headers});
+});
+await page.goto('https://chromium.org');
+```
+
+You can continue requests with modifications. Example above removes an HTTP header from the outgoing requests.
+
+#### Variations
+
+```js
+// Continue requests as POST.
+
+await page.route('**/*', route =>
+    route.continue({method: 'POST'}));
+await page.goto('https://chromium.org');
+```
+
+<br/>
+
+## Abort requests
 
 ```js
 const page = await browser.newPage();
@@ -134,49 +211,3 @@ await page.goto('https://chromium.org');
 - [`route.abort([errorCode])`](./api.md#routeaborterrorcode)
 
 <br/>
-
-## Modify selected requests
-
-
-```js
-await page.route('**/*', route => {
-  const headers = route.request().headers();
-  delete headers['X-Secret'];
-  route.continue({headers});
-});
-await page.goto('https://chromium.org');
-```
-
-You can continue requests with modifications. Example above removes an HTTP header from the outgoing requests.
-
-#### Variations
-
-```js
-// Continue requests as POST.
-
-await page.route('**/*', route =>
-    route.continue({method: 'POST'}));
-await page.goto('https://chromium.org');
-```
-
-<br/>
-
-## Setup [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication)
-
-```js
-const context = await browser.newContext({
-  httpCredentials: {
-    username: 'bill',
-    password: 'pa55w0rd',
-  },
-});
-const page = await context.newPage();
-awat page.goto('https://example.com');
-```
-
-You can also use [`browserContext.setHTTPCredentials`](./api.md#browsercontextsethttpcredentialshttpcredentials) to update HTTP credentials of an existing context.
-
-#### API reference
-
-- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
-- [`browserContext.setHTTPCredentials(httpCredentials)`](./api.md#browsercontextsethttpcredentialshttpcredentials)

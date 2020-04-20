@@ -17,20 +17,20 @@
     - [Keys and shortcuts](./input.md#keys-and-shortcuts)
     - [Upload files](./input.md#upload-files)
     - [Focus element](./input.md#focus-element)
-1. Emulation
-    - User agent
-    - Viewport, color scheme
-    - Devices
-    - Locale & Timezone
-    - Geolocation
-    - Permissions
-1. Network
-    - Navigation & load
-    - Waiting for navigation
-    - Handling downloads
-    - Network events
-    - Mocking network
-    - Aborting requests
+1. [Emulation](./emulation.md)
+    - [User agent](./emulation.md#user-agent)
+    - [Viewport, color scheme](./emulation.md#viewport-color-scheme)
+    - [Devices](./emulation.md#select-options)
+    - [Locale & Timezone](./emulation.md#locale--timezone)
+    - [Permissions](./emulation.md#permissions)
+    - [Geolocation](./emulation.md#geolocation)
+1. [Network](./network.md)
+    - [HTTP Authentication](./network.md#http-authentication)
+    - [Handle file downloads](./network.md#handle-file-downloads)
+    - [Network events](./network.md#network-events)
+    - [Handle requests](./network.md#handle-requests)
+    - [Modify requests](./network.md#modify-requests)
+    - [Abort requests](./network.md#abort-requests)
 1. Scraping and verification
     - Screenshots
     - Evaluation

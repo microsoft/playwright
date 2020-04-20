@@ -34,7 +34,7 @@ await page.fill('#local', '2020-03-02T05:15');
 
 ```
 
-#### Reference
+#### API reference
 
 - [page.fill(selector, value[, options])](./api.md#pagefillselector-value-options) — main frame
 - [frame.fill(selector, value[, options])](./api.md#framefillselector-value-options) — given frame
@@ -54,7 +54,7 @@ await page.uncheck('#subscribe-label');
 
 This is the easiest way to check and uncheck a checkbox. This method can be used on the `input[type=checkbox]` and on the `label` associated with that input.
 
-#### Reference
+#### API reference
 
 - [page.check(selector[, options])](./api.md#pagecheckselector-options) — main frame
 - [page.uncheck(selector[, options])](./api.md#pageuncheckselector-options) — main frame
@@ -97,7 +97,7 @@ const option = await page.$('#best-option');
 await page.selectOption('select#colors', option);
 ```
 
-#### Reference
+#### API reference
 
 - [page.selectOption(selector, values[, options])](./api.md#pageselectoptionselector-values-options) — main frame
 - [frame.selectOption(selector, values[, options])](./api.md#frameselectoptionselector-values-options) — given frame
@@ -140,7 +140,7 @@ await page.hover('#item');
 await page.click('#item', { position: { x: 0, y: 0} });
 ```
 
-#### Reference
+#### API reference
 
 - [page.click(selector[, options])](./api.md#pageclickselector-options) — main frame
 - [frame.click(selector[, options])](./api.md#frameclickselector-options) — given frame
@@ -166,7 +166,7 @@ Note that most of the time, [`page.fill`](#text-input) will just work. You only 
 
 But sometimes it is important to type into the field character by character, as if it was a user with a real keyboard. This method will emit all the necessary keyboard events, with all the `keydown`, `keyup`, `keypress` events in place. You can even specify the optional `delay` between the key presses to simulate real user behavior.
 
-#### Reference
+#### API reference
 
 - [page.type(selector, text[, options])](./api.md#pagetypeselector-text-options) — main frame
 - [frame.type(selector, text[, options])](./api.md#frametypeselector-text-options) — given frame
@@ -224,7 +224,7 @@ Shortcuts such as `"Control+o"` or `"Control+Shift+T"` are supported as well. Wh
 Note that you still need to specify the capital `A` in `Shift-A` to produce the capital character. `Shift-a` produces a lower-case one as if you had the `CapsLock` toggled.
 
 
-#### Reference
+#### API reference
 
 - [page.press(selector, key[, options])](./api.md#pagepressselector-key-options) — main frame
 - [frame.press(selector, key[, options])](./api.md#framepressselector-key-options) — given frame
@@ -260,7 +260,7 @@ await page.setInputFiles('input#upload', {
 await page.setInputFiles('input#upload', []);
 ```
 
-#### Reference
+#### API reference
 
 - [page.setInputFiles(selector, files[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetinputfilesselector-value-options)
 - [frame.setInputFiles(selector, files[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framesetinputfilesselector-value-options)
@@ -279,7 +279,7 @@ await page.focus('input#name');
 
 For the dynamic pages that handle focus events, you can focus the given element.
 
-#### Reference
+#### API reference
 
 - [page.focus(selector, [options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagefocusselector-options)
 - [frame.focus(selector, [options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framefocusselector-options)
