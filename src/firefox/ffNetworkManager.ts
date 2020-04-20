@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-import { debugError, helper, RegisteredListener } from '../helper';
+import { helper, RegisteredListener } from '../helper';
 import { FFSession } from './ffConnection';
 import { Page } from '../page';
 import * as network from '../network';
 import * as frames from '../frames';
 import { Protocol } from './protocol';
+import { logError } from '../logger';
 
 export class FFNetworkManager {
   private _session: FFSession;
@@ -164,9 +165,7 @@ class InterceptableRequest implements network.RouteDelegate {
       method,
       headers: headers ? headersArray(headers) : undefined,
       postData: postData ? Buffer.from(postData).toString('base64') : undefined
-    }).catch(error => {
-      debugError(error);
-    });
+    }).catch(logError(this.request._page));
   }
 
   async fulfill(response: network.FulfillResponse) {
@@ -188,18 +187,14 @@ class InterceptableRequest implements network.RouteDelegate {
       statusText: network.STATUS_TEXTS[String(response.status || 200)] || '',
       headers: headersArray(responseHeaders),
       base64body: responseBody ? responseBody.toString('base64') : undefined,
-    }).catch(error => {
-      debugError(error);
-    });
+    }).catch(logError(this.request._page));
   }
 
   async abort(errorCode: string) {
     await this._session.send('Network.abortInterceptedRequest', {
       requestId: this._id,
       errorCode,
-    }).catch(error => {
-      debugError(error);
-    });
+    }).catch(logError(this.request._page));
   }
 }
 

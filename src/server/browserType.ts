@@ -16,6 +16,7 @@
 
 import { BrowserContext } from '../browserContext';
 import { BrowserServer } from './browserServer';
+import { LoggerSink } from '../logger';
 
 export type BrowserArgOptions = {
   headless?: boolean,
@@ -30,17 +31,14 @@ type LaunchOptionsBase = BrowserArgOptions & {
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
   timeout?: number,
-  /**
-   * Whether to dump stdio of the browser, this is useful for example when
-   * diagnosing browser launch issues.
-   */
-  dumpio?: boolean,
+  loggerSink?: LoggerSink,
   env?: {[key: string]: string} | undefined
 };
 
 export type ConnectOptions = {
   wsEndpoint: string,
-  slowMo?: number
+  slowMo?: number,
+  loggerSink?: LoggerSink,
 };
 export type LaunchOptions = LaunchOptionsBase & { slowMo?: number };
 export type LaunchServerOptions = LaunchOptionsBase & { port?: number };

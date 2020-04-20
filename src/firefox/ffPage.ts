@@ -19,7 +19,7 @@ import * as dialog from '../dialog';
 import * as dom from '../dom';
 import { Events } from '../events';
 import * as frames from '../frames';
-import { assert, debugError, helper, RegisteredListener } from '../helper';
+import { assert, helper, RegisteredListener } from '../helper';
 import { Page, PageBinding, PageDelegate, Worker } from '../page';
 import { kScreenshotDuringNavigationError } from '../screenshotter';
 import * as types from '../types';
@@ -32,6 +32,7 @@ import { FFNetworkManager, headersArray } from './ffNetworkManager';
 import { Protocol } from './protocol';
 import { selectors } from '../selectors';
 import { NotConnectedError } from '../errors';
+import { logError } from '../logger';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -199,7 +200,7 @@ export class FFPage implements PageDelegate {
         params.type,
         params.message,
         async (accept: boolean, promptText?: string) => {
-          await this._session.send('Page.handleDialog', { dialogId: params.dialogId, accept, promptText }).catch(debugError);
+          await this._session.send('Page.handleDialog', { dialogId: params.dialogId, accept, promptText }).catch(logError(this._page));
         },
         params.defaultValue));
   }
@@ -218,7 +219,7 @@ export class FFPage implements PageDelegate {
 
   async _onWorkerCreated(event: Protocol.Page.workerCreatedPayload) {
     const workerId = event.workerId;
-    const worker = new Worker(event.url);
+    const worker = new Worker(this._page, event.url);
     const workerSession = new FFSession(this._session._connection, 'worker', workerId, (message: any) => {
       this._session.send('Page.sendMessageToWorker', {
         frameId: event.frameId,
@@ -434,7 +435,7 @@ export class FFPage implements PageDelegate {
     const result = await this._session.send('Page.getContentQuads', {
       frameId: handle._context.frame._id,
       objectId: toRemoteObject(handle).objectId!,
-    }).catch(debugError);
+    }).catch(logError(this._page));
     if (!result)
       return null;
     return result.quads.map(quad => [ quad.p1, quad.p2, quad.p3, quad.p4 ]);

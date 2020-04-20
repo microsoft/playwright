@@ -103,43 +103,41 @@ function collect(browserNames) {
     }
 
     const browserEnvironment = new Environment(browserName);
+    let logger;
     browserEnvironment.beforeAll(async state => {
-      state.browser = await state.browserType.launch(launchOptions);
-      state._stdout = readline.createInterface({ input: state.browser._ownedServer.process().stdout });
-      state._stderr = readline.createInterface({ input: state.browser._ownedServer.process().stderr });
+      state.browser = await state.browserType.launch({...launchOptions, loggerSink: {
+        isEnabled: (name, severity) => {
+          return name === 'browser' ||
+              (name === 'protocol' && config.dumpProtocolOnFailure);
+        },
+        log: (name, severity, message, args) => {
+          if (logger)
+            logger(name, severity, message);
+        }
+      }});
     });
     browserEnvironment.afterAll(async state => {
       await state.browser.close();
       delete state.browser;
-      state._stdout.close();
-      state._stderr.close();
-      delete state._stdout;
-      delete state._stderr;
     });
     browserEnvironment.beforeEach(async(state, testRun) => {
-      const dumpout = data => testRun.log(`\x1b[33m[pw:stdio:out]\x1b[0m ${data}`);
-      const dumperr = data => testRun.log(`\x1b[31m[pw:stdio:err]\x1b[0m ${data}`);
-      state._stdout.on('line', dumpout);
-      state._stderr.on('line', dumperr);
-      // TODO: figure out debug options.
-      if (config.dumpProtocolOnFailure) {
-        state.browser._debugProtocol.log = data => testRun.log(`\x1b[32m[pw:protocol]\x1b[0m ${data}`);
-        state.browser._debugProtocol.enabled = true;
-      }
-      state._browserTearDown = async (testRun) => {
-        state._stdout.off('line', dumpout);
-        state._stderr.off('line', dumperr);
-        if (config.dumpProtocolOnFailure) {
-          delete state.browser._debugProtocol.log;
-          state.browser._debugProtocol.enabled = false;
-          if (testRun.ok())
-            testRun.output().splice(0);
+      logger = (name, severity, message) => {
+        if (name === 'browser') {
+          if (severity === 'warning')
+            testRun.log(`\x1b[31m[browser]\x1b[0m ${message}`)
+          else
+            testRun.log(`\x1b[33m[browser]\x1b[0m ${message}`)
+        } else if (name === 'protocol' && config.dumpProtocolOnFailure) {
+          testRun.log(`\x1b[32m[protocol]\x1b[0m ${message}`)
         }
-      };
+      }
     });
     browserEnvironment.afterEach(async (state, testRun) => {
-      await state._browserTearDown(testRun);
-      delete state._browserTearDown;
+      logger = null;
+      if (config.dumpProtocolOnFailure) {
+        if (testRun.ok())
+          testRun.output().splice(0);
+      }
     });
 
     const pageEnvironment = new Environment('Page');

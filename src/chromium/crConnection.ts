@@ -16,9 +16,10 @@
  */
 
 import { assert } from '../helper';
-import { ConnectionTransport, ProtocolRequest, ProtocolResponse, debugProtocol } from '../transport';
+import { ConnectionTransport, ProtocolRequest, ProtocolResponse, protocolLog } from '../transport';
 import { Protocol } from './protocol';
 import { EventEmitter } from 'events';
+import { Logger } from '../logger';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('ConnectionEvents.Disconnected')
@@ -34,15 +35,18 @@ export class CRConnection extends EventEmitter {
   private readonly _sessions = new Map<string, CRSession>();
   readonly rootSession: CRSession;
   _closed = false;
+  private _logger: Logger;
 
-  constructor(transport: ConnectionTransport) {
+  constructor(transport: ConnectionTransport, logger: Logger) {
     super();
     this._transport = transport;
+    this._logger = logger;
     this._transport.onmessage = this._onMessage.bind(this);
     this._transport.onclose = this._onClose.bind(this);
     this.rootSession = new CRSession(this, '', 'browser', '');
     this._sessions.set('', this.rootSession);
   }
+
 
   static fromSession(session: CRSession): CRConnection {
     return session._connection!;
@@ -57,15 +61,15 @@ export class CRConnection extends EventEmitter {
     const message: ProtocolRequest = { id, method, params };
     if (sessionId)
       message.sessionId = sessionId;
-    if (debugProtocol.enabled)
-      debugProtocol('SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
+    if (this._logger._isLogEnabled(protocolLog))
+      this._logger._log(protocolLog, 'SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
     this._transport.send(message);
     return id;
   }
 
   async _onMessage(message: ProtocolResponse) {
-    if (debugProtocol.enabled)
-      debugProtocol('◀ RECV ' + JSON.stringify(message));
+    if (this._logger._isLogEnabled(protocolLog))
+      this._logger._log(protocolLog, '◀ RECV ' + JSON.stringify(message));
     if (message.id === kBrowserCloseMessageId)
       return;
     if (message.method === 'Target.attachedToTarget') {

@@ -27,6 +27,7 @@
 - [class: Worker](#class-worker)
 - [class: BrowserServer](#class-browserserver)
 - [class: BrowserType](#class-browsertype)
+- [class: LoggerSink](#class-loggersink)
 - [class: ChromiumBrowser](#class-chromiumbrowser)
 - [class: ChromiumBrowserContext](#class-chromiumbrowsercontext)
 - [class: ChromiumCoverage](#class-chromiumcoverage)
@@ -3767,6 +3768,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 - `options` <[Object]>
   - `wsEndpoint` <[string]> A browser websocket endpoint to connect to. **required**
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
+  - `loggerSink` <[LoggerSink]> Sink for log messages.
 - returns: <[Promise]<[Browser]>>
 
 This methods attaches Playwright to an existing browser instance.
@@ -3783,8 +3785,8 @@ This methods attaches Playwright to an existing browser instance.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
+  - `loggerSink` <[LoggerSink]> Sink for log messages.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
-  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
@@ -3816,8 +3818,8 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
+  - `loggerSink` <[LoggerSink]> Sink for log messages.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
-  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
@@ -3835,8 +3837,8 @@ Launches browser instance that uses persistent storage located at `userDataDir`.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
+  - `loggerSink` <[LoggerSink]> Sink for log messages.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
-  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
 - returns: <[Promise]<[BrowserServer]>> Promise which resolves to the browser app instance.
@@ -3861,6 +3863,44 @@ const { chromium } = require('playwright');  // Or 'webkit' or 'firefox'.
 - returns: <[string]>
 
 Returns browser name. For example: `'chromium'`, `'webkit'` or `'firefox'`.
+
+### class: LoggerSink
+
+Playwright generates a lot of logs and they are accessible via the pluggable logger sink.
+
+```js
+const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
+
+(async () => {
+  const browser = await chromium.launch({
+    loggerSink: {
+      isEnabled: (name, severity) => name === 'browser',
+      log: (name, severity, message, args) => console.log(`${name} ${message}`)
+    }
+  });
+  ...
+})();
+```
+
+<!-- GEN:toc -->
+- [loggerSink.isEnabled(name, severity)](#loggersinkisenabledname-severity)
+- [loggerSink.log(name, severity, message, args, hints)](#loggersinklogname-severity-message-args-hints)
+<!-- GEN:stop -->
+
+#### loggerSink.isEnabled(name, severity)
+- `name` <[string]> logger name
+- `severity` <"verbose"|"info"|"warning"|"error">
+- returns: <[boolean]>
+
+Determines whether sink is interested in the logger with the given name and severity.
+
+#### loggerSink.log(name, severity, message, args, hints)
+- `name` <[string]> logger name
+- `severity` <"verbose"|"info"|"warning"|"error">
+- `message` <[string]|[Error]> log message format
+- `args` <[Array]<[Object]>> message arguments
+- `hints` <[Object]> optional formatting hints
+  - `color` <[string]> preferred logger color
 
 ### class: ChromiumBrowser
 
@@ -4218,6 +4258,7 @@ const { chromium } = require('playwright');
 [Frame]: #class-frame "Frame"
 [JSHandle]: #class-jshandle "JSHandle"
 [Keyboard]: #class-keyboard "Keyboard"
+[LoggerSink]: #class-loggersink "LoggerSink"
 [Map]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map "Map"
 [Mouse]: #class-mouse "Mouse"
 [Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"

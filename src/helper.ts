@@ -16,15 +16,11 @@
  */
 
 import * as crypto from 'crypto';
-import * as debug from 'debug';
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as util from 'util';
 import { TimeoutError } from './errors';
 import * as types from './types';
-
-export const debugError = debug(`pw:error`);
-export const debugInput = debug('pw:input');
 
 export type RegisteredListener = {
   emitter: EventEmitter;
@@ -66,37 +62,16 @@ class Helper {
   }
 
   static installApiHooks(className: string, classType: any) {
-    const log = debug('pw:api');
     for (const methodName of Reflect.ownKeys(classType.prototype)) {
       const method = Reflect.get(classType.prototype, methodName);
       if (methodName === 'constructor' || typeof methodName !== 'string' || methodName.startsWith('_') || typeof method !== 'function')
         continue;
       const isAsync = method.constructor.name === 'AsyncFunction';
-      if (!isAsync && !log.enabled)
+      if (!isAsync)
         continue;
       Reflect.set(classType.prototype, methodName, function(this: any, ...args: any[]) {
         const syncStack: any = {};
         Error.captureStackTrace(syncStack);
-        if (log.enabled) {
-          const frames = syncStack.stack.substring('Error\n'.length)
-              .split('\n')
-              .map((f: string) => f.replace(/\s+at\s/, '').trim());
-          const userCall = frames.length <= 1 || !frames[1].includes('playwright/lib');
-          if (userCall) {
-            const match = /([^/\\]+)(:\d+:\d+)[)]?$/.exec(frames[1]);
-            let location = '';
-            if (match) {
-              const fileName = helper.trimMiddle(match[1], 20 - match[2].length);
-              location = `\u001b[33m[${fileName}${match[2]}]\u001b[39m `;
-            }
-            if (args.length)
-              log(`${location}${className}.${methodName} %o`, args);
-            else
-              log(`${location}${className}.${methodName}`);
-          }
-        }
-        if (!isAsync)
-          return method.call(this, ...args);
         return method.call(this, ...args).catch((e: any) => {
           const stack = syncStack.stack.substring(syncStack.stack.indexOf('\n') + 1);
           const clientStack = stack.substring(stack.indexOf('\n'));

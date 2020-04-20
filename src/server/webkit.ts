@@ -22,7 +22,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import * as util from 'util';
-import { debugError, helper, assert } from '../helper';
+import { helper, assert } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
 import { LaunchOptions, BrowserArgOptions, BrowserType, LaunchServerOptions, ConnectOptions } from './browserType';
 import { ConnectionTransport, SequenceNumberMixer, WebSocketTransport } from '../transport';
@@ -31,6 +31,7 @@ import { LaunchType } from '../browser';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { Events } from '../events';
 import { BrowserContext } from '../browserContext';
+import { Logger, logError, RootLogger } from '../logger';
 
 export class WebKit implements BrowserType<WKBrowser> {
   private _executablePath: (string|undefined);
@@ -47,8 +48,8 @@ export class WebKit implements BrowserType<WKBrowser> {
 
   async launch(options: LaunchOptions = {}): Promise<WKBrowser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
-    const { browserServer, transport, downloadsPath } = await this._launchServer(options, 'local');
-    const browser = await WKBrowser.connect(transport!, options.slowMo, false);
+    const { browserServer, transport, downloadsPath, logger } = await this._launchServer(options, 'local');
+    const browser = await WKBrowser.connect(transport!, logger,  options.slowMo, false);
     browser._ownedServer = browserServer;
     browser._downloadsPath = downloadsPath;
     return browser;
@@ -63,18 +64,17 @@ export class WebKit implements BrowserType<WKBrowser> {
       timeout = 30000,
       slowMo = 0,
     } = options;
-    const { transport, browserServer } = await this._launchServer(options, 'persistent', userDataDir);
-    const browser = await WKBrowser.connect(transport!, slowMo, true);
+    const { transport, browserServer, logger } = await this._launchServer(options, 'persistent', userDataDir);
+    const browser = await WKBrowser.connect(transport!, logger, slowMo, true);
     browser._ownedServer = browserServer;
     await helper.waitWithTimeout(browser._waitForFirstPageTarget(), 'first page', timeout);
     return browser._defaultContext!;
   }
 
-  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport, downloadsPath: string }> {
+  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport, downloadsPath: string, logger: Logger }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
-      dumpio = false,
       executablePath = null,
       env = process.env,
       handleSIGINT = true,
@@ -83,6 +83,7 @@ export class WebKit implements BrowserType<WKBrowser> {
       port = 0,
     } = options;
     assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
+    const logger = new RootLogger(options.loggerSink);
 
     let temporaryUserDataDir: string | null = null;
     if (!userDataDir) {
@@ -109,7 +110,7 @@ export class WebKit implements BrowserType<WKBrowser> {
       handleSIGINT,
       handleSIGTERM,
       handleSIGHUP,
-      dumpio,
+      logger,
       pipe: true,
       tempDir: temporaryUserDataDir || undefined,
       attemptToGracefullyClose: async () => {
@@ -129,14 +130,14 @@ export class WebKit implements BrowserType<WKBrowser> {
     let transport: ConnectionTransport | undefined = undefined;
     let browserServer: BrowserServer | undefined = undefined;
     const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
-    transport = new PipeTransport(stdio[3], stdio[4]);
-    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, port || 0) : null);
-    return { browserServer, transport, downloadsPath };
+    transport = new PipeTransport(stdio[3], stdio[4], logger);
+    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, logger, port || 0) : null);
+    return { browserServer, transport, downloadsPath, logger };
   }
 
   async connect(options: ConnectOptions): Promise<WKBrowser> {
     return await WebSocketTransport.connect(options.wsEndpoint, transport => {
-      return WKBrowser.connect(transport, options.slowMo);
+      return WKBrowser.connect(transport, new RootLogger(options.loggerSink), options.slowMo);
     });
   }
 
@@ -169,7 +170,7 @@ const mkdtempAsync = util.promisify(fs.mkdtemp);
 
 const WEBKIT_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_dev_profile-');
 
-function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number): WebSocketWrapper {
+function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Logger, port: number): WebSocketWrapper {
   const server = new ws.Server({ port });
   const guid = helper.guid();
   const idMixer = new SequenceNumberMixer<{id: number, socket: ws}>();
@@ -282,7 +283,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
         pendingBrowserContextDeletions.set(seqNum, params.browserContextId);
     });
 
-    socket.on('error', error => debugError(error));
+    socket.on('error', logError(logger));
 
     socket.on('close', (socket as any).__closeListener = () => {
       for (const [pageProxyId, s] of pageProxyIds) {

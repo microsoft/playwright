@@ -16,10 +16,11 @@
  */
 
 import * as frames from '../frames';
-import { assert, debugError, helper } from '../helper';
+import { assert, helper } from '../helper';
 import * as network from '../network';
 import { Protocol } from './protocol';
 import { WKSession } from './wkConnection';
+import { logError } from '../logger';
 
 const errorReasons: { [reason: string]: string } = {
   'aborted': 'Cancellation',
@@ -61,7 +62,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     await this._session.send('Network.interceptAsError', { requestId: this._requestId, reason }).catch(error => {
       // In certain cases, protocol will return error if the request was already canceled
       // or the page was closed. We should tolerate these errors.
-      debugError(error);
+      logError(this.request._page);
     });
   }
 
@@ -92,7 +93,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     }).catch(error => {
       // In certain cases, protocol will return error if the request was already canceled
       // or the page was closed. We should tolerate these errors.
-      debugError(error);
+      logError(this.request._page);
     });
   }
 
@@ -106,7 +107,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     }).catch((error: Error) => {
       // In certain cases, protocol will return error if the request was already canceled
       // or the page was closed. We should tolerate these errors.
-      debugError(error);
+      logError(this.request._page);
     });
   }
 

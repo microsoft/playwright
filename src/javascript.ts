@@ -17,6 +17,7 @@
 import * as types from './types';
 import * as dom from './dom';
 import { helper } from './helper';
+import { Logger } from './logger';
 
 export interface ExecutionContextDelegate {
   evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: string | Function, ...args: any[]): Promise<any>;
@@ -28,9 +29,11 @@ export interface ExecutionContextDelegate {
 
 export class ExecutionContext {
   readonly _delegate: ExecutionContextDelegate;
+  readonly _logger: Logger;
 
-  constructor(delegate: ExecutionContextDelegate) {
+  constructor(delegate: ExecutionContextDelegate, logger: Logger) {
     this._delegate = delegate;
+    this._logger = logger;
   }
 
   _doEvaluateInternal(returnByValue: boolean, waitForNavigations: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {

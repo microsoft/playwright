@@ -22,6 +22,7 @@ export { Dialog } from './dialog';
 export { Download } from './download';
 export { ElementHandle } from './dom';
 export { FileChooser } from './fileChooser';
+export { LoggerSink } from './logger';
 export { TimeoutError } from './errors';
 export { Frame } from './frames';
 export { Keyboard, Mouse } from './input';

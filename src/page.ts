@@ -17,7 +17,7 @@
 
 import * as dom from './dom';
 import * as frames from './frames';
-import { assert, debugError, helper, Listener } from './helper';
+import { assert, helper, Listener } from './helper';
 import * as input from './input';
 import * as js from './javascript';
 import * as network from './network';
@@ -31,6 +31,7 @@ import * as accessibility from './accessibility';
 import { ExtendedEventEmitter } from './extendedEventEmitter';
 import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
+import { logError, Logger, Log } from './logger';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -86,7 +87,7 @@ type PageState = {
   extraHTTPHeaders: network.Headers | null;
 };
 
-export class Page extends ExtendedEventEmitter {
+export class Page extends ExtendedEventEmitter implements Logger {
   private _closed = false;
   private _closedCallback: () => void;
   private _closedPromise: Promise<void>;
@@ -525,23 +526,33 @@ export class Page extends ExtendedEventEmitter {
       this._delegate.setFileChooserIntercepted(false);
     return this;
   }
+
+  _isLogEnabled(log: Log): boolean {
+    return this._browserContext._isLogEnabled(log);
+  }
+
+  _log(log: Log, message: string | Error, ...args: any[]) {
+    return this._browserContext._log(log, message, ...args);
+  }
 }
 
 export class Worker extends EventEmitter {
+  private _logger: Logger;
   private _url: string;
   private _executionContextPromise: Promise<js.ExecutionContext>;
   private _executionContextCallback: (value?: js.ExecutionContext) => void;
   _existingExecutionContext: js.ExecutionContext | null = null;
 
-  constructor(url: string) {
+  constructor(logger: Logger, url: string) {
     super();
+    this._logger = logger;
     this._url = url;
     this._executionContextCallback = () => {};
     this._executionContextPromise = new Promise(x => this._executionContextCallback = x);
   }
 
   _createExecutionContext(delegate: js.ExecutionContextDelegate) {
-    this._existingExecutionContext = new js.ExecutionContext(delegate);
+    this._existingExecutionContext = new js.ExecutionContext(delegate, this._logger);
     this._executionContextCallback(this._existingExecutionContext);
   }
 
@@ -588,7 +599,7 @@ export class PageBinding {
       else
         expression = helper.evaluationString(deliverErrorValue, name, seq, error);
     }
-    context.evaluateInternal(expression).catch(debugError);
+    context.evaluateInternal(expression).catch(logError(page));
 
     function deliverResult(name: string, seq: number, result: any) {
       (window as any)[name]['callbacks'].get(seq).resolve(result);

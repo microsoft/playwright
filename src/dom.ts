@@ -19,7 +19,7 @@ import * as mime from 'mime';
 import * as path from 'path';
 import * as util from 'util';
 import * as frames from './frames';
-import { assert, debugError, helper, debugInput } from './helper';
+import { assert, helper } from './helper';
 import { Injected, InjectedResult } from './injected/injected';
 import * as input from './input';
 import * as js from './javascript';
@@ -27,6 +27,7 @@ import { Page } from './page';
 import { selectors } from './selectors';
 import * as types from './types';
 import { NotConnectedError, TimeoutError } from './errors';
+import { Log, logError } from './logger';
 
 export type PointerActionOptions = {
   modifiers?: input.Modifier[];
@@ -37,12 +38,17 @@ export type ClickOptions = PointerActionOptions & input.MouseClickOptions;
 
 export type MultiClickOptions = PointerActionOptions & input.MouseMultiClickOptions;
 
+export const inputLog: Log = {
+  name: 'input',
+  color: 'cyan'
+};
+
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
   private _injectedPromise?: Promise<js.JSHandle>;
 
   constructor(delegate: js.ExecutionContextDelegate, frame: frames.Frame) {
-    super(delegate);
+    super(delegate, frame._page);
     this.frame = frame;
   }
 
@@ -144,9 +150,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _scrollRectIntoViewIfNeeded(rect?: types.Rect): Promise<void> {
-    debugInput('scrolling into veiw if needed...');
+    this._page._log(inputLog, 'scrolling into view if needed...');
     await this._page._delegate.scrollRectIntoViewIfNeeded(this, rect);
-    debugInput('...done');
+    this._page._log(inputLog, '...done');
   }
 
   async scrollIntoViewIfNeeded() {
@@ -195,7 +201,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   private async _offsetPoint(offset: types.Point): Promise<types.Point> {
     const [box, border] = await Promise.all([
       this.boundingBox(),
-      this._evaluateInUtility(({ injected, node }) => injected.getElementBorderWidth(node), {}).catch(debugError),
+      this._evaluateInUtility(({ injected, node }) => injected.getElementBorderWidth(node), {}).catch(logError(this._context._logger)),
     ]);
     const point = { x: offset.x, y: offset.y };
     if (box) {
@@ -227,9 +233,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       let restoreModifiers: input.Modifier[] | undefined;
       if (options && options.modifiers)
         restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
-      debugInput('performing input action...');
+      this._page._log(inputLog, 'performing input action...');
       await action(point);
-      debugInput('...done');
+      this._page._log(inputLog, '...done');
       if (restoreModifiers)
         await this._page.keyboard._ensureModifiers(restoreModifiers);
     }, deadline, options, true);
@@ -404,18 +410,18 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _waitForDisplayedAtStablePosition(deadline: number): Promise<void> {
-    debugInput('waiting for element to be displayed and not moving...');
+    this._page._log(inputLog, 'waiting for element to be displayed and not moving...');
     const stablePromise = this._evaluateInUtility(({ injected, node }, timeout) => {
       return injected.waitForDisplayedAtStablePosition(node, timeout);
     }, helper.timeUntilDeadline(deadline));
     const timeoutMessage = 'element to be displayed and not moving';
     const injectedResult = await helper.waitWithDeadline(stablePromise, timeoutMessage, deadline);
     handleInjectedResult(injectedResult, timeoutMessage);
-    debugInput('...done');
+    this._page._log(inputLog, '...done');
   }
 
   async _waitForHitTargetAt(point: types.Point, deadline: number): Promise<void> {
-    debugInput(`waiting for element to receive pointer events at (${point.x},${point.y}) ...`);
+    this._page._log(inputLog, `waiting for element to receive pointer events at (${point.x},${point.y}) ...`);
     const frame = await this.ownerFrame();
     if (frame && frame.parentFrame()) {
       const element = await frame.frameElement();
@@ -431,7 +437,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const timeoutMessage = 'element to receive pointer events';
     const injectedResult = await helper.waitWithDeadline(hitTargetPromise, timeoutMessage, deadline);
     handleInjectedResult(injectedResult, timeoutMessage);
-    debugInput('...done');
+    this._page._log(inputLog, '...done');
   }
 }
 
