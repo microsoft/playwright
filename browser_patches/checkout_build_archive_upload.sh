@@ -117,7 +117,8 @@ trap "rm -rf ${ZIP_PATH}; rm -rf ${LOG_PATH}; cd $(pwd -P);" INT TERM EXIT
 cd "$(dirname "$0")"
 BUILD_NUMBER=$(cat ./$BROWSER_NAME/BUILD_NUMBER)
 BUILD_BLOB_PATH="${BROWSER_NAME}/${BUILD_NUMBER}/${BUILD_BLOB_NAME}"
-LOG_BLOB_PATH="${BROWSER_NAME}/${BUILD_NUMBER}/${BUILD_BLOB_NAME%.zip}.log.gz"
+LOG_BLOB_NAME="${BUILD_BLOB_NAME%.zip}.log.gz"
+LOG_BLOB_PATH="${BROWSER_NAME}/${BUILD_NUMBER}/${LOG_BLOB_NAME}"
 
 # pull from upstream and check if a new build has to be uploaded.
 if ! [[ ($2 == '-f') || ($2 == '--force') ]]; then
@@ -213,6 +214,6 @@ else
   fi
   # Upload logs only in case of failure and report failure.
   ./upload.sh ${LOG_BLOB_PATH} ${LOG_PATH} || true
-  send_telegram_message "$BUILD_ALIAS -- ${FAILED_STEP} failed! ❌ <a href='https://playwright.azureedge.net/builds/${LOG_BLOB_PATH}'>see logs</a>"
+  send_telegram_message "$BUILD_ALIAS -- ${FAILED_STEP} failed! ❌ <a href='https://playwright.azureedge.net/builds/${LOG_BLOB_PATH}'>${LOG_BLOB_NAME}</a>"
 fi
 
