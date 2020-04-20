@@ -61,12 +61,11 @@ describe('Auto waiting', () => {
       res.end(`Hello world`);
     });
     await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);
-    const messages = [];
-    await Promise.all([
-      page.waitForEvent('download').then(() => messages.push('download')),
-      page.click('a').then(() => messages.push('click')),
+    const messages = await Promise.all([
+      page.waitForEvent('download').then(() => 'download'),
+      page.click('a').then(() => 'click'),
     ]);
-    expect(messages.join('|')).toBe('download|click');
+    expect(messages.sort().join('|')).toBe('click|download');
   });
   it('should await cross-process navigation when clicking anchor', async({page, server}) => {
     const messages = [];
