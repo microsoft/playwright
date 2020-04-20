@@ -75,7 +75,7 @@ export class FFBrowser extends BrowserBase {
     options = validateBrowserContextOptions(options);
     let viewport;
     if (options.viewport) {
-      // TODO: remove isMobile/hasTouch from the protocol?
+      // TODO: remove isMobile from the protocol?
       if (options.isMobile)
         throw new Error('options.isMobile is not supported in Firefox');
       viewport = {

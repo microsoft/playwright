@@ -103,6 +103,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const frameId = await this._page._delegate.getOwnerFrame(this);
     if (!frameId)
       return null;
+    const frame = this._page._frameManager.frame(frameId);
+    if (frame)
+      return frame;
     for (const page of this._page._browserContext.pages()) {
       const frame = page._frameManager.frame(frameId);
       if (frame)
@@ -378,20 +381,17 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._screenshotter.screenshotElement(this, options);
   }
 
-  $(selector: string): Promise<ElementHandle | null> {
-    // TODO: this should be ownerFrame() instead.
+  async $(selector: string): Promise<ElementHandle | null> {
     return selectors._query(this._context.frame, selector, this);
   }
 
-  $$(selector: string): Promise<ElementHandle<Element>[]> {
-    // TODO: this should be ownerFrame() instead.
+  async $$(selector: string): Promise<ElementHandle<Element>[]> {
     return selectors._queryAll(this._context.frame, selector, this);
   }
 
   async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
   async $eval<R>(selector: string, pageFunction: types.FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
-    // TODO: this should be ownerFrame() instead.
     const handle = await selectors._query(this._context.frame, selector, this);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
@@ -403,7 +403,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
   async $$eval<R>(selector: string, pageFunction: types.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
   async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
-    // TODO: this should be ownerFrame() instead.
     const arrayHandle = await selectors._queryArray(this._context.frame, selector, this);
     const result = await arrayHandle.evaluate(pageFunction, arg);
     arrayHandle.dispose();

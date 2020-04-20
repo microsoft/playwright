@@ -238,7 +238,33 @@ describe('ElementHandle.$', function() {
     const second = await html.$('.third');
     expect(second).toBe(null);
   });
+  it('should work for adopted elements', async({page,server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.evaluate(url => window.__popup = window.open(url), server.EMPTY_PAGE),
+    ]);
+    const divHandle = await page.evaluateHandle(() => {
+      const div = document.createElement('div');
+      document.body.appendChild(div);
+      const span = document.createElement('span');
+      span.textContent = 'hello';
+      div.appendChild(span);
+      return div;
+    });
+    expect(await divHandle.$('span')).toBeTruthy();
+    expect(await divHandle.$eval('span', e => e.textContent)).toBe('hello');
+
+    await popup.waitForLoadState('domcontentloaded');
+    await page.evaluate(() => {
+      const div = document.querySelector('div');
+      window.__popup.document.body.appendChild(div);
+    });
+    expect(await divHandle.$('span')).toBeTruthy();
+    expect(await divHandle.$eval('span', e => e.textContent)).toBe('hello');
+  });
 });
+
 describe('ElementHandle.$eval', function() {
   it('should work', async({page, server}) => {
     await page.setContent('<html><body><div class="tweet"><div class="like">100</div><div class="retweets">10</div></div></body></html>');
