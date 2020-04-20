@@ -71,7 +71,7 @@
     "eslint": "^6.6.0",
     "esprima": "^4.0.0",
     "formidable": "^1.2.1",
-    "minimist": "^1.2.0",
+    "minimist": "^1.2.5",
     "ncp": "^2.0.0",
     "node-stream-zip": "^1.8.2",
     "pixelmatch": "^4.0.2",
