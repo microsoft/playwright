@@ -559,6 +559,10 @@ export class WKPage implements PageDelegate {
         height: viewport.height,
       }),
     ];
+    if (options.isMobile) {
+      const angle = viewport.width > viewport.height ? 90 : 0;
+      promises.push(this._session.send('Page.setOrientationOverride', { angle }));
+    }
     await Promise.all(promises);
   }
 
