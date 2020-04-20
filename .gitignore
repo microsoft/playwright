@@ -9,7 +9,6 @@
 *.swp
 *.pyc
 .vscode
-package-lock.json
 yarn.lock
 /node6
 /src/generated/*
