@@ -31,7 +31,7 @@ type AssertNotAny<S> = {notRealProperty: number} extends S ? false : true;
 (async () => {
   const browser = await playwright.chromium.launch();
   const page = await browser.newPage();
-  await page.goto('https://news.ycombinator.com', { waitUntil: 'networkidle0' });
+  await page.goto('https://news.ycombinator.com', { waitUntil: 'networkidle' });
   await page.pdf({ path: 'hn.pdf', format: 'A4' });
 
   browser.close();

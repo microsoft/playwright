@@ -1,4 +1,4 @@
-# Continuous integration.md
+# Continuous integration
 
 Playwright tests can be executed to run on your CI environments. To simplify this, we have created sample configurations for common CI providers that can be used to bootstrap your setup.
 

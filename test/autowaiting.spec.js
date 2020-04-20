@@ -54,7 +54,7 @@ describe('Auto waiting', () => {
     ]);
     expect(messages.join('|')).toBe('popup|click');
   });
-  it('should await download when clicking anchor', async function({page, server}) {
+  it.fail(CHROMIUM)('should await download when clicking anchor', async function({page, server}) {
     server.setRoute('/download', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
       res.setHeader('Content-Disposition', 'attachment');
