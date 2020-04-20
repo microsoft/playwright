@@ -30,46 +30,57 @@ BROWSER_NAME=""
 EXTRA_BUILD_ARGS=""
 EXTRA_ARCHIVE_ARGS=""
 BUILD_FLAVOR="$1"
+BUILD_BLOB_NAME=""
 EXPECTED_HOST_OS=""
 EXPECTED_HOST_OS_VERSION=""
 if [[ "$BUILD_FLAVOR" == "firefox-linux" ]]; then
   BROWSER_NAME="firefox"
   EXPECTED_HOST_OS="Linux"
+  BUILD_BLOB_NAME="firefox-linux.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-mac" ]]; then
   BROWSER_NAME="firefox"
   EXPECTED_HOST_OS="Darwin"
   EXPECTED_HOST_OS_VERSION="10.14"
+  BUILD_BLOB_NAME="firefox-mac.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-win32" ]]; then
   BROWSER_NAME="firefox"
   EXPECTED_HOST_OS="MINGW"
+  BUILD_BLOB_NAME="firefox-win32.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-win64" ]]; then
   BROWSER_NAME="firefox"
   EXTRA_BUILD_ARGS="--win64"
   EXPECTED_HOST_OS="MINGW"
+  BUILD_BLOB_NAME="firefox-win64.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-gtk" ]]; then
   BROWSER_NAME="webkit"
   EXTRA_BUILD_ARGS="--gtk"
   EXTRA_ARCHIVE_ARGS="--gtk"
   EXPECTED_HOST_OS="Linux"
+  BUILD_BLOB_NAME="minibrowser-gtk.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-wpe" ]]; then
   BROWSER_NAME="webkit"
   EXTRA_BUILD_ARGS="--wpe"
   EXTRA_ARCHIVE_ARGS="--wpe"
   EXPECTED_HOST_OS="Linux"
+  BUILD_BLOB_NAME="minibrowser-wpe.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-gtk-wpe" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="Linux"
+  BUILD_BLOB_NAME="minibrowser-gtk-wpe.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-win64" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="MINGW"
+  BUILD_BLOB_NAME="minibrowser-win64.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-mac-10.14" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="Darwin"
   EXPECTED_HOST_OS_VERSION="10.14"
+  BUILD_BLOB_NAME="minibrowser-mac-10.14.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-mac-10.15" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="Darwin"
   EXPECTED_HOST_OS_VERSION="10.15"
+  BUILD_BLOB_NAME="minibrowser-mac-10.15.zip"
 else
   echo ERROR: unknown build flavor - "$BUILD_FLAVOR"
   exit 1
@@ -91,79 +102,106 @@ fi
 
 if [[ $(uname) == MINGW* ]]; then
   ZIP_PATH="$PWD/archive-$BROWSER_NAME.zip"
+  LOG_PATH="$PWD/log-$BROWSER_NAME.zip"
 else
   ZIP_PATH="/tmp/archive-$BROWSER_NAME.zip"
+  LOG_PATH="/tmp/log-$BROWSER_NAME.zip"
 fi
 
 if [[ -f $ZIP_PATH ]]; then
   echo "Archive $ZIP_PATH already exists - remove and re-run the script."
   exit 1
 fi
-trap "rm -rf ${ZIP_PATH}; cd $(pwd -P);" INT TERM EXIT
+trap "rm -rf ${ZIP_PATH}; rm -rf ${LOG_PATH}; cd $(pwd -P);" INT TERM EXIT
 cd "$(dirname "$0")"
 BUILD_NUMBER=$(cat ./$BROWSER_NAME/BUILD_NUMBER)
+BUILD_BLOB_PATH="${BROWSER_NAME}/${BUILD_NUMBER}/${BUILD_BLOB_NAME}"
+LOG_BLOB_PATH="${BROWSER_NAME}/${BUILD_NUMBER}/${BUILD_BLOB_NAME%.zip}.log.zip"
 
 # pull from upstream and check if a new build has to be uploaded.
 if ! [[ ($2 == '-f') || ($2 == '--force') ]]; then
-  if ./upload.sh $BUILD_FLAVOR --check; then
+  if ./upload.sh "${BUILD_BLOB_PATH}" --check; then
     echo "Build is already uploaded - no changes."
     exit 0
-  else
-    echo "Build is missing - rebuilding"
+  elif ./upload.sh "${LOG_BLOB_PATH}" --check; then
+    echo "This build has already been attempted - skip building."
+    exit 0
   fi
+  echo "Build is missing and has not been attempted - rebuilding"
 else
   echo "Force-rebuilding the build."
 fi
 
-source ./buildbots/send_telegram_message.sh
-BUILD_ALIAS="$BUILD_FLAVOR r$BUILD_NUMBER"
-
-send_telegram_message "$BUILD_ALIAS -- started"
-
-if [[ "$BUILD_FLAVOR" == "webkit-gtk-wpe" ]]; then
-  echo "-- combining binaries together"
-  if ! ./webkit/download_gtk_and_wpe_and_zip_together.sh $ZIP_PATH; then
-    send_telegram_message "$BUILD_ALIAS -- ./download_gtk_and_wpe_and_zip_together.sh failed! ❌"
-    exit 1
+FAILED_STEP=""
+function generate_and_upload_browser_build {
+  # webkit-gtk-wpe is a special build doesn't need to be built.
+  if [[ "$BUILD_FLAVOR" == "webkit-gtk-wpe" ]]; then
+    echo "-- combining binaries together"
+    if ! ./webkit/download_gtk_and_wpe_and_zip_together.sh $ZIP_PATH; then
+      FAILED_STEP="./download_gtk_and_wpe_and_zip_together.sh"
+      return 1
+    fi
+    echo "-- uploading"
+    if ! ./upload.sh $BUILD_BLOB_PATH $ZIP_PATH; then
+      FAILED_STEP="./upload.sh "
+      return 1
+    fi
+    return 0
   fi
-else
+
+  # Other browser flavors follow typical build flow.
   echo "-- preparing checkout"
   if ! ./prepare_checkout.sh $BROWSER_NAME; then
-    send_telegram_message "$BUILD_ALIAS -- ./prepare_checkout.sh failed! ❌"
-    exit 1
+    FAILED_STEP="./prepare_checkout.sh"
+    return 1
   fi
 
   echo "-- cleaning"
   if ! ./$BROWSER_NAME/clean.sh; then
-    send_telegram_message "$BUILD_ALIAS -- ./clean.sh failed! ❌"
-    exit 1
+    FAILED_STEP="./clean.sh"
+    return 1
   fi
 
   echo "-- building"
   if ! ./$BROWSER_NAME/build.sh "$EXTRA_BUILD_ARGS"; then
-    send_telegram_message "$BUILD_ALIAS -- ./build.sh failed! ❌"
-    exit 1
+    FAILED_STEP="./build.sh "
+    return 1
   fi
 
   echo "-- archiving to $ZIP_PATH"
   if ! ./$BROWSER_NAME/archive.sh $ZIP_PATH "$EXTRA_ARCHIVE_ARGS"; then
-    send_telegram_message "$BUILD_ALIAS -- ./archive.sh failed! ❌"
-    exit 1
+    FAILED_STEP="./archive.sh "
+    return 1
   fi
+
+  echo "-- uploading"
+  if ! ./upload.sh $BUILD_BLOB_PATH $ZIP_PATH; then
+    FAILED_STEP="./upload.sh "
+    return 1
+  fi
+  return 0
+}
+
+source ./buildbots/send_telegram_message.sh
+BUILD_ALIAS="$BUILD_FLAVOR r$BUILD_NUMBER"
+send_telegram_message "$BUILD_ALIAS -- started"
+
+if generate_and_upload_browser_build 2>&1 | ./sanitize_env.js | zip > $LOG_PATH; then
+  # Report successful build. Note: we don't know how to get zip size on MINGW.
+  if [[ $(uname) == MINGW* ]]; then
+    send_telegram_message "$BUILD_ALIAS -- uploaded"
+  else
+    UPLOAD_SIZE=$(du -h "$ZIP_PATH" | awk '{print $1}')
+    send_telegram_message "$BUILD_ALIAS -- $UPLOAD_SIZE uploaded"
+  fi
+  # Check if we uploaded the last build.
+  if ./tools/check_cdn.sh $BROWSER_NAME --has-all-builds; then
+    LAST_COMMIT_MESSAGE=$(git log --format=%s -n 1 HEAD -- ./$BROWSER_NAME/BUILD_NUMBER)
+    send_telegram_message "<b>$BROWSER_NAME r${BUILD_NUMBER} COMPLETE! ✅</b> $LAST_COMMIT_MESSAGE"
+  fi
+else
+  # Upload logs only in case of failure and report failure.
+  ./upload.sh ${LOG_BLOB_PATH} ${LOG_PATH} || true
+  send_telegram_message "$BUILD_ALIAS -- ${FAILED_STEP} failed! ❌ <a href='https://playwright.azureedge.net/builds/${LOG_BLOB_PATH}'>see logs</a>"
 fi
-
-echo "-- uploading"
-if ! ./upload.sh $BUILD_FLAVOR $ZIP_PATH; then
-  send_telegram_message "$BUILD_ALIAS -- ./upload.sh failed! ❌"
-  exit 1
-fi
-UPLOAD_SIZE=$(du -h "$ZIP_PATH" | awk '{print $1}')
-send_telegram_message "$BUILD_ALIAS -- $UPLOAD_SIZE uploaded"
-
-if ./tools/check_cdn.sh $BROWSER_NAME --has-all-builds; then
-  LAST_COMMIT_MESSAGE=$(git log --format=%s -n 1 HEAD -- ./$BROWSER_NAME/BUILD_NUMBER)
-  send_telegram_message "<b>$BROWSER_NAME r${BUILD_NUMBER} COMPLETE! ✅</b> $LAST_COMMIT_MESSAGE"
-fi
-
-
 
