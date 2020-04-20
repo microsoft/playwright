@@ -204,13 +204,32 @@ playwright.chromium.launch().then(async browser => {
 
 // Test v0.12 features
 (async () => {
-  const browser = await playwright.chromium.launch({
+  const launchOptions: playwright.LaunchOptions = {
     devtools: true,
     env: {
       JEST_TEST: true
     }
-  });
-  const page = await browser.newPage();
+  };
+  const browser = await playwright.chromium.launch(launchOptions);
+  const viewport: playwright.ViewportSize = {
+    width: 100,
+    height: 200,
+  };
+  const geolocation: playwright.Geolocation = {
+    latitude: 0,
+    longitude: 0,
+    accuracy: undefined,
+  };
+  const httpCredentials: playwright.HTTPCredentials = {
+    username: 'foo',
+    password: 'bar',
+  };
+  const contextOptions: playwright.BrowserContextOptions = {
+    viewport,
+    geolocation,
+    httpCredentials,
+  };
+  const page = await browser.newPage(contextOptions);
   const button = (await page.$('#myButton'))!;
   const div = (await page.$('#myDiv'))!;
   const input = (await page.$('#myInput'))!;
@@ -245,6 +264,16 @@ playwright.chromium.launch().then(async browser => {
 
   const buttonText = await (await button.getProperty('textContent')).jsonValue();
   await page.context().clearCookies();
+
+  const cookies: playwright.Cookie[] = await page.context().cookies(['http://example.com']);
+  const cookie = cookies[0];
+  const nameIsString: AssertType<string, typeof cookie.name> = true;
+  const valueIsString: AssertType<string, typeof cookie.value> = true;
+  const pathIsString: AssertType<string, typeof cookie.path> = true;
+  const expiresIsNumber: AssertType<number, typeof cookie.expires> = true;
+  const httpOnlyIsBoolean: AssertType<boolean, typeof cookie.httpOnly> = true;
+  const secureIsBoolean: AssertType<boolean, typeof cookie.secure> = true;
+  const sameSiteIsEnum: AssertType<"Strict"|"Lax"|"None", typeof cookie.sameSite> = true;
 
   const navResponse = await page.waitForNavigation({
     timeout: 1000
