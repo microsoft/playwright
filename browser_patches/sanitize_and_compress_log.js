@@ -16,7 +16,14 @@
  */
 
 const fs = require('fs');
+const zlib = require('zlib');
 const readline = require('readline');
+
+if (process.argv.length < 3) {
+  console.log('ERROR: output file path has to be specified!');
+  process.exit(1);
+}
+const OUTPUT_PATH = process.argv[2];
 
 // These env variable values should be removed from logs no matter what.
 const BLOCKLIST_ENV_KEYS = new Set([
@@ -58,9 +65,17 @@ const rl = readline.createInterface({
   crlfDelay: Infinity,
 });
 
+const gzip = zlib.createGzip();
+gzip.pipe(fs.createWriteStream(OUTPUT_PATH));
+
 rl.on('line', line => {
   for (const [key,  value] of sanitizeEnv)
     line = line.split(value).join(`<${key}>`);
   console.log(line);
+  gzip.write(line + '\n');
+});
+
+rl.on('close', () => {
+  gzip.end();
 });
 

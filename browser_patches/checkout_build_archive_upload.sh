@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 set +x
+set -o pipefail
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
   echo "usage: $(basename $0) [firefox-linux|firefox-win32|firefox-win64|webkit-gtk|webkit-wpe|webkit-gtk-wpe|webkit-win64|webkit-mac-10.14|webkit-mac-10.15] [-f|--force]"
@@ -116,7 +117,7 @@ trap "rm -rf ${ZIP_PATH}; rm -rf ${LOG_PATH}; cd $(pwd -P);" INT TERM EXIT
 cd "$(dirname "$0")"
 BUILD_NUMBER=$(cat ./$BROWSER_NAME/BUILD_NUMBER)
 BUILD_BLOB_PATH="${BROWSER_NAME}/${BUILD_NUMBER}/${BUILD_BLOB_NAME}"
-LOG_BLOB_PATH="${BROWSER_NAME}/${BUILD_NUMBER}/${BUILD_BLOB_NAME%.zip}.log.zip"
+LOG_BLOB_PATH="${BROWSER_NAME}/${BUILD_NUMBER}/${BUILD_BLOB_NAME%.zip}.log.gz"
 
 # pull from upstream and check if a new build has to be uploaded.
 if ! [[ ($2 == '-f') || ($2 == '--force') ]]; then
@@ -132,19 +133,16 @@ else
   echo "Force-rebuilding the build."
 fi
 
-FAILED_STEP=""
 function generate_and_upload_browser_build {
   # webkit-gtk-wpe is a special build doesn't need to be built.
   if [[ "$BUILD_FLAVOR" == "webkit-gtk-wpe" ]]; then
     echo "-- combining binaries together"
     if ! ./webkit/download_gtk_and_wpe_and_zip_together.sh $ZIP_PATH; then
-      FAILED_STEP="./download_gtk_and_wpe_and_zip_together.sh"
-      return 1
+      return 10
     fi
     echo "-- uploading"
     if ! ./upload.sh $BUILD_BLOB_PATH $ZIP_PATH; then
-      FAILED_STEP="./upload.sh "
-      return 1
+      return 11
     fi
     return 0
   fi
@@ -152,32 +150,27 @@ function generate_and_upload_browser_build {
   # Other browser flavors follow typical build flow.
   echo "-- preparing checkout"
   if ! ./prepare_checkout.sh $BROWSER_NAME; then
-    FAILED_STEP="./prepare_checkout.sh"
-    return 1
+    return 20
   fi
 
   echo "-- cleaning"
   if ! ./$BROWSER_NAME/clean.sh; then
-    FAILED_STEP="./clean.sh"
-    return 1
+    return 21
   fi
 
   echo "-- building"
   if ! ./$BROWSER_NAME/build.sh "$EXTRA_BUILD_ARGS"; then
-    FAILED_STEP="./build.sh "
-    return 1
+    return 22
   fi
 
   echo "-- archiving to $ZIP_PATH"
   if ! ./$BROWSER_NAME/archive.sh $ZIP_PATH "$EXTRA_ARCHIVE_ARGS"; then
-    FAILED_STEP="./archive.sh "
-    return 1
+    return 23
   fi
 
   echo "-- uploading"
   if ! ./upload.sh $BUILD_BLOB_PATH $ZIP_PATH; then
-    FAILED_STEP="./upload.sh "
-    return 1
+    return 24
   fi
   return 0
 }
@@ -186,7 +179,7 @@ source ./buildbots/send_telegram_message.sh
 BUILD_ALIAS="$BUILD_FLAVOR r$BUILD_NUMBER"
 send_telegram_message "$BUILD_ALIAS -- started"
 
-if generate_and_upload_browser_build 2>&1 | ./sanitize_env.js | zip > $LOG_PATH; then
+if generate_and_upload_browser_build 2>&1 | ./sanitize_and_compress_log.js $LOG_PATH; then
   # Report successful build. Note: we don't know how to get zip size on MINGW.
   if [[ $(uname) == MINGW* ]]; then
     send_telegram_message "$BUILD_ALIAS -- uploaded"
@@ -200,6 +193,24 @@ if generate_and_upload_browser_build 2>&1 | ./sanitize_env.js | zip > $LOG_PATH;
     send_telegram_message "<b>$BROWSER_NAME r${BUILD_NUMBER} COMPLETE! ✅</b> $LAST_COMMIT_MESSAGE"
   fi
 else
+  RESULT_CODE="$?"
+  if (( RESULT_CODE == 10 )); then
+    FAILED_STEP="./download_gtk_and_wpe_and_zip_together.sh"
+  elif (( RESULT_CODE == 11 )); then
+    FAILED_STEP="./upload.sh"
+  elif (( RESULT_CODE == 20 )); then
+    FAILED_STEP="./prepare_checkout.sh"
+  elif (( RESULT_CODE == 21 )); then
+    FAILED_STEP="./clean.sh"
+  elif (( RESULT_CODE == 22 )); then
+    FAILED_STEP="./build.sh"
+  elif (( RESULT_CODE == 23 )); then
+    FAILED_STEP="./archive.sh"
+  elif (( RESULT_CODE == 24 )); then
+    FAILED_STEP="./upload.sh"
+  else
+    FAILED_STEP="<unknown step>"
+  fi
   # Upload logs only in case of failure and report failure.
   ./upload.sh ${LOG_BLOB_PATH} ${LOG_PATH} || true
   send_telegram_message "$BUILD_ALIAS -- ${FAILED_STEP} failed! ❌ <a href='https://playwright.azureedge.net/builds/${LOG_BLOB_PATH}'>see logs</a>"

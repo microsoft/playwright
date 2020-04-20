@@ -44,11 +44,11 @@ if [[ ("$2" == '--check') ]]; then
 fi
 
 if ! [[ -f $ZIP_PATH ]]; then
-  echo "ERROR: $ZIP_PATH does not exist"
+  echo "ERROR: ${ZIP_PATH} does not exist"
   exit 1
 fi
-if ! [[ $ZIP_PATH == *.zip ]]; then
-  echo "ERROR: $ZIP_PATH is not a zip archive (must have a .zip extension)"
+if [[ "${ZIP_PATH}" != *.zip && "${ZIP_PATH}" != *.gz ]]; then
+  echo "ERROR: ${ZIP_PATH} is not an archive (must have a .zip or .gz extension)"
   exit 1
 fi
 if [[ $(uname) == MINGW* ]]; then
