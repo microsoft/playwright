@@ -8,9 +8,18 @@ Along with a test runner Playwright can be used to automate user interactions to
 validate and test web applications. The Playwright API enables this through
 the following primitives.
 
-## Primitives
+#### Contents
+  - [Browser](#browser)
+  - [Browser contexts](#browser-contexts)
+  - [Pages and frames](#pages-and-frames)
+  - [Selectors](#selectors)
+  - [Auto-waiting](#auto-waiting)
+  - [Execution contexts](#execution-contexts)
+  - [Object & element handles](#object--element-handles)
 
-### Browser
+<br/>
+
+## Browser
 
 A [`Browser`](../api.md#class-browser) refers to an instance of Chromium, Firefox
 or WebKit. Playwright scripts generally start with launching a browser instance
@@ -27,7 +36,9 @@ await browser.close();
 Launching a browser instance can be expensive, and Playwright is designed to
 maximize what a single instance can do through multiple browser contexts.
 
-### Browser Context
+<br/>
+
+## Browser contexts
 
 A [`BrowserContext`](../api.md#class-browsercontext) is an isolated incognito-alike
 session within a browser instance. Browser contexts are fast and cheap to create.
@@ -54,7 +65,9 @@ const context = await browser.newContext({
 });
 ```
 
-### Pages and Frames
+<br/>
+
+## Pages and frames
 
 A Browser context can have multiple pages. A [`Page`](../api.md#class-page)
 refers to a single tab or a popup window within a browser context. A page can be used to navigate
@@ -79,27 +92,21 @@ const frame = page.frame('frame-name');
 await frame.fill('#username-input');
 ```
 
-### Single Page Scenarios
+<br/>
 
-For scenarios involving just one page, it is possible to create a new page
-without explicitly creating a browser context through a convenience API. This
-will create a new context internally, and closing the page will close the
-context as well.
+## Selectors
 
-```js
-const browser = await webkit.launch();
-const page = await browser.newPage();
-```
+<br/>
+
+## Auto-waiting
+
+<br/>
 
 ## Execution contexts
 
 Playwright scripts run in your Node.js environment. You page scripts run in the page environment. Those environments don't intersect, they are running in different virtual machines in different processes and potentially on different computers.
 
 IMAGE PLACEHOLDER
-
-Playwright exposes APIs to execute the JavaScript code in the context of the web page and allows calling back into the Node.js environment from your web page.
-
-### Using the Evaluate API
 
 The [`page.evaluate`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatepagefunction-arg) API can run a JavaScript function in the context
 of the web page and bring results back to the Node.js environment. Globals like
@@ -127,3 +134,10 @@ const result = await page.evaluate(() => {
 
 Evaluation parameters are serialized and sent into your web page over the wire.
 You can pass primitive types, JSON-alike objects and remote object handles received from the page.
+
+<br/>
+
+## Object & element handles
+
+<br/>
+
