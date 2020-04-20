@@ -206,12 +206,9 @@ export class FrameManager {
     frame._firedLifecycleEvents.clear();
     // Keep the current navigation request if any.
     frame._inflightRequests = new Set(Array.from(frame._inflightRequests).filter(request => request._documentId === frame._lastDocumentId));
-    this._stopNetworkIdleTimer(frame, 'networkidle0');
+    frame._stopNetworkIdleTimer();
     if (frame._inflightRequests.size === 0)
-      this._startNetworkIdleTimer(frame, 'networkidle0');
-    this._stopNetworkIdleTimer(frame, 'networkidle2');
-    if (frame._inflightRequests.size <= 2)
-      this._startNetworkIdleTimer(frame, 'networkidle2');
+      frame._startNetworkIdleTimer();
   }
 
   requestStarted(request: network.Request) {
@@ -282,9 +279,7 @@ export class FrameManager {
       return;
     frame._inflightRequests.delete(request);
     if (frame._inflightRequests.size === 0)
-      this._startNetworkIdleTimer(frame, 'networkidle0');
-    if (frame._inflightRequests.size === 2)
-      this._startNetworkIdleTimer(frame, 'networkidle2');
+      frame._startNetworkIdleTimer();
   }
 
   private _inflightRequestStarted(request: network.Request) {
@@ -293,25 +288,7 @@ export class FrameManager {
       return;
     frame._inflightRequests.add(request);
     if (frame._inflightRequests.size === 1)
-      this._stopNetworkIdleTimer(frame, 'networkidle0');
-    if (frame._inflightRequests.size === 3)
-      this._stopNetworkIdleTimer(frame, 'networkidle2');
-  }
-
-  private _startNetworkIdleTimer(frame: Frame, event: types.LifecycleEvent) {
-    assert(!frame._networkIdleTimers.has(event));
-    if (frame._firedLifecycleEvents.has(event))
-      return;
-    frame._networkIdleTimers.set(event, setTimeout(() => {
-      this.frameLifecycleEvent(frame._id, event);
-    }, 500));
-  }
-
-  private _stopNetworkIdleTimer(frame: Frame, event: types.LifecycleEvent) {
-    const timeoutId = frame._networkIdleTimers.get(event);
-    if (timeoutId)
-      clearTimeout(timeoutId);
-    frame._networkIdleTimers.delete(event);
+      frame._stopNetworkIdleTimer();
   }
 
   interceptConsoleMessage(message: ConsoleMessage): boolean {
@@ -341,7 +318,7 @@ export class Frame {
   private _childFrames = new Set<Frame>();
   _name = '';
   _inflightRequests = new Set<network.Request>();
-  readonly _networkIdleTimers = new Map<types.LifecycleEvent, NodeJS.Timer>();
+  private _networkIdleTimer: NodeJS.Timer | undefined;
   private _setContentCounter = 0;
   readonly _detachedPromise: Promise<void>;
   private _detachedCallback = () => {};
@@ -858,6 +835,19 @@ export class Frame {
       if (data.context === context)
         this._setContext(contextType, null);
     }
+  }
+
+  _startNetworkIdleTimer() {
+    assert(!this._networkIdleTimer);
+    if (this._firedLifecycleEvents.has('networkidle'))
+      return;
+    this._networkIdleTimer = setTimeout(() => { this._page._frameManager.frameLifecycleEvent(this._id, 'networkidle'); }, 500);
+  }
+
+  _stopNetworkIdleTimer() {
+    if (this._networkIdleTimer)
+      clearTimeout(this._networkIdleTimer);
+    this._networkIdleTimer = undefined;
   }
 }
 

@@ -172,9 +172,14 @@ describe('Page.goto', function() {
     await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
     await page.goto(httpsServer.EMPTY_PAGE).catch(e => void 0);
   });
-  it('should throw if networkidle is passed as an option', async({page, server}) => {
+  it('should throw if networkidle0 is passed as an option', async({page, server}) => {
     let error = null;
-    await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle'}).catch(err => error = err);
+    await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle0'}).catch(err => error = err);
+    expect(error.message).toContain('Unsupported waitUntil option');
+  });
+  it('should throw if networkidle2 is passed as an option', async({page, server}) => {
+    let error = null;
+    await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle2'}).catch(err => error = err);
     expect(error.message).toContain('Unsupported waitUntil option');
   });
   it('should fail when main resources failed to load', async({page, server}) => {
@@ -407,23 +412,18 @@ describe('Page.goto', function() {
   });
 
   describe('network idle', function() {
-    it('should navigate to empty page with networkidle0', async({page, server}) => {
-      const response = await page.goto(server.EMPTY_PAGE, { waitUntil: 'networkidle0' });
-      expect(response.status()).toBe(200);
-    });
-    it('should navigate to empty page with networkidle2', async({page, server}) => {
-      const response = await page.goto(server.EMPTY_PAGE, { waitUntil: 'networkidle2' });
+    it('should navigate to empty page with networkidle', async({page, server}) => {
+      const response = await page.goto(server.EMPTY_PAGE, { waitUntil: 'networkidle' });
       expect(response.status()).toBe(200);
     });
 
     /**
      * @param {import('../src/frames').Frame} frame
      * @param {TestServer} server
-     * @param {'networkidle0'|'networkidle2'} signal
      * @param {() => Promise<void>} action
      * @param {boolean} isSetContent
      */
-    async function networkIdleTest(frame, server, signal, action, isSetContent) {
+    async function networkIdleTest(frame, server, action, isSetContent) {
       const finishResponse = response => {
         response.statusCode = 404;
         response.end(`File not found`);
@@ -437,19 +437,13 @@ describe('Page.goto', function() {
       let responses = {};
       // Hold on to a bunch of requests without answering.
       server.setRoute('/fetch-request-a.js', (req, res) => responses.a = res);
-      server.setRoute('/fetch-request-b.js', (req, res) => responses.b = res);
-      server.setRoute('/fetch-request-c.js', (req, res) => responses.c = res);
       const initialFetchResourcesRequested = Promise.all([
         waitForRequest('/fetch-request-a.js'),
-        waitForRequest('/fetch-request-b.js'),
-        waitForRequest('/fetch-request-c.js')
       ]);
 
       let secondFetchResourceRequested;
-      if (signal === 'networkidle0') {
-        server.setRoute('/fetch-request-d.js', (req, res) => responses.d = res);
-        secondFetchResourceRequested = waitForRequest('/fetch-request-d.js');
-      }
+      server.setRoute('/fetch-request-d.js', (req, res) => responses.d = res);
+      secondFetchResourceRequested = waitForRequest('/fetch-request-d.js');
 
       const waitForLoadPromise = isSetContent ? Promise.resolve() : frame.waitForNavigation({ waitUntil: 'load' });
 
@@ -470,139 +464,73 @@ describe('Page.goto', function() {
       expect(actionFinished).toBe(false);
 
       expect(responses.a).toBeTruthy();
-      expect(responses.b).toBeTruthy();
-      expect(responses.c).toBeTruthy();
       let timer;
       let timerTriggered = false;
-      if (signal === 'networkidle0') {
-        // Finishing first response should leave 2 requests alive and trigger networkidle2.
-        finishResponse(responses.a);
-        // Finishing two more responses should trigger the second round.
-        finishResponse(responses.b);
-        finishResponse(responses.c);
+      // Finishing response should trigger the second round.
+      finishResponse(responses.a);
 
-        // Wait for the second round to be requested.
-        await secondFetchResourceRequested;
-        expect(actionFinished).toBe(false);
-        // Finishing the last response should trigger networkidle0.
-        timer = setTimeout(() => timerTriggered = true, 500);
-        finishResponse(responses.d);
-      } else {
-        timer = setTimeout(() => timerTriggered = true, 500);
-        // Finishing first response should leave 2 requests alive and trigger networkidle2.
-        finishResponse(responses.a);
-      }
+      // Wait for the second round to be requested.
+      await secondFetchResourceRequested;
+      expect(actionFinished).toBe(false);
+      // Finishing the last response should trigger networkidle.
+      timer = setTimeout(() => timerTriggered = true, 500);
+      finishResponse(responses.d);
+
       const response = await actionPromise;
       clearTimeout(timer);
       expect(timerTriggered).toBe(true);
       if (!isSetContent)
         expect(response.ok()).toBe(true);
-
-      if (signal === 'networkidle2') {
-        // Cleanup.
-        finishResponse(responses.b);
-        finishResponse(responses.c);
-      }
     }
 
-    it('should wait for networkidle0 to succeed navigation', async({page, server}) => {
-      await networkIdleTest(page.mainFrame(), server, 'networkidle0', () => {
-        return page.goto(server.PREFIX + '/networkidle.html', { waitUntil: 'networkidle0' });
+    it('should wait for networkidle to succeed navigation', async({page, server}) => {
+      await networkIdleTest(page.mainFrame(), server, () => {
+        return page.goto(server.PREFIX + '/networkidle.html', { waitUntil: 'networkidle' });
       });
     });
-    it('should wait for networkidle2 to succeed navigation', async({page, server}) => {
-      await networkIdleTest(page.mainFrame(), server, 'networkidle2', () => {
-        return page.goto(server.PREFIX + '/networkidle.html', { waitUntil: 'networkidle2' });
-      });
-    });
-    it('should wait for networkidle0 to succeed navigation with request from previous navigation', async({page, server}) => {
+    it('should wait for networkidle to succeed navigation with request from previous navigation', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       server.setRoute('/foo.js', () => {});
       await page.setContent(`<script>fetch('foo.js');</script>`);
-      await networkIdleTest(page.mainFrame(), server, 'networkidle0', () => {
-        return page.goto(server.PREFIX + '/networkidle.html', { waitUntil: 'networkidle0' });
+      await networkIdleTest(page.mainFrame(), server, () => {
+        return page.goto(server.PREFIX + '/networkidle.html', { waitUntil: 'networkidle' });
       });
     });
-    it('should wait for networkidle2 to succeed navigation with request from previous navigation', async({page, server}) => {
-      await page.goto(server.EMPTY_PAGE);
-      server.setRoute('/foo.js', () => {});
-      await page.setContent(`<script>fetch('foo.js');</script>`);
-      await networkIdleTest(page.mainFrame(), server, 'networkidle2', () => {
-        return page.goto(server.PREFIX + '/networkidle.html', { waitUntil: 'networkidle2' });
-      });
-    });
-    it('should wait for networkidle0 in waitForNavigation', async({page, server}) => {
-      await networkIdleTest(page.mainFrame(), server, 'networkidle0', () => {
-        const promise = page.waitForNavigation({ waitUntil: 'networkidle0' });
+    it('should wait for networkidle in waitForNavigation', async({page, server}) => {
+      await networkIdleTest(page.mainFrame(), server, () => {
+        const promise = page.waitForNavigation({ waitUntil: 'networkidle' });
         page.goto(server.PREFIX + '/networkidle.html');
         return promise;
       });
     });
-    it('should wait for networkidle2 in waitForNavigation', async({page, server}) => {
-      await networkIdleTest(page.mainFrame(), server, 'networkidle2', () => {
-        const promise = page.waitForNavigation({ waitUntil: 'networkidle2' });
-        page.goto(server.PREFIX + '/networkidle.html');
-        return promise;
-      });
-    });
-    it('should wait for networkidle0 in setContent', async({page, server}) => {
+    it('should wait for networkidle in setContent', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await networkIdleTest(page.mainFrame(), server, 'networkidle0', () => {
-        return page.setContent(`<script src='networkidle.js'></script>`, { waitUntil: 'networkidle0' });
+      await networkIdleTest(page.mainFrame(), server, () => {
+        return page.setContent(`<script src='networkidle.js'></script>`, { waitUntil: 'networkidle' });
       }, true);
     });
-    it('should wait for networkidle2 in setContent', async({page, server}) => {
-      await page.goto(server.EMPTY_PAGE);
-      await networkIdleTest(page.mainFrame(), server, 'networkidle2', () => {
-        return page.setContent(`<script src='networkidle.js'></script>`, { waitUntil: 'networkidle2' });
-      }, true);
-    });
-    it('should wait for networkidle0 in setContent with request from previous navigation', async({page, server}) => {
+    it('should wait for networkidle in setContent with request from previous navigation', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       server.setRoute('/foo.js', () => {});
       await page.setContent(`<script>fetch('foo.js');</script>`);
-      await networkIdleTest(page.mainFrame(), server, 'networkidle0', () => {
-        return page.setContent(`<script src='networkidle.js'></script>`, { waitUntil: 'networkidle0' });
+      await networkIdleTest(page.mainFrame(), server, () => {
+        return page.setContent(`<script src='networkidle.js'></script>`, { waitUntil: 'networkidle' });
       }, true);
     });
-    it('should wait for networkidle2 in setContent with request from previous navigation', async({page, server}) => {
-      await page.goto(server.EMPTY_PAGE);
-      server.setRoute('/foo.js', () => {});
-      await page.setContent(`<script>fetch('foo.js');</script>`);
-      await networkIdleTest(page.mainFrame(), server, 'networkidle2', () => {
-        return page.setContent(`<script src='networkidle.js'></script>`, { waitUntil: 'networkidle2' });
-      }, true);
-    });
-    it('should wait for networkidle0 when navigating iframe', async({page, server}) => {
+    it('should wait for networkidle when navigating iframe', async({page, server}) => {
       await page.goto(server.PREFIX + '/frames/one-frame.html');
       const frame = page.mainFrame().childFrames()[0];
-      await networkIdleTest(frame, server, 'networkidle0', () => frame.goto(server.PREFIX + '/networkidle.html', { waitUntil: 'networkidle0' }));
+      await networkIdleTest(frame, server, () => frame.goto(server.PREFIX + '/networkidle.html', { waitUntil: 'networkidle' }));
     });
-    it('should wait for networkidle2 when navigating iframe', async({page, server}) => {
-      await page.goto(server.PREFIX + '/frames/one-frame.html');
-      const frame = page.mainFrame().childFrames()[0];
-      await networkIdleTest(frame, server, 'networkidle2', () => frame.goto(server.PREFIX + '/networkidle.html', { waitUntil: 'networkidle2' }));
-    });
-    it('should wait for networkidle0 in setContent from the child frame', async({page, server}) => {
+    it('should wait for networkidle in setContent from the child frame', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await networkIdleTest(page.mainFrame(), server, 'networkidle0', () => {
-        return page.setContent(`<iframe src='networkidle.html'></iframe>`, { waitUntil: 'networkidle0' });
+      await networkIdleTest(page.mainFrame(), server, () => {
+        return page.setContent(`<iframe src='networkidle.html'></iframe>`, { waitUntil: 'networkidle' });
       }, true);
     });
-    it('should wait for networkidle2 in setContent from the child frame', async({page, server}) => {
-      await page.goto(server.EMPTY_PAGE);
-      await networkIdleTest(page.mainFrame(), server, 'networkidle2', () => {
-        return page.setContent(`<iframe src='networkidle.html'></iframe>`, { waitUntil: 'networkidle2' });
-      }, true);
-    });
-    it('should wait for networkidle0 from the child frame', async({page, server}) => {
-      await networkIdleTest(page.mainFrame(), server, 'networkidle0', () => {
-        return page.goto(server.PREFIX + '/networkidle-frame.html', { waitUntil: 'networkidle0' });
-      });
-    });
-    it('should wait for networkidle2 from the child frame', async({page, server}) => {
-      await networkIdleTest(page.mainFrame(), server, 'networkidle2', () => {
-        return page.goto(server.PREFIX + '/networkidle-frame.html', { waitUntil: 'networkidle2' });
+    it('should wait for networkidle from the child frame', async({page, server}) => {
+      await networkIdleTest(page.mainFrame(), server, () => {
+        return page.goto(server.PREFIX + '/networkidle-frame.html', { waitUntil: 'networkidle' });
       });
     });
   });

@@ -168,16 +168,7 @@ await page.click('css:light=div');
 Selectors using the same or different engines can be combined using the `>>` separator. For example,
 
 ```js
-await page.click('css=article >> css=.bar > .baz >> css=span[attr=value]');
-```
-
-is equivalent to
-
-```js
-document
-  .querySelector('article')
-  .querySelector('.bar > .baz')
-  .querySelector('span[attr=value]')
+await page.click('#free-month-promo >> text=Learn more');
 ```
 
 <br/>

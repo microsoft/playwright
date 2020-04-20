@@ -46,6 +46,7 @@
     - [Travis CI](./ci.md#travis-ci)
     - [CircleCI](./ci.md#circleci)
     - [AppVeyor](./ci.md#appveyor)
+    - Troubleshooting
 1. Test runners
     - Jest
     - Mocha

@@ -3,10 +3,11 @@ async function sleep(delay) {
 }
 
 async function main() {
+  window.ws = new WebSocket('ws://localhost:' + window.location.port + '/ws');
+  window.ws.addEventListener('message', message => {});
+
   const roundOne = Promise.all([
     fetch('fetch-request-a.js'),
-    fetch('fetch-request-b.js'),
-    fetch('fetch-request-c.js'),
   ]);
 
   await roundOne;

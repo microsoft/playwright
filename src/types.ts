@@ -42,8 +42,8 @@ export type WaitForElementOptions = TimeoutOptions & { waitFor?: 'attached' | 'd
 export type Polling = 'raf' | 'mutation' | number;
 export type WaitForFunctionOptions = TimeoutOptions & { polling?: Polling };
 
-export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2';
-export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle0', 'networkidle2']);
+export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle';
+export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle']);
 
 export type NavigateOptions = TimeoutOptions & {
   waitUntil?: LifecycleEvent,

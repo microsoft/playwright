@@ -38,7 +38,7 @@ Page load takes time retrieving the response body over the network, parsing, exe
 - page executes some scripts and loads resources like stylesheets and images
 - [`load`](api.md#event-load) event is fired
 - page executes dynamically loaded scripts
-- `networkidle0` is fired - no new network requests made for at least `500` ms
+- `networkidle` is fired - no new network requests made for at least `500` ms
 
 ### Common scenarios
 

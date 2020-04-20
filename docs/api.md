@@ -1242,11 +1242,10 @@ Returns frame matching the specified criteria. Either `name` or `url` must be sp
 #### page.goBack([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"> When to consider navigation succeeded, defaults to `load`. Events can be either:
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider navigation to be finished when the `load` event is fired.
-    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'networkidle'` - consider navigation to be finished when there are no network connections for at least `500` ms.
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. If
 can not go back, resolves to `null`.
 
@@ -1255,11 +1254,10 @@ Navigate to the previous page in history.
 #### page.goForward([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"> When to consider navigation succeeded, defaults to `load`. Events can be either:
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider navigation to be finished when the `load` event is fired.
-    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'networkidle'` - consider navigation to be finished when there are no network connections for at least `500` ms.
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. If
 can not go forward, resolves to `null`.
 
@@ -1269,11 +1267,10 @@ Navigate to the next page in history.
 - `url` <[string]> URL to navigate page to. The url should include scheme, e.g. `https://`.
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"> When to consider navigation succeeded, defaults to `load`. Events can be either:
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider navigation to be finished when the `load` event is fired.
-    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'networkidle'` - consider navigation to be finished when there are no network connections for at least `500` ms.
   - `referer` <[string]> Referer header value. If provided it will take preference over the referer header value set by [page.setExtraHTTPHeaders()](#pagesetextrahttpheadersheaders).
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
 
@@ -1441,11 +1438,10 @@ await browser.close();
 #### page.reload([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"> When to consider navigation succeeded, defaults to `load`. Events can be either:
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider navigation to be finished when the `load` event is fired.
-    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'networkidle'` - consider navigation to be finished when there are no network connections for at least `500` ms.
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
 
 #### page.route(url, handler)
@@ -1527,11 +1523,10 @@ Shortcut for [page.mainFrame().selectOption()](#frameselectoptionselector-values
 - `html` <[string]> HTML markup to assign to the page.
 - `options` <[Object]> Parameters which might have the following properties:
   - `timeout` <[number]> Maximum time in milliseconds for resources to load, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2">  When to consider setting markup succeeded, defaults to `load`. Given an array of event strings, setting content is considered to be successful after all events have been fired. Events can be either:
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle">  When to consider setting markup succeeded, defaults to `load`. Given an array of event strings, setting content is considered to be successful after all events have been fired. Events can be either:
     - `'load'` - consider setting content to be finished when the `load` event is fired.
     - `'domcontentloaded'` - consider setting content to be finished when the `DOMContentLoaded` event is fired.
-    - `'networkidle0'` - consider setting content to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `'networkidle2'` - consider setting content to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'networkidle'` - consider setting content to be finished when there are no network connections for at least `500` ms.
 - returns: <[Promise]>
 
 #### page.setDefaultNavigationTimeout(timeout)
@@ -1736,11 +1731,10 @@ await page.waitForFunction(selector => !!document.querySelector(selector), selec
 Shortcut for [page.mainFrame().waitForFunction(pageFunction, arg, options]])](#framewaitforfunctionpagefunction-arg-options).
 
 #### page.waitForLoadState([state[, options]])
-- `state` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"> Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method resolves immediately.
+- `state` <"load"|"domcontentloaded"|"networkidle"> Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method resolves immediately.
   - `'load'` - wait for the `load` event to be fired.
   - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
-  - `'networkidle0'` - wait until there are no more than 0 network connections for at least `500` ms.
-  - `'networkidle2'` - wait until there are no more than 2 network connections for at least `500` ms.
+  - `'networkidle'` - wait until there are no network connections for at least `500` ms.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum waiting time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the required load state has been reached.
@@ -1767,11 +1761,10 @@ Shortcut for [page.mainFrame().waitForLoadState([options])](#framewaitforloadsta
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
   - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2">  When to consider navigation succeeded, defaults to `load`. Events can be either:
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle">  When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider navigation to be finished when the `load` event is fired.
-    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'networkidle'` - consider navigation to be finished when there are no network connections for at least `500` ms.
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will resolve with `null`.
 
 This resolves when the page navigates to a new URL or reloads. It is useful for when you run code
@@ -2154,11 +2147,10 @@ console.log(frame === contentFrame);  // -> true
 - `url` <[string]> URL to navigate frame to. The url should include scheme, e.g. `https://`.
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2">  When to consider navigation succeeded, defaults to `load`. Events can be either:
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle">  When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider navigation to be finished when the `load` event is fired.
-    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'networkidle'` - consider navigation to be finished when there are no network connections for at least `500` ms.
   - `referer` <[string]> Referer header value. If provided it will take preference over the referer header value set by [page.setExtraHTTPHeaders()](#pagesetextrahttpheadersheaders).
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
 
@@ -2261,11 +2253,10 @@ frame.selectOption('select#colors', 'red', 'green', 'blue');
 - `html` <[string]> HTML markup to assign to the page.
 - `options` <[Object]> Parameters which might have the following properties:
   - `timeout` <[number]> Maximum time in milliseconds for resources to load, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2">  When to consider navigation succeeded, defaults to `load`. Events can be either:
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle">  When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider setting content to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider setting content to be finished when the `load` event is fired.
-    - `'networkidle0'` - consider setting content to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `'networkidle2'` - consider setting content to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'networkidle'` - consider setting content to be finished when there are no network connections for at least `500` ms.
 - returns: <[Promise]>
 
 #### frame.setInputFiles(selector, files[, options])
@@ -2389,11 +2380,10 @@ await frame.waitForFunction(selector => !!document.querySelector(selector), sele
 ```
 
 #### frame.waitForLoadState([state[, options]])
-- `state` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"> Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method resolves immediately.
+- `state` <"load"|"domcontentloaded"|"networkidle"> Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method resolves immediately.
   - `'load'` - wait for the `load` event to be fired.
   - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
-  - `'networkidle0'` - wait until there are no more than 0 network connections for at least `500` ms.
-  - `'networkidle2'` - wait until there are no more than 2 network connections for at least `500` ms.
+  - `'networkidle'` - wait until there are no network connections for at least `500` ms.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum waiting time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the required load state has been reached.
@@ -2409,11 +2399,10 @@ await frame.waitForLoadState(); // The promise resolves after 'load' event.
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
   - `url` <[string]|[RegExp]|[Function]> URL string, URL regex pattern or predicate receiving [URL] to match while waiting for the navigation.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2">  When to consider navigation succeeded, defaults to `load`. Events can be either:
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle">  When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider navigation to be finished when the `load` event is fired.
-    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'networkidle'` - consider navigation to be finished when there are no network connections for at least `500` ms.
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will resolve with `null`.
 
 This resolves when the frame navigates to a new URL. It is useful for when you run code
