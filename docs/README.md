@@ -31,9 +31,12 @@
     - [Handle requests](./network.md#handle-requests)
     - [Modify requests](./network.md#modify-requests)
     - [Abort requests](./network.md#abort-requests)
-1. Scraping and verification
-    - Screenshots
-    - Evaluation
+1. [Scraping and verification](./verification.md)
+    - [Screenshots](./verification.md#capturing-screenshot)
+    - [Evaluation](./verification.md#evaluating-javascript)
+    - [Console messages](./verification.md#listening-console-messages)
+    - [Uncaghut exceptions](./verification.md#uncaghut-exceptions)
+    - [Page crashes](./verification.md#page-crashes)
 1. [Navigation and loading](./loading.md)
     - [Common scenarios](./loading.md#common-scenarios)
     - [Loading a popup](./loading.md#loading-a-popup)
