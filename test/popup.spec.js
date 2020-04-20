@@ -344,7 +344,6 @@ describe('Page.Events.Popup', function() {
   it('should work with fake-clicking target=_blank and rel=noopener', async({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
-    // TODO: FFOX sends events for "one-style.html" request to both pages.
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
     const [popup] = await Promise.all([

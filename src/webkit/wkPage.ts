@@ -655,13 +655,10 @@ export class WKPage implements PageDelegate {
   }
 
   async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
-    // TODO: line below crashes, sort it out.
     await this._session.send('Page.setDefaultBackgroundColorOverride', { color });
   }
 
   async takeScreenshot(format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
-    // TODO: documentRect does not include pageScale, while backend considers it does.
-    // This brakes mobile screenshots of elements or full page.
     const rect = (documentRect || viewportRect)!;
     const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport' });
     const prefix = 'data:image/png;base64,';
