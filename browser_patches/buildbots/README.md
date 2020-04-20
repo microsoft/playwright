@@ -77,6 +77,8 @@ SET TELEGRAM_BOT_KEY=<bot_key>
 SET WEBKIT_BUILD_PATH=<value of "PATH" variable from cmd.exe>
 SET DEVENV="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\devenv.com"
 ```
+> **NOTE:** mind different quotes position in DEVENV="..." than in PATH (and WEBKIT_BUILD_PATH). This is important.
+
 And right before the `REM Start shell.`, change `PATH` to export locally-installed node.js:
 ```bat
 SET "PATH=C:\Program Files\nodejs\;%PATH%"
