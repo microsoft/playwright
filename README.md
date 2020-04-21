@@ -26,7 +26,7 @@ This installs Playwright along with its dependencies and the browser binaries. B
 
 Once installed, Playwright can be used to create a browser instance, open pages and then automate interactions.
 
-* [Get started with examples](docs/examples/README.md)
+* [Documentation](docs/README.md)
 * [API reference](docs/api.md)
 
 ### Examples
@@ -122,10 +122,6 @@ const { webkit } = require('playwright');
 })();
 ```
 
-## Contributing
-
-Check out our [contributing guide](https://github.com/microsoft/playwright/blob/master/CONTRIBUTING.md).
-
 ## FAQ
 
 ### Q: Can I use a single API to automate different browsers?
@@ -178,9 +174,13 @@ Playwright is ready for your feedback. It respects [semver](https://semver.org/)
 
 Playwright is being actively developed as we get to the feature parity across Chromium, Firefox and WebKit. Progress on each browser can be tracked on the [Is Playwright Ready?](https://aslushnikov.github.io/isplaywrightready/) page, which shows currently failing tests per browser.
 
+## Contributing
+
+Check out our [contributing guide](https://github.com/microsoft/playwright/blob/master/CONTRIBUTING.md).
+
 ## Resources
 
-* [Get started with examples](docs/examples/README.md)
-* [API documentation](docs/api.md)
-* [Getting started on CI](docs/ci.md)
+* [Documentation](docs/README.md)
+* [Example recipes](docs/examples/README.md)
+* [API reference](docs/api.md)
 * [Community showcase](docs/showcase.md)
