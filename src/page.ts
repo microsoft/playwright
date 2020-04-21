@@ -31,7 +31,7 @@ import * as accessibility from './accessibility';
 import { ExtendedEventEmitter } from './extendedEventEmitter';
 import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
-import { logError, Logger, Log } from './logger';
+import { logError, InnerLogger, Log } from './logger';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -87,7 +87,7 @@ type PageState = {
   extraHTTPHeaders: network.Headers | null;
 };
 
-export class Page extends ExtendedEventEmitter implements Logger {
+export class Page extends ExtendedEventEmitter implements InnerLogger {
   private _closed = false;
   private _closedCallback: () => void;
   private _closedPromise: Promise<void>;
@@ -537,13 +537,13 @@ export class Page extends ExtendedEventEmitter implements Logger {
 }
 
 export class Worker extends EventEmitter {
-  private _logger: Logger;
+  private _logger: InnerLogger;
   private _url: string;
   private _executionContextPromise: Promise<js.ExecutionContext>;
   private _executionContextCallback: (value?: js.ExecutionContext) => void;
   _existingExecutionContext: js.ExecutionContext | null = null;
 
-  constructor(logger: Logger, url: string) {
+  constructor(logger: InnerLogger, url: string) {
     super();
     this._logger = logger;
     this._url = url;

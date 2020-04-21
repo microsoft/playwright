@@ -17,7 +17,7 @@
 
 import { helper, RegisteredListener } from '../helper';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
-import { logError, Logger } from '../logger';
+import { logError, InnerLogger } from '../logger';
 
 export class PipeTransport implements ConnectionTransport {
   private _pipeWrite: NodeJS.WritableStream | null;
@@ -28,7 +28,7 @@ export class PipeTransport implements ConnectionTransport {
   onmessage?: (message: ProtocolResponse) => void;
   onclose?: () => void;
 
-  constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream, logger: Logger) {
+  constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream, logger: InnerLogger) {
     this._pipeWrite = pipeWrite;
     this._eventListeners = [
       helper.addEventListener(pipeRead, 'data', buffer => this._dispatch(buffer)),

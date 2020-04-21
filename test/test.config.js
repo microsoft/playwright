@@ -210,6 +210,7 @@ module.exports = {
         './defaultbrowsercontext.spec.js',
         './fixtures.spec.js',
         './launcher.spec.js',
+        './logger.spec.js',
         './headful.spec.js',
         './multiclient.spec.js',
       ],

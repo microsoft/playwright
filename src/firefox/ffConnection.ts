@@ -19,7 +19,7 @@ import { EventEmitter } from 'events';
 import { assert } from '../helper';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse, protocolLog } from '../transport';
 import { Protocol } from './protocol';
-import { Logger } from '../logger';
+import { InnerLogger } from '../logger';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('Disconnected'),
@@ -33,7 +33,7 @@ export class FFConnection extends EventEmitter {
   private _lastId: number;
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
   private _transport: ConnectionTransport;
-  private _logger: Logger;
+  private _logger: InnerLogger;
   readonly _sessions: Map<string, FFSession>;
   _closed: boolean;
 
@@ -43,7 +43,7 @@ export class FFConnection extends EventEmitter {
   removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
-  constructor(transport: ConnectionTransport, logger: Logger) {
+  constructor(transport: ConnectionTransport, logger: InnerLogger) {
     super();
     this._transport = transport;
     this._logger = logger;

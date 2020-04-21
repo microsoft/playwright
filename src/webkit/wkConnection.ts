@@ -19,7 +19,7 @@ import { EventEmitter } from 'events';
 import { assert } from '../helper';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse, protocolLog } from '../transport';
 import { Protocol } from './protocol';
-import { Logger } from '../logger';
+import { InnerLogger } from '../logger';
 
 // WKPlaywright uses this special id to issue Browser.close command which we
 // should ignore.
@@ -37,9 +37,9 @@ export class WKConnection {
   private _closed = false;
 
   readonly browserSession: WKSession;
-  private _logger: Logger;
+  private _logger: InnerLogger;
 
-  constructor(transport: ConnectionTransport, logger: Logger, onDisconnect: () => void) {
+  constructor(transport: ConnectionTransport, logger: InnerLogger, onDisconnect: () => void) {
     this._transport = transport;
     this._logger = logger;
     this._transport.onmessage = this._dispatchMessage.bind(this);

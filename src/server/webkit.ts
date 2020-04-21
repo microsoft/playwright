@@ -31,7 +31,7 @@ import { LaunchType } from '../browser';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { Events } from '../events';
 import { BrowserContext } from '../browserContext';
-import { Logger, logError, RootLogger } from '../logger';
+import { InnerLogger, logError, RootLogger } from '../logger';
 
 export class WebKit implements BrowserType<WKBrowser> {
   private _executablePath: (string|undefined);
@@ -71,7 +71,7 @@ export class WebKit implements BrowserType<WKBrowser> {
     return browser._defaultContext!;
   }
 
-  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport, downloadsPath: string, logger: Logger }> {
+  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport, downloadsPath: string, logger: InnerLogger }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -83,7 +83,7 @@ export class WebKit implements BrowserType<WKBrowser> {
       port = 0,
     } = options;
     assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
-    const logger = new RootLogger(options.loggerSink);
+    const logger = new RootLogger(options.logger);
 
     let temporaryUserDataDir: string | null = null;
     if (!userDataDir) {
@@ -137,7 +137,7 @@ export class WebKit implements BrowserType<WKBrowser> {
 
   async connect(options: ConnectOptions): Promise<WKBrowser> {
     return await WebSocketTransport.connect(options.wsEndpoint, transport => {
-      return WKBrowser.connect(transport, new RootLogger(options.loggerSink), options.slowMo);
+      return WKBrowser.connect(transport, new RootLogger(options.logger), options.slowMo);
     });
   }
 
@@ -170,7 +170,7 @@ const mkdtempAsync = util.promisify(fs.mkdtemp);
 
 const WEBKIT_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_dev_profile-');
 
-function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Logger, port: number): WebSocketWrapper {
+function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketWrapper {
   const server = new ws.Server({ port });
   const guid = helper.guid();
   const idMixer = new SequenceNumberMixer<{id: number, socket: ws}>();

@@ -29,7 +29,7 @@ import { readProtocolStream } from './crProtocolHelper';
 import { Events } from './events';
 import { Protocol } from './protocol';
 import { CRExecutionContext } from './crExecutionContext';
-import { Logger, logError } from '../logger';
+import { InnerLogger, logError } from '../logger';
 
 export class CRBrowser extends BrowserBase {
   readonly _connection: CRConnection;
@@ -47,7 +47,7 @@ export class CRBrowser extends BrowserBase {
   private _tracingPath: string | null = '';
   private _tracingClient: CRSession | undefined;
 
-  static async connect(transport: ConnectionTransport, isPersistent: boolean, logger: Logger, slowMo?: number): Promise<CRBrowser> {
+  static async connect(transport: ConnectionTransport, isPersistent: boolean, logger: InnerLogger, slowMo?: number): Promise<CRBrowser> {
     const connection = new CRConnection(SlowMoTransport.wrap(transport, slowMo), logger);
     const browser = new CRBrowser(connection, logger, isPersistent);
     const session = connection.rootSession;
@@ -84,7 +84,7 @@ export class CRBrowser extends BrowserBase {
     return browser;
   }
 
-  constructor(connection: CRConnection, logger: Logger, isPersistent: boolean) {
+  constructor(connection: CRConnection, logger: InnerLogger, isPersistent: boolean) {
     super(logger);
     this._connection = connection;
     this._session = this._connection.rootSession;

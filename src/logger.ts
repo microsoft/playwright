@@ -25,26 +25,26 @@ export type Log = {
 };
 
 export interface Logger {
-  _isLogEnabled(log: Log): boolean;
-  _log(log: Log, message: string | Error, ...args: any[]): void;
-}
-
-export interface LoggerSink {
   isEnabled(name: string, severity: LoggerSeverity): boolean;
   log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }): void;
 }
 
+export interface InnerLogger {
+  _isLogEnabled(log: Log): boolean;
+  _log(log: Log, message: string | Error, ...args: any[]): void;
+}
+
 export const errorLog: Log = { name: 'generic', severity: 'error' };
 
-export function logError(logger: Logger): (error: Error) => void {
+export function logError(logger: InnerLogger): (error: Error) => void {
   return error => logger._log(errorLog, error, []);
 }
 
-export class RootLogger implements Logger {
-  private _userSink: LoggerSink | undefined;
+export class RootLogger implements InnerLogger {
+  private _userSink: Logger | undefined;
   private _debugSink: DebugLoggerSink;
 
-  constructor(userSink: LoggerSink | undefined) {
+  constructor(userSink: Logger | undefined) {
     this._userSink = userSink;
     this._debugSink = new DebugLoggerSink();
   }
@@ -72,17 +72,17 @@ const colorMap = new Map<string, number>([
   ['reset', 0],
 ]);
 
-class DebugLoggerSink implements LoggerSink {
+class DebugLoggerSink implements Logger {
   private _debuggers = new Map<string, debug.IDebugger>();
 
   isEnabled(name: string, severity: LoggerSeverity): boolean {
-    return debug.enabled('pw:' + name);
+    return debug.enabled(`pw:${name}`);
   }
 
   log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }) {
     let cachedDebugger = this._debuggers.get(name);
     if (!cachedDebugger) {
-      cachedDebugger = debug('pw:' + name);
+      cachedDebugger = debug(`pw:${name}`);
       this._debuggers.set(name, cachedDebugger);
 
       let color = hints.color || 'reset';

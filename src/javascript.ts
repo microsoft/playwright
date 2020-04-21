@@ -17,7 +17,7 @@
 import * as types from './types';
 import * as dom from './dom';
 import { helper } from './helper';
-import { Logger } from './logger';
+import { InnerLogger } from './logger';
 
 export interface ExecutionContextDelegate {
   evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: string | Function, ...args: any[]): Promise<any>;
@@ -29,9 +29,9 @@ export interface ExecutionContextDelegate {
 
 export class ExecutionContext {
   readonly _delegate: ExecutionContextDelegate;
-  readonly _logger: Logger;
+  readonly _logger: InnerLogger;
 
-  constructor(delegate: ExecutionContextDelegate, logger: Logger) {
+  constructor(delegate: ExecutionContextDelegate, logger: InnerLogger) {
     this._delegate = delegate;
     this._logger = logger;
   }

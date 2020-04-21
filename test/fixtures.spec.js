@@ -21,8 +21,6 @@ const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX} = require('./utils').testOptions(brow
 
 async function testSignal(state, action, exitOnClose) {
   const options = Object.assign({}, state.defaultBrowserOptions, {
-    // Disable DUMPIO to cleanly read stdout.
-    dumpio: false,
     handleSIGINT: true,
     handleSIGTERM: true,
     handleSIGHUP: true,
