@@ -82,11 +82,26 @@ class DefaultTestRunner {
     return this._api;
   }
 
-  focusMatchingTests(fullNameRegex) {
+  focusMatchingNameTests(fullNameRegex) {
+    const focusedTests = [];
     for (const test of this._collector.tests()) {
-      if (fullNameRegex.test(test.fullName()))
+      if (fullNameRegex.test(test.fullName())) {
         this._filter.markFocused(test);
+        focusedTests.push(test);
+      }
     }
+    return focusedTests;
+  }
+
+  focusMatchingFilePath(filepathRegex) {
+    const focusedTests = [];
+    for (const test of this._collector.tests()) {
+      if (filepathRegex.test(test.location().filePath())) {
+        this._filter.markFocused(test);
+        focusedTests.push(test);
+      }
+    }
+    return focusedTests;
   }
 
   repeatAll(repeatCount) {
