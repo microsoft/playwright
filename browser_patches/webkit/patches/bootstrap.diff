@@ -12223,7 +12223,7 @@ index 0000000000000000000000000000000000000000..135a60361fa8fbf907382625e7c8dd4e
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/win/WebPageInspectorEmulationAgentWin.cpp b/Source/WebKit/UIProcess/win/WebPageInspectorEmulationAgentWin.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..520d9714bac279a8b778c2c377af4411fba8d5d7
+index 0000000000000000000000000000000000000000..62b841fe1d0de2296e1c61e328cff564f5aa1c0f
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/win/WebPageInspectorEmulationAgentWin.cpp
 @@ -0,0 +1,58 @@
@@ -12277,7 +12277,7 @@ index 0000000000000000000000000000000000000000..520d9714bac279a8b778c2c377af4411
 +    width += windowRect.right - windowRect.left - viewRect.right + viewRect.left;
 +    height += windowRect.bottom - windowRect.top - viewRect.bottom + viewRect.top;
 +
-+    if (!SetWindowPos(windowHwnd, 0, 0, 0, width, height, SWP_NOMOVE)) {
++    if (!SetWindowPos(windowHwnd, 0, 0, 0, width, height, SWP_NOCOPYBITS | SWP_NOSENDCHANGING | SWP_NOMOVE)) {
 +        callback("Could not resize window");
 +        return;
 +    }
