@@ -27,7 +27,7 @@ import { ConnectionEvents, FFConnection } from './ffConnection';
 import { headersArray } from './ffNetworkManager';
 import { FFPage } from './ffPage';
 import { Protocol } from './protocol';
-import { Logger } from '../logger';
+import { InnerLogger } from '../logger';
 
 export class FFBrowser extends BrowserBase {
   _connection: FFConnection;
@@ -38,14 +38,14 @@ export class FFBrowser extends BrowserBase {
   readonly _firstPagePromise: Promise<void>;
   private _firstPageCallback = () => {};
 
-  static async connect(transport: ConnectionTransport, logger: Logger, attachToDefaultContext: boolean, slowMo?: number): Promise<FFBrowser> {
+  static async connect(transport: ConnectionTransport, logger: InnerLogger, attachToDefaultContext: boolean, slowMo?: number): Promise<FFBrowser> {
     const connection = new FFConnection(SlowMoTransport.wrap(transport, slowMo), logger);
     const browser = new FFBrowser(connection, logger, attachToDefaultContext);
     await connection.send('Browser.enable', { attachToDefaultContext });
     return browser;
   }
 
-  constructor(connection: FFConnection, logger: Logger, isPersistent: boolean) {
+  constructor(connection: FFConnection, logger: InnerLogger, isPersistent: boolean) {
     super(logger);
     this._connection = connection;
     this._ffPages = new Map();

@@ -19,7 +19,7 @@ import { assert } from '../helper';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse, protocolLog } from '../transport';
 import { Protocol } from './protocol';
 import { EventEmitter } from 'events';
-import { Logger } from '../logger';
+import { InnerLogger } from '../logger';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('ConnectionEvents.Disconnected')
@@ -35,9 +35,9 @@ export class CRConnection extends EventEmitter {
   private readonly _sessions = new Map<string, CRSession>();
   readonly rootSession: CRSession;
   _closed = false;
-  private _logger: Logger;
+  private _logger: InnerLogger;
 
-  constructor(transport: ConnectionTransport, logger: Logger) {
+  constructor(transport: ConnectionTransport, logger: InnerLogger) {
     super();
     this._transport = transport;
     this._logger = logger;

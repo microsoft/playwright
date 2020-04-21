@@ -31,7 +31,7 @@ import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { BrowserArgOptions, BrowserType, LaunchOptions, LaunchServerOptions, ConnectOptions } from './browserType';
 import { launchProcess, waitForLine } from './processLauncher';
 import { ConnectionTransport, SequenceNumberMixer, WebSocketTransport } from '../transport';
-import { RootLogger, Logger, logError } from '../logger';
+import { RootLogger, InnerLogger, logError } from '../logger';
 
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 
@@ -79,7 +79,7 @@ export class Firefox implements BrowserType<FFBrowser> {
     return browserContext;
   }
 
-  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, downloadsPath: string, logger: Logger }> {
+  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, downloadsPath: string, logger: InnerLogger }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -92,7 +92,7 @@ export class Firefox implements BrowserType<FFBrowser> {
       port = 0,
     } = options;
     assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
-    const logger = new RootLogger(options.loggerSink);
+    const logger = new RootLogger(options.logger);
 
     const firefoxArguments = [];
 
@@ -153,7 +153,7 @@ export class Firefox implements BrowserType<FFBrowser> {
   }
 
   async connect(options: ConnectOptions): Promise<FFBrowser> {
-    const logger = new RootLogger(options.loggerSink);
+    const logger = new RootLogger(options.logger);
     return await WebSocketTransport.connect(options.wsEndpoint, transport => {
       return FFBrowser.connect(transport, logger, false, options.slowMo);
     });
@@ -198,7 +198,7 @@ export class Firefox implements BrowserType<FFBrowser> {
   }
 }
 
-function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Logger, port: number): WebSocketWrapper {
+function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketWrapper {
   const server = new ws.Server({ port });
   const guid = helper.guid();
   const idMixer = new SequenceNumberMixer<{id: number, socket: ws}>();

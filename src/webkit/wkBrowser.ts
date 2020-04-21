@@ -26,7 +26,7 @@ import * as types from '../types';
 import { Protocol } from './protocol';
 import { kPageProxyMessageReceived, PageProxyMessageReceivedPayload, WKConnection, WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
-import { Logger } from '../logger';
+import { InnerLogger } from '../logger';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15';
 
@@ -41,12 +41,12 @@ export class WKBrowser extends BrowserBase {
   private _firstPageCallback: () => void = () => {};
   private readonly _firstPagePromise: Promise<void>;
 
-  static async connect(transport: ConnectionTransport, logger: Logger, slowMo: number = 0, attachToDefaultContext: boolean = false): Promise<WKBrowser> {
+  static async connect(transport: ConnectionTransport, logger: InnerLogger, slowMo: number = 0, attachToDefaultContext: boolean = false): Promise<WKBrowser> {
     const browser = new WKBrowser(SlowMoTransport.wrap(transport, slowMo), logger, attachToDefaultContext);
     return browser;
   }
 
-  constructor(transport: ConnectionTransport, logger: Logger, attachToDefaultContext: boolean) {
+  constructor(transport: ConnectionTransport, logger: InnerLogger, attachToDefaultContext: boolean) {
     super(logger);
     this._connection = new WKConnection(transport, logger, this._onDisconnect.bind(this));
     this._browserSession = this._connection.browserSession;

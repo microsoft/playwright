@@ -20,7 +20,7 @@ import { EventEmitter } from 'events';
 import { Download } from './download';
 import type { BrowserServer } from './server/browserServer';
 import { Events } from './events';
-import { Logger, Log } from './logger';
+import { InnerLogger, Log } from './logger';
 
 export interface Browser extends EventEmitter {
   newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
@@ -30,13 +30,13 @@ export interface Browser extends EventEmitter {
   close(): Promise<void>;
 }
 
-export abstract class BrowserBase extends EventEmitter implements Browser, Logger {
+export abstract class BrowserBase extends EventEmitter implements Browser, InnerLogger {
   _downloadsPath: string = '';
   private _downloads = new Map<string, Download>();
   _ownedServer: BrowserServer | null = null;
-  readonly _logger: Logger;
+  readonly _logger: InnerLogger;
 
-  constructor(logger: Logger) {
+  constructor(logger: InnerLogger) {
     super();
     this._logger = logger;
   }

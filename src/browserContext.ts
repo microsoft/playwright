@@ -24,7 +24,7 @@ import { Events } from './events';
 import { ExtendedEventEmitter } from './extendedEventEmitter';
 import { Download } from './download';
 import { BrowserBase } from './browser';
-import { Log, Logger } from './logger';
+import { Log, InnerLogger, Logger, RootLogger } from './logger';
 
 export type BrowserContextOptions = {
   viewport?: types.Size | null,
@@ -43,10 +43,11 @@ export type BrowserContextOptions = {
   isMobile?: boolean,
   hasTouch?: boolean,
   colorScheme?: types.ColorScheme,
-  acceptDownloads?: boolean
+  acceptDownloads?: boolean,
+  logger?: Logger,
 };
 
-export interface BrowserContext extends Logger {
+export interface BrowserContext extends InnerLogger {
   setDefaultNavigationTimeout(timeout: number): void;
   setDefaultTimeout(timeout: number): void;
   pages(): Page[];
@@ -79,11 +80,13 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
   readonly _permissions = new Map<string, string[]>();
   readonly _downloads = new Set<Download>();
   readonly _browserBase: BrowserBase;
+  private _logger: InnerLogger;
 
   constructor(browserBase: BrowserBase, options: BrowserContextOptions) {
     super();
     this._browserBase = browserBase;
     this._options = options;
+    this._logger = options.logger ? new RootLogger(options.logger) : browserBase;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
   }
 
@@ -155,11 +158,11 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
   }
 
   _isLogEnabled(log: Log): boolean {
-    return this._browserBase._isLogEnabled(log);
+    return this._logger._isLogEnabled(log);
   }
 
   _log(log: Log, message: string | Error, ...args: any[]) {
-    return this._browserBase._log(log, message, ...args);
+    return this._logger._log(log, message, ...args);
   }
 }
 

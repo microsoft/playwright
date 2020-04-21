@@ -16,7 +16,7 @@
 
 import { BrowserContext } from '../browserContext';
 import { BrowserServer } from './browserServer';
-import { LoggerSink } from '../logger';
+import { Logger } from '../logger';
 
 export type BrowserArgOptions = {
   headless?: boolean,
@@ -31,14 +31,14 @@ type LaunchOptionsBase = BrowserArgOptions & {
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
   timeout?: number,
-  loggerSink?: LoggerSink,
+  logger?: Logger,
   env?: {[key: string]: string} | undefined
 };
 
 export type ConnectOptions = {
   wsEndpoint: string,
   slowMo?: number,
-  loggerSink?: LoggerSink,
+  logger?: Logger,
 };
 export type LaunchOptions = LaunchOptionsBase & { slowMo?: number };
 export type LaunchServerOptions = LaunchOptionsBase & { port?: number };

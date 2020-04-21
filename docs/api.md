@@ -27,7 +27,7 @@
 - [class: Worker](#class-worker)
 - [class: BrowserServer](#class-browserserver)
 - [class: BrowserType](#class-browsertype)
-- [class: LoggerSink](#class-loggersink)
+- [class: Logger](#class-logger)
 - [class: ChromiumBrowser](#class-chromiumbrowser)
 - [class: ChromiumBrowserContext](#class-chromiumbrowsercontext)
 - [class: ChromiumCoverage](#class-chromiumcoverage)
@@ -218,6 +218,7 @@ Indicates that the browser is connected.
     - `username` <[string]>
     - `password` <[string]>
   - `colorScheme` <"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
+  - `logger` <[Logger]> Logger sink for Playwright logging.
 - returns: <[Promise]<[BrowserContext]>>
 
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -259,6 +260,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
     - `username` <[string]>
     - `password` <[string]>
   - `colorScheme` <"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
+  - `logger` <[Logger]> Logger sink for Playwright logging.
 - returns: <[Promise]<[Page]>>
 
 Creates a new page in a new browser context. Closing this page will close the context as well.
@@ -3757,7 +3759,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 - `options` <[Object]>
   - `wsEndpoint` <[string]> A browser websocket endpoint to connect to. **required**
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
-  - `loggerSink` <[LoggerSink]> Sink for log messages.
+  - `logger` <[Logger]> Logger sink for Playwright logging.
 - returns: <[Promise]<[Browser]>>
 
 This methods attaches Playwright to an existing browser instance.
@@ -3774,7 +3776,7 @@ This methods attaches Playwright to an existing browser instance.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
-  - `loggerSink` <[LoggerSink]> Sink for log messages.
+  - `logger` <[Logger]> Logger sink for Playwright logging.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
@@ -3807,7 +3809,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
-  - `loggerSink` <[LoggerSink]> Sink for log messages.
+  - `logger` <[Logger]> Logger sink for Playwright logging.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
@@ -3826,7 +3828,7 @@ Launches browser instance that uses persistent storage located at `userDataDir`.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
-  - `loggerSink` <[LoggerSink]> Sink for log messages.
+  - `logger` <[Logger]> Logger sink for Playwright logging.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
@@ -3853,7 +3855,7 @@ const { chromium } = require('playwright');  // Or 'webkit' or 'firefox'.
 
 Returns browser name. For example: `'chromium'`, `'webkit'` or `'firefox'`.
 
-### class: LoggerSink
+### class: Logger
 
 Playwright generates a lot of logs and they are accessible via the pluggable logger sink.
 
@@ -3862,7 +3864,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 (async () => {
   const browser = await chromium.launch({
-    loggerSink: {
+    logger: {
       isEnabled: (name, severity) => name === 'browser',
       log: (name, severity, message, args) => console.log(`${name} ${message}`)
     }
@@ -3872,18 +3874,18 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 ```
 
 <!-- GEN:toc -->
-- [loggerSink.isEnabled(name, severity)](#loggersinkisenabledname-severity)
-- [loggerSink.log(name, severity, message, args, hints)](#loggersinklogname-severity-message-args-hints)
+- [logger.isEnabled(name, severity)](#loggerisenabledname-severity)
+- [logger.log(name, severity, message, args, hints)](#loggerlogname-severity-message-args-hints)
 <!-- GEN:stop -->
 
-#### loggerSink.isEnabled(name, severity)
+#### logger.isEnabled(name, severity)
 - `name` <[string]> logger name
 - `severity` <"verbose"|"info"|"warning"|"error">
 - returns: <[boolean]>
 
 Determines whether sink is interested in the logger with the given name and severity.
 
-#### loggerSink.log(name, severity, message, args, hints)
+#### logger.log(name, severity, message, args, hints)
 - `name` <[string]> logger name
 - `severity` <"verbose"|"info"|"warning"|"error">
 - `message` <[string]|[Error]> log message format
@@ -4247,7 +4249,7 @@ const { chromium } = require('playwright');
 [Frame]: #class-frame "Frame"
 [JSHandle]: #class-jshandle "JSHandle"
 [Keyboard]: #class-keyboard "Keyboard"
-[LoggerSink]: #class-loggersink "LoggerSink"
+[Logger]: #class-logger "Logger"
 [Map]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map "Map"
 [Mouse]: #class-mouse "Mouse"
 [Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"

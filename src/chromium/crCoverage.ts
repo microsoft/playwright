@@ -21,7 +21,7 @@ import { Protocol } from './protocol';
 
 import { EVALUATION_SCRIPT_URL } from './crExecutionContext';
 import * as types from '../types';
-import { logError, Logger } from '../logger';
+import { logError, InnerLogger } from '../logger';
 
 type JSRange = {
   startOffset: number,
@@ -51,7 +51,7 @@ export class CRCoverage {
   private _jsCoverage: JSCoverage;
   private _cssCoverage: CSSCoverage;
 
-  constructor(client: CRSession, logger: Logger) {
+  constructor(client: CRSession, logger: InnerLogger) {
     this._jsCoverage = new JSCoverage(client, logger);
     this._cssCoverage = new CSSCoverage(client, logger);
   }
@@ -81,9 +81,9 @@ class JSCoverage {
   _eventListeners: RegisteredListener[];
   _resetOnNavigation: boolean;
   _reportAnonymousScripts = false;
-  private _logger: Logger;
+  private _logger: InnerLogger;
 
-  constructor(client: CRSession, logger: Logger) {
+  constructor(client: CRSession, logger: InnerLogger) {
     this._client = client;
     this._logger = logger;
     this._enabled = false;
@@ -175,9 +175,9 @@ class CSSCoverage {
   _stylesheetSources: Map<string, string>;
   _eventListeners: RegisteredListener[];
   _resetOnNavigation: boolean;
-  private _logger: Logger;
+  private _logger: InnerLogger;
 
-  constructor(client: CRSession, logger: Logger) {
+  constructor(client: CRSession, logger: InnerLogger) {
     this._client = client;
     this._logger = logger;
     this._enabled = false;

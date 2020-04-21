@@ -31,7 +31,7 @@ import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { Events } from '../events';
 import { ConnectionTransport, ProtocolRequest, WebSocketTransport } from '../transport';
 import { BrowserContext } from '../browserContext';
-import { Logger, logError, RootLogger } from '../logger';
+import { InnerLogger, logError, RootLogger } from '../logger';
 
 export class Chromium implements BrowserType<CRBrowser> {
   private _executablePath: (string|undefined);
@@ -71,7 +71,7 @@ export class Chromium implements BrowserType<CRBrowser> {
     return browser._defaultContext!;
   }
 
-  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport, downloadsPath: string, logger: Logger }> {
+  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport, downloadsPath: string, logger: InnerLogger }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -83,7 +83,7 @@ export class Chromium implements BrowserType<CRBrowser> {
       port = 0,
     } = options;
     assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
-    const logger = new RootLogger(options.loggerSink);
+    const logger = new RootLogger(options.logger);
 
     let temporaryUserDataDir: string | null = null;
     if (!userDataDir) {
@@ -137,7 +137,7 @@ export class Chromium implements BrowserType<CRBrowser> {
 
   async connect(options: ConnectOptions): Promise<CRBrowser> {
     return await WebSocketTransport.connect(options.wsEndpoint, transport => {
-      return CRBrowser.connect(transport, false, new RootLogger(options.loggerSink), options.slowMo);
+      return CRBrowser.connect(transport, false, new RootLogger(options.logger), options.slowMo);
     });
   }
 
@@ -179,7 +179,7 @@ export class Chromium implements BrowserType<CRBrowser> {
   }
 }
 
-function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Logger, port: number): WebSocketWrapper {
+function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketWrapper {
   const server = new ws.Server({ port });
   const guid = helper.guid();
 

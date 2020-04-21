@@ -16,7 +16,7 @@
  */
 
 import * as childProcess from 'child_process';
-import { Log, Logger } from '../logger';
+import { Log, InnerLogger } from '../logger';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -59,7 +59,7 @@ export type LaunchProcessOptions = {
   // Note: attemptToGracefullyClose should reject if it does not close the browser.
   attemptToGracefullyClose: () => Promise<any>,
   onkill: (exitCode: number | null, signal: string | null) => void,
-  logger: Logger,
+  logger: InnerLogger,
 };
 
 type LaunchResult = {

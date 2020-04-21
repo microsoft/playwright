@@ -105,7 +105,7 @@ function collect(browserNames) {
     const browserEnvironment = new Environment(browserName);
     browserEnvironment.beforeAll(async state => {
       state._logger = null;
-      state.browser = await state.browserType.launch({...launchOptions, loggerSink: {
+      state.browser = await state.browserType.launch({...launchOptions, logger: {
         isEnabled: (name, severity) => {
           return name === 'browser' ||
               (name === 'protocol' && config.dumpProtocolOnFailure);
