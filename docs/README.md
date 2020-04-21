@@ -1,5 +1,6 @@
 ### Table of contents
 
+1. [Introduction](./intro.md)
 1. [Core concepts](./core-concepts.md)
     - [Browser](./core-concepts.md#browser)
     - [Browser contexts](./core-concepts.md#browser-contexts)
