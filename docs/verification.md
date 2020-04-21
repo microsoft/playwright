@@ -1,19 +1,10 @@
 # Scraping and verification
 
-Playwright allows verifiying state of the page and catching abnormal behavior by:
-  - evaluating JavaScript code snippets in the page
-  - capturing screenshots (png or jpeg)
-  - listening console messages
-  - observing uncaghut exceptions in the page
-  - observing page crashes
-  - etc
-
 #### Contents
 - [Evaluating JavaScript](#evaluating-javascript)
 - [Capturing screenshot](#capturing-screenshot)
-- [Listening console messages](#listening-console-messages)
-- [Uncaghut exceptions](#uncaghut-exceptions)
-- [Page crashes](#page-crashes)
+- [Page events](#page-events)
+- [Handling exceptions](#handling-exceptions)
 
 <br/>
 
@@ -21,43 +12,43 @@ Playwright allows verifiying state of the page and catching abnormal behavior by
 
 Execute JavaScript function in the page:
 ```js
-  const href = await page.evaluate(() => document.location.href);
+const href = await page.evaluate(() => document.location.href);
 ```
 
-If the result is a Promise or if the function is asynchronouse eveluate will automatically wait until it's resolved:
+If the result is a Promise or if the function is asynchronous evaluate will automatically wait until it's resolved:
 ```js
-  const status = await page.evaluate(async () => {
-    const response = await fetch(location.href);
-    return response.status;
-  });
+const status = await page.evaluate(async () => {
+  const response = await fetch(location.href);
+  return response.status;
+});
 ```
 
 Get object handle and use it in multiple evaluations:
 ```js
-  // Create a new array in the page, wriate a reference to it in
-  // window.myArray and get a handle to it.
-  const myArrayHandle = await page.evaluateHandle(() => {
-    window.myArray = [1];
-    return myArray;
-  });
+// Create a new array in the page, write a reference to it in
+// window.myArray and get a handle to it.
+const myArrayHandle = await page.evaluateHandle(() => {
+  window.myArray = [1];
+  return myArray;
+});
 
-  // Get current length of the array using the handle.
-  const length = await page.evaluate(
-    (arg) => arg.myArray.length,
-    { myArray: myArrayHandle }
-  );
+// Get current length of the array using the handle.
+const length = await page.evaluate(
+  (arg) => arg.myArray.length,
+  { myArray: myArrayHandle }
+);
 
-  // Add one more element to the array using the handle
-  await page.evaluate((arg) => arg.myArray.push(arg.newElement), {
-    myArray:myArrayHandle,
-    newElement: 2
-  });
+// Add one more element to the array using the handle
+await page.evaluate((arg) => arg.myArray.push(arg.newElement), {
+  myArray: myArrayHandle,
+  newElement: 2
+});
 
-  // Get current length of the array using window.myArray reference.
-  const newLength = await page.evaluate(() => window.myArray.length);
+// Get current length of the array using window.myArray reference.
+const newLength = await page.evaluate(() => window.myArray.length);
 
-  // Release the object when it's no longer needed.
-  await myArrayHandle.dispose();
+// Release the object when it's no longer needed.
+await myArrayHandle.dispose();
 ```
 
 #### API reference
@@ -75,90 +66,95 @@ Get object handle and use it in multiple evaluations:
 
 Take screenshot of the page's viewport and save it in a png file:
 ```js
-  await page.screenshot({path: 'screenshot.png'});
+await page.screenshot({path: 'screenshot.png'});
 ```
-Capture entire scrollable area of the page:
+
+#### Variations
+
+Capture particular element:
 ```js
-  await page.screenshot({path: 'screenshot.png', fullPage: true});
+const elementHandle = await page.$('.header');
+await elementHandle.screenshot({ path: 'screenshot.png' });
 ```
-Save screenshot in an in-memory buffer (the content is base64-encoded image bytes):
+
+Capture full page screenshot:
 ```js
-  const buffer = await page.screenshot();
-  // Log the length.
-  console.log(buffer.length);
+await page.screenshot({path: 'screenshot.png', fullPage: true});
+```
+
+Capture screenshot into a Node [Buffer](https://nodejs.org/api/buffer.html#buffer_class_buffer).
+```js
+const buffer = await page.screenshot();
+// Log the length.
+console.log(buffer.toString('base64'));
 ```
 
 
 #### API reference
 
 - [page.screenshot([options])](./api.md#pagescreenshotoptions)
-- [Node.js Buffer](https://nodejs.org/api/buffer.html)
+- [elementHandle.screenshot([options])](./api.md#elementhandlescreenshotoptions)
 
 <br/>
 
-## Listening console messages
+## Page events
 
-Listen all console messages in a page and dump _errors_ in to the terminal:
+You can listen for various events on the `page` object. Following are just some of the examples of the events you can assert and handle:
+
+#### "`console`" - get all console messages from the page
 
 ```js
-  // Get all console messages from the page.
-  page.on('console', msg => {
-    // Handle only errors.
-    if (msg.type() !== 'error')
-      return;
-    console.log(`text: "${msg.text()}"`);
-  });
-
-  await page.evaluate(() => console.error('Page error message'));
+page.on('console', msg => {
+  // Handle only errors.
+  if (msg.type() !== 'error')
+    return;
+  console.log(`text: "${msg.text()}"`);
+});
 ```
-Get access to the console message arguments:
+
+#### "`dialog`" - Handle assert, confirm, prompt
+
 ```js
-  page.on('console', msg => {
-    for (let i = 0; i < msg.args().length; ++i)
-      console.log(`${i}: ${msg.args()[i]}`);
-  });
+page.on('dialog', dialog => {
+  dialog.accept();
+});
+```
+
+#### "`popup`" - Handle assert, confirm, prompt
+
+```js
+const [popup] = await Promise.all([
+  page.waitForEvent('popup'),
+  page.click('#open')
+]);
 ```
 
 #### API reference
 
-- [class: ConsoleMessage](./api.md#class-consolemessage)
-- [class `JSHandle`](./api.md#class-jshandle)
+- [class: Page](./api.md#class-page)
 - [event: 'console'](./api.md#event-console)
+- [event: 'dialog'](./api.md#event-dialog)
+- [event: 'popup'](./api.md#event-popup)
+- [class: ConsoleMessage](./api.md#class-consolemessage)
 
 <br/>
 
 
-## Uncaghut exceptions
+## Handling exceptions
 
-Listen uncaghut exceptions in the page:
+Listen uncaught exceptions in the page:
 ```js
-  // Log all uncaught errors to the terminal
-  page.on('pageerror', exception => {
-    console.log(`Uncaught exception: "${exception}"`);
-  });
+// Log all uncaught errors to the terminal
+page.on('pageerror', exception => {
+  console.log(`Uncaught exception: "${exception}"`);
+});
 
-  // Navigate to a page with an exception.
-  await page.goto('data:text/html,<script>throw new Error("Test")</script>');
+// Navigate to a page with an exception.
+await page.goto('data:text/html,<script>throw new Error("Test")</script>');
 ```
 
 #### API reference
 
 - [event: 'pageerror'](./api.md#event-pageerror)
-
-<br/>
-
-## Page crashes
-
-Listen to page crashes:
-```js
-  page.on('crash', exception => {
-    console.log(`Page crashed`);
-  });
-```
-It's very unusual for page to crash but might happen if a page allocates too much memory or due to a bug in a browser.
-
-#### API reference
-
-- [event: 'crash'](./api.md#event-crash)
 
 <br/>
