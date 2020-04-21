@@ -30,7 +30,7 @@ npm i playwright
 
 During installation, Playwright downloads browser binaries for Chromium, Firefox and WebKit. This sets up your environment for browser automation with just one command. It is possible to modify this default behavior for monorepos and other scenarios through [environment variables](api.md#environment-variables).
 
-### Writing your first script
+### Usage
 
 Once installed, you can `require` Playwright in a Node.js script, and launch any of the 3 browsers (`chromium`, `firefox` and `webkit`).
 
@@ -43,6 +43,17 @@ const { chromium } = require('playwright');
   await browser.close();
 })();
 ```
+
+Playwright APIs are asynchronous and return Promise objects. Our code examples use [the async/await pattern](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Asynchronous/Async_await) to simplify comprehension. The code is wrapped in an unnamed async arrow function which is invoking itself.
+
+```js
+(async () => { // Start of async arrow function
+  // Function code
+  // ...
+})(); // End of the function and () to invoke itself
+```
+
+### Writing your first script
 
 In our first script, we will navigate to `whatsmyuseragent.org` and take a screenshot in WebKit.
 
