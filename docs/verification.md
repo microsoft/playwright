@@ -85,7 +85,6 @@ await page.screenshot({path: 'screenshot.png', fullPage: true});
 Capture screenshot into a Node [Buffer](https://nodejs.org/api/buffer.html#buffer_class_buffer).
 ```js
 const buffer = await page.screenshot();
-// Log the length.
 console.log(buffer.toString('base64'));
 ```
 
@@ -101,7 +100,7 @@ console.log(buffer.toString('base64'));
 
 You can listen for various events on the `page` object. Following are just some of the examples of the events you can assert and handle:
 
-#### "`console`" - get all console messages from the page
+#### `"console"` - get all console messages from the page
 
 ```js
 page.on('console', msg => {
@@ -112,7 +111,7 @@ page.on('console', msg => {
 });
 ```
 
-#### "`dialog`" - Handle assert, confirm, prompt
+#### `"dialog"` - handle assert, confirm, prompt
 
 ```js
 page.on('dialog', dialog => {
@@ -120,7 +119,7 @@ page.on('dialog', dialog => {
 });
 ```
 
-#### "`popup`" - Handle assert, confirm, prompt
+#### `"popup"` - handle popup windows
 
 ```js
 const [popup] = await Promise.all([
@@ -131,11 +130,11 @@ const [popup] = await Promise.all([
 
 #### API reference
 
+- [class: ConsoleMessage](./api.md#class-consolemessage)
 - [class: Page](./api.md#class-page)
 - [event: 'console'](./api.md#event-console)
 - [event: 'dialog'](./api.md#event-dialog)
 - [event: 'popup'](./api.md#event-popup)
-- [class: ConsoleMessage](./api.md#class-consolemessage)
 
 <br/>
 
