@@ -67,10 +67,10 @@ else
 fi
 
 npm run clean
-npm publish .                            --tag="${NPM_PUBLISH_TAG}" --dry-run
-npm publish packages/playwright-firefox  --tag="${NPM_PUBLISH_TAG}" --dry-run
-npm publish packages/playwright-webkit   --tag="${NPM_PUBLISH_TAG}" --dry-run
-npm publish packages/playwright-chromium --tag="${NPM_PUBLISH_TAG}" --dry-run
-npm publish packages/playwright          --tag="${NPM_PUBLISH_TAG}" --dry-run
+npm publish .                            --tag="${NPM_PUBLISH_TAG}"
+npm publish packages/playwright-firefox  --tag="${NPM_PUBLISH_TAG}"
+npm publish packages/playwright-webkit   --tag="${NPM_PUBLISH_TAG}"
+npm publish packages/playwright-chromium --tag="${NPM_PUBLISH_TAG}"
+npm publish packages/playwright          --tag="${NPM_PUBLISH_TAG}"
 
 echo "Done."
