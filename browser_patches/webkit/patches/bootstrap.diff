@@ -4742,18 +4742,15 @@ index a9d228ca404918860c40651994db78a1e76db5ca..1fc3c345308dfed8384d1c02334f2030
  }
  
 diff --git a/Source/WebCore/page/SocketProvider.cpp b/Source/WebCore/page/SocketProvider.cpp
-index 803ac83155ff4df1becf75cd4710f6fbf7bbc32a..54fb28427e8b2b7da2ea3204673414f8e1bd24d7 100644
+index 803ac83155ff4df1becf75cd4710f6fbf7bbc32a..cc08682748a6d2fdf5d79980cd629812c98aa7ce 100644
 --- a/Source/WebCore/page/SocketProvider.cpp
 +++ b/Source/WebCore/page/SocketProvider.cpp
-@@ -33,7 +33,11 @@ namespace WebCore {
+@@ -33,7 +33,7 @@ namespace WebCore {
      
  Ref<SocketStreamHandle> SocketProvider::createSocketStreamHandle(const URL& url, SocketStreamHandleClient& client, PAL::SessionID sessionID, const String& credentialPartition, const StorageSessionProvider* provider)
  {
-+#if OS(WINDOWS)
+-    return SocketStreamHandleImpl::create(url, client, sessionID, credentialPartition, { }, provider);
 +    return SocketStreamHandleImpl::create(url, false, client, sessionID, credentialPartition, { }, provider);
-+#else
-     return SocketStreamHandleImpl::create(url, client, sessionID, credentialPartition, { }, provider);
-+#endif
  }
  
  RefPtr<ThreadableWebSocketChannel> SocketProvider::createWebSocketChannel(Document&, WebSocketChannelClient&)
@@ -5370,6 +5367,66 @@ index 87930048f4fd18d6098af7de4da25be532df5931..2bb2afcf9473b0d5d97efbe18dd7b814
      Vector<WTF::Function<void(bool)>> m_listeners;
      Timer m_updateStateTimer;
  
+diff --git a/Source/WebCore/platform/network/cf/SocketStreamHandleImpl.h b/Source/WebCore/platform/network/cf/SocketStreamHandleImpl.h
+index d677280d2b5e7b053a240c155d64bc881f1737bb..1be949e09982b34366d162e6d45ebc51a76dcfb0 100644
+--- a/Source/WebCore/platform/network/cf/SocketStreamHandleImpl.h
++++ b/Source/WebCore/platform/network/cf/SocketStreamHandleImpl.h
+@@ -47,7 +47,7 @@ class SocketStreamHandleClient;
+ 
+ class SocketStreamHandleImpl : public SocketStreamHandle {
+ public:
+-    static Ref<SocketStreamHandleImpl> create(const URL& url, SocketStreamHandleClient& client, PAL::SessionID sessionID, const String& credentialPartition, SourceApplicationAuditToken&& auditData, const StorageSessionProvider* provider) { return adoptRef(*new SocketStreamHandleImpl(url, client, sessionID, credentialPartition, WTFMove(auditData), provider)); }
++    static Ref<SocketStreamHandleImpl> create(const URL& url, bool ignoreCertificateErrors, SocketStreamHandleClient& client, PAL::SessionID sessionID, const String& credentialPartition, SourceApplicationAuditToken&& auditData, const StorageSessionProvider* provider) { return adoptRef(*new SocketStreamHandleImpl(url, ignoreCertificateErrors, client, sessionID, credentialPartition, WTFMove(auditData), provider)); }
+ 
+     virtual ~SocketStreamHandleImpl();
+ 
+@@ -61,7 +61,7 @@ private:
+     Optional<size_t> platformSendInternal(const uint8_t*, size_t);
+     bool sendPendingData();
+ 
+-    WEBCORE_EXPORT SocketStreamHandleImpl(const URL&, SocketStreamHandleClient&, PAL::SessionID, const String& credentialPartition, SourceApplicationAuditToken&&, const StorageSessionProvider*);
++    WEBCORE_EXPORT SocketStreamHandleImpl(const URL&, bool ignoreCertificateErrors, SocketStreamHandleClient&, PAL::SessionID, const String& credentialPartition, SourceApplicationAuditToken&&, const StorageSessionProvider*);
+     void createStreams();
+     void scheduleStreams();
+     void chooseProxy();
+@@ -106,6 +106,7 @@ private:
+     String m_credentialPartition;
+     SourceApplicationAuditToken m_auditData;
+     RefPtr<const StorageSessionProvider> m_storageSessionProvider;
++    bool m_ignoreCertificateErrors { false };
+ 
+     StreamBuffer<uint8_t, 1024 * 1024> m_buffer;
+     static const unsigned maxBufferSize = 100 * 1024 * 1024;
+diff --git a/Source/WebCore/platform/network/cf/SocketStreamHandleImplCFNet.cpp b/Source/WebCore/platform/network/cf/SocketStreamHandleImplCFNet.cpp
+index 545c28e62f72771de5f3f3e9fed2e8cf6147ed0f..a6fc5f5b3fc62adce2604821bd29f9aed378c24c 100644
+--- a/Source/WebCore/platform/network/cf/SocketStreamHandleImplCFNet.cpp
++++ b/Source/WebCore/platform/network/cf/SocketStreamHandleImplCFNet.cpp
+@@ -96,7 +96,7 @@ static inline auto callbacksRunLoopMode()
+ #endif
+ }
+ 
+-SocketStreamHandleImpl::SocketStreamHandleImpl(const URL& url, SocketStreamHandleClient& client, PAL::SessionID sessionID, const String& credentialPartition, SourceApplicationAuditToken&& auditData, const StorageSessionProvider* provider)
++SocketStreamHandleImpl::SocketStreamHandleImpl(const URL& url, bool ignoreCertificateErrors, SocketStreamHandleClient& client, PAL::SessionID sessionID, const String& credentialPartition, SourceApplicationAuditToken&& auditData, const StorageSessionProvider* provider)
+     : SocketStreamHandle(url, client)
+     , m_connectingSubstate(New)
+     , m_connectionType(Unknown)
+@@ -104,6 +104,7 @@ SocketStreamHandleImpl::SocketStreamHandleImpl(const URL& url, SocketStreamHandl
+     , m_credentialPartition(credentialPartition)
+     , m_auditData(WTFMove(auditData))
+     , m_storageSessionProvider(provider)
++    , m_ignoreCertificateErrors(ignoreCertificateErrors)
+ {
+     LOG(Network, "SocketStreamHandle %p new client %p", this, &m_client);
+ 
+@@ -360,7 +361,7 @@ void SocketStreamHandleImpl::createStreams()
+     }
+ 
+     if (shouldUseSSL()) {
+-        CFBooleanRef validateCertificateChain = DeprecatedGlobalSettings::allowsAnySSLCertificate() ? kCFBooleanFalse : kCFBooleanTrue;
++        CFBooleanRef validateCertificateChain = m_ignoreCertificateErrors || DeprecatedGlobalSettings::allowsAnySSLCertificate() ? kCFBooleanFalse : kCFBooleanTrue;
+         const void* keys[] = {
+             kCFStreamSSLPeerName,
+             kCFStreamSSLLevel,
 diff --git a/Source/WebCore/platform/network/curl/CurlStream.cpp b/Source/WebCore/platform/network/curl/CurlStream.cpp
 index 26dc7bef4b74bc6b4e2e526dec6523c3ad6d3643..c783aa5a7984f3966312e5e0ffd76f93ed6208f8 100644
 --- a/Source/WebCore/platform/network/curl/CurlStream.cpp
@@ -5494,6 +5551,19 @@ index 3b6dea9ed2552d81aaf7e694a5f922e96dbf94d6..6b5bd9b9782b0fb55341e76fc3cff862
  }
  
  SocketStreamHandleImpl::~SocketStreamHandleImpl()
+diff --git a/Source/WebCore/platform/network/soup/SocketStreamHandleImpl.h b/Source/WebCore/platform/network/soup/SocketStreamHandleImpl.h
+index 3ecf866005da6da9cec7c7930e6a4f93cb39d6e0..d81dc9ac0c433e00ab4ad73e206856098ab9230e 100644
+--- a/Source/WebCore/platform/network/soup/SocketStreamHandleImpl.h
++++ b/Source/WebCore/platform/network/soup/SocketStreamHandleImpl.h
+@@ -47,7 +47,7 @@ class StorageSessionProvider;
+ 
+ class SocketStreamHandleImpl final : public SocketStreamHandle {
+ public:
+-    static Ref<SocketStreamHandleImpl> create(const URL&, SocketStreamHandleClient&, PAL::SessionID, const String&, SourceApplicationAuditToken&&, const StorageSessionProvider*)
++    static Ref<SocketStreamHandleImpl> create(const URL&, bool, SocketStreamHandleClient&, PAL::SessionID, const String&, SourceApplicationAuditToken&&, const StorageSessionProvider*)
+     {
+         RELEASE_ASSERT_NOT_REACHED();
+     }
 diff --git a/Source/WebCore/platform/win/KeyEventWin.cpp b/Source/WebCore/platform/win/KeyEventWin.cpp
 index 44737686187a06a92c408ea60b63a48ac8481334..c754a763688b52e7ddd47493296ef9b0c6adc527 100644
 --- a/Source/WebCore/platform/win/KeyEventWin.cpp
@@ -5635,18 +5705,15 @@ index 099ce74a3e08a66a060fb3a6095c12ea38f5b612..157873fe8ad24728321029019a53000b
      HashSet<Ref<NetworkResourceLoader>> m_keptAliveLoads;
  
 diff --git a/Source/WebKit/NetworkProcess/NetworkSocketStream.cpp b/Source/WebKit/NetworkProcess/NetworkSocketStream.cpp
-index d1fa427d82884fc43569d1bf0df7d728921502fc..59790afe7f4deedc69b3f020e23f2b50a38595cf 100644
+index d1fa427d82884fc43569d1bf0df7d728921502fc..30450ab01cddfcd406e46ac8e08ac50a2983f7a6 100644
 --- a/Source/WebKit/NetworkProcess/NetworkSocketStream.cpp
 +++ b/Source/WebKit/NetworkProcess/NetworkSocketStream.cpp
-@@ -43,7 +43,11 @@ Ref<NetworkSocketStream> NetworkSocketStream::create(NetworkProcess& networkProc
+@@ -43,7 +43,7 @@ Ref<NetworkSocketStream> NetworkSocketStream::create(NetworkProcess& networkProc
  NetworkSocketStream::NetworkSocketStream(NetworkProcess& networkProcess, URL&& url, PAL::SessionID sessionID, const String& credentialPartition, WebSocketIdentifier identifier, IPC::Connection& connection, SourceApplicationAuditToken&& auditData)
      : m_identifier(identifier)
      , m_connection(connection)
-+#if OS(WINDOWS)
+-    , m_impl(SocketStreamHandleImpl::create(url, *this, sessionID, credentialPartition, WTFMove(auditData), NetworkStorageSessionProvider::create(networkProcess, sessionID).ptr()))
 +    , m_impl(SocketStreamHandleImpl::create(url, networkProcess.networkSession(sessionID)->ignoreCertificateErrors(), *this, sessionID, credentialPartition, WTFMove(auditData), NetworkStorageSessionProvider::create(networkProcess, sessionID).ptr()))
-+#else
-     , m_impl(SocketStreamHandleImpl::create(url, *this, sessionID, credentialPartition, WTFMove(auditData), NetworkStorageSessionProvider::create(networkProcess, sessionID).ptr()))
-+#endif
  {
  }
  
