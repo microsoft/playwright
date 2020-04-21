@@ -173,8 +173,8 @@ describe('Page.$', function() {
   });
   it('should auto-detect text selector', async({page, server}) => {
     await page.setContent('<section>test</section>');
-    const element = await page.$('"test"');
-    expect(element).toBeTruthy();
+    expect(await page.$('"test"')).toBeTruthy();
+    expect(await page.$("'test'")).toBeTruthy();
   });
   it('should auto-detect css selector', async({page, server}) => {
     await page.setContent('<section>test</section>');
@@ -495,9 +495,13 @@ describe('text selector', () => {
     await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
     expect(await page.$eval(`text=ya`, e => e.outerHTML)).toBe('<div>ya</div>');
     expect(await page.$eval(`text="ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
+    expect(await page.$eval(`text='ya'`, e => e.outerHTML)).toBe('<div>ya</div>');
     expect(await page.$eval(`text=/^[ay]+$/`, e => e.outerHTML)).toBe('<div>ya</div>');
     expect(await page.$eval(`text=/Ya/i`, e => e.outerHTML)).toBe('<div>ya</div>');
     expect(await page.$eval(`text=ye`, e => e.outerHTML)).toBe('<div>\nye  </div>');
+
+    await page.setContent(`<div> " </div>`);
+    expect(await page.$eval(`text="`, e => e.outerHTML)).toBe('<div> " </div>');
 
     await page.setContent(`<div> ye </div><div>ye</div>`);
     expect(await page.$eval(`text="ye"`, e => e.outerHTML)).toBe('<div>ye</div>');

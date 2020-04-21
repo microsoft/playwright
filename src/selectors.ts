@@ -21,6 +21,7 @@ import { helper, assert } from './helper';
 import SelectorEvaluator from './injected/selectorEvaluator';
 import * as js from './javascript';
 import * as types from './types';
+import { hasTextSelectorSurroundings } from './injected/textSelectorEngine';
 
 const kEvaluatorSymbol = Symbol('evaluator');
 type EvaluatorData = {
@@ -184,7 +185,7 @@ export class Selectors {
       if (eqIndex !== -1 && part.substring(0, eqIndex).trim().match(/^[a-zA-Z_0-9-+:]+$/)) {
         name = part.substring(0, eqIndex).trim();
         body = part.substring(eqIndex + 1);
-      } else if (part.startsWith('"')) {
+      } else if (hasTextSelectorSurroundings(part)) {
         name = 'text';
         body = part;
       } else if (/^\(*\/\//.test(part)) {

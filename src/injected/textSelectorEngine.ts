@@ -48,17 +48,27 @@ export function createTextSelector(shadow: boolean): SelectorEngine {
   return engine;
 }
 
+const SINGLE_QUOTE_CHAR = "'";
+const DOUBLE_QUOTE_CHAR = '"';
+const isSurroundedBy = (text: string, check: string) => text.length > 2 && text[0] === check && text[text.length - 1] === check;
+export const hasTextSelectorSurroundings = (selector: string) => isSurroundedBy(selector, DOUBLE_QUOTE_CHAR) || isSurroundedBy(selector, SINGLE_QUOTE_CHAR);
+
 type Matcher = (text: string) => boolean;
 function createMatcher(selector: string): Matcher {
-  if (selector[0] === '"' && selector[selector.length - 1] === '"') {
-    const parsed = JSON.parse(selector);
+  // If the selector is surrounded by quotes test case sensitive
+  if (hasTextSelectorSurroundings(selector)) {
+    const innerText = selector.slice(1, selector.length - 1);
+    // Use JSON.parse since we want to parse escaped characters
+    const parsed = JSON.parse(`"${innerText}"`);
     return text => text === parsed;
   }
+  // If the selector is a RegExp, test for that
   if (selector[0] === '/' && selector.lastIndexOf('/') > 0) {
     const lastSlash = selector.lastIndexOf('/');
     const re = new RegExp(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
     return text => re.test(text);
   }
+  // Otherwise case insensitive
   selector = selector.trim().toLowerCase();
   return text => text.toLowerCase().includes(selector);
 }
