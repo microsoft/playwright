@@ -25,63 +25,52 @@ if ! command -v npm >/dev/null; then
   exit 1
 fi
 
-if [[ (-n $CI) && (-n $NPM_AUTH_TOKEN) ]]; then
-  echo "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}" > $HOME/.npmrc
-fi
-
 if ! npm whoami >/dev/null 2>&1; then
-  echo "ERROR: NPM failed to log in"
-  exit 1
-fi
-
-UPSTREAM_SHA=$(git ls-remote https://github.com/microsoft/playwright --tags master | cut -f1)
-CURRENT_SHA=$(git rev-parse HEAD)
-
-if [[ "${UPSTREAM_SHA}" != "${CURRENT_SHA}" ]]; then
-  echo "REFUSING TO PUBLISH: this is not tip-of-tree"
+  echo "ERROR: NPM is not logged in."
   exit 1
 fi
 
 cd ..
 
+NPM_PUBLISH_TAG="next"
+VERSION=$(node -e 'console.log(require("./package.json").version)')
+
 if [[ $1 == "--release" ]]; then
-  if [[ -n $CI ]]; then
-    echo "Found \$CI env - cannot publish real release from CI"
-    exit 1
-  fi
   if [[ -n $(git status -s) ]]; then
     echo "ERROR: git status is dirty; some uncommitted changes or untracked files"
     exit 1
   fi
-  VERSION=$(node -e 'console.log(require("./package.json").version)')
-  echo -n "Publish Playwright v${VERSION} (y/N)? "
-  read ANSWER
-  if [[ "$ANSWER" != "y" ]]; then
-    echo "Bailing out."
+  # Ensure package version does not contain dash.
+  if [[ "${VERSION}" == *-* ]]; then
+    echo "ERROR: cannot publish pre-release version with --release flag"
+    exit 1
+  fi
+  NPM_PUBLISH_TAG="latest"
+elif [[ $1 == "--tip-of-tree" ]]; then
+  # Ensure package version contains dash.
+  if [[ "${VERSION}" != *-* ]]; then
+    echo "ERROR: cannot publish release version with --tip-of-tree flag"
     exit 1
   fi
 
-  npm run clean
-  npm publish .
-  npm publish packages/playwright-firefox
-  npm publish packages/playwright-webkit
-  npm publish packages/playwright-chromium
-  npm publish packages/playwright
-  echo "Done."
-elif [[ $1 == "--tip-of-tree" ]]; then
-  if [[ -z $CI ]]; then
-    echo "Did not find \$CI env - cannot publish tip-of-tree release not from CI"
+  # Ensure this is actually tip-of-tree.
+  UPSTREAM_SHA=$(git ls-remote https://github.com/microsoft/playwright --tags master | cut -f1)
+  CURRENT_SHA=$(git rev-parse HEAD)
+  if [[ "${UPSTREAM_SHA}" != "${CURRENT_SHA}" ]]; then
+    echo "REFUSING TO PUBLISH: this is not tip-of-tree"
     exit 1
   fi
-  npm run clean
-  npm publish . --tag="next"
-  npm publish packages/playwright-firefox --tag="next"
-  npm publish packages/playwright-webkit --tag="next"
-  npm publish packages/playwright-chromium --tag="next"
-  npm publish packages/playwright --tag="next"
-  echo "Done."
+  NPM_PUBLISH_TAG="next"
 else
   echo "unknown argument - '$1'"
   exit 1
 fi
 
+npm run clean
+npm publish .                            --tag="${NPM_PUBLISH_TAG}" --dry-run
+npm publish packages/playwright-firefox  --tag="${NPM_PUBLISH_TAG}" --dry-run
+npm publish packages/playwright-webkit   --tag="${NPM_PUBLISH_TAG}" --dry-run
+npm publish packages/playwright-chromium --tag="${NPM_PUBLISH_TAG}" --dry-run
+npm publish packages/playwright          --tag="${NPM_PUBLISH_TAG}" --dry-run
+
+echo "Done."
