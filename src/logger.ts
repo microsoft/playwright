@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as util from 'util';
+import * as debug from 'debug';
 
 export type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
 
@@ -40,70 +40,60 @@ export function logError(logger: Logger): (error: Error) => void {
   return error => logger._log(errorLog, error, []);
 }
 
-const colorMap = new Map<string, number>([
-  ['black', 30],
-  ['red', 31],
-  ['green', 32],
-  ['yellow', 33],
-  ['blue', 34],
-  ['magenta', 35],
-  ['cyan', 36],
-  ['white', 37],
-  ['reset', 0],
-]);
-
 export class RootLogger implements Logger {
   private _userSink: LoggerSink | undefined;
-  private _consoleSink: ConsoleLoggerSink;
+  private _debugSink: DebugLoggerSink;
 
   constructor(userSink: LoggerSink | undefined) {
     this._userSink = userSink;
-    this._consoleSink = new ConsoleLoggerSink();
+    this._debugSink = new DebugLoggerSink();
   }
 
   _isLogEnabled(log: Log): boolean {
     return (this._userSink && this._userSink.isEnabled(log.name, log.severity || 'info')) ||
-        this._consoleSink.isEnabled(log.name, log.severity || 'info');
+        this._debugSink.isEnabled(log.name, log.severity || 'info');
   }
 
   _log(log: Log, message: string | Error, ...args: any[]) {
     if (this._userSink && this._userSink.isEnabled(log.name, log.severity || 'info'))
       this._userSink.log(log.name, log.severity || 'info', message, args, log.color ? { color: log.color } : {});
-    if (this._consoleSink.isEnabled(log.name, log.severity || 'info'))
-      this._consoleSink.log(log.name, log.severity || 'info', message, args, log.color ? { color: log.color } : {});
+    if (this._debugSink.isEnabled(log.name, log.severity || 'info'))
+      this._debugSink.log(log.name, log.severity || 'info', message, args, log.color ? { color: log.color } : {});
   }
 }
 
-class ConsoleLoggerSink implements LoggerSink {
-  private _enabled: string[];
-  private _enabledCache = new Map<string, boolean>();
+const colorMap = new Map<string, number>([
+  ['red', 160],
+  ['green', 34],
+  ['yellow', 172],
+  ['blue', 33],
+  ['magenta', 207],
+  ['cyan', 45],
+  ['reset', 0],
+]);
 
-  constructor() {
-    this._enabled = process.env.PWDEBUG ? process.env.PWDEBUG.split(',') : [];
-  }
+class DebugLoggerSink implements LoggerSink {
+  private _debuggers = new Map<string, debug.IDebugger>();
 
   isEnabled(name: string, severity: LoggerSeverity): boolean {
-    const result = this._enabledCache.get(name);
-    if (typeof result === 'boolean')
-      return result;
-
-    for (const logger of this._enabled) {
-      if (name.includes(logger)) {
-        this._enabledCache.set(name, true);
-        return true;
-      }
-    }
-    this._enabledCache.set(name, false);
-    return false;
+    return debug.enabled('pw:' + name);
   }
 
   log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }) {
-    let color = hints.color || 'reset';
-    switch (severity) {
-      case 'error': color = 'red'; break;
-      case 'warning': color = 'yellow'; break;
+    let cachedDebugger = this._debuggers.get(name);
+    if (!cachedDebugger) {
+      cachedDebugger = debug('pw:' + name);
+      this._debuggers.set(name, cachedDebugger);
+
+      let color = hints.color || 'reset';
+      switch (severity) {
+        case 'error': color = 'red'; break;
+        case 'warning': color = 'yellow'; break;
+      }
+      const escaped = colorMap.get(color) || 0;
+      if (escaped)
+        (cachedDebugger as any).color = String(escaped);
     }
-    const escape = colorMap.get(color) || 0;
-    console.log(`[${new Date().toISOString()}:\u001b[${escape}m${name}\u001b[0m] ${util.format(message, ...args)}`);  // eslint-disable-line no-console
+    cachedDebugger(message, ...args);
   }
 }
