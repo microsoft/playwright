@@ -58,4 +58,5 @@
     - Storybooks
 1. [Extensibility](./extensibility.md)
     - [Custom selector engines](./extensibility.md#custom-selector-engines)
+1. [Managing browser binaries](./browsers.md)
 1. [API Reference](./api.md)
