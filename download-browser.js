@@ -48,7 +48,7 @@ function downloadOptionsFromENV(packagePath, browserName) {
 
 async function downloadBrowserWithProgressBar(options) {
   if (options.skipBrowserDownload) {
-    logPolitely('Skipping browsers download since `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
+    logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
     return;
   }
   let progressBar = null;

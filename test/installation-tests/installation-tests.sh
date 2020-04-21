@@ -80,7 +80,7 @@ function test_skip_browser_download {
 
   npm install ${PLAYWRIGHT_CORE_TGZ}
   OUTPUT=$(PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ})
-  if [[ "${OUTPUT}" != *"Skipping browsers download since"* ]]; then
+  if [[ "${OUTPUT}" != *"Skipping browsers download because"* ]]; then
     echo "missing log message that browsers download is skipped"
     exit 1
   fi
