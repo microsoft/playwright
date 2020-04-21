@@ -196,6 +196,13 @@ function collect(browserNames) {
     testRunner.focusMatchingTests(new RegExp(filter, 'i'));
   }
 
+  const fileArgIndex = process.argv.indexOf('--file');
+  if (fileArgIndex !== -1) {
+    console.log(process.argv);
+    const filter = process.argv[fileArgIndex + 1];
+    testRunner.focusMatchingFilePath(new RegExp(filter, 'i'));
+  }
+
   const repeatArgIndex = process.argv.indexOf('--repeat');
   if (repeatArgIndex !== -1) {
     const repeat = parseInt(process.argv[repeatArgIndex + 1], 10);

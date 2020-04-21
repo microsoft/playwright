@@ -89,6 +89,15 @@ class DefaultTestRunner {
     }
   }
 
+  focusMatchingFilePath(filepathRegex) {
+    for (const test of this._collector.tests()) {
+      if (filepathRegex.test(test.location().filePath())) {
+        console.log('filtere: ' + test.fullName());
+        this._filter.markFocused(test);
+      }
+    }
+  }
+
   repeatAll(repeatCount) {
     this._repeater.repeat(this._collector.rootSuite(), repeatCount);
   }
