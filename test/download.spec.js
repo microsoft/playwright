@@ -51,6 +51,25 @@ describe('Download', function() {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   });
+  it.fail(WEBKIT)('should report non-navigation downloads', async({browser, server}) => {
+    // Our WebKit embedder does not download in this case.
+    server.setRoute('/download', (req, res) => {
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.end(`Hello world`);
+    });
+
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent(`<a download="file.txt" href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const path = await download.path();
+    expect(fs.existsSync(path)).toBeTruthy();
+    expect(fs.readFileSync(path).toString()).toBe('Hello world');
+    await page.close();
+  });
   it('should delete file', async({browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);
