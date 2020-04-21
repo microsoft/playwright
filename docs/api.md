@@ -4148,6 +4148,7 @@ If Playwright doesn't find them in the environment, a lowercased variant of thes
 
 - `PLAYWRIGHT_DOWNLOAD_HOST` - overwrite URL prefix that is used to download browsers. Note: this includes protocol and might even include path prefix. By default, Playwright uses `https://storage.googleapis.com` to download Chromium and `https://playwright.azureedge.net` to download Webkit & Firefox.
 - `PLAYWRIGHT_BROWSERS_PATH` - specify a shared folder that playwright will use to download browsers and to look for browsers when launching browser instances.
+- `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` - set to non-empty value to skip browser downloads altogether.
 
 ```sh
 # Install browsers to the shared location.

@@ -37,6 +37,7 @@ function downloadOptionsFromENV(packagePath, browserName) {
       path.join(packagePath, '.local-browsers', browserName);
   return {
     downloadPath,
+    skipBrowserDownload: getFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'),
     progressBarBrowserName: `${browserName} for playwright v${packageJSON.version}`,
     revision: packageJSON.playwright[`${browserName}_revision`],
     browser: browserName,
@@ -46,6 +47,10 @@ function downloadOptionsFromENV(packagePath, browserName) {
 }
 
 async function downloadBrowserWithProgressBar(options) {
+  if (options.skipBrowserDownload) {
+    logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
+    return;
+  }
   let progressBar = null;
   let lastDownloadedBytes = 0;
   function progress(downloadedBytes, totalBytes) {
