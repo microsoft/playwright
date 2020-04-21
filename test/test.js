@@ -190,26 +190,6 @@ function collect(browserNames) {
       delete global[key];
   }
 
-  const filterArgIndex = process.argv.indexOf('--filter');
-  if (filterArgIndex !== -1) {
-    const filter = process.argv[filterArgIndex + 1];
-    testRunner.focusMatchingTests(new RegExp(filter, 'i'));
-  }
-
-  const fileArgIndex = process.argv.indexOf('--file');
-  if (fileArgIndex !== -1) {
-    console.log(process.argv);
-    const filter = process.argv[fileArgIndex + 1];
-    testRunner.focusMatchingFilePath(new RegExp(filter, 'i'));
-  }
-
-  const repeatArgIndex = process.argv.indexOf('--repeat');
-  if (repeatArgIndex !== -1) {
-    const repeat = parseInt(process.argv[repeatArgIndex + 1], 10);
-    if (!isNaN(repeat))
-      testRunner.repeatAll(repeat);
-  }
-
   return testRunner;
 }
 
@@ -221,5 +201,31 @@ if (require.main === module) {
     return process.env.BROWSER === name || process.env.BROWSER === 'all';
   });
   const testRunner = collect(browserNames);
+
+  const filterArgIndex = process.argv.indexOf('--filter');
+  if (filterArgIndex !== -1) {
+    const filter = process.argv[filterArgIndex + 1];
+    if (!testRunner.focusMatchingNameTests(new RegExp(filter, 'i')).length) {
+      console.log('ERROR: no tests matched given `--filter` regex.');
+      process.exit(1);
+    }
+  }
+
+  const fileArgIndex = process.argv.indexOf('--file');
+  if (fileArgIndex !== -1) {
+    const filter = process.argv[fileArgIndex + 1];
+    if (!testRunner.focusMatchingFilePath(new RegExp(filter, 'i')).length) {
+      console.log('ERROR: no files matched given `--file` regex.');
+      process.exit(1);
+    }
+  }
+
+  const repeatArgIndex = process.argv.indexOf('--repeat');
+  if (repeatArgIndex !== -1) {
+    const repeat = parseInt(process.argv[repeatArgIndex + 1], 10);
+    if (!isNaN(repeat))
+      testRunner.repeatAll(repeat);
+  }
+
   testRunner.run().then(() => { delete global.expect; });
 }
