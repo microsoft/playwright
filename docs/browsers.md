@@ -33,7 +33,7 @@ $ PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i playwright
 
 ## Share browser binaries across projects
 
-Often developers work with multiple NPM projects that all use Playwright.
+Often times, developers work with multiple NPM projects that all use Playwright.
 By default, every project will have browser binaries in its own `node_modules/` folder.
 To save the disk space and to speedup installation, Playwright can re-use
 these binaries.
