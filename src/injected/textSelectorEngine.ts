@@ -59,7 +59,7 @@ function createMatcher(selector: string): Matcher {
   if (hasTextSelectorSurroundings(selector)) {
     const innerText = selector.slice(1, selector.length - 1);
     // Use JSON.parse since we want to parse escaped characters
-    const parsed = JSON.parse(`"${innerText}"`);
+    const parsed = innerText.includes('\\') ? JSON.parse(`"${innerText}"`) : innerText;
     return text => text === parsed;
   }
   // If the selector is a RegExp, test for that

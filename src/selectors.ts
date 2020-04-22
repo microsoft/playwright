@@ -21,13 +21,17 @@ import { helper, assert } from './helper';
 import SelectorEvaluator from './injected/selectorEvaluator';
 import * as js from './javascript';
 import * as types from './types';
-import { hasTextSelectorSurroundings } from './injected/textSelectorEngine';
 
 const kEvaluatorSymbol = Symbol('evaluator');
 type EvaluatorData = {
   promise: Promise<js.JSHandle<SelectorEvaluator>>,
   generation: number,
 };
+
+const SINGLE_QUOTE_CHAR = "'";
+const DOUBLE_QUOTE_CHAR = '"';
+const isSurroundedBy = (text: string, check: string) => text.length > 2 && text[0] === check && text[text.length - 1] === check;
+export const hasTextSelectorSurroundings = (selector: string) => isSurroundedBy(selector, DOUBLE_QUOTE_CHAR) || isSurroundedBy(selector, SINGLE_QUOTE_CHAR);
 
 export class Selectors {
   readonly _builtinEngines: Set<string>;
@@ -187,7 +191,8 @@ export class Selectors {
         body = part.substring(eqIndex + 1);
       } else if (hasTextSelectorSurroundings(part)) {
         name = 'text';
-        body = part;
+        const innerText = part.slice(1, part.length - 1);
+        body = innerText.includes('\\') ? JSON.parse(`"${innerText}"`) : innerText;
       } else if (/^\(*\/\//.test(part)) {
         // If selector starts with '//' or '//' prefixed with multiple opening
         // parenthesis, consider xpath. @see https://github.com/microsoft/playwright/issues/817
