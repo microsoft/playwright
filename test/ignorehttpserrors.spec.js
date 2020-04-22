@@ -60,7 +60,7 @@ describe('ignoreHTTPSErrors', function() {
     expect(await page.frames()[1].evaluate('2 + 3')).toBe(5);
     await context.close();
   });
-  it.fail(WEBKIT && MAC)('should work with WebSocket', async({browser, httpsServer}) => {
+  it('should work with WebSocket', async({browser, httpsServer}) => {
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
     const page = await context.newPage();
     const value = await page.evaluate(endpoint => {
