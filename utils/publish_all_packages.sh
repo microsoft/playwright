@@ -53,13 +53,6 @@ elif [[ $1 == "--tip-of-tree" ]]; then
     exit 1
   fi
 
-  # Ensure this is actually tip-of-tree.
-  UPSTREAM_SHA=$(git ls-remote https://github.com/microsoft/playwright --tags master | cut -f1)
-  CURRENT_SHA=$(git rev-parse HEAD)
-  if [[ "${UPSTREAM_SHA}" != "${CURRENT_SHA}" ]]; then
-    echo "REFUSING TO PUBLISH: this is not tip-of-tree"
-    exit 1
-  fi
   NPM_PUBLISH_TAG="next"
 else
   echo "unknown argument - '$1'"
