@@ -172,10 +172,9 @@ describe('Page.goto', function() {
     await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
     await page.goto(httpsServer.EMPTY_PAGE).catch(e => void 0);
   });
-  it('should throw if networkidle0 is passed as an option', async({page, server}) => {
+  it('should not throw if networkidle0 is passed as an option', async({page, server}) => {
     let error = null;
-    await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle0'}).catch(err => error = err);
-    expect(error.message).toContain('Unsupported waitUntil option');
+    await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle0'});
   });
   it('should throw if networkidle2 is passed as an option', async({page, server}) => {
     let error = null;

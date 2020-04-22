@@ -1112,6 +1112,8 @@ export class FrameTask {
   }
 
   waitForLifecycle(waitUntil: types.LifecycleEvent): Promise<void> {
+    if (waitUntil as unknown === 'networkidle0')
+      waitUntil = 'networkidle';
     if (!types.kLifecycleEvents.has(waitUntil))
       throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
     return this.raceAgainstFailures(new Promise((resolve, reject) => {
