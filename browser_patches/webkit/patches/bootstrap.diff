@@ -14390,10 +14390,10 @@ index 0000000000000000000000000000000000000000..00fb6b0006c743091a8bbf8edb18b211
 +</Scheme>
 diff --git a/Tools/Playwright/mac/AppDelegate.h b/Tools/Playwright/mac/AppDelegate.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..ff88daf2035365d0f1d19c5adc47b467c7d4e980
+index 0000000000000000000000000000000000000000..ccc73af47f7bdb4813a9a1e6fb8d55d5d837c8d7
 --- /dev/null
 +++ b/Tools/Playwright/mac/AppDelegate.h
-@@ -0,0 +1,54 @@
+@@ -0,0 +1,51 @@
 +/*
 + * Copyright (C) 2010 Apple Inc. All rights reserved.
 + *
@@ -14428,7 +14428,6 @@ index 0000000000000000000000000000000000000000..ff88daf2035365d0f1d19c5adc47b467
 +@end
 +
 +@interface BrowserAppDelegate : NSObject <NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate, _WKBrowserInspectorDelegate, _WKDownloadDelegate> {
-+    NSMutableSet *_browserWindowControllers;
 +    NSMutableSet *_headlessWindows;
 +    NSMutableSet *_browserContexts;
 +    bool _headless;
@@ -14439,8 +14438,6 @@ index 0000000000000000000000000000000000000000..ff88daf2035365d0f1d19c5adc47b467
 +    IBOutlet NSMenuItem *_newWebKit2WindowItem;
 +}
 +
-+- (void)browserWindowWillClose:(NSWindow *)window;
-+
 +@end
 +
 +@interface NSApplication (PlaywrightApplicationExtensions)
@@ -14450,10 +14447,10 @@ index 0000000000000000000000000000000000000000..ff88daf2035365d0f1d19c5adc47b467
 +@end
 diff --git a/Tools/Playwright/mac/AppDelegate.m b/Tools/Playwright/mac/AppDelegate.m
 new file mode 100644
-index 0000000000000000000000000000000000000000..6eb18b8f492fe3937d2c38b36b4daebbe2199586
+index 0000000000000000000000000000000000000000..d46e0dbe9677760b63de22b837a08404a8042dd2
 --- /dev/null
 +++ b/Tools/Playwright/mac/AppDelegate.m
-@@ -0,0 +1,440 @@
+@@ -0,0 +1,405 @@
 +/*
 + * Copyright (C) 2010-2016 Apple Inc. All rights reserved.
 + *
@@ -14539,6 +14536,7 @@ index 0000000000000000000000000000000000000000..6eb18b8f492fe3937d2c38b36b4daebb
 +- (id)init
 +{
 +    self = [super init];
++
 +    if (!self)
 +        return nil;
 +
@@ -14569,7 +14567,6 @@ index 0000000000000000000000000000000000000000..6eb18b8f492fe3937d2c38b36b4daebb
 +        _dialogs = [[NSMutableSet alloc] init];
 +    } else {
 +        [NSApp activateIgnoringOtherApps:YES];
-+        _browserWindowControllers = [[NSMutableSet alloc] init];
 +    }
 +    if ([arguments containsObject: @"--inspector-pipe"])
 +        [_WKBrowserInspector initializeRemoteInspectorPipe:self headless:_headless];
@@ -14651,23 +14648,6 @@ index 0000000000000000000000000000000000000000..6eb18b8f492fe3937d2c38b36b4daebb
 +    return configuration;
 +}
 +
-+- (BrowserWindowController *)createBrowserWindowController:(id)sender
-+{
-+    if (_headless)
-+        return nil;
-+
-+    BrowserWindowController *controller = [[[BrowserWindowController alloc] initWithConfiguration:[self defaultConfiguration]] autorelease];
-+    if (!controller)
-+        return nil;
-+    [_browserWindowControllers addObject:controller];
-+    return controller;
-+}
-+
-+- (void)browserWindowWillClose:(NSWindow *)window
-+{
-+    [_browserWindowControllers removeObject:window.windowController];
-+}
-+
 +- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 +{
 +    if (!_headless)
@@ -14678,22 +14658,6 @@ index 0000000000000000000000000000000000000000..6eb18b8f492fe3937d2c38b36b4daebb
 +
 +    [self createNewPage:0];
 +    _initialURL = nil;
-+}
-+
-+- (BrowserWindowController *)frontmostBrowserWindowController
-+{
-+    for (NSWindow* window in [NSApp windows]) {
-+        id delegate = [window delegate];
-+
-+        if (![delegate isKindOfClass:[BrowserWindowController class]])
-+            continue;
-+
-+        BrowserWindowController *controller = (BrowserWindowController *)delegate;
-+        assert([_browserWindowControllers containsObject:controller]);
-+        return controller;
-+    }
-+
-+    return nil;
 +}
 +
 +- (void)_updateNewWindowKeyEquivalents
@@ -14729,19 +14693,17 @@ index 0000000000000000000000000000000000000000..6eb18b8f492fe3937d2c38b36b4daebb
 +
 +- (WKWebView *)createHeadfulPage:(WKWebViewConfiguration *)configuration withURL:(NSString*)urlString
 +{
-+
-+    BrowserWindowController *controller = [[[BrowserWindowController alloc] initWithConfiguration:configuration] autorelease];
++    // WebView lifecycle will control the BrowserWindowController life times.
++    BrowserWindowController *controller = [[BrowserWindowController alloc] initWithConfiguration:configuration];
 +    if (!controller)
 +        return nil;
-+    [[controller window] makeKeyAndOrderFront:nil];
-+    [_browserWindowControllers addObject:controller];
 +    [controller loadURLString:urlString];
 +    return [controller webView];
 +}
 +
 +- (WKWebView *)createHeadlessPage:(WKWebViewConfiguration *)configuration withURL:(NSString*)urlString
 +{
-+    NSRect rect = NSMakeRect(0, 0, 1024, 768);
++    NSRect rect = NSMakeRect(0, 0, 1280, 720);
 +    NSScreen *firstScreen = [[NSScreen screens] objectAtIndex:0];
 +    NSRect windowRect = NSOffsetRect(rect, -10000, [firstScreen frame].size.height - rect.size.height + 10000);
 +    NSWindow* window = [[NSWindow alloc] initWithContentRect:windowRect styleMask:NSWindowStyleMaskBorderless backing:(NSBackingStoreType)_NSBackingStoreUnbuffered defer:YES];
@@ -15107,10 +15069,10 @@ index 0000000000000000000000000000000000000000..4dbf13c8fb31a745ae8e1965a457d4fb
 +@end
 diff --git a/Tools/Playwright/mac/BrowserWindowController.m b/Tools/Playwright/mac/BrowserWindowController.m
 new file mode 100644
-index 0000000000000000000000000000000000000000..8d4cf055b4e93f2990801cfbddc20182534ce594
+index 0000000000000000000000000000000000000000..c48697f7cfd699e3da720be6d9e4d0db90726984
 --- /dev/null
 +++ b/Tools/Playwright/mac/BrowserWindowController.m
-@@ -0,0 +1,838 @@
+@@ -0,0 +1,839 @@
 +/*
 + * Copyright (C) 2010-2016 Apple Inc. All rights reserved.
 + *
@@ -15308,6 +15270,7 @@ index 0000000000000000000000000000000000000000..8d4cf055b4e93f2990801cfbddc20182
 +    _configuration = [configuration copy];
 +    _isPrivateBrowsingWindow = !_configuration.websiteDataStore.isPersistent;
 +    self.window.styleMask &= ~NSWindowStyleMaskFullSizeContentView;
++    [self.window makeKeyAndOrderFront:nil];
 +    return self;
 +}
 +
@@ -15495,10 +15458,11 @@ index 0000000000000000000000000000000000000000..8d4cf055b4e93f2990801cfbddc20182
 +
 +- (void)windowWillClose:(NSNotification *)notification
 +{
-+    [[[NSApplication sharedApplication] browserAppDelegate] browserWindowWillClose:self.window];
 +    [_webView removeObserver:self forKeyPath:@"title"];
 +    [_webView removeObserver:self forKeyPath:@"URL"];
-+    [self autorelease];
++    [_webView removeFromSuperview];
++    _textFinder.hideInterfaceCallback = nil;
++    [self release];
 +}
 +
 +- (void)webViewDidClose:(WKWebView *)webView {
@@ -15571,9 +15535,8 @@ index 0000000000000000000000000000000000000000..8d4cf055b4e93f2990801cfbddc20182
 +
 +- (nullable WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
 +{
++    // WebView lifecycle will control the BrowserWindowController life times.
 +    BrowserWindowController *controller = [[BrowserWindowController alloc] initWithConfiguration:configuration];
-+    [controller.window makeKeyAndOrderFront:self];
-+
 +    return controller->_webView;
 +}
 +
