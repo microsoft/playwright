@@ -28,7 +28,7 @@ describe('Download', function() {
   });
 
   it('should report downloads with acceptDownloads: false', async({page, server}) => {
-    await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
@@ -41,7 +41,7 @@ describe('Download', function() {
   });
   it('should report downloads with acceptDownloads: true', async({browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
-    await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
@@ -52,7 +52,7 @@ describe('Download', function() {
     await page.close();
   });
   it.fail(WEBKIT)('should report non-navigation downloads', async({browser, server}) => {
-    // Our WebKit embedder does not download in this case.
+    // Our WebKit embedder does not download in this case, although Safari does.
     server.setRoute('/download', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
       res.end(`Hello world`);
@@ -70,9 +70,30 @@ describe('Download', function() {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   });
+  it.skip(FFOX).fail(CHROMIUM || WEBKIT)('should report alt-click downloads', async({browser, server}) => {
+    // Firefox does not download on alt-click by default.
+    // Our WebKit embedder does not download on alt-click, although Safari does.
+    // Chromium hangs waiting for navigation because of Page.frameRequestedNavigation.
+    server.setRoute('/download', (req, res) => {
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.end(`Hello world`);
+    });
+
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a', { modifiers: ['Alt']})
+    ]);
+    const path = await download.path();
+    expect(fs.existsSync(path)).toBeTruthy();
+    expect(fs.readFileSync(path).toString()).toBe('Hello world');
+    await page.close();
+  });
   it('should delete file', async({browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
-    await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
@@ -85,7 +106,7 @@ describe('Download', function() {
   });
   it('should expose stream', async({browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
-    await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
@@ -100,7 +121,7 @@ describe('Download', function() {
   });
   it('should delete downloads on context destruction', async({browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
-    await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download1 ] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
@@ -120,7 +141,7 @@ describe('Download', function() {
   it('should delete downloads on browser gone', async ({ server, browserType, defaultBrowserOptions }) => {
     const browser = await browserType.launch(defaultBrowserOptions);
     const page = await browser.newPage({ acceptDownloads: true });
-    await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download1 ] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
