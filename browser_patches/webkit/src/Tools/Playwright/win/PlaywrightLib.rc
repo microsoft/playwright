@@ -1,0 +1,354 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "PlaywrightLibResource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_PLAYWRIGHT         ICON                    "Playwright.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDC_PLAYWRIGHT MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "New Window\tCtrl-N"           IDM_NEW_WINDOW
+        MENUITEM "Close\tCtrl-W",               IDM_CLOSE_WINDOW
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "Actual Size\tCtrl+0",         IDM_ACTUAL_SIZE
+        MENUITEM "Zoom In\tCtrl++",             IDM_ZOOM_IN
+        MENUITEM "Zoom Out\tCtrl+-",            IDM_ZOOM_OUT
+        MENUITEM "Invert Colors",               IDM_INVERT_COLORS
+    END
+    POPUP "&History"
+    BEGIN
+        MENUITEM "Reload\tCtrl-R",              IDM_RELOAD
+        MENUITEM "Back",                        IDM_HISTORY_BACKWARD
+        MENUITEM "Forward",                     IDM_HISTORY_FORWARD
+    END
+    POPUP "D&evelop"
+    BEGIN
+        MENUITEM "Show Web Inspector",          IDM_WEB_INSPECTOR
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About ...",                  IDM_ABOUT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDC_PLAYWRIGHT ACCELERATORS
+BEGIN
+    "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
+    "0",            IDM_ACTUAL_SIZE,        VIRTKEY, CONTROL, NOINVERT
+    "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
+    "R",            IDM_RELOAD,             VIRTKEY, CONTROL, NOINVERT
+    "N",            IDM_NEW_WINDOW,         VIRTKEY, CONTROL, NOINVERT
+    VK_ADD,         IDM_ZOOM_IN,            VIRTKEY, CONTROL, NOINVERT
+    VK_OEM_MINUS,   IDM_ZOOM_OUT,           VIRTKEY, CONTROL, NOINVERT
+    VK_OEM_PLUS,    IDM_ZOOM_IN,            VIRTKEY, CONTROL, NOINVERT
+    VK_SUBTRACT,    IDM_ZOOM_OUT,           VIRTKEY, CONTROL, NOINVERT
+END
+
+IDR_ACCELERATORS_PRE ACCELERATORS
+BEGIN
+    "W",            IDM_CLOSE_WINDOW,       VIRTKEY, CONTROL, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 22, 17, 230, 41
+STYLE DS_SETFONT | DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "About"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    ICON            IDI_PLAYWRIGHT,IDC_MYICON,14,9,20,20
+    LTEXT           "Playwright Version 1.1",IDC_STATIC,49,10,119,8
+    LTEXT           "Copyright (C) 2015-2019",IDC_STATIC,49,20,119,8
+    DEFPUSHBUTTON   "OK",IDOK,186,10,30,11,WS_GROUP
+END
+
+IDD_CACHES DIALOGEX 0, 0, 401, 456
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,287,435,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,344,435,50,14
+    GROUPBOX        "FastMalloc",IDC_STATIC,208,14,186,67
+    GROUPBOX        "WebCore Cache",IDC_STATIC,17,83,376,105
+    GROUPBOX        "JavaScript Heap",IDC_STATIC,18,193,376,168
+    GROUPBOX        "Site Icon Database",IDC_STATIC,18,366,142,65
+    GROUPBOX        "Font and Glyph Caches",IDC_STATIC,168,366,226,66
+    GROUPBOX        "CFURLCache",IDC_STATIC,7,14,197,67
+    PUSHBUTTON      "Empty URLCache",IDC_EMPTY_URL_CACHE,131,63,69,14,WS_DISABLED
+    PUSHBUTTON      "Return Free Memory",IDC_RETURN_FREE_MEMORY,308,63,76,14,WS_DISABLED
+    PUSHBUTTON      "Empty WebCore Cache",IDC_EMPTY_WEBCORE_CACHE,21,170,83,14,WS_DISABLED
+    CONTROL         "Disable WebCore Cache",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,119,172,93,10
+    PUSHBUTTON      "Garbage Collect JavaScript Objects",IDC_GC_JSC,253,343,135,14,WS_DISABLED
+    RTEXT           "Reserved VM",IDC_STATIC,212,26,67,9
+    RTEXT           "0",IDC_RESERVED_VM,290,26,94,8
+    RTEXT           "Committed VM",IDC_STATIC,211,39,67,8
+    RTEXT           "0",IDC_COMMITTED_VM,290,39,94,8
+    RTEXT           "Free List Bytes",IDC_STATIC,211,52,67,8
+    RTEXT           "0",IDC_FREE_LIST_BYTES,290,52,94,8
+    RTEXT           "Images",IDC_STATIC,37,106,24,8
+    RTEXT           "CSS",IDC_STATIC,47,116,14,8
+    RTEXT           "XSL",IDC_STATIC,49,126,12,8
+    RTEXT           "JavaScript",IDC_STATIC,27,135,34,8
+    RTEXT           "Total",IDC_STATIC,43,146,17,8
+    LTEXT           "Objects",IDC_STATIC,111,96,26,8
+    LTEXT           "Bytes",IDC_STATIC,175,96,19,8
+    LTEXT           "Live",IDC_STATIC,232,96,14,8
+    LTEXT           "Decoded",IDC_STATIC,284,96,29,8
+    LTEXT           "Purgeable",IDC_STATIC,351,96,33,8
+    RTEXT           "0",IDC_IMAGES_OBJECT_COUNT,100,106,32,8
+    RTEXT           "0",IDC_CSS_OBJECT_COUNT,100,116,32,8
+    RTEXT           "0",IDC_XSL_OBJECT_COUNT,100,126,32,8
+    RTEXT           "0",IDC_JSC_OBJECT_COUNT,100,135,32,8
+    RTEXT           "0",IDC_TOTAL_OBJECT_COUNT,100,146,32,8
+    RTEXT           "0",IDC_IMAGES_BYTES,162,106,32,8
+    RTEXT           "0",IDC_CSS_BYTES,162,116,32,8
+    RTEXT           "0",IDC_XSL_BYTES,162,126,32,8
+    RTEXT           "0",IDC_JSC_BYTES,162,135,32,8
+    RTEXT           "0",IDC_TOTAL_BYTES,162,146,32,8
+    RTEXT           "0",IDC_IMAGES_LIVE_COUNT,221,106,32,8
+    RTEXT           "0",IDC_CSS_LIVE_COUNT,221,116,32,8
+    RTEXT           "0",IDC_XSL_LIVE_COUNT,221,126,32,8
+    RTEXT           "0",IDC_JSC_LIVE_COUNT,221,135,32,8
+    RTEXT           "0",IDC_TOTAL_LIVE_COUNT,221,146,32,8
+    RTEXT           "0",IDC_IMAGES_DECODED_COUNT,284,106,32,8
+    RTEXT           "0",IDC_CSS_DECODED_COUNT,284,116,32,8
+    RTEXT           "0",IDC_XSL_DECODED_COUNT,284,126,32,8
+    RTEXT           "0",IDC_JSC_DECODED_COUNT,284,135,32,8
+    RTEXT           "0",IDC_TOTAL_DECODED,284,146,32,8
+    RTEXT           "0",IDC_IMAGES_PURGEABLE_COUNT,354,106,32,8
+    RTEXT           "0",IDC_CSS_PURGEABLE_COUNT,354,116,32,8
+    RTEXT           "0",IDC_XSL_PURGEABLE_COUNT,354,126,32,8
+    RTEXT           "0",IDC_JSC_PURGEABLE_COUNT,354,135,32,8
+    RTEXT           "0",IDC_TOTAL_PURGEABLE,354,146,32,8
+    RTEXT           "Total Objects",IDC_STATIC,63,207,44,8
+    RTEXT           "Global Objects",IDC_STATIC,56,217,51,8
+    RTEXT           "Protected Objects",IDC_STATIC,48,227,59,8
+    RTEXT           "0",IDC_TOTAL_JSC_HEAP_OBJECTS,127,207,56,8
+    RTEXT           "0",IDC_GLOBAL_JSC_HEAP_OBJECTS,127,217,56,8
+    RTEXT           "0",IDC_PROTECTED_JSC_HEAP_OBJECTS,127,227,56,8
+    RTEXT           "Size",IDC_STATIC56,223,207,14,8
+    RTEXT           "Free",IDC_STATIC57,222,217,16,8
+    RTEXT           "0",IDC_JSC_HEAP_SIZE,270,207,56,8
+    RTEXT           "0",IDC_JSC_HEAP_FREE,270,217,56,8
+    PUSHBUTTON      "Purge Inactive Font Data",IDC_BUTTON5,293,415,95,14,WS_DISABLED
+    LTEXT           "Total Font Data Objects",IDC_STATIC,208,379,78,8
+    LTEXT           "Inactive Font Data Objects",IDC_STATIC,198,390,88,8
+    LTEXT           "Glyph Pages",IDC_STATIC,246,402,40,8
+    RTEXT           "0",IDC_TOTAL_FONT_OBJECTS,329,379,56,8
+    RTEXT           "0",IDC_INACTIVE_FONT_OBJECTS,329,390,56,8
+    RTEXT           "0",IDC_GLYPH_PAGES,329,402,56,8
+    LTEXT           "Page URL Mappings",IDC_STATIC,33,380,64,8
+    LTEXT           "Retained Page URLs",IDC_STATIC,31,390,66,8
+    LTEXT           "Site Icon Records",IDC_STATIC,40,400,57,8
+    LTEXT           "Site Icons with Data",IDC_STATIC,32,410,65,8
+    RTEXT           "0",IDC_PAGE_URL_MAPPINGS,101,380,52,8
+    RTEXT           "0",IDC_RETAINED_PAGE_URLS,101,390,52,8
+    RTEXT           "0",IDC_SITE_ICON_RECORDS,101,400,52,8
+    RTEXT           "0",IDC_SITE_ICONS_WITH_DATA,101,410,52,8
+END
+
+IDD_AUTH DIALOGEX 0, 0, 231, 119
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Authentication Required"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Sign In",IDOK,116,98,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,174,98,50,14
+    LTEXT           "Realm",IDC_REALM_TEXT,67,21,157,8
+    RTEXT           "User Name:",IDC_STATIC,7,41,57,8
+    EDITTEXT        IDC_AUTH_USER,67,39,157,14,ES_AUTOHSCROLL
+    RTEXT           "Password:",IDC_STATIC,7,66,57,8
+    EDITTEXT        IDC_AUTH_PASSWORD,67,64,157,14,ES_PASSWORD | ES_AUTOHSCROLL
+END
+
+IDD_PROXY DIALOGEX 0, 0, 310, 176
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Proxy Configuration"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,199,155,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,253,155,50,14
+    CONTROL         "Use system default proxy configuration.",IDC_PROXY_DEFAULT,
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP,22,15,226,10
+    CONTROL         "Use custom proxy configuration:",IDC_PROXY_CUSTOM,
+                    "Button",BS_AUTORADIOBUTTON,22,33,226,10
+    CONTROL         "Don't use proxy.",IDC_PROXY_DISABLE,"Button",BS_AUTORADIOBUTTON,22,117,226,10
+    EDITTEXT        IDC_PROXY_URL,76,52,193,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_PROXY_EXCLUDE,76,85,193,14,ES_AUTOHSCROLL
+    LTEXT           "URL:",IDC_STATIC,30,55,43,8,0,WS_EX_RIGHT
+    LTEXT           "Excude list:",IDC_STATIC,30,88,43,8,0,WS_EX_RIGHT
+    LTEXT           "Example: http://192.168.0.2:8000",IDC_STATIC,80,68,194,8
+    LTEXT           "Comma separated hostnames.",IDC_STATIC,80,101,194,8
+END
+
+IDD_SERVER_TRUST DIALOGEX 0, 0, 319, 184
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Server Trust Evaluation Request"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Yes",IDOK,197,163,50,14
+    PUSHBUTTON      "No",IDCANCEL,262,163,50,14
+    LTEXT           "Certificate information",IDC_STATIC,7,7,294,17
+    EDITTEXT        IDC_SERVER_TRUST_TEXT,7,24,305,130,ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL | NOT WS_TABSTOP
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "PlaywrightLibResource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+    END
+
+    IDD_CACHES, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 394
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 449
+    END
+
+    IDD_AUTH, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 224
+        VERTGUIDE, 64
+        VERTGUIDE, 67
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 92
+        HORZGUIDE, 25
+        HORZGUIDE, 50
+    END
+
+    IDD_PROXY, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 303
+        VERTGUIDE, 22
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 169
+    END
+
+    IDD_SERVER_TRUST, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 312
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 177
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_TOOLBAR             BITMAP                  "toolbar.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE           "Playwright"
+    IDC_PLAYWRIGHT          "Playwright"
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

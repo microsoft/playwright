@@ -31,6 +31,7 @@ FRIENDLY_CHECKOUT_PATH="";
 CHECKOUT_PATH=""
 PATCHES_PATH=""
 BUILD_NUMBER=""
+PLAYWRIGHT_PATH=""
 if [[ ("$1" == "firefox") || ("$1" == "firefox/") || ("$1" == "ff") ]]; then
   FRIENDLY_CHECKOUT_PATH="//browser_patches/firefox/checkout";
   CHECKOUT_PATH="$PWD/firefox/checkout"
@@ -41,6 +42,7 @@ elif [[ ("$1" == "webkit") || ("$1" == "webkit/") || ("$1" == "wk") ]]; then
   FRIENDLY_CHECKOUT_PATH="//browser_patches/webkit/checkout";
   CHECKOUT_PATH="$PWD/webkit/checkout"
   PATCHES_PATH="$PWD/webkit/patches"
+  PLAYWRIGHT_PATH="$PWD/webkit/src/Tools/Playwright"
   BUILD_NUMBER=$(cat "$PWD/webkit/BUILD_NUMBER")
   source "./webkit/UPSTREAM_CONFIG.sh"
 else
@@ -110,6 +112,13 @@ fi
 git checkout -b playwright-build
 echo "-- applying patches"
 git apply --index $PATCHES_PATH/*
+
+if [[ ("$1" == "webkit") || ("$1" == "webkit/") || ("$1" == "wk") ]]; then
+echo "-- adding WebKit embedders"
+cp -r $PLAYWRIGHT_PATH Tools
+git add Tools/Playwright
+fi
+
 git commit -a --author="playwright-devops <devops@playwright.com>" -m "chore: bootstrap build #$BUILD_NUMBER"
 
 echo
