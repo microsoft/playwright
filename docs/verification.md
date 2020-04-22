@@ -111,7 +111,7 @@ page.on('console', msg => {
 });
 ```
 
-#### `"dialog"` - handle assert, confirm, prompt
+#### `"dialog"` - handle alert, confirm, prompt
 
 ```js
 page.on('dialog', dialog => {
