@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, MAC} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = require('./utils').testOptions(browserType);
 
 function dimensions() {
   const rect = document.querySelector('textarea').getBoundingClientRect();
@@ -28,7 +28,8 @@ function dimensions() {
 }
 
 describe('Mouse', function() {
-  it('should click the document', async({page, server}) => {
+  // Occasionally times out on FFOX on Windows: https://github.com/microsoft/playwright/pull/1911/checks?check_run_id=607149016
+  it.fail(FFOX && WIN)('should click the document', async({page, server}) => {
     await page.evaluate(() => {
       window.clickPromise = new Promise(resolve => {
         document.addEventListener('click', event => {
