@@ -72,9 +72,7 @@ describe('Download', function() {
   });
   it(`should report download path within page.on('download', …) handler`, async({browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
-    const onDownloadPathPath = new Promise((res, rej) => {
-      setTimeout(() => { rej('failed to find path quickly'); }, 1000);
-
+    const onDownloadPathPath = new Promise((res) => {
       page.on('download', dl => {
         dl.path().then(res);
       });
