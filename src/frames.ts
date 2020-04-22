@@ -948,7 +948,6 @@ export class SignalBarrier {
   private _options: types.NavigatingActionWaitOptions;
   private _protectCount = 0;
   private _expectedPopups = 0;
-  private _expectedDownloads = 0;
   private _promise: Promise<void>;
   private _promiseCallback = () => {};
   private _deadline: number;
@@ -989,16 +988,6 @@ export class SignalBarrier {
     this.release();
   }
 
-  async expectDownload() {
-    ++this._expectedDownloads;
-  }
-
-  async addDownload() {
-    if (this._expectedDownloads)
-      --this._expectedDownloads;
-    this._maybeResolve();
-  }
-
   retain() {
     ++this._protectCount;
   }
@@ -1009,7 +998,7 @@ export class SignalBarrier {
   }
 
   private async _maybeResolve() {
-    if (!this._protectCount && !this._expectedPopups && !this._expectedDownloads && !this._frameIds.size)
+    if (!this._protectCount && !this._expectedPopups && !this._frameIds.size)
       this._promiseCallback();
   }
 }
