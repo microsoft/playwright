@@ -124,7 +124,8 @@ describe('Fixtures', function() {
       // TODO: ideally, we would expect the SIGKILL on the browser from
       // force kill, but that's racy with sending two signals.
     });
-    it.slow()('should kill the browser on SIGTERM + SIGINT', async state => {
+    // TODO: flaky - https://github.com/microsoft/playwright/pull/1911/checks?check_run_id=607148951
+    it.slow().fail(FFOX && LINUX)('should kill the browser on SIGTERM + SIGINT', async state => {
       const result = await testSignal(state, child => {
         process.kill(child.pid, 'SIGTERM');
         process.kill(child.pid, 'SIGINT');
