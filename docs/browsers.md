@@ -1,11 +1,23 @@
 # Managing browser binaries
 
-Playwright comes bundled with browsers, and by default `npm i playwright` downloads
-all 3 browsers inside the `node_modules/` folder. This way no extra steps are needed
-to get playwright up and running.
+Each version of Playwright needs specific versions of browser binaries to operate.
 
-However, Playwright also has rich configuration to support various strategies
-for browser management.
+By default it downloads Chromium, WebKit and Firefox browsers into the `node_modules/` folder. This way no extra steps are needed to get playwright up and running:
+
+```sh
+npm i playwright
+```
+
+These browsers will take hundreds of megabytes of the disk space when installed:
+
+```sh
+du -hs ./node_modules/.local-browsers/*
+281M	.local-browsers/chromium-XXXXXX
+187M	.local-browsers/firefox-XXXX
+180M	.local-browsers/webkit-XXXX
+```
+
+To mitigate that, Playwright has a rich set of options to control browser management.
 
 ## Download from artifact repository
 
@@ -21,10 +33,10 @@ $ PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i playwright
 
 ## Share browser binaries across projects
 
-Sometimes developers work with multiple NPM projects that all use Playwright.
+Often developers work with multiple NPM projects that all use Playwright.
 By default, every project will have browser binaries in its own `node_modules/` folder.
-To save some HDD space and to speedup installation, Playwright can re-use
-browser binaries.
+To save the disk space and to speedup installation, Playwright can re-use
+these binaries.
 
 Sharing browser binaries is a two-step process:
 
