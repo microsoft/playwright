@@ -70,6 +70,20 @@ describe('Download', function() {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   });
+  fit(`should report download path within page.on('download', …) handler`, async({browser, server}) => {
+    const page = await browser.newPage({ acceptDownloads: true });
+    const onDownloadPathPath = new Promise((res, rej) => {
+      setTimeout(() => { rej('failed to find path quickly'); }, 1000);
+
+      page.on('download', dl => {
+        dl.path().then(res);
+      });
+    });
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    await page.click('a');
+    const path = await onDownloadPathPath;
+    expect(fs.readFileSync(path).toString()).toBe('Hello world');
+  })
   it.skip(FFOX).fail(CHROMIUM || WEBKIT)('should report alt-click downloads', async({browser, server}) => {
     // Firefox does not download on alt-click by default.
     // Our WebKit embedder does not download on alt-click, although Safari does.
