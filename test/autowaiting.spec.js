@@ -54,20 +54,6 @@ describe('Auto waiting', () => {
     ]);
     expect(messages.join('|')).toBe('popup|click');
   });
-  it.fail(CHROMIUM)('should await download when clicking anchor', async function({page, server}) {
-    server.setRoute('/download', (req, res) => {
-      res.setHeader('Content-Type', 'application/octet-stream');
-      res.setHeader('Content-Disposition', 'attachment');
-      res.end(`Hello world`);
-    });
-    await page.setContent(`<a download=true href="${server.PREFIX}/download">download</a>`);
-    const messages = [];
-    await Promise.all([
-      page.waitForEvent('download').then(() => messages.push('download')),
-      page.click('a').then(() => messages.push('click')),
-    ]);
-    expect(messages.join('|')).toBe('download|click');
-  });
   it('should await cross-process navigation when clicking anchor', async({page, server}) => {
     const messages = [];
     server.setRoute('/empty.html', async (req, res) => {
