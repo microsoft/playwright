@@ -11,7 +11,7 @@ npm i playwright
 These browsers will take hundreds of megabytes of the disk space when installed:
 
 ```sh
-du -hs ./node_modules/.local-browsers/*
+du -hs ./node_modules/playwright/.local-browsers/*
 281M	.local-browsers/chromium-XXXXXX
 187M	.local-browsers/firefox-XXXX
 180M	.local-browsers/webkit-XXXX
