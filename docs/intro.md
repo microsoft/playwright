@@ -6,7 +6,7 @@ Playwright is a cross-browser automation driver for end-to-end testing. Playwrig
 
 The Playwright API is cross-browser: it works across **Chromium** (used in Chrome, Edge, and many other browsers), **Firefox** and **WebKit** (used in Safari) engines.
 
-Playwright is free and open source. Playwright is also modular, and work with any JavaScript test runner framework.
+Playwright is free and open source. Playwright is also modular, and works with any JavaScript test runner framework.
 
 ### Capabilities
 

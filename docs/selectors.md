@@ -8,7 +8,7 @@ Selector can be used to obtain `ElementHandle` (see [page.$()](api.md#pageselect
 
 Selector is a string that consists of one or more clauses separated by `>>` token, e.g. `clause1 >> clause2 >> clause3`.  When multiple clauses are present, next one is queried relative to the previous one's result.
 
-Each clause contains a selector engine name and selector body, e.g. `engine=body`. Here `engine` is one of the supported engines (e.g. `css` or a custom one). Selector `body` follows the format of the particular engine, e.g. for `css` engine it should be a [css selector](https://developer.mozilla.org/en/docs/Web/CSS/CSS_Selectors). Body format is assumed to ignore leading and trailing whitespaces, so that extra whitespace can be added for readability. If selector engine needs to include `>>` in the body, it should be escaped inside a string to not be confused with clause separator, e.g. `text="some >> text"`.
+Each clause contains a selector engine name and selector body, e.g. `engine=body`. Here `engine` is one of the supported engines (e.g. `css` or a custom one). Selector `body` follows the format of the particular engine, e.g. for `css` engine it should be a [css selector](https://developer.mozilla.org/en/docs/Web/CSS/CSS_Selectors). Body format is assumed to ignore leading and trailing white spaces, so that extra whitespace can be added for readability. If selector engine needs to include `>>` in the body, it should be escaped inside a string to not be confused with clause separator, e.g. `text="some >> text"`.
 
 For example,
 ```
@@ -61,7 +61,7 @@ const handle = await divHandle.$('css=span');
 
 `css` is a default engine - any malformed selector not starting with `//` nor with `"` is assumed to be a css selector. For example, Playwright converts `page.$('span > button')` to `page.$('css=span > button')`.
 
-`css:light` engine is equivalent to [`Document.querySelector`](https://developer.mozilla.org/en/docs/Web/API/Document/querySelector) and behaves according to the CSS spec. However, it does not pierce shadow roots, which may be incovenient when working with [Shadow DOM and Web Components](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM). For that reason, `css` engine pierces shadow roots. More specifically, every [Descendant combinator](https://developer.mozilla.org/en-US/docs/Web/CSS/Descendant_combinator) pierces an arbitrary number of open shadow roots, including the implicit descendant combinator at the start of the selector.
+`css:light` engine is equivalent to [`Document.querySelector`](https://developer.mozilla.org/en/docs/Web/API/Document/querySelector) and behaves according to the CSS spec. However, it does not pierce shadow roots, which may be inconvenient when working with [Shadow DOM and Web Components](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM). For that reason, `css` engine pierces shadow roots. More specifically, every [Descendant combinator](https://developer.mozilla.org/en-US/docs/Web/CSS/Descendant_combinator) pierces an arbitrary number of open shadow roots, including the implicit descendant combinator at the start of the selector.
 
 `css` engine first searches for elements in the light dom in the iteration order, and then recursively inside open shadow roots in the iteration order. It does not search inside closed shadow roots or iframes.
 
@@ -119,4 +119,4 @@ Malformed selector starting with `"` is assumed to be a text selector. For examp
 
 ### id, data-testid, data-test-id, data-test and their :light counterparts
 
-Attribute engines are selecting based on the corresponding atrribute value. For example: `data-test-id=foo` is equivalent to `css=[data-test-id="foo"]`, and `id:light=foo` is equivalent to `css:light=[id="foo"]`.
+Attribute engines are selecting based on the corresponding attribute value. For example: `data-test-id=foo` is equivalent to `css=[data-test-id="foo"]`, and `id:light=foo` is equivalent to `css:light=[id="foo"]`.

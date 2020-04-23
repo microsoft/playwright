@@ -197,7 +197,7 @@ ArrowUp, F1 - F12, Digit0 - Digit9, KeyA - KeyZ, etc.
 
 - You can alternatively specify a single character you'd like to produce such as `"a"` or `"#"`.
 
-- Following modification shortcuts are also suported: `Shift, Control, Alt, Meta`.
+- Following modification shortcuts are also supported: `Shift, Control, Alt, Meta`.
 
 
 #### Variations
