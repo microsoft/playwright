@@ -198,6 +198,26 @@ HEADLESS=false SLOW_MO=500 npm run wtest
 BROWSER=chromium node --inspect-brk test/test.js
 ```
 
+- When should a test be marked with `skip` or `fail`?
+
+  - **`skip(condition)`**: This test *should ***never*** work* for `condition`
+    where `condition` is usually a certain browser like `FFOX` (for Firefox),
+    `WEBKIT` (for WebKit), and `CHROMIUM` (for Chromium).
+
+    For example, the [alt-click downloads test](https://github.com/microsoft/playwright/blob/471ccc72d3f0847caa36f629b394a028c7750d93/test/download.spec.js#L86) is marked
+    with `skip(FFOX)` since an alt-click in Firefox will not produce a download
+    even if a person was driving the browser.
+
+
+  - **`fail(condition)`**: This test *should ***eventually*** work* for `condition`
+    where `condition` is usually a certain browser like `FFOX` (for Firefox),
+    `WEBKIT` (for WebKit), and `CHROMIUM` (for Chromium).
+
+    For example, the [alt-click downloads test](https://github.com/microsoft/playwright/blob/471ccc72d3f0847caa36f629b394a028c7750d93/test/download.spec.js#L86) is marked
+    with `fail(CHROMIUM || WEBKIT)` since Playwright performing these actions
+    currently diverges from what a user would experience driving a Chromium or
+    WebKit.
+
 ## Public API Coverage
 
 Every public API method or event should be called at least once in tests. To ensure this, there's a `coverage` command which tracks calls to public API and reports back if some methods/events were not called.
