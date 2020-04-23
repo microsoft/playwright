@@ -1,3 +1,5 @@
+# Contributing
+
 <!-- gen:toc -->
 - [How to Contribute](#how-to-contribute)
   * [Getting Code](#getting-code)
@@ -13,9 +15,9 @@
   * [Code of Conduct](#code-of-conduct)
 <!-- gen:stop -->
 
-# How to Contribute
+## How to Contribute
 
-## Getting Code
+### Getting Code
 
 1. Clone this repository
 
@@ -36,14 +38,14 @@ npm install
 npm test
 ```
 
-## Code reviews
+### Code reviews
 
 All submissions, including submissions by project members, require review. We
 use GitHub pull requests for this purpose. Consult
 [GitHub Help](https://help.github.com/articles/about-pull-requests/) for more
 information on using pull requests.
 
-## Code Style
+### Code Style
 
 - Coding style is fully defined in [.eslintrc](https://github.com/microsoft/playwright/blob/master/.eslintrc.js)
 - Comments should be generally avoided. If the code would not be understood without comments, consider re-writing the code to make it self-explanatory.
@@ -54,7 +56,7 @@ To run code linter, use:
 npm run eslint
 ```
 
-## API guidelines
+### API guidelines
 
 When authoring new API methods, consider the following:
 
@@ -64,7 +66,7 @@ When authoring new API methods, consider the following:
 - All string literals must be small case. This includes event names and option values.
 - Avoid adding "sugar" API (API that is trivially implementable in user-space) unless they're **very** common.
 
-## Commit Messages
+### Commit Messages
 
 Commit messages should follow the Semantic Commit Messages format:
 
@@ -98,7 +100,7 @@ This patch fixes session cookies in firefox browser.
 Fixes #123, fixes #234
 ```
 
-## Writing Documentation
+### Writing Documentation
 
 All public API should have a descriptive entry in [`docs/api.md`](https://github.com/microsoft/playwright/blob/master/docs/api.md). There's a [documentation linter](https://github.com/microsoft/playwright/tree/master/utils/doclint) which makes sure documentation is aligned with the codebase.
 
@@ -108,7 +110,7 @@ To run the documentation linter, use:
 npm run doc
 ```
 
-## Adding New Dependencies
+### Adding New Dependencies
 
 For all dependencies (both installation and development):
 - **Do not add** a dependency if the desired functionality is easily implementable.
@@ -117,7 +119,7 @@ For all dependencies (both installation and development):
 A barrier for introducing new installation dependencies is especially high:
 - **Do not add** installation dependency unless it's critical to project success.
 
-## Running & Writing Tests
+### Running & Writing Tests
 
 - Every feature should be accompanied by a test.
 - Every public api event/method should be accompanied by a test.
@@ -218,7 +220,7 @@ BROWSER=chromium node --inspect-brk test/test.js
     currently diverges from what a user would experience driving a Chromium or
     WebKit.
 
-## Public API Coverage
+### Public API Coverage
 
 Every public API method or event should be called at least once in tests. To ensure this, there's a `coverage` command which tracks calls to public API and reports back if some methods/events were not called.
 
@@ -230,7 +232,7 @@ npm run coverage
 
 There are also per-browser commands:" `npm run ccoverage`, `npm run fcoverage` and `npm run wcoverage`.
 
-# Contributor License Agreement
+## Contributor License Agreement
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
@@ -240,7 +242,7 @@ When you submit a pull request, a CLA bot will automatically determine whether y
 a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
 provided by the bot. You will only need to do this once across all repos using our CLA.
 
-## Code of Conduct
+### Code of Conduct
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
