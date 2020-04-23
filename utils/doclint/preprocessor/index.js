@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+const path = require('path');
 const Message = require('../Message');
 
 function runCommands(sources, {libversion, chromiumVersion, firefoxVersion}) {
@@ -21,13 +22,14 @@ function runCommands(sources, {libversion, chromiumVersion, firefoxVersion}) {
   const isReleaseVersion = !libversion.includes('-');
 
   const messages = [];
-  const commands = [];
   for (const source of sources) {
     const text = source.text();
     const commandStartRegex = /<!--\s*gen:([a-z-]+)\s*-->/ig;
     const commandEndRegex = /<!--\s*gen:stop\s*-->/ig;
     let start;
 
+    const sourceEdits = new SourceEdits(source);
+    // Extract all commands from source
     while (start = commandStartRegex.exec(text)) { // eslint-disable-line no-cond-assign
       commandEndRegex.lastIndex = commandStartRegex.lastIndex;
       const end = commandEndRegex.exec(text);
@@ -35,56 +37,38 @@ function runCommands(sources, {libversion, chromiumVersion, firefoxVersion}) {
         messages.push(Message.error(`Failed to find 'gen:stop' for command ${start[0]}`));
         return messages;
       }
-      const name = start[1];
+      const commandName = start[1];
       const from = commandStartRegex.lastIndex;
       const to = end.index;
-      const originalText = text.substring(from, to);
-      commands.push({name, from, to, originalText, source});
       commandStartRegex.lastIndex = commandEndRegex.lastIndex;
-    }
-  }
 
-  const changedSources = new Set();
-  // Iterate commands in reverse order so that edits don't conflict.
-  commands.sort((a, b) => b.from - a.from);
-  for (const command of commands) {
-    let newText = null;
-    if (command.name === 'version')
-      newText = isReleaseVersion ? 'v' + libversion : 'Tip-Of-Tree';
-    else if (command.name === 'chromium-version')
-      newText = chromiumVersion;
-    else if (command.name === 'firefox-version')
-      newText = firefoxVersion;
-    else if (command.name === 'chromium-version-badge')
-      newText = `[![Chromium version](https://img.shields.io/badge/chromium-${chromiumVersion}-blue.svg?logo=google-chrome)](https://www.chromium.org/Home)`;
-    else if (command.name === 'firefox-version-badge')
-      newText = `[![Firefox version](https://img.shields.io/badge/firefox-${firefoxVersion}-blue.svg?logo=mozilla-firefox)](https://www.mozilla.org/en-US/firefox/new/)`;
-    else if (command.name === 'toc')
-      newText = generateTableOfContents(command.source.text(), command.to, false /* topLevelOnly */);
-    else if (command.name === 'toc-top-level')
-      newText = generateTableOfContents(command.source.text(), command.to, true /* topLevelOnly */);
-    else if (command.name.startsWith('toc-extends-'))
-      newText = generateTableOfContentsForSuperclass(command.source.text(), 'class: ' + command.name.substring('toc-extends-'.length));
-    if (newText === null)
-      messages.push(Message.error(`Unknown command 'gen:${command.name}'`));
-    else if (applyCommand(command, newText))
-      changedSources.add(command.source);
+      let newText = null;
+      if (commandName === 'version')
+        newText = isReleaseVersion ? 'v' + libversion : 'Tip-Of-Tree';
+      else if (commandName === 'chromium-version')
+        newText = chromiumVersion;
+      else if (commandName === 'firefox-version')
+        newText = firefoxVersion;
+      else if (commandName === 'chromium-version-badge')
+        newText = `[![Chromium version](https://img.shields.io/badge/chromium-${chromiumVersion}-blue.svg?logo=google-chrome)](https://www.chromium.org/Home)`;
+      else if (commandName === 'firefox-version-badge')
+        newText = `[![Firefox version](https://img.shields.io/badge/firefox-${firefoxVersion}-blue.svg?logo=mozilla-firefox)](https://www.mozilla.org/en-US/firefox/new/)`;
+      else if (commandName === 'toc')
+        newText = generateTableOfContents(source.text(), to, false /* topLevelOnly */);
+      else if (commandName === 'toc-top-level')
+        newText = generateTableOfContents(source.text(), to, true /* topLevelOnly */);
+      else if (commandName.startsWith('toc-extends-'))
+        newText = generateTableOfContentsForSuperclass(source.text(), 'class: ' + commandName.substring('toc-extends-'.length));
+
+      if (newText === null)
+        messages.push(Message.error(`Unknown command 'gen:${commandName}'`));
+      else
+        sourceEdits.edit(from, to, newText);
+    }
+    sourceEdits.commit(messages);
   }
-  for (const source of changedSources)
-    messages.push(Message.warning(`GEN: updated ${source.projectPath()}`));
   return messages;
 };
-
-/**
- * @param {{name: string, from: number, to: number, source: !Source}} command
- * @param {string} editText
- * @return {boolean}
- */
-function applyCommand(command, editText) {
-  const text = command.source.text();
-  const newText = text.substring(0, command.from) + editText + text.substring(command.to);
-  return command.source.setText(newText);
-}
 
 function getTOCEntriesForText(text) {
   const ids = new Set();
@@ -122,20 +106,142 @@ function getTOCEntriesForText(text) {
 /**
  * @param {string} text
  */
-function ensureInternalLinksAreValid(sources) {
-  const messages = [];
+function autocorrectInvalidLinks(projectRoot, sources, allowedFilePaths) {
+  const pathToHashLinks = new Map();
   for (const source of sources) {
     const text = source.text();
-    const availableLinks = new Set(getTOCEntriesForText(text).map(entry => entry.id));
-    const internalLinkRegex = /\]\(#([#\w\-]*)\)/g;
-    let match;
-    while ((match = internalLinkRegex.exec(text)) !== null) {
-      const link = match[1];
-      if (!availableLinks.has(link))
-        messages.push(Message.error(`Found invalid link: #${match[1]}`));
+    const hashLinks = new Set(getTOCEntriesForText(text).map(entry => entry.id));
+    pathToHashLinks.set(source.filePath(), hashLinks);
+  }
+
+  const messages = [];
+  for (const source of sources) {
+    const allRelativePaths = [];
+    for (const filepath of allowedFilePaths) {
+      allRelativePaths.push('/' + path.relative(projectRoot, filepath));
+      allRelativePaths.push(path.relative(path.dirname(source.filePath()), filepath));
     }
+    const sourceEdits = new SourceEdits(source);
+    let offset = 0;
+    const edits = [];
+
+    const lines = source.text().split('\n');
+    lines.forEach((line, lineNumber) => {
+      const linkRegex = /\]\(([^\)]*)\)/gm;
+      let match;
+      while (match = linkRegex.exec(line)) {
+        const hrefOffset = offset + lineNumber + match.index + 2; // +2 since we have to skip ](
+        const [, href] = match;
+        if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('mailto:'))
+          continue;
+        const [relativePath, hash] = href.split('#');
+        const hashOffset = hrefOffset + relativePath.length + 1;
+
+        let resolvedPath = resolveLinkPath(source, relativePath);
+        let hashLinks = pathToHashLinks.get(resolvedPath);
+
+        if (!hashLinks) {
+          // Attempt to autocorrect
+          const newRelativePath = autocorrectText(relativePath, allRelativePaths);
+          if (!newRelativePath) {
+            messages.push(Message.error(`Bad link in ${source.projectPath()}:${lineNumber + 1}: file ${relativePath} does not exist`));
+            continue;
+          }
+          resolvedPath = resolveLinkPath(source, newRelativePath);
+          hashLinks = pathToHashLinks.get(resolvedPath);
+          sourceEdits.edit(hrefOffset, hrefOffset + relativePath.length, newRelativePath);
+        }
+
+        if (!hash || hashLinks.has(hash))
+          continue;
+
+        const newHashLink = autocorrectText(hash, [...hashLinks]);
+        if (newHashLink) {
+          sourceEdits.edit(hashOffset, hashOffset + hash.length, newHashLink);
+        } else {
+          messages.push(Message.error(`Bad link in ${source.projectPath()}:${lineNumber + 1}: hash "#${hash}" does not exist in "${path.relative(projectRoot, resolvedPath)}"`));
+        }
+      }
+      offset += line.length;
+    });
+
+    sourceEdits.commit(messages);
   }
   return messages;
+
+  function resolveLinkPath(source, relativePath) {
+    if (!relativePath)
+      return source.filePath();
+    if (relativePath.startsWith('/'))
+      return path.resolve(projectRoot, '.' + relativePath);
+    return path.resolve(path.dirname(source.filePath()), relativePath);
+  }
+}
+
+class SourceEdits {
+  constructor(source) {
+    this._source = source;
+    this._edits = [];
+  }
+
+  edit(from, to, newText) {
+    this._edits.push({from, to, newText});
+  }
+
+  commit(messages = []) {
+    if (!this._edits.length)
+      return;
+    this._edits.sort((a, b) => a.from - b.from);
+    for (const edit of this._edits) {
+      if (edit.from > edit.to) {
+        messages.push(Message.error('INTERNAL ERROR: incorrect edit!'));
+        return;
+      }
+    }
+    for (let i = 0; i < this._edits.length - 1; ++i) {
+      if (this._edits[i].to > this._edits[i + 1].from) {
+        messages.push(Message.error('INTERNAL ERROR: edits are overlapping!'));
+        return;
+      }
+    }
+    this._edits.reverse();
+    let text = this._source.text();
+    for (const edit of this._edits)
+      text = text.substring(0, edit.from) + edit.newText + text.substring(edit.to);
+    this._source.setText(text);
+  }
+}
+
+function autocorrectText(text, options, maxCorrectionsRatio = 0.5) {
+  if (!options.length)
+    return null;
+  const scores = options.map(option => ({option, score: levenshteinDistance(text, option)}));
+  scores.sort((a, b) => a.score - b.score);
+  if (scores[0].score > text.length * maxCorrectionsRatio)
+    return null;
+  return scores[0].option;
+}
+
+function levenshteinDistance(a, b) {
+  const N = a.length, M = b.length;
+  const d = new Int32Array(N * M);
+  for (let i = 0; i < N * M; ++i)
+    d[i] = 0;
+  for (let j = 0; j < M; ++j)
+    d[j] = j;
+  for (let i = 0; i < N; ++i)
+    d[i * M] = i;
+  for (let i = 1; i < N; ++i) {
+    for (let j = 1; j < M; ++j) {
+      const cost = a[i] === b[j] ? 0 : 1;
+      d[i * M + j] = Math.min(
+        d[(i - 1) * M + j] + 1, // d[i-1][j] + 1
+        d[i * M + j - 1] + 1, // d[i][j - 1] + 1
+        d[(i - 1) * M + j - 1] + cost // d[i - 1][j - 1] + cost
+      );
+    }
+  }
+  return d[N * M - 1];
 }
 
 function generateTableOfContents(text, offset, topLevelOnly) {
@@ -177,4 +283,4 @@ function generateTableOfContentsForSuperclass(text, name) {
   return text;
 }
 
-module.exports = {ensureInternalLinksAreValid, runCommands};
+module.exports = {autocorrectInvalidLinks, runCommands};

@@ -64,7 +64,7 @@ Explicit loading handling may be required for more complicated scenarios though.
 
 ### Loading a popup
 
-When popup is opened, explicitly calling [`page.waitForLoadState()`](#pagewaitforloadstatestate-options) ensures that popup is loaded to the desired state.
+When popup is opened, explicitly calling [`page.waitForLoadState()`](api.md#pagewaitforloadstatestate-options) ensures that popup is loaded to the desired state.
 ```js
 const [ popup ] = await Promise.all([
   page.waitForEvent('popup'),
@@ -76,7 +76,7 @@ await popup.evaluate(() => window.globalVariableInitializedByOnLoadHandler);
 
 ### Unusual client-side redirects
 
-Usually, the client-side redirect happens before the `load` event, and `page.goto()` method automatically waits for the redirect. However, when redirecting from a link click or after the `load` event, it would be easier to explicitly [`waitForNavigation()`](#pagewaitfornavigationoptions) to a specific url.
+Usually, the client-side redirect happens before the `load` event, and `page.goto()` method automatically waits for the redirect. However, when redirecting from a link click or after the `load` event, it would be easier to explicitly [`waitForNavigation()`](api.md#pagewaitfornavigationoptions) to a specific url.
 ```js
 await Promise.all([
   page.waitForNavigation({ url: '**/login' }),
@@ -88,7 +88,7 @@ Notice the `Promise.all` to click and wait for navigation. Awaiting these method
 
 ### Click triggers navigation after a timeout
 
-When `onclick` handler triggers a navigation from a `setTimeout`, use an explicit [`waitForNavigation()`](#pagewaitfornavigationoptions) call as a last resort.
+When `onclick` handler triggers a navigation from a `setTimeout`, use an explicit [`waitForNavigation()`](api.md#pagewaitfornavigationoptions) call as a last resort.
 ```js
 await Promise.all([
   page.waitForNavigation(), // Waits for the next navigation.
@@ -108,7 +108,7 @@ await page.waitForFunction(() => window.amILoadedYet());
 await page.screenshot();
 ```
 
-When clicking on a button triggers some asynchronous processing, issues a couple GET requests and pushes a new history state multiple times, explicit [`waitForNavigation()`](#pagewaitfornavigationoptions) to a specific url is the most reliable option.
+When clicking on a button triggers some asynchronous processing, issues a couple GET requests and pushes a new history state multiple times, explicit [`waitForNavigation()`](api.md#pagewaitfornavigationoptions) to a specific url is the most reliable option.
 ```js
 await Promise.all([
   page.waitForNavigation({ url: '**/invoice#processed' }),

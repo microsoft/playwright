@@ -14,14 +14,14 @@ the following primitives.
   - [Pages and frames](#pages-and-frames)
   - [Selectors](#selectors)
   - [Auto-waiting](#auto-waiting)
-  - [Node.js and browser execution contexts](#node-js-and-browser-execution-contexts)
+  - [Node.js and browser execution contexts](#nodejs-and-browser-execution-contexts)
   - [Object & element handles](#object--element-handles)
 
 <br/>
 
 ## Browser
 
-A [`Browser`](../api.md#class-browser) refers to an instance of Chromium, Firefox
+A [`Browser`](api.md#class-browser) refers to an instance of Chromium, Firefox
 or WebKit. Playwright scripts generally start with launching a browser instance
 and end with closing the browser. Browser instances can be launched in headless
 (without a GUI) or headful mode.
@@ -44,7 +44,7 @@ maximize what a single instance can do through multiple browser contexts.
 
 ## Browser contexts
 
-A [`BrowserContext`](../api.md#class-browsercontext) is an isolated incognito-alike
+A [`BrowserContext`](api.md#class-browsercontext) is an isolated incognito-alike
 session within a browser instance. Browser contexts are fast and cheap to create.
 Browser contexts can be used to parallelize isolated test executions.
 
@@ -71,13 +71,13 @@ const context = await browser.newContext({
 
 #### API reference
 
-- [class `BrowserContext`](./api.md#class-browser-context)
+- [class `BrowserContext`](./api.md#class-browsercontext)
 
 <br/>
 
 ## Pages and frames
 
-A Browser context can have multiple pages. A [`Page`](../api.md#class-page)
+A Browser context can have multiple pages. A [`Page`](api.md#class-page)
 refers to a single tab or a popup window within a browser context. It should be used to navigate to URLs and interact with the page content.
 
 ```js
@@ -104,7 +104,7 @@ console.log(page.url());
 window.location.href = 'https://example.com';
 ```
 
-A page can have one or more [Frame](../api.md#class-frame) objects attached to
+A page can have one or more [Frame](api.md#class-frame) objects attached to
 it. Each page has a main frame and page-level interactions (like `click`) are
 assumed to operate in the main frame.
 

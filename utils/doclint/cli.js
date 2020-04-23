@@ -18,6 +18,7 @@
 const playwright = require('../../index.js');
 const path = require('path');
 const Source = require('./Source');
+const Message = require('./Message');
 
 const {spawnSync} = require('child_process');
 
@@ -44,8 +45,8 @@ async function run() {
     const readme = await Source.readFile(path.join(PROJECT_DIR, 'README.md'));
     const contributing = await Source.readFile(path.join(PROJECT_DIR, 'CONTRIBUTING.md'));
     const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
-    const troubleshooting = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'troubleshooting.md'));
-    const mdSources = [readme, api, contributing, troubleshooting];
+    const docs = await Source.readdir(path.join(PROJECT_DIR, 'docs'), '.md');
+    const mdSources = [readme, api, contributing, ...docs];
 
     const preprocessor = require('./preprocessor');
     const browserVersions = await getBrowserVersions();
@@ -54,13 +55,15 @@ async function run() {
       chromiumVersion: browserVersions.chromium,
       firefoxVersion: browserVersions.firefox,
     })));
-    messages.push(...preprocessor.ensureInternalLinksAreValid([api]));
+    messages.push(...preprocessor.autocorrectInvalidLinks(PROJECT_DIR, mdSources, getRepositoryFiles()));
+    for (const source of mdSources.filter(source => source.hasUpdatedText()))
+      messages.push(Message.warning(`WARN: updated ${source.projectPath()}`));
 
     const browser = await playwright.chromium.launch();
     const page = await browser.newPage();
     const checkPublicAPI = require('./check_public_api');
     const jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src'));
-    messages.push(...await checkPublicAPI(page, mdSources, jsSources));
+    messages.push(...await checkPublicAPI(page, [api], jsSources));
     await browser.close();
 
     for (const source of mdSources) {
@@ -124,6 +127,11 @@ async function getChromeVersion() {
   }
   const version = spawnSync(playwright.chromium.executablePath(), ['--version'], undefined).stdout.toString();
   return version.trim().split(' ').pop();
+}
+
+function getRepositoryFiles() {
+  const out = spawnSync('git', ['ls-files'], {cwd: PROJECT_DIR});
+  return out.stdout.toString().trim().split('\n').map(file => path.join(PROJECT_DIR, file));
 }
 
 async function getFirefoxVersion() {

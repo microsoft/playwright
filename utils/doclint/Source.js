@@ -121,7 +121,8 @@ class Source {
    * @return {!Promise<!Array<!Source>>}
    */
   static async readdir(dirPath, extension = '') {
-    const filePaths = (await recursiveReadDir(dirPath)).filter(fileName => fileName.endsWith(extension));
+    extension = extension.toLowerCase();
+    const filePaths = (await recursiveReadDir(dirPath)).filter(fileName => fileName.toLowerCase().endsWith(extension));
     return Promise.all(filePaths.map(filePath => Source.readFile(filePath)));
   }
 }

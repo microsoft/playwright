@@ -7,7 +7,7 @@
     - [Pages and frames](./core-concepts.md#pages-and-frames)
     - [Selectors](./core-concepts.md#selectors)
     - [Auto-waiting](./core-concepts.md#auto-waiting)
-    - [Node.js and browser execution contexts](./core-concepts.md#node-js-and-browser-execution-contexts)
+    - [Node.js and browser execution contexts](./core-concepts.md#nodejs-and-browser-execution-contexts)
     - [Object & element handles](./core-concepts.md#object--element-handles)
 1. [Input](./input.md)
     - [Text input](./input.md#text-input)
