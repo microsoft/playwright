@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Blob Download Example</title>
+  </head>
+  <body>
+    <script>
+      const download = (data, filename) => {
+      const a = document.createElement("a");
+      a.style = "display: none";
+      document.body.appendChild(a);
+      a.style = "display: none";
+
+      const blob = new Blob([data], { type: "octet/stream" });
+      const url = window.URL.createObjectURL(blob);
+      a.href = url;
+      a.download = filename;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    };
+
+    const downloadIt = () => {
+      download("Hello world", "example.txt");
+    }
+    </script>
+    <a onclick="javascipt:downloadIt();">Download</a>
+  </body>
+</html>

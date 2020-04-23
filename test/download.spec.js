@@ -70,16 +70,29 @@ describe('Download', function() {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   });
-  it(`should report download path within page.on('download', …) handler`, async({browser, server}) => {
+  it(`should report download path within page.on('download', …) handler for Files`, async({browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
-    const onDownloadPathPath = new Promise((res) => {
+    const onDownloadPath = new Promise((res) => {
       page.on('download', dl => {
         dl.path().then(res);
       });
     });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     await page.click('a');
-    const path = await onDownloadPathPath;
+    const path = await onDownloadPath;
+    expect(fs.readFileSync(path).toString()).toBe('Hello world');
+    await page.close();
+  })
+  it.fail(FFOX || WEBKIT)(`should report download path within page.on('download', …) handler for Blobs`, async({browser, server}) => {
+    const page = await browser.newPage({ acceptDownloads: true });
+    const onDownloadPath = new Promise((res) => {
+      page.on('download', dl => {
+        dl.path().then(res);
+      });
+    });
+    await page.goto(server.PREFIX + '/download-blob.html');
+    await page.click('a');
+    const path = await onDownloadPath;
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   })
