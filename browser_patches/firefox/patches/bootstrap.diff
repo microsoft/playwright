@@ -1279,7 +1279,7 @@ index 25c5b01fc54c8d45da8ceb7cf6ba163bee3c5361..490c5ce49cd9b5f804df59abbfb0450f
    void internalResyncICUDefaultTimeZone();
 diff --git a/juggler/Helper.js b/juggler/Helper.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..b8e6649fb91be6cd72b000426fb4d58216745c4f
+index 0000000000000000000000000000000000000000..2b1fe7fa712ae210af3ebbccda08404183d19921
 --- /dev/null
 +++ b/juggler/Helper.js
 @@ -0,0 +1,115 @@
@@ -1326,15 +1326,15 @@ index 0000000000000000000000000000000000000000..b8e6649fb91be6cd72b000426fb4d582
 +    return string.substring(1, string.length - 1);
 +  }
 +
-+  getLoadContext(httpChannel) {
++  getLoadContext(channel) {
 +    let loadContext = null;
 +    try {
-+      if (httpChannel.notificationCallbacks)
-+        loadContext = httpChannel.notificationCallbacks.getInterface(Ci.nsILoadContext);
++      if (channel.notificationCallbacks)
++        loadContext = channel.notificationCallbacks.getInterface(Ci.nsILoadContext);
 +    } catch (e) {}
 +    try {
-+      if (!loadContext && httpChannel.loadGroup)
-+        loadContext = httpChannel.loadGroup.notificationCallbacks.getInterface(Ci.nsILoadContext);
++      if (!loadContext && channel.loadGroup)
++        loadContext = channel.loadGroup.notificationCallbacks.getInterface(Ci.nsILoadContext);
 +    } catch (e) { }
 +    return loadContext;
 +  }
@@ -2336,10 +2336,10 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..5f10371dc2f2a921cd5df2b9b038bd1a6cec2533
+index 0000000000000000000000000000000000000000..2e0c24790272fb398aae701b6b96c1d2d378c952
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
-@@ -0,0 +1,664 @@
+@@ -0,0 +1,628 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
@@ -2352,10 +2352,6 @@ index 0000000000000000000000000000000000000000..5f10371dc2f2a921cd5df2b9b038bd1a
 +const {RuntimeHandler} = ChromeUtils.import("chrome://juggler/content/protocol/RuntimeHandler.js");
 +const {AccessibilityHandler} = ChromeUtils.import("chrome://juggler/content/protocol/AccessibilityHandler.js");
 +const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-+
-+const Cc = Components.classes;
-+const Ci = Components.interfaces;
-+const Cu = Components.utils;
 +
 +const helper = new Helper();
 +
@@ -2371,38 +2367,19 @@ index 0000000000000000000000000000000000000000..5f10371dc2f2a921cd5df2b9b038bd1a
 +  constructor(registry) {
 +    this._registry = registry
 +    this._handlerToUuid = new Map();
-+    helper.addObserver(this._onRequest.bind(this), 'http-on-modify-request');
-+  }
-+
-+  _onRequest(httpChannel, topic) {
-+    let loadContext = helper.getLoadContext(httpChannel);
-+    if (!loadContext)
-+      return;
-+    if (!loadContext.topFrameElement)
-+      return;
-+    const target = this._registry.targetForBrowser(loadContext.topFrameElement);
-+    if (!target)
-+      return;
-+    target._httpChannelIds.add(httpChannel.channelId);
 +  }
 +
 +  //
 +  // nsIDownloadInterceptor implementation.
 +  //
-+  interceptDownloadRequest(externalAppHandler, request, outFile) {
-+    const httpChannel = request.QueryInterface(Ci.nsIHttpChannel);
-+    if (!httpChannel)
-+      return false;
-+    if (!httpChannel.loadInfo)
-+      return false;
-+    const userContextId = httpChannel.loadInfo.originAttributes.userContextId;
-+    const browserContext = this._registry._userContextIdToBrowserContext.get(userContextId);
-+    const options = browserContext.options.downloadOptions;
-+    if (!options)
++  interceptDownloadRequest(externalAppHandler, request, browsingContext, outFile) {
++    const pageTarget = this._registry._browserBrowsingContextToTarget.get(browsingContext);
++    if (!pageTarget)
 +      return false;
 +
-+    const pageTarget = this._registry._targetForChannel(httpChannel);
-+    if (!pageTarget)
++    const browserContext = pageTarget.browserContext();
++    const options = browserContext.options.downloadOptions;
++    if (!options)
 +      return false;
 +
 +    const uuid = helper.generateId();
@@ -2425,7 +2402,7 @@ index 0000000000000000000000000000000000000000..5f10371dc2f2a921cd5df2b9b038bd1a
 +      uuid,
 +      browserContextId: browserContext.browserContextId,
 +      pageTargetId: pageTarget.id(),
-+      url: httpChannel.URI.spec,
++      url: request.name,
 +      suggestedFileName: externalAppHandler.suggestedFileName,
 +    };
 +    this._registry.emit(TargetRegistry.Events.DownloadCreated, downloadInfo);
@@ -2649,18 +2626,6 @@ index 0000000000000000000000000000000000000000..5f10371dc2f2a921cd5df2b9b038bd1a
 +  targetForBrowser(browser) {
 +    return this._browserToTarget.get(browser);
 +  }
-+
-+  _targetForChannel(httpChannel) {
-+    let loadContext = helper.getLoadContext(httpChannel);
-+    if (loadContext)
-+      return this.targetForBrowser(loadContext.topFrameElement);
-+    const channelId = httpChannel.channelId;
-+    for (const target of this._browserToTarget.values()) {
-+      if (target._httpChannelIds.has(channelId))
-+        return target;
-+    }
-+    return null;
-+  }
 +}
 +
 +class PageTarget {
@@ -2676,7 +2641,6 @@ index 0000000000000000000000000000000000000000..5f10371dc2f2a921cd5df2b9b038bd1a
 +    this._url = '';
 +    this._openerId = opener ? opener.id() : undefined;
 +    this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, this._linkedBrowser.messageManager);
-+    this._httpChannelIds = new Set();
 +
 +    const navigationListener = {
 +      QueryInterface: ChromeUtils.generateQI([ Ci.nsIWebProgressListener]),
@@ -7797,7 +7761,7 @@ index 87701f8d2cfee8bd84acd28c62b3be4989c9474c..ae1aa85c019cb21d4f7e79c35e8afe72
 +                             [optional] in unsigned long aFlags);
  };
 diff --git a/uriloader/exthandler/nsExternalHelperAppService.cpp b/uriloader/exthandler/nsExternalHelperAppService.cpp
-index 3c6d29151a3271638b2f9af2fff9641d353989d4..67edf27465a407da9097cf7cf17f41c35c61a534 100644
+index 3c6d29151a3271638b2f9af2fff9641d353989d4..94dddbfb401f0d876c5bbf1ae4de90bdc23db835 100644
 --- a/uriloader/exthandler/nsExternalHelperAppService.cpp
 +++ b/uriloader/exthandler/nsExternalHelperAppService.cpp
 @@ -99,6 +99,7 @@
@@ -7843,7 +7807,7 @@ index 3c6d29151a3271638b2f9af2fff9641d353989d4..67edf27465a407da9097cf7cf17f41c3
 +  nsCOMPtr<nsIDownloadInterceptor> interceptor = mExtProtSvc->mInterceptor;
 +  if (interceptor) {
 +    nsCOMPtr<nsIFile> fileToUse;
-+    rv = interceptor->InterceptDownloadRequest(this, request, getter_AddRefs(fileToUse), &isIntercepted);
++    rv = interceptor->InterceptDownloadRequest(this, request, mBrowsingContext, getter_AddRefs(fileToUse), &isIntercepted);
 +    if (!NS_SUCCEEDED(rv)) {
 +      LOG(("    failed to call nsIDowloadInterceptor.interceptDownloadRequest"));
 +      return rv;
@@ -7939,18 +7903,19 @@ index 288676c354cfc571ad5eff01dd2db5232c084394..249326acca0685cbacefa74f712a2415
     * When we download a helper app, we are going to retarget all load
     * notifications into our own docloader and load group instead of
 diff --git a/uriloader/exthandler/nsIExternalHelperAppService.idl b/uriloader/exthandler/nsIExternalHelperAppService.idl
-index 8a55c1bd666c4f7a032863f1527a2315830643c5..c8bfff858079216798e0c71cc757e67466ad4ce1 100644
+index 8a55c1bd666c4f7a032863f1527a2315830643c5..f7891682bd1903e45f96bd081f5af5a20a098edd 100644
 --- a/uriloader/exthandler/nsIExternalHelperAppService.idl
 +++ b/uriloader/exthandler/nsIExternalHelperAppService.idl
-@@ -6,6 +6,7 @@
+@@ -6,6 +6,8 @@
  
  #include "nsICancelable.idl"
  
++webidl BrowsingContext;
 +interface nsIHelperAppLauncher;
  interface nsIURI;
  interface nsIRequest;
  interface nsIStreamListener;
-@@ -20,6 +21,17 @@ webidl BrowsingContext;
+@@ -20,6 +22,17 @@ webidl BrowsingContext;
  class nsExternalAppHandler;
  %}
  
@@ -7960,7 +7925,7 @@ index 8a55c1bd666c4f7a032863f1527a2315830643c5..c8bfff858079216798e0c71cc757e674
 +[scriptable, uuid(9a20e9b0-75d0-11ea-bc55-0242ac130003)]
 +interface nsIDownloadInterceptor : nsISupports
 +{
-+  bool interceptDownloadRequest(in nsIHelperAppLauncher aHandler, in nsIRequest aRequest, out nsIFile file);
++  bool interceptDownloadRequest(in nsIHelperAppLauncher aHandler, in nsIRequest aRequest, in BrowsingContext aBrowsingContext, out nsIFile file);
 +
 +  void onDownloadComplete(in nsIHelperAppLauncher aHandler, in ACString aErrorName);
 +};
@@ -7968,7 +7933,7 @@ index 8a55c1bd666c4f7a032863f1527a2315830643c5..c8bfff858079216798e0c71cc757e674
  /**
   * The external helper app service is used for finding and launching
   * platform specific external applications for a given mime content type.
-@@ -49,7 +61,7 @@ interface nsIExternalHelperAppService : nsISupports
+@@ -49,7 +62,7 @@ interface nsIExternalHelperAppService : nsISupports
                                 in nsIInterfaceRequestor aContentContext,
                                 in boolean aForceSave,
                                 [optional] in nsIInterfaceRequestor aWindowContext);
@@ -7977,7 +7942,7 @@ index 8a55c1bd666c4f7a032863f1527a2315830643c5..c8bfff858079216798e0c71cc757e674
    /**
     * Binds an external helper application to a stream listener. The caller
     * should pump data into the returned stream listener. When the OnStopRequest
-@@ -82,6 +94,7 @@ interface nsIExternalHelperAppService : nsISupports
+@@ -82,6 +95,7 @@ interface nsIExternalHelperAppService : nsISupports
    boolean applyDecodingForExtension(in AUTF8String aExtension,
                                      in ACString aEncodingType);
  
