@@ -509,9 +509,37 @@ describe('text selector', () => {
 
     await page.setContent(`<div>yo<div>ya</div>hey<div>hey</div></div>`);
     expect(await page.$eval(`text=hey`, e => e.outerHTML)).toBe('<div>yo<div>ya</div>hey<div>hey</div></div>');
+    expect(await page.$eval(`text="yo">>text="ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
+    expect(await page.$eval(`text='yo'>> text="ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
+    expect(await page.$eval(`text="yo" >>text='ya'`, e => e.outerHTML)).toBe('<div>ya</div>');
+    expect(await page.$eval(`text='yo' >> text='ya'`, e => e.outerHTML)).toBe('<div>ya</div>');
+    expect(await page.$eval(`'yo'>>"ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
+    expect(await page.$eval(`"yo" >> 'ya'`, e => e.outerHTML)).toBe('<div>ya</div>');
 
     await page.setContent(`<div>yo<span id="s1"></span></div><div>yo<span id="s2"></span><span id="s3"></span></div>`);
     expect(await page.$$eval(`text=yo`, es => es.map(e => e.outerHTML).join('\n'))).toBe('<div>yo<span id="s1"></span></div>\n<div>yo<span id="s2"></span><span id="s3"></span></div>');
+
+    await page.setContent(`<div>'</div><div>"</div><div>\\</div><div>x</div>`);
+    expect(await page.$eval(`text='\\''`, e => e.outerHTML)).toBe('<div>\'</div>');
+    expect(await page.$eval(`text='"'`, e => e.outerHTML)).toBe('<div>"</div>');
+    expect(await page.$eval(`text="\\""`, e => e.outerHTML)).toBe('<div>"</div>');
+    expect(await page.$eval(`text="'"`, e => e.outerHTML)).toBe('<div>\'</div>');
+    expect(await page.$eval(`text="\\x"`, e => e.outerHTML)).toBe('<div>x</div>');
+    expect(await page.$eval(`text='\\x'`, e => e.outerHTML)).toBe('<div>x</div>');
+    expect(await page.$eval(`text='\\\\'`, e => e.outerHTML)).toBe('<div>\\</div>');
+    expect(await page.$eval(`text="\\\\"`, e => e.outerHTML)).toBe('<div>\\</div>');
+    expect(await page.$eval(`text="`, e => e.outerHTML)).toBe('<div>"</div>');
+    expect(await page.$eval(`text='`, e => e.outerHTML)).toBe('<div>\'</div>');
+    expect(await page.$eval(`"x"`, e => e.outerHTML)).toBe('<div>x</div>');
+    expect(await page.$eval(`'x'`, e => e.outerHTML)).toBe('<div>x</div>');
+    let error = await page.$(`"`).catch(e => e);
+    expect(error.message).toContain(WEBKIT ? 'SyntaxError' : 'querySelector');
+    error = await page.$(`'`).catch(e => e);
+    expect(error.message).toContain(WEBKIT ? 'SyntaxError' : 'querySelector');
+
+    await page.setContent(`<div> ' </div><div> " </div>`);
+    expect(await page.$eval(`text="`, e => e.outerHTML)).toBe('<div> " </div>');
+    expect(await page.$eval(`text='`, e => e.outerHTML)).toBe('<div> \' </div>');
   });
 
   it('create', async ({page}) => {
