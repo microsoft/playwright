@@ -48,7 +48,7 @@ const browserStdErrLog: Log = {
 export type LaunchProcessOptions = {
   executablePath: string,
   args: string[],
-  env?: {[key: string]: string | undefined},
+  env?: {[key: string]: string | number | boolean | undefined},
 
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
@@ -80,7 +80,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
         // process group, making it possible to kill child process tree with `.kill(-pid)` command.
         // @see https://nodejs.org/api/child_process.html#child_process_options_detached
         detached: process.platform !== 'win32',
-        env: options.env,
+        env: (options.env as {[key: string]: string}),
         stdio
       }
   );

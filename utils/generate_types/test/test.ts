@@ -135,8 +135,14 @@ playwright.chromium.launch().then(async browser => {
   await page.route(str => {
     const assertion: AssertType<string, typeof str> = true;
     return true;
-  }, interceptedRequest => {
-    interceptedRequest.continue();
+  }, (route, request) => {
+    const {referer} = request.headers();
+    const isString: AssertType<string, typeof referer> = true;
+    route.continue({
+      headers: {
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
     return 'something random for no reason';
   });
 
@@ -207,6 +213,8 @@ playwright.chromium.launch().then(async browser => {
   const launchOptions: playwright.LaunchOptions = {
     devtools: true,
     env: {
+      TIMEOUT: 52,
+      SOMETHING: '/some/path',
       JEST_TEST: true
     }
   };

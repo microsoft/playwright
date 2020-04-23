@@ -307,6 +307,14 @@ function parseType(type) {
 function stringifyType(parsedType) {
   if (!parsedType)
     return 'void';
+  if (parsedType.name === 'Object' && parsedType.template) {
+    const keyType = stringifyType({
+      ...parsedType.template,
+      next: null
+    });
+    const valueType = stringifyType(parsedType.template.next);
+    return `{ [key: ${keyType}]: ${valueType}; }`;
+  }
   let out = parsedType.name;
   if (parsedType.args) {
     let args = parsedType.args;

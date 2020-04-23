@@ -32,7 +32,7 @@ type LaunchOptionsBase = BrowserArgOptions & {
   handleSIGHUP?: boolean,
   timeout?: number,
   logger?: Logger,
-  env?: {[key: string]: string} | undefined
+  env?: {[key: string]: string|number|boolean}
 };
 
 export type ConnectOptions = {

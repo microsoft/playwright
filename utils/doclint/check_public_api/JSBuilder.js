@@ -184,7 +184,7 @@ function checkSources(sources) {
    */
   function serializeType(type, circular = []) {
     let typeName = checker.typeToString(type).replace(/SmartHandle/g, 'Handle');
-    if (typeName === 'any' || typeName === '{ [x: string]: string; }')
+    if (typeName === 'any') 
       typeName = 'Object';
     const nextCircular = [typeName].concat(circular);
 
@@ -196,8 +196,10 @@ function checkSources(sources) {
       }
       return new Documentation.Type(typeName, []);
     }
-
-    if (isRegularObject(type)) {
+    const stringIndexType = type.getStringIndexType();
+    if (stringIndexType) {
+      return new Documentation.Type(`Object<string, ${serializeType(stringIndexType, circular).name}>`);
+    } else if (isRegularObject(type)) {
       let properties = undefined;
       if (!circular.includes(typeName))
         properties = type.getProperties().map(property => serializeSymbol(property, nextCircular));
