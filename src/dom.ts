@@ -94,6 +94,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this;
   }
 
+  async _evaluateInMain<R, Arg>(pageFunction: types.FuncOn<{ injected: Injected, node: T }, Arg, R>, arg: Arg): Promise<R> {
+    const main = await this._context.frame._mainContext();
+    return main._doEvaluateInternal(true /* returnByValue */, true /* waitForNavigations */, pageFunction, { injected: await main._injected(), node: this }, arg);
+  }
+
   async _evaluateInUtility<R, Arg>(pageFunction: types.FuncOn<{ injected: Injected, node: T }, Arg, R>, arg: Arg): Promise<R> {
     const utility = await this._context.frame._utilityContext();
     return utility._doEvaluateInternal(true /* returnByValue */, true /* waitForNavigations */, pageFunction, { injected: await utility._injected(), node: this }, arg);
@@ -150,6 +155,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const element = node as unknown as Element;
       return element.innerHTML;
     }, {});
+  }
+
+  async dispatchEvent(type: string, eventInit: Object = {}) {
+    await this._evaluateInMain(({ injected, node }, { type, eventInit }) =>
+      injected.dispatchEvent(node, type, eventInit), { type, eventInit });
   }
 
   async _scrollRectIntoViewIfNeeded(rect?: types.Rect): Promise<void> {

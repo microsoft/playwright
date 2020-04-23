@@ -220,6 +220,10 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
     return this.mainFrame().waitForSelector(selector, options);
   }
 
+  async dispatchEvent(selector: string, type: string, eventInit?: Object, options?: types.TimeoutOptions): Promise<void> {
+    return this.mainFrame().dispatchEvent(selector, type, eventInit, options);
+  }
+
   async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
