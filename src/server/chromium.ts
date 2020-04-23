@@ -49,7 +49,7 @@ export class Chromium implements BrowserType<CRBrowser> {
   async launch(options: LaunchOptions = {}): Promise<CRBrowser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     const { browserServer, transport, downloadsPath, logger } = await this._launchServer(options, 'local');
-    const browser = await CRBrowser.connect(transport!, false, logger, options.slowMo);
+    const browser = await CRBrowser.connect(transport!, false, logger, options);
     browser._ownedServer = browserServer;
     browser._downloadsPath = downloadsPath;
     return browser;
@@ -60,14 +60,10 @@ export class Chromium implements BrowserType<CRBrowser> {
   }
 
   async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
-    const {
-      timeout = 30000,
-      slowMo = 0,
-    } = options;
     const { transport, browserServer, logger } = await this._launchServer(options, 'persistent', userDataDir);
-    const browser = await CRBrowser.connect(transport!, true, logger, slowMo);
+    const browser = await CRBrowser.connect(transport!, true, logger, options);
     browser._ownedServer = browserServer;
-    await helper.waitWithTimeout(browser._firstPagePromise, 'first page', timeout);
+    await helper.waitWithTimeout(browser._firstPagePromise, 'first page', options.timeout || 30000);
     return browser._defaultContext!;
   }
 
@@ -137,7 +133,7 @@ export class Chromium implements BrowserType<CRBrowser> {
 
   async connect(options: ConnectOptions): Promise<CRBrowser> {
     return await WebSocketTransport.connect(options.wsEndpoint, transport => {
-      return CRBrowser.connect(transport, false, new RootLogger(options.logger), options.slowMo);
+      return CRBrowser.connect(transport, false, new RootLogger(options.logger), options);
     });
   }
 

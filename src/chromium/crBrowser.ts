@@ -46,10 +46,11 @@ export class CRBrowser extends BrowserBase {
   private _tracingRecording = false;
   private _tracingPath: string | null = '';
   private _tracingClient: CRSession | undefined;
+  readonly _isHeadful: boolean;
 
-  static async connect(transport: ConnectionTransport, isPersistent: boolean, logger: InnerLogger, slowMo?: number): Promise<CRBrowser> {
-    const connection = new CRConnection(SlowMoTransport.wrap(transport, slowMo), logger);
-    const browser = new CRBrowser(connection, logger, isPersistent);
+  static async connect(transport: ConnectionTransport, isPersistent: boolean, logger: InnerLogger, options: { slowMo?: number, headless?: boolean } = {}): Promise<CRBrowser> {
+    const connection = new CRConnection(SlowMoTransport.wrap(transport, options.slowMo), logger);
+    const browser = new CRBrowser(connection, logger, isPersistent, !options.headless);
     const session = connection.rootSession;
     if (!isPersistent) {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
@@ -84,13 +85,14 @@ export class CRBrowser extends BrowserBase {
     return browser;
   }
 
-  constructor(connection: CRConnection, logger: InnerLogger, isPersistent: boolean) {
+  constructor(connection: CRConnection, logger: InnerLogger, isPersistent: boolean, isHeadful: boolean) {
     super(logger);
     this._connection = connection;
     this._session = this._connection.rootSession;
 
     if (isPersistent)
       this._defaultContext = new CRBrowserContext(this, null, validateBrowserContextOptions({}));
+    this._isHeadful = isHeadful;
     this._connection.on(ConnectionEvents.Disconnected, () => {
       for (const context of this._contexts.values())
         context._browserClosed();
@@ -141,7 +143,7 @@ export class CRBrowser extends BrowserBase {
     assert(!this._serviceWorkers.has(targetInfo.targetId), 'Duplicate target ' + targetInfo.targetId);
 
     if (targetInfo.type === 'background_page') {
-      const backgroundPage = new CRPage(session, targetInfo.targetId, context, null);
+      const backgroundPage = new CRPage(session, targetInfo.targetId, context, null, false);
       this._backgroundPages.set(targetInfo.targetId, backgroundPage);
       backgroundPage.pageOrError().then(() => {
         context!.emit(Events.CRBrowserContext.BackgroundPage, backgroundPage._page);
@@ -151,7 +153,7 @@ export class CRBrowser extends BrowserBase {
 
     if (targetInfo.type === 'page') {
       const opener = targetInfo.openerId ? this._crPages.get(targetInfo.openerId) || null : null;
-      const crPage = new CRPage(session, targetInfo.targetId, context, opener);
+      const crPage = new CRPage(session, targetInfo.targetId, context, opener, this._isHeadful);
       this._crPages.set(targetInfo.targetId, crPage);
       if (opener && opener._initializedPage) {
         for (const signalBarrier of opener._initializedPage._frameManager._signalBarriers)
