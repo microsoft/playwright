@@ -346,6 +346,21 @@ export class Injected {
     return { status: result ? 'success' : 'timeout' };
   }
 
+  dispatchEvent(node: Node, type: string, eventInit: Object) {
+    let event;
+    eventInit = { bubbles: true, cancelable: true, composed: true, ...eventInit };
+    switch (eventType.get(type)) {
+      case 'mouse': event = new MouseEvent(type, eventInit); break;
+      case 'keyboard': event = new KeyboardEvent(type, eventInit); break;
+      case 'touch': event = new TouchEvent(type, eventInit); break;
+      case 'pointer': event = new PointerEvent(type, eventInit); break;
+      case 'focus': event = new FocusEvent(type, eventInit); break;
+      case 'drag': event = new DragEvent(type, eventInit); break;
+      default: event = new Event(type, eventInit); break;
+    }
+    node.dispatchEvent(event);
+  }
+
   private _parentElementOrShadowHost(element: Element): Element | undefined {
     if (element.parentElement)
       return element.parentElement;
@@ -368,3 +383,51 @@ export class Injected {
     return element;
   }
 }
+
+const eventType = new Map<string, 'mouse'|'keyboard'|'touch'|'pointer'|'focus'|'drag'>([
+  ['auxclick', 'mouse'],
+  ['click', 'mouse'],
+  ['dblclick', 'mouse'],
+  ['mousedown','mouse'],
+  ['mouseeenter', 'mouse'],
+  ['mouseleave', 'mouse'],
+  ['mousemove', 'mouse'],
+  ['mouseout', 'mouse'],
+  ['mouseover', 'mouse'],
+  ['mouseup', 'mouse'],
+  ['mouseleave', 'mouse'],
+  ['mousewheel', 'mouse'],
+
+  ['keydown', 'keyboard'],
+  ['keyup', 'keyboard'],
+  ['keypress', 'keyboard'],
+  ['textInput', 'keyboard'],
+
+  ['touchstart', 'touch'],
+  ['touchmove', 'touch'],
+  ['touchend', 'touch'],
+  ['touchcancel', 'touch'],
+
+  ['pointerover', 'pointer'],
+  ['pointerout', 'pointer'],
+  ['pointerenter', 'pointer'],
+  ['pointerleave', 'pointer'],
+  ['pointerdown', 'pointer'],
+  ['pointerup', 'pointer'],
+  ['pointermove', 'pointer'],
+  ['pointercancel', 'pointer'],
+  ['gotpointercapture', 'pointer'],
+  ['lostpointercapture', 'pointer'],
+
+  ['focus', 'focus'],
+  ['blur', 'focus'],
+
+  ['drag', 'drag'],
+  ['dragstart', 'drag'],
+  ['dragend', 'drag'],
+  ['dragover', 'drag'],
+  ['dragenter', 'drag'],
+  ['dragleave', 'drag'],
+  ['dragexit', 'drag'],
+  ['drop', 'drag'],
+]);

@@ -163,6 +163,19 @@ export class Selectors {
     return { world: this._needsMainContext(parsed) ? 'main' : 'utility', task };
   }
 
+  _dispatchEventTask(selector: string, type: string, eventInit: Object, deadline: number): (context: dom.FrameExecutionContext) => Promise<js.JSHandle> {
+    const parsed = this._parseSelector(selector);
+    const task = async (context: dom.FrameExecutionContext) => context.evaluateHandleInternal(({ evaluator, parsed, type, eventInit, timeout }) => {
+      return evaluator.injected.poll('mutation', timeout, () => {
+        const element = evaluator.querySelector(parsed, document);
+        if (element)
+          evaluator.injected.dispatchEvent(element, type, eventInit);
+        return element || false;
+      });
+    }, { evaluator: await this._prepareEvaluator(context), parsed, type, eventInit, timeout: helper.timeUntilDeadline(deadline) });
+    return task;
+  }
+
   async _createSelector(name: string, handle: dom.ElementHandle<Element>): Promise<string | undefined> {
     const mainContext = await handle._page.mainFrame()._mainContext();
     return mainContext.evaluateInternal(({ evaluator, target, name }) => {

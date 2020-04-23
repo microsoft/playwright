@@ -158,6 +158,7 @@ module.exports = {
         './click.spec.js',
         './cookies.spec.js',
         './dialog.spec.js',
+        './dispatchevent.spec.js',
         './download.spec.js',
         './elementhandle.spec.js',
         './emulation.spec.js',

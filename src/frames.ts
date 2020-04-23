@@ -454,6 +454,13 @@ export class Frame {
     return handle;
   }
 
+  async dispatchEvent(selector: string, type: string, eventInit?: Object, options?: types.TimeoutOptions): Promise<void> {
+    const deadline = this._page._timeoutSettings.computeDeadline(options);
+    const task = selectors._dispatchEventTask(selector, type, eventInit || {}, deadline);
+    const result = await this._scheduleRerunnableTask(task, 'main', deadline, `selector "${selectorToString(selector, 'attached')}"`);
+    result.dispose();
+  }
+
   async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
   async $eval<R>(selector: string, pageFunction: types.FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {

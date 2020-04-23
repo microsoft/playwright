@@ -674,6 +674,7 @@ page.removeListener('request', logRequest);
 - [page.context()](#pagecontext)
 - [page.coverage](#pagecoverage)
 - [page.dblclick(selector[, options])](#pagedblclickselector-options)
+- [page.dispatchEvent(selector, type[, eventInit, options])](#pagedispatcheventselector-type-eventinit-options)
 - [page.emulateMedia(options)](#pageemulatemediaoptions)
 - [page.evaluate(pageFunction[, arg])](#pageevaluatepagefunction-arg)
 - [page.evaluateHandle(pageFunction[, arg])](#pageevaluatehandlepagefunction-arg)
@@ -1039,6 +1040,40 @@ Bear in mind that if the first click of the `dblclick()` triggers a navigation e
 > **NOTE** `page.dblclick()` dispatches two `click` events and a single `dblclick` event.
 
 Shortcut for [page.mainFrame().dblclick(selector[, options])](#framedblclickselector-options).
+
+
+#### page.dispatchEvent(selector, type[, eventInit, options])
+- `selector` <[string]> A selector to search for element to use. If there are multiple elements satisfying the selector, the first will be used.
+- `type` <[string]> DOM event type: `"click"`, `"dragstart"`, etc.
+- `eventInit` <[Object]> event-specific initialization properties.
+- `options` <[Object]>
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]>
+
+The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the elment, `click` is dispatched. This is equivalend to calling [`element.click()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
+
+```js
+await page.dispatchEvent('button#submit', 'click');
+```
+
+Under the hood, it creates an instance of an event based on the given `type`, initializes it with `eventInit` properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by default.
+
+Since `eventInit` is event-specific, please refer to the events documentation for the lists of initial properties:
+- [DragEvent](https://developer.mozilla.org/en-US/docs/Web/API/DragEvent/DragEvent)
+- [FocusEvent](https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent/FocusEvent)
+- [KeyboardEvent](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/KeyboardEvent)
+- [MouseEvent](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/MouseEvent)
+- [PointerEvent](https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent/PointerEvent)
+- [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)
+- [Event](https://developer.mozilla.org/en-US/docs/Web/API/Event/Event)
+
+ You can also specify `JSHandle` as the property value if you want live objects to be passed into the event:
+
+```js
+// Note you can only create DataTransfer in Chromium and Firefox
+const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
+await page.dispatchEvent('#source', 'dragstart', { dataTransfer });
+```
 
 #### page.emulateMedia(options)
 - `options` <[Object]>
@@ -1894,6 +1929,7 @@ An example of getting text from an iframe element:
 - [frame.click(selector[, options])](#frameclickselector-options)
 - [frame.content()](#framecontent)
 - [frame.dblclick(selector[, options])](#framedblclickselector-options)
+- [frame.dispatchEvent(selector, type[, eventInit, options])](#framedispatcheventselector-type-eventinit-options)
 - [frame.evaluate(pageFunction[, arg])](#frameevaluatepagefunction-arg)
 - [frame.evaluateHandle(pageFunction[, arg])](#frameevaluatehandlepagefunction-arg)
 - [frame.fill(selector, value[, options])](#framefillselector-value-options)
@@ -2051,6 +2087,39 @@ If there's no element matching `selector`, the method throws an error.
 Bear in mind that if the first click of the `dblclick()` triggers a navigation event, there will be an exception.
 
 > **NOTE** `frame.dblclick()` dispatches two `click` events and a single `dblclick` event.
+
+#### frame.dispatchEvent(selector, type[, eventInit, options])
+- `selector` <[string]> A selector to search for element to double click. If there are multiple elements satisfying the selector, the first will be double clicked.
+- `type` <[string]> DOM event type: `"click"`, `"dragstart"`, etc.
+- `eventInit` <[Object]> event-specific initialization properties.
+- `options` <[Object]>
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]>
+
+The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the elment, `click` is dispatched. This is equivalend to calling [`element.click()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
+
+```js
+await frame.dispatchEvent('button#submit', 'click');
+```
+
+Under the hood, it creates an instance of an event based on the given `type`, initializes it with `eventInit` properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by default.
+
+Since `eventInit` is event-specific, please refer to the events documentation for the lists of initial properties:
+- [DragEvent](https://developer.mozilla.org/en-US/docs/Web/API/DragEvent/DragEvent)
+- [FocusEvent](https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent/FocusEvent)
+- [KeyboardEvent](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/KeyboardEvent)
+- [MouseEvent](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/MouseEvent)
+- [PointerEvent](https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent/PointerEvent)
+- [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)
+- [Event](https://developer.mozilla.org/en-US/docs/Web/API/Event/Event)
+
+ You can also specify `JSHandle` as the property value if you want live objects to be passed into the event:
+
+```js
+// Note you can only create DataTransfer in Chromium and Firefox
+const dataTransfer = await frame.evaluateHandle(() => new DataTransfer());
+await frame.dispatchEvent('#source', 'dragstart', { dataTransfer });
+```
 
 #### frame.evaluate(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in browser context
@@ -2477,6 +2546,7 @@ ElementHandle instances can be used as an argument in [`page.$eval()`](#pageeval
 - [elementHandle.click([options])](#elementhandleclickoptions)
 - [elementHandle.contentFrame()](#elementhandlecontentframe)
 - [elementHandle.dblclick([options])](#elementhandledblclickoptions)
+- [elementHandle.dispatchEvent(type[, eventInit])](#elementhandledispatcheventtype-eventinit)
 - [elementHandle.fill(value[, options])](#elementhandlefillvalue-options)
 - [elementHandle.focus()](#elementhandlefocus)
 - [elementHandle.getAttribute(name)](#elementhandlegetattributename)
@@ -2625,6 +2695,36 @@ If the element is detached from DOM, the method throws an error.
 Bear in mind that if the first click of the `dblclick()` triggers a navigation event, there will be an exception.
 
 > **NOTE** `elementHandle.dblclick()` dispatches two `click` events and a single `dblclick` event.
+
+#### elementHandle.dispatchEvent(type[, eventInit])
+- `type` <[string]> DOM event type: `"click"`, `"dragstart"`, etc.
+- `eventInit` <[Object]> event-specific initialization properties.
+- returns: <[Promise]>
+
+The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the elment, `click` is dispatched. This is equivalend to calling [`element.click()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
+
+```js
+await elementHandle.dispatchEvent('click');
+```
+
+Under the hood, it creates an instance of an event based on the given `type`, initializes it with `eventInit` properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by default.
+
+Since `eventInit` is event-specific, please refer to the events documentation for the lists of initial properties:
+- [DragEvent](https://developer.mozilla.org/en-US/docs/Web/API/DragEvent/DragEvent)
+- [FocusEvent](https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent/FocusEvent)
+- [KeyboardEvent](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/KeyboardEvent)
+- [MouseEvent](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/MouseEvent)
+- [PointerEvent](https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent/PointerEvent)
+- [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)
+- [Event](https://developer.mozilla.org/en-US/docs/Web/API/Event/Event)
+
+ You can also specify `JSHandle` as the property value if you want live objects to be passed into the event:
+
+```js
+// Note you can only create DataTransfer in Chromium and Firefox
+const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
+await elementHandle.dispatchEvent('dragstart', { dataTransfer });
+```
 
 #### elementHandle.fill(value[, options])
 - `value` <[string]> Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
