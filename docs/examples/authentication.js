@@ -49,6 +49,6 @@ const account = { login: '', password: '' };
 })();
 
 const verifyIsLoggedIn = async (page) => {
-  // Find element through text value and assert it exists.
-  assert(await page.$('text="Create repository"'));
+  await page.click('summary[aria-label="View profile and more"]')
+  assert(await page.$(`text="Your profile"`));
 }
