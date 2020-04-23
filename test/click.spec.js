@@ -506,55 +506,6 @@ describe('Page.click', function() {
     await page.click('button');
     expect(await page.evaluate('window.clicked')).toBe(true);
   });
-  it('should fail to click a button animated via CSS animations and setInterval', async({page}) => {
-    // This test has a setInterval that consistently animates a button.
-    const buttonSize = 10;
-    const containerWidth = 500;
-    const transition = 100;
-    await page.setContent(`
-      <html>
-      <body>
-      <div style="border: 1px solid black; height: 50px; overflow: auto; width: ${containerWidth}px;">
-      <button style="border: none; height: ${buttonSize}px; width: ${buttonSize}px; transition: left ${transition}ms linear 0s; left: 0; position: relative" onClick="window.clicked++"></button>
-      </div>
-      </body>
-      <script>
-        window.atLeft = true;
-        const animateLeft = () => {
-          const button = document.querySelector('button');
-          button.style.left = window.atLeft ? '${containerWidth - buttonSize}px' : '0px';
-          console.log('set ' + button.style.left);
-          window.atLeft = !window.atLeft;
-        };
-        window.clicked = 0;
-        const dump = () => {
-          const button = document.querySelector('button');
-          const clientRect = button.getBoundingClientRect();
-          const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
-          requestAnimationFrame(dump);
-        };
-        dump();
-      </script>
-      </html>
-    `);
-    await page.evaluate(transition => {
-      window.setInterval(animateLeft, transition);
-      animateLeft();
-    }, transition);
-
-    // Ideally, we we detect the button to be continuously animating, and timeout waiting for it to stop.
-    // That does not happen though:
-    // - Chromium headless does not issue rafs between first and second animateLeft() calls.
-    // - Chromium and WebKit keep element bounds the same when for 2 frames when changing left to a new value.
-    // This test currently documents our flaky behavior, because it's unclear whether we could
-    // guarantee timeout.
-    const error1 = await page.click('button', { timeout: 250 }).catch(e => e);
-    if (error1)
-      expect(error1.message).toContain('timeout exceeded');
-    const error2 = await page.click('button', { timeout: 250 }).catch(e => e);
-    if (error2)
-      expect(error2.message).toContain('timeout exceeded');
-  });
   it('should report nice error when element is detached and force-clicked', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/animating-button.html');
     await page.evaluate(() => addButton());

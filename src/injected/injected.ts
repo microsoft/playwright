@@ -321,20 +321,29 @@ export class Injected {
   }
 
   async waitForHitTargetAt(node: Node, timeout: number, point: types.Point): Promise<InjectedResult> {
-    let element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+    const targetElement = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+    let element = targetElement;
     while (element && window.getComputedStyle(element).pointerEvents === 'none')
       element = element.parentElement;
     if (!element)
       return { status: 'notconnected' };
-    const result = await this.poll('raf', timeout, (): 'notconnected' | boolean => {
+    const result = await this.poll('raf', timeout, (): 'notconnected' | 'moved' | boolean => {
       if (!element!.isConnected)
         return 'notconnected';
+      const clientRect = targetElement!.getBoundingClientRect();
+      if (clientRect.left > point.x || clientRect.left + clientRect.width < point.x ||
+          clientRect.top > point.y || clientRect.top + clientRect.height < point.y)
+        return 'moved';
       let hitElement = this._deepElementFromPoint(document, point.x, point.y);
       while (hitElement && hitElement !== element)
         hitElement = this._parentElementOrShadowHost(hitElement);
       return hitElement === element;
     });
-    return { status: result === 'notconnected' ? 'notconnected' : (result ? 'success' : 'timeout') };
+    if (result === 'notconnected')
+      return { status: 'notconnected' };
+    if (result === 'moved')
+      return { status: 'error', error: 'Element has moved during the action' };
+    return { status: result ? 'success' : 'timeout' };
   }
 
   private _parentElementOrShadowHost(element: Element): Element | undefined {
