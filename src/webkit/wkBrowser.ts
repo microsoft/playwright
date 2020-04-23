@@ -99,6 +99,14 @@ export class WKBrowser extends BrowserBase {
     const page = this._wkPages.get(payload.pageProxyId);
     if (!page)
       return;
+    const frameManager = page._page._frameManager;
+    const frame = frameManager.frame(payload.frameId);
+    if (frame) {
+      // In some cases, e.g. blob url download, we receive only frameScheduledNavigation
+      // but no signals that the navigation was canceled and replaced by download. Fix it
+      // here by simulating cancelled provisional load which matches downloads from network.
+      frameManager.provisionalLoadFailed(frame, '', 'Download is starting');
+    }
     this._downloadCreated(page._page, payload.uuid, payload.url);
   }
 
