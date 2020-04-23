@@ -39,6 +39,7 @@ import { ConsoleMessage } from '../console';
 import { NotConnectedError } from '../errors';
 import { logError } from '../logger';
 
+
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
 export class CRPage implements PageDelegate {
@@ -55,7 +56,7 @@ export class CRPage implements PageDelegate {
   private readonly _pagePromise: Promise<Page | Error>;
   _initializedPage: Page | null = null;
 
-  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null) {
+  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, hasUIWindow: boolean) {
     this._targetId = targetId;
     this._opener = opener;
     this.rawKeyboard = new RawKeyboardImpl(client);
@@ -67,7 +68,7 @@ export class CRPage implements PageDelegate {
     this._mainFrameSession = new FrameSession(this, client, targetId);
     this._sessions.set(targetId, this._mainFrameSession);
     client.once(CRSessionEvents.Disconnected, () => this._page._didDisconnect());
-    this._pagePromise = this._mainFrameSession._initialize().then(() => this._initializedPage = this._page).catch(e => e);
+    this._pagePromise = this._mainFrameSession._initialize(hasUIWindow).then(() => this._initializedPage = this._page).catch(e => e);
   }
 
   private async _forAllFrameSessions(cb: (frame: FrameSession) => Promise<any>) {
@@ -97,7 +98,7 @@ export class CRPage implements PageDelegate {
     this._page._frameManager.removeChildFramesRecursively(frame);
     const frameSession = new FrameSession(this, session, targetId);
     this._sessions.set(targetId, frameSession);
-    frameSession._initialize().catch(e => e);
+    frameSession._initialize(false).catch(e => e);
   }
 
   removeFrameSession(targetId: Protocol.Target.TargetID) {
@@ -319,6 +320,7 @@ class FrameSession {
   private _firstNonInitialNavigationCommittedPromise: Promise<void>;
   private _firstNonInitialNavigationCommittedFulfill = () => {};
   private _firstNonInitialNavigationCommittedReject = (e: Error) => {};
+  private _windowId: number | undefined;
 
   constructor(crPage: CRPage, client: CRSession, targetId: string) {
     this._client = client;
@@ -364,7 +366,11 @@ class FrameSession {
     ];
   }
 
-  async _initialize() {
+  async _initialize(hasUIWindow: boolean) {
+    if (hasUIWindow) {
+      const { windowId } = await this._client.send('Browser.getWindowForTarget');
+      this._windowId = windowId;
+    }
     let lifecycleEventsEnabled: Promise<any>;
     if (!this._isMainFrame())
       this._addSessionListeners();
@@ -696,6 +702,20 @@ class FrameSession {
         screenOrientation: isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' },
       }),
     ];
+    if (this._windowId) {
+      let insets = { width: 24, height: 88 };
+      if (process.platform === 'win32')
+        insets = { width: 16, height: 88 };
+      else if (process.platform === 'linux')
+        insets = { width: 8, height: 85 };
+      else if (process.platform === 'darwin')
+        insets = { width: 2, height: 80 };
+
+      promises.push(this._client.send('Browser.setWindowBounds', {
+        windowId: this._windowId,
+        bounds: { width: viewport.width + insets.width, height: viewport.height + insets.height }
+      }));
+    }
     await Promise.all(promises);
   }
 
