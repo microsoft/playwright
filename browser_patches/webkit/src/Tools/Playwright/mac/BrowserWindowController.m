@@ -388,6 +388,33 @@ static BOOL areEssentiallyEqual(double a, double b)
     [_webView removeFromSuperview];
     _textFinder.hideInterfaceCallback = nil;
     [self release];
+
+    // Post two events (don't ask me why!) to spin event loop and drain
+    // automatically created autorelease pools that will release our window.
+    // See https://www.mikeash.com/pyblog/more-fun-with-autorelease.html
+    // for some discussion.
+    NSEvent* event1 = [NSEvent
+      otherEventWithType:NSEventTypeApplicationDefined
+                location:NSMakePoint(0, 0)
+           modifierFlags:0
+               timestamp:[[NSDate date] timeIntervalSince1970]
+            windowNumber:0
+                 context:nil
+                 subtype:0
+                   data1:0
+                   data2:0];
+    [NSApp postEvent:event1 atStart:YES];
+    NSEvent* event2 = [NSEvent
+      otherEventWithType:NSEventTypeApplicationDefined
+                location:NSMakePoint(0, 0)
+           modifierFlags:0
+               timestamp:[[NSDate date] timeIntervalSince1970]
+            windowNumber:0
+                 context:nil
+                 subtype:0
+                   data1:0
+                   data2:0];
+    [NSApp postEvent:event2 atStart:NO];
 }
 
 - (void)webViewDidClose:(WKWebView *)webView {
