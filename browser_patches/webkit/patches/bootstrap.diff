@@ -1081,10 +1081,10 @@ index 78980810141a9e9b65b93e6cebe80daff9a52dc1..4818c82fff8b19e060e129275ef5f95f
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Playwright.json b/Source/JavaScriptCore/inspector/protocol/Playwright.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..7b632af490e3f643129d89fdd58497e0aed87c7c
+index 0000000000000000000000000000000000000000..9cc2d3f122c1f3228b3298b07978201c72208eb1
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Playwright.json
-@@ -0,0 +1,220 @@
+@@ -0,0 +1,221 @@
 +{
 +    "domain": "Playwright",
 +    "availability": ["web"],
@@ -1293,7 +1293,8 @@ index 0000000000000000000000000000000000000000..7b632af490e3f643129d89fdd58497e0
 +                { "name": "uuid", "type": "string" },
 +                { "name": "url", "type": "string" },
 +                { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
-+                { "name": "browserContextId", "$ref": "ContextID" }
++                { "name": "browserContextId", "$ref": "ContextID" },
++                { "name": "frameId", "$ref": "Network.FrameId", "description": "Unique identifier of the originating frame." }
 +            ]
 +        },
 +        {
@@ -3072,7 +3073,7 @@ index b038a1879c043aa17dae97425693f29be42e3258..d60716b837663004675ffd90bceede4c
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index 3e8680e1df15245df250aa8e52c3126935832037..04ebf0d6bc6d89c731cf3d5789f284daa6f694b2 100644
+index 3e8680e1df15245df250aa8e52c3126935832037..6ce143783b7f337e0df356ea58aead5a1f1da7e8 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -3100,7 +3101,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..04ebf0d6bc6d89c731cf3d5789f284da
  #include "HTMLNames.h"
  #include "ImageBuffer.h"
  #include "InspectorClient.h"
-@@ -56,19 +61,29 @@
+@@ -56,19 +61,28 @@
  #include "MIMETypeRegistry.h"
  #include "MemoryCache.h"
  #include "Page.h"
@@ -3121,7 +3122,6 @@ index 3e8680e1df15245df250aa8e52c3126935832037..04ebf0d6bc6d89c731cf3d5789f284da
  #include <JavaScriptCore/IdentifiersFactory.h>
 +#include <JavaScriptCore/InjectedScriptManager.h>
  #include <JavaScriptCore/RegularExpression.h>
-+#include <platform/ProcessIdentifier.h>
 +#include <wtf/DateMath.h>
  #include <wtf/ListHashSet.h>
 +#include <wtf/NeverDestroyed.h>
@@ -3130,7 +3130,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..04ebf0d6bc6d89c731cf3d5789f284da
  #include <wtf/Stopwatch.h>
  #include <wtf/text/Base64.h>
  #include <wtf/text/StringBuilder.h>
-@@ -81,7 +96,6 @@
+@@ -81,7 +95,6 @@
  #include "LegacyWebArchive.h"
  #endif
  
@@ -3138,7 +3138,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..04ebf0d6bc6d89c731cf3d5789f284da
  namespace WebCore {
  
  using namespace Inspector;
-@@ -100,6 +114,11 @@ using namespace Inspector;
+@@ -100,6 +113,11 @@ using namespace Inspector;
      macro(WebRTCEncryptionEnabled) \
      macro(WebSecurityEnabled)
  
@@ -3150,7 +3150,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..04ebf0d6bc6d89c731cf3d5789f284da
  static bool decodeBuffer(const char* buffer, unsigned size, const String& textEncodingName, String* result)
  {
      if (buffer) {
-@@ -340,6 +359,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
+@@ -340,6 +358,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
      , m_frontendDispatcher(makeUnique<Inspector::PageFrontendDispatcher>(context.frontendRouter))
      , m_backendDispatcher(Inspector::PageBackendDispatcher::create(context.backendDispatcher, this))
      , m_inspectedPage(context.inspectedPage)
@@ -3158,7 +3158,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..04ebf0d6bc6d89c731cf3d5789f284da
      , m_client(client)
      , m_overlay(overlay)
  {
-@@ -373,11 +393,20 @@ void InspectorPageAgent::enable(ErrorString& errorString)
+@@ -373,11 +392,20 @@ void InspectorPageAgent::enable(ErrorString& errorString)
  #if HAVE(OS_DARK_MODE_SUPPORT)
      defaultAppearanceDidChange(m_inspectedPage.defaultUseDarkAppearance());
  #endif
@@ -3179,7 +3179,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..04ebf0d6bc6d89c731cf3d5789f284da
  
      ErrorString unused;
      setShowPaintRects(unused, false);
-@@ -415,12 +444,34 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
+@@ -415,12 +443,34 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
      m_inspectedPage.mainFrame().loader().reload(reloadOptions);
  }
  
@@ -3216,7 +3216,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..04ebf0d6bc6d89c731cf3d5789f284da
      FrameLoadRequest frameLoadRequest { *frame.document(), frame.document()->securityOrigin(), WTFMove(resourceRequest), "_self"_s, InitiatedByMainFrame::Unknown };
      frameLoadRequest.disableNavigationToInvalidURL();
      frame.loader().changeLocation(WTFMove(frameLoadRequest));
-@@ -748,15 +799,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
+@@ -748,15 +798,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
      m_overlay->setShowPaintRects(show);
  }
  
@@ -3238,13 +3238,18 @@ index 3e8680e1df15245df250aa8e52c3126935832037..04ebf0d6bc6d89c731cf3d5789f284da
  }
  
  void InspectorPageAgent::frameNavigated(Frame& frame)
-@@ -764,13 +816,18 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
+@@ -764,13 +815,23 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
      m_frontendDispatcher->frameNavigated(buildObjectForFrame(&frame));
  }
  
++String InspectorPageAgent::makeFrameID(ProcessIdentifier processID,  FrameIdentifier frameID)
++{
++    return makeString(processID.toUInt64(), ".", frameID.toUInt64());
++}
++
 +static String globalIDForFrame(Frame& frame)
 +{
-+    return makeString(Process::identifier().toUInt64(), ".", frame.loader().client().frameID()->toUInt64());
++    return InspectorPageAgent::makeFrameID(Process::identifier(), *frame.loader().client().frameID());
 +}
 +
  void InspectorPageAgent::frameDetached(Frame& frame)
@@ -3260,7 +3265,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..04ebf0d6bc6d89c731cf3d5789f284da
  }
  
  Frame* InspectorPageAgent::frameForId(const String& frameId)
-@@ -782,20 +839,18 @@ String InspectorPageAgent::frameId(Frame* frame)
+@@ -782,20 +843,18 @@ String InspectorPageAgent::frameId(Frame* frame)
  {
      if (!frame)
          return emptyString();
@@ -3287,7 +3292,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..04ebf0d6bc6d89c731cf3d5789f284da
  }
  
  Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& frameId)
-@@ -806,11 +861,6 @@ Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& f
+@@ -806,11 +865,6 @@ Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& f
      return frame;
  }
  
@@ -3299,7 +3304,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..04ebf0d6bc6d89c731cf3d5789f284da
  void InspectorPageAgent::frameStartedLoading(Frame& frame)
  {
      m_frontendDispatcher->frameStartedLoading(frameId(&frame));
-@@ -831,6 +881,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -831,6 +885,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -3312,7 +3317,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..04ebf0d6bc6d89c731cf3d5789f284da
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
      m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -888,6 +944,48 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -888,6 +948,48 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -3361,7 +3366,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..04ebf0d6bc6d89c731cf3d5789f284da
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -1031,6 +1129,29 @@ void InspectorPageAgent::snapshotRect(ErrorString& errorString, int x, int y, in
+@@ -1031,6 +1133,29 @@ void InspectorPageAgent::snapshotRect(ErrorString& errorString, int x, int y, in
      *outDataURL = snapshot->toDataURL("image/png"_s, WTF::nullopt, PreserveResolution::Yes);
  }
  
@@ -3391,7 +3396,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..04ebf0d6bc6d89c731cf3d5789f284da
  void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  {
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
-@@ -1048,4 +1169,538 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -1048,4 +1173,538 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -3931,10 +3936,17 @@ index 3e8680e1df15245df250aa8e52c3126935832037..04ebf0d6bc6d89c731cf3d5789f284da
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 6c75829502336b0806db2531e78186d2c559e44c..7b3c952fb5c8e60620d605bd2b9b4989554ae91c 100644
+index 6c75829502336b0806db2531e78186d2c559e44c..a2f8734a41a3a7d6ba489ea65fe8ca18e91c92d9 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-@@ -40,11 +40,16 @@
+@@ -34,17 +34,23 @@
+ #include "CachedResource.h"
+ #include "InspectorWebAgentBase.h"
+ #include "LayoutRect.h"
++#include "ProcessIdentifier.h"
+ #include <JavaScriptCore/InspectorBackendDispatchers.h>
+ #include <JavaScriptCore/InspectorFrontendDispatchers.h>
+ #include <wtf/HashMap.h>
  #include <wtf/Seconds.h>
  #include <wtf/text/WTFString.h>
  
@@ -3951,7 +3963,15 @@ index 6c75829502336b0806db2531e78186d2c559e44c..7b3c952fb5c8e60620d605bd2b9b4989
  class InspectorClient;
  class InspectorOverlay;
  class Page;
-@@ -97,7 +102,9 @@ public:
+@@ -77,6 +83,7 @@ public:
+         OtherResource,
+     };
+ 
++    WEBCORE_EXPORT static String makeFrameID(ProcessIdentifier processID,  FrameIdentifier frameID);
+     static bool sharedBufferContent(RefPtr<SharedBuffer>&&, const String& textEncodingName, bool withBase64Encode, String* result);
+     static Vector<CachedResource*> cachedResourcesForFrame(Frame*);
+     static void resourceContent(ErrorString&, Frame*, const URL&, String* result, bool* base64Encoded);
+@@ -97,7 +104,9 @@ public:
      void enable(ErrorString&) override;
      void disable(ErrorString&) override;
      void reload(ErrorString&, const bool* optionalReloadFromOrigin, const bool* optionalRevalidateAllResources) override;
@@ -3962,7 +3982,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..7b3c952fb5c8e60620d605bd2b9b4989
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
      void getCookies(ErrorString&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::Cookie>>& cookies) override;
-@@ -112,20 +119,31 @@ public:
+@@ -112,20 +121,31 @@ public:
      void setShowPaintRects(ErrorString&, bool show) override;
      void setEmulatedMedia(ErrorString&, const String&) override;
      void setForcedAppearance(ErrorString&, const String&) override;
@@ -3998,7 +4018,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..7b3c952fb5c8e60620d605bd2b9b4989
      void defaultAppearanceDidChange(bool useDarkAppearance);
      void applyUserAgentOverride(String&);
      void applyEmulatedMedia(String&);
-@@ -134,6 +152,12 @@ public:
+@@ -134,6 +154,12 @@ public:
      void didLayout();
      void didScroll();
      void didRecalculateStyle();
@@ -4011,7 +4031,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..7b3c952fb5c8e60620d605bd2b9b4989
  
      Frame* frameForId(const String& frameId);
      WEBCORE_EXPORT String frameId(Frame*);
-@@ -142,6 +166,7 @@ public:
+@@ -142,6 +168,7 @@ public:
  
  private:
      double timestamp();
@@ -4019,7 +4039,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..7b3c952fb5c8e60620d605bd2b9b4989
  
      static bool mainResourceContent(Frame*, bool withBase64Encode, String* result);
      static bool dataContent(const char* data, unsigned size, const String& textEncodingName, bool withBase64Encode, String* result);
-@@ -153,18 +178,20 @@ private:
+@@ -153,18 +180,20 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -8078,7 +8098,7 @@ index d7695088e7cfc4f638f157338754f9f157489749..ba114d47ac079661702e44f19853398f
      bool m_isBackingStoreDiscardable { true };
      std::unique_ptr<BackingStore> m_backingStore;
 diff --git a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
-index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..4b0fe2f5a562fbcd3250dc4749072ddfa7c7be4f 100644
+index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..50b310adfdea35e6194120f5b776632d2b2987ea 100644
 --- a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
 +++ b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
 @@ -42,8 +42,10 @@
@@ -8099,7 +8119,7 @@ index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..4b0fe2f5a562fbcd3250dc4749072ddf
 +    , m_uuid(createCanonicalUUIDString())
  {
 +    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
-+      instrumentation->downloadCreated(m_uuid, m_request, originatingPage);
++      instrumentation->downloadCreated(m_uuid, m_request, frameInfoData, originatingPage);
  }
  
  DownloadProxy::~DownloadProxy()
@@ -8885,10 +8905,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..8133961d81a81bb82ed05e0d2c82150a61d410e3
+index 0000000000000000000000000000000000000000..45eab7a43fcab9aea59f1c04113a3549f926c190
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,601 @@
+@@ -0,0 +1,605 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -8920,6 +8940,7 @@ index 0000000000000000000000000000000000000000..8133961d81a81bb82ed05e0d2c82150a
 +#if ENABLE(REMOTE_INSPECTOR)
 +
 +#include "APIPageConfiguration.h"
++#include "FrameInfoData.h"
 +#include "InspectorPlaywrightAgentClient.h"
 +#include "InspectorTargetProxy.h"
 +#include "NetworkProcessMessages.h"
@@ -8933,6 +8954,7 @@ index 0000000000000000000000000000000000000000..8133961d81a81bb82ed05e0d2c82150a
 +#include "WebProcessProxy.h"
 +#include <WebCore/FrameIdentifier.h>
 +#include <WebCore/GeolocationPositionData.h>
++#include <WebCore/InspectorPageAgent.h>
 +#include <WebCore/ProcessIdentifier.h>
 +#include <WebCore/ResourceRequest.h>
 +#include <JavaScriptCore/InspectorFrontendRouter.h>
@@ -9439,13 +9461,15 @@ index 0000000000000000000000000000000000000000..8133961d81a81bb82ed05e0d2c82150a
 +    }
 +}
 +
-+void InspectorPlaywrightAgent::downloadCreated(const String& uuid, const WebCore::ResourceRequest& request, WebPageProxy* page)
++void InspectorPlaywrightAgent::downloadCreated(const String& uuid, const WebCore::ResourceRequest& request, const FrameInfoData& frameInfoData, WebPageProxy* page)
 +{
 +    if (!m_isConnected)
 +        return;
++    String frameID = WebCore::InspectorPageAgent::makeFrameID(page->process().coreProcessIdentifier(), frameInfoData.frameID ? *frameInfoData.frameID : page->mainFrame()->frameID());
 +    m_frontendDispatcher->downloadCreated(uuid, request.url().string(),
 +        InspectorPlaywrightAgent::toPageProxyIDProtocolString(*page),
-+        InspectorPlaywrightAgent::toBrowserContextIDProtocolString(page->sessionID()));
++        InspectorPlaywrightAgent::toBrowserContextIDProtocolString(page->sessionID()),
++        frameID);
 +}
 +
 +void InspectorPlaywrightAgent::downloadFinished(const String& uuid, const String& error)
@@ -9492,7 +9516,7 @@ index 0000000000000000000000000000000000000000..8133961d81a81bb82ed05e0d2c82150a
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..f42806c4bd0e3d844aa7636ae198d59de6fc96db
+index 0000000000000000000000000000000000000000..a38b9be4e699469fe9de746400dae7b222245909
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 @@ -0,0 +1,121 @@
@@ -9597,7 +9621,7 @@ index 0000000000000000000000000000000000000000..f42806c4bd0e3d844aa7636ae198d59d
 +    static String toPageProxyIDProtocolString(const WebPageProxy&);
 +
 +    // DownloadInstrumentation
-+    void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, WebPageProxy* page) override;
++    void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) override;
 +    void downloadFinished(const String& uuid, const String& error) override;
 +
 +private:
@@ -11071,16 +11095,24 @@ index 50d97931d4c05c7046521bfa762f520fff3c1184..6934a161312d658e3a1c1f3a053070ab
 +
  }
 diff --git a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
-index e842313256ba31bdd8a750ca55b33abdab2c0092..6fa4e7ff97db4dd9565b4834de2257a6966ed56a 100644
+index e842313256ba31bdd8a750ca55b33abdab2c0092..bb639d919b7348f811abface22a6f5cded25a371 100644
 --- a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
 +++ b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
-@@ -96,6 +96,13 @@ enum class StorageAccessPromptStatus;
+@@ -83,6 +83,7 @@ class WebResourceLoadStatisticsStore;
+ enum class CacheModel : uint8_t;
+ enum class WebsiteDataFetchOption;
+ enum class WebsiteDataType;
++struct FrameInfoData;
+ struct WebsiteDataRecord;
+ struct WebsiteDataStoreParameters;
+ 
+@@ -96,6 +97,13 @@ enum class StorageAccessPromptStatus;
  struct PluginModuleInfo;
  #endif
  
 +class DownloadInstrumentation {
 +public:
-+    virtual void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, WebPageProxy* page) = 0;
++    virtual void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) = 0;
 +    virtual void downloadFinished(const String& uuid, const String& error) = 0;
 +    virtual ~DownloadInstrumentation() = default;
 +};
@@ -11088,7 +11120,7 @@ index e842313256ba31bdd8a750ca55b33abdab2c0092..6fa4e7ff97db4dd9565b4834de2257a6
  class WebsiteDataStore : public API::ObjectImpl<API::Object::Type::WebsiteDataStore>, public Identified<WebsiteDataStore>, public CanMakeWeakPtr<WebsiteDataStore>  {
  public:
      static Ref<WebsiteDataStore> defaultDataStore();
-@@ -282,6 +289,14 @@ public:
+@@ -282,6 +290,14 @@ public:
      static WTF::String defaultJavaScriptConfigurationDirectory();
      static bool http3Enabled();
  
@@ -11103,7 +11135,7 @@ index e842313256ba31bdd8a750ca55b33abdab2c0092..6fa4e7ff97db4dd9565b4834de2257a6
      void resetQuota(CompletionHandler<void()>&&);
      void hasAppBoundSession(CompletionHandler<void(bool)>&&) const;
      void setInAppBrowserPrivacyEnabled(bool enabled, CompletionHandler<void()>&&);
-@@ -372,6 +387,11 @@ private:
+@@ -372,6 +388,11 @@ private:
  
      RefPtr<API::HTTPCookieStore> m_cookieStore;
  
