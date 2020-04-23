@@ -2,7 +2,7 @@ name: "release"
 
 on:
   release:
-    types: [created]
+    types: [published]
 
 env:
   CI: true
