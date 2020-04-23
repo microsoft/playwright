@@ -39,9 +39,9 @@ export class Download {
     this._url = url;
     this._finishedCallback = () => {};
     this._finishedPromise = new Promise(f => this._finishedCallback = f);
-    this._page.emit(Events.Page.Download, this);
     page._browserContext._downloads.add(this);
     this._acceptDownloads = !!this._page._browserContext._options.acceptDownloads;
+    this._page.emit(Events.Page.Download, this);
   }
 
   url(): string {
