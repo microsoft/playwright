@@ -82,7 +82,7 @@ Using these packages is as easy as using a regular Playwright:
 $ npm i playwright-webkit
 ```
 
-2. Requre package
+2. Require package
 
 ```js
 // Notice a proper package name in require
