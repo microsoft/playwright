@@ -3073,7 +3073,7 @@ index b038a1879c043aa17dae97425693f29be42e3258..d60716b837663004675ffd90bceede4c
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index 3e8680e1df15245df250aa8e52c3126935832037..6ce143783b7f337e0df356ea58aead5a1f1da7e8 100644
+index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c670a0c1a2 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -3396,7 +3396,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..6ce143783b7f337e0df356ea58aead5a
  void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  {
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
-@@ -1048,4 +1173,538 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -1048,4 +1173,543 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -3926,12 +3926,17 @@ index 3e8680e1df15245df250aa8e52c3126935832037..6ce143783b7f337e0df356ea58aead5a
 +    m_inspectedPage.setOverrideScreenSize(size);
 +}
 +
-+void InspectorPageAgent::setOrientationOverride(Inspector::ErrorString&, const int* angle)
++void InspectorPageAgent::setOrientationOverride(Inspector::ErrorString& errorString, const int* angle)
 +{
++#if ENABLE(ORIENTATION_EVENTS)
++    UNUSED_PARAM(errorString);
 +    Optional<int> orientation;
 +    if (angle)
 +        orientation = *angle;
 +    m_inspectedPage.setOverrideOrientation(orientation);
++#else
++    errorString = "Orientation events are disabled in this build";
++#endif
 +}
 +
  } // namespace WebCore
