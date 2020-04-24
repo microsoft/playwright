@@ -82,8 +82,10 @@ describe.skip(WEBKIT)('Permissions', function() {
     await context.clearPermissions();
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
-  //TODO: flaky on Linux. https://github.com/microsoft/playwright/pull/1790/checks?check_run_id=587327883
-  it.fail(FFOX && LINUX)('should trigger permission onchange', async({page, server, context}) => {
+  //TODO: flaky
+  // - Linux: https://github.com/microsoft/playwright/pull/1790/checks?check_run_id=587327883
+  // - Win: https://ci.appveyor.com/project/aslushnikov/playwright/builds/32402536
+  it.fail(FFOX)('should trigger permission onchange', async({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => {
       window['events'] = [];
