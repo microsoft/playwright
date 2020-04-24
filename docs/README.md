@@ -1,7 +1,10 @@
+# Documentation
+
 ### Table of contents
 
-1. [Introduction](./intro.md)
-1. [Core concepts](./core-concepts.md)
+1. [Getting Started](./intro.md)
+    - [Installation](./installation.md)
+1. [Core Concepts](./core-concepts.md)
     - [Browser](./core-concepts.md#browser)
     - [Browser contexts](./core-concepts.md#browser-contexts)
     - [Pages and frames](./core-concepts.md#pages-and-frames)
@@ -32,31 +35,31 @@
     - [Handle requests](./network.md#handle-requests)
     - [Modify requests](./network.md#modify-requests)
     - [Abort requests](./network.md#abort-requests)
-1. [Scraping and verification](./verification.md)
+1. [Scraping and Verification](./verification.md)
     - [Evaluating JavaScript](./verification.md#evaluating-javascript)
     - [Capturing screenshot](./verification.md#capturing-screenshot)
     - [Page events](./verification.md#page-events)
     - [Handling exceptions](./verification.md#handling-exceptions)
-1. [Navigation and loading](./loading.md)
+1. [Navigation and Loading](./loading.md)
     - [Common scenarios](./loading.md#common-scenarios)
     - [Loading a popup](./loading.md#loading-a-popup)
     - [Client-side redirects](./loading.md#unusual-client-side-redirects)
     - [Navigation after a timeout](./loading.md#click-triggers-navigation-after-a-timeout)
-1. [Continuous integration](./ci.md)
+1. [Continuous Integration](./ci.md)
     - [Docker](./ci.md#docker)
     - [GitHub Actions](./ci.md#github-actions)
     - [Azure Pipelines](./ci.md#azure-pipelines)
     - [Travis CI](./ci.md#travis-ci)
     - [CircleCI](./ci.md#circleci)
     - [AppVeyor](./ci.md#appveyor)
-    - Troubleshooting
+    - [Troubleshooting](./troubleshooting.md)
 1. Test runners
     - Jest
     - Mocha
     - Karma
     - Jasmine
     - Storybooks
+1. [Selector engines](./selectors.md)
 1. [Extensibility](./extensibility.md)
     - [Custom selector engines](./extensibility.md#custom-selector-engines)
-1. [Installation](./installation.md)
 1. [API Reference](./api.md)
