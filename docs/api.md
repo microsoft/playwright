@@ -1,5 +1,5 @@
 
-# Playwright API <!-- GEN:version -->Tip-Of-Tree<!-- GEN:stop-->
+# Playwright API <!-- GEN:version -->v0.15.0<!-- GEN:stop-->
 
 ##### Table of Contents
 
