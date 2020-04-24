@@ -16,7 +16,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, MAC} = require('./utils').testOptions(browserType);
 
 describe('Download', function() {
   beforeEach(async(state) => {
@@ -83,7 +83,7 @@ describe('Download', function() {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   })
-  it.fail(FFOX || WEBKIT)(`should report download path within page.on('download', …) handler for Blobs`, async({browser, server}) => {
+  it.fail(WEBKIT && MAC)(`should report download path within page.on('download', …) handler for Blobs`, async({browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
     const onDownloadPath = new Promise((res) => {
       page.on('download', dl => {
