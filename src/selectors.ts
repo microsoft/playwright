@@ -197,7 +197,10 @@ export class Selectors {
       if (eqIndex !== -1 && part.substring(0, eqIndex).trim().match(/^[a-zA-Z_0-9-+:]+$/)) {
         name = part.substring(0, eqIndex).trim();
         body = part.substring(eqIndex + 1);
-      } else if (part.startsWith('"')) {
+      } else if (part.length > 1 && part[0] === '"' && part[part.length - 1] === '"') {
+        name = 'text';
+        body = part;
+      } else if (part.length > 1 && part[0] === "'" && part[part.length - 1] === "'") {
         name = 'text';
         body = part;
       } else if (/^\(*\/\//.test(part)) {

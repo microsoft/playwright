@@ -48,10 +48,27 @@ export function createTextSelector(shadow: boolean): SelectorEngine {
   return engine;
 }
 
+function unescape(s: string): string {
+  if (!s.includes('\\'))
+    return s;
+  const r: string[] = [];
+  let i = 0;
+  while (i < s.length) {
+    if (s[i] === '\\' && i + 1 < s.length)
+      i++;
+    r.push(s[i++]);
+  }
+  return r.join('');
+}
+
 type Matcher = (text: string) => boolean;
 function createMatcher(selector: string): Matcher {
-  if (selector[0] === '"' && selector[selector.length - 1] === '"') {
-    const parsed = JSON.parse(selector);
+  if (selector.length > 1 && selector[0] === '"' && selector[selector.length - 1] === '"') {
+    const parsed = unescape(selector.substring(1, selector.length - 1));
+    return text => text === parsed;
+  }
+  if (selector.length > 1 && selector[0] === "'" && selector[selector.length - 1] === "'") {
+    const parsed = unescape(selector.substring(1, selector.length - 1));
     return text => text === parsed;
   }
   if (selector[0] === '/' && selector.lastIndexOf('/') > 0) {
