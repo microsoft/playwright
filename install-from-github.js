@@ -64,33 +64,20 @@ async function listFiles(dirpath) {
 }
 
 async function downloadAllBrowsersAndGenerateProtocolTypes() {
-  const {downloadBrowserWithProgressBar, localDownloadOptions} = require('./download-browser');
+  const { targetDirectory, executablePath, downloadBrowserWithProgressBar } = require('./download-browser');
   const protocolGenerator = require('./utils/protocol-types-generator');
-  const chromiumOptions = localDownloadOptions('chromium');
-  const firefoxOptions = localDownloadOptions('firefox');
-  const webkitOptions = localDownloadOptions('webkit');
-  if (!(await existsAsync(chromiumOptions.downloadPath))) {
-    await downloadBrowserWithProgressBar(chromiumOptions);
-    await protocolGenerator.generateChromiumProtocol(chromiumOptions.executablePath).catch(console.warn);
-  }
-  if (!(await existsAsync(firefoxOptions.downloadPath))) {
-    await downloadBrowserWithProgressBar(firefoxOptions);
-    await protocolGenerator.generateFirefoxProtocol(firefoxOptions.executablePath).catch(console.warn);
-  }
-  if (!(await existsAsync(webkitOptions.downloadPath))) {
-    await downloadBrowserWithProgressBar(webkitOptions);
-    await protocolGenerator.generateWebKitProtocol(webkitOptions.downloadPath).catch(console.warn);
-  }
+  if (await downloadBrowserWithProgressBar(__dirname, 'chromium'))
+    await protocolGenerator.generateChromiumProtocol(executablePath(__dirname, 'chromium')).catch(console.warn);
+  if (await downloadBrowserWithProgressBar(__dirname, 'firefox'))
+    await protocolGenerator.generateFirefoxProtocol(executablePath(__dirname, 'firefox')).catch(console.warn);
+  if (await downloadBrowserWithProgressBar(__dirname, 'webkit'))
+    await protocolGenerator.generateWebKitProtocol(executablePath(__dirname, 'webkit')).catch(console.warn);
 
   // Cleanup stale revisions.
   const directories = new Set(await readdirAsync(path.join(__dirname, '.local-browsers')));
-  directories.delete(chromiumOptions.downloadPath);
-  directories.delete(firefoxOptions.downloadPath);
-  directories.delete(webkitOptions.downloadPath);
-  // cleanup old browser directories.
-  directories.add(path.join(__dirname, '.local-chromium'));
-  directories.add(path.join(__dirname, '.local-firefox'));
-  directories.add(path.join(__dirname, '.local-webkit'));
+  directories.delete(targetDirectory(__dirname, 'chromium'));
+  directories.delete(targetDirectory(__dirname, 'firefox'));
+  directories.delete(targetDirectory(__dirname, 'webkit'));
   await Promise.all([...directories].map(directory => rmAsync(directory)));
 
   try {
