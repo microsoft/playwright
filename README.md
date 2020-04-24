@@ -1,35 +1,43 @@
-# 🎭 Playwright
-[![npm version](https://img.shields.io/npm/v/playwright.svg?style=flat)](https://www.npmjs.com/package/playwright) <!-- GEN:chromium-version-badge -->[![Chromium version](https://img.shields.io/badge/chromium-84.0.4125.0-blue.svg?logo=google-chrome)](https://www.chromium.org/Home)<!-- GEN:stop --> <!-- GEN:firefox-version-badge -->[![Firefox version](https://img.shields.io/badge/firefox-76.0b5-blue.svg?logo=mozilla-firefox)](https://www.mozilla.org/en-US/firefox/new/)<!-- GEN:stop --> [![WebKit version](https://img.shields.io/badge/webkit-13.0.4-blue.svg?logo=safari)](https://webkit.org/) [![Join Slack](https://img.shields.io/badge/join-slack-infomational)](https://join.slack.com/t/playwright/shared_invite/enQtOTEyMTUxMzgxMjIwLThjMDUxZmIyNTRiMTJjNjIyMzdmZDA3MTQxZWUwZTFjZjQwNGYxZGM5MzRmNzZlMWI5ZWUyOTkzMjE5Njg1NDg)
+# 🎭 Playwright 
 
-###### [Docs](https://github.com/microsoft/playwright/blob/master/docs/README.md) | [API](https://github.com/microsoft/playwright/blob/master/docs/api.md) | [Changelog](https://github.com/microsoft/playwright/releases) | [Contributing](#contributing)
+[![npm version](https://img.shields.io/npm/v/playwright.svg?style=flat)](https://www.npmjs.com/package/playwright) [![Join Slack](https://img.shields.io/badge/join-slack-infomational)](https://join.slack.com/t/playwright/shared_invite/enQtOTEyMTUxMzgxMjIwLThjMDUxZmIyNTRiMTJjNjIyMzdmZDA3MTQxZWUwZTFjZjQwNGYxZGM5MzRmNzZlMWI5ZWUyOTkzMjE5Njg1NDg) <!-- GEN:chromium-version-badge -->[![Chromium version](https://img.shields.io/badge/chromium-84.0.4125.0-blue.svg?logo=google-chrome)](https://www.chromium.org/Home)<!-- GEN:stop --> <!-- GEN:firefox-version-badge -->[![Firefox version](https://img.shields.io/badge/firefox-76.0b5-blue.svg?logo=mozilla-firefox)](https://www.mozilla.org/en-US/firefox/new/)<!-- GEN:stop --> [![WebKit version](https://img.shields.io/badge/webkit-13.0.4-blue.svg?logo=safari)](https://webkit.org/)
 
+##### [Docs](docs/README.md) | [API reference](docs/api.md) | [Changelog](https://github.com/microsoft/playwright/releases)
 
-Playwright is a Node library to automate the [Chromium](https://www.chromium.org/Home), [WebKit](https://webkit.org/) and [Firefox](https://www.mozilla.org/en-US/firefox/new/) browsers with a single API. It enables **cross-browser** web automation that is **ever-green**, **capable**, **reliable** and **fast**.
+Playwright is a Node library to automate [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) and [WebKit](https://webkit.org/) with a single API. Playwright is built to enable cross-browser web automation that is **ever-green**, **capable**, **reliable** and **fast**.
 
-|          | Linux | macOS | Win |
-|   ---:   | :---: | :---:  | :---: |
+|          | Linux | macOS | Windows |
+|   :---   | :---: | :---: | :---:   |
 | Chromium <!-- GEN:chromium-version -->84.0.4125.0<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | WebKit 13.0.4 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | Firefox <!-- GEN:firefox-version -->76.0b5<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-- Headless is supported for all the browsers on all platforms.
 
+Headless execution is supported for all the browsers on all platforms.
 
-Our primary goal with Playwright is to improve automated UI testing by eliminating flakiness, improving the speed of execution and offering insights into the browser operation.
-
-### Usage
+## Usage
 
 ```
 npm i playwright
 ```
 
-This installs Playwright along with its dependencies and the browser binaries. Browser binaries are about 50-100MB each, so expect the installation network traffic to be substantial.
+This installs Playwright and browser binaries for Chromium, Firefox and WebKit. Once installed, you can `require` Playwright in a Node.js script and automate web browser interactions.
 
-Once installed, Playwright can be used to create a browser instance, open pages and then automate interactions.
-
-* [Documentation](docs/README.md)
+* [Getting started](docs/intro.md)
+* [Installation configuration](docs/installation.md).
 * [API reference](docs/api.md)
 
-### Examples
+## Capabilities
+
+Playwright is built to automate the broad and growing set of web browser capabilities used by Single Page Apps and Progressive Web Apps.
+
+* Scenarios that span multiple page, domains and iframes
+* Auto-wait for elements to be ready before executing actions (like click, fill)
+* Intercept network activity for stubbing and mocking network requests
+* Emulate mobile devices, geolocation, permissions
+* Native input events for mouse and keyboard
+* Upload and download files
+
+## Examples
 
 #### Page screenshot
 
@@ -122,13 +130,10 @@ const { webkit } = require('playwright');
 })();
 ```
 
-## Contributing
-
-Check out our [contributing guide](https://github.com/microsoft/playwright/blob/master/CONTRIBUTING.md).
-
 ## Resources
 
 * [Documentation](docs/README.md)
-* [Example recipes](docs/examples/README.md)
 * [API reference](docs/api.md)
+* [Example recipes](docs/examples/README.md)
+* [Contributing](CONTRIBUTING.md)
 * [Community showcase](docs/showcase.md)

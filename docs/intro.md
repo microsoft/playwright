@@ -1,26 +1,14 @@
-# Introduction
+# Getting Started
 
-## What is Playwright?
+<!-- GEN:toc -->
+- [Installation](#installation)
+- [Usage](#usage)
+- [Writing your first script](#writing-your-first-script)
+- [Debugging scripts](#debugging-scripts)
+- [Deploying to CI](#deploying-to-ci)
+<!-- GEN:stop -->
 
-Playwright is a cross-browser automation driver for end-to-end testing. Playwright provides an API to launch web browsers, navigate to web pages and manipulate page contents in JavaScript.
-
-The Playwright API is cross-browser: it works across **Chromium** (used in Chrome, Edge, and many other browsers), **Firefox** and **WebKit** (used in Safari) engines.
-
-Playwright is free and open source. Playwright is also modular, and works with any JavaScript test runner framework.
-
-### Capabilities
-
-Playwright can run automation scenarios that span multiple tabs, domains and iframes. More specifically, Playwright can:
-
-* Auto-wait for elements to be ready before executing actions (like click, fill)
-* Intercept network activity for stubbing and mocking network requests
-* Emulate mobile devices, geolocation, permissions
-* Native input events for mouse and keyboard
-* Upload and download files
-
-## Getting started
-
-### Installation
+## Installation
 
 Use npm or Yarn to install Playwright in your Node.js project. Playwright requires Node.js 10 or higher.
 
@@ -28,9 +16,9 @@ Use npm or Yarn to install Playwright in your Node.js project. Playwright requir
 npm i playwright
 ```
 
-During installation, Playwright downloads browser binaries for Chromium, Firefox and WebKit. This sets up your environment for browser automation with just one command. It is possible to modify this default behavior for monorepos and other scenarios through [environment variables](api.md#environment-variables).
+During installation, Playwright downloads browser binaries for Chromium, Firefox and WebKit. This sets up your environment for browser automation with just one command. It is possible to modify this default behavior for monorepos and other scenarios. See [installation](installation.md).
 
-### Usage
+## Usage
 
 Once installed, you can `require` Playwright in a Node.js script, and launch any of the 3 browsers (`chromium`, `firefox` and `webkit`).
 
@@ -53,7 +41,7 @@ Playwright APIs are asynchronous and return Promise objects. Our code examples u
 })(); // End of the function and () to invoke itself
 ```
 
-### Writing your first script
+## Writing your first script
 
 In our first script, we will navigate to `whatsmyuseragent.org` and take a screenshot in WebKit.
 
@@ -75,10 +63,12 @@ By default, Playwright runs the browsers in headless mode. To see the browser UI
 firefox.launch({ headless: false, slowMo: 50 });
 ```
 
-### Debugging scripts
+## Debugging scripts
 
 <a href="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png"><img src="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png" width="300" alt="Chromium Developer Tools" align="right"></a>
 
 Playwright scripts can be developed just like any other Node.js script. For example, you can use the [Node.js debugger](https://nodejs.org/api/debugger.html) or [VS Code debugging](https://code.visualstudio.com/docs/nodejs/nodejs-debugging) to set breakpoints and get fine grained control over execution.
 
 It is also possible to open **browser developer tools** during execution, to inspect the DOM tree or network activity.
+
+## Deploying to CI
