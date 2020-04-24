@@ -51,9 +51,8 @@ describe('runCommands', function() {
         Playwright <!-- gen:version -->XXX<!-- gen:stop -->
       `);
       const messages = runCommands([source], OPTIONS_REL);
-      expect(messages.length).toBe(1);
-      expect(messages[0].type).toBe('warning');
-      expect(messages[0].text).toContain('doc.md');
+      expect(messages.length).toBe(0);
+      expect(source.hasUpdatedText()).toBe(true);
       expect(source.text()).toBe(`
         Playwright <!-- gen:version -->v1.3.0<!-- gen:stop -->
       `);
@@ -63,9 +62,8 @@ describe('runCommands', function() {
         Playwright <!-- gen:version -->XXX<!-- gen:stop -->
       `);
       const messages = runCommands([source], OPTIONS_DEV);
-      expect(messages.length).toBe(1);
-      expect(messages[0].type).toBe('warning');
-      expect(messages[0].text).toContain('doc.md');
+      expect(messages.length).toBe(0);
+      expect(source.hasUpdatedText()).toBe(true);
       expect(source.text()).toBe(`
         Playwright <!-- gen:version -->Tip-Of-Tree<!-- gen:stop -->
       `);
@@ -92,9 +90,8 @@ describe('runCommands', function() {
         #### page.$
         #### page.$$`);
       const messages = runCommands([source], OPTIONS_REL);
-      expect(messages.length).toBe(1);
-      expect(messages[0].type).toBe('warning');
-      expect(messages[0].text).toContain('doc.md');
+      expect(messages.length).toBe(0);
+      expect(source.hasUpdatedText()).toBe(true);
       expect(source.text()).toBe(`<!-- gen:toc -->
 - [class: page](#class-page)
   * [page.$](#page)
@@ -113,9 +110,8 @@ describe('runCommands', function() {
         \`\`\`
       `);
       const messages = runCommands([source], OPTIONS_REL);
-      expect(messages.length).toBe(1);
-      expect(messages[0].type).toBe('warning');
-      expect(messages[0].text).toContain('doc.md');
+      expect(messages.length).toBe(0);
+      expect(source.hasUpdatedText()).toBe(true);
       expect(source.text()).toBe(`<!-- gen:toc -->
 - [class: page](#class-page)
 <!-- gen:stop -->
@@ -131,9 +127,8 @@ describe('runCommands', function() {
         ### some [link](#foobar) here
       `);
       const messages = runCommands([source], OPTIONS_REL);
-      expect(messages.length).toBe(1);
-      expect(messages[0].type).toBe('warning');
-      expect(messages[0].text).toContain('doc.md');
+      expect(messages.length).toBe(0);
+      expect(source.hasUpdatedText()).toBe(true);
       expect(source.text()).toBe(`<!-- gen:toc -->
 - [some link here](#some-link-here)
 <!-- gen:stop -->
@@ -150,9 +145,8 @@ describe('runCommands', function() {
         ## Second
       `);
       const messages = runCommands([source], OPTIONS_REL);
-      expect(messages.length).toBe(1);
-      expect(messages[0].type).toBe('warning');
-      expect(messages[0].text).toContain('doc.md');
+      expect(messages.length).toBe(0);
+      expect(source.hasUpdatedText()).toBe(true);
       expect(source.text()).toBe(`
         ## First
         <!-- gen:toc -->
@@ -173,9 +167,8 @@ describe('runCommands', function() {
       <!-- gen:version -->zzz<!-- gen:stop -->
     `);
     const messages = runCommands([source], OPTIONS_REL);
-    expect(messages.length).toBe(1);
-    expect(messages[0].type).toBe('warning');
-    expect(messages[0].text).toContain('doc.md');
+    expect(messages.length).toBe(0);
+    expect(source.hasUpdatedText()).toBe(true);
     expect(source.text()).toBe(`
       <!-- gen:version -->v1.3.0<!-- gen:stop -->
       <!-- gen:version -->v1.3.0<!-- gen:stop -->
@@ -187,9 +180,8 @@ describe('runCommands', function() {
         Playwright <!-- gen:chromium-version -->XXX<!-- gen:stop -->
       `);
       const messages = runCommands([source], OPTIONS_REL);
-      expect(messages.length).toBe(1);
-      expect(messages[0].type).toBe('warning');
-      expect(messages[0].text).toContain('doc.md');
+      expect(messages.length).toBe(0);
+      expect(source.hasUpdatedText()).toBe(true);
       expect(source.text()).toBe(`
         Playwright <!-- gen:chromium-version -->80.0.4004.0<!-- gen:stop -->
       `);
@@ -201,9 +193,8 @@ describe('runCommands', function() {
         Playwright <!-- gen:firefox-version -->XXX<!-- gen:stop -->
       `);
       const messages = runCommands([source], OPTIONS_REL);
-      expect(messages.length).toBe(1);
-      expect(messages[0].type).toBe('warning');
-      expect(messages[0].text).toContain('doc.md');
+      expect(messages.length).toBe(0);
+      expect(source.hasUpdatedText()).toBe(true);
       expect(source.text()).toBe(`
         Playwright <!-- gen:firefox-version -->73.0b3<!-- gen:stop -->
       `);
