@@ -86,21 +86,33 @@ function queryInternal(root: SelectorRoot, matcher: Matcher, shadow: boolean): E
   const shadowRoots: ShadowRoot[] = [];
   if (shadow && (root as Element).shadowRoot)
     shadowRoots.push((root as Element).shadowRoot!);
-  while (walker.nextNode()) {
-    const node = walker.currentNode;
-    if (node.nodeType === Node.ELEMENT_NODE) {
+
+  let lastTextParent: Element | null = null;
+  let lastText = '';
+  while (true) {
+    const node = walker.nextNode();
+
+    const textParent = (node && node.nodeType === Node.TEXT_NODE) ? node.parentElement : null;
+    if (lastTextParent && textParent !== lastTextParent) {
+      if (lastTextParent.nodeName !== 'SCRIPT' && lastTextParent.nodeName !== 'STYLE' && matcher(lastText))
+        return lastTextParent;
+      lastText = '';
+    }
+    lastTextParent = textParent;
+
+    if (!node)
+      break;
+    if (node.nodeType === Node.TEXT_NODE) {
+      lastText += node.nodeValue;
+    } else {
       const element = node as Element;
       if ((element instanceof HTMLInputElement) && (element.type === 'submit' || element.type === 'button') && matcher(element.value))
         return element;
       if (shadow && element.shadowRoot)
         shadowRoots.push(element.shadowRoot);
-    } else {
-      const element = node.parentElement;
-      const text = node.nodeValue;
-      if (element && element.nodeName !== 'SCRIPT' && element.nodeName !== 'STYLE' && text && matcher(text))
-        return element;
     }
   }
+
   for (const shadowRoot of shadowRoots) {
     const element = queryInternal(shadowRoot, matcher, shadow);
     if (element)
@@ -114,21 +126,33 @@ function queryAllInternal(root: SelectorRoot, matcher: Matcher, shadow: boolean,
   const shadowRoots: ShadowRoot[] = [];
   if (shadow && (root as Element).shadowRoot)
     shadowRoots.push((root as Element).shadowRoot!);
-  while (walker.nextNode()) {
-    const node = walker.currentNode;
-    if (node.nodeType === Node.ELEMENT_NODE) {
+
+  let lastTextParent: Element | null = null;
+  let lastText = '';
+  while (true) {
+    const node = walker.nextNode();
+
+    const textParent = (node && node.nodeType === Node.TEXT_NODE) ? node.parentElement : null;
+    if (lastTextParent && textParent !== lastTextParent) {
+      if (lastTextParent.nodeName !== 'SCRIPT' && lastTextParent.nodeName !== 'STYLE' && matcher(lastText))
+        result.push(lastTextParent);
+      lastText = '';
+    }
+    lastTextParent = textParent;
+
+    if (!node)
+      break;
+    if (node.nodeType === Node.TEXT_NODE) {
+      lastText += node.nodeValue;
+    } else {
       const element = node as Element;
       if ((element instanceof HTMLInputElement) && (element.type === 'submit' || element.type === 'button') && matcher(element.value))
         result.push(element);
       if (shadow && element.shadowRoot)
         shadowRoots.push(element.shadowRoot);
-    } else {
-      const element = node.parentElement;
-      const text = node.nodeValue;
-      if (element && element.nodeName !== 'SCRIPT' && element.nodeName !== 'STYLE' && text && matcher(text))
-        result.push(element);
     }
   }
+
   for (const shadowRoot of shadowRoots)
     queryAllInternal(shadowRoot, matcher, shadow, result);
 }
