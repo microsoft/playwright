@@ -372,6 +372,10 @@ const NSActivityOptions ActivityOptions =
 {
     LOG(@"decidePolicyForNavigationAction");
 
+    if (navigationAction._shouldPerformDownload) {
+        decisionHandler(_WKNavigationActionPolicyDownload);
+        return;
+    }
     if (navigationAction._canHandleRequest) {
         decisionHandler(WKNavigationActionPolicyAllow);
         return;
