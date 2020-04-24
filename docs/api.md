@@ -2089,7 +2089,7 @@ Bear in mind that if the first click of the `dblclick()` triggers a navigation e
 > **NOTE** `frame.dblclick()` dispatches two `click` events and a single `dblclick` event.
 
 #### frame.dispatchEvent(selector, type[, eventInit, options])
-- `selector` <[string]> A selector to search for element to double click. If there are multiple elements satisfying the selector, the first will be double clicked.
+- `selector` <[string]> A selector to search for element to use. If there are multiple elements satisfying the selector, the first will be double clicked.
 - `type` <[string]> DOM event type: `"click"`, `"dragstart"`, etc.
 - `eventInit` <[Object]> event-specific initialization properties.
 - `options` <[Object]>
