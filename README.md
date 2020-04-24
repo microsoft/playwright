@@ -23,7 +23,7 @@ npm i playwright
 This installs Playwright and browser binaries for Chromium, Firefox and WebKit. Once installed, you can `require` Playwright in a Node.js script and automate web browser interactions.
 
 * [Getting started](docs/intro.md)
-* [Installation configuration](docs/installation.md).
+* [Installation configuration](docs/installation.md)
 * [API reference](docs/api.md)
 
 ## Capabilities
