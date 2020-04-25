@@ -17,6 +17,4 @@ yarn.lock
 /src/webkit/protocol.ts
 lib/
 playwright-*.tgz
-/web.js
-/web.js.map
 /types/*
