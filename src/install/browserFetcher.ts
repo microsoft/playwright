@@ -75,12 +75,6 @@ function getDownloadUrl(browserName: BrowserName, platform: BrowserPlatform): st
   }
 }
 
-export type DownloadOptions = {
-  browser: BrowserDescriptor,
-  packagePath: string,
-  serverHost?: string,
-};
-
 function revisionURL(browser: BrowserDescriptor, platform = browserPaths.hostPlatform): string {
   const serverHost = getFromENV('PLAYWRIGHT_DOWNLOAD_HOST') || DEFAULT_DOWNLOAD_HOSTS[browser.name];
   const urlTemplate = getDownloadUrl(browser.name, platform);
@@ -88,19 +82,9 @@ function revisionURL(browser: BrowserDescriptor, platform = browserPaths.hostPla
   return util.format(urlTemplate, serverHost, browser.revision);
 }
 
-export async function downloadBrowsersWithProgressBar(packagePath: string, browsers: BrowserDescriptor[]) {
-  if (getFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD')) {
-    logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
-    return false;
-  }
-  for (const browser of browsers)
-    await downloadBrowserWithProgressBar(packagePath, browser);
-}
-
-export async function downloadBrowserWithProgressBar(packagePath: string, browser: BrowserDescriptor): Promise<boolean> {
+export async function downloadBrowserWithProgressBar(browserPath: string, browser: BrowserDescriptor): Promise<boolean> {
   const progressBarName = `${browser.name} v${browser.revision}`;
-  const targetDir = browserPaths.browserDirectory(packagePath, browser);
-  if (await existsAsync(targetDir)) {
+  if (await existsAsync(browserPath)) {
     // Already downloaded.
     return false;
   }
@@ -126,8 +110,8 @@ export async function downloadBrowserWithProgressBar(packagePath: string, browse
   const zipPath = path.join(os.tmpdir(), `playwright-download-${browser.name}-${browserPaths.hostPlatform}-${browser.revision}.zip`);
   try {
     await downloadFile(url, zipPath, progress);
-    await extract(zipPath, {dir: targetDir});
-    await chmodAsync(browserPaths.executablePath(packagePath, browser), 0o755);
+    await extract(zipPath, { dir: browserPath});
+    await chmodAsync(browserPaths.executablePath(browserPath, browser)!, 0o755);
   } catch (e) {
     process.exitCode = 1;
     throw e;
@@ -135,7 +119,7 @@ export async function downloadBrowserWithProgressBar(packagePath: string, browse
     if (await existsAsync(zipPath))
       await unlinkAsync(zipPath);
   }
-  logPolitely(`${progressBarName} downloaded to ${targetDir}`);
+  logPolitely(`${progressBarName} downloaded to ${browserPath}`);
   return true;
 }
 

@@ -18,7 +18,7 @@
 import { execSync } from 'child_process';
 import * as os from 'os';
 import * as path from 'path';
-import { assert, getFromENV } from '../helper';
+import { getFromENV } from '../helper';
 
 export type BrowserName = 'chromium'|'webkit'|'firefox';
 export type BrowserPlatform = 'win32'|'win64'|'mac10.13'|'mac10.14'|'mac10.15'|'linux';
@@ -40,9 +40,10 @@ export const hostPlatform = ((): BrowserPlatform => {
   return platform as BrowserPlatform;
 })();
 
-function getRelativeExecutablePath(browserName: BrowserName): string[] | undefined {
-  if (browserName === 'chromium') {
-    return new Map<BrowserPlatform, string[]>([
+export function executablePath(browserPath: string, browser: BrowserDescriptor): string | undefined {
+  let tokens: string[] | undefined;
+  if (browser.name === 'chromium') {
+    tokens = new Map<BrowserPlatform, string[]>([
       ['linux', ['chrome-linux', 'chrome']],
       ['mac10.13', ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium']],
       ['mac10.14', ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium']],
@@ -52,8 +53,8 @@ function getRelativeExecutablePath(browserName: BrowserName): string[] | undefin
     ]).get(hostPlatform);
   }
 
-  if (browserName === 'firefox') {
-    return new Map<BrowserPlatform, string[]>([
+  if (browser.name === 'firefox') {
+    tokens = new Map<BrowserPlatform, string[]>([
       ['linux', ['firefox', 'firefox']],
       ['mac10.13', ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox']],
       ['mac10.14', ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox']],
@@ -63,8 +64,8 @@ function getRelativeExecutablePath(browserName: BrowserName): string[] | undefin
     ]).get(hostPlatform);
   }
 
-  if (browserName === 'webkit') {
-    return new Map<BrowserPlatform, string[] | undefined>([
+  if (browser.name === 'webkit') {
+    tokens = new Map<BrowserPlatform, string[] | undefined>([
       ['linux', ['pw_run.sh']],
       ['mac10.13', undefined],
       ['mac10.14', ['pw_run.sh']],
@@ -73,6 +74,7 @@ function getRelativeExecutablePath(browserName: BrowserName): string[] | undefin
       ['win64', ['Playwright.exe']],
     ]).get(hostPlatform);
   }
+  return tokens ? path.join(browserPath, ...tokens) : undefined;
 }
 
 export function browsersPath(packagePath: string): string {
@@ -80,12 +82,11 @@ export function browsersPath(packagePath: string): string {
   return result || path.join(packagePath, '.local-browsers');
 }
 
-export function browserDirectory(packagePath: string, browser: BrowserDescriptor): string {
-  return path.join(browsersPath(packagePath), `${browser.name}-${browser.revision}`);
+export function browserDirectory(browsersPath: string, browser: BrowserDescriptor): string {
+  return path.join(browsersPath, `${browser.name}-${browser.revision}`);
 }
 
-export function executablePath(packagePath: string, browser: BrowserDescriptor): string {
-  const relativePath = getRelativeExecutablePath(browser.name);
-  assert(relativePath, `Unsupported platform for ${browser.name}: ${hostPlatform}`);
-  return path.join(browserDirectory(packagePath, browser), ...relativePath);
+export function isBrowserDirectory(browserPath: string): boolean {
+  const baseName = path.basename(browserPath);
+  return baseName.startsWith('chromium-') || baseName.startsWith('firefox-') || baseName.startsWith('webkit-');
 }

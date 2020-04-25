@@ -41,9 +41,7 @@ const rmAsync = util.promisify(require('rimraf'));
   if (outdatedFiles.some(Boolean)) {
     console.log(`Rebuilding playwright...`);
     try {
-      execSync('npm run build', {
-        stdio: 'ignore'
-      });
+      execSync('npm run build');
     } catch (e) {
     }
   }
@@ -63,20 +61,16 @@ async function listFiles(dirpath) {
 }
 
 async function downloadAllBrowsersAndGenerateProtocolTypes() {
-  const { downloadBrowserWithProgressBar } = require('./lib/install/browserFetcher');
+  const { installBrowsersWithProgressBar } = require('./lib/install/installer');
   const protocolGenerator = require('./utils/protocol-types-generator');
   const browserPaths = require('./lib/install/browserPaths');
+  const browsersPath = browserPaths.browsersPath(__dirname);
   const browsers = require('./browsers.json')['browsers'];
+  await installBrowsersWithProgressBar(__dirname);
   for (const browser of browsers) {
-    if (await downloadBrowserWithProgressBar(__dirname, browser))
-      await protocolGenerator.generateProtocol(browser.name, browserPaths.executablePath(__dirname, browser)).catch(console.warn);
+    const browserPath = browserPaths.browserDirectory(browsersPath, browser);
+    await protocolGenerator.generateProtocol(browser.name, browserPaths.executablePath(browserPath, browser)).catch(console.warn);
   }
-
-  // Cleanup stale revisions.
-  const directories = new Set(await readdirAsync(browserPaths.browsersPath(__dirname)));
-  for (const browser of browsers)
-    directories.delete(browserPaths.browserDirectory(__dirname, browser));
-  await Promise.all([...directories].map(directory => rmAsync(directory)));
 
   try {
     console.log('Generating types...');
