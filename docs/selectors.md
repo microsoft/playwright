@@ -22,6 +22,8 @@ document
   .querySelector('span[attr=value]')
 ```
 
+Selector engine name can be prefixed with `*` to capture element that matches the particular clause instead of the last one. For example, `css=article >> text=Hello` captures the element with the text `Hello`, and `*css=article >> text=Hello` (note the `*`) captures the `article` element that contains some element with the text `Hello`.
+
 For convenience, selectors in the wrong format are heuristically converted to the right format:
 - Selector starting with `//` is assumed to be `xpath=selector`. Example: `page.click('//html')` is converted to `page.click('xpath=//html')`.
 - Selector surrounded with quotes (either `"` or `'`) is assumed to be `text=selector`. Example: `page.click('"foo"')` is converted to `page.click('text="foo"')`.

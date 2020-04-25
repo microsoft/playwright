@@ -111,6 +111,21 @@ describe('Page.$eval', function() {
     const html = await page.$eval('button >> "Next"', e => e.outerHTML);
     expect(html).toBe('<button>Next</button>');
   });
+  it('should support * capture', async({page, server}) => {
+    await page.setContent('<section><div><span>a</span></div></section><section><div><span>b</span></div></section>');
+    expect(await page.$eval('*css=div >> "b"', e => e.outerHTML)).toBe('<div><span>b</span></div>');
+    expect(await page.$eval('section >> *css=div >> "b"', e => e.outerHTML)).toBe('<div><span>b</span></div>');
+    expect(await page.$eval('css=div >> *text="b"', e => e.outerHTML)).toBe('<span>b</span>');
+    expect(await page.$('*')).toBeTruthy();
+  });
+  it('should throw on multiple * captures', async({page, server}) => {
+    const error = await page.$eval('*css=div >> *css=span', e => e.outerHTML).catch(e => e);
+    expect(error.message).toBe('Only one of the selectors can capture using * modifier');
+  });
+  it('should throw on malformed * capture', async({page, server}) => {
+    const error = await page.$eval('*=div', e => e.outerHTML).catch(e => e);
+    expect(error.message).toBe('Unknown engine "" while parsing selector *=div');
+  });
 });
 
 describe('Page.$$eval', function() {
@@ -138,6 +153,26 @@ describe('Page.$$eval', function() {
     await page.setContent('<div><span>hello</span></div><div>beautiful</div><div><span>wo</span><span>rld!</span></div><span>Not this one</span>');
     const spansCount = await page.$$eval('css=div >> css=span', spans => spans.length);
     expect(spansCount).toBe(3);
+  });
+  it('should support * capture', async({page, server}) => {
+    await page.setContent('<section><div><span>a</span></div></section><section><div><span>b</span></div></section>');
+    expect(await page.$$eval('*css=div >> "b"', els => els.length)).toBe(1);
+    expect(await page.$$eval('section >> *css=div >> "b"', els => els.length)).toBe(1);
+    expect(await page.$$eval('section >> *', els => els.length)).toBe(4);
+
+    await page.setContent('<section><div><span>a</span><span>a</span></div></section>');
+    expect(await page.$$eval('*css=div >> "a"', els => els.length)).toBe(1);
+    expect(await page.$$eval('section >> *css=div >> "a"', els => els.length)).toBe(1);
+
+    await page.setContent('<div><span>a</span></div><div><span>a</span></div><section><div><span>a</span></div></section>');
+    expect(await page.$$eval('*css=div >> "a"', els => els.length)).toBe(3);
+    expect(await page.$$eval('section >> *css=div >> "a"', els => els.length)).toBe(1);
+  });
+  it('should support * capture when multiple paths match', async({page, server}) => {
+    await page.setContent('<div><div><span></span></div></div><div></div>');
+    expect(await page.$$eval('*css=div >> span', els => els.length)).toBe(2);
+    await page.setContent('<div><div><span></span></div><span></span><span></span></div><div></div>');
+    expect(await page.$$eval('*css=div >> span', els => els.length)).toBe(2);
   });
 });
 
@@ -690,7 +725,7 @@ describe('selectors.register', () => {
     expect(await page.$eval('div', e => e.nodeName)).toBe('DIV');
 
     let error = await page.$('dummy=ignored').catch(e => e);
-    expect(error.message).toContain('Unknown engine dummy while parsing selector dummy=ignored');
+    expect(error.message).toBe('Unknown engine "dummy" while parsing selector dummy=ignored');
 
     const createDummySelector = () => ({
       create(root, target) {

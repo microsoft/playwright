@@ -168,7 +168,13 @@ await page.click('css:light=div');
 Selectors using the same or different engines can be combined using the `>>` separator. For example,
 
 ```js
-await page.click('#free-month-promo >> text=Learn more');
+// Click an element with text 'Sign Up' inside of a #free-month-promo.
+await page.click('#free-month-promo >> text=Sign Up');
+```
+
+```js
+// Capture textContent of a section that contains an element with text 'Selectors'.
+const sectionText = await page.$eval('*css=section >> text=Selectors', e => e.textContent);
 ```
 
 <br/>
