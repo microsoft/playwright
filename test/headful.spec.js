@@ -57,4 +57,18 @@ describe('Headful', function() {
     await browserContext.close();
     await removeUserDataDir(userDataDir);
   });
+  it.fail(CHROMIUM)('should not crash when creating second context', async ({browserType, defaultBrowserOptions, server}) => {
+    const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
+    {
+      const browserContext = await browser.newContext();
+      const page = await browserContext.newPage();
+      await browserContext.close();
+    }
+    {
+      const browserContext = await browser.newContext();
+      const page = await browserContext.newPage();
+      await browserContext.close();
+    }
+    await browser.close();
+  });
 });
