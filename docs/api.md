@@ -710,7 +710,6 @@ page.removeListener('request', logRequest);
 - [page.unroute(url[, handler])](#pageunrouteurl-handler)
 - [page.url()](#pageurl)
 - [page.viewportSize()](#pageviewportsize)
-- [page.waitFor(selectorOrFunctionOrTimeout[, options[, arg]])](#pagewaitforselectororfunctionortimeout-options-arg)
 - [page.waitForEvent(event[, optionsOrPredicate])](#pagewaitforeventevent-optionsorpredicate)
 - [page.waitForFunction(pageFunction[, arg, options])](#pagewaitforfunctionpagefunction-arg-options)
 - [page.waitForLoadState([state[, options]])](#pagewaitforloadstatestate-options)
@@ -718,6 +717,7 @@ page.removeListener('request', logRequest);
 - [page.waitForRequest(urlOrPredicate[, options])](#pagewaitforrequesturlorpredicate-options)
 - [page.waitForResponse(urlOrPredicate[, options])](#pagewaitforresponseurlorpredicate-options)
 - [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options)
+- [page.waitForTimeout(timeout)](#pagewaitfortimeouttimeout)
 - [page.workers()](#pageworkers)
 <!-- GEN:stop -->
 
@@ -1688,41 +1688,6 @@ This is a shortcut for [page.mainFrame().url()](#frameurl)
   - `width` <[number]> page width in pixels.
   - `height` <[number]> page height in pixels.
 
-#### page.waitFor(selectorOrFunctionOrTimeout[, options[, arg]])
-- `selectorOrFunctionOrTimeout` <[string]|[number]|[function]> A [selector], predicate or timeout to wait for
-- `options` <[Object]> Optional waiting parameters
-  - `waitFor` <"attached"|"detached"|"visible"|"hidden"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`attached`) or not present in dom (`detached`). Defaults to `attached`.
-  - `polling` <[number]|"raf"|"mutation"> An interval at which the `pageFunction` is executed, defaults to `raf`. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. If `polling` is a string, then it can be one of the following values:
-    - `'raf'` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
-    - `'mutation'` - to execute `pageFunction` on every DOM mutation.
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<?[JSHandle]>> Promise which resolves to a JSHandle of the success value
-
-This method behaves differently with respect to the type of the first parameter:
-- if `selectorOrFunctionOrTimeout` is a `string`, then the first argument is treated as a [selector] and the method is a shortcut for [page.waitForSelector](#pagewaitforselectorselector-options)
-- if `selectorOrFunctionOrTimeout` is a `function`, then the first argument is treated as a predicate to wait for and the method is a shortcut for [page.waitForFunction()](#pagewaitforfunctionpagefunction-arg-options).
-- if `selectorOrFunctionOrTimeout` is a `number`, then the first argument is treated as a timeout in milliseconds and the method returns a promise which resolves after the timeout
-- otherwise, an exception is thrown
-
-```js
-// wait for selector
-await page.waitFor('.foo');
-// wait for 1 second
-await page.waitFor(1000);
-// wait for predicate
-await page.waitFor(() => !!document.querySelector('.foo'));
-```
-
-To pass an argument from node.js to the predicate of `page.waitFor` function:
-
-```js
-const selector = '.foo';
-await page.waitFor(selector => !!document.querySelector(selector), {}, selector);
-```
-
-Shortcut for [page.mainFrame().waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#framewaitforselectororfunctionortimeout-options-arg).
-
 #### page.waitForEvent(event[, optionsOrPredicate])
 - `event` <[string]> Event name, same one would pass into `page.on(event)`.
 - `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object.
@@ -1871,7 +1836,22 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
   await browser.close();
 })();
 ```
-Shortcut for [page.mainFrame().waitForSelector(selector[, options])](#framewaitforselectororfunctionortimeout-options-arg).
+Shortcut for [page.mainFrame().waitForSelector(selector[, options])](#framewaitforselectorselector-options).
+
+#### page.waitForTimeout(timeout)
+- `timeout` <[number]> A timeout to wait for
+- returns: <[Promise]>
+
+Returns a promise that resolves after the timeout.
+
+Note that `page.waitForTimeout()` should only be used for debugging. Tests using the timer in production are going to be flaky. Use signals such as network events, selectors becoming visible and others instead.
+
+```js
+// wait for 1 second
+await page.waitForTimeout(1000);
+```
+
+Shortcut for [page.mainFrame().waitForTimeout(timeout)](#pagewaitfortimeouttimeout).
 
 #### page.workers()
 - returns: <[Array]<[Worker]>>
@@ -1948,11 +1928,11 @@ An example of getting text from an iframe element:
 - [frame.type(selector, text[, options])](#frametypeselector-text-options)
 - [frame.uncheck(selector, [options])](#frameuncheckselector-options)
 - [frame.url()](#frameurl)
-- [frame.waitFor(selectorOrFunctionOrTimeout[, options[, arg]])](#framewaitforselectororfunctionortimeout-options-arg)
 - [frame.waitForFunction(pageFunction[, arg, options])](#framewaitforfunctionpagefunction-arg-options)
 - [frame.waitForLoadState([state[, options]])](#framewaitforloadstatestate-options)
 - [frame.waitForNavigation([options])](#framewaitfornavigationoptions)
 - [frame.waitForSelector(selector[, options])](#framewaitforselectorselector-options)
+- [frame.waitForTimeout(timeout)](#framewaitfortimeouttimeout)
 <!-- GEN:stop -->
 
 #### frame.$(selector)
@@ -2385,39 +2365,6 @@ If there's no element matching `selector`, the method throws an error.
 
 Returns frame's url.
 
-#### frame.waitFor(selectorOrFunctionOrTimeout[, options[, arg]])
-- `selectorOrFunctionOrTimeout` <[string]|[number]|[function]> A [selector], predicate or timeout to wait for
-- `options` <[Object]> Optional waiting parameters
-  - `waitFor` <"attached"|"detached"|"visible"|"hidden"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`attached`) or not present in dom (`detached`). Defaults to `attached`.
-  - `polling` <[number]|"raf"|"mutation"> An interval at which the `pageFunction` is executed, defaults to `raf`. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. If `polling` is a string, then it can be one of the following values:
-    - `'raf'` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
-    - `'mutation'` - to execute `pageFunction` on every DOM mutation.
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<?[JSHandle]>> Promise which resolves to a JSHandle of the success value
-
-This method behaves differently with respect to the type of the first parameter:
-- if `selectorOrFunctionOrTimeout` is a `string`, then the first argument is treated as a [selector] and the method is a shortcut for [frame.waitForSelector](#framewaitforselectororfunctionortimeout-options-arg)
-- if `selectorOrFunctionOrTimeout` is a `function`, then the first argument is treated as a predicate to wait for and the method is a shortcut for [frame.waitForFunction()](#framewaitforfunctionpagefunction-arg-options).
-- if `selectorOrFunctionOrTimeout` is a `number`, then the first argument is treated as a timeout in milliseconds and the method returns a promise which resolves after the timeout
-- otherwise, an exception is thrown
-
-```js
-// wait for selector
-await frame.waitFor('.foo');
-// wait for 1 second
-await frame.waitFor(1000);
-// wait for predicate
-await frame.waitFor(() => !!document.querySelector('.foo'));
-```
-
-To pass an argument from node.js to the predicate of `frame.waitFor` function:
-
-```js
-const selector = '.foo';
-await frame.waitFor(selector => !!document.querySelector(selector), {}, selector);
-```
-
 #### frame.waitForFunction(pageFunction[, arg, options])
 - `pageFunction` <[function]|[string]> Function to be evaluated in browser context
 - `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
@@ -2513,6 +2460,14 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
   await browser.close();
 })();
 ```
+
+#### frame.waitForTimeout(timeout)
+- `timeout` <[number]> A timeout to wait for
+- returns: <[Promise]>
+
+Returns a promise that resolves after the timeout.
+
+Note that `frame.waitForTimeout()` should only be used for debugging. Tests using the timer in production are going to be flaky. Use signals such as network events, selectors becoming visible and others instead.
 
 ### class: ElementHandle
 * extends: [JSHandle]
