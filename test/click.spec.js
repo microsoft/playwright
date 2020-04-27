@@ -146,7 +146,7 @@ describe('Page.click', function() {
     expect(error.message).toBe('Node is either not visible or not an HTMLElement');
     expect(await page.evaluate(() => result)).toBe('Was not clicked');
   });
-  it('should waitFor visible', async({page, server}) => {
+  it('should waitFor display:none to be gone', async({page, server}) => {
     let done = false;
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.display = 'none');
@@ -155,15 +155,38 @@ describe('Page.click', function() {
       // Do enough double rafs to check for possible races.
       await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
     }
+    expect(await page.evaluate(() => result)).toBe('Was not clicked');
     expect(done).toBe(false);
     await page.$eval('button', b => b.style.display = 'block');
     await clicked;
     expect(done).toBe(true);
     expect(await page.evaluate(() => result)).toBe('Clicked');
   });
-  it('should timeout waiting for visible', async({page, server}) => {
+  it('should waitFor visibility:hidden to be gone', async({page, server}) => {
+    let done = false;
+    await page.goto(server.PREFIX + '/input/button.html');
+    await page.$eval('button', b => b.style.visibility = 'hidden');
+    const clicked = page.click('button', { timeout: 0 }).then(() => done = true);
+    for (let i = 0; i < 10; i++) {
+      // Do enough double rafs to check for possible races.
+      await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
+    }
+    expect(await page.evaluate(() => result)).toBe('Was not clicked');
+    expect(done).toBe(false);
+    await page.$eval('button', b => b.style.visibility = 'visible');
+    await clicked;
+    expect(done).toBe(true);
+    expect(await page.evaluate(() => result)).toBe('Clicked');
+  });
+  it('should timeout waiting for display:none to be gone', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.display = 'none');
+    const error = await page.click('button', { timeout: 100 }).catch(e => e);
+    expect(error.message).toContain('timeout exceeded');
+  });
+  it('should timeout waiting for visbility:hidden to be gone', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/button.html');
+    await page.$eval('button', b => b.style.visibility = 'hidden');
     const error = await page.click('button', { timeout: 100 }).catch(e => e);
     expect(error.message).toContain('timeout exceeded');
   });

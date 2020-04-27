@@ -25,13 +25,14 @@ export type InjectedResult<T = undefined> =
 
 export class Injected {
   isVisible(element: Element): boolean {
+    // Note: this logic should be similar to waitForDisplayedAtStablePosition() to avoid surprises.
     if (!element.ownerDocument || !element.ownerDocument.defaultView)
       return true;
     const style = element.ownerDocument.defaultView.getComputedStyle(element);
     if (!style || style.visibility === 'hidden')
       return false;
     const rect = element.getBoundingClientRect();
-    return !!(rect.top || rect.bottom || rect.width || rect.height);
+    return rect.width > 0 && rect.height > 0;
   }
 
   private _pollMutation<T>(predicate: Predicate<T>, timeout: number): Promise<T | undefined> {
@@ -311,9 +312,12 @@ export class Injected {
         return false;
       if (!node.isConnected)
         return 'notconnected';
+      // Note: this logic should be similar to isVisible() to avoid surprises.
       const clientRect = element.getBoundingClientRect();
       const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
-      const isDisplayedAndStable = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height && rect.width > 0 && rect.height > 0;
+      let isDisplayedAndStable = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height && rect.width > 0 && rect.height > 0;
+      const style = element.ownerDocument && element.ownerDocument.defaultView ? element.ownerDocument.defaultView.getComputedStyle(element) : undefined;
+      isDisplayedAndStable = isDisplayedAndStable && (!!style && style.visibility !== 'hidden');
       lastRect = rect;
       return !!isDisplayedAndStable;
     });

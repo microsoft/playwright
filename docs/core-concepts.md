@@ -183,10 +183,11 @@ const sectionText = await page.$eval('*css=section >> text=Selectors', e => e.te
 
 Actions like `click` and `fill` auto-wait for the element to be visible and actionable. For example, click will:
 - wait for element with given selector to be in DOM
-- wait for it to become displayed, i.e. not `display:none`,
+- wait for it to become displayed, i.e. not empty, no `display:none`, no `visibility:hidden`
 - wait for it to stop moving, for example, until css transition finishes
 - scroll the element into view
 - wait for it to receive pointer events at the action point, for example, waits until element becomes non-obscured by other elements
+- retry if the element is detached during any of the above checks
 
 
 ```js
