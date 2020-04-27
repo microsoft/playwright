@@ -71,4 +71,6 @@ Playwright scripts can be developed just like any other Node.js script. For exam
 
 It is also possible to open **browser developer tools** during execution, to inspect the DOM tree or network activity.
 
-## Deploying to CI
+## Continuous Integration
+
+Playwright tests can be executed on Continuous Integration (CI) environments. Learn about the Playwright GitHub Action and sample Docker configuration in [the Continuous Integration section](ci.md).
