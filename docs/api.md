@@ -947,7 +947,7 @@ Shortcut for [page.mainFrame().addStyleTag(options)](#frameaddstyletagoptions).
 - `selector` <[string]> A selector to search for checkbox or radio button to check. If there are multiple elements satisfying the selector, the first will be checked.
 - `options` <[Object]>
   - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
+    - displayed (for example, not empty, no `display:none`, no `visibility:hidden`),
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
@@ -971,7 +971,7 @@ Shortcut for [page.mainFrame().check(selector[, options])](#framecheckselector-o
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
+    - displayed (for example, not empty, no `display:none`, no `visibility:hidden`),
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
@@ -1024,7 +1024,7 @@ Browser-specific Coverage implementation, only available for Chromium atm. See [
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the double click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
+    - displayed (for example, not empty, no `display:none`, no `visibility:hidden`),
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
@@ -1333,7 +1333,7 @@ Shortcut for [page.mainFrame().goto(url[, options])](#framegotourl-options)
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the hover, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
+    - displayed (for example, not empty, no `display:none`, no `visibility:hidden`),
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
@@ -1658,7 +1658,7 @@ Shortcut for [page.mainFrame().type(selector, text[, options])](#frametypeselect
 - `selector` <[string]> A selector to search for uncheckbox to check. If there are multiple elements satisfying the selector, the first will be checked.
 - `options` <[Object]>
   - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
+    - displayed (for example, not empty, no `display:none`, no `visibility:hidden`),
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
@@ -1854,6 +1854,8 @@ return finalResponse.ok();
 
 Wait for the `selector` to satisfy `waitFor` option (either appear/disappear from dom, or become visible/hidden). If at the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
 
+Element is considered `visible` when it has non-empty bounding box (for example, it has some content and no `display:none`) and no `visibility:hidden`. Element is considired `hidden` when it is not `visible` as defined above.
+
 This method works across navigations:
 ```js
 const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
@@ -2022,7 +2024,7 @@ Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<s
 - `selector` <[string]> A selector to search for checkbox to check. If there are multiple elements satisfying the selector, the first will be checked.
 - `options` <[Object]>
   - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
+    - displayed (for example, not empty, no `display:none`, no `visibility:hidden`),
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
@@ -2047,7 +2049,7 @@ If there's no element matching `selector`, the method throws an error.
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
+    - displayed (for example, not empty, no `display:none`, no `visibility:hidden`),
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
@@ -2073,7 +2075,7 @@ Gets the full HTML contents of the frame, including the doctype.
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the double click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
+    - displayed (for example, not empty, no `display:none`, no `visibility:hidden`),
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
@@ -2246,7 +2248,7 @@ console.log(frame === contentFrame);  // -> true
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the hover, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
+    - displayed (for example, not empty, no `display:none`, no `visibility:hidden`),
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
@@ -2369,7 +2371,7 @@ await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a 
 - `selector` <[string]> A selector to search for uncheckbox to check. If there are multiple elements satisfying the selector, the first will be checked.
 - `options` <[Object]>
   - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
+    - displayed (for example, not empty, no `display:none`, no `visibility:hidden`),
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
@@ -2638,7 +2640,7 @@ This method returns the bounding box of the element (relative to the main frame)
 #### elementHandle.check([options])
 - `options` <[Object]>
   - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
+    - displayed (for example, not empty, no `display:none`, no `visibility:hidden`),
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
@@ -2658,7 +2660,7 @@ If element is not already checked, it scrolls it into view if needed, and then u
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
+    - displayed (for example, not empty, no `display:none`, no `visibility:hidden`),
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
@@ -2681,7 +2683,7 @@ If the element is detached from DOM, the method throws an error.
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the double click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
+    - displayed (for example, not empty, no `display:none`, no `visibility:hidden`),
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
@@ -2754,7 +2756,7 @@ Returns element attribute value.
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the hover, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
+    - displayed (for example, not empty, no `display:none`, no `visibility:hidden`),
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.
@@ -2893,7 +2895,7 @@ await elementHandle.press('Enter');
 #### elementHandle.uncheck([options])
 - `options` <[Object]>
   - `force` <[boolean]> Whether to bypass the actionability checks. By default actions wait until the element is:
-    - displayed (for example, no `display:none`),
+    - displayed (for example, not empty, no `display:none`, no `visibility:hidden`),
     - is not moving (for example, waits until css transition finishes),
     - receives pointer events at the action point (for example, waits until element becomes non-obscured by other elements).
     Even if the action is forced, it will wait for the element matching selector to be in DOM. Defaults to `false`.

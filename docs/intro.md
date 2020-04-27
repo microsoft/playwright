@@ -5,7 +5,7 @@
 - [Usage](#usage)
 - [Writing your first script](#writing-your-first-script)
 - [Debugging scripts](#debugging-scripts)
-- [Deploying to CI](#deploying-to-ci)
+- [Continuous Integration](#continuous-integration)
 <!-- GEN:stop -->
 
 ## Installation
