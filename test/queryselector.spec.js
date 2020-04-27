@@ -126,6 +126,27 @@ describe('Page.$eval', function() {
     const error = await page.$eval('*=div', e => e.outerHTML).catch(e => e);
     expect(error.message).toBe('Unknown engine "" while parsing selector *=div');
   });
+  it('should work with spaces in css attributes', async({page, server}) => {
+    await page.setContent('<div><input placeholder="Select date"></div>');
+    expect(await page.waitForSelector(`[placeholder="Select date"]`)).toBeTruthy();
+    expect(await page.waitForSelector(`[placeholder='Select date']`)).toBeTruthy();
+    expect(await page.waitForSelector(`input[placeholder="Select date"]`)).toBeTruthy();
+    expect(await page.waitForSelector(`input[placeholder='Select date']`)).toBeTruthy();
+    expect(await page.$(`[placeholder="Select date"]`)).toBeTruthy();
+    expect(await page.$(`[placeholder='Select date']`)).toBeTruthy();
+    expect(await page.$(`input[placeholder="Select date"]`)).toBeTruthy();
+    expect(await page.$(`input[placeholder='Select date']`)).toBeTruthy();
+    expect(await page.$eval(`[placeholder="Select date"]`, e => e.outerHTML)).toBe('<input placeholder="Select date">');
+    expect(await page.$eval(`[placeholder='Select date']`, e => e.outerHTML)).toBe('<input placeholder="Select date">');
+    expect(await page.$eval(`input[placeholder="Select date"]`, e => e.outerHTML)).toBe('<input placeholder="Select date">');
+    expect(await page.$eval(`input[placeholder='Select date']`, e => e.outerHTML)).toBe('<input placeholder="Select date">');
+    expect(await page.$eval(`css=[placeholder="Select date"]`, e => e.outerHTML)).toBe('<input placeholder="Select date">');
+    expect(await page.$eval(`css=[placeholder='Select date']`, e => e.outerHTML)).toBe('<input placeholder="Select date">');
+    expect(await page.$eval(`css=input[placeholder="Select date"]`, e => e.outerHTML)).toBe('<input placeholder="Select date">');
+    expect(await page.$eval(`css=input[placeholder='Select date']`, e => e.outerHTML)).toBe('<input placeholder="Select date">');
+    expect(await page.$eval(`div >> [placeholder="Select date"]`, e => e.outerHTML)).toBe('<input placeholder="Select date">');
+    expect(await page.$eval(`div >> [placeholder='Select date']`, e => e.outerHTML)).toBe('<input placeholder="Select date">');
+  });
 });
 
 describe('Page.$$eval', function() {
