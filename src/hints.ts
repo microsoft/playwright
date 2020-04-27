@@ -22,12 +22,12 @@ const hintsLog: Log = {
   severity: 'warning'
 };
 
-let waitForTimeWasUsedReported = false;
-export function waitForTimeWasUsed(page: Page) {
-  if (waitForTimeWasUsedReported)
+let waitForTimeoutWasUsedReported = false;
+export function waitForTimeoutWasUsed(page: Page) {
+  if (waitForTimeoutWasUsedReported)
     return;
-  waitForTimeWasUsedReported = true;
-  page._log(hintsLog, `WARNING: page.waitFor(timeout) should only be used for debugging.
-It is likely that the tests using timer in production are going to be flaky.
+  waitForTimeoutWasUsedReported = true;
+  page._log(hintsLog, `WARNING: page.waitForTimeout(timeout) should only be used for debugging.
+Tests using the timer in production are going to be flaky.
 Use signals such as network events, selectors becoming visible, etc. instead.`);
 }

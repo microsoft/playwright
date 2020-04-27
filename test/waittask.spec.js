@@ -18,56 +18,12 @@
 const utils = require('./utils');
 const {FFOX, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
 
-describe('Page.waitFor', function() {
-  it('should wait for selector', async({page, server}) => {
-    let found = false;
-    const waitFor = page.waitFor('div').then(() => found = true);
-    await page.goto(server.EMPTY_PAGE);
-    expect(found).toBe(false);
-    await page.goto(server.PREFIX + '/grid.html');
-    await waitFor;
-    expect(found).toBe(true);
-  });
-  it('should wait for an xpath', async({page, server}) => {
-    let found = false;
-    const waitFor = page.waitFor('//div').then(() => found = true);
-    await page.goto(server.EMPTY_PAGE);
-    expect(found).toBe(false);
-    await page.goto(server.PREFIX + '/grid.html');
-    await waitFor;
-    expect(found).toBe(true);
-  });
-  it('should not allow you to select an element with single slash xpath', async({page, server}) => {
-    await page.setContent(`<div>some text</div>`);
-    let error = null;
-    await page.waitFor('/html/body/div').catch(e => error = e);
-    expect(error).toBeTruthy();
-  });
+describe('Page.waitForTimeout', function() {
   it('should timeout', async({page, server}) => {
     const startTime = Date.now();
     const timeout = 42;
-    await page.waitFor(timeout);
+    await page.waitForTimeout(timeout);
     expect(Date.now() - startTime).not.toBeLessThan(timeout / 2);
-  });
-  it('should work with multiline body', async({page, server}) => {
-    const result = await page.waitForFunction(`
-      (() => true)()
-    `);
-    expect(await result.jsonValue()).toBe(true);
-  });
-  it('should wait for predicate', async({page, server}) => {
-    await Promise.all([
-      page.waitFor(() => window.innerWidth < 130), // Windows doesn't like windows below 120px wide
-      page.setViewportSize({width: 10, height: 10}),
-    ]);
-  });
-  it('should throw when unknown type', async({page, server}) => {
-    let error = null;
-    await page.waitFor({foo: 'bar'}).catch(e => error = e);
-    expect(error.message).toContain('Unsupported target type');
-  });
-  it('should wait for predicate with arguments', async({page, server}) => {
-    await page.waitFor(({arg1, arg2}) => arg1 + arg2 === 3, {}, { arg1: 1, arg2: 2});
   });
 });
 
@@ -197,6 +153,15 @@ describe('Frame.waitForFunction', function() {
     await page.goto(server.PREFIX + '/consolelog.html');
     await page.evaluate(() => window.__done = true);
     await watchdog;
+  });
+  it('should work with multiline body', async({page, server}) => {
+    const result = await page.waitForFunction(`
+      (() => true)()
+    `);
+    expect(await result.jsonValue()).toBe(true);
+  });
+  it('should wait for predicate with arguments', async({page, server}) => {
+    await page.waitForFunction(({arg1, arg2}) => arg1 + arg2 === 3, { arg1: 1, arg2: 2});
   });
 });
 

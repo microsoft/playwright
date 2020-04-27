@@ -481,8 +481,8 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
     return this.mainFrame().uncheck(selector, options);
   }
 
-  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options?: types.WaitForFunctionOptions & types.WaitForElementOptions, arg?: any): Promise<js.JSHandle | null> {
-    return this.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, arg);
+  async waitForTimeout(timeout: number) {
+    await this.mainFrame().waitForTimeout(timeout);
   }
 
   async waitForFunction<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>>;

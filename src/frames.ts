@@ -27,7 +27,7 @@ import * as network from './network';
 import { Page } from './page';
 import { selectors } from './selectors';
 import * as types from './types';
-import { waitForTimeWasUsed } from './hints';
+import { waitForTimeoutWasUsed } from './hints';
 
 type ContextType = 'main' | 'utility';
 type ContextData = {
@@ -755,16 +755,9 @@ export class Frame {
         (handle, deadline) => handle.uncheck(helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
-  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: types.WaitForFunctionOptions & types.WaitForElementOptions = {}, arg?: any): Promise<js.JSHandle | null> {
-    if (helper.isString(selectorOrFunctionOrTimeout))
-      return this.waitForSelector(selectorOrFunctionOrTimeout, options) as any;
-    if (helper.isNumber(selectorOrFunctionOrTimeout)) {
-      waitForTimeWasUsed(this._page);
-      return new Promise(fulfill => setTimeout(fulfill, selectorOrFunctionOrTimeout));
-    }
-    if (typeof selectorOrFunctionOrTimeout === 'function')
-      return this.waitForFunction(selectorOrFunctionOrTimeout as any, arg, options);
-    return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
+  async waitForTimeout(timeout: number) {
+    waitForTimeoutWasUsed(this._page);
+    await new Promise(fulfill => setTimeout(fulfill, timeout));
   }
 
   async waitForFunction<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>>;
