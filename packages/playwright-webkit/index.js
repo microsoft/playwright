@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const path = require('path');
-const {Playwright} = require('playwright-core/lib/server/playwright.js');
-const {downloadOptionsFromENV} = require('playwright-core/download-browser.js');
+
+const { Playwright } = require('playwright-core/lib/server/playwright.js');
+const { executablePath } = require('playwright-core/download-browser.js');
 
 const playwright = new Playwright({
   browsers: ['webkit'],
 });
 
-playwright.webkit._executablePath = downloadOptionsFromENV(__dirname, 'webkit').executablePath;
+playwright.webkit._executablePath = executablePath(__dirname, 'webkit');
 
 module.exports = playwright;
-

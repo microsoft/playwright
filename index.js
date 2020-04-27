@@ -15,18 +15,15 @@
  */
 const fs = require('fs');
 const path = require('path');
-const {Playwright} = require('./lib/server/playwright.js');
-const {localDownloadOptions} = require('./download-browser.js');
+const { Playwright } = require('./lib/server/playwright.js');
+const { executablePath } = require('./download-browser.js');
 
 const playwright = new Playwright({
   browsers: ['webkit', 'chromium', 'firefox'],
 });
 
-if (fs.existsSync(path.join(__dirname, '.local-browsers'))) {
-  playwright.chromium._executablePath = localDownloadOptions('chromium').executablePath;
-  playwright.firefox._executablePath = localDownloadOptions('firefox').executablePath;
-  playwright.webkit._executablePath = localDownloadOptions('webkit').executablePath;
-}
+playwright.chromium._executablePath = executablePath(__dirname, 'chromium');
+playwright.firefox._executablePath = executablePath(__dirname, 'firefox');
+playwright.webkit._executablePath = executablePath(__dirname, 'webkit');
 
 module.exports = playwright;
-

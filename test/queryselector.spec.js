@@ -540,6 +540,26 @@ describe('text selector', () => {
     await page.setContent(`<div> ' </div><div> " </div>`);
     expect(await page.$eval(`text="`, e => e.outerHTML)).toBe('<div> " </div>');
     expect(await page.$eval(`text='`, e => e.outerHTML)).toBe('<div> \' </div>');
+
+    await page.setContent(`<div>a<br>b</div><div>a</div>`);
+    expect(await page.$eval(`text=a`, e => e.outerHTML)).toBe('<div>a<br>b</div>');
+    expect(await page.$eval(`text=b`, e => e.outerHTML)).toBe('<div>a<br>b</div>');
+    expect(await page.$(`text=ab`)).toBe(null);
+    expect(await page.$$eval(`text=a`, els => els.length)).toBe(2);
+    expect(await page.$$eval(`text=b`, els => els.length)).toBe(1);
+    expect(await page.$$eval(`text=ab`, els => els.length)).toBe(0);
+
+    await page.setContent(`<div></div><span></span>`);
+    await page.$eval('div', div => {
+      div.appendChild(document.createTextNode('hello'));
+      div.appendChild(document.createTextNode('world'));
+    });
+    await page.$eval('span', span => {
+      span.appendChild(document.createTextNode('hello'));
+      span.appendChild(document.createTextNode('world'));
+    });
+    expect(await page.$eval(`text=lowo`, e => e.outerHTML)).toBe('<div>helloworld</div>');
+    expect(await page.$$eval(`text=lowo`, els => els.map(e => e.outerHTML).join(''))).toBe('<div>helloworld</div><span>helloworld</span>');
   });
 
   it('create', async ({page}) => {

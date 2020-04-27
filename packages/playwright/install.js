@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const path = require('path');
-const fs = require('fs');
-const {downloadBrowserWithProgressBar, downloadOptionsFromENV} = require('playwright-core/download-browser');
+
+ const { downloadBrowserWithProgressBar } = require('playwright-core/download-browser');
 
 (async function() {
-  await downloadBrowserWithProgressBar(downloadOptionsFromENV(__dirname, 'chromium'));
-  await downloadBrowserWithProgressBar(downloadOptionsFromENV(__dirname, 'firefox'));
-  await downloadBrowserWithProgressBar(downloadOptionsFromENV(__dirname, 'webkit'));
+  await downloadBrowserWithProgressBar(__dirname, 'chromium');
+  await downloadBrowserWithProgressBar(__dirname, 'firefox');
+  await downloadBrowserWithProgressBar(__dirname, 'webkit');
 })();

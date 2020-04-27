@@ -13,78 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const fs = require('fs');
+
 const path = require('path');
 const browserFetcher = require('./lib/server/browserFetcher.js');
 const packageJSON = require('./package.json');
 
-function localDownloadOptions(browserName) {
-  const revision = packageJSON.playwright[`${browserName}_revision`];
-  const downloadPath = path.join(__dirname, '.local-browsers', `${browserName}-${revision}`);
-  return {
-    browser: browserName,
-    progressBarBrowserName: `${browserName} r${revision}`,
-    revision,
-    downloadPath,
-    executablePath: browserFetcher.executablePath({browser: browserName, downloadPath}),
-  };
-}
-
-function downloadOptionsFromENV(packagePath, browserName) {
+function resolveBrowser(packagePath, browserName) {
   const browsersPath = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
-  const downloadPath = browsersPath ?
-      path.join(browsersPath, 'v' + packageJSON.version, browserName) :
-      path.join(packagePath, '.local-browsers', browserName);
-  return {
-    downloadPath,
-    skipBrowserDownload: getFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'),
-    progressBarBrowserName: `${browserName} for playwright v${packageJSON.version}`,
-    revision: packageJSON.playwright[`${browserName}_revision`],
-    browser: browserName,
-    host: getFromENV('PLAYWRIGHT_DOWNLOAD_HOST'),
-    executablePath: browserFetcher.executablePath({browser: browserName, downloadPath}),
-  };
+  const baseDir = browsersPath || path.join(packagePath, '.local-browsers');
+  const browserRevision = packageJSON.playwright[`${browserName}_revision`];
+  return { baseDir, browserRevision };
 }
 
-async function downloadBrowserWithProgressBar(options) {
-  if (options.skipBrowserDownload) {
-    logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
-    return;
-  }
-  let progressBar = null;
-  let lastDownloadedBytes = 0;
-  function progress(downloadedBytes, totalBytes) {
-    if (!progressBar) {
-      const ProgressBar = require('progress');
-      progressBar = new ProgressBar(`Downloading ${options.progressBarBrowserName} - ${toMegabytes(totalBytes)} [:bar] :percent :etas `, {
-        complete: '=',
-        incomplete: ' ',
-        width: 20,
-        total: totalBytes,
-      });
-    }
-    const delta = downloadedBytes - lastDownloadedBytes;
-    lastDownloadedBytes = downloadedBytes;
-    progressBar.tick(delta);
-  }
-  await browserFetcher.downloadBrowser({...options, progress}).catch(e => {
-    process.exitCode = 1;
-    throw e;
+function executablePath(packagePath, browserName) {
+  const { baseDir, browserRevision } = resolveBrowser(packagePath, browserName);
+  return browserFetcher.executablePath(baseDir, browserName, browserRevision);
+}
+
+function targetDirectory(packagePath, browserName) {
+  const { baseDir, browserRevision } = resolveBrowser(packagePath, browserName);
+  return browserFetcher.targetDirectory(baseDir, browserName, browserRevision);
+}
+
+async function downloadBrowserWithProgressBar(packagePath, browserName) {
+  const { baseDir, browserRevision } = resolveBrowser(packagePath, browserName);
+  if (getFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'))
+    return browserFetcher.downloadBrowserWithProgressBar(null);
+  return browserFetcher.downloadBrowserWithProgressBar({
+    baseDir,
+    browserName,
+    browserRevision,
+    progressBarName: `${browserName} for playwright v${packageJSON.version}`,
+    serverHost: getFromENV('PLAYWRIGHT_DOWNLOAD_HOST'),
   });
-  logPolitely(`${options.progressBarBrowserName} downloaded to ${options.downloadPath}`);
-}
-
-function toMegabytes(bytes) {
-  const mb = bytes / 1024 / 1024;
-  return `${Math.round(mb * 10) / 10} Mb`;
-}
-
-function logPolitely(toBeLogged) {
-  const logLevel = process.env.npm_config_loglevel;
-  const logLevelDisplay = ['silent', 'error', 'warn'].indexOf(logLevel) > -1;
-
-  if (!logLevelDisplay)
-    console.log(toBeLogged);
 }
 
 function getFromENV(name) {
@@ -94,4 +55,4 @@ function getFromENV(name) {
   return value;
 }
 
-module.exports = {downloadBrowserWithProgressBar, downloadOptionsFromENV, localDownloadOptions};
+module.exports = { targetDirectory, executablePath, downloadBrowserWithProgressBar };

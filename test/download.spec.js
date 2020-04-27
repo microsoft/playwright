@@ -83,7 +83,7 @@ describe('Download', function() {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   })
-  it.fail(WEBKIT && MAC)(`should report download path within page.on('download', …) handler for Blobs`, async({browser, server}) => {
+  it(`should report download path within page.on('download', …) handler for Blobs`, async({browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
     const onDownloadPath = new Promise((res) => {
       page.on('download', dl => {
@@ -115,6 +115,17 @@ describe('Download', function() {
     const path = await download.path();
     expect(fs.existsSync(path)).toBeTruthy();
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
+    await page.close();
+  });
+  it.fail(CHROMIUM || WEBKIT || FFOX)('should report new window downloads', async({browser, server}) => {
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.setContent(`<a target=_blank href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const path = await download.path();
+    expect(fs.existsSync(path)).toBeTruthy();
     await page.close();
   });
   it('should delete file', async({browser, server}) => {
