@@ -62,7 +62,7 @@ export class Selectors {
   }
 
   private _needsMainContext(parsed: types.ParsedSelector): boolean {
-    return parsed.some(({name}) => {
+    return parsed.parts.some(({name}) => {
       const custom = this._engines.get(name);
       return custom ? !custom.contentScript : false;
     });
@@ -188,13 +188,13 @@ export class Selectors {
     let index = 0;
     let quote: string | undefined;
     let start = 0;
-    const result: types.ParsedSelector = [];
+    const result: types.ParsedSelector = { parts: [] };
     const append = () => {
       const part = selector.substring(start, index).trim();
       const eqIndex = part.indexOf('=');
       let name: string;
       let body: string;
-      if (eqIndex !== -1 && part.substring(0, eqIndex).trim().match(/^[a-zA-Z_0-9-+:]+$/)) {
+      if (eqIndex !== -1 && part.substring(0, eqIndex).trim().match(/^[a-zA-Z_0-9-+:*]+$/)) {
         name = part.substring(0, eqIndex).trim();
         body = part.substring(eqIndex + 1);
       } else if (part.length > 1 && part[0] === '"' && part[part.length - 1] === '"') {
@@ -213,9 +213,19 @@ export class Selectors {
         body = part;
       }
       name = name.toLowerCase();
+      let capture = false;
+      if (name[0] === '*') {
+        capture = true;
+        name = name.substring(1);
+      }
       if (!this._builtinEngines.has(name) && !this._engines.has(name))
-        throw new Error(`Unknown engine ${name} while parsing selector ${selector}`);
-      result.push({ name, body });
+        throw new Error(`Unknown engine "${name}" while parsing selector ${selector}`);
+      result.parts.push({ name, body });
+      if (capture) {
+        if (result.capture !== undefined)
+          throw new Error(`Only one of the selectors can capture using * modifier`);
+        result.capture = result.parts.length - 1;
+      }
     };
     while (index < selector.length) {
       const c = selector[index];

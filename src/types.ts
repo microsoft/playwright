@@ -157,6 +157,9 @@ export type JSCoverageOptions = {
 };
 
 export type ParsedSelector = {
-  name: string,
-  body: string,
-}[];
+  parts: {
+    name: string,
+    body: string,
+  }[],
+  capture?: number,
+};
