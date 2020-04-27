@@ -26,7 +26,7 @@ Selector engine name can be prefixed with `*` to capture element that matches th
 
 For convenience, selectors in the wrong format are heuristically converted to the right format:
 - Selector starting with `//` is assumed to be `xpath=selector`. Example: `page.click('//html')` is converted to `page.click('xpath=//html')`.
-- Selector surrounded with quotes (either `"` or `'`) is assumed to be `text=selector`. Example: `page.click('"foo"')` is converted to `page.click('text="foo"')`.
+- Selector starting and ending with a quote (either `"` or `'`) is assumed to be `text=selector`. Example: `page.click('"foo"')` is converted to `page.click('text="foo"')`.
 - Otherwise, selector is assumed to be `css=selector`. Example: `page.click('div')` is converted to `page.click('css=div')`.
 
 ## Examples
@@ -61,7 +61,7 @@ const handle = await divHandle.$('css=span');
 
 ### css and css:light
 
-`css` is a default engine - any malformed selector not starting with `//` nor surrounded with quotes is assumed to be a css selector. For example, Playwright converts `page.$('span > button')` to `page.$('css=span > button')`.
+`css` is a default engine - any malformed selector not starting with `//` nor starting and ending with a quote is assumed to be a css selector. For example, Playwright converts `page.$('span > button')` to `page.$('css=span > button')`.
 
 `css:light` engine is equivalent to [`Document.querySelector`](https://developer.mozilla.org/en/docs/Web/API/Document/querySelector) and behaves according to the CSS spec. However, it does not pierce shadow roots, which may be inconvenient when working with [Shadow DOM and Web Components](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM). For that reason, `css` engine pierces shadow roots. More specifically, every [Descendant combinator](https://developer.mozilla.org/en-US/docs/Web/CSS/Descendant_combinator) pierces an arbitrary number of open shadow roots, including the implicit descendant combinator at the start of the selector.
 
@@ -115,7 +115,7 @@ Text engine finds an element that contains a text node with the passed text. For
 - Text body can also be a JavaScript-like regex wrapped in `/` symbols. This means `text=/^\\s*Login$/i` will match `<button> loGIN</button>` with any number of spaces before "Login" and no spaces after.
 - Input elements of the type `button` and `submit` are rendered with their value as text, and text engine finds them. For example, `text=Login` matches `<input type=button value="Login">`.
 
-Malformed selector surrounded with quotes (either `"` or `'`) is assumed to be a text selector. For example, Playwright converts `page.click('"Login"')` to `page.click('text="Login"')`.
+Malformed selector starting and ending with a quote (either `"` or `'`) is assumed to be a text selector. For example, Playwright converts `page.click('"Login"')` to `page.click('text="Login"')`.
 
 `text` engine open pierces shadow roots similarly to `css`, while `text:light` does not. Text engine first searches for elements in the light dom in the iteration order, and then recursively inside open shadow roots in the iteration order. It does not search inside closed shadow roots or iframes.
 

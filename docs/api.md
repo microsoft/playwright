@@ -4265,7 +4265,7 @@ Selector has the following format: `engine=body [>> engine=body]*`. Here `engine
 
 For convenience, selectors in the wrong format are heuristically converted to the right format:
 - selector starting with `//` is assumed to be `xpath=selector`;
-- selector starting with `"` is assumed to be `text=selector`;
+- selector starting and ending with a quote (either `"` or `'`) is assumed to be `text=selector`;
 - otherwise selector is assumed to be `css=selector`.
 
 ```js
