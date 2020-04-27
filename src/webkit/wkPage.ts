@@ -313,9 +313,12 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
       helper.addEventListener(this._session, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
       helper.addEventListener(this._session, 'Page.frameScheduledNavigation', event => this._onFrameScheduledNavigation(event.frameId)),
+      helper.addEventListener(this._session, 'Page.frameClearedScheduledNavigation', event => this._onFrameClearedScheduledNavigation(event.frameId)),
       helper.addEventListener(this._session, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
       helper.addEventListener(this._session, 'Page.loadEventFired', event => this._onLifecycleEvent(event.frameId, 'load')),
       helper.addEventListener(this._session, 'Page.domContentEventFired', event => this._onLifecycleEvent(event.frameId, 'domcontentloaded')),
+      helper.addEventListener(this._session, 'Page.frameWillRequestNavigation', event => this._onFrameWillRequestNavigation(event)),
+      helper.addEventListener(this._session, 'Page.frameDidRequestNavigation', event => this._onFrameDidRequestNavigation(event)),
       helper.addEventListener(this._session, 'Page.willRequestOpenWindow', event => this._onWillRequestOpenWindow()),
       helper.addEventListener(this._session, 'Page.didRequestOpenWindow', event => this._onDidRequestOpenWindow(event)),
       helper.addEventListener(this._session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
@@ -349,7 +352,21 @@ export class WKPage implements PageDelegate {
   }
 
   private _onFrameScheduledNavigation(frameId: string) {
-    this._page._frameManager.frameRequestedNavigation(frameId, '');
+    this._page._frameManager.frameWillPotentiallyRequestNavigation();
+  }
+
+  private _onFrameClearedScheduledNavigation(frameId: string) {
+    this._page._frameManager.frameDidPotentiallyRequestNavigation();
+  }
+
+  private _onFrameWillRequestNavigation(event: Protocol.Page.frameWillRequestNavigationPayload) {
+    this._page._frameManager.frameWillPotentiallyRequestNavigation();
+  }
+
+  private _onFrameDidRequestNavigation(event: Protocol.Page.frameDidRequestNavigationPayload) {
+    if (event.allowed)
+      this._page._frameManager.frameRequestedNavigation(event.frameId, '');
+    this._page._frameManager.frameDidPotentiallyRequestNavigation();
   }
 
   private _onFrameStoppedLoading(frameId: string) {

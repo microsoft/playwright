@@ -51,8 +51,7 @@ describe('Download', function() {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   });
-  it.fail(WEBKIT)('should report non-navigation downloads', async({browser, server}) => {
-    // Our WebKit embedder does not download in this case, although Safari does.
+  it('should report non-navigation downloads', async({browser, server}) => {
     server.setRoute('/download', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
       res.end(`Hello world`);
@@ -96,9 +95,8 @@ describe('Download', function() {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   })
-  it.skip(FFOX).fail(CHROMIUM || WEBKIT)('should report alt-click downloads', async({browser, server}) => {
+  it.skip(FFOX).fail(CHROMIUM)('should report alt-click downloads', async({browser, server}) => {
     // Firefox does not download on alt-click by default.
-    // Our WebKit embedder does not download on alt-click, although Safari does.
     // Chromium hangs waiting for navigation because of Page.frameRequestedNavigation.
     server.setRoute('/download', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
