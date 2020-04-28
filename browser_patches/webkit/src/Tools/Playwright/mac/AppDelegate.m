@@ -376,11 +376,27 @@ const NSActivityOptions ActivityOptions =
         decisionHandler(_WKNavigationActionPolicyDownload);
         return;
     }
-    if (navigationAction._canHandleRequest) {
-        decisionHandler(WKNavigationActionPolicyAllow);
+
+    if (!navigationAction._canHandleRequest) {
+        decisionHandler(WKNavigationActionPolicyCancel);
         return;
     }
-    decisionHandler(WKNavigationActionPolicyCancel);
+
+    NSEventModifierFlags modifiers = [navigationAction modifierFlags];
+    if (modifiers & NSEventModifierFlagOption) {
+        decisionHandler(_WKNavigationActionPolicyDownload);
+        return;
+    }
+
+    if ((modifiers & NSEventModifierFlagShift) || (modifiers & NSEventModifierFlagCommand)) {
+        WKWebView* newWebView = [self createHeadlessPage:[webView configuration] withURL:nil];
+        if (newWebView)
+          [newWebView loadRequest:[navigationAction request]];
+        decisionHandler(WKNavigationActionPolicyCancel);
+        return;
+    }
+
+    decisionHandler(WKNavigationActionPolicyAllow);
 }
 
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationResponse:(WKNavigationResponse *)navigationResponse decisionHandler:(void (^)(WKNavigationResponsePolicy))decisionHandler

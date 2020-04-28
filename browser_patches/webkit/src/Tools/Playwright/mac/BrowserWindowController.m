@@ -664,11 +664,31 @@ static NSSet *dataTypes()
 {
     LOG(@"decidePolicyForNavigationAction");
 
-    if (navigationAction._canHandleRequest) {
-        decisionHandler(WKNavigationActionPolicyAllow);
+    if (navigationAction._shouldPerformDownload) {
+        decisionHandler(_WKNavigationActionPolicyDownload);
         return;
     }
-    decisionHandler(WKNavigationActionPolicyCancel);
+
+    if (!navigationAction._canHandleRequest) {
+        decisionHandler(WKNavigationActionPolicyCancel);
+        return;
+    }
+
+    NSEventModifierFlags modifiers = [navigationAction modifierFlags];
+    if (modifiers & NSEventModifierFlagOption) {
+        decisionHandler(_WKNavigationActionPolicyDownload);
+        return;
+    }
+
+    if ((modifiers & NSEventModifierFlagShift) || (modifiers & NSEventModifierFlagCommand)) {
+        // WebView lifecycle will control the BrowserWindowController life times.
+        BrowserWindowController *controller = [[BrowserWindowController alloc] initWithConfiguration:[webView configuration]];
+        [controller->_webView loadRequest:[navigationAction request]];
+        decisionHandler(WKNavigationActionPolicyCancel);
+        return;
+    }
+
+    decisionHandler(WKNavigationActionPolicyAllow);
 }
 
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationResponse:(WKNavigationResponse *)navigationResponse decisionHandler:(void (^)(WKNavigationResponsePolicy))decisionHandler
