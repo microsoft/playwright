@@ -16,7 +16,7 @@
  */
 
 const assert = require('assert');
-const browserFetcher = require('../lib/server/browserFetcher.js');
+const browserFetcher = require('../lib/install/browserFetcher.js');
 const https = require('https');
 const SUPPORTER_PLATFORMS = ['linux', 'mac', 'win32', 'win64'];
 

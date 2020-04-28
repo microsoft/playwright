@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-const { downloadBrowsersWithProgressBar } = require('playwright-core/download-browser');
+const { downloadBrowsersWithProgressBar } = require('playwright-core/lib/install/browserFetcher');
 
-downloadBrowsersWithProgressBar(__dirname, require('./browsers.json'));
+downloadBrowsersWithProgressBar(__dirname, require('./browsers.json')['browsers']);

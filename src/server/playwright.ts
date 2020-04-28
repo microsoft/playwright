@@ -23,15 +23,12 @@ import { Chromium } from './chromium';
 import { WebKit } from './webkit';
 import { Firefox } from './firefox';
 import { selectors } from '../selectors';
+import * as browserPaths from '../install/browserPaths';
 
 for (const className in api) {
   if (typeof (api as any)[className] === 'function')
     helper.installApiHooks(className[0].toLowerCase() + className.substring(1), (api as any)[className]);
 }
-
-type PlaywrightOptions = {
-  browsers: Array<('firefox'|'webkit'|'chromium')>,
-};
 
 export class Playwright {
   readonly selectors = selectors;
@@ -41,17 +38,20 @@ export class Playwright {
   readonly firefox: (Firefox|undefined);
   readonly webkit: (WebKit|undefined);
 
-  constructor(options: PlaywrightOptions) {
-    const {
-      browsers,
-    } = options;
+  constructor(packagePath: string, browsers: browserPaths.BrowserDescriptor[]) {
     this.devices = DeviceDescriptors;
     this.errors = { TimeoutError };
-    if (browsers.includes('chromium'))
-      this.chromium = new Chromium();
-    if (browsers.includes('webkit'))
-      this.webkit = new WebKit();
-    if (browsers.includes('firefox'))
-      this.firefox = new Firefox();
+
+    const chromium = browsers.find(browser => browser.name === 'chromium');
+    if (chromium)
+      this.chromium = new Chromium(packagePath, chromium);
+
+    const firefox = browsers.find(browser => browser.name === 'firefox');
+    if (firefox)
+      this.firefox = new Firefox(packagePath, firefox);
+
+    const webkit = browsers.find(browser => browser.name === 'webkit');
+    if (webkit)
+      this.webkit = new WebKit(packagePath, webkit);
   }
 }

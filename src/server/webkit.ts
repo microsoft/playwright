@@ -24,7 +24,7 @@ import * as os from 'os';
 import * as util from 'util';
 import { helper, assert } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
-import { LaunchOptions, BrowserArgOptions, BrowserType, LaunchServerOptions, ConnectOptions } from './browserType';
+import { LaunchOptions, BrowserArgOptions, LaunchServerOptions, ConnectOptions, AbstractBrowserType } from './browserType';
 import { ConnectionTransport, SequenceNumberMixer, WebSocketTransport } from '../transport';
 import * as ws from 'ws';
 import { LaunchType } from '../browser';
@@ -32,18 +32,11 @@ import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { Events } from '../events';
 import { BrowserContext } from '../browserContext';
 import { InnerLogger, logError, RootLogger } from '../logger';
+import { BrowserDescriptor } from '../install/browserPaths';
 
-export class WebKit implements BrowserType<WKBrowser> {
-  private _executablePath: (string|undefined);
-
-  executablePath(): string {
-    if (!this._executablePath)
-      throw new Error('No executable path!');
-    return this._executablePath;
-  }
-
-  name() {
-    return 'webkit';
+export class WebKit extends AbstractBrowserType<WKBrowser> {
+  constructor(packagePath: string, browser: BrowserDescriptor) {
+    super(packagePath, browser);
   }
 
   async launch(options: LaunchOptions = {}): Promise<WKBrowser> {
@@ -99,7 +92,7 @@ export class WebKit implements BrowserType<WKBrowser> {
     else
       webkitArguments.push(...args);
 
-    const webkitExecutable = executablePath || this._executablePath;
+    const webkitExecutable = executablePath || this.executablePath();
     if (!webkitExecutable)
       throw new Error(`No executable path is specified.`);
 
