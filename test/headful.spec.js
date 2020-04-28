@@ -57,4 +57,12 @@ describe('Headful', function() {
     await browserContext.close();
     await removeUserDataDir(userDataDir);
   });
+  it.fail(CHROMIUM)('should click background tab', async({browserType, defaultBrowserOptions, server}) => {
+    const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
+    const page = await browser.newPage();
+    await page.setContent(`<button>Hello</button><a target=_blank href="${server.EMPTY_PAGE}">empty.html</a>`);
+    await page.click('a');
+    await page.click('button');
+    await browser.close();
+  });
 });
