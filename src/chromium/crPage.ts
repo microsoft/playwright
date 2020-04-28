@@ -653,8 +653,18 @@ class FrameSession {
     this._page._onFileChooserOpened(handle);
   }
 
-  _onDownloadWillBegin(payload: Protocol.Page.downloadWillBeginPayload) {
-    this._crPage._browserContext._browser._downloadCreated(this._page, payload.guid, payload.url);
+  async _onDownloadWillBegin(payload: Protocol.Page.downloadWillBeginPayload) {
+    let originPage = this._crPage._initializedPage;
+    // If it's a new window download, report it on the opener page.
+    if (!originPage) {
+      originPage = await this._crPage.opener();
+      // Resume the page creation with an error. The page will automatically close right
+      // after the download begins.
+      this._firstNonInitialNavigationCommittedReject(new Error('Starting new page download'));
+    }
+    if (!originPage)
+      return;
+    this._crPage._browserContext._browser._downloadCreated(originPage, payload.guid, payload.url);
   }
 
   _onDownloadProgress(payload: Protocol.Page.downloadProgressPayload) {

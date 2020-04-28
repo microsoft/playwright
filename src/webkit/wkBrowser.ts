@@ -95,7 +95,7 @@ export class WKBrowser extends BrowserBase {
     return this._firstPagePromise;
   }
 
-  _onDownloadCreated(payload: Protocol.Playwright.downloadCreatedPayload) {
+  async _onDownloadCreated(payload: Protocol.Playwright.downloadCreatedPayload) {
     const page = this._wkPages.get(payload.pageProxyId);
     if (!page)
       return;
@@ -107,7 +107,13 @@ export class WKBrowser extends BrowserBase {
       // here by simulating cancelled provisional load which matches downloads from network.
       frameManager.provisionalLoadFailed(frame, '', 'Download is starting');
     }
-    this._downloadCreated(page._page, payload.uuid, payload.url);
+    let originPage = page._initializedPage;
+    // If it's a new window download, report it on the opener page.
+    if (!originPage)
+      originPage = await page.opener();
+    if (!originPage)
+      return;
+    this._downloadCreated(originPage, payload.uuid, payload.url);
   }
 
   _onDownloadFinished(payload: Protocol.Playwright.downloadFinishedPayload) {
