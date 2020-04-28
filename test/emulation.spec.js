@@ -453,6 +453,28 @@ describe('BrowserContext({locale})', function() {
     ]);
     await context.close();
   });
+  it('should be isolated between contexts', async({browser, server}) => {
+    const context1 = await browser.newContext({ locale: 'en-US' });
+    const promises = [];
+    // By default firefox limits number of child web processes to 8.
+    for (let i = 0; i< 8; i++)
+      promises.push(context1.newPage());
+    await Promise.all(promises);
+
+    const context2 = await browser.newContext({ locale: 'ru-RU' });
+    const page2 = await context2.newPage();
+
+    const localeNumber = () => (1000000.50).toLocaleString();
+    const numbers = await Promise.all(context1.pages().map(page => page.evaluate(localeNumber)));
+
+    numbers.forEach(value => expect(value).toBe('1,000,000.5'));
+    expect(await page2.evaluate(localeNumber)).toBe('1 000 000,5');
+
+    await Promise.all([
+      context1.close(),
+      context2.close()
+    ]);
+  });
 });
 
 describe('focus', function() {

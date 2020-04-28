@@ -16,5 +16,5 @@ lib/injected/
 # root for "playwright-core" package
 !index.js
 
-# root for "playwright-core/web"
-!web.js
+# browser descriptor
+!browsers.json

@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 
-const { Playwright } = require('playwright-core/lib/server/playwright.js');
-const { executablePath } = require('playwright-core/download-browser.js');
+const { initializePlaywright } = require('playwright-core/download-browser');
 
-const playwright = new Playwright({
-  browsers: ['chromium'],
-});
-
-playwright.chromium._executablePath = executablePath(__dirname, 'chromium');
-
-module.exports = playwright;
+module.exports = initializePlaywright(__dirname, require('./browsers.json'));

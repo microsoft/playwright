@@ -199,6 +199,23 @@ describe('Auto waiting', () => {
     ]);
     expect(messages.join('|')).toBe('route|domcontentloaded|clickload');
   });
+  it('should work with goto following click', async({page, server}) => {
+    server.setRoute('/login.html', async (req, res) => {
+      messages.push('route');
+      res.setHeader('Content-Type', 'text/html');
+      res.end(`You are logged in`);
+    });
+
+    await page.setContent(`
+      <form action="${server.PREFIX}/login.html" method="get">
+        <input type="text">
+        <input type="submit" value="Submit">
+      </form>`);
+
+    await page.fill('input[type=text]', 'admin');
+    await page.click('input[type=submit]');
+    await page.goto(server.EMPTY_PAGE);
+  });
 });
 
 describe('Auto waiting should not hang when', () => {

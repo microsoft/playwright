@@ -25,7 +25,7 @@ import * as ProgressBar from 'progress';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import * as util from 'util';
-import { assert } from '../helper';
+import { assert, logPolitely } from '../helper';
 
 const unlinkAsync = util.promisify(fs.unlink.bind(fs));
 const chmodAsync = util.promisify(fs.chmod.bind(fs));
@@ -129,7 +129,6 @@ export type DownloadOptions = {
   baseDir: string,
   browserName: BrowserName,
   browserRevision: string,
-  progressBarName: string,
   serverHost?: string,
 };
 
@@ -155,17 +154,13 @@ export function executablePath(baseDir: string, browserName: BrowserName, browse
   return path.join(targetDirectory(baseDir, browserName, browserRevision), ...relativePath);
 }
 
-export async function downloadBrowserWithProgressBar(options: DownloadOptions | null): Promise<boolean> {
-  if (!options) {
-    logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
-    return false;
-  }
+export async function downloadBrowserWithProgressBar(options: DownloadOptions): Promise<boolean> {
   const {
     baseDir,
     browserName,
     browserRevision,
-    progressBarName
   } = options;
+  const progressBarName = `${browserName} v${browserRevision}`;
   assert(baseDir, '`baseDir` must be provided');
   const targetDir = targetDirectory(baseDir, browserName, browserRevision);
   if (await existsAsync(targetDir)) {
@@ -212,20 +207,11 @@ function toMegabytes(bytes: number) {
   return `${Math.round(mb * 10) / 10} Mb`;
 }
 
-function logPolitely(toBeLogged: string) {
-  const logLevel = process.env.npm_config_loglevel;
-  const logLevelDisplay = ['silent', 'error', 'warn'].indexOf(logLevel || '') > -1;
-
-  if (!logLevelDisplay)
-    console.log(toBeLogged);  // eslint-disable-line no-console
-}
-
 export async function canDownload(browserName: BrowserName, browserRevision: string, platform: BrowserPlatform): Promise<boolean> {
   const url = revisionURL({
     baseDir: '',
     browserName,
-    browserRevision,
-    progressBarName: '',
+    browserRevision
   }, platform);
   let resolve: (result: boolean) => void = () => {};
   const promise = new Promise<boolean>(x => resolve = x);

@@ -18,56 +18,12 @@
 const utils = require('./utils');
 const {FFOX, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
 
-describe('Page.waitFor', function() {
-  it('should wait for selector', async({page, server}) => {
-    let found = false;
-    const waitFor = page.waitFor('div').then(() => found = true);
-    await page.goto(server.EMPTY_PAGE);
-    expect(found).toBe(false);
-    await page.goto(server.PREFIX + '/grid.html');
-    await waitFor;
-    expect(found).toBe(true);
-  });
-  it('should wait for an xpath', async({page, server}) => {
-    let found = false;
-    const waitFor = page.waitFor('//div').then(() => found = true);
-    await page.goto(server.EMPTY_PAGE);
-    expect(found).toBe(false);
-    await page.goto(server.PREFIX + '/grid.html');
-    await waitFor;
-    expect(found).toBe(true);
-  });
-  it('should not allow you to select an element with single slash xpath', async({page, server}) => {
-    await page.setContent(`<div>some text</div>`);
-    let error = null;
-    await page.waitFor('/html/body/div').catch(e => error = e);
-    expect(error).toBeTruthy();
-  });
+describe('Page.waitForTimeout', function() {
   it('should timeout', async({page, server}) => {
     const startTime = Date.now();
     const timeout = 42;
-    await page.waitFor(timeout);
+    await page.waitForTimeout(timeout);
     expect(Date.now() - startTime).not.toBeLessThan(timeout / 2);
-  });
-  it('should work with multiline body', async({page, server}) => {
-    const result = await page.waitForFunction(`
-      (() => true)()
-    `);
-    expect(await result.jsonValue()).toBe(true);
-  });
-  it('should wait for predicate', async({page, server}) => {
-    await Promise.all([
-      page.waitFor(() => window.innerWidth < 130), // Windows doesn't like windows below 120px wide
-      page.setViewportSize({width: 10, height: 10}),
-    ]);
-  });
-  it('should throw when unknown type', async({page, server}) => {
-    let error = null;
-    await page.waitFor({foo: 'bar'}).catch(e => error = e);
-    expect(error.message).toContain('Unsupported target type');
-  });
-  it('should wait for predicate with arguments', async({page, server}) => {
-    await page.waitFor(({arg1, arg2}) => arg1 + arg2 === 3, {}, { arg1: 1, arg2: 2});
   });
 });
 
@@ -198,6 +154,15 @@ describe('Frame.waitForFunction', function() {
     await page.evaluate(() => window.__done = true);
     await watchdog;
   });
+  it('should work with multiline body', async({page, server}) => {
+    const result = await page.waitForFunction(`
+      (() => true)()
+    `);
+    expect(await result.jsonValue()).toBe(true);
+  });
+  it('should wait for predicate with arguments', async({page, server}) => {
+    await page.waitForFunction(({arg1, arg2}) => arg1 + arg2 === 3, { arg1: 1, arg2: 2});
+  });
 });
 
 describe('Frame.waitForSelector', function() {
@@ -287,6 +252,16 @@ describe('Frame.waitForSelector', function() {
     expect(await waitForSelector).toBe(true);
     expect(divFound).toBe(true);
   });
+  it('should not consider visible when zero-sized', async({page, server}) => {
+    await page.setContent(`<div style='width: 0; height: 0;'>1</div>`);
+    let error = await page.waitForSelector('div', { waitFor: 'visible', timeout: 1000 }).catch(e => e);
+    expect(error.message).toContain('timeout exceeded');
+    await page.evaluate(() => document.querySelector('div').style.width = '10px');
+    error = await page.waitForSelector('div', { waitFor: 'visible', timeout: 1000 }).catch(e => e);
+    expect(error.message).toContain('timeout exceeded');
+    await page.evaluate(() => document.querySelector('div').style.height = '10px');
+    expect(await page.waitForSelector('div', { waitFor: 'visible', timeout: 1000 })).toBeTruthy();
+  });
   it('should wait for visible recursively', async({page, server}) => {
     let divVisible = false;
     const waitForSelector = page.waitForSelector('div#inner', { waitFor: 'visible' }).then(() => divVisible = true);
@@ -300,7 +275,7 @@ describe('Frame.waitForSelector', function() {
   });
   it('hidden should wait for hidden', async({page, server}) => {
     let divHidden = false;
-    await page.setContent(`<div style='display: block;'></div>`);
+    await page.setContent(`<div style='display: block;'>content</div>`);
     const waitForSelector = page.waitForSelector('div', { waitFor: 'hidden' }).then(() => divHidden = true);
     await page.waitForSelector('div'); // do a round trip
     expect(divHidden).toBe(false);
@@ -310,7 +285,7 @@ describe('Frame.waitForSelector', function() {
   });
   it('hidden should wait for display: none', async({page, server}) => {
     let divHidden = false;
-    await page.setContent(`<div style='display: block;'></div>`);
+    await page.setContent(`<div style='display: block;'>content</div>`);
     const waitForSelector = page.waitForSelector('div', { waitFor: 'hidden' }).then(() => divHidden = true);
     await page.waitForSelector('div'); // do a round trip
     expect(divHidden).toBe(false);
@@ -319,7 +294,7 @@ describe('Frame.waitForSelector', function() {
     expect(divHidden).toBe(true);
   });
   it('hidden should wait for removal', async({page, server}) => {
-    await page.setContent(`<div></div>`);
+    await page.setContent(`<div>content</div>`);
     let divRemoved = false;
     const waitForSelector = page.waitForSelector('div', { waitFor: 'hidden' }).then(() => divRemoved = true);
     await page.waitForSelector('div'); // do a round trip
@@ -340,9 +315,9 @@ describe('Frame.waitForSelector', function() {
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
   it('should have an error message specifically for awaiting an element to be hidden', async({page, server}) => {
-    await page.setContent(`<div></div>`);
+    await page.setContent(`<div>content</div>`);
     let error = null;
-    await page.waitForSelector('div', { waitFor: 'hidden', timeout: 10 }).catch(e => error = e);
+    await page.waitForSelector('div', { waitFor: 'hidden', timeout: 1000 }).catch(e => error = e);
     expect(error).toBeTruthy();
     expect(error.message).toContain('waiting for selector "[hidden] div" failed: timeout');
   });

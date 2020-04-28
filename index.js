@@ -13,17 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const fs = require('fs');
-const path = require('path');
-const { Playwright } = require('./lib/server/playwright.js');
-const { executablePath } = require('./download-browser.js');
 
-const playwright = new Playwright({
-  browsers: ['webkit', 'chromium', 'firefox'],
-});
+const { initializePlaywright } = require('./download-browser');
 
-playwright.chromium._executablePath = executablePath(__dirname, 'chromium');
-playwright.firefox._executablePath = executablePath(__dirname, 'firefox');
-playwright.webkit._executablePath = executablePath(__dirname, 'webkit');
-
-module.exports = playwright;
+module.exports = initializePlaywright(__dirname, require('./browsers.json'));

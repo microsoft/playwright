@@ -81,26 +81,28 @@ export function createCSSEngine(shadow: boolean): SelectorEngine {
     },
 
     query(root: SelectorRoot, selector: string): Element | undefined {
-      const simple = root.querySelector(selector);
-      if (simple)
-        return simple;
-      if (!shadow)
-        return;
+      // TODO: uncomment for performance.
+      // const simple = root.querySelector(selector);
+      // if (simple)
+      //   return simple;
+      // if (!shadow)
+      //   return;
       const parts = split(selector);
       if (!parts.length)
         return;
       parts.reverse();
-      return queryShadowInternal(root, root, parts);
+      return queryShadowInternal(root, root, parts, shadow);
     },
 
     queryAll(root: SelectorRoot, selector: string): Element[] {
-      if (!shadow)
-        return Array.from(root.querySelectorAll(selector));
+      // TODO: uncomment for performance.
+      // if (!shadow)
+      //   return Array.from(root.querySelectorAll(selector));
       const result: Element[] = [];
       const parts = split(selector);
       if (parts.length) {
         parts.reverse();
-        queryShadowAllInternal(root, root, parts, result);
+        queryShadowAllInternal(root, root, parts, shadow, result);
       }
       return result;
     }
@@ -109,15 +111,17 @@ export function createCSSEngine(shadow: boolean): SelectorEngine {
   return engine;
 }
 
-function queryShadowInternal(boundary: SelectorRoot, root: SelectorRoot, parts: string[]): Element | undefined {
+function queryShadowInternal(boundary: SelectorRoot, root: SelectorRoot, parts: string[], shadow: boolean): Element | undefined {
   const matching = root.querySelectorAll(parts[0]);
   for (let i = 0; i < matching.length; i++) {
     const element = matching[i];
     if (parts.length === 1 || matches(element, parts, boundary))
       return element;
   }
+  if (!shadow)
+    return;
   if ((root as Element).shadowRoot) {
-    const child = queryShadowInternal(boundary, (root as Element).shadowRoot!, parts);
+    const child = queryShadowInternal(boundary, (root as Element).shadowRoot!, parts, shadow);
     if (child)
       return child;
   }
@@ -125,27 +129,27 @@ function queryShadowInternal(boundary: SelectorRoot, root: SelectorRoot, parts: 
   for (let i = 0; i < elements.length; i++) {
     const element = elements[i];
     if (element.shadowRoot) {
-      const child = queryShadowInternal(boundary, element.shadowRoot, parts);
+      const child = queryShadowInternal(boundary, element.shadowRoot, parts, shadow);
       if (child)
         return child;
     }
   }
 }
 
-function queryShadowAllInternal(boundary: SelectorRoot, root: SelectorRoot, parts: string[], result: Element[]) {
+function queryShadowAllInternal(boundary: SelectorRoot, root: SelectorRoot, parts: string[], shadow: boolean, result: Element[]) {
   const matching = root.querySelectorAll(parts[0]);
   for (let i = 0; i < matching.length; i++) {
     const element = matching[i];
     if (parts.length === 1 || matches(element, parts, boundary))
       result.push(element);
   }
-  if ((root as Element).shadowRoot)
-    queryShadowAllInternal(boundary, (root as Element).shadowRoot!, parts, result);
+  if (shadow && (root as Element).shadowRoot)
+    queryShadowAllInternal(boundary, (root as Element).shadowRoot!, parts, shadow, result);
   const elements = root.querySelectorAll('*');
   for (let i = 0; i < elements.length; i++) {
     const element = elements[i];
-    if (element.shadowRoot)
-      queryShadowAllInternal(boundary, element.shadowRoot, parts, result);
+    if (shadow && element.shadowRoot)
+      queryShadowAllInternal(boundary, element.shadowRoot, parts, shadow, result);
   }
 }
 
@@ -200,6 +204,9 @@ function split(selector: string): string[] {
         index += 2;
       } else if (c === quote) {
         quote = undefined;
+        index++;
+      } else if (c === '\'' || c === '"') {
+        quote = c;
         index++;
       } else {
         index++;
