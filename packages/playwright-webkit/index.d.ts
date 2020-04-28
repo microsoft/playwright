@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as types from 'playwright-core/types/types';
+import * as types from 'playwright/types/types';
 
-export * from 'playwright-core/types/types';
+export * from 'playwright/types/types';
 export const webkit: types.BrowserType<types.WebKitBrowser>;

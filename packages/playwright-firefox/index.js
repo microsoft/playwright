@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-const { Playwright } = require('playwright-core/lib/server/playwright.js');
-const { executablePath } = require('playwright-core/download-browser.js');
+const { Playwright } = require('playwright/lib/server/playwright.js');
+const { executablePath } = require('playwright/download-browser.js');
 
 const playwright = new Playwright({
   browsers: ['firefox'],

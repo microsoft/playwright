@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import * as types from 'playwright-core/types/types';
+const { Playwright } = require('playwright/lib/server/playwright.js');
 
-export * from 'playwright-core/types/types';
-export const webkit: types.BrowserType<types.WebKitBrowser>;
-export const chromium: types.BrowserType<types.ChromiumBrowser>;
-export const firefox: types.BrowserType<types.FirefoxBrowser>;
+const playwright = new Playwright({
+  browsers: ['webkit', 'chromium', 'firefox'],
+});
+
+module.exports = playwright;

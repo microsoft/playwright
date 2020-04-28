@@ -13,8 +13,8 @@ lib/injected/
 # used for npm install scripts
 !download-browser.js
 
-# root for "playwright-core" package
+# root for "playwright" package
 !index.js
 
-# root for "playwright-core/web"
+# root for "playwright/web"
 !web.js

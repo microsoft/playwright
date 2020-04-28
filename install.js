@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
- const { downloadBrowserWithProgressBar } = require('playwright-core/download-browser');
+const path = require('path');
+const { downloadBrowserWithProgressBar } = require('./download-browser');
 
 (async function() {
-  await downloadBrowserWithProgressBar(__dirname, 'chromium');
-  await downloadBrowserWithProgressBar(__dirname, 'firefox');
-  await downloadBrowserWithProgressBar(__dirname, 'webkit');
+  const packageName = path.basename(__dirname);
+  if (packageName === 'playwright') {
+    await downloadBrowserWithProgressBar(__dirname, 'chromium');
+    await downloadBrowserWithProgressBar(__dirname, 'firefox');
+    await downloadBrowserWithProgressBar(__dirname, 'webkit');
+  }
 })();

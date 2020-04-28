@@ -14,16 +14,9 @@
  * limitations under the License.
  */
 
-const { Playwright } = require('playwright-core/lib/server/playwright.js');
-const { executablePath } = require('playwright-core/download-browser.js');
+import * as types from 'playwright/types/types';
 
-const playwright = new Playwright({
-  browsers: ['webkit', 'chromium', 'firefox'],
-});
-
-playwright.chromium._executablePath = executablePath(__dirname, 'chromium');
-playwright.webkit._executablePath = executablePath(__dirname, 'webkit');
-playwright.firefox._executablePath = executablePath(__dirname, 'firefox');
-
-module.exports = playwright;
-
+export * from 'playwright/types/types';
+export const webkit: types.BrowserType<types.WebKitBrowser>;
+export const chromium: types.BrowserType<types.ChromiumBrowser>;
+export const firefox: types.BrowserType<types.FirefoxBrowser>;

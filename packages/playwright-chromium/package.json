@@ -12,6 +12,6 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "playwright-core": "=0.15.0-post"
+    "playwright": "=0.15.0-post"
   }
 }

@@ -12,7 +12,7 @@ mkdir ./output
 cd ./output
 
 npm pack ../../..
-npm pack ../../../packages/playwright
+npm pack ../../../packages/playwright-core
 npm pack ../../../packages/playwright-chromium
 npm pack ../../../packages/playwright-webkit
 npm pack ../../../packages/playwright-firefox

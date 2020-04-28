@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const { downloadBrowserWithProgressBar } = require('playwright-core/download-browser');
+const { downloadBrowserWithProgressBar } = require('playwright/download-browser');
 
 (async function() {
   await downloadBrowserWithProgressBar(__dirname, 'firefox');

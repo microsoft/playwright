@@ -64,14 +64,11 @@ async function listFiles(dirpath) {
 }
 
 async function downloadAllBrowsersAndGenerateProtocolTypes() {
-  const { targetDirectory, executablePath, downloadBrowserWithProgressBar } = require('./download-browser');
+  const { targetDirectory, executablePath } = require('./download-browser');
   const protocolGenerator = require('./utils/protocol-types-generator');
-  if (await downloadBrowserWithProgressBar(__dirname, 'chromium'))
-    await protocolGenerator.generateChromiumProtocol(executablePath(__dirname, 'chromium')).catch(console.warn);
-  if (await downloadBrowserWithProgressBar(__dirname, 'firefox'))
-    await protocolGenerator.generateFirefoxProtocol(executablePath(__dirname, 'firefox')).catch(console.warn);
-  if (await downloadBrowserWithProgressBar(__dirname, 'webkit'))
-    await protocolGenerator.generateWebKitProtocol(executablePath(__dirname, 'webkit')).catch(console.warn);
+  await protocolGenerator.generateChromiumProtocol(executablePath(__dirname, 'chromium')).catch(console.warn);
+  await protocolGenerator.generateFirefoxProtocol(executablePath(__dirname, 'firefox')).catch(console.warn);
+  await protocolGenerator.generateWebKitProtocol(executablePath(__dirname, 'webkit')).catch(console.warn);
 
   // Cleanup stale revisions.
   const directories = new Set(await readdirAsync(path.join(__dirname, '.local-browsers')));

@@ -1,5 +1,5 @@
 {
-  "name": "playwright-core",
+  "name": "playwright",
   "version": "0.15.0-post",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
@@ -32,6 +32,7 @@
     "lint": "npm run eslint && npm run tsc && npm run doc && npm run test-types && npm run test-infra",
     "debug-test": "node --inspect-brk test/test.js",
     "clean": "rimraf lib && rimraf types",
+    "install": "node install.js",
     "prepare": "node install-from-github.js",
     "build": "node utils/runWebpack.js --mode='development' && tsc -p .",
     "watch": "node utils/runWebpack.js --mode='development' --watch --silent | tsc -w -p .",

@@ -67,7 +67,7 @@ updatePackage(path.join(__dirname, '..', 'package.json'), packageJSON => {
 for (const packageName of ['playwright-chromium', 'playwright-firefox', 'playwright-webkit', 'playwright']) {
   updatePackage(path.join(__dirname, '..', 'packages', packageName, 'package.json'), packageJSON => {
     packageJSON.version = version;
-    packageJSON.dependencies['playwright-core'] = `=${version}`;
+    packageJSON.dependencies['playwright'] = `=${version}`;
   });
 }
 
