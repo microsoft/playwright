@@ -21,4 +21,14 @@ function stopButton(remove) {
   if (remove)
     button.remove();
 }
+function startJumping() {
+  const button = document.querySelector('button');
+  let x = 0;
+  const moveIt = () => {
+    x += 300;
+    button.style.marginLeft = x + 'px';
+    requestAnimationFrame(moveIt);
+  };
+  moveIt();
+}
 </script>

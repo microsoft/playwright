@@ -571,6 +571,21 @@ describe('Page.click', function() {
     expect(clicked).toBe(true);
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
+  it('should fail when element moves during hit testing', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/animating-button.html');
+    await page.evaluate(() => addButton());
+    let clicked = false;
+    const handle = await page.$('button');
+    const __testHookBeforeWaitForHitTarget = () => page.evaluate(() => startJumping());
+    const promise = handle.click({ timeout: 0, __testHookBeforeWaitForHitTarget }).then(() => clicked = true).catch(e => e);
+    expect(clicked).toBe(false);
+    expect(await page.evaluate(() => window.clicked)).toBe(undefined);
+    await page.evaluate(() => stopButton());
+    const error = await promise;
+    expect(clicked).toBe(false);
+    expect(error.message).toBe('Element has moved during the action');
+    expect(await page.evaluate(() => window.clicked)).toBe(undefined);
+  });
   it('should fail when element is blocked on hover', async({page, server}) => {
     await page.setContent(`<style>
       container { display: block; position: relative; width: 200px; height: 50px; }

@@ -240,6 +240,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     point.x = (point.x * 100 | 0) / 100;
     point.y = (point.y * 100 | 0) / 100;
     await this._page.mouse.move(point.x, point.y);  // Force any hover effects before waiting for hit target.
+    if (options && (options as any).__testHookBeforeWaitForHitTarget)
+      await (options as any).__testHookBeforeWaitForHitTarget();
     if (!force)
       await this._waitForHitTargetAt(point, deadline);
 
@@ -437,7 +439,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const element = await frame.frameElement();
       const box = await element.boundingBox();
       if (!box)
-        throw new Error('Element is not attached to the DOM');
+        throw new NotConnectedError();
       // Translate from viewport coordinates to frame coordinates.
       point = { x: point.x - box.x, y: point.y - box.y };
     }
