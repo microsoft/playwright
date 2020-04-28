@@ -201,6 +201,9 @@ function split(selector: string): string[] {
       } else if (c === quote) {
         quote = undefined;
         index++;
+      } else if (c === '\'' || c === '"') {
+        quote = c;
+        index++;
       } else {
         index++;
       }

@@ -147,6 +147,32 @@ describe('Page.$eval', function() {
     expect(await page.$eval(`div >> [placeholder="Select date"]`, e => e.outerHTML)).toBe('<input placeholder="Select date">');
     expect(await page.$eval(`div >> [placeholder='Select date']`, e => e.outerHTML)).toBe('<input placeholder="Select date">');
   });
+  it('should work with quotes in css attributes', async({page, server}) => {
+    await page.setContent('<div><input placeholder="Select&quot;date"></div>');
+    expect(await page.$(`[placeholder="Select\\"date"]`)).toBeTruthy();
+    expect(await page.$(`[placeholder='Select"date']`)).toBeTruthy();
+    await page.setContent('<div><input placeholder="Select &quot; date"></div>');
+    expect(await page.$(`[placeholder="Select \\" date"]`)).toBeTruthy();
+    expect(await page.$(`[placeholder='Select " date']`)).toBeTruthy();
+    await page.setContent('<div><input placeholder="Select&apos;date"></div>');
+    expect(await page.$(`[placeholder="Select'date"]`)).toBeTruthy();
+    expect(await page.$(`[placeholder='Select\\'date']`)).toBeTruthy();
+    await page.setContent('<div><input placeholder="Select &apos; date"></div>');
+    expect(await page.$(`[placeholder="Select ' date"]`)).toBeTruthy();
+    expect(await page.$(`[placeholder='Select \\' date']`)).toBeTruthy();
+  });
+  it('should work with spaces in css attributes when missing', async({page, server}) => {
+    const inputPromise = page.waitForSelector(`[placeholder="Select date"]`);
+    expect(await page.$(`[placeholder="Select date"]`)).toBe(null);
+    await page.setContent('<div><input placeholder="Select date"></div>');
+    await inputPromise;
+  });
+  it('should work with quotes in css attributes when missing', async({page, server}) => {
+    const inputPromise = page.waitForSelector(`[placeholder="Select\\"date"]`);
+    expect(await page.$(`[placeholder="Select\\"date"]`)).toBe(null);
+    await page.setContent('<div><input placeholder="Select&quot;date"></div>');
+    await inputPromise;
+  });
 });
 
 describe('Page.$$eval', function() {
