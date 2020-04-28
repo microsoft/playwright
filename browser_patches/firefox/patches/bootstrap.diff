@@ -2336,10 +2336,10 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..2e0c24790272fb398aae701b6b96c1d2d378c952
+index 0000000000000000000000000000000000000000..97221bb293315abe2ecbb954aebd17a176348cd8
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
-@@ -0,0 +1,628 @@
+@@ -0,0 +1,654 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
@@ -2367,13 +2367,29 @@ index 0000000000000000000000000000000000000000..2e0c24790272fb398aae701b6b96c1d2
 +  constructor(registry) {
 +    this._registry = registry
 +    this._handlerToUuid = new Map();
++    helper.addObserver(this._onRequest.bind(this), 'http-on-modify-request');
++  }
++
++  _onRequest(httpChannel, topic) {
++    let loadContext = helper.getLoadContext(httpChannel);
++    if (!loadContext)
++      return;
++    if (!loadContext.topFrameElement)
++      return;
++    const target = this._registry.targetForBrowser(loadContext.topFrameElement);
++    if (!target)
++      return;
++    target._channelIds.add(httpChannel.channelId);
 +  }
 +
 +  //
 +  // nsIDownloadInterceptor implementation.
 +  //
 +  interceptDownloadRequest(externalAppHandler, request, browsingContext, outFile) {
-+    const pageTarget = this._registry._browserBrowsingContextToTarget.get(browsingContext);
++    let pageTarget = this._registry._browserBrowsingContextToTarget.get(browsingContext);
++    // New page downloads won't have browsing contex.
++    if (!pageTarget)
++      pageTarget = this._registry._targetForChannel(request);
 +    if (!pageTarget)
 +      return false;
 +
@@ -2626,6 +2642,15 @@ index 0000000000000000000000000000000000000000..2e0c24790272fb398aae701b6b96c1d2
 +  targetForBrowser(browser) {
 +    return this._browserToTarget.get(browser);
 +  }
++
++  _targetForChannel(channel) {
++    const channelId = channel.channelId;
++    for (const target of this._browserToTarget.values()) {
++      if (target._channelIds.has(channelId))
++        return target;
++    }
++    return null;
++  }
 +}
 +
 +class PageTarget {
@@ -2641,6 +2666,7 @@ index 0000000000000000000000000000000000000000..2e0c24790272fb398aae701b6b96c1d2
 +    this._url = '';
 +    this._openerId = opener ? opener.id() : undefined;
 +    this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, this._linkedBrowser.messageManager);
++    this._channelIds = new Set();
 +
 +    const navigationListener = {
 +      QueryInterface: ChromeUtils.generateQI([ Ci.nsIWebProgressListener]),
@@ -3080,7 +3106,7 @@ index 0000000000000000000000000000000000000000..268fbc361d8053182bb6c27f626e853d
 +
 diff --git a/juggler/content/FrameTree.js b/juggler/content/FrameTree.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..224de0f9514d4af3327d7b59dd5719607bd9c0ed
+index 0000000000000000000000000000000000000000..fe9b67c153cbb6d687bbb98b8882dfdf2bc10c2e
 --- /dev/null
 +++ b/juggler/content/FrameTree.js
 @@ -0,0 +1,473 @@
@@ -3308,7 +3334,7 @@ index 0000000000000000000000000000000000000000..224de0f9514d4af3327d7b59dd571960
 +      // Always report download navigation as failure to match other browsers.
 +      const errorText = isDownload ? 'Will download to file' : helper.getNetworkErrorStatusText(status);
 +      this.emit(FrameTree.Events.NavigationAborted, frame, navigationId, errorText);
-+      if (frame === this._mainFrame && status !== Cr.NS_BINDING_ABORTED)
++      if (frame === this._mainFrame && status !== Cr.NS_BINDING_ABORTED && !isDownload)
 +        this.forcePageReady();
 +    }
 +  }
