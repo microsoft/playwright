@@ -15,44 +15,55 @@
  */
 
 const path = require('path');
+const { getFromENV, logPolitely } = require('./lib/helper.js');
+const { Playwright } = require('./lib/server/playwright.js');
 const browserFetcher = require('./lib/server/browserFetcher.js');
-const packageJSON = require('./package.json');
 
-function resolveBrowser(packagePath, browserName) {
-  const browsersPath = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
-  const baseDir = browsersPath || path.join(packagePath, '.local-browsers');
-  const browserRevision = packageJSON.playwright[`${browserName}_revision`];
-  return { baseDir, browserRevision };
+function browsersPath(packagePath) {
+  const result = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
+  return result || path.join(packagePath, '.local-browsers');
 }
 
-function executablePath(packagePath, browserName) {
-  const { baseDir, browserRevision } = resolveBrowser(packagePath, browserName);
-  return browserFetcher.executablePath(baseDir, browserName, browserRevision);
+function executablePath(packagePath, browser) {
+  return browserFetcher.executablePath(browsersPath(packagePath), browser.name, browser.revision);
 }
 
-function targetDirectory(packagePath, browserName) {
-  const { baseDir, browserRevision } = resolveBrowser(packagePath, browserName);
-  return browserFetcher.targetDirectory(baseDir, browserName, browserRevision);
+function targetDirectory(packagePath, browser) {
+  return browserFetcher.targetDirectory(browsersPath(packagePath), browser.name, browser.revision);
 }
 
-async function downloadBrowserWithProgressBar(packagePath, browserName) {
-  const { baseDir, browserRevision } = resolveBrowser(packagePath, browserName);
-  if (getFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'))
-    return browserFetcher.downloadBrowserWithProgressBar(null);
+async function downloadBrowsersWithProgressBar(packagePath, browsersJSON) {
+  if (getFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD')) {
+    logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
+    return false;
+  }
+  for (const browser of browsersJSON.browsers)
+    await downloadBrowserWithProgressBar(packagePath, browser);
+}
+
+async function downloadBrowserWithProgressBar(packagePath, browser) {
   return browserFetcher.downloadBrowserWithProgressBar({
-    baseDir,
-    browserName,
-    browserRevision,
-    progressBarName: `${browserName} for playwright v${packageJSON.version}`,
+    baseDir: browsersPath(packagePath),
+    browserName: browser.name,
+    browserRevision: browser.revision,
     serverHost: getFromENV('PLAYWRIGHT_DOWNLOAD_HOST'),
   });
 }
 
-function getFromENV(name) {
-  let value = process.env[name];
-  value = value || process.env[`npm_config_${name.toLowerCase()}`];
-  value = value || process.env[`npm_package_config_${name.toLowerCase()}`];
-  return value;
+function initializePlaywright(packagePath, browsersJSON) {
+  const browsers = browsersJSON.browsers;
+  const playwright = new Playwright({
+    browsers: browsers.map(browser => browser.name),
+  });
+  for (const browser of browsers)
+    playwright[browser.name]._executablePath = executablePath(packagePath, browser);
+  return playwright;
 }
 
-module.exports = { targetDirectory, executablePath, downloadBrowserWithProgressBar };
+module.exports = {
+  executablePath,
+  targetDirectory,
+  downloadBrowserWithProgressBar,
+  downloadBrowsersWithProgressBar,
+  initializePlaywright
+};
