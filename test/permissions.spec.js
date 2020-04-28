@@ -104,7 +104,7 @@ describe.skip(WEBKIT)('Permissions', function() {
     await context.clearPermissions();
     expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied', 'granted', 'prompt']);
   });
-  it('should isolate permissions between browser contexs', async({page, server, context, browser}) => {
+  it('should isolate permissions between browser contexts', async({page, server, context, browser}) => {
     await page.goto(server.EMPTY_PAGE);
     const otherContext = await browser.newContext();
     const otherPage = await otherContext.newPage();
@@ -121,5 +121,16 @@ describe.skip(WEBKIT)('Permissions', function() {
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
     expect(await getPermission(otherPage, 'geolocation')).toBe('granted');
     await otherContext.close();
+  });
+  it.skip(FFOX)('should support clipboard read', async({page, server, context, browser}) => {
+    // No such permissions (requires flag) in Firefox
+    await page.goto(server.EMPTY_PAGE);
+    expect(await getPermission(page, 'clipboard-read')).toBe('prompt');
+    let error;
+    await page.evaluate(() => navigator.clipboard.readText()).catch(e => error = e);
+    expect(error.toString()).toContain('denied');
+    await context.grantPermissions(['clipboard-read']);
+    expect(await getPermission(page, 'clipboard-read')).toBe('granted');
+    await page.evaluate(() => navigator.clipboard.readText());
   });
 });
