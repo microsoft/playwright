@@ -22,7 +22,6 @@ const path = require('path');
 const fs = require('fs');
 const util = require('util');
 const rmAsync = util.promisify(require('rimraf'));
-const existsAsync = path => fs.promises.access(path).then(() => true, e => false);
 
 (async () => {
   const SRC_FOLDER = path.join(__dirname, 'src');
@@ -66,18 +65,16 @@ async function listFiles(dirpath) {
 async function downloadAllBrowsersAndGenerateProtocolTypes() {
   const { targetDirectory, executablePath, downloadBrowserWithProgressBar } = require('./download-browser');
   const protocolGenerator = require('./utils/protocol-types-generator');
-  if (await downloadBrowserWithProgressBar(__dirname, 'chromium'))
-    await protocolGenerator.generateChromiumProtocol(executablePath(__dirname, 'chromium')).catch(console.warn);
-  if (await downloadBrowserWithProgressBar(__dirname, 'firefox'))
-    await protocolGenerator.generateFirefoxProtocol(executablePath(__dirname, 'firefox')).catch(console.warn);
-  if (await downloadBrowserWithProgressBar(__dirname, 'webkit'))
-    await protocolGenerator.generateWebKitProtocol(executablePath(__dirname, 'webkit')).catch(console.warn);
+  const browsers = require('./browsers.json')['browsers'];
+  for (const browser of browsers) {
+    if (await downloadBrowserWithProgressBar(__dirname, browser))
+      await protocolGenerator.generateProtocol(browser.name, executablePath(__dirname, browser)).catch(console.warn);
+  }
 
   // Cleanup stale revisions.
   const directories = new Set(await readdirAsync(path.join(__dirname, '.local-browsers')));
-  directories.delete(targetDirectory(__dirname, 'chromium'));
-  directories.delete(targetDirectory(__dirname, 'firefox'));
-  directories.delete(targetDirectory(__dirname, 'webkit'));
+  for (const browser of browsers)
+    directories.delete(targetDirectory(__dirname, browser));
   await Promise.all([...directories].map(directory => rmAsync(directory)));
 
   try {

@@ -64,4 +64,4 @@ You can check the CDN status:
 $ ./browser_patches/tools/check_cdn.sh
 ```
 
-As the builds appear, you can roll to a new browser version in the `./package.json` file.
+As the builds appear, you can roll to a new browser version in the `./browsers.json` file.

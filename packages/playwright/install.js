@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
- const { downloadBrowserWithProgressBar } = require('playwright-core/download-browser');
+const { downloadBrowsersWithProgressBar } = require('playwright-core/download-browser');
 
-(async function() {
-  await downloadBrowserWithProgressBar(__dirname, 'chromium');
-  await downloadBrowserWithProgressBar(__dirname, 'firefox');
-  await downloadBrowserWithProgressBar(__dirname, 'webkit');
-})();
+downloadBrowsersWithProgressBar(__dirname, require('./browsers.json'));

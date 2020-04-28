@@ -6,6 +6,15 @@ const vm = require('vm');
 const os = require('os');
 const util = require('util');
 
+async function generateProtocol(name, executablePath) {
+  if (name === 'chromium')
+    return generateChromiumProtocol(executablePath);
+  if (name === 'firefox')
+    return generateFirefoxProtocol(executablePath);
+  if (name === 'webkit')
+    return generateWebKitProtocol(executablePath);
+}
+
 async function generateChromiumProtocol(executablePath) {
   const outputPath = path.join(__dirname, '..', '..', 'src', 'chromium', 'protocol.ts');
   const playwright = await require('../../index').chromium;
@@ -215,4 +224,4 @@ function firefoxTypeToString(type, indent='    ') {
   return type['$type'];
 }
 
-module.exports = {generateChromiumProtocol, generateFirefoxProtocol, generateWebKitProtocol};
+module.exports = { generateProtocol };

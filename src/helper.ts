@@ -337,6 +337,21 @@ export function assert(value: any, message?: string): asserts value {
     throw new Error(message);
 }
 
+export function getFromENV(name: string) {
+  let value = process.env[name];
+  value = value || process.env[`npm_config_${name.toLowerCase()}`];
+  value = value || process.env[`npm_package_config_${name.toLowerCase()}`];
+  return value;
+}
+
+export function logPolitely(toBeLogged: string) {
+  const logLevel = process.env.npm_config_loglevel;
+  const logLevelDisplay = ['silent', 'error', 'warn'].indexOf(logLevel || '') > -1;
+
+  if (!logLevelDisplay)
+    console.log(toBeLogged);  // eslint-disable-line no-console
+}
+
 const escapeGlobChars = new Set(['/', '$', '^', '+', '.', '(', ')', '=', '!', '|']);
 
 export const helper = Helper;
