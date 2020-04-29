@@ -75,7 +75,7 @@ function getRelativeExecutablePath(browserName: BrowserName): string[] | undefin
   }
 }
 
-function browsersPath(packagePath: string): string {
+export function browsersPath(packagePath: string): string {
   const result = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
   return result || path.join(packagePath, '.local-browsers');
 }

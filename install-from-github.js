@@ -73,7 +73,7 @@ async function downloadAllBrowsersAndGenerateProtocolTypes() {
   }
 
   // Cleanup stale revisions.
-  const directories = new Set(await readdirAsync(path.join(__dirname, '.local-browsers')));
+  const directories = new Set(await readdirAsync(browserPaths.browsersPath(__dirname)));
   for (const browser of browsers)
     directories.delete(browserPaths.browserDirectory(__dirname, browser));
   await Promise.all([...directories].map(directory => rmAsync(directory)));
