@@ -163,9 +163,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _scrollRectIntoViewIfNeeded(rect?: types.Rect): Promise<void> {
-    this._page._log(inputLog, 'scrolling into view if needed...');
     await this._page._delegate.scrollRectIntoViewIfNeeded(this, rect);
-    this._page._log(inputLog, '...done');
   }
 
   async scrollIntoViewIfNeeded() {
@@ -229,44 +227,78 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return point;
   }
 
-  async _performPointerAction(action: (point: types.Point) => Promise<void>, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
+  async _retryPointerAction(action: (point: types.Point) => Promise<void>, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
     const deadline = this._page._timeoutSettings.computeDeadline(options);
-    const { force = false } = (options || {});
-    if (!force)
-      await this._waitForDisplayedAtStablePosition(deadline);
-    const position = options ? options.position : undefined;
-    await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
-    const point = position ? await this._offsetPoint(position) : await this._clickablePoint();
-    point.x = (point.x * 100 | 0) / 100;
-    point.y = (point.y * 100 | 0) / 100;
-    await this._page.mouse.move(point.x, point.y);  // Force any hover effects before waiting for hit target.
-    if (options && (options as any).__testHookBeforeWaitForHitTarget)
-      await (options as any).__testHookBeforeWaitForHitTarget();
-    if (!force)
-      await this._waitForHitTargetAt(point, deadline);
+    while (!helper.isPastDeadline(deadline)) {
+      const result = await this._performPointerAction(action, deadline, options);
+      if (result === 'done')
+        return;
+    }
+    throw new TimeoutError(`waiting for element to receive pointer events failed: timeout exceeded`);
+  }
 
-    await this._page._frameManager.waitForSignalsCreatedBy(async () => {
-      let restoreModifiers: input.Modifier[] | undefined;
-      if (options && options.modifiers)
-        restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
-      this._page._log(inputLog, 'performing input action...');
-      await action(point);
-      this._page._log(inputLog, '...done');
-      if (restoreModifiers)
-        await this._page.keyboard._ensureModifiers(restoreModifiers);
-    }, deadline, options, true);
+  async _performPointerAction(action: (point: types.Point) => Promise<void>, deadline: number, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<'done' | 'retry'> {
+    const { force = false, position } = options;
+    if (!force && !(options as any).__testHookSkipStablePosition)
+      await this._waitForDisplayedAtStablePosition(deadline);
+
+    let paused = false;
+    try {
+      await this._page._delegate.setActivityPaused(true);
+      paused = true;
+
+      // Scroll into view and calculate the point again while paused just in case something has moved.
+      this._page._log(inputLog, 'scrolling into view if needed...');
+      await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
+      this._page._log(inputLog, '...done scrolling');
+      const point = roundPoint(position ? await this._offsetPoint(position) : await this._clickablePoint());
+
+      if (!force) {
+        if ((options as any).__testHookBeforeHitTarget)
+          await (options as any).__testHookBeforeHitTarget();
+        this._page._log(inputLog, `checking that element receives pointer events at (${point.x},${point.y})...`);
+        const matchesHitTarget = await this._checkHitTargetAt(point);
+        if (!matchesHitTarget) {
+          this._page._log(inputLog, '...element does not receive pointer events, retrying input action');
+          await this._page._delegate.setActivityPaused(false);
+          paused = false;
+          return 'retry';
+        }
+        this._page._log(inputLog, `...element does receive pointer events, continuing input action`);
+      }
+
+      await this._page._frameManager.waitForSignalsCreatedBy(async () => {
+        let restoreModifiers: input.Modifier[] | undefined;
+        if (options && options.modifiers)
+          restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
+        this._page._log(inputLog, 'performing input action...');
+        await action(point);
+        this._page._log(inputLog, '...input action done');
+        this._page._log(inputLog, 'waiting for navigations to finish...');
+        await this._page._delegate.setActivityPaused(false);
+        paused = false;
+        if (restoreModifiers)
+          await this._page.keyboard._ensureModifiers(restoreModifiers);
+      }, deadline, options, true);
+      this._page._log(inputLog, '...navigations have finished');
+
+      return 'done';
+    } finally {
+      if (paused)
+        await this._page._delegate.setActivityPaused(false);
+    }
   }
 
   hover(options?: PointerActionOptions & types.PointerActionWaitOptions): Promise<void> {
-    return this._performPointerAction(point => this._page.mouse.move(point.x, point.y), options);
+    return this._retryPointerAction(point => this._page.mouse.move(point.x, point.y), options);
   }
 
   click(options?: ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
-    return this._performPointerAction(point => this._page.mouse.click(point.x, point.y, options), options);
+    return this._retryPointerAction(point => this._page.mouse.click(point.x, point.y, options), options);
   }
 
   dblclick(options?: MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
-    return this._performPointerAction(point => this._page.mouse.dblclick(point.x, point.y, options), options);
+    return this._retryPointerAction(point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
   async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options?: types.NavigatingActionWaitOptions): Promise<string[]> {
@@ -429,11 +461,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const timeoutMessage = 'element to be displayed and not moving';
     const injectedResult = await helper.waitWithDeadline(stablePromise, timeoutMessage, deadline);
     handleInjectedResult(injectedResult, timeoutMessage);
-    this._page._log(inputLog, '...done');
+    this._page._log(inputLog, '...element is displayed and does not move');
   }
 
-  async _waitForHitTargetAt(point: types.Point, deadline: number): Promise<void> {
-    this._page._log(inputLog, `waiting for element to receive pointer events at (${point.x},${point.y}) ...`);
+  async _checkHitTargetAt(point: types.Point): Promise<boolean> {
     const frame = await this.ownerFrame();
     if (frame && frame.parentFrame()) {
       const element = await frame.frameElement();
@@ -443,13 +474,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       // Translate from viewport coordinates to frame coordinates.
       point = { x: point.x - box.x, y: point.y - box.y };
     }
-    const hitTargetPromise = this._evaluateInUtility(({ injected, node }, { timeout, point }) => {
-      return injected.waitForHitTargetAt(node, timeout, point);
-    }, { timeout: helper.timeUntilDeadline(deadline), point });
-    const timeoutMessage = 'element to receive pointer events';
-    const injectedResult = await helper.waitWithDeadline(hitTargetPromise, timeoutMessage, deadline);
-    handleInjectedResult(injectedResult, timeoutMessage);
-    this._page._log(inputLog, '...done');
+    const injectedResult = await this._evaluateInUtility(({ injected, node }, { point }) => {
+      return injected.checkHitTargetAt(node, point);
+    }, { point });
+    return handleInjectedResult(injectedResult, '');
   }
 }
 
@@ -469,4 +497,11 @@ function handleInjectedResult<T = undefined>(injectedResult: InjectedResult<T>, 
   if (injectedResult.status === 'error')
     throw new Error(injectedResult.error);
   return injectedResult.value as T;
+}
+
+function roundPoint(point: types.Point): types.Point {
+  return {
+    x: (point.x * 100 | 0) / 100,
+    y: (point.y * 100 | 0) / 100,
+  };
 }

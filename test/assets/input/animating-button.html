@@ -14,6 +14,7 @@ function addButton() {
   button.addEventListener('click', () => window.clicked = true);
   document.body.appendChild(button);
 }
+
 function stopButton(remove) {
   const button = document.querySelector('button');
   button.style.marginLeft = button.getBoundingClientRect().left + 'px';
@@ -21,14 +22,21 @@ function stopButton(remove) {
   if (remove)
     button.remove();
 }
-function startJumping() {
+
+let x = 0;
+function jump() {
+  x += 300;
   const button = document.querySelector('button');
-  let x = 0;
+  button.style.marginLeft = x + 'px';
+}
+
+function startJumping() {
+  x = 0;
   const moveIt = () => {
-    x += 300;
-    button.style.marginLeft = x + 'px';
+    jump();
     requestAnimationFrame(moveIt);
   };
+  setInterval(jump, 0);
   moveIt();
 }
 </script>
