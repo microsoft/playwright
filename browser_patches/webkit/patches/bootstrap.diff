@@ -836,7 +836,7 @@ index 777a54166ed6664561b3f8249a6abb4ac59d0480..e738f34f65fa8137a16bf7b66bc237b8
              "name": "webSocketWillSendHandshakeRequest",
              "description": "Fired when WebSocket is about to initiate handshake.",
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index 78980810141a9e9b65b93e6cebe80daff9a52dc1..4818c82fff8b19e060e129275ef5f95f1db2fcb0 100644
+index 78980810141a9e9b65b93e6cebe80daff9a52dc1..074e0e53b03f3453972c11e39d021baaff44131e 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -109,6 +109,41 @@
@@ -925,7 +925,7 @@ index 78980810141a9e9b65b93e6cebe80daff9a52dc1..4818c82fff8b19e060e129275ef5f95f
          {
              "name": "snapshotNode",
              "description": "Capture a snapshot of the specified node that does not include unrelated layers.",
-@@ -282,19 +341,85 @@
+@@ -282,19 +341,92 @@
              "returns": [
                  { "name": "data", "type": "string", "description": "Base64-encoded web archive." }
              ]
@@ -993,6 +993,13 @@ index 78980810141a9e9b65b93e6cebe80daff9a52dc1..4818c82fff8b19e060e129275ef5f95f
 +            "parameters": [
 +                { "name": "angle", "type": "integer", "optional": true }
 +            ]
++        },
++        {
++            "name": "setActivityPaused",
++            "description": "Pauses page activity (active objects, animations).",
++            "parameters": [
++                { "name": "paused", "type": "boolean" }
++            ]
          }
      ],
      "events": [
@@ -1013,7 +1020,7 @@ index 78980810141a9e9b65b93e6cebe80daff9a52dc1..4818c82fff8b19e060e129275ef5f95f
              ]
          },
          {
-@@ -304,6 +429,14 @@
+@@ -304,6 +436,14 @@
                  { "name": "frame", "$ref": "Frame", "description": "Frame object." }
              ]
          },
@@ -1028,7 +1035,7 @@ index 78980810141a9e9b65b93e6cebe80daff9a52dc1..4818c82fff8b19e060e129275ef5f95f
          {
              "name": "frameDetached",
              "description": "Fired when frame has been detached from its parent.",
-@@ -340,12 +473,50 @@
+@@ -340,12 +480,50 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -3073,10 +3080,10 @@ index b038a1879c043aa17dae97425693f29be42e3258..d60716b837663004675ffd90bceede4c
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c670a0c1a2 100644
+index 3e8680e1df15245df250aa8e52c3126935832037..6265563481ad523f4cac4d05142667698b797231 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-@@ -32,6 +32,8 @@
+@@ -32,20 +32,27 @@
  #include "config.h"
  #include "InspectorPageAgent.h"
  
@@ -3085,9 +3092,12 @@ index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c6
  #include "CachedResource.h"
  #include "CachedResourceLoader.h"
  #include "Cookie.h"
-@@ -40,12 +42,15 @@
+ #include "CookieJar.h"
+ #include "CustomHeaderFields.h"
++#include "CSSAnimationController.h"
  #include "DOMWrapperWorld.h"
  #include "Document.h"
++#include "DocumentTimeline.h"
  #include "DocumentLoader.h"
 +#include "FocusController.h"
  #include "Frame.h"
@@ -3101,7 +3111,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c6
  #include "HTMLNames.h"
  #include "ImageBuffer.h"
  #include "InspectorClient.h"
-@@ -56,19 +61,28 @@
+@@ -56,19 +63,30 @@
  #include "MIMETypeRegistry.h"
  #include "MemoryCache.h"
  #include "Page.h"
@@ -3115,6 +3125,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c6
  #include "SecurityOrigin.h"
  #include "Settings.h"
  #include "StyleScope.h"
++#include "SVGDocumentExtensions.h"
  #include "TextEncoding.h"
 +#include "TypingCommand.h"
  #include "UserGestureIndicator.h"
@@ -3124,13 +3135,14 @@ index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c6
  #include <JavaScriptCore/RegularExpression.h>
 +#include <wtf/DateMath.h>
  #include <wtf/ListHashSet.h>
++#include <wtf/MainThread.h>
 +#include <wtf/NeverDestroyed.h>
 +#include <wtf/Ref.h>
 +#include <wtf/RefPtr.h>
  #include <wtf/Stopwatch.h>
  #include <wtf/text/Base64.h>
  #include <wtf/text/StringBuilder.h>
-@@ -81,7 +95,6 @@
+@@ -81,7 +99,6 @@
  #include "LegacyWebArchive.h"
  #endif
  
@@ -3138,7 +3150,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c6
  namespace WebCore {
  
  using namespace Inspector;
-@@ -100,6 +113,11 @@ using namespace Inspector;
+@@ -100,6 +117,11 @@ using namespace Inspector;
      macro(WebRTCEncryptionEnabled) \
      macro(WebSecurityEnabled)
  
@@ -3150,7 +3162,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c6
  static bool decodeBuffer(const char* buffer, unsigned size, const String& textEncodingName, String* result)
  {
      if (buffer) {
-@@ -340,6 +358,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
+@@ -340,6 +362,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
      , m_frontendDispatcher(makeUnique<Inspector::PageFrontendDispatcher>(context.frontendRouter))
      , m_backendDispatcher(Inspector::PageBackendDispatcher::create(context.backendDispatcher, this))
      , m_inspectedPage(context.inspectedPage)
@@ -3158,7 +3170,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c6
      , m_client(client)
      , m_overlay(overlay)
  {
-@@ -373,11 +392,20 @@ void InspectorPageAgent::enable(ErrorString& errorString)
+@@ -373,11 +396,20 @@ void InspectorPageAgent::enable(ErrorString& errorString)
  #if HAVE(OS_DARK_MODE_SUPPORT)
      defaultAppearanceDidChange(m_inspectedPage.defaultUseDarkAppearance());
  #endif
@@ -3179,7 +3191,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c6
  
      ErrorString unused;
      setShowPaintRects(unused, false);
-@@ -415,12 +443,34 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
+@@ -415,12 +447,34 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
      m_inspectedPage.mainFrame().loader().reload(reloadOptions);
  }
  
@@ -3216,7 +3228,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c6
      FrameLoadRequest frameLoadRequest { *frame.document(), frame.document()->securityOrigin(), WTFMove(resourceRequest), "_self"_s, InitiatedByMainFrame::Unknown };
      frameLoadRequest.disableNavigationToInvalidURL();
      frame.loader().changeLocation(WTFMove(frameLoadRequest));
-@@ -748,15 +798,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
+@@ -748,15 +802,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
      m_overlay->setShowPaintRects(show);
  }
  
@@ -3238,7 +3250,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c6
  }
  
  void InspectorPageAgent::frameNavigated(Frame& frame)
-@@ -764,13 +815,23 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
+@@ -764,13 +819,23 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
      m_frontendDispatcher->frameNavigated(buildObjectForFrame(&frame));
  }
  
@@ -3265,7 +3277,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c6
  }
  
  Frame* InspectorPageAgent::frameForId(const String& frameId)
-@@ -782,20 +843,18 @@ String InspectorPageAgent::frameId(Frame* frame)
+@@ -782,20 +847,18 @@ String InspectorPageAgent::frameId(Frame* frame)
  {
      if (!frame)
          return emptyString();
@@ -3292,7 +3304,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c6
  }
  
  Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& frameId)
-@@ -806,11 +865,6 @@ Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& f
+@@ -806,11 +869,6 @@ Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& f
      return frame;
  }
  
@@ -3304,7 +3316,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c6
  void InspectorPageAgent::frameStartedLoading(Frame& frame)
  {
      m_frontendDispatcher->frameStartedLoading(frameId(&frame));
-@@ -831,6 +885,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -831,6 +889,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -3317,7 +3329,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c6
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
      m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -888,6 +948,48 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -888,6 +952,48 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -3366,7 +3378,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c6
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -1031,6 +1133,29 @@ void InspectorPageAgent::snapshotRect(ErrorString& errorString, int x, int y, in
+@@ -1031,6 +1137,29 @@ void InspectorPageAgent::snapshotRect(ErrorString& errorString, int x, int y, in
      *outDataURL = snapshot->toDataURL("image/png"_s, WTF::nullopt, PreserveResolution::Yes);
  }
  
@@ -3396,7 +3408,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c6
  void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  {
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
-@@ -1048,4 +1173,543 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -1048,4 +1177,578 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -3939,9 +3951,44 @@ index 3e8680e1df15245df250aa8e52c3126935832037..aa712305c6eeb786445b4953a55005c6
 +#endif
 +}
 +
++void InspectorPageAgent::setActivityPaused(Inspector::ErrorString& errorString, bool paused)
++{
++    setMainThreadCallbacksPaused(paused);
++    bool webAnimationsCSSIntegrationEnabled = RuntimeEnabledFeatures::sharedFeatures().webAnimationsCSSIntegrationEnabled();
++    for (Frame* frame = &m_inspectedPage.mainFrame(); frame; frame = frame->tree().traverseNext()) {
++        ASSERT(frame->document());
++        auto& document = *frame->document();
++        if (paused) {
++            document.suspendScriptedAnimationControllerCallbacks();
++            document.suspendActiveDOMObjects(ReasonForSuspension::JavaScriptDebuggerPaused);
++            if (webAnimationsCSSIntegrationEnabled) {
++                if (auto* timeline = document.existingTimeline())
++                    timeline->suspendAnimations();
++            }
++            if (document.svgExtensions())
++                document.accessSVGExtensions().pauseAnimations();
++        } else {
++            document.resumeActiveDOMObjects(ReasonForSuspension::JavaScriptDebuggerPaused);
++            document.resumeScriptedAnimationControllerCallbacks();
++            if (webAnimationsCSSIntegrationEnabled) {
++                if (auto* timeline = document.existingTimeline())
++                    timeline->resumeAnimations();
++            }
++            if (document.svgExtensions())
++                document.accessSVGExtensions().unpauseAnimations();
++        }
++    }
++    if (!webAnimationsCSSIntegrationEnabled) {
++      if (paused)
++        m_inspectedPage.mainFrame().animation().suspendAnimations();
++      else
++        m_inspectedPage.mainFrame().animation().resumeAnimations();
++    }
++}
++
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 6c75829502336b0806db2531e78186d2c559e44c..a2f8734a41a3a7d6ba489ea65fe8ca18e91c92d9 100644
+index 6c75829502336b0806db2531e78186d2c559e44c..1ad6b8e863c56fd572910db6c6fb524d367f2ad8 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -34,17 +34,23 @@
@@ -3987,7 +4034,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..a2f8734a41a3a7d6ba489ea65fe8ca18
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
      void getCookies(ErrorString&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::Cookie>>& cookies) override;
-@@ -112,20 +121,31 @@ public:
+@@ -112,20 +121,32 @@ public:
      void setShowPaintRects(ErrorString&, bool show) override;
      void setEmulatedMedia(ErrorString&, const String&) override;
      void setForcedAppearance(ErrorString&, const String&) override;
@@ -4006,6 +4053,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..a2f8734a41a3a7d6ba489ea65fe8ca18
 +    void crash(ErrorString&) override;
 +    void setScreenSizeOverride(ErrorString&, int width, int height) override;
 +    void setOrientationOverride(Inspector::ErrorString&, const int* angle) override;
++    void setActivityPaused(Inspector::ErrorString&, bool) override;
  
      // InspectorInstrumentation
 -    void domContentEventFired();
@@ -4023,7 +4071,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..a2f8734a41a3a7d6ba489ea65fe8ca18
      void defaultAppearanceDidChange(bool useDarkAppearance);
      void applyUserAgentOverride(String&);
      void applyEmulatedMedia(String&);
-@@ -134,6 +154,12 @@ public:
+@@ -134,6 +155,12 @@ public:
      void didLayout();
      void didScroll();
      void didRecalculateStyle();
@@ -4036,7 +4084,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..a2f8734a41a3a7d6ba489ea65fe8ca18
  
      Frame* frameForId(const String& frameId);
      WEBCORE_EXPORT String frameId(Frame*);
-@@ -142,6 +168,7 @@ public:
+@@ -142,6 +169,7 @@ public:
  
  private:
      double timestamp();
@@ -4044,7 +4092,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..a2f8734a41a3a7d6ba489ea65fe8ca18
  
      static bool mainResourceContent(Frame*, bool withBase64Encode, String* result);
      static bool dataContent(const char* data, unsigned size, const String& textEncodingName, bool withBase64Encode, String* result);
-@@ -153,18 +180,20 @@ private:
+@@ -153,18 +181,20 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
