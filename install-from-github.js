@@ -63,18 +63,19 @@ async function listFiles(dirpath) {
 }
 
 async function downloadAllBrowsersAndGenerateProtocolTypes() {
-  const { targetDirectory, executablePath, downloadBrowserWithProgressBar } = require('./download-browser');
+  const { downloadBrowserWithProgressBar } = require('./lib/install/browserFetcher');
   const protocolGenerator = require('./utils/protocol-types-generator');
+  const browserPaths = require('./lib/install/browserPaths');
   const browsers = require('./browsers.json')['browsers'];
   for (const browser of browsers) {
     if (await downloadBrowserWithProgressBar(__dirname, browser))
-      await protocolGenerator.generateProtocol(browser.name, executablePath(__dirname, browser)).catch(console.warn);
+      await protocolGenerator.generateProtocol(browser.name, browserPaths.executablePath(__dirname, browser)).catch(console.warn);
   }
 
   // Cleanup stale revisions.
   const directories = new Set(await readdirAsync(path.join(__dirname, '.local-browsers')));
   for (const browser of browsers)
-    directories.delete(targetDirectory(__dirname, browser));
+    directories.delete(browserPaths.browserDirectory(__dirname, browser));
   await Promise.all([...directories].map(directory => rmAsync(directory)));
 
   try {

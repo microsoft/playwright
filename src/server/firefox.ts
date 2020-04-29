@@ -28,24 +28,17 @@ import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
 import { helper, assert } from '../helper';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
-import { BrowserArgOptions, BrowserType, LaunchOptions, LaunchServerOptions, ConnectOptions } from './browserType';
+import { BrowserArgOptions, LaunchOptions, LaunchServerOptions, ConnectOptions, AbstractBrowserType } from './browserType';
 import { launchProcess, waitForLine } from './processLauncher';
 import { ConnectionTransport, SequenceNumberMixer, WebSocketTransport } from '../transport';
 import { RootLogger, InnerLogger, logError } from '../logger';
+import { BrowserDescriptor } from '../install/browserPaths';
 
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 
-export class Firefox implements BrowserType<FFBrowser> {
-  private _executablePath: (string|undefined);
-
-  executablePath(): string {
-    if (!this._executablePath)
-      throw new Error('No executable path!');
-    return this._executablePath;
-  }
-
-  name() {
-    return 'firefox';
+export class Firefox extends AbstractBrowserType<FFBrowser> {
+  constructor(packagePath: string, browser: BrowserDescriptor) {
+    super(packagePath, browser);
   }
 
   async launch(options: LaunchOptions = {}): Promise<FFBrowser> {
@@ -109,7 +102,7 @@ export class Firefox implements BrowserType<FFBrowser> {
     else
       firefoxArguments.push(...args);
 
-    const firefoxExecutable = executablePath || this._executablePath;
+    const firefoxExecutable = executablePath || this.executablePath();
     if (!firefoxExecutable)
       throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
 

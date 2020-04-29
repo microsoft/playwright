@@ -10,9 +10,6 @@ lib/injected/
 !types/*
 !index.d.ts
 
-# used for npm install scripts
-!download-browser.js
-
 # root for "playwright-core" package
 !index.js
 
