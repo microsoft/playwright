@@ -628,6 +628,60 @@ describe('Page.click', function() {
     await page.click('button');
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
+  it.fail(CHROMIUM || WEBKIT || FFOX)('should pause animations', async({page}) => {
+    // This test requires pausing the page.
+    await page.setContent(`<style>
+      @keyframes spinner {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .spinner {
+        animation: spinner 2s linear infinite;
+      }
+      </style>
+      <div class="spinner" style="width: 500px; height: 500px; display: flex; justify-content: center;" >
+        <button id="target"
+                style="width: 30px; height: 30px; background-color: green"
+                onclick="window.clicked=true"></button>
+      </div>
+    `);
+    await page.click('#target', { __testHookSkipStablePosition: new Promise(f => setTimeout(f, 100)) });
+    expect(await page.evaluate(() => window.clicked)).toBe(true);
+  });
+  it.fail(CHROMIUM || WEBKIT || FFOX)('should defer timers', async({page}) => {
+    // This test requires pausing the page.
+    await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);
+    await page.click('button', { __testHookSkipStablePosition: async () => {
+      // Schedule a timer that hides the element
+      await page.evaluate(() => setTimeout(() => button.style.display = 'none', 0));
+      // Allow enough time for timer to fire
+      await page.waitForTimeout(100);
+    }});
+    expect(await page.evaluate(() => window.clicked)).toBe(true);
+  });
+  it.fail(CHROMIUM || WEBKIT || FFOX)('should defer rafs', async({page}) => {
+    // This test requires pausing the page.
+    await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);
+    await page.click('button', { __testHookSkipStablePosition: async () => {
+      // Schedule a timer that hides the element
+      await page.evaluate(() => requestAnimationFrame(() => button.style.display = 'none'));
+      // Allow enough time for raf to fire
+      await page.waitForTimeout(100);
+    }});
+    expect(await page.evaluate(() => window.clicked)).toBe(true);
+  });
+  it.fail(CHROMIUM || WEBKIT || FFOX)('should defer fetch', async({page, server}) => {
+    // This test requires pausing the page.
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);
+    await page.click('button', { __testHookSkipStablePosition: async () => {
+      // Fetch that would immediately delete button.
+      page.evaluate(() => fetch(window.location.href).then(() => button.style.display = 'none'));
+      // Allow enough time for raf to fire
+      await page.waitForTimeout(100);
+    }});
+    expect(await page.evaluate(() => window.clicked)).toBe(true);
+  });
 });
 
 describe('Page.check', function() {
