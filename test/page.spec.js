@@ -163,6 +163,12 @@ describe('Page.Events.Console', function() {
     expect(await message.args()[1].jsonValue()).toEqual(5);
     expect(await message.args()[2].jsonValue()).toEqual({foo: 'bar'});
   });
+  it('should emit same log twice', async({page, server}) => {
+    const messages = [];
+    page.on('console', m => messages.push(m.text()));
+    await page.evaluate(() => { for (let i = 0; i < 2; ++i ) console.log('hello'); } );
+    expect(messages).toEqual(['hello', 'hello']);
+  });
   it('should work for different console API calls', async({page, server}) => {
     const messages = [];
     page.on('console', msg => messages.push(msg));

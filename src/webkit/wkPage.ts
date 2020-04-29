@@ -38,6 +38,8 @@ import * as jpeg from 'jpeg-js';
 import * as png from 'pngjs';
 import { NotConnectedError } from '../errors';
 import { logError } from '../logger';
+import { ConsoleMessageLocation } from '../console';
+import { JSHandle } from '../javascript';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
@@ -64,6 +66,7 @@ export class WKPage implements PageDelegate {
   private _firstNonInitialNavigationCommittedPromise: Promise<void>;
   private _firstNonInitialNavigationCommittedFulfill = () => {};
   private _firstNonInitialNavigationCommittedReject = (e: Error) => {};
+  private _lastConsoleMessage: { derivedType: string, text: string, handles: JSHandle[]; count: number, location: ConsoleMessageLocation; } | null = null;
 
   constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null) {
     this._pageProxySession = pageProxySession;
@@ -320,6 +323,7 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.didRequestOpenWindow', event => this._onDidRequestOpenWindow(event)),
       helper.addEventListener(this._session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
       helper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
+      helper.addEventListener(this._session, 'Console.messageRepeatCountUpdated', event => this._onConsoleRepeatCountUpdated(event)),
       helper.addEventListener(this._pageProxySession, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
       helper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
       helper.addEventListener(this._session, 'Network.requestWillBeSent', e => this._onRequestWillBeSent(this._session, e)),
@@ -483,7 +487,33 @@ export class WKPage implements PageDelegate {
       }
       return context._createHandle(p);
     });
-    this._page._addConsoleMessage(derivedType, handles, { url, lineNumber: (lineNumber || 1) - 1, columnNumber: (columnNumber || 1) - 1 }, handles.length ? undefined : text);
+    this._lastConsoleMessage = {
+      derivedType,
+      text,
+      handles,
+      count: 0,
+      location: {
+        url,
+        lineNumber: (lineNumber || 1) - 1,
+        columnNumber: (columnNumber || 1) - 1,
+      }
+    };
+    this._onConsoleRepeatCountUpdated({ count: 1});
+  }
+
+  _onConsoleRepeatCountUpdated(event: Protocol.Console.messageRepeatCountUpdatedPayload) {
+    if (this._lastConsoleMessage) {
+      const {
+        derivedType,
+        text,
+        handles,
+        count,
+        location
+      } = this._lastConsoleMessage;
+      for (let i = count; i < event.count; ++i)
+        this._page._addConsoleMessage(derivedType, handles, location, handles.length ? undefined : text);
+      this._lastConsoleMessage.count = event.count;
+    }
   }
 
   _onDialog(event: Protocol.Dialog.javascriptDialogOpeningPayload) {
