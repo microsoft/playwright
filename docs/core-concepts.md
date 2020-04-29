@@ -182,16 +182,16 @@ const sectionText = await page.$eval('*css=section >> text=Selectors', e => e.te
 ## Auto-waiting
 
 Actions like `click` and `fill` auto-wait for the element to be visible and actionable. For example, click will:
-- wait for element with given selector to be in DOM
-- wait for it to become displayed, i.e. not empty, no `display:none`, no `visibility:hidden`
-- wait for it to stop moving, for example, until css transition finishes
+- wait for an element with the given selector to appear in the DOM
+- wait for it to become displayed: have non-empty bounding box and no `visibility:hidden`
+- wait for it to stop moving: for example, wait until css transition finishes
 - scroll the element into view
-- wait for it to receive pointer events at the action point, for example, waits until element becomes non-obscured by other elements
+- wait for it to receive pointer events at the action point: for example, wait until element becomes non-obscured by other elements
 - retry if the element is detached during any of the above checks
 
 
 ```js
-// Playwright waits for #search element to be in DOM
+// Playwright waits for #search element to be in the DOM
 await page.fill('#search', 'query');
 ```
 ```js
@@ -200,16 +200,22 @@ await page.fill('#search', 'query');
 await page.click('#search');
 ```
 
-You can explicitly wait for element to become available in DOM and to become visible:
+You can explicitly wait for an element to appear in the DOM or to become visible:
 
 ```js
-await page.waitForSelector('#search', { waitFor: 'visible' });
+// Wait for #search to appear in the DOM.
+await page.waitForSelector('#search', { waitFor: 'attached' });
+// Wait for #promo to become visible, for example with `visibility:visible`.
+await page.waitForSelector('#promo', { waitFor: 'visible' });
 ```
 
 ... or to become hidden or detached
 
 ```js
-await page.waitForSelector('#search', { waitFor: 'detached' });
+// Wait for #details to become hidden, for example with `display:none`.
+await page.waitForSelector('#details', { waitFor: 'hidden' });
+// Wait for #promo to be removed from the DOM.
+await page.waitForSelector('#promo', { waitFor: 'detached' });
 ```
 
 #### API reference
