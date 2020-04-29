@@ -221,7 +221,6 @@ describe('Page.click', function() {
       'mouseover',
       'mouseenter',
       'mousemove',
-      'mousemove',
       'mousedown',
       'mouseup',
       'click',
@@ -571,37 +570,50 @@ describe('Page.click', function() {
     expect(clicked).toBe(true);
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
-  it('should fail when element moves during hit testing', async({page, server}) => {
+  it('should retry when element jumps during hit testing', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/animating-button.html');
     await page.evaluate(() => addButton());
     let clicked = false;
     const handle = await page.$('button');
-    const __testHookBeforeWaitForHitTarget = () => page.evaluate(() => startJumping());
-    const promise = handle.click({ timeout: 0, __testHookBeforeWaitForHitTarget }).then(() => clicked = true).catch(e => e);
+    const __testHookBeforeHitTarget = () => page.evaluate(() => { if (window.x === 0) jump(); });
+    const promise = handle.click({ timeout: 0, __testHookBeforeHitTarget }).then(() => clicked = true);
     expect(clicked).toBe(false);
     expect(await page.evaluate(() => window.clicked)).toBe(undefined);
     await page.evaluate(() => stopButton());
+    await promise;
+    expect(clicked).toBe(true);
+    expect(await page.evaluate(() => window.clicked)).toBe(true);
+  });
+  it('should fail when element jumps during hit testing', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/animating-button.html');
+    await page.evaluate(() => addButton());
+    await page.evaluate(() => stopButton());
+    let clicked = false;
+    const handle = await page.$('button');
+    const __testHookBeforeHitTarget = () => page.evaluate(() => jump());
+    const promise = handle.click({ timeout: 1000, __testHookBeforeHitTarget, __testHookSkipStablePosition: true }).then(() => clicked = true).catch(e => e);
     const error = await promise;
     expect(clicked).toBe(false);
-    expect(error.message).toBe('Element has moved during the action');
     expect(await page.evaluate(() => window.clicked)).toBe(undefined);
-  });
-  it('should fail when element is blocked on hover', async({page, server}) => {
-    await page.setContent(`<style>
-      container { display: block; position: relative; width: 200px; height: 50px; }
-      div, button { position: absolute; left: 0; top: 0; bottom: 0; right: 0; }
-      div { pointer-events: none; }
-      container:hover div { pointer-events: auto; background: red; }
-    </style>
-    <container>
-      <button onclick="window.clicked=true">Click me</button>
-      <div></div>
-    </container>`);
-    const error = await page.click('button', { timeout: 3000 }).catch(e => e);
     expect(error.message).toBe('waiting for element to receive pointer events failed: timeout exceeded');
-    expect(await page.evaluate(() => window.clicked)).toBe(undefined);
   });
-  it('should wait while element is blocked on hover', async({page, server}) => {
+  it.fail(CHROMIUM || WEBKIT || FFOX)('should work when element jumps uncontrollably', async({page, server}) => {
+    // This test requires pausing the page.
+    await page.goto(server.PREFIX + '/input/animating-button.html');
+    await page.evaluate(() => addButton());
+    await page.evaluate(() => stopButton());
+    const handle = await page.$('button');
+    await page.evaluate(() => startJumping());
+    let clicked = false;
+    const promise = handle.click({ timeout: 1000, __testHookSkipStablePosition: true }).then(() => clicked = true);
+    expect(clicked).toBe(false);
+    expect(await page.evaluate(() => window.clicked)).toBe(undefined);
+    await promise;
+    expect(clicked).toBe(true);
+    expect(await page.evaluate(() => window.clicked)).toBe(true);
+  });
+  it.fail(CHROMIUM || WEBKIT || FFOX)('should wait while element is blocked on hover', async({page, server}) => {
+    // This test requires pausing the page.
     await page.setContent(`<style>
       @keyframes move-out { from { marign-left: 0; } to { margin-left: 150px; } }
       container { display: block; position: relative; width: 200px; height: 50px; }

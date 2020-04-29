@@ -258,6 +258,10 @@ export class CRPage implements PageDelegate {
     return this._sessionForHandle(handle)._scrollRectIntoViewIfNeeded(handle, rect);
   }
 
+  async setActivityPaused(paused: boolean): Promise<void> {
+    await this._forAllFrameSessions(frame => frame._setActivityPaused(paused));
+  }
+
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     return this._sessionForHandle(handle)._getContentQuads(handle);
   }
@@ -793,6 +797,9 @@ class FrameSession {
         e.message = 'Node is either not visible or not an HTMLElement';
       throw e;
     });
+  }
+
+  async _setActivityPaused(paused: boolean): Promise<void> {
   }
 
   async _getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
