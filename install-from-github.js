@@ -41,7 +41,7 @@ const rmAsync = util.promisify(require('rimraf'));
   if (outdatedFiles.some(Boolean)) {
     console.log(`Rebuilding playwright...`);
     try {
-      execSync('npm run build');
+      execSync('npm run build', {stdio: 'inherit'});
     } catch (e) {
       process.exit(1);
     }
