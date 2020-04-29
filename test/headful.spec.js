@@ -57,7 +57,7 @@ describe('Headful', function() {
     await browserContext.close();
     await removeUserDataDir(userDataDir);
   });
-  it.fail(CHROMIUM)('should not crash when creating second context', async ({browserType, defaultBrowserOptions, server}) => {
+  it('should not crash when creating second context', async ({browserType, defaultBrowserOptions, server}) => {
     const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
     {
       const browserContext = await browser.newContext();
@@ -71,7 +71,7 @@ describe('Headful', function() {
     }
     await browser.close();
   });
-  it.fail(CHROMIUM)('should click background tab', async({browserType, defaultBrowserOptions, server}) => {
+  it('should click background tab', async({browserType, defaultBrowserOptions, server}) => {
     const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
     const page = await browser.newPage();
     await page.setContent(`<button>Hello</button><a target=_blank href="${server.EMPTY_PAGE}">empty.html</a>`);
