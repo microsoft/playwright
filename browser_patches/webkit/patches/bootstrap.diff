@@ -3080,7 +3080,7 @@ index b038a1879c043aa17dae97425693f29be42e3258..d60716b837663004675ffd90bceede4c
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index 3e8680e1df15245df250aa8e52c3126935832037..6265563481ad523f4cac4d05142667698b797231 100644
+index 3e8680e1df15245df250aa8e52c3126935832037..5f19226ecbe7cfdac6d4386912ab546952bc7998 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,20 +32,27 @@
@@ -3951,7 +3951,7 @@ index 3e8680e1df15245df250aa8e52c3126935832037..6265563481ad523f4cac4d0514266769
 +#endif
 +}
 +
-+void InspectorPageAgent::setActivityPaused(Inspector::ErrorString& errorString, bool paused)
++void InspectorPageAgent::setActivityPaused(Inspector::ErrorString&, bool paused)
 +{
 +    setMainThreadCallbacksPaused(paused);
 +    bool webAnimationsCSSIntegrationEnabled = RuntimeEnabledFeatures::sharedFeatures().webAnimationsCSSIntegrationEnabled();
