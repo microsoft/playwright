@@ -49,7 +49,7 @@ export class CRPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
   readonly _targetId: string;
-  private readonly _opener: CRPage | null;
+  readonly _opener: CRPage | null;
   private readonly _pdf: CRPDF;
   private readonly _coverage: CRCoverage;
   readonly _browserContext: CRBrowserContext;
@@ -653,14 +653,15 @@ class FrameSession {
     this._page._onFileChooserOpened(handle);
   }
 
-  async _onDownloadWillBegin(payload: Protocol.Page.downloadWillBeginPayload) {
+  _onDownloadWillBegin(payload: Protocol.Page.downloadWillBeginPayload) {
     let originPage = this._crPage._initializedPage;
     // If it's a new window download, report it on the opener page.
     if (!originPage) {
-      originPage = await this._crPage.opener();
       // Resume the page creation with an error. The page will automatically close right
       // after the download begins.
       this._firstNonInitialNavigationCommittedReject(new Error('Starting new page download'));
+      if (this._crPage._opener)
+        originPage = this._crPage._opener._initializedPage;
     }
     if (!originPage)
       return;

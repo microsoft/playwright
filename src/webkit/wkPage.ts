@@ -53,7 +53,7 @@ export class WKPage implements PageDelegate {
   private readonly _pagePromise: Promise<Page | Error>;
   private _pagePromiseCallback: (page: Page | Error) => void = () => {};
   private readonly _pageProxySession: WKSession;
-  private readonly _opener: WKPage | null;
+  readonly _opener: WKPage | null;
   private readonly _requestIdToRequest = new Map<string, WKInterceptableRequest>();
   private readonly _workers: WKWorkers;
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
@@ -65,7 +65,7 @@ export class WKPage implements PageDelegate {
   _initializedPage: Page | null = null;
   private _firstNonInitialNavigationCommittedPromise: Promise<void>;
   private _firstNonInitialNavigationCommittedFulfill = () => {};
-  private _firstNonInitialNavigationCommittedReject = (e: Error) => {};
+  _firstNonInitialNavigationCommittedReject = (e: Error) => {};
   private _lastConsoleMessage: { derivedType: string, text: string, handles: JSHandle[]; count: number, location: ConsoleMessageLocation; } | null = null;
 
   constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null) {

@@ -539,10 +539,6 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
   _log(log: Log, message: string | Error, ...args: any[]) {
     return this._browserContext._log(log, message, ...args);
   }
-
-  toString(): string {
-    return `[Page ${this.url()}]`;
-  }
 }
 
 export class Worker extends EventEmitter {

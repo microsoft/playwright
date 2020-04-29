@@ -148,7 +148,7 @@ export class FFBrowser extends BrowserBase {
     });
   }
 
-  async _onDownloadCreated(payload: Protocol.Browser.downloadCreatedPayload) {
+  _onDownloadCreated(payload: Protocol.Browser.downloadCreatedPayload) {
     const ffPage = this._ffPages.get(payload.pageTargetId)!;
     assert(ffPage);
     if (!ffPage)
@@ -156,10 +156,11 @@ export class FFBrowser extends BrowserBase {
     let originPage = ffPage._initializedPage;
     // If it's a new window download, report it on the opener page.
     if (!originPage) {
-      originPage = await ffPage.opener();
       // Resume the page creation with an error. The page will automatically close right
       // after the download begins.
       ffPage._pageCallback(new Error('Starting new page download'));
+      if (ffPage._opener)
+        originPage = ffPage._opener._initializedPage;
     }
     if (!originPage)
       return;

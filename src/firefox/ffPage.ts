@@ -47,7 +47,7 @@ export class FFPage implements PageDelegate {
   private _pagePromise: Promise<Page | Error>;
   _pageCallback: (pageOrError: Page | Error) => void = () => {};
   _initializedPage: Page | null = null;
-  private readonly _opener: FFPage | null;
+  readonly _opener: FFPage | null;
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
   private _workers = new Map<string, { frameId: string, session: FFSession }>();

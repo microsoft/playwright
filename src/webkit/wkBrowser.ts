@@ -95,7 +95,7 @@ export class WKBrowser extends BrowserBase {
     return this._firstPagePromise;
   }
 
-  async _onDownloadCreated(payload: Protocol.Playwright.downloadCreatedPayload) {
+  _onDownloadCreated(payload: Protocol.Playwright.downloadCreatedPayload) {
     const page = this._wkPages.get(payload.pageProxyId);
     if (!page)
       return;
@@ -109,8 +109,13 @@ export class WKBrowser extends BrowserBase {
     }
     let originPage = page._initializedPage;
     // If it's a new window download, report it on the opener page.
-    if (!originPage)
-      originPage = await page.opener();
+    if (!originPage) {
+      // Resume the page creation with an error. The page will automatically close right
+      // after the download begins.
+      page._firstNonInitialNavigationCommittedReject(new Error('Starting new page download'));
+      if (page._opener)
+        originPage = page._opener._initializedPage;
+    }
     if (!originPage)
       return;
     this._downloadCreated(originPage, payload.uuid, payload.url);
