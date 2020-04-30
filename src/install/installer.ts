@@ -24,7 +24,6 @@ import * as browserPaths from '../install/browserPaths';
 import * as browserFetcher from '../install/browserFetcher';
 
 const fsMkdirAsync = util.promisify(fs.mkdir.bind(fs));
-const fsExistsAsync = (path: string) => new Promise(f => fs.exists(path, f));
 const fsReaddirAsync = util.promisify(fs.readdir.bind(fs));
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 const fsUnlinkAsync = util.promisify(fs.unlink.bind(fs));
@@ -39,11 +38,7 @@ export async function installBrowsersWithProgressBar(packagePath: string) {
     logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
     return false;
   }
-  if (!await fsExistsAsync(browsersPath))
-    await fsMkdirAsync(browsersPath);
-  if (!await fsExistsAsync(linksDir))
-    await fsMkdirAsync(linksDir);
-
+  await fsMkdirAsync(linksDir,  { recursive: true });
   await fsWriteFileAsync(path.join(linksDir, sha1(packagePath)), packagePath);
   await validateCache(browsersPath, linksDir);
 }

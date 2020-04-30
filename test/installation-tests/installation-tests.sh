@@ -19,8 +19,8 @@ npm pack ../../../packages/playwright-firefox
 
 # cleanup environment
 unset PLAYWRIGHT_DOWNLOAD_HOST
-unset PLAYWRIGHT_BROWSERS_PATH
 unset PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
+export PLAYWRIGHT_BROWSERS_PATH=0
 
 # There is no option to specify output for `npm pack`, but the format is
 # fixed.

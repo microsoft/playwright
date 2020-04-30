@@ -77,9 +77,27 @@ export function executablePath(browserPath: string, browser: BrowserDescriptor):
   return tokens ? path.join(browserPath, ...tokens) : undefined;
 }
 
+function cacheDirectory() {
+  if (process.platform === 'linux')
+    return process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
+
+  if (process.platform === 'darwin')
+    return path.join(os.homedir(), 'Library', 'Caches');
+
+  if (process.platform === 'win32')
+    return process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
+  throw new Error('Unsupported platform: ' + process.platform);
+}
+
+const defaultBrowsersPath = ((): string | undefined => {
+  const envDefined = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
+  if (envDefined === '0')
+    return undefined;
+  return envDefined || path.join(cacheDirectory(), 'ms-playwright');
+})();
+
 export function browsersPath(packagePath: string): string {
-  const result = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
-  return result || path.join(packagePath, '.local-browsers');
+  return defaultBrowsersPath || path.join(packagePath, '.local-browsers');
 }
 
 export function browserDirectory(browsersPath: string, browser: BrowserDescriptor): string {
