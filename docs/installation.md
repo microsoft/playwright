@@ -3,11 +3,12 @@
 <!-- GEN:toc -->
 - [System requirements](#system-requirements)
 - [Managing browser binaries](#managing-browser-binaries)
-  * [Download from artifact repository](#download-from-artifact-repository)
-  * [Share browser binaries across projects](#share-browser-binaries-across-projects)
-  * [Skip browser downloads](#skip-browser-downloads)
+- [Download from artifact repository](#download-from-artifact-repository)
+- [Skip browser downloads](#skip-browser-downloads)
 - [Download single browser binary](#download-single-browser-binary)
 <!-- GEN:stop -->
+
+<br>
 
 ## System requirements
 
@@ -21,28 +22,56 @@ Firefox and WebKit work across the 3 platforms (Windows, macOS, Linux):
   * For Ubuntu 18.04, the additional dependencies are defined in [our Docker image](docker/Dockerfile.bionic),
     which is based on Ubuntu.
 
+<br>
+
 ## Managing browser binaries
 
-Each version of Playwright needs specific versions of browser binaries to operate.
+Each version of Playwright needs specific versions of browser binaries to operate. By default Playwright downloads Chromium, WebKit and Firefox browsers into the OS-specific cache folders:
 
-By default it downloads Chromium, WebKit and Firefox browsers into the `node_modules/` folder. This way no extra steps are needed to get playwright up and running:
+- `HOME\AppData\Local\ms-playwright` on Windows
+- `~/Library/Caches/ms-playwright` on MacOS
+- `~/.cache/playwright/ms-playwright` on Linux
 
 ```sh
 npm i playwright
 ```
 
-These browsers will take hundreds of megabytes of the disk space when installed:
+These browsers will take few hundreds of megabytes of the disk space when installed:
 
 ```sh
-du -hs ./node_modules/playwright/.local-browsers/*
-281M	.local-browsers/chromium-XXXXXX
-187M	.local-browsers/firefox-XXXX
-180M	.local-browsers/webkit-XXXX
+du -hs ./Library/Caches/ms-playwright/*
+281M  chromium-XXXXXX
+187M	firefox-XXXX
+180M	webkit-XXXX
 ```
 
-To mitigate that, Playwright has a rich set of options to control browser management.
+You can override default behavior using environment variables. When installing Playwright, ask it to download browsers into a specific location:
 
-### Download from artifact repository
+```sh
+$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers npm i playwright
+```
+
+When running Playwright scripts, ask it to search for browsers in a shared location:
+
+```sh
+$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers node playwright-script.js
+```
+
+Or you can opt into the hermetic install and place binaries under the `node_modules/` folder:
+
+```sh
+$ PLAYWRIGHT_BROWSERS_PATH=0 node playwright-script.js
+```
+
+Playwright keeps track of packages that need those browsers and will garbage collect them as you update Playwright to the newer versions.
+
+<br>
+
+> **NOTE** Developers can opt-in in this mode via exporting `PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers` in their `.bashrc`.
+
+<br>
+
+## Download from artifact repository
 
 By default, Playwright downloads browsers from Microsoft and Google public CDNs.
 
@@ -54,30 +83,9 @@ location using the `PLAYWRIGHT_DOWNLOAD_HOST` env variable.
 $ PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i playwright
 ```
 
-### Share browser binaries across projects
+<br>
 
-Often times, developers work with multiple NPM projects that all use Playwright.
-By default, every project will have browser binaries in its own `node_modules/` folder.
-To save the disk space and to speedup installation, Playwright can re-use
-these binaries.
-
-Sharing browser binaries is a two-step process:
-
-1. When installing Playwright, ask it to download browsers into a shared location:
-
-```sh
-$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers npm i playwright
-```
-
-2. When running Playwright scripts, ask it to search for browsers in a shared location:
-
-```sh
-$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers node playwright-script.js
-```
-
-> **NOTE** Developers can opt-in in this mode via exporting `PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers` in their `.bashrc`.
-
-### Skip browser downloads
+## Skip browser downloads
 
 In certain cases, it is desired to avoid browser downloads altogether because
 browser binaries are managed separately.
@@ -87,6 +95,8 @@ This can be done by setting `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` variable before i
 ```sh
 $ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i playwright
 ```
+
+<br>
 
 ## Download single browser binary
 
@@ -99,13 +109,13 @@ Playwright ships three packages that bundle only a single browser:
 
 Using these packages is as easy as using a regular Playwright:
 
-1. Install a specific package
+Install a specific package
 
 ```sh
 $ npm i playwright-webkit
 ```
 
-2. Require package
+Require package
 
 ```js
 // Notice a proper package name in require
