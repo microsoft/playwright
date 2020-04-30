@@ -52,14 +52,9 @@ describe('Frame.waitForFunction', function() {
     }, {}, {polling});
     expect(timeDelta).not.toBeLessThan(polling);
   });
-  it('should poll on mutation', async({page, server}) => {
-    let success = false;
-    const watchdog = page.waitForFunction(() => window.__FOO === 'hit', {}, {polling: 'mutation'})
-        .then(() => success = true);
-    await page.evaluate(() => window.__FOO = 'hit');
-    expect(success).toBe(false);
-    await page.evaluate(() => document.body.appendChild(document.createElement('div')));
-    await watchdog;
+  it('should throw on polling:mutation', async({page, server}) => {
+    const error = await page.waitForFunction(() => true, {}, {polling: 'mutation'}).catch(e => e);
+    expect(error.message).toBe('Unknown polling option: mutation');
   });
   it('should poll on raf', async({page, server}) => {
     const watchdog = page.waitForFunction(() => window.__FOO === 'hit', {}, {polling: 'raf'});
