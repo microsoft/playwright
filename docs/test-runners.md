@@ -1,9 +1,20 @@
 # Test Runners
 
-## Basic Setup
 With a few lines of code, you can hook up Playwright to your favorite JavaScript test runner.
 
-### Jest / Jasmine
+<!-- GEN:toc -->
+- [Jest / Jasmine](#jest--jasmine)
+- [AVA](#ava)
+- [Mocha](#mocha)
+- [IDE support](#ide-support)
+- [Multiple Browsers](#multiple-browsers)
+<!-- GEN:stop -->
+
+<br>
+
+<br>
+
+## Jest / Jasmine
 
 For Jest, [jest-playwright](https://github.com/playwright-community/jest-playwright) can be used. However for a light-weight solution, requiring playwright directly works fine. Jest shares it's syntax with Jasmine, so this applies to Jasmine as well.
 
@@ -30,7 +41,9 @@ it('should work', async () => {
 });
 ```
 
-### AVA
+<br>
+
+## AVA
 
 Tests run concurrently in AVA, so a single page variable cannot be shared between tests. Instead, create new pages with a macro function.
 
@@ -55,7 +68,9 @@ test('should work', pageMacro, async (t, page) => {
 });
 ```
 
-### Mocha
+<br>
+
+## Mocha
 
 Mocha looks very similar to the Jest/Jasmine setup, and functions in the same way.
 
@@ -81,9 +96,9 @@ it('should work', async () => {
   assert.equal(await page.title(), 'Example Domain');
 });
 ```
+<br>
 
-
-## Types
+## IDE support
 
 If using TypeScript, add types to your variables like:
 ```ts

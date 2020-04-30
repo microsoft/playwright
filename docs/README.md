@@ -53,12 +53,10 @@
     - [CircleCI](./ci.md#circleci)
     - [AppVeyor](./ci.md#appveyor)
     - [Troubleshooting](./troubleshooting.md)
-1. Test runners
-    - Jest
-    - Mocha
-    - Karma
-    - Jasmine
-    - Storybooks
+1. [Test runners](./test-runners.md)
+    - [Jest / Jasmine](./test-runners.md#jest--jasmine)
+    - [AVA](./test-runners.md#ava)
+    - [Mocha](./test-runners.md#mocha)
 1. [Selector engines](./selectors.md)
 1. [Extensibility](./extensibility.md)
     - [Custom selector engines](./extensibility.md#custom-selector-engines)
