@@ -239,19 +239,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _performPointerAction(action: (point: types.Point) => Promise<void>, deadline: number, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<'done' | 'retry'> {
     const { force = false, position } = options;
-    const skipStableCheck = (options as any).__testHookSkipStablePosition;
-    if (!force && !skipStableCheck)
+    if (!force)
       await this._waitForDisplayedAtStablePosition(deadline);
 
     let paused = false;
     try {
       await this._page._delegate.setActivityPaused(true);
       paused = true;
-
-      if (typeof skipStableCheck === 'function')
-        await skipStableCheck();
-      else if (skipStableCheck)
-        await skipStableCheck;
 
       // Scroll into view and calculate the point again while paused just in case something has moved.
       this._page._log(inputLog, 'scrolling into view if needed...');

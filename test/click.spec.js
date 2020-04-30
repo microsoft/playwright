@@ -570,47 +570,19 @@ describe('Page.click', function() {
     expect(clicked).toBe(true);
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
-  it('should retry when element jumps during hit testing', async({page, server}) => {
-    await page.goto(server.PREFIX + '/input/animating-button.html');
-    await page.evaluate(() => addButton());
-    let clicked = false;
-    const handle = await page.$('button');
-    const __testHookBeforeHitTarget = () => page.evaluate(() => { if (window.x === 0) jump(); });
-    const promise = handle.click({ timeout: 0, __testHookBeforeHitTarget }).then(() => clicked = true);
-    expect(clicked).toBe(false);
-    expect(await page.evaluate(() => window.clicked)).toBe(undefined);
-    await page.evaluate(() => stopButton());
-    await promise;
-    expect(clicked).toBe(true);
-    expect(await page.evaluate(() => window.clicked)).toBe(true);
-  });
   it('should fail when element jumps during hit testing', async({page, server}) => {
-    await page.goto(server.PREFIX + '/input/animating-button.html');
-    await page.evaluate(() => addButton());
-    await page.evaluate(() => stopButton());
+    await page.setContent('<button>Click me</button>');
     let clicked = false;
     const handle = await page.$('button');
-    const __testHookBeforeHitTarget = () => page.evaluate(() => jump());
-    const promise = handle.click({ timeout: 1000, __testHookBeforeHitTarget, __testHookSkipStablePosition: true }).then(() => clicked = true).catch(e => e);
+    const __testHookBeforeHitTarget = () => page.evaluate(() => {
+      const margin = parseInt(document.querySelector('button').style.marginLeft || 0) + 100;
+      document.querySelector('button').style.marginLeft = margin + 'px';
+    });
+    const promise = handle.click({ timeout: 1000, __testHookBeforeHitTarget }).then(() => clicked = true).catch(e => e);
     const error = await promise;
     expect(clicked).toBe(false);
     expect(await page.evaluate(() => window.clicked)).toBe(undefined);
-    expect(error.message).toBe('waiting for element to receive pointer events failed: timeout exceeded');
-  });
-  it.fail(CHROMIUM || FFOX)('should work when element jumps uncontrollably', async({page, server}) => {
-    // This test requires pausing the page.
-    await page.goto(server.PREFIX + '/input/animating-button.html');
-    await page.evaluate(() => addButton());
-    await page.evaluate(() => stopButton());
-    const handle = await page.$('button');
-    await page.evaluate(() => startJumping());
-    let clicked = false;
-    const promise = handle.click({ timeout: 1000, __testHookSkipStablePosition: true }).then(() => clicked = true);
-    expect(clicked).toBe(false);
-    expect(await page.evaluate(() => window.clicked)).toBe(undefined);
-    await promise;
-    expect(clicked).toBe(true);
-    expect(await page.evaluate(() => window.clicked)).toBe(true);
+    expect(error.message).toContain('timeout exceeded');
   });
   it.fail(CHROMIUM || FFOX)('should pause animations', async({page}) => {
     // This test requires pausing the page.
@@ -621,6 +593,7 @@ describe('Page.click', function() {
       }
       .spinner {
         animation: spinner 2s linear infinite;
+        animation-delay: 500ms;
       }
       </style>
       <div class="spinner" style="width: 500px; height: 500px; display: flex; justify-content: center;" >
@@ -629,28 +602,28 @@ describe('Page.click', function() {
                 onclick="window.clicked=true"></button>
       </div>
     `);
-    await page.click('#target', { __testHookSkipStablePosition: new Promise(f => setTimeout(f, 100)) });
+    await page.click('#target', { __testHookBeforeHitTarget: () => new Promise(f => setTimeout(f, 1000)) });
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
   it.fail(CHROMIUM || FFOX)('should defer timers', async({page}) => {
     // This test requires pausing the page.
     await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);
-    await page.click('button', { __testHookSkipStablePosition: async () => {
+    await page.click('button', { __testHookBeforeHitTarget: async () => {
       // Schedule a timer that hides the element
       await page.evaluate(() => setTimeout(() => button.style.display = 'none', 0));
       // Allow enough time for timer to fire
-      await page.waitForTimeout(100);
+      await page.waitForTimeout(500);
     }});
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
   it.fail(CHROMIUM || FFOX)('should defer rafs', async({page}) => {
     // This test requires pausing the page.
     await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);
-    await page.click('button', { __testHookSkipStablePosition: async () => {
+    await page.click('button', { __testHookBeforeHitTarget: async () => {
       // Schedule a timer that hides the element
       await page.evaluate(() => requestAnimationFrame(() => button.style.display = 'none'));
       // Allow enough time for raf to fire
-      await page.waitForTimeout(100);
+      await page.waitForTimeout(500);
     }});
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
@@ -658,11 +631,11 @@ describe('Page.click', function() {
     // This test requires pausing the page.
     await page.goto(server.EMPTY_PAGE);
     await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);
-    await page.click('button', { __testHookSkipStablePosition: async () => {
+    await page.click('button', { __testHookBeforeHitTarget: async () => {
       // Fetch that would immediately delete button.
       page.evaluate(() => fetch(window.location.href).then(() => button.style.display = 'none'));
       // Allow enough time for raf to fire
-      await page.waitForTimeout(100);
+      await page.waitForTimeout(500);
     }});
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
