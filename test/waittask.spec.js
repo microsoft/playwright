@@ -192,6 +192,23 @@ describe('Frame.waitForSelector', function() {
     const tagName = await eHandle.getProperty('tagName').then(e => e.jsonValue());
     expect(tagName).toBe('DIV');
   });
+  it('should resolve promise when node is added in shadow dom', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    const watchdog = page.waitForSelector('span');
+    await page.evaluate(() => {
+      const div = document.createElement('div');
+      div.attachShadow({mode: 'open'});
+      document.body.appendChild(div);
+    });
+    await page.evaluate(() => new Promise(f => setTimeout(f, 100)));
+    await page.evaluate(() => {
+      const span = document.createElement('span');
+      span.textContent = 'Hello from shadow';
+      document.querySelector('div').shadowRoot.appendChild(span);
+    });
+    const handle = await watchdog;
+    expect(await handle.evaluate(e => e.textContent)).toBe('Hello from shadow');
+  });
   it('should work when node is added through innerHTML', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const watchdog = page.waitForSelector('h3 div');
