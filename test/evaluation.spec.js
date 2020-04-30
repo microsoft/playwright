@@ -168,17 +168,17 @@ describe('Page.evaluate', function() {
       await f().catch(e => error = e);
       expect('' + error).toContain('Too many arguments');
     }
-    expectThrow(() => page.evaluate((a, b) => false, 1, 2));
-    expectThrow(() => page.evaluateHandle((a, b) => false, 1, 2));
-    expectThrow(() => page.$eval('sel', (a, b) => false, 1, 2));
-    expectThrow(() => page.$$eval('sel', (a, b) => false, 1, 2));
-    expectThrow(() => page.evaluate((a, b) => false, 1, 2));
+    await expectThrow(() => page.evaluate((a, b) => false, 1, 2));
+    await expectThrow(() => page.evaluateHandle((a, b) => false, 1, 2));
+    await expectThrow(() => page.$eval('sel', (a, b) => false, 1, 2));
+    await expectThrow(() => page.$$eval('sel', (a, b) => false, 1, 2));
+    await expectThrow(() => page.evaluate((a, b) => false, 1, 2));
     const frame = page.mainFrame();
-    expectThrow(() => frame.evaluate((a, b) => false, 1, 2));
-    expectThrow(() => frame.evaluateHandle((a, b) => false, 1, 2));
-    expectThrow(() => frame.$eval('sel', (a, b) => false, 1, 2));
-    expectThrow(() => frame.$$eval('sel', (a, b) => false, 1, 2));
-    expectThrow(() => frame.evaluate((a, b) => false, 1, 2));
+    await expectThrow(() => frame.evaluate((a, b) => false, 1, 2));
+    await expectThrow(() => frame.evaluateHandle((a, b) => false, 1, 2));
+    await expectThrow(() => frame.$eval('sel', (a, b) => false, 1, 2));
+    await expectThrow(() => frame.$$eval('sel', (a, b) => false, 1, 2));
+    await expectThrow(() => frame.evaluate((a, b) => false, 1, 2));
   });
   it('should accept "undefined" as one of multiple parameters', async({page, server}) => {
     const result = await page.evaluate(({ a, b }) => Object.is(a, undefined) && Object.is(b, 'foo'), { a: undefined, b: 'foo' });
