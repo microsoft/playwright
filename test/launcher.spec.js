@@ -28,6 +28,7 @@ describe('Playwright', function() {
       const page = await (await browser.newContext()).newPage();
       let error = null;
       const neverResolves = page.evaluate(() => new Promise(r => {})).catch(e => error = e);
+      await page.evaluate(() => new Promise(f => setTimeout(f, 0)));
       await browser.close();
       await neverResolves;
       expect(error.message).toContain('Protocol error');
