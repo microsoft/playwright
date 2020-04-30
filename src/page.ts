@@ -17,7 +17,7 @@
 
 import * as dom from './dom';
 import * as frames from './frames';
-import { assert, helper, Listener } from './helper';
+import { assert, helper, Listener, assertMaxArguments } from './helper';
 import * as input from './input';
 import * as js from './javascript';
 import * as network from './network';
@@ -228,18 +228,21 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
   async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
+    assertMaxArguments(arguments.length, 2);
     return this.mainFrame().evaluateHandle(pageFunction, arg);
   }
 
   async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
   async $eval<R>(selector: string, pageFunction: types.FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
+    assertMaxArguments(arguments.length, 3);
     return this.mainFrame().$eval(selector, pageFunction, arg);
   }
 
   async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
   async $$eval<R>(selector: string, pageFunction: types.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
   async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
+    assertMaxArguments(arguments.length, 3);
     return this.mainFrame().$$eval(selector, pageFunction, arg);
   }
 
@@ -373,6 +376,7 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
   async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R>;
   async evaluate<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<R>;
   async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R> {
+    assertMaxArguments(arguments.length, 2);
     return this.mainFrame().evaluate(pageFunction, arg);
   }
 
@@ -568,12 +572,14 @@ export class Worker extends EventEmitter {
   async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R>;
   async evaluate<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<R>;
   async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R> {
+    assertMaxArguments(arguments.length, 2);
     return (await this._executionContextPromise).evaluateInternal(pageFunction, arg);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
+    assertMaxArguments(arguments.length, 2);
     return (await this._executionContextPromise).evaluateHandleInternal(pageFunction, arg);
   }
 }

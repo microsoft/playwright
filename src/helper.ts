@@ -337,6 +337,10 @@ export function assert(value: any, message?: string): asserts value {
     throw new Error(message);
 }
 
+export function assertMaxArguments(count: number, max: number): asserts count {
+  assert(count <= max, 'Too many arguments. If you need to pass more than 1 argument to the function wrap them in an object.');
+}
+
 export function getFromENV(name: string) {
   let value = process.env[name];
   value = value || process.env[`npm_config_${name.toLowerCase()}`];

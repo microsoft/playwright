@@ -162,6 +162,24 @@ describe('Page.evaluate', function() {
     const result = await page.evaluate(() => -Infinity);
     expect(Object.is(result, -Infinity)).toBe(true);
   });
+  fit('should throw when passed more than one parameter', async({page, server}) => {
+    const expectThrow = async f => {
+      let error;
+      await f().catch(e => error = e);
+      expect('' + error).toContain('Too many arguments');
+    }
+    expectThrow(() => page.evaluate((a, b) => false, 1, 2));
+    expectThrow(() => page.evaluateHandle((a, b) => false, 1, 2));
+    expectThrow(() => page.$eval('sel', (a, b) => false, 1, 2));
+    expectThrow(() => page.$$eval('sel', (a, b) => false, 1, 2));
+    expectThrow(() => page.evaluate((a, b) => false, 1, 2));
+    const frame = page.mainFrame();
+    expectThrow(() => frame.evaluate((a, b) => false, 1, 2));
+    expectThrow(() => frame.evaluateHandle((a, b) => false, 1, 2));
+    expectThrow(() => frame.$eval('sel', (a, b) => false, 1, 2));
+    expectThrow(() => frame.$$eval('sel', (a, b) => false, 1, 2));
+    expectThrow(() => frame.evaluate((a, b) => false, 1, 2));
+  });
   it('should accept "undefined" as one of multiple parameters', async({page, server}) => {
     const result = await page.evaluate(({ a, b }) => Object.is(a, undefined) && Object.is(b, 'foo'), { a: undefined, b: 'foo' });
     expect(result).toBe(true);
