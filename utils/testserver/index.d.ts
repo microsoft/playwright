@@ -29,7 +29,8 @@ export class TestServer {
   setRedirect(from: string, to: string);
   waitForRequest(path: string): Promise<IncomingMessage & {postBody: Buffer}>;
   reset();
-  serveFile(request: IncomingMessage, response: ServerResponse, pathName: string);
+  serveFile(request: IncomingMessage, response: ServerResponse);
+  serveFile(request: IncomingMessage, response: ServerResponse, filePath: string);
 
   PORT: number;
   PREFIX: string;

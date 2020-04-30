@@ -450,7 +450,7 @@ it('should reject referer option when setExtraHTTPHeaders provides referer', asy
 it('should override referrer-policy', async ({page, server}) => {
   server.setRoute('/grid.html', (req, res) => {
     res.setHeader('Referrer-Policy', 'no-referrer');
-    server.serveFile(req, res, '/grid.html');
+    server.serveFile(req, res);
   });
   const [request1, request2] = await Promise.all([
     server.waitForRequest('/grid.html'),
@@ -482,7 +482,7 @@ it('extraHttpHeaders should be pushed to provisional page', test => {
   const pagePath = '/one-style.html';
   server.setRoute(pagePath, async (req, res) => {
     page.setExtraHTTPHeaders({ foo: 'bar' });
-    server.serveFile(req, res, pagePath);
+    server.serveFile(req, res);
   });
   const [htmlReq, cssReq] = await Promise.all([
     server.waitForRequest(pagePath),

@@ -35,6 +35,7 @@ export type LaunchProcessOptions = {
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
   pipe?: boolean,
+  pipeStdin?: boolean,
   tempDirectories: string[],
 
   cwd?: string,
@@ -62,6 +63,8 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
 
   const progress = options.progress;
   const stdio: ('ignore' | 'pipe')[] = options.pipe ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe'];
+  if (options.pipeStdin)
+    stdio[0] = 'pipe';
   progress.log(`<launching> ${options.executablePath} ${options.args.join(' ')}`);
   const spawnedProcess = childProcess.spawn(
       options.executablePath,

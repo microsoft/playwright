@@ -20,7 +20,7 @@ import type { Page } from '..';
 
 import fs from 'fs';
 import path from 'path';
-import url from 'url';
+import { TestServer } from '../utils/testserver';
 
 
 declare global {
@@ -29,7 +29,7 @@ declare global {
   }
 }
 
-registerFixture('videoPlayer', async ({playwright, context}, test) => {
+registerFixture('videoPlayer', async ({playwright, context, server}, test) => {
   let firefox;
   if (options.WEBKIT && !LINUX) {
     // WebKit on Mac & Windows cannot replay webm/vp8 video, so we launch Firefox.
@@ -38,7 +38,7 @@ registerFixture('videoPlayer', async ({playwright, context}, test) => {
   }
 
   const page = await context.newPage();
-  const player = new VideoPlayer(page);
+  const player = new VideoPlayer(page, server);
   await test(player);
   if (firefox)
     await firefox.close();
@@ -90,12 +90,19 @@ function expectAll(pixels, rgbaPredicate) {
 
 class VideoPlayer {
   private readonly _page: Page;
-  constructor(page: Page) {
+  private readonly _server: TestServer;
+  constructor(page: Page, server: TestServer) {
     this._page = page;
+    this._server = server;
   }
 
-  async load(videoFile) {
-    await this._page.goto(url.pathToFileURL(videoFile).href);
+  async load(videoFile: string) {
+    const servertPath = '/v.webm';
+    this._server.setRoute(servertPath, (req, response) => {
+      this._server.serveFile(req, response, videoFile);
+    });
+
+    await this._page.goto(this._server.PREFIX + servertPath);
     await this._page.$eval('video', (v: HTMLVideoElement) => {
       return new Promise(fulfil => {
         // In case video playback autostarts.
@@ -172,36 +179,35 @@ class VideoPlayer {
   }
 }
 
+it('should capture static page', test => {
+  test.skip(options.WIRE);
+}, async ({page, tmpDir, videoPlayer, toImpl}) => {
+  const videoFile = path.join(tmpDir, 'v.webm');
+  await page.evaluate(() => document.body.style.backgroundColor = 'red');
+  await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
+  // TODO: in WebKit figure out why video size is not reported correctly for
+  // static pictures.
+  if (options.HEADLESS && options.WEBKIT)
+    await page.setViewportSize({width: 1270, height: 950});
+  await new Promise(r => setTimeout(r, 300));
+  await toImpl(page)._delegate.stopScreencast();
+  expect(fs.existsSync(videoFile)).toBe(true);
+
+  await videoPlayer.load(videoFile);
+  const duration = await videoPlayer.duration();
+  expect(duration).toBeGreaterThan(0);
+
+  expect(await videoPlayer.videoWidth()).toBe(640);
+  expect(await videoPlayer.videoHeight()).toBe(480);
+
+  await videoPlayer.seekLastNonEmptyFrame();
+  const pixels = await videoPlayer.pixels();
+  expectAll(pixels, almostRed);
+});
+
 describe('screencast', suite => {
-  suite.skip(options.WIRE);
-  suite.fixme(options.CHROMIUM);
+  suite.skip(options.WIRE || options.CHROMIUM);
 }, () => {
-  it('should capture static page', test => {
-    test.fixme();
-  }, async ({page, tmpDir, videoPlayer, toImpl}) => {
-    const videoFile = path.join(tmpDir, 'v.webm');
-    await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
-    // TODO: in WebKit figure out why video size is not reported correctly for
-    // static pictures.
-    if (options.HEADLESS && options.WEBKIT)
-      await page.setViewportSize({width: 1270, height: 950});
-    await new Promise(r => setTimeout(r, 300));
-    await toImpl(page)._delegate.stopScreencast();
-    expect(fs.existsSync(videoFile)).toBe(true);
-
-    await videoPlayer.load(videoFile);
-    const duration = await videoPlayer.duration();
-    expect(duration).toBeGreaterThan(0);
-
-    expect(await videoPlayer.videoWidth()).toBe(640);
-    expect(await videoPlayer.videoHeight()).toBe(480);
-
-    await videoPlayer.seekLastNonEmptyFrame();
-    const pixels = await videoPlayer.pixels();
-    expectAll(pixels, almostRed);
-  });
-
   it('should capture navigation', test => {
     test.flaky(options.WEBKIT);
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
