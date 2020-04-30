@@ -164,14 +164,19 @@ function generate_and_upload_browser_build {
     return 22
   fi
 
+  echo "-- running sanity test"
+  if ! ./$BROWSER_NAME/run_sanity_check.sh; then
+    return 23
+  fi
+
   echo "-- archiving to $ZIP_PATH"
   if ! ./$BROWSER_NAME/archive.sh $ZIP_PATH "$EXTRA_ARCHIVE_ARGS"; then
-    return 23
+    return 24
   fi
 
   echo "-- uploading"
   if ! ./upload.sh $BUILD_BLOB_PATH $ZIP_PATH; then
-    return 24
+    return 25
   fi
   return 0
 }
@@ -206,8 +211,10 @@ else
   elif (( RESULT_CODE == 22 )); then
     FAILED_STEP="./build.sh"
   elif (( RESULT_CODE == 23 )); then
-    FAILED_STEP="./archive.sh"
+    FAILED_STEP="./run_sanity_check.sh"
   elif (( RESULT_CODE == 24 )); then
+    FAILED_STEP="./archive.sh"
+  elif (( RESULT_CODE == 25 )); then
     FAILED_STEP="./upload.sh"
   else
     FAILED_STEP="<unknown step>"
