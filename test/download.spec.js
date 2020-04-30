@@ -117,7 +117,10 @@ describe('Download', function() {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   });
-  it.fail(CHROMIUM || WEBKIT || FFOX)('should report new window downloads', async({browser, server}) => {
+  it('should report new window downloads', async({browser, server}) => {
+    // TODO: - the test fails in headful Chromium as the popup page gets closed along
+    // with the session before download completed event arrives.
+    // - WebKit doesn't close the popup page
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a target=_blank href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([

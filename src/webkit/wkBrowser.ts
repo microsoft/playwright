@@ -107,7 +107,18 @@ export class WKBrowser extends BrowserBase {
       // here by simulating cancelled provisional load which matches downloads from network.
       frameManager.provisionalLoadFailed(frame, '', 'Download is starting');
     }
-    this._downloadCreated(page._page, payload.uuid, payload.url);
+    let originPage = page._initializedPage;
+    // If it's a new window download, report it on the opener page.
+    if (!originPage) {
+      // Resume the page creation with an error. The page will automatically close right
+      // after the download begins.
+      page._firstNonInitialNavigationCommittedReject(new Error('Starting new page download'));
+      if (page._opener)
+        originPage = page._opener._initializedPage;
+    }
+    if (!originPage)
+      return;
+    this._downloadCreated(originPage, payload.uuid, payload.url);
   }
 
   _onDownloadFinished(payload: Protocol.Playwright.downloadFinishedPayload) {
