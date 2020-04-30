@@ -145,8 +145,7 @@ export class Selectors {
   _waitForSelectorTask(selector: string, waitFor: 'attached' | 'detached' | 'visible' | 'hidden', deadline: number): { world: 'main' | 'utility', task: (context: dom.FrameExecutionContext) => Promise<js.JSHandle> } {
     const parsed = this._parseSelector(selector);
     const task = async (context: dom.FrameExecutionContext) => context.evaluateHandleInternal(({ evaluator, parsed, waitFor, timeout }) => {
-      const polling = (waitFor === 'attached' || waitFor === 'detached') ? 'mutation' : 'raf';
-      return evaluator.injected.poll(polling, timeout, () => {
+      return evaluator.injected.poll('raf', timeout, () => {
         const element = evaluator.querySelector(parsed, document);
         switch (waitFor) {
           case 'attached':
@@ -166,7 +165,7 @@ export class Selectors {
   _dispatchEventTask(selector: string, type: string, eventInit: Object, deadline: number): (context: dom.FrameExecutionContext) => Promise<js.JSHandle> {
     const parsed = this._parseSelector(selector);
     const task = async (context: dom.FrameExecutionContext) => context.evaluateHandleInternal(({ evaluator, parsed, type, eventInit, timeout }) => {
-      return evaluator.injected.poll('mutation', timeout, () => {
+      return evaluator.injected.poll('raf', timeout, () => {
         const element = evaluator.querySelector(parsed, document);
         if (element)
           evaluator.injected.dispatchEvent(element, type, eventInit);

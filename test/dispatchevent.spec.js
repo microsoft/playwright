@@ -79,6 +79,24 @@ describe('Page.dispatchEvent(click)', function() {
     await page.dispatchEvent('button', 'click');
     expect(await page.evaluate(() => window.clicked)).toBeTruthy();
   });
+  it('should dispatch click when node is added in shadow dom', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    const watchdog = page.dispatchEvent('span', 'click');
+    await page.evaluate(() => {
+      const div = document.createElement('div');
+      div.attachShadow({mode: 'open'});
+      document.body.appendChild(div);
+    });
+    await page.evaluate(() => new Promise(f => setTimeout(f, 100)));
+    await page.evaluate(() => {
+      const span = document.createElement('span');
+      span.textContent = 'Hello from shadow';
+      span.addEventListener('click', () => window.clicked = true);
+      document.querySelector('div').shadowRoot.appendChild(span);
+    });
+    await watchdog;
+    expect(await page.evaluate(() => window.clicked)).toBe(true);
+  });
 });
 
 describe('Page.dispatchEvent(drag)', function() {
