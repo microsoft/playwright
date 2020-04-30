@@ -246,6 +246,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     let paused = false;
     try {
       await this._page._delegate.setActivityPaused(true);
+      paused = true;
 
       if (typeof skipStableCheck === 'function')
         await skipStableCheck();
