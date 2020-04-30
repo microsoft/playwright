@@ -53,9 +53,16 @@ export abstract class BrowserBase extends EventEmitter implements Browser, Inner
     return page;
   }
 
-  _downloadCreated(page: Page, uuid: string, url: string) {
-    const download = new Download(page, this._downloadsPath, uuid, url);
+  _downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string) {
+    const download = new Download(page, this._downloadsPath, uuid, url, suggestedFilename);
     this._downloads.set(uuid, download);
+  }
+
+  _downloadFilenameSuggested(uuid: string, suggestedFilename: string) {
+    const download = this._downloads.get(uuid);
+    if (!download)
+      return;
+    download._filenameSuggested(suggestedFilename);
   }
 
   _downloadFinished(uuid: string, error?: string) {

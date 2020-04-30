@@ -160,7 +160,7 @@ export class FFBrowser extends BrowserBase {
     }
     if (!originPage)
       return;
-    this._downloadCreated(originPage, payload.uuid, payload.url);
+    this._downloadCreated(originPage, payload.uuid, payload.url, payload.suggestedFileName);
   }
 
   _onDownloadFinished(payload: Protocol.Browser.downloadFinishedPayload) {

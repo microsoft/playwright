@@ -56,6 +56,7 @@ export class WKBrowser extends BrowserBase {
       helper.addEventListener(this._browserSession, 'Playwright.pageProxyDestroyed', this._onPageProxyDestroyed.bind(this)),
       helper.addEventListener(this._browserSession, 'Playwright.provisionalLoadFailed', event => this._onProvisionalLoadFailed(event)),
       helper.addEventListener(this._browserSession, 'Playwright.downloadCreated', this._onDownloadCreated.bind(this)),
+      helper.addEventListener(this._browserSession, 'Playwright.downloadFilenameSuggested', this._onDownloadFilenameSuggested.bind(this)),
       helper.addEventListener(this._browserSession, 'Playwright.downloadFinished', this._onDownloadFinished.bind(this)),
       helper.addEventListener(this._browserSession, kPageProxyMessageReceived, this._onPageProxyMessageReceived.bind(this)),
     ];
@@ -109,6 +110,10 @@ export class WKBrowser extends BrowserBase {
     if (!originPage)
       return;
     this._downloadCreated(originPage, payload.uuid, payload.url);
+  }
+
+  _onDownloadFilenameSuggested(payload: Protocol.Playwright.downloadFilenameSuggestedPayload) {
+    this._downloadFilenameSuggested(payload.uuid, payload.suggestedFilename);
   }
 
   _onDownloadFinished(payload: Protocol.Playwright.downloadFinishedPayload) {

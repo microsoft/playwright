@@ -670,7 +670,7 @@ class FrameSession {
     }
     if (!originPage)
       return;
-    this._crPage._browserContext._browser._downloadCreated(originPage, payload.guid, payload.url);
+    this._crPage._browserContext._browser._downloadCreated(originPage, payload.guid, payload.url, payload.suggestedFilename);
   }
 
   _onDownloadProgress(payload: Protocol.Page.downloadProgressPayload) {

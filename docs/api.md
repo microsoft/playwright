@@ -3046,6 +3046,7 @@ const path = await download.path();
 - [download.delete()](#downloaddelete)
 - [download.failure()](#downloadfailure)
 - [download.path()](#downloadpath)
+- [download.suggestedFilename()](#downloadsuggestedfilename)
 - [download.url()](#downloadurl)
 <!-- GEN:stop -->
 
@@ -3068,6 +3069,11 @@ Returns download error if any.
 - returns: <[Promise]<null|[string]>>
 
 Returns path to the downloaded file in case of successful download.
+
+#### download.suggestedFilename()
+- returns: <[string]>
+
+Returns suggested filename for this download. It is typically computed by the browser from the [`Content-Disposition`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition) response header or the `download` attribute. See the spec on [whatwg](https://html.spec.whatwg.org/#downloading-resources). Different browsers can use different logic for computing it.
 
 #### download.url()
 - returns: <[string]>

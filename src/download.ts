@@ -20,6 +20,7 @@ import * as util from 'util';
 import { Page } from './page';
 import { Events } from './events';
 import { Readable } from 'stream';
+import { assert } from './helper';
 
 export class Download {
   private _downloadsPath: string;
@@ -31,21 +32,34 @@ export class Download {
   private _failure: string | null = null;
   private _deleted = false;
   private _url: string;
+  private _suggestedFilename: string | undefined;
 
-  constructor(page: Page, downloadsPath: string, uuid: string, url: string) {
+  constructor(page: Page, downloadsPath: string, uuid: string, url: string, suggestedFilename?: string) {
     this._page = page;
     this._downloadsPath = downloadsPath;
     this._uuid = uuid;
     this._url = url;
+    this._suggestedFilename = suggestedFilename;
     this._finishedCallback = () => {};
     this._finishedPromise = new Promise(f => this._finishedCallback = f);
     page._browserContext._downloads.add(this);
     this._acceptDownloads = !!this._page._browserContext._options.acceptDownloads;
+    if (suggestedFilename !== undefined)
+      this._page.emit(Events.Page.Download, this);
+  }
+
+  _filenameSuggested(suggestedFilename: string) {
+    assert(this._suggestedFilename === undefined);
+    this._suggestedFilename = suggestedFilename;
     this._page.emit(Events.Page.Download, this);
   }
 
   url(): string {
     return this._url;
+  }
+
+  suggestedFilename(): string {
+    return this._suggestedFilename!;
   }
 
   async path(): Promise<string | null> {
