@@ -22,6 +22,8 @@ import * as dom from './dom';
 import { assert, helper } from './helper';
 import { Page } from './page';
 import * as types from './types';
+import * as js from './javascript';
+import { Injected } from './injected/injected';
 
 export class Screenshotter {
   private _queue = new TaskQueue();
@@ -82,7 +84,7 @@ export class Screenshotter {
 
   async screenshotPage(options: types.ScreenshotOptions = {}): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
-    return this._queue.postTask(async () => {
+    return this._queue.postTask(() => this._sanitizeIfNeeded(options, async () => {
       const { viewportSize, originalViewportSize } = await this._originalViewportSize();
 
       if (options.fullPage) {
@@ -101,12 +103,12 @@ export class Screenshotter {
 
       const viewportRect = options.clip ? trimClipToSize(options.clip, viewportSize) : { x: 0, y: 0, ...viewportSize };
       return await this._screenshot(format, undefined, viewportRect, options, null, originalViewportSize);
-    }).catch(rewriteError);
+    })).catch(rewriteError);
   }
 
   async screenshotElement(handle: dom.ElementHandle, options: types.ElementScreenshotOptions = {}): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
-    return this._queue.postTask(async () => {
+    return this._queue.postTask(() => this._sanitizeIfNeeded(options, async () => {
       const { viewportSize, originalViewportSize } = await this._originalViewportSize();
 
       await handle.scrollIntoViewIfNeeded();
@@ -137,7 +139,7 @@ export class Screenshotter {
       documentRect.x += scrollOffset.x;
       documentRect.y += scrollOffset.y;
       return await this._screenshot(format, helper.enclosingIntRect(documentRect), undefined, options, overridenViewportSize, originalViewportSize);
-    }).catch(rewriteError);
+    })).catch(rewriteError);
   }
 
   private async _screenshot(format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, options: types.ElementScreenshotOptions, overridenViewportSize: types.Size | null, originalViewportSize: types.Size | null): Promise<Buffer> {
@@ -157,6 +159,30 @@ export class Screenshotter {
     if (options.path)
       await util.promisify(fs.writeFile)(options.path, buffer);
     return buffer;
+  }
+
+  private async _sanitizeIfNeeded(options: types.ElementScreenshotOptions, callback: () => Promise<Buffer>): Promise<Buffer> {
+    const sanitized: { context: dom.FrameExecutionContext, injected: js.JSHandle<Injected> }[] = [];
+    if ((options as any).__sanitize) {
+      await this._page._delegate.setActivityPaused(true);
+      for (const frame of this._page.frames()) {
+        if (frame.isDetached())
+          continue;
+        const context = await frame._utilityContext();
+        const injected = await context._injected();
+        sanitized.push({ context, injected });
+        await context._doEvaluateInternal(true, false, (injected: Injected) => injected.sanitizeScreenshot(), injected);
+      }
+    }
+    try {
+      return await callback();
+    } finally {
+      if ((options as any).__sanitize) {
+        for (const { context, injected } of sanitized)
+          await context._doEvaluateInternal(true, false, (injected: Injected) => injected.unsanitizeScreenshot(), injected);
+        await this._page._delegate.setActivityPaused(false);
+      }
+    }
   }
 }
 

@@ -23,7 +23,19 @@ export type InjectedResult<T = undefined> =
   { status: 'timeout' } |
   { status: 'error', error: string };
 
+type SanitizedElementData = {
+  fontSize: number,
+  color: string,
+  lineHeight: string,
+  letterSpacing: string,
+};
+type SanitizedScreenshotData = {
+  replacements: Map<Node, Element>;
+};
+
 export class Injected {
+  private _sanitizedScreenshotData?: SanitizedScreenshotData;
+
   isVisible(element: Element): boolean {
     // Note: this logic should be similar to waitForDisplayedAtStablePosition() to avoid surprises.
     if (!element.ownerDocument || !element.ownerDocument.defaultView)
@@ -338,6 +350,203 @@ export class Injected {
       container = element.shadowRoot;
     }
     return element;
+  }
+
+  sanitizeScreenshot() {
+    if (this._sanitizedScreenshotData)
+      throw new Error('One screenshot at a time');
+
+    const elementData = new Map<Element, SanitizedElementData>();
+    const measure = (n: Node) => {
+      if (n.nodeType === Node.ELEMENT_NODE) {
+        const e = n as Element;
+        if (e.shadowRoot)
+          measure(e.shadowRoot);
+        if ((e as HTMLElement).offsetParent) {
+          const style = window.getComputedStyle(e);
+          elementData.set(e, { fontSize: parseInt(style.fontSize, 10), color: style.color, lineHeight: style.lineHeight, letterSpacing: style.letterSpacing });
+        }
+      }
+      for (let c = n.firstChild; c; c = c.nextSibling)
+        measure(c);
+    };
+    measure(document);
+
+    const screenshotData: SanitizedScreenshotData = {
+      replacements: new Map(),
+    };
+    const visit = (n: Node): Node => {
+      const data = n.nodeType === Node.ELEMENT_NODE ? elementData.get(n as Element) : undefined;
+      if (!data) {
+        for (let c: Node | null = n.firstChild; c; c = c.nextSibling)
+          c = visit(c);
+        return n;
+      }
+      const e = n as Element;
+      if (e.shadowRoot)
+        visit(e.shadowRoot);
+
+      // TODO: fix pseudos
+
+      if (e.nodeName === 'BUTTON' || e.nodeName === 'TEXTAREA') {
+        data.fontSize = 16;
+        const box = this._createReplacementBox(e as HTMLElement, {
+          'display': 'inline-block',
+          'background': e.nodeName === 'BUTTON' ? 'gray' : 'white',
+          'box-sizing': 'border-box',
+          'border': '1px solid black',
+        });
+        const text = e.textContent;
+        if (text)
+          box.appendChild(this._createTextBox(e.ownerDocument!, text, data));
+        screenshotData.replacements.set(e, box);
+        e.replaceWith(box);
+        return box;
+      }
+
+      if (e.nodeName === 'SELECT') {
+        data.fontSize = 16;
+        const select = e as HTMLSelectElement;
+        const box = this._createReplacementBox(select, {
+          'display': 'inline-block',
+          'background': 'white',
+          'box-sizing': 'border-box',
+          'border': '1px solid black',
+          'max-width': '150px',
+          'min-height': select.multiple ? '64px' : '16px',
+        });
+        if (select.multiple) {
+          for (const option of Array.from(select.options)) {
+            const textBox = this._createTextBox(e.ownerDocument!, option.label, data);
+            textBox.style.display = 'block';
+            textBox.style.background = option.selected ? 'gray' : 'white';
+            box.appendChild(textBox);
+          }
+        } else {
+          const option = select.options[select.selectedIndex];
+          if (option)
+            box.appendChild(this._createTextBox(e.ownerDocument!, option.label, data));
+        }
+        screenshotData.replacements.set(e, box);
+        e.replaceWith(box);
+        return box;
+      }
+
+      if (e.nodeName === 'INPUT') {
+        data.fontSize = 16;
+        const input = e as HTMLInputElement;
+        const type = input.type.toLowerCase();
+        const props: { [key: string]: string } = {
+          'display': 'inline-block',
+          'background': 'white',
+          'box-sizing': 'border-box',
+          'border': '1px solid black',
+          'max-width': '150px',
+          'min-height': '16px',
+        };
+        if (type === 'checkbox') {
+          props['background'] = input.checked ? 'white' : 'black';
+          props['min-width'] = '16px';
+        }
+        if (type === 'file' || type === 'image') {
+          props['background'] = 'green';
+          props['min-width'] = '100px';
+        }
+        if (type === 'radio') {
+          props['background'] = input.checked ? 'black' : 'white';
+          props['border-radius'] = '50%';
+          props['min-width'] = '16px';
+        }
+        if (type === 'range') {
+          const min = parseFloat(input.min);
+          const max = parseFloat(input.max);
+          const value = parseFloat(input.value);
+          props['width'] = '200px';
+          props['border-left-width'] = max === min ? '100px' : (value - min) / (max - min) * 200 + 'px';
+        }
+        const box = this._createReplacementBox(input, props);
+        if (!['checkbox', 'file', 'hidden', 'image', 'radio', 'range'].includes(type)) {
+          const text = input.value;
+          if (text)
+            box.appendChild(this._createTextBox(e.ownerDocument!, text, data));
+        }
+        screenshotData.replacements.set(e, box);
+        e.replaceWith(box);
+        return box;
+      }
+
+      const texts: Text[] = [];
+      for (let c: Node | null = e.firstChild; c; c = c.nextSibling) {
+        if (c.nodeType !== Node.TEXT_NODE)
+          c = visit(c);
+        else
+          texts.push(c as Text);
+      }
+      for (const t of texts) {
+        const textBox = this._createTextBox(e.ownerDocument!, t.nodeValue || '', data);
+        screenshotData.replacements.set(t, textBox);
+        t.replaceWith(textBox);
+      }
+      return e;
+    };
+    visit(document);
+    this._sanitizedScreenshotData = screenshotData;
+  }
+
+  unsanitizeScreenshot() {
+    if (!this._sanitizedScreenshotData)
+      return;
+    for (const [t, e] of this._sanitizedScreenshotData.replacements)
+      e.replaceWith(t);
+    this._sanitizedScreenshotData = undefined;
+  }
+
+  private _createTextBox(doc: Document, text: string, data: SanitizedElementData) {
+    const box = doc.createElement('playwright-box');
+    box.style.display = 'inline';
+    box.style.padding = '0';
+    box.style.margin = '0';
+    box.style.border = 'none';
+    box.style.outline = 'none';
+    if (data.lineHeight === 'normal')
+      box.style.lineHeight = '1';
+    // TODO: figure out the first/last space collapse rules.
+    text = text.replace(/^\s+/u, '').replace(/\s+$/u, '').replace(/\s\s+/ug, ' ');
+    // TODO: define a good size for each font size.
+    const charWidth = Math.floor(data.fontSize * 0.45) + 'px';
+    const charHeight = (data.fontSize + 3) + 'px';
+    for (let i = 0; i < text.length; i++) {
+      // TODO: try to handle unpaired surrogates, emojis, extra-wide chars and extra-narrow chars.
+      const char = doc.createElement('playwright-char');
+      char.style.display = 'inline-block';
+      char.style.padding = '0';
+      char.style.margin = '0';
+      char.style.outline = 'none';
+      char.style.boxSizing = 'border-box';
+      char.style.width = charWidth;
+      char.style.height = charHeight;
+      if (!/^\s+$/u.test(text[i])) {
+        char.style.background = data.color;
+        char.style.backgroundClip = 'padding-box';
+        char.style.border = '1px solid transparent';
+        char.style.borderWidth = '2px 1px';
+      }
+      box.appendChild(char);
+    }
+    return box;
+  }
+
+  private _createReplacementBox(e: HTMLElement, props: { [key: string]: string }): HTMLElement {
+    const box = e.ownerDocument!.createElement('playwright-box');
+    box.style.cssText = e.style.cssText;
+    for (const [key, value] of Object.entries(props)) {
+      if (!box.style.getPropertyValue(key))
+        box.style.setProperty(key, value);
+    }
+    box.style.setProperty('appearance', 'none');
+    box.style.setProperty('-webkit-appearance', 'none');
+    box.style.setProperty('-moz-appearance', 'none');
+    return box;
   }
 }
 

@@ -219,6 +219,20 @@ describe('Page.screenshot', function() {
     expect(screenshot).toBeGolden(golden('screenshot-device-scale-factor.png'));
     await context.close();
   });
+  it('should sanitize', async({page, server, golden}) => {
+    await page.setViewportSize({width: 500, height: 500});
+    await page.goto(server.PREFIX + '/sanitize.html');
+    const screenshot = await page.screenshot({ fullPage: true, __sanitize: true });
+    console.error(screenshot.toString('base64'));
+    expect(screenshot).toBeGolden(golden('screenshot-sanitized.png'));
+  });
+  xit('should sanitize2', async({page, server, golden}) => {
+    await page.setViewportSize({width: 850, height: 800});
+    await page.goto('https://playwright.dev/');
+    await page.waitForSelector('h2 >> "Resources"');
+    const screenshot = await page.screenshot({ __sanitize: true });
+    expect(screenshot).toBeGolden(golden('screenshot-pwdev.png'));
+  });
 });
 
 describe('ElementHandle.screenshot', function() {
