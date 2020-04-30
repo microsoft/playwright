@@ -17,7 +17,7 @@
 
 const path = require('path');
 const vm = require('vm');
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN} = require('./utils').testOptions(browserType);
 
 describe('Page.close', function() {
   it('should reject all promises when page is closed', async({context}) => {
@@ -119,7 +119,7 @@ describe('Page.Events.Crash', function() {
     crash(page);
     await new Promise(f => page.on('crash', f));
   });
-  it('should throw on any action after page crashes', async({page}) => {
+  it.fail(FFOX && WIN)('should throw on any action after page crashes', async({page}) => {
     await page.setContent(`<div>This page should crash</div>`);
     crash(page);
     await page.waitForEvent('crash');

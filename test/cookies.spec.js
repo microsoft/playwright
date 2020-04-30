@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, MAC} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = require('./utils').testOptions(browserType);
 
 describe('BrowserContext.cookies', function() {
   it('should return no cookies in pristine browser context', async({context, page, server}) => {
@@ -37,7 +37,7 @@ describe('BrowserContext.cookies', function() {
       sameSite: 'None',
     }]);
   });
-  it('should get a non-session cookie', async({context, page, server}) => {
+  it.fail(WEBKIT && WIN)('should get a non-session cookie', async({context, page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     // @see https://en.wikipedia.org/wiki/Year_2038_problem
     const date = +(new Date('1/1/2038'));
