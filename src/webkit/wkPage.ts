@@ -704,6 +704,19 @@ export class WKPage implements PageDelegate {
     await this._session.send('Page.setDefaultBackgroundColorOverride', { color });
   }
 
+  async startVideoRecording(options: types.VideoRecordingOptions): Promise<void> {
+    this._pageProxySession.send('Screencast.startVideoRecording', {
+      file: options.outputFile,
+      width: options.width,
+      height: options.height,
+      scale: options.scale,
+    });
+  }
+
+  async stopVideoRecording(): Promise<void> {
+    await this._pageProxySession.send('Screencast.stopVideoRecording');
+  }
+
   async takeScreenshot(format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
     const rect = (documentRect || viewportRect)!;
     const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport' });
