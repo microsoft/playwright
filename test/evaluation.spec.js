@@ -162,7 +162,7 @@ describe('Page.evaluate', function() {
     const result = await page.evaluate(() => -Infinity);
     expect(Object.is(result, -Infinity)).toBe(true);
   });
-  fit('should throw when passed more than one parameter', async({page, server}) => {
+  it('should throw when passed more than one parameter', async({page, server}) => {
     const expectThrow = async f => {
       let error;
       await f().catch(e => error = e);
