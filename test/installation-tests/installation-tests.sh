@@ -17,6 +17,11 @@ npm pack ../../../packages/playwright-chromium
 npm pack ../../../packages/playwright-webkit
 npm pack ../../../packages/playwright-firefox
 
+# cleanup environment
+unset PLAYWRIGHT_DOWNLOAD_HOST
+unset PLAYWRIGHT_BROWSERS_PATH
+unset PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
+
 # There is no option to specify output for `npm pack`, but the format is
 # fixed.
 PACKAGE_VERSION=$(node -e 'console.log(require("../../../package.json").version)')
