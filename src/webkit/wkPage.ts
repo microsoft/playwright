@@ -762,7 +762,7 @@ export class WKPage implements PageDelegate {
   }
 
   async setActivityPaused(paused: boolean): Promise<void> {
-    // await this._session.send('Page.setJavaScriptPaused', { paused });
+    await this._session.send('Page.setActivityPaused', { paused });
   }
 
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {

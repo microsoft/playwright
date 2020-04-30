@@ -597,7 +597,7 @@ describe('Page.click', function() {
     expect(await page.evaluate(() => window.clicked)).toBe(undefined);
     expect(error.message).toBe('waiting for element to receive pointer events failed: timeout exceeded');
   });
-  it.fail(CHROMIUM || WEBKIT || FFOX)('should work when element jumps uncontrollably', async({page, server}) => {
+  it.fail(CHROMIUM || FFOX)('should work when element jumps uncontrollably', async({page, server}) => {
     // This test requires pausing the page.
     await page.goto(server.PREFIX + '/input/animating-button.html');
     await page.evaluate(() => addButton());
@@ -612,23 +612,7 @@ describe('Page.click', function() {
     expect(clicked).toBe(true);
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
-  it.fail(CHROMIUM || WEBKIT || FFOX)('should wait while element is blocked on hover', async({page, server}) => {
-    // This test requires pausing the page.
-    await page.setContent(`<style>
-      @keyframes move-out { from { marign-left: 0; } to { margin-left: 150px; } }
-      container { display: block; position: relative; width: 200px; height: 50px; }
-      div, button { position: absolute; left: 0; top: 0; bottom: 0; right: 0; }
-      div { pointer-events: none; }
-      container:hover div { pointer-events: auto; background: red; animation: 3s linear move-out; animation-fill-mode: forwards; }
-    </style>
-    <container>
-      <button onclick="window.clicked=true">Click me</button>
-      <div></div>
-    </container>`);
-    await page.click('button');
-    expect(await page.evaluate(() => window.clicked)).toBe(true);
-  });
-  it.fail(CHROMIUM || WEBKIT || FFOX)('should pause animations', async({page}) => {
+  it.fail(CHROMIUM || FFOX)('should pause animations', async({page}) => {
     // This test requires pausing the page.
     await page.setContent(`<style>
       @keyframes spinner {
@@ -648,7 +632,7 @@ describe('Page.click', function() {
     await page.click('#target', { __testHookSkipStablePosition: new Promise(f => setTimeout(f, 100)) });
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
-  it.fail(CHROMIUM || WEBKIT || FFOX)('should defer timers', async({page}) => {
+  it.fail(CHROMIUM || FFOX)('should defer timers', async({page}) => {
     // This test requires pausing the page.
     await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);
     await page.click('button', { __testHookSkipStablePosition: async () => {
@@ -659,7 +643,7 @@ describe('Page.click', function() {
     }});
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
-  it.fail(CHROMIUM || WEBKIT || FFOX)('should defer rafs', async({page}) => {
+  it.fail(CHROMIUM || FFOX)('should defer rafs', async({page}) => {
     // This test requires pausing the page.
     await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);
     await page.click('button', { __testHookSkipStablePosition: async () => {
@@ -670,7 +654,7 @@ describe('Page.click', function() {
     }});
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
-  it.fail(CHROMIUM || WEBKIT || FFOX)('should defer fetch', async({page, server}) => {
+  it.fail(CHROMIUM || FFOX)('should defer fetch', async({page, server}) => {
     // This test requires pausing the page.
     await page.goto(server.EMPTY_PAGE);
     await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);

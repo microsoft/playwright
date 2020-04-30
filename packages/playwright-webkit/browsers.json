@@ -2,7 +2,7 @@
   "browsers": [
     {
       "name": "webkit",
-      "revision": "1211"
+      "revision": "1213"
     }
   ]
 }
