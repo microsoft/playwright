@@ -21,7 +21,7 @@ import { ConsoleMessage } from './console';
 import * as dom from './dom';
 import { TimeoutError, NotConnectedError } from './errors';
 import { Events } from './events';
-import { assert, helper, RegisteredListener } from './helper';
+import { assert, helper, RegisteredListener, assertMaxArguments } from './helper';
 import * as js from './javascript';
 import * as network from './network';
 import { Page } from './page';
@@ -415,6 +415,7 @@ export class Frame {
   async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
+    assertMaxArguments(arguments.length, 2);
     const context = await this._mainContext();
     return context.evaluateHandleInternal(pageFunction, arg);
   }
@@ -422,6 +423,7 @@ export class Frame {
   async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R>;
   async evaluate<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<R>;
   async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R> {
+    assertMaxArguments(arguments.length, 2);
     const context = await this._mainContext();
     return context.evaluateInternal(pageFunction, arg);
   }
@@ -464,6 +466,7 @@ export class Frame {
   async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
   async $eval<R>(selector: string, pageFunction: types.FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
+    assertMaxArguments(arguments.length, 3);
     const handle = await this.$(selector);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
@@ -475,6 +478,7 @@ export class Frame {
   async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
   async $$eval<R>(selector: string, pageFunction: types.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
   async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
+    assertMaxArguments(arguments.length, 3);
     const arrayHandle = await selectors._queryArray(this, selector);
     const result = await arrayHandle.evaluate(pageFunction, arg);
     arrayHandle.dispose();
