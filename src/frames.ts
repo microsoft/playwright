@@ -770,7 +770,7 @@ export class Frame {
     const { polling = 'raf' } = options;
     const deadline = this._page._timeoutSettings.computeDeadline(options);
     if (helper.isString(polling))
-      assert(polling === 'raf' || polling === 'mutation', 'Unknown polling option: ' + polling);
+      assert(polling === 'raf', 'Unknown polling option: ' + polling);
     else if (helper.isNumber(polling))
       assert(polling > 0, 'Cannot poll with non-positive interval: ' + polling);
     else

@@ -35,37 +35,6 @@ export class Injected {
     return rect.width > 0 && rect.height > 0;
   }
 
-  private _pollMutation<T>(predicate: Predicate<T>, timeout: number): Promise<T | undefined> {
-    let timedOut = false;
-    if (timeout)
-      setTimeout(() => timedOut = true, timeout);
-
-    const success = predicate();
-    if (success)
-      return Promise.resolve(success);
-
-    let fulfill: (result?: any) => void;
-    const result = new Promise<T | undefined>(x => fulfill = x);
-    const observer = new MutationObserver(() => {
-      if (timedOut) {
-        observer.disconnect();
-        fulfill();
-        return;
-      }
-      const success = predicate();
-      if (success) {
-        observer.disconnect();
-        fulfill(success);
-      }
-    });
-    observer.observe(document, {
-      childList: true,
-      subtree: true,
-      attributes: true
-    });
-    return result;
-  }
-
   private _pollRaf<T>(predicate: Predicate<T>, timeout: number): Promise<T | undefined> {
     let timedOut = false;
     if (timeout)
@@ -113,11 +82,9 @@ export class Injected {
     return result;
   }
 
-  poll<T>(polling: 'raf' | 'mutation' | number, timeout: number, predicate: Predicate<T>): Promise<T | undefined> {
+  poll<T>(polling: 'raf' | number, timeout: number, predicate: Predicate<T>): Promise<T | undefined> {
     if (polling === 'raf')
       return this._pollRaf(predicate, timeout);
-    if (polling === 'mutation')
-      return this._pollMutation(predicate, timeout);
     return this._pollInterval(polling, predicate, timeout);
   }
 

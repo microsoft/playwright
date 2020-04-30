@@ -39,7 +39,7 @@ export type TimeoutOptions = { timeout?: number };
 
 export type WaitForElementOptions = TimeoutOptions & { waitFor?: 'attached' | 'detached' | 'visible' | 'hidden' };
 
-export type Polling = 'raf' | 'mutation' | number;
+export type Polling = 'raf' | number;
 export type WaitForFunctionOptions = TimeoutOptions & { polling?: Polling };
 
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle';
