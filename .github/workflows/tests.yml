@@ -284,3 +284,24 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: bash test/installation-tests/installation-tests.sh
+
+  headful_linux:
+    name: "Headful Linux"
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10
+    - uses: microsoft/playwright-github-action@v1
+    - run: npm ci
+    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
+    # Wrap `npm run` in a subshell to redirect STDERR to file.
+    - run: xvfb-run --auto-servernum -- bash -c "HEADLESS=false npm run test -- --line-break=100 2>./headful-linux-testrun.log"
+      env:
+        DEBUG: "*"
+    - uses: actions/upload-artifact@v1
+      if: failure()
+      with:
+        name: headful-linux-testrun.log
+        path: headful-linux-testrun.log

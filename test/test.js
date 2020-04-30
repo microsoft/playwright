@@ -63,6 +63,7 @@ function collect(browserNames) {
     summary: !process.argv.includes('--verbose'),
     showSlowTests: process.env.CI ? 5 : 0,
     showMarkedAsFailingTests: 10,
+    lineBreak: parseInt(getCLIArgument('--line-break') || 0, 10),
   });
   if (config.setupTestRunner)
     config.setupTestRunner(testRunner);
@@ -171,6 +172,7 @@ function collect(browserNames) {
       // In addition to state, expose these two on global so that describes can access them.
       global.playwright = playwright;
       global.browserType = browserType;
+      global.HEADLESS = !!launchOptions.headless;
 
       testRunner.collector().useEnvironment(browserTypeEnvironment);
 
@@ -194,6 +196,7 @@ function collect(browserNames) {
         });
       }
 
+      delete global.HEADLESS;
       delete global.browserType;
       delete global.playwright;
     });

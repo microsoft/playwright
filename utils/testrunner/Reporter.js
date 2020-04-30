@@ -26,6 +26,7 @@ class Reporter {
       showMarkedAsFailingTests = Infinity,
       verbose = false,
       summary = true,
+      lineBreak = 0,
     } = options;
     this._filePathToLines = new Map();
     this._delegate = delegate;
@@ -33,6 +34,7 @@ class Reporter {
     this._showMarkedAsFailingTests = showMarkedAsFailingTests;
     this._verbose = verbose;
     this._summary = summary;
+    this._lineBreak = lineBreak;
     this._testCounter = 0;
   }
 
@@ -157,8 +159,8 @@ class Reporter {
   }
 
   onTestRunFinished(testRun) {
+    ++this._testCounter;
     if (this._verbose) {
-      ++this._testCounter;
       this._printVerboseTestRunResult(this._testCounter, testRun);
     } else {
       if (testRun.result() === 'ok')
@@ -175,6 +177,8 @@ class Reporter {
         process.stdout.write(colors.magenta('.'));
       else if (testRun.result() === 'timedout')
         process.stdout.write(colors.red('T'));
+      if (this._lineBreak && !(this._testCounter % this._lineBreak))
+        process.stdout.write('\n');
     }
   }
 

@@ -19,7 +19,7 @@ const path = require('path');
 const {FFOX, CHROMIUM, WEBKIT, OUTPUT_DIR} = require('../utils').testOptions(browserType);
 
 // Printing to pdf is currently only supported in headless
-describe('Page.pdf', function() {
+describe.skip(!HEADLESS)('Page.pdf', function() {
   it('should be able to save file', async({page, server}) => {
     const outputFile = path.join(OUTPUT_DIR, 'output.pdf');
     await page.pdf({path: outputFile});
