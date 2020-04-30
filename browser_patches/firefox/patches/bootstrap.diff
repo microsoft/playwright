@@ -531,10 +531,18 @@ index ee89208c3ada6da09ecda6147e1a372ee0562810..57628c020a66d8361387dcc9df0bedc5
 +  void setGeolocationOverride(in nsIDOMGeoPosition position);
  };
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index 493753583ff621ba810e7b759d0723fbe605443d..756c06f7e69d267c6f57aa985d946d4c9070cdae 100644
+index 493753583ff621ba810e7b759d0723fbe605443d..050f5f70b27751e23ba990300575999cc8117ed2 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
-@@ -3271,6 +3271,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
+@@ -1336,6 +1336,7 @@ Document::Document(const char* aContentType)
+       mSubtreeModifiedDepth(0),
+       mPreloadPictureDepth(0),
+       mEventsSuppressed(0),
++      mRequestAnimationFrameSuspended(false),
+       mIgnoreDestructiveWritesCounter(0),
+       mFrameRequestCallbackCounter(0),
+       mStaticCloneCount(0),
+@@ -3271,6 +3272,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
  }
  
  void Document::ApplySettingsFromCSP(bool aSpeculative) {
@@ -544,7 +552,7 @@ index 493753583ff621ba810e7b759d0723fbe605443d..756c06f7e69d267c6f57aa985d946d4c
    nsresult rv = NS_OK;
    if (!aSpeculative) {
      // 1) apply settings from regular CSP
-@@ -3320,6 +3323,11 @@ nsresult Document::InitCSP(nsIChannel* aChannel) {
+@@ -3320,6 +3324,11 @@ nsresult Document::InitCSP(nsIChannel* aChannel) {
      return NS_OK;
    }
  
@@ -556,7 +564,7 @@ index 493753583ff621ba810e7b759d0723fbe605443d..756c06f7e69d267c6f57aa985d946d4c
    // If this is a data document - no need to set CSP.
    if (mLoadedAsData) {
      return NS_OK;
-@@ -4058,6 +4066,10 @@ bool Document::HasFocus(ErrorResult& rv) const {
+@@ -4058,6 +4067,10 @@ bool Document::HasFocus(ErrorResult& rv) const {
      return false;
    }
  
@@ -567,7 +575,16 @@ index 493753583ff621ba810e7b759d0723fbe605443d..756c06f7e69d267c6f57aa985d946d4c
    // Is there a focused DOMWindow?
    nsCOMPtr<mozIDOMWindowProxy> focusedWindow;
    fm->GetFocusedWindow(getter_AddRefs(focusedWindow));
-@@ -16212,6 +16224,20 @@ void Document::RemoveToplevelLoadingDocument(Document* aDoc) {
+@@ -6268,7 +6281,7 @@ void Document::UpdateFrameRequestCallbackSchedulingState(
+   // variable, add UpdateFrameRequestCallbackSchedulingState() calls to the
+   // places where that variable can change.
+   bool shouldBeScheduled = mPresShell && IsEventHandlingEnabled() &&
+-                           !mFrameRequestCallbacks.IsEmpty();
++                           !mRequestAnimationFrameSuspended && !mFrameRequestCallbacks.IsEmpty();
+   if (shouldBeScheduled == mFrameRequestCallbacksScheduled) {
+     // nothing to do
+     return;
+@@ -16212,6 +16225,20 @@ void Document::RemoveToplevelLoadingDocument(Document* aDoc) {
  }
  
  StylePrefersColorScheme Document::PrefersColorScheme() const {
@@ -588,6 +605,30 @@ index 493753583ff621ba810e7b759d0723fbe605443d..756c06f7e69d267c6f57aa985d946d4c
    if (nsContentUtils::ShouldResistFingerprinting(this)) {
      return StylePrefersColorScheme::Light;
    }
+diff --git a/dom/base/Document.h b/dom/base/Document.h
+index 2bedaca3738118a91c238f50389e773fc685e9d2..4f1167203a0a2acd415b7767b6a0e3691c1b78f0 100644
+--- a/dom/base/Document.h
++++ b/dom/base/Document.h
+@@ -2709,6 +2709,11 @@ class Document : public nsINode,
+     return !EventHandlingSuppressed() && mScriptGlobalObject;
+   }
+ 
++  void SetRequestAnimationFrameSuspended(bool suspended) {
++    mRequestAnimationFrameSuspended = suspended;
++    UpdateFrameRequestCallbackSchedulingState();
++  }
++
+   void DecreaseEventSuppression() {
+     MOZ_ASSERT(mEventsSuppressed);
+     --mEventsSuppressed;
+@@ -4731,6 +4736,7 @@ class Document : public nsINode,
+   RefPtr<Document> mDisplayDocument;
+ 
+   uint32_t mEventsSuppressed;
++  bool mRequestAnimationFrameSuspended;
+ 
+   // Any XHR ChannelEventQueues that were suspended on this document while
+   // events were suppressed.
 diff --git a/dom/base/Navigator.cpp b/dom/base/Navigator.cpp
 index fcf21250aaf95e0af6115a4f33955404b2ad1031..66902cb0a9fa46c2bed1ae900f9ea8405178105b 100644
 --- a/dom/base/Navigator.cpp
@@ -652,6 +693,27 @@ index 188d983e11acde18f39385d431802b9f182f8be8..b2a3e8200e761f0aa4f3728cd134a300
  
    dom::MediaCapabilities* MediaCapabilities();
    dom::MediaSession* MediaSession();
+diff --git a/dom/base/nsDOMWindowUtils.cpp b/dom/base/nsDOMWindowUtils.cpp
+index 795203354e850e72dc3b5ca23f09c3186fed0649..33e8e77f9bdba82d990a22861dfef2c89657ab64 100644
+--- a/dom/base/nsDOMWindowUtils.cpp
++++ b/dom/base/nsDOMWindowUtils.cpp
+@@ -1375,6 +1375,16 @@ nsDOMWindowUtils::SuppressEventHandling(bool aSuppress) {
+   return NS_OK;
+ }
+ 
++NS_IMETHODIMP
++nsDOMWindowUtils::SetRequestAnimationFrameSuspended(bool aSuspend) {
++  nsCOMPtr<Document> doc = GetDocument();
++  NS_ENSURE_TRUE(doc, NS_ERROR_FAILURE);
++
++  doc->SetRequestAnimationFrameSuspended(aSuspend);
++
++  return NS_OK;
++}
++
+ static nsresult getScrollXYAppUnits(const nsWeakPtr& aWindow, bool aFlushLayout,
+                                     nsPoint& aScrollPos) {
+   nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(aWindow);
 diff --git a/dom/base/nsGlobalWindowOuter.cpp b/dom/base/nsGlobalWindowOuter.cpp
 index 53c026b831c01c0b887ca1a06f64a528b6ca0247..e348c0106d0bc02492f0b79f7fcb909b8c61e7bc 100644
 --- a/dom/base/nsGlobalWindowOuter.cpp
@@ -876,6 +938,22 @@ index 00e6097558643cd59db482917736e94ad36a80ea..4d0eca91f62de8ef324b89251c645ea9
    if (IsPopupBlocked()) {
      return NS_OK;
    }
+diff --git a/dom/interfaces/base/nsIDOMWindowUtils.idl b/dom/interfaces/base/nsIDOMWindowUtils.idl
+index e167d4cc964cf7864f1da3c2fb75c18e6726e545..dda75460803bdb6e4d04b59dda9872b3490e3eb2 100644
+--- a/dom/interfaces/base/nsIDOMWindowUtils.idl
++++ b/dom/interfaces/base/nsIDOMWindowUtils.idl
+@@ -1310,6 +1310,11 @@ interface nsIDOMWindowUtils : nsISupports {
+   void suspendTimeouts();
+   void resumeTimeouts();
+ 
++  /**
++   * Suspend/resume RAFs on this document
++   */
++  void setRequestAnimationFrameSuspended(in boolean suspend);
++
+   /**
+    * What type of layer manager the widget associated with this window is
+    * using. "Basic" is unaccelerated; other types are accelerated. Throws an
 diff --git a/dom/ipc/BrowserChild.cpp b/dom/ipc/BrowserChild.cpp
 index dcf487a171dc89bcea2a85276ecf87f6d996b3ab..09fbb7d8344ef4de404feb5a0ca6706341f6d397 100644
 --- a/dom/ipc/BrowserChild.cpp
@@ -1400,10 +1478,10 @@ index 0000000000000000000000000000000000000000..2b1fe7fa712ae210af3ebbccda084041
 +
 diff --git a/juggler/NetworkObserver.js b/juggler/NetworkObserver.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..1a55b5498c18d2403eab21fe9149242f286157d4
+index 0000000000000000000000000000000000000000..303cd198cc6c6e2981945f1048b5637ffe825d84
 --- /dev/null
 +++ b/juggler/NetworkObserver.js
-@@ -0,0 +1,794 @@
+@@ -0,0 +1,816 @@
 +"use strict";
 +
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
@@ -1457,6 +1535,19 @@ index 0000000000000000000000000000000000000000..1a55b5498c18d2403eab21fe9149242f
 +    this._responseStorage = null;
 +    this._requestInterceptionEnabled = false;
 +    this._requestIdToInterceptor = null;
++
++    this._frozen = false;
++    this._frozenCallbacks = [];
++  }
++
++  setFrozen(frozen) {
++    this._frozen = frozen;
++    if (!frozen) {
++      const callbacks = this._frozenCallbacks;
++      this._frozenCallbacks = [];
++      for (const callback of callbacks)
++        callback();
++    }
 +  }
 +
 +  addSession() {
@@ -1475,6 +1566,13 @@ index 0000000000000000000000000000000000000000..1a55b5498c18d2403eab21fe9149242f
 +      this._requestInterceptionEnabled = false;
 +      this._requestIdToInterceptor = null;
 +    }
++  }
++
++  _callWhenNotFrozen(callback) {
++    if (this._frozen)
++      this._frozenCallbacks.push(callback);
++    else
++      callback();
 +  }
 +
 +  _isActive() {
@@ -1696,7 +1794,7 @@ index 0000000000000000000000000000000000000000..1a55b5498c18d2403eab21fe9149242f
 +    this._appendExtraHTTPHeaders(httpChannel, pageNetwork._extraHTTPHeaders);
 +    const requestId = this._requestId(httpChannel);
 +    const isRedirect = this._redirectMap.has(requestId);
-+    const interceptionEnabled = this._isInterceptionEnabledForPage(pageNetwork);
++    const interceptionEnabled = this._isInterceptionEnabledForPage(pageNetwork) || pageNetwork._frozen;
 +    if (!interceptionEnabled) {
 +      new NotificationCallbacks(this, pageNetwork, httpChannel, false);
 +      this._sendOnRequest(httpChannel, false);
@@ -1764,12 +1862,14 @@ index 0000000000000000000000000000000000000000..1a55b5498c18d2403eab21fe9149242f
 +      return;
 +    }
 +
-+    const interceptionEnabled = this._isInterceptionEnabledForPage(pageNetwork);
-+    this._sendOnRequest(httpChannel, !!interceptionEnabled);
-+    if (interceptionEnabled)
-+      pageNetwork._ensureInterceptors().set(this._requestId(httpChannel), interceptor);
-+    else
-+      interceptor._resume();
++    pageNetwork._callWhenNotFrozen(() => {
++      const interceptionEnabled = this._isInterceptionEnabledForPage(pageNetwork);
++      this._sendOnRequest(httpChannel, !!interceptionEnabled);
++      if (interceptionEnabled)
++        pageNetwork._ensureInterceptors().set(this._requestId(httpChannel), interceptor);
++      else
++        interceptor._resume();
++    });
 +  }
 +
 +  _sendOnRequest(httpChannel, isIntercepted) {
@@ -3639,10 +3739,10 @@ index 0000000000000000000000000000000000000000..155d0770ddf704728829272a41a31ce8
 +
 diff --git a/juggler/content/PageAgent.js b/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..63754937b3464794227fe894b3d6057fbf0ae582
+index 0000000000000000000000000000000000000000..41261af7f0e3a57d77606f2b0599be2e756c9e09
 --- /dev/null
 +++ b/juggler/content/PageAgent.js
-@@ -0,0 +1,914 @@
+@@ -0,0 +1,940 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -3777,6 +3877,7 @@ index 0000000000000000000000000000000000000000..63754937b3464794227fe894b3d6057f
 +        getFullAXTree: this._getFullAXTree.bind(this),
 +        goBack: this._goBack.bind(this),
 +        goForward: this._goForward.bind(this),
++        setPaused: this._setPaused.bind(this),
 +        insertText: this._insertText.bind(this),
 +        navigate: this._navigate.bind(this),
 +        reload: this._reload.bind(this),
@@ -4178,6 +4279,31 @@ index 0000000000000000000000000000000000000000..63754937b3464794227fe894b3d6057f
 +      return {navigationId: null, navigationURL: null};
 +    docShell.goForward();
 +    return {navigationId: frame.pendingNavigationId(), navigationURL: frame.pendingNavigationURL()};
++  }
++
++  async _setPaused({paused}) {
++    const frame = this._frameTree.mainFrame();
++    if (paused) {
++      dump(`
++        Suspending timeouts!
++      `);
++      frame.domWindow().windowUtils.suspendTimeouts();
++      frame.domWindow().windowUtils.setRequestAnimationFrameSuspended(true);
++      const animations = frame.domWindow().document.getAnimations();
++      for (const animation of animations)
++        animation.startTime = null;
++    } else {
++      dump(`
++        Resuming timeouts!
++      `);
++      frame.domWindow().windowUtils.resumeTimeouts();
++      frame.domWindow().windowUtils.setRequestAnimationFrameSuspended(false);
++      const animations = frame.domWindow().document.getAnimations();
++      for (const animation of animations) {
++        const currentTime = animation.currentTime || 0;
++        animation.startTime = animation.timeline.currentTime - currentTime / animation.playbackRate;
++      }
++    }
 +  }
 +
 +  async _adoptNode({frameId, objectId, executionContextId}) {
@@ -6112,14 +6238,15 @@ index 0000000000000000000000000000000000000000..10ce1e9eb24879426ca11a21ffeb89f3
 +this.NetworkHandler = NetworkHandler;
 diff --git a/juggler/protocol/PageHandler.js b/juggler/protocol/PageHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..95481cd1194918d0b539dc1872906070ef75b1be
+index 0000000000000000000000000000000000000000..db8372e5f65b6bc5376fffb5167edff22dd2f160
 --- /dev/null
 +++ b/juggler/protocol/PageHandler.js
-@@ -0,0 +1,345 @@
+@@ -0,0 +1,352 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
++const {NetworkObserver, PageNetwork} = ChromeUtils.import('chrome://juggler/content/NetworkObserver.js');
 +
 +const Cc = Components.classes;
 +const Ci = Components.interfaces;
@@ -6174,6 +6301,7 @@ index 0000000000000000000000000000000000000000..95481cd1194918d0b539dc1872906070
 +    this._contentChannel = contentChannel;
 +    this._contentPage = contentChannel.connect(session.sessionId() + 'page');
 +    this._workers = new Map();
++    this._pageNetwork = NetworkObserver.instance().pageNetworkForTarget(target);
 +
 +    const emitProtocolEvent = eventName => {
 +      return (...args) => this._session.emitEvent(eventName, ...args);
@@ -6337,6 +6465,11 @@ index 0000000000000000000000000000000000000000..95481cd1194918d0b539dc1872906070
 +   */
 +  async goForward(options) {
 +    return await this._contentPage.send('goForward', options);
++  }
++
++  async setPaused({paused}) {
++    this._pageNetwork.setFrozen(paused);
++    return await this._contentPage.send('setPaused', {paused});
 +  }
 +
 +  /**
@@ -6612,10 +6745,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/juggler/protocol/Protocol.js b/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..76445a317969f569f080bbec116c59a37587ef84
+index 0000000000000000000000000000000000000000..e4fe708abc8a5159b7f5c0e895068c7b66e479ec
 --- /dev/null
 +++ b/juggler/protocol/Protocol.js
-@@ -0,0 +1,801 @@
+@@ -0,0 +1,806 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -7195,6 +7328,11 @@ index 0000000000000000000000000000000000000000..76445a317969f569f080bbec116c59a3
 +    'close': {
 +      params: {
 +        runBeforeUnload: t.Optional(t.Boolean),
++      },
++    },
++    'setPaused': {
++      params: {
++        paused: t.Boolean,
 +      },
 +    },
 +    'setFileInputFiles': {
