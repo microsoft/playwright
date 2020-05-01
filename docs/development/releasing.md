@@ -25,15 +25,17 @@ Once release branch is pushed, it's last commit will be picked up by our CI/CD:
     - `./utils/print_versions.js`
 1. Fill "Highlights" if any.
     - Be creative.
+1. Make sure you fetched tags from the upstream to get latest releases.
+    - `git fetch --tags upstream`
 1. Fill "New APIs" if any.
     - `git diff $(git describe --tags $(git rev-list --tags --max-count=1)):docs/api.md docs/api.md`
 1. Fill "Breaking API Changes" if any.
     - `git diff $(git describe --tags $(git rev-list --tags --max-count=1)):docs/api.md docs/api.md`
 1. Fill "Bug fixes".
-    - `git log $(git describe --tags $(git rev-list --tags --max-count=1))..HEAD`
-    - Manually look for `#1234` references in commit messages.
+    - `./utils/list_closed_issues.sh $(git describe --tags $(git rev-list --tags --max-count=1))`
 1. Fill "Raw notes".
-    - `git fetch --tags upstream`
+    - `git log --pretty="%h - %s" $(git describe --tags $(git rev-list --tags --max-count=1))..HEAD`
+
 1. When making links to the API, copy actual links from [GitHub](https://github.com/microsoft/playwright/blob/master/docs/api.md), and not from `api.md` source - these might be incorrect.
     - Before publishing, replace `blob/master/docs` with `blob/vX.Y.Z/docs` in all the links.
 1. Use "Save Draft", not "Publish".
