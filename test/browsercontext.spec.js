@@ -651,9 +651,7 @@ describe('Events.BrowserContext.Page', function() {
     ]);
     await context.close();
   });
-  it.fail(CHROMIUM || WEBKIT)('should work with Shift-clicking', async({browser, server}) => {
-    // Chromium: Shift+Click fires frameRequestedNavigation that never materializes
-    // because it actually opens a new window.
+  it.fail(WEBKIT)('should work with Shift-clicking', async({browser, server}) => {
     // WebKit: Shift+Click does not open a new window.
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -663,13 +661,11 @@ describe('Events.BrowserContext.Page', function() {
       context.waitForEvent('page'),
       page.click('a', { modifiers: ['Shift'] }),
     ]);
-    expect(await page.evaluate(() => !!window.opener)).toBe(false);
-    expect(await popup.evaluate(() => !!window.opener)).toBe(false);
+    expect(await popup.opener()).toBe(null);
     await context.close();
   });
-  it.fail(CHROMIUM || WEBKIT)('should work with Ctrl-clicking', async({browser, server}) => {
-    // Chromium: Ctrl+Click fires frameRequestedNavigation that never materializes
-    // because it actually opens a new tab.
+  it.fail(WEBKIT || FFOX)('should work with Ctrl-clicking', async({browser, server}) => {
+    // Firefox: reports an opener in this case.
     // WebKit: Ctrl+Click does not open a new tab.
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -679,8 +675,7 @@ describe('Events.BrowserContext.Page', function() {
       context.waitForEvent('page'),
       page.click('a', { modifiers: [ MAC ? 'Meta' : 'Control'] }),
     ]);
-    expect(await page.evaluate(() => !!window.opener)).toBe(false);
-    expect(await popup.evaluate(() => !!window.opener)).toBe(false);
+    expect(await popup.opener()).toBe(null);
     await context.close();
   });
 });
