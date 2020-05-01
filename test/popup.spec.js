@@ -304,43 +304,6 @@ describe('Page.Events.Popup', function() {
     expect(await popup.evaluate(() => !!window.opener)).toBe(true);
     await context.close();
   });
-  it.fail(true)('should work with Shift-clicking', async({browser, server}) => {
-    // Chromium:
-    // - Shift+Click fires frameRequestedNavigation that never materializes
-    //   because it actually opens a new window.
-    // - New window does not report an opener.
-    // WebKit: Shift+Click does not open a new window.
-    // Firefox: new window does not report an opener.
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    await page.goto(server.EMPTY_PAGE);
-    await page.setContent('<a href="/one-style.html">yo</a>');
-    const [popup] = await Promise.all([
-      page.waitForEvent('popup'),
-      page.click('a', { modifiers: ['Shift'] }),
-    ]);
-    expect(await page.evaluate(() => !!window.opener)).toBe(false);
-    expect(await popup.evaluate(() => !!window.opener)).toBe(true);
-    await context.close();
-  });
-  it.fail(CHROMIUM || WEBKIT)('should work with Control-clicking', async({browser, server}) => {
-    // Chromium:
-    // - Shift+Click fires frameRequestedNavigation that never materializes
-    //   because it actually opens a new tab.
-    // - New tab does not report an opener.
-    // WebKit: Shift+Click does not open a new tab.
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    await page.goto(server.EMPTY_PAGE);
-    await page.setContent('<a href="/one-style.html">yo</a>');
-    const [popup] = await Promise.all([
-      page.waitForEvent('popup'),
-      page.click('a', { modifiers: [MAC ? 'Meta' : 'Control'] }),
-    ]);
-    expect(await page.evaluate(() => !!window.opener)).toBe(false);
-    expect(await popup.evaluate(() => !!window.opener)).toBe(false);
-    await context.close();
-  });
   it('should work with fake-clicking target=_blank and rel=noopener', async({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();

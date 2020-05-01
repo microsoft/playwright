@@ -502,7 +502,8 @@ class FrameSession {
   }
 
   _onFrameRequestedNavigation(payload: Protocol.Page.frameRequestedNavigationPayload) {
-    this._page._frameManager.frameRequestedNavigation(payload.frameId, '');
+    if (payload.disposition === 'currentTab')
+      this._page._frameManager.frameRequestedNavigation(payload.frameId, '');
   }
 
   _onFrameNavigatedWithinDocument(frameId: string, url: string) {
