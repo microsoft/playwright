@@ -584,7 +584,7 @@ describe('Page.click', function() {
     expect(await page.evaluate(() => window.clicked)).toBe(undefined);
     expect(error.message).toContain('timeout exceeded');
   });
-  it.fail(CHROMIUM || FFOX)('should pause animations', async({page}) => {
+  it.skip(true)('should pause animations', async({page}) => {
     // This test requires pausing the page.
     await page.setContent(`<style>
       @keyframes spinner {
@@ -605,7 +605,7 @@ describe('Page.click', function() {
     await page.click('#target', { __testHookBeforeHitTarget: () => new Promise(f => setTimeout(f, 1000)) });
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
-  it.fail(CHROMIUM || FFOX)('should defer timers', async({page}) => {
+  it.skip(true)('should defer timers', async({page}) => {
     // This test requires pausing the page.
     await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);
     await page.click('button', { __testHookBeforeHitTarget: async () => {
@@ -616,7 +616,7 @@ describe('Page.click', function() {
     }});
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
-  it.fail(CHROMIUM || FFOX)('should defer rafs', async({page}) => {
+  it.skip(true)('should defer rafs', async({page}) => {
     // This test requires pausing the page.
     await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);
     await page.click('button', { __testHookBeforeHitTarget: async () => {
@@ -627,7 +627,7 @@ describe('Page.click', function() {
     }});
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
-  it.fail(CHROMIUM || FFOX)('should defer fetch', async({page, server}) => {
+  it.skip(true)('should defer fetch', async({page, server}) => {
     // This test requires pausing the page.
     await page.goto(server.EMPTY_PAGE);
     await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);
@@ -638,6 +638,28 @@ describe('Page.click', function() {
       await page.waitForTimeout(500);
     }});
     expect(await page.evaluate(() => window.clicked)).toBe(true);
+  });
+  it('should dispatch microtasks in order', async({page, server}) => {
+    await page.setContent(`
+      <button id=button>Click me</button>
+      <script>
+        let mutationCount = 0;
+        const observer = new MutationObserver((mutationsList, observer) => {
+          for(let mutation of mutationsList)
+            ++mutationCount;
+        });
+        observer.observe(document.body, { attributes: true, childList: true, subtree: true });
+        button.addEventListener('mousedown', () => {
+          mutationCount = 0;
+          document.body.appendChild(document.createElement('div'));
+        });
+        button.addEventListener('mouseup', () => {
+          window.result = mutationCount;
+        });
+      </script>
+    `);
+    await page.click('button');
+    expect(await page.evaluate(() => window.result)).toBe(1);
   });
 });
 
