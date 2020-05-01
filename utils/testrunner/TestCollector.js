@@ -21,55 +21,63 @@ const { TestRun } = require('./TestRunner');
 
 class FocusedFilter {
   constructor() {
-    this._focused = new Set();
+    this._focusedTests = new Set();
+    this._focusedSuites = new Set();
+    this._focusedFilePaths = new Set();
   }
 
-  markFocused(testOrSuite) {
-    this._focused.add(testOrSuite);
-  }
+  focusTest(test) { this._focusedTests.add(test); }
+  focusSuite(suite) { this._focusedSuites.add(suite); }
+  focusFilePath(filePath) { this._focusedFilePaths.add(filePath); }
 
-  hasFocusedTestsOrSuites() {
-    return !!this._focused.size;
+  hasFocusedTestsOrSuitesOrFiles() {
+    return !!this._focusedTests.size || !!this._focusedSuites.size || !!this._focusedFilePaths.size;
   }
 
   focusedTests(tests) {
-    return tests.filter(test => this._focused.has(test));
+    return tests.filter(test => this._focusedTests.has(test));
   }
 
   focusedSuites(suites) {
-    return suites.filter(suite => this._focused.has(suite));
+    return suites.filter(suite => this._focusedSuites.has(suite));
+  }
+
+  focusedFilePaths(filePaths) {
+    return filePaths.filter(filePath => this._focusedFilePaths.has(filePath));
   }
 
   filter(tests) {
-    if (!this.hasFocusedTestsOrSuites())
+    if (!this.hasFocusedTestsOrSuitesOrFiles())
       return tests;
 
     const ignoredSuites = new Set();
+    const ignoredFilePaths = new Set();
     for (const test of tests) {
-      if (this._focused.has(test)) {
+      if (this._focusedTests.has(test)) {
         // Focused tests should be run even if skipped.
         test.setSkipped(false);
         // TODO: remove next line once we run failing tests.
         test.setExpectation(test.Expectations.Ok);
+        ignoredFilePaths.add(test.location().filePath());
       }
       for (let suite = test.suite(); suite; suite = suite.parentSuite()) {
-        if (this._focused.has(suite)) {
+        if (this._focusedSuites.has(suite)) {
           // Focused suites should be run even if skipped.
           suite.setSkipped(false);
           // TODO: remove next line once we run failing tests.
           suite.setExpectation(suite.Expectations.Ok);
         }
         // Mark parent suites of focused tests as ignored.
-        if (this._focused.has(test))
+        if (this._focusedTests.has(test))
           ignoredSuites.add(suite);
       }
     }
     // Pick all tests that are focused or belong to focused suites.
     const result = [];
     for (const test of tests) {
-      let focused = this._focused.has(test);
+      let focused = this._focusedTests.has(test) || (this._focusedFilePaths.has(test.location().filePath()) && !ignoredFilePaths.has(test.location().filePath()));
       for (let suite = test.suite(); suite; suite = suite.parentSuite())
-        focused = focused || (this._focused.has(suite) && !ignoredSuites.has(suite));
+        focused = focused || (this._focusedSuites.has(suite) && !ignoredSuites.has(suite));
       if (focused)
         result.push(test);
     }
@@ -223,6 +231,15 @@ class TestCollector {
 
   suites() {
     return this._suites;
+  }
+
+  filePaths() {
+    const filePaths = new Set();
+    for (const test of this._tests)
+      filePaths.add(test.location().filePath());
+    for (const suite of this._suites)
+      filePaths.add(suite.location().filePath());
+    return [...filePaths];
   }
 
   rootSuite() {

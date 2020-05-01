@@ -8,8 +8,8 @@ class Runner {
     this._filter = new FocusedFilter();
     this._repeater = new Repeater();
     this._collector = new TestCollector(options);
-    this._collector.addSuiteAttribute('only', s => this._filter.markFocused(s));
-    this._collector.addTestAttribute('only', t => this._filter.markFocused(t));
+    this._collector.addSuiteAttribute('only', s => this._filter.focusSuite(s));
+    this._collector.addTestAttribute('only', t => this._filter.focusTest(t));
     this._collector.addSuiteAttribute('skip', s => s.setSkipped(true));
     this._collector.addTestAttribute('skip', t => t.setSkipped(true));
     this._collector.addTestAttribute('fail', t => t.setExpectation(t.Expectations.Fail));
@@ -712,16 +712,16 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
     });
   });
 
-  describe('TestRunner.hasFocusedTestsOrSuites', () => {
+  describe('TestRunner.hasFocusedTestsOrSuitesOrFiles', () => {
     it('should work', () => {
       const t = new Runner();
       t.it('uno', () => {});
-      expect(t._filter.hasFocusedTestsOrSuites()).toBe(false);
+      expect(t._filter.hasFocusedTestsOrSuitesOrFiles()).toBe(false);
     });
     it('should work #2', () => {
       const t = new Runner();
       t.fit('uno', () => {});
-      expect(t._filter.hasFocusedTestsOrSuites()).toBe(true);
+      expect(t._filter.hasFocusedTestsOrSuitesOrFiles()).toBe(true);
     });
     it('should work #3', () => {
       const t = new Runner();
@@ -732,7 +732,7 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
           });
         });
       });
-      expect(t._filter.hasFocusedTestsOrSuites()).toBe(true);
+      expect(t._filter.hasFocusedTestsOrSuitesOrFiles()).toBe(true);
     });
   });
 

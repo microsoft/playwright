@@ -15,6 +15,7 @@
  */
 
 const fs = require('fs');
+const path = require('path');
 const colors = require('colors/safe');
 const {MatchError} = require('./Matchers.js');
 
@@ -38,15 +39,23 @@ class Reporter {
   onStarted(testRuns) {
     this._testCounter = 0;
     this._timestamp = Date.now();
-    if (!this._delegate.hasFocusedTestsOrSuites()) {
+    if (!this._delegate.hasFocusedTestsOrSuitesOrFiles()) {
       console.log(`Running all ${colors.yellow(testRuns.length)} tests on ${colors.yellow(this._delegate.parallel())} worker${this._delegate.parallel() > 1 ? 's' : ''}:\n`);
     } else {
       console.log(`Running ${colors.yellow(testRuns.length)} focused tests out of total ${colors.yellow(this._delegate.testCount())} on ${colors.yellow(this._delegate.parallel())} worker${this._delegate.parallel() > 1 ? 's' : ''}`);
       console.log('');
+      const focusedFilePaths = this._delegate.focusedFilePaths();
+      if (focusedFilePaths.length) {
+        console.log('Focused Files:');
+        for (let i = 0; i < focusedFilePaths.length; ++i)
+          console.log(`  ${i + 1}) ${colors.yellow(path.basename(focusedFilePaths[i]))}`);
+        console.log('');
+      }
       const focusedEntities = [
         ...this._delegate.focusedSuites(),
         ...this._delegate.focusedTests(),
       ];
+
       if (focusedEntities.length) {
         console.log('Focused Suites and Tests:');
         for (let i = 0; i < focusedEntities.length; ++i)

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+const path = require('path');
 const { TestRunner, Result, TestResult } = require('./TestRunner');
 const { TestCollector, FocusedFilter, Repeater } = require('./TestCollector');
 const Reporter = require('./Reporter');
@@ -60,10 +61,10 @@ class DefaultTestRunner {
       ...this._collector.api(),
       expect: new Matchers().expect,
     };
-    this._collector.addSuiteAttribute('only', s => this._filter.markFocused(s));
+    this._collector.addSuiteAttribute('only', s => this._filter.focusSuite(s));
     this._collector.addSuiteAttribute('skip', s => s.setSkipped(true));
     this._collector.addSuiteModifier('repeat', (s, count) => this._repeater.repeat(s, count));
-    this._collector.addTestAttribute('only', t => this._filter.markFocused(t));
+    this._collector.addTestAttribute('only', t => this._filter.focusTest(t));
     this._collector.addTestAttribute('skip', t => t.setSkipped(true));
     this._collector.addTestAttribute('todo', t => t.setSkipped(true));
     this._collector.addTestAttribute('slow', t => t.setTimeout(t.timeout() * 3));
@@ -86,22 +87,22 @@ class DefaultTestRunner {
     const focusedTests = [];
     for (const test of this._collector.tests()) {
       if (fullNameRegex.test(test.fullName())) {
-        this._filter.markFocused(test);
+        this._filter.focusTest(test);
         focusedTests.push(test);
       }
     }
     return focusedTests;
   }
 
-  focusMatchingFilePath(filepathRegex) {
-    const focusedTests = [];
-    for (const test of this._collector.tests()) {
-      if (filepathRegex.test(test.location().filePath())) {
-        this._filter.markFocused(test);
-        focusedTests.push(test);
+  focusMatchingFileName(filenameRegex) {
+    const focusedFilePaths = [];
+    for (const filePath of this._collector.filePaths()) {
+      if (filenameRegex.test(path.basename(filePath))) {
+        this._filter.focusFilePath(filePath);
+        focusedFilePaths.push(filePath);
       }
     }
-    return focusedTests;
+    return focusedFilePaths;
   }
 
   repeatAll(repeatCount) {
@@ -113,9 +114,10 @@ class DefaultTestRunner {
 
     if (this._needReporter) {
       const reporterDelegate = {
-        focusedSuites: () => this._filter.focusedTests(this._collector.suites()),
-        focusedTests: () => this._filter.focusedSuites(this._collector.tests()),
-        hasFocusedTestsOrSuites: () => this._filter.hasFocusedTestsOrSuites(),
+        focusedSuites: () => this._filter.focusedSuites(this._collector.suites()),
+        focusedTests: () => this._filter.focusedTests(this._collector.tests()),
+        focusedFilePaths: () => this._filter.focusedFilePaths(this._collector.filePaths()),
+        hasFocusedTestsOrSuitesOrFiles: () => this._filter.hasFocusedTestsOrSuitesOrFiles(),
         parallel: () => this._parallel,
         testCount: () => this._collector.tests().length,
       };
@@ -128,7 +130,7 @@ class DefaultTestRunner {
       reporter = new Reporter(reporterDelegate, reporterOptions);
     }
 
-    if (this._crashIfTestsAreFocusedOnCI && process.env.CI && this._filter.hasFocusedTestsOrSuites()) {
+    if (this._crashIfTestsAreFocusedOnCI && process.env.CI && this._filter.hasFocusedTestsOrSuitesOrFiles()) {
       if (reporter)
         await reporter.onStarted([]);
       const result = new Result();
