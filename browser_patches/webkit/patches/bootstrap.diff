@@ -1088,10 +1088,10 @@ index 78980810141a9e9b65b93e6cebe80daff9a52dc1..074e0e53b03f3453972c11e39d021baa
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Playwright.json b/Source/JavaScriptCore/inspector/protocol/Playwright.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..9cc2d3f122c1f3228b3298b07978201c72208eb1
+index 0000000000000000000000000000000000000000..b064c8fb400a57176e4051f8e80df4af57a9d575
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Playwright.json
-@@ -0,0 +1,221 @@
+@@ -0,0 +1,228 @@
 +{
 +    "domain": "Playwright",
 +    "availability": ["web"],
@@ -1302,6 +1302,13 @@ index 0000000000000000000000000000000000000000..9cc2d3f122c1f3228b3298b07978201c
 +                { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
 +                { "name": "browserContextId", "$ref": "ContextID" },
 +                { "name": "frameId", "$ref": "Network.FrameId", "description": "Unique identifier of the originating frame." }
++            ]
++        },
++        {
++            "name": "downloadFilenameSuggested",
++            "parameters": [
++                { "name": "uuid", "type": "string" },
++                { "name": "suggestedFilename", "type": "string" }
 +            ]
 +        },
 +        {
@@ -8151,7 +8158,7 @@ index d7695088e7cfc4f638f157338754f9f157489749..ba114d47ac079661702e44f19853398f
      bool m_isBackingStoreDiscardable { true };
      std::unique_ptr<BackingStore> m_backingStore;
 diff --git a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
-index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..50b310adfdea35e6194120f5b776632d2b2987ea 100644
+index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..e7889c60fffb8979ee3965295b3221989ea48e05 100644
 --- a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
 +++ b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
 @@ -42,8 +42,10 @@
@@ -8176,11 +8183,14 @@ index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..50b310adfdea35e6194120f5b776632d
  }
  
  DownloadProxy::~DownloadProxy()
-@@ -178,7 +183,18 @@ void DownloadProxy::decideDestinationWithSuggestedFilenameAsync(DownloadID downl
+@@ -178,7 +183,21 @@ void DownloadProxy::decideDestinationWithSuggestedFilenameAsync(DownloadID downl
  {
      if (!m_processPool)
          return;
 -    
++
++    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
++      instrumentation->downloadFilenameSuggested(m_uuid, suggestedFilename);
 +
 +    if (m_processPool->networkProcess() && m_dataStore->allowDownloadForAutomation()) {
 +        SandboxExtension::Handle sandboxExtensionHandle;
@@ -8196,7 +8206,7 @@ index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..50b310adfdea35e6194120f5b776632d
      m_processPool->downloadClient().decideDestinationWithSuggestedFilename(*this, ResourceResponseBase::sanitizeSuggestedFilename(suggestedFilename), [this, protectedThis = makeRef(*this), downloadID = downloadID] (AllowOverwrite allowOverwrite, String destination) {
          SandboxExtension::Handle sandboxExtensionHandle;
          if (!destination.isNull())
-@@ -206,6 +222,8 @@ void DownloadProxy::didFinish()
+@@ -206,6 +225,8 @@ void DownloadProxy::didFinish()
          return;
  
      m_processPool->downloadClient().didFinish(*this);
@@ -8205,7 +8215,7 @@ index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..50b310adfdea35e6194120f5b776632d
  
      // This can cause the DownloadProxy object to be deleted.
      m_downloadProxyMap.downloadFinished(*this);
-@@ -227,6 +245,8 @@ void DownloadProxy::didFail(const ResourceError& error, const IPC::DataReference
+@@ -227,6 +248,8 @@ void DownloadProxy::didFail(const ResourceError& error, const IPC::DataReference
      m_resumeData = createData(resumeData);
  
      m_processPool->downloadClient().didFail(*this, error);
@@ -8214,7 +8224,7 @@ index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..50b310adfdea35e6194120f5b776632d
  
      // This can cause the DownloadProxy object to be deleted.
      m_downloadProxyMap.downloadFinished(*this);
-@@ -237,6 +257,8 @@ void DownloadProxy::didCancel(const IPC::DataReference& resumeData)
+@@ -237,6 +260,8 @@ void DownloadProxy::didCancel(const IPC::DataReference& resumeData)
      m_resumeData = createData(resumeData);
  
      m_processPool->downloadClient().didCancel(*this);
@@ -8958,10 +8968,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..45eab7a43fcab9aea59f1c04113a3549f926c190
+index 0000000000000000000000000000000000000000..ca6d9848a80eba88d8b0d16066f9d9caef157345
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,605 @@
+@@ -0,0 +1,612 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -9525,6 +9535,13 @@ index 0000000000000000000000000000000000000000..45eab7a43fcab9aea59f1c04113a3549
 +        frameID);
 +}
 +
++void InspectorPlaywrightAgent::downloadFilenameSuggested(const String& uuid, const String& suggestedFilename)
++{
++    if (!m_isConnected)
++        return;
++    m_frontendDispatcher->downloadFilenameSuggested(uuid, suggestedFilename);
++}
++
 +void InspectorPlaywrightAgent::downloadFinished(const String& uuid, const String& error)
 +{
 +    if (!m_isConnected)
@@ -9569,10 +9586,10 @@ index 0000000000000000000000000000000000000000..45eab7a43fcab9aea59f1c04113a3549
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..a38b9be4e699469fe9de746400dae7b222245909
+index 0000000000000000000000000000000000000000..751b0e403b7e9d7c31e3e1f191c9167f71bb0442
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
-@@ -0,0 +1,121 @@
+@@ -0,0 +1,122 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -9675,6 +9692,7 @@ index 0000000000000000000000000000000000000000..a38b9be4e699469fe9de746400dae7b2
 +
 +    // DownloadInstrumentation
 +    void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) override;
++    void downloadFilenameSuggested(const String& uuid, const String& suggestedFilename) override;
 +    void downloadFinished(const String& uuid, const String& error) override;
 +
 +private:
@@ -11148,7 +11166,7 @@ index 50d97931d4c05c7046521bfa762f520fff3c1184..6934a161312d658e3a1c1f3a053070ab
 +
  }
 diff --git a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
-index e842313256ba31bdd8a750ca55b33abdab2c0092..bb639d919b7348f811abface22a6f5cded25a371 100644
+index e842313256ba31bdd8a750ca55b33abdab2c0092..6d082863966f374657864275da68d0fc9fcb43b4 100644
 --- a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
 +++ b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
 @@ -83,6 +83,7 @@ class WebResourceLoadStatisticsStore;
@@ -11159,13 +11177,14 @@ index e842313256ba31bdd8a750ca55b33abdab2c0092..bb639d919b7348f811abface22a6f5cd
  struct WebsiteDataRecord;
  struct WebsiteDataStoreParameters;
  
-@@ -96,6 +97,13 @@ enum class StorageAccessPromptStatus;
+@@ -96,6 +97,14 @@ enum class StorageAccessPromptStatus;
  struct PluginModuleInfo;
  #endif
  
 +class DownloadInstrumentation {
 +public:
 +    virtual void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) = 0;
++    virtual void downloadFilenameSuggested(const String& uuid, const String& suggestedFilename) = 0;
 +    virtual void downloadFinished(const String& uuid, const String& error) = 0;
 +    virtual ~DownloadInstrumentation() = default;
 +};
@@ -11173,7 +11192,7 @@ index e842313256ba31bdd8a750ca55b33abdab2c0092..bb639d919b7348f811abface22a6f5cd
  class WebsiteDataStore : public API::ObjectImpl<API::Object::Type::WebsiteDataStore>, public Identified<WebsiteDataStore>, public CanMakeWeakPtr<WebsiteDataStore>  {
  public:
      static Ref<WebsiteDataStore> defaultDataStore();
-@@ -282,6 +290,14 @@ public:
+@@ -282,6 +291,14 @@ public:
      static WTF::String defaultJavaScriptConfigurationDirectory();
      static bool http3Enabled();
  
@@ -11188,7 +11207,7 @@ index e842313256ba31bdd8a750ca55b33abdab2c0092..bb639d919b7348f811abface22a6f5cd
      void resetQuota(CompletionHandler<void()>&&);
      void hasAppBoundSession(CompletionHandler<void(bool)>&&) const;
      void setInAppBrowserPrivacyEnabled(bool enabled, CompletionHandler<void()>&&);
-@@ -372,6 +388,11 @@ private:
+@@ -372,6 +389,11 @@ private:
  
      RefPtr<API::HTTPCookieStore> m_cookieStore;
  
