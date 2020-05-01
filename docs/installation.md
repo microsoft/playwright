@@ -28,7 +28,7 @@ Firefox and WebKit work across the 3 platforms (Windows, macOS, Linux):
 
 Each version of Playwright needs specific versions of browser binaries to operate. By default Playwright downloads Chromium, WebKit and Firefox browsers into the OS-specific cache folders:
 
-- `HOME\AppData\Local\ms-playwright` on Windows
+- `%USERPROFILE%\AppData\Local\ms-playwright` on Windows
 - `~/Library/Caches/ms-playwright` on MacOS
 - `~/.cache/playwright/ms-playwright` on Linux
 
