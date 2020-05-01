@@ -20,13 +20,27 @@ const readline = require('readline');
 const TestRunner = require('../utils/testrunner/');
 const {Environment} = require('../utils/testrunner/Test');
 
+function getCLIArgument(argName) {
+  for (let i = 0; i < process.argv.length; ++i) {
+    // Support `./test.js --foo bar
+    if (process.argv[i] === argName)
+      return process.argv[i + 1];
+    // Support `./test.js --foo=bar
+    if (argName.startsWith('--') && process.argv[i].startsWith(argName + '='))
+      return process.argv[i].substring((argName + '=').length);
+    // Support `./test.js -j4
+    if (!argName.startsWith('--') && argName.startsWith('-') && process.argv[i].startsWith(argName))
+      return process.argv[i].substring(argName.length);
+  }
+  return null;
+}
+
 function collect(browserNames) {
   let parallel = 1;
   if (process.env.PW_PARALLEL_TESTS)
     parallel = parseInt(process.env.PW_PARALLEL_TESTS.trim(), 10);
-  const parallelArgIndex = process.argv.indexOf('-j');
-  if (parallelArgIndex !== -1)
-    parallel = parseInt(process.argv[parallelArgIndex + 1], 10);
+  if (getCLIArgument('-j'))
+    parallel = parseInt(getCLIArgument('-j'), 10);
   require('events').defaultMaxListeners *= parallel;
 
   let timeout = process.env.CI ? 30 * 1000 : 10 * 1000;
@@ -202,30 +216,21 @@ if (require.main === module) {
   });
   const testRunner = collect(browserNames);
 
-  const filterArgIndex = process.argv.indexOf('--filter');
-  if (filterArgIndex !== -1) {
-    const filter = process.argv[filterArgIndex + 1];
-    if (!testRunner.focusMatchingNameTests(new RegExp(filter, 'i')).length) {
-      console.log('ERROR: no tests matched given `--filter` regex.');
-      process.exit(1);
-    }
+  const testNameFilter = getCLIArgument('--filter');
+  if (testNameFilter && !testRunner.focusMatchingNameTests(new RegExp(testNameFilter, 'i')).length) {
+    console.log('ERROR: no tests matched given `--filter` regex.');
+    process.exit(1);
   }
 
-  const fileArgIndex = process.argv.indexOf('--file');
-  if (fileArgIndex !== -1) {
-    const filter = process.argv[fileArgIndex + 1];
-    if (!testRunner.focusMatchingFilePath(new RegExp(filter, 'i')).length) {
-      console.log('ERROR: no files matched given `--file` regex.');
-      process.exit(1);
-    }
+  const fileNameFilter = getCLIArgument('--file');
+  if (fileNameFilter && !testRunner.focusMatchingFileName(new RegExp(fileNameFilter, 'i')).length) {
+    console.log('ERROR: no files matched given `--file` regex.');
+    process.exit(1);
   }
 
-  const repeatArgIndex = process.argv.indexOf('--repeat');
-  if (repeatArgIndex !== -1) {
-    const repeat = parseInt(process.argv[repeatArgIndex + 1], 10);
-    if (!isNaN(repeat))
-      testRunner.repeatAll(repeat);
-  }
+  const repeat = parseInt(getCLIArgument('--repeat'), 10);
+  if (!isNaN(repeat))
+    testRunner.repeatAll(repeat);
 
   testRunner.run().then(() => { delete global.expect; });
 }
