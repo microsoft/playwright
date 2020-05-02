@@ -986,6 +986,23 @@ describe('Page.reload', function() {
   });
 });
 
+describe('Click navigation', function() {
+  it('should work with _blank target', async({page, server}) => {
+    server.setRoute('/empty.html', (req, res) => {
+      res.end(`<a href="${server.EMPTY_PAGE}" target="_blank">Click me</a>`);
+    });
+    await page.goto(server.EMPTY_PAGE);
+    await page.click('"Click me"');
+  });
+  it.fail(WEBKIT)('should work with cross-process _blank target', async({page, server}) => {
+    server.setRoute('/empty.html', (req, res) => {
+      res.end(`<a href="${server.CROSS_PROCESS_PREFIX}/empty.html" target="_blank">Click me</a>`);
+    });
+    await page.goto(server.EMPTY_PAGE);
+    await page.click('"Click me"');
+  });
+});
+
 function expectSSLError(errorMessage) {
   if (CHROMIUM) {
     expect(errorMessage).toContain('net::ERR_CERT_AUTHORITY_INVALID');
