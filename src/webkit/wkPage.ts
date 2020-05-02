@@ -257,8 +257,8 @@ export class WKPage implements PageDelegate {
     });
     assert(targetInfo.type === 'page', 'Only page targets are expected in WebKit, received: ' + targetInfo.type);
 
-    if (!this._initializedPage) {
-      assert(!targetInfo.isProvisional);
+    if (!targetInfo.isProvisional) {
+      assert(!this._initializedPage);
       let pageOrError: Page | Error;
       try {
         this._setSession(session);
