@@ -994,7 +994,7 @@ describe('Click navigation', function() {
     await page.goto(server.EMPTY_PAGE);
     await page.click('"Click me"');
   });
-  it.fail(WEBKIT)('should work with cross-process _blank target', async({page, server}) => {
+  it('should work with cross-process _blank target', async({page, server}) => {
     server.setRoute('/empty.html', (req, res) => {
       res.end(`<a href="${server.CROSS_PROCESS_PREFIX}/empty.html" target="_blank">Click me</a>`);
     });
