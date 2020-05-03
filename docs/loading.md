@@ -2,7 +2,7 @@
 
 Playwright logically splits the process of showing a new document in the page into **navigation** and **loading**.
 
-### Navigation
+## Navigation
 
 Page navigation can be either initiated by the Playwright call:
 
@@ -29,7 +29,7 @@ history.pushState({}, 'title', '#deep-link');
 
 Navigation intent may result in being canceled, for example transformed into a download or hitting an unresolved DNS address. Only when the navigation succeeds, page starts **loading** the document.
 
-### Loading
+## Loading
 
 Page load takes time retrieving the response body over the network, parsing, executing the scripts and firing the events. Typical load scenario goes through the following load states:
 - [`page.url()`](api.md#pageurl) is set to the new url
@@ -40,7 +40,7 @@ Page load takes time retrieving the response body over the network, parsing, exe
 - page executes dynamically loaded scripts
 - `networkidle` is fired - no new network requests made for at least `500` ms
 
-### Common scenarios
+## Common scenarios
 
 By default, Playwright handles navigations seamlessly so that you did not need to think about them. Consider the following scenario, where everything is handled by Playwright behind the scenes:
 
@@ -62,7 +62,7 @@ await page.click('text=Login');
 
 Explicit loading handling may be required for more complicated scenarios though.
 
-### Loading a popup
+## Loading a popup
 
 When popup is opened, explicitly calling [`page.waitForLoadState()`](api.md#pagewaitforloadstatestate-options) ensures that popup is loaded to the desired state.
 ```js
