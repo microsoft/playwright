@@ -78,6 +78,7 @@ console.log(buffer.toString('base64'));
 // Capture given element
 const elementHandle = await page.$('.header');
 await elementHandle.screenshot({ path: 'screenshot.png' });
+```
 
 #### API reference
 
