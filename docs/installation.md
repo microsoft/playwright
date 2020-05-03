@@ -30,7 +30,7 @@ Each version of Playwright needs specific versions of browser binaries to operat
 
 - `%USERPROFILE%\AppData\Local\ms-playwright` on Windows
 - `~/Library/Caches/ms-playwright` on MacOS
-- `~/.cache/playwright/ms-playwright` on Linux
+- `~/.cache/ms-playwright` on Linux
 
 ```sh
 npm i playwright
