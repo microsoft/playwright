@@ -3,10 +3,12 @@
 <!-- GEN:toc -->
 - [Installation](#installation)
 - [Usage](#usage)
-- [Writing your first script](#writing-your-first-script)
+- [First script](#first-script)
+- [System requirements](#system-requirements)
 - [Debugging scripts](#debugging-scripts)
-- [Continuous Integration](#continuous-integration)
 <!-- GEN:stop -->
+
+<br>
 
 ## Installation
 
@@ -16,7 +18,9 @@ Use npm or Yarn to install Playwright in your Node.js project. Playwright requir
 npm i playwright
 ```
 
-During installation, Playwright downloads browser binaries for Chromium, Firefox and WebKit. This sets up your environment for browser automation with just one command. It is possible to modify this default behavior for monorepos and other scenarios. See [installation](installation.md).
+During installation, Playwright downloads browser binaries for Chromium, Firefox and WebKit. This sets up your environment for browser automation with just one command. It is possible to modify this default behavior for monorepos and other scenarios. See [installation parameters](installation.md) for mode details.
+
+<br>
 
 ## Usage
 
@@ -41,7 +45,9 @@ Playwright APIs are asynchronous and return Promise objects. Our code examples u
 })(); // End of the function and () to invoke itself
 ```
 
-## Writing your first script
+<br>
+
+## First script
 
 In our first script, we will navigate to `whatsmyuseragent.org` and take a screenshot in WebKit.
 
@@ -63,14 +69,28 @@ By default, Playwright runs the browsers in headless mode. To see the browser UI
 firefox.launch({ headless: false, slowMo: 50 });
 ```
 
-## Debugging scripts
+<br>
 
-<a href="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png"><img src="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png" width="300" alt="Chromium Developer Tools" align="right"></a>
+## System requirements
+
+Playwright requires Node.js version 10.15 or above. The browser binaries for Chromium,
+Firefox and WebKit work across the 3 platforms (Windows, macOS, Linux):
+
+* **Windows**: Works with Windows and Windows Subsystem for Linux (WSL).
+* **macOS**: Requires 10.14 or above.
+* **Linux**: Depending on your Linux distribution, you might need to install additional
+  dependencies to run the browsers.
+  * For Ubuntu 18.04, the additional dependencies are defined in [our Docker image](docker/Dockerfile.bionic),
+    which is based on Ubuntu.
+
+<br>
+
+## Debugging scripts
 
 Playwright scripts can be developed just like any other Node.js script. For example, you can use the [Node.js debugger](https://nodejs.org/api/debugger.html) or [VS Code debugging](https://code.visualstudio.com/docs/nodejs/nodejs-debugging) to set breakpoints and get fine grained control over execution.
 
+  <a href="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png"><img src="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png" width="300" alt="Chromium Developer Tools"></a>
+
 It is also possible to open **browser developer tools** during execution, to inspect the DOM tree or network activity.
 
-## Continuous Integration
-
-Playwright tests can be executed on Continuous Integration (CI) environments. Learn about the Playwright GitHub Action and sample Docker configuration in [the Continuous Integration section](ci.md).
+<br>

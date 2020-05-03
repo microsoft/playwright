@@ -3,8 +3,12 @@
 ### Table of contents
 
 1. [Getting Started](./intro.md)
-    - [Introduction](./intro.md#)
-    - [Installation](./installation.md)
+    - [Installation](./intro.md#installation)
+    - [Usage](./intro.md#usage)
+    - [First script](./intro.md#first-script)
+    - [System requirements](./intro.md#system-requirements)
+    - [Debugging scripts](./intro.md#debugging-scripts)
+    - [Installation parameters](./installation.md)
 1. [Core Concepts](./core-concepts.md)
     - [Overview](./core-concepts.md#)
     - [Browser](./core-concepts.md#browser)
