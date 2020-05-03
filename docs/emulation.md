@@ -21,13 +21,13 @@ Most of these parameters are configured during the browser context construction,
 
 ## User agent
 
+All pages created in the context above will share the user agent specified:
+
 ```js
 const context = await browser.newContext({
   userAgent: 'My user agent'
 });
 ```
-
-All pages created in the context above will share the user agent specified.
 
 #### API reference
 
@@ -40,42 +40,27 @@ All pages created in the context above will share the user agent specified.
 Create a context with custom viewport size:
 
 ```js
+// Create context with given viewport
 const context = await browser.newContext({
-  viewport: {
-    width: 1280,
-    height: 1024
-  }
+  viewport: { width: 1280, height: 1024 }
 });
-```
-Resize viewport for individual pages:
 
-```js
-await page.setViewportSize({ 'width': 1600, 'height': 1200 });
-```
+// Resize viewport for individual page
+await page.setViewportSize(
+    { 'width': 1600, 'height': 1200 });
 
-Emulate desktop device with the high-DPI screen and touch support:
-
-```js
+// Emulate high-DPI
 const context = await browser.newContext({
-  viewport: {
-    width: 2560,
-    height: 1440,
-  },
+  viewport: { width: 2560, height: 1440 },
   deviceScaleFactor: 2,
-  hasTouch: true
 });
-```
 
-Create device with the dark color scheme:
-```js
+// Create device with the dark color scheme:
 const context = await browser.newContext({
   colorScheme: 'dark'
 });
-```
 
-Change color scheme for individual pages:
-
-```js
+// Change color scheme for the page
 await page.emulateMedia({ colorScheme: 'dark' });
 ```
 
@@ -92,7 +77,8 @@ await page.emulateMedia({ colorScheme: 'dark' });
 Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser behavior on a mobile device:
 
 ```js
-const { chromium, devices } = require('playwright');
+const { chromium, devices } =
+    require('playwright');
 const browser = await chromium.launch();
 
 const pixel2 = devices['Pixel 2'];
@@ -113,6 +99,7 @@ All pages created in the context above will share the same device parameters.
 ## Locale & timezone
 
 ```js
+// Emulate locale and time
 const context = await browser.newContext({
   locale: 'de-DE',
   timezoneId: 'Europe/Berlin',

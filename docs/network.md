@@ -127,8 +127,6 @@ const [response] = await Promise.all([
 
 ## Handle requests
 
-You can mock API endpoints via handling the network quests in your Playwright script.
-
 ```js
 await page.route('**/api/fetch_data', route => route.fulfill({
   status: 200,
@@ -136,6 +134,8 @@ await page.route('**/api/fetch_data', route => route.fulfill({
 }));
 await page.goto('https://example.com');
 ```
+
+You can mock API endpoints via handling the network quests in your Playwright script.
 
 #### Variations
 
@@ -163,45 +163,29 @@ await page.goto('https://example.com');
 ## Modify requests
 
 ```js
+// Delete header
 await page.route('**/*', route => {
   const headers = route.request().headers();
   delete headers['X-Secret'];
   route.continue({headers});
 });
-await page.goto('https://chromium.org');
+
+// Continue requests as POST.
+await page.route('**/*', route => route.continue({method: 'POST'}));
 ```
 
 You can continue requests with modifications. Example above removes an HTTP header from the outgoing requests.
 
-#### Variations
-
-```js
-// Continue requests as POST.
-
-await page.route('**/*', route => route.continue({method: 'POST'}));
-await page.goto('https://chromium.org');
-```
-
-<br/>
-
 ## Abort requests
 
 ```js
-const page = await browser.newPage();
 await page.route('**/*.{png,jpg,jpeg}', route => route.abort());
-await page.goto('https://example.com');
-```
 
-#### Variations
-
-```js
-// Abort requests based on their type.
-
+// Abort based on the request type
 await page.route('**/*', route => {
   return route.request().resourceType() === 'image' ?
       route.abort() : route.continue();
 });
-await page.goto('https://chromium.org');
 ```
 
 #### API reference

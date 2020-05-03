@@ -64,30 +64,20 @@ await myArrayHandle.dispose();
 
 ## Capturing screenshot
 
-Take screenshot of the page's viewport and save it in a png file:
 ```js
+// Save to file
 await page.screenshot({path: 'screenshot.png'});
-```
 
-#### Variations
-
-Capture particular element:
-```js
-const elementHandle = await page.$('.header');
-await elementHandle.screenshot({ path: 'screenshot.png' });
-```
-
-Capture full page screenshot:
-```js
+// Capture full page
 await page.screenshot({path: 'screenshot.png', fullPage: true});
-```
 
-Capture screenshot into a Node [Buffer](https://nodejs.org/api/buffer.html#buffer_class_buffer).
-```js
+// Capture into buffer
 const buffer = await page.screenshot();
 console.log(buffer.toString('base64'));
-```
 
+// Capture given element
+const elementHandle = await page.$('.header');
+await elementHandle.screenshot({ path: 'screenshot.png' });
 
 #### API reference
 
