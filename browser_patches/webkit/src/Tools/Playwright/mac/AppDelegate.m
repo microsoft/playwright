@@ -245,6 +245,8 @@ const NSActivityOptions ActivityOptions =
     if (!controller)
         return nil;
     [controller loadURLString:urlString];
+    NSWindow *window = controller.window;
+    [window setIsVisible:YES];
     return [controller webView];
 }
 
@@ -262,6 +264,7 @@ const NSActivityOptions ActivityOptions =
 
     webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [window.contentView addSubview:webView];
+    [window setIsVisible:YES];
     if (urlString) {
         NSURL *url = [NSURL _webkit_URLWithUserTypedString:urlString];
         [webView loadRequest:[NSURLRequest requestWithURL:url]];
