@@ -79,4 +79,39 @@ describe('Headful', function() {
     await page.click('button');
     await browser.close();
   });
+  it('should(not) block third party cookies', async({browserType, defaultBrowserOptions, server}) => {
+    const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
+    const page = await browser.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(src => {
+      let fulfill;
+      const promise = new Promise(x => fulfill = x);
+      const iframe = document.createElement('iframe');
+      document.body.appendChild(iframe);
+      iframe.onload = fulfill;
+      iframe.src = src;
+      return promise;
+    }, server.CROSS_PROCESS_PREFIX + '/grid.html');
+    await page.frames()[1].evaluate(`document.cookie = 'username=John Doe'`);
+    await page.waitForTimeout(2000);
+    const allowsThirdParty = CHROMIUM || FFOX;
+    const cookies = await page.context().cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
+    if (allowsThirdParty) {
+      expect(cookies).toEqual([
+        {
+          "domain": "127.0.0.1",
+          "expires": -1,
+          "httpOnly": false,
+          "name": "username",
+          "path": "/",
+          "sameSite": "None",
+          "secure": false,
+          "value": "John Doe"
+        }
+      ]);
+    } else {
+      expect(cookies).toEqual([]);
+    }
+    await browser.close();
+  });
 });
