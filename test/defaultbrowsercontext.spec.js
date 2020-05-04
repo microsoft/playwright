@@ -17,7 +17,7 @@
 
 const utils = require('./utils');
 const {makeUserDataDir, removeUserDataDir} = utils;
-const {FFOX, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
+const {FFOX, MAC, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
 
 describe('launchPersistentContext()', function() {
   beforeEach(async state => {
@@ -82,5 +82,37 @@ describe('launchPersistentContext()', function() {
     await page.reload();
     expect(await page.context().cookies([])).toEqual([]);
     expect(await page.evaluate('document.cookie')).toBe('');
+  });
+  it('should(not) block third party cookies', async({browserContext, page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(src => {
+      let fulfill;
+      const promise = new Promise(x => fulfill = x);
+      const iframe = document.createElement('iframe');
+      document.body.appendChild(iframe);
+      iframe.onload = fulfill;
+      iframe.src = src;
+      return promise;
+    }, server.CROSS_PROCESS_PREFIX + '/grid.html');
+    await page.frames()[1].evaluate(`document.cookie = 'username=John Doe'`);
+    await page.waitForTimeout(2000);
+    const allowsThirdParty = CHROMIUM || FFOX;
+    const cookies = await browserContext.cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
+    if (allowsThirdParty) {
+      expect(cookies).toEqual([
+        {
+          "domain": "127.0.0.1",
+          "expires": -1,
+          "httpOnly": false,
+          "name": "username",
+          "path": "/",
+          "sameSite": "None",
+          "secure": false,
+          "value": "John Doe"
+        }
+      ]);
+    } else {
+      expect(cookies).toEqual([]);
+    }
   });
 });
