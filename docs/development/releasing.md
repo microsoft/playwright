@@ -21,21 +21,7 @@ Once release branch is pushed, it's last commit will be picked up by our CI/CD:
 
 1. Use ["draft new release tag"](https://github.com/microsoft/playwright/releases/new).
 1. Version starts with "v", e.g. "vX.Y.Z".
-1. Fill "Browser versions".
-    - `./utils/print_versions.js`
-1. Fill "Highlights" if any.
-    - Be creative.
-1. Make sure you fetched tags from the upstream to get latest releases.
-    - `git fetch --tags upstream`
-1. Fill "New APIs" if any.
-    - `git diff $(git describe --tags $(git rev-list --tags --max-count=1)):docs/api.md docs/api.md`
-1. Fill "Breaking API Changes" if any.
-    - `git diff $(git describe --tags $(git rev-list --tags --max-count=1)):docs/api.md docs/api.md`
-1. Fill "Bug fixes".
-    - `./utils/list_closed_issues.sh $(git describe --tags $(git rev-list --tags --max-count=1))`
-1. Fill "Raw notes".
-    - `git log --pretty="%h - %s" $(git describe --tags $(git rev-list --tags --max-count=1))..HEAD`
-
+1. Run `./utils/draft_release_notes.sh` and fill in the "TODO" in generated text.
 1. When making links to the API, copy actual links from [GitHub](https://github.com/microsoft/playwright/blob/master/docs/api.md), and not from `api.md` source - these might be incorrect.
     - Before publishing, replace `blob/master/docs` with `blob/vX.Y.Z/docs` in all the links.
 1. Use "Save Draft", not "Publish".

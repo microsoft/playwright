@@ -73,19 +73,20 @@ function runCommands(sources, {libversion, chromiumVersion, firefoxVersion}) {
 function getTOCEntriesForText(text) {
   const ids = new Set();
   const titles = [];
+  const titleRegex = /^(#+)\s+(.*)$/;
   let insideCodeBlock = false;
   let offset = 0;
   text.split('\n').forEach((aLine, lineNumber) => {
     const line = aLine.trim();
     if (line.startsWith('```'))
       insideCodeBlock = !insideCodeBlock;
-    else if (!insideCodeBlock && line.startsWith('#'))
+    else if (!insideCodeBlock && line.match(titleRegex))
       titles.push({line, offset: offset + lineNumber});
     offset += aLine.length;
   });
   let tocEntries = [];
   for (const {line, offset} of titles) {
-    const [, nesting, name] = line.match(/^(#+)\s+(.*)$/);
+    const [, nesting, name] = line.match(titleRegex);
     const delinkifiedName = name.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
     const id = delinkifiedName.trim().toLowerCase().replace(/\s/g, '-').replace(/[^-0-9a-zа-яё]/ig, '');
     let dedupId = id;
