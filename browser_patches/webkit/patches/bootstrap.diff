@@ -7366,18 +7366,6 @@ index a68a30983f609d925b45ee16fbe34110b6cabe95..533f45fe6810509b8a0e1823087011a8
  
      WebKitWebViewBase* webkitWebViewBase = WEBKIT_WEB_VIEW_BASE(m_viewWidget);
      webkitWebViewBaseForwardNextKeyEvent(webkitWebViewBase);
-diff --git a/Source/WebKit/UIProcess/API/gtk/PageClientImpl.h b/Source/WebKit/UIProcess/API/gtk/PageClientImpl.h
-index cdd7cddbdc80396a3aab27fa2f843a7f70dddf7b..63831839686f86a4ef0fed7b415d4e84d92ec833 100644
---- a/Source/WebKit/UIProcess/API/gtk/PageClientImpl.h
-+++ b/Source/WebKit/UIProcess/API/gtk/PageClientImpl.h
-@@ -98,6 +98,7 @@ private:
-     RefPtr<WebDataListSuggestionsDropdown> createDataListSuggestionsDropdown(WebPageProxy&) override;
- #endif
-     void selectionDidChange() override;
-+    String takeSnapshotForAutomation() override { return String(); }
-     RefPtr<ViewSnapshot> takeViewSnapshot(Optional<WebCore::IntRect>&&) override;
- #if ENABLE(DRAG_SUPPORT)
-     void startDrag(Ref<WebCore::SelectionData>&&, WebCore::DragOperation, RefPtr<ShareableBitmap>&& dragImage) override;
 diff --git a/Source/WebKit/UIProcess/API/gtk/WebKitBrowserInspector.h b/Source/WebKit/UIProcess/API/gtk/WebKitBrowserInspector.h
 new file mode 100644
 index 0000000000000000000000000000000000000000..a51cfebc270ca5a91cd94645eeeb005ba9a67caf
