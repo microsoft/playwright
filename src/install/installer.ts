@@ -22,6 +22,7 @@ import * as util from 'util';
 import * as removeFolder from 'rimraf';
 import * as browserPaths from '../install/browserPaths';
 import * as browserFetcher from '../install/browserFetcher';
+import { Playwright } from '../server/playwright';
 
 const fsMkdirAsync = util.promisify(fs.mkdir.bind(fs));
 const fsReaddirAsync = util.promisify(fs.readdir.bind(fs));
@@ -40,10 +41,10 @@ export async function installBrowsersWithProgressBar(packagePath: string) {
   }
   await fsMkdirAsync(linksDir,  { recursive: true });
   await fsWriteFileAsync(path.join(linksDir, sha1(packagePath)), packagePath);
-  await validateCache(browsersPath, linksDir);
+  await validateCache(packagePath, browsersPath, linksDir);
 }
 
-async function validateCache(browsersPath: string, linksDir: string) {
+async function validateCache(packagePath: string, browsersPath: string, linksDir: string) {
   // 1. Collect unused downloads and package descriptors.
   const allBrowsers: browserPaths.BrowserDescriptor[] = [];
   for (const fileName of await fsReaddirAsync(linksDir)) {
@@ -73,8 +74,22 @@ async function validateCache(browsersPath: string, linksDir: string) {
   // 3. Install missing browsers.
   for (const browser of allBrowsers) {
     const browserPath = browserPaths.browserDirectory(browsersPath, browser);
-    await browserFetcher.downloadBrowserWithProgressBar(browserPath, browser);
+    if (await browserFetcher.downloadBrowserWithProgressBar(browserPath, browser))
+      await installBrowser(packagePath, browserPath, browser);
   }
+}
+
+async function installBrowser(packagePath: string, browserPath: string, browser: browserPaths.BrowserDescriptor) {
+  if (browser.name !== 'firefox')
+    return;
+  const firefox = new Playwright(packagePath, [browser]).firefox!;
+  const userDataDir = path.join(browserPath, 'cached-profile');
+  await fsMkdirAsync(userDataDir, { recursive: true });
+  logPolitely('Pre-compiling Firefox scripts at ' + userDataDir);
+  const browserContext = await firefox.launchPersistentContext(userDataDir);
+  const page = await browserContext.newPage();
+  await page.goto('data:text/html,<html>Hello world</html>');
+  await browserContext.close();
 }
 
 function sha1(data: string): string {
