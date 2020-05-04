@@ -343,13 +343,6 @@ export class CRBrowserContext extends BrowserContextBase {
   }
 
   async addCookies(cookies: network.SetNetworkCookieParam[]) {
-    cookies = cookies.map(c => {
-      const copy = { ...c };
-      // Working around setter issue in Chrome. Cookies are now None by default.
-      if (copy.sameSite === 'None')
-        delete copy.sameSite;
-      return copy;
-    });
     await this._browser._session.send('Storage.setCookies', { cookies: network.rewriteCookies(cookies), browserContextId: this._browserContextId || undefined });
   }
 
