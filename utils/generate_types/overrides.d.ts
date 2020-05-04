@@ -39,7 +39,7 @@ type HTMLOrSVGElement = SVGElement | HTMLElement;
 type HTMLOrSVGElementHandle = ElementHandle<HTMLOrSVGElement>;
 
 type WaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
-  waitFor: 'visible'|'attached';
+  state: 'visible'|'attached';
 }
 
 export interface Page {

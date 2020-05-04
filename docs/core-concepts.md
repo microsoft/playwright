@@ -204,18 +204,18 @@ You can explicitly wait for an element to appear in the DOM or to become visible
 
 ```js
 // Wait for #search to appear in the DOM.
-await page.waitForSelector('#search', { waitFor: 'attached' });
+await page.waitForSelector('#search', { state: 'attached' });
 // Wait for #promo to become visible, for example with `visibility:visible`.
-await page.waitForSelector('#promo', { waitFor: 'visible' });
+await page.waitForSelector('#promo');
 ```
 
 ... or to become hidden or detached
 
 ```js
 // Wait for #details to become hidden, for example with `display:none`.
-await page.waitForSelector('#details', { waitFor: 'hidden' });
+await page.waitForSelector('#details', { state: 'hidden' });
 // Wait for #promo to be removed from the DOM.
-await page.waitForSelector('#promo', { waitFor: 'detached' });
+await page.waitForSelector('#promo', { state: 'detached' });
 ```
 
 #### API reference

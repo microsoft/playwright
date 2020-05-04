@@ -434,14 +434,16 @@ export class Frame {
 
   async waitForSelector(selector: string, options?: types.WaitForElementOptions): Promise<dom.ElementHandle<Element> | null> {
     if (options && (options as any).visibility)
-      throw new Error('options.visibility is not supported, did you mean options.waitFor?');
-    const { waitFor = 'attached' } = (options || {});
-    if (!['attached', 'detached', 'visible', 'hidden'].includes(waitFor))
-      throw new Error(`Unsupported waitFor option "${waitFor}"`);
+      throw new Error('options.visibility is not supported, did you mean options.state?');
+    if (options && (options as any).waitFor && (options as any).waitFor !== 'visible')
+      throw new Error('options.waitFor is not supported, did you mean options.state?');
+    const { state = 'visible' } = (options || {});
+    if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
+      throw new Error(`Unsupported waitFor option "${state}"`);
 
     const deadline = this._page._timeoutSettings.computeDeadline(options);
-    const { world, task } = selectors._waitForSelectorTask(selector, waitFor, deadline);
-    const result = await this._scheduleRerunnableTask(task, world, deadline, `selector "${selectorToString(selector, waitFor)}"`);
+    const { world, task } = selectors._waitForSelectorTask(selector, state, deadline);
+    const result = await this._scheduleRerunnableTask(task, world, deadline, `selector "${selectorToString(selector, state)}"`);
     if (!result.asElement()) {
       result.dispose();
       return null;
@@ -936,9 +938,9 @@ class RerunnableTask {
   }
 }
 
-function selectorToString(selector: string, waitFor: 'attached' | 'detached' | 'visible' | 'hidden'): string {
+function selectorToString(selector: string, state: 'attached' | 'detached' | 'visible' | 'hidden'): string {
   let label;
-  switch (waitFor) {
+  switch (state) {
     case 'visible': label = '[visible] '; break;
     case 'hidden': label = '[hidden] '; break;
     case 'attached': label = ''; break;
