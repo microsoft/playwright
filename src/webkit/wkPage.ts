@@ -764,6 +764,10 @@ export class WKPage implements PageDelegate {
   async setActivityPaused(paused: boolean): Promise<void> {
   }
 
+  rafCountForStablePosition(): number {
+    return process.platform === 'win32' ? 5 : 1;
+  }
+
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     const result = await this._session.send('DOM.getContentQuads', {
       objectId: toRemoteObject(handle).objectId!

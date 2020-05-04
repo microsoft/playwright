@@ -262,6 +262,10 @@ export class CRPage implements PageDelegate {
     await this._forAllFrameSessions(frame => frame._setActivityPaused(paused));
   }
 
+  rafCountForStablePosition(): number {
+    return 1;
+  }
+
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     return this._sessionForHandle(handle)._getContentQuads(handle);
   }

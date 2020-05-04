@@ -262,7 +262,7 @@ export class Injected {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  async waitForDisplayedAtStablePosition(node: Node, timeout: number): Promise<InjectedResult> {
+  async waitForDisplayedAtStablePosition(node: Node, rafCount: number, timeout: number): Promise<InjectedResult> {
     if (!node.isConnected)
       return { status: 'notconnected' };
     const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
@@ -271,6 +271,8 @@ export class Injected {
 
     let lastRect: types.Rect | undefined;
     let counter = 0;
+    let samePositionCounter = 0;
+    let lastTime = 0;
     const result = await this.poll('raf', timeout, (): 'notconnected' | boolean => {
       // First raf happens in the same animation frame as evaluation, so it does not produce
       // any client rect difference compared to synchronous call. We skip the synchronous call
@@ -279,10 +281,22 @@ export class Injected {
         return false;
       if (!node.isConnected)
         return 'notconnected';
+
+      // Drop frames that are shorter than 16ms - WebKit Win bug.
+      const time = performance.now();
+      if (rafCount > 1 && time - lastTime < 15)
+        return false;
+      lastTime = time;
+
       // Note: this logic should be similar to isVisible() to avoid surprises.
       const clientRect = element.getBoundingClientRect();
       const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
-      let isDisplayedAndStable = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height && rect.width > 0 && rect.height > 0;
+      const samePosition = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height && rect.width > 0 && rect.height > 0;
+      if (samePosition)
+        ++samePositionCounter;
+      else
+        samePositionCounter = 0;
+      let isDisplayedAndStable = samePositionCounter >= rafCount;
       const style = element.ownerDocument && element.ownerDocument.defaultView ? element.ownerDocument.defaultView.getComputedStyle(element) : undefined;
       isDisplayedAndStable = isDisplayedAndStable && (!!style && style.visibility !== 'hidden');
       lastRect = rect;

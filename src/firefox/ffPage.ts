@@ -431,6 +431,10 @@ export class FFPage implements PageDelegate {
   async setActivityPaused(paused: boolean): Promise<void> {
   }
 
+  rafCountForStablePosition(): number {
+    return 1;
+  }
+
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     const result = await this._session.send('Page.getContentQuads', {
       frameId: handle._context.frame._id,
