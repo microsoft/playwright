@@ -24,8 +24,10 @@ import { Events } from './events';
 import { Loggers } from './logger';
 import { ProxySettings } from './types';
 import { LoggerSink } from './loggerSink';
+import { TraceController } from './trace/traceController';
 
 export type BrowserOptions = {
+  name: string,
   loggers: Loggers,
   downloadsPath?: string,
   headful?: boolean,
@@ -54,6 +56,9 @@ export abstract class BrowserBase extends EventEmitter implements Browser {
   constructor(options: BrowserOptions) {
     super();
     this._options = options;
+    const traceController = TraceController.instance();
+    if (traceController)
+      traceController.browserCreated(this);
   }
 
   abstract newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
@@ -92,6 +97,9 @@ export abstract class BrowserBase extends EventEmitter implements Browser {
     for (const context of this.contexts())
       (context as BrowserContextBase)._browserClosed();
     this.emit(Events.Browser.Disconnected);
+    const traceController = TraceController.instance();
+    if (traceController)
+      traceController.browserDestroyed(this);
   }
 
   async close() {

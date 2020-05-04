@@ -341,3 +341,30 @@ jobs:
       with:
         name: headful-linux-coredumps
         path: coredumps
+
+  trace_linux:
+    name: "Trace Linux"
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10
+    - uses: microsoft/playwright-github-action@v1
+    - run: npm ci
+    - run: mkdir -p coredumps
+    # Set core dump file name pattern
+    - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
+    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
+    # Wrap `npm run` in a subshell to redirect STDERR to file.
+    # Enable core dumps in the subshell.
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && PWTRACE=./test/output-trace npm run test -- --line-break=100"
+    - uses: actions/upload-artifact@v1
+      with:
+        name: trace-linux-trace
+        path: test/output-trace
+    - uses: actions/upload-artifact@v1
+      if: failure()
+      with:
+        name: trace-linux-coredumps
+        path: coredumps

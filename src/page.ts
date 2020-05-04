@@ -32,6 +32,7 @@ import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
 import { logError, Logger } from './logger';
 import { ProgressController, Progress, runAbortableTask } from './progress';
+import { TraceController } from './trace/traceController';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -162,8 +163,21 @@ export class Page extends EventEmitter {
     this._disconnectedCallback(new Error('Page closed'));
   }
 
+  _captureSnapshot(options: types.TimeoutOptions & { label?: string } = {}): Promise<void> {
+    return runAbortableTask(async progress => {
+      await this._snapshot(progress, options.label || 'snapshot');
+    }, this._logger, this._timeoutSettings.timeout(options), 'page.captureSnapshot');
+  }
+
+  async _snapshot(progress: Progress, label: string): Promise<void> {
+    const traceController = TraceController.instance();
+    if (traceController)
+      await traceController.captureSnapshot(progress, this, label);
+  }
+
   async _runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number, apiName: string): Promise<T> {
     return runAbortableTask(async progress => {
+      await this._snapshot(progress, 'before ' + progress.apiName);
       return task(progress);
     }, this._logger, timeout, apiName);
   }

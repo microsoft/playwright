@@ -24,39 +24,61 @@ import { BrowserType } from '../server/browserType';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import { helper } from '../helper';
 import { LaunchOptions, BrowserContextOptions } from '../types';
+import { showTraceViewer } from '../trace/traceViewer';
 
 const playwright = new Playwright(__dirname, require('../../browsers.json')['browsers']);
 
 program
-    .version('Version ' + require('../../package.json').version)
-    .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
-    .option('--headless', 'run in headless mode', false)
-    .option('--device <deviceName>', 'emulate device, for example  "iPhone 11"');
+    .version('Version ' + require('../../package.json').version);
 
 program
     .command('open [url]')
     .description('open page in browser specified via -b, --browser')
+    .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
+    .option('--headless', 'run in headless mode', false)
+    .option('--device <deviceName>', 'emulate device, for example  "iPhone 11"')
     .action(function(url, command) {
-      open(command.parent, url);
-    }).on('--help', function() {
+      open(command, url);
+    })
+    .on('--help', function() {
       console.log('');
       console.log('Examples:');
       console.log('');
       console.log('  $ open');
-      console.log('  $ -b webkit open https://example.com');
+      console.log('  $ open -b webkit https://example.com');
     });
 
 program
     .command('record [url]')
     .description('open page in browser specified via -b, --browser and start recording')
+    .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
+    .option('--headless', 'run in headless mode', false)
+    .option('--device <deviceName>', 'emulate device, for example  "iPhone 11"')
     .action(function(url, command) {
-      record(command.parent, url);
-    }).on('--help', function() {
+      record(command, url);
+    })
+    .on('--help', function() {
       console.log('');
       console.log('Examples:');
       console.log('');
       console.log('  $ record');
-      console.log('  $ -b webkit record https://example.com');
+      console.log('  $ record -b webkit https://example.com');
+    });
+
+program
+    .command('trace-viewer <path-to-trace-directory>')
+    .description('open viewier for the trace')
+    .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
+    .action(function(tracePath, command) {
+      traceViewer(command, tracePath);
+    })
+    .on('--help', function() {
+      console.log('Note: trace viewer only shows traces for the browser specified with --browser');
+      console.log('');
+      console.log('Examples:');
+      console.log('');
+      console.log('  $ trace-viewer /path/to/trace/directory');
+      console.log('  $ trace-viewer -b webkit /path/to/trace/directory');
     });
 
 const browsers = [
@@ -69,9 +91,12 @@ for (const {initial, name, type} of browsers) {
   program
       .command(`${initial} [url]`)
       .description(`open page in ${name} browser`)
+      .option('--headless', 'run in headless mode', false)
+      .option('--device <deviceName>', 'emulate device, for example  "iPhone 11"')
       .action(function(url, command) {
-        open({ ...command.parent, browser: type }, url);
-      }).on('--help', function() {
+        open({ ...command, browser: type }, url);
+      })
+      .on('--help', function() {
         console.log('');
         console.log('Examples:');
         console.log('');
@@ -84,7 +109,6 @@ program.parse(process.argv);
 type Options = {
   browser: string,
   device: string | undefined,
-  verbose: boolean,
   headless: boolean,
 };
 
@@ -105,6 +129,11 @@ async function open(options: Options, url: string | undefined) {
 async function record(options: Options, url: string | undefined) {
   helper.setRecordMode(true);
   return await open(options, url);
+}
+
+async function traceViewer(options: { browser: string }, tracePath: string) {
+  const browserType = lookupBrowserType(options.browser);
+  showTraceViewer(browserType, tracePath);
 }
 
 function lookupBrowserType(name: string): BrowserType {

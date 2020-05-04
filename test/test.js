@@ -16,6 +16,7 @@
  */
 
 const fs = require('fs');
+const rm = require('rimraf').sync;
 const utils = require('./utils');
 const TestRunner = require('../utils/testrunner/');
 const {Environment} = require('../utils/testrunner/Test');
@@ -80,8 +81,14 @@ function collect(browserNames) {
   // TODO: this should be a preinstalled playwright by default.
   const playwrightPath = config.playwrightPath;
   const playwright = require('..');
-  const { setUnderTest } = require(require('path').join(playwrightPath, 'lib/helper.js'));
+  const { setUnderTest } = require(require('path').join(playwrightPath, 'lib', 'helper.js'));
   setUnderTest();
+
+  if (process.env.PWTRACE) {
+    if (fs.existsSync(process.env.PWTRACE))
+      rm(process.env.PWTRACE);
+    fs.mkdirSync(process.env.PWTRACE, { recursive: true });
+  }
 
   const playwrightEnvironment = new Environment('Playwright');
   playwrightEnvironment.beforeAll(async state => {
@@ -160,11 +167,18 @@ function collect(browserNames) {
     });
 
     const pageEnvironment = new Environment('Page');
-    pageEnvironment.beforeEach(async state => {
+    pageEnvironment.beforeEach(async (state, testRun) => {
       state.context = await state.browser.newContext();
       state.page = await state.context.newPage();
     });
-    pageEnvironment.afterEach(async state => {
+    pageEnvironment.afterEach(async (state, testRun) => {
+      if (!testRun.ok()) {
+        try {
+          await state.page._captureSnapshot({ timeout: 5000, label: 'Test Failed' });
+        } catch (e) {
+          // Failed to capture snapshot. Oh well...
+        }
+      }
       await state.context.close();
       state.context = null;
       state.page = null;

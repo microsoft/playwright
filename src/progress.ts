@@ -16,7 +16,7 @@
 
 import { Logger } from './logger';
 import { TimeoutError } from './errors';
-import { assert } from './helper';
+import { assert, helper } from './helper';
 import { rewriteErrorMessage } from './utils/stackTrace';
 
 export interface Progress {
@@ -65,7 +65,7 @@ export class ProgressController {
     this._logger = logger;
 
     this._timeout = timeout;
-    this._deadline = timeout ? monotonicTime() + timeout : 0;
+    this._deadline = timeout ? helper.monotonicTime() + timeout : 0;
 
     this._forceAbortPromise = new Promise((resolve, reject) => this._forceAbort = reject);
     this._forceAbortPromise.catch(e => null);  // Prevent unhandle promsie rejection.
@@ -83,7 +83,7 @@ export class ProgressController {
       apiName: this._apiName,
       aborted: this._abortedPromise,
       logger: loggerScope,
-      timeUntilDeadline: () => this._deadline ? this._deadline - monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
+      timeUntilDeadline: () => this._deadline ? this._deadline - helper.monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
       isRunning: () => this._state === 'running',
       cleanupWhenAborted: (cleanup: () => any) => {
         if (this._state === 'running')
@@ -141,11 +141,6 @@ function formatLogRecording(log: string[], name: string): string {
   const leftLength = (headerLength - name.length) / 2;
   const rightLength = headerLength - name.length - leftLength;
   return `\n${'='.repeat(leftLength)}${name}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
-}
-
-function monotonicTime(): number {
-  const [seconds, nanoseconds] = process.hrtime();
-  return seconds * 1000 + (nanoseconds / 1000000 | 0);
 }
 
 class AbortedError extends Error {}

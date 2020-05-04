@@ -2,6 +2,7 @@
 /test/output-chromium
 /test/output-firefox
 /test/output-webkit
+/test/output-trace
 /test/test-user-data-dir*
 .local-browsers/
 /.dev_profile*

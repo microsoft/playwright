@@ -330,6 +330,17 @@ class Helper {
   static setRecordMode(enabled: boolean) {
     isInRecordMode = enabled;
   }
+
+  static monotonicTime(): number {
+    const [seconds, nanoseconds] = process.hrtime();
+    return seconds * 1000 + (nanoseconds / 1000000 | 0);
+  }
+
+  static sha1(buffer: Buffer): string {
+    const hash = crypto.createHash('sha1');
+    hash.update(buffer);
+    return hash.digest('hex');
+  }
 }
 
 export function assert(value: any, message?: string): asserts value {

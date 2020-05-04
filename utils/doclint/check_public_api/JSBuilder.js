@@ -184,7 +184,7 @@ function checkSources(sources) {
    */
   function serializeType(type, circular = []) {
     let typeName = checker.typeToString(type).replace(/SmartHandle/g, 'Handle');
-    if (typeName === 'any') 
+    if (typeName === 'any')
       typeName = 'Object';
     const nextCircular = [typeName].concat(circular);
 

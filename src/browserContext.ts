@@ -30,6 +30,7 @@ import { EventEmitter } from 'events';
 import { ProgressController } from './progress';
 import { DebugController } from './debug/debugController';
 import { LoggerSink } from './loggerSink';
+import { TraceController } from './trace/traceController';
 
 export interface BrowserContext {
   setDefaultNavigationTimeout(timeout: number): void;
@@ -79,6 +80,9 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
     this._apiLogger = loggers.api;
     this._isPersistentContext = isPersistentContext;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
+    const traceController = TraceController.instance();
+    if (traceController)
+      traceController.contextCreated(this);
   }
 
   async _initialize() {
@@ -112,6 +116,9 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
     this._downloads.clear();
     this._closePromiseFulfill!(new Error('Context closed'));
     this.emit(Events.BrowserContext.Close);
+    const traceController = TraceController.instance();
+    if (traceController)
+      traceController.contextDestroyed(this);
   }
 
   // BrowserContext methods.

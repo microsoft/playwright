@@ -202,7 +202,7 @@ export class Electron  {
       const chromeMatch = await waitForLine(progress, launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/);
       const chromeTransport = await WebSocketTransport.connect(progress, chromeMatch[1]);
       const browserServer = new BrowserServer(launchedProcess, gracefullyClose, kill);
-      const browser = await CRBrowser.connect(chromeTransport, { headful: true, loggers, persistent: { viewport: null }, ownedServer: browserServer });
+      const browser = await CRBrowser.connect(chromeTransport, { name: 'electron', headful: true, loggers, persistent: { viewport: null }, ownedServer: browserServer });
       app = new ElectronApplication(loggers, browser, nodeConnection);
       await app._init();
       return app;

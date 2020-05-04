@@ -106,6 +106,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     if ((options as any).__testHookBeforeCreateBrowser)
       await (options as any).__testHookBeforeCreateBrowser();
     const browserOptions: BrowserOptions = {
+      name: this.name(),
       slowMo: options.slowMo,
       persistent,
       headful: !options.headless,
@@ -142,7 +143,7 @@ export abstract class BrowserTypeBase implements BrowserType {
       progress.cleanupWhenAborted(() => transport.closeAndWait());
       if ((options as any).__testHookBeforeCreateBrowser)
         await (options as any).__testHookBeforeCreateBrowser();
-      const browser = await this._connectToTransport(transport, { slowMo: options.slowMo, loggers });
+      const browser = await this._connectToTransport(transport, { name: this.name(), slowMo: options.slowMo, loggers });
       return browser;
     }, loggers.browser, TimeoutSettings.timeout(options), 'browserType.connect');
   }
