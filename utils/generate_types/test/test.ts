@@ -155,7 +155,7 @@ playwright.chromium.launch().then(async browser => {
 
   let currentURL: string;
   page
-      .waitForSelector('img', { waitFor: 'visible' })
+      .waitForSelector('img')
       .then(() => console.log('First URL with image: ' + currentURL));
   for (currentURL of [
     'https://example.com',
@@ -594,7 +594,7 @@ playwright.chromium.launch().then(async browser => {
   }, 5);
 
   const something = Math.random()  > .5 ? 'visible' : 'attached';
-  const handle = await page.waitForSelector('a', {waitFor: something});
+  const handle = await page.waitForSelector('a', {state: something});
   await handle.$eval('span', (element, { x, y }) => {
     const spanAssertion: AssertType<HTMLSpanElement, typeof element> = true;
     const numberAssertion: AssertType<number, typeof x> = true;
@@ -654,19 +654,19 @@ playwright.chromium.launch().then(async browser => {
       const canBeNull: AssertType<null, typeof handle> = false;
     }
     {
-      const waitFor = Math.random() > .5 ? 'attached' : 'visible';
-      const handle = await frameLike.waitForSelector('body', {waitFor});
+      const state = Math.random() > .5 ? 'attached' : 'visible';
+      const handle = await frameLike.waitForSelector('body', {state});
       const bodyAssertion: AssertType<playwright.ElementHandle<HTMLBodyElement>, typeof handle> = true;
       const canBeNull: AssertType<null, typeof handle> = false;
     }
     {
-      const handle = await frameLike.waitForSelector('body', {waitFor: 'hidden'});
+      const handle = await frameLike.waitForSelector('body', {state: 'hidden'});
       const bodyAssertion: AssertType<playwright.ElementHandle<HTMLBodyElement>, typeof handle> = true;
       const canBeNull: AssertType<null, typeof handle> = true;
     }
     {
-      const waitFor = Math.random() > .5 ? 'hidden' : 'visible';
-      const handle = await frameLike.waitForSelector('body', {waitFor});
+      const state = Math.random() > .5 ? 'hidden' : 'visible';
+      const handle = await frameLike.waitForSelector('body', {state});
       const bodyAssertion: AssertType<playwright.ElementHandle<HTMLBodyElement>, typeof handle> = true;
       const canBeNull: AssertType<null, typeof handle> = true;
     }
@@ -677,14 +677,14 @@ playwright.chromium.launch().then(async browser => {
       const canBeNull: AssertType<null, typeof handle> = false;
     }
     {
-      const waitFor = Math.random() > .5 ? 'attached' : 'visible';
-      const handle = await frameLike.waitForSelector('something-strange', {waitFor});
+      const state = Math.random() > .5 ? 'attached' : 'visible';
+      const handle = await frameLike.waitForSelector('something-strange', {state});
       const elementAssertion: AssertType<playwright.ElementHandle<HTMLElement|SVGElement>, typeof handle> = true;
       const canBeNull: AssertType<null, typeof handle> = false;
     }
     {
-      const waitFor = Math.random() > .5 ? 'hidden' : 'visible';
-      const handle = await frameLike.waitForSelector('something-strange', {waitFor});
+      const state = Math.random() > .5 ? 'hidden' : 'visible';
+      const handle = await frameLike.waitForSelector('something-strange', {state});
       const elementAssertion: AssertType<playwright.ElementHandle<HTMLElement|SVGElement>, typeof handle> = true;
       const canBeNull: AssertType<null, typeof handle> = true;
     }

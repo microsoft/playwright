@@ -142,12 +142,12 @@ export class Selectors {
     return result;
   }
 
-  _waitForSelectorTask(selector: string, waitFor: 'attached' | 'detached' | 'visible' | 'hidden', deadline: number): { world: 'main' | 'utility', task: (context: dom.FrameExecutionContext) => Promise<js.JSHandle> } {
+  _waitForSelectorTask(selector: string, state: 'attached' | 'detached' | 'visible' | 'hidden', deadline: number): { world: 'main' | 'utility', task: (context: dom.FrameExecutionContext) => Promise<js.JSHandle> } {
     const parsed = this._parseSelector(selector);
-    const task = async (context: dom.FrameExecutionContext) => context.evaluateHandleInternal(({ evaluator, parsed, waitFor, timeout }) => {
+    const task = async (context: dom.FrameExecutionContext) => context.evaluateHandleInternal(({ evaluator, parsed, state, timeout }) => {
       return evaluator.injected.poll('raf', timeout, () => {
         const element = evaluator.querySelector(parsed, document);
-        switch (waitFor) {
+        switch (state) {
           case 'attached':
             return element || false;
           case 'detached':
@@ -158,7 +158,7 @@ export class Selectors {
             return !element || !evaluator.injected.isVisible(element);
         }
       });
-    }, { evaluator: await this._prepareEvaluator(context), parsed, waitFor, timeout: helper.timeUntilDeadline(deadline) });
+    }, { evaluator: await this._prepareEvaluator(context), parsed, state, timeout: helper.timeUntilDeadline(deadline) });
     return { world: this._needsMainContext(parsed) ? 'main' : 'utility', task };
   }
 

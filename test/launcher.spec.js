@@ -171,10 +171,10 @@ describe('Browser.disconnect', function() {
     const browserServer = await browserType.launchServer(defaultBrowserOptions);
     const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
     const page = await remote.newPage();
-    const watchdog = page.waitForSelector('div', { timeout: 60000 }).catch(e => e);
+    const watchdog = page.waitForSelector('div', { state: 'attached', timeout: 60000 }).catch(e => e);
 
     // Make sure the previous waitForSelector has time to make it to the browser before we disconnect.
-    await page.waitForSelector('body');
+    await page.waitForSelector('body', { state: 'attached' });
 
     await remote.close();
     const error = await watchdog;
