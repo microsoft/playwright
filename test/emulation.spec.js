@@ -555,7 +555,8 @@ describe('focus', function() {
     ]);
     expect(active).toEqual(['INPUT', 'TEXTAREA']);
   });
-  it('should not affect screenshots', async({page, server, golden}) => {
+  it.skip(FFOX && !HEADLESS)('should not affect screenshots', async({page, server, golden}) => {
+    // Firefox headful produces a different image.
     const page2 = await page.context().newPage();
     await Promise.all([
       page.setViewportSize({width: 500, height: 500}),

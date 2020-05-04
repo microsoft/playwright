@@ -39,6 +39,7 @@ class DefaultTestRunner {
       showMarkedAsFailingTests,
       verbose,
       summary,
+      lineBreak,
     } = options;
 
     this._crashIfTestsAreFocusedOnCI = crashIfTestsAreFocusedOnCI;
@@ -52,6 +53,7 @@ class DefaultTestRunner {
     this._showMarkedAsFailingTests = showMarkedAsFailingTests;
     this._verbose = verbose;
     this._summary = summary;
+    this._lineBreak = lineBreak;
 
     this._filter = new FocusedFilter();
     this._repeater = new Repeater();
@@ -126,6 +128,7 @@ class DefaultTestRunner {
         showMarkedAsFailingTests: this._showMarkedAsFailingTests,
         verbose: this._verbose,
         summary: this._summary,
+        lineBreak: this._lineBreak,
       };
       reporter = new Reporter(reporterDelegate, reporterOptions);
     }

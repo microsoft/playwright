@@ -466,7 +466,8 @@ describe('Request.fulfill', function() {
     expect(response.statusText()).toBe('Unprocessable Entity');
     expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
   });
-  it('should allow mocking binary responses', async({page, server, golden}) => {
+  it.skip(FFOX && !HEADLESS)('should allow mocking binary responses', async({page, server, golden}) => {
+    // Firefox headful produces a different image.
     await page.route('**/*', route => {
       const imageBuffer = fs.readFileSync(path.join(__dirname, 'assets', 'pptr.png'));
       route.fulfill({

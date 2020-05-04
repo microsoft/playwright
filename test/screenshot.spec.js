@@ -17,7 +17,10 @@
 
 const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
 
-describe('Page.screenshot', function() {
+// Firefox headful produces a different image.
+const ffheadful = FFOX && !HEADLESS;
+
+describe.skip(ffheadful)('Page.screenshot', function() {
   it('should work', async({page, server, golden}) => {
     await page.setViewportSize({width: 500, height: 500});
     await page.goto(server.PREFIX + '/grid.html');
@@ -221,7 +224,7 @@ describe('Page.screenshot', function() {
   });
 });
 
-describe('ElementHandle.screenshot', function() {
+describe.skip(ffheadful)('ElementHandle.screenshot', function() {
   it('should work', async({page, server, golden}) => {
     await page.setViewportSize({width: 500, height: 500});
     await page.goto(server.PREFIX + '/grid.html');
