@@ -5507,6 +5507,19 @@ index 545c28e62f72771de5f3f3e9fed2e8cf6147ed0f..a6fc5f5b3fc62adce2604821bd29f9ae
          const void* keys[] = {
              kCFStreamSSLPeerName,
              kCFStreamSSLLevel,
+diff --git a/Source/WebCore/platform/network/curl/CookieJarDB.h b/Source/WebCore/platform/network/curl/CookieJarDB.h
+index 112f632128b1aa72b4639b62a3eb5a79e37c5f80..0ba51dfb3f80ce0cc09ba9065fd5ed7c9588d931 100644
+--- a/Source/WebCore/platform/network/curl/CookieJarDB.h
++++ b/Source/WebCore/platform/network/curl/CookieJarDB.h
+@@ -69,7 +69,7 @@ public:
+     WEBCORE_EXPORT ~CookieJarDB();
+ 
+ private:
+-    CookieAcceptPolicy m_acceptPolicy { CookieAcceptPolicy::Always };
++    CookieAcceptPolicy m_acceptPolicy { CookieAcceptPolicy::OnlyFromMainDocumentDomain };
+     String m_databasePath;
+ 
+     bool m_detectedDatabaseCorruption { false };
 diff --git a/Source/WebCore/platform/network/curl/CurlStream.cpp b/Source/WebCore/platform/network/curl/CurlStream.cpp
 index 26dc7bef4b74bc6b4e2e526dec6523c3ad6d3643..c783aa5a7984f3966312e5e0ffd76f93ed6208f8 100644
 --- a/Source/WebCore/platform/network/curl/CurlStream.cpp
