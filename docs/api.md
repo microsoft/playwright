@@ -1085,7 +1085,7 @@ await page.dispatchEvent('#source', 'dragstart', { dataTransfer });
 await page.evaluate(() => matchMedia('screen').matches));
 // → true
 await page.evaluate(() => matchMedia('print').matches));
-// → true
+// → false
 
 await page.emulateMedia({ media: 'print' });
 await page.evaluate(() => matchMedia('screen').matches));
@@ -1097,7 +1097,7 @@ await page.emulateMedia({});
 await page.evaluate(() => matchMedia('screen').matches));
 // → true
 await page.evaluate(() => matchMedia('print').matches));
-// → true
+// → false
 ```
 
 ```js
