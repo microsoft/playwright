@@ -110,7 +110,10 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         WKContextSetPrimaryDataStore(context.get(), dataStore.get());
 
         auto* mainWindow = new MainWindow();
-        HRESULT hr = mainWindow->init(hInst, context.get(), dataStore.get());
+        auto conf = adoptWK(WKPageConfigurationCreate());
+        WKPageConfigurationSetContext(conf.get(), context.get());
+        WKPageConfigurationSetWebsiteDataStore(conf.get(), dataStore.get());
+        HRESULT hr = mainWindow->init(hInst, conf.get());
         if (FAILED(hr))
             goto exit;
 

@@ -40,7 +40,6 @@ public:
     MainWindow();
 
     ~MainWindow();
-    bool init(HINSTANCE hInstance, WKContextRef, WKWebsiteDataStoreRef);
     bool init(HINSTANCE hInstance, WKPageConfigurationRef);
 
     void resizeSubViews();

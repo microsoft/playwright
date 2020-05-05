@@ -12636,10 +12636,10 @@ index 0000000000000000000000000000000000000000..30e6ae3bdc8c1695189885afae949071
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.cpp b/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..544442b75afcba6e121ab202ad32dcdfaf923e2e
+index 0000000000000000000000000000000000000000..9ea75b043513fe4c56b3af33d2082375971a75f7
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.cpp
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,82 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -12695,7 +12695,6 @@ index 0000000000000000000000000000000000000000..544442b75afcba6e121ab202ad32dcdf
 +RefPtr<WebPageProxy> InspectorPlaywrightAgentClientWin::createPage(WTF::String& error, const BrowserContext& context)
 +{
 +    auto conf = API::PageConfiguration::create();
-+    auto prefs = WebPreferences::create(String(), "WebKit2Automation.", "WebKit2Automation.");
 +    conf->setProcessPool(context.processPool.get());
 +    conf->setWebsiteDataStore(context.dataStore.get());
 +    return toImpl(m_createPage(toAPI(&conf.get())));
