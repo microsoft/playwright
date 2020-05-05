@@ -26,8 +26,8 @@ These browsers will take few hundreds of megabytes of the disk space when instal
 ```sh
 du -hs ./Library/Caches/ms-playwright/*
 281M  chromium-XXXXXX
-187M	firefox-XXXX
-180M	webkit-XXXX
+187M  firefox-XXXX
+180M  webkit-XXXX
 ```
 
 You can override default behavior using environment variables. When installing Playwright, ask it to download browsers into a specific location:

@@ -52,7 +52,7 @@ This script will:
 
 If you omit the path to your checkout, the script will assume one is located at `./browser_patches/firefox/checkout`
 
-Send a PR to the Playwright repo to be reviewed. 
+Send a PR to the Playwright repo to be reviewed.
 
 ## 4. Rolling Playwright to the new browser build
 

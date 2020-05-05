@@ -40,8 +40,8 @@ You can also use [`browserContext.setHTTPCredentials`](./api.md#browsercontextse
 
 ```js
 const [ download ] = await Promise.all([
-	page.waitForEvent('download'), // <-- start waiting for the download
-	page.click('button#delayed-download') // <-- perform the action that directly or indirectly initiates it.
+  page.waitForEvent('download'), // <-- start waiting for the download
+  page.click('button#delayed-download') // <-- perform the action that directly or indirectly initiates it.
 ]);
 const path = await download.path();
 ```
