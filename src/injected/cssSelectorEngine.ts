@@ -87,11 +87,13 @@ export function createCSSEngine(shadow: boolean): SelectorEngine {
       //   return simple;
       // if (!shadow)
       //   return;
-      const parts = split(selector);
-      if (!parts.length)
+      const selectors = split(selector);
+      // Note: we do not just merge results produced by each selector, as that
+      // will not return them in the tree traversal order, but rather in the selectors
+      // matching order.
+      if (!selectors.length)
         return;
-      parts.reverse();
-      return queryShadowInternal(root, root, parts, shadow);
+      return queryShadowInternal(root, root, selectors, shadow);
     },
 
     queryAll(root: SelectorRoot, selector: string): Element[] {
@@ -99,11 +101,12 @@ export function createCSSEngine(shadow: boolean): SelectorEngine {
       // if (!shadow)
       //   return Array.from(root.querySelectorAll(selector));
       const result: Element[] = [];
-      const parts = split(selector);
-      if (parts.length) {
-        parts.reverse();
-        queryShadowAllInternal(root, root, parts, shadow, result);
-      }
+      const selectors = split(selector);
+      // Note: we do not just merge results produced by each selector, as that
+      // will not return them in the tree traversal order, but rather in the selectors
+      // matching order.
+      if (selectors.length)
+        queryShadowAllInternal(root, root, selectors, shadow, result);
       return result;
     }
   };
@@ -111,49 +114,89 @@ export function createCSSEngine(shadow: boolean): SelectorEngine {
   return engine;
 }
 
-function queryShadowInternal(boundary: SelectorRoot, root: SelectorRoot, parts: string[], shadow: boolean): Element | undefined {
-  const matching = root.querySelectorAll(parts[0]);
-  for (let i = 0; i < matching.length; i++) {
-    const element = matching[i];
-    if (parts.length === 1 || matches(element, parts, boundary))
-      return element;
+function queryShadowInternal(boundary: SelectorRoot, root: SelectorRoot, selectors: string[][], shadow: boolean): Element | undefined {
+  let elements: NodeListOf<Element> | undefined;
+  if (selectors.length === 1) {
+    // Fast path for a single selector - query only matching elements, not all.
+    const parts = selectors[0];
+    const matching = root.querySelectorAll(parts[0]);
+    for (const element of matching) {
+      // If there is a single part, there are no ancestors to match.
+      if (parts.length === 1 || ancestorsMatch(element, parts, boundary))
+        return element;
+    }
+  } else {
+    // Multiple selectors: visit each element in tree-traversal order and check whether it matches.
+    elements = root.querySelectorAll('*');
+    for (const element of elements) {
+      for (const parts of selectors) {
+        if (!element.matches(parts[0]))
+          continue;
+        // If there is a single part, there are no ancestors to match.
+        if (parts.length === 1 || ancestorsMatch(element, parts, boundary))
+          return element;
+      }
+    }
   }
+
+  // Visit shadow dom after the light dom to preserve the tree-traversal order.
   if (!shadow)
     return;
   if ((root as Element).shadowRoot) {
-    const child = queryShadowInternal(boundary, (root as Element).shadowRoot!, parts, shadow);
+    const child = queryShadowInternal(boundary, (root as Element).shadowRoot!, selectors, shadow);
     if (child)
       return child;
   }
-  const elements = root.querySelectorAll('*');
-  for (let i = 0; i < elements.length; i++) {
-    const element = elements[i];
+  if (!elements)
+    elements = root.querySelectorAll('*');
+  for (const element of elements) {
     if (element.shadowRoot) {
-      const child = queryShadowInternal(boundary, element.shadowRoot, parts, shadow);
+      const child = queryShadowInternal(boundary, element.shadowRoot, selectors, shadow);
       if (child)
         return child;
     }
   }
 }
 
-function queryShadowAllInternal(boundary: SelectorRoot, root: SelectorRoot, parts: string[], shadow: boolean, result: Element[]) {
-  const matching = root.querySelectorAll(parts[0]);
-  for (let i = 0; i < matching.length; i++) {
-    const element = matching[i];
-    if (parts.length === 1 || matches(element, parts, boundary))
-      result.push(element);
+function queryShadowAllInternal(boundary: SelectorRoot, root: SelectorRoot, selectors: string[][], shadow: boolean, result: Element[]) {
+  let elements: NodeListOf<Element> | undefined;
+  if (selectors.length === 1) {
+    // Fast path for a single selector - query only matching elements, not all.
+    const parts = selectors[0];
+    const matching = root.querySelectorAll(parts[0]);
+    for (const element of matching) {
+      // If there is a single part, there are no ancestors to match.
+      if (parts.length === 1 || ancestorsMatch(element, parts, boundary))
+        result.push(element);
+    }
+  } else {
+    // Multiple selectors: visit each element in tree-traversal order and check whether it matches.
+    elements = root.querySelectorAll('*');
+    for (const element of elements) {
+      for (const parts of selectors) {
+        if (!element.matches(parts[0]))
+          continue;
+        // If there is a single part, there are no ancestors to match.
+        if (parts.length === 1 || ancestorsMatch(element, parts, boundary))
+          result.push(element);
+      }
+    }
   }
-  if (shadow && (root as Element).shadowRoot)
-    queryShadowAllInternal(boundary, (root as Element).shadowRoot!, parts, shadow, result);
-  const elements = root.querySelectorAll('*');
-  for (let i = 0; i < elements.length; i++) {
-    const element = elements[i];
-    if (shadow && element.shadowRoot)
-      queryShadowAllInternal(boundary, element.shadowRoot, parts, shadow, result);
+
+  // Visit shadow dom after the light dom to preserve the tree-traversal order.
+  if (!shadow)
+    return;
+  if ((root as Element).shadowRoot)
+    queryShadowAllInternal(boundary, (root as Element).shadowRoot!, selectors, shadow, result);
+  if (!elements)
+    elements = root.querySelectorAll('*');
+  for (const element of elements) {
+    if (element.shadowRoot)
+      queryShadowAllInternal(boundary, element.shadowRoot, selectors, shadow, result);
   }
 }
 
-function matches(element: Element | undefined, parts: string[], boundary: SelectorRoot): boolean {
+function ancestorsMatch(element: Element | undefined, parts: string[], boundary: SelectorRoot): boolean {
   let i = 1;
   while (i < parts.length && (element = parentElementOrShadowHost(element!)) && element !== boundary) {
     if (element.matches(parts[i]))
@@ -171,16 +214,24 @@ function parentElementOrShadowHost(element: Element): Element | undefined {
     return (element.parentNode as ShadowRoot).host;
 }
 
-function split(selector: string): string[] {
+// Splits the string into separate selectors by comma, and then each selector by the descendant combinator (space).
+// Parts of each selector are reversed, so that the first one matches the target element.
+function split(selector: string): string[][] {
   let index = 0;
   let quote: string | undefined;
   let start = 0;
   let space: 'none' | 'before' | 'after' = 'none';
-  const result: string[] = [];
-  const append = () => {
+  const result: string[][] = [];
+  let current: string[] = [];
+  const appendToCurrent = () => {
     const part = selector.substring(start, index).trim();
     if (part.length)
-      result.push(part);
+      current.push(part);
+  };
+  const appendToResult = () => {
+    appendToCurrent();
+    result.push(current);
+    current = [];
   };
   while (index < selector.length) {
     const c = selector[index];
@@ -193,7 +244,7 @@ function split(selector: string): string[] {
         if (c === '>' || c === '+' || c === '~') {
           space = 'after';
         } else {
-          append();
+          appendToCurrent();
           start = index;
           space = 'none';
         }
@@ -208,13 +259,17 @@ function split(selector: string): string[] {
       } else if (c === '\'' || c === '"') {
         quote = c;
         index++;
+      } else if (!quote && c === ',') {
+        appendToResult();
+        index++;
+        start = index;
       } else {
         index++;
       }
     }
   }
-  append();
-  return result;
+  appendToResult();
+  return result.filter(parts => !!parts.length).map(parts => parts.reverse());
 }
 
 function test(engine: SelectorEngine) {

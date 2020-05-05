@@ -4,6 +4,7 @@ window.addEventListener('DOMContentLoaded', () => {
   document.body.appendChild(outer);
 
   const root1 = document.createElement('div');
+  root1.setAttribute('id', 'root1');
   outer.appendChild(root1);
   const shadowRoot1 = root1.attachShadow({mode: 'open'});
   const span1 = document.createElement('span');
