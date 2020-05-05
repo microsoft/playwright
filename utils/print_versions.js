@@ -21,6 +21,6 @@ const child_process = require('child_process');
 for (const browserType of [pw.chromium, pw.firefox]) {
   const executablePath = browserType.executablePath();
   const version = child_process.execSync(executablePath + ' --version').toString().trim();
-  console.log(version);
+  console.log('- ' + version);
 }
-console.log('WebKit 13.0.4');
+console.log('- WebKit 13.0.4');
