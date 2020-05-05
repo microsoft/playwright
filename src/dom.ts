@@ -455,9 +455,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _waitForDisplayedAtStablePosition(deadline: number): Promise<void> {
     this._page._log(inputLog, 'waiting for element to be displayed and not moving...');
-    const stablePromise = this._evaluateInUtility(({ injected, node }, timeout) => {
-      return injected.waitForDisplayedAtStablePosition(node, timeout);
-    }, helper.timeUntilDeadline(deadline));
+    const rafCount =  this._page._delegate.rafCountForStablePosition();
+    const stablePromise = this._evaluateInUtility(({ injected, node }, { rafCount, timeout }) => {
+      return injected.waitForDisplayedAtStablePosition(node, rafCount, timeout);
+    }, { rafCount, timeout: helper.timeUntilDeadline(deadline) });
     const timeoutMessage = 'element to be displayed and not moving';
     const injectedResult = await helper.waitWithDeadline(stablePromise, timeoutMessage, deadline);
     handleInjectedResult(injectedResult, timeoutMessage);
