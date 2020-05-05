@@ -2376,7 +2376,7 @@ index b67e89b80b4e7a8586cac81ade5d58a1bcb0d431..c468bc0981d1fb13272b28095f9f7584
  {
      FAST_RETURN_IF_NO_FRONTENDS(false);
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index 25828457119ce81b5283fd03b96fe0ced56d93f8..565b0731690457676b74f77576e8ce7d5d8bd84a 100644
+index 25828457119ce81b5283fd03b96fe0ced56d93f8..aed882b1f46d1a302d705077c42335fb26b8ee32 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -61,12 +61,16 @@
@@ -2545,7 +2545,7 @@ index 25828457119ce81b5283fd03b96fe0ced56d93f8..565b0731690457676b74f77576e8ce7d
 +        errorString = "Node not found"_s;
 +        return;
 +    }
-+    node->document().updateLayoutIgnorePendingStylesheets();
++    m_inspectedPage.updateRendering();
 +    if (!node->isConnected()) {
 +        errorString = "Node is detached from document"_s;
 +        return;
@@ -2591,7 +2591,7 @@ index 25828457119ce81b5283fd03b96fe0ced56d93f8..565b0731690457676b74f77576e8ce7d
 +    }
 +
 +    // Ensure quads are up to date.
-+    renderer->document().updateLayoutIgnorePendingStylesheets();
++    m_inspectedPage.updateRendering();
 +
 +    Frame* containingFrame = renderer->document().frame();
 +    FrameView* containingView = containingFrame ? containingFrame->view() : nullptr;
