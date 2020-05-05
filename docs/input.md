@@ -10,8 +10,6 @@
 - [Upload files](#upload-files)
 - [Focus element](#focus-element)
 
-<br/>
-
 ## Text input
 
 This is the easiest way to fill out the form fields. It focuses the element and triggers an `input` event with the entered text. It works for `<input>`, `<textarea>` and `[contenteditable]` elements.
@@ -36,8 +34,6 @@ await page.fill('#local', '2020-03-02T05:15');
 - [frame.fill(selector, value[, options])](./api.md#framefillselector-value-options) — given frame
 - [elementHandle.fill(value[, options])](./api.md#elementhandlefillvalue-options) — given element
 
-<br/>
-
 ## Checkboxes
 
 This is the easiest way to check and uncheck a checkbox. This method can be used on the `input[type=checkbox]` and on the `label` associated with that input.
@@ -58,8 +54,6 @@ await page.uncheck('#subscribe-label');
 - [frame.uncheck(selector[, options])](./api.md#frameuncheckselector-options) — given frame
 - [elementHandle.check(value[, options])](./api.md#elementhandleuncheckoptions) — given element
 - [elementHandle.uncheck(value[, options])](./api.md#elementhandleuncheckoptions) — given element
-
-<br/>
 
 ## Select options
 
@@ -86,8 +80,6 @@ await page.selectOption('select#colors', option);
 - [page.selectOption(selector, values[, options])](./api.md#pageselectoptionselector-values-options) — main frame
 - [frame.selectOption(selector, values[, options])](./api.md#frameselectoptionselector-values-options) — given frame
 - [elementHandle.selectOption(values[, options])](./api.md#elementhandleselectoptionvalues-options) — given element
-
-<br/>
 
 ## Mouse click
 
@@ -134,8 +126,6 @@ Under the hood, this and other pointer-related methods:
 - [frame.hover(selector[, options])](./api.md#framehoverselector-options) — given frame
 - [elementHandle.hover([options])](./api.md#elementhandlehoveroptions) — given element
 
-<br/>
-
 ## Type characters
 
 Type into the field character by character, as if it was a user with a real keyboard. 
@@ -155,8 +145,6 @@ This method will emit all the necessary keyboard events, with all the `keydown`,
 - [frame.type(selector, text[, options])](./api.md#frametypeselector-text-options) — given frame
 - [elementHandle.type(text[, options])](./api.md#elementhandletypetext-options) — given element
 - [keyboard.type(text[, options])](./api.md#keyboardtypetext-options) — focused element
-
-<br/>
 
 ## Keys and shortcuts
 
@@ -206,8 +194,6 @@ Note that you still need to specify the capital `A` in `Shift-A` to produce the 
 - [elementHandle.press(key[, options])](./api.md#elementhandlepresskey-options) — given element
 - [keyboard.press(key[, options])](./api.md#keyboardpresskey-options) — focused element
 
-<br/>
-
 ## Upload files
 
 ```js
@@ -236,8 +222,6 @@ You can select input files for upload using the `page.setInputFiles` method. It 
 - [frame.setInputFiles(selector, files[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framesetinputfilesselector-value-options)
 - [elementHandle.setInputFiles(files[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandlesetinputfilesfiles-options)
 
-<br/>
-
 ## Focus element
 
 For the dynamic pages that handle focus events, you can focus the given element.
@@ -252,4 +236,3 @@ await page.focus('input#name');
 - [frame.focus(selector, [options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framefocusselector-options)
 - [elementHandle.focus([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandlefocus-options)
 
-<br/>

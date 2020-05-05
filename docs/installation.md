@@ -7,7 +7,6 @@
 - [Download single browser binary](#download-single-browser-binary)
 <!-- GEN:stop -->
 
-<br>
 
 ## Managing browser binaries
 
@@ -50,11 +49,9 @@ $ PLAYWRIGHT_BROWSERS_PATH=0 node playwright-script.js
 
 Playwright keeps track of packages that need those browsers and will garbage collect them as you update Playwright to the newer versions.
 
-<br>
 
 > **NOTE** Developers can opt-in in this mode via exporting `PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers` in their `.bashrc`.
 
-<br>
 
 ## Download from artifact repository
 
@@ -68,7 +65,6 @@ location using the `PLAYWRIGHT_DOWNLOAD_HOST` env variable.
 $ PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i playwright
 ```
 
-<br>
 
 ## Skip browser downloads
 
@@ -81,7 +77,6 @@ This can be done by setting `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` variable before i
 $ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i playwright
 ```
 
-<br>
 
 ## Download single browser binary
 

@@ -12,8 +12,6 @@ Any requests that page does, including [XHRs](https://developer.mozilla.org/en-U
   - [Modify requests](#modify-requests)
   - [Abort requests](#abort-requests)
 
-<br/>
-
 ## HTTP Authentication
 
 ```js
@@ -33,8 +31,6 @@ You can also use [`browserContext.setHTTPCredentials`](./api.md#browsercontextse
 
 - [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
 - [`browserContext.setHTTPCredentials(httpCredentials)`](./api.md#browsercontextsethttpcredentialshttpcredentials)
-
-<br/>
 
 ## Handle file downloads
 
@@ -63,8 +59,6 @@ Note that handling the event forks the control flow and makes script harder to f
 - [`Download`](https://github.com/microsoft/playwright/blob/master/docs/api.md#class-download)
 - [`page.on('download')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#event-download)
 - [`page.waitForEvent(event)`](https://github.com/microsoft/playwright/blob/master/docs/api.md##pagewaitforeventevent-optionsorpredicate)
-
-<br/>
 
 ## Network events
 
@@ -123,8 +117,6 @@ const [response] = await Promise.all([
 - [`page.waitForRequest(urlOrPredicate[, options])`](./api.md#pagewaitforrequesturlorpredicate-options)
 - [`page.waitForResponse(urlOrPredicate[, options])`](./api.md#pagewaitforresponseurlorpredicate-options)
 
-<br/>
-
 ## Handle requests
 
 ```js
@@ -157,8 +149,6 @@ await page.goto('https://example.com');
 - [`page.route(url, handler)`](./api.md#pagerouteurl-handler)
 - [`page.unroute(url[, handler])`](./api.md#pageunrouteurl-handler)
 - [`Route`](./api.md#class-route)
-
-<br/>
 
 ## Modify requests
 
@@ -194,4 +184,3 @@ await page.route('**/*', route => {
 - [`browserContext.route(url, handler)`](./api.md#browsercontextrouteurl-handler)
 - [`route.abort([errorCode])`](./api.md#routeaborterrorcode)
 
-<br/>

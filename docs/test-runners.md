@@ -10,10 +10,6 @@ With a few lines of code, you can hook up Playwright to your favorite JavaScript
 - [Multiple Browsers](#multiple-browsers)
 <!-- GEN:stop -->
 
-<br>
-
-<br>
-
 ## Jest / Jasmine
 
 For Jest, [jest-playwright](https://github.com/playwright-community/jest-playwright) can be used. However for a light-weight solution, requiring playwright directly works fine. Jest shares it's syntax with Jasmine, so this applies to Jasmine as well.
@@ -41,8 +37,6 @@ it('should work', async () => {
 });
 ```
 
-<br>
-
 ## AVA
 
 Tests run concurrently in AVA, so a single page variable cannot be shared between tests. Instead, create new pages with a macro function.
@@ -67,8 +61,6 @@ test('should work', pageMacro, async (t, page) => {
   t.is(await page.title(), 'Example Domain');
 });
 ```
-
-<br>
 
 ## Mocha
 
@@ -96,7 +88,6 @@ it('should work', async () => {
   assert.equal(await page.title(), 'Example Domain');
 });
 ```
-<br>
 
 ## IDE support
 

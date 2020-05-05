@@ -6,8 +6,6 @@
 - [Page events](#page-events)
 - [Handling exceptions](#handling-exceptions)
 
-<br/>
-
 ## Evaluating JavaScript
 
 Execute JavaScript function in the page:
@@ -60,8 +58,6 @@ await myArrayHandle.dispose();
 - [page.evaluate(pageFunction[, arg])](./api.md#pageevaluatepagefunction-arg)
 - [page.evaluateHandle(pageFunction[, arg])](./api.md#pageevaluatehandlepagefunction-arg)
 
-<br/>
-
 ## Capturing screenshot
 
 ```js
@@ -84,8 +80,6 @@ await elementHandle.screenshot({ path: 'screenshot.png' });
 
 - [page.screenshot([options])](./api.md#pagescreenshotoptions)
 - [elementHandle.screenshot([options])](./api.md#elementhandlescreenshotoptions)
-
-<br/>
 
 ## Page events
 
@@ -127,8 +121,6 @@ const [popup] = await Promise.all([
 - [event: 'dialog'](./api.md#event-dialog)
 - [event: 'popup'](./api.md#event-popup)
 
-<br/>
-
 
 ## Handling exceptions
 
@@ -147,4 +139,3 @@ await page.goto('data:text/html,<script>throw new Error("Test")</script>');
 
 - [event: 'pageerror'](./api.md#event-pageerror)
 
-<br/>

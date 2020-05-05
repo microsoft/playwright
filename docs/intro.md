@@ -8,8 +8,6 @@
 - [Debugging scripts](#debugging-scripts)
 <!-- GEN:stop -->
 
-<br>
-
 ## Installation
 
 Use npm or Yarn to install Playwright in your Node.js project. Playwright requires Node.js 10 or higher.
@@ -19,8 +17,6 @@ npm i playwright
 ```
 
 During installation, Playwright downloads browser binaries for Chromium, Firefox and WebKit. This sets up your environment for browser automation with just one command. It is possible to modify this default behavior for monorepos and other scenarios. See [installation parameters](installation.md) for mode details.
-
-<br>
 
 ## Usage
 
@@ -45,8 +41,6 @@ Playwright APIs are asynchronous and return Promise objects. Our code examples u
 })(); // End of the function and () to invoke itself
 ```
 
-<br>
-
 ## First script
 
 In our first script, we will navigate to `whatsmyuseragent.org` and take a screenshot in WebKit.
@@ -69,8 +63,6 @@ By default, Playwright runs the browsers in headless mode. To see the browser UI
 firefox.launch({ headless: false, slowMo: 50 });
 ```
 
-<br>
-
 ## System requirements
 
 Playwright requires Node.js version 10.15 or above. The browser binaries for Chromium,
@@ -83,8 +75,6 @@ Firefox and WebKit work across the 3 platforms (Windows, macOS, Linux):
   * For Ubuntu 18.04, the additional dependencies are defined in [our Docker image](docker/Dockerfile.bionic),
     which is based on Ubuntu.
 
-<br>
-
 ## Debugging scripts
 
 Playwright scripts can be developed just like any other Node.js script. For example, you can use the [Node.js debugger](https://nodejs.org/api/debugger.html) or [VS Code debugging](https://code.visualstudio.com/docs/nodejs/nodejs-debugging) to set breakpoints and get fine grained control over execution.
@@ -93,4 +83,3 @@ Playwright scripts can be developed just like any other Node.js script. For exam
 
 It is also possible to open **browser developer tools** during execution, to inspect the DOM tree or network activity.
 
-<br>

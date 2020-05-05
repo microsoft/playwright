@@ -17,7 +17,6 @@ the following primitives.
   - [Node.js and browser execution contexts](#nodejs-and-browser-execution-contexts)
   - [Object & element handles](#object--element-handles)
 
-<br/>
 
 ## Browser
 
@@ -40,7 +39,6 @@ maximize what a single instance can do through multiple browser contexts.
 
 - [class `Browser`](./api.md#class-browser)
 
-<br/>
 
 ## Browser contexts
 
@@ -73,7 +71,6 @@ const context = await browser.newContext({
 
 - [class `BrowserContext`](./api.md#class-browsercontext)
 
-<br/>
 
 ## Pages and frames
 
@@ -124,7 +121,6 @@ await frame.fill('#username-input', 'John');
 
 To learn more about navigation and loading, read [this document](loading.md).
 
-<br/>
 
 ## Selectors
 
@@ -177,7 +173,6 @@ await page.click('#free-month-promo >> text=Sign Up');
 const sectionText = await page.$eval('*css=section >> text=Selectors', e => e.textContent);
 ```
 
-<br/>
 
 ## Auto-waiting
 
@@ -224,13 +219,12 @@ await page.waitForSelector('#promo', { state: 'detached' });
 - [page.fill(selector, value[, options])](./api.md#pagefillselector-value-options)
 - [page.waitForSelector(selector[, options])](./api.md#pagewaitforselectorselector-options)
 
-<br/>
 
 ## Node.js and browser execution contexts
 
 Playwright scripts run in your Node.js environment. You page scripts run in the page environment. Those environments don't intersect, they are running in different virtual machines in different processes and potentially on different computers.
 
-IMAGE PLACEHOLDER
+<!-- IMAGE PLACEHOLDER -->
 
 The [`page.evaluate`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatepagefunction-arg) API can run a JavaScript function in the context
 of the web page and bring results back to the Node.js environment. Globals like
@@ -259,14 +253,13 @@ const result = await page.evaluate(() => {
 Evaluation parameters are serialized and sent into your web page over the wire.
 You can pass primitive types, JSON-alike objects and remote object handles received from the page.
 
-<br/>
 
 ## Object & element handles
 
 Playwright has an API to create Node-side handles to the page DOM elements or any other objects inside the page.
 These handles live in the Node.js process, whereas the actual objects reside in browser.
 
-IMAGE PLACEHOLDER
+<!-- IMAGE PLACEHOLDER -->
 
 There are two types of handles:
 - [`JSHandle`](./api.md#class-jshandle) to reference any javascript objects in the page
@@ -307,4 +300,3 @@ await page.evaluate(uiElement => getComputedStyle(uiElement).getPropertyValue('d
 - [`page.$$`](./api.md#pageselector-1)
 - [`jsHandle.evaluate`](./api.md#jshandleevaluatepagefunction-arg)
 
-<br/>

@@ -131,9 +131,10 @@ yum update nss -y
 <details>
   <summary>Check out discussions</summary>
 
-- [Puppeteer#290](https://github.com/puppeteer/puppeteer/issues/290) - Debian troubleshooting <br/>
-- [Puppeteer#391](https://github.com/puppeteer/puppeteer/issues/391) - CentOS troubleshooting <br/>
-- [Puppeteer#379](https://github.com/puppeteer/puppeteer/issues/379) - Alpine troubleshooting <br/>
+- [Puppeteer#290](https://github.com/puppeteer/puppeteer/issues/290) - Debian troubleshooting
+- [Puppeteer#391](https://github.com/puppeteer/puppeteer/issues/391) - CentOS troubleshooting
+- [Puppeteer#379](https://github.com/puppeteer/puppeteer/issues/379) - Alpine troubleshooting
+
 </details>
 
 Please file new issues in this repo for things relating to Playwright.

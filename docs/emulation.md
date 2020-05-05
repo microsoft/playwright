@@ -17,8 +17,6 @@ Most of these parameters are configured during the browser context construction,
 - [Permissions](#permissions)
 - [Geolocation](#geolocation)
 
-<br/>
-
 ## User agent
 
 All pages created in the context above will share the user agent specified:
@@ -32,8 +30,6 @@ const context = await browser.newContext({
 #### API reference
 
 - [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
-
-<br/>
 
 ## Viewport, color scheme
 
@@ -70,8 +66,6 @@ await page.emulateMedia({ colorScheme: 'dark' });
 - [`page.emulateMedia([options])`](./api.md#pageemulatemediaoptions)
 - [`page.setViewportSize(viewportSize)`](./api.md#pagesetviewportsizeviewportsize)
 
-<br/>
-
 ## Devices
 
 Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser behavior on a mobile device:
@@ -94,7 +88,6 @@ All pages created in the context above will share the same device parameters.
 - [`playwright.devices`](./api.md#playwrightdevices)
 - [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
 
-<br/>
 
 ## Locale & timezone
 
@@ -110,7 +103,6 @@ const context = await browser.newContext({
 
 - [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
 
-<br/>
 
 ## Permissions
 
@@ -142,7 +134,6 @@ await context.clearPermissions();
 - [`browserContext.grantPermissions(permissions[][, options])`](./api.md#browsercontextgrantpermissionspermissions-options)
 - [`browserContext.clearPermissions()`](./api.md#browsercontextclearpermissions)
 
-<br/>
 
 ## Geolocation
 Create a context with `"geolocation"` permissions granted:
@@ -165,4 +156,3 @@ await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 };
 - [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
 - [`browserContext.setGeolocation(geolocation)`](./api.md#browsercontextsetgeolocationgeolocation)
 
-<br/>
