@@ -684,13 +684,17 @@ export class Frame {
   }
 
   private async _retryWithSelectorIfNotConnected<R>(
+    actionName: string,
     selector: string, options: types.TimeoutOptions,
     action: (handle: dom.ElementHandle<Element>, deadline: number) => Promise<R>): Promise<R> {
     const deadline = this._page._timeoutSettings.computeDeadline(options);
+    this._page._log(dom.inputLog, `(page|frame).${actionName}("${selector}")`);
     while (!helper.isPastDeadline(deadline)) {
       try {
         const { world, task } = selectors._waitForSelectorTask(selector, 'attached', deadline);
+        this._page._log(dom.inputLog, `waiting for the selector "${selector}"`);
         const handle = await this._scheduleRerunnableTask(task, world, deadline, `selector "${selector}"`);
+        this._page._log(dom.inputLog, `...got element for the selector`);
         const element = handle.asElement() as dom.ElementHandle<Element>;
         try {
           return await action(element, deadline);
@@ -703,61 +707,61 @@ export class Frame {
         this._page._log(dom.inputLog, 'Element was detached from the DOM, retrying');
       }
     }
-    throw new TimeoutError(`waiting for selector "${selector}" failed: timeout exceeded`);
+    throw new TimeoutError(`waiting for selector "${selector}" failed: timeout exceeded. Re-run with the DEBUG=pw:input env variable to see the debug log.`);
   }
 
   async click(selector: string, options: dom.ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options,
+    await this._retryWithSelectorIfNotConnected('click', selector, options,
         (handle, deadline) => handle.click(helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
   async dblclick(selector: string, options: dom.MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options,
+    await this._retryWithSelectorIfNotConnected('dblclick', selector, options,
         (handle, deadline) => handle.dblclick(helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
   async fill(selector: string, value: string, options: types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options,
+    await this._retryWithSelectorIfNotConnected('fill', selector, options,
         (handle, deadline) => handle.fill(value, helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
   async focus(selector: string, options: types.TimeoutOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options,
+    await this._retryWithSelectorIfNotConnected('focus', selector, options,
         (handle, deadline) => handle.focus());
   }
 
   async hover(selector: string, options: dom.PointerActionOptions & types.PointerActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options,
+    await this._retryWithSelectorIfNotConnected('hover', selector, options,
         (handle, deadline) => handle.hover(helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
   async selectOption(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return await this._retryWithSelectorIfNotConnected(selector, options,
+    return await this._retryWithSelectorIfNotConnected('selectOption', selector, options,
         (handle, deadline) => handle.selectOption(values, helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
   async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
-    await this._retryWithSelectorIfNotConnected(selector, options,
+    await this._retryWithSelectorIfNotConnected('setInputFiles', selector, options,
         (handle, deadline) => handle.setInputFiles(files, helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
   async type(selector: string, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options,
+    await this._retryWithSelectorIfNotConnected('type', selector, options,
         (handle, deadline) => handle.type(text, helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
   async press(selector: string, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options,
+    await this._retryWithSelectorIfNotConnected('press', selector, options,
         (handle, deadline) => handle.press(key, helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
   async check(selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options,
+    await this._retryWithSelectorIfNotConnected('check', selector, options,
         (handle, deadline) => handle.check(helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
   async uncheck(selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options,
+    await this._retryWithSelectorIfNotConnected('uncheck', selector, options,
         (handle, deadline) => handle.uncheck(helper.optionsWithUpdatedTimeout(options, deadline)));
   }
 
@@ -879,7 +883,7 @@ class RerunnableTask {
     });
     // Since page navigation requires us to re-install the pageScript, we should track
     // timeout on our end.
-    const timeoutError = new TimeoutError(`waiting for ${title || 'function'} failed: timeout exceeded`);
+    const timeoutError = new TimeoutError(`waiting for ${title || 'function'} failed: timeout exceeded. Re-run with the DEBUG=pw:input env variable to see the debug log.`);
     this._timeoutTimer = setTimeout(() => this.terminate(timeoutError), helper.timeUntilDeadline(deadline));
   }
 

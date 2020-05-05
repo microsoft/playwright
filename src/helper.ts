@@ -164,7 +164,7 @@ class Helper {
 
   static async waitWithDeadline<T>(promise: Promise<T>, taskName: string, deadline: number): Promise<T> {
     let reject: (error: Error) => void;
-    const timeoutError = new TimeoutError(`waiting for ${taskName} failed: timeout exceeded`);
+    const timeoutError = new TimeoutError(`Waiting for ${taskName} failed: timeout exceeded. Re-run with the DEBUG=pw:input env variable to see the debug log.`);
     const timeoutPromise = new Promise<T>((resolve, x) => reject = x);
     const timeoutTimer = setTimeout(() => reject(timeoutError), helper.timeUntilDeadline(deadline));
     try {
