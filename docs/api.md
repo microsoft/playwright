@@ -1082,31 +1082,31 @@ await page.dispatchEvent('#source', 'dragstart', { dataTransfer });
 - returns: <[Promise]>
 
 ```js
-await page.evaluate(() => matchMedia('screen').matches));
+await page.evaluate(() => matchMedia('screen').matches);
 // → true
-await page.evaluate(() => matchMedia('print').matches));
+await page.evaluate(() => matchMedia('print').matches);
 // → false
 
 await page.emulateMedia({ media: 'print' });
-await page.evaluate(() => matchMedia('screen').matches));
+await page.evaluate(() => matchMedia('screen').matches);
 // → false
-await page.evaluate(() => matchMedia('print').matches));
+await page.evaluate(() => matchMedia('print').matches);
 // → true
 
 await page.emulateMedia({});
-await page.evaluate(() => matchMedia('screen').matches));
+await page.evaluate(() => matchMedia('screen').matches);
 // → true
-await page.evaluate(() => matchMedia('print').matches));
+await page.evaluate(() => matchMedia('print').matches);
 // → false
 ```
 
 ```js
 await page.emulateMedia({ colorScheme: 'dark' }] });
-await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches));
+await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches);
 // → true
-await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches));
+await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches);
 // → false
-await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches));
+await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches);
 // → false
 ```
 
