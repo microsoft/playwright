@@ -484,6 +484,23 @@ describe('Request.fulfill', function() {
     const img = await page.$('img');
     expect(await img.screenshot()).toBeGolden(golden('mock-binary-response.png'));
   });
+  it.skip(FFOX && !HEADLESS)('should allow mocking svg with charset', async({page, server, golden}) => {
+    // Firefox headful produces a different image.
+    await page.route('**/*', route => {
+      route.fulfill({
+        contentType: 'image/svg+xml ; charset=utf-8',
+        body: '<svg width="50" height="50" version="1.1" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="10" width="30" height="30" stroke="black" fill="transparent" stroke-width="5"/></svg>'
+      });
+    });
+    await page.evaluate(PREFIX => {
+      const img = document.createElement('img');
+      img.src = PREFIX + '/does-not-exist.svg';
+      document.body.appendChild(img);
+      return new Promise((f, r) => { img.onload = f; img.onerror = r; });
+    }, server.PREFIX);
+    const img = await page.$('img');
+    expect(await img.screenshot()).toBeGolden(golden('mock-svg.png'));
+  });
   it('should work with file path', async({page, server, golden}) => {
     await page.route('**/*', route => route.fulfill({ contentType: 'shouldBeIgnored', path: path.join(__dirname, 'assets', 'pptr.png') }));
     await page.evaluate(PREFIX => {

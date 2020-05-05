@@ -77,8 +77,15 @@ export class WKInterceptableRequest implements network.RouteDelegate {
       for (const header of Object.keys(response.headers))
         responseHeaders[header.toLowerCase()] = String(response.headers[header]);
     }
-    if (response.contentType)
+    let mimeType = base64Encoded ? 'application/octet-stream' : 'text/plain';
+    if (response.contentType) {
       responseHeaders['content-type'] = response.contentType;
+      const index = response.contentType.indexOf(';');
+      if (index !== -1)
+        mimeType = response.contentType.substring(0, index).trimEnd();
+      else
+        mimeType = response.contentType.trim();
+    }
     if (responseBody && !('content-length' in responseHeaders))
       responseHeaders['content-length'] = String(Buffer.byteLength(responseBody));
 
@@ -86,7 +93,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
       requestId: this._requestId,
       status: response.status || 200,
       statusText: network.STATUS_TEXTS[String(response.status || 200)],
-      mimeType: response.contentType || (base64Encoded ? 'application/octet-stream' : 'text/plain'),
+      mimeType,
       headers: responseHeaders,
       base64Encoded,
       content: responseBody
