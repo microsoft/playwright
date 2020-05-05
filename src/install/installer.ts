@@ -63,7 +63,6 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
   let downloadedBrowsers = (await fsReaddirAsync(browsersPath)).map(file => path.join(browsersPath, file));
   downloadedBrowsers = downloadedBrowsers.filter(file => browserPaths.isBrowserDirectory(file));
   const directories = new Set<string>(downloadedBrowsers);
-  directories.delete(path.join(browsersPath, '.links'));
   for (const browser of allBrowsers)
     directories.delete(browserPaths.browserDirectory(browsersPath, browser));
   for (const directory of directories) {
@@ -71,8 +70,9 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
     await removeFolderAsync(directory).catch(e => {});
   }
 
-  // 3. Install missing browsers.
-  for (const browser of allBrowsers) {
+  // 3. Install missing browsers for this package.
+  const myBrowsers = JSON.parse((await fsReadFileAsync(path.join(packagePath, 'browsers.json'))).toString())['browsers'];
+  for (const browser of myBrowsers) {
     const browserPath = browserPaths.browserDirectory(browsersPath, browser);
     if (await browserFetcher.downloadBrowserWithProgressBar(browserPath, browser))
       await installBrowser(packagePath, browserPath, browser);
