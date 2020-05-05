@@ -227,17 +227,18 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return point;
   }
 
-  async _retryPointerAction(action: (point: types.Point) => Promise<void>, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
+  async _retryPointerAction(actionName: string, action: (point: types.Point) => Promise<void>, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
+    this._page._log(inputLog, `elementHandle.${actionName}()`);
     const deadline = this._page._timeoutSettings.computeDeadline(options);
     while (!helper.isPastDeadline(deadline)) {
-      const result = await this._performPointerAction(action, deadline, options);
+      const result = await this._performPointerAction(actionName, action, deadline, options);
       if (result === 'done')
         return;
     }
-    throw new TimeoutError(`waiting for element to receive pointer events failed: timeout exceeded`);
+    throw new TimeoutError(`waiting for element to receive pointer events failed: timeout exceeded. Re-run with the DEBUG=pw:input env variable to see the debug log.`);
   }
 
-  async _performPointerAction(action: (point: types.Point) => Promise<void>, deadline: number, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<'done' | 'retry'> {
+  async _performPointerAction(actionName: string, action: (point: types.Point) => Promise<void>, deadline: number, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<'done' | 'retry'> {
     const { force = false, position } = options;
     if (!force)
       await this._waitForDisplayedAtStablePosition(deadline);
@@ -271,10 +272,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         let restoreModifiers: input.Modifier[] | undefined;
         if (options && options.modifiers)
           restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
-        this._page._log(inputLog, 'performing input action...');
+        this._page._log(inputLog, `performing "${actionName}" action...`);
         await action(point);
-        this._page._log(inputLog, '...input action done');
-        this._page._log(inputLog, 'waiting for navigations to finish...');
+        this._page._log(inputLog, `... "${actionName}" action done`);
+        this._page._log(inputLog, 'waiting for scheduled navigations to finish...');
         await this._page._delegate.setActivityPaused(false);
         paused = false;
         if (restoreModifiers)
@@ -290,18 +291,19 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   hover(options?: PointerActionOptions & types.PointerActionWaitOptions): Promise<void> {
-    return this._retryPointerAction(point => this._page.mouse.move(point.x, point.y), options);
+    return this._retryPointerAction('hover', point => this._page.mouse.move(point.x, point.y), options);
   }
 
   click(options?: ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
-    return this._retryPointerAction(point => this._page.mouse.click(point.x, point.y, options), options);
+    return this._retryPointerAction('click', point => this._page.mouse.click(point.x, point.y, options), options);
   }
 
   dblclick(options?: MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
-    return this._retryPointerAction(point => this._page.mouse.dblclick(point.x, point.y, options), options);
+    return this._retryPointerAction('dblclick', point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
   async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options?: types.NavigatingActionWaitOptions): Promise<string[]> {
+    this._page._log(inputLog, `elementHandle.selectOption(%s)`, values);
     const deadline = this._page._timeoutSettings.computeDeadline(options);
     let vals: string[] | ElementHandle[] | types.SelectOption[];
     if (!Array.isArray(values))
@@ -326,6 +328,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async fill(value: string, options?: types.NavigatingActionWaitOptions): Promise<void> {
+    this._page._log(inputLog, `elementHandle.fill(${value})`);
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
     const deadline = this._page._timeoutSettings.computeDeadline(options);
     await this._page._frameManager.waitForSignalsCreatedBy(async () => {
@@ -341,11 +344,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async selectText(): Promise<void> {
+    this._page._log(inputLog, `elementHandle.selectText()`);
     const injectedResult = await this._evaluateInUtility(({ injected, node }) => injected.selectText(node), {});
     handleInjectedResult(injectedResult, '');
   }
 
   async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options?: types.NavigatingActionWaitOptions) {
+    this._page._log(inputLog, `elementHandle.setInputFiles(...)`);
     const deadline = this._page._timeoutSettings.computeDeadline(options);
     const injectedResult = await this._evaluateInUtility(({ node }): InjectedResult<boolean> => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node as Node as Element).tagName !== 'INPUT')
@@ -381,11 +386,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async focus() {
+    this._page._log(inputLog, `elementHandle.focus()`);
     const injectedResult = await this._evaluateInUtility(({ injected, node }) => injected.focusNode(node), {});
     handleInjectedResult(injectedResult, '');
   }
 
   async type(text: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
+    this._page._log(inputLog, `elementHandle.type("${text}")`);
     const deadline = this._page._timeoutSettings.computeDeadline(options);
     await this._page._frameManager.waitForSignalsCreatedBy(async () => {
       await this.focus();
@@ -394,6 +401,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async press(key: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
+    this._page._log(inputLog, `elementHandle.press("${key}")`);
     const deadline = this._page._timeoutSettings.computeDeadline(options);
     await this._page._frameManager.waitForSignalsCreatedBy(async () => {
       await this.focus();
@@ -402,10 +410,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async check(options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+    this._page._log(inputLog, `elementHandle.check()`);
     await this._setChecked(true, options);
   }
 
   async uncheck(options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+    this._page._log(inputLog, `elementHandle.uncheck()`);
     await this._setChecked(false, options);
   }
 
@@ -494,7 +504,7 @@ function handleInjectedResult<T = undefined>(injectedResult: InjectedResult<T>, 
   if (injectedResult.status === 'notconnected')
     throw new NotConnectedError();
   if (injectedResult.status === 'timeout')
-    throw new TimeoutError(`waiting for ${timeoutMessage} failed: timeout exceeded`);
+    throw new TimeoutError(`waiting for ${timeoutMessage} failed: timeout exceeded. Re-run with the DEBUG=pw:input env variable to see the debug log.`);
   if (injectedResult.status === 'error')
     throw new Error(injectedResult.error);
   return injectedResult.value as T;

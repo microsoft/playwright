@@ -183,12 +183,14 @@ describe('Page.click', function() {
     await page.$eval('button', b => b.style.display = 'none');
     const error = await page.click('button', { timeout: 100 }).catch(e => e);
     expect(error.message).toContain('timeout exceeded');
+    expect(error.message).toContain('DEBUG=pw:input');
   });
   it('should timeout waiting for visbility:hidden to be gone', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.visibility = 'hidden');
     const error = await page.click('button', { timeout: 100 }).catch(e => e);
     expect(error.message).toContain('timeout exceeded');
+    expect(error.message).toContain('DEBUG=pw:input');
   });
   it('should waitFor visible when parent is hidden', async({page, server}) => {
     let done = false;
@@ -433,6 +435,7 @@ describe('Page.click', function() {
     });
     const error = await button.click({ timeout: 100 }).catch(e => e);
     expect(error.message).toContain('timeout exceeded');
+    expect(error.message).toContain('DEBUG=pw:input');
   });
   it('should wait for becoming hit target', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
@@ -481,6 +484,7 @@ describe('Page.click', function() {
     });
     const error = await button.click({ timeout: 100 }).catch(e => e);
     expect(error.message).toContain('timeout exceeded');
+    expect(error.message).toContain('DEBUG=pw:input');
   });
   it('should fail when obscured and not waiting for hit target', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
@@ -583,6 +587,7 @@ describe('Page.click', function() {
     expect(clicked).toBe(false);
     expect(await page.evaluate(() => window.clicked)).toBe(undefined);
     expect(error.message).toContain('timeout exceeded');
+    expect(error.message).toContain('DEBUG=pw:input');
   });
   it.skip(true)('should pause animations', async({page}) => {
     // This test requires pausing the page.
