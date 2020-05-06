@@ -1,6 +1,6 @@
 {
   "name": "playwright-firefox",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A high-level API to automate Firefox",
   "repository": "github:Microsoft/playwright",
   "main": "index.js",
@@ -12,6 +12,6 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "playwright-core": "=1.0.0"
+    "playwright-core": "=1.0.1"
   }
 }
