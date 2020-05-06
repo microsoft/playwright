@@ -3639,10 +3639,10 @@ index 0000000000000000000000000000000000000000..155d0770ddf704728829272a41a31ce8
 +
 diff --git a/juggler/content/PageAgent.js b/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..63754937b3464794227fe894b3d6057fbf0ae582
+index 0000000000000000000000000000000000000000..2d70debb89be35dd68851c47bbee909495808f0b
 --- /dev/null
 +++ b/juggler/content/PageAgent.js
-@@ -0,0 +1,914 @@
+@@ -0,0 +1,918 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -4212,6 +4212,8 @@ index 0000000000000000000000000000000000000000..63754937b3464794227fe894b3d6057f
 +    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
 +    if (!unsafeObject.getBoxQuads)
 +      throw new Error('RemoteObject is not a node');
++    frame.domWindow().windowUtils.advanceTimeAndRefresh(0);
++    frame.domWindow().windowUtils.restoreNormalRefresh();
 +    const quads = unsafeObject.getBoxQuads({relativeTo: this._frameTree.mainFrame().domWindow().document}).map(quad => {
 +      return {
 +        p1: {x: quad.p1.x, y: quad.p1.y},
@@ -4254,6 +4256,8 @@ index 0000000000000000000000000000000000000000..63754937b3464794227fe894b3d6057f
 +      throw new Error('Node is detached from document');
 +    if (!rect)
 +      rect = { x: -1, y: -1, width: -1, height: -1};
++    frame.domWindow().windowUtils.advanceTimeAndRefresh(0);
++    frame.domWindow().windowUtils.restoreNormalRefresh();
 +    if (unsafeObject.scrollRectIntoViewIfNeeded)
 +      unsafeObject.scrollRectIntoViewIfNeeded(rect.x, rect.y, rect.width, rect.height);
 +    else
