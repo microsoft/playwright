@@ -32,6 +32,7 @@ import { ExtendedEventEmitter } from './extendedEventEmitter';
 import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
 import { logError, InnerLogger, Log } from './logger';
+import { Video } from './video';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -72,7 +73,7 @@ export interface PageDelegate {
   setActivityPaused(paused: boolean): Promise<void>;
   rafCountForStablePosition(): number;
 
-  getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}>;
+  getAccessibilityTree(needle?: dom.ElementHandle): Promise<{ tree: accessibility.AXNode, needle: accessibility.AXNode | null }>;
   pdf?: (options?: types.PDFOptions) => Promise<Buffer>;
   coverage?: () => any;
 
@@ -104,6 +105,7 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
   readonly _state: PageState;
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _screenshotter: Screenshotter;
+  readonly _video: Video;
   readonly _frameManager: frames.FrameManager;
   readonly accessibility: accessibility.Accessibility;
   private _workers = new Map<string, Worker>();
@@ -115,9 +117,9 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
   constructor(delegate: PageDelegate, browserContext: BrowserContextBase) {
     super();
     this._delegate = delegate;
-    this._closedCallback = () => {};
+    this._closedCallback = () => { };
     this._closedPromise = new Promise(f => this._closedCallback = f);
-    this._disconnectedCallback = () => {};
+    this._disconnectedCallback = () => { };
     this._disconnectedPromise = new Promise(f => this._disconnectedCallback = f);
     this._browserContext = browserContext;
     let viewportSize: types.Size | null = null;
@@ -138,6 +140,7 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
     this.mouse = new input.Mouse(delegate.rawMouse, this.keyboard);
     this._timeoutSettings = new TimeoutSettings(browserContext._timeoutSettings);
     this._screenshotter = new Screenshotter(this);
+    this._video = new Video(this);
     this._frameManager = new frames.FrameManager(this);
     if (delegate.pdf)
       this.pdf = delegate.pdf.bind(delegate);
@@ -339,7 +342,7 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
     const waitPromise = this.waitForNavigation(options);
     const result = await this._delegate.goBack();
     if (!result) {
-      waitPromise.catch(() => {});
+      waitPromise.catch(() => { });
       return null;
     }
     return waitPromise;
@@ -349,7 +352,7 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
     const waitPromise = this.waitForNavigation(options);
     const result = await this._delegate.goForward();
     if (!result) {
-      waitPromise.catch(() => {});
+      waitPromise.catch(() => { });
       return null;
     }
     return waitPromise;
@@ -422,12 +425,21 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
   async screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {
     return this._screenshotter.screenshotPage(options);
   }
+  async startVideo(options: unknown) {
+    if (!this._video.closed && !this._closed)
+      await this._video.init({ FPS: 30, outFile: './demo.mp4' });
+
+    return this._video.start();
+  }
+  async stopVideo() {
+    return this._video.stop();
+  }
 
   async title(): Promise<string> {
     return this.mainFrame().title();
   }
 
-  async close(options: { runBeforeUnload: (boolean | undefined); } = {runBeforeUnload: undefined}) {
+  async close(options: { runBeforeUnload: (boolean | undefined); } = { runBeforeUnload: undefined }) {
     if (this._closed)
       return;
     assert(!this._disconnected, 'Protocol error: Connection closed. Most likely the page has been closed.');
@@ -557,7 +569,7 @@ export class Worker extends EventEmitter {
     super();
     this._logger = logger;
     this._url = url;
-    this._executionContextCallback = () => {};
+    this._executionContextCallback = () => { };
     this._executionContextPromise = new Promise(x => this._executionContextCallback = x);
   }
 
@@ -597,7 +609,7 @@ export class PageBinding {
   }
 
   static async dispatch(page: Page, payload: string, context: js.ExecutionContext) {
-    const {name, seq, args} = JSON.parse(payload);
+    const { name, seq, args } = JSON.parse(payload);
     let expression = null;
     try {
       let binding = page._pageBindings.get(name);
@@ -645,8 +657,8 @@ function addPageBinding(bindingName: string) {
     }
     const seq = (me['lastSeq'] || 0) + 1;
     me['lastSeq'] = seq;
-    const promise = new Promise((resolve, reject) => callbacks.set(seq, {resolve, reject}));
-    binding(JSON.stringify({name: bindingName, seq, args}));
+    const promise = new Promise((resolve, reject) => callbacks.set(seq, { resolve, reject }));
+    binding(JSON.stringify({ name: bindingName, seq, args }));
     return promise;
   };
   (window as any)[bindingName].__installed = true;

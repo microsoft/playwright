@@ -50,6 +50,7 @@
     "ws": "^6.1.0"
   },
   "devDependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.0.20",
     "@types/debug": "0.0.31",
     "@types/extract-zip": "^1.6.2",
     "@types/mime": "^2.0.1",

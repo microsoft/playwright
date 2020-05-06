@@ -180,6 +180,7 @@ module.exports = {
         './workers.spec.js',
         './capabilities.spec.js',
         './permissions.spec.js',
+        './video.spec.js',
       ],
       environments: [customEnvironment,  'page'],
     },

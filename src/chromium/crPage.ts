@@ -289,7 +289,7 @@ export class CRPage implements PageDelegate {
   }
 
   async inputActionEpilogue(): Promise<void> {
-    await this._mainFrameSession._client.send('Page.enable').catch(e => {});
+    await this._mainFrameSession._client.send('Page.enable').catch(e => { });
   }
 
   async pdf(options?: types.PDFOptions): Promise<Buffer> {
@@ -326,8 +326,8 @@ class FrameSession {
   private _eventListeners: RegisteredListener[] = [];
   readonly _targetId: string;
   private _firstNonInitialNavigationCommittedPromise: Promise<void>;
-  private _firstNonInitialNavigationCommittedFulfill = () => {};
-  private _firstNonInitialNavigationCommittedReject = (e: Error) => {};
+  private _firstNonInitialNavigationCommittedFulfill = () => { };
+  private _firstNonInitialNavigationCommittedReject = (e: Error) => { };
   private _windowId: number | undefined;
 
   constructor(crPage: CRPage, client: CRSession, targetId: string) {
@@ -384,12 +384,12 @@ class FrameSession {
       this._addSessionListeners();
     const promises: Promise<any>[] = [
       this._client.send('Page.enable'),
-      this._client.send('Page.getFrameTree').then(({frameTree}) => {
+      this._client.send('Page.getFrameTree').then(({ frameTree }) => {
         if (this._isMainFrame()) {
           this._handleFrameTree(frameTree);
           this._addSessionListeners();
         }
-        const localFrames = this._isMainFrame() ? this._page.frames() : [ this._page._frameManager.frame(this._targetId)! ];
+        const localFrames = this._isMainFrame() ? this._page.frames() : [this._page._frameManager.frame(this._targetId)!];
         for (const frame of localFrames) {
           // Note: frames might be removed before we send these.
           this._client.send('Page.createIsolatedWorld', {
@@ -626,12 +626,12 @@ class FrameSession {
 
   _onDialog(event: Protocol.Page.javascriptDialogOpeningPayload) {
     this._page.emit(Events.Page.Dialog, new dialog.Dialog(
-        event.type,
-        event.message,
-        async (accept: boolean, promptText?: string) => {
-          await this._client.send('Page.handleJavaScriptDialog', { accept, promptText });
-        },
-        event.defaultPrompt));
+      event.type,
+      event.message,
+      async (accept: boolean, promptText?: string) => {
+        await this._client.send('Page.handleJavaScriptDialog', { accept, promptText });
+      },
+      event.defaultPrompt));
   }
 
   _handleException(exceptionDetails: Protocol.Runtime.ExceptionDetails) {
@@ -644,11 +644,11 @@ class FrameSession {
   }
 
   _onLogEntryAdded(event: Protocol.Log.entryAddedPayload) {
-    const {level, text, args, source, url, lineNumber} = event.entry;
+    const { level, text, args, source, url, lineNumber } = event.entry;
     if (args)
       args.map(arg => releaseObject(this._client, arg));
     if (source !== 'worker')
-      this._page.emit(Events.Page.Console, new ConsoleMessage(level, text, [], {url, lineNumber}));
+      this._page.emit(Events.Page.Console, new ConsoleMessage(level, text, [], { url, lineNumber }));
   }
 
   async _onFileChooserOpened(event: Protocol.Page.fileChooserOpenedPayload) {
@@ -750,7 +750,7 @@ class FrameSession {
   }
 
   async _setFileChooserIntercepted(enabled: boolean) {
-    await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
+    await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => { }); // target can be closed.
   }
 
   async _evaluateOnNewDocument(source: string): Promise<void> {
@@ -799,7 +799,7 @@ class FrameSession {
     const y = Math.min(quad[1], quad[3], quad[5], quad[7]);
     const width = Math.max(quad[0], quad[2], quad[4], quad[6]) - x;
     const height = Math.max(quad[1], quad[3], quad[5], quad[7]) - y;
-    return {x, y, width, height};
+    return { x, y, width, height };
   }
 
   async _scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<void> {
