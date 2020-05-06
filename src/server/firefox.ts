@@ -91,7 +91,7 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
 
     let temporaryProfileDir = null;
     if (!userDataDir) {
-      userDataDir = await this._createTemporaryProfile();
+      userDataDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_firefox_profile-'));
       temporaryProfileDir = userDataDir;
     }
 
@@ -188,15 +188,6 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
     }
 
     return firefoxArguments;
-  }
-
-  async _createTemporaryProfile(): Promise<string> {
-    const userDataDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_firefox_profile-'));
-    const cachedProfileDir = path.join(this._browserPath, 'cached-profile');
-    const files = fs.readdirSync(cachedProfileDir);
-    for (const file of files)
-      copyRecursiveSync(path.join(cachedProfileDir, file), userDataDir);
-    return userDataDir;
   }
 }
 
@@ -327,19 +318,4 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Inne
   const wsEndpoint = typeof address === 'string' ? `${address}/${guid}` : `ws://127.0.0.1:${address.port}/${guid}`;
   return new WebSocketWrapper(wsEndpoint,
       [pendingBrowserContextCreations, pendingBrowserContextDeletions, browserContextIds, sessionToSocket, sockets]);
-}
-
-function copyRecursiveSync(source: string, targetFolder: string) {
-  const target = path.join(targetFolder, path.basename(source));
-  const stat = fs.lstatSync(source);
-  if (stat.isFile()) {
-    fs.copyFileSync(source, target);
-    return;
-  }
-  if (stat.isDirectory()) {
-    fs.mkdirSync(target, { recursive: true });
-    const files = fs.readdirSync(source);
-    for (const file of files)
-      copyRecursiveSync(path.join(source, file), target);
-  }
 }
