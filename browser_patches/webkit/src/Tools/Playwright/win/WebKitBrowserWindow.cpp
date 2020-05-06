@@ -340,6 +340,7 @@ void WebKitBrowserWindow::handleJavaScriptDialog(WKPageRef page, bool accept, WK
 
 WKPageRef WebKitBrowserWindow::createPageCallback(WKPageConfigurationRef configuration)
 {
+    // This comes from the Playwright agent, configuration is a pool+data pair.
     return WebKitBrowserWindow::createViewCallback(configuration, true);
 }
 
@@ -357,6 +358,7 @@ WKPageRef WebKitBrowserWindow::createViewCallback(WKPageConfigurationRef configu
 
 WKPageRef WebKitBrowserWindow::createNewPage(WKPageRef, WKPageConfigurationRef configuration, WKNavigationActionRef, WKWindowFeaturesRef, const void*)
 {
+    // This comes from the client for popups, configuration is inherited from main page.
     // Retain popups as per API contract.
     WKRetainPtr<WKPageRef> newPage = createViewCallback(configuration, false);
     return newPage.leakRef();

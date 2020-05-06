@@ -173,27 +173,18 @@ void MainWindow::rescaleToolbar()
     m_toolbarItemsWidth = rect.right;
 }
 
-bool MainWindow::init(HINSTANCE hInstance, WKContextRef context, WKWebsiteDataStoreRef dataStore)
+bool MainWindow::init(HINSTANCE hInstance, WKPageConfigurationRef conf)
 {
-    auto conf = adoptWK(WKPageConfigurationCreate());
+    auto pageGroup = adoptWK(WKPageGroupCreateWithIdentifier(createWKString("WinPlaywright").get()));
     auto prefs = adoptWK(WKPreferencesCreate());
 
-    auto pageGroup = adoptWK(WKPageGroupCreateWithIdentifier(createWKString("WinPlaywright").get()));
-    WKPageConfigurationSetPageGroup(conf.get(), pageGroup.get());
+    WKPageConfigurationSetPageGroup(conf, pageGroup.get());
+    WKPageConfigurationSetPreferences(conf, prefs.get());
     WKPageGroupSetPreferences(pageGroup.get(), prefs.get());
 
     WKPreferencesSetMediaCapabilitiesEnabled(prefs.get(), false);
     WKPreferencesSetDeveloperExtrasEnabled(prefs.get(), true);
-    WKPageConfigurationSetPreferences(conf.get(), prefs.get());
 
-    WKPageConfigurationSetContext(conf.get(), context);
-    WKPageConfigurationSetWebsiteDataStore(conf.get(), dataStore);
-
-    return init(hInstance, conf.get());
-}
-
-bool MainWindow::init(HINSTANCE hInstance, WKPageConfigurationRef conf)
-{
     m_configuration = conf;
 
     registerClass(hInstance);
