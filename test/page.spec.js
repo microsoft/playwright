@@ -16,6 +16,7 @@
  */
 
 const path = require('path');
+const util = require('util');
 const vm = require('vm');
 const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
 
@@ -168,6 +169,15 @@ describe('Page.Events.Console', function() {
     page.on('console', m => messages.push(m.text()));
     await page.evaluate(() => { for (let i = 0; i < 2; ++i ) console.log('hello'); } );
     expect(messages).toEqual(['hello', 'hello']);
+  });
+  it('should use text() for inspection', async({page}) => {
+    let text;
+    const inspect = value => {
+      text = util.inspect(value);
+    }
+    page.on('console', inspect);
+    await page.evaluate(() => console.log('Hello world'));
+    expect(text).toEqual('Hello world');
   });
   it('should work for different console API calls', async({page, server}) => {
     const messages = [];

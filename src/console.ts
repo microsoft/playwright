@@ -15,6 +15,7 @@
  */
 
 import * as js from './javascript';
+import * as util from 'util';
 
 export type ConsoleMessageLocation = {
   url?: string,
@@ -51,5 +52,9 @@ export class ConsoleMessage {
 
   location(): ConsoleMessageLocation {
     return this._location;
+  }
+
+  [util.inspect.custom]() {
+    return this.text();
   }
 }
