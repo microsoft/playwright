@@ -1559,7 +1559,7 @@ Shortcut for [page.mainFrame().selectOption()](#frameselectoptionselector-values
 - `html` <[string]> HTML markup to assign to the page.
 - `options` <[Object]> Parameters which might have the following properties:
   - `timeout` <[number]> Maximum time in milliseconds for resources to load, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle">  When to consider setting markup succeeded, defaults to `load`. Given an array of event strings, setting content is considered to be successful after all events have been fired. Events can be either:
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider setting markup succeeded, defaults to `load`. Given an array of event strings, setting content is considered to be successful after all events have been fired. Events can be either:
     - `'load'` - consider setting content to be finished when the `load` event is fired.
     - `'domcontentloaded'` - consider setting content to be finished when the `DOMContentLoaded` event is fired.
     - `'networkidle'` - consider setting content to be finished when there are no network connections for at least `500` ms.
@@ -1760,7 +1760,7 @@ Shortcut for [page.mainFrame().waitForLoadState([options])](#framewaitforloadsta
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
   - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle">  When to consider navigation succeeded, defaults to `load`. Events can be either:
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle'` - consider navigation to be finished when there are no network connections for at least `500` ms.
@@ -1892,9 +1892,9 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 An example of getting text from an iframe element:
 
 ```js
-  const frame = page.frames().find(frame => frame.name() === 'myframe');
-  const text = await frame.$eval('.selector', element => element.textContent);
-  console.log(text);
+const frame = page.frames().find(frame => frame.name() === 'myframe');
+const text = await frame.$eval('.selector', element => element.textContent);
+console.log(text);
 ```
 
 <!-- GEN:toc -->
@@ -2197,7 +2197,7 @@ console.log(frame === contentFrame);  // -> true
 - `url` <[string]> URL to navigate frame to. The url should include scheme, e.g. `https://`.
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle">  When to consider navigation succeeded, defaults to `load`. Events can be either:
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle'` - consider navigation to be finished when there are no network connections for at least `500` ms.
@@ -2303,7 +2303,7 @@ frame.selectOption('select#colors', 'red', 'green', 'blue');
 - `html` <[string]> HTML markup to assign to the page.
 - `options` <[Object]> Parameters which might have the following properties:
   - `timeout` <[number]> Maximum time in milliseconds for resources to load, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle">  When to consider navigation succeeded, defaults to `load`. Events can be either:
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider setting content to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider setting content to be finished when the `load` event is fired.
     - `'networkidle'` - consider setting content to be finished when there are no network connections for at least `500` ms.
@@ -2414,7 +2414,7 @@ await frame.waitForLoadState(); // The promise resolves after 'load' event.
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
   - `url` <[string]|[RegExp]|[Function]> URL string, URL regex pattern or predicate receiving [URL] to match while waiting for the navigation.
-  - `waitUntil` <"load"|"domcontentloaded"|"networkidle">  When to consider navigation succeeded, defaults to `load`. Events can be either:
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider navigation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle'` - consider navigation to be finished when there are no network connections for at least `500` ms.
@@ -3822,7 +3822,7 @@ This methods attaches Playwright to an existing browser instance.
 - returns: <[string]> A path where Playwright expects to find a bundled browser executable.
 
 #### browserType.launch([options])
-- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+- `options` <[Object]> Set of configurable options to set on the browser. Can have the following fields:
   - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
   - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). Note that Playwright only works with the bundled Chromium, Firefox or WebKit, use at your own risk.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
@@ -3855,7 +3855,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
 
 #### browserType.launchPersistentContext(userDataDir, [options])
  - `userDataDir` <[string]> Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
-- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+- `options` <[Object]> Set of configurable options to set on the browser. Can have the following fields:
   - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
   - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only guaranteed to work with the bundled Chromium, Firefox or WebKit, use at your own risk.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
@@ -3873,7 +3873,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
 Launches browser instance that uses persistent storage located at `userDataDir`.
 
 #### browserType.launchServer([options])
-- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+- `options` <[Object]> Set of configurable options to set on the browser. Can have the following fields:
   - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
   - `port` <[number]> Port to use for the web socket. Defaults to 0 that picks any available port.
   - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only guaranteed to work with the bundled Chromium, Firefox or WebKit, use at your own risk.
@@ -4088,12 +4088,12 @@ const v8toIstanbul = require('v8-to-istanbul');
 <!-- GEN:stop -->
 
 #### chromiumCoverage.startCSSCoverage([options])
-- `options` <[Object]>  Set of configurable options for coverage
+- `options` <[Object]> Set of configurable options for coverage
   - `resetOnNavigation` <[boolean]> Whether to reset coverage on every navigation. Defaults to `true`.
 - returns: <[Promise]> Promise that resolves when coverage is started
 
 #### chromiumCoverage.startJSCoverage([options])
-- `options` <[Object]>  Set of configurable options for coverage
+- `options` <[Object]> Set of configurable options for coverage
   - `resetOnNavigation` <[boolean]> Whether to reset coverage on every navigation. Defaults to `true`.
   - `reportAnonymousScripts` <[boolean]> Whether anonymous scripts generated by the page should be reported. Defaults to `false`.
 - returns: <[Promise]> Promise that resolves when coverage is started

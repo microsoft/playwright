@@ -14,7 +14,7 @@
 
 Use npm or Yarn to install Playwright in your Node.js project. Playwright requires Node.js 10 or higher.
 
-```
+```sh
 npm i playwright
 ```
 

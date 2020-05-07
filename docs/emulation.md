@@ -46,8 +46,7 @@ const context = await browser.newContext({
 });
 
 // Resize viewport for individual page
-await page.setViewportSize(
-    { 'width': 1600, 'height': 1200 });
+await page.setViewportSize({ width: 1600, height: 1200 });
 
 // Emulate high-DPI
 const context = await browser.newContext({
@@ -155,7 +154,7 @@ const context = await browser.newContext({
 Change the location later:
 
 ```js
-await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 };
+await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
 ```
 
 **Note** you can only change geolocation for all pages in the context.

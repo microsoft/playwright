@@ -91,7 +91,7 @@ await page.selectOption('select#colors', option);
 
 ## Mouse click
 
-Performs a simple human click. 
+Performs a simple human click.
 
 ```js
 // Generic click
@@ -158,7 +158,7 @@ await page.dispatchEvent('button#submit', 'click');
 
 ## Type characters
 
-Type into the field character by character, as if it was a user with a real keyboard. 
+Type into the field character by character, as if it was a user with a real keyboard.
 
 ```js
 // Type characted by character
@@ -207,10 +207,10 @@ Simple version produces a single character. This character is case-sensitive, so
 
 
 ```js
-// <input id=name></input>
+// <input id=name>
 await page.press('#name', 'Shift+A');
 
-// <input id=name></input>
+// <input id=name>
 await page.press('#name', 'Shift+ArrowLeft');
 ```
 
@@ -242,9 +242,9 @@ await page.setInputFiles('input#upload', []);
 
 // Upload buffer from memory
 await page.setInputFiles('input#upload', {
-	name: 'file.txt',
-	mimeType: 'text/plain',
-	buffer: Buffer.from('this is test')
+  name: 'file.txt',
+  mimeType: 'text/plain',
+  buffer: Buffer.from('this is test')
 });
 ```
 

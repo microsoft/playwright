@@ -157,23 +157,23 @@ npm run ftest -- --break-on-failure
 - To run a specific test, substitute the `it` with `fit` (mnemonic rule: '*focus it*'):
 
 ```js
-  ...
-  // Using "fit" to run specific test
-  fit('should work', async ({server, page}) => {
-    const response = await page.goto(server.EMPTY_PAGE);
-    expect(response.ok).toBe(true);
-  });
+...
+// Using "fit" to run specific test
+fit('should work', async ({server, page}) => {
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.ok).toBe(true);
+});
 ```
 
 - To disable a specific test, substitute the `it` with `xit` (mnemonic rule: '*cross it*'):
 
 ```js
-  ...
-  // Using "xit" to skip specific test
-  xit('should work', async ({server, page}) => {
-    const response = await page.goto(server.EMPTY_PAGE);
-    expect(response.ok).toBe(true);
-  });
+...
+// Using "xit" to skip specific test
+xit('should work', async ({server, page}) => {
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.ok).toBe(true);
+});
 ```
 
 - To run tests in non-headless (headful) mode:
