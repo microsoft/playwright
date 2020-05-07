@@ -91,7 +91,7 @@ export class CRBrowser extends BrowserBase {
     this._session = this._connection.rootSession;
 
     if (isPersistent)
-      this._defaultContext = new CRBrowserContext(this, null, validateBrowserContextOptions({}));
+      this._defaultContext = new CRBrowserContext(this, null, validateBrowserContextOptions({ viewport: null }));
     this._isHeadful = isHeadful;
     this._connection.on(ConnectionEvents.Disconnected, () => {
       for (const context of this._contexts.values())
