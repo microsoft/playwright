@@ -658,7 +658,7 @@ function addPageBinding(bindingName: string) {
     const seq = (me['lastSeq'] || 0) + 1;
     me['lastSeq'] = seq;
     const promise = new Promise((resolve, reject) => callbacks.set(seq, {resolve, reject}));
-    binding(JSON.stringify({ name: bindingName, seq, args }));
+    binding(JSON.stringify({name: bindingName, seq, args}));
     return promise;
   };
   (window as any)[bindingName].__installed = true;
