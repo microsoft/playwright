@@ -3,6 +3,7 @@
   "version": "1.0.0-post",
   "description": "A high-level API to automate Firefox",
   "repository": "github:Microsoft/playwright",
+  "homepage": "https://playwright.dev",
   "main": "index.js",
   "scripts": {
     "install": "node install.js"
