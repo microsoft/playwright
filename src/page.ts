@@ -73,7 +73,7 @@ export interface PageDelegate {
   setActivityPaused(paused: boolean): Promise<void>;
   rafCountForStablePosition(): number;
 
-  getAccessibilityTree(needle?: dom.ElementHandle): Promise<{ tree: accessibility.AXNode, needle: accessibility.AXNode | null }>;
+  getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}>;
   pdf?: (options?: types.PDFOptions) => Promise<Buffer>;
   coverage?: () => any;
 
@@ -117,9 +117,9 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
   constructor(delegate: PageDelegate, browserContext: BrowserContextBase) {
     super();
     this._delegate = delegate;
-    this._closedCallback = () => { };
+    this._closedCallback = () => {};
     this._closedPromise = new Promise(f => this._closedCallback = f);
-    this._disconnectedCallback = () => { };
+    this._disconnectedCallback = () => {};
     this._disconnectedPromise = new Promise(f => this._disconnectedCallback = f);
     this._browserContext = browserContext;
     let viewportSize: types.Size | null = null;
@@ -342,7 +342,7 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
     const waitPromise = this.waitForNavigation(options);
     const result = await this._delegate.goBack();
     if (!result) {
-      waitPromise.catch(() => { });
+      waitPromise.catch(() => {});
       return null;
     }
     return waitPromise;
@@ -352,7 +352,7 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
     const waitPromise = this.waitForNavigation(options);
     const result = await this._delegate.goForward();
     if (!result) {
-      waitPromise.catch(() => { });
+      waitPromise.catch(() => {});
       return null;
     }
     return waitPromise;
@@ -439,7 +439,7 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
     return this.mainFrame().title();
   }
 
-  async close(options: { runBeforeUnload: (boolean | undefined); } = { runBeforeUnload: undefined }) {
+  async close(options: { runBeforeUnload: (boolean | undefined); } = {runBeforeUnload: undefined}) {
     if (this._closed)
       return;
     assert(!this._disconnected, 'Protocol error: Connection closed. Most likely the page has been closed.');
@@ -569,7 +569,7 @@ export class Worker extends EventEmitter {
     super();
     this._logger = logger;
     this._url = url;
-    this._executionContextCallback = () => { };
+    this._executionContextCallback = () => {};
     this._executionContextPromise = new Promise(x => this._executionContextCallback = x);
   }
 
@@ -609,7 +609,7 @@ export class PageBinding {
   }
 
   static async dispatch(page: Page, payload: string, context: js.ExecutionContext) {
-    const { name, seq, args } = JSON.parse(payload);
+    const {name, seq, args} = JSON.parse(payload);
     let expression = null;
     try {
       let binding = page._pageBindings.get(name);
@@ -657,7 +657,7 @@ function addPageBinding(bindingName: string) {
     }
     const seq = (me['lastSeq'] || 0) + 1;
     me['lastSeq'] = seq;
-    const promise = new Promise((resolve, reject) => callbacks.set(seq, { resolve, reject }));
+    const promise = new Promise((resolve, reject) => callbacks.set(seq, {resolve, reject}));
     binding(JSON.stringify({ name: bindingName, seq, args }));
     return promise;
   };
