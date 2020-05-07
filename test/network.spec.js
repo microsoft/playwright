@@ -41,6 +41,20 @@ describe('Page.Events.Request', function() {
     await page.evaluate(() => fetch('/empty.html'));
     expect(requests.length).toBe(2);
   });
+  it.fail(FFOX)('should report requests and responses handled by service worker', async({page, server}) => {
+    // Firefox issues Network.requestWillBeSent and nothing else.
+    await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
+    await page.evaluate(() => window.activationPromise);
+    const [swResponse, request] = await Promise.all([
+      page.evaluate(() => fetchDummy('foo')),
+      page.waitForEvent('request'),
+    ]);
+    expect(swResponse).toBe('responseFromServiceWorker:foo');
+    expect(request.url()).toBe(server.PREFIX + '/serviceworkers/fetchdummy/foo');
+    const response = await request.response();
+    expect(response.url()).toBe(server.PREFIX + '/serviceworkers/fetchdummy/foo');
+    expect(await response.text()).toBe('responseFromServiceWorker:foo');
+  });
 });
 
 describe('Request.frame', function() {
