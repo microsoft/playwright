@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, LINUX, WEBKIT} = require('./utils').testOptions(browserType);
 
 describe('Page.focus', function() {
   it('should work', async function({page, server}) {
@@ -43,5 +43,20 @@ describe('Page.focus', function() {
     await page.focus('#d2');
     expect(focused).toBe(true);
     expect(blurred).toBe(true);
+  });
+  it.fail(WEBKIT && !LINUX)('should traverse focus', async function({page, server}) {
+    await page.setContent(`<input id="i1"><input id="i2">`);
+    let focused = false;
+    await page.exposeFunction('focusEvent', () => focused = true);
+    await page.evaluate(() => i2.addEventListener('focus', focusEvent));
+
+    await page.focus('#i1');
+    await page.keyboard.type("First");
+    await page.keyboard.press("Tab");
+    await page.keyboard.type("Last");
+
+    expect(focused).toBe(true);
+    expect(await page.$eval('#i1', e => e.value)).toBe('First');
+    expect(await page.$eval('#i2', e => e.value)).toBe('Last');
   });
 });
