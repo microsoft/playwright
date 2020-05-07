@@ -29,12 +29,14 @@ const extensionToMimeType = {
   'txt': 'text/plain',
   'jpg': 'image/jpeg',
   'jpeg': 'image/jpeg',
+  'mp4': 'video/mp4'
 };
 
 const GoldenComparators = {
   'image/png': compareImages,
   'image/jpeg': compareImages,
-  'text/plain': compareText
+  'text/plain': compareText,
+  'video/mp4': compareVideo,
 };
 
 
@@ -81,6 +83,26 @@ function compareText(actual, expectedBuffer) {
     diff: html,
     diffExtension: '.html'
   };
+}
+
+
+/**
+ * @param {?Object} actualBuffer
+ * @param {!Buffer} expectedBuffer
+ * @param {!string} mimeType
+ * @return {?{diff: (!Object:undefined), errorMessage: (string|undefined)}}
+ */
+function compareVideo(actualBuffer, expectedBuffer, mimeType){
+  if (!actualBuffer || !(actualBuffer instanceof Buffer))
+    return { errorMessage: 'Actual result should be Buffer.' };
+  const diffNumber = Buffer.compare(actualBuffer, expectedBuffer);
+
+  if(diffNumber === 0)
+    return null;
+
+  return {
+    diff: diffNumber,
+  }
 }
 
 /**

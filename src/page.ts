@@ -425,13 +425,13 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
   async screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {
     return this._screenshotter.screenshotPage(options);
   }
-  async startVideo(options: unknown) {
-    if (!this._video.closed && !this._closed)
-      await this._video.init({ FPS: 30, outFile: './demo.mp4' });
+  async startVideo(options: types.VideoOptions): Promise<void> {
+    if (!this._video.closed)
+      await this._video.init(options);
 
     return this._video.start();
   }
-  async stopVideo() {
+  async stopVideo(): Promise<Buffer> {
     return this._video.stop();
   }
 

@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+const { resolve } = require('path');
 const { FFOX, CHROMIUM, WEBKIT } = require('./utils').testOptions(browserType);
-const {promisify} = require('util');
+const { promisify } = require('util');
 
 const delay = promisify(setTimeout);
 
@@ -25,8 +25,18 @@ describe('Page.video', function () {
         await page.startVideo();
         await page.goto(server.PREFIX + '/grid.html');
         await delay(3000);
-        await page.goto(server.PREFIX + '/grid.html');
-        await page.stopVideo();
-        // expect(screenshot).toBeGolden(golden('screenshot-sanity.png'));
+        const video = await page.stopVideo();
+        // expect(video).toBeGolden(golden('grid-video.mp4'));
+        expect(video).toBeInstanceOf(Buffer);
     });
+    it('should contain more than one frame', async ({ page, server, golden }) => {
+        await page.startVideo({ outFile: 'demo.mp4', keepScreenshots: true });
+        await page.goto(server.PREFIX + '/grid.html');
+        await delay(3000);
+        await page.goto(server.PREFIX + '/input/button.html');
+        await page.click('button');
+        await delay(3000);
+        const video = await page.stopVideo();
+        expect(video).toBeInstanceOf(Buffer);
+    })
 });

@@ -1,71 +1,67 @@
-import { promisify } from 'util';
-import { setTimeout } from 'timers';
-import { mkdtempSync, writeFileSync, rmdirSync } from 'fs';
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { mkdtempSync, readFile, writeFile } from 'fs';
 import { resolve } from 'path';
+import { EventEmitter } from 'events';
+import { promisify } from 'util';
 
 const ffmpegPath: string = require('@ffmpeg-installer/ffmpeg').path;
 import * as ffmpeg from 'fluent-ffmpeg';
+import * as rimraf from 'rimraf';
 
 import { Page } from './page';
-import { logPolitely } from './helper';
+import { VideoOptions } from './types';
+import { logPolitely, helper } from './helper';
 
-
-const DEFAULT_OPTIONS = [
-  // NOTE: don't ask confirmation for rewriting the output file
-  '-y',
-
-  // NOTE: use the time when a frame is read from the source as its timestamp
-  // IMPORTANT: must be specified before configuring the source
-  '-use_wallclock_as_timestamps', '1',
-
-  // NOTE: use stdin as a source
-  '-i', 'pipe:0',
-
-  // NOTE: use the H.264 video codec
-  '-c:v', 'libx264',
-
-  // NOTE: use the 'ultrafast' compression preset
-  '-preset', 'ultrafast',
-
-  // NOTE: use the yuv420p pixel format (the most widely supported)
-  '-pix_fmt', 'yuv420p',
-
-  // NOTE: scale input frames to make the frame height divisible by 2 (yuv420p's requirement)
-  '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
-
-  // NOTE: set the frame rate to 30 in the output video (the most widely supported)
-  '-r', '30',
-];
 const FFMPEG_START_DELAY = 50;
-const delay = promisify(setTimeout);
 
-type Options = {
-  FPS: 30 | 60;
-  outFile: string;
-};
-
+const writeFileAsync = promisify(writeFile);
 export class Video {
-  private _frames: Buffer[] = [];
   public closed = false;
   private capturingPromise?: Promise<void>;
-  private tempFolder = '';
+  public _tempFolder = '';
   private captureCounter = 0;
-  private ffmpegCommand: ffmpeg.FfmpegCommand;
+  private ffmpegProcess: ffmpeg.FfmpegCommand;
+  public _keepScreenshots: boolean = false;
+  public _outputFile: string = '';
+  private readonly imageType = 'png' as const;
+  private ffmpegProcessPromise: Promise<unknown>;
   public constructor(
     private readonly page: Page,
   ) {
-    this.tempFolder = mkdtempSync(resolve(__dirname));
-    this.ffmpegCommand = ffmpeg({ timeout: FFMPEG_START_DELAY })
-        .on('exit', () => {
-          this.captureCounter = 0;
-          logPolitely('exit');
-        // rmdirSync(this.tempFolder);
-        }).setFfmpegPath(ffmpegPath);
-  }
-  async init({ FPS, outFile }: Options) {
-    this.ffmpegCommand.addOptions(DEFAULT_OPTIONS).FPS(FPS).output(outFile);
+    this._tempFolder = mkdtempSync(resolve(__dirname));
 
-    await delay(FFMPEG_START_DELAY);
+    this.ffmpegProcess = ffmpeg({ timeout: FFMPEG_START_DELAY }).setFfmpegPath(ffmpegPath);
+    this.ffmpegProcessPromise = eventToPromise(this.ffmpegProcess, 'end');
+  }
+  async init(options: VideoOptions = {}) {
+    this._outputFile = options.outFile || `${helper.guid()}.mp4`;
+    const fps = options.FPS || 30;
+    this.ffmpegProcess
+        .on('end', onEnd.bind(this))
+        .on('progress', onProgress)
+        .on('error', onError)
+        .output(this._outputFile)
+        .FPS(fps)
+        .addOptions(
+            '-start_number',
+            '0'
+        );
+    this._keepScreenshots = !!options.keepScreenshots;
   }
 
 
@@ -76,19 +72,22 @@ export class Video {
   async stop() {
 
     this.closed = true;
-
     await this.capturingPromise;
-    this.ffmpegCommand
-        .addInput(this.tempFolder + '/image_%d.jpeg')
-        .run();
+    this.ffmpegProcess.input(`${this._tempFolder}/image_%d.${this.imageType}`).inputFPS(1 / 6).run();
+    await this.ffmpegProcessPromise;
+
+    const path = resolve(this._outputFile);
+
+    const buffer = await promisify(readFile)(path);
+    return buffer;
   }
 
   private async _capture() {
     let errorTries = 0;
     while (!this.closed) {
       try {
-        const frame = await this.page.screenshot({ omitBackground: true, type: 'jpeg' });
-        writeFileSync(`${this.tempFolder}/image_${this.captureCounter}.jpeg`, frame);
+        const frame = await this.page.screenshot({ omitBackground: true, type: this.imageType });
+        await writeFileAsync(`${this._tempFolder}/image_${this.captureCounter}.${this.imageType}`, frame);
       } catch (e) {
         errorTries++;
         if (errorTries > 5) {
@@ -97,6 +96,37 @@ export class Video {
         }
         continue;
       }
+      this.captureCounter++;
     }
   }
+
+}
+function onError(err: Error, stdout: typeof process.stdout, stderr: typeof process.stderr) {
+  logPolitely('Cannot process video: ' + err.message);
+}
+function onEnd(this: Video) {
+  logPolitely('Finished processing file: ' + this._outputFile);
+
+  if (!this._keepScreenshots) {
+    rimraf(`${this._tempFolder}/*`, err => {
+      if (err)
+        logPolitely(err.message);
+    });
+  }
+}
+
+let timemark: any = null;
+function onProgress(progress: any) {
+  if (progress.timemark !== timemark) {
+    timemark = progress.timemark;
+    logPolitely(`Time mark: ${timemark}...`);
+  }
+}
+
+function eventToPromise<T extends EventEmitter>(emitter: T, eventResolve: string, eventReject?: string) {
+  return new Promise((resolve, reject) => {
+    emitter.on(eventResolve, resolve);
+    if (eventReject)
+      emitter.on(eventReject, reject);
+  });
 }

@@ -79,6 +79,12 @@ export type ScreenshotOptions = ElementScreenshotOptions & {
   clip?: Rect,
 };
 
+export type VideoOptions = {
+  FPS?: 30 | 60,
+  outFile?: string,
+  keepScreenshots?: boolean,
+};
+
 export type URLMatch = string | RegExp | ((url: URL) => boolean);
 
 export type Credentials = {
