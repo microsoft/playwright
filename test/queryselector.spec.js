@@ -721,6 +721,40 @@ describe('css selector', () => {
     expect(await root3.$eval(`css=[attr*="value"]`, e => e.textContent)).toBe('Hello from root3 #2');
     expect(await root3.$(`css:light=[attr*="value"]`)).toBe(null);
   });
+
+  it('should work with comma separated list', async({page, server}) => {
+    await page.goto(server.PREFIX + '/deep-shadow.html');
+    expect(await page.$$eval(`css=span,section #root1`, els => els.length)).toBe(5);
+    expect(await page.$$eval(`css=section #root1, div span`, els => els.length)).toBe(5);
+    expect(await page.$eval(`css=doesnotexist , section #root1`, e => e.id)).toBe('root1');
+    expect(await page.$$eval(`css=doesnotexist ,section #root1`, els => els.length)).toBe(1);
+    expect(await page.$$eval(`css=span,div span`, els => els.length)).toBe(4);
+    expect(await page.$$eval(`css=span,div span`, els => els.length)).toBe(4);
+    expect(await page.$$eval(`css=span,div span,div div span`, els => els.length)).toBe(4);
+    expect(await page.$$eval(`css=#target,[attr="value\\ space"]`, els => els.length)).toBe(2);
+    expect(await page.$$eval(`css=#target,[data-testid="foo"],[attr="value\\ space"]`, els => els.length)).toBe(4);
+    expect(await page.$$eval(`css=#target,[data-testid="foo"],[attr="value\\ space"],span`, els => els.length)).toBe(4);
+  });
+
+  it('should keep dom order with comma separated list', async({page}) => {
+    await page.setContent(`<section><span><div><x></x><y></y></div></span></section>`);
+    expect(await page.$$eval(`css=span,div`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
+    expect(await page.$$eval(`css=div,span`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
+    expect(await page.$$eval(`css=span div, div`, els => els.map(e => e.nodeName).join(','))).toBe('DIV');
+    expect(await page.$$eval(`*css=section >> css=div,span`, els => els.map(e => e.nodeName).join(','))).toBe('SECTION');
+    expect(await page.$$eval(`css=section >> *css=div >> css=x,y`, els => els.map(e => e.nodeName).join(','))).toBe('DIV');
+    expect(await page.$$eval(`css=section >> *css=div,span >> css=x,y`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
+    expect(await page.$$eval(`css=section >> *css=div,span >> css=y`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
+  });
+
+  it('should work with comma inside text', async({page}) => {
+    await page.setContent(`<span></span><div attr="hello,world!"></div>`);
+    expect(await page.$eval(`css=div[attr="hello,world!"]`, e => e.outerHTML)).toBe('<div attr="hello,world!"></div>');
+    expect(await page.$eval(`css=[attr="hello,world!"]`, e => e.outerHTML)).toBe('<div attr="hello,world!"></div>');
+    expect(await page.$eval(`css=div[attr='hello,world!']`, e => e.outerHTML)).toBe('<div attr="hello,world!"></div>');
+    expect(await page.$eval(`css=[attr='hello,world!']`, e => e.outerHTML)).toBe('<div attr="hello,world!"></div>');
+    expect(await page.$eval(`css=div[attr="hello,world!"],span`, e => e.outerHTML)).toBe('<span></span>');
+  });
 });
 
 describe('attribute selector', () => {
