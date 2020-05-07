@@ -122,6 +122,23 @@ Under the hood, this and other pointer-related methods:
 - wait for it to receive pointer events at the action point, for example, waits until element becomes non-obscured by other elements
 - retry if the element is detached during any of the above checks
 
+#### Forcing the click
+
+Sometimes, apps use non-trivial logic where hovering the element overlays it with another element that intercepts the click. This behavior is indistinguishable from a bug where element gets covered and the click is dispatched elsewhere. If you know this is taking place, you can bypass the actionability checks and force the click:
+
+```js
+await page.click('button#submit', { force: true });
+```
+
+#### Programmatic click
+
+If you are not interested in testing your app under the real conditions and want to simulate the click by any means possible, you can trigger the [`HTMLElement.click()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click) behavior via simply dispatching a click event on the element:
+
+```js
+await page.dispatchEvent('button#submit', 'click');
+```
+
+
 #### API reference
 
 - [page.click(selector[, options])](./api.md#pageclickselector-options) — main frame
@@ -133,6 +150,9 @@ Under the hood, this and other pointer-related methods:
 - [page.hover(selector[, options])](./api.md#pagehoverselector-options) — main frame
 - [frame.hover(selector[, options])](./api.md#framehoverselector-options) — given frame
 - [elementHandle.hover([options])](./api.md#elementhandlehoveroptions) — given element
+- [page.dispatchEvent(selector, type)](./api.md#pagedispatcheventselector-type-eventinit-options) — main frame
+- [frame.dispatchEvent(selector, type)](./api.md#framedispatcheventselector-type-eventinit-options) — given frame
+- [elementHandle.dispatchEvent(type)](./api.md#elementhandledispatcheventtype-eventinit) — given element
 
 <br/>
 
