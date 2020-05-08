@@ -354,7 +354,7 @@ describe('Keyboard', function() {
   });
 
   // event.keyIdentifier has been removed from all browsers except WebKit
-  it.skip(!WEBKIT).fail(true)('should expose keyIdentifier in webkit', async({page, server}) => {
+  it.skip(!WEBKIT)('should expose keyIdentifier in webkit', async({page, server}) => {
     await page.evaluate(() => {
       document.addEventListener('keydown', event => {
         window.lastKeyIdentifier = event.keyIdentifier 
