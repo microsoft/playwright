@@ -54,7 +54,9 @@ const browserPromise = chromium.launch();
 
 async function pageMacro(t, callback) {
   const browser = await browserPromise;
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
   try {
     await callback(t, page);
   } finally {
