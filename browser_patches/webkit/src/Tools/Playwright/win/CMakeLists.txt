@@ -1,8 +1,6 @@
-set(Playwright_INCLUDE_DIRECTORIES
-    ${PAL_FRAMEWORK_HEADERS_DIR}
+set(Playwright_PRIVATE_INCLUDE_DIRECTORIES
+    ${CMAKE_BINARY_DIR}
     ${WebCore_PRIVATE_FRAMEWORK_HEADERS_DIR}
-    ${WebKit_FRAMEWORK_HEADERS_DIR}
-    ${WebKit_PRIVATE_FRAMEWORK_HEADERS_DIR}
 )
 
 set(Playwright_SOURCES
@@ -14,29 +12,30 @@ set(Playwright_SOURCES
     stdafx.cpp
 )
 
-set(Playwright_LIBRARIES
-    DbgHelp
+set(Playwright_PRIVATE_DEFINITIONS _UNICODE)
+set(Playwright_PRIVATE_LIBRARIES
     WebKit::WTF
     comctl32
-    comsupp
-    comsuppw
     shlwapi
-    WebKit
+    user32
 )
 
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${MSVC_RUNTIME_LINKER_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:wWinMainCRTStartup")
+list(APPEND Playwright_PRIVATE_DEFINITIONS ENABLE_WEBKIT)
+list(APPEND Playwright_SOURCES
+    WebKitBrowserWindow.cpp
+)
+list(APPEND Playwright_PRIVATE_LIBRARIES
+    WebKit::WebKit
+)
 
+WEBKIT_EXECUTABLE_DECLARE(Playwright)
+WEBKIT_WRAP_EXECUTABLE(Playwright
+    SOURCES ${TOOLS_DIR}/win/DLLLauncher/DLLLauncherMain.cpp Playwright.rc
+    LIBRARIES shlwapi
+)
+WEBKIT_EXECUTABLE(Playwright)
+
+set_target_properties(Playwright PROPERTIES WIN32_EXECUTABLE ON)
 if (${WTF_PLATFORM_WIN_CAIRO})
-    add_definitions(-DWIN_CAIRO)
+    target_compile_definitions(Playwright PRIVATE WIN_CAIRO)
 endif ()
-add_definitions(-D_UNICODE)
-include_directories(${Playwright_INCLUDE_DIRECTORIES})
-add_library(PlaywrightLib SHARED ${Playwright_SOURCES})
-target_link_libraries(PlaywrightLib ${Playwright_LIBRARIES})
-
-add_executable(Playwright WIN32 ${TOOLS_DIR}/win/DLLLauncher/DLLLauncherMain.cpp Playwright.rc)
-target_link_libraries(Playwright shlwapi)
-set_target_properties(Playwright PROPERTIES OUTPUT_NAME "Playwright")
-
-add_dependencies(Playwright PlaywrightLib)
