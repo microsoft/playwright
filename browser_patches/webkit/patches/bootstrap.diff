@@ -10901,10 +10901,10 @@ index 0000000000000000000000000000000000000000..5ae0ce152f06b8316dbfbbbb2efd1990
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..5043224bbd6378175c9ca7dce63fc5a233649878
+index 0000000000000000000000000000000000000000..5d19607e019489b33318be50ccdc94c2fcfae914
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
-@@ -0,0 +1,253 @@
+@@ -0,0 +1,282 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -10937,6 +10937,7 @@ index 0000000000000000000000000000000000000000..5043224bbd6378175c9ca7dce63fc5a2
 +#include "NativeWebMouseEvent.h"
 +#include "WebPageProxy.h"
 +#include <wtf/MathExtras.h>
++#include <wtf/HexNumber.h>
 +
 +namespace WebKit {
 +
@@ -11009,6 +11010,31 @@ index 0000000000000000000000000000000000000000..5043224bbd6378175c9ca7dce63fc5a2
 +    m_mouseCallbacks = nullptr;
 +}
 +
++static String keyIdentifierForKey(const String& key)
++{
++    if (key.length() == 1)
++        return makeString("U+", hex(toASCIIUpper(key.characterAt(0)), 4));
++    if (key == "Delete")
++        return "U+007F";
++    if (key == "Backspace")
++        return "U+0008";
++    if (key == "ArrowUp")
++        return "Up";
++    if (key == "ArrowDown")
++        return "Down";
++    if (key == "ArrowLeft")
++        return "Left";
++    if (key == "ArrowRight")
++        return "Right";
++    if (key == "Tab")
++        return "U+0009";
++    if (key == "Pause")
++        return "Pause";
++    if (key == "ScrollLock")
++        return "Scroll";
++    return key;
++}
++
 +void WebPageInspectorInputAgent::dispatchKeyEvent(const String& type, const int* modifiers, const String* text, const String* unmodifiedText, const String* code, const String* key, const int* windowsVirtualKeyCode, const int* nativeVirtualKeyCode, const bool* autoRepeat, const bool* isKeypad, const bool* isSystemKey, const JSON::Array* commands, Ref<Inspector::InputBackendDispatcherHandler::DispatchKeyEventCallback>&& callback)
 +{
 +    WebKit::WebEvent::Type eventType;
@@ -11053,6 +11079,8 @@ index 0000000000000000000000000000000000000000..5043224bbd6378175c9ca7dce63fc5a2
 +      }
 +    }
 +
++    String keyIdentifier = keyIdentifierForKey(eventKey);
++
 +    bool eventIsAutoRepeat = false;
 +    if (autoRepeat)
 +        eventIsAutoRepeat = *autoRepeat;
@@ -11071,6 +11099,7 @@ index 0000000000000000000000000000000000000000..5043224bbd6378175c9ca7dce63fc5a2
 +        eventUnmodifiedText,
 +        eventKey,
 +        eventCode,
++        keyIdentifier,
 +        eventWindowsVirtualKeyCode,
 +        eventNativeVirtualKeyCode,
 +        eventIsAutoRepeat,
@@ -11160,7 +11189,7 @@ index 0000000000000000000000000000000000000000..5043224bbd6378175c9ca7dce63fc5a2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..76290475097e756e3d932d22be4d8c797be4aa0c
+index 0000000000000000000000000000000000000000..20311d530090b0229010957a96fc60f44b4823fe
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
 @@ -0,0 +1,84 @@
@@ -11228,7 +11257,7 @@ index 0000000000000000000000000000000000000000..76290475097e756e3d932d22be4d8c79
 +    void dispatchMouseEvent(const String& type, int x, int y, const int* modifiers, const String* button, const int* buttons, const int* clickCount, const int* deltaX, const int* deltaY, Ref<DispatchMouseEventCallback>&& callback) override;
 +
 +private:
-+    void platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& commands, WallTime timestamp);
++    void platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& commands, WallTime timestamp);
 +#if PLATFORM(WPE)
 +    void platformDispatchMouseEvent(WebMouseEvent::Type type, int x, int y, WebMouseEvent::Button button, OptionSet<WebEvent::Modifier> modifiers);
 +#endif
@@ -12132,10 +12161,10 @@ index 0000000000000000000000000000000000000000..e5e25acebabb76a05a77db02a99f1267
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/gtk/WebPageInspectorInputAgentGtk.cpp b/Source/WebKit/UIProcess/gtk/WebPageInspectorInputAgentGtk.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..7ad3fe416c5c747eaad8c6948c3549a3984223ea
+index 0000000000000000000000000000000000000000..d0f9827544994e450e24e3f7a427c35eeff94d67
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/gtk/WebPageInspectorInputAgentGtk.cpp
-@@ -0,0 +1,107 @@
+@@ -0,0 +1,105 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -12201,11 +12230,10 @@ index 0000000000000000000000000000000000000000..7ad3fe416c5c747eaad8c6948c3549a3
 +    return state;
 +}
 +
-+void WebPageInspectorInputAgent::platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& macCommands, WallTime timestamp)
++void WebPageInspectorInputAgent::platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& macCommands, WallTime timestamp)
 +{
 +    Vector<String> commands;
 +    const guint keyVal = WebCore::PlatformKeyboardEvent::gdkKeyCodeForWindowsKeyCode(windowsVirtualKeyCode);
-+    String keyIdentifier;
 +    if (keyVal) {
 +        GdkEventType event = GDK_NOTHING;
 +        switch (type)
@@ -12222,7 +12250,6 @@ index 0000000000000000000000000000000000000000..7ad3fe416c5c747eaad8c6948c3549a3
 +        }
 +        unsigned state = modifiersToEventState(modifiers);
 +        commands = commandsForKeyEvent(event, keyVal, state);
-+        keyIdentifier = WebCore::PlatformKeyboardEvent::keyIdentifierForGdkKeyCode(keyVal);
 +    }
 +    NativeWebKeyboardEvent event(
 +        type,
@@ -12642,10 +12669,10 @@ index 0000000000000000000000000000000000000000..6113f4cd60a5d72b8ead61176cb43200
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm b/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..30e6ae3bdc8c1695189885afae949071add54c4e
+index 0000000000000000000000000000000000000000..832e52038cf42ea73246e036a66ad9e1fc87fa78
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm
-@@ -0,0 +1,124 @@
+@@ -0,0 +1,122 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -12678,7 +12705,6 @@ index 0000000000000000000000000000000000000000..30e6ae3bdc8c1695189885afae949071
 +#import <WebCore/IntPoint.h>
 +#import <WebCore/IntSize.h>
 +#import "NativeWebKeyboardEvent.h"
-+#import <wtf/HexNumber.h>
 +
 +namespace WebKit {
 +
@@ -12743,9 +12769,8 @@ index 0000000000000000000000000000000000000000..30e6ae3bdc8c1695189885afae949071
 +    }
 +}
 +
-+void WebPageInspectorInputAgent::platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& commands, WallTime timestamp)
++void WebPageInspectorInputAgent::platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& commands, WallTime timestamp)
 +{
-+    String keyIdentifier = key.length() == 1 ? makeString("U+", hex(toASCIIUpper(key.characterAt(0)), 4)) : key;
 +    Vector<WebCore::KeypressCommand> macCommands;
 +    for (const String& command : commands)
 +      macCommands.append(WebCore::KeypressCommand(command.utf8().data()));
@@ -13030,7 +13055,7 @@ index 0000000000000000000000000000000000000000..62b841fe1d0de2296e1c61e328cff564
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/win/WebPageInspectorInputAgentWin.cpp b/Source/WebKit/UIProcess/win/WebPageInspectorInputAgentWin.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..a299240b1fea96694cb47fa11fc6a6411ffdaf70
+index 0000000000000000000000000000000000000000..5cf8a010e9809e6a95741cdb7c2cbeb445ab638b
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/win/WebPageInspectorInputAgentWin.cpp
 @@ -0,0 +1,55 @@
@@ -13069,7 +13094,7 @@ index 0000000000000000000000000000000000000000..a299240b1fea96694cb47fa11fc6a641
 +
 +namespace WebKit {
 +
-+void WebPageInspectorInputAgent::platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& macCommands, WallTime timestamp)
++void WebPageInspectorInputAgent::platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& macCommands, WallTime timestamp)
 +{
 +    NativeWebKeyboardEvent event(
 +        type,
@@ -13077,7 +13102,7 @@ index 0000000000000000000000000000000000000000..a299240b1fea96694cb47fa11fc6a641
 +        unmodifiedText,
 +        key,
 +        code,
-+        "",
++        keyIdentifier,
 +        windowsVirtualKeyCode,
 +        nativeVirtualKeyCode,
 +        isAutoRepeat,
@@ -13220,10 +13245,10 @@ index 0000000000000000000000000000000000000000..5dc76aa302cb574307059e66a1b73730
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp b/Source/WebKit/UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..585fb151f302e4b376c705ed0d0974d518733605
+index 0000000000000000000000000000000000000000..c3d7cacea987ba2b094d5022c670705ef6ced129
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,55 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -13259,12 +13284,8 @@ index 0000000000000000000000000000000000000000..585fb151f302e4b376c705ed0d0974d5
 +
 +namespace WebKit {
 +
-+void WebPageInspectorInputAgent::platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& macCommands, WallTime timestamp)
++void WebPageInspectorInputAgent::platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& macCommands, WallTime timestamp)
 +{
-+    unsigned keyCode = WebCore::PlatformKeyboardEvent::WPEKeyCodeForWindowsKeyCode(windowsVirtualKeyCode);
-+    String keyIdentifier;
-+    if (keyCode)
-+        keyIdentifier = WebCore::PlatformKeyboardEvent::keyIdentifierForWPEKeyCode(keyCode);
 +    NativeWebKeyboardEvent event(
 +        type,
 +        text,
