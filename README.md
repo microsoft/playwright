@@ -34,6 +34,7 @@ Playwright is built to automate the broad and growing set of web browser capabil
 * Auto-wait for elements to be ready before executing actions (like click, fill)
 * Intercept network activity for stubbing and mocking network requests
 * Emulate mobile devices, geolocation, permissions
+* Support for web components via shadow-piercing selectors
 * Native input events for mouse and keyboard
 * Upload and download files
 
