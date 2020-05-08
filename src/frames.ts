@@ -21,7 +21,7 @@ import { ConsoleMessage } from './console';
 import * as dom from './dom';
 import { TimeoutError, NotConnectedError } from './errors';
 import { Events } from './events';
-import { assert, helper, RegisteredListener, assertMaxArguments } from './helper';
+import { assert, helper, RegisteredListener, assertMaxArguments, debugAssert } from './helper';
 import * as js from './javascript';
 import * as network from './network';
 import { Page } from './page';
@@ -149,7 +149,7 @@ export class FrameManager {
     this.removeChildFramesRecursively(frame);
     frame._url = url;
     frame._name = name;
-    assert(!frame._pendingDocumentId || frame._pendingDocumentId === documentId);
+    debugAssert(!frame._pendingDocumentId || frame._pendingDocumentId === documentId);
     frame._lastDocumentId = documentId;
     frame._pendingDocumentId = '';
     for (const task of frame._frameTasks)
