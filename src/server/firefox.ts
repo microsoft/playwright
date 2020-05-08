@@ -33,6 +33,7 @@ import { launchProcess, waitForLine } from './processLauncher';
 import { ConnectionTransport, SequenceNumberMixer, WebSocketTransport } from '../transport';
 import { RootLogger, InnerLogger, logError } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
+import { TimeoutSettings } from '../timeoutSettings';
 
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 
@@ -61,15 +62,17 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
       timeout = 30000,
       slowMo = 0,
     } = options;
+    const deadline = TimeoutSettings.computeDeadline(timeout);
     const { browserServer, downloadsPath, logger } = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
       return FFBrowser.connect(transport, logger, true, slowMo);
     });
     browser._ownedServer = browserServer;
     browser._downloadsPath = downloadsPath;
-    await helper.waitWithTimeout(browser._firstPagePromise, 'first page', timeout);
-    const browserContext = browser._defaultContext!;
-    return browserContext;
+    const context = browser._defaultContext!;
+    if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
+      await helper.waitWithTimeout(context._loadDefaultContext(), 'first page', helper.timeUntilDeadline(deadline));
+    return context;
   }
 
   private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, downloadsPath: string, logger: InnerLogger }> {
@@ -87,14 +90,13 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
     assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
     const logger = new RootLogger(options.logger);
 
-    const firefoxArguments = [];
-
     let temporaryProfileDir = null;
     if (!userDataDir) {
       userDataDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_firefox_profile-'));
       temporaryProfileDir = userDataDir;
     }
 
+    const firefoxArguments = [];
     if (!ignoreDefaultArgs)
       firefoxArguments.push(...this._defaultArgs(options, launchType, userDataDir, 0));
     else if (Array.isArray(ignoreDefaultArgs))
@@ -165,8 +167,6 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
       throw new Error('Pass userDataDir parameter instead of specifying -profile argument');
     if (args.find(arg => arg.startsWith('-juggler')))
       throw new Error('Use the port parameter instead of -juggler argument');
-    if (launchType !== 'persistent' && args.find(arg => !arg.startsWith('-')))
-      throw new Error('Arguments can not specify page to be opened');
 
     const firefoxArguments = ['-no-remote'];
     if (headless) {
@@ -175,18 +175,13 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
       firefoxArguments.push('-wait-for-browser');
       firefoxArguments.push('-foreground');
     }
-
     firefoxArguments.push(`-profile`, userDataDir);
     firefoxArguments.push('-juggler', String(port));
     firefoxArguments.push(...args);
-
-    if (launchType === 'persistent') {
-      if (args.every(arg => arg.startsWith('-')))
-        firefoxArguments.push('about:blank');
-    } else {
+    if (launchType === 'persistent')
+      firefoxArguments.push('about:blank');
+    else
       firefoxArguments.push('-silent');
-    }
-
     return firefoxArguments;
   }
 }

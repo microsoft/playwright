@@ -40,8 +40,6 @@ export class CRBrowser extends BrowserBase {
   _crPages = new Map<string, CRPage>();
   _backgroundPages = new Map<string, CRPage>();
   _serviceWorkers = new Map<string, CRServiceWorker>();
-  readonly _firstPagePromise: Promise<void>;
-  private _firstPageCallback = () => {};
 
   private _tracingRecording = false;
   private _tracingPath: string | null = '';
@@ -100,7 +98,6 @@ export class CRBrowser extends BrowserBase {
     });
     this._session.on('Target.attachedToTarget', this._onAttachedToTarget.bind(this));
     this._session.on('Target.detachedFromTarget', this._onDetachedFromTarget.bind(this));
-    this._firstPagePromise = new Promise(f => this._firstPageCallback = f);
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
@@ -160,7 +157,6 @@ export class CRBrowser extends BrowserBase {
           signalBarrier.addPopup(crPage.pageOrError());
       }
       crPage.pageOrError().then(() => {
-        this._firstPageCallback();
         context!.emit(CommonEvents.BrowserContext.Page, crPage._page);
         if (opener) {
           opener.pageOrError().then(openerPage => {

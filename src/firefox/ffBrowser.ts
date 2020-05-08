@@ -35,8 +35,6 @@ export class FFBrowser extends BrowserBase {
   readonly _defaultContext: FFBrowserContext | null = null;
   readonly _contexts: Map<string, FFBrowserContext>;
   private _eventListeners: RegisteredListener[];
-  readonly _firstPagePromise: Promise<void>;
-  private _firstPageCallback = () => {};
 
   static async connect(transport: ConnectionTransport, logger: InnerLogger, attachToDefaultContext: boolean, slowMo?: number): Promise<FFBrowser> {
     const connection = new FFConnection(SlowMoTransport.wrap(transport, slowMo), logger);
@@ -64,7 +62,6 @@ export class FFBrowser extends BrowserBase {
       helper.addEventListener(this._connection, 'Browser.downloadCreated', this._onDownloadCreated.bind(this)),
       helper.addEventListener(this._connection, 'Browser.downloadFinished', this._onDownloadFinished.bind(this)),
     ];
-    this._firstPagePromise = new Promise(f => this._firstPageCallback = f);
   }
 
   isConnected(): boolean {
@@ -137,7 +134,6 @@ export class FFBrowser extends BrowserBase {
         signalBarrier.addPopup(ffPage.pageOrError());
     }
     ffPage.pageOrError().then(async () => {
-      this._firstPageCallback();
       const page = ffPage._page;
       context.emit(Events.BrowserContext.Page, page);
       if (!opener)

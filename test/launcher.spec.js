@@ -39,7 +39,7 @@ describe('Playwright', function() {
       await browserType.launch(options).catch(e => waitError = e);
       expect(waitError.message).toContain('launchPersistentContext');
     });
-    it('should throw if page argument is passed', async({browserType, defaultBrowserOptions}) => {
+    it.skip(FFOX)('should throw if page argument is passed', async({browserType, defaultBrowserOptions}) => {
       let waitError = null;
       const options = Object.assign({}, defaultBrowserOptions, { args: ['http://example.com'] });
       await browserType.launch(options).catch(e => waitError = e);
@@ -62,18 +62,28 @@ describe('Playwright', function() {
       await browserContext.close();
       await removeUserDataDir(userDataDir);
     });
-    it('should have custom URL when launching browser', async ({browserType, defaultBrowserOptions, server}) => {
+    it.skip(FFOX)('should throw if page argument is passed', async ({browserType, defaultBrowserOptions, server}) => {
       const userDataDir = await makeUserDataDir();
       const options = Object.assign({}, defaultBrowserOptions);
       options.args = [server.EMPTY_PAGE].concat(options.args || []);
+      const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
+      expect(error.message).toContain('can not specify page');
+      await removeUserDataDir(userDataDir);
+    });
+    it('should have passed URL when launching with ignoreDefaultArgs: true', async ({browserType, defaultBrowserOptions, server}) => {
+      const userDataDir = await makeUserDataDir();
+      const args = browserType._defaultArgs(defaultBrowserOptions, 'persistent', userDataDir, 0).filter(a => a !== 'about:blank');
+      const options = {
+        ...defaultBrowserOptions,
+        args: [...args, server.EMPTY_PAGE],
+        ignoreDefaultArgs: true,
+      };
       const browserContext = await browserType.launchPersistentContext(userDataDir, options);
-      const pages = browserContext.pages();
-      expect(pages.length).toBe(1);
-      const page = pages[0];
-      if (page.url() !== server.EMPTY_PAGE) {
-        await page.waitForNavigation();
-      }
-      expect(page.url()).toBe(server.EMPTY_PAGE);
+      if (!browserContext.pages().length)
+        await browserContext.waitForEvent('page');
+      await browserContext.pages()[0].waitForLoadState();
+      const gotUrls = browserContext.pages().map(page => page.url());
+      expect(gotUrls).toEqual([server.EMPTY_PAGE]);
       await browserContext.close();
       await removeUserDataDir(userDataDir);
     });

@@ -33,6 +33,7 @@ import { ConnectionTransport, ProtocolRequest, WebSocketTransport } from '../tra
 import { BrowserContext } from '../browserContext';
 import { InnerLogger, logError, RootLogger } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
+import { TimeoutSettings } from '../timeoutSettings';
 
 export class Chromium extends AbstractBrowserType<CRBrowser> {
   constructor(packagePath: string, browser: BrowserDescriptor) {
@@ -53,11 +54,15 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
   }
 
   async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
+    const { timeout = 30000 } = options;
+    const deadline = TimeoutSettings.computeDeadline(timeout);
     const { transport, browserServer, logger } = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await CRBrowser.connect(transport!, true, logger, options);
     browser._ownedServer = browserServer;
-    await helper.waitWithTimeout(browser._firstPagePromise, 'first page', options.timeout || 30000);
-    return browser._defaultContext!;
+    const context = browser._defaultContext!;
+    if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
+      await helper.waitWithTimeout(context._loadDefaultContext(), 'first page', helper.timeUntilDeadline(deadline));
+    return context;
   }
 
   private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport, downloadsPath: string, logger: InnerLogger }> {
@@ -141,9 +146,8 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
       throw new Error('Pass userDataDir parameter instead of specifying --user-data-dir argument');
     if (args.find(arg => arg.startsWith('--remote-debugging-pipe')))
       throw new Error('Playwright manages remote debugging connection itself.');
-    if (launchType !== 'persistent' && args.find(arg => !arg.startsWith('-')))
+    if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
-
     const chromeArguments = [...DEFAULT_ARGS];
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
     chromeArguments.push('--remote-debugging-pipe');
@@ -157,13 +161,10 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
       );
     }
     chromeArguments.push(...args);
-    if (launchType === 'persistent') {
-      if (args.every(arg => arg.startsWith('-')))
-        chromeArguments.push('about:blank');
-    } else {
+    if (launchType === 'persistent')
+      chromeArguments.push('about:blank');
+    else
       chromeArguments.push('--no-startup-window');
-    }
-
     return chromeArguments;
   }
 }
