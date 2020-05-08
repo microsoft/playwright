@@ -337,6 +337,21 @@ export function assert(value: any, message?: string): asserts value {
     throw new Error(message);
 }
 
+let _isUnderTest = false;
+
+export function setUnderTest() {
+  _isUnderTest = true;
+}
+
+export function isUnderTest(): boolean {
+  return _isUnderTest;
+}
+
+export function debugAssert(value: any, message?: string): asserts value {
+  if (_isUnderTest && !value)
+    throw new Error(message);
+}
+
 export function assertMaxArguments(count: number, max: number): asserts count {
   assert(count <= max, 'Too many arguments. If you need to pass more than 1 argument to the function wrap them in an object.');
 }

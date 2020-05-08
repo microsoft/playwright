@@ -16,7 +16,6 @@
  */
 
 const fs = require('fs');
-const readline = require('readline');
 const TestRunner = require('../utils/testrunner/');
 const {Environment} = require('../utils/testrunner/Test');
 
@@ -74,6 +73,8 @@ function collect(browserNames) {
   // TODO: this should be a preinstalled playwright by default.
   const playwrightPath = config.playwrightPath;
   const playwright = require(playwrightPath);
+  const { setUnderTest } = require(require('path').join(playwrightPath, 'lib/helper.js'));
+  setUnderTest();
 
   const playwrightEnvironment = new Environment('Playwright');
   playwrightEnvironment.beforeAll(async state => {
