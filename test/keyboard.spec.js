@@ -354,7 +354,7 @@ describe('Keyboard', function() {
   });
 
   // event.keyIdentifier has been removed from all browsers except WebKit
-  it.skip(!WEBKIT).fail(!LINUX)('should expose keyIdentifier in webkit', async({page, server}) => {
+  it.skip(!WEBKIT).fail(true)('should expose keyIdentifier in webkit', async({page, server}) => {
     await page.evaluate(() => {
       document.addEventListener('keydown', event => {
         window.lastKeyIdentifier = event.keyIdentifier 
@@ -368,8 +368,8 @@ describe('Keyboard', function() {
       'Backspace': 'U+0008',
       'Tab': 'U+0009',
       'Delete': 'U+007F',
-      'a': 'U+0061',
-      'b': 'U+0062',
+      'a': 'U+0041',
+      'b': 'U+0042',
       'F12': 'F12',
     };
     for (const [key, keyIdentifier] of Object.entries(keyMap)) {
