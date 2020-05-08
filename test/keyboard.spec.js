@@ -16,7 +16,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, MAC} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, MAC, LINUX} = require('./utils').testOptions(browserType);
 
 describe('Keyboard', function() {
   it('should type into a textarea', async({page, server}) => {
@@ -351,5 +351,30 @@ describe('Keyboard', function() {
     })
     await page.keyboard.press('a');
     expect(await page.evaluate('lastKey.key')).toBe('a');
-  })
+  });
+
+  // event.keyIdentifier has been removed from all browsers except WebKit
+  fit.skip(!WEBKIT).fail(!LINUX)('should expose keyIdentifier in webkit', async({page, server}) => {
+    await page.evaluate(() => {
+      document.addEventListener('keydown', event => {
+        window.lastKeyIdentifier = event.keyIdentifier 
+      });
+    });
+    const keyMap = {
+      'ArrowUp': 'Up',
+      'ArrowDown': 'Down',
+      'ArrowLeft': 'Left',
+      'ArrowRight': 'Right',
+      'Backspace': 'U+0008',
+      'Tab': 'U+0009',
+      'Delete': 'U+007F',
+      'a': 'U+0061',
+      'b': 'U+0062',
+      'F12': 'F12',
+    };
+    for (const [key, keyIdentifier] of Object.entries(keyMap)) {
+      await page.keyboard.press(key);
+      expect(await page.evaluate('lastKeyIdentifier')).toBe(keyIdentifier);
+    }
+  });
 });
