@@ -22,6 +22,7 @@ import { DeviceDescriptors } from '../deviceDescriptors';
 import { Chromium } from './chromium';
 import { WebKit } from './webkit';
 import { Firefox } from './firefox';
+import { Electron } from './electron';
 import { selectors } from '../selectors';
 import * as browserPaths from '../install/browserPaths';
 
@@ -37,6 +38,7 @@ export class Playwright {
   readonly chromium: (Chromium|undefined);
   readonly firefox: (Firefox|undefined);
   readonly webkit: (WebKit|undefined);
+  readonly electron: Electron;
 
   constructor(packagePath: string, browsers: browserPaths.BrowserDescriptor[]) {
     this.devices = DeviceDescriptors;
@@ -53,5 +55,7 @@ export class Playwright {
     const webkit = browsers.find(browser => browser.name === 'webkit');
     if (webkit)
       this.webkit = new WebKit(packagePath, webkit);
+
+    this.electron = new Electron();
   }
 }
