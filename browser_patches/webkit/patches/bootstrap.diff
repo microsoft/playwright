@@ -7657,10 +7657,10 @@ index 23b992f3ce45f82f0dcdede6007a2e3a46b7b0b6..7e711e8f5132931e01eac66db6ea60c3
      // This reuses the basename of the remote file path so that the filename exposed to DOM API remains the same.
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorController.cpp b/Source/WebKit/UIProcess/BrowserInspectorController.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..300be76e7926ac5eb435ab62df1a973f04520327
+index 0000000000000000000000000000000000000000..de8a477e40d847a0355f1ff86a387fc8e7dac001
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorController.cpp
-@@ -0,0 +1,244 @@
+@@ -0,0 +1,30 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -7690,227 +7690,13 @@ index 0000000000000000000000000000000000000000..300be76e7926ac5eb435ab62df1a973f
 +#include "BrowserInspectorController.h"
 +
 +#if ENABLE(REMOTE_INSPECTOR)
-+
-+#include "InspectorPlaywrightAgent.h"
-+#include "InspectorPlaywrightAgentClient.h"
-+#include "WebPageInspectorController.h"
-+#include "WebPageProxy.h"
-+#include "WebProcessPool.h"
-+#include "WebProcessProxy.h"
-+#include <JavaScriptCore/InspectorBackendDispatcher.h>
-+#include <JavaScriptCore/InspectorBackendDispatchers.h>
-+#include <JavaScriptCore/InspectorFrontendChannel.h>
-+#include <JavaScriptCore/InspectorFrontendRouter.h>
-+#include <JavaScriptCore/InspectorTarget.h>
-+#include <WebCore/WindowFeatures.h>
-+#include <wtf/Ref.h>
-+#include <wtf/RefPtr.h>
-+
-+using namespace Inspector;
-+
-+namespace WebKit {
-+
-+static Vector<WebPageProxy*> allPages()
-+{
-+    ASSERT(isMainThread());
-+    Vector<WebPageProxy*> result;
-+    for (WebProcessPool* pool : WebProcessPool::allProcessPools()) {
-+        for (auto& process : pool->processes()) {
-+            result.appendRange(process->pages().begin(), process->pages().end());
-+        }
-+    }
-+    return result;
-+}
-+
-+class BrowserInspectorController::PageProxyChannel : public FrontendChannel {
-+    WTF_MAKE_FAST_ALLOCATED;
-+public:
-+    PageProxyChannel(FrontendChannel& frontendChannel, String pageProxyID, WebPageProxy& page)
-+        : m_pageProxyID(pageProxyID)
-+        , m_frontendChannel(frontendChannel)
-+        , m_page(page)
-+    {
-+    }
-+
-+    ~PageProxyChannel() override = default;
-+
-+    void dispatchMessageFromFrontend(const String& message)
-+    {
-+        m_page.inspectorController().dispatchMessageFromFrontend(message);
-+    }
-+
-+    WebPageProxy& page() { return m_page; }
-+
-+    void disconnect()
-+    {
-+        m_page.inspectorController().disconnectFrontend(*this);
-+    }
-+
-+private:
-+    ConnectionType connectionType() const override { return m_frontendChannel.connectionType(); }
-+    void sendMessageToFrontend(const String& message) override
-+    {
-+        m_frontendChannel.sendMessageToFrontend(addTabIdToMessage(message));
-+    }
-+
-+    String addTabIdToMessage(const String& message) {
-+        RefPtr<JSON::Value> parsedMessage;
-+        if (!JSON::Value::parseJSON(message, parsedMessage))
-+            return message;
-+
-+        RefPtr<JSON::Object> messageObject;
-+        if (!parsedMessage->asObject(messageObject))
-+            return message;
-+
-+        messageObject->setString("pageProxyId"_s, m_pageProxyID);
-+        return messageObject->toJSONString();
-+    }
-+
-+    String m_pageProxyID;
-+    FrontendChannel& m_frontendChannel;
-+    WebPageProxy& m_page;
-+};
-+
-+BrowserInspectorController::BrowserInspectorController(std::unique_ptr<InspectorPlaywrightAgentClient> client)
-+    : m_frontendChannel(nullptr)
-+    , m_frontendRouter(FrontendRouter::create())
-+    , m_backendDispatcher(BackendDispatcher::create(m_frontendRouter.copyRef()))
-+    , m_browserAgentClient(std::move(client))
-+{
-+    PageProxyIDMap* map = this;
-+    auto browserAgent = makeUnique<InspectorPlaywrightAgent>(m_frontendRouter, m_backendDispatcher, m_browserAgentClient.get(), *map);
-+    m_browserAgent = browserAgent.get();
-+    m_agents.append(WTFMove(browserAgent));
-+}
-+
-+BrowserInspectorController::~BrowserInspectorController()
-+{
-+    if (m_frontendChannel)
-+        disconnectFrontend();
-+}
-+
-+void BrowserInspectorController::connectFrontend(FrontendChannel& frontendChannel)
-+{
-+    ASSERT(!m_frontendChannel);
-+    m_frontendChannel = &frontendChannel;
-+    WebPageInspectorController::setObserver(this);
-+
-+    bool connectingFirstFrontend = !m_frontendRouter->hasFrontends();
-+    m_frontendRouter->connectFrontend(frontendChannel);
-+    if (connectingFirstFrontend)
-+        m_agents.didCreateFrontendAndBackend(&m_frontendRouter.get(), &m_backendDispatcher.get());
-+
-+    connectToAllPages();
-+}
-+
-+void BrowserInspectorController::disconnectFrontend()
-+{
-+    ASSERT(m_frontendChannel);
-+    disconnectFromAllPages();
-+
-+    m_frontendRouter->disconnectFrontend(*m_frontendChannel);
-+    if (!m_frontendRouter->hasFrontends())
-+        m_agents.willDestroyFrontendAndBackend(DisconnectReason::InspectorDestroyed);
-+
-+    WebPageInspectorController::setObserver(nullptr);
-+    m_frontendChannel = nullptr;
-+}
-+
-+void BrowserInspectorController::dispatchMessageFromFrontend(const String& message)
-+{
-+    m_backendDispatcher->dispatch(message, BackendDispatcher::Mode::FailIfDomainIsMissing, [&](const RefPtr<JSON::Object>& messageObject) {
-+        RefPtr<JSON::Value> pageProxyIDValue;
-+        if (!messageObject->getValue("pageProxyId"_s, pageProxyIDValue))
-+            return BackendDispatcher::DispatchResult::Continue;
-+
-+        String pageProxyID;
-+        if (!pageProxyIDValue->asString(pageProxyID)) {
-+            m_backendDispatcher->reportProtocolError(BackendDispatcher::InvalidRequest, "The type of 'pageProxyId' must be string"_s);
-+            m_backendDispatcher->sendPendingErrors();
-+            return BackendDispatcher::DispatchResult::Finished;
-+        }
-+
-+
-+        if (auto pageProxyChannel = m_pageProxyChannels.get(pageProxyID)) {
-+            pageProxyChannel->dispatchMessageFromFrontend(message);
-+            return BackendDispatcher::DispatchResult::Finished;
-+        }
-+
-+        m_backendDispatcher->reportProtocolError(BackendDispatcher::InvalidRequest, "Cannot find page proxy with provided 'pageProxyId'"_s);
-+        m_backendDispatcher->sendPendingErrors();
-+        return BackendDispatcher::DispatchResult::Finished;
-+    });
-+}
-+
-+void BrowserInspectorController::connectToAllPages()
-+{
-+    for (auto* page : allPages())
-+        connectToPage(*page);
-+}
-+
-+void BrowserInspectorController::disconnectFromAllPages()
-+{
-+    for (auto it = m_pageProxyChannels.begin(); it != m_pageProxyChannels.end(); ++it)
-+        it->value->disconnect();
-+    m_pageProxyChannels.clear();
-+}
-+
-+void BrowserInspectorController::connectToPage(WebPageProxy& page)
-+{
-+    String pageProxyID = InspectorPlaywrightAgent::toPageProxyIDProtocolString(page);
-+    auto pageProxyChannel = makeUnique<PageProxyChannel>(*m_frontendChannel, pageProxyID, page);
-+    page.inspectorController().connectFrontend(*pageProxyChannel);
-+    // Always pause new targets if controlled remotely.
-+    page.inspectorController().setPauseOnStart(true);
-+    m_pageProxyChannels.set(pageProxyID, WTFMove(pageProxyChannel));
-+}
-+
-+void BrowserInspectorController::didCreateInspectorController(WebPageProxy& page)
-+{
-+    ASSERT(m_frontendChannel);
-+    // Auto-connect to all new pages.
-+    connectToPage(page);
-+    m_browserAgent->didCreateWebPageProxy(page);
-+}
-+
-+void BrowserInspectorController::willDestroyInspectorController(WebPageProxy& page)
-+{
-+    m_browserAgent->willDestroyWebPageProxy(page);
-+
-+    String pageProxyID = InspectorPlaywrightAgent::toPageProxyIDProtocolString(page);
-+    auto it = m_pageProxyChannels.find(pageProxyID);
-+    ASSERT(it != m_pageProxyChannels.end());
-+    it->value->disconnect();
-+    m_pageProxyChannels.remove(it);
-+}
-+
-+void BrowserInspectorController::didFailProvisionalLoad(WebPageProxy& page, uint64_t navigationID, const String& error)
-+{
-+    m_browserAgent->didFailProvisionalLoad(page, navigationID, error);
-+}
-+
-+void BrowserInspectorController::willCreateNewPage(WebPageProxy& page, const WebCore::WindowFeatures& features, const URL& url)
-+{
-+    m_browserAgent->willCreateNewPage(page, features, url);
-+}
-+
-+WebPageProxy* BrowserInspectorController::findPageProxy(const String& pageProxyID)
-+{
-+    if (auto* pageProxyChannel = m_pageProxyChannels.get(pageProxyID))
-+        return &pageProxyChannel->page();
-+
-+    return nullptr;
-+}
-+
-+} // namespace WebKit
-+
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorController.h b/Source/WebKit/UIProcess/BrowserInspectorController.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..b8e7b1c9f301c99baf62dc52ad4591b0376f00b3
+index 0000000000000000000000000000000000000000..1ae75dea0fd699280e89aee6589a62158cb02636
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorController.h
-@@ -0,0 +1,86 @@
+@@ -0,0 +1,29 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -7939,70 +7725,13 @@ index 0000000000000000000000000000000000000000..b8e7b1c9f301c99baf62dc52ad4591b0
 +#pragma once
 +
 +#if ENABLE(REMOTE_INSPECTOR)
-+
-+#include "InspectorPlaywrightAgent.h"
-+#include "WebPageInspectorController.h"
-+#include <JavaScriptCore/InspectorAgentRegistry.h>
-+#include <wtf/Forward.h>
-+#include <wtf/Noncopyable.h>
-+
-+namespace Inspector {
-+class BackendDispatcher;
-+class FrontendChannel;
-+class FrontendRouter;
-+}
-+
-+namespace WebKit {
-+
-+class InspectorPlaywrightAgent;
-+class InspectorPlaywrightAgentClient;
-+
-+class BrowserInspectorController : private WebPageInspectorControllerObserver, private PageProxyIDMap {
-+    WTF_MAKE_NONCOPYABLE(BrowserInspectorController);
-+    WTF_MAKE_FAST_ALLOCATED;
-+public:
-+    BrowserInspectorController(std::unique_ptr<InspectorPlaywrightAgentClient> client);
-+    ~BrowserInspectorController();
-+
-+    void connectFrontend(Inspector::FrontendChannel&);
-+    void disconnectFrontend();
-+    void dispatchMessageFromFrontend(const String& message);
-+
-+private:
-+    class TargetHandler;
-+    class PageProxyChannel;
-+
-+    // WebPageInspectorControllerObserver
-+    void didCreateInspectorController(WebPageProxy&) override;
-+    void willDestroyInspectorController(WebPageProxy&) override;
-+    void didFailProvisionalLoad(WebPageProxy&, uint64_t navigationID, const String& error) override;
-+    void willCreateNewPage(WebPageProxy&, const WebCore::WindowFeatures&, const URL&) override;
-+
-+    // PageProxyIDMap
-+    WebPageProxy* findPageProxy(const String& pageProxyID) override;
-+
-+    void connectToAllPages();
-+    void disconnectFromAllPages();
-+    void connectToPage(WebPageProxy&);
-+
-+    Inspector::FrontendChannel* m_frontendChannel { nullptr };
-+    Ref<Inspector::FrontendRouter> m_frontendRouter;
-+    Ref<Inspector::BackendDispatcher> m_backendDispatcher;
-+    std::unique_ptr<InspectorPlaywrightAgentClient> m_browserAgentClient;
-+    Inspector::AgentRegistry m_agents;
-+    InspectorPlaywrightAgent* m_browserAgent { nullptr };
-+    HashMap<String, std::unique_ptr<PageProxyChannel>> m_pageProxyChannels;
-+};
-+
-+} // namespace WebKit
-+
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp b/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..e07123453ecab2611ff4918cec37ee6e744a23a6
+index 0000000000000000000000000000000000000000..912d671dfe20d11b6a7288c1af2bc07bf300b9d5
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp
-@@ -0,0 +1,57 @@
+@@ -0,0 +1,46 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -8033,28 +7762,17 @@ index 0000000000000000000000000000000000000000..e07123453ecab2611ff4918cec37ee6e
 +
 +#if ENABLE(REMOTE_INSPECTOR)
 +
-+#include "BrowserInspectorController.h"
-+#include "RemoteInspectorPipe.h"
 +#include <wtf/NeverDestroyed.h>
++#include "InspectorPlaywrightAgent.h"
 +#include "InspectorPlaywrightAgentClient.h"
 +
 +namespace WebKit {
 +
 +void initializeBrowserInspectorPipe(std::unique_ptr<InspectorPlaywrightAgentClient> client)
 +{
-+    class BrowserInspectorPipe {
-+    public:
-+        BrowserInspectorPipe(std::unique_ptr<InspectorPlaywrightAgentClient> client)
-+            : m_browserInspectorController(std::move(client))
-+            , m_remoteInspectorPipe(m_browserInspectorController)
-+        {
-+        }
-+
-+        BrowserInspectorController m_browserInspectorController;
-+        RemoteInspectorPipe m_remoteInspectorPipe;
-+    };
-+
-+    static NeverDestroyed<BrowserInspectorPipe> pipe(std::move(client));
++    // Initialize main loop before creating a pipe.
++    WTF::RunLoop::initializeMainRunLoop();
++    static NeverDestroyed<InspectorPlaywrightAgent> agent(std::move(client));
 +}
 +
 +} // namespace WebKit
@@ -9517,10 +9235,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e3556d47d
+index 0000000000000000000000000000000000000000..fdcbb9acb902fd34193e226c8fbce87ece841e79
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,658 @@
+@@ -0,0 +1,781 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -9572,18 +9290,35 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +#include <WebCore/ProcessIdentifier.h>
 +#include <WebCore/ResourceRequest.h>
 +#include <WebCore/WindowFeatures.h>
++#include <JavaScriptCore/InspectorBackendDispatcher.h>
++#include <JavaScriptCore/InspectorBackendDispatchers.h>
++#include <JavaScriptCore/InspectorFrontendChannel.h>
 +#include <JavaScriptCore/InspectorFrontendRouter.h>
++#include <JavaScriptCore/InspectorTarget.h>
 +#include <pal/SessionID.h>
 +#include <stdlib.h>
 +#include <wtf/HashMap.h>
 +#include <wtf/HexNumber.h>
-+
++#include <wtf/Ref.h>
++#include <wtf/RefPtr.h>
 +
 +using namespace Inspector;
 +
 +namespace WebKit {
 +
 +namespace {
++
++String toBrowserContextIDProtocolString(const PAL::SessionID& sessionID)
++{
++    StringBuilder builder;
++    builder.append(hex(sessionID.toUInt64(), 16));
++    return builder.toString();
++}
++
++String toPageProxyIDProtocolString(const WebPageProxy& page)
++{
++    return makeString(page.identifier().toUInt64());
++}
 +
 +static RefPtr<JSON::ArrayOf<String>> getEnabledWindowFeatures(const WebCore::WindowFeatures& features) {
 +  auto result = JSON::ArrayOf<String>::create();
@@ -9651,16 +9386,102 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +
 +Ref<Inspector::Protocol::Playwright::PageProxyInfo> buildPageProxyInfo(const WebPageProxy& page) {
 +    auto result = Inspector::Protocol::Playwright::PageProxyInfo::create()
-+        .setPageProxyId(InspectorPlaywrightAgent::toPageProxyIDProtocolString(page))
-+        .setBrowserContextId(InspectorPlaywrightAgent::toBrowserContextIDProtocolString(page.sessionID()))
++        .setPageProxyId(toPageProxyIDProtocolString(page))
++        .setBrowserContextId(toBrowserContextIDProtocolString(page.sessionID()))
 +        .release();
 +    auto* opener = page.configuration().relatedPage();
 +    if (opener)
-+        result->setOpenerId(InspectorPlaywrightAgent::toPageProxyIDProtocolString(*opener));
++        result->setOpenerId(toPageProxyIDProtocolString(*opener));
++    return result;
++}
++
++Vector<WebPageProxy*> allPages()
++{
++    ASSERT(isMainThread());
++    Vector<WebPageProxy*> result;
++    for (WebProcessPool* pool : WebProcessPool::allProcessPools()) {
++        for (auto& process : pool->processes()) {
++            result.appendRange(process->pages().begin(), process->pages().end());
++        }
++    }
 +    return result;
 +}
 +
 +}  // namespace
++
++class InspectorPlaywrightAgent::PipeChannel : public Inspector::FrontendChannel {
++    WTF_MAKE_FAST_ALLOCATED;
++
++public:
++    explicit PipeChannel(RemoteInspectorPipe& pipe)
++        : m_pipe(pipe)
++    {
++    }
++
++    ~PipeChannel() override = default;
++
++    ConnectionType connectionType() const override
++    {
++        return ConnectionType::Remote;
++    }
++
++    void sendMessageToFrontend(const String& message) override
++    {
++        m_pipe.sendMessageToPipe(message);
++    }
++
++private:
++    RemoteInspectorPipe& m_pipe;
++};
++
++class InspectorPlaywrightAgent::PageProxyChannel : public FrontendChannel {
++    WTF_MAKE_FAST_ALLOCATED;
++public:
++    PageProxyChannel(FrontendChannel& frontendChannel, String pageProxyID, WebPageProxy& page)
++        : m_pageProxyID(pageProxyID)
++        , m_frontendChannel(frontendChannel)
++        , m_page(page)
++    {
++    }
++
++    ~PageProxyChannel() override = default;
++
++    void dispatchMessageFromFrontend(const String& message)
++    {
++        m_page.inspectorController().dispatchMessageFromFrontend(message);
++    }
++
++    WebPageProxy& page() { return m_page; }
++
++    void disconnect()
++    {
++        m_page.inspectorController().disconnectFrontend(*this);
++    }
++
++private:
++    ConnectionType connectionType() const override { return m_frontendChannel.connectionType(); }
++    void sendMessageToFrontend(const String& message) override
++    {
++        m_frontendChannel.sendMessageToFrontend(addTabIdToMessage(message));
++    }
++
++    String addTabIdToMessage(const String& message) {
++        RefPtr<JSON::Value> parsedMessage;
++        if (!JSON::Value::parseJSON(message, parsedMessage))
++            return message;
++
++        RefPtr<JSON::Object> messageObject;
++        if (!parsedMessage->asObject(messageObject))
++            return message;
++
++        messageObject->setString("pageProxyId"_s, m_pageProxyID);
++        return messageObject->toJSONString();
++    }
++
++    String m_pageProxyID;
++    FrontendChannel& m_frontendChannel;
++    WebPageProxy& m_page;
++};
 +
 +Vector<WebPageProxy*> BrowserContext::pages() const {
 +    Vector<WebPageProxy*> pages;
@@ -9711,68 +9532,33 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +};
 +
 +
-+InspectorPlaywrightAgent::InspectorPlaywrightAgent(Inspector::FrontendRouter& frontendRouter, Inspector::BackendDispatcher& backendDispatcher, InspectorPlaywrightAgentClient* client, PageProxyIDMap& pageProxyIDMap)
-+    : InspectorAgentBase("Playwright"_s)
-+    , m_frontendDispatcher(makeUnique<PlaywrightFrontendDispatcher>(frontendRouter))
-+    , m_backendDispatcher(PlaywrightBackendDispatcher::create(backendDispatcher, this))
-+    , m_client(client)
-+    , m_pageProxyIDMap(pageProxyIDMap)
++InspectorPlaywrightAgent::InspectorPlaywrightAgent(std::unique_ptr<InspectorPlaywrightAgentClient> client)
++    : m_pipe(*this)
++    , m_pipeChannel(new PipeChannel(m_pipe))
++    , m_frontendRouter(FrontendRouter::create())
++    , m_backendDispatcher(BackendDispatcher::create(m_frontendRouter.copyRef()))
++    , m_client(std::move(client))
++    , m_frontend(makeUnique<PlaywrightFrontendDispatcher>(m_frontendRouter))
++    , m_backend(PlaywrightBackendDispatcher::create(m_backendDispatcher, this))
 +{
-+}
-+
-+InspectorPlaywrightAgent::~InspectorPlaywrightAgent() = default;
-+
-+void InspectorPlaywrightAgent::didCreateWebPageProxy(const WebPageProxy& page)
-+{
-+    if (m_isConnected)
-+        m_frontendDispatcher->pageProxyCreated(buildPageProxyInfo(page));
-+}
-+
-+void InspectorPlaywrightAgent::willDestroyWebPageProxy(const WebPageProxy& page)
-+{
-+    if (!m_isConnected)
-+        return;
-+
-+    m_frontendDispatcher->pageProxyDestroyed(toPageProxyIDProtocolString(page));
-+
-+    auto it = m_browserContextDeletions.find(page.sessionID());
-+    if (it == m_browserContextDeletions.end())
-+        return;
-+
-+    it->value->willDestroyPage(page);
-+    if (it->value->isFinished())
-+        m_browserContextDeletions.remove(it);
-+}
-+
-+void InspectorPlaywrightAgent::didCreateFrontendAndBackend(FrontendRouter*, BackendDispatcher*)
-+{
-+    m_isConnected = true;
++    WebPageInspectorController::setObserver(this);
++    m_frontendRouter->connectFrontend(*m_pipeChannel.get());
 +    for (auto& pool : WebProcessPool::allProcessPools()) {
 +        auto* dataStore = pool->websiteDataStore();
 +        if (dataStore)
 +            dataStore->setDownloadInstrumentation(this);
 +    }
++    for (auto* page : allPages())
++        connectToPage(*page);
 +}
 +
-+void InspectorPlaywrightAgent::didFailProvisionalLoad(WebPageProxy& page, uint64_t navigationID, const String& error)
++InspectorPlaywrightAgent::~InspectorPlaywrightAgent()
 +{
-+    if (!m_isConnected)
-+        return;
-+
-+    m_frontendDispatcher->provisionalLoadFailed(toPageProxyIDProtocolString(page), String::number(navigationID), error);
-+}
-+
-+void InspectorPlaywrightAgent::willCreateNewPage(WebPageProxy& page, const WebCore::WindowFeatures& features, const URL& url)
-+{
-+    if (!m_isConnected)
-+        return;
-+
-+    m_frontendDispatcher->windowOpen(toPageProxyIDProtocolString(page), url.string(), getEnabledWindowFeatures(features));
-+}
-+
-+void InspectorPlaywrightAgent::willDestroyFrontendAndBackend(DisconnectReason)
-+{
-+    m_isConnected = false;
++    for (auto it = m_pageProxyChannels.begin(); it != m_pageProxyChannels.end(); ++it)
++        it->value->disconnect();
++    m_pageProxyChannels.clear();
++    m_frontendRouter->disconnectFrontend(*m_pipeChannel.get());
++    WebPageInspectorController::setObserver(nullptr);
 +    for (auto& pool : WebProcessPool::allProcessPools()) {
 +        auto* dataStore = pool->websiteDataStore();
 +        if (dataStore) {
@@ -9783,6 +9569,78 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +    for (auto& it : m_browserContexts)
 +        it.value.dataStore->setDownloadInstrumentation(nullptr);
 +    m_browserContextDeletions.clear();
++}
++
++void InspectorPlaywrightAgent::receiveMessageFromPipe(const String& message)
++{
++    m_backendDispatcher->dispatch(message, BackendDispatcher::Mode::FailIfDomainIsMissing, [&](const RefPtr<JSON::Object>& messageObject) {
++        RefPtr<JSON::Value> pageProxyIDValue;
++        if (!messageObject->getValue("pageProxyId"_s, pageProxyIDValue))
++            return BackendDispatcher::DispatchResult::Continue;
++
++        String pageProxyID;
++        if (!pageProxyIDValue->asString(pageProxyID)) {
++            m_backendDispatcher->reportProtocolError(BackendDispatcher::InvalidRequest, "The type of 'pageProxyId' must be string"_s);
++            m_backendDispatcher->sendPendingErrors();
++            return BackendDispatcher::DispatchResult::Finished;
++        }
++
++
++        if (auto pageProxyChannel = m_pageProxyChannels.get(pageProxyID)) {
++            pageProxyChannel->dispatchMessageFromFrontend(message);
++            return BackendDispatcher::DispatchResult::Finished;
++        }
++
++        m_backendDispatcher->reportProtocolError(BackendDispatcher::InvalidRequest, "Cannot find page proxy with provided 'pageProxyId'"_s);
++        m_backendDispatcher->sendPendingErrors();
++        return BackendDispatcher::DispatchResult::Finished;
++    });
++}
++
++void InspectorPlaywrightAgent::connectToPage(WebPageProxy& page)
++{
++    String pageProxyID = toPageProxyIDProtocolString(page);
++    auto pageProxyChannel = makeUnique<PageProxyChannel>(*m_pipeChannel.get(), pageProxyID, page);
++    page.inspectorController().connectFrontend(*pageProxyChannel);
++    // Always pause new targets if controlled remotely.
++    page.inspectorController().setPauseOnStart(true);
++    m_pageProxyChannels.set(pageProxyID, WTFMove(pageProxyChannel));
++}
++
++void InspectorPlaywrightAgent::didCreateInspectorController(WebPageProxy& page)
++{
++    // Auto-connect to all new pages.
++    connectToPage(page);
++    m_frontend->pageProxyCreated(buildPageProxyInfo(page));
++}
++
++void InspectorPlaywrightAgent::willDestroyInspectorController(WebPageProxy& page)
++{
++    String pageProxyID = toPageProxyIDProtocolString(page);
++    m_frontend->pageProxyDestroyed(toPageProxyIDProtocolString(page));
++
++    auto channelIt = m_pageProxyChannels.find(pageProxyID);
++    ASSERT(channelIt != m_pageProxyChannels.end());
++    channelIt->value->disconnect();
++    m_pageProxyChannels.remove(channelIt);
++
++    auto deletionIt = m_browserContextDeletions.find(page.sessionID());
++    if (deletionIt == m_browserContextDeletions.end())
++        return;
++
++    deletionIt->value->willDestroyPage(page);
++    if (deletionIt->value->isFinished())
++        m_browserContextDeletions.remove(deletionIt);
++}
++
++void InspectorPlaywrightAgent::didFailProvisionalLoad(WebPageProxy& page, uint64_t navigationID, const String& error)
++{
++    m_frontend->provisionalLoadFailed(toPageProxyIDProtocolString(page), String::number(navigationID), error);
++}
++
++void InspectorPlaywrightAgent::willCreateNewPage(WebPageProxy& page, const WebCore::WindowFeatures& features, const URL& url)
++{
++    m_frontend->windowOpen(toPageProxyIDProtocolString(page), url.string(), getEnabledWindowFeatures(features));
 +}
 +
 +void InspectorPlaywrightAgent::close(Ref<CloseCallback>&& callback)
@@ -9901,12 +9759,13 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +
 +void InspectorPlaywrightAgent::navigate(const String& url, const String& pageProxyID, const String* frameID, const String* referrer, Ref<NavigateCallback>&& callback)
 +{
-+    WebPageProxy* page = m_pageProxyIDMap.findPageProxy(pageProxyID);
-+    if (!page) {
++    auto* pageProxyChannel = m_pageProxyChannels.get(pageProxyID);
++    if (!pageProxyChannel) {
 +        callback->sendFailure("Cannot find page proxy with provided 'pageProxyId'"_s);
 +        return;
 +    }
 +
++    WebPageProxy* page = &pageProxyChannel->page();
 +    WebCore::ResourceRequest resourceRequest { url };
 +
 +    if (referrer)
@@ -10121,39 +9980,21 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +
 +void InspectorPlaywrightAgent::downloadCreated(const String& uuid, const WebCore::ResourceRequest& request, const FrameInfoData& frameInfoData, WebPageProxy* page)
 +{
-+    if (!m_isConnected)
-+        return;
 +    String frameID = WebCore::InspectorPageAgent::makeFrameID(page->process().coreProcessIdentifier(), frameInfoData.frameID ? *frameInfoData.frameID : page->mainFrame()->frameID());
-+    m_frontendDispatcher->downloadCreated(uuid, request.url().string(),
-+        InspectorPlaywrightAgent::toPageProxyIDProtocolString(*page),
-+        InspectorPlaywrightAgent::toBrowserContextIDProtocolString(page->sessionID()),
++    m_frontend->downloadCreated(uuid, request.url().string(),
++        toPageProxyIDProtocolString(*page),
++        toBrowserContextIDProtocolString(page->sessionID()),
 +        frameID);
 +}
 +
 +void InspectorPlaywrightAgent::downloadFilenameSuggested(const String& uuid, const String& suggestedFilename)
 +{
-+    if (!m_isConnected)
-+        return;
-+    m_frontendDispatcher->downloadFilenameSuggested(uuid, suggestedFilename);
++    m_frontend->downloadFilenameSuggested(uuid, suggestedFilename);
 +}
 +
 +void InspectorPlaywrightAgent::downloadFinished(const String& uuid, const String& error)
 +{
-+    if (!m_isConnected)
-+        return;
-+    m_frontendDispatcher->downloadFinished(uuid, error);
-+}
-+
-+String InspectorPlaywrightAgent::toBrowserContextIDProtocolString(const PAL::SessionID& sessionID)
-+{
-+    StringBuilder builder;
-+    builder.append(hex(sessionID.toUInt64(), 16));
-+    return builder.toString();
-+}
-+
-+String InspectorPlaywrightAgent::toPageProxyIDProtocolString(const WebPageProxy& page)
-+{
-+    return makeString(page.identifier().toUInt64());
++    m_frontend->downloadFinished(uuid, error);
 +}
 +
 +BrowserContext InspectorPlaywrightAgent::lookupBrowserContext(ErrorString& errorString, const String* browserContextID)
@@ -10181,7 +10022,7 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..6a371421a504243925aac4ba0e6a0227f1453aea
+index 0000000000000000000000000000000000000000..8df9feee6179c9da7f40a94457f9373258b1940e
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 @@ -0,0 +1,127 @@
@@ -10215,6 +10056,8 @@ index 0000000000000000000000000000000000000000..6a371421a504243925aac4ba0e6a0227
 +#if ENABLE(REMOTE_INSPECTOR)
 +
 +#include "InspectorPlaywrightAgentClient.h"
++#include "RemoteInspectorPipe.h"
++#include "WebPageInspectorController.h"
 +#include <JavaScriptCore/InspectorAgentBase.h>
 +#include <JavaScriptCore/InspectorBackendDispatchers.h>
 +#include "WebProcessPool.h"
@@ -10244,34 +10087,27 @@ index 0000000000000000000000000000000000000000..6a371421a504243925aac4ba0e6a0227
 +class NetworkProcess;
 +class WebFrameProxy;
 +
-+class PageProxyIDMap {
-+public:
-+    virtual WebPageProxy* findPageProxy(const String& pageProxyID) = 0;
-+
-+protected:
-+    virtual ~PageProxyIDMap() = default;
-+};
-+
 +class InspectorPlaywrightAgent final
-+    : public Inspector::InspectorAgentBase
-+    , public Inspector::PlaywrightBackendDispatcherHandler
-+    , public DownloadInstrumentation {
++    : public Inspector::PlaywrightBackendDispatcherHandler
++    , public DownloadInstrumentation
++    , public WebPageInspectorControllerObserver
++    , public RemoteInspectorPipe::Receiver {
 +    WTF_MAKE_NONCOPYABLE(InspectorPlaywrightAgent);
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    InspectorPlaywrightAgent(Inspector::FrontendRouter&, Inspector::BackendDispatcher&, InspectorPlaywrightAgentClient*, PageProxyIDMap&);
++    explicit InspectorPlaywrightAgent(std::unique_ptr<InspectorPlaywrightAgentClient>);
 +    ~InspectorPlaywrightAgent() override;
 +
-+    void didCreateWebPageProxy(const WebPageProxy&);
-+    void willDestroyWebPageProxy(const WebPageProxy&);
-+    void didFailProvisionalLoad(WebPageProxy&, uint64_t navigationID, const String& error);
-+    void willCreateNewPage(WebPageProxy&, const WebCore::WindowFeatures&, const URL&);
++    // RemoteInspectorPipe::Receiver
++    void receiveMessageFromPipe(const String&) override;
 +
-+    // InspectorAgentBase
-+    void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) override;
-+    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
++    // WebPageInspectorControllerObserver
++    void didCreateInspectorController(WebPageProxy&) override;
++    void willDestroyInspectorController(WebPageProxy&) override;
++    void didFailProvisionalLoad(WebPageProxy&, uint64_t navigationID, const String& error) override;
++    void willCreateNewPage(WebPageProxy&, const WebCore::WindowFeatures&, const URL&) override;
 +
-+    // PlaywrightDispatcherHandler
++    // PlaywrightBackendDispatcherHandler
 +    void close(Ref<CloseCallback>&&) override;
 +    void createContext(Inspector::ErrorString&, String* browserContextID) override;
 +    void deleteContext(const String& browserContextID, Ref<DeleteContextCallback>&& callback) override;
@@ -10287,26 +10123,31 @@ index 0000000000000000000000000000000000000000..6a371421a504243925aac4ba0e6a0227
 +    void setLanguages(Inspector::ErrorString&, const JSON::Array& languages, const String* browserContextID) override;
 +    void setDownloadBehavior(Inspector::ErrorString&, const String* behavior, const String* downloadPath, const String* browserContextID) override;
 +
-+    static String toBrowserContextIDProtocolString(const PAL::SessionID&);
-+    static String toPageProxyIDProtocolString(const WebPageProxy&);
-+
 +    // DownloadInstrumentation
 +    void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) override;
 +    void downloadFilenameSuggested(const String& uuid, const String& suggestedFilename) override;
 +    void downloadFinished(const String& uuid, const String& error) override;
 +
 +private:
++    class TargetHandler;
++    class PageProxyChannel;
++    class PipeChannel;
 +    class BrowserContextDeletion;
++
 +    BrowserContext lookupBrowserContext(Inspector::ErrorString&, const String* browserContextID);
 +    WebFrameProxy* frameForID(const String& frameID, String& error);
++    void connectToPage(WebPageProxy&);
 +
-+    std::unique_ptr<Inspector::PlaywrightFrontendDispatcher> m_frontendDispatcher;
-+    Ref<Inspector::PlaywrightBackendDispatcher> m_backendDispatcher;
-+    InspectorPlaywrightAgentClient* m_client;
-+    PageProxyIDMap& m_pageProxyIDMap;
++    RemoteInspectorPipe m_pipe;
++    std::unique_ptr<PipeChannel> m_pipeChannel;
++    Ref<Inspector::FrontendRouter> m_frontendRouter;
++    Ref<Inspector::BackendDispatcher> m_backendDispatcher;
++    std::unique_ptr<InspectorPlaywrightAgentClient> m_client;
++    HashMap<String, std::unique_ptr<PageProxyChannel>> m_pageProxyChannels;
++    std::unique_ptr<Inspector::PlaywrightFrontendDispatcher> m_frontend;
++    Ref<Inspector::PlaywrightBackendDispatcher> m_backend;
 +    HashMap<String, BrowserContext> m_browserContexts;
 +    HashMap<PAL::SessionID, std::unique_ptr<BrowserContextDeletion>> m_browserContextDeletions;
-+    bool m_isConnected { false };
 +};
 +
 +} // namespace WebKit
@@ -10409,10 +10250,10 @@ index 57678852e25e443cb4f066efed611ef1f7ed6c26..a51d79c4284a4f72252854c0a183f02d
  #endif
 diff --git a/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..e842999cf436a92f5279642a4edccd10ede7b3e2
+index 0000000000000000000000000000000000000000..358efcc9485ae74c4782e1a447980fff344f7da6
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
-@@ -0,0 +1,221 @@
+@@ -0,0 +1,174 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -10443,13 +10284,10 @@ index 0000000000000000000000000000000000000000..e842999cf436a92f5279642a4edccd10
 +
 +#if ENABLE(REMOTE_INSPECTOR)
 +
-+#include "BrowserInspectorController.h"
-+#include <JavaScriptCore/InspectorFrontendChannel.h>
 +#include <wtf/MainThread.h>
 +#include <wtf/RunLoop.h>
 +#include <wtf/UniqueArray.h>
 +#include <wtf/Vector.h>
-+#include <wtf/WorkQueue.h>
 +
 +#if OS(UNIX)
 +#include <stdio.h>
@@ -10523,76 +10361,32 @@ index 0000000000000000000000000000000000000000..e842999cf436a92f5279642a4edccd10
 +
 +}  // namespace
 +
-+class RemoteInspectorPipe::RemoteFrontendChannel : public Inspector::FrontendChannel {
-+    WTF_MAKE_FAST_ALLOCATED;
-+
-+public:
-+    RemoteFrontendChannel()
-+        : m_senderQueue(WorkQueue::create("Inspector pipe writer"))
-+    {
-+    }
-+
-+    ~RemoteFrontendChannel() override = default;
-+
-+    ConnectionType connectionType() const override
-+    {
-+        return ConnectionType::Remote;
-+    }
-+
-+    void sendMessageToFrontend(const String& message) override
-+    {
-+        m_senderQueue->dispatch([message = message.isolatedCopy()]() {
-+            WriteBytes(message.ascii().data(), message.length());
-+            WriteBytes("\0", 1);
-+        });
-+    }
-+
-+private:
-+    Ref<WorkQueue> m_senderQueue;
-+};
-+
-+RemoteInspectorPipe::RemoteInspectorPipe(BrowserInspectorController& browserInspectorController)
-+    : m_browserInspectorController(browserInspectorController)
++RemoteInspectorPipe::RemoteInspectorPipe(Receiver& receiver)
++    : m_receiver(receiver)
++    , m_senderQueue(WorkQueue::create("Inspector pipe writer"))
 +{
-+    // Initialize main loop before creating WorkQueue
-+    WTF::RunLoop::initializeMainRunLoop();
-+    m_remoteFrontendChannel = makeUnique<RemoteFrontendChannel>();
-+    start();
-+}
-+
-+RemoteInspectorPipe::~RemoteInspectorPipe()
-+{
-+    stop();
-+}
-+
-+bool RemoteInspectorPipe::start()
-+{
-+    if (m_receiverThread)
-+        return true;
-+
 +#if PLATFORM(WIN)
 +    readHandle = reinterpret_cast<HANDLE>(_get_osfhandle(readFD));
 +    writeHandle = reinterpret_cast<HANDLE>(_get_osfhandle(writeFD));
 +#endif
-+
-+    m_browserInspectorController.connectFrontend(*m_remoteFrontendChannel);
-+    m_terminated = false;
 +    m_receiverThread = Thread::create("Inspector pipe reader", [this] {
 +        workerRun();
 +    });
-+    return true;
 +}
 +
-+void RemoteInspectorPipe::stop()
++RemoteInspectorPipe::~RemoteInspectorPipe()
 +{
-+    if (!m_receiverThread)
-+        return;
-+
-+    m_browserInspectorController.disconnectFrontend();
-+
 +    m_terminated = true;
 +    m_receiverThread->waitForCompletion();
 +    m_receiverThread = nullptr;
++}
++
++void RemoteInspectorPipe::sendMessageToPipe(const String& message)
++{
++    m_senderQueue->dispatch([message = message.isolatedCopy()]() {
++        WriteBytes(message.ascii().data(), message.length());
++        WriteBytes("\0", 1);
++    });
 +}
 +
 +void RemoteInspectorPipe::workerRun()
@@ -10619,7 +10413,7 @@ index 0000000000000000000000000000000000000000..e842999cf436a92f5279642a4edccd10
 +                String message = String::fromUTF8(line.data() + start, end - start);
 +                RunLoop::main().dispatch([this, message] {
 +                    if (!m_terminated)
-+                        m_browserInspectorController.dispatchMessageFromFrontend(message);
++                        m_receiver.receiveMessageFromPipe(message);
 +                });
 +            }
 +            ++end;
@@ -10636,10 +10430,10 @@ index 0000000000000000000000000000000000000000..e842999cf436a92f5279642a4edccd10
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/RemoteInspectorPipe.h b/Source/WebKit/UIProcess/RemoteInspectorPipe.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..b1307da8b9ee02d63ef98d276473d65a1d8c3556
+index 0000000000000000000000000000000000000000..bf47f4577c3a304895daf0fa2d2ed597fbdc8ae0
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/RemoteInspectorPipe.h
-@@ -0,0 +1,65 @@
+@@ -0,0 +1,64 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -10672,34 +10466,33 @@ index 0000000000000000000000000000000000000000..b1307da8b9ee02d63ef98d276473d65a
 +#include <wtf/Ref.h>
 +#include <wtf/RefPtr.h>
 +#include <wtf/Threading.h>
-+
-+namespace Inspector {
-+class FrontendChannel;
-+}
++#include <wtf/WorkQueue.h>
 +
 +namespace WebKit {
-+
-+class BrowserInspectorController;
 +
 +class RemoteInspectorPipe {
 +    WTF_MAKE_NONCOPYABLE(RemoteInspectorPipe);
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    explicit RemoteInspectorPipe(BrowserInspectorController&);
++    class Receiver {
++    public:
++        virtual void receiveMessageFromPipe(const String&) = 0;
++    protected:
++        virtual ~Receiver() = default;
++    };
++
++    explicit RemoteInspectorPipe(Receiver&);
 +    ~RemoteInspectorPipe();
 +
++    void sendMessageToPipe(const String&);
++
 +private:
-+    class RemoteFrontendChannel;
-+
-+    bool start();
-+    void stop();
-+
 +    void workerRun();
 +
-+    RefPtr<Thread> m_receiverThread;
++    Receiver& m_receiver;
 +    std::atomic<bool> m_terminated { false };
-+    std::unique_ptr<Inspector::FrontendChannel> m_remoteFrontendChannel;
-+    BrowserInspectorController& m_browserInspectorController;
++    Ref<WorkQueue> m_senderQueue;
++    RefPtr<Thread> m_receiverThread;
 +};
 +
 +} // namespace WebKit
