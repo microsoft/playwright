@@ -164,6 +164,17 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
   _log(log: Log, message: string | Error, ...args: any[]) {
     return this._logger._log(log, message, ...args);
   }
+
+  async _loadDefaultContext() {
+    if (!this.pages().length)
+      await this.waitForEvent('page');
+    const pages = this.pages();
+    await pages[0].waitForLoadState();
+    if (pages.length !== 1 || pages[0].url() !== 'about:blank') {
+      await this.close().catch(e => null);
+      throw new Error('Arguments can not specify page to be opened');
+    }
+  }
 }
 
 export function assertBrowserContextIsNotOwned(context: BrowserContextBase) {

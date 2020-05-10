@@ -18,7 +18,7 @@
 import { BrowserBase } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, BrowserContextOptions, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { Events } from '../events';
-import { assert, helper, RegisteredListener } from '../helper';
+import { helper, RegisteredListener } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding } from '../page';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
@@ -37,9 +37,6 @@ export class WKBrowser extends BrowserBase {
   readonly _contexts = new Map<string, WKBrowserContext>();
   readonly _wkPages = new Map<string, WKPage>();
   private readonly _eventListeners: RegisteredListener[];
-
-  private _firstPageCallback: () => void = () => {};
-  private readonly _firstPagePromise: Promise<void>;
 
   static async connect(transport: ConnectionTransport, logger: InnerLogger, slowMo: number = 0, attachToDefaultContext: boolean = false): Promise<WKBrowser> {
     const browser = new WKBrowser(SlowMoTransport.wrap(transport, slowMo), logger, attachToDefaultContext);
@@ -62,8 +59,6 @@ export class WKBrowser extends BrowserBase {
       helper.addEventListener(this._browserSession, 'Playwright.downloadFinished', this._onDownloadFinished.bind(this)),
       helper.addEventListener(this._browserSession, kPageProxyMessageReceived, this._onPageProxyMessageReceived.bind(this)),
     ];
-
-    this._firstPagePromise = new Promise<void>(resolve => this._firstPageCallback = resolve);
   }
 
   _onDisconnect() {
@@ -88,11 +83,6 @@ export class WKBrowser extends BrowserBase {
 
   contexts(): BrowserContext[] {
     return Array.from(this._contexts.values());
-  }
-
-  async _waitForFirstPageTarget(): Promise<void> {
-    assert(!this._wkPages.size);
-    return this._firstPagePromise;
   }
 
   _onDownloadCreated(payload: Protocol.Playwright.downloadCreatedPayload) {
@@ -152,7 +142,6 @@ export class WKBrowser extends BrowserBase {
         signalBarrier.addPopup(wkPage.pageOrError());
     }
     wkPage.pageOrError().then(async () => {
-      this._firstPageCallback();
       const page = wkPage._page;
       context!.emit(Events.BrowserContext.Page, page);
       if (!opener)

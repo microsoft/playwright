@@ -33,6 +33,7 @@ import { Events } from '../events';
 import { BrowserContext } from '../browserContext';
 import { InnerLogger, logError, RootLogger } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
+import { TimeoutSettings } from '../timeoutSettings';
 
 export class WebKit extends AbstractBrowserType<WKBrowser> {
   constructor(packagePath: string, browser: BrowserDescriptor) {
@@ -57,11 +58,14 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
       timeout = 30000,
       slowMo = 0,
     } = options;
+    const deadline = TimeoutSettings.computeDeadline(timeout);
     const { transport, browserServer, logger } = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await WKBrowser.connect(transport!, logger, slowMo, true);
     browser._ownedServer = browserServer;
-    await helper.waitWithTimeout(browser._waitForFirstPageTarget(), 'first page', timeout);
-    return browser._defaultContext!;
+    const context = browser._defaultContext!;
+    if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
+      await helper.waitWithTimeout(context._loadDefaultContext(), 'first page', helper.timeUntilDeadline(deadline));
+    return context;
   }
 
   private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport, downloadsPath: string, logger: InnerLogger }> {
@@ -145,7 +149,7 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir='));
     if (userDataDirArg)
       throw new Error('Pass userDataDir parameter instead of specifying --user-data-dir argument');
-    if (launchType !== 'persistent' && args.find(arg => !arg.startsWith('-')))
+    if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
     const webkitArguments = ['--inspector-pipe'];
     if (headless)
@@ -155,6 +159,8 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
     else
       webkitArguments.push(`--no-startup-window`);
     webkitArguments.push(...args);
+    if (launchType === 'persistent')
+      webkitArguments.push('about:blank');
     return webkitArguments;
   }
 }
