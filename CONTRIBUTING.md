@@ -84,7 +84,7 @@ footer
     - `docs` - changes to docs, e.g. `docs(api.md): ..` to change documentation.
     - `test` - changes to playwright tests infrastructure.
     - `devops` - build-related work, e.g. CI related patches and general changes to the browser build infrastructure
-    - `chore` - everythin that doesn't fall under previous categories
+    - `chore` - everything that doesn't fall under previous categories
 2. *namespace* is put in parenthesis after label and is optional. Must be lowercase.
 3. *title* is a brief summary of changes.
 4. *description* is **optional**, new-line separated from title and is in present tense.
