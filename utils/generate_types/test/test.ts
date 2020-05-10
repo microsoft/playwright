@@ -133,7 +133,6 @@ playwright.chromium.launch().then(async browser => {
   });
 
   await page.route(str => {
-    const assertion: AssertType<string, typeof str> = true;
     return true;
   }, (route, request) => {
     const {referer} = request.headers();

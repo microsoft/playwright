@@ -492,7 +492,7 @@ Creates a new page in the browser context.
 - returns: <[Array]<[Page]>> All open pages in the context. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using [chromiumBrowserContext.backgroundPages()](#chromiumbrowsercontextbackgroundpages).
 
 #### browserContext.route(url, handler)
-- `url` <[string]|[RegExp]|[function]\([string]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
 - `handler` <[function]\([Route], [Request]\)> handler function to route the request.
 - returns: <[Promise]>
 
@@ -581,7 +581,7 @@ To disable authentication, pass `null`.
 - returns: <[Promise]>
 
 #### browserContext.unroute(url[, handler])
-- `url` <[string]|[RegExp]|[function]\([string]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
 - `handler` <[function]\([Route], [Request]\)> Handler function to route the request.
 - returns: <[Promise]>
 
@@ -1481,7 +1481,7 @@ await browser.close();
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
 
 #### page.route(url, handler)
-- `url` <[string]|[RegExp]|[function]\([string]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
 - `handler` <[function]\([Route], [Request]\)> handler function to route the request.
 - returns: <[Promise]>.
 
@@ -1672,7 +1672,7 @@ If there's no element matching `selector`, the method waits until a matching ele
 Shortcut for [page.mainFrame().uncheck(selector[, options])](#frameuncheckselector-options).
 
 #### page.unroute(url[, handler])
-- `url` <[string]|[RegExp]|[function]\([string]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
 - `handler` <[function]\([Route], [Request]\)> Handler function to route the request.
 - returns: <[Promise]>
 
