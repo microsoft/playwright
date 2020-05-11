@@ -130,7 +130,9 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
   }
 
   async connect(options: ConnectOptions): Promise<CRBrowser> {
-    return await WebSocketTransport.connect(options.wsEndpoint, transport => {
+    return await WebSocketTransport.connect(options.wsEndpoint, async transport => {
+      if ((options as any).__testHookBeforeCreateBrowser)
+        await (options as any).__testHookBeforeCreateBrowser();
       return CRBrowser.connect(transport, false, new RootLogger(options.logger), options);
     });
   }

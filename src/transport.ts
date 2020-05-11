@@ -129,7 +129,14 @@ export class WebSocketTransport implements ConnectionTransport {
   static connect<T>(url: string, onopen: (transport: ConnectionTransport) => Promise<T> | T): Promise<T> {
     const transport = new WebSocketTransport(url);
     return new Promise<T>((fulfill, reject) => {
-      transport._ws.addEventListener('open', async () => fulfill(await onopen(transport)));
+      transport._ws.addEventListener('open', async () => {
+        try {
+          fulfill(await onopen(transport));
+        } catch (e) {
+          try { transport._ws.close(); } catch (ignored) {}
+          reject(e);
+        }
+      });
       transport._ws.addEventListener('error', event => reject(new Error('WebSocket error: ' + event.message)));
     });
   }
