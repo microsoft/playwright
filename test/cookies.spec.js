@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, MAC, LINUX} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN} = require('./utils').testOptions(browserType);
 
 describe('BrowserContext.cookies', function() {
   it('should return no cookies in pristine browser context', async({context, page, server}) => {
@@ -66,7 +66,7 @@ describe('BrowserContext.cookies', function() {
     expect(cookies.length).toBe(1);
     expect(cookies[0].httpOnly).toBe(true);
   });
-  it.fail(WEBKIT && !MAC)('should properly report "Strict" sameSite cookie', async({context, page, server}) => {
+  it.fail(WEBKIT && WIN)('should properly report "Strict" sameSite cookie', async({context, page, server}) => {
     server.setRoute('/empty.html', (req, res) => {
       res.setHeader('Set-Cookie', 'name=value;SameSite=Strict');
       res.end();
@@ -76,7 +76,7 @@ describe('BrowserContext.cookies', function() {
     expect(cookies.length).toBe(1);
     expect(cookies[0].sameSite).toBe('Strict');
   });
-  it.fail(WEBKIT && !MAC)('should properly report "Lax" sameSite cookie', async({context, page, server}) => {
+  it.fail(WEBKIT && WIN)('should properly report "Lax" sameSite cookie', async({context, page, server}) => {
     server.setRoute('/empty.html', (req, res) => {
       res.setHeader('Set-Cookie', 'name=value;SameSite=Lax');
       res.end();
