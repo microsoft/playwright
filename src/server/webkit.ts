@@ -42,11 +42,17 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
 
   async launch(options: LaunchOptions = {}): Promise<WKBrowser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
+    const { timeout = 30000 } = options;
+    const deadline = TimeoutSettings.computeDeadline(timeout);
     const { browserServer, transport, downloadsPath, logger } = await this._launchServer(options, 'local');
-    const browser = await WKBrowser.connect(transport!, logger,  options.slowMo, false);
-    browser._ownedServer = browserServer;
-    browser._downloadsPath = downloadsPath;
-    return browser;
+    return await browserServer._initializeOrClose(deadline, async () => {
+      if ((options as any).__testHookBeforeCreateBrowser)
+        await (options as any).__testHookBeforeCreateBrowser();
+      const browser = await WKBrowser.connect(transport!, logger,  options.slowMo, false);
+      browser._ownedServer = browserServer;
+      browser._downloadsPath = downloadsPath;
+      return browser;
+    });
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
@@ -60,12 +66,16 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
     } = options;
     const deadline = TimeoutSettings.computeDeadline(timeout);
     const { transport, browserServer, logger } = await this._launchServer(options, 'persistent', userDataDir);
-    const browser = await WKBrowser.connect(transport!, logger, slowMo, true);
-    browser._ownedServer = browserServer;
-    const context = browser._defaultContext!;
-    if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
-      await helper.waitWithTimeout(context._loadDefaultContext(), 'first page', helper.timeUntilDeadline(deadline));
-    return context;
+    return await browserServer._initializeOrClose(deadline, async () => {
+      if ((options as any).__testHookBeforeCreateBrowser)
+        await (options as any).__testHookBeforeCreateBrowser();
+      const browser = await WKBrowser.connect(transport!, logger, slowMo, true);
+      browser._ownedServer = browserServer;
+      const context = browser._defaultContext!;
+      if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
+        await context._loadDefaultContext();
+      return context;
+    });
   }
 
   private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport, downloadsPath: string, logger: InnerLogger }> {
@@ -123,7 +133,8 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
       },
     });
 
-    // For local launch scenario close will terminate the browser process.
+    // Note: it is important to define these variables before launchProcess, so that we don't get
+    // "Cannot access 'browserServer' before initialization" if something went wrong.
     let transport: ConnectionTransport | undefined = undefined;
     let browserServer: BrowserServer | undefined = undefined;
     const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];

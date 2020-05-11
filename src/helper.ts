@@ -158,13 +158,9 @@ class Helper {
     });
   }
 
-  static async waitWithTimeout<T>(promise: Promise<T>, taskName: string, timeout: number): Promise<T> {
-    return this.waitWithDeadline(promise, taskName, helper.monotonicTime() + timeout);
-  }
-
-  static async waitWithDeadline<T>(promise: Promise<T>, taskName: string, deadline: number): Promise<T> {
+  static async waitWithDeadline<T>(promise: Promise<T>, taskName: string, deadline: number, debugName: string): Promise<T> {
     let reject: (error: Error) => void;
-    const timeoutError = new TimeoutError(`Waiting for ${taskName} failed: timeout exceeded. Re-run with the DEBUG=pw:input env variable to see the debug log.`);
+    const timeoutError = new TimeoutError(`Waiting for ${taskName} failed: timeout exceeded. Re-run with the DEBUG=${debugName} env variable to see the debug log.`);
     const timeoutPromise = new Promise<T>((resolve, x) => reject = x);
     const timeoutTimer = setTimeout(() => reject(timeoutError), helper.timeUntilDeadline(deadline));
     try {

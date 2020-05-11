@@ -470,7 +470,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return injected.waitForDisplayedAtStablePosition(node, rafCount, timeout);
     }, { rafCount, timeout: helper.timeUntilDeadline(deadline) });
     const timeoutMessage = 'element to be displayed and not moving';
-    const injectedResult = await helper.waitWithDeadline(stablePromise, timeoutMessage, deadline);
+    const injectedResult = await helper.waitWithDeadline(stablePromise, timeoutMessage, deadline, 'pw:input');
     handleInjectedResult(injectedResult, timeoutMessage);
     this._page._log(inputLog, '...element is displayed and does not move');
   }
