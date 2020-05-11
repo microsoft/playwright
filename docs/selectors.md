@@ -4,6 +4,12 @@ Playwright supports multiple selector engines used to query elements in the web 
 
 Selector can be used to obtain `ElementHandle` (see [page.$()](api.md#pageselector) for example) or shortcut element operations to avoid intermediate handle (see [page.click()](api.md#pageclickselector-options) for example).
 
+<!-- GEN:toc-top-level -->
+- [Selector syntax](#selector-syntax)
+- [Examples](#examples)
+- [Built-in selector engines](#built-in-selector-engines)
+<!-- GEN:stop -->
+
 ## Selector syntax
 
 Selector is a string that consists of one or more clauses separated by `>>` token, e.g. `clause1 >> clause2 >> clause3`.  When multiple clauses are present, next one is queried relative to the previous one's result.

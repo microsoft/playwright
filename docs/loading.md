@@ -2,6 +2,13 @@
 
 Playwright logically splits the process of showing a new document in the page into **navigation** and **loading**.
 
+<!-- GEN:toc-top-level -->
+- [Navigation](#navigation)
+- [Loading](#loading)
+- [Common scenarios](#common-scenarios)
+- [Loading a popup](#loading-a-popup)
+<!-- GEN:stop -->
+
 ## Navigation
 
 Page navigation can be either initiated by the Playwright call:

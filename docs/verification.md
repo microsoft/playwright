@@ -1,10 +1,11 @@
 # Scraping and verification
 
-#### Contents
+<!-- GEN:toc-top-level -->
 - [Evaluating JavaScript](#evaluating-javascript)
 - [Capturing screenshot](#capturing-screenshot)
 - [Page events](#page-events)
 - [Handling exceptions](#handling-exceptions)
+<!-- GEN:stop -->
 
 <br/>
 

@@ -8,14 +8,15 @@ Along with a test runner Playwright can be used to automate user interactions to
 validate and test web applications. The Playwright API enables this through
 the following primitives.
 
-#### Contents
-  - [Browser](#browser)
-  - [Browser contexts](#browser-contexts)
-  - [Pages and frames](#pages-and-frames)
-  - [Selectors](#selectors)
-  - [Auto-waiting](#auto-waiting)
-  - [Node.js and browser execution contexts](#nodejs-and-browser-execution-contexts)
-  - [Object & element handles](#object--element-handles)
+<!-- GEN:toc-top-level -->
+- [Browser](#browser)
+- [Browser contexts](#browser-contexts)
+- [Pages and frames](#pages-and-frames)
+- [Selectors](#selectors)
+- [Auto-waiting](#auto-waiting)
+- [Node.js and browser execution contexts](#nodejs-and-browser-execution-contexts)
+- [Object & element handles](#object--element-handles)
+<!-- GEN:stop -->
 
 <br/>
 

@@ -1,8 +1,8 @@
 # Extensibility
 
-#### Contents
-
+<!-- GEN:toc-top-level -->
 - [Custom selector engines](#custom-selector-engines)
+<!-- GEN:stop -->
 
 ## Custom selector engines
 
