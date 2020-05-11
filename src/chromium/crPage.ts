@@ -375,7 +375,7 @@ class FrameSession {
   }
 
   async _initialize(hasUIWindow: boolean) {
-    if (hasUIWindow) {
+    if (hasUIWindow && this._crPage._browserContext._options.viewport !== null) {
       const { windowId } = await this._client.send('Browser.getWindowForTarget');
       this._windowId = windowId;
     }
