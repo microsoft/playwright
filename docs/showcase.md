@@ -22,6 +22,7 @@
 * [dom-to-playwright](https://github.com/Xiphe/dom-to-playwright) to copy a JSDOM snapshot into a Playwright page.
 * [Headless Testing](https://headlesstesting.com/support/start/playwright.html): Run Playwright tests on browsers in the cloud
 * [playwright-test](https://github.com/hugomrdias/playwright-test) Run unit tests and benchmarks in browsers with Node's seamless experience.
+* [mockiavelli](https://github.com/HLTech/mockiavelli) Request mocking library for Playwright to test SPA in isolation from backend APIs.
 
 ## Frameworks
 
