@@ -44,13 +44,19 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
 
   async launch(options: LaunchOptions = {}): Promise<FFBrowser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
+    const { timeout = 30000 } = options;
+    const deadline = TimeoutSettings.computeDeadline(timeout);
     const { browserServer, downloadsPath, logger } = await this._launchServer(options, 'local');
-    const browser = await WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
-      return FFBrowser.connect(transport, logger, false, options.slowMo);
+    return await browserServer._initializeOrClose(deadline, async () => {
+      if ((options as any).__testHookBeforeCreateBrowser)
+        await (options as any).__testHookBeforeCreateBrowser();
+      const browser = await WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
+        return FFBrowser.connect(transport, logger, false, options.slowMo);
+      });
+      browser._ownedServer = browserServer;
+      browser._downloadsPath = downloadsPath;
+      return browser;
     });
-    browser._ownedServer = browserServer;
-    browser._downloadsPath = downloadsPath;
-    return browser;
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
@@ -64,15 +70,19 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
     } = options;
     const deadline = TimeoutSettings.computeDeadline(timeout);
     const { browserServer, downloadsPath, logger } = await this._launchServer(options, 'persistent', userDataDir);
-    const browser = await WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
-      return FFBrowser.connect(transport, logger, true, slowMo);
+    return await browserServer._initializeOrClose(deadline, async () => {
+      if ((options as any).__testHookBeforeCreateBrowser)
+        await (options as any).__testHookBeforeCreateBrowser();
+      const browser = await WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
+        return FFBrowser.connect(transport, logger, true, slowMo);
+      });
+      browser._ownedServer = browserServer;
+      browser._downloadsPath = downloadsPath;
+      const context = browser._defaultContext!;
+      if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
+        await context._loadDefaultContext();
+      return context;
     });
-    browser._ownedServer = browserServer;
-    browser._downloadsPath = downloadsPath;
-    const context = browser._defaultContext!;
-    if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
-      await helper.waitWithTimeout(context._loadDefaultContext(), 'first page', helper.timeUntilDeadline(deadline));
-    return context;
   }
 
   private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, downloadsPath: string, logger: InnerLogger }> {

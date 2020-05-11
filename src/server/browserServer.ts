@@ -16,6 +16,7 @@
 
 import { ChildProcess, execSync } from 'child_process';
 import { EventEmitter } from 'events';
+import { helper } from '../helper';
 
 export class WebSocketWrapper {
   readonly wsEndpoint: string;
@@ -86,5 +87,23 @@ export class BrowserServer extends EventEmitter {
   async _checkLeaks(): Promise<void> {
     if (this._webSocketWrapper)
       await this._webSocketWrapper.checkLeaks();
+  }
+
+  async _initializeOrClose<T>(deadline: number, init: () => Promise<T>): Promise<T> {
+    try {
+      const result = await helper.waitWithDeadline(init(), 'the browser to launch', deadline, 'pw:browser*');
+      return result;
+    } catch (e) {
+      await this._closeOrKill(deadline);
+      throw e;
+    }
+  }
+
+  async _closeOrKill(deadline: number): Promise<void> {
+    try {
+      await helper.waitWithDeadline(this.close(), '', deadline, ''); // The error message is ignored.
+    } catch (ignored) {
+      this.kill();
+    }
   }
 }

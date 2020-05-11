@@ -42,11 +42,17 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
 
   async launch(options: LaunchOptions = {}): Promise<CRBrowser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
+    const { timeout = 30000 } = options;
+    const deadline = TimeoutSettings.computeDeadline(timeout);
     const { browserServer, transport, downloadsPath, logger } = await this._launchServer(options, 'local');
-    const browser = await CRBrowser.connect(transport!, false, logger, options);
-    browser._ownedServer = browserServer;
-    browser._downloadsPath = downloadsPath;
-    return browser;
+    return await browserServer._initializeOrClose(deadline, async () => {
+      if ((options as any).__testHookBeforeCreateBrowser)
+        await (options as any).__testHookBeforeCreateBrowser();
+      const browser = await CRBrowser.connect(transport!, false, logger, options);
+      browser._ownedServer = browserServer;
+      browser._downloadsPath = downloadsPath;
+      return browser;
+    });
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
@@ -57,12 +63,16 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
     const { timeout = 30000 } = options;
     const deadline = TimeoutSettings.computeDeadline(timeout);
     const { transport, browserServer, logger } = await this._launchServer(options, 'persistent', userDataDir);
-    const browser = await CRBrowser.connect(transport!, true, logger, options);
-    browser._ownedServer = browserServer;
-    const context = browser._defaultContext!;
-    if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
-      await helper.waitWithTimeout(context._loadDefaultContext(), 'first page', helper.timeUntilDeadline(deadline));
-    return context;
+    return await browserServer._initializeOrClose(deadline, async () => {
+      if ((options as any).__testHookBeforeCreateBrowser)
+        await (options as any).__testHookBeforeCreateBrowser();
+      const browser = await CRBrowser.connect(transport!, true, logger, options);
+      browser._ownedServer = browserServer;
+      const context = browser._defaultContext!;
+      if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
+        await context._loadDefaultContext();
+      return context;
+    });
   }
 
   private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport, downloadsPath: string, logger: InnerLogger }> {

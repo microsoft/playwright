@@ -20,10 +20,11 @@ import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../trans
 import { logError, InnerLogger } from '../logger';
 
 export class PipeTransport implements ConnectionTransport {
-  private _pipeWrite: NodeJS.WritableStream | null;
+  private _pipeWrite: NodeJS.WritableStream;
   private _pendingMessage = '';
   private _eventListeners: RegisteredListener[];
   private _waitForNextTask = helper.makeWaitForNextTask();
+  private _closed = false;
 
   onmessage?: (message: ProtocolResponse) => void;
   onclose?: () => void;
@@ -33,6 +34,7 @@ export class PipeTransport implements ConnectionTransport {
     this._eventListeners = [
       helper.addEventListener(pipeRead, 'data', buffer => this._dispatch(buffer)),
       helper.addEventListener(pipeRead, 'close', () => {
+        this._closed = true;
         helper.removeEventListeners(this._eventListeners);
         if (this.onclose)
           this.onclose.call(null);
@@ -45,8 +47,10 @@ export class PipeTransport implements ConnectionTransport {
   }
 
   send(message: ProtocolRequest) {
-    this._pipeWrite!.write(JSON.stringify(message));
-    this._pipeWrite!.write('\0');
+    if (this._closed)
+      throw new Error('Pipe has been closed');
+    this._pipeWrite.write(JSON.stringify(message));
+    this._pipeWrite.write('\0');
   }
 
   close() {
