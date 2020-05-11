@@ -146,16 +146,20 @@ export class Selectors {
     const parsed = this._parseSelector(selector);
     const task = async (context: dom.FrameExecutionContext) => context.evaluateHandleInternal(({ evaluator, parsed, state, timeout }) => {
       return evaluator.injected.poll('raf', timeout, () => {
-        const element = evaluator.querySelector(parsed, document);
+        const elementList = evaluator.querySelectorAll(parsed, document);
         switch (state) {
           case 'attached':
-            return element || false;
+            return elementList[0] || false;
           case 'detached':
-            return !element;
+            return !elementList[0];
           case 'visible':
-            return element && evaluator.injected.isVisible(element) ? element : false;
+            const foundVisibleElem = elementList.find(element => evaluator.injected.isVisible(element));
+            return foundVisibleElem || false;
           case 'hidden':
-            return !element || !evaluator.injected.isVisible(element);
+            if (!elementList[0])
+              return true;
+            const invisibleElemExists = elementList.some(element => !evaluator.injected.isVisible(element));
+            return invisibleElemExists || false;
         }
       });
     }, { evaluator: await this._prepareEvaluator(context), parsed, state, timeout: helper.timeUntilDeadline(deadline) });
