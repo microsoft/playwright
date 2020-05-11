@@ -48,8 +48,8 @@ interface TestSetup<STATE> {
     MAC: boolean;
     LINUX: boolean;
     WIN: boolean;
-    playwright: typeof import('../index');
-    browserType: import('../index').BrowserType<import('../index').Browser>;
+    playwright: typeof import('../index-for-dev');
+    browserType: import('../index-for-dev').BrowserType<import('../index-for-dev').Browser>;
     selectors: import('../src/selectors').Selectors;
     expect<T>(value: T): Expect<T>;
     defaultBrowserOptions: import('../src/server/browserType').LaunchOptions;
@@ -65,16 +65,16 @@ type TestState = {
 };
 
 type BrowserState = TestState & {
-    browser: import('../index').Browser;
-    browserServer: import('../index').BrowserServer;
+    browser: import('../index-for-dev').Browser;
+    browserServer: import('../index-for-dev').BrowserServer;
 };
 
 type PageState = BrowserState & {
-    context: import('../index').BrowserContext;
-    page: import('../index').Page;
+    context: import('../index-for-dev').BrowserContext;
+    page: import('../index-for-dev').Page;
 };
 type ChromiumPageState = PageState & {
-    browser: import('../index').ChromiumBrowser;
+    browser: import('../index-for-dev').ChromiumBrowser;
 };
 type TestSuite = (setup: TestSetup<TestState>) => void;
 type BrowserTestSuite = (setup: TestSetup<BrowserState>) => void;

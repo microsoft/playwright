@@ -64,9 +64,10 @@ async function downloadAllBrowsersAndGenerateProtocolTypes() {
   const { installBrowsersWithProgressBar } = require('./lib/install/installer');
   const protocolGenerator = require('./utils/protocol-types-generator');
   const browserPaths = require('./lib/install/browserPaths');
-  const browsersPath = browserPaths.browsersPath(__dirname);
-  const browsers = require('./browsers.json')['browsers'];
-  await installBrowsersWithProgressBar(__dirname);
+  const playwrightRoot = path.join(__dirname, 'packages', 'playwright');
+  const browsersPath = browserPaths.browsersPath(playwrightRoot);
+  const browsers = require(path.join(playwrightRoot, 'browsers.json'))['browsers'];
+  await installBrowsersWithProgressBar(playwrightRoot);
   for (const browser of browsers) {
     const browserPath = browserPaths.browserDirectory(browsersPath, browser);
     await protocolGenerator.generateProtocol(browser.name, browserPaths.executablePath(browserPath, browser)).catch(console.warn);

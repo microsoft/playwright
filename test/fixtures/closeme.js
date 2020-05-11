@@ -1,6 +1,6 @@
 (async() => {
-  const [, , playwrightRoot, browserType, options, exitOnClose] = process.argv;
-  const browserServer = await require(playwrightRoot)[browserType].launchServer(JSON.parse(options));
+  const [, , playwrightIndex, browserType, options, exitOnClose] = process.argv;
+  const browserServer = await require(playwrightIndex)[browserType].launchServer(JSON.parse(options));
   browserServer.on('close', (exitCode, signal) => {
     console.log(`browserClose:${exitCode}:${signal}:browserClose`);
     if (exitOnClose)

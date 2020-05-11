@@ -17,7 +17,7 @@
 //@ts-check
 const path = require('path');
 const Source = require('../doclint/Source');
-const {chromium} = require('../../index');
+const {chromium} = require('../../index-for-dev');
 const Documentation = require('../doclint/check_public_api/Documentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');

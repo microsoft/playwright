@@ -15,6 +15,7 @@
  */
 
 import * as playwright from '../../../index';
+
 type AssertType<T, S> = S extends T ? AssertNotAny<S> : false;
 type AssertNotAny<S> = {notRealProperty: number} extends S ? false : true;
 
