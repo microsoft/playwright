@@ -15,5 +15,7 @@
  */
 
 const { Playwright } = require('./lib/server/playwright');
+const path = require('path');
 
-module.exports = new Playwright(__dirname, require('./browsers.json')['browsers']);
+const playwrightRoot = path.join(__dirname, 'packages', 'playwright');
+module.exports = new Playwright(playwrightRoot, require(path.join(playwrightRoot, 'browsers.json'))['browsers']);

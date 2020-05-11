@@ -16,6 +16,7 @@
  */
 
 const fs = require('fs');
+const path = require('path');
 const TestRunner = require('../utils/testrunner/');
 const {Environment} = require('../utils/testrunner/Test');
 
@@ -72,7 +73,7 @@ function collect(browserNames) {
 
   // TODO: this should be a preinstalled playwright by default.
   const playwrightPath = config.playwrightPath;
-  const playwright = require(playwrightPath);
+  const playwright = require(path.join(playwrightPath, 'index-for-dev'));
   const { setUnderTest } = require(require('path').join(playwrightPath, 'lib/helper.js'));
   setUnderTest();
 
