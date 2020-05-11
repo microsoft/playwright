@@ -50,7 +50,7 @@ describe('Frame.waitForFunction', function() {
       }
       return Date.now() - window.__startTime;
     }, {}, {polling});
-    expect(timeDelta).not.toBeLessThan(polling);
+    expect(await timeDelta.jsonValue()).not.toBeLessThan(polling);
   });
   it('should throw on polling:mutation', async({page, server}) => {
     const error = await page.waitForFunction(() => true, {}, {polling: 'mutation'}).catch(e => e);
