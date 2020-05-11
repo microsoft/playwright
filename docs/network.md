@@ -4,13 +4,14 @@ Playwright provides APIs to **monitor** and **modify** network traffic, both HTT
 Any requests that page does, including [XHRs](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) and
 [fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) requests, can be tracked, modified and handled.
 
-#### Contents
-  - [HTTP Authentication](#http-authentication)
-  - [Handle file downloads](#handle-file-downloads)
-  - [Network events](#network-events)
-  - [Handle requests](#handle-requests)
-  - [Modify requests](#modify-requests)
-  - [Abort requests](#abort-requests)
+<!-- GEN:toc-top-level -->
+- [HTTP Authentication](#http-authentication)
+- [Handle file downloads](#handle-file-downloads)
+- [Network events](#network-events)
+- [Handle requests](#handle-requests)
+- [Modify requests](#modify-requests)
+- [Abort requests](#abort-requests)
+<!-- GEN:stop -->
 
 <br/>
 

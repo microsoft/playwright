@@ -1,6 +1,6 @@
 # Input
 
-#### Contents
+<!-- GEN:toc-top-level -->
 - [Text input](#text-input)
 - [Checkboxes](#checkboxes)
 - [Select options](#select-options)
@@ -9,6 +9,7 @@
 - [Keys and shortcuts](#keys-and-shortcuts)
 - [Upload files](#upload-files)
 - [Focus element](#focus-element)
+<!-- GEN:stop -->
 
 <br/>
 
