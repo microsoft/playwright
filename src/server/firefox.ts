@@ -148,9 +148,10 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
   }
 
   async connect(options: ConnectOptions): Promise<FFBrowser> {
-    const logger = new RootLogger(options.logger);
-    return await WebSocketTransport.connect(options.wsEndpoint, transport => {
-      return FFBrowser.connect(transport, logger, false, options.slowMo);
+    return await WebSocketTransport.connect(options.wsEndpoint, async transport => {
+      if ((options as any).__testHookBeforeCreateBrowser)
+        await (options as any).__testHookBeforeCreateBrowser();
+      return FFBrowser.connect(transport, new RootLogger(options.logger), false, options.slowMo);
     });
   }
 

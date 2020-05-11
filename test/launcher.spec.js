@@ -290,6 +290,15 @@ describe('browserType.connect', function() {
     await browserServer._checkLeaks();
     await browserServer.close();
   });
+  it.slow()('should handle exceptions during connect', async({browserType, defaultBrowserOptions, server}) => {
+    const browserServer = await browserType.launchServer(defaultBrowserOptions);
+    const e = new Error('Dummy');
+    const __testHookBeforeCreateBrowser = () => { throw e };
+    const error = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint(), __testHookBeforeCreateBrowser }).catch(e => e);
+    await browserServer._checkLeaks();
+    await browserServer.close();
+    expect(error).toBe(e);
+  });
 });
 
 describe('browserType.launchPersistentContext', function() {
