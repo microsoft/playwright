@@ -56,6 +56,9 @@ export type LaunchProcessOptions = {
   pipe?: boolean,
   tempDir?: string,
 
+  cwd?: string,
+  omitDownloads?: boolean,
+
   // Note: attemptToGracefullyClose should reject if it does not close the browser.
   attemptToGracefullyClose: () => Promise<any>,
   onkill: (exitCode: number | null, signal: string | null) => void,
@@ -81,7 +84,8 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
         // @see https://nodejs.org/api/child_process.html#child_process_options_detached
         detached: process.platform !== 'win32',
         env: (options.env as {[key: string]: string}),
-        stdio
+        cwd: options.cwd,
+        stdio,
       }
   );
   if (!spawnedProcess.pid) {
@@ -104,7 +108,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     logger._log(browserStdErrLog, data);
   });
 
-  const downloadsPath = await mkdtempAsync(DOWNLOADS_FOLDER);
+  const downloadsPath = options.omitDownloads ? '' : await mkdtempAsync(DOWNLOADS_FOLDER);
 
   let processClosed = false;
   const waitForProcessToClose = new Promise((fulfill, reject) => {
@@ -115,7 +119,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
       options.onkill(exitCode, signal);
       // Cleanup as processes exit.
       Promise.all([
-        removeFolderAsync(downloadsPath),
+        options.omitDownloads ? Promise.resolve() : removeFolderAsync(downloadsPath),
         options.tempDir ? removeFolderAsync(options.tempDir) : Promise.resolve()
       ]).catch((err: Error) => console.error(err)).then(fulfill);
     });

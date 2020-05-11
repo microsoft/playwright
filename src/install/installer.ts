@@ -70,7 +70,7 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
   }
 
   // 3. Install missing browsers for this package.
-  const myBrowsers = JSON.parse((await fsReadFileAsync(path.join(packagePath, 'browsers.json'))).toString())['browsers'];
+  const myBrowsers = JSON.parse((await fsReadFileAsync(path.join(packagePath, 'browsers.json'))).toString())['browsers'] as browserPaths.BrowserDescriptor[];
   for (const browser of myBrowsers) {
     const browserPath = browserPaths.browserDirectory(browsersPath, browser);
     await browserFetcher.downloadBrowserWithProgressBar(browserPath, browser);

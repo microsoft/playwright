@@ -46,9 +46,9 @@ export class CRBrowser extends BrowserBase {
   private _tracingClient: CRSession | undefined;
   readonly _isHeadful: boolean;
 
-  static async connect(transport: ConnectionTransport, isPersistent: boolean, logger: InnerLogger, options: { slowMo?: number, headless?: boolean } = {}): Promise<CRBrowser> {
+  static async connect(transport: ConnectionTransport, isPersistent: boolean, logger: InnerLogger, options: { slowMo?: number, headless?: boolean, viewport?: types.Size | null } = {}): Promise<CRBrowser> {
     const connection = new CRConnection(SlowMoTransport.wrap(transport, options.slowMo), logger);
-    const browser = new CRBrowser(connection, logger, isPersistent, !options.headless);
+    const browser = new CRBrowser(connection, logger, { persistent: isPersistent, headful: !options.headless, viewport: options.viewport });
     const session = connection.rootSession;
     if (!isPersistent) {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
@@ -83,14 +83,14 @@ export class CRBrowser extends BrowserBase {
     return browser;
   }
 
-  constructor(connection: CRConnection, logger: InnerLogger, isPersistent: boolean, isHeadful: boolean) {
+  constructor(connection: CRConnection, logger: InnerLogger, options: { headful?: boolean, persistent?: boolean, viewport?: types.Size | null } = {}) {
     super(logger);
     this._connection = connection;
     this._session = this._connection.rootSession;
 
-    if (isPersistent)
-      this._defaultContext = new CRBrowserContext(this, null, validateBrowserContextOptions({}));
-    this._isHeadful = isHeadful;
+    if (options.persistent)
+      this._defaultContext = new CRBrowserContext(this, null, validateBrowserContextOptions({ viewport: options.viewport }));
+    this._isHeadful = !!options.headful;
     this._connection.on(ConnectionEvents.Disconnected, () => {
       for (const context of this._contexts.values())
         context._browserClosed();
