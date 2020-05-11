@@ -64,6 +64,7 @@
     "colors": "^1.4.0",
     "commonmark": "^0.28.1",
     "cross-env": "^5.0.5",
+    "electron": "^9.0.0-beta.24",
     "eslint": "^6.6.0",
     "esprima": "^4.0.0",
     "formidable": "^1.2.1",

@@ -231,6 +231,15 @@ module.exports = {
 
     {
       files: [
+        './electron/electron.spec.js',
+      ],
+      browsers: ['chromium'],
+      title: '[Electron]',
+      environments: [customEnvironment],
+    },
+
+    {
+      files: [
         './apicoverage.spec.js',
       ],
       environments: [],

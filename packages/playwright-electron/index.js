@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-const { Playwright } = require('./lib/server/playwright');
-const { Electron } = require('./lib/server/electron');
-const path = require('path');
+const { Playwright } = require('playwright-core/lib/server/playwright');
+const { Electron } = require('playwright-core/lib/server/electron');
 
-const playwrightRoot = path.join(__dirname, 'packages', 'playwright');
-const playwright = new Playwright(playwrightRoot, require(path.join(playwrightRoot, 'browsers.json'))['browsers']);
+const playwright = new Playwright(__dirname, require('./browsers.json')['browsers']);
 playwright.electron = new Electron();
 module.exports = playwright;
