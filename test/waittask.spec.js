@@ -19,12 +19,12 @@ const utils = require('./utils');
 const {FFOX, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
 
 describe('Frame.waitForSelector', function() {
-  fit('wait for selector', async({page, server}) => {
+  it('wait for selector', async({page, server}) => {
     await page.setContent(`<div >hi!</div>`);
     const waitForSelector = page.waitForSelector('div');
     expect(await page.evaluate(x => x.textContent, await waitForSelector)).toBe("hi!");
   });
-  fit('wait for selector', async({page, server}) => {
+  it('wait for selector', async({page, server}) => {
     await page.setContent(`<div hidden="hidden">hi!</div><div >hi!</div>`);
     const waitForSelector = page.waitForSelector('div');
     expect(await page.evaluate(x => x.textContent, await waitForSelector)).toBe("hi!");
