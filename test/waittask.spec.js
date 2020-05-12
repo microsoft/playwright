@@ -268,9 +268,9 @@ describe('Frame.waitForSelector', function() {
     const waitForSelector = page.waitForSelector('div');
     expect(await page.evaluate(x => x.textContent, await waitForSelector)).toBe("hi! I'm visible");
   });
-  it('should wait for visible selector', async({page, server}) => {
+  it('should find hidden selector', async({page, server}) => {
     let divFound=false
-    await page.setContent(`<div hidden="hidden">hi! I'm hidden</div><div >hi! I'm visible</div>`);
+    await page.setContent(`<div hidden="hidden">hi! I'm hidden</div>`);
     const waitForSelector = page.waitForSelector('div',{state:"hidden"}).then(divFound=true);
     await waitForSelector;
     expect(divFound).toBe(true);
