@@ -70,39 +70,9 @@ export class FFBrowser extends BrowserBase {
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     options = validateBrowserContextOptions(options);
-    let viewport;
-    if (options.viewport) {
-      // TODO: remove isMobile from the protocol?
-      if (options.isMobile)
-        throw new Error('options.isMobile is not supported in Firefox');
-      viewport = {
-        viewportSize: { width: options.viewport.width, height: options.viewport.height },
-        deviceScaleFactor: options.deviceScaleFactor || 1,
-        isMobile: false,
-        hasTouch: !!options.hasTouch,
-      };
-    } else if (options.viewport !== null) {
-      viewport = {
-        viewportSize: { width: 1280, height: 720 },
-        deviceScaleFactor: 1,
-        isMobile: false,
-        hasTouch: false,
-      };
-    }
-    const { browserContextId } = await this._connection.send('Browser.createBrowserContext', {
-      userAgent: options.userAgent,
-      bypassCSP: options.bypassCSP,
-      ignoreHTTPSErrors: options.ignoreHTTPSErrors,
-      javaScriptDisabled: options.javaScriptEnabled === false ? true : undefined,
-      viewport,
-      locale: options.locale,
-      timezoneId: options.timezoneId,
-      removeOnDetach: true,
-      downloadOptions: {
-        behavior: options.acceptDownloads ? 'saveToDisk' : 'cancel',
-        downloadsDir: this._downloadsPath,
-      },
-    });
+    if (options.isMobile)
+      throw new Error('options.isMobile is not supported in Firefox');
+    const { browserContextId } = await this._connection.send('Browser.createBrowserContext', { removeOnDetach: true });
     const context = new FFBrowserContext(this, browserContextId, options);
     await context._initialize();
     this._contexts.set(browserContextId, context);
@@ -187,18 +157,50 @@ export class FFBrowserContext extends BrowserContextBase {
   }
 
   async _initialize() {
+    const browserContextId = this._browserContextId || undefined;
+    const promises: Promise<any>[] = [
+      this._browser._connection.send('Browser.setDownloadOptions', {
+        browserContextId,
+        downloadOptions: {
+          behavior: this._options.acceptDownloads ? 'saveToDisk' : 'cancel',
+          downloadsDir: this._browser._downloadsPath,
+        },
+      }),
+    ];
+    if (this._options.viewport) {
+      const viewport = {
+        viewportSize: { width: this._options.viewport.width, height: this._options.viewport.height },
+        deviceScaleFactor: this._options.deviceScaleFactor || 1,
+      };
+      promises.push(this._browser._connection.send('Browser.setDefaultViewport', { browserContextId, viewport }));
+    }
+    if (this._options.hasTouch)
+      promises.push(this._browser._connection.send('Browser.setTouchOverride', { browserContextId, hasTouch: true }));
+    if (this._options.userAgent)
+      promises.push(this._browser._connection.send('Browser.setUserAgentOverride', { browserContextId, userAgent: this._options.userAgent }));
+    if (this._options.bypassCSP)
+      promises.push(this._browser._connection.send('Browser.setBypassCSP', { browserContextId, bypassCSP: true }));
+    if (this._options.ignoreHTTPSErrors)
+      promises.push(this._browser._connection.send('Browser.setIgnoreHTTPSErrors', { browserContextId, ignoreHTTPSErrors: true }));
+    if (this._options.javaScriptEnabled === false)
+      promises.push(this._browser._connection.send('Browser.setJavaScriptDisabled', { browserContextId, javaScriptDisabled: true }));
+    if (this._options.locale)
+      promises.push(this._browser._connection.send('Browser.setLocaleOverride', { browserContextId, locale: this._options.locale }));
+    if (this._options.timezoneId)
+      promises.push(this._browser._connection.send('Browser.setTimezoneOverride', { browserContextId, timezoneId: this._options.timezoneId }));
     if (this._options.permissions)
-      await this.grantPermissions(this._options.permissions);
+      promises.push(this.grantPermissions(this._options.permissions));
     if (this._options.extraHTTPHeaders || this._options.locale)
-      await this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || {});
+      promises.push(this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || {}));
     if (this._options.httpCredentials)
-      await this.setHTTPCredentials(this._options.httpCredentials);
+      promises.push(this.setHTTPCredentials(this._options.httpCredentials));
     if (this._options.geolocation)
-      await this.setGeolocation(this._options.geolocation);
+      promises.push(this.setGeolocation(this._options.geolocation));
     if (this._options.offline)
-      await this.setOffline(this._options.offline);
+      promises.push(this.setOffline(this._options.offline));
     if (this._options.colorScheme)
-      await this._setColorScheme(this._options.colorScheme);
+      promises.push(this._browser._connection.send('Browser.setColorScheme', { browserContextId, colorScheme: this._options.colorScheme }));
+    await Promise.all(promises);
   }
 
   _ffPages(): FFPage[] {
@@ -292,10 +294,6 @@ export class FFBrowserContext extends BrowserContextBase {
   async setOffline(offline: boolean): Promise<void> {
     this._options.offline = offline;
     await this._browser._connection.send('Browser.setOnlineOverride', { browserContextId: this._browserContextId || undefined, override: offline ? 'offline' : 'online' });
-  }
-
-  async _setColorScheme(colorScheme?: types.ColorScheme): Promise<void> {
-    await this._browser._connection.send('Browser.setColorScheme', { browserContextId: this._browserContextId || undefined, colorScheme });
   }
 
   async setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {

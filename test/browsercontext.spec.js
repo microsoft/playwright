@@ -324,10 +324,11 @@ describe('BrowserContext.exposeFunction', () => {
     await context.exposeFunction('add', (a, b) => a + b);
     const page = await context.newPage();
     await page.exposeFunction('mul', (a, b) => a * b);
+    await context.exposeFunction('sub', (a, b) => a - b);
     const result = await page.evaluate(async function() {
-      return { mul: await mul(9, 4), add: await add(9, 4) };
+      return { mul: await mul(9, 4), add: await add(9, 4), sub: await sub(9, 4) };
     });
-    expect(result).toEqual({ mul: 36, add: 13 });
+    expect(result).toEqual({ mul: 36, add: 13, sub: 5 });
     await context.close();
   });
   it('should throw for duplicate registrations', async({browser, server}) => {

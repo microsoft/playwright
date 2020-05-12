@@ -52,7 +52,7 @@ describe('Playwright', function() {
       expect(waitError.message).toContain('Failed to launch');
     });
     it('should handle timeout', async({browserType, defaultBrowserOptions}) => {
-      const options = { ...defaultBrowserOptions, timeout: 1000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 2000)) };
+      const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
       const error = await browserType.launch(options).catch(e => e);
       expect(error.message).toBe('Waiting for the browser to launch failed: timeout exceeded. Re-run with the DEBUG=pw:browser* env variable to see the debug log.');
     });
@@ -100,7 +100,7 @@ describe('Playwright', function() {
     });
     it('should handle timeout', async({browserType, defaultBrowserOptions}) => {
       const userDataDir = await makeUserDataDir();
-      const options = { ...defaultBrowserOptions, timeout: 1000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 2000)) };
+      const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
       const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
       expect(error.message).toBe('Waiting for the browser to launch failed: timeout exceeded. Re-run with the DEBUG=pw:browser* env variable to see the debug log.');
       await removeUserDataDir(userDataDir);
