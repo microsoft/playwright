@@ -5,10 +5,6 @@ notifications:
 install:
 - npm ci
 
-cache:
-  directories:
-  - node_modules
-
 jobs:
   include:
     - os: linux
