@@ -264,15 +264,15 @@ describe('Frame.waitForSelector', function() {
     expect(boxFound).toBe(true);
   });
   it('should wait for visible selector when there is another element invisible', async({page, server}) => {
-    await page.setContent(`<div hidden="hidden">hi! I'm hidden</div><div >hi! I'm visible</div>`);
+    await page.setContent(`<div hidden>hi! I'm hidden</div><div >hi! I'm visible</div>`);
     const waitForSelector = page.waitForSelector('div');
     expect(await page.evaluate(x => x.textContent, await waitForSelector)).toBe("hi! I'm visible");
   });
   it('should find hidden selector when there is another element visible', async({page, server}) => {
     let divFound=false
-    await page.setContent(`<div>content</div><div hidden="hidden">content</div>`);
-    const waitForSelector = page.waitForSelector('div',{state:"hidden"}).then(divFound=true);
-    await waitForSelector;
+    await page.setContent(`<div>content</div><div hidden>content</div>`);
+    const waitForSelector = page.waitForSelector('div',{state:"hidden"}).then(() => divFound = true);
+    expect(await waitForSelector).toBe(true);
     expect(divFound).toBe(true);
   });
 
