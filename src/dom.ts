@@ -27,7 +27,7 @@ import { Page } from './page';
 import { selectors } from './selectors';
 import * as types from './types';
 import { NotConnectedError, TimeoutError } from './errors';
-import { Log, logError } from './logger';
+import { Log, logError, inputLog } from './logger';
 
 export type PointerActionOptions = {
   modifiers?: input.Modifier[];
@@ -37,11 +37,6 @@ export type PointerActionOptions = {
 export type ClickOptions = PointerActionOptions & input.MouseClickOptions;
 
 export type MultiClickOptions = PointerActionOptions & input.MouseMultiClickOptions;
-
-export const inputLog: Log = {
-  name: 'input',
-  color: 'cyan'
-};
 
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;

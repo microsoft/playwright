@@ -16,23 +16,28 @@
  */
 
 import { assert } from './helper';
+import { inputLog } from './logger';
+import { Page } from './page';
 
 type OnHandle = (accept: boolean, promptText?: string) => Promise<void>;
 
 export type DialogType = 'alert' | 'beforeunload' | 'confirm' | 'prompt';
 
 export class Dialog {
+  private _page: Page;
   private _type: string;
   private _message: string;
   private _onHandle: OnHandle;
   private _handled = false;
   private _defaultValue: string;
 
-  constructor(type: string, message: string, onHandle: OnHandle, defaultValue?: string) {
+  constructor(page: Page, type: string, message: string, onHandle: OnHandle, defaultValue?: string) {
+    this._page = page;
     this._type = type;
     this._message = message;
     this._onHandle = onHandle;
     this._defaultValue = defaultValue || '';
+    this._page._log(inputLog, `dialog opened: "${this._type}"`);
   }
 
   type(): string {
@@ -51,11 +56,13 @@ export class Dialog {
     assert(!this._handled, 'Cannot accept dialog which is already handled!');
     this._handled = true;
     await this._onHandle(true, promptText);
+    this._page._log(inputLog, `dialog accepted: "${this._type}"`);
   }
 
   async dismiss() {
     assert(!this._handled, 'Cannot dismiss dialog which is already handled!');
     this._handled = true;
     await this._onHandle(false);
+    this._page._log(inputLog, `dialog dismissed: "${this._type}"`);
   }
 }

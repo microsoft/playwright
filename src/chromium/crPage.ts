@@ -626,6 +626,7 @@ class FrameSession {
 
   _onDialog(event: Protocol.Page.javascriptDialogOpeningPayload) {
     this._page.emit(Events.Page.Dialog, new dialog.Dialog(
+        this._page,
         event.type,
         event.message,
         async (accept: boolean, promptText?: string) => {

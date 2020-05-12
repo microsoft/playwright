@@ -35,6 +35,10 @@ export interface InnerLogger {
 }
 
 export const errorLog: Log = { name: 'generic', severity: 'error' };
+export const inputLog: Log = {
+  name: 'input',
+  color: 'cyan'
+};
 
 export function logError(logger: InnerLogger): (error: Error) => void {
   return error => logger._log(errorLog, error, []);

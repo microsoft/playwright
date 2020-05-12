@@ -28,6 +28,7 @@ import { Page } from './page';
 import { selectors } from './selectors';
 import * as types from './types';
 import { waitForTimeoutWasUsed } from './hints';
+import { inputLog } from './logger';
 
 type ContextType = 'main' | 'utility';
 type ContextData = {
@@ -688,13 +689,13 @@ export class Frame {
     selector: string, options: types.TimeoutOptions,
     action: (handle: dom.ElementHandle<Element>, deadline: number) => Promise<R>): Promise<R> {
     const deadline = this._page._timeoutSettings.computeDeadline(options);
-    this._page._log(dom.inputLog, `(page|frame).${actionName}("${selector}")`);
+    this._page._log(inputLog, `(page|frame).${actionName}("${selector}")`);
     while (!helper.isPastDeadline(deadline)) {
       try {
         const { world, task } = selectors._waitForSelectorTask(selector, 'attached', deadline);
-        this._page._log(dom.inputLog, `waiting for the selector "${selector}"`);
+        this._page._log(inputLog, `waiting for the selector "${selector}"`);
         const handle = await this._scheduleRerunnableTask(task, world, deadline, `selector "${selector}"`);
-        this._page._log(dom.inputLog, `...got element for the selector`);
+        this._page._log(inputLog, `...got element for the selector`);
         const element = handle.asElement() as dom.ElementHandle<Element>;
         try {
           return await action(element, deadline);
@@ -704,7 +705,7 @@ export class Frame {
       } catch (e) {
         if (!(e instanceof NotConnectedError))
           throw e;
-        this._page._log(dom.inputLog, 'Element was detached from the DOM, retrying');
+        this._page._log(inputLog, 'Element was detached from the DOM, retrying');
       }
     }
     throw new TimeoutError(`waiting for selector "${selector}" failed: timeout exceeded. Re-run with the DEBUG=pw:input env variable to see the debug log.`);
