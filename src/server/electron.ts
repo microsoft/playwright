@@ -83,11 +83,18 @@ export class ElectronApplication extends ExtendedEventEmitter {
       this._windows.delete(page);
     });
     this._windows.add(page);
+    await page.waitForLoadState('domcontentloaded');
     this.emit(ElectronEvents.ElectronApplication.Window, page);
   }
 
   windows(): Page[] {
     return [...this._windows];
+  }
+
+  async firstWindow(): Promise<Page> {
+    if (this._windows.size)
+      return this._windows.values().next().value;
+    return this.waitForEvent('window');
   }
 
   async newBrowserWindow(options: any): Promise<Page> {
