@@ -715,7 +715,11 @@ playwright.chromium.launch().then(async browser => {
   playwright.chromium.connect;
   playwright.errors.TimeoutError;
   {
-    const iPhone = playwright.devices['iPhone'];
+    playwright.devices['my device'] = {
+      userAgent: 'foo',
+      viewport: {height: 123, width: 456}
+    };
+    const iPhone = playwright.devices['iPhone 11'];
     const assertion: AssertType<string, typeof iPhone.userAgent> = true;
     const numberAssertion: AssertType<number, typeof iPhone.viewport.width> = true;
   }
