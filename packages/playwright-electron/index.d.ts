@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-const { Playwright } = require('./lib/server/playwright');
-const { Electron } = require('./lib/server/electron');
-const path = require('path');
+import * as types from 'playwright-core/types/types';
 
-const playwrightRoot = path.join(__dirname, 'packages', 'playwright');
-const playwright = new Playwright(playwrightRoot, require(path.join(playwrightRoot, 'browsers.json'))['browsers']);
-playwright.electron = new Electron();
-module.exports = playwright;
+export * from 'playwright-core/types/types';
+export const electron: types.BrowserType<types.Electron>;
