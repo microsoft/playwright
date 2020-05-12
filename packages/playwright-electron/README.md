@@ -82,7 +82,7 @@ describe('Sanity checks', function () {
 
   it('sanity checks', async () => {
     // Wait for the first window to appear.
-    const window = await this.app.waitForEvent('window');
+    const window = await this.app.firstWindow();
 
     // Assert window title.
     assert.equal(await window.title(), 'Hello World!');

@@ -24,6 +24,7 @@ describe('Electron', function() {
     const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
     state.application = await playwright.electron.launch(electronPath, {
       args: [path.join(__dirname, 'testApp.js')],
+      // This is for our own extensive protocol logging, customers don't need it.
       logger: {
         isEnabled: (name, severity) => {
           return name === 'browser' ||
@@ -44,6 +45,7 @@ describe('Electron', function() {
   });
   afterEach(async (state, testRun) => {
     await state.application.close();
+    // This is for our own extensive protocol logging, customers don't need it.
     if (config.dumpProtocolOnFailure) {
       if (testRun.ok())
         testRun.output().splice(0);
@@ -115,9 +117,17 @@ describe('Electron', function() {
     await page.goto('data:text/html,<script>window.result = add(20, 22);</script>');
     expect(await page.evaluate(() => result)).toBe(42);
   });
+  it('should wait for first window', async ({ application }) => {
+    application.evaluate(({ BrowserWindow }) => {
+      const window = new BrowserWindow({ width: 800, height: 600 });
+      window.loadURL('data:text/html,<title>Hello World!</title>');
+    });
+    const window = await application.firstWindow();
+    expect(await window.title()).toBe('Hello World!');
+  });
 });
 
-describe('Electron window', function() {
+describe('Electron per window', function() {
   beforeAll(async state => {
     const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
     state.application = await playwright.electron.launch(electronPath, {
