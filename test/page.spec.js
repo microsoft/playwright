@@ -345,6 +345,16 @@ describe('Page.waitForRequest', function() {
   });
 });
 
+describe('Page.waitForEvent', function() {
+  it('should fail with error upon disconnect', async({page, server}) => {
+    let error;
+    const waitForPromise = page.waitForEvent('download').catch(e => error = e);
+    await page.close();
+    await waitForPromise;
+    expect(error.message).toContain('Target closed');
+  });
+});
+
 describe('Page.waitForResponse', function() {
   it('should work', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);

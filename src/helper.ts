@@ -133,6 +133,8 @@ class Helper {
       resolveCallback = resolve;
       rejectCallback = reject;
     });
+
+    // Add listener.
     const listener = Helper.addEventListener(emitter, eventName, event => {
       try {
         if (!predicate(event))
@@ -142,20 +144,21 @@ class Helper {
         rejectCallback(e);
       }
     });
+
+    // Reject upon timeout.
     const eventTimeout = setTimeout(() => {
       rejectCallback(new TimeoutError(`Timeout exceeded while waiting for ${String(eventName)}`));
     }, helper.timeUntilDeadline(deadline));
-    function cleanup() {
+
+    // Reject upon abort.
+    abortPromise.then(rejectCallback);
+
+    try {
+      return await promise;
+    } finally {
       Helper.removeEventListeners([listener]);
       clearTimeout(eventTimeout);
     }
-    return await Promise.race([promise, abortPromise]).then(r => {
-      cleanup();
-      return r;
-    }, e => {
-      cleanup();
-      throw e;
-    });
   }
 
   static async waitWithDeadline<T>(promise: Promise<T>, taskName: string, deadline: number, debugName: string): Promise<T> {
