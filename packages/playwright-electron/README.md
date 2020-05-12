@@ -58,7 +58,6 @@ app.whenReady().then(createWindow);
 
 `test/spec.js` - test file
 ```js
-
 const { electron  } = require('playwright-electron');
 const assert = require('assert');
 const electronPath = require('electron');
@@ -80,25 +79,80 @@ describe('Sanity checks', function () {
     await this.app.close();
   });
 
-  it('sanity checks', async () => {
-    // Wait for the first window to appear.
-    const window = await this.app.firstWindow();
+  it('script application', async () => {
+    const appPath = await this.app.evaluate(async ({ app }) => {
+      // This runs in the main Electron process, first parameter is
+      // the result of the require('electron') in the main app script.
+      return app.getAppPath();
+    });
+    assert.equal(appPath, path.join(__dirname, '..'));
+  });
 
-    // Assert window title.
-    assert.equal(await window.title(), 'Hello World!');
+  it('window title', async () => {
+    // Return value of this.app.firstWindow a Playwright Page.
+    // See https://playwright.dev/#path=docs%2Fapi.md&q=class-page.
+
+    // Get a Playwright page for the first Electron window.
+    // It awaits for the page to be available. Alternatively use 
+    // this.app.windows() or this.app.waitForEvent('window').
+    const page = await this.app.firstWindow();
+    assert.equal(await page.title(), 'Hello World!');
+  });
+
+  it('capture screenshot', async () => {
+    const page = await this.app.firstWindow();
 
     // Capture window screenshot.
-    await window.screenshot({ path: 'intro.png' });
+    await page.screenshot({ path: 'intro.png' });
+  });
+
+  it('sniff console', async () => {
+    const page = await this.app.firstWindow();
 
     // Collect console logs.
     let consoleText;
-    window.on('console', message => consoleText = message.text());
+    page.on('console', message => consoleText = message.text());
 
     // Click button.
-    await window.click('text=Click me');
+    await page.click('text=Click me');
 
     // Check that click produced console message.
     assert.equal(consoleText, 'click');
   });
+
+  it('intercept network', async () => {
+    await this.app.firstWindow();
+
+    // Return value of this.app.context() is a Playwright BrowserContext.
+    // See https://playwright.dev/#path=docs%2Fapi.md&q=class-browsercontext.
+
+    await await this.app.context().route('**/empty.html', (route, request) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<title>Hello World</title>',
+      })
+    });
+
+    // Helper method to create BrowserWindow.
+    const page = await this.app.newBrowserWindow({ width: 800, height: 600 });
+    await page.goto('https://localhost:1000/empty.html');
+
+    assert.equal(await page.title(), 'Hello World');
+  });
+
+  it('should maximize window', async () => {
+    await this.app.firstWindow();
+
+    const page = await this.app.newBrowserWindow({ width: 800, height: 600 });
+    // page.browserWindow is a Playwright JSHandle pointing at Electron's
+    // BrowserWindow.
+    // https://playwright.dev/#path=docs%2Fapi.md&q=class-jshandle
+    await page.browserWindow.evaluate(browserWindow => browserWindow.maximize());
+    assert(await page.browserWindow.evaluate(browserWindow => browserWindow.isMaximized()));
+    await page.browserWindow.evaluate(browserWindow => browserWindow.unmaximize());
+    assert(!(await page.browserWindow.evaluate(browserWindow => browserWindow.isMaximized())));
+  });
+
 });
 ```
