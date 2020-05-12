@@ -1466,7 +1466,7 @@ index 0000000000000000000000000000000000000000..2b1fe7fa712ae210af3ebbccda084041
 +
 diff --git a/juggler/NetworkObserver.js b/juggler/NetworkObserver.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..1a55b5498c18d2403eab21fe9149242f286157d4
+index 0000000000000000000000000000000000000000..f803071bea317e4d3ce7341573622f6bddaaf547
 --- /dev/null
 +++ b/juggler/NetworkObserver.js
 @@ -0,0 +1,794 @@
@@ -1758,7 +1758,7 @@ index 0000000000000000000000000000000000000000..1a55b5498c18d2403eab21fe9149242f
 +    }
 +    const browserContext = pageNetwork._target.browserContext();
 +    if (browserContext)
-+      this._appendExtraHTTPHeaders(httpChannel, browserContext.options.extraHTTPHeaders);
++      this._appendExtraHTTPHeaders(httpChannel, browserContext.extraHTTPHeaders);
 +    this._appendExtraHTTPHeaders(httpChannel, pageNetwork._extraHTTPHeaders);
 +    const requestId = this._requestId(httpChannel);
 +    const isRedirect = this._redirectMap.has(requestId);
@@ -1804,9 +1804,9 @@ index 0000000000000000000000000000000000000000..1a55b5498c18d2403eab21fe9149242f
 +    if (pageNetwork._requestInterceptionEnabled)
 +      return true;
 +    const browserContext = pageNetwork._target.browserContext();
-+    if (browserContext && browserContext.options.requestInterceptionEnabled)
++    if (browserContext && browserContext.requestInterceptionEnabled)
 +      return true;
-+    if (browserContext && browserContext.options.onlineOverride === 'offline')
++    if (browserContext && browserContext.settings.onlineOverride === 'offline')
 +      return true;
 +    return false;
 +  }
@@ -1825,7 +1825,7 @@ index 0000000000000000000000000000000000000000..1a55b5498c18d2403eab21fe9149242f
 +      return;
 +    }
 +    const browserContext = pageNetwork._target.browserContext();
-+    if (browserContext && browserContext.options.onlineOverride === 'offline') {
++    if (browserContext && browserContext.settings.onlineOverride === 'offline') {
 +      interceptor._abort(Cr.NS_ERROR_OFFLINE);
 +      return;
 +    }
@@ -2181,7 +2181,7 @@ index 0000000000000000000000000000000000000000..1a55b5498c18d2403eab21fe9149242f
 +    if (authInfo.flags & Ci.nsIAuthInformation.PREVIOUS_FAILED)
 +      return false;
 +    const browserContext = this._pageNetwork._target.browserContext();
-+    const credentials = browserContext ? browserContext.options.httpCredentials : undefined;
++    const credentials = browserContext ? browserContext.httpCredentials : undefined;
 +    if (!credentials)
 +      return false;
 +    authInfo.username = credentials.username;
@@ -2402,10 +2402,10 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..97221bb293315abe2ecbb954aebd17a176348cd8
+index 0000000000000000000000000000000000000000..ffa7a3eb7db0508bce20f59535fee808a3ee2859
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
-@@ -0,0 +1,654 @@
+@@ -0,0 +1,648 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
@@ -2460,7 +2460,7 @@ index 0000000000000000000000000000000000000000..97221bb293315abe2ecbb954aebd17a1
 +      return false;
 +
 +    const browserContext = pageTarget.browserContext();
-+    const options = browserContext.options.downloadOptions;
++    const options = browserContext.downloadOptions;
 +    if (!options)
 +      return false;
 +
@@ -2583,7 +2583,9 @@ index 0000000000000000000000000000000000000000..97221bb293315abe2ecbb954aebd17a1
 +        this.emit(TargetRegistry.Events.TargetCreated, readyData);
 +        sessions.forEach(session => target._initSession(session));
 +        return {
-+          browserContextOptions: browserContext ? browserContext.options : {},
++          scriptsToEvaluateOnNewDocument: browserContext ? browserContext.scriptsToEvaluateOnNewDocument : [],
++          bindings: browserContext ? browserContext.bindings : [],
++          settings: browserContext ? browserContext.settings : {},
 +          sessionIds: sessions.map(session => session.sessionId()),
 +        };
 +      },
@@ -2593,8 +2595,8 @@ index 0000000000000000000000000000000000000000..97221bb293315abe2ecbb954aebd17a1
 +      const tab = event.target;
 +      const userContextId = tab.userContextId;
 +      const browserContext = this._userContextIdToBrowserContext.get(userContextId);
-+      if (browserContext && browserContext.options.viewport)
-+        setViewportSizeForBrowser(browserContext.options.viewport.viewportSize, tab.linkedBrowser);
++      if (browserContext && browserContext.settings.defaultViewport)
++        setViewportSizeForBrowser(browserContext.settings.defaultViewport.viewportSize, tab.linkedBrowser);
 +    };
 +
 +    const onTabCloseListener = event => {
@@ -2646,8 +2648,8 @@ index 0000000000000000000000000000000000000000..97221bb293315abe2ecbb954aebd17a1
 +    return this._defaultContext;
 +  }
 +
-+  createBrowserContext(options) {
-+    return new BrowserContext(this, helper.generateId(), options);
++  createBrowserContext(removeOnDetach) {
++    return new BrowserContext(this, helper.generateId(), removeOnDetach);
 +  }
 +
 +  browserContextForId(browserContextId) {
@@ -2694,7 +2696,7 @@ index 0000000000000000000000000000000000000000..97221bb293315abe2ecbb954aebd17a1
 +      });
 +    }
 +    window.gBrowser.selectedTab = tab;
-+    if (browserContext.options.timezoneId) {
++    if (browserContext.settings.timezoneId) {
 +      if (await target.hasFailedToOverrideTimezone())
 +        throw new Error('Failed to override timezone');
 +    }
@@ -2818,16 +2820,8 @@ index 0000000000000000000000000000000000000000..97221bb293315abe2ecbb954aebd17a1
 +    await this._channel.connect('').send('addBinding', { name, script }).catch(e => void e);
 +  }
 +
-+  async setGeolocationOverride(geolocation) {
-+    await this._channel.connect('').send('setGeolocationOverride', geolocation).catch(e => void e);
-+  }
-+
-+  async setOnlineOverride(override) {
-+    await this._channel.connect('').send('setOnlineOverride', override).catch(e => void e);
-+  }
-+
-+  async setColorScheme(colorScheme) {
-+    await this._channel.connect('').send('setColorScheme', colorScheme).catch(e => void e);
++  async applyContextSetting(name, value) {
++    await this._channel.connect('').send('applyContextSetting', { name, value }).catch(e => void e);
 +  }
 +
 +  async hasFailedToOverrideTimezone() {
@@ -2845,7 +2839,7 @@ index 0000000000000000000000000000000000000000..97221bb293315abe2ecbb954aebd17a1
 +}
 +
 +class BrowserContext {
-+  constructor(registry, browserContextId, options) {
++  constructor(registry, browserContextId, removeOnDetach) {
 +    this._registry = registry;
 +    this.browserContextId = browserContextId;
 +    // Default context has userContextId === 0, but we pass undefined to many APIs just in case.
@@ -2859,22 +2853,16 @@ index 0000000000000000000000000000000000000000..97221bb293315abe2ecbb954aebd17a1
 +    this._permissions = new Map();
 +    this._registry._browserContextIdToBrowserContext.set(this.browserContextId, this);
 +    this._registry._userContextIdToBrowserContext.set(this.userContextId, this);
-+    this.options = options || {};
-+    this.options.scriptsToEvaluateOnNewDocument = [];
-+    this.options.bindings = [];
++    this.removeOnDetach = removeOnDetach;
++    this.extraHTTPHeaders = undefined;
++    this.httpCredentials = undefined;
++    this.requestInterceptionEnabled = undefined;
++    this.ignoreHTTPSErrors = undefined;
++    this.downloadOptions = undefined;
++    this.scriptsToEvaluateOnNewDocument = [];
++    this.bindings = [];
++    this.settings = {};
 +    this.pages = new Set();
-+
-+    if (this.options.ignoreHTTPSErrors) {
-+      Preferences.set("network.stricttransportsecurity.preloadlist", false);
-+      Preferences.set("security.cert_pinning.enforcement_level", 0);
-+
-+      const certOverrideService = Cc[
-+        "@mozilla.org/security/certoverride;1"
-+      ].getService(Ci.nsICertOverrideService);
-+      certOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData(
-+        true, this.userContextId
-+      );
-+    }
 +  }
 +
 +  async destroy() {
@@ -2896,29 +2884,35 @@ index 0000000000000000000000000000000000000000..97221bb293315abe2ecbb954aebd17a1
 +    this._registry._userContextIdToBrowserContext.delete(this.userContextId);
 +  }
 +
++  setIgnoreHTTPSErrors(ignoreHTTPSErrors) {
++    if (this.ignoreHTTPSErrors === ignoreHTTPSErrors)
++      return;
++    this.ignoreHTTPSErrors = ignoreHTTPSErrors;
++    const certOverrideService = Cc[
++      "@mozilla.org/security/certoverride;1"
++    ].getService(Ci.nsICertOverrideService);
++    if (ignoreHTTPSErrors) {
++      Preferences.set("network.stricttransportsecurity.preloadlist", false);
++      Preferences.set("security.cert_pinning.enforcement_level", 0);
++      certOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData(true, this.userContextId);
++    } else {
++      certOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData(false, this.userContextId);
++    }
++  }
++
 +  async addScriptToEvaluateOnNewDocument(script) {
-+    this.options.scriptsToEvaluateOnNewDocument.push(script);
++    this.scriptsToEvaluateOnNewDocument.push(script);
 +    await Promise.all(Array.from(this.pages).map(page => page.addScriptToEvaluateOnNewDocument(script)));
 +  }
 +
 +  async addBinding(name, script) {
-+    this.options.bindings.push({ name, script });
++    this.bindings.push({ name, script });
 +    await Promise.all(Array.from(this.pages).map(page => page.addBinding(name, script)));
 +  }
 +
-+  async setGeolocationOverride(geolocation) {
-+    this.options.geolocation = geolocation;
-+    await Promise.all(Array.from(this.pages).map(page => page.setGeolocationOverride(geolocation)));
-+  }
-+
-+  async setOnlineOverride(override) {
-+    this.options.onlineOverride = override;
-+    await Promise.all(Array.from(this.pages).map(page => page.setOnlineOverride(override)));
-+  }
-+
-+  async setColorScheme(colorScheme) {
-+    this.options.colorScheme = colorScheme;
-+    await Promise.all(Array.from(this.pages).map(page => page.setColorScheme(colorScheme)));
++  async applySetting(name, value) {
++    this.settings[name] = value;
++    await Promise.all(Array.from(this.pages).map(page => page.applyContextSetting(name, value)));
 +  }
 +
 +  async grantPermissions(origin, permissions) {
@@ -5420,10 +5414,10 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/juggler/content/main.js b/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..848b8daab8655df61ba2aaebc1abf02ffdc94b6d
+index 0000000000000000000000000000000000000000..ef33a19f8fd4f8abefac1470aa7c79b66d822860
 --- /dev/null
 +++ b/juggler/content/main.js
-@@ -0,0 +1,165 @@
+@@ -0,0 +1,174 @@
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
@@ -5453,77 +5447,94 @@ index 0000000000000000000000000000000000000000..848b8daab8655df61ba2aaebc1abf02f
 +    handler.dispose();
 +}
 +
-+function setGeolocationOverrideInDocShell(geolocation) {
-+  if (geolocation) {
-+    docShell.setGeolocationOverride({
-+      coords: {
-+        latitude: geolocation.latitude,
-+        longitude: geolocation.longitude,
-+        accuracy: geolocation.accuracy,
-+        altitude: NaN,
-+        altitudeAccuracy: NaN,
-+        heading: NaN,
-+        speed: NaN,
-+      },
-+      address: null,
-+      timestamp: Date.now()
-+    });
-+  } else {
-+    docShell.setGeolocationOverride(null);
-+  }
-+}
++let failedToOverrideTimezone = false;
 +
-+function setOnlineOverrideInDocShell(override) {
-+  if (!override) {
-+    docShell.onlineOverride = Ci.nsIDocShell.ONLINE_OVERRIDE_NONE;
-+    return;
-+  }
-+  docShell.onlineOverride = override === 'online' ?
-+      Ci.nsIDocShell.ONLINE_OVERRIDE_ONLINE : Ci.nsIDocShell.ONLINE_OVERRIDE_OFFLINE;
-+}
++const applySetting = {
++  geolocation: (geolocation) => {
++    if (geolocation) {
++      docShell.setGeolocationOverride({
++        coords: {
++          latitude: geolocation.latitude,
++          longitude: geolocation.longitude,
++          accuracy: geolocation.accuracy,
++          altitude: NaN,
++          altitudeAccuracy: NaN,
++          heading: NaN,
++          speed: NaN,
++        },
++        address: null,
++        timestamp: Date.now()
++      });
++    } else {
++      docShell.setGeolocationOverride(null);
++    }
++  },
++
++  onlineOverride: (onlineOverride) => {
++    if (!onlineOverride) {
++      docShell.onlineOverride = Ci.nsIDocShell.ONLINE_OVERRIDE_NONE;
++      return;
++    }
++    docShell.onlineOverride = onlineOverride === 'online' ?
++        Ci.nsIDocShell.ONLINE_OVERRIDE_ONLINE : Ci.nsIDocShell.ONLINE_OVERRIDE_OFFLINE;
++  },
++
++  userAgent: (userAgent) => {
++    docShell.browsingContext.customUserAgent = userAgent;
++  },
++
++  bypassCSP: (bypassCSP) => {
++    docShell.bypassCSPEnabled = bypassCSP;
++  },
++
++  timezoneId: (timezoneId) => {
++    failedToOverrideTimezone = !docShell.overrideTimezone(timezoneId);
++  },
++
++  locale: (locale) => {
++    docShell.languageOverride = locale;
++  },
++
++  javaScriptDisabled: (javaScriptDisabled) => {
++    docShell.allowJavascript = !javaScriptDisabled;
++  },
++
++  hasTouch: (hasTouch) => {
++    docShell.touchEventsOverride = hasTouch ? Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_ENABLED : Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_NONE;
++  },
++
++  colorScheme: (colorScheme) => {
++    frameTree.setColorScheme(colorScheme);
++  },
++
++  defaultViewport: (viewport) => {
++    docShell.contentViewer.overrideDPPX = viewport.deviceScaleFactor || this._initialDPPX;
++    docShell.deviceSizeIsPageSize = true;
++  },
++};
 +
 +function initialize() {
 +  const loadContext = docShell.QueryInterface(Ci.nsILoadContext);
 +  const userContextId = loadContext.originAttributes.userContextId;
 +
-+  let response = sendSyncMessage('juggler:content-ready', { userContextId })[0];
-+  if (!response)
-+    response = { sessionIds: [], browserContextOptions: {} };
-+
-+  const { sessionIds, browserContextOptions } = response;
-+  const { userAgent, bypassCSP, javaScriptDisabled, viewport, scriptsToEvaluateOnNewDocument, bindings, locale, timezoneId, geolocation, onlineOverride, colorScheme } = browserContextOptions;
-+
-+  let failedToOverrideTimezone = false;
-+  if (timezoneId)
-+    failedToOverrideTimezone = !docShell.overrideTimezone(timezoneId);
-+  if (userAgent !== undefined)
-+    docShell.browsingContext.customUserAgent = userAgent;
-+  if (bypassCSP !== undefined)
-+    docShell.bypassCSPEnabled = bypassCSP;
-+  if (javaScriptDisabled !== undefined)
-+    docShell.allowJavascript = !javaScriptDisabled;
-+  if (locale !== undefined)
-+    docShell.languageOverride = locale;
-+  if (geolocation !== undefined)
-+    setGeolocationOverrideInDocShell(geolocation);
-+  if (onlineOverride !== undefined)
-+    setOnlineOverrideInDocShell(onlineOverride);
-+  if (viewport !== undefined) {
-+    docShell.contentViewer.overrideDPPX = viewport.deviceScaleFactor || this._initialDPPX;
-+    docShell.touchEventsOverride = viewport.hasTouch ? Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_ENABLED : Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_NONE;
-+    docShell.deviceSizeIsPageSize = true;
-+    scrollbarManager.setFloatingScrollbars(viewport.isMobile);
-+  }
++  const response = sendSyncMessage('juggler:content-ready', { userContextId })[0];
++  const {
++    sessionIds = [],
++    scriptsToEvaluateOnNewDocument = [],
++    bindings = [],
++    settings = {}
++  } = response || {};
 +
 +  // Enforce focused state for all top level documents.
 +  docShell.overrideHasFocus = true;
-+
 +  frameTree = new FrameTree(docShell);
-+  if (colorScheme !== undefined)
-+    frameTree.setColorScheme(colorScheme);
-+  for (const script of scriptsToEvaluateOnNewDocument || [])
++  for (const [name, value] of Object.entries(settings)) {
++    if (value !== undefined)
++      applySetting[name](value);
++  }
++  for (const script of scriptsToEvaluateOnNewDocument)
 +    frameTree.addScriptToEvaluateOnNewDocument(script);
-+  for (const { name, script } of bindings || [])
++  for (const { name, script } of bindings)
 +    frameTree.addBinding(name, script);
 +  networkMonitor = new NetworkMonitor(docShell, frameTree);
 +
@@ -5545,20 +5556,12 @@ index 0000000000000000000000000000000000000000..848b8daab8655df61ba2aaebc1abf02f
 +      frameTree.addScriptToEvaluateOnNewDocument(script);
 +    },
 +
-+    addBinding(name, script) {
++    addBinding({name, script}) {
 +      frameTree.addBinding(name, script);
 +    },
 +
-+    setGeolocationOverride(geolocation) {
-+      setGeolocationOverrideInDocShell(geolocation);
-+    },
-+
-+    setOnlineOverride(override) {
-+      setOnlineOverrideInDocShell(override);
-+    },
-+
-+    setColorScheme(colorScheme) {
-+      frameTree.setColorScheme(colorScheme);
++    applyContextSetting({name, value}) {
++      applySetting[name](value);
 +    },
 +
 +    ensurePermissions() {
@@ -5668,10 +5671,10 @@ index 0000000000000000000000000000000000000000..bf37558bccc48f4d90eadc971c1eb3e4
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/juggler/protocol/BrowserHandler.js b/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..21ea3ef1451d02b36f884cf3c6ef3df81bd1a9b9
+index 0000000000000000000000000000000000000000..1d304e2996c62df07d823b4cffd1eb309cba29ab
 --- /dev/null
 +++ b/juggler/protocol/BrowserHandler.js
-@@ -0,0 +1,199 @@
+@@ -0,0 +1,239 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -5719,10 +5722,10 @@ index 0000000000000000000000000000000000000000..21ea3ef1451d02b36f884cf3c6ef3df8
 +    ];
 +  }
 +
-+  async createBrowserContext(options) {
++  async createBrowserContext({removeOnDetach}) {
 +    if (!this._enabled)
 +      throw new Error('Browser domain is not enabled');
-+    const browserContext = this._targetRegistry.createBrowserContext(options);
++    const browserContext = this._targetRegistry.createBrowserContext(removeOnDetach);
 +    this._createdBrowserContextIds.add(browserContext.browserContextId);
 +    return {browserContextId: browserContext.browserContextId};
 +  }
@@ -5743,7 +5746,7 @@ index 0000000000000000000000000000000000000000..21ea3ef1451d02b36f884cf3c6ef3df8
 +    this._attachedSessions.clear();
 +    for (const browserContextId of this._createdBrowserContextIds) {
 +      const browserContext = this._targetRegistry.browserContextForId(browserContextId);
-+      if (browserContext.options.removeOnDetach)
++      if (browserContext.removeOnDetach)
 +        browserContext.destroy();
 +    }
 +    this._createdBrowserContextIds.clear();
@@ -5814,27 +5817,63 @@ index 0000000000000000000000000000000000000000..21ea3ef1451d02b36f884cf3c6ef3df8
 +  }
 +
 +  setExtraHTTPHeaders({browserContextId, headers}) {
-+    this._targetRegistry.browserContextForId(browserContextId).options.extraHTTPHeaders = headers;
++    this._targetRegistry.browserContextForId(browserContextId).extraHTTPHeaders = headers;
 +  }
 +
 +  setHTTPCredentials({browserContextId, credentials}) {
-+    this._targetRegistry.browserContextForId(browserContextId).options.httpCredentials = credentials;
++    this._targetRegistry.browserContextForId(browserContextId).httpCredentials = nullToUndefined(credentials);
 +  }
 +
 +  setRequestInterception({browserContextId, enabled}) {
-+    this._targetRegistry.browserContextForId(browserContextId).options.requestInterceptionEnabled = enabled;
++    this._targetRegistry.browserContextForId(browserContextId).requestInterceptionEnabled = enabled;
++  }
++
++  setIgnoreHTTPSErrors({browserContextId, ignoreHTTPSErrors}) {
++    this._targetRegistry.browserContextForId(browserContextId).setIgnoreHTTPSErrors(nullToUndefined(ignoreHTTPSErrors));
++  }
++
++  setDownloadOptions({browserContextId, downloadOptions}) {
++    this._targetRegistry.browserContextForId(browserContextId).downloadOptions = nullToUndefined(downloadOptions);
 +  }
 +
 +  async setGeolocationOverride({browserContextId, geolocation}) {
-+    await this._targetRegistry.browserContextForId(browserContextId).setGeolocationOverride(geolocation);
++    await this._targetRegistry.browserContextForId(browserContextId).applySetting('geolocation', nullToUndefined(geolocation));
 +  }
 +
 +  async setOnlineOverride({browserContextId, override}) {
-+    await this._targetRegistry.browserContextForId(browserContextId).setOnlineOverride(override);
++    await this._targetRegistry.browserContextForId(browserContextId).applySetting('onlineOverride', nullToUndefined(override));
 +  }
 +
 +  async setColorScheme({browserContextId, colorScheme}) {
-+    await this._targetRegistry.browserContextForId(browserContextId).setColorScheme(colorScheme);
++    await this._targetRegistry.browserContextForId(browserContextId).applySetting('colorScheme', nullToUndefined(colorScheme));
++  }
++
++  async setUserAgentOverride({browserContextId, userAgent}) {
++    await this._targetRegistry.browserContextForId(browserContextId).applySetting('userAgent', nullToUndefined(userAgent));
++  }
++
++  async setBypassCSP({browserContextId, bypassCSP}) {
++    await this._targetRegistry.browserContextForId(browserContextId).applySetting('bypassCSP', nullToUndefined(bypassCSP));
++  }
++
++  async setJavaScriptDisabled({browserContextId, javaScriptDisabled}) {
++    await this._targetRegistry.browserContextForId(browserContextId).applySetting('javaScriptDisabled', nullToUndefined(javaScriptDisabled));
++  }
++
++  async setLocaleOverride({browserContextId, locale}) {
++    await this._targetRegistry.browserContextForId(browserContextId).applySetting('locale', nullToUndefined(locale));
++  }
++
++  async setTimezoneOverride({browserContextId, timezoneId}) {
++    await this._targetRegistry.browserContextForId(browserContextId).applySetting('timezoneId', nullToUndefined(timezoneId));
++  }
++
++  async setTouchOverride({browserContextId, hasTouch}) {
++    await this._targetRegistry.browserContextForId(browserContextId).applySetting('hasTouch', nullToUndefined(hasTouch));
++  }
++
++  async setDefaultViewport({browserContextId, viewport}) {
++    await this._targetRegistry.browserContextForId(browserContextId).applySetting('defaultViewport', nullToUndefined(viewport));
 +  }
 +
 +  async addScriptToEvaluateOnNewDocument({browserContextId, script}) {
@@ -5867,6 +5906,10 @@ index 0000000000000000000000000000000000000000..21ea3ef1451d02b36f884cf3c6ef3df8
 +                                .userAgent;
 +    return {version: 'Firefox/' + version, userAgent};
 +  }
++}
++
++function nullToUndefined(value) {
++  return value === null ? undefined : value;
 +}
 +
 +var EXPORTED_SYMBOLS = ['BrowserHandler'];
@@ -6678,10 +6721,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/juggler/protocol/Protocol.js b/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..76445a317969f569f080bbec116c59a37587ef84
+index 0000000000000000000000000000000000000000..e6bb9a8d5b553531a2ee22e27e693dd0569bda22
 --- /dev/null
 +++ b/juggler/protocol/Protocol.js
-@@ -0,0 +1,801 @@
+@@ -0,0 +1,845 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -6752,8 +6795,6 @@ index 0000000000000000000000000000000000000000..76445a317969f569f080bbec116c59a3
 +pageTypes.Viewport = {
 +  viewportSize: pageTypes.Size,
 +  deviceScaleFactor: t.Number,
-+  isMobile: t.Boolean,
-+  hasTouch: t.Boolean,
 +};
 +
 +pageTypes.DOMQuad = {
@@ -6910,14 +6951,6 @@ index 0000000000000000000000000000000000000000..76445a317969f569f080bbec116c59a3
 +    'createBrowserContext': {
 +      params: {
 +        removeOnDetach: t.Optional(t.Boolean),
-+        userAgent: t.Optional(t.String),
-+        bypassCSP: t.Optional(t.Boolean),
-+        ignoreHTTPSErrors: t.Optional(t.Boolean),
-+        javaScriptDisabled: t.Optional(t.Boolean),
-+        viewport: t.Optional(pageTypes.Viewport),
-+        locale: t.Optional(t.String),
-+        timezoneId: t.Optional(t.String),
-+        downloadOptions: t.Optional(browserTypes.DownloadOptions),
 +      },
 +      returns: {
 +        browserContextId: t.String,
@@ -6967,6 +7000,60 @@ index 0000000000000000000000000000000000000000..76445a317969f569f080bbec116c59a3
 +        geolocation: t.Nullable(browserTypes.Geolocation),
 +      }
 +    },
++    'setUserAgentOverride': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        userAgent: t.Nullable(t.String),
++      }
++    },
++    'setBypassCSP': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        bypassCSP: t.Nullable(t.Boolean),
++      }
++    },
++    'setIgnoreHTTPSErrors': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        ignoreHTTPSErrors: t.Nullable(t.Boolean),
++      }
++    },
++    'setJavaScriptDisabled': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        javaScriptDisabled: t.Nullable(t.Boolean),
++      }
++    },
++    'setLocaleOverride': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        locale: t.Nullable(t.String),
++      }
++    },
++    'setTimezoneOverride': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        timezoneId: t.Nullable(t.String),
++      }
++    },
++    'setDownloadOptions': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        downloadOptions: t.Nullable(browserTypes.DownloadOptions),
++      }
++    },
++    'setTouchOverride': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        hasTouch: t.Nullable(t.Boolean),
++      }
++    },
++    'setDefaultViewport': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        viewport: t.Nullable(pageTypes.Viewport),
++      }
++    },
 +    'addScriptToEvaluateOnNewDocument': {
 +      params: {
 +        browserContextId: t.Optional(t.String),
@@ -7014,13 +7101,13 @@ index 0000000000000000000000000000000000000000..76445a317969f569f080bbec116c59a3
 +    'setOnlineOverride': {
 +      params: {
 +        browserContextId: t.Optional(t.String),
-+        override: t.Optional(t.Enum(['online', 'offline'])),
++        override: t.Nullable(t.Enum(['online', 'offline'])),
 +      }
 +    },
 +    'setColorScheme': {
 +      params: {
 +        browserContextId: t.Optional(t.String),
-+        colorScheme: t.Optional(t.Enum(['dark', 'light', 'no-preference'])),
++        colorScheme: t.Nullable(t.Enum(['dark', 'light', 'no-preference'])),
 +      },
 +    },
 +  },
