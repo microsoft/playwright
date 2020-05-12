@@ -75,7 +75,9 @@ export class ElectronApplication extends ExtendedEventEmitter {
     // Needs to be sync.
     const windowId = ++this._lastWindowId;
     // Can be async.
-    const handle = await this._nodeElectronHandle!.evaluateHandle(({ BrowserWindow }, windowId) => BrowserWindow.fromId(windowId), windowId);
+    const handle = await this._nodeElectronHandle!.evaluateHandle(({ BrowserWindow }, windowId) => BrowserWindow.fromId(windowId), windowId).catch(e => {});
+    if (!handle)
+      return;
     (page as any).browserWindow = handle;
     (page as any)._browserWindowId = windowId;
     page.on(Events.Page.Close, () => {
@@ -83,7 +85,7 @@ export class ElectronApplication extends ExtendedEventEmitter {
       this._windows.delete(page);
     });
     this._windows.add(page);
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState('domcontentloaded').catch(e => {}); // can happen after detach
     this.emit(ElectronEvents.ElectronApplication.Window, page);
   }
 
