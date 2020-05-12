@@ -91,15 +91,13 @@ else
   git remote add $REMOTE_BROWSER_UPSTREAM $REMOTE_URL
 fi
 
-# Check if we have the $BASE_REVISION commit in GIT
+# If not, fetch from REMOTE_BROWSER_UPSTREAM and check one more time.
+git fetch $REMOTE_BROWSER_UPSTREAM $BASE_BRANCH
 if ! git cat-file -e $BASE_REVISION^{commit}; then
-  # If not, fetch from REMOTE_BROWSER_UPSTREAM and check one more time.
-  git fetch $REMOTE_BROWSER_UPSTREAM $BASE_BRANCH
-  if ! git cat-file -e $BASE_REVISION^{commit}; then
-    echo "ERROR: $FRIENDLY_CHECKOUT_PATH/ does not include the BASE_REVISION (@$BASE_REVISION). Wrong revision number?"
-    exit 1
-  fi
+  echo "ERROR: $FRIENDLY_CHECKOUT_PATH/ does not include the BASE_REVISION (@$BASE_REVISION). Wrong revision number?"
+  exit 1
 fi
+
 echo "-- checking $FRIENDLY_CHECKOUT_PATH repo has BASE_REVISION (@$BASE_REVISION) commit - OK"
 
 # Check out the $BASE_REVISION
