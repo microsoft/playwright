@@ -95,6 +95,9 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
       temporaryUserDataDir = userDataDir;
     }
 
+    const runningAsRoot = process.geteuid && process.geteuid() === 0;
+    assert(!runningAsRoot || args.includes('--no-sandbox'), 'Cannot launch Chromium as root without --no-sandbox. See https://crbug.com/638180.');
+
     const chromeArguments = [];
     if (!ignoreDefaultArgs)
       chromeArguments.push(...this._defaultArgs(options, launchType, userDataDir));
