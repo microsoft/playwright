@@ -429,7 +429,7 @@ class FrameSession {
       promises.push(this._client.send('Page.setBypassCSP', { enabled: true }));
     if (options.ignoreHTTPSErrors)
       promises.push(this._client.send('Security.setIgnoreCertificateErrors', { ignore: true }));
-    if (this._isMainFrame() && options.viewport)
+    if (this._isMainFrame())
       promises.push(this._updateViewport());
     if (options.hasTouch)
       promises.push(this._client.send('Emulation.setTouchEmulationEnabled', { enabled: true }));
@@ -706,23 +706,23 @@ class FrameSession {
   async _updateViewport(): Promise<void> {
     assert(this._isMainFrame());
     const options = this._crPage._browserContext._options;
-    let viewport = options.viewport || { width: 0, height: 0 };
     const viewportSize = this._page._state.viewportSize;
-    if (viewportSize)
-      viewport = { ...viewport, ...viewportSize };
-    const isLandscape = viewport.width > viewport.height;
+    if (viewportSize === null)
+      return;
+    const isLandscape = viewportSize.width > viewportSize.height;
     const promises = [
       this._client.send('Emulation.setDeviceMetricsOverride', {
         mobile: !!options.isMobile,
-        width: viewport.width,
-        height: viewport.height,
-        screenWidth: viewport.width,
-        screenHeight: viewport.height,
+        width: viewportSize.width,
+        height: viewportSize.height,
+        screenWidth: viewportSize.width,
+        screenHeight: viewportSize.height,
         deviceScaleFactor: options.deviceScaleFactor || 1,
         screenOrientation: isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' },
       }),
     ];
     if (this._windowId) {
+      // TODO: popup windows have their own insets.
       let insets = { width: 24, height: 88 };
       if (process.platform === 'win32')
         insets = { width: 16, height: 88 };
@@ -733,7 +733,7 @@ class FrameSession {
 
       promises.push(this._client.send('Browser.setWindowBounds', {
         windowId: this._windowId,
-        bounds: { width: viewport.width + insets.width, height: viewport.height + insets.height }
+        bounds: { width: viewportSize.width + insets.width, height: viewportSize.height + insets.height }
       }));
     }
     await Promise.all(promises);

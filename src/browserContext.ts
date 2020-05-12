@@ -186,6 +186,10 @@ export function assertBrowserContextIsNotOwned(context: BrowserContextBase) {
 
 export function validateBrowserContextOptions(options: BrowserContextOptions): BrowserContextOptions {
   const result = { ...options };
+  if (result.viewport === null && result.deviceScaleFactor !== undefined)
+    throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
+  if (result.viewport === null && result.isMobile !== undefined)
+    throw new Error(`"isMobile" option is not supported with null "viewport"`);
   if (!result.viewport && result.viewport !== null)
     result.viewport = { width: 1280, height: 720 };
   if (result.viewport)

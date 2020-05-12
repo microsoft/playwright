@@ -100,8 +100,7 @@ export class WKPage implements PageDelegate {
     const contextOptions = this._browserContext._options;
     if (contextOptions.javaScriptEnabled === false)
       promises.push(this._pageProxySession.send('Emulation.setJavaScriptEnabled', { enabled: false }));
-    if (this._page._state.viewportSize || contextOptions.viewport)
-      promises.push(this._updateViewport());
+    promises.push(this._updateViewport());
     promises.push(this.updateHttpCredentials());
     if (this._browserContext._permissions.size) {
       for (const [key, value] of this._browserContext._permissions)
@@ -573,24 +572,23 @@ export class WKPage implements PageDelegate {
 
   async _updateViewport(): Promise<void> {
     const options = this._browserContext._options;
-    let viewport = options.viewport || { width: 0, height: 0 };
     const viewportSize = this._page._state.viewportSize;
-    if (viewportSize)
-      viewport = { ...viewport, ...viewportSize };
+    if (viewportSize === null)
+      return;
     const promises: Promise<any>[] = [
       this._pageProxySession.send('Emulation.setDeviceMetricsOverride', {
-        width: viewport.width,
-        height: viewport.height,
+        width: viewportSize.width,
+        height: viewportSize.height,
         fixedLayout: !!options.isMobile,
         deviceScaleFactor: options.deviceScaleFactor || 1
       }),
       this._session.send('Page.setScreenSizeOverride', {
-        width: viewport.width,
-        height: viewport.height,
+        width: viewportSize.width,
+        height: viewportSize.height,
       }),
     ];
     if (options.isMobile) {
-      const angle = viewport.width > viewport.height ? 90 : 0;
+      const angle = viewportSize.width > viewportSize.height ? 90 : 0;
       promises.push(this._session.send('Page.setOrientationOverride', { angle }));
     }
     await Promise.all(promises);

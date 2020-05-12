@@ -77,6 +77,13 @@ describe('BrowserContext({viewport})', function() {
     await page.goto(server.PREFIX + '/detect-touch.html');
     expect(await page.evaluate(() => document.body.textContent.trim())).toBe('NO');
   });
+  it('should support touch with null viewport', async({browser, server}) => {
+    const context = await browser.newContext({ viewport: null, hasTouch: true });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/mobile.html');
+    expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(true);
+    await context.close();
+  });
 });
 
 describe.skip(FFOX)('viewport.isMobile', () => {
