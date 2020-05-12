@@ -4,9 +4,10 @@ This package contains the [Electron](https://www.electronjs.org/) flavor of [Pla
 ## How to demo
 
 ```bash
-npm i --save-dev electron@beta
-npm i --save-dev playwright-electron@next
+npm i --save-dev electron@beta playwright-electron
+npx mocha
 ```
+
 
 `index.js` - main Electron application file.
 ```js
@@ -149,9 +150,6 @@ describe('Sanity checks', function () {
     // BrowserWindow.
     // https://playwright.dev/#path=docs%2Fapi.md&q=class-jshandle
     await page.browserWindow.evaluate(browserWindow => browserWindow.maximize());
-    assert(await page.browserWindow.evaluate(browserWindow => browserWindow.isMaximized()));
-    await page.browserWindow.evaluate(browserWindow => browserWindow.unmaximize());
-    assert(!(await page.browserWindow.evaluate(browserWindow => browserWindow.isMaximized())));
   });
 
 });
