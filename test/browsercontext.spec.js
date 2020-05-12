@@ -482,6 +482,32 @@ describe('BrowserContext.setHTTPCredentials', function() {
     expect(response.status()).toBe(401);
     await context.close();
   });
+  it.fail(true)('should update', async({browser, server}) => {
+    server.setAuth('/empty.html', 'user', 'pass');
+    const context = await browser.newContext({
+      httpCredentials: { username: 'user', password: 'pass' }
+    });
+    const page = await context.newPage();
+    let response = await page.goto(server.EMPTY_PAGE);
+    expect(response.status()).toBe(200);
+    await context.setHTTPCredentials({ username: 'user', password: 'letmein' });
+    response = await page.goto(server.EMPTY_PAGE);
+    expect(response.status()).toBe(401);
+    await context.close();
+  });
+  it.fail(true)('should update to null', async({browser, server}) => {
+    server.setAuth('/empty.html', 'user', 'pass');
+    const context = await browser.newContext({
+      httpCredentials: { username: 'user', password: 'pass' }
+    });
+    const page = await context.newPage();
+    let response = await page.goto(server.EMPTY_PAGE);
+    expect(response.status()).toBe(200);
+    await context.setHTTPCredentials(null);
+    response = await page.goto(server.EMPTY_PAGE);
+    expect(response.status()).toBe(401);
+    await context.close();
+  });
   it('should return resource body', async({browser, server}) => {
     server.setAuth('/playground.html', 'user', 'pass');
     const context = await browser.newContext({
