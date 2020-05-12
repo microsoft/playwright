@@ -6174,6 +6174,32 @@ index 35fdfbb3097a8174ecc536b181d92c7cd9149581..a98424581b326c780375968b0db5e008
  #if USE(APPKIT)
      NSEvent* nativeEvent() const { return m_nativeEvent.get(); }
  #elif PLATFORM(GTK)
+diff --git a/Source/WebKit/Shared/SessionState.h b/Source/WebKit/Shared/SessionState.h
+index 91a2a24ade69a7f81231b36b3e4228573dfb0e22..e4ae1bbe7658d1a0841a4e9d4123bb407bffc93f 100644
+--- a/Source/WebKit/Shared/SessionState.h
++++ b/Source/WebKit/Shared/SessionState.h
+@@ -134,7 +134,7 @@ struct BackForwardListItemState {
+     WebCore::BackForwardItemIdentifier identifier;
+ 
+     PageState pageState;
+-#if PLATFORM(COCOA) || PLATFORM(GTK)
++#if PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)
+     RefPtr<ViewSnapshot> snapshot;
+ #endif
+     bool hasCachedPage { false };
+diff --git a/Source/WebKit/Shared/WebBackForwardListItem.h b/Source/WebKit/Shared/WebBackForwardListItem.h
+index 6642e2007848c8add40d573f343e91619ede8c8d..78b0ccabe256cc757873e61f366e3b1580b16efb 100644
+--- a/Source/WebKit/Shared/WebBackForwardListItem.h
++++ b/Source/WebKit/Shared/WebBackForwardListItem.h
+@@ -75,7 +75,7 @@ public:
+     bool itemIsInSameDocument(const WebBackForwardListItem&) const;
+     bool itemIsClone(const WebBackForwardListItem&);
+ 
+-#if PLATFORM(COCOA) || PLATFORM(GTK)
++#if PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)
+     ViewSnapshot* snapshot() const { return m_itemState.snapshot.get(); }
+     void setSnapshot(RefPtr<ViewSnapshot>&& snapshot) { m_itemState.snapshot = WTFMove(snapshot); }
+ #endif
 diff --git a/Source/WebKit/Shared/WebCoreArgumentCoders.cpp b/Source/WebKit/Shared/WebCoreArgumentCoders.cpp
 index a6bf8bc1d21b0aa978cf7a3f49bf9066f92a6b11..b644f3bce73226660412da1aed2d527d1de06aea 100644
 --- a/Source/WebKit/Shared/WebCoreArgumentCoders.cpp
@@ -6564,10 +6590,18 @@ index 3fbcb41484500aade971edf8a6f4b2e6cfa400ee..e552ab479f52dc0edcc83a9cd236e872
  UIProcess/gtk/WebPasteboardProxyGtk.cpp
  UIProcess/gtk/WebPopupMenuProxyGtk.cpp
 diff --git a/Source/WebKit/SourcesWPE.txt b/Source/WebKit/SourcesWPE.txt
-index 8b934e81e74890eba674f5faaa6a5ade0f605c11..4f5bcc18e576a656709dfcfccd75d09e00f8e80c 100644
+index 8b934e81e74890eba674f5faaa6a5ade0f605c11..8d56850991d529a129e69154f26d2062c42b3704 100644
 --- a/Source/WebKit/SourcesWPE.txt
 +++ b/Source/WebKit/SourcesWPE.txt
-@@ -125,6 +125,7 @@ UIProcess/API/glib/WebKitAuthenticationRequest.cpp @no-unify
+@@ -108,6 +108,7 @@ Shared/unix/AuxiliaryProcessMain.cpp
+ 
+ UIProcess/DefaultUndoController.cpp
+ UIProcess/LegacySessionStateCodingNone.cpp
++UIProcess/ViewSnapshotStore.cpp
+ UIProcess/WebGrammarDetail.cpp
+ UIProcess/WebMemoryPressureHandler.cpp @no-unify
+ UIProcess/WebViewportAttributes.cpp
+@@ -125,6 +126,7 @@ UIProcess/API/glib/WebKitAuthenticationRequest.cpp @no-unify
  UIProcess/API/glib/WebKitAutomationSession.cpp @no-unify
  UIProcess/API/glib/WebKitBackForwardList.cpp @no-unify
  UIProcess/API/glib/WebKitBackForwardListItem.cpp @no-unify
@@ -6575,7 +6609,7 @@ index 8b934e81e74890eba674f5faaa6a5ade0f605c11..4f5bcc18e576a656709dfcfccd75d09e
  UIProcess/API/glib/WebKitContextMenuClient.cpp @no-unify
  UIProcess/API/glib/WebKitCookieManager.cpp @no-unify
  UIProcess/API/glib/WebKitCredential.cpp @no-unify
-@@ -200,7 +201,7 @@ UIProcess/Automation/wpe/WebAutomationSessionWPE.cpp
+@@ -200,7 +202,7 @@ UIProcess/Automation/wpe/WebAutomationSessionWPE.cpp
  UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
  
  UIProcess/geoclue/GeoclueGeolocationProvider.cpp
@@ -6584,7 +6618,7 @@ index 8b934e81e74890eba674f5faaa6a5ade0f605c11..4f5bcc18e576a656709dfcfccd75d09e
  UIProcess/glib/WebProcessPoolGLib.cpp
  UIProcess/glib/WebProcessProxyGLib.cpp
  UIProcess/glib/WebsiteDataStoreGLib.cpp @no-unify
-@@ -225,6 +226,10 @@ UIProcess/linux/MemoryPressureMonitor.cpp
+@@ -225,7 +227,12 @@ UIProcess/linux/MemoryPressureMonitor.cpp
  UIProcess/soup/WebCookieManagerProxySoup.cpp
  UIProcess/soup/WebProcessPoolSoup.cpp
  
@@ -6593,8 +6627,10 @@ index 8b934e81e74890eba674f5faaa6a5ade0f605c11..4f5bcc18e576a656709dfcfccd75d09e
 +UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp
 +
  UIProcess/wpe/WebPageProxyWPE.cpp
++UIProcess/gtk/ViewSnapshotStoreGtk.cpp
  
  WebProcess/GPU/media/gstreamer/VideoLayerRemoteGStreamer.cpp
+ 
 diff --git a/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp b/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp
 index a65f066f9813e8f54673c8f3348853c17a6df60d..8a58eebddd0d147246b478ba24b7db17da0621b4 100644
 --- a/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp
@@ -7333,7 +7369,7 @@ index 7222a91cb95a5e370f9229ee6425e412b5f8b078..c4031ba28fc89c771c0a64ee787fd245
      /**
       * WebKitWebContext:use-system-appearance-for-scrollbars:
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp b/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
-index 8c54b423ff9266b8307385dd13c3f44924fc2e45..b0a141f2f26cb43af78efeafbe4d12e1883b7919 100644
+index 8c54b423ff9266b8307385dd13c3f44924fc2e45..b958f18ced702e8cc40bb361978c14a35bcbff30 100644
 --- a/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
 @@ -130,6 +130,7 @@ enum {
@@ -7344,7 +7380,20 @@ index 8c54b423ff9266b8307385dd13c3f44924fc2e45..b0a141f2f26cb43af78efeafbe4d12e1
  
      DECIDE_POLICY,
      PERMISSION_REQUEST,
-@@ -1535,6 +1536,15 @@ static void webkit_web_view_class_init(WebKitWebViewClass* webViewClass)
+@@ -460,6 +461,12 @@ void WebKitWebViewClient::didReceiveUserMessage(WKWPE::View&, UserMessage&& mess
+ {
+     webkitWebViewDidReceiveUserMessage(m_webView, WTFMove(message), WTFMove(completionHandler));
+ }
++
++cairo_surface_t* WebKitWebViewClient::takeSnapshot()
++{
++    return webkitWebViewBackendTakeScreenshot(m_webView->priv->backend.get());
++}
++
+ #endif
+ 
+ static gboolean webkitWebViewLoadFail(WebKitWebView* webView, WebKitLoadEvent, const char* failingURI, GError* error)
+@@ -1535,6 +1542,15 @@ static void webkit_web_view_class_init(WebKitWebViewClass* webViewClass)
          G_TYPE_BOOLEAN, 1,
          WEBKIT_TYPE_SCRIPT_DIALOG);
  
@@ -7360,7 +7409,7 @@ index 8c54b423ff9266b8307385dd13c3f44924fc2e45..b0a141f2f26cb43af78efeafbe4d12e1
      /**
       * WebKitWebView::decide-policy:
       * @web_view: the #WebKitWebView on which the signal is emitted
-@@ -2416,6 +2426,20 @@ void webkitWebViewRunJavaScriptBeforeUnloadConfirm(WebKitWebView* webView, const
+@@ -2416,6 +2432,20 @@ void webkitWebViewRunJavaScriptBeforeUnloadConfirm(WebKitWebView* webView, const
      webkit_script_dialog_unref(webView->priv->currentScriptDialog);
  }
  
@@ -7503,6 +7552,117 @@ index 930b17b6629e04d0dfa2222bbc3217877c6e1812..395462e5f01c195231e9296d1204167c
  #include <webkit2/WebKitContextMenu.h>
  #include <webkit2/WebKitContextMenuActions.h>
  #include <webkit2/WebKitContextMenuItem.h>
+diff --git a/Source/WebKit/UIProcess/API/wpe/APIViewClient.h b/Source/WebKit/UIProcess/API/wpe/APIViewClient.h
+index 509f849a12f86299486b1d1a52db56501a61eb42..6e022281ee8a63a84ece25b67e1f8e319ac49dee 100644
+--- a/Source/WebKit/UIProcess/API/wpe/APIViewClient.h
++++ b/Source/WebKit/UIProcess/API/wpe/APIViewClient.h
+@@ -27,6 +27,7 @@
+ 
+ #include "UserMessage.h"
+ #include <wtf/CompletionHandler.h>
++#include <cairo.h>
+ 
+ typedef struct OpaqueJSContext* JSGlobalContextRef;
+ 
+@@ -52,6 +53,7 @@ public:
+     virtual void willStartLoad(WKWPE::View&) { }
+     virtual void didChangePageID(WKWPE::View&) { }
+     virtual void didReceiveUserMessage(WKWPE::View&, WebKit::UserMessage&&, CompletionHandler<void(WebKit::UserMessage&&)>&& completionHandler) { completionHandler(WebKit::UserMessage()); }
++    virtual cairo_surface_t* takeSnapshot() { return nullptr; }
+ };
+ 
+ } // namespace API
+diff --git a/Source/WebKit/UIProcess/API/wpe/PageClientImpl.cpp b/Source/WebKit/UIProcess/API/wpe/PageClientImpl.cpp
+index c8b41f407774d2337e99cc7f9151ec65be3fc532..8583acd39ee4b58ea85d4b656e83c92235e7a853 100644
+--- a/Source/WebKit/UIProcess/API/wpe/PageClientImpl.cpp
++++ b/Source/WebKit/UIProcess/API/wpe/PageClientImpl.cpp
+@@ -194,7 +194,7 @@ WebCore::IntPoint PageClientImpl::accessibilityScreenToRootView(const WebCore::I
+ 
+ WebCore::IntRect PageClientImpl::rootViewToAccessibilityScreen(const WebCore::IntRect& rect)
+ {
+-    return rootViewToScreen(rect);    
++    return rootViewToScreen(rect);
+ }
+ 
+ void PageClientImpl::doneWithKeyEvent(const NativeWebKeyboardEvent&, bool)
+@@ -444,4 +444,18 @@ void PageClientImpl::selectionDidChange()
+     m_view.selectionDidChange();
+ }
+ 
++RefPtr<ViewSnapshot> PageClientImpl::takeViewSnapshot(Optional<WebCore::IntRect>&&)
++{
++    cairo_surface_t* surface = m_view.client().takeSnapshot();
++    if (!surface)
++        return nullptr;
++
++    return ViewSnapshot::create(adoptRef(surface));
++}
++
++void PageClientImpl::setFrameDisplayedCallback(WTF::Function<void()>&& callback)
++{
++    m_view.setFrameDisplayedCallback(WTFMove(callback));
++}
++
+ } // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/API/wpe/PageClientImpl.h b/Source/WebKit/UIProcess/API/wpe/PageClientImpl.h
+index 372b30fd09c9bcfc3d47762ebff11788fac5f3cc..4b383da7b9fe599ff2fb3b286112be1f56483363 100644
+--- a/Source/WebKit/UIProcess/API/wpe/PageClientImpl.h
++++ b/Source/WebKit/UIProcess/API/wpe/PageClientImpl.h
+@@ -165,6 +165,8 @@ private:
+     void didChangeWebPageID() const override;
+ 
+     void selectionDidChange() override;
++    RefPtr<ViewSnapshot> takeViewSnapshot(Optional<WebCore::IntRect>&&) override;
++    void setFrameDisplayedCallback(WTF::Function<void()>&&) override;
+ 
+     WKWPE::View& m_view;
+ };
+diff --git a/Source/WebKit/UIProcess/API/wpe/WPEView.cpp b/Source/WebKit/UIProcess/API/wpe/WPEView.cpp
+index cc81eec6bf72a2075c8611f8076e92b88fe6d787..78c3c99758cc4f999bcb382bbbeafd5e5fcc1a80 100644
+--- a/Source/WebKit/UIProcess/API/wpe/WPEView.cpp
++++ b/Source/WebKit/UIProcess/API/wpe/WPEView.cpp
+@@ -213,6 +213,8 @@ void View::setClient(std::unique_ptr<API::ViewClient>&& client)
+ 
+ void View::frameDisplayed()
+ {
++    if (m_frameDisplayedCallback)
++        m_frameDisplayedCallback();
+     m_client->frameDisplayed(*this);
+ }
+ 
+@@ -303,6 +305,11 @@ void View::synthesizeCompositionKeyPress(const String& text, Optional<Vector<Web
+     page().handleKeyboardEvent(WebKit::NativeWebKeyboardEvent(&event, text, NativeWebKeyboardEvent::HandledByInputMethod::Yes, WTFMove(underlines), WTFMove(selectionRange)));
+ }
+ 
++void View::setFrameDisplayedCallback(WTF::Function<void()>&& callback)
++{
++    m_frameDisplayedCallback = WTFMove(callback);
++}
++
+ void View::close()
+ {
+     m_pageProxy->close();
+diff --git a/Source/WebKit/UIProcess/API/wpe/WPEView.h b/Source/WebKit/UIProcess/API/wpe/WPEView.h
+index 8f4a8f3f436272f41963863c56f0d50fd760dad3..c973238ef3b7700331453602597fc23004f5e525 100644
+--- a/Source/WebKit/UIProcess/API/wpe/WPEView.h
++++ b/Source/WebKit/UIProcess/API/wpe/WPEView.h
+@@ -96,6 +96,8 @@ public:
+ 
+     OptionSet<WebCore::ActivityState::Flag> viewState() const { return m_viewStateFlags; }
+ 
++    void setFrameDisplayedCallback(WTF::Function<void()>&&);
++
+     void close();
+ 
+ #if ENABLE(FULLSCREEN_API)
+@@ -123,6 +125,7 @@ private:
+     RefPtr<WebKit::WebPageProxy> m_pageProxy;
+     WebCore::IntSize m_size;
+     OptionSet<WebCore::ActivityState::Flag> m_viewStateFlags;
++    WTF::Function<void()> m_frameDisplayedCallback;
+ 
+     struct wpe_view_backend* m_backend;
+ 
 diff --git a/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h b/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h
 new file mode 100644
 index 0000000000000000000000000000000000000000..6dffa4fa10a9a64f778a0a77c760c2e76b2f9968
@@ -7622,6 +7782,98 @@ index 3ad6e613657557045ec07ce4bcdb3eea0d1e7dae..a53a4aa01bd692ba34bacb9f663c335c
 +    auto completionHandler = std::exchange(dialog->completionHandler, nullptr);
 +    completionHandler(true, value);
  }
+diff --git a/Source/WebKit/UIProcess/API/wpe/WebKitWebViewBackend.cpp b/Source/WebKit/UIProcess/API/wpe/WebKitWebViewBackend.cpp
+index e0fc205b39095cf8aae201a1dcca520461c60de4..872186ad99a7b82f0c61705ff6c5ae4453e5e1d4 100644
+--- a/Source/WebKit/UIProcess/API/wpe/WebKitWebViewBackend.cpp
++++ b/Source/WebKit/UIProcess/API/wpe/WebKitWebViewBackend.cpp
+@@ -54,6 +54,7 @@ struct _WebKitWebViewBackend {
+     struct wpe_view_backend* backend;
+     GDestroyNotify notifyCallback;
+     gpointer notifyCallbackData;
++    take_screenshot_callback screenshotCallback;
+     int referenceCount { 1 };
+ };
+ 
+@@ -116,6 +117,19 @@ struct wpe_view_backend* webkit_web_view_backend_get_wpe_backend(WebKitWebViewBa
+     return viewBackend->backend;
+ }
+ 
++void webkit_web_view_backend_set_screenshot_callback(WebKitWebViewBackend *view_backend, take_screenshot_callback callback)
++{
++    view_backend->screenshotCallback = callback;
++}
++
++cairo_surface_t* webkitWebViewBackendTakeScreenshot(WebKitWebViewBackend* view_backend)
++{
++    if (!view_backend->screenshotCallback)
++        return nullptr;
++
++    return view_backend->screenshotCallback(view_backend->notifyCallbackData);
++}
++
+ namespace WTF {
+ 
+ template <> WebKitWebViewBackend* refGPtr(WebKitWebViewBackend* ptr)
+diff --git a/Source/WebKit/UIProcess/API/wpe/WebKitWebViewBackend.h b/Source/WebKit/UIProcess/API/wpe/WebKitWebViewBackend.h
+index 6663964d5abac79e123d90e0351590884c66aa72..13ba5e7c3895c6e4efda95f1f90b9baea1c1bf30 100644
+--- a/Source/WebKit/UIProcess/API/wpe/WebKitWebViewBackend.h
++++ b/Source/WebKit/UIProcess/API/wpe/WebKitWebViewBackend.h
+@@ -27,6 +27,7 @@
+ #include <glib-object.h>
+ #include <wpe/WebKitDefines.h>
+ #include <wpe/wpe.h>
++#include <cairo.h>
+ 
+ G_BEGIN_DECLS
+ 
+@@ -44,6 +45,12 @@ webkit_web_view_backend_new             (struct wpe_view_backend *backend,
+ WEBKIT_API struct wpe_view_backend *
+ webkit_web_view_backend_get_wpe_backend (WebKitWebViewBackend    *view_backend);
+ 
++typedef cairo_surface_t* (*take_screenshot_callback)(gpointer              user_data);
++
++WEBKIT_API void
++webkit_web_view_backend_set_screenshot_callback   (WebKitWebViewBackend      *view_backend,
++                                                   take_screenshot_callback  callback);
++
+ G_END_DECLS
+ 
+ #endif /* WebKitWebViewBackend_h */
+diff --git a/Source/WebKit/UIProcess/API/wpe/WebKitWebViewBackendPrivate.h b/Source/WebKit/UIProcess/API/wpe/WebKitWebViewBackendPrivate.h
+index e4b92ace1531090ae38a7aec3d3d4febf19aee84..43690f9ef4969a39084501613bfc00a77fd5df49 100644
+--- a/Source/WebKit/UIProcess/API/wpe/WebKitWebViewBackendPrivate.h
++++ b/Source/WebKit/UIProcess/API/wpe/WebKitWebViewBackendPrivate.h
+@@ -31,3 +31,5 @@ template <> void derefGPtr(WebKitWebViewBackend* ptr);
+ }
+ 
+ void webkitWebViewBackendUnref(WebKitWebViewBackend*);
++
++cairo_surface_t* webkitWebViewBackendTakeScreenshot(WebKitWebViewBackend*);
+diff --git a/Source/WebKit/UIProcess/API/wpe/WebKitWebViewClient.h b/Source/WebKit/UIProcess/API/wpe/WebKitWebViewClient.h
+index 36381ca333ad516abd2496729abf5c3f4da1f056..d35721231b3ee8c86604fab06d0569f80503a0bc 100644
+--- a/Source/WebKit/UIProcess/API/wpe/WebKitWebViewClient.h
++++ b/Source/WebKit/UIProcess/API/wpe/WebKitWebViewClient.h
+@@ -54,6 +54,7 @@ private:
+     void willStartLoad(WKWPE::View&) override;
+     void didChangePageID(WKWPE::View&) override;
+     void didReceiveUserMessage(WKWPE::View&, WebKit::UserMessage&&, CompletionHandler<void(WebKit::UserMessage&&)>&&) override;
++    virtual cairo_surface_t* takeSnapshot() override;
+ 
+     WebKitWebView* m_webView;
+ };
+diff --git a/Source/WebKit/UIProcess/API/wpe/docs/wpe-1.0-sections.txt b/Source/WebKit/UIProcess/API/wpe/docs/wpe-1.0-sections.txt
+index 0c2dc6515c66b79577a7d5807ca4a0fbc5d07539..ce35fc25855bef0fdb63ba45c89b6d98df83cb65 100644
+--- a/Source/WebKit/UIProcess/API/wpe/docs/wpe-1.0-sections.txt
++++ b/Source/WebKit/UIProcess/API/wpe/docs/wpe-1.0-sections.txt
+@@ -312,6 +312,8 @@ WEBKIT_TYPE_WEB_VIEW_BACKEND
+ WebKitWebViewBackend
+ webkit_web_view_backend_get_wpe_backend
+ webkit_web_view_backend_new
++take_screenshot_callback
++webkit_web_view_backend_set_screenshot_callback
+ 
+ <SUBSECTION Private>
+ webkit_web_view_backend_get_type
 diff --git a/Source/WebKit/UIProcess/API/wpe/webkit.h b/Source/WebKit/UIProcess/API/wpe/webkit.h
 index 02e258253e47fbf6594c20f743d0faeac8a4eefe..e051fdf396dc65717def6b36168b5538e3cb2f4d 100644
 --- a/Source/WebKit/UIProcess/API/wpe/webkit.h
@@ -8426,10 +8678,10 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
      // The timeout we use when waiting for a DidUpdateGeometry message.
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..b982b01789b697f3e7810b374705d95ccaf6a0ba
+index 0000000000000000000000000000000000000000..0eb406634eb326892168ffeeddafe440c00fe750
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,202 @@
+@@ -0,0 +1,226 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8461,8 +8713,13 @@ index 0000000000000000000000000000000000000000..b982b01789b697f3e7810b374705d95c
 +#include "PageClient.h"
 +#include "WebAutomationSession.h"
 +#include "WebPageProxy.h"
++#include <JavaScriptCore/InspectorFrontendDispatchers.h>
 +#include <JavaScriptCore/InspectorFrontendRouter.h>
 +
++#if PLATFORM(WPE)
++#include <WebCore/ImageBufferUtilitiesCairo.h>
++#include <wtf/text/Base64.h>
++#endif
 +#if PLATFORM(GTK)
 +#include <WebCore/ImageBufferUtilitiesCairo.h>
 +#include <gtk/gtk.h>
@@ -8500,6 +8757,14 @@ index 0000000000000000000000000000000000000000..b982b01789b697f3e7810b374705d95c
 +    if (m_enabled)
 +      return;
 +
++#if PLATFORM(WPE)
++    // TODO: make ImageBufferUtilitiesCairo produce jpeg on WPE.
++    if (format != "png") {
++        errorString = "Only png format is supported on WPE."_s;
++        return;
++    }
++#endif
++
 +    if (format == "jpeg") {
 +        m_format = ImageFormat::Jpeg;
 +    } else if (format == "png") {
@@ -8520,6 +8785,17 @@ index 0000000000000000000000000000000000000000..b982b01789b697f3e7810b374705d95c
 +    fprintf(stderr, "InspectorScreencastAgent::start %p\n", this);
 +#if PLATFORM(GTK)
 +    g_signal_connect_swapped(m_page.viewWidget(), "draw", reinterpret_cast<GCallback>(InspectorScreencastAgent::webViewDrawCallback), this);
++#elif PLATFORM(WPE)
++    bool takingScreenshot = false;
++    m_page.pageClient().setFrameDisplayedCallback([this, takingScreenshot]() mutable {
++        // HeadlessViewBackend::createSnapshot() updates the frame and results in recursive
++        // invocation of this callback.
++        if (takingScreenshot)
++            return;
++        takingScreenshot = true;
++        takeSnapshot();
++        takingScreenshot = false;
++    });
 +#else
 +    scheduleSnapshot();
 +#endif
@@ -8535,12 +8811,13 @@ index 0000000000000000000000000000000000000000..b982b01789b697f3e7810b374705d95c
 +    m_quality = WTF::nullopt;
 +#if PLATFORM(GTK)
 +    g_signal_handlers_disconnect_by_func(m_page.viewWidget(), reinterpret_cast<gpointer>(InspectorScreencastAgent::webViewDrawCallback), this);
++#elif PLATFORM(WPE)
++    m_page.pageClient().setFrameDisplayedCallback(nullptr);
 +#endif
 +}
 +
 +void InspectorScreencastAgent::frameAck(Inspector::ErrorString& errorString)
 +{
-+    fprintf(stderr, "InspectorScreencastAgent::frameAck m_inflightFrames=%d\n", m_inflightFrames);
 +    if (!m_inflightFrames) {
 +        errorString = "No inflight frames to ack"_s;
 +        return;
@@ -8557,21 +8834,16 @@ index 0000000000000000000000000000000000000000..b982b01789b697f3e7810b374705d95c
 +    if (!m_enabled)
 +        return;
 +
-+    fprintf(stderr, "InspectorScreencastAgent::scheduleSnapshot m_inflightFrames=%d\n", m_inflightFrames);
-+
 +    m_page.callAfterNextPresentationUpdate([agent = makeWeakPtr(this)](CallbackBase::Error error) mutable {
-+        fprintf(stderr, "callAfterNextPresentationUpdate 1 error= %d\n", error);
 +        if (!agent)
 +            return;
 +
-+        fprintf(stderr, "callAfterNextPresentationUpdate 2 error= %d\n", error);
 +        if (error == CallbackBase::Error::None) {
 +            agent->takeSnapshot();
 +        } else {
 +            fprintf(stderr, "callAfterNextPresentationUpdate error= %d\n", error);
 +        }
 +        agent->scheduleSnapshot();
-+        fprintf(stderr, "callAfterNextPresentationUpdate 3 error= %d\n", error);
 +    });
 +}
 +
@@ -8584,6 +8856,11 @@ index 0000000000000000000000000000000000000000..b982b01789b697f3e7810b374705d95c
 +        return;
 +
 +    String snapshot = platformTakeSnapshot();
++    if (snapshot.isEmpty()) {
++        fprintf(stderr, "   skipping empty screenshot\n");
++        return;
++    }
++
 +    ++m_inflightFrames;
 +    m_frontendDispatcher->frame(snapshot);
 +}
@@ -8595,14 +8872,13 @@ index 0000000000000000000000000000000000000000..b982b01789b697f3e7810b374705d95c
 +    // Let default handler draw on the screen.
 +    return FALSE;
 +}
-+
++#endif
++#if PLATFORM(GTK) || PLATFORM(WPE)
 +String InspectorScreencastAgent::platformTakeSnapshot()
 +{
 +    auto viewSnapshot = m_page.takeViewSnapshot(WTF::nullopt);
-+    if (!viewSnapshot) {
-+        fprintf(stderr, "   takeViewSnapshot failed\n");
++    if (!viewSnapshot)
 +        return String();
-+    }
 +
 +    String format;
 +    switch (m_format) {
@@ -8634,10 +8910,10 @@ index 0000000000000000000000000000000000000000..b982b01789b697f3e7810b374705d95c
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..b5eeeca0f6b8c5c31e3786c0a675e32285a808c4
+index 0000000000000000000000000000000000000000..9848f2fab12656879e9767e37bfa3eebfe04de6c
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
-@@ -0,0 +1,77 @@
+@@ -0,0 +1,79 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8667,6 +8943,7 @@ index 0000000000000000000000000000000000000000..b5eeeca0f6b8c5c31e3786c0a675e322
 +
 +#include <JavaScriptCore/InspectorAgentBase.h>
 +#include <JavaScriptCore/InspectorBackendDispatchers.h>
++#include <JavaScriptCore/InspectorFrontendDispatchers.h>
 +
 +#include <wtf/Forward.h>
 +#include <wtf/Noncopyable.h>
@@ -8676,6 +8953,7 @@ index 0000000000000000000000000000000000000000..b5eeeca0f6b8c5c31e3786c0a675e322
 +class BackendDispatcher;
 +class FrontendChannel;
 +class FrontendRouter;
++class ScreencastFrontendDispatcher;
 +}
 +
 +namespace WebKit {
@@ -10392,21 +10670,26 @@ index 7a14cfba15c103a2d4fe263fa49d25af3c396ec2..3ee0e154349661632799057c71f1d1f1
      BOOL result = ::CreateProcess(0, commandLine.data(), 0, 0, true, 0, 0, 0, &startupInfo, &processInformation);
  
 diff --git a/Source/WebKit/UIProcess/PageClient.h b/Source/WebKit/UIProcess/PageClient.h
-index 57678852e25e443cb4f066efed611ef1f7ed6c26..a51d79c4284a4f72252854c0a183f02d19b61119 100644
+index 57678852e25e443cb4f066efed611ef1f7ed6c26..af620243bad78ce0b981d8fc7aef2ed1f5f52d50 100644
 --- a/Source/WebKit/UIProcess/PageClient.h
 +++ b/Source/WebKit/UIProcess/PageClient.h
-@@ -280,6 +280,11 @@ public:
+@@ -280,7 +280,15 @@ public:
      virtual void selectionDidChange() = 0;
  #endif
  
+-#if PLATFORM(COCOA) || PLATFORM(GTK)
 +// Paywright begin
 +#if PLATFORM(COCOA)
 +    virtual RetainPtr<CGImageRef> takeSnapshotForAutomation() = 0;
 +#endif
++#if PLATFORM(WPE)
++    virtual void setFrameDisplayedCallback(WTF::Function<void()>&&) = 0;
++#endif
 +// Paywright end
- #if PLATFORM(COCOA) || PLATFORM(GTK)
++#if PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)
      virtual RefPtr<ViewSnapshot> takeViewSnapshot(Optional<WebCore::IntRect>&&) = 0;
  #endif
+ 
 diff --git a/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..e842999cf436a92f5279642a4edccd10ede7b3e2
@@ -10705,6 +10988,46 @@ index 0000000000000000000000000000000000000000..b1307da8b9ee02d63ef98d276473d65a
 +} // namespace WebKit
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
+diff --git a/Source/WebKit/UIProcess/ViewSnapshotStore.h b/Source/WebKit/UIProcess/ViewSnapshotStore.h
+index ab147be4a9a7aa38978f32c29fe1dc4c31f14b4c..aa377b5682db0bf9972ded61b8c117b7514ff7b6 100644
+--- a/Source/WebKit/UIProcess/ViewSnapshotStore.h
++++ b/Source/WebKit/UIProcess/ViewSnapshotStore.h
+@@ -35,7 +35,7 @@
+ #include <WebCore/IOSurface.h>
+ #endif
+ 
+-#if PLATFORM(GTK)
++#if PLATFORM(GTK) || PLATFORM(WPE)
+ #include <WebCore/RefPtrCairo.h>
+ #endif
+ 
+@@ -49,7 +49,7 @@ public:
+ #if HAVE(IOSURFACE)
+     static Ref<ViewSnapshot> create(std::unique_ptr<WebCore::IOSurface>);
+ #endif
+-#if PLATFORM(GTK)
++#if PLATFORM(GTK) || PLATFORM(WPE)
+     static Ref<ViewSnapshot> create(RefPtr<cairo_surface_t>&&);
+ #endif
+ 
+@@ -86,7 +86,7 @@ public:
+     WebCore::IOSurface::SurfaceState setVolatile(bool);
+ #endif
+ 
+-#if PLATFORM(GTK)
++#if PLATFORM(GTK) || PLATFORM(WPE)
+     cairo_surface_t* surface() const { return m_surface.get(); }
+ 
+     size_t imageSizeInBytes() const;
+@@ -100,7 +100,7 @@ private:
+     std::unique_ptr<WebCore::IOSurface> m_surface;
+ #endif
+ 
+-#if PLATFORM(GTK)
++#if PLATFORM(GTK) || PLATFORM(WPE)
+     explicit ViewSnapshot(RefPtr<cairo_surface_t>&&);
+ 
+     RefPtr<cairo_surface_t> m_surface;
 diff --git a/Source/WebKit/UIProcess/WebAuthentication/Cocoa/WebAuthenticationPanelClient.h b/Source/WebKit/UIProcess/WebAuthentication/Cocoa/WebAuthenticationPanelClient.h
 index 8270164b6c98497e848c12026a0d0bd6dafbcfe3..976ca69d0af81c45bfaf86275373949db7d6bc4e 100644
 --- a/Source/WebKit/UIProcess/WebAuthentication/Cocoa/WebAuthenticationPanelClient.h
@@ -11354,7 +11677,7 @@ index 0000000000000000000000000000000000000000..20311d530090b0229010957a96fc60f4
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
-index eebfba4fbe95eb7c6457179e4656c62fa76ec9fd..848773b6cacbfa57fef6e5137fcea8fd9a811543 100644
+index eebfba4fbe95eb7c6457179e4656c62fa76ec9fd..5d056888b187013057a73a4f94eab74566f1e0c9 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
 +++ b/Source/WebKit/UIProcess/WebPageProxy.cpp
 @@ -946,6 +946,7 @@ void WebPageProxy::finishAttachingToWebProcess(ProcessLaunchReason reason)
@@ -11669,8 +11992,17 @@ index eebfba4fbe95eb7c6457179e4656c62fa76ec9fd..848773b6cacbfa57fef6e5137fcea8fd
      // FIXME: Once iOS migrates to the new WKUIDelegate SPI, clean this up
      // and make it one UIClient call that calls the completionHandler with false
      // if there is no delegate instead of returning the completionHandler
+@@ -8609,7 +8717,7 @@ void WebPageProxy::setEditableElementIsFocused(bool editableElementIsFocused)
+ 
+ #endif // PLATFORM(MAC)
+ 
+-#if PLATFORM(COCOA) || PLATFORM(GTK)
++#if PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)
+ RefPtr<ViewSnapshot> WebPageProxy::takeViewSnapshot(Optional<WebCore::IntRect>&& clipRect)
+ {
+     return pageClient().takeViewSnapshot(WTFMove(clipRect));
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.h b/Source/WebKit/UIProcess/WebPageProxy.h
-index acf3493477db2a77e9208b27937da9e5301e33f6..a6ae6ca51d66709ac6ce9dd2b7352908ae16cbf0 100644
+index acf3493477db2a77e9208b27937da9e5301e33f6..e810892e3adc4a97c20b6e29e7d7b5f66c481c56 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.h
 +++ b/Source/WebKit/UIProcess/WebPageProxy.h
 @@ -37,6 +37,7 @@
@@ -11718,16 +12050,16 @@ index acf3493477db2a77e9208b27937da9e5301e33f6..a6ae6ca51d66709ac6ce9dd2b7352908
      void pluginScaleFactorDidChange(double);
      void pluginZoomFactorDidChange(double);
  
-@@ -1399,6 +1409,8 @@ public:
+@@ -1397,7 +1407,7 @@ public:
+     void recordNavigationSnapshot(WebBackForwardListItem&);
+     void requestFocusedElementInformation(Function<void(const FocusedElementInformation&, CallbackBase::Error)>&&);
  
- #if PLATFORM(COCOA) || PLATFORM(GTK)
+-#if PLATFORM(COCOA) || PLATFORM(GTK)
++#if PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)
      RefPtr<ViewSnapshot> takeViewSnapshot(Optional<WebCore::IntRect>&&);
-+#elif PLATFORM(WPE)
-+    RefPtr<ViewSnapshot> takeViewSnapshot(Optional<WebCore::IntRect>&&) { return nullptr; }
  #endif
  
- #if ENABLE(WEB_CRYPTO)
-@@ -2374,6 +2386,7 @@ private:
+@@ -2374,6 +2384,7 @@ private:
      String m_overrideContentSecurityPolicy;
  
      RefPtr<WebInspectorProxy> m_inspector;
@@ -11735,7 +12067,7 @@ index acf3493477db2a77e9208b27937da9e5301e33f6..a6ae6ca51d66709ac6ce9dd2b7352908
  
  #if ENABLE(FULLSCREEN_API)
      std::unique_ptr<WebFullScreenManagerProxy> m_fullScreenManager;
-@@ -2804,6 +2817,9 @@ private:
+@@ -2804,6 +2815,9 @@ private:
          RefPtr<API::Object> messageBody;
      };
      Vector<InjectedBundleMessage> m_pendingInjectedBundleMessages;
@@ -13736,30 +14068,17 @@ index 1324229bf6dd3a90324aa55dff533186f97b52e8..b459bf67142874851e3f6e0caf0a229b
  {
      if (m_page.activeOpenPanelResultListener())
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
-index 28189c82da62d9e0d9f516f1a69d4a8614dbd1d6..0664c282e8514abe6f8f213c3a496a4a6a9cdcda 100644
+index 28189c82da62d9e0d9f516f1a69d4a8614dbd1d6..90ecbb9db84c43482d7f5e7c6572577cb7ebc9c2 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
-@@ -244,12 +244,20 @@ void DrawingAreaCoordinatedGraphics::updatePreferences(const WebPreferencesStore
+@@ -244,6 +244,7 @@ void DrawingAreaCoordinatedGraphics::updatePreferences(const WebPreferencesStore
          settings.setAcceleratedCompositingEnabled(false);
      }
  #endif
 +
-+#if USE(LIBWPE)
-+    settings.setAcceleratedCompositingEnabled(false);
-+    settings.setForceCompositingMode(false);
-+    settings.setAcceleratedCompositingForFixedPositionEnabled(false);
-+    m_alwaysUseCompositing = false;
-+#else
      settings.setForceCompositingMode(store.getBoolValueForKey(WebPreferencesKey::forceCompositingModeKey()));
      // Fixed position elements need to be composited and create stacking contexts
      // in order to be scrolled by the ScrollingCoordinator.
-     settings.setAcceleratedCompositingForFixedPositionEnabled(settings.acceleratedCompositingEnabled());
- 
-     m_alwaysUseCompositing = settings.acceleratedCompositingEnabled() && settings.forceCompositingMode();
-+#endif
- 
-     // If async scrolling is disabled, we have to force-disable async frame and overflow scrolling
-     // to keep the non-async scrolling on those elements working.
 diff --git a/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp b/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp
 index b2d54a627b94583bda3518c4e7c3364481b605a4..d407e32b6a7b8b27925c49391e86d42c9b3dfa8b 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp
@@ -14333,19 +14652,18 @@ index 2ff45b938cffabe95fe17137393b8b6c506d4993..42676b3466da8db3ccafe9f8c1049b90
      return 0;
  }
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index a8cccb6c1d567823fe8e6503f1a137856b0a9975..00b39f96b6b48dc0bd3df54659850dfc233ea0be 100644
+index a8cccb6c1d567823fe8e6503f1a137856b0a9975..a98ebffa8bb965fda8b6df06ce8de1a4ecf8e3dc 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
-@@ -25,7 +25,7 @@
- 
+@@ -26,6 +26,7 @@
  #include "cmakeconfig.h"
  
--#include "HeadlessViewBackend.h"
+ #include "HeadlessViewBackend.h"
 +#include "NullViewBackend.h"
  #include "WindowViewBackend.h"
  #if ENABLE_WEB_AUDIO || ENABLE_VIDEO
  #include <gst/gst.h>
-@@ -43,6 +43,9 @@ static gboolean headlessMode;
+@@ -43,6 +44,9 @@ static gboolean headlessMode;
  static gboolean privateMode;
  static gboolean automationMode;
  static gboolean ignoreTLSErrors;
@@ -14355,7 +14673,7 @@ index a8cccb6c1d567823fe8e6503f1a137856b0a9975..00b39f96b6b48dc0bd3df54659850dfc
  static const char* contentFilter;
  static const char* cookiesFile;
  static const char* cookiesPolicy;
-@@ -64,6 +67,9 @@ static const GOptionEntry commandLineOptions[] =
+@@ -64,6 +68,9 @@ static const GOptionEntry commandLineOptions[] =
      { "content-filter", 0, 0, G_OPTION_ARG_FILENAME, &contentFilter, "JSON with content filtering rules", "FILE" },
      { "bg-color", 0, 0, G_OPTION_ARG_STRING, &bgColor, "Window background color. Default: white", "COLOR" },
      { "version", 'v', 0, G_OPTION_ARG_NONE, &printVersion, "Print the WPE version", nullptr },
@@ -14365,16 +14683,7 @@ index a8cccb6c1d567823fe8e6503f1a137856b0a9975..00b39f96b6b48dc0bd3df54659850dfc
      { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &uriArguments, nullptr, "[URL]" },
      { nullptr, 0, 0, G_OPTION_ARG_NONE, nullptr, nullptr, nullptr }
  };
-@@ -132,7 +138,7 @@ static gboolean decidePermissionRequest(WebKitWebView *, WebKitPermissionRequest
- static std::unique_ptr<WPEToolingBackends::ViewBackend> createViewBackend(uint32_t width, uint32_t height)
- {
-     if (headlessMode)
--        return std::make_unique<WPEToolingBackends::HeadlessViewBackend>(width, height);
-+        return std::make_unique<WPEToolingBackends::NullViewBackend>();
-     return std::make_unique<WPEToolingBackends::WindowViewBackend>(width, height);
- }
- 
-@@ -148,13 +154,34 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
+@@ -148,13 +155,34 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
      g_main_loop_quit(data->mainLoop);
  }
  
@@ -14410,9 +14719,16 @@ index a8cccb6c1d567823fe8e6503f1a137856b0a9975..00b39f96b6b48dc0bd3df54659850dfc
  {
      auto backend = createViewBackend(1280, 720);
      struct wpe_view_backend* wpeBackend = backend->backend();
-@@ -166,16 +193,50 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
+@@ -165,17 +193,57 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
+         [](gpointer data) {
              delete static_cast<WPEToolingBackends::ViewBackend*>(data);
          }, backend.release());
++    if (headlessMode) {
++        webkit_web_view_backend_set_screenshot_callback(viewBackend,
++            [](gpointer data) {
++                return static_cast<WPEToolingBackends::HeadlessViewBackend*>(data)->createSnapshot();
++            });
++    }
  
 -    auto* newWebView = webkit_web_view_new_with_related_view(viewBackend, webView);
 -    webkit_web_view_set_settings(newWebView, webkit_web_view_get_settings(webView));
@@ -14463,7 +14779,7 @@ index a8cccb6c1d567823fe8e6503f1a137856b0a9975..00b39f96b6b48dc0bd3df54659850dfc
  int main(int argc, char *argv[])
  {
  #if ENABLE_DEVELOPER_MODE
-@@ -210,6 +271,16 @@ int main(int argc, char *argv[])
+@@ -210,6 +278,16 @@ int main(int argc, char *argv[])
      }
  
      auto* loop = g_main_loop_new(nullptr, FALSE);
@@ -14480,7 +14796,7 @@ index a8cccb6c1d567823fe8e6503f1a137856b0a9975..00b39f96b6b48dc0bd3df54659850dfc
  
      auto backend = createViewBackend(1280, 720);
      struct wpe_view_backend* wpeBackend = backend->backend();
-@@ -219,7 +290,19 @@ int main(int argc, char *argv[])
+@@ -219,7 +297,19 @@ int main(int argc, char *argv[])
          return 1;
      }
  
@@ -14501,7 +14817,20 @@ index a8cccb6c1d567823fe8e6503f1a137856b0a9975..00b39f96b6b48dc0bd3df54659850dfc
  
      if (cookiesPolicy) {
          auto* cookieManager = webkit_web_context_get_cookie_manager(webContext);
-@@ -300,8 +383,6 @@ int main(int argc, char *argv[])
+@@ -283,6 +373,12 @@ int main(int argc, char *argv[])
+     auto* viewBackend = webkit_web_view_backend_new(wpeBackend, [](gpointer data) {
+         delete static_cast<WPEToolingBackends::ViewBackend*>(data);
+     }, backend.release());
++    if (headlessMode) {
++        webkit_web_view_backend_set_screenshot_callback(viewBackend,
++            [](gpointer data) {
++                return static_cast<WPEToolingBackends::HeadlessViewBackend*>(data)->createSnapshot();
++            });
++    }
+ 
+     auto* webView = WEBKIT_WEB_VIEW(g_object_new(WEBKIT_TYPE_WEB_VIEW,
+         "backend", viewBackend,
+@@ -300,8 +396,6 @@ int main(int argc, char *argv[])
          backendPtr->setAccessibleChild(ATK_OBJECT(accessible));
  #endif
  
@@ -14510,7 +14839,7 @@ index a8cccb6c1d567823fe8e6503f1a137856b0a9975..00b39f96b6b48dc0bd3df54659850dfc
      webkit_web_context_set_automation_allowed(webContext, automationMode);
      g_signal_connect(webContext, "automation-started", G_CALLBACK(automationStartedCallback), webView);
      g_signal_connect(webView, "permission-request", G_CALLBACK(decidePermissionRequest), nullptr);
-@@ -326,7 +407,7 @@ int main(int argc, char *argv[])
+@@ -326,7 +420,7 @@ int main(int argc, char *argv[])
          g_object_unref(file);
          webkit_web_view_load_uri(webView, url);
          g_free(url);
@@ -14519,7 +14848,7 @@ index a8cccb6c1d567823fe8e6503f1a137856b0a9975..00b39f96b6b48dc0bd3df54659850dfc
          webkit_web_view_load_uri(webView, "about:blank");
      else
          webkit_web_view_load_uri(webView, "https://wpewebkit.org");
-@@ -336,8 +417,7 @@ int main(int argc, char *argv[])
+@@ -336,8 +430,7 @@ int main(int argc, char *argv[])
      g_hash_table_destroy(openViews);
  
  
