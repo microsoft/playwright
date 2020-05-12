@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 const utils = require('./utils');
 const {FFOX, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
 
@@ -425,6 +426,7 @@ describe('Frame.waitForSelector', function() {
 
 describe('Frame.waitForSelector xpath', function() {
   const addElement = tag => document.body.appendChild(document.createElement(tag));
+
   it('should support some fancy xpath', async({page, server}) => {
     await page.setContent(`<p>red herring</p><p>hello  world  </p>`);
     const waitForXPath = page.waitForSelector('//p[normalize-space(.)="hello world"]');
