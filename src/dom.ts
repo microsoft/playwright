@@ -27,7 +27,7 @@ import { Page } from './page';
 import { selectors } from './selectors';
 import * as types from './types';
 import { NotConnectedError, TimeoutError } from './errors';
-import { Log, logError, inputLog } from './logger';
+import { logError, inputLog } from './logger';
 
 export type PointerActionOptions = {
   modifiers?: input.Modifier[];
