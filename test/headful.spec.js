@@ -114,4 +114,22 @@ describe('Headful', function() {
     }
     await browser.close();
   });
+  it.fail(WEBKIT)('should not override viewport size when passed null', async function({browserType, defaultBrowserOptions, server}) {
+    // Our WebKit embedder does not respect window features.
+    const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
+    const context = await browser.newContext({ viewport: null });
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.evaluate(() => {
+        const win = window.open(window.location.href, 'Title', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=780,height=200,top=0,left=0');
+        win.resizeTo(500, 450);
+      }),
+    ]);
+    await popup.waitForLoadState();
+    const size = await popup.evaluate(() => ({ width: window.outerWidth, height: window.outerHeight }));
+    await context.close();
+    expect(size).toEqual({width: 500, height: 450});
+  });
 });

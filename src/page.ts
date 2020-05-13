@@ -120,15 +120,8 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
     this._disconnectedCallback = () => {};
     this._disconnectedPromise = new Promise(f => this._disconnectedCallback = f);
     this._browserContext = browserContext;
-    let viewportSize: types.Size | null = null;
-    if (browserContext._options.viewport) {
-      viewportSize = {
-        width: browserContext._options.viewport.width,
-        height: browserContext._options.viewport.height,
-      };
-    }
     this._state = {
-      viewportSize,
+      viewportSize: browserContext._options.viewport ? { ...browserContext._options.viewport } : null,
       mediaType: null,
       colorScheme: null,
       extraHTTPHeaders: null,
