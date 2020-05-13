@@ -14228,7 +14228,7 @@ index 1570d65effb5d601ee3c44a2a7461436f4691c2c..65e62adad0c3684e5cec2f6bc8e7f528
  
  #endif
 diff --git a/Tools/MiniBrowser/gtk/main.c b/Tools/MiniBrowser/gtk/main.c
-index 2ff45b938cffabe95fe17137393b8b6c506d4993..42676b3466da8db3ccafe9f8c1049b908b349c21 100644
+index 2ff45b938cffabe95fe17137393b8b6c506d4993..bd28310341f4f47612dbbea350e83a6d182953c3 100644
 --- a/Tools/MiniBrowser/gtk/main.c
 +++ b/Tools/MiniBrowser/gtk/main.c
 @@ -54,6 +54,10 @@ static const char *cookiesFile;
@@ -14322,7 +14322,18 @@ index 2ff45b938cffabe95fe17137393b8b6c506d4993..42676b3466da8db3ccafe9f8c1049b90
      g_object_unref(manager);
  
      if (cookiesPolicy) {
-@@ -657,8 +713,7 @@ int main(int argc, char *argv[])
+@@ -633,9 +689,7 @@ int main(int argc, char *argv[])
+             WebKitWebView *webView = createBrowserTab(mainWindow, webkitSettings, userContentManager);
+             if (!i)
+                 firstTab = GTK_WIDGET(webView);
+-            gchar *url = argumentToURL(uriArguments[i]);
+-            webkit_web_view_load_uri(webView, url);
+-            g_free(url);
++            webkit_web_view_load_uri(webView, uriArguments[i]);
+         }
+     } else {
+         WebKitWebView *webView = createBrowserTab(mainWindow, webkitSettings, userContentManager);
+@@ -657,8 +711,7 @@ int main(int argc, char *argv[])
  
      browser_main();
  
@@ -14333,7 +14344,7 @@ index 2ff45b938cffabe95fe17137393b8b6c506d4993..42676b3466da8db3ccafe9f8c1049b90
      return 0;
  }
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index a8cccb6c1d567823fe8e6503f1a137856b0a9975..00b39f96b6b48dc0bd3df54659850dfc233ea0be 100644
+index a8cccb6c1d567823fe8e6503f1a137856b0a9975..afded3b4c108dbc48397bcb7653795c432877057 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
 @@ -25,7 +25,7 @@
@@ -14510,16 +14521,27 @@ index a8cccb6c1d567823fe8e6503f1a137856b0a9975..00b39f96b6b48dc0bd3df54659850dfc
      webkit_web_context_set_automation_allowed(webContext, automationMode);
      g_signal_connect(webContext, "automation-started", G_CALLBACK(automationStartedCallback), webView);
      g_signal_connect(webView, "permission-request", G_CALLBACK(decidePermissionRequest), nullptr);
-@@ -326,7 +407,7 @@ int main(int argc, char *argv[])
-         g_object_unref(file);
-         webkit_web_view_load_uri(webView, url);
-         g_free(url);
+@@ -317,16 +398,9 @@ int main(int argc, char *argv[])
+         webkit_web_view_set_background_color(webView, &color);
+ 
+     if (uriArguments) {
+-        const char* uri = uriArguments[0];
+-        if (g_str_equal(uri, "about:gpu"))
+-            uri = "webkit://gpu";
+-
+-        GFile* file = g_file_new_for_commandline_arg(uri);
+-        char* url = g_file_get_uri(file);
+-        g_object_unref(file);
+-        webkit_web_view_load_uri(webView, url);
+-        g_free(url);
 -    } else if (automationMode)
++        // Playwright: avoid weird url transformation like http://trac.webkit.org/r240840
++        webkit_web_view_load_uri(webView, uriArguments[0]);
 +    } else if (automationMode || inspectorPipe)
          webkit_web_view_load_uri(webView, "about:blank");
      else
          webkit_web_view_load_uri(webView, "https://wpewebkit.org");
-@@ -336,8 +417,7 @@ int main(int argc, char *argv[])
+@@ -336,8 +410,7 @@ int main(int argc, char *argv[])
      g_hash_table_destroy(openViews);
  
  
