@@ -62,6 +62,7 @@ export class FFPage implements PageDelegate {
     this._page = new Page(this, browserContext);
     this._networkManager = new FFNetworkManager(session, this._page);
     this._page.on(Events.Page.FrameDetached, frame => this._removeContextsForFrame(frame));
+    // TODO: remove Page.willOpenNewWindowAsynchronously from the protocol.
     this._eventListeners = [
       helper.addEventListener(this._session, 'Page.eventFired', this._onEventFired.bind(this)),
       helper.addEventListener(this._session, 'Page.frameAttached', this._onFrameAttached.bind(this)),
@@ -73,7 +74,6 @@ export class FFPage implements PageDelegate {
       helper.addEventListener(this._session, 'Runtime.executionContextCreated', this._onExecutionContextCreated.bind(this)),
       helper.addEventListener(this._session, 'Runtime.executionContextDestroyed', this._onExecutionContextDestroyed.bind(this)),
       helper.addEventListener(this._session, 'Page.linkClicked', event => this._onLinkClicked(event.phase)),
-      helper.addEventListener(this._session, 'Page.willOpenNewWindowAsynchronously', this._onWillOpenNewWindowAsynchronously.bind(this)),
       helper.addEventListener(this._session, 'Page.uncaughtError', this._onUncaughtError.bind(this)),
       helper.addEventListener(this._session, 'Runtime.console', this._onConsole.bind(this)),
       helper.addEventListener(this._session, 'Page.dialogOpened', this._onDialogOpened.bind(this)),
@@ -134,11 +134,6 @@ export class FFPage implements PageDelegate {
       this._page._frameManager.frameWillPotentiallyRequestNavigation();
     else
       this._page._frameManager.frameDidPotentiallyRequestNavigation();
-  }
-
-  _onWillOpenNewWindowAsynchronously() {
-    for (const barrier of this._page._frameManager._signalBarriers)
-      barrier.expectPopup();
   }
 
   _onNavigationStarted(params: Protocol.Page.navigationStartedPayload) {

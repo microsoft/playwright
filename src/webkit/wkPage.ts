@@ -309,6 +309,7 @@ export class WKPage implements PageDelegate {
   }
 
   private _addSessionListeners() {
+    // TODO: remove Page.willRequestOpenWindow and Page.didRequestOpenWindow from the protocol.
     this._sessionListeners = [
       helper.addEventListener(this._session, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
       helper.addEventListener(this._session, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
@@ -318,8 +319,6 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
       helper.addEventListener(this._session, 'Page.loadEventFired', event => this._onLifecycleEvent(event.frameId, 'load')),
       helper.addEventListener(this._session, 'Page.domContentEventFired', event => this._onLifecycleEvent(event.frameId, 'domcontentloaded')),
-      helper.addEventListener(this._session, 'Page.willRequestOpenWindow', event => this._onWillRequestOpenWindow()),
-      helper.addEventListener(this._session, 'Page.didRequestOpenWindow', event => this._onDidRequestOpenWindow(event)),
       helper.addEventListener(this._session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
       helper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
       helper.addEventListener(this._session, 'Console.messageRepeatCountUpdated', event => this._onConsoleRepeatCountUpdated(event)),
@@ -361,18 +360,6 @@ export class WKPage implements PageDelegate {
 
   private _onLifecycleEvent(frameId: string, event: types.LifecycleEvent) {
     this._page._frameManager.frameLifecycleEvent(frameId, event);
-  }
-
-  private _onWillRequestOpenWindow() {
-    for (const barrier of this._page._frameManager._signalBarriers)
-      barrier.expectPopup();
-  }
-
-  private _onDidRequestOpenWindow(event: Protocol.Page.didRequestOpenWindowPayload) {
-    if (!event.opened) {
-      for (const barrier of this._page._frameManager._signalBarriers)
-        barrier.unexpectPopup();
-    }
   }
 
   private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {

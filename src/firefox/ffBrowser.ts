@@ -99,10 +99,6 @@ export class FFBrowser extends BrowserBase {
     const ffPage = new FFPage(session, context, opener);
     this._ffPages.set(targetId, ffPage);
 
-    if (opener && opener._initializedPage) {
-      for (const signalBarrier of opener._initializedPage._frameManager._signalBarriers)
-        signalBarrier.addPopup(ffPage.pageOrError());
-    }
     ffPage.pageOrError().then(async () => {
       const page = ffPage._page;
       context.emit(Events.BrowserContext.Page, page);
