@@ -574,7 +574,7 @@ await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 
 Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
 
-To disable authentication, pass `null`.
+> **NOTE** Browsers may cache credentials that resulted in successfull auth. That means passing different credentials after successfull authentication or passing `null` to disable authentication is unreliable. Instead, create a separate browser context that will not have previous credentials cached.
 
 #### browserContext.setOffline(offline)
 - `offline` <[boolean]> Whether to emulate network being offline for the browser context.
