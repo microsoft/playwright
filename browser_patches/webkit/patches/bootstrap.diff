@@ -148,7 +148,7 @@ index cd593a24af4fe24ba59577b73b26947765edcc32..1f7a04d72065dbd60761c1a72f3254f9
              return;
          }
 diff --git a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp b/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
-index 038cb646d31706905deff8935040d63c0afd00f9..2fca7b043f15a8cce3819cc827912fb719a345db 100644
+index 038cb646d31706905deff8935040d63c0afd00f9..54bf8bf6aba07039109f61369b5e441eee0ba184 100644
 --- a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
 +++ b/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
 @@ -102,7 +102,7 @@ void BackendDispatcher::registerDispatcherForDomain(const String& domain, Supple
@@ -156,105 +156,33 @@ index 038cb646d31706905deff8935040d63c0afd00f9..2fca7b043f15a8cce3819cc827912fb7
  }
  
 -void BackendDispatcher::dispatch(const String& message)
-+BackendDispatcher::DispatchResult BackendDispatcher::dispatch(const String& message, Mode mode, Interceptor&& interceptor)
++void BackendDispatcher::dispatch(const String& message, Interceptor&& interceptor)
  {
      Ref<BackendDispatcher> protect(*this);
  
-@@ -120,29 +120,32 @@ void BackendDispatcher::dispatch(const String& message)
-         if (!JSON::Value::parseJSON(message, parsedMessage)) {
-             reportProtocolError(ParseError, "Message must be in JSON format"_s);
-             sendPendingErrors();
--            return;
-+            return DispatchResult::Finished;
-         }
- 
-         if (!parsedMessage->asObject(messageObject)) {
-             reportProtocolError(InvalidRequest, "Message must be a JSONified object"_s);
-             sendPendingErrors();
--            return;
-+            return DispatchResult::Finished;
-         }
- 
-         RefPtr<JSON::Value> requestIdValue;
-         if (!messageObject->getValue("id"_s, requestIdValue)) {
-             reportProtocolError(InvalidRequest, "'id' property was not found"_s);
-             sendPendingErrors();
--            return;
-+            return DispatchResult::Finished;
-         }
- 
-         if (!requestIdValue->asInteger(requestId)) {
-             reportProtocolError(InvalidRequest, "The type of 'id' property must be integer"_s);
-             sendPendingErrors();
--            return;
-+            return DispatchResult::Finished;
+@@ -143,6 +143,9 @@ void BackendDispatcher::dispatch(const String& message)
          }
      }
  
-+    if (interceptor && interceptor(messageObject) == DispatchResult::Finished)
-+        return DispatchResult::Finished;
++    if (interceptor && interceptor(messageObject) == InterceptionResult::Intercepted)
++        return;
 +
      {
          // We could be called re-entrantly from a nested run loop, so restore the previous id.
          SetForScope<Optional<long>> scopedRequestId(m_currentRequestId, requestId);
-@@ -151,29 +154,31 @@ void BackendDispatcher::dispatch(const String& message)
-         if (!messageObject->getValue("method"_s, methodValue)) {
-             reportProtocolError(InvalidRequest, "'method' property wasn't found"_s);
-             sendPendingErrors();
--            return;
-+            return DispatchResult::Finished;
-         }
- 
-         String methodString;
-         if (!methodValue->asString(methodString)) {
-             reportProtocolError(InvalidRequest, "The type of 'method' property must be string"_s);
-             sendPendingErrors();
--            return;
-+            return DispatchResult::Finished;
-         }
- 
-         Vector<String> domainAndMethod = methodString.splitAllowingEmptyEntries('.');
-         if (domainAndMethod.size() != 2 || !domainAndMethod[0].length() || !domainAndMethod[1].length()) {
-             reportProtocolError(InvalidRequest, "The 'method' property was formatted incorrectly. It should be 'Domain.method'"_s);
-             sendPendingErrors();
--            return;
-+            return DispatchResult::Finished;
-         }
- 
-         String domain = domainAndMethod[0];
-         SupplementalBackendDispatcher* domainDispatcher = m_dispatchers.get(domain);
-         if (!domainDispatcher) {
-+            if (mode == Mode::ContinueIfDomainIsMissing)
-+                return DispatchResult::Continue;
-             reportProtocolError(MethodNotFound, "'" + domain + "' domain was not found");
-             sendPendingErrors();
--            return;
-+            return DispatchResult::Finished;
-         }
- 
-         String method = domainAndMethod[1];
-@@ -182,6 +187,7 @@ void BackendDispatcher::dispatch(const String& message)
-         if (m_protocolErrors.size())
-             sendPendingErrors();
-     }
-+    return DispatchResult::Finished;
- }
- 
- // FIXME: remove this function when legacy InspectorObject symbols are no longer needed <http://webkit.org/b/179847>.
 diff --git a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.h b/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.h
-index 95d9d81188e735e8f1b70cc0deee2682cb6714f0..4c67ce34302f74e0d07f64ae53a4eaf18df6669a 100644
+index 95d9d81188e735e8f1b70cc0deee2682cb6714f0..fbab25a07bf35c49faf026a3dfaccd50f50d1ab8 100644
 --- a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.h
 +++ b/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.h
-@@ -82,7 +82,11 @@ public:
+@@ -82,7 +82,10 @@ public:
      };
  
      void registerDispatcherForDomain(const String& domain, SupplementalBackendDispatcher*);
 -    void dispatch(const String& message);
 +
-+    enum class DispatchResult { Finished, Continue };
-+    enum class Mode { FailIfDomainIsMissing, ContinueIfDomainIsMissing };
-+    using Interceptor = WTF::Function<DispatchResult(const RefPtr<JSON::Object>&)>;
-+    DispatchResult dispatch(const String& message, Mode mode = Mode::FailIfDomainIsMissing, Interceptor&& interceptor = Interceptor());
++    enum class InterceptionResult { Intercepted, Continue };
++    using Interceptor = WTF::Function<InterceptionResult(const RefPtr<JSON::Object>&)>;
++    void dispatch(const String& message, Interceptor&& interceptor = Interceptor());
  
      // Note that 'unused' is a workaround so the compiler can pick the right sendResponse based on arity.
      // When <http://webkit.org/b/179847> is fixed or this class is renamed for the JSON::Object case,
@@ -7657,7 +7585,7 @@ index 23b992f3ce45f82f0dcdede6007a2e3a46b7b0b6..7e711e8f5132931e01eac66db6ea60c3
      // This reuses the basename of the remote file path so that the filename exposed to DOM API remains the same.
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorController.cpp b/Source/WebKit/UIProcess/BrowserInspectorController.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..300be76e7926ac5eb435ab62df1a973f04520327
+index 0000000000000000000000000000000000000000..df23f11858e6e60ca238793fe3f37cf19036fbee
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorController.cpp
 @@ -0,0 +1,244 @@
@@ -7818,27 +7746,27 @@ index 0000000000000000000000000000000000000000..300be76e7926ac5eb435ab62df1a973f
 +
 +void BrowserInspectorController::dispatchMessageFromFrontend(const String& message)
 +{
-+    m_backendDispatcher->dispatch(message, BackendDispatcher::Mode::FailIfDomainIsMissing, [&](const RefPtr<JSON::Object>& messageObject) {
++    m_backendDispatcher->dispatch(message, [&](const RefPtr<JSON::Object>& messageObject) {
 +        RefPtr<JSON::Value> pageProxyIDValue;
 +        if (!messageObject->getValue("pageProxyId"_s, pageProxyIDValue))
-+            return BackendDispatcher::DispatchResult::Continue;
++            return BackendDispatcher::InterceptionResult::Continue;
 +
 +        String pageProxyID;
 +        if (!pageProxyIDValue->asString(pageProxyID)) {
 +            m_backendDispatcher->reportProtocolError(BackendDispatcher::InvalidRequest, "The type of 'pageProxyId' must be string"_s);
 +            m_backendDispatcher->sendPendingErrors();
-+            return BackendDispatcher::DispatchResult::Finished;
++            return BackendDispatcher::InterceptionResult::Intercepted;
 +        }
 +
 +
 +        if (auto pageProxyChannel = m_pageProxyChannels.get(pageProxyID)) {
 +            pageProxyChannel->dispatchMessageFromFrontend(message);
-+            return BackendDispatcher::DispatchResult::Finished;
++            return BackendDispatcher::InterceptionResult::Intercepted;
 +        }
 +
 +        m_backendDispatcher->reportProtocolError(BackendDispatcher::InvalidRequest, "Cannot find page proxy with provided 'pageProxyId'"_s);
 +        m_backendDispatcher->sendPendingErrors();
-+        return BackendDispatcher::DispatchResult::Finished;
++        return BackendDispatcher::InterceptionResult::Intercepted;
 +    });
 +}
 +
@@ -8716,7 +8644,7 @@ index 0000000000000000000000000000000000000000..b5eeeca0f6b8c5c31e3786c0a675e322
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/InspectorTargetProxy.cpp b/Source/WebKit/UIProcess/Inspector/InspectorTargetProxy.cpp
-index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..c4645302296540a408aa88dabb64fd5e9a04f3f7 100644
+index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..621b99e233ed5cf504fedbd3ca3209c03bcd611f 100644
 --- a/Source/WebKit/UIProcess/Inspector/InspectorTargetProxy.cpp
 +++ b/Source/WebKit/UIProcess/Inspector/InspectorTargetProxy.cpp
 @@ -27,11 +27,10 @@
@@ -8756,17 +8684,7 @@ index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..c4645302296540a408aa88dabb64fd5e
      , m_identifier(targetId)
      , m_type(type)
  {
-@@ -83,6 +81,9 @@ void InspectorTargetProxy::disconnect()
- 
- void InspectorTargetProxy::sendMessageToTargetBackend(const String& message)
- {
-+    if (m_page.inspectorController().dispatchMessageToTargetBackend(message))
-+        return;
-+
-     if (m_provisionalPage) {
-         m_provisionalPage->send(Messages::WebPage::SendMessageToTargetBackend(identifier(), message));
-         return;
-@@ -97,6 +98,31 @@ void InspectorTargetProxy::didCommitProvisionalTarget()
+@@ -97,6 +95,31 @@ void InspectorTargetProxy::didCommitProvisionalTarget()
      m_provisionalPage = nullptr;
  }
  
@@ -8839,7 +8757,7 @@ index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..79f3ff84327dc075ec96983e04db4b10
  
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
-index 1861cff806131196ea49b4f8aca6665beebbf6e8..7287fd4bbc06a5791190454bedf02190fe98d2ae 100644
+index 1861cff806131196ea49b4f8aca6665beebbf6e8..521ef88239d5db7274cd19cd4258581464081f92 100644
 --- a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
 @@ -26,12 +26,20 @@
@@ -9009,19 +8927,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..7287fd4bbc06a5791190454bedf02190
      m_page.didChangeInspectorFrontendCount(m_frontendRouter->frontendCount());
  
  #if ENABLE(REMOTE_INSPECTOR)
-@@ -136,6 +235,11 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
-     m_backendDispatcher->dispatch(message);
- }
- 
-+bool WebPageInspectorController::dispatchMessageToTargetBackend(const String& message)
-+{
-+    return m_backendDispatcher->dispatch(message, BackendDispatcher::Mode::ContinueIfDomainIsMissing) == BackendDispatcher::DispatchResult::Finished;
-+}
-+
- #if ENABLE(REMOTE_INSPECTOR)
- void WebPageInspectorController::setIndicating(bool indicating)
- {
-@@ -150,6 +254,55 @@ void WebPageInspectorController::setIndicating(bool indicating)
+@@ -150,6 +249,55 @@ void WebPageInspectorController::setIndicating(bool indicating)
  }
  #endif
  
@@ -9077,7 +8983,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..7287fd4bbc06a5791190454bedf02190
  void WebPageInspectorController::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
      addTarget(InspectorTargetProxy::create(m_page, targetId, type));
-@@ -169,6 +322,33 @@ void WebPageInspectorController::sendMessageToInspectorFrontend(const String& ta
+@@ -169,6 +317,33 @@ void WebPageInspectorController::sendMessageToInspectorFrontend(const String& ta
      m_targetAgent->sendMessageFromTargetToFrontend(targetId, message);
  }
  
@@ -9111,7 +9017,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..7287fd4bbc06a5791190454bedf02190
  bool WebPageInspectorController::shouldPauseLoading(const ProvisionalPageProxy& provisionalPage) const
  {
      if (!m_frontendRouter->hasFrontends())
-@@ -188,7 +368,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
+@@ -188,7 +363,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
  
  void WebPageInspectorController::didCreateProvisionalPage(ProvisionalPageProxy& provisionalPage)
  {
@@ -9120,7 +9026,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..7287fd4bbc06a5791190454bedf02190
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -241,4 +421,20 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
+@@ -241,4 +416,20 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
      m_targets.set(target->identifier(), WTFMove(target));
  }
  
@@ -9142,7 +9048,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..7287fd4bbc06a5791190454bedf02190
 +
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.h b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.h
-index 9ce5ef36b652fd56a843c1d12a4c3c3cf639282c..9b6a239b6db52a55f693654ed65d89dff8dd0ffb 100644
+index 9ce5ef36b652fd56a843c1d12a4c3c3cf639282c..bb4d6b26bf245aebc2bd0f435a7bb83151331961 100644
 --- a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.h
 +++ b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.h
 @@ -26,17 +26,27 @@
@@ -9215,13 +9121,7 @@ index 9ce5ef36b652fd56a843c1d12a4c3c3cf639282c..9b6a239b6db52a55f693654ed65d89df
  
      bool hasLocalFrontend() const;
  
-@@ -60,15 +97,28 @@ public:
-     void disconnectAllFrontends();
- 
-     void dispatchMessageFromFrontend(const String& message);
-+    bool dispatchMessageToTargetBackend(const String&);
- 
- #if ENABLE(REMOTE_INSPECTOR)
+@@ -65,10 +102,22 @@ public:
      void setIndicating(bool);
  #endif
  
@@ -9244,7 +9144,7 @@ index 9ce5ef36b652fd56a843c1d12a4c3c3cf639282c..9b6a239b6db52a55f693654ed65d89df
      bool shouldPauseLoading(const ProvisionalPageProxy&) const;
      void setContinueLoadingCallback(const ProvisionalPageProxy&, WTF::Function<void()>&&);
  
-@@ -84,6 +134,7 @@ private:
+@@ -84,6 +133,7 @@ private:
      void createLazyAgents();
  
      void addTarget(std::unique_ptr<InspectorTargetProxy>&&);
@@ -9252,7 +9152,7 @@ index 9ce5ef36b652fd56a843c1d12a4c3c3cf639282c..9b6a239b6db52a55f693654ed65d89df
  
      Ref<Inspector::FrontendRouter> m_frontendRouter;
      Ref<Inspector::BackendDispatcher> m_backendDispatcher;
-@@ -92,11 +143,16 @@ private:
+@@ -92,11 +142,16 @@ private:
      WebPageProxy& m_page;
  
      Inspector::InspectorTargetAgent* m_targetAgent;
