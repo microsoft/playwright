@@ -119,9 +119,11 @@ export class WKPage implements PageDelegate {
 
   // This method is called for provisional targets as well. The session passed as the parameter
   // may be different from the current session and may be destroyed without becoming current.
-  async _initializeSession(session: WKSession, resourceTreeHandler: (r: Protocol.Page.getResourceTreeReturnValue) => void) {
+  async _initializeSession(session: WKSession, provisional: boolean, resourceTreeHandler: (r: Protocol.Page.getResourceTreeReturnValue) => void) {
     await this._initializeSessionMayThrow(session, resourceTreeHandler).catch(e => {
-      if (session.isDisposed())
+      // Provisional session can be disposed at any time, for example due to new navigation initiating
+      // a new provisional page.
+      if (provisional && session.isDisposed())
         return;
       // Swallow initialization errors due to newer target swap in,
       // since we will reinitialize again.
@@ -263,7 +265,7 @@ export class WKPage implements PageDelegate {
         this._setSession(session);
         await Promise.all([
           this._initializePageProxySession(),
-          this._initializeSession(session, ({frameTree}) => this._handleFrameTree(frameTree)),
+          this._initializeSession(session, false, ({frameTree}) => this._handleFrameTree(frameTree)),
         ]);
         pageOrError = this._page;
       } catch (e) {
