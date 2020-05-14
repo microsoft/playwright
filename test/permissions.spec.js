@@ -85,7 +85,7 @@ describe.skip(WEBKIT)('Permissions', function() {
   //TODO: flaky
   // - Linux: https://github.com/microsoft/playwright/pull/1790/checks?check_run_id=587327883
   // - Win: https://ci.appveyor.com/project/aslushnikov/playwright/builds/32402536
-  it.fail(FFOX)('should trigger permission onchange', async({page, server, context}) => {
+  it.fail(FFOX).fail(CHROMIUM && !HEADLESS)('should trigger permission onchange', async({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => {
       window['events'] = [];
@@ -122,7 +122,7 @@ describe.skip(WEBKIT)('Permissions', function() {
     expect(await getPermission(otherPage, 'geolocation')).toBe('granted');
     await otherContext.close();
   });
-  it.skip(FFOX)('should support clipboard read', async({page, server, context, browser}) => {
+  it.skip(FFOX).fail(CHROMIUM && !HEADLESS)('should support clipboard read', async({page, server, context, browser}) => {
     // No such permissions (requires flag) in Firefox
     await page.goto(server.EMPTY_PAGE);
     expect(await getPermission(page, 'clipboard-read')).toBe('prompt');

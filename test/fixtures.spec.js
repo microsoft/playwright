@@ -73,7 +73,7 @@ describe('Fixtures', function() {
     // so we don't check it here.
   });
 
-  describe.skip(WIN)('signals', () => {
+  describe.skip(WIN).skip(!HEADLESS)('signals', () => {
     // Cannot reliably send signals on Windows.
     it.slow()('should report browser close signal', async state => {
       const result = await testSignal(state, (child, browserPid) => process.kill(browserPid), true);
