@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { BrowserBase } from '../browser';
+import { BrowserBase, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, BrowserContextOptions, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { Events as CommonEvents } from '../events';
 import { assert, helper } from '../helper';
@@ -29,7 +29,7 @@ import { readProtocolStream } from './crProtocolHelper';
 import { Events } from './events';
 import { Protocol } from './protocol';
 import { CRExecutionContext } from './crExecutionContext';
-import { InnerLogger, logError } from '../logger';
+import { logError } from '../logger';
 
 export class CRBrowser extends BrowserBase {
   readonly _connection: CRConnection;
@@ -44,13 +44,12 @@ export class CRBrowser extends BrowserBase {
   private _tracingRecording = false;
   private _tracingPath: string | null = '';
   private _tracingClient: CRSession | undefined;
-  readonly _isHeadful: boolean;
 
-  static async connect(transport: ConnectionTransport, isPersistent: boolean, logger: InnerLogger, options: { slowMo?: number, headless?: boolean, viewport?: types.Size | null } = {}): Promise<CRBrowser> {
-    const connection = new CRConnection(SlowMoTransport.wrap(transport, options.slowMo), logger);
-    const browser = new CRBrowser(connection, logger, { persistent: isPersistent, headful: !options.headless, viewport: options.viewport });
+  static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<CRBrowser> {
+    const connection = new CRConnection(SlowMoTransport.wrap(transport, options.slowMo), options.logger);
+    const browser = new CRBrowser(connection, options);
     const session = connection.rootSession;
-    if (!isPersistent) {
+    if (!options.persistent) {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
       return browser;
     }
@@ -83,14 +82,13 @@ export class CRBrowser extends BrowserBase {
     return browser;
   }
 
-  constructor(connection: CRConnection, logger: InnerLogger, options: { headful?: boolean, persistent?: boolean, viewport?: types.Size | null } = {}) {
-    super(logger);
+  constructor(connection: CRConnection, options: BrowserOptions) {
+    super(options);
     this._connection = connection;
     this._session = this._connection.rootSession;
 
     if (options.persistent)
       this._defaultContext = new CRBrowserContext(this, null, validateBrowserContextOptions({ viewport: options.viewport }));
-    this._isHeadful = !!options.headful;
     this._connection.on(ConnectionEvents.Disconnected, () => {
       for (const context of this._contexts.values())
         context._browserClosed();
@@ -150,7 +148,7 @@ export class CRBrowser extends BrowserBase {
 
     if (targetInfo.type === 'page') {
       const opener = targetInfo.openerId ? this._crPages.get(targetInfo.openerId) || null : null;
-      const crPage = new CRPage(session, targetInfo.targetId, context, opener, this._isHeadful);
+      const crPage = new CRPage(session, targetInfo.targetId, context, opener, !!this._options.headful);
       this._crPages.set(targetInfo.targetId, crPage);
       crPage.pageOrError().then(() => {
         context!.emit(CommonEvents.BrowserContext.Page, crPage._page);
@@ -289,7 +287,7 @@ export class CRBrowserContext extends BrowserContextBase {
       this._browser._session.send('Browser.setDownloadBehavior', {
         behavior: this._options.acceptDownloads ? 'allowAndName' : 'deny',
         browserContextId: this._browserContextId || undefined,
-        downloadPath: this._browser._downloadsPath
+        downloadPath: this._browser._options.downloadsPath
       })
     ];
     if (this._options.permissions)

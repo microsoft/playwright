@@ -25,7 +25,7 @@ import * as ws from 'ws';
 import { launchProcess } from './processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
 import { PipeTransport } from './pipeTransport';
-import { LaunchOptions, BrowserArgOptions, ConnectOptions, LaunchServerOptions, AbstractBrowserType } from './browserType';
+import { LaunchOptions, BrowserArgOptions, ConnectOptions, LaunchServerOptions, AbstractBrowserType, processBrowserArgOptions } from './browserType';
 import { LaunchType } from '../browser';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { Events } from '../events';
@@ -48,10 +48,13 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
     return await browserServer._initializeOrClose(deadline, async () => {
       if ((options as any).__testHookBeforeCreateBrowser)
         await (options as any).__testHookBeforeCreateBrowser();
-      const browser = await CRBrowser.connect(transport!, false, logger, options);
-      browser._ownedServer = browserServer;
-      browser._downloadsPath = downloadsPath;
-      return browser;
+      return await CRBrowser.connect(transport!, {
+        slowMo: options.slowMo,
+        headful: !processBrowserArgOptions(options).headless,
+        logger,
+        downloadsPath,
+        ownedServer: browserServer
+      });
     });
   }
 
@@ -62,12 +65,18 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
   async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
     const { timeout = 30000 } = options;
     const deadline = TimeoutSettings.computeDeadline(timeout);
-    const { transport, browserServer, logger } = await this._launchServer(options, 'persistent', userDataDir);
+    const { transport, browserServer, downloadsPath, logger } = await this._launchServer(options, 'persistent', userDataDir);
     return await browserServer._initializeOrClose(deadline, async () => {
       if ((options as any).__testHookBeforeCreateBrowser)
         await (options as any).__testHookBeforeCreateBrowser();
-      const browser = await CRBrowser.connect(transport!, true, logger, options);
-      browser._ownedServer = browserServer;
+      const browser = await CRBrowser.connect(transport!, {
+        slowMo: options.slowMo,
+        persistent: true,
+        logger,
+        downloadsPath,
+        headful: !processBrowserArgOptions(options).headless,
+        ownedServer: browserServer
+      });
       const context = browser._defaultContext!;
       if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
         await context._loadDefaultContext();
@@ -109,6 +118,11 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
     const chromeExecutable = executablePath || this.executablePath();
     if (!chromeExecutable)
       throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
+
+    // Note: it is important to define these variables before launchProcess, so that we don't get
+    // "Cannot access 'browserServer' before initialization" if something went wrong.
+    let transport: PipeTransport | undefined = undefined;
+    let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose, downloadsPath } = await launchProcess({
       executablePath: chromeExecutable,
       args: chromeArguments,
@@ -134,8 +148,6 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
       },
     });
 
-    let transport: PipeTransport | undefined = undefined;
-    let browserServer: BrowserServer | undefined = undefined;
     const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
     transport = new PipeTransport(stdio[3], stdio[4], logger);
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, logger, port) : null);
@@ -146,16 +158,13 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
     return await WebSocketTransport.connect(options.wsEndpoint, async transport => {
       if ((options as any).__testHookBeforeCreateBrowser)
         await (options as any).__testHookBeforeCreateBrowser();
-      return CRBrowser.connect(transport, false, new RootLogger(options.logger), options);
+      return CRBrowser.connect(transport, { slowMo: options.slowMo, logger: new RootLogger(options.logger), downloadsPath: '' });
     });
   }
 
   private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string): string[] {
-    const {
-      devtools = false,
-      headless = !devtools,
-      args = [],
-    } = options;
+    const { devtools, headless } = processBrowserArgOptions(options);
+    const { args = [] } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
       throw new Error('Pass userDataDir parameter instead of specifying --user-data-dir argument');

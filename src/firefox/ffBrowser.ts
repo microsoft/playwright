@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { BrowserBase } from '../browser';
+import { BrowserBase, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, BrowserContextOptions, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { Events } from '../events';
 import { assert, helper, RegisteredListener } from '../helper';
@@ -27,7 +27,6 @@ import { ConnectionEvents, FFConnection } from './ffConnection';
 import { headersArray } from './ffNetworkManager';
 import { FFPage } from './ffPage';
 import { Protocol } from './protocol';
-import { InnerLogger } from '../logger';
 
 export class FFBrowser extends BrowserBase {
   _connection: FFConnection;
@@ -36,19 +35,19 @@ export class FFBrowser extends BrowserBase {
   readonly _contexts: Map<string, FFBrowserContext>;
   private _eventListeners: RegisteredListener[];
 
-  static async connect(transport: ConnectionTransport, logger: InnerLogger, attachToDefaultContext: boolean, slowMo?: number): Promise<FFBrowser> {
-    const connection = new FFConnection(SlowMoTransport.wrap(transport, slowMo), logger);
-    const browser = new FFBrowser(connection, logger, attachToDefaultContext);
-    await connection.send('Browser.enable', { attachToDefaultContext });
+  static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
+    const connection = new FFConnection(SlowMoTransport.wrap(transport, options.slowMo), options.logger);
+    const browser = new FFBrowser(connection, options);
+    await connection.send('Browser.enable', { attachToDefaultContext: !!options.persistent });
     return browser;
   }
 
-  constructor(connection: FFConnection, logger: InnerLogger, isPersistent: boolean) {
-    super(logger);
+  constructor(connection: FFConnection, options: BrowserOptions) {
+    super(options);
     this._connection = connection;
     this._ffPages = new Map();
 
-    if (isPersistent)
+    if (options.persistent)
       this._defaultContext = new FFBrowserContext(this, null, validateBrowserContextOptions({}));
     this._contexts = new Map();
     this._connection.on(ConnectionEvents.Disconnected, () => {
@@ -159,7 +158,7 @@ export class FFBrowserContext extends BrowserContextBase {
         browserContextId,
         downloadOptions: {
           behavior: this._options.acceptDownloads ? 'saveToDisk' : 'cancel',
-          downloadsDir: this._browser._downloadsPath,
+          downloadsDir: this._browser._options.downloadsPath,
         },
       }),
     ];

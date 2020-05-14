@@ -24,7 +24,7 @@ import * as os from 'os';
 import * as util from 'util';
 import { helper, assert } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
-import { LaunchOptions, BrowserArgOptions, LaunchServerOptions, ConnectOptions, AbstractBrowserType } from './browserType';
+import { LaunchOptions, BrowserArgOptions, LaunchServerOptions, ConnectOptions, AbstractBrowserType, processBrowserArgOptions } from './browserType';
 import { ConnectionTransport, SequenceNumberMixer, WebSocketTransport } from '../transport';
 import * as ws from 'ws';
 import { LaunchType } from '../browser';
@@ -48,10 +48,13 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
     return await browserServer._initializeOrClose(deadline, async () => {
       if ((options as any).__testHookBeforeCreateBrowser)
         await (options as any).__testHookBeforeCreateBrowser();
-      const browser = await WKBrowser.connect(transport!, logger,  options.slowMo, false);
-      browser._ownedServer = browserServer;
-      browser._downloadsPath = downloadsPath;
-      return browser;
+      return await WKBrowser.connect(transport!, {
+        slowMo: options.slowMo,
+        headful: !processBrowserArgOptions(options).headless,
+        logger,
+        downloadsPath,
+        ownedServer: browserServer
+      });
     });
   }
 
@@ -60,17 +63,20 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
   }
 
   async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
-    const {
-      timeout = 30000,
-      slowMo = 0,
-    } = options;
+    const { timeout = 30000 } = options;
     const deadline = TimeoutSettings.computeDeadline(timeout);
-    const { transport, browserServer, logger } = await this._launchServer(options, 'persistent', userDataDir);
+    const { transport, browserServer, logger, downloadsPath } = await this._launchServer(options, 'persistent', userDataDir);
     return await browserServer._initializeOrClose(deadline, async () => {
       if ((options as any).__testHookBeforeCreateBrowser)
         await (options as any).__testHookBeforeCreateBrowser();
-      const browser = await WKBrowser.connect(transport!, logger, slowMo, true);
-      browser._ownedServer = browserServer;
+      const browser = await WKBrowser.connect(transport!, {
+        slowMo: options.slowMo,
+        headful: !processBrowserArgOptions(options).headless,
+        logger,
+        persistent: true,
+        downloadsPath,
+        ownedServer: browserServer
+      });
       const context = browser._defaultContext!;
       if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
         await context._loadDefaultContext();
@@ -110,6 +116,10 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
     if (!webkitExecutable)
       throw new Error(`No executable path is specified.`);
 
+    // Note: it is important to define these variables before launchProcess, so that we don't get
+    // "Cannot access 'browserServer' before initialization" if something went wrong.
+    let transport: ConnectionTransport | undefined = undefined;
+    let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose, downloadsPath } = await launchProcess({
       executablePath: webkitExecutable,
       args: webkitArguments,
@@ -133,10 +143,6 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
       },
     });
 
-    // Note: it is important to define these variables before launchProcess, so that we don't get
-    // "Cannot access 'browserServer' before initialization" if something went wrong.
-    let transport: ConnectionTransport | undefined = undefined;
-    let browserServer: BrowserServer | undefined = undefined;
     const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
     transport = new PipeTransport(stdio[3], stdio[4], logger);
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, logger, port || 0) : null);
@@ -147,16 +153,13 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
     return await WebSocketTransport.connect(options.wsEndpoint, async transport => {
       if ((options as any).__testHookBeforeCreateBrowser)
         await (options as any).__testHookBeforeCreateBrowser();
-      return WKBrowser.connect(transport, new RootLogger(options.logger), options.slowMo);
+      return WKBrowser.connect(transport, { slowMo: options.slowMo, logger: new RootLogger(options.logger), downloadsPath: '' });
     });
   }
 
   _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {
-    const {
-      devtools = false,
-      headless = !devtools,
-      args = [],
-    } = options;
+    const { devtools, headless } = processBrowserArgOptions(options);
+    const { args = [] } = options;
     if (devtools)
       console.warn('devtools parameter as a launch argument in WebKit is not supported. Also starting Web Inspector manually will terminate the execution in WebKit.');
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir='));

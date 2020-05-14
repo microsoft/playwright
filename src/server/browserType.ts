@@ -36,6 +36,11 @@ type LaunchOptionsBase = BrowserArgOptions & {
   env?: {[key: string]: string|number|boolean}
 };
 
+export function processBrowserArgOptions(options: LaunchOptionsBase): { devtools: boolean, headless: boolean } {
+  const { devtools = false, headless = !devtools } = options;
+  return { devtools, headless };
+}
+
 export type ConnectOptions = {
   wsEndpoint: string,
   slowMo?: number,
