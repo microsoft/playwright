@@ -57,7 +57,7 @@ describe('Download', function() {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   });
-  it.fail(WEBKIT && WIN)('should report non-navigation downloads', async({browser, server}) => {
+  it('should report non-navigation downloads', async({browser, server}) => {
     // Mac WebKit embedder does not download in this case, although Safari does.
     server.setRoute('/download', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
