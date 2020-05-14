@@ -13128,42 +13128,6 @@ index 0000000000000000000000000000000000000000..5cf8a010e9809e6a95741cdb7c2cbeb4
 +}
 +
 +} // namespace WebKit
-diff --git a/Source/WebKit/UIProcess/win/WebProcessPoolWin.cpp b/Source/WebKit/UIProcess/win/WebProcessPoolWin.cpp
-index 18f9e93932793b7c3e44e6346be0f13ed6dbf233..bd056b2ab34f0059d6477c955f51d71136f2a252 100644
---- a/Source/WebKit/UIProcess/win/WebProcessPoolWin.cpp
-+++ b/Source/WebKit/UIProcess/win/WebProcessPoolWin.cpp
-@@ -26,7 +26,6 @@
- 
- #include "config.h"
- #include "WebProcessPool.h"
--
- #include "WebProcessCreationParameters.h"
- #include <WebCore/NotImplemented.h>
- 
-diff --git a/Source/WebKit/UIProcess/win/WebView.cpp b/Source/WebKit/UIProcess/win/WebView.cpp
-index 4a96b5e998800bb7b1ca104f860e96dcf418d178..d04d3be8e814b6994a3cc390fa1b17a87a3b06b9 100644
---- a/Source/WebKit/UIProcess/win/WebView.cpp
-+++ b/Source/WebKit/UIProcess/win/WebView.cpp
-@@ -114,6 +114,8 @@ LRESULT WebView::wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-         m_page->tryClose();
-         break;
-     case WM_DESTROY:
-+        if (!m_page)
-+            return ::DefWindowProc(hWnd, message, wParam, lParam);
-         m_isBeingDestroyed = true;
-         close();
-         break;
-@@ -275,6 +277,10 @@ WebView::WebView(RECT rect, const API::PageConfiguration& configuration, HWND pa
- 
- WebView::~WebView()
- {
-+    // We must close the page here since page expects pageClient to outlive it. Even though page
-+    // client is a weak-ref in the page, the expectations are that it is available at least until
-+    // the page.close.
-+    m_page->close();
-     // Tooltip window needs to be explicitly destroyed since it isn't a WS_CHILD.
-     if (::IsWindow(m_toolTipWindow))
-         ::DestroyWindow(m_toolTipWindow);
 diff --git a/Source/WebKit/UIProcess/wpe/InspectorTargetProxyWPE.cpp b/Source/WebKit/UIProcess/wpe/InspectorTargetProxyWPE.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..7453194ca6f032ba86a4c67f5bf12688ab6ec1be
