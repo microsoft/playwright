@@ -446,7 +446,7 @@ describe('BrowserContext.route', () => {
 });
 
 describe('BrowserContext.setHTTPCredentials', function() {
-  it('should work', async({browser, server}) => {
+  it.fail(CHROMIUM && !HEADLESS)('should work', async({browser, server}) => {
     server.setAuth('/empty.html', 'user', 'pass');
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -476,7 +476,7 @@ describe('BrowserContext.setHTTPCredentials', function() {
     expect(response.status()).toBe(200);
     await context.close();
   });
-  it('should allow disable authentication', async({browser, server}) => {
+  it.fail(CHROMIUM && !HEADLESS)('should allow disable authentication', async({browser, server}) => {
     server.setAuth('/empty.html', 'user', 'pass');
     const context = await browser.newContext({
       httpCredentials: { username: 'user', password: 'pass' }

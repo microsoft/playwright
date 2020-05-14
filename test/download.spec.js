@@ -123,7 +123,7 @@ describe('Download', function() {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   });
-  it('should report new window downloads', async({browser, server}) => {
+  it.fail(CHROMIUM && !HEADLESS)('should report new window downloads', async({browser, server}) => {
     // TODO: - the test fails in headful Chromium as the popup page gets closed along
     // with the session before download completed event arrives.
     // - WebKit doesn't close the popup page

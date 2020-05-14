@@ -19,7 +19,7 @@ const utils = require('./utils');
 const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
 
 describe('ElementHandle.boundingBox', function() {
-  it('should work', async({page, server}) => {
+  it.fail(FFOX && !HEADLESS)('should work', async({page, server}) => {
     await page.setViewportSize({width: 500, height: 500});
     await page.goto(server.PREFIX + '/grid.html');
     const elementHandle = await page.$('.box:nth-of-type(13)');
