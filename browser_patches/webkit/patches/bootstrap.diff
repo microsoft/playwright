@@ -14045,10 +14045,18 @@ index 1324229bf6dd3a90324aa55dff533186f97b52e8..b459bf67142874851e3f6e0caf0a229b
  {
      if (m_page.activeOpenPanelResultListener())
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
-index 28189c82da62d9e0d9f516f1a69d4a8614dbd1d6..fb39c9ea955e8255de7dbb755cf0c26aff23a3c0 100644
+index 28189c82da62d9e0d9f516f1a69d4a8614dbd1d6..eeb699cd93357a271ae05c5873c9ebba43c6460b 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
-@@ -244,12 +244,20 @@ void DrawingAreaCoordinatedGraphics::updatePreferences(const WebPreferencesStore
+@@ -37,6 +37,7 @@
+ #include "WebPreferencesKeys.h"
+ #include <WebCore/Frame.h>
+ #include <WebCore/GraphicsContext.h>
++#include <WebCore/InspectorController.h>
+ #include <WebCore/Page.h>
+ #include <WebCore/PageOverlayController.h>
+ #include <WebCore/Settings.h>
+@@ -244,12 +245,20 @@ void DrawingAreaCoordinatedGraphics::updatePreferences(const WebPreferencesStore
          settings.setAcceleratedCompositingEnabled(false);
      }
  #endif
@@ -14069,7 +14077,7 @@ index 28189c82da62d9e0d9f516f1a69d4a8614dbd1d6..fb39c9ea955e8255de7dbb755cf0c26a
  
      // If async scrolling is disabled, we have to force-disable async frame and overflow scrolling
      // to keep the non-async scrolling on those elements working.
-@@ -713,6 +721,11 @@ void DrawingAreaCoordinatedGraphics::display()
+@@ -713,6 +722,11 @@ void DrawingAreaCoordinatedGraphics::display()
          return;
      }
  
