@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { BrowserBase } from '../browser';
+import { BrowserBase, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, BrowserContextOptions, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { Events } from '../events';
 import { helper, RegisteredListener } from '../helper';
@@ -26,7 +26,6 @@ import * as types from '../types';
 import { Protocol } from './protocol';
 import { kPageProxyMessageReceived, PageProxyMessageReceivedPayload, WKConnection, WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
-import { InnerLogger } from '../logger';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15';
 
@@ -38,17 +37,17 @@ export class WKBrowser extends BrowserBase {
   readonly _wkPages = new Map<string, WKPage>();
   private readonly _eventListeners: RegisteredListener[];
 
-  static async connect(transport: ConnectionTransport, logger: InnerLogger, slowMo: number = 0, attachToDefaultContext: boolean = false): Promise<WKBrowser> {
-    const browser = new WKBrowser(SlowMoTransport.wrap(transport, slowMo), logger, attachToDefaultContext);
+  static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
+    const browser = new WKBrowser(SlowMoTransport.wrap(transport, options.slowMo), options);
     return browser;
   }
 
-  constructor(transport: ConnectionTransport, logger: InnerLogger, attachToDefaultContext: boolean) {
-    super(logger);
-    this._connection = new WKConnection(transport, logger, this._onDisconnect.bind(this));
+  constructor(transport: ConnectionTransport, options: BrowserOptions) {
+    super(options);
+    this._connection = new WKConnection(transport, options.logger, this._onDisconnect.bind(this));
     this._browserSession = this._connection.browserSession;
 
-    if (attachToDefaultContext)
+    if (options.persistent)
       this._defaultContext = new WKBrowserContext(this, undefined, validateBrowserContextOptions({}));
 
     this._eventListeners = [
@@ -205,7 +204,7 @@ export class WKBrowserContext extends BrowserContextBase {
     const promises: Promise<any>[] = [
       this._browser._browserSession.send('Playwright.setDownloadBehavior', {
         behavior: this._options.acceptDownloads ? 'allow' : 'deny',
-        downloadPath: this._browser._downloadsPath,
+        downloadPath: this._browser._options.downloadsPath,
         browserContextId
       })
     ];

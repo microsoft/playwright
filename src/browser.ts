@@ -21,6 +21,17 @@ import { Download } from './download';
 import type { BrowserServer } from './server/browserServer';
 import { Events } from './events';
 import { InnerLogger, Log } from './logger';
+import * as types from './types';
+
+export type BrowserOptions = {
+  logger: InnerLogger,
+  downloadsPath: string,
+  headful?: boolean,
+  persistent?: boolean,
+  slowMo?: number,
+  viewport?: types.Size | null,
+  ownedServer?: BrowserServer,
+};
 
 export interface Browser extends EventEmitter {
   newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
@@ -31,14 +42,12 @@ export interface Browser extends EventEmitter {
 }
 
 export abstract class BrowserBase extends EventEmitter implements Browser, InnerLogger {
-  _downloadsPath: string = '';
+  readonly _options: BrowserOptions;
   private _downloads = new Map<string, Download>();
-  _ownedServer: BrowserServer | null = null;
-  readonly _logger: InnerLogger;
 
-  constructor(logger: InnerLogger) {
+  constructor(options: BrowserOptions) {
     super();
-    this._logger = logger;
+    this._options = options;
   }
 
   abstract newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
@@ -54,7 +63,7 @@ export abstract class BrowserBase extends EventEmitter implements Browser, Inner
   }
 
   _downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string) {
-    const download = new Download(page, this._downloadsPath, uuid, url, suggestedFilename);
+    const download = new Download(page, this._options.downloadsPath, uuid, url, suggestedFilename);
     this._downloads.set(uuid, download);
   }
 
@@ -74,8 +83,8 @@ export abstract class BrowserBase extends EventEmitter implements Browser, Inner
   }
 
   async close() {
-    if (this._ownedServer) {
-      await this._ownedServer.close();
+    if (this._options.ownedServer) {
+      await this._options.ownedServer.close();
     } else {
       await Promise.all(this.contexts().map(context => context.close()));
       this._disconnect();
@@ -85,11 +94,11 @@ export abstract class BrowserBase extends EventEmitter implements Browser, Inner
   }
 
   _isLogEnabled(log: Log): boolean {
-    return this._logger._isLogEnabled(log);
+    return this._options.logger._isLogEnabled(log);
   }
 
   _log(log: Log, message: string | Error, ...args: any[]) {
-    return this._logger._log(log, message, ...args);
+    return this._options.logger._log(log, message, ...args);
   }
 }
 

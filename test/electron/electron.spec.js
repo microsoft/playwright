@@ -146,7 +146,7 @@ describe('Electron per window', function() {
   afterEach(async state => {
     await state.page.close();
   });
- 
+
   it('should click the button', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.click('button');

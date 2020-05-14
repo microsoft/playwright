@@ -28,7 +28,7 @@ import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
 import { helper, assert } from '../helper';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
-import { BrowserArgOptions, LaunchOptions, LaunchServerOptions, ConnectOptions, AbstractBrowserType } from './browserType';
+import { BrowserArgOptions, LaunchOptions, LaunchServerOptions, ConnectOptions, AbstractBrowserType, processBrowserArgOptions } from './browserType';
 import { launchProcess, waitForLine } from './processLauncher';
 import { ConnectionTransport, SequenceNumberMixer, WebSocketTransport } from '../transport';
 import { RootLogger, InnerLogger, logError } from '../logger';
@@ -51,10 +51,14 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
       if ((options as any).__testHookBeforeCreateBrowser)
         await (options as any).__testHookBeforeCreateBrowser();
       const browser = await WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
-        return FFBrowser.connect(transport, logger, false, options.slowMo);
+        return FFBrowser.connect(transport, {
+          slowMo: options.slowMo,
+          logger,
+          downloadsPath,
+          headful: !processBrowserArgOptions(options).headless,
+          ownedServer: browserServer,
+        });
       });
-      browser._ownedServer = browserServer;
-      browser._downloadsPath = downloadsPath;
       return browser;
     });
   }
@@ -64,20 +68,22 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
   }
 
   async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
-    const {
-      timeout = 30000,
-      slowMo = 0,
-    } = options;
+    const { timeout = 30000 } = options;
     const deadline = TimeoutSettings.computeDeadline(timeout);
     const { browserServer, downloadsPath, logger } = await this._launchServer(options, 'persistent', userDataDir);
     return await browserServer._initializeOrClose(deadline, async () => {
       if ((options as any).__testHookBeforeCreateBrowser)
         await (options as any).__testHookBeforeCreateBrowser();
       const browser = await WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
-        return FFBrowser.connect(transport, logger, true, slowMo);
+        return FFBrowser.connect(transport, {
+          slowMo: options.slowMo,
+          logger,
+          persistent: true,
+          downloadsPath,
+          ownedServer: browserServer,
+          headful: !processBrowserArgOptions(options).headless,
+        });
       });
-      browser._ownedServer = browserServer;
-      browser._downloadsPath = downloadsPath;
       const context = browser._defaultContext!;
       if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
         await context._loadDefaultContext();
@@ -118,6 +124,10 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
     if (!firefoxExecutable)
       throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
 
+    // Note: it is important to define these variables before launchProcess, so that we don't get
+    // "Cannot access 'browserServer' before initialization" if something went wrong.
+    let browserServer: BrowserServer | undefined = undefined;
+    let browserWSEndpoint: string | undefined = undefined;
     const { launchedProcess, gracefullyClose, downloadsPath } = await launchProcess({
       executablePath: firefoxExecutable,
       args: firefoxArguments,
@@ -149,8 +159,6 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
     const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
     const innerEndpoint = match[1];
 
-    let browserServer: BrowserServer | undefined = undefined;
-    let browserWSEndpoint: string | undefined = undefined;
     const webSocketWrapper = launchType === 'server' ? (await WebSocketTransport.connect(innerEndpoint, t => wrapTransportWithWebSocket(t, logger, port))) : new WebSocketWrapper(innerEndpoint, []);
     browserWSEndpoint = webSocketWrapper.wsEndpoint;
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, webSocketWrapper);
@@ -161,16 +169,13 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
     return await WebSocketTransport.connect(options.wsEndpoint, async transport => {
       if ((options as any).__testHookBeforeCreateBrowser)
         await (options as any).__testHookBeforeCreateBrowser();
-      return FFBrowser.connect(transport, new RootLogger(options.logger), false, options.slowMo);
+      return FFBrowser.connect(transport, { slowMo: options.slowMo, logger: new RootLogger(options.logger), downloadsPath: '' });
     });
   }
 
   private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {
-    const {
-      devtools = false,
-      headless = !devtools,
-      args = [],
-    } = options;
+    const { devtools, headless } = processBrowserArgOptions(options);
+    const { args = [] } = options;
     if (devtools)
       console.warn('devtools parameter is not supported as a launch argument in Firefox. You can launch the devtools window manually.');
     const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));

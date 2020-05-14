@@ -198,8 +198,7 @@ export class Electron  {
       return transport;
     });
     const browserServer = new BrowserServer(launchedProcess, gracefullyClose, null);
-    const browser = await CRBrowser.connect(chromeTransport, true, logger, { ...options, viewport: null });
-    browser._ownedServer = browserServer;
+    const browser = await CRBrowser.connect(chromeTransport, { headful: true, logger, persistent: true, viewport: null, ownedServer: browserServer, downloadsPath: '' });
     app = new ElectronApplication(logger, browser, nodeConnection);
     await app._init();
     return app;

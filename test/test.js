@@ -80,17 +80,16 @@ function collect(browserNames) {
   const playwrightEnvironment = new Environment('Playwright');
   playwrightEnvironment.beforeAll(async state => {
     state.playwright = playwright;
-    global.playwright = playwright;
   });
   playwrightEnvironment.afterAll(async state => {
     delete state.playwright;
-    delete global.playwright;
   });
 
   testRunner.collector().useEnvironment(playwrightEnvironment);
   for (const e of config.globalEnvironments || [])
     testRunner.collector().useEnvironment(e);
 
+  global.playwright = playwright;
   for (const browserName of browserNames) {
     const browserType = playwright[browserName];
     const browserTypeEnvironment = new Environment('BrowserType');
@@ -172,7 +171,6 @@ function collect(browserNames) {
     const suiteName = { 'chromium': 'Chromium', 'firefox': 'Firefox', 'webkit': 'WebKit' }[browserName];
     describe(suiteName, () => {
       // In addition to state, expose these two on global so that describes can access them.
-      global.playwright = playwright;
       global.browserType = browserType;
       global.HEADLESS = !!launchOptions.headless;
 
@@ -200,7 +198,6 @@ function collect(browserNames) {
 
       delete global.HEADLESS;
       delete global.browserType;
-      delete global.playwright;
     });
   }
   for (const [key, value] of Object.entries(testRunner.api())) {
