@@ -730,6 +730,26 @@ export class Frame {
         (handle, deadline) => handle.focus());
   }
 
+  async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<string | null> {
+    return await this._retryWithSelectorIfNotConnected('textContent', selector, options,
+        (handle, deadline) => handle.textContent());
+  }
+
+  async innerText(selector: string, options: types.TimeoutOptions = {}): Promise<string | null> {
+    return await this._retryWithSelectorIfNotConnected('innerText', selector, options,
+        (handle, deadline) => handle.innerText());
+  }
+
+  async innerHTML(selector: string, options: types.TimeoutOptions = {}): Promise<string | null> {
+    return await this._retryWithSelectorIfNotConnected('innerHTML', selector, options,
+        (handle, deadline) => handle.innerHTML());
+  }
+
+  async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
+    return await this._retryWithSelectorIfNotConnected('getAttribute', selector, options,
+        (handle, deadline) => handle.getAttribute(name));
+  }
+
   async hover(selector: string, options: dom.PointerActionOptions & types.PointerActionWaitOptions = {}) {
     await this._retryWithSelectorIfNotConnected('hover', selector, options,
         (handle, deadline) => handle.hover(helper.optionsWithUpdatedTimeout(options, deadline)));

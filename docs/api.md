@@ -683,10 +683,13 @@ page.removeListener('request', logRequest);
 - [page.focus(selector[, options])](#pagefocusselector-options)
 - [page.frame(options)](#pageframeoptions)
 - [page.frames()](#pageframes)
+- [page.getAttribute(selector, name[, options])](#pagegetattributeselector-name-options)
 - [page.goBack([options])](#pagegobackoptions)
 - [page.goForward([options])](#pagegoforwardoptions)
 - [page.goto(url[, options])](#pagegotourl-options)
 - [page.hover(selector[, options])](#pagehoverselector-options)
+- [page.innerHTML(selector[, options])](#pageinnerhtmlselector-options)
+- [page.innerText(selector[, options])](#pageinnertextselector-options)
 - [page.isClosed()](#pageisclosed)
 - [page.keyboard](#pagekeyboard)
 - [page.mainFrame()](#pagemainframe)
@@ -704,6 +707,7 @@ page.removeListener('request', logRequest);
 - [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
 - [page.setInputFiles(selector, files[, options])](#pagesetinputfilesselector-files-options)
 - [page.setViewportSize(viewportSize)](#pagesetviewportsizeviewportsize)
+- [page.textContent(selector[, options])](#pagetextcontentselector-options)
 - [page.title()](#pagetitle)
 - [page.type(selector, text[, options])](#pagetypeselector-text-options)
 - [page.uncheck(selector, [options])](#pageuncheckselector-options)
@@ -1275,6 +1279,15 @@ Returns frame matching the specified criteria. Either `name` or `url` must be sp
 #### page.frames()
 - returns: <[Array]<[Frame]>> An array of all frames attached to the page.
 
+#### page.getAttribute(selector, name[, options])
+- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be checked. See [working with selectors](#working-with-selectors) for more details.
+- `name` <[string]> Attribute name to get the value for.
+- `options` <[Object]>
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]<null|[string]>>
+
+Returns element attribute value.
+
 #### page.goBack([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
@@ -1344,6 +1357,22 @@ This method fetches an element with `selector`, scrolls it into view if needed, 
 If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the actionability checks, the action is retried.
 
 Shortcut for [page.mainFrame().hover(selector[, options])](#framehoverselector-options).
+
+#### page.innerHTML(selector[, options])
+- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be checked. See [working with selectors](#working-with-selectors) for more details.
+- `options` <[Object]>
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]<null|[string]>>
+
+Resolves to the `node.innerHTML`.
+
+#### page.innerText(selector[, options])
+- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be checked. See [working with selectors](#working-with-selectors) for more details.
+- `options` <[Object]>
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]<null|[string]>>
+
+Resolves to the `node.innerText`.
 
 #### page.isClosed()
 
@@ -1629,10 +1658,21 @@ await page.setViewportSize({
 await page.goto('https://example.com');
 ```
 
+#### page.textContent(selector[, options])
+- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be checked. See [working with selectors](#working-with-selectors) for more details.
+- `options` <[Object]>
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]<null|[string]>>
+
+Resolves to the `node.textContent`.
+
+
 #### page.title()
 - returns: <[Promise]<[string]>> The page's title.
 
 Shortcut for [page.mainFrame().title()](#frametitle).
+
+
 
 #### page.type(selector, text[, options])
 - `selector` <[string]> A selector of an element to type into. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
@@ -1917,8 +1957,11 @@ console.log(text);
 - [frame.fill(selector, value[, options])](#framefillselector-value-options)
 - [frame.focus(selector[, options])](#framefocusselector-options)
 - [frame.frameElement()](#frameframeelement)
+- [frame.getAttribute(selector, name[, options])](#framegetattributeselector-name-options)
 - [frame.goto(url[, options])](#framegotourl-options)
 - [frame.hover(selector[, options])](#framehoverselector-options)
+- [frame.innerHTML(selector[, options])](#frameinnerhtmlselector-options)
+- [frame.innerText(selector[, options])](#frameinnertextselector-options)
 - [frame.isDetached()](#frameisdetached)
 - [frame.name()](#framename)
 - [frame.parentFrame()](#frameparentframe)
@@ -1926,6 +1969,7 @@ console.log(text);
 - [frame.selectOption(selector, values[, options])](#frameselectoptionselector-values-options)
 - [frame.setContent(html[, options])](#framesetcontenthtml-options)
 - [frame.setInputFiles(selector, files[, options])](#framesetinputfilesselector-files-options)
+- [frame.textContent(selector[, options])](#frametextcontentselector-options)
 - [frame.title()](#frametitle)
 - [frame.type(selector, text[, options])](#frametypeselector-text-options)
 - [frame.uncheck(selector, [options])](#frameuncheckselector-options)
@@ -2195,6 +2239,15 @@ const contentFrame = await frameElement.contentFrame();
 console.log(frame === contentFrame);  // -> true
 ```
 
+#### frame.getAttribute(selector, name[, options])
+- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be checked. See [working with selectors](#working-with-selectors) for more details.
+- `name` <[string]> Attribute name to get the value for.
+- `options` <[Object]>
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]<null|[string]>>
+
+Returns element attribute value.
+
 #### frame.goto(url[, options])
 - `url` <[string]> URL to navigate frame to. The url should include scheme, e.g. `https://`.
 - `options` <[Object]> Navigation parameters which might have the following properties:
@@ -2237,6 +2290,22 @@ console.log(frame === contentFrame);  // -> true
 
 This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to hover over the center of the element.
 If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the actionability checks, the action is retried.
+
+#### frame.innerHTML(selector[, options])
+- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be checked. See [working with selectors](#working-with-selectors) for more details.
+- `options` <[Object]>
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]<null|[string]>>
+
+Resolves to the `node.innerHTML`.
+
+#### frame.innerText(selector[, options])
+- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be checked. See [working with selectors](#working-with-selectors) for more details.
+- `options` <[Object]>
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]<null|[string]>>
+
+Resolves to the `node.innerText`.
 
 #### frame.isDetached()
 - returns: <[boolean]>
@@ -2325,6 +2394,15 @@ frame.selectOption('select#colors', 'red', 'green', 'blue');
 This method expects `selector` to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). For empty array, clears the selected files.
+
+#### frame.textContent(selector[, options])
+- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be checked. See [working with selectors](#working-with-selectors) for more details.
+- `options` <[Object]>
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]<null|[string]>>
+
+Resolves to the `node.textContent`.
+
 
 #### frame.title()
 - returns: <[Promise]<[string]>> The page's title.
@@ -2702,7 +2780,7 @@ Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus
 
 #### elementHandle.getAttribute(name)
 - `name` <[string]> Attribute name to get the value for.
-- returns: <[Promise]<null|[string]>> Resolves to the attribute value.
+- returns: <[Promise]<null|[string]>>
 
 Returns element attribute value.
 

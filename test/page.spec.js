@@ -1175,3 +1175,4 @@ describe('Page api coverage', function() {
     expect(await frame.evaluate(() => document.querySelector('textarea').value)).toBe('a');
   });
 });
+
