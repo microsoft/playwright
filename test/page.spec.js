@@ -780,6 +780,14 @@ describe('Page.url', function() {
     await page.goto(server.EMPTY_PAGE);
     expect(page.url()).toBe(server.EMPTY_PAGE);
   });
+  it('should not return hashes', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE + '#hash');
+    expect(page.url()).toBe(server.EMPTY_PAGE + '#hash');
+    await page.evaluate(() => {
+      window.location.hash = "dynamic";
+    });
+    expect(page.url()).toBe(server.EMPTY_PAGE + '#dynamic');
+  });
 });
 
 describe('Page.title', function() {
