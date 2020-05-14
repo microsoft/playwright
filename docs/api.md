@@ -1280,7 +1280,7 @@ Returns frame matching the specified criteria. Either `name` or `url` must be sp
 - returns: <[Array]<[Frame]>> An array of all frames attached to the page.
 
 #### page.getAttribute(selector, name[, options])
-- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be checked. See [working with selectors](#working-with-selectors) for more details.
+- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be picked. See [working with selectors](#working-with-selectors) for more details.
 - `name` <[string]> Attribute name to get the value for.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
@@ -1359,20 +1359,20 @@ If there's no element matching `selector`, the method waits until a matching ele
 Shortcut for [page.mainFrame().hover(selector[, options])](#framehoverselector-options).
 
 #### page.innerHTML(selector[, options])
-- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be checked. See [working with selectors](#working-with-selectors) for more details.
+- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be picked. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<null|[string]>>
 
-Resolves to the `node.innerHTML`.
+Resolves to the `element.innerHTML`.
 
 #### page.innerText(selector[, options])
-- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be checked. See [working with selectors](#working-with-selectors) for more details.
+- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be picked. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<null|[string]>>
 
-Resolves to the `node.innerText`.
+Resolves to the `element.innerText`.
 
 #### page.isClosed()
 
@@ -1659,12 +1659,12 @@ await page.goto('https://example.com');
 ```
 
 #### page.textContent(selector[, options])
-- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be checked. See [working with selectors](#working-with-selectors) for more details.
+- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be picked. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<null|[string]>>
 
-Resolves to the `node.textContent`.
+Resolves to the `element.textContent`.
 
 
 #### page.title()
@@ -2240,7 +2240,7 @@ console.log(frame === contentFrame);  // -> true
 ```
 
 #### frame.getAttribute(selector, name[, options])
-- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be checked. See [working with selectors](#working-with-selectors) for more details.
+- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be picked. See [working with selectors](#working-with-selectors) for more details.
 - `name` <[string]> Attribute name to get the value for.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
@@ -2292,20 +2292,20 @@ This method fetches an element with `selector`, scrolls it into view if needed, 
 If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the actionability checks, the action is retried.
 
 #### frame.innerHTML(selector[, options])
-- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be checked. See [working with selectors](#working-with-selectors) for more details.
+- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be picked. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<null|[string]>>
 
-Resolves to the `node.innerHTML`.
+Resolves to the `element.innerHTML`.
 
 #### frame.innerText(selector[, options])
-- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be checked. See [working with selectors](#working-with-selectors) for more details.
+- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be picked. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<null|[string]>>
 
-Resolves to the `node.innerText`.
+Resolves to the `element.innerText`.
 
 #### frame.isDetached()
 - returns: <[boolean]>
@@ -2396,12 +2396,12 @@ This method expects `selector` to point to an [input element](https://developer.
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). For empty array, clears the selected files.
 
 #### frame.textContent(selector[, options])
-- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be checked. See [working with selectors](#working-with-selectors) for more details.
+- `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be picked. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<null|[string]>>
 
-Resolves to the `node.textContent`.
+Resolves to the `element.textContent`.
 
 
 #### frame.title()

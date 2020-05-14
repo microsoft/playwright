@@ -730,24 +730,24 @@ export class Frame {
         (handle, deadline) => handle.focus());
   }
 
-  async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<string | null> {
+  async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
     return await this._retryWithSelectorIfNotConnected('textContent', selector, options,
-        (handle, deadline) => handle.textContent());
+        (handle, deadline) => handle.textContent() as Promise<string>);
   }
 
-  async innerText(selector: string, options: types.TimeoutOptions = {}): Promise<string | null> {
+  async innerText(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
     return await this._retryWithSelectorIfNotConnected('innerText', selector, options,
-        (handle, deadline) => handle.innerText());
+        (handle, deadline) => handle.innerText() as Promise<string>);
   }
 
-  async innerHTML(selector: string, options: types.TimeoutOptions = {}): Promise<string | null> {
+  async innerHTML(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
     return await this._retryWithSelectorIfNotConnected('innerHTML', selector, options,
-        (handle, deadline) => handle.innerHTML());
+        (handle, deadline) => handle.innerHTML() as Promise<string>);
   }
 
-  async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
+  async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string> {
     return await this._retryWithSelectorIfNotConnected('getAttribute', selector, options,
-        (handle, deadline) => handle.getAttribute(name));
+        (handle, deadline) => handle.getAttribute(name) as Promise<string>);
   }
 
   async hover(selector: string, options: dom.PointerActionOptions & types.PointerActionWaitOptions = {}) {

@@ -452,19 +452,19 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
     return this.mainFrame().focus(selector, options);
   }
 
-  async textContent(selector: string, options?: types.TimeoutOptions): Promise<string | null> {
+  async textContent(selector: string, options?: types.TimeoutOptions): Promise<string> {
     return this.mainFrame().textContent(selector, options);
   }
 
-  async innerText(selector: string, options?: types.TimeoutOptions): Promise<string | null> {
+  async innerText(selector: string, options?: types.TimeoutOptions): Promise<string> {
     return this.mainFrame().innerText(selector, options);
   }
 
-  async innerHTML(selector: string, options?: types.TimeoutOptions): Promise<string | null> {
+  async innerHTML(selector: string, options?: types.TimeoutOptions): Promise<string> {
     return this.mainFrame().innerHTML(selector, options);
   }
 
-  async getAttribute(selector: string, name: string, options?: types.TimeoutOptions): Promise<string | null> {
+  async getAttribute(selector: string, name: string, options?: types.TimeoutOptions): Promise<string> {
     return this.mainFrame().getAttribute(selector, name, options);
   }
 
