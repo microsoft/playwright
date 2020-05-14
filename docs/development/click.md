@@ -1,6 +1,6 @@
 ## Supported click scenarios
 
-These are some clicking corner cases that we did consider and decided to support.
+These are some of the corner cases that Playwright aims to support.
 
 ### Positioning
 
@@ -10,7 +10,7 @@ These are some clicking corner cases that we did consider and decided to support
     <button>Click me</button>
     ```
 
-    We use `scrollRectIntoViewIfNeeded` to scroll the element into the viewport if at all possible.
+    Playwright scrolls the element into the viewport if at all possible.
 
   - Empty element with non-empty pseudo.
 
@@ -19,7 +19,7 @@ These are some clicking corner cases that we did consider and decided to support
     <span></span>
     ```
 
-    We retrieve the actual visible regions of the target element and click at the pseudo.
+    Playwright retrieves the actual visible regions of the target element and clicks at the pseudo.
 
   - Some part of the element is always outside of the viewport.
 
@@ -28,11 +28,11 @@ These are some clicking corner cases that we did consider and decided to support
     <span><i>one</i><b>two</b></span>
     ```
 
-    We retrieve the actual visible regions of the target element and click at the visible part.
+    Playwright retrieves the actual visible regions of the target element and clicks at the visible part.
 
   - Inline element is wrapped to the next line.
 
-    We retrieve the actual visible regions of the target element and click at one of the inline boxes.
+    Playwright retrieves the actual visible regions of the target element and clicks at one of the inline boxes.
 
   - Element is rotated with transform.
 
@@ -40,11 +40,11 @@ These are some clicking corner cases that we did consider and decided to support
     <button style="transform: rotate(50deg);">Click me</button>
     ```
 
-    We retrieve the actual visible regions of the target element and click at the transformed visible point.
+    Playwright retrieve the actual visible regions of the target element and clicks at the transformed visible point.
 
   - Element is deep inside the iframes and/or shadow dom.
 
-    We click it.
+    Playwright just clicks it.
 
 ### Dynamic changes
 
@@ -56,7 +56,7 @@ These are some clicking corner cases that we did consider and decided to support
     </script>
     ```
 
-    We wait for the element to be visible before clicking.
+    Playwright waits for the element to be visible before clicking.
 
   - Element is animating in.
 
@@ -67,7 +67,7 @@ These are some clicking corner cases that we did consider and decided to support
     <button style="animation: 3s linear move forwards;">Click me</button>
     ```
 
-    We wait for the element to stop moving before clicking.
+    Playwright waits for the element to stop moving before clicking.
 
   - Another element is temporary obscuring the target element.
 
@@ -93,8 +93,8 @@ These are some clicking corner cases that we did consider and decided to support
     </script>
     ```
 
-    For example, the dialog is dismissed and is slowly fading out. We wait for the obscuring element to disappear.
-    More precisely, we wait for the target element to actually receive pointer events.
+    For example, the dialog is dismissed and is slowly fading out. Playwright waits for the obscuring element to disappear.
+    More precisely, it waits for the target element to actually receive pointer events.
 
   - Element is replaced with another one after animation.
 
@@ -112,7 +112,7 @@ These are some clicking corner cases that we did consider and decided to support
     </script>
     ```
 
-    We wait for the element to be at a stable position, detect that it has been removed from the DOM and retry.
+    Playwright waits for the element to be at a stable position, detects that it has been removed from the DOM and retries.
 
 ### Targeting
 
@@ -124,17 +124,15 @@ These are some clicking corner cases that we did consider and decided to support
     </button>
     ```
 
-    We assume that in such a case the first parent receiving pointer events is a click target.
-    This is very convenient with something like `text=Click target` selector that actually targets the inner element.
+    Playwright assumes that in such a case the first parent receiving pointer events is a click target.
+    This is very convenient with something like `text=Click target` selector that actually targets the inner element but wants to click on the parent button.
 
 
 ## Unsupported click scenarios
 
-These are some clicking corner cases that we considered.
+Some scenarios here are marked as a bug in the web page - we believe that the page should be fixed because the real user will suffer the same issue. Playwright tries to throw when it's possible to detect the issue or timeout otherwise.
 
-Some scenarios are marked as a bug in the web page - we believe that the page should be fixed because the real user will suffer the same issue. We try to throw when it's possible to detect the issue or timeout otherwise.
-
-Other scenarios are perfectly fine, but we cannot support them, and usually suggest another way to handle. If Playwright logic does not work on your page, passing `{force: true}` option to the click will force the click without any checks. Use it when you know that's what you need.
+Other scenarios are perfectly fine, but Playwright cannot support them, and we usually suggest another way to handle. If Playwright logic does not work on your page, passing `{force: true}` option to the click will force the click without any checks. Use it when you know that's what you need.
 
 ### Positioning
 
@@ -151,7 +149,7 @@ Other scenarios are perfectly fine, but we cannot support them, and usually sugg
     </script>
     ```
 
-    We consider this a bug in the page and throw.
+    Playwright throws, considering this a bug in the page.
 
 ### Dynamic changes
 
@@ -165,7 +163,7 @@ Other scenarios are perfectly fine, but we cannot support them, and usually sugg
     <button style="animation: 3s linear move infinite;">Click me</button>
     ```
 
-    We wait for the element to be at a stable position and timeout. A real user would be able to click in some cases.
+    Playwright waits for the element to be at a stable position and times out. A real user would be able to click in some cases.
 
   - Element is animating in, but temporarily pauses in the middle.
 
@@ -176,7 +174,7 @@ Other scenarios are perfectly fine, but we cannot support them, and usually sugg
     <button style="animation: 3s linear move forwards;">Click me</button>
     ```
 
-    We click in the middle of the animation and could actually click at the wrong element. We do not detect this case and do not throw. A real user would probably retry and click again.
+    Playwright clicks in the middle of the animation and could actually click at the wrong element. Playwright does not detect this case and does not throw. A real user would probably retry and click again.
 
   - Element is removed or hidden after `fetch` / `xhr` / `setTimeout`.
 
@@ -187,9 +185,9 @@ Other scenarios are perfectly fine, but we cannot support them, and usually sugg
     </script>
     ```
 
-    We click the element and might be able to misclick. We do not detect this case and do not throw.
+    Playwright clicks the element, and might be able to misclick because it is already hidden. Playwright does not detect this case and does not throw.
 
-    This is a typical flaky failure, because the network fetch is racing against the input driven by Playwright. The suggested solution is to wait for the response to arrive, and only then click. For example, consider a filtered list with a "Apply filters" button that fetches new data, removes all items from the list and inserts new ones.
+    This is a typical flaky failure, because the network fetch is racing against the input driven by Playwright. We suggest to wait for the response to arrive, and click after that. For example, consider a filtered list with an "Apply filters" button that fetches new data, removes all items from the list and inserts new ones.
 
     ```js
     await Promise.all([
@@ -215,7 +213,7 @@ Other scenarios are perfectly fine, but we cannot support them, and usually sugg
     </div>
     ```
 
-    We consider the overlay temporary and timeout waiting for it to disappear.
+    Playwright considers the overlay temporary and times out while waiting for the overlay to disappear.
     When the overlay element is actually handling the input instead of the target element, use `{force: true}` option to skip the checks and click anyway.
 
   - Hover handler creates an overlay.
