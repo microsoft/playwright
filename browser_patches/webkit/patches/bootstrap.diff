@@ -1614,6 +1614,18 @@ index 6d5be9a591a272cd67d6e9d097b30505bdf8ae5e..8f67ba28c380e844c8e4191ee7044665
              return false;
      }
      
+diff --git a/Source/WebCore/Sources.txt b/Source/WebCore/Sources.txt
+index 51d46a8fcb19cd2d801e1e00086924bd9388ffd7..8148f0f7a8663d7c2635e38aa08170649e437c4a 100644
+--- a/Source/WebCore/Sources.txt
++++ b/Source/WebCore/Sources.txt
+@@ -1424,6 +1424,7 @@ inspector/agents/InspectorLayerTreeAgent.cpp
+ inspector/agents/InspectorMemoryAgent.cpp
+ inspector/agents/InspectorNetworkAgent.cpp
+ inspector/agents/InspectorPageAgent.cpp
++inspector/agents/InspectorScreencastAgent.cpp
+ inspector/agents/InspectorTimelineAgent.cpp
+ inspector/agents/InspectorWorkerAgent.cpp
+ inspector/agents/WebConsoleAgent.cpp
 diff --git a/Source/WebCore/SourcesCocoa.txt b/Source/WebCore/SourcesCocoa.txt
 index 71bab3866a179a695c769252584f77c2bcb64606..f2d3d3eababdde1635a649d0fc8a3a7b51fad191 100644
 --- a/Source/WebCore/SourcesCocoa.txt
@@ -1868,10 +1880,30 @@ index 3e2f9beaf00d25860436b7b608bfe9fb23195bae..e1a18032645fc9f9803ee891a4193030
          return;
  
 diff --git a/Source/WebCore/inspector/InspectorController.cpp b/Source/WebCore/inspector/InspectorController.cpp
-index f6784b88e479fdd184f0a1496c5e34d3714a1683..f0981d2ce954bd1833a0e8d8fe03c6c85e027b22 100644
+index f6784b88e479fdd184f0a1496c5e34d3714a1683..0687486f07a45b951054e55603f9b6daf819d822 100644
 --- a/Source/WebCore/inspector/InspectorController.cpp
 +++ b/Source/WebCore/inspector/InspectorController.cpp
-@@ -366,8 +366,8 @@ void InspectorController::inspect(Node* node)
+@@ -84,6 +84,9 @@
+ #include <JavaScriptCore/JSLock.h>
+ #include <wtf/Stopwatch.h>
+ 
++#if PLATFORM(WPE) || PLATFORM(WIN)
++#include "InspectorScreencastAgent.h"
++#endif
+ #if ENABLE(REMOTE_INSPECTOR)
+ #include "PageDebuggable.h"
+ #endif
+@@ -185,6 +188,9 @@ void InspectorController::createLazyAgents()
+     m_agents.append(makeUnique<PageHeapAgent>(pageContext));
+     m_agents.append(makeUnique<PageAuditAgent>(pageContext));
+     m_agents.append(makeUnique<InspectorCanvasAgent>(pageContext));
++#if PLATFORM(WPE) || PLATFORM(WIN)
++    m_agents.append(makeUnique<InspectorScreencastAgent>(pageContext));
++#endif
+     m_agents.append(makeUnique<InspectorTimelineAgent>(pageContext));
+     m_agents.append(makeUnique<InspectorAnimationAgent>(pageContext));
+ 
+@@ -366,8 +372,8 @@ void InspectorController::inspect(Node* node)
      if (!enabled())
          return;
  
@@ -1882,7 +1914,21 @@ index f6784b88e479fdd184f0a1496c5e34d3714a1683..f0981d2ce954bd1833a0e8d8fe03c6c8
  
      ensureDOMAgent().inspect(node);
  }
-@@ -510,4 +510,24 @@ void InspectorController::didComposite(Frame& frame)
+@@ -500,6 +506,13 @@ JSC::VM& InspectorController::vm()
+     return commonVM();
+ }
+ 
++// Playwright begin
++void InspectorController::willDisplay()
++{
++    InspectorInstrumentation::willDisplay(m_page);
++}
++// Playwright end
++
+ void InspectorController::willComposite(Frame& frame)
+ {
+     InspectorInstrumentation::willComposite(frame);
+@@ -510,4 +523,24 @@ void InspectorController::didComposite(Frame& frame)
      InspectorInstrumentation::didComposite(frame);
  }
  
@@ -1908,10 +1954,16 @@ index f6784b88e479fdd184f0a1496c5e34d3714a1683..f0981d2ce954bd1833a0e8d8fe03c6c8
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/InspectorController.h b/Source/WebCore/inspector/InspectorController.h
-index 3fae9951d703f83d0de805a71dfe0f7260feac58..6d6fbf9be7522188468f1dec988e6aee5d5aa877 100644
+index 3fae9951d703f83d0de805a71dfe0f7260feac58..b128a43568db28c399b7c86bc4f32ed541859689 100644
 --- a/Source/WebCore/inspector/InspectorController.h
 +++ b/Source/WebCore/inspector/InspectorController.h
-@@ -100,6 +100,10 @@ public:
+@@ -97,9 +97,16 @@ public:
+ 
+     WEBCORE_EXPORT void setIndicating(bool);
+ 
++// Playwright begin
++    WEBCORE_EXPORT void willDisplay();
++// Playwright end
      WEBCORE_EXPORT void willComposite(Frame&);
      WEBCORE_EXPORT void didComposite(Frame&);
  
@@ -1922,7 +1974,7 @@ index 3fae9951d703f83d0de805a71dfe0f7260feac58..6d6fbf9be7522188468f1dec988e6aee
      bool isUnderTest() const { return m_isUnderTest; }
      void setIsUnderTest(bool isUnderTest) { m_isUnderTest = isUnderTest; }
      WEBCORE_EXPORT void evaluateForTestInFrontend(const String& script);
-@@ -149,6 +153,7 @@ private:
+@@ -149,6 +156,7 @@ private:
      bool m_isAutomaticInspection { false };
      bool m_pauseAfterInitialization = { false };
      bool m_didCreateLazyAgents { false };
@@ -1931,10 +1983,36 @@ index 3fae9951d703f83d0de805a71dfe0f7260feac58..6d6fbf9be7522188468f1dec988e6aee
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index 0c442ee908877d2067d65e87441652a8cf00c88e..4234144873e3fa3caf12960c5eaa6b7f299d369e 100644
+index 0c442ee908877d2067d65e87441652a8cf00c88e..b6aec17893afb39c7eab7310ef9f2ce401c9456b 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-@@ -628,6 +628,12 @@ void InspectorInstrumentation::didFailLoadingImpl(InstrumentingAgents& instrumen
+@@ -53,6 +53,7 @@
+ #include "InspectorMemoryAgent.h"
+ #include "InspectorNetworkAgent.h"
+ #include "InspectorPageAgent.h"
++#include "InspectorScreencastAgent.h"
+ #include "InspectorTimelineAgent.h"
+ #include "InspectorWorkerAgent.h"
+ #include "InstrumentingAgents.h"
+@@ -502,6 +503,17 @@ void InspectorInstrumentation::didLayoutImpl(InstrumentingAgents& instrumentingA
+         pageAgent->didLayout();
+ }
+ 
++// Playwright begin
++void InspectorInstrumentation::willDisplayImpl(InstrumentingAgents& instrumentingAgents)
++{
++#if PLATFORM(WPE) || PLATFORM(WIN)
++
++    if (auto* screencastAgent = instrumentingAgents.inspectorScreencastAgent())
++        screencastAgent->willDisplay();
++#endif
++}
++// Playwright end
++
+ void InspectorInstrumentation::willCompositeImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
+ {
+     if (InspectorTimelineAgent* timelineAgent = instrumentingAgents.trackingInspectorTimelineAgent())
+@@ -628,6 +640,12 @@ void InspectorInstrumentation::didFailLoadingImpl(InstrumentingAgents& instrumen
          consoleAgent->didFailLoading(identifier, error); // This should come AFTER resource notification, front-end relies on this.
  }
  
@@ -1947,7 +2025,7 @@ index 0c442ee908877d2067d65e87441652a8cf00c88e..4234144873e3fa3caf12960c5eaa6b7f
  void InspectorInstrumentation::willLoadXHRSynchronouslyImpl(InstrumentingAgents& instrumentingAgents)
  {
      if (InspectorNetworkAgent* networkAgent = instrumentingAgents.inspectorNetworkAgent())
-@@ -660,20 +666,17 @@ void InspectorInstrumentation::didReceiveScriptResponseImpl(InstrumentingAgents&
+@@ -660,20 +678,17 @@ void InspectorInstrumentation::didReceiveScriptResponseImpl(InstrumentingAgents&
  
  void InspectorInstrumentation::domContentLoadedEventFiredImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
  {
@@ -1971,7 +2049,7 @@ index 0c442ee908877d2067d65e87441652a8cf00c88e..4234144873e3fa3caf12960c5eaa6b7f
  }
  
  void InspectorInstrumentation::frameDetachedFromParentImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
-@@ -751,12 +754,6 @@ void InspectorInstrumentation::frameDocumentUpdatedImpl(InstrumentingAgents& ins
+@@ -751,12 +766,6 @@ void InspectorInstrumentation::frameDocumentUpdatedImpl(InstrumentingAgents& ins
          pageDOMDebuggerAgent->frameDocumentUpdated(frame);
  }
  
@@ -1984,7 +2062,7 @@ index 0c442ee908877d2067d65e87441652a8cf00c88e..4234144873e3fa3caf12960c5eaa6b7f
  void InspectorInstrumentation::frameStartedLoadingImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
  {
      if (frame.isMainFrame()) {
-@@ -793,6 +790,12 @@ void InspectorInstrumentation::frameClearedScheduledNavigationImpl(Instrumenting
+@@ -793,6 +802,12 @@ void InspectorInstrumentation::frameClearedScheduledNavigationImpl(Instrumenting
          inspectorPageAgent->frameClearedScheduledNavigation(frame);
  }
  
@@ -1997,7 +2075,7 @@ index 0c442ee908877d2067d65e87441652a8cf00c88e..4234144873e3fa3caf12960c5eaa6b7f
  void InspectorInstrumentation::defaultAppearanceDidChangeImpl(InstrumentingAgents& instrumentingAgents, bool useDarkAppearance)
  {
      if (InspectorPageAgent* inspectorPageAgent = instrumentingAgents.inspectorPageAgent())
-@@ -1295,6 +1298,43 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
+@@ -1295,6 +1310,43 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
          layerTreeAgent->renderLayerDestroyed(renderLayer);
  }
  
@@ -2041,7 +2119,7 @@ index 0c442ee908877d2067d65e87441652a8cf00c88e..4234144873e3fa3caf12960c5eaa6b7f
  InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope& workerGlobalScope)
  {
      return workerGlobalScope.inspectorController().m_instrumentingAgents;
-@@ -1306,6 +1346,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForPage(Page&
+@@ -1306,6 +1358,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForPage(Page&
      return page.inspectorController().m_instrumentingAgents.get();
  }
  
@@ -2056,7 +2134,7 @@ index 0c442ee908877d2067d65e87441652a8cf00c88e..4234144873e3fa3caf12960c5eaa6b7f
  {
      if (is<Document>(context))
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.h b/Source/WebCore/inspector/InspectorInstrumentation.h
-index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..f5ba8d9989675341f39238d86f7ce2f48fd8d39f 100644
+index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..cd95112f4ed24429dfe27343228592e1d4ff7db4 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.h
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.h
 @@ -31,6 +31,7 @@
@@ -2090,7 +2168,17 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..f5ba8d9989675341f39238d86f7ce2f4
  class HTTPHeaderMap;
  class InspectorTimelineAgent;
  class InstrumentingAgents;
-@@ -198,6 +202,7 @@ public:
+@@ -181,6 +185,9 @@ public:
+     static void willLayout(Frame&);
+     static void didLayout(Frame&, RenderObject&);
+     static void didScroll(Page&);
++// Playwright begin
++    static void willDisplay(Page&);
++// Playwright end
+     static void willComposite(Frame&);
+     static void didComposite(Frame&);
+     static void willPaint(RenderObject&);
+@@ -198,6 +205,7 @@ public:
      static void didReceiveData(Frame*, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoading(Frame*, DocumentLoader*, unsigned long identifier, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoading(Frame*, DocumentLoader*, unsigned long identifier, const ResourceError&);
@@ -2098,7 +2186,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..f5ba8d9989675341f39238d86f7ce2f4
  
      static void willSendRequest(WorkerGlobalScope&, unsigned long identifier, ResourceRequest&);
      static void didReceiveResourceResponse(WorkerGlobalScope&, unsigned long identifier, const ResourceResponse&);
-@@ -224,11 +229,11 @@ public:
+@@ -224,11 +232,11 @@ public:
      static void frameDetachedFromParent(Frame&);
      static void didCommitLoad(Frame&, DocumentLoader*);
      static void frameDocumentUpdated(Frame&);
@@ -2111,7 +2199,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..f5ba8d9989675341f39238d86f7ce2f4
      static void defaultAppearanceDidChange(Page&, bool useDarkAppearance);
      static void willDestroyCachedResource(CachedResource&);
  
-@@ -318,6 +323,13 @@ public:
+@@ -318,6 +326,13 @@ public:
      static void layerTreeDidChange(Page*);
      static void renderLayerDestroyed(Page*, const RenderLayer&);
  
@@ -2125,7 +2213,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..f5ba8d9989675341f39238d86f7ce2f4
      static void frontendCreated();
      static void frontendDeleted();
      static bool hasFrontends() { return InspectorInstrumentationPublic::hasFrontends(); }
-@@ -333,6 +345,8 @@ public:
+@@ -333,6 +348,8 @@ public:
      static void registerInstrumentingAgents(InstrumentingAgents&);
      static void unregisterInstrumentingAgents(InstrumentingAgents&);
  
@@ -2134,7 +2222,17 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..f5ba8d9989675341f39238d86f7ce2f4
  private:
      static void didClearWindowObjectInWorldImpl(InstrumentingAgents&, Frame&, DOMWrapperWorld&);
      static bool isDebuggerPausedImpl(InstrumentingAgents&);
-@@ -419,6 +433,7 @@ private:
+@@ -400,6 +417,9 @@ private:
+     static void willLayoutImpl(InstrumentingAgents&, Frame&);
+     static void didLayoutImpl(InstrumentingAgents&, RenderObject&);
+     static void didScrollImpl(InstrumentingAgents&);
++// Playwright begin
++    static void willDisplayImpl(InstrumentingAgents&);
++// Playwright end
+     static void willCompositeImpl(InstrumentingAgents&, Frame&);
+     static void didCompositeImpl(InstrumentingAgents&);
+     static void willPaintImpl(InstrumentingAgents&, RenderObject&);
+@@ -419,6 +439,7 @@ private:
      static void didReceiveDataImpl(InstrumentingAgents&, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const ResourceError&);
@@ -2142,7 +2240,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..f5ba8d9989675341f39238d86f7ce2f4
      static void willLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void didLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void scriptImportedImpl(InstrumentingAgents&, unsigned long identifier, const String& sourceString);
-@@ -429,11 +444,11 @@ private:
+@@ -429,11 +450,11 @@ private:
      static void frameDetachedFromParentImpl(InstrumentingAgents&, Frame&);
      static void didCommitLoadImpl(InstrumentingAgents&, Frame&, DocumentLoader*);
      static void frameDocumentUpdatedImpl(InstrumentingAgents&, Frame&);
@@ -2155,7 +2253,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..f5ba8d9989675341f39238d86f7ce2f4
      static void defaultAppearanceDidChangeImpl(InstrumentingAgents&, bool useDarkAppearance);
      static void willDestroyCachedResourceImpl(CachedResource&);
  
-@@ -519,6 +534,13 @@ private:
+@@ -519,6 +540,13 @@ private:
      static void layerTreeDidChangeImpl(InstrumentingAgents&);
      static void renderLayerDestroyedImpl(InstrumentingAgents&, const RenderLayer&);
  
@@ -2169,7 +2267,22 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..f5ba8d9989675341f39238d86f7ce2f4
      static InstrumentingAgents& instrumentingAgentsForPage(Page&);
      static InstrumentingAgents& instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope&);
  
-@@ -1107,6 +1129,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
+@@ -968,6 +996,14 @@ inline void InspectorInstrumentation::didScroll(Page& page)
+     didScrollImpl(instrumentingAgentsForPage(page));
+ }
+ 
++// Playwright begin
++inline void InspectorInstrumentation::willDisplay(Page& page)
++{
++    FAST_RETURN_IF_NO_FRONTENDS(void());
++    willDisplayImpl(instrumentingAgentsForPage(page));
++}
++// Playwright end
++
+ inline void InspectorInstrumentation::willComposite(Frame& frame)
+ {
+     FAST_RETURN_IF_NO_FRONTENDS(void());
+@@ -1107,6 +1143,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
          didFailLoadingImpl(*instrumentingAgents, identifier, loader, error);
  }
  
@@ -2183,7 +2296,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..f5ba8d9989675341f39238d86f7ce2f4
  inline void InspectorInstrumentation::didFailLoading(WorkerGlobalScope& workerGlobalScope, unsigned long identifier, const ResourceError& error)
  {
      didFailLoadingImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), identifier, nullptr, error);
-@@ -1202,13 +1231,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
+@@ -1202,13 +1245,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
          frameDocumentUpdatedImpl(*instrumentingAgents, frame);
  }
  
@@ -2197,7 +2310,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..f5ba8d9989675341f39238d86f7ce2f4
  inline void InspectorInstrumentation::frameStartedLoading(Frame& frame)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1237,6 +1259,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
+@@ -1237,6 +1273,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
          frameClearedScheduledNavigationImpl(*instrumentingAgents, frame);
  }
  
@@ -2211,7 +2324,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..f5ba8d9989675341f39238d86f7ce2f4
  inline void InspectorInstrumentation::defaultAppearanceDidChange(Page& page, bool useDarkAppearance)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1687,6 +1716,50 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
+@@ -1687,6 +1730,50 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
          renderLayerDestroyedImpl(*instrumentingAgents, renderLayer);
  }
  
@@ -2313,6 +2426,48 @@ index b67e89b80b4e7a8586cac81ade5d58a1bcb0d431..c468bc0981d1fb13272b28095f9f7584
  inline bool InspectorInstrumentationWebKit::shouldInterceptResponse(const Frame* frame, const ResourceResponse& response)
  {
      FAST_RETURN_IF_NO_FRONTENDS(false);
+diff --git a/Source/WebCore/inspector/InstrumentingAgents.cpp b/Source/WebCore/inspector/InstrumentingAgents.cpp
+index d7a2f71958d943cccac434eac93e33dae27cc404..6cd053bd72ef6d14f15b0bd6739f672b0468198b 100644
+--- a/Source/WebCore/inspector/InstrumentingAgents.cpp
++++ b/Source/WebCore/inspector/InstrumentingAgents.cpp
+@@ -46,6 +46,7 @@ void InstrumentingAgents::reset()
+ {
+     m_inspectorAgent = nullptr;
+     m_inspectorPageAgent = nullptr;
++    m_inspectorScreencastAgent = nullptr;
+     m_inspectorCSSAgent = nullptr;
+     m_inspectorLayerTreeAgent = nullptr;
+     m_inspectorWorkerAgent = nullptr;
+diff --git a/Source/WebCore/inspector/InstrumentingAgents.h b/Source/WebCore/inspector/InstrumentingAgents.h
+index f59c3dbdcaf78cf9c6d8dbb432dccf22f15d507d..e6abccfbf286613180ecea948947c61075bc57b3 100644
+--- a/Source/WebCore/inspector/InstrumentingAgents.h
++++ b/Source/WebCore/inspector/InstrumentingAgents.h
+@@ -57,6 +57,7 @@ class InspectorLayerTreeAgent;
+ class InspectorMemoryAgent;
+ class InspectorNetworkAgent;
+ class InspectorPageAgent;
++class InspectorScreencastAgent;
+ class InspectorTimelineAgent;
+ class InspectorWorkerAgent;
+ class Page;
+@@ -88,6 +89,9 @@ public:
+     InspectorPageAgent* inspectorPageAgent() const { return m_inspectorPageAgent; }
+     void setInspectorPageAgent(InspectorPageAgent* agent) { m_inspectorPageAgent = agent; }
+ 
++    InspectorScreencastAgent* inspectorScreencastAgent() const { return m_inspectorScreencastAgent; }
++    void setInspectorScreencastAgent(InspectorScreencastAgent* agent) { m_inspectorScreencastAgent = agent; }
++
+     InspectorCanvasAgent* inspectorCanvasAgent() const { return m_inspectorCanvasAgent; }
+     void setInspectorCanvasAgent(InspectorCanvasAgent* agent) { m_inspectorCanvasAgent = agent; }
+ 
+@@ -169,6 +173,7 @@ private:
+ 
+     Inspector::InspectorAgent* m_inspectorAgent { nullptr };
+     InspectorPageAgent* m_inspectorPageAgent { nullptr };
++    InspectorScreencastAgent* m_inspectorScreencastAgent { nullptr };
+     InspectorCSSAgent* m_inspectorCSSAgent { nullptr };
+     InspectorLayerTreeAgent* m_inspectorLayerTreeAgent { nullptr };
+     InspectorWorkerAgent* m_inspectorWorkerAgent { nullptr };
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 index a2f8dfa1624ddff42e359c862e0748e72ecbc96c..b7a4e23bf12b1367f1eda92bc9ae113055c455d5 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
@@ -4109,6 +4264,255 @@ index 6c75829502336b0806db2531e78186d2c559e44c..1ad6b8e863c56fd572910db6c6fb524d
  };
  
  } // namespace WebCore
+diff --git a/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp b/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..e7f4a5b8b23771f8d81dd4c61c642923399ca757
+--- /dev/null
++++ b/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp
+@@ -0,0 +1,158 @@
++/*
++ * Copyright (C) 2020 Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "config.h"
++#include "InspectorScreencastAgent.h"
++
++#if PLATFORM(WPE) || PLATFORM(WIN)
++
++#include "Page.h"
++#include "FrameSnapshotting.h"
++#include "ImageBuffer.h"
++#include <JavaScriptCore/InspectorFrontendDispatchers.h>
++#include <JavaScriptCore/InspectorFrontendRouter.h>
++
++namespace WebCore {
++
++using namespace Inspector;
++
++InspectorScreencastAgent::InspectorScreencastAgent(PageAgentContext& context)
++    : InspectorAgentBase("Screencast"_s, context)
++    , m_frontendDispatcher(makeUnique<ScreencastFrontendDispatcher>(context.frontendRouter))
++    , m_backendDispatcher(ScreencastBackendDispatcher::create(context.backendDispatcher, this))
++    , m_inspectedPage(context.inspectedPage)
++{
++}
++
++InspectorScreencastAgent::~InspectorScreencastAgent()
++{
++}
++
++void InspectorScreencastAgent::didCreateFrontendAndBackend(FrontendRouter*, BackendDispatcher*)
++{
++}
++
++void InspectorScreencastAgent::willDestroyFrontendAndBackend(DisconnectReason)
++{
++    ErrorString errorString;
++    stop(errorString);
++}
++
++void InspectorScreencastAgent::start(Inspector::ErrorString& errorString, const String& format, const int* quality)
++{
++    if (isEnabled())
++      return;
++
++#if !PLATFORM(GTK)
++    // TODO: make ImageBufferUtilitiesCairo produce jpeg on WPE and Windows.
++    if (format != "png") {
++        errorString = "Only png format is supported on WPE."_s;
++        return;
++    }
++#endif
++
++    if (format == "jpeg") {
++        m_format = "image/jpeg";
++    } else if (format == "png") {
++        m_format = "image/png";
++    } else {
++        errorString = "Unsupported format."_s;
++        return;
++    }
++
++    if (quality && (*quality < 0 || *quality >100)) {
++        errorString = "Unsupported quality."_s;
++        return;
++    }
++
++    if (quality)
++        m_quality = *quality;
++    m_instrumentingAgents.setInspectorScreencastAgent(this);
++}
++
++void InspectorScreencastAgent::stop(Inspector::ErrorString&)
++{
++    if (!isEnabled())
++      return;
++
++    m_instrumentingAgents.setInspectorScreencastAgent(nullptr);
++    m_inflightFrames = 0;
++    m_quality = WTF::nullopt;
++}
++
++void InspectorScreencastAgent::frameAck(Inspector::ErrorString& errorString)
++{
++    if (!m_inflightFrames) {
++        errorString = "No inflight frames to ack"_s;
++        return;
++    }
++
++    --m_inflightFrames;
++}
++
++bool InspectorScreencastAgent::isEnabled() const
++{
++    return m_instrumentingAgents.inspectorScreencastAgent();
++}
++
++void InspectorScreencastAgent::willDisplay()
++{
++    if (!isEnabled())
++        return;
++
++    if (m_inflightFrames > 2)
++        return;
++
++    String snapshot = takeSnapshot();
++    if (snapshot.isEmpty())
++        return;
++
++    ++m_inflightFrames;
++    m_frontendDispatcher->frame(snapshot);
++}
++
++String InspectorScreencastAgent::takeSnapshot()
++{
++    SnapshotOptions options = SnapshotOptionsNone;
++    options |= SnapshotOptionsInViewCoordinates;
++    IntSize size = m_inspectedPage.mainFrame().view()->visibleSize();
++    fprintf(stderr, "view().visibleSize() = %s\n", size.toJSONString().ascii().data());
++    IntRect rectangle({0, 0}, size);
++    std::unique_ptr<ImageBuffer> snapshot = snapshotFrameRect(m_inspectedPage.mainFrame(), rectangle, options);
++
++    if (!snapshot)
++        return String();
++
++    Optional<double> quality;
++    if (m_quality)
++        quality = *m_quality / 100.0;
++
++    Vector<uint8_t> data = snapshot->toData(m_format, quality);
++    return base64Encode(data);
++}
++
++} // namespace WebCore
++
++#endif  // PLATFORM(WPE) || PLATFORM(WIN)
+diff --git a/Source/WebCore/inspector/agents/InspectorScreencastAgent.h b/Source/WebCore/inspector/agents/InspectorScreencastAgent.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..031911914c9fd89fb3ee8e42a95f97cdf1b9c4cd
+--- /dev/null
++++ b/Source/WebCore/inspector/agents/InspectorScreencastAgent.h
+@@ -0,0 +1,79 @@
++/*
++ * Copyright (C) 2020 Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#pragma once
++
++#if PLATFORM(WPE) || PLATFORM(WIN)
++
++#include "InspectorWebAgentBase.h"
++#include <JavaScriptCore/InspectorBackendDispatchers.h>
++#include <JavaScriptCore/InspectorFrontendDispatchers.h>
++
++#include <wtf/Forward.h>
++#include <wtf/Noncopyable.h>
++#include <wtf/WeakPtr.h>
++
++namespace Inspector {
++class BackendDispatcher;
++class FrontendChannel;
++class FrontendRouter;
++class ScreencastFrontendDispatcher;
++}
++
++namespace WebCore {
++
++class Page;
++
++class InspectorScreencastAgent : public InspectorAgentBase, public Inspector::ScreencastBackendDispatcherHandler, public CanMakeWeakPtr<InspectorScreencastAgent> {
++    WTF_MAKE_NONCOPYABLE(InspectorScreencastAgent);
++    WTF_MAKE_FAST_ALLOCATED;
++public:
++    InspectorScreencastAgent(PageAgentContext&);
++    ~InspectorScreencastAgent() override;
++
++    void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) override;
++    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
++
++    void start(Inspector::ErrorString&, const String& format, const int* quality) override;
++    void stop(Inspector::ErrorString&) override;
++    void frameAck(Inspector::ErrorString&) override;
++
++    void willDisplay();
++
++private:
++    bool isEnabled() const;
++    String takeSnapshot();
++
++    std::unique_ptr<Inspector::ScreencastFrontendDispatcher> m_frontendDispatcher;
++    Ref<Inspector::ScreencastBackendDispatcher> m_backendDispatcher;
++    Page& m_inspectedPage;
++    int m_inflightFrames { 0 };
++    String m_format;
++    Optional<int> m_quality;
++};
++
++} // namespace WebCore
++
++#endif // PLATFORM(WPE) || PLATFORM(WIN)
 diff --git a/Source/WebCore/inspector/agents/InspectorWorkerAgent.cpp b/Source/WebCore/inspector/agents/InspectorWorkerAgent.cpp
 index a7a20f7234743d65382b5c93077c95f2bfa793bb..ba10548085cc4012c1d42d78112445c9a5777070 100644
 --- a/Source/WebCore/inspector/agents/InspectorWorkerAgent.cpp
@@ -8384,10 +8788,10 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
      // The timeout we use when waiting for a DidUpdateGeometry message.
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..b982b01789b697f3e7810b374705d95ccaf6a0ba
+index 0000000000000000000000000000000000000000..f301bc4d2782a4ba1deca8bb59da46c00ae09896
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,202 @@
+@@ -0,0 +1,206 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8419,7 +8823,9 @@ index 0000000000000000000000000000000000000000..b982b01789b697f3e7810b374705d95c
 +#include "PageClient.h"
 +#include "WebAutomationSession.h"
 +#include "WebPageProxy.h"
++#include <JavaScriptCore/InspectorFrontendDispatchers.h>
 +#include <JavaScriptCore/InspectorFrontendRouter.h>
++#include <WebCore/NotImplemented.h>
 +
 +#if PLATFORM(GTK)
 +#include <WebCore/ImageBufferUtilitiesCairo.h>
@@ -8456,7 +8862,7 @@ index 0000000000000000000000000000000000000000..b982b01789b697f3e7810b374705d95c
 +void InspectorScreencastAgent::start(Inspector::ErrorString& errorString, const String& format, const int* quality)
 +{
 +    if (m_enabled)
-+      return;
++        return;
 +
 +    if (format == "jpeg") {
 +        m_format = ImageFormat::Jpeg;
@@ -8486,7 +8892,7 @@ index 0000000000000000000000000000000000000000..b982b01789b697f3e7810b374705d95c
 +void InspectorScreencastAgent::stop(Inspector::ErrorString&)
 +{
 +    if (!m_enabled)
-+      return;
++        return;
 +
 +    m_enabled = false;
 +    m_inflightFrames = 0;
@@ -8585,6 +8991,8 @@ index 0000000000000000000000000000000000000000..b982b01789b697f3e7810b374705d95c
 +#else
 +String InspectorScreencastAgent::platformTakeSnapshot()
 +{
++    // WPE and Windows implementation lives in the Web Process.
++    notImplemented();
 +    return String();
 +}
 +#endif
@@ -8592,10 +9000,10 @@ index 0000000000000000000000000000000000000000..b982b01789b697f3e7810b374705d95c
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..b5eeeca0f6b8c5c31e3786c0a675e32285a808c4
+index 0000000000000000000000000000000000000000..a1d8892da8bebd48346a4ccb9e9836dab9da7909
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
-@@ -0,0 +1,77 @@
+@@ -0,0 +1,78 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8634,6 +9042,7 @@ index 0000000000000000000000000000000000000000..b5eeeca0f6b8c5c31e3786c0a675e322
 +class BackendDispatcher;
 +class FrontendChannel;
 +class FrontendRouter;
++class ScreencastFrontendDispatcher;
 +}
 +
 +namespace WebKit {
@@ -8787,7 +9196,7 @@ index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..79f3ff84327dc075ec96983e04db4b10
  
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
-index 1861cff806131196ea49b4f8aca6665beebbf6e8..521ef88239d5db7274cd19cd4258581464081f92 100644
+index 1861cff806131196ea49b4f8aca6665beebbf6e8..57cb5bd0a6916b00da01af17b743da9e04094a77 100644
 --- a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
 @@ -26,12 +26,20 @@
@@ -8811,7 +9220,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..521ef88239d5db7274cd19cd42585814
  #include <JavaScriptCore/InspectorAgentBase.h>
  #include <JavaScriptCore/InspectorBackendDispatcher.h>
  #include <JavaScriptCore/InspectorBackendDispatchers.h>
-@@ -48,27 +56,103 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
+@@ -48,27 +56,104 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
      return WebPageInspectorTarget::toTargetID(provisionalPage.webPageID());
  }
  
@@ -8844,8 +9253,9 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..521ef88239d5db7274cd19cd42585814
 +    m_inputAgent = inputAgent.get();
 +    m_agents.append(WTFMove(inputAgent));
 +    m_agents.append(makeUnique<InspectorDialogAgent>(m_backendDispatcher.get(), m_frontendRouter.get(), m_page));
++#if !PLATFORM(WPE) && !PLATFORM(WIN)
 +    m_agents.append(makeUnique<InspectorScreencastAgent>(m_backendDispatcher.get(), m_frontendRouter.get(), m_page));
-+
++#endif
 +    if (s_observer)
 +        s_observer->didCreateInspectorController(m_page);
 +
@@ -8918,7 +9328,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..521ef88239d5db7274cd19cd42585814
  }
  
  bool WebPageInspectorController::hasLocalFrontend() const
-@@ -82,6 +166,17 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
+@@ -82,6 +167,17 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
  
      bool connectingFirstFrontend = !m_frontendRouter->hasFrontends();
  
@@ -8936,7 +9346,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..521ef88239d5db7274cd19cd42585814
      m_frontendRouter->connectFrontend(frontendChannel);
  
      if (connectingFirstFrontend)
-@@ -100,8 +195,10 @@ void WebPageInspectorController::disconnectFrontend(FrontendChannel& frontendCha
+@@ -100,8 +196,10 @@ void WebPageInspectorController::disconnectFrontend(FrontendChannel& frontendCha
      m_frontendRouter->disconnectFrontend(frontendChannel);
  
      bool disconnectingLastFrontend = !m_frontendRouter->hasFrontends();
@@ -8948,7 +9358,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..521ef88239d5db7274cd19cd42585814
  
      m_page.didChangeInspectorFrontendCount(m_frontendRouter->frontendCount());
  
-@@ -124,6 +221,8 @@ void WebPageInspectorController::disconnectAllFrontends()
+@@ -124,6 +222,8 @@ void WebPageInspectorController::disconnectAllFrontends()
      // Disconnect any remaining remote frontends.
      m_frontendRouter->disconnectAllFrontends();
  
@@ -8957,7 +9367,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..521ef88239d5db7274cd19cd42585814
      m_page.didChangeInspectorFrontendCount(m_frontendRouter->frontendCount());
  
  #if ENABLE(REMOTE_INSPECTOR)
-@@ -150,6 +249,55 @@ void WebPageInspectorController::setIndicating(bool indicating)
+@@ -150,6 +250,55 @@ void WebPageInspectorController::setIndicating(bool indicating)
  }
  #endif
  
@@ -9013,7 +9423,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..521ef88239d5db7274cd19cd42585814
  void WebPageInspectorController::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
      addTarget(InspectorTargetProxy::create(m_page, targetId, type));
-@@ -169,6 +317,33 @@ void WebPageInspectorController::sendMessageToInspectorFrontend(const String& ta
+@@ -169,6 +318,33 @@ void WebPageInspectorController::sendMessageToInspectorFrontend(const String& ta
      m_targetAgent->sendMessageFromTargetToFrontend(targetId, message);
  }
  
@@ -9047,7 +9457,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..521ef88239d5db7274cd19cd42585814
  bool WebPageInspectorController::shouldPauseLoading(const ProvisionalPageProxy& provisionalPage) const
  {
      if (!m_frontendRouter->hasFrontends())
-@@ -188,7 +363,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
+@@ -188,7 +364,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
  
  void WebPageInspectorController::didCreateProvisionalPage(ProvisionalPageProxy& provisionalPage)
  {
@@ -9056,7 +9466,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..521ef88239d5db7274cd19cd42585814
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -241,4 +416,20 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
+@@ -241,4 +417,20 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
      m_targets.set(target->identifier(), WTFMove(target));
  }
  
@@ -13630,7 +14040,7 @@ index 1324229bf6dd3a90324aa55dff533186f97b52e8..b459bf67142874851e3f6e0caf0a229b
  {
      if (m_page.activeOpenPanelResultListener())
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
-index 28189c82da62d9e0d9f516f1a69d4a8614dbd1d6..0664c282e8514abe6f8f213c3a496a4a6a9cdcda 100644
+index 28189c82da62d9e0d9f516f1a69d4a8614dbd1d6..fb39c9ea955e8255de7dbb755cf0c26aff23a3c0 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 @@ -244,12 +244,20 @@ void DrawingAreaCoordinatedGraphics::updatePreferences(const WebPreferencesStore
@@ -13654,6 +14064,18 @@ index 28189c82da62d9e0d9f516f1a69d4a8614dbd1d6..0664c282e8514abe6f8f213c3a496a4a
  
      // If async scrolling is disabled, we have to force-disable async frame and overflow scrolling
      // to keep the non-async scrolling on those elements working.
+@@ -713,6 +721,11 @@ void DrawingAreaCoordinatedGraphics::display()
+         return;
+     }
+ 
++// Playwright begin
++#if PLATFORM(WPE) || PLATFORM(WIN)
++    m_webPage.corePage()->inspectorController().willDisplay();
++#endif
++// Playwright end
+     send(Messages::DrawingAreaProxy::Update(m_backingStoreStateID, updateInfo));
+     m_isWaitingForDidUpdate = true;
+ }
 diff --git a/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp b/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp
 index b2d54a627b94583bda3518c4e7c3364481b605a4..d407e32b6a7b8b27925c49391e86d42c9b3dfa8b 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp
