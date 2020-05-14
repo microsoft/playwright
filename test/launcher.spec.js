@@ -58,7 +58,7 @@ describe('Playwright', function() {
     });
     it('should handle exception', async({browserType, defaultBrowserOptions}) => {
       const e = new Error('Dummy');
-      const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; } };
+      const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
       const error = await browserType.launch(options).catch(e => e);
       expect(error).toBe(e);
     });
