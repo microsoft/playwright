@@ -60,3 +60,14 @@ describe('Page.focus', function() {
     expect(await page.$eval('#i2', e => e.value)).toBe('Last');
   });
 });
+
+describe('ElementHandle.hasFocus', function() {
+  it('should work', async({page, server}) => {
+    await page.setContent(`<div id=d1 tabIndex=0></div>`);
+    expect(await page.$('body').then(body => body.hasFocus())).toBe(true);
+    expect(await page.$('#d1').then(div => div.hasFocus())).toBe(false);
+    await page.focus('#d1');
+    expect(await page.$('body').then(body => body.hasFocus())).toBe(false);
+    expect(await page.$('#d1').then(div => div.hasFocus())).toBe(true);
+  });
+});

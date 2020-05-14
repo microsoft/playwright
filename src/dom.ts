@@ -157,6 +157,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, {});
   }
 
+  async hasFocus(): Promise<boolean> {
+    return this._evaluateInUtility(({node}) => {
+      if (node.nodeType !== Node.ELEMENT_NODE)
+        throw new Error('Not an element');
+      const element = node as unknown as Element;
+      return element === document.activeElement;
+    }, {});
+  }
+
   async dispatchEvent(type: string, eventInit: Object = {}) {
     await this._evaluateInMain(({ injected, node }, { type, eventInit }) =>
       injected.dispatchEvent(node, type, eventInit), { type, eventInit });

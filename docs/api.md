@@ -2509,6 +2509,7 @@ ElementHandle instances can be used as an argument in [`page.$eval()`](#pageeval
 - [elementHandle.fill(value[, options])](#elementhandlefillvalue-options)
 - [elementHandle.focus()](#elementhandlefocus)
 - [elementHandle.getAttribute(name)](#elementhandlegetattributename)
+- [elementHandle.hasFocus()](#elementhandlehasfocus)
 - [elementHandle.hover([options])](#elementhandlehoveroptions)
 - [elementHandle.innerHTML()](#elementhandleinnerhtml)
 - [elementHandle.innerText()](#elementhandleinnertext)
@@ -2705,6 +2706,11 @@ Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus
 - returns: <[Promise]<null|[string]>> Resolves to the attribute value.
 
 Returns element attribute value.
+
+#### elementHandle.hasFocus()
+- returns: <[Promise]<[boolean]>>
+
+Returns `true` is this element is equal to [`document.activeElement`](https://developer.mozilla.org/en-US/docs/Web/API/DocumentOrShadowRoot/activeElement).
 
 #### elementHandle.hover([options])
 - `options` <[Object]>
