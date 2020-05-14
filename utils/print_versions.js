@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const pw = require('..');
+const pw = require('../index-for-dev.js');
 const child_process = require('child_process');
 
 for (const browserType of [pw.chromium, pw.firefox]) {
@@ -23,4 +23,4 @@ for (const browserType of [pw.chromium, pw.firefox]) {
   const version = child_process.execSync(executablePath + ' --version').toString().trim();
   console.log('- ' + version);
 }
-console.log('- WebKit 13.0.4');
+console.log('- WebKit 13.2');
