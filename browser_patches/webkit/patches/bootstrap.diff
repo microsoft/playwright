@@ -1983,18 +1983,23 @@ index 3fae9951d703f83d0de805a71dfe0f7260feac58..b128a43568db28c399b7c86bc4f32ed5
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index 0c442ee908877d2067d65e87441652a8cf00c88e..b6aec17893afb39c7eab7310ef9f2ce401c9456b 100644
+index 0c442ee908877d2067d65e87441652a8cf00c88e..edc00897f886f540db097000fe1e870f296c980c 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-@@ -53,6 +53,7 @@
- #include "InspectorMemoryAgent.h"
- #include "InspectorNetworkAgent.h"
- #include "InspectorPageAgent.h"
+@@ -81,6 +81,12 @@
+ #include <JavaScriptCore/ScriptCallStack.h>
+ #include <wtf/StdLibExtras.h>
+ 
++// Playwright begin
++#if PLATFORM(WPE) || PLATFORM(WIN)
 +#include "InspectorScreencastAgent.h"
- #include "InspectorTimelineAgent.h"
- #include "InspectorWorkerAgent.h"
- #include "InstrumentingAgents.h"
-@@ -502,6 +503,17 @@ void InspectorInstrumentation::didLayoutImpl(InstrumentingAgents& instrumentingA
++#endif
++// Playwright end
++
+ #if ENABLE(WEBGPU)
+ #include "WebGPUSwapChain.h"
+ #endif
+@@ -502,6 +508,17 @@ void InspectorInstrumentation::didLayoutImpl(InstrumentingAgents& instrumentingA
          pageAgent->didLayout();
  }
  
@@ -2012,7 +2017,7 @@ index 0c442ee908877d2067d65e87441652a8cf00c88e..b6aec17893afb39c7eab7310ef9f2ce4
  void InspectorInstrumentation::willCompositeImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
  {
      if (InspectorTimelineAgent* timelineAgent = instrumentingAgents.trackingInspectorTimelineAgent())
-@@ -628,6 +640,12 @@ void InspectorInstrumentation::didFailLoadingImpl(InstrumentingAgents& instrumen
+@@ -628,6 +645,12 @@ void InspectorInstrumentation::didFailLoadingImpl(InstrumentingAgents& instrumen
          consoleAgent->didFailLoading(identifier, error); // This should come AFTER resource notification, front-end relies on this.
  }
  
@@ -2025,7 +2030,7 @@ index 0c442ee908877d2067d65e87441652a8cf00c88e..b6aec17893afb39c7eab7310ef9f2ce4
  void InspectorInstrumentation::willLoadXHRSynchronouslyImpl(InstrumentingAgents& instrumentingAgents)
  {
      if (InspectorNetworkAgent* networkAgent = instrumentingAgents.inspectorNetworkAgent())
-@@ -660,20 +678,17 @@ void InspectorInstrumentation::didReceiveScriptResponseImpl(InstrumentingAgents&
+@@ -660,20 +683,17 @@ void InspectorInstrumentation::didReceiveScriptResponseImpl(InstrumentingAgents&
  
  void InspectorInstrumentation::domContentLoadedEventFiredImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
  {
@@ -2049,7 +2054,7 @@ index 0c442ee908877d2067d65e87441652a8cf00c88e..b6aec17893afb39c7eab7310ef9f2ce4
  }
  
  void InspectorInstrumentation::frameDetachedFromParentImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
-@@ -751,12 +766,6 @@ void InspectorInstrumentation::frameDocumentUpdatedImpl(InstrumentingAgents& ins
+@@ -751,12 +771,6 @@ void InspectorInstrumentation::frameDocumentUpdatedImpl(InstrumentingAgents& ins
          pageDOMDebuggerAgent->frameDocumentUpdated(frame);
  }
  
@@ -2062,7 +2067,7 @@ index 0c442ee908877d2067d65e87441652a8cf00c88e..b6aec17893afb39c7eab7310ef9f2ce4
  void InspectorInstrumentation::frameStartedLoadingImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
  {
      if (frame.isMainFrame()) {
-@@ -793,6 +802,12 @@ void InspectorInstrumentation::frameClearedScheduledNavigationImpl(Instrumenting
+@@ -793,6 +807,12 @@ void InspectorInstrumentation::frameClearedScheduledNavigationImpl(Instrumenting
          inspectorPageAgent->frameClearedScheduledNavigation(frame);
  }
  
@@ -2075,7 +2080,7 @@ index 0c442ee908877d2067d65e87441652a8cf00c88e..b6aec17893afb39c7eab7310ef9f2ce4
  void InspectorInstrumentation::defaultAppearanceDidChangeImpl(InstrumentingAgents& instrumentingAgents, bool useDarkAppearance)
  {
      if (InspectorPageAgent* inspectorPageAgent = instrumentingAgents.inspectorPageAgent())
-@@ -1295,6 +1310,43 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
+@@ -1295,6 +1315,43 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
          layerTreeAgent->renderLayerDestroyed(renderLayer);
  }
  
@@ -2119,7 +2124,7 @@ index 0c442ee908877d2067d65e87441652a8cf00c88e..b6aec17893afb39c7eab7310ef9f2ce4
  InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope& workerGlobalScope)
  {
      return workerGlobalScope.inspectorController().m_instrumentingAgents;
-@@ -1306,6 +1358,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForPage(Page&
+@@ -1306,6 +1363,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForPage(Page&
      return page.inspectorController().m_instrumentingAgents.get();
  }
  
