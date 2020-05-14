@@ -142,10 +142,6 @@ export class WKBrowser extends BrowserBase {
     const wkPage = new WKPage(context, pageProxySession, opener || null);
     this._wkPages.set(pageProxyId, wkPage);
 
-    if (opener && opener._initializedPage) {
-      for (const signalBarrier of opener._initializedPage._frameManager._signalBarriers)
-        signalBarrier.addPopup(wkPage.pageOrError());
-    }
     wkPage.pageOrError().then(async () => {
       const page = wkPage._page;
       context!.emit(Events.BrowserContext.Page, page);

@@ -34,26 +34,6 @@ describe('Auto waiting', () => {
     ]);
     expect(messages.join('|')).toBe('route|navigated|click');
   });
-  it('should await popup when clicking anchor', async function({page, server}) {
-    await page.goto(server.EMPTY_PAGE);
-    await page.setContent('<a target=_blank rel=opener href="/empty.html">link</a>');
-    const messages = [];
-    await Promise.all([
-      page.waitForEvent('popup').then(() => messages.push('popup')),
-      page.click('a').then(() => messages.push('click')),
-    ]);
-    expect(messages.join('|')).toBe('popup|click');
-  });
-  it('should await popup when clicking anchor with noopener', async function({page, server}) {
-    await page.goto(server.EMPTY_PAGE);
-    await page.setContent('<a target=_blank rel=noopener href="/empty.html">link</a>');
-    const messages = [];
-    await Promise.all([
-      page.waitForEvent('popup').then(() => messages.push('popup')),
-      page.click('a').then(() => messages.push('click')),
-    ]);
-    expect(messages.join('|')).toBe('popup|click');
-  });
   it('should await cross-process navigation when clicking anchor', async({page, server}) => {
     const messages = [];
     server.setRoute('/empty.html', async (req, res) => {
@@ -150,15 +130,6 @@ describe('Auto waiting', () => {
     ]);
     expect(messages.join('|')).toBe('route|navigated|evaluate');
   });
-  it('should await new popup when evaluating', async function({page, server}) {
-    await page.goto(server.EMPTY_PAGE);
-    const messages = [];
-    await Promise.all([
-      page.waitForEvent('popup').then(() => messages.push('popup')),
-      page.evaluate(() => window._popup = window.open(window.location.href)).then(() => messages.push('evaluate')),
-    ]);
-    expect(messages.join('|')).toBe('popup|evaluate');
-  });
   it('should await navigating specified target', async({page, server}) => {
     const messages = [];
     server.setRoute('/empty.html', async (req, res) => {
@@ -253,6 +224,13 @@ describe('Auto waiting should not hang when', () => {
       const popup = window.open(window.location.href);
       popup.close();
     });
+  });
+  it('opening a popup', async function({page, server}) {
+    await page.goto(server.EMPTY_PAGE);
+    await Promise.all([
+      page.waitForEvent('popup'),
+      page.evaluate(() => window._popup = window.open(window.location.href)),
+    ]);
   });
 });
 

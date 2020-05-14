@@ -954,10 +954,8 @@ function selectorToString(selector: string, state: 'attached' | 'detached' | 'vi
 }
 
 export class SignalBarrier {
-  private _frameIds = new Map<string, number>();
   private _options: types.NavigatingActionWaitOptions;
   private _protectCount = 0;
-  private _expectedPopups = 0;
   private _promise: Promise<void>;
   private _promiseCallback = () => {};
   private _deadline: number;
@@ -981,23 +979,6 @@ export class SignalBarrier {
     this.release();
   }
 
-  async expectPopup() {
-    ++this._expectedPopups;
-  }
-
-  async unexpectPopup() {
-    --this._expectedPopups;
-    this._maybeResolve();
-  }
-
-  async addPopup(pageOrError: Promise<Page | Error>) {
-    if (this._expectedPopups)
-      --this._expectedPopups;
-    this.retain();
-    await pageOrError;
-    this.release();
-  }
-
   retain() {
     ++this._protectCount;
   }
@@ -1008,7 +989,7 @@ export class SignalBarrier {
   }
 
   private async _maybeResolve() {
-    if (!this._protectCount && !this._expectedPopups && !this._frameIds.size)
+    if (!this._protectCount)
       this._promiseCallback();
   }
 }
