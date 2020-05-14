@@ -43,16 +43,7 @@ export class Screenshotter {
     let viewportSize = originalViewportSize;
     if (!viewportSize) {
       const context = await this._page.mainFrame()._utilityContext();
-      viewportSize = await context.evaluateInternal(() => {
-        if (!document.body || !document.documentElement)
-          return null;
-        return {
-          width: Math.max(document.body.offsetWidth, document.documentElement.offsetWidth),
-          height: Math.max(document.body.offsetHeight, document.documentElement.offsetHeight),
-        };
-      });
-      if (!viewportSize)
-        throw new Error(kScreenshotDuringNavigationError);
+      viewportSize = await context.evaluateInternal(() => ({ width: window.innerWidth, height: window.innerHeight }));
     }
     return { viewportSize, originalViewportSize };
   }

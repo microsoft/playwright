@@ -16,6 +16,7 @@
  */
 
 const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+const {PNG} = require('pngjs');
 
 // Firefox headful produces a different image.
 const ffheadful = FFOX && !HEADLESS;
@@ -410,10 +411,15 @@ describe.skip(ffheadful)('ElementHandle.screenshot', function() {
   it('should take screenshots when default viewport is null', async({server, browser}) => {
     const context = await browser.newContext({ viewport: null });
     const page = await context.newPage();
-    await page.goto(server.PREFIX + '/grid.html');
+    await page.setContent(`<div style='height: 10000px; background: red'></div>`);
+    const windowSize = await page.evaluate(() => ({ width: window.innerWidth * window.devicePixelRatio, height: window.innerHeight * window.devicePixelRatio }));
     const sizeBefore = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
+
     const screenshot = await page.screenshot();
     expect(screenshot).toBeInstanceOf(Buffer);
+    const decoded = PNG.sync.read(screenshot);
+    expect(decoded.width).toBe(windowSize.width);
+    expect(decoded.height).toBe(windowSize.height);
 
     const sizeAfter = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
     expect(sizeBefore.width).toBe(sizeAfter.width);
