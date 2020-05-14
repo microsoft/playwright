@@ -31,6 +31,7 @@ import * as types from '../types';
 import { BrowserServer } from './browserServer';
 import { launchProcess, waitForLine } from './processLauncher';
 import { BrowserContext } from '../browserContext';
+import type {BrowserWindow} from 'electron';
 
 type ElectronLaunchOptions = {
   args?: string[],
@@ -50,6 +51,11 @@ export const ElectronEvents = {
   }
 };
 
+interface ElectronPage extends Page {
+  browserWindow: js.JSHandle<BrowserWindow>;
+  _browserWindowId: number;
+}
+
 export class ElectronApplication extends ExtendedEventEmitter {
   private _logger: InnerLogger;
   private _browserContext: CRBrowserContext;
@@ -57,7 +63,7 @@ export class ElectronApplication extends ExtendedEventEmitter {
   private _nodeSession: CRSession;
   private _nodeExecutionContext: js.ExecutionContext | undefined;
   private _nodeElectronHandle: js.JSHandle<any> | undefined;
-  private _windows = new Set<Page>();
+  private _windows = new Set<ElectronPage>();
   private _lastWindowId = 0;
   readonly _timeoutSettings = new TimeoutSettings();
 
@@ -71,17 +77,17 @@ export class ElectronApplication extends ExtendedEventEmitter {
     this._nodeSession = nodeConnection.rootSession;
   }
 
-  private async _onPage(page: Page) {
+  private async _onPage(page: ElectronPage) {
     // Needs to be sync.
     const windowId = ++this._lastWindowId;
     // Can be async.
     const handle = await this._nodeElectronHandle!.evaluateHandle(({ BrowserWindow }, windowId) => BrowserWindow.fromId(windowId), windowId).catch(e => {});
     if (!handle)
       return;
-    (page as any).browserWindow = handle;
-    (page as any)._browserWindowId = windowId;
+    page.browserWindow = handle;
+    page._browserWindowId = windowId;
     page.on(Events.Page.Close, () => {
-      (page as any).browserWindow.dispose();
+      page.browserWindow.dispose();
       this._windows.delete(page);
     });
     this._windows.add(page);
@@ -107,11 +113,11 @@ export class ElectronApplication extends ExtendedEventEmitter {
     }, options);
 
     for (const page of this._windows) {
-      if ((page as any)._browserWindowId === windowId)
+      if (page._browserWindowId === windowId)
         return page;
     }
 
-    return await this.waitForEvent(ElectronEvents.ElectronApplication.Window, (page: Page) => (page as any)._browserWindowId === windowId);
+    return await this.waitForEvent(ElectronEvents.ElectronApplication.Window, (page: ElectronPage) => page._browserWindowId === windowId);
   }
 
   context(): BrowserContext {
