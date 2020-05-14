@@ -325,7 +325,7 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
         }
         }
         break;
-    case WM_DESTROY:
+    case WM_NCDESTROY:
         SetWindowLongPtr(hWnd, GWLP_USERDATA, 0);
         delete thisWindow;
         if (s_noStartupWindow || s_numInstances > 0)
