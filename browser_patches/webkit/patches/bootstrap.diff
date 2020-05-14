@@ -5836,7 +5836,7 @@ index 61f10cc81264e24a6f76e5194119fd567f37f9f9..6b567d0c641a515544815c83574e7f17
  
  #if HAVE(TLS_PROTOCOL_VERSION_T)
 diff --git a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
-index 26d961d4e9bc5bcd8064361f9d2e9bc478573b72..2e7fc9f49c648a042f9cd5806874a2bf0aa145f1 100644
+index 26d961d4e9bc5bcd8064361f9d2e9bc478573b72..c5056df4833dd7d4e713a5edabf8c87fb6feb980 100644
 --- a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
 +++ b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
 @@ -26,9 +26,13 @@
@@ -5853,15 +5853,16 @@ index 26d961d4e9bc5bcd8064361f9d2e9bc478573b72..2e7fc9f49c648a042f9cd5806874a2bf
  #include <WebCore/AuthenticationChallenge.h>
  #include <WebCore/CookieJar.h>
  #include <WebCore/CurlRequest.h>
-@@ -38,6 +42,7 @@
+@@ -38,6 +42,8 @@
  #include <WebCore/ResourceError.h>
  #include <WebCore/SameSiteInfo.h>
  #include <WebCore/SynchronousLoaderClient.h>
++#include <WebCore/TextEncoding.h>
 +#include <wtf/FileSystem.h>
  
  namespace WebKit {
  
-@@ -71,6 +76,8 @@ NetworkDataTaskCurl::NetworkDataTaskCurl(NetworkSession& session, NetworkDataTas
+@@ -71,6 +77,8 @@ NetworkDataTaskCurl::NetworkDataTaskCurl(NetworkSession& session, NetworkDataTas
          m_curlRequest->setUserPass(m_initialCredential.user(), m_initialCredential.password());
          m_curlRequest->setAuthenticationScheme(ProtectionSpaceAuthenticationSchemeHTTPBasic);
      }
@@ -5870,7 +5871,7 @@ index 26d961d4e9bc5bcd8064361f9d2e9bc478573b72..2e7fc9f49c648a042f9cd5806874a2bf
      m_curlRequest->setStartTime(m_startTime);
      m_curlRequest->start();
  }
-@@ -177,7 +184,12 @@ void NetworkDataTaskCurl::curlDidReceiveBuffer(CurlRequest&, Ref<SharedBuffer>&&
+@@ -177,7 +185,12 @@ void NetworkDataTaskCurl::curlDidReceiveBuffer(CurlRequest&, Ref<SharedBuffer>&&
      auto protectedThis = makeRef(*this);
      if (state() == State::Canceling || state() == State::Completed || (!m_client && !isDownload()))
          return;
@@ -5884,7 +5885,7 @@ index 26d961d4e9bc5bcd8064361f9d2e9bc478573b72..2e7fc9f49c648a042f9cd5806874a2bf
      m_client->didReceiveData(WTFMove(buffer));
  }
  
-@@ -186,6 +198,12 @@ void NetworkDataTaskCurl::curlDidComplete(CurlRequest&, NetworkLoadMetrics&& net
+@@ -186,6 +199,12 @@ void NetworkDataTaskCurl::curlDidComplete(CurlRequest&, NetworkLoadMetrics&& net
      if (state() == State::Canceling || state() == State::Completed || (!m_client && !isDownload()))
          return;
  
@@ -5897,7 +5898,7 @@ index 26d961d4e9bc5bcd8064361f9d2e9bc478573b72..2e7fc9f49c648a042f9cd5806874a2bf
      m_client->didCompleteWithError({ }, WTFMove(networkLoadMetrics));
  }
  
-@@ -199,6 +217,13 @@ void NetworkDataTaskCurl::curlDidFailWithError(CurlRequest& request, ResourceErr
+@@ -199,6 +218,13 @@ void NetworkDataTaskCurl::curlDidFailWithError(CurlRequest& request, ResourceErr
          return;
      }
  
@@ -5911,7 +5912,7 @@ index 26d961d4e9bc5bcd8064361f9d2e9bc478573b72..2e7fc9f49c648a042f9cd5806874a2bf
      m_client->didCompleteWithError(resourceError);
  }
  
-@@ -235,6 +260,18 @@ void NetworkDataTaskCurl::invokeDidReceiveResponse()
+@@ -235,6 +261,18 @@ void NetworkDataTaskCurl::invokeDidReceiveResponse()
              break;
          case PolicyAction::Ignore:
              break;
@@ -5930,7 +5931,7 @@ index 26d961d4e9bc5bcd8064361f9d2e9bc478573b72..2e7fc9f49c648a042f9cd5806874a2bf
          default:
              notImplemented();
              break;
-@@ -312,6 +349,8 @@ void NetworkDataTaskCurl::willPerformHTTPRedirection()
+@@ -312,6 +350,8 @@ void NetworkDataTaskCurl::willPerformHTTPRedirection()
              m_curlRequest->setUserPass(m_initialCredential.user(), m_initialCredential.password());
              m_curlRequest->setAuthenticationScheme(ProtectionSpaceAuthenticationSchemeHTTPBasic);
          }
@@ -5938,6 +5939,35 @@ index 26d961d4e9bc5bcd8064361f9d2e9bc478573b72..2e7fc9f49c648a042f9cd5806874a2bf
 +            m_curlRequest->disableServerTrustEvaluation();
          m_curlRequest->setStartTime(m_startTime);
          m_curlRequest->start();
+ 
+@@ -462,4 +502,16 @@ void NetworkDataTaskCurl::handleCookieHeaders(const WebCore::ResourceRequest& re
+     }
+ }
+ 
++String NetworkDataTaskCurl::suggestedFilename() const
++{
++    if (!m_suggestedFilename.isEmpty())
++        return m_suggestedFilename;
++
++    String suggestedFilename = m_response.suggestedFilename();
++    if (!suggestedFilename.isEmpty())
++        return suggestedFilename;
++
++    return decodeURLEscapeSequences(m_response.url().lastPathComponent());
++}
++
+ } // namespace WebKit
+diff --git a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.h b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.h
+index 52d085b44c17e60f6133fba0e0cd6933ee3af255..7c95b368df416300ce095c77c4a2ef29a3ffb0bb 100644
+--- a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.h
++++ b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.h
+@@ -81,6 +81,7 @@ private:
+ 
+     void appendCookieHeader(WebCore::ResourceRequest&);
+     void handleCookieHeaders(const WebCore::ResourceRequest&, const WebCore::CurlResponse&);
++    String suggestedFilename() const override;
+ 
+     State m_state { State::Suspended };
  
 diff --git a/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp b/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
 index 9c0465058939cf65fc10f4771ed216662b6b9f8b..53b7425514c7adbbe02085e6d8c810ed112b28c0 100644
