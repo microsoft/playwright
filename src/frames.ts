@@ -745,7 +745,7 @@ export class Frame {
         (handle, deadline) => handle.innerHTML() as Promise<string>);
   }
 
-  async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string> {
+  async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
     return await this._retryWithSelectorIfNotConnected('getAttribute', selector, options,
         (handle, deadline) => handle.getAttribute(name) as Promise<string>);
   }

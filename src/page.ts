@@ -464,7 +464,7 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
     return this.mainFrame().innerHTML(selector, options);
   }
 
-  async getAttribute(selector: string, name: string, options?: types.TimeoutOptions): Promise<string> {
+  async getAttribute(selector: string, name: string, options?: types.TimeoutOptions): Promise<string | null> {
     return this.mainFrame().getAttribute(selector, name, options);
   }
 
