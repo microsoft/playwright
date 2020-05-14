@@ -16,7 +16,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, MAC} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = require('./utils').testOptions(browserType);
 
 describe('Download', function() {
   beforeEach(async(state) => {
@@ -57,7 +57,7 @@ describe('Download', function() {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   });
-  it.fail(WEBKIT && MAC)('should report non-navigation downloads', async({browser, server}) => {
+  it.fail(WEBKIT && WIN)('should report non-navigation downloads', async({browser, server}) => {
     // Mac WebKit embedder does not download in this case, although Safari does.
     server.setRoute('/download', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
