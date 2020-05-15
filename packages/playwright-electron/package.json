@@ -1,6 +1,6 @@
 {
   "name": "playwright-electron",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "A high-level API to automate Electron",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
