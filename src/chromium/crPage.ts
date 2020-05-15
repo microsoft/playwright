@@ -577,7 +577,7 @@ class FrameSession {
       session.send('Runtime.runIfWaitingForDebugger'),
     ]).catch(logError(this._page));  // This might fail if the target is closed before we initialize.
     session.on('Runtime.consoleAPICalled', event => {
-      const args = event.args.map(o => worker._existingExecutionContext!._createHandle(o));
+      const args = event.args.map(o => worker._existingExecutionContext!.createHandle(o));
       this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
     });
     session.on('Runtime.exceptionThrown', exception => this._page.emit(Events.Page.PageError, exceptionToError(exception.exceptionDetails)));
@@ -608,7 +608,7 @@ class FrameSession {
       return;
     }
     const context = this._contextIdToContext.get(event.executionContextId)!;
-    const values = event.args.map(arg => context._createHandle(arg));
+    const values = event.args.map(arg => context.createHandle(arg));
     this._page._addConsoleMessage(event.type, values, toConsoleMessageLocation(event.stackTrace));
   }
 
@@ -846,7 +846,7 @@ class FrameSession {
     }).catch(logError(this._page));
     if (!result || result.object.subtype === 'null')
       throw new Error('Unable to adopt element handle from a different document');
-    return to._createHandle(result.object).asElement()!;
+    return to.createHandle(result.object).asElement()!;
   }
 }
 

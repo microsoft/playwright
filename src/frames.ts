@@ -786,7 +786,7 @@ export class Frame {
     const task = async (context: dom.FrameExecutionContext) => context.evaluateHandleInternal(({ injected, predicateBody, polling, timeout, arg }) => {
       const innerPredicate = new Function('arg', predicateBody);
       return injected.poll(polling, timeout, () => innerPredicate(arg));
-    }, { injected: await context._injected(), predicateBody, polling, timeout: helper.timeUntilDeadline(deadline), arg });
+    }, { injected: await context.injectedScript(), predicateBody, polling, timeout: helper.timeUntilDeadline(deadline), arg });
     return this._scheduleRerunnableTask(task, 'main', deadline) as any as types.SmartHandle<R>;
   }
 

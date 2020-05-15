@@ -20,7 +20,8 @@ import * as path from 'path';
 import * as util from 'util';
 import * as frames from './frames';
 import { assert, helper } from './helper';
-import { Injected, InjectedResult } from './injected/injected';
+import InjectedScript from './injected/injectedScript';
+import * as injectedScriptSource from './generated/injectedScriptSource';
 import * as input from './input';
 import * as js from './javascript';
 import { Page } from './page';
@@ -52,29 +53,35 @@ export class FrameExecutionContext extends js.ExecutionContext {
     this.frame = frame;
   }
 
-  _adoptIfNeeded(handle: js.JSHandle): Promise<js.JSHandle> | null {
+  adoptIfNeeded(handle: js.JSHandle): Promise<js.JSHandle> | null {
     if (handle instanceof ElementHandle && handle._context !== this)
       return this.frame._page._delegate.adoptElementHandle(handle, this);
     return null;
   }
 
-  async _doEvaluateInternal(returnByValue: boolean, waitForNavigations: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
+  async doEvaluateInternal(returnByValue: boolean, waitForNavigations: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(async () => {
       return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
     }, Number.MAX_SAFE_INTEGER, waitForNavigations ? undefined : { noWaitAfter: true });
   }
 
-  _createHandle(remoteObject: any): js.JSHandle {
+  createHandle(remoteObject: any): js.JSHandle {
     if (this.frame._page._delegate.isElementHandle(remoteObject))
       return new ElementHandle(this, remoteObject);
-    return super._createHandle(remoteObject);
+    return super.createHandle(remoteObject);
   }
 
-  _injected(): Promise<js.JSHandle<Injected>> {
+  injectedScript(): Promise<js.JSHandle<InjectedScript>> {
     if (!this._injectedPromise) {
-      this._injectedPromise = selectors._prepareEvaluator(this).then(evaluator => {
-        return this.evaluateHandleInternal(evaluator => evaluator.injected, evaluator);
-      });
+      const custom: string[] = [];
+      for (const [name, { source }] of selectors._engines)
+        custom.push(`{ name: '${name}', engine: (${source}) }`);
+      const source = `
+        new (${injectedScriptSource.source})([
+          ${custom.join(',\n')}
+        ])
+      `;
+      this._injectedPromise = this.doEvaluateInternal(false /* returnByValue */, false /* waitForNavigations */, source);
     }
     return this._injectedPromise;
   }
@@ -94,14 +101,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this;
   }
 
-  async _evaluateInMain<R, Arg>(pageFunction: types.FuncOn<{ injected: Injected, node: T }, Arg, R>, arg: Arg): Promise<R> {
+  async _evaluateInMain<R, Arg>(pageFunction: types.FuncOn<{ injected: InjectedScript, node: T }, Arg, R>, arg: Arg): Promise<R> {
     const main = await this._context.frame._mainContext();
-    return main._doEvaluateInternal(true /* returnByValue */, true /* waitForNavigations */, pageFunction, { injected: await main._injected(), node: this }, arg);
+    return main.doEvaluateInternal(true /* returnByValue */, true /* waitForNavigations */, pageFunction, { injected: await main.injectedScript(), node: this }, arg);
   }
 
-  async _evaluateInUtility<R, Arg>(pageFunction: types.FuncOn<{ injected: Injected, node: T }, Arg, R>, arg: Arg): Promise<R> {
+  async _evaluateInUtility<R, Arg>(pageFunction: types.FuncOn<{ injected: InjectedScript, node: T }, Arg, R>, arg: Arg): Promise<R> {
     const utility = await this._context.frame._utilityContext();
-    return utility._doEvaluateInternal(true /* returnByValue */, true /* waitForNavigations */, pageFunction, { injected: await utility._injected(), node: this }, arg);
+    return utility.doEvaluateInternal(true /* returnByValue */, true /* waitForNavigations */, pageFunction, { injected: await utility.injectedScript(), node: this }, arg);
   }
 
   async ownerFrame(): Promise<frames.Frame | null> {
@@ -352,7 +359,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options?: types.NavigatingActionWaitOptions) {
     this._page._log(inputLog, `elementHandle.setInputFiles(...)`);
     const deadline = this._page._timeoutSettings.computeDeadline(options);
-    const injectedResult = await this._evaluateInUtility(({ node }): InjectedResult<boolean> => {
+    const injectedResult = await this._evaluateInUtility(({ node }): types.InjectedScriptResult<boolean> => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node as Node as Element).tagName !== 'INPUT')
         return { status: 'error', error: 'Node is not an HTMLInputElement' };
       if (!node.isConnected)
@@ -500,7 +507,7 @@ export function toFileTransferPayload(files: types.FilePayload[]): types.FileTra
   }));
 }
 
-function handleInjectedResult<T = undefined>(injectedResult: InjectedResult<T>, timeoutMessage: string): T {
+function handleInjectedResult<T = undefined>(injectedResult: types.InjectedScriptResult<T>, timeoutMessage: string): T {
   if (injectedResult.status === 'notconnected')
     throw new NotConnectedError();
   if (injectedResult.status === 'timeout')

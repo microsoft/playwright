@@ -473,7 +473,7 @@ export class WKPage implements PageDelegate {
       } else {
         context = this._contextIdToContext.get(this._mainFrameContextId!)!;
       }
-      return context._createHandle(p);
+      return context.createHandle(p);
     });
     this._lastConsoleMessage = {
       derivedType,
@@ -516,7 +516,7 @@ export class WKPage implements PageDelegate {
 
   private async _onFileChooserOpened(event: {frameId: Protocol.Network.FrameId, element: Protocol.Runtime.RemoteObject}) {
     const context = await this._page._frameManager.frame(event.frameId)!._mainContext();
-    const handle = context._createHandle(event.element).asElement()!;
+    const handle = context.createHandle(event.element).asElement()!;
     this._page._onFileChooserOpened(handle);
   }
 
@@ -785,7 +785,7 @@ export class WKPage implements PageDelegate {
     }).catch(logError(this._page));
     if (!result || result.object.subtype === 'null')
       throw new Error('Unable to adopt element handle from a different document');
-    return to._createHandle(result.object) as dom.ElementHandle<T>;
+    return to.createHandle(result.object) as dom.ElementHandle<T>;
   }
 
   async getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
