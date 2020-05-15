@@ -263,7 +263,8 @@ describe('Page.Events.Popup', function() {
       page.waitForEvent('popup'),
       page.evaluate(() => window.__popup = window.open(undefined, null, 'noopener')),
     ]);
-    expect(popup.url()).toBe('about:blank');
+    // Chromium reports `about:blank#blocked` here.
+    expect(popup.url().split('#')[0]).toBe('about:blank');
     expect(await page.evaluate(() => !!window.opener)).toBe(false);
     expect(await popup.evaluate(() => !!window.opener)).toBe(false);
     await context.close();
