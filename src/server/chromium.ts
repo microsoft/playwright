@@ -33,6 +33,7 @@ import { InnerLogger, logError, RootLogger } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
 import { CRDevTools } from '../chromium/crDevTools';
 import { BrowserBase, BrowserOptions } from '../browser';
+import { PersistentContextOptions } from '../browserContext';
 
 export class Chromium extends BrowserTypeBase {
   private _devtools: CRDevTools | undefined;
@@ -47,7 +48,7 @@ export class Chromium extends BrowserTypeBase {
     return new CRDevTools(path.join(this._browserPath, 'devtools-preferences.json'));
   }
 
-  async _connectToServer(browserServer: BrowserServer, persistent: boolean): Promise<BrowserBase> {
+  async _connectToServer(browserServer: BrowserServer, persistent: PersistentContextOptions | undefined): Promise<BrowserBase> {
     const options = browserServer._launchOptions;
     let devtools = this._devtools;
     if ((options as any).__testHookForDevTools) {

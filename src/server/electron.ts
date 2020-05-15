@@ -198,8 +198,8 @@ export class Electron  {
 
     const chromeMatch = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, helper.timeUntilDeadline(deadline), timeoutError);
     const chromeTransport = await WebSocketTransport.connect(chromeMatch[1], logger, deadline);
-    const browserServer = new BrowserServer(options, launchedProcess, gracefullyClose, chromeTransport, '', null);
-    const browser = await CRBrowser.connect(chromeTransport, { headful: true, logger, persistent: true, viewport: null, ownedServer: browserServer, downloadsPath: '' });
+    const browserServer = new BrowserServer(options, launchedProcess, gracefullyClose, chromeTransport, undefined, null);
+    const browser = await CRBrowser.connect(chromeTransport, { headful: true, logger, persistent: { viewport: null }, ownedServer: browserServer });
     app = new ElectronApplication(logger, browser, nodeConnection);
     await app._init();
     return app;

@@ -202,12 +202,12 @@ const utils = module.exports = {
 
     const logger = {
       isEnabled: (name, severity) => {
-        return name === 'browser' || (name === 'protocol' && dumpProtocolOnFailure);
+        return name.startsWith('browser') || (name === 'protocol' && dumpProtocolOnFailure);
       },
       log: (name, severity, message, args) => {
         if (!testRun)
           return;
-        if (name === 'browser') {
+        if (name.startsWith('browser')) {
           if (severity === 'warning')
             testRun.log(`${prefix}\x1b[31m[browser]\x1b[0m ${message}`)
           else

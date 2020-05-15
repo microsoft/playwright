@@ -56,6 +56,8 @@ export class CRBrowser extends BrowserBase {
       return browser;
     }
 
+    browser._defaultContext = new CRBrowserContext(browser, null, options.persistent);
+
     const existingTargetAttachPromises: Promise<any>[] = [];
     // First page, background pages and their service workers in the persistent context
     // are created automatically and may be initialized before we enable auto-attach.
@@ -77,6 +79,7 @@ export class CRBrowser extends BrowserBase {
     await Promise.all([
       startDiscover,
       autoAttachAndStopDiscover,
+      (browser._defaultContext as CRBrowserContext)._initialize(),
     ]);
 
     // Wait for initial targets to arrive.
@@ -88,9 +91,6 @@ export class CRBrowser extends BrowserBase {
     super(options);
     this._connection = connection;
     this._session = this._connection.rootSession;
-
-    if (options.persistent)
-      this._defaultContext = new CRBrowserContext(this, null, validateBrowserContextOptions({ viewport: options.viewport }));
     this._connection.on(ConnectionEvents.Disconnected, () => {
       for (const context of this._contexts.values())
         context._browserClosed();
@@ -290,19 +290,17 @@ export class CRBrowserContext extends BrowserContextBase {
   }
 
   async _initialize() {
-    const promises: Promise<any>[] = [
-      this._browser._session.send('Browser.setDownloadBehavior', {
+    assert(!Array.from(this._browser._crPages.values()).some(page => page._browserContext === this));
+    const promises: Promise<any>[] = [];
+    if (this._browser._options.downloadsPath) {
+      promises.push(this._browser._session.send('Browser.setDownloadBehavior', {
         behavior: this._options.acceptDownloads ? 'allowAndName' : 'deny',
         browserContextId: this._browserContextId || undefined,
         downloadPath: this._browser._options.downloadsPath
-      })
-    ];
+      }));
+    }
     if (this._options.permissions)
       promises.push(this.grantPermissions(this._options.permissions));
-    if (this._options.offline)
-      promises.push(this.setOffline(this._options.offline));
-    if (this._options.httpCredentials)
-      promises.push(this.setHTTPCredentials(this._options.httpCredentials));
     await Promise.all(promises);
   }
 

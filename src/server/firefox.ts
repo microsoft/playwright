@@ -32,6 +32,7 @@ import { ConnectionTransport, SequenceNumberMixer, WebSocketTransport } from '..
 import { InnerLogger, logError, RootLogger } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
 import { BrowserBase, BrowserOptions } from '../browser';
+import { PersistentContextOptions } from '../browserContext';
 
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 
@@ -40,7 +41,7 @@ export class Firefox extends BrowserTypeBase {
     super(packagePath, browser);
   }
 
-  _connectToServer(browserServer: BrowserServer, persistent: boolean): Promise<BrowserBase> {
+  _connectToServer(browserServer: BrowserServer, persistent: PersistentContextOptions | undefined): Promise<BrowserBase> {
     return FFBrowser.connect(browserServer._transport, {
       slowMo: browserServer._launchOptions.slowMo,
       logger: browserServer._logger,

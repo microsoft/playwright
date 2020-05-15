@@ -102,6 +102,12 @@ describe('BrowserContext', function() {
     expect(await page.evaluate('window.innerHeight')).toBe(789);
     await context.close();
   });
+  it('should respect deviceScaleFactor', async({ browser }) => {
+    const context = await browser.newContext({ deviceScaleFactor: 3 });
+    const page = await context.newPage();
+    expect(await page.evaluate('window.devicePixelRatio')).toBe(3);
+    await context.close();
+  });
   it('should not allow deviceScaleFactor with null viewport', async({ browser }) => {
     const error = await browser.newContext({ viewport: null, deviceScaleFactor: 1 }).catch(e => e);
     expect(error.message).toBe('"deviceScaleFactor" option is not supported with null "viewport"');

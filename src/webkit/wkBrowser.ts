@@ -18,7 +18,7 @@
 import { BrowserBase, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, BrowserContextOptions, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { Events } from '../events';
-import { helper, RegisteredListener } from '../helper';
+import { helper, RegisteredListener, assert } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding } from '../page';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
@@ -38,7 +38,14 @@ export class WKBrowser extends BrowserBase {
 
   static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
     const browser = new WKBrowser(SlowMoTransport.wrap(transport, options.slowMo), options);
-    await browser._browserSession.send('Playwright.enable');
+    const promises: Promise<any>[] = [
+      browser._browserSession.send('Playwright.enable'),
+    ];
+    if (options.persistent) {
+      browser._defaultContext = new WKBrowserContext(browser, undefined, options.persistent);
+      promises.push((browser._defaultContext as WKBrowserContext)._initialize());
+    }
+    await Promise.all(promises);
     return browser;
   }
 
@@ -46,10 +53,6 @@ export class WKBrowser extends BrowserBase {
     super(options);
     this._connection = new WKConnection(transport, options.logger, this._onDisconnect.bind(this));
     this._browserSession = this._connection.browserSession;
-
-    if (options.persistent)
-      this._defaultContext = new WKBrowserContext(this, undefined, validateBrowserContextOptions({}));
-
     this._eventListeners = [
       helper.addEventListener(this._browserSession, 'Playwright.pageProxyCreated', this._onPageProxyCreated.bind(this)),
       helper.addEventListener(this._browserSession, 'Playwright.pageProxyDestroyed', this._onPageProxyDestroyed.bind(this)),
@@ -200,14 +203,16 @@ export class WKBrowserContext extends BrowserContextBase {
   }
 
   async _initialize() {
+    assert(!this._wkPages().length);
     const browserContextId = this._browserContextId;
-    const promises: Promise<any>[] = [
-      this._browser._browserSession.send('Playwright.setDownloadBehavior', {
+    const promises: Promise<any>[] = [];
+    if (this._browser._options.downloadsPath) {
+      promises.push(this._browser._browserSession.send('Playwright.setDownloadBehavior', {
         behavior: this._options.acceptDownloads ? 'allow' : 'deny',
         downloadPath: this._browser._options.downloadsPath,
         browserContextId
-      })
-    ];
+      }));
+    }
     if (this._options.ignoreHTTPSErrors)
       promises.push(this._browser._browserSession.send('Playwright.setIgnoreCertificateErrors', { browserContextId, ignore: true }));
     if (this._options.locale)
