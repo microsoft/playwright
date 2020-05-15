@@ -140,7 +140,17 @@ export class CRNetworkManager {
         requestId: event.requestId
       }).catch(logError(this._page));
     }
-    if (!event.networkId || event.request.url.startsWith('data:'))
+    if (!event.networkId) {
+      // Fetch without networkId means that request was not recongnized by inspector, and
+      // it will never receive Network.requestWillBeSent. Most likely, this is an internal request
+      // that we can safely fail.
+      this._client.send('Fetch.failRequest', {
+        requestId: event.requestId,
+        errorReason: 'Aborted',
+      }).catch(logError(this._page));
+      return;
+    }
+    if (event.request.url.startsWith('data:'))
       return;
 
     const requestId = event.networkId;
