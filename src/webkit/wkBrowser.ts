@@ -308,15 +308,7 @@ export class WKBrowserContext extends BrowserContextBase {
       await (page._delegate as WKPage)._updateBootstrapScript();
   }
 
-  async exposeFunction(name: string, playwrightFunction: Function): Promise<void> {
-    for (const page of this.pages()) {
-      if (page._pageBindings.has(name))
-        throw new Error(`Function "${name}" has been already registered in one of the pages`);
-    }
-    if (this._pageBindings.has(name))
-      throw new Error(`Function "${name}" has been already registered`);
-    const binding = new PageBinding(name, playwrightFunction);
-    this._pageBindings.set(name, binding);
+  async _doExposeBinding(binding: PageBinding) {
     for (const page of this.pages())
       await (page._delegate as WKPage).exposeBinding(binding);
   }

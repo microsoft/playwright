@@ -297,6 +297,7 @@ await context.close();
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
 - [browserContext.close()](#browsercontextclose)
 - [browserContext.cookies([urls])](#browsercontextcookiesurls)
+- [browserContext.exposeBinding(name, playwrightBinding)](#browsercontextexposebindingname-playwrightbinding)
 - [browserContext.exposeFunction(name, playwrightFunction)](#browsercontextexposefunctionname-playwrightfunction)
 - [browserContext.grantPermissions(permissions[][, options])](#browsercontextgrantpermissionspermissions-options)
 - [browserContext.newPage()](#browsercontextnewpage)
@@ -421,19 +422,53 @@ will be closed.
 If no URLs are specified, this method returns all cookies.
 If URLs are specified, only cookies that affect those URLs are returned.
 
+#### browserContext.exposeBinding(name, playwrightBinding)
+- `name` <[string]> Name of the function on the window object.
+- `playwrightBinding` <[function]> Callback function that will be called in the Playwright's context.
+- returns: <[Promise]>
+
+The method adds a function called `name` on the `window` object of every frame in every page in the context.
+When called, the function executes `playwrightBinding` in Node.js and returns a [Promise] which resolves to the return value of `playwrightBinding`.
+If the `playwrightBinding` returns a [Promise], it will be awaited.
+
+The first argument of the `playwrightBinding` function contains information about the caller:
+`{ browserContext: BrowserContext, page: Page, frame: Frame }`.
+
+See [page.exposeBinding(name, playwrightBinding)](#pageexposebindingname-playwrightbinding) for page-only version.
+
+An example of exposing page URL to all frames in all pages in the context:
+```js
+const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
+
+(async () => {
+  const browser = await webkit.launch({ headless: false });
+  const context = await browser.newContext();
+  await context.exposeBinding('pageURL', ({ page }) => page.url());
+  const page = await context.newPage();
+  await page.setContent(`
+    <script>
+      async function onClick() {
+        document.querySelector('div').textContent = await window.pageURL();
+      }
+    </script>
+    <button onclick="onClick()">Click me</button>
+    <div></div>
+  `);
+  await page.click('button');
+})();
+```
+
 #### browserContext.exposeFunction(name, playwrightFunction)
 - `name` <[string]> Name of the function on the window object.
 - `playwrightFunction` <[function]> Callback function that will be called in the Playwright's context.
 - returns: <[Promise]>
 
 The method adds a function called `name` on the `window` object of every frame in every page in the context.
-When called, the function executes `playwrightFunction` in node.js and returns a [Promise] which resolves to the return value of `playwrightFunction`.
+When called, the function executes `playwrightFunction` in Node.js and returns a [Promise] which resolves to the return value of `playwrightFunction`.
 
 If the `playwrightFunction` returns a [Promise], it will be awaited.
 
 See [page.exposeFunction(name, playwrightFunction)](#pageexposefunctionname-playwrightfunction) for page-only version.
-
-> **NOTE** Functions installed via `page.exposeFunction` survive navigations.
 
 An example of adding an `md5` function to all pages in the context:
 ```js
@@ -678,6 +713,7 @@ page.removeListener('request', logRequest);
 - [page.emulateMedia(options)](#pageemulatemediaoptions)
 - [page.evaluate(pageFunction[, arg])](#pageevaluatepagefunction-arg)
 - [page.evaluateHandle(pageFunction[, arg])](#pageevaluatehandlepagefunction-arg)
+- [page.exposeBinding(name, playwrightBinding)](#pageexposebindingname-playwrightbinding)
 - [page.exposeFunction(name, playwrightFunction)](#pageexposefunctionname-playwrightfunction)
 - [page.fill(selector, value[, options])](#pagefillselector-value-options)
 - [page.focus(selector[, options])](#pagefocusselector-options)
@@ -1165,13 +1201,51 @@ console.log(await resultHandle.jsonValue());
 await resultHandle.dispose();
 ```
 
+#### page.exposeBinding(name, playwrightBinding)
+- `name` <[string]> Name of the function on the window object.
+- `playwrightBinding` <[function]> Callback function that will be called in the Playwright's context.
+- returns: <[Promise]>
+
+The method adds a function called `name` on the `window` object of every frame in this page.
+When called, the function executes `playwrightBinding` in Node.js and returns a [Promise] which resolves to the return value of `playwrightBinding`.
+If the `playwrightBinding` returns a [Promise], it will be awaited.
+
+The first argument of the `playwrightBinding` function contains information about the caller:
+`{ browserContext: BrowserContext, page: Page, frame: Frame }`.
+
+See [browserContext.exposeBinding(name, playwrightBinding)](#browsercontextexposebindingname-playwrightbinding) for the context-wide version.
+
+> **NOTE** Functions installed via `page.exposeBinding` survive navigations.
+
+An example of exposing page URL to all frames in a page:
+```js
+const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
+
+(async () => {
+  const browser = await webkit.launch({ headless: false });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.exposeBinding('pageURL', ({ page }) => page.url());
+  await page.setContent(`
+    <script>
+      async function onClick() {
+        document.querySelector('div').textContent = await window.pageURL();
+      }
+    </script>
+    <button onclick="onClick()">Click me</button>
+    <div></div>
+  `);
+  await page.click('button');
+})();
+```
+
 #### page.exposeFunction(name, playwrightFunction)
 - `name` <[string]> Name of the function on the window object
 - `playwrightFunction` <[function]> Callback function which will be called in Playwright's context.
 - returns: <[Promise]>
 
 The method adds a function called `name` on the `window` object of every frame in the page.
-When called, the function executes `playwrightFunction` in node.js and returns a [Promise] which resolves to the return value of `playwrightFunction`.
+When called, the function executes `playwrightFunction` in Node.js and returns a [Promise] which resolves to the return value of `playwrightFunction`.
 
 If the `playwrightFunction` returns a [Promise], it will be awaited.
 
@@ -1720,7 +1794,7 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 })();
 ```
 
-To pass an argument from node.js to the predicate of `page.waitForFunction` function:
+To pass an argument from Node.js to the predicate of `page.waitForFunction` function:
 
 ```js
 const selector = '.foo';
@@ -2389,7 +2463,7 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 })();
 ```
 
-To pass an argument from node.js to the predicate of `frame.waitForFunction` function:
+To pass an argument from Node.js to the predicate of `frame.waitForFunction` function:
 
 ```js
 const selector = '.foo';
@@ -4027,6 +4101,7 @@ const backgroundPage = await context.waitForEvent('backgroundpage');
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
 - [browserContext.close()](#browsercontextclose)
 - [browserContext.cookies([urls])](#browsercontextcookiesurls)
+- [browserContext.exposeBinding(name, playwrightBinding)](#browsercontextexposebindingname-playwrightbinding)
 - [browserContext.exposeFunction(name, playwrightFunction)](#browsercontextexposefunctionname-playwrightfunction)
 - [browserContext.grantPermissions(permissions[][, options])](#browsercontextgrantpermissionspermissions-options)
 - [browserContext.newPage()](#browsercontextnewpage)

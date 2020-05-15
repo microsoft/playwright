@@ -28,6 +28,7 @@ import { Page } from './page';
 import { selectors } from './selectors';
 import * as types from './types';
 import { waitForTimeoutWasUsed } from './hints';
+import { BrowserContext } from './browserContext';
 
 type ContextType = 'main' | 'utility';
 type ContextData = {
@@ -45,6 +46,8 @@ export type GotoResult = {
 };
 
 type ConsoleTagHandler = () => void;
+
+export type FunctionWithSource = (source: { context: BrowserContext, page: Page, frame: Frame}, ...args: any) => any;
 
 export class FrameManager {
   private _page: Page;

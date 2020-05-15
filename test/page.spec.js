@@ -405,6 +405,26 @@ describe('Page.waitForResponse', function() {
   });
 });
 
+describe('Page.exposeBinding', () => {
+  it('should work', async({browser}) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    let bindingSource;
+    await page.exposeBinding('add', (source, a, b) => {
+      bindingSource = source;
+      return a + b;
+    });
+    const result = await page.evaluate(async function() {
+      return add(5, 6);
+    });
+    expect(bindingSource.context).toBe(context);
+    expect(bindingSource.page).toBe(page);
+    expect(bindingSource.frame).toBe(page.mainFrame());
+    expect(result).toEqual(11);
+    await context.close();
+  });
+});
+
 describe('Page.exposeFunction', function() {
   it('should work', async({page, server}) => {
     await page.exposeFunction('compute', function(a, b) {

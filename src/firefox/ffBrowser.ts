@@ -302,16 +302,8 @@ export class FFBrowserContext extends BrowserContextBase {
     await this._browser._connection.send('Browser.addScriptToEvaluateOnNewDocument', { browserContextId: this._browserContextId || undefined, script: source });
   }
 
-  async exposeFunction(name: string, playwrightFunction: Function): Promise<void> {
-    for (const page of this.pages()) {
-      if (page._pageBindings.has(name))
-        throw new Error(`Function "${name}" has been already registered in one of the pages`);
-    }
-    if (this._pageBindings.has(name))
-      throw new Error(`Function "${name}" has been already registered`);
-    const binding = new PageBinding(name, playwrightFunction);
-    this._pageBindings.set(name, binding);
-    await this._browser._connection.send('Browser.addBinding', { browserContextId: this._browserContextId || undefined, name, script: binding.source });
+  async _doExposeBinding(binding: PageBinding) {
+    await this._browser._connection.send('Browser.addBinding', { browserContextId: this._browserContextId || undefined, name: binding.name, script: binding.source });
   }
 
   async route(url: types.URLMatch, handler: network.RouteHandler): Promise<void> {

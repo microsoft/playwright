@@ -253,11 +253,15 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
   }
 
   async exposeFunction(name: string, playwrightFunction: Function) {
+    await this.exposeBinding(name, (options, ...args: any) => playwrightFunction(...args));
+  }
+
+  async exposeBinding(name: string, playwrightBinding: frames.FunctionWithSource) {
     if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
     if (this._browserContext._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered in the browser context`);
-    const binding = new PageBinding(name, playwrightFunction);
+    const binding = new PageBinding(name, playwrightBinding);
     this._pageBindings.set(name, binding);
     await this._delegate.exposeBinding(binding);
   }
@@ -267,7 +271,7 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
     return this._delegate.updateExtraHTTPHeaders();
   }
 
-  async _onBindingCalled(payload: string, context: js.ExecutionContext) {
+  async _onBindingCalled(payload: string, context: dom.FrameExecutionContext) {
     await PageBinding.dispatch(this, payload, context);
   }
 
@@ -580,23 +584,23 @@ export class Worker extends EventEmitter {
 
 export class PageBinding {
   readonly name: string;
-  readonly playwrightFunction: Function;
+  readonly playwrightFunction: frames.FunctionWithSource;
   readonly source: string;
 
-  constructor(name: string, playwrightFunction: Function) {
+  constructor(name: string, playwrightFunction: frames.FunctionWithSource) {
     this.name = name;
     this.playwrightFunction = playwrightFunction;
     this.source = helper.evaluationString(addPageBinding, name);
   }
 
-  static async dispatch(page: Page, payload: string, context: js.ExecutionContext) {
+  static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {
     const {name, seq, args} = JSON.parse(payload);
     let expression = null;
     try {
       let binding = page._pageBindings.get(name);
       if (!binding)
         binding = page._browserContext._pageBindings.get(name);
-      const result = await binding!.playwrightFunction(...args);
+      const result = await binding!.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
       expression = helper.evaluationString(deliverResult, name, seq, result);
     } catch (error) {
       if (error instanceof Error)
