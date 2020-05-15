@@ -215,8 +215,13 @@ export class FrameManager {
     this._inflightRequestStarted(request);
     for (const task of request.frame()._frameTasks)
       task.onRequest(request);
-    if (!request._isFavicon)
-      this._page._requestStarted(request);
+    if (request._isFavicon) {
+      const route = request._route();
+      if (route)
+        route.continue();
+      return;
+    }
+    this._page._requestStarted(request);
   }
 
   requestReceivedResponse(response: network.Response) {
