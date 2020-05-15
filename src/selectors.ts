@@ -16,17 +16,9 @@
 
 import * as dom from './dom';
 import * as frames from './frames';
-import * as selectorEvaluatorSource from './generated/selectorEvaluatorSource';
 import { helper, assert } from './helper';
-import SelectorEvaluator from './injected/selectorEvaluator';
 import * as js from './javascript';
 import * as types from './types';
-
-const kEvaluatorSymbol = Symbol('evaluator');
-type EvaluatorData = {
-  promise: Promise<js.JSHandle<SelectorEvaluator>>,
-  generation: number,
-};
 
 export class Selectors {
   readonly _builtinEngines: Set<string>;
@@ -68,37 +60,13 @@ export class Selectors {
     });
   }
 
-  async _prepareEvaluator(context: dom.FrameExecutionContext): Promise<js.JSHandle<SelectorEvaluator>> {
-    let data = (context as any)[kEvaluatorSymbol] as EvaluatorData | undefined;
-    if (data && data.generation !== this._generation) {
-      data.promise.then(handle => handle.dispose());
-      data = undefined;
-    }
-    if (!data) {
-      const custom: string[] = [];
-      for (const [name, { source }] of this._engines)
-        custom.push(`{ name: '${name}', engine: (${source}) }`);
-      const source = `
-        new (${selectorEvaluatorSource.source})([
-          ${custom.join(',\n')}
-        ])
-      `;
-      data = {
-        promise: context._doEvaluateInternal(false /* returnByValue */, false /* waitForNavigations */, source),
-        generation: this._generation
-      };
-      (context as any)[kEvaluatorSymbol] = data;
-    }
-    return data.promise;
-  }
-
   async _query(frame: frames.Frame, selector: string, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
     const parsed = this._parseSelector(selector);
     const context = this._needsMainContext(parsed) ? await frame._mainContext() : await frame._utilityContext();
-    const handle = await context.evaluateHandleInternal(
-        ({ evaluator, parsed, scope }) => evaluator.querySelector(parsed, scope || document),
-        { evaluator: await this._prepareEvaluator(context), parsed, scope }
-    );
+    const injectedScript = await context.injectedScript();
+    const handle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
+      return injected.querySelector(parsed, scope || document);
+    }, { parsed, scope });
     const elementHandle = handle.asElement() as dom.ElementHandle<Element> | null;
     if (!elementHandle) {
       handle.dispose();
@@ -115,20 +83,21 @@ export class Selectors {
   async _queryArray(frame: frames.Frame, selector: string, scope?: dom.ElementHandle): Promise<js.JSHandle<Element[]>> {
     const parsed = this._parseSelector(selector);
     const context = await frame._mainContext();
-    const arrayHandle = await context.evaluateHandleInternal(
-        ({ evaluator, parsed, scope }) => evaluator.querySelectorAll(parsed, scope || document),
-        { evaluator: await this._prepareEvaluator(context), parsed, scope }
-    );
+    const injectedScript = await context.injectedScript();
+    const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
+      return injected.querySelectorAll(parsed, scope || document);
+    }, { parsed, scope });
     return arrayHandle;
   }
 
   async _queryAll(frame: frames.Frame, selector: string, scope?: dom.ElementHandle, allowUtilityContext?: boolean): Promise<dom.ElementHandle<Element>[]> {
     const parsed = this._parseSelector(selector);
     const context = !allowUtilityContext || this._needsMainContext(parsed) ? await frame._mainContext() : await frame._utilityContext();
-    const arrayHandle = await context.evaluateHandleInternal(
-        ({ evaluator, parsed, scope }) => evaluator.querySelectorAll(parsed, scope || document),
-        { evaluator: await this._prepareEvaluator(context), parsed, scope }
-    );
+    const injectedScript = await context.injectedScript();
+    const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
+      return injected.querySelectorAll(parsed, scope || document);
+    }, { parsed, scope });
+
     const properties = await arrayHandle.getProperties();
     arrayHandle.dispose();
     const result: dom.ElementHandle<Element>[] = [];
@@ -144,42 +113,49 @@ export class Selectors {
 
   _waitForSelectorTask(selector: string, state: 'attached' | 'detached' | 'visible' | 'hidden', deadline: number): { world: 'main' | 'utility', task: (context: dom.FrameExecutionContext) => Promise<js.JSHandle> } {
     const parsed = this._parseSelector(selector);
-    const task = async (context: dom.FrameExecutionContext) => context.evaluateHandleInternal(({ evaluator, parsed, state, timeout }) => {
-      return evaluator.injected.poll('raf', timeout, () => {
-        const element = evaluator.querySelector(parsed, document);
-        switch (state) {
-          case 'attached':
-            return element || false;
-          case 'detached':
-            return !element;
-          case 'visible':
-            return element && evaluator.injected.isVisible(element) ? element : false;
-          case 'hidden':
-            return !element || !evaluator.injected.isVisible(element);
-        }
-      });
-    }, { evaluator: await this._prepareEvaluator(context), parsed, state, timeout: helper.timeUntilDeadline(deadline) });
+    const task = async (context: dom.FrameExecutionContext) => {
+      const injectedScript = await context.injectedScript();
+      return injectedScript.evaluateHandle((injected, { parsed, state, timeout }) => {
+        return injected.poll('raf', timeout, () => {
+          const element = injected.querySelector(parsed, document);
+          switch (state) {
+            case 'attached':
+              return element || false;
+            case 'detached':
+              return !element;
+            case 'visible':
+              return element && injected.isVisible(element) ? element : false;
+            case 'hidden':
+              return !element || !injected.isVisible(element);
+          }
+        });
+      }, { parsed, state, timeout: helper.timeUntilDeadline(deadline) });
+    };
     return { world: this._needsMainContext(parsed) ? 'main' : 'utility', task };
   }
 
   _dispatchEventTask(selector: string, type: string, eventInit: Object, deadline: number): (context: dom.FrameExecutionContext) => Promise<js.JSHandle> {
     const parsed = this._parseSelector(selector);
-    const task = async (context: dom.FrameExecutionContext) => context.evaluateHandleInternal(({ evaluator, parsed, type, eventInit, timeout }) => {
-      return evaluator.injected.poll('raf', timeout, () => {
-        const element = evaluator.querySelector(parsed, document);
-        if (element)
-          evaluator.injected.dispatchEvent(element, type, eventInit);
-        return element || false;
-      });
-    }, { evaluator: await this._prepareEvaluator(context), parsed, type, eventInit, timeout: helper.timeUntilDeadline(deadline) });
+    const task = async (context: dom.FrameExecutionContext) => {
+      const injectedScript = await context.injectedScript();
+      return injectedScript.evaluateHandle((injected, { parsed, type, eventInit, timeout }) => {
+        return injected.poll('raf', timeout, () => {
+          const element = injected.querySelector(parsed, document);
+          if (element)
+            injected.dispatchEvent(element, type, eventInit);
+          return element || false;
+        });
+      }, { parsed, type, eventInit, timeout: helper.timeUntilDeadline(deadline) });
+    };
     return task;
   }
 
   async _createSelector(name: string, handle: dom.ElementHandle<Element>): Promise<string | undefined> {
     const mainContext = await handle._page.mainFrame()._mainContext();
-    return mainContext.evaluateInternal(({ evaluator, target, name }) => {
-      return evaluator.engines.get(name)!.create(document.documentElement, target);
-    }, { evaluator: await this._prepareEvaluator(mainContext), target: handle, name });
+    const injectedScript = await mainContext.injectedScript();
+    return injectedScript.evaluate((injected, { target, name }) => {
+      return injected.engines.get(name)!.create(document.documentElement, target);
+    }, { target: handle, name });
   }
 
   private _parseSelector(selector: string): types.ParsedSelector {

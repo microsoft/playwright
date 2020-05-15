@@ -184,7 +184,7 @@ export class FFPage implements PageDelegate {
   _onConsole(payload: Protocol.Runtime.consolePayload) {
     const {type, args, executionContextId, location} = payload;
     const context = this._contextIdToContext.get(executionContextId)!;
-    this._page._addConsoleMessage(type, args.map(arg => context._createHandle(arg)), location);
+    this._page._addConsoleMessage(type, args.map(arg => context.createHandle(arg)), location);
   }
 
   _onDialogOpened(params: Protocol.Page.dialogOpenedPayload) {
@@ -205,7 +205,7 @@ export class FFPage implements PageDelegate {
   async _onFileChooserOpened(payload: Protocol.Page.fileChooserOpenedPayload) {
     const {executionContextId, element} = payload;
     const context = this._contextIdToContext.get(executionContextId)!;
-    const handle = context._createHandle(element).asElement()!;
+    const handle = context.createHandle(element).asElement()!;
     this._page._onFileChooserOpened(handle);
   }
 
@@ -229,7 +229,7 @@ export class FFPage implements PageDelegate {
     workerSession.on('Runtime.console', event => {
       const {type, args, location} = event;
       const context = worker._existingExecutionContext!;
-      this._page._addConsoleMessage(type, args.map(arg => context._createHandle(arg)), location);
+      this._page._addConsoleMessage(type, args.map(arg => context.createHandle(arg)), location);
     });
     // Note: we receive worker exceptions directly from the page.
   }
@@ -457,7 +457,7 @@ export class FFPage implements PageDelegate {
     });
     if (!result.remoteObject)
       throw new Error('Unable to adopt element handle from a different document');
-    return to._createHandle(result.remoteObject) as dom.ElementHandle<T>;
+    return to.createHandle(result.remoteObject) as dom.ElementHandle<T>;
   }
 
   async getAccessibilityTree(needle?: dom.ElementHandle) {

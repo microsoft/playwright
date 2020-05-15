@@ -15,15 +15,83 @@
  */
 
 import * as types from '../types';
+import { createAttributeEngine } from './attributeSelectorEngine';
+import { createCSSEngine } from './cssSelectorEngine';
+import { SelectorEngine, SelectorRoot } from './selectorEngine';
+import { createTextSelector } from './textSelectorEngine';
+import { XPathEngine } from './xpathSelectorEngine';
 
 type Predicate<T> = () => T;
-export type InjectedResult<T = undefined> =
-  (T extends undefined ? { status: 'success', value?: T} : { status: 'success', value: T }) |
-  { status: 'notconnected' } |
-  { status: 'timeout' } |
-  { status: 'error', error: string };
 
-export class Injected {
+export default class InjectedScript {
+  readonly engines: Map<string, SelectorEngine>;
+
+  constructor(customEngines: { name: string, engine: SelectorEngine}[]) {
+    this.engines = new Map();
+    // Note: keep predefined names in sync with Selectors class.
+    this.engines.set('css', createCSSEngine(true));
+    this.engines.set('css:light', createCSSEngine(false));
+    this.engines.set('xpath', XPathEngine);
+    this.engines.set('xpath:light', XPathEngine);
+    this.engines.set('text', createTextSelector(true));
+    this.engines.set('text:light', createTextSelector(false));
+    this.engines.set('id', createAttributeEngine('id', true));
+    this.engines.set('id:light', createAttributeEngine('id', false));
+    this.engines.set('data-testid', createAttributeEngine('data-testid', true));
+    this.engines.set('data-testid:light', createAttributeEngine('data-testid', false));
+    this.engines.set('data-test-id', createAttributeEngine('data-test-id', true));
+    this.engines.set('data-test-id:light', createAttributeEngine('data-test-id', false));
+    this.engines.set('data-test', createAttributeEngine('data-test', true));
+    this.engines.set('data-test:light', createAttributeEngine('data-test', false));
+    for (const {name, engine} of customEngines)
+      this.engines.set(name, engine);
+  }
+
+  querySelector(selector: types.ParsedSelector, root: Node): Element | undefined {
+    if (!(root as any)['querySelector'])
+      throw new Error('Node is not queryable.');
+    return this._querySelectorRecursively(root as SelectorRoot, selector, 0);
+  }
+
+  private _querySelectorRecursively(root: SelectorRoot, selector: types.ParsedSelector, index: number): Element | undefined {
+    const current = selector.parts[index];
+    if (index === selector.parts.length - 1)
+      return this.engines.get(current.name)!.query(root, current.body);
+    const all = this.engines.get(current.name)!.queryAll(root, current.body);
+    for (const next of all) {
+      const result = this._querySelectorRecursively(next, selector, index + 1);
+      if (result)
+        return selector.capture === index ? next : result;
+    }
+  }
+
+  querySelectorAll(selector: types.ParsedSelector, root: Node): Element[] {
+    if (!(root as any)['querySelectorAll'])
+      throw new Error('Node is not queryable.');
+    const capture = selector.capture === undefined ? selector.parts.length - 1 : selector.capture;
+    // Query all elements up to the capture.
+    const partsToQuerAll = selector.parts.slice(0, capture + 1);
+    // Check they have a descendant matching everything after the capture.
+    const partsToCheckOne = selector.parts.slice(capture + 1);
+    let set = new Set<SelectorRoot>([ root as SelectorRoot ]);
+    for (const { name, body } of partsToQuerAll) {
+      const newSet = new Set<Element>();
+      for (const prev of set) {
+        for (const next of this.engines.get(name)!.queryAll(prev, body)) {
+          if (newSet.has(next))
+            continue;
+          newSet.add(next);
+        }
+      }
+      set = newSet;
+    }
+    const candidates = Array.from(set) as Element[];
+    if (!partsToCheckOne.length)
+      return candidates;
+    const partial = { parts: partsToCheckOne };
+    return candidates.filter(e => !!this._querySelectorRecursively(e, partial, 0));
+  }
+
   isVisible(element: Element): boolean {
     // Note: this logic should be similar to waitForDisplayedAtStablePosition() to avoid surprises.
     if (!element.ownerDocument || !element.ownerDocument.defaultView)
@@ -95,7 +163,7 @@ export class Injected {
     return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
   }
 
-  selectOptions(node: Node, optionsToSelect: (Node | types.SelectOption)[]): InjectedResult<string[]> {
+  selectOptions(node: Node, optionsToSelect: (Node | types.SelectOption)[]): types.InjectedScriptResult<string[]> {
     if (node.nodeName.toLowerCase() !== 'select')
       return { status: 'error', error: 'Element is not a <select> element.' };
     if (!node.isConnected)
@@ -126,7 +194,7 @@ export class Injected {
     return { status: 'success', value: options.filter(option => option.selected).map(option => option.value) };
   }
 
-  fill(node: Node, value: string): InjectedResult<boolean> {
+  fill(node: Node, value: string): types.InjectedScriptResult<boolean> {
     if (node.nodeType !== Node.ELEMENT_NODE)
       return { status: 'error', error: 'Node is not of type HTMLElement' };
     const element = node as HTMLElement;
@@ -175,7 +243,7 @@ export class Injected {
     return result;
   }
 
-  selectText(node: Node): InjectedResult {
+  selectText(node: Node): types.InjectedScriptResult {
     if (node.nodeType !== Node.ELEMENT_NODE)
       return { status: 'error', error: 'Node is not of type HTMLElement' };
     if (!node.isConnected)
@@ -207,7 +275,7 @@ export class Injected {
     return { status: 'success' };
   }
 
-  focusNode(node: Node): InjectedResult {
+  focusNode(node: Node): types.InjectedScriptResult {
     if (!node.isConnected)
       return { status: 'notconnected' };
     if (!(node as any)['focus'])
@@ -262,7 +330,7 @@ export class Injected {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  async waitForDisplayedAtStablePosition(node: Node, rafCount: number, timeout: number): Promise<InjectedResult> {
+  async waitForDisplayedAtStablePosition(node: Node, rafCount: number, timeout: number): Promise<types.InjectedScriptResult> {
     if (!node.isConnected)
       return { status: 'notconnected' };
     const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
@@ -305,7 +373,7 @@ export class Injected {
     return { status: result === 'notconnected' ? 'notconnected' : (result ? 'success' : 'timeout') };
   }
 
-  checkHitTargetAt(node: Node, point: types.Point): InjectedResult<boolean> {
+  checkHitTargetAt(node: Node, point: types.Point): types.InjectedScriptResult<boolean> {
     let element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
     while (element && window.getComputedStyle(element).pointerEvents === 'none')
       element = element.parentElement;

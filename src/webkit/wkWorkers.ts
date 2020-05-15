@@ -91,7 +91,7 @@ export class WKWorkers {
       derivedType = 'timeEnd';
 
     const handles = (parameters || []).map(p => {
-      return worker._existingExecutionContext!._createHandle(p);
+      return worker._existingExecutionContext!.createHandle(p);
     });
     this._page._addConsoleMessage(derivedType, handles, { url, lineNumber: (lineNumber || 1) - 1, columnNumber: (columnNumber || 1) - 1 }, handles.length ? undefined : text);
   }

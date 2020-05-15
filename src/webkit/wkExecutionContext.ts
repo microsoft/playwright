@@ -60,7 +60,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       if (response.wasThrown)
         throw new Error('Evaluation failed: ' + response.result.description);
       if (!returnByValue)
-        return context._createHandle(response.result);
+        return context.createHandle(response.result);
       if (response.result.objectId)
         return await this._returnObjectByValue(response.result.objectId);
       return valueFromRemoteObject(response.result);
@@ -196,7 +196,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     for (const property of response.properties) {
       if (!property.enumerable)
         continue;
-      result.set(property.name, handle._context._createHandle(property.value));
+      result.set(property.name, handle._context.createHandle(property.value));
     }
     return result;
   }

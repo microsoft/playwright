@@ -39,7 +39,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
       checkException(payload.exceptionDetails);
       if (returnByValue)
         return deserializeValue(payload.result!);
-      return context._createHandle(payload.result);
+      return context.createHandle(payload.result);
     }
     if (typeof pageFunction !== 'function')
       throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
@@ -71,7 +71,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
       checkException(payload.exceptionDetails);
       if (returnByValue)
         return deserializeValue(payload.result!);
-      return context._createHandle(payload.result);
+      return context.createHandle(payload.result);
     } finally {
       dispose();
     }
@@ -97,7 +97,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     });
     const result = new Map();
     for (const property of response.properties)
-      result.set(property.name, handle._context._createHandle(property.value));
+      result.set(property.name, handle._context.createHandle(property.value));
     return result;
   }
 

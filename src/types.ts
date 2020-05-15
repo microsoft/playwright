@@ -163,3 +163,9 @@ export type ParsedSelector = {
   }[],
   capture?: number,
 };
+
+export type InjectedScriptResult<T = undefined> =
+  (T extends undefined ? { status: 'success', value?: T} : { status: 'success', value: T }) |
+  { status: 'notconnected' } |
+  { status: 'timeout' } |
+  { status: 'error', error: string };

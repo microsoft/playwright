@@ -49,7 +49,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
       }).catch(rewriteError);
       if (exceptionDetails)
         throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
-      return returnByValue ? valueFromRemoteObject(remoteObject) : context._createHandle(remoteObject);
+      return returnByValue ? valueFromRemoteObject(remoteObject) : context.createHandle(remoteObject);
     }
 
     if (typeof pageFunction !== 'function')
@@ -91,7 +91,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
       }).catch(rewriteError);
       if (exceptionDetails)
         throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
-      return returnByValue ? valueFromRemoteObject(remoteObject) : context._createHandle(remoteObject);
+      return returnByValue ? valueFromRemoteObject(remoteObject) : context.createHandle(remoteObject);
     } finally {
       dispose();
     }
@@ -122,7 +122,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     for (const property of response.result) {
       if (!property.enumerable)
         continue;
-      result.set(property.name, handle._context._createHandle(property.value));
+      result.set(property.name, handle._context.createHandle(property.value));
     }
     return result;
   }
