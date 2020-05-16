@@ -32,7 +32,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
   async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
     if (helper.isString(pageFunction)) {
       const payload = await this._session.send('Runtime.evaluate', {
-        expression: pageFunction.trim(),
+        expression: js.ensureSourceUrl(pageFunction),
         returnByValue,
         executionContextId: this._executionContextId,
       }).catch(rewriteError);
@@ -117,7 +117,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     const simpleValue = await this._session.send('Runtime.callFunction', {
       executionContextId: this._executionContextId,
       returnByValue: true,
-      functionDeclaration: ((e: any) => e).toString(),
+      functionDeclaration: ((e: any) => e).toString() + js.generateSourceUrl(),
       args: [this._toCallArgument(payload)],
     });
     return deserializeValue(simpleValue.result!);

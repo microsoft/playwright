@@ -21,9 +21,6 @@ import { valueFromRemoteObject, getExceptionMessage, releaseObject } from './crP
 import { Protocol } from './protocol';
 import * as js from '../javascript';
 
-export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
-const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
-
 export class CRExecutionContext implements js.ExecutionContextDelegate {
   _client: CRSession;
   _contextId: number;
@@ -34,14 +31,11 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
-    const suffix = `//# sourceURL=${EVALUATION_SCRIPT_URL}`;
-
     if (helper.isString(pageFunction)) {
       const contextId = this._contextId;
       const expression: string = pageFunction;
-      const expressionWithSourceUrl = SOURCE_URL_REGEX.test(expression) ? expression : expression + '\n' + suffix;
       const {exceptionDetails, result: remoteObject} = await this._client.send('Runtime.evaluate', {
-        expression: expressionWithSourceUrl,
+        expression: js.ensureSourceUrl(expression),
         contextId,
         returnByValue,
         awaitPromise: true,
@@ -79,7 +73,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
 
     try {
       const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
-        functionDeclaration: functionText + '\n' + suffix + '\n',
+        functionDeclaration: functionText,
         executionContextId: this._contextId,
         arguments: [
           ...values.map(value => ({ value })),

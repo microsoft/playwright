@@ -21,9 +21,6 @@ import { valueFromRemoteObject, releaseObject } from './wkProtocolHelper';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
 
-export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
-const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
-
 type MaybeCallArgument = Protocol.Runtime.CallArgument | { unserializable: any };
 
 export class WKExecutionContext implements js.ExecutionContextDelegate {
@@ -75,9 +72,8 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     if (helper.isString(pageFunction)) {
       const contextId = this._contextId;
       const expression: string = pageFunction;
-      const expressionWithSourceUrl = SOURCE_URL_REGEX.test(expression) ? expression : expression + '\n' + suffix;
       return await this._session.send('Runtime.evaluate', {
-        expression: expressionWithSourceUrl,
+        expression: js.ensureSourceUrl(expression),
         contextId,
         returnByValue: false,
         emulateUserGesture: true
@@ -105,7 +101,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       const callParams = this._serializeFunctionAndArguments(functionText, values, handles);
       const thisObjectId = await this._contextGlobalObjectId();
       return await this._session.send('Runtime.callFunctionOn', {
-        functionDeclaration: callParams.functionText + '\n' + suffix + '\n',
+        functionDeclaration: callParams.functionText,
         objectId: thisObjectId,
         arguments: callParams.callArguments,
         returnByValue: false,
@@ -170,7 +166,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     try {
       const serializeResponse = await this._session.send('Runtime.callFunctionOn', {
         // Serialize object using standard JSON implementation to correctly pass 'undefined'.
-        functionDeclaration: 'function(){return this}\n' + suffix + '\n',
+        functionDeclaration: 'function(){return this}\n' + js.generateSourceUrl(),
         objectId: objectId,
         returnByValue: true
       });
@@ -231,7 +227,6 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   }
 }
 
-const suffix = `//# sourceURL=${EVALUATION_SCRIPT_URL}`;
 const contextDestroyedResult = {
   wasThrown: true,
   result: {
