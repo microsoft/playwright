@@ -17,6 +17,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const utils = require('./utils');
 const TestRunner = require('../utils/testrunner/');
 const {Environment} = require('../utils/testrunner/Test');
 
@@ -120,17 +121,8 @@ function collect(browserNames) {
 
     const browserEnvironment = new Environment(browserName);
     browserEnvironment.beforeAll(async state => {
-      state._logger = null;
-      state.browser = await state.browserType.launch({...launchOptions, logger: {
-        isEnabled: (name, severity) => {
-          return name === 'browser' ||
-              (name === 'protocol' && config.dumpProtocolOnFailure);
-        },
-        log: (name, severity, message, args) => {
-          if (state._logger)
-            state._logger(name, severity, message);
-        }
-      }});
+      state._logger = utils.createTestLogger(config.dumpProtocolOnFailure);
+      state.browser = await state.browserType.launch({...launchOptions, logger: state._logger});
     });
     browserEnvironment.afterAll(async state => {
       await state.browser.close();
@@ -138,23 +130,10 @@ function collect(browserNames) {
       delete state._logger;
     });
     browserEnvironment.beforeEach(async(state, testRun) => {
-      state._logger = (name, severity, message) => {
-        if (name === 'browser') {
-          if (severity === 'warning')
-            testRun.log(`\x1b[31m[browser]\x1b[0m ${message}`)
-          else
-            testRun.log(`\x1b[33m[browser]\x1b[0m ${message}`)
-        } else if (name === 'protocol' && config.dumpProtocolOnFailure) {
-          testRun.log(`\x1b[32m[protocol]\x1b[0m ${message}`)
-        }
-      }
+      state._logger.setTestRun(testRun);
     });
     browserEnvironment.afterEach(async (state, testRun) => {
-      state._logger = null;
-      if (config.dumpProtocolOnFailure) {
-        if (testRun.ok())
-          testRun.output().splice(0);
-      }
+      state._logger.setTestRun(null);
     });
 
     const pageEnvironment = new Environment('Page');

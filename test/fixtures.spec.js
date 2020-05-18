@@ -25,6 +25,7 @@ async function testSignal(state, action, exitOnClose) {
     handleSIGTERM: true,
     handleSIGHUP: true,
     executablePath: state.browserType.executablePath(),
+    logger: undefined,
   });
   const res = spawn('node', [path.join(__dirname, 'fixtures', 'closeme.js'), path.join(state.playwrightPath, 'index-for-dev'), state.browserType.name(), JSON.stringify(options), exitOnClose ? 'true' : '']);
   let wsEndPointCallback;

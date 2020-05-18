@@ -155,11 +155,12 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
   }
 
   async connect(options: ConnectOptions): Promise<CRBrowser> {
+    const logger = new RootLogger(options.logger);
     return await WebSocketTransport.connect(options.wsEndpoint, async transport => {
       if ((options as any).__testHookBeforeCreateBrowser)
         await (options as any).__testHookBeforeCreateBrowser();
-      return CRBrowser.connect(transport, { slowMo: options.slowMo, logger: new RootLogger(options.logger), downloadsPath: '' });
-    });
+      return CRBrowser.connect(transport, { slowMo: options.slowMo, logger, downloadsPath: '' });
+    }, logger);
   }
 
   private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string): string[] {

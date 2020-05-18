@@ -150,11 +150,12 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
   }
 
   async connect(options: ConnectOptions): Promise<WKBrowser> {
+    const logger = new RootLogger(options.logger);
     return await WebSocketTransport.connect(options.wsEndpoint, async transport => {
       if ((options as any).__testHookBeforeCreateBrowser)
         await (options as any).__testHookBeforeCreateBrowser();
-      return WKBrowser.connect(transport, { slowMo: options.slowMo, logger: new RootLogger(options.logger), downloadsPath: '' });
-    });
+      return WKBrowser.connect(transport, { slowMo: options.slowMo, logger, downloadsPath: '' });
+    }, logger);
   }
 
   _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {
