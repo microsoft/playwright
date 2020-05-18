@@ -31,7 +31,7 @@ steps:
     run: npm test
 ```
 
-We run [our tests](/.github/workflows/tests.yml) on GitHub Actions, across a matrix of 3 platforms (Windows, Linux, macOS) and 3 browsers (Chromium, Firefox, WebKit).
+We run [our tests](https://github.com/microsoft/playwright/blob/master/.github/workflows/tests.yml) on GitHub Actions, across a matrix of 3 platforms (Windows, Linux, macOS) and 3 browsers (Chromium, Firefox, WebKit).
 
 ### Docker
 
@@ -70,7 +70,7 @@ For Linux agents, refer to [our Docker setup](docker/README.md) to see additiona
 
 ### Travis CI
 
-We run our tests on Travis CI over a Linux agent (Ubuntu 18.04). Use our [Travis configuration](/.travis.yml) to see list of additional dependencies to be installed.
+We run our tests on Travis CI over a Linux agent (Ubuntu 18.04). Use our [Travis configuration](https://github.com/microsoft/playwright/blob/master/.travis.yml) to see list of additional dependencies to be installed.
 
 Suggested configuration
 1. [User namespace cloning](http://man7.org/linux/man-pages/man7/user_namespaces.7.html)
@@ -121,7 +121,7 @@ before_install:
 
 ### CircleCI
 
-We run our tests on CircleCI, with our [pre-built Docker image](docker/README.md). Use our [CircleCI configuration](/.circleci/config.yml) to create your own. Running Playwright smoothly on CircleCI requires the following steps:
+We run our tests on CircleCI, with our [pre-built Docker image](docker/README.md). Use our [CircleCI configuration](https://github.com/microsoft/playwright/blob/master/.circleci/config.yml) to create your own. Running Playwright smoothly on CircleCI requires the following steps:
 
 1. Use the pre-built [Docker image](docker/README.md) in your config like so:
 
@@ -144,7 +144,7 @@ We run our tests on CircleCI, with our [pre-built Docker image](docker/README.md
 
 ### AppVeyor
 
-We run our tests on Windows agents in AppVeyor. Use our [AppVeyor configuration](/.appveyor.yml) to create your own.
+We run our tests on Windows agents in AppVeyor. Use our [AppVeyor configuration](https://github.com/microsoft/playwright/blob/master/.appveyor.yml) to create your own.
 
 ## Caching browsers
 
