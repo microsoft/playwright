@@ -105,9 +105,9 @@ If using TypeScript, add types to your variables like:
 let page: import('playwright').Page;
 ```
 
-If using JavaScript, you can still get nice autocompletions in VSCode by using JSDOC
+If using JavaScript, you can still get nice autocompletions in VSCode or WebStorm by using JSDoc.
 ```js
-/** @type {import('playwright').Page} **/
+/** @type {import('playwright').Page} */
 let page;
 ```
 
