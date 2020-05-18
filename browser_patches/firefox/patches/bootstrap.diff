@@ -2402,10 +2402,10 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..ffa7a3eb7db0508bce20f59535fee808a3ee2859
+index 0000000000000000000000000000000000000000..bbd2983755282e514c17824c210e9ab49a1bbad0
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
-@@ -0,0 +1,648 @@
+@@ -0,0 +1,676 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
@@ -2595,8 +2595,8 @@ index 0000000000000000000000000000000000000000..ffa7a3eb7db0508bce20f59535fee808
 +      const tab = event.target;
 +      const userContextId = tab.userContextId;
 +      const browserContext = this._userContextIdToBrowserContext.get(userContextId);
-+      if (browserContext && browserContext.settings.defaultViewport)
-+        setViewportSizeForBrowser(browserContext.settings.defaultViewport.viewportSize, tab.linkedBrowser);
++      if (browserContext && browserContext.defaultViewportSize)
++        setViewportSizeForBrowser(browserContext.defaultViewportSize, tab.linkedBrowser);
 +    };
 +
 +    const onTabCloseListener = event => {
@@ -2731,6 +2731,7 @@ index 0000000000000000000000000000000000000000..ffa7a3eb7db0508bce20f59535fee808
 +    this._tab = tab;
 +    this._linkedBrowser = linkedBrowser;
 +    this._browserContext = browserContext;
++    this._viewportSize = undefined;
 +    this._url = '';
 +    this._openerId = opener ? opener.id() : undefined;
 +    this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, this._linkedBrowser.messageManager);
@@ -2745,8 +2746,10 @@ index 0000000000000000000000000000000000000000..ffa7a3eb7db0508bce20f59535fee808
 +    ];
 +
 +    this._disposed = false;
-+    if (browserContext)
++    if (browserContext) {
 +      browserContext.pages.add(this);
++      browserContext._firstPageCallback();
++    }
 +    this._registry._browserToTarget.set(this._linkedBrowser, this);
 +    this._registry._browserBrowsingContextToTarget.set(this._linkedBrowser.browsingContext, this);
 +  }
@@ -2759,8 +2762,13 @@ index 0000000000000000000000000000000000000000..ffa7a3eb7db0508bce20f59535fee808
 +    return this._browserContext;
 +  }
 +
-+  setViewportSize(viewportSize) {
-+    return setViewportSizeForBrowser(viewportSize, this._linkedBrowser);
++  async setViewportSize(viewportSize) {
++    this._viewportSize = viewportSize;
++    const actualSize = setViewportSizeForBrowser(viewportSize, this._linkedBrowser);
++    await this._channel.connect('').send('awaitViewportDimensions', {
++      width: actualSize.width,
++      height: actualSize.height
++    });
 +  }
 +
 +  connectSession(session) {
@@ -2859,10 +2867,12 @@ index 0000000000000000000000000000000000000000..ffa7a3eb7db0508bce20f59535fee808
 +    this.requestInterceptionEnabled = undefined;
 +    this.ignoreHTTPSErrors = undefined;
 +    this.downloadOptions = undefined;
++    this.defaultViewportSize = undefined;
 +    this.scriptsToEvaluateOnNewDocument = [];
 +    this.bindings = [];
 +    this.settings = {};
 +    this.pages = new Set();
++    this._firstPagePromise = new Promise(f => this._firstPageCallback = f);
 +  }
 +
 +  async destroy() {
@@ -2898,6 +2908,24 @@ index 0000000000000000000000000000000000000000..ffa7a3eb7db0508bce20f59535fee808
 +    } else {
 +      certOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData(false, this.userContextId);
 +    }
++  }
++
++  async setDefaultViewport(viewport) {
++    this.defaultViewportSize = viewport ? viewport.viewportSize : undefined;
++    if (!this.userContextId) {
++      // First page in the default context comes before onTabOpenListener
++      // so we don't set default viewport. Wait for it here and ensure the viewport.
++      await this._firstPagePromise;
++    }
++    const promises = Array.from(this.pages).map(async page => {
++      // Resize to new default, unless the page has a custom viewport.
++      if (!page._viewportSize)
++        await page.setViewportSize(this.defaultViewportSize);
++    });
++    await Promise.all([
++      this.applySetting('deviceScaleFactor', viewport ? viewport.deviceScaleFactor : undefined),
++      ...promises,
++    ]);
 +  }
 +
 +  async addScriptToEvaluateOnNewDocument(script) {
@@ -3699,10 +3727,10 @@ index 0000000000000000000000000000000000000000..155d0770ddf704728829272a41a31ce8
 +
 diff --git a/juggler/content/PageAgent.js b/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..73b6ee4d266ff648acd0a8dfb8909f9b0c76c28d
+index 0000000000000000000000000000000000000000..7828bbea9a32fc7bf161c1bc814b900bdc19a2a9
 --- /dev/null
 +++ b/juggler/content/PageAgent.js
-@@ -0,0 +1,992 @@
+@@ -0,0 +1,977 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -3832,7 +3860,6 @@ index 0000000000000000000000000000000000000000..73b6ee4d266ff648acd0a8dfb8909f9b
 +        addBinding: ({ name, script }) => this._frameTree.addBinding(name, script),
 +        addScriptToEvaluateOnNewDocument: this._addScriptToEvaluateOnNewDocument.bind(this),
 +        adoptNode: this._adoptNode.bind(this),
-+        awaitViewportDimensions: this._awaitViewportDimensions.bind(this),
 +        crash: this._crash.bind(this),
 +        describeNode: this._describeNode.bind(this),
 +        dispatchKeyEvent: this._dispatchKeyEvent.bind(this),
@@ -3869,20 +3896,6 @@ index 0000000000000000000000000000000000000000..73b6ee4d266ff648acd0a8dfb8909f9b
 +    this._initialDPPX = docShell.contentViewer.overrideDPPX;
 +    this._customScrollbars = null;
 +    this._dataTransfer = null;
-+  }
-+
-+  async _awaitViewportDimensions({width, height}) {
-+    const win = this._frameTree.mainFrame().domWindow();
-+    if (win.innerWidth === width && win.innerHeight === height)
-+      return;
-+    await new Promise(resolve => {
-+      const listener = helper.addEventListener(win, 'resize', () => {
-+        if (win.innerWidth === width && win.innerHeight === height) {
-+          helper.removeListeners([listener]);
-+          resolve();
-+        }
-+      });
-+    });
 +  }
 +
 +  _requestDetails({channelId}) {
@@ -5492,10 +5505,10 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/juggler/content/main.js b/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..ef33a19f8fd4f8abefac1470aa7c79b66d822860
+index 0000000000000000000000000000000000000000..70c47bb426876f4a89709ba61460149dae370efe
 --- /dev/null
 +++ b/juggler/content/main.js
-@@ -0,0 +1,174 @@
+@@ -0,0 +1,188 @@
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
@@ -5585,9 +5598,9 @@ index 0000000000000000000000000000000000000000..ef33a19f8fd4f8abefac1470aa7c79b6
 +    frameTree.setColorScheme(colorScheme);
 +  },
 +
-+  defaultViewport: (viewport) => {
-+    docShell.contentViewer.overrideDPPX = viewport.deviceScaleFactor || this._initialDPPX;
-+    docShell.deviceSizeIsPageSize = true;
++  deviceScaleFactor: (deviceScaleFactor) => {
++    docShell.contentViewer.overrideDPPX = deviceScaleFactor || this._initialDPPX;
++    docShell.deviceSizeIsPageSize = !!deviceScaleFactor;
 +  },
 +};
 +
@@ -5648,6 +5661,20 @@ index 0000000000000000000000000000000000000000..ef33a19f8fd4f8abefac1470aa7c79b6
 +
 +    hasFailedToOverrideTimezone() {
 +      return failedToOverrideTimezone;
++    },
++
++    async awaitViewportDimensions({width, height}) {
++      const win = docShell.domWindow;
++      if (win.innerWidth === width && win.innerHeight === height)
++        return;
++      await new Promise(resolve => {
++        const listener = helper.addEventListener(win, 'resize', () => {
++          if (win.innerWidth === width && win.innerHeight === height) {
++            helper.removeListeners([listener]);
++            resolve();
++          }
++        });
++      });
 +    },
 +
 +    dispose() {
@@ -5749,7 +5776,7 @@ index 0000000000000000000000000000000000000000..bf37558bccc48f4d90eadc971c1eb3e4
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/juggler/protocol/BrowserHandler.js b/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..1d304e2996c62df07d823b4cffd1eb309cba29ab
+index 0000000000000000000000000000000000000000..ad4bfcf776c2ae97957c8b0e675f920371955728
 --- /dev/null
 +++ b/juggler/protocol/BrowserHandler.js
 @@ -0,0 +1,239 @@
@@ -5951,7 +5978,7 @@ index 0000000000000000000000000000000000000000..1d304e2996c62df07d823b4cffd1eb30
 +  }
 +
 +  async setDefaultViewport({browserContextId, viewport}) {
-+    await this._targetRegistry.browserContextForId(browserContextId).applySetting('defaultViewport', nullToUndefined(viewport));
++    await this._targetRegistry.browserContextForId(browserContextId).setDefaultViewport(nullToUndefined(viewport));
 +  }
 +
 +  async addScriptToEvaluateOnNewDocument({browserContextId, script}) {
@@ -6299,10 +6326,10 @@ index 0000000000000000000000000000000000000000..10ce1e9eb24879426ca11a21ffeb89f3
 +this.NetworkHandler = NetworkHandler;
 diff --git a/juggler/protocol/PageHandler.js b/juggler/protocol/PageHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..95481cd1194918d0b539dc1872906070ef75b1be
+index 0000000000000000000000000000000000000000..2ad037e57ac4b0b97d85c55bcd08489d840205c1
 --- /dev/null
 +++ b/juggler/protocol/PageHandler.js
-@@ -0,0 +1,345 @@
+@@ -0,0 +1,341 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -6440,11 +6467,7 @@ index 0000000000000000000000000000000000000000..95481cd1194918d0b539dc1872906070
 +  }
 +
 +  async setViewportSize({viewportSize}) {
-+    const size = this._pageTarget.setViewportSize(viewportSize);
-+    await this._contentPage.send('awaitViewportDimensions', {
-+      width: size.width,
-+      height: size.height
-+    });
++    await this._pageTarget.setViewportSize(viewportSize === null ? undefined : viewportSize);
 +  }
 +
 +  _updateModalDialogs() {
