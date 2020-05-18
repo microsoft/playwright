@@ -2802,10 +2802,10 @@ This method scrolls element into view if needed, and then uses [page.mouse](#pag
 If the element is detached from DOM, the method throws an error.
 
 #### elementHandle.innerHTML()
-- returns: <[Promise]<null|[string]>> Resolves to the `element.innerHTML`.
+- returns: <[Promise]<[string]>> Resolves to the `element.innerHTML`.
 
 #### elementHandle.innerText()
-- returns: <[Promise]<null|[string]>> Resolves to the `element.innerText`.
+- returns: <[Promise]<[string]>> Resolves to the `element.innerText`.
 
 #### elementHandle.ownerFrame()
 - returns: <[Promise]<?[Frame]>> Returns the frame containing the given element.

@@ -139,16 +139,18 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._evaluateInUtility(({node}) => node.textContent, {});
   }
 
-  async innerText(): Promise<string | null> {
+  async innerText(): Promise<string> {
     return this._evaluateInUtility(({node}) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         throw new Error('Not an element');
+      if (node.namespaceURI !== 'http://www.w3.org/1999/xhtml')
+        throw new Error('Not an HTMLElement');
       const element = node as unknown as HTMLElement;
       return element.innerText;
     }, {});
   }
 
-  async innerHTML(): Promise<string | null> {
+  async innerHTML(): Promise<string> {
     return this._evaluateInUtility(({node}) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         throw new Error('Not an element');
