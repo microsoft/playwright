@@ -25,6 +25,7 @@ import { ExtendedEventEmitter } from './extendedEventEmitter';
 import { Download } from './download';
 import { BrowserBase } from './browser';
 import { Log, InnerLogger, Logger, RootLogger } from './logger';
+import { FunctionWithSource } from './frames';
 
 export type BrowserContextOptions = {
   viewport?: types.Size | null,
@@ -62,6 +63,7 @@ export interface BrowserContext extends InnerLogger {
   setOffline(offline: boolean): Promise<void>;
   setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void>;
   addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any): Promise<void>;
+  exposeBinding(name: string, playwrightBinding: FunctionWithSource): Promise<void>;
   exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
   route(url: types.URLMatch, handler: network.RouteHandler): Promise<void>;
   unroute(url: types.URLMatch, handler?: network.RouteHandler): Promise<void>;
@@ -126,10 +128,26 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
   abstract setExtraHTTPHeaders(headers: network.Headers): Promise<void>;
   abstract setOffline(offline: boolean): Promise<void>;
   abstract addInitScript(script: string | Function | { path?: string | undefined; content?: string | undefined; }, arg?: any): Promise<void>;
-  abstract exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
+  abstract _doExposeBinding(binding: PageBinding): Promise<void>;
   abstract route(url: types.URLMatch, handler: network.RouteHandler): Promise<void>;
   abstract unroute(url: types.URLMatch, handler?: network.RouteHandler): Promise<void>;
   abstract close(): Promise<void>;
+
+  async exposeFunction(name: string, playwrightFunction: Function): Promise<void> {
+    await this.exposeBinding(name, (options, ...args: any) => playwrightFunction(...args));
+  }
+
+  async exposeBinding(name: string, playwrightBinding: FunctionWithSource): Promise<void> {
+    for (const page of this.pages()) {
+      if (page._pageBindings.has(name))
+        throw new Error(`Function "${name}" has been already registered in one of the pages`);
+    }
+    if (this._pageBindings.has(name))
+      throw new Error(`Function "${name}" has been already registered`);
+    const binding = new PageBinding(name, playwrightBinding);
+    this._pageBindings.set(name, binding);
+    this._doExposeBinding(binding);
+  }
 
   async grantPermissions(permissions: string[], options?: { origin?: string }) {
     let origin = '*';

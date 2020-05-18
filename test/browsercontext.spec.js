@@ -326,6 +326,26 @@ describe('BrowserContext.pages()', function() {
   });
 });
 
+describe('BrowserContext.exposeBinding', () => {
+  it('should work', async({browser}) => {
+    const context = await browser.newContext();
+    let bindingSource;
+    await context.exposeBinding('add', (source, a, b) => {
+      bindingSource = source;
+      return a + b;
+    });
+    const page = await context.newPage();
+    const result = await page.evaluate(async function() {
+      return add(5, 6);
+    });
+    expect(bindingSource.context).toBe(context);
+    expect(bindingSource.page).toBe(page);
+    expect(bindingSource.frame).toBe(page.mainFrame());
+    expect(result).toEqual(11);
+    await context.close();
+  });
+});
+
 describe('BrowserContext.exposeFunction', () => {
   it('should work', async({browser, server}) => {
     const context = await browser.newContext();
