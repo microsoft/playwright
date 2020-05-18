@@ -452,7 +452,7 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
     return this.mainFrame().focus(selector, options);
   }
 
-  async textContent(selector: string, options?: types.TimeoutOptions): Promise<string|null> {
+  async textContent(selector: string, options?: types.TimeoutOptions): Promise<null|string> {
     return this.mainFrame().textContent(selector, options);
   }
 

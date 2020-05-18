@@ -730,7 +730,7 @@ export class Frame {
         (handle, deadline) => handle.focus());
   }
 
-  async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<string|null> {
+  async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<null|string> {
     return await this._retryWithSelectorIfNotConnected('textContent', selector, options,
         (handle, deadline) => handle.textContent() as Promise<string>);
   }
