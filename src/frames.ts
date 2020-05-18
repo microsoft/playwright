@@ -732,17 +732,17 @@ export class Frame {
 
   async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<null|string> {
     return await this._retryWithSelectorIfNotConnected('textContent', selector, options,
-        (handle, deadline) => handle.textContent() as Promise<string>);
+        (handle, deadline) => handle.textContent());
   }
 
   async innerText(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
     return await this._retryWithSelectorIfNotConnected('innerText', selector, options,
-        (handle, deadline) => handle.innerText() as Promise<string>);
+        (handle, deadline) => handle.innerText());
   }
 
   async innerHTML(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
     return await this._retryWithSelectorIfNotConnected('innerHTML', selector, options,
-        (handle, deadline) => handle.innerHTML() as Promise<string>);
+        (handle, deadline) => handle.innerHTML());
   }
 
   async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
