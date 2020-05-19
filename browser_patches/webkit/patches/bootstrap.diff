@@ -4271,10 +4271,10 @@ index 6c75829502336b0806db2531e78186d2c559e44c..1ad6b8e863c56fd572910db6c6fb524d
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp b/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..e7f4a5b8b23771f8d81dd4c61c642923399ca757
+index 0000000000000000000000000000000000000000..13ca5202e8e3ee5add01634037c2111798c58936
 --- /dev/null
 +++ b/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,158 @@
+@@ -0,0 +1,150 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -4341,14 +4341,6 @@ index 0000000000000000000000000000000000000000..e7f4a5b8b23771f8d81dd4c61c642923
 +{
 +    if (isEnabled())
 +      return;
-+
-+#if !PLATFORM(GTK)
-+    // TODO: make ImageBufferUtilitiesCairo produce jpeg on WPE and Windows.
-+    if (format != "png") {
-+        errorString = "Only png format is supported on WPE."_s;
-+        return;
-+    }
-+#endif
 +
 +    if (format == "jpeg") {
 +        m_format = "image/jpeg";
@@ -5306,6 +5298,98 @@ index 892d8de6d345d91fda80cfa5334c4aa68b757da3..a22497d801a349487be10b15139e9c76
  #endif
  
  #if PLATFORM(IOS_FAMILY)
+diff --git a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp b/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
+index d79728555b7db9b59cb615c55a7a7a6851cb57c8..6a6bfcd87074be69790a9d4b7993d427953129f5 100644
+--- a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
++++ b/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
+@@ -48,6 +48,14 @@
+ #include <wtf/glib/GUniquePtr.h>
+ #endif
+ 
++#if PLATFORM(WPE)
++#include <wtf/glib/GUniquePtr.h>
++#include <stdio.h> // Needed by jpeglib.h for FILE.
++extern "C" {
++#include "jpeglib.h"
++}
++#endif
++
+ namespace WebCore {
+ 
+ #if !PLATFORM(GTK)
+@@ -65,8 +73,71 @@ static bool encodeImage(cairo_surface_t* image, const String& mimeType, Vector<u
+     return cairo_surface_write_to_png_stream(image, writeFunction, output) == CAIRO_STATUS_SUCCESS;
+ }
+ 
+-Vector<uint8_t> data(cairo_surface_t* image, const String& mimeType, Optional<double>)
++static Vector<uint8_t> encodeJpeg(cairo_surface_t* image, int quality)
+ {
++    struct jpeg_compress_struct info;
++    struct jpeg_error_mgr error;
++    info.err = jpeg_std_error(&error);
++    jpeg_create_compress(&info);
++
++    GUniqueOutPtr<guchar> buffer;
++    gsize bufferSize;
++    jpeg_mem_dest(&info, &buffer.outPtr(), &bufferSize);
++    info.image_width = cairo_image_surface_get_width(image);
++    info.image_height = cairo_image_surface_get_height(image);
++
++    if (cairo_surface_get_type(image) != CAIRO_SURFACE_TYPE_IMAGE) {
++        fprintf(stderr, "Unexpected cairo surface type: %d\n", cairo_surface_get_type(image));
++        return { };
++    }
++
++    if (cairo_image_surface_get_format(image) != CAIRO_FORMAT_ARGB32) {
++        fprintf(stderr, "Unexpected surface image format: %d\n", cairo_image_surface_get_format(image));
++        return { };
++    }
++#ifndef LIBJPEG_TURBO_VERSION
++    COMPILE_ASSERT(false, only_libjpeg_turbo_is_supported);
++#endif
++
++#if CPU(LITTLE_ENDIAN)
++    info.in_color_space = JCS_EXT_BGRA;
++#else
++    info.in_color_space = JCS_EXT_ARGB;
++#endif
++    // # of color components in input image
++    info.input_components = 4;
++
++    jpeg_set_defaults(&info);
++    jpeg_set_quality(&info, quality, true);
++
++    jpeg_start_compress(&info, true);
++
++    while (info.next_scanline < info.image_height)
++    {
++        JSAMPROW row = cairo_image_surface_get_data(image) + (info.next_scanline * cairo_image_surface_get_stride(image));
++        if (jpeg_write_scanlines(&info, &row, 1) != 1) {
++            fprintf(stderr, "JPEG library failed to encode line\n");
++            return { };
++        }
++    }
++
++    jpeg_finish_compress(&info);
++    jpeg_destroy_compress(&info);
++
++    Vector<uint8_t> output;
++    output.append(buffer.get(), bufferSize);
++    return output;
++}
++
++Vector<uint8_t> data(cairo_surface_t* image, const String& mimeType, Optional<double> quality)
++{
++    if (mimeType == "image/jpeg") {
++        int qualityPercent = 100;
++        if (quality)
++            qualityPercent = static_cast<int>(*quality * 100.0 + 0.5);
++        return encodeJpeg(image, qualityPercent);
++    }
++
+     Vector<uint8_t> encodedImage;
+     if (!image || !encodeImage(image, mimeType, &encodedImage))
+         return { };
 diff --git a/Source/WebCore/platform/graphics/cg/ImageBufferUtilitiesCG.h b/Source/WebCore/platform/graphics/cg/ImageBufferUtilitiesCG.h
 index bc87758878d5163a938af8242c7a6800ea9bd13c..3d0751f8dfe1124bbe054daa2fa0c7552fecab32 100644
 --- a/Source/WebCore/platform/graphics/cg/ImageBufferUtilitiesCG.h
