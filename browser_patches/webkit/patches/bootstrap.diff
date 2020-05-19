@@ -5299,15 +5299,14 @@ index 892d8de6d345d91fda80cfa5334c4aa68b757da3..a22497d801a349487be10b15139e9c76
  
  #if PLATFORM(IOS_FAMILY)
 diff --git a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp b/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
-index d79728555b7db9b59cb615c55a7a7a6851cb57c8..6a6bfcd87074be69790a9d4b7993d427953129f5 100644
+index d79728555b7db9b59cb615c55a7a7a6851cb57c8..6c05bfbcc1056e5fb906bf019cc52472d1b02882 100644
 --- a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
 +++ b/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
-@@ -48,6 +48,14 @@
+@@ -48,6 +48,13 @@
  #include <wtf/glib/GUniquePtr.h>
  #endif
  
-+#if PLATFORM(WPE)
-+#include <wtf/glib/GUniquePtr.h>
++#if PLATFORM(WPE) || PLATFORM(WIN)
 +#include <stdio.h> // Needed by jpeglib.h for FILE.
 +extern "C" {
 +#include "jpeglib.h"
@@ -5317,24 +5316,13 @@ index d79728555b7db9b59cb615c55a7a7a6851cb57c8..6a6bfcd87074be69790a9d4b7993d427
  namespace WebCore {
  
  #if !PLATFORM(GTK)
-@@ -65,8 +73,71 @@ static bool encodeImage(cairo_surface_t* image, const String& mimeType, Vector<u
+@@ -65,8 +72,75 @@ static bool encodeImage(cairo_surface_t* image, const String& mimeType, Vector<u
      return cairo_surface_write_to_png_stream(image, writeFunction, output) == CAIRO_STATUS_SUCCESS;
  }
  
 -Vector<uint8_t> data(cairo_surface_t* image, const String& mimeType, Optional<double>)
 +static Vector<uint8_t> encodeJpeg(cairo_surface_t* image, int quality)
- {
-+    struct jpeg_compress_struct info;
-+    struct jpeg_error_mgr error;
-+    info.err = jpeg_std_error(&error);
-+    jpeg_create_compress(&info);
-+
-+    GUniqueOutPtr<guchar> buffer;
-+    gsize bufferSize;
-+    jpeg_mem_dest(&info, &buffer.outPtr(), &bufferSize);
-+    info.image_width = cairo_image_surface_get_width(image);
-+    info.image_height = cairo_image_surface_get_height(image);
-+
++{
 +    if (cairo_surface_get_type(image) != CAIRO_SURFACE_TYPE_IMAGE) {
 +        fprintf(stderr, "Unexpected cairo surface type: %d\n", cairo_surface_get_type(image));
 +        return { };
@@ -5344,6 +5332,18 @@ index d79728555b7db9b59cb615c55a7a7a6851cb57c8..6a6bfcd87074be69790a9d4b7993d427
 +        fprintf(stderr, "Unexpected surface image format: %d\n", cairo_image_surface_get_format(image));
 +        return { };
 +    }
++
++    struct jpeg_compress_struct info;
++    struct jpeg_error_mgr error;
++    info.err = jpeg_std_error(&error);
++    jpeg_create_compress(&info);
++
++    unsigned char* bufferPtr = nullptr;
++    size_t bufferSize;
++    jpeg_mem_dest(&info, &bufferPtr, &bufferSize);
++    info.image_width = cairo_image_surface_get_width(image);
++    info.image_height = cairo_image_surface_get_height(image);
++
 +#ifndef LIBJPEG_TURBO_VERSION
 +    COMPILE_ASSERT(false, only_libjpeg_turbo_is_supported);
 +#endif
@@ -5366,7 +5366,7 @@ index d79728555b7db9b59cb615c55a7a7a6851cb57c8..6a6bfcd87074be69790a9d4b7993d427
 +        JSAMPROW row = cairo_image_surface_get_data(image) + (info.next_scanline * cairo_image_surface_get_stride(image));
 +        if (jpeg_write_scanlines(&info, &row, 1) != 1) {
 +            fprintf(stderr, "JPEG library failed to encode line\n");
-+            return { };
++            break;
 +        }
 +    }
 +
@@ -5374,12 +5374,15 @@ index d79728555b7db9b59cb615c55a7a7a6851cb57c8..6a6bfcd87074be69790a9d4b7993d427
 +    jpeg_destroy_compress(&info);
 +
 +    Vector<uint8_t> output;
-+    output.append(buffer.get(), bufferSize);
++    output.append(bufferPtr, bufferSize);
++    // Cannot use unique_ptr as bufferPtr changes during compression. GUniquePtr would work
++    // but it's under GLib and won't work on Windows.
++    free(bufferPtr);
 +    return output;
 +}
 +
 +Vector<uint8_t> data(cairo_surface_t* image, const String& mimeType, Optional<double> quality)
-+{
+ {
 +    if (mimeType == "image/jpeg") {
 +        int qualityPercent = 100;
 +        if (quality)
