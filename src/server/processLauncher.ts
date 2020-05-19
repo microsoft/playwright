@@ -16,7 +16,7 @@
  */
 
 import * as childProcess from 'child_process';
-import { Log, InnerLogger } from '../logger';
+import { Log, RootLogger } from '../logger';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -44,7 +44,6 @@ const browserStdErrLog: Log = {
   severity: 'warning'
 };
 
-
 export type LaunchProcessOptions = {
   executablePath: string,
   args: string[],
@@ -62,7 +61,7 @@ export type LaunchProcessOptions = {
   // Note: attemptToGracefullyClose should reject if it does not close the browser.
   attemptToGracefullyClose: () => Promise<any>,
   onkill: (exitCode: number | null, signal: string | null) => void,
-  logger: InnerLogger,
+  logger: RootLogger,
 };
 
 type LaunchResult = {
@@ -74,6 +73,7 @@ type LaunchResult = {
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
   const logger = options.logger;
   const stdio: ('ignore' | 'pipe')[] = options.pipe ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe'];
+  logger.startLaunchRecording();
   logger._log(browserLog, `<launching> ${options.executablePath} ${options.args.join(' ')}`);
   const spawnedProcess = childProcess.spawn(
       options.executablePath,

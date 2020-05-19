@@ -213,7 +213,7 @@ function compareDocumentations(actual, expected) {
     let expectedName = expected.name;
     for (const replacer of tsReplacers)
       expectedName = expectedName.replace(...replacer);
-    if (expectedName !== actualName)
+    if (normalizeType(expectedName) !== normalizeType(actualName))
       errors.push(`${source} ${actualName} != ${expectedName}`);
     if (actual.name === 'boolean' || actual.name === 'string')
       return;
@@ -304,3 +304,23 @@ function diff(actual, expected) {
   }
 }
 
+function normalizeType(type) {
+  let nesting = 0;
+  const result = [];
+  let word = '';
+  for (const c of type) {
+    if (c === '<') {
+      ++nesting;
+    } else if (c === '>') {
+      --nesting;
+    }
+    if (c === '|' && !nesting) {
+      result.push(word);
+      word = '';
+    } else {
+      word += c;
+    }
+  }
+  result.sort();
+  return result.join('|');
+}

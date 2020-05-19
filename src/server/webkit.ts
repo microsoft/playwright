@@ -33,7 +33,6 @@ import { Events } from '../events';
 import { BrowserContext } from '../browserContext';
 import { InnerLogger, logError, RootLogger } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
-import { TimeoutSettings } from '../timeoutSettings';
 
 export class WebKit extends AbstractBrowserType<WKBrowser> {
   constructor(packagePath: string, browser: BrowserDescriptor) {
@@ -42,16 +41,13 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
 
   async launch(options: LaunchOptions = {}): Promise<WKBrowser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
-    const { timeout = 30000 } = options;
-    const deadline = TimeoutSettings.computeDeadline(timeout);
-    const { browserServer, transport, downloadsPath, logger } = await this._launchServer(options, 'local');
-    return await browserServer._initializeOrClose(deadline, async () => {
-      if ((options as any).__testHookBeforeCreateBrowser)
-        await (options as any).__testHookBeforeCreateBrowser();
+    const browserServer = new BrowserServer(options);
+    const { transport, downloadsPath } = await this._launchServer(options, 'local', browserServer);
+    return await browserServer._initializeOrClose(async () => {
       return await WKBrowser.connect(transport!, {
         slowMo: options.slowMo,
         headful: !processBrowserArgOptions(options).headless,
-        logger,
+        logger: browserServer._logger,
         downloadsPath,
         ownedServer: browserServer
       });
@@ -59,20 +55,19 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
-    return (await this._launchServer(options, 'server')).browserServer;
+    const browserServer = new BrowserServer(options);
+    await this._launchServer(options, 'server', browserServer);
+    return browserServer;
   }
 
   async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
-    const { timeout = 30000 } = options;
-    const deadline = TimeoutSettings.computeDeadline(timeout);
-    const { transport, browserServer, logger, downloadsPath } = await this._launchServer(options, 'persistent', userDataDir);
-    return await browserServer._initializeOrClose(deadline, async () => {
-      if ((options as any).__testHookBeforeCreateBrowser)
-        await (options as any).__testHookBeforeCreateBrowser();
+    const browserServer = new BrowserServer(options);
+    const { transport, downloadsPath } = await this._launchServer(options, 'persistent', browserServer, userDataDir);
+    return await browserServer._initializeOrClose(async () => {
       const browser = await WKBrowser.connect(transport!, {
         slowMo: options.slowMo,
         headful: !processBrowserArgOptions(options).headless,
-        logger,
+        logger: browserServer._logger,
         persistent: true,
         downloadsPath,
         ownedServer: browserServer
@@ -84,7 +79,7 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
     });
   }
 
-  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport, downloadsPath: string, logger: InnerLogger }> {
+  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, browserServer: BrowserServer, userDataDir?: string): Promise<{ transport?: ConnectionTransport, downloadsPath: string, logger: RootLogger }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -96,7 +91,7 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
       port = 0,
     } = options;
     assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
-    const logger = new RootLogger(options.logger);
+    const logger = browserServer._logger;
 
     let temporaryUserDataDir: string | null = null;
     if (!userDataDir) {
@@ -119,7 +114,6 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
     // Note: it is important to define these variables before launchProcess, so that we don't get
     // "Cannot access 'browserServer' before initialization" if something went wrong.
     let transport: ConnectionTransport | undefined = undefined;
-    let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose, downloadsPath } = await launchProcess({
       executablePath: webkitExecutable,
       args: webkitArguments,
@@ -135,18 +129,17 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
         // our connection ignores kBrowserCloseMessageId.
-        await transport.send({method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId});
+        transport.send({method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId});
       },
       onkill: (exitCode, signal) => {
-        if (browserServer)
-          browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
+        browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
       },
     });
 
     const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
     transport = new PipeTransport(stdio[3], stdio[4], logger);
-    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, logger, port || 0) : null);
-    return { browserServer, transport, downloadsPath, logger };
+    browserServer._initialize(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, logger, port || 0) : null);
+    return { transport, downloadsPath, logger };
   }
 
   async connect(options: ConnectOptions): Promise<WKBrowser> {

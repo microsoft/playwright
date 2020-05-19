@@ -25,7 +25,7 @@ export type BrowserArgOptions = {
   devtools?: boolean,
 };
 
-type LaunchOptionsBase = BrowserArgOptions & {
+export type LaunchOptionsBase = BrowserArgOptions & {
   executablePath?: string,
   ignoreDefaultArgs?: boolean | string[],
   handleSIGINT?: boolean,

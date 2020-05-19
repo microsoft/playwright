@@ -17,6 +17,9 @@
 import { ChildProcess, execSync } from 'child_process';
 import { EventEmitter } from 'events';
 import { helper } from '../helper';
+import { RootLogger } from '../logger';
+import { TimeoutSettings } from '../timeoutSettings';
+import { LaunchOptionsBase } from './browserType';
 
 export class WebSocketWrapper {
   readonly wsEndpoint: string;
@@ -48,19 +51,32 @@ export class WebSocketWrapper {
 }
 
 export class BrowserServer extends EventEmitter {
-  private _process: ChildProcess;
-  private _gracefullyClose: () => Promise<void>;
-  private _webSocketWrapper: WebSocketWrapper | null;
+  private _process: ChildProcess | undefined;
+  private _gracefullyClose: (() => Promise<void>) | undefined;
+  private _webSocketWrapper: WebSocketWrapper | null = null;
+  private _launchOptions: LaunchOptionsBase;
+  readonly _logger: RootLogger;
+  readonly _launchDeadline: number;
 
-  constructor(process: ChildProcess, gracefullyClose: () => Promise<void>, webSocketWrapper: WebSocketWrapper | null) {
+  constructor(options: LaunchOptionsBase) {
     super();
+    this._launchOptions = options;
+    this._logger = new RootLogger(options.logger);
+    this._launchDeadline = TimeoutSettings.computeDeadline(typeof options.timeout === 'number' ? options.timeout : 30000);
+  }
+
+  _initialize(process: ChildProcess, gracefullyClose: () => Promise<void>, webSocketWrapper: WebSocketWrapper | null) {
     this._process = process;
     this._gracefullyClose = gracefullyClose;
     this._webSocketWrapper = webSocketWrapper;
   }
 
+  _isInitialized(): boolean {
+    return !!this._process;
+  }
+
   process(): ChildProcess {
-    return this._process;
+    return this._process!;
   }
 
   wsEndpoint(): string {
@@ -68,12 +84,12 @@ export class BrowserServer extends EventEmitter {
   }
 
   kill() {
-    if (this._process.pid && !this._process.killed) {
+    if (this._process!.pid && !this._process!.killed) {
       try {
         if (process.platform === 'win32')
-          execSync(`taskkill /pid ${this._process.pid} /T /F`);
+          execSync(`taskkill /pid ${this._process!.pid} /T /F`);
         else
-          process.kill(-this._process.pid, 'SIGKILL');
+          process.kill(-this._process!.pid, 'SIGKILL');
       } catch (e) {
         // the process might have already stopped
       }
@@ -81,7 +97,7 @@ export class BrowserServer extends EventEmitter {
   }
 
   async close(): Promise<void> {
-    await this._gracefullyClose();
+    await this._gracefullyClose!();
   }
 
   async _checkLeaks(): Promise<void> {
@@ -89,19 +105,28 @@ export class BrowserServer extends EventEmitter {
       await this._webSocketWrapper.checkLeaks();
   }
 
-  async _initializeOrClose<T>(deadline: number, init: () => Promise<T>): Promise<T> {
+  async _initializeOrClose<T>(init: () => Promise<T>): Promise<T> {
     try {
-      const result = await helper.waitWithDeadline(init(), 'the browser to launch', deadline, 'pw:browser*');
+      let promise: Promise<T>;
+      if ((this._launchOptions as any).__testHookBeforeCreateBrowser)
+        promise = (this._launchOptions as any).__testHookBeforeCreateBrowser().then(init);
+      else
+        promise = init();
+      const result = await helper.waitWithDeadline(promise, 'the browser to launch', this._launchDeadline, 'pw:browser*');
+      this._logger.stopLaunchRecording();
       return result;
     } catch (e) {
-      await this._closeOrKill(deadline);
+      e.message += '\n=============== Process output during launch: ===============\n' +
+          this._logger.stopLaunchRecording() +
+          '\n=============================================================';
+      await this._closeOrKill();
       throw e;
     }
   }
 
-  async _closeOrKill(deadline: number): Promise<void> {
+  private async _closeOrKill(): Promise<void> {
     try {
-      await helper.waitWithDeadline(this.close(), '', deadline, ''); // The error message is ignored.
+      await helper.waitWithDeadline(this.close(), '', this._launchDeadline, ''); // The error message is ignored.
     } catch (ignored) {
       this.kill();
     }

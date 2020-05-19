@@ -39,6 +39,7 @@ export class WKBrowser extends BrowserBase {
 
   static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
     const browser = new WKBrowser(SlowMoTransport.wrap(transport, options.slowMo), options);
+    // TODO: add Playwright.enable to test connection.
     return browser;
   }
 
