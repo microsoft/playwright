@@ -96,6 +96,10 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
     if (!webkitExecutable)
       throw new Error(`No executable path is specified.`);
 
+    // Note: it is important to define these variables before launchProcess, so that we don't get
+    // "Cannot access 'browserServer' before initialization" if something went wrong.
+    let transport: ConnectionTransport | undefined = undefined;
+    let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose, downloadsPath } = await launchProcess({
       executablePath: webkitExecutable,
       args: webkitArguments,
@@ -119,9 +123,7 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
       },
     });
 
-    // For local launch scenario close will terminate the browser process.
-    let transport: ConnectionTransport | undefined = undefined;
-    let browserServer: BrowserServer | undefined = undefined;
+
     const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
     transport = new PipeTransport(stdio[3], stdio[4], logger);
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, logger, port || 0) : null);

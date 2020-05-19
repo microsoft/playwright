@@ -106,6 +106,10 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
     if (!firefoxExecutable)
       throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
 
+    // Note: it is important to define these variables before launchProcess, so that we don't get
+    // "Cannot access 'browserServer' before initialization" if something went wrong.
+    let browserServer: BrowserServer | undefined = undefined;
+    let browserWSEndpoint: string | undefined = undefined;
     const { launchedProcess, gracefullyClose, downloadsPath } = await launchProcess({
       executablePath: firefoxExecutable,
       args: firefoxArguments,
@@ -137,8 +141,6 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
     const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
     const innerEndpoint = match[1];
 
-    let browserServer: BrowserServer | undefined = undefined;
-    let browserWSEndpoint: string | undefined = undefined;
     const webSocketWrapper = launchType === 'server' ? (await WebSocketTransport.connect(innerEndpoint, t => wrapTransportWithWebSocket(t, logger, port))) : new WebSocketWrapper(innerEndpoint, []);
     browserWSEndpoint = webSocketWrapper.wsEndpoint;
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, webSocketWrapper);

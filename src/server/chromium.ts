@@ -91,6 +91,11 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
     const chromeExecutable = executablePath || this.executablePath();
     if (!chromeExecutable)
       throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
+
+    // Note: it is important to define these variables before launchProcess, so that we don't get
+    // "Cannot access 'browserServer' before initialization" if something went wrong.
+    let transport: PipeTransport | undefined = undefined;
+    let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose, downloadsPath } = await launchProcess({
       executablePath: chromeExecutable,
       args: chromeArguments,
@@ -116,8 +121,6 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
       },
     });
 
-    let transport: PipeTransport | undefined = undefined;
-    let browserServer: BrowserServer | undefined = undefined;
     const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
     transport = new PipeTransport(stdio[3], stdio[4], logger);
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, logger, port) : null);
