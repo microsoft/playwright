@@ -366,20 +366,24 @@ describe('ElementHandle convenience API', function() {
     await page.goto(`${server.PREFIX}/dom.html`);
     const handle = await page.$('#outer');
     expect(await handle.getAttribute('name')).toBe('value');
+    expect(await page.getAttribute('#outer', 'name')).toBe('value');
   });
   it('innerHTML should work', async({page, server}) => {
     await page.goto(`${server.PREFIX}/dom.html`);
     const handle = await page.$('#outer');
     expect(await handle.innerHTML()).toBe('<div id="inner">Text,\nmore text</div>');
+    expect(await page.innerHTML('#outer')).toBe('<div id="inner">Text,\nmore text</div>');
   });
   it('innerText should work', async({page, server}) => {
     await page.goto(`${server.PREFIX}/dom.html`);
     const handle = await page.$('#inner');
     expect(await handle.innerText()).toBe('Text, more text');
+    expect(await page.innerText('#inner')).toBe('Text, more text');
   });
   it('textContent should work', async({page, server}) => {
     await page.goto(`${server.PREFIX}/dom.html`);
     const handle = await page.$('#inner');
     expect(await handle.textContent()).toBe('Text,\nmore text');
+    expect(await page.textContent('#inner')).toBe('Text,\nmore text');
   });
 });

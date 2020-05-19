@@ -456,6 +456,22 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
     return this.mainFrame().focus(selector, options);
   }
 
+  async textContent(selector: string, options?: types.TimeoutOptions): Promise<null|string> {
+    return this.mainFrame().textContent(selector, options);
+  }
+
+  async innerText(selector: string, options?: types.TimeoutOptions): Promise<string> {
+    return this.mainFrame().innerText(selector, options);
+  }
+
+  async innerHTML(selector: string, options?: types.TimeoutOptions): Promise<string> {
+    return this.mainFrame().innerHTML(selector, options);
+  }
+
+  async getAttribute(selector: string, name: string, options?: types.TimeoutOptions): Promise<string | null> {
+    return this.mainFrame().getAttribute(selector, name, options);
+  }
+
   async hover(selector: string, options?: dom.PointerActionOptions & types.PointerActionWaitOptions) {
     return this.mainFrame().hover(selector, options);
   }
