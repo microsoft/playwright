@@ -194,15 +194,41 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
   }
 }
 
+type SessionData = {
+  socket: ws,
+  children: Set<string>,
+  isBrowserSession: boolean,
+  parent?: string,
+};
+
 function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketWrapper {
   const server = new ws.Server({ port });
   const guid = helper.guid();
 
   const awaitingBrowserTarget = new Map<number, ws>();
-  const sessionToSocket = new Map<string, ws>();
+  const sessionToData = new Map<string, SessionData>();
   const socketToBrowserSession = new Map<ws, { sessionId?: string, queue?: ProtocolRequest[] }>();
-  const browserSessions = new Set<string>();
   let lastSequenceNumber = 1;
+
+  function addSession(sessionId: string, socket: ws, parentSessionId?: string) {
+    sessionToData.set(sessionId, {
+      socket,
+      children: new Set(),
+      isBrowserSession: !parentSessionId,
+      parent: parentSessionId
+    });
+    if (parentSessionId)
+      sessionToData.get(parentSessionId)!.children.add(sessionId);
+  }
+
+  function removeSession(sessionId: string) {
+    const data = sessionToData.get(sessionId)!;
+    for (const child of data.children)
+      removeSession(child);
+    if (data.parent)
+      sessionToData.get(data.parent)!.children.delete(sessionId);
+    sessionToData.delete(sessionId);
+  }
 
   transport.onmessage = message => {
     if (typeof message.id === 'number' && awaitingBrowserTarget.has(message.id)) {
@@ -211,14 +237,13 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Inne
 
       const sessionId = message.result.sessionId;
       if (freshSocket.readyState !== ws.CLOSED && freshSocket.readyState !== ws.CLOSING) {
-        sessionToSocket.set(sessionId, freshSocket);
         const { queue } = socketToBrowserSession.get(freshSocket)!;
         for (const item of queue!) {
           item.sessionId = sessionId;
           transport.send(item);
         }
         socketToBrowserSession.set(freshSocket, { sessionId });
-        browserSessions.add(sessionId);
+        addSession(sessionId, freshSocket);
       } else {
         transport.send({
           id: ++lastSequenceNumber,
@@ -234,16 +259,16 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Inne
     if (!message.sessionId)
       return;
 
-    const socket = sessionToSocket.get(message.sessionId);
-    if (socket && socket.readyState !== ws.CLOSING) {
+    const data = sessionToData.get(message.sessionId);
+    if (data && data.socket.readyState !== ws.CLOSING) {
       if (message.method === 'Target.attachedToTarget')
-        sessionToSocket.set(message.params.sessionId, socket);
+        addSession(message.params.sessionId, data.socket, message.sessionId);
       if (message.method === 'Target.detachedFromTarget')
-        sessionToSocket.delete(message.params.sessionId);
+        removeSession(message.params.sessionId);
       // Strip session ids from the browser sessions.
-      if (browserSessions.has(message.sessionId))
+      if (data.isBrowserSession)
         delete message.sessionId;
-      socket.send(JSON.stringify(message));
+      data.socket.send(JSON.stringify(message));
     }
   };
 
@@ -297,8 +322,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Inne
       const session = socketToBrowserSession.get(socket);
       if (!session || !session.sessionId)
         return;
-      sessionToSocket.delete(session.sessionId);
-      browserSessions.delete(session.sessionId);
+      removeSession(session.sessionId);
       socketToBrowserSession.delete(socket);
       transport.send({
         id: ++lastSequenceNumber,
@@ -310,7 +334,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Inne
 
   const address = server.address();
   const wsEndpoint = typeof address === 'string' ? `${address}/${guid}` : `ws://127.0.0.1:${address.port}/${guid}`;
-  return new WebSocketWrapper(wsEndpoint, [awaitingBrowserTarget, sessionToSocket, socketToBrowserSession, browserSessions]);
+  return new WebSocketWrapper(wsEndpoint, [awaitingBrowserTarget, sessionToData, socketToBrowserSession]);
 }
 
 
