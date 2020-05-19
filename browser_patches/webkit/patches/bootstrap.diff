@@ -5299,7 +5299,7 @@ index 892d8de6d345d91fda80cfa5334c4aa68b757da3..a22497d801a349487be10b15139e9c76
  
  #if PLATFORM(IOS_FAMILY)
 diff --git a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp b/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
-index d79728555b7db9b59cb615c55a7a7a6851cb57c8..6c05bfbcc1056e5fb906bf019cc52472d1b02882 100644
+index d79728555b7db9b59cb615c55a7a7a6851cb57c8..61d3cc4b488e35ef9e1afa1ce3ac5f5d60ebe9a7 100644
 --- a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
 +++ b/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
 @@ -48,6 +48,13 @@
@@ -5339,7 +5339,7 @@ index d79728555b7db9b59cb615c55a7a7a6851cb57c8..6c05bfbcc1056e5fb906bf019cc52472
 +    jpeg_create_compress(&info);
 +
 +    unsigned char* bufferPtr = nullptr;
-+    size_t bufferSize;
++    unsigned long bufferSize;
 +    jpeg_mem_dest(&info, &bufferPtr, &bufferSize);
 +    info.image_width = cairo_image_surface_get_width(image);
 +    info.image_height = cairo_image_surface_get_height(image);
