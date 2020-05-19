@@ -378,8 +378,6 @@ export default class InjectedScript {
     if (!element || !element.isConnected)
       return { status: 'notconnected' };
     element = element.closest('button, [role=button]') || element;
-    if (window.getComputedStyle(element).pointerEvents === 'none')
-      return { status: 'success', value: false};
     let hitElement = this._deepElementFromPoint(document, point.x, point.y);
     while (hitElement && hitElement !== element)
       hitElement = this._parentElementOrShadowHost(hitElement);
