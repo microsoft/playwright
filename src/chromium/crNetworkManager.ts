@@ -28,6 +28,7 @@ import { logError } from '../logger';
 export class CRNetworkManager {
   private _client: CRSession;
   private _page: Page;
+  private _parentManager: CRNetworkManager | null;
   private _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _requestIdToRequestWillBeSentEvent = new Map<string, Protocol.Network.requestWillBeSentPayload>();
   private _credentials: {username: string, password: string} | null = null;
@@ -37,9 +38,10 @@ export class CRNetworkManager {
   private _requestIdToRequestPausedEvent = new Map<string, Protocol.Fetch.requestPausedPayload>();
   private _eventListeners: RegisteredListener[];
 
-  constructor(client: CRSession, page: Page) {
+  constructor(client: CRSession, page: Page, parentManager: CRNetworkManager | null) {
     this._client = client;
     this._page = page;
+    this._parentManager = parentManager;
     this._eventListeners = this.instrumentNetworkEvents(client);
   }
 
@@ -235,7 +237,9 @@ export class CRNetworkManager {
   }
 
   _onLoadingFinished(event: Protocol.Network.loadingFinishedPayload) {
-    const request = this._requestIdToRequest.get(event.requestId);
+    let request = this._requestIdToRequest.get(event.requestId);
+    if (!request)
+      request = this._maybeAdoptMainRequest(event.requestId);
     // For certain requestIds we never receive requestWillBeSent event.
     // @see https://crbug.com/750469
     if (!request)
@@ -253,7 +257,9 @@ export class CRNetworkManager {
   }
 
   _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {
-    const request = this._requestIdToRequest.get(event.requestId);
+    let request = this._requestIdToRequest.get(event.requestId);
+    if (!request)
+      request = this._maybeAdoptMainRequest(event.requestId);
     // For certain requestIds we never receive requestWillBeSent event.
     // @see https://crbug.com/750469
     if (!request)
@@ -266,6 +272,23 @@ export class CRNetworkManager {
       this._attemptedAuthentications.delete(request._interceptionId);
     request.request._setFailureText(event.errorText);
     this._page._frameManager.requestFailed(request.request, !!event.canceled);
+  }
+
+  private _maybeAdoptMainRequest(requestId: Protocol.Network.RequestId): InterceptableRequest | undefined {
+    // OOPIF has a main request that starts in the parent session but finishes in the child session.
+    if (!this._parentManager)
+      return;
+    const request = this._parentManager._requestIdToRequest.get(requestId);
+    // Main requests have matching loaderId and requestId.
+    if (!request || request._documentId !== requestId)
+      return;
+    this._requestIdToRequest.set(requestId, request);
+    this._parentManager._requestIdToRequest.delete(requestId);
+    if (request._interceptionId && this._parentManager._attemptedAuthentications.has(request._interceptionId)) {
+      this._parentManager._attemptedAuthentications.delete(request._interceptionId);
+      this._attemptedAuthentications.add(request._interceptionId);
+    }
+    return request;
   }
 }
 

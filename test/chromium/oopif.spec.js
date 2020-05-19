@@ -151,6 +151,43 @@ describe('OOPIF', function() {
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(await countOOPIFs(browser)).toBe(1);
   });
+  it('should report main requests', async function({browser, page, server, context}) {
+    const requestFrames = [];
+    page.on('request', r => requestFrames.push(r.frame()));
+    const finishedFrames = [];
+    page.on('requestfinished', r => finishedFrames.push(r.frame()));
+
+    await page.goto(server.PREFIX + '/empty.html');
+    const main = page.mainFrame();
+
+    await main.evaluate(url => {
+      const iframe = document.createElement('iframe');
+      iframe.src = url;
+      document.body.appendChild(iframe);
+      return new Promise(f => iframe.onload = f);
+    }, server.CROSS_PROCESS_PREFIX + '/empty.html');
+    expect(page.frames().length).toBe(2);
+    const child = main.childFrames()[0];
+    await child.waitForLoadState('domcontentloaded');
+
+    await child.evaluate(url => {
+      const iframe = document.createElement('iframe');
+      iframe.src = url;
+      document.body.appendChild(iframe);
+      return new Promise(f => iframe.onload = f);
+    }, server.PREFIX + '/empty.html');
+    expect(page.frames().length).toBe(3);
+    const grandChild = child.childFrames()[0];
+    await grandChild.waitForLoadState('domcontentloaded');
+
+    expect(await countOOPIFs(browser)).toBe(2);
+    expect(requestFrames[0]).toBe(main);
+    expect(finishedFrames[0]).toBe(main);
+    expect(requestFrames[1]).toBe(child);
+    expect(finishedFrames[1]).toBe(child);
+    expect(requestFrames[2]).toBe(grandChild);
+    expect(finishedFrames[2]).toBe(grandChild);
+  });
   // @see https://github.com/microsoft/playwright/issues/1240
   it('should click a button when it overlays oopif', async function({browser, page, server, context}) {
     await page.goto(server.PREFIX + '/button-overlay-oopif.html');

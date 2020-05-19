@@ -65,7 +65,7 @@ export class CRPage implements PageDelegate {
     this._coverage = new CRCoverage(client, browserContext);
     this._browserContext = browserContext;
     this._page = new Page(this, browserContext);
-    this._mainFrameSession = new FrameSession(this, client, targetId);
+    this._mainFrameSession = new FrameSession(this, client, targetId, null);
     this._sessions.set(targetId, this._mainFrameSession);
     client.once(CRSessionEvents.Disconnected, () => this._page._didDisconnect());
     this._pagePromise = this._mainFrameSession._initialize(hasUIWindow).then(() => this._initializedPage = this._page).catch(e => e);
@@ -75,7 +75,7 @@ export class CRPage implements PageDelegate {
     await Promise.all(Array.from(this._sessions.values()).map(frame => cb(frame)));
   }
 
-  private _sessionForFrame(frame: frames.Frame): FrameSession {
+  _sessionForFrame(frame: frames.Frame): FrameSession {
     // Frame id equals target id.
     while (!this._sessions.has(frame._id)) {
       const parent = frame.parentFrame();
@@ -95,8 +95,9 @@ export class CRPage implements PageDelegate {
     // Frame id equals target id.
     const frame = this._page._frameManager.frame(targetId);
     assert(frame);
+    const parentSession = this._sessionForFrame(frame);
     this._page._frameManager.removeChildFramesRecursively(frame);
-    const frameSession = new FrameSession(this, session, targetId);
+    const frameSession = new FrameSession(this, session, targetId, parentSession);
     this._sessions.set(targetId, frameSession);
     frameSession._initialize(false).catch(e => e);
   }
@@ -330,12 +331,12 @@ class FrameSession {
   private _firstNonInitialNavigationCommittedReject = (e: Error) => {};
   private _windowId: number | undefined;
 
-  constructor(crPage: CRPage, client: CRSession, targetId: string) {
+  constructor(crPage: CRPage, client: CRSession, targetId: string, parentSession: FrameSession | null) {
     this._client = client;
     this._crPage = crPage;
     this._page = crPage._page;
     this._targetId = targetId;
-    this._networkManager = new CRNetworkManager(client, this._page);
+    this._networkManager = new CRNetworkManager(client, this._page, parentSession ? parentSession._networkManager : null);
     this._firstNonInitialNavigationCommittedPromise = new Promise((f, r) => {
       this._firstNonInitialNavigationCommittedFulfill = f;
       this._firstNonInitialNavigationCommittedReject = r;
