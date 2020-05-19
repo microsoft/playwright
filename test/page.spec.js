@@ -558,6 +558,37 @@ describe('Page.Events.PageError', function() {
     ]);
     expect(error.stack).toContain('myscript.js');
   });
+  it('should handle odd values', async ({page}) => {
+    const cases = [
+      [null, 'null'],
+      [undefined, 'undefined'],
+      [0, '0'],
+      ['', ''],
+    ];
+    for (const [value, message] of cases) {
+      const [error] = await Promise.all([
+        page.waitForEvent('pageerror'),
+        page.evaluate(value => setTimeout(() => { throw value; }, 0), value),
+      ]);
+      expect(error.message).toBe(FFOX ? 'uncaught exception: ' + message : message);
+    }
+  });
+  it.fail(FFOX)('should handle object', async ({page}) => {
+    // Firefox just does not report this error.
+    const [error] = await Promise.all([
+      page.waitForEvent('pageerror'),
+      page.evaluate(() => setTimeout(() => { throw {}; }, 0)),
+    ]);
+    expect(error.message).toBe(CHROMIUM ? 'Object' : '[object Object]');
+  });
+  it.fail(FFOX)('should handle window', async ({page}) => {
+    // Firefox just does not report this error.
+    const [error] = await Promise.all([
+      page.waitForEvent('pageerror'),
+      page.evaluate(() => setTimeout(() => { throw window; }, 0)),
+    ]);
+    expect(error.message).toBe(CHROMIUM ? 'Window' : '[object Window]');
+  });
 });
 
 describe('Page.setContent', function() {
