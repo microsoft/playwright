@@ -17,7 +17,7 @@
 
 import * as WebSocket from 'ws';
 import { helper } from './helper';
-import { Log } from './logger';
+import { Log, InnerLogger } from './logger';
 
 export type ProtocolRequest = {
   id: number;
@@ -120,32 +120,40 @@ export class DeferWriteTransport implements ConnectionTransport {
 
 export class WebSocketTransport implements ConnectionTransport {
   _ws: WebSocket;
+  _logger?: InnerLogger;
 
   onmessage?: (message: ProtocolResponse) => void;
   onclose?: () => void;
 
   // 'onmessage' handler must be installed synchronously when 'onopen' callback is invoked to
   // avoid missing incoming messages.
-  static connect<T>(url: string, onopen: (transport: ConnectionTransport) => Promise<T> | T): Promise<T> {
-    const transport = new WebSocketTransport(url);
+  static connect<T>(url: string, onopen: (transport: ConnectionTransport) => Promise<T> | T, logger?: InnerLogger): Promise<T> {
+    logger && logger._log({ name: 'browser' }, `<ws connecting> ${url}`);
+    const transport = new WebSocketTransport(url, logger);
     return new Promise<T>((fulfill, reject) => {
       transport._ws.addEventListener('open', async () => {
+        logger && logger._log({ name: 'browser' }, `<ws connected> ${url}`);
         try {
           fulfill(await onopen(transport));
         } catch (e) {
+          logger && logger._log({ name: 'browser' }, `<ws disconnecting> ${url}`);
           try { transport._ws.close(); } catch (ignored) {}
           reject(e);
         }
       });
-      transport._ws.addEventListener('error', event => reject(new Error('WebSocket error: ' + event.message)));
+      transport._ws.addEventListener('error', event => {
+        logger && logger._log({ name: 'browser' }, `<ws connect error> ${url} ${event.message}`);
+        reject(new Error('WebSocket error: ' + event.message));
+      });
     });
   }
 
-  constructor(url: string) {
+  constructor(url: string, logger: InnerLogger | undefined) {
     this._ws = new WebSocket(url, [], {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb
     });
+    this._logger = logger;
     // The 'ws' module in node sometimes sends us multiple messages in a single task.
     // In Web, all IO callbacks (e.g. WebSocket callbacks)
     // are dispatched into separate tasks, so there's no need
@@ -160,6 +168,7 @@ export class WebSocketTransport implements ConnectionTransport {
     });
 
     this._ws.addEventListener('close', event => {
+      this._logger && this._logger._log({ name: 'browser' }, `<ws server disconnected> ${url}`);
       if (this.onclose)
         this.onclose.call(null);
     });
@@ -172,6 +181,7 @@ export class WebSocketTransport implements ConnectionTransport {
   }
 
   close() {
+    this._logger && this._logger._log({ name: 'browser' }, `<ws disconnecting> ${this._ws.url}`);
     this._ws.close();
   }
 }

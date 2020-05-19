@@ -18,6 +18,7 @@
 const fs = require('fs');
 const path = require('path');
 const rm = require('rimraf').sync;
+const utils = require('./utils');
 const {TestServer} = require('../utils/testserver/');
 const {Environment} = require('../utils/testrunner/Test');
 
@@ -44,10 +45,12 @@ serverEnvironment.beforeAll(async state => {
   state.httpsServer.CROSS_PROCESS_PREFIX = `https://127.0.0.1:${httpsPort}`;
   state.httpsServer.EMPTY_PAGE = `https://localhost:${httpsPort}/empty.html`;
 
+  state._extraLogger = utils.createTestLogger(valueFromEnv('DEBUGP', false), null, 'extra');
   state.defaultBrowserOptions = {
     handleSIGINT: false,
     slowMo: valueFromEnv('SLOW_MO', 0),
     headless: !!valueFromEnv('HEADLESS', true),
+    logger: state._extraLogger,
   };
   state.playwrightPath = playwrightPath;
 });
@@ -57,9 +60,13 @@ serverEnvironment.afterAll(async({server, httpsServer}) => {
     httpsServer.stop(),
   ]);
 });
-serverEnvironment.beforeEach(async({server, httpsServer}) => {
-  server.reset();
-  httpsServer.reset();
+serverEnvironment.beforeEach(async(state, testRun) => {
+  state.server.reset();
+  state.httpsServer.reset();
+  state._extraLogger.setTestRun(testRun);
+});
+serverEnvironment.afterEach(async(state) => {
+  state._extraLogger.setTestRun(null);
 });
 
 const customEnvironment = new Environment('Golden+CheckContexts');

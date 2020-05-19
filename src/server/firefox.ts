@@ -58,7 +58,7 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
           headful: !processBrowserArgOptions(options).headless,
           ownedServer: browserServer,
         });
-      });
+      }, logger);
       return browser;
     });
   }
@@ -83,7 +83,7 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
           ownedServer: browserServer,
           headful: !processBrowserArgOptions(options).headless,
         });
-      });
+      }, logger);
       const context = browser._defaultContext!;
       if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
         await context._loadDefaultContext();
@@ -159,18 +159,21 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
     const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
     const innerEndpoint = match[1];
 
-    const webSocketWrapper = launchType === 'server' ? (await WebSocketTransport.connect(innerEndpoint, t => wrapTransportWithWebSocket(t, logger, port))) : new WebSocketWrapper(innerEndpoint, []);
+    const webSocketWrapper = launchType === 'server' ?
+      (await WebSocketTransport.connect(innerEndpoint, t => wrapTransportWithWebSocket(t, logger, port), logger)) :
+      new WebSocketWrapper(innerEndpoint, []);
     browserWSEndpoint = webSocketWrapper.wsEndpoint;
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, webSocketWrapper);
     return { browserServer, downloadsPath, logger };
   }
 
   async connect(options: ConnectOptions): Promise<FFBrowser> {
+    const logger = new RootLogger(options.logger);
     return await WebSocketTransport.connect(options.wsEndpoint, async transport => {
       if ((options as any).__testHookBeforeCreateBrowser)
         await (options as any).__testHookBeforeCreateBrowser();
-      return FFBrowser.connect(transport, { slowMo: options.slowMo, logger: new RootLogger(options.logger), downloadsPath: '' });
-    });
+      return FFBrowser.connect(transport, { slowMo: options.slowMo, logger, downloadsPath: '' });
+    }, logger);
   }
 
   private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {

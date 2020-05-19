@@ -191,10 +191,37 @@ const utils = module.exports = {
     // To support isplaywrightready.
     platform = p;
   },
-};
 
-function valueFromEnv(name, defaultValue) {
-  if (!(name in process.env))
-    return defaultValue;
-  return JSON.parse(process.env[name]);
-}
+  createTestLogger(dumpProtocolOnFailure = true, testRun = null, prefix = '') {
+    const colors = [31, 32, 33, 34, 35, 36, 37];
+    let colorIndex = 0;
+    for (let i = 0; i < prefix.length; i++)
+      colorIndex += prefix.charCodeAt(i);
+    const color = colors[colorIndex % colors.length];
+    prefix = prefix ? `\x1b[${color}m[${prefix}]\x1b[0m ` : '';
+
+    const logger = {
+      isEnabled: (name, severity) => {
+        return name === 'browser' || (name === 'protocol' && dumpProtocolOnFailure);
+      },
+      log: (name, severity, message, args) => {
+        if (!testRun)
+          return;
+        if (name === 'browser') {
+          if (severity === 'warning')
+            testRun.log(`${prefix}\x1b[31m[browser]\x1b[0m ${message}`)
+          else
+            testRun.log(`${prefix}\x1b[33m[browser]\x1b[0m ${message}`)
+        } else if (name === 'protocol' && dumpProtocolOnFailure) {
+          testRun.log(`${prefix}\x1b[32m[protocol]\x1b[0m ${message}`)
+        }
+      },
+      setTestRun(tr) {
+        if (testRun && testRun.ok())
+          testRun.output().splice(0);
+        testRun = tr;
+      },
+    };
+    return logger;
+  },
+};
