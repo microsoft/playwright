@@ -21,7 +21,7 @@ import * as frames from '../frames';
 import { helper, RegisteredListener, assert } from '../helper';
 import * as network from '../network';
 import { CRSession, CRConnection, CRSessionEvents } from './crConnection';
-import { EVALUATION_SCRIPT_URL, CRExecutionContext } from './crExecutionContext';
+import { CRExecutionContext } from './crExecutionContext';
 import { CRNetworkManager } from './crNetworkManager';
 import { Page, Worker, PageBinding } from '../page';
 import { Protocol } from './protocol';
@@ -418,7 +418,7 @@ class FrameSession {
       lifecycleEventsEnabled = this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
       this._client.send('Runtime.enable', {}),
       this._client.send('Page.addScriptToEvaluateOnNewDocument', {
-        source: `//# sourceURL=${EVALUATION_SCRIPT_URL}`,
+        source: js.generateSourceUrl(),
         worldName: UTILITY_WORLD_NAME,
       }),
       this._networkManager.initialize(),

@@ -16,7 +16,9 @@
 
 import * as types from './types';
 import * as dom from './dom';
-import { helper } from './helper';
+import * as fs from 'fs';
+import * as util from 'util';
+import { helper, getCallerFilePath, isDebugMode } from './helper';
 import { InnerLogger } from './logger';
 
 export interface ExecutionContextDelegate {
@@ -125,7 +127,8 @@ export async function prepareFunctionCall<T>(
   args: any[],
   toCallArgumentIfNeeded: (value: any) => { handle?: T, value?: any }): Promise<{ functionText: string, values: any[], handles: T[], dispose: () => void }> {
 
-  let functionText = pageFunction.toString();
+  const originalText = pageFunction.toString();
+  let functionText = originalText;
   try {
     new Function('(' + functionText + ')');
   } catch (e1) {
@@ -199,10 +202,13 @@ export async function prepareFunctionCall<T>(
   if (error)
     throw new Error(error);
 
-  if (!guids.length)
+  if (!guids.length) {
+    const sourceMapUrl = await generateSourceMapUrl(originalText, { line: 0, column: 0 });
+    functionText += sourceMapUrl;
     return { functionText, values: args, handles: [], dispose: () => {} };
+  }
 
-  functionText = `(...__playwright__args__) => {
+  const wrappedFunctionText = `(...__playwright__args__) => {
     return (${functionText})(...(() => {
       const args = __playwright__args__;
       __playwright__args__ = undefined;
@@ -226,6 +232,8 @@ export async function prepareFunctionCall<T>(
       return result;
     })());
   }`;
+  const compiledPosition = findPosition(wrappedFunctionText, wrappedFunctionText.indexOf(functionText));
+  functionText = wrappedFunctionText;
 
   const resolved = await Promise.all(handles);
   const resultHandles: T[] = [];
@@ -242,5 +250,120 @@ export async function prepareFunctionCall<T>(
   const dispose = () => {
     toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
   };
+
+  const sourceMapUrl = await generateSourceMapUrl(originalText, compiledPosition);
+  functionText += sourceMapUrl;
   return { functionText, values: [ args.length, ...args, guids.length, ...guids ], handles: resultHandles, dispose };
+}
+
+let sourceUrlCounter = 0;
+const playwrightSourceUrlPrefix = '__playwright_evaluation_script__';
+const sourceUrlRegex = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
+export function generateSourceUrl(): string {
+  return `\n//# sourceURL=${playwrightSourceUrlPrefix}${sourceUrlCounter++}\n`;
+}
+
+export function isPlaywrightSourceUrl(s: string): boolean {
+  return s.startsWith(playwrightSourceUrlPrefix);
+}
+
+export function ensureSourceUrl(expression: string): string {
+  return sourceUrlRegex.test(expression) ? expression : expression + generateSourceUrl();
+}
+
+type Position = {
+  line: number;
+  column: number;
+};
+
+async function generateSourceMapUrl(functionText: string, compiledPosition: Position): Promise<string> {
+  if (!isDebugMode())
+    return generateSourceUrl();
+  const filePath = getCallerFilePath();
+  if (!filePath)
+    return generateSourceUrl();
+  try {
+    const source = await util.promisify(fs.readFile)(filePath, 'utf8');
+    const index = source.indexOf(functionText);
+    if (index === -1)
+      return generateSourceUrl();
+    const sourcePosition = findPosition(source, index);
+    const delta = findPosition(functionText, functionText.length);
+    const sourceMap = generateSourceMap(filePath, sourcePosition, compiledPosition, delta);
+    return `\n//# sourceMappingURL=data:application/json;base64,${Buffer.from(sourceMap).toString('base64')}\n`;
+  } catch (e) {
+    return generateSourceUrl();
+  }
+}
+
+const VLQ_BASE_SHIFT = 5;
+const VLQ_BASE = 1 << VLQ_BASE_SHIFT;
+const VLQ_BASE_MASK = VLQ_BASE - 1;
+const VLQ_CONTINUATION_BIT = VLQ_BASE;
+const BASE64_DIGITS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+function base64VLQ(value: number): string {
+  if (value < 0)
+    value = ((-value) << 1) | 1;
+  else
+    value <<= 1;
+  let result = '';
+  do {
+    let digit = value & VLQ_BASE_MASK;
+    value >>>= VLQ_BASE_SHIFT;
+    if (value > 0)
+      digit |= VLQ_CONTINUATION_BIT;
+    result += BASE64_DIGITS[digit];
+  } while (value > 0);
+  return result;
+}
+
+function generateSourceMap(filePath: string, sourcePosition: Position, compiledPosition: Position, delta: Position): any {
+  const mappings = [];
+  let lastCompiled = { line: 0, column: 0 };
+  let lastSource = { line: 0, column: 0 };
+  for (let line = 0; line < delta.line; line++) {
+    // We need at least a mapping per line. This will yield an execution line at the start of each line.
+    // Note: for more granular mapping, we can do word-by-word.
+    const source = advancePosition(sourcePosition, { line, column: 0 });
+    const compiled = advancePosition(compiledPosition, { line, column: 0 });
+    while (lastCompiled.line < compiled.line) {
+      mappings.push(';');
+      lastCompiled.line++;
+      lastCompiled.column = 0;
+    }
+    mappings.push(base64VLQ(compiled.column - lastCompiled.column));
+    mappings.push(base64VLQ(0)); // Source index.
+    mappings.push(base64VLQ(source.line - lastSource.line));
+    mappings.push(base64VLQ(source.column - lastSource.column));
+    lastCompiled = compiled;
+    lastSource = source;
+  }
+  return JSON.stringify({
+    version: 3,
+    sources: ['file://' + filePath],
+    names: [],
+    mappings: mappings.join(''),
+  });
+}
+
+function findPosition(source: string, offset: number): Position {
+  const result: Position = { line: 0, column: 0 };
+  let index = 0;
+  while (true) {
+    const newline = source.indexOf('\n', index);
+    if (newline === -1 || newline >= offset)
+      break;
+    result.line++;
+    index = newline + 1;
+  }
+  result.column = offset - index;
+  return result;
+}
+
+function advancePosition(position: Position, delta: Position) {
+  return {
+    line: position.line + delta.line,
+    column: delta.column + (delta.line ? 0 : position.column),
+  };
 }

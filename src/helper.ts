@@ -22,6 +22,9 @@ import * as util from 'util';
 import { TimeoutError } from './errors';
 import * as types from './types';
 
+// NOTE: update this to point to playwright/lib when moving this file.
+const PLAYWRIGHT_LIB_PATH = __dirname;
+
 export type RegisteredListener = {
   emitter: EventEmitter;
   eventName: (string | symbol);
@@ -368,6 +371,38 @@ export function logPolitely(toBeLogged: string) {
 
   if (!logLevelDisplay)
     console.log(toBeLogged);  // eslint-disable-line no-console
+}
+
+export function getCallerFilePath(ignorePrefix = PLAYWRIGHT_LIB_PATH): string | null {
+  const error = new Error();
+  const stackFrames = (error.stack || '').split('\n').slice(1);
+  // Find first stackframe that doesn't point to ignorePrefix.
+  for (let frame of stackFrames) {
+    frame = frame.trim();
+    if (!frame.startsWith('at '))
+      return null;
+    if (frame.endsWith(')')) {
+      const from = frame.indexOf('(');
+      frame = frame.substring(from + 1, frame.length - 1);
+    } else {
+      frame = frame.substring('at '.length);
+    }
+    const match = frame.match(/^(?:async )?(.*):(\d+):(\d+)$/);
+    if (!match)
+      return null;
+    const filePath = match[1];
+    if (filePath.startsWith(ignorePrefix))
+      continue;
+    return filePath;
+  }
+  return null;
+}
+
+let debugMode: boolean | undefined;
+export function isDebugMode(): boolean {
+  if (debugMode === undefined)
+    debugMode = !!getFromENV('PLAYWRIGHT_DEBUG_UI');
+  return debugMode;
 }
 
 const escapeGlobChars = new Set(['/', '$', '^', '+', '.', '(', ')', '=', '!', '|']);
