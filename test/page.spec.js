@@ -18,7 +18,7 @@
 const path = require('path');
 const util = require('util');
 const vm = require('vm');
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN} = require('./utils').testOptions(browserType);
 
 describe('Page.close', function() {
   it('should reject all promises when page is closed', async({context}) => {
@@ -105,7 +105,9 @@ describe('Async stacks', () => {
   });
 });
 
-describe('Page.Events.Crash', function() {
+describe.fail(FFOX && WIN)('Page.Events.Crash', function() {
+  // Firefox Win: it just doesn't crash sometimes.
+
   function crash(page) {
     if (CHROMIUM)
       page.goto('chrome://crash').catch(e => {});
