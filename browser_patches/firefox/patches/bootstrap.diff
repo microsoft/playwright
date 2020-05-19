@@ -2402,7 +2402,7 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..bbd2983755282e514c17824c210e9ab49a1bbad0
+index 0000000000000000000000000000000000000000..921cea40e11588805a0ab014e810c6aff8998f16
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
 @@ -0,0 +1,676 @@
@@ -2732,7 +2732,7 @@ index 0000000000000000000000000000000000000000..bbd2983755282e514c17824c210e9ab4
 +    this._linkedBrowser = linkedBrowser;
 +    this._browserContext = browserContext;
 +    this._viewportSize = undefined;
-+    this._url = '';
++    this._url = 'about:blank';
 +    this._openerId = opener ? opener.id() : undefined;
 +    this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, this._linkedBrowser.messageManager);
 +    this._channelIds = new Set();
