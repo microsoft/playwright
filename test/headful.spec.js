@@ -123,13 +123,12 @@ describe('Headful', function() {
     const [popup] = await Promise.all([
       page.waitForEvent('popup'),
       page.evaluate(() => {
-        const win = window.open(window.location.href, 'Title', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=780,height=200,top=0,left=0');
+        const win = window.open(window.location.href, 'Title', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=600,height=300,top=0,left=0');
         win.resizeTo(500, 450);
       }),
     ]);
     await popup.waitForLoadState();
-    const size = await popup.evaluate(() => ({ width: window.outerWidth, height: window.outerHeight }));
+    await popup.waitForFunction(() => window.outerWidth === 500 && window.outerHeight === 450);
     await context.close();
-    expect(size).toEqual({width: 500, height: 450});
   });
 });
