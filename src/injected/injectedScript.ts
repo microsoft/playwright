@@ -375,10 +375,9 @@ export default class InjectedScript {
 
   checkHitTargetAt(node: Node, point: types.Point): types.InjectedScriptResult<boolean> {
     let element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
-    while (element && window.getComputedStyle(element).pointerEvents === 'none')
-      element = element.parentElement;
     if (!element || !element.isConnected)
       return { status: 'notconnected' };
+    element = element.closest('button, [role=button]') || element;
     let hitElement = this._deepElementFromPoint(document, point.x, point.y);
     while (hitElement && hitElement !== element)
       hitElement = this._parentElementOrShadowHost(hitElement);
