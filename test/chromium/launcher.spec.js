@@ -33,16 +33,16 @@ describe('launcher', function() {
     await browser.close();
   });
   it('should open devtools when "devtools: true" option is given', async({browserType, defaultBrowserOptions}) => {
-    const browser = await browserType.launch(Object.assign({devtools: true}, {...defaultBrowserOptions, headless: false}));
+    let devtoolsCallback;
+    const devtoolsPromise = new Promise(f => devtoolsCallback = f);
+    const __testHookForDevTools = devtools => devtools.__testHookOnBinding = parsed => {
+      if (parsed.method === 'getPreferences')
+        devtoolsCallback();
+    };
+    const browser = await browserType.launch({...defaultBrowserOptions, headless: false, devtools: true, __testHookForDevTools});
     const context = await browser.newContext();
-    const browserSession = await browser.newBrowserCDPSession();
-    await browserSession.send('Target.setDiscoverTargets', { discover: true });
-    const devtoolsPagePromise = new Promise(fulfill => browserSession.on('Target.targetCreated', async ({targetInfo}) => {
-      if (targetInfo.type === 'other' && targetInfo.url.includes('devtools://'))
-          fulfill();
-    }));
     await Promise.all([
-      devtoolsPagePromise,
+      devtoolsPromise,
       context.newPage()
     ]);
     await browser.close();
@@ -74,8 +74,8 @@ describe('extensions', () => {
 });
 
 describe('BrowserContext', function() {
-  it('should not create pages automatically', async ({browserType}) => {
-    const browser = await browserType.launch();
+  it('should not create pages automatically', async ({browserType, defaultBrowserOptions}) => {
+    const browser = await browserType.launch(defaultBrowserOptions);
     const browserSession = await browser.newBrowserCDPSession();
     const targets = [];
     browserSession.on('Target.targetCreated', async ({targetInfo}) => {

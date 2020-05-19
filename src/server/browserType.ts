@@ -60,12 +60,13 @@ export interface BrowserType<Browser> {
 export abstract class AbstractBrowserType<Browser> implements BrowserType<Browser> {
   private _name: string;
   private _executablePath: string | undefined;
+  readonly _browserPath: string;
 
   constructor(packagePath: string, browser: browserPaths.BrowserDescriptor) {
     this._name = browser.name;
     const browsersPath = browserPaths.browsersPath(packagePath);
-    const browserPath = browserPaths.browserDirectory(browsersPath, browser);
-    this._executablePath = browserPaths.executablePath(browserPath, browser);
+    this._browserPath = browserPaths.browserDirectory(browsersPath, browser);
+    this._executablePath = browserPaths.executablePath(this._browserPath, browser);
   }
 
   executablePath(): string {

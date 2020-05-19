@@ -19,7 +19,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
-import { helper, assert } from '../helper';
+import { helper, assert, isDebugMode } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
 import * as ws from 'ws';
 import { launchProcess } from './processLauncher';
@@ -34,10 +34,19 @@ import { BrowserContext } from '../browserContext';
 import { InnerLogger, logError, RootLogger } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
 import { TimeoutSettings } from '../timeoutSettings';
+import { CRDevTools } from '../chromium/crDevTools';
 
 export class Chromium extends AbstractBrowserType<CRBrowser> {
+  private _devtools: CRDevTools | undefined;
+
   constructor(packagePath: string, browser: BrowserDescriptor) {
     super(packagePath, browser);
+    if (isDebugMode())
+      this._devtools = this._createDevTools();
+  }
+
+  private _createDevTools() {
+    return new CRDevTools(path.join(this._browserPath, 'devtools-preferences.json'));
   }
 
   async launch(options: LaunchOptions = {}): Promise<CRBrowser> {
@@ -48,13 +57,18 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
     return await browserServer._initializeOrClose(deadline, async () => {
       if ((options as any).__testHookBeforeCreateBrowser)
         await (options as any).__testHookBeforeCreateBrowser();
+      let devtools = this._devtools;
+      if ((options as any).__testHookForDevTools) {
+        devtools = this._createDevTools();
+        await (options as any).__testHookForDevTools(devtools);
+      }
       return await CRBrowser.connect(transport!, {
         slowMo: options.slowMo,
         headful: !processBrowserArgOptions(options).headless,
         logger,
         downloadsPath,
-        ownedServer: browserServer
-      });
+        ownedServer: browserServer,
+      }, devtools);
     });
   }
 
@@ -76,7 +90,7 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
         downloadsPath,
         headful: !processBrowserArgOptions(options).headless,
         ownedServer: browserServer
-      });
+      }, this._devtools);
       const context = browser._defaultContext!;
       if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
         await context._loadDefaultContext();

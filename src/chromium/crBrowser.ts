@@ -30,6 +30,7 @@ import { Events } from './events';
 import { Protocol } from './protocol';
 import { CRExecutionContext } from './crExecutionContext';
 import { logError } from '../logger';
+import { CRDevTools } from './crDevTools';
 
 export class CRBrowser extends BrowserBase {
   readonly _connection: CRConnection;
@@ -40,14 +41,16 @@ export class CRBrowser extends BrowserBase {
   _crPages = new Map<string, CRPage>();
   _backgroundPages = new Map<string, CRPage>();
   _serviceWorkers = new Map<string, CRServiceWorker>();
+  _devtools?: CRDevTools;
 
   private _tracingRecording = false;
   private _tracingPath: string | null = '';
   private _tracingClient: CRSession | undefined;
 
-  static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<CRBrowser> {
+  static async connect(transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools): Promise<CRBrowser> {
     const connection = new CRConnection(SlowMoTransport.wrap(transport, options.slowMo), options.logger);
     const browser = new CRBrowser(connection, options);
+    browser._devtools = devtools;
     const session = connection.rootSession;
     if (!options.persistent) {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
@@ -121,6 +124,11 @@ export class CRBrowser extends BrowserBase {
       // TODO: auto attach only to pages from our contexts.
       // assert(this._defaultContext);
       context = this._defaultContext;
+    }
+
+    if (targetInfo.type === 'other' && targetInfo.url.startsWith('devtools://devtools') && this._devtools) {
+      this._devtools.install(session);
+      return;
     }
 
     if (targetInfo.type === 'other' || !context) {
