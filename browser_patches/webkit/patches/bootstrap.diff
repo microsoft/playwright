@@ -1024,10 +1024,10 @@ index d27512a4f00779b8f1171999953fdc76107a9815..8fc6eebd1677a0acf548aaeb9f78c585
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Playwright.json b/Source/JavaScriptCore/inspector/protocol/Playwright.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..6b46980f8a8278b78cdd849b96f969434f397f71
+index 0000000000000000000000000000000000000000..31806fde2a7df437ad9f604ad7df15f53555e9af
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Playwright.json
-@@ -0,0 +1,237 @@
+@@ -0,0 +1,243 @@
 +{
 +    "domain": "Playwright",
 +    "availability": ["web"],
@@ -1103,6 +1103,12 @@ index 0000000000000000000000000000000000000000..6b46980f8a8278b78cdd849b96f96943
 +        }
 +    ],
 +    "commands": [
++        {
++            "name": "enable"
++        },
++        {
++            "name": "disable"
++        },
 +        {
 +            "name": "close",
 +            "async": true,
@@ -6918,14 +6924,13 @@ index 88d53d236cd6d62735f03678a04ca9c198dddacb..b8f8efc57ab00dc5725660c5a8ad56a3
      return WebTouchEvent();
  }
 diff --git a/Source/WebKit/Sources.txt b/Source/WebKit/Sources.txt
-index 89434b54cde8a18a87c755238fffb0c0c2a372c8..bf86020632afb1dbffd812352f8bda4e0a5ed54b 100644
+index 89434b54cde8a18a87c755238fffb0c0c2a372c8..b1973bffcaa5355adb8f6a7cf863801e546b1d21 100644
 --- a/Source/WebKit/Sources.txt
 +++ b/Source/WebKit/Sources.txt
-@@ -275,16 +275,21 @@ Shared/WebsiteData/WebsiteData.cpp
+@@ -275,16 +275,20 @@ Shared/WebsiteData/WebsiteData.cpp
  
  UIProcess/AuxiliaryProcessProxy.cpp
  UIProcess/BackgroundProcessResponsivenessTimer.cpp
-+UIProcess/BrowserInspectorController.cpp
 +UIProcess/BrowserInspectorPipe.cpp
  UIProcess/DeviceIdHashSaltStorage.cpp
  UIProcess/DrawingAreaProxy.cpp
@@ -6943,7 +6948,7 @@ index 89434b54cde8a18a87c755238fffb0c0c2a372c8..bf86020632afb1dbffd812352f8bda4e
  UIProcess/ResponsivenessTimer.cpp
  UIProcess/SuspendedPageProxy.cpp
  UIProcess/SystemPreviewController.cpp
-@@ -321,6 +326,8 @@ UIProcess/WebOpenPanelResultListenerProxy.cpp
+@@ -321,6 +325,8 @@ UIProcess/WebOpenPanelResultListenerProxy.cpp
  UIProcess/WebPageDiagnosticLoggingClient.cpp
  UIProcess/WebPageGroup.cpp
  UIProcess/WebPageInjectedBundleClient.cpp
@@ -6952,7 +6957,7 @@ index 89434b54cde8a18a87c755238fffb0c0c2a372c8..bf86020632afb1dbffd812352f8bda4e
  UIProcess/WebPageProxy.cpp
  UIProcess/WebPasteboardProxy.cpp
  UIProcess/WebPreferences.cpp
-@@ -440,6 +447,7 @@ UIProcess/Inspector/WebPageDebuggable.cpp
+@@ -440,6 +446,7 @@ UIProcess/Inspector/WebPageDebuggable.cpp
  UIProcess/Inspector/WebPageInspectorController.cpp
  
  UIProcess/Inspector/Agents/InspectorBrowserAgent.cpp
@@ -8078,351 +8083,9 @@ index 23b992f3ce45f82f0dcdede6007a2e3a46b7b0b6..7e711e8f5132931e01eac66db6ea60c3
  
      // Save base64-encoded file contents to a local file path and return the path.
      // This reuses the basename of the remote file path so that the filename exposed to DOM API remains the same.
-diff --git a/Source/WebKit/UIProcess/BrowserInspectorController.cpp b/Source/WebKit/UIProcess/BrowserInspectorController.cpp
-new file mode 100644
-index 0000000000000000000000000000000000000000..df23f11858e6e60ca238793fe3f37cf19036fbee
---- /dev/null
-+++ b/Source/WebKit/UIProcess/BrowserInspectorController.cpp
-@@ -0,0 +1,244 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
-+#include "config.h"
-+#include "BrowserInspectorController.h"
-+
-+#if ENABLE(REMOTE_INSPECTOR)
-+
-+#include "InspectorPlaywrightAgent.h"
-+#include "InspectorPlaywrightAgentClient.h"
-+#include "WebPageInspectorController.h"
-+#include "WebPageProxy.h"
-+#include "WebProcessPool.h"
-+#include "WebProcessProxy.h"
-+#include <JavaScriptCore/InspectorBackendDispatcher.h>
-+#include <JavaScriptCore/InspectorBackendDispatchers.h>
-+#include <JavaScriptCore/InspectorFrontendChannel.h>
-+#include <JavaScriptCore/InspectorFrontendRouter.h>
-+#include <JavaScriptCore/InspectorTarget.h>
-+#include <WebCore/WindowFeatures.h>
-+#include <wtf/Ref.h>
-+#include <wtf/RefPtr.h>
-+
-+using namespace Inspector;
-+
-+namespace WebKit {
-+
-+static Vector<WebPageProxy*> allPages()
-+{
-+    ASSERT(isMainThread());
-+    Vector<WebPageProxy*> result;
-+    for (WebProcessPool* pool : WebProcessPool::allProcessPools()) {
-+        for (auto& process : pool->processes()) {
-+            result.appendRange(process->pages().begin(), process->pages().end());
-+        }
-+    }
-+    return result;
-+}
-+
-+class BrowserInspectorController::PageProxyChannel : public FrontendChannel {
-+    WTF_MAKE_FAST_ALLOCATED;
-+public:
-+    PageProxyChannel(FrontendChannel& frontendChannel, String pageProxyID, WebPageProxy& page)
-+        : m_pageProxyID(pageProxyID)
-+        , m_frontendChannel(frontendChannel)
-+        , m_page(page)
-+    {
-+    }
-+
-+    ~PageProxyChannel() override = default;
-+
-+    void dispatchMessageFromFrontend(const String& message)
-+    {
-+        m_page.inspectorController().dispatchMessageFromFrontend(message);
-+    }
-+
-+    WebPageProxy& page() { return m_page; }
-+
-+    void disconnect()
-+    {
-+        m_page.inspectorController().disconnectFrontend(*this);
-+    }
-+
-+private:
-+    ConnectionType connectionType() const override { return m_frontendChannel.connectionType(); }
-+    void sendMessageToFrontend(const String& message) override
-+    {
-+        m_frontendChannel.sendMessageToFrontend(addTabIdToMessage(message));
-+    }
-+
-+    String addTabIdToMessage(const String& message) {
-+        RefPtr<JSON::Value> parsedMessage;
-+        if (!JSON::Value::parseJSON(message, parsedMessage))
-+            return message;
-+
-+        RefPtr<JSON::Object> messageObject;
-+        if (!parsedMessage->asObject(messageObject))
-+            return message;
-+
-+        messageObject->setString("pageProxyId"_s, m_pageProxyID);
-+        return messageObject->toJSONString();
-+    }
-+
-+    String m_pageProxyID;
-+    FrontendChannel& m_frontendChannel;
-+    WebPageProxy& m_page;
-+};
-+
-+BrowserInspectorController::BrowserInspectorController(std::unique_ptr<InspectorPlaywrightAgentClient> client)
-+    : m_frontendChannel(nullptr)
-+    , m_frontendRouter(FrontendRouter::create())
-+    , m_backendDispatcher(BackendDispatcher::create(m_frontendRouter.copyRef()))
-+    , m_browserAgentClient(std::move(client))
-+{
-+    PageProxyIDMap* map = this;
-+    auto browserAgent = makeUnique<InspectorPlaywrightAgent>(m_frontendRouter, m_backendDispatcher, m_browserAgentClient.get(), *map);
-+    m_browserAgent = browserAgent.get();
-+    m_agents.append(WTFMove(browserAgent));
-+}
-+
-+BrowserInspectorController::~BrowserInspectorController()
-+{
-+    if (m_frontendChannel)
-+        disconnectFrontend();
-+}
-+
-+void BrowserInspectorController::connectFrontend(FrontendChannel& frontendChannel)
-+{
-+    ASSERT(!m_frontendChannel);
-+    m_frontendChannel = &frontendChannel;
-+    WebPageInspectorController::setObserver(this);
-+
-+    bool connectingFirstFrontend = !m_frontendRouter->hasFrontends();
-+    m_frontendRouter->connectFrontend(frontendChannel);
-+    if (connectingFirstFrontend)
-+        m_agents.didCreateFrontendAndBackend(&m_frontendRouter.get(), &m_backendDispatcher.get());
-+
-+    connectToAllPages();
-+}
-+
-+void BrowserInspectorController::disconnectFrontend()
-+{
-+    ASSERT(m_frontendChannel);
-+    disconnectFromAllPages();
-+
-+    m_frontendRouter->disconnectFrontend(*m_frontendChannel);
-+    if (!m_frontendRouter->hasFrontends())
-+        m_agents.willDestroyFrontendAndBackend(DisconnectReason::InspectorDestroyed);
-+
-+    WebPageInspectorController::setObserver(nullptr);
-+    m_frontendChannel = nullptr;
-+}
-+
-+void BrowserInspectorController::dispatchMessageFromFrontend(const String& message)
-+{
-+    m_backendDispatcher->dispatch(message, [&](const RefPtr<JSON::Object>& messageObject) {
-+        RefPtr<JSON::Value> pageProxyIDValue;
-+        if (!messageObject->getValue("pageProxyId"_s, pageProxyIDValue))
-+            return BackendDispatcher::InterceptionResult::Continue;
-+
-+        String pageProxyID;
-+        if (!pageProxyIDValue->asString(pageProxyID)) {
-+            m_backendDispatcher->reportProtocolError(BackendDispatcher::InvalidRequest, "The type of 'pageProxyId' must be string"_s);
-+            m_backendDispatcher->sendPendingErrors();
-+            return BackendDispatcher::InterceptionResult::Intercepted;
-+        }
-+
-+
-+        if (auto pageProxyChannel = m_pageProxyChannels.get(pageProxyID)) {
-+            pageProxyChannel->dispatchMessageFromFrontend(message);
-+            return BackendDispatcher::InterceptionResult::Intercepted;
-+        }
-+
-+        m_backendDispatcher->reportProtocolError(BackendDispatcher::InvalidRequest, "Cannot find page proxy with provided 'pageProxyId'"_s);
-+        m_backendDispatcher->sendPendingErrors();
-+        return BackendDispatcher::InterceptionResult::Intercepted;
-+    });
-+}
-+
-+void BrowserInspectorController::connectToAllPages()
-+{
-+    for (auto* page : allPages())
-+        connectToPage(*page);
-+}
-+
-+void BrowserInspectorController::disconnectFromAllPages()
-+{
-+    for (auto it = m_pageProxyChannels.begin(); it != m_pageProxyChannels.end(); ++it)
-+        it->value->disconnect();
-+    m_pageProxyChannels.clear();
-+}
-+
-+void BrowserInspectorController::connectToPage(WebPageProxy& page)
-+{
-+    String pageProxyID = InspectorPlaywrightAgent::toPageProxyIDProtocolString(page);
-+    auto pageProxyChannel = makeUnique<PageProxyChannel>(*m_frontendChannel, pageProxyID, page);
-+    page.inspectorController().connectFrontend(*pageProxyChannel);
-+    // Always pause new targets if controlled remotely.
-+    page.inspectorController().setPauseOnStart(true);
-+    m_pageProxyChannels.set(pageProxyID, WTFMove(pageProxyChannel));
-+}
-+
-+void BrowserInspectorController::didCreateInspectorController(WebPageProxy& page)
-+{
-+    ASSERT(m_frontendChannel);
-+    // Auto-connect to all new pages.
-+    connectToPage(page);
-+    m_browserAgent->didCreateWebPageProxy(page);
-+}
-+
-+void BrowserInspectorController::willDestroyInspectorController(WebPageProxy& page)
-+{
-+    m_browserAgent->willDestroyWebPageProxy(page);
-+
-+    String pageProxyID = InspectorPlaywrightAgent::toPageProxyIDProtocolString(page);
-+    auto it = m_pageProxyChannels.find(pageProxyID);
-+    ASSERT(it != m_pageProxyChannels.end());
-+    it->value->disconnect();
-+    m_pageProxyChannels.remove(it);
-+}
-+
-+void BrowserInspectorController::didFailProvisionalLoad(WebPageProxy& page, uint64_t navigationID, const String& error)
-+{
-+    m_browserAgent->didFailProvisionalLoad(page, navigationID, error);
-+}
-+
-+void BrowserInspectorController::willCreateNewPage(WebPageProxy& page, const WebCore::WindowFeatures& features, const URL& url)
-+{
-+    m_browserAgent->willCreateNewPage(page, features, url);
-+}
-+
-+WebPageProxy* BrowserInspectorController::findPageProxy(const String& pageProxyID)
-+{
-+    if (auto* pageProxyChannel = m_pageProxyChannels.get(pageProxyID))
-+        return &pageProxyChannel->page();
-+
-+    return nullptr;
-+}
-+
-+} // namespace WebKit
-+
-+#endif // ENABLE(REMOTE_INSPECTOR)
-diff --git a/Source/WebKit/UIProcess/BrowserInspectorController.h b/Source/WebKit/UIProcess/BrowserInspectorController.h
-new file mode 100644
-index 0000000000000000000000000000000000000000..b8e7b1c9f301c99baf62dc52ad4591b0376f00b3
---- /dev/null
-+++ b/Source/WebKit/UIProcess/BrowserInspectorController.h
-@@ -0,0 +1,86 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
-+#pragma once
-+
-+#if ENABLE(REMOTE_INSPECTOR)
-+
-+#include "InspectorPlaywrightAgent.h"
-+#include "WebPageInspectorController.h"
-+#include <JavaScriptCore/InspectorAgentRegistry.h>
-+#include <wtf/Forward.h>
-+#include <wtf/Noncopyable.h>
-+
-+namespace Inspector {
-+class BackendDispatcher;
-+class FrontendChannel;
-+class FrontendRouter;
-+}
-+
-+namespace WebKit {
-+
-+class InspectorPlaywrightAgent;
-+class InspectorPlaywrightAgentClient;
-+
-+class BrowserInspectorController : private WebPageInspectorControllerObserver, private PageProxyIDMap {
-+    WTF_MAKE_NONCOPYABLE(BrowserInspectorController);
-+    WTF_MAKE_FAST_ALLOCATED;
-+public:
-+    BrowserInspectorController(std::unique_ptr<InspectorPlaywrightAgentClient> client);
-+    ~BrowserInspectorController();
-+
-+    void connectFrontend(Inspector::FrontendChannel&);
-+    void disconnectFrontend();
-+    void dispatchMessageFromFrontend(const String& message);
-+
-+private:
-+    class TargetHandler;
-+    class PageProxyChannel;
-+
-+    // WebPageInspectorControllerObserver
-+    void didCreateInspectorController(WebPageProxy&) override;
-+    void willDestroyInspectorController(WebPageProxy&) override;
-+    void didFailProvisionalLoad(WebPageProxy&, uint64_t navigationID, const String& error) override;
-+    void willCreateNewPage(WebPageProxy&, const WebCore::WindowFeatures&, const URL&) override;
-+
-+    // PageProxyIDMap
-+    WebPageProxy* findPageProxy(const String& pageProxyID) override;
-+
-+    void connectToAllPages();
-+    void disconnectFromAllPages();
-+    void connectToPage(WebPageProxy&);
-+
-+    Inspector::FrontendChannel* m_frontendChannel { nullptr };
-+    Ref<Inspector::FrontendRouter> m_frontendRouter;
-+    Ref<Inspector::BackendDispatcher> m_backendDispatcher;
-+    std::unique_ptr<InspectorPlaywrightAgentClient> m_browserAgentClient;
-+    Inspector::AgentRegistry m_agents;
-+    InspectorPlaywrightAgent* m_browserAgent { nullptr };
-+    HashMap<String, std::unique_ptr<PageProxyChannel>> m_pageProxyChannels;
-+};
-+
-+} // namespace WebKit
-+
-+#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp b/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..e07123453ecab2611ff4918cec37ee6e744a23a6
+index 0000000000000000000000000000000000000000..dc8af6fe1c57bcd62d605fd1daa3da13361858bb
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp
 @@ -0,0 +1,57 @@
@@ -8456,7 +8119,7 @@ index 0000000000000000000000000000000000000000..e07123453ecab2611ff4918cec37ee6e
 +
 +#if ENABLE(REMOTE_INSPECTOR)
 +
-+#include "BrowserInspectorController.h"
++#include "InspectorPlaywrightAgent.h"
 +#include "RemoteInspectorPipe.h"
 +#include <wtf/NeverDestroyed.h>
 +#include "InspectorPlaywrightAgentClient.h"
@@ -8468,12 +8131,12 @@ index 0000000000000000000000000000000000000000..e07123453ecab2611ff4918cec37ee6e
 +    class BrowserInspectorPipe {
 +    public:
 +        BrowserInspectorPipe(std::unique_ptr<InspectorPlaywrightAgentClient> client)
-+            : m_browserInspectorController(std::move(client))
-+            , m_remoteInspectorPipe(m_browserInspectorController)
++            : m_playwrightAgent(std::move(client))
++            , m_remoteInspectorPipe(m_playwrightAgent)
 +        {
 +        }
 +
-+        BrowserInspectorController m_browserInspectorController;
++        InspectorPlaywrightAgent m_playwrightAgent;
 +        RemoteInspectorPipe m_remoteInspectorPipe;
 +    };
 +
@@ -9918,10 +9581,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e3556d47d
+index 0000000000000000000000000000000000000000..3a695349c679f8685093eb685911d16a9e8f6bcc
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,658 @@
+@@ -0,0 +1,796 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -9973,18 +9636,83 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +#include <WebCore/ProcessIdentifier.h>
 +#include <WebCore/ResourceRequest.h>
 +#include <WebCore/WindowFeatures.h>
++#include <JavaScriptCore/InspectorBackendDispatcher.h>
++#include <JavaScriptCore/InspectorFrontendChannel.h>
 +#include <JavaScriptCore/InspectorFrontendRouter.h>
 +#include <pal/SessionID.h>
 +#include <stdlib.h>
 +#include <wtf/HashMap.h>
 +#include <wtf/HexNumber.h>
++#include <wtf/URL.h>
 +
 +
 +using namespace Inspector;
 +
 +namespace WebKit {
 +
++class InspectorPlaywrightAgent::PageProxyChannel : public FrontendChannel {
++    WTF_MAKE_FAST_ALLOCATED;
++public:
++    PageProxyChannel(FrontendChannel& frontendChannel, String pageProxyID, WebPageProxy& page)
++        : m_pageProxyID(pageProxyID)
++        , m_frontendChannel(frontendChannel)
++        , m_page(page)
++    {
++    }
++
++    ~PageProxyChannel() override = default;
++
++    void dispatchMessageFromFrontend(const String& message)
++    {
++        m_page.inspectorController().dispatchMessageFromFrontend(message);
++    }
++
++    WebPageProxy& page() { return m_page; }
++
++    void disconnect()
++    {
++        m_page.inspectorController().disconnectFrontend(*this);
++    }
++
++private:
++    ConnectionType connectionType() const override { return m_frontendChannel.connectionType(); }
++    void sendMessageToFrontend(const String& message) override
++    {
++        m_frontendChannel.sendMessageToFrontend(addTabIdToMessage(message));
++    }
++
++    String addTabIdToMessage(const String& message) {
++        RefPtr<JSON::Value> parsedMessage;
++        if (!JSON::Value::parseJSON(message, parsedMessage))
++            return message;
++
++        RefPtr<JSON::Object> messageObject;
++        if (!parsedMessage->asObject(messageObject))
++            return message;
++
++        messageObject->setString("pageProxyId"_s, m_pageProxyID);
++        return messageObject->toJSONString();
++    }
++
++    String m_pageProxyID;
++    FrontendChannel& m_frontendChannel;
++    WebPageProxy& m_page;
++};
++
 +namespace {
++
++String toBrowserContextIDProtocolString(const PAL::SessionID& sessionID)
++{
++    StringBuilder builder;
++    builder.append(hex(sessionID.toUInt64(), 16));
++    return builder.toString();
++}
++
++String toPageProxyIDProtocolString(const WebPageProxy& page)
++{
++    return makeString(page.identifier().toUInt64());
++}
++
 +
 +static RefPtr<JSON::ArrayOf<String>> getEnabledWindowFeatures(const WebCore::WindowFeatures& features) {
 +  auto result = JSON::ArrayOf<String>::create();
@@ -10052,12 +9780,12 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +
 +Ref<Inspector::Protocol::Playwright::PageProxyInfo> buildPageProxyInfo(const WebPageProxy& page) {
 +    auto result = Inspector::Protocol::Playwright::PageProxyInfo::create()
-+        .setPageProxyId(InspectorPlaywrightAgent::toPageProxyIDProtocolString(page))
-+        .setBrowserContextId(InspectorPlaywrightAgent::toBrowserContextIDProtocolString(page.sessionID()))
++        .setPageProxyId(toPageProxyIDProtocolString(page))
++        .setBrowserContextId(toBrowserContextIDProtocolString(page.sessionID()))
 +        .release();
 +    auto* opener = page.configuration().relatedPage();
 +    if (opener)
-+        result->setOpenerId(InspectorPlaywrightAgent::toPageProxyIDProtocolString(*opener));
++        result->setOpenerId(toPageProxyIDProtocolString(*opener));
 +    return result;
 +}
 +
@@ -10112,52 +9840,112 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +};
 +
 +
-+InspectorPlaywrightAgent::InspectorPlaywrightAgent(Inspector::FrontendRouter& frontendRouter, Inspector::BackendDispatcher& backendDispatcher, InspectorPlaywrightAgentClient* client, PageProxyIDMap& pageProxyIDMap)
-+    : InspectorAgentBase("Playwright"_s)
-+    , m_frontendDispatcher(makeUnique<PlaywrightFrontendDispatcher>(frontendRouter))
-+    , m_backendDispatcher(PlaywrightBackendDispatcher::create(backendDispatcher, this))
-+    , m_client(client)
-+    , m_pageProxyIDMap(pageProxyIDMap)
++InspectorPlaywrightAgent::InspectorPlaywrightAgent(std::unique_ptr<InspectorPlaywrightAgentClient> client)
++    : m_frontendChannel(nullptr)
++    , m_frontendRouter(FrontendRouter::create())
++    , m_backendDispatcher(BackendDispatcher::create(m_frontendRouter.copyRef()))
++    , m_client(std::move(client))
++    , m_frontendDispatcher(makeUnique<PlaywrightFrontendDispatcher>(m_frontendRouter))
++    , m_playwrightDispatcher(PlaywrightBackendDispatcher::create(m_backendDispatcher.get(), this))
 +{
 +}
 +
-+InspectorPlaywrightAgent::~InspectorPlaywrightAgent() = default;
-+
-+void InspectorPlaywrightAgent::didCreateWebPageProxy(const WebPageProxy& page)
++InspectorPlaywrightAgent::~InspectorPlaywrightAgent()
 +{
-+    if (m_isConnected)
-+        m_frontendDispatcher->pageProxyCreated(buildPageProxyInfo(page));
++    if (m_frontendChannel)
++        disconnectFrontend();
 +}
 +
-+void InspectorPlaywrightAgent::willDestroyWebPageProxy(const WebPageProxy& page)
++void InspectorPlaywrightAgent::connectFrontend(FrontendChannel& frontendChannel)
 +{
-+    if (!m_isConnected)
++    ASSERT(!m_frontendChannel);
++    m_frontendChannel = &frontendChannel;
++    WebPageInspectorController::setObserver(this);
++
++    m_frontendRouter->connectFrontend(frontendChannel);
++}
++
++void InspectorPlaywrightAgent::disconnectFrontend()
++{
++    ASSERT(m_frontendChannel);
++
++    ErrorString error;
++    disable(error);
++
++    m_frontendRouter->disconnectFrontend(*m_frontendChannel);
++    ASSERT(!m_frontendRouter->hasFrontends());
++
++    WebPageInspectorController::setObserver(nullptr);
++    m_frontendChannel = nullptr;
++}
++
++void InspectorPlaywrightAgent::dispatchMessageFromFrontend(const String& message)
++{
++    m_backendDispatcher->dispatch(message, [&](const RefPtr<JSON::Object>& messageObject) {
++        RefPtr<JSON::Value> pageProxyIDValue;
++        if (!messageObject->getValue("pageProxyId"_s, pageProxyIDValue))
++            return BackendDispatcher::InterceptionResult::Continue;
++
++        String pageProxyID;
++        if (!pageProxyIDValue->asString(pageProxyID)) {
++            m_backendDispatcher->reportProtocolError(BackendDispatcher::InvalidRequest, "The type of 'pageProxyId' must be string"_s);
++            m_backendDispatcher->sendPendingErrors();
++            return BackendDispatcher::InterceptionResult::Intercepted;
++        }
++
++
++        if (auto pageProxyChannel = m_pageProxyChannels.get(pageProxyID)) {
++            pageProxyChannel->dispatchMessageFromFrontend(message);
++            return BackendDispatcher::InterceptionResult::Intercepted;
++        }
++
++        m_backendDispatcher->reportProtocolError(BackendDispatcher::InvalidRequest, "Cannot find page proxy with provided 'pageProxyId'"_s);
++        m_backendDispatcher->sendPendingErrors();
++        return BackendDispatcher::InterceptionResult::Intercepted;
++    });
++}
++
++void InspectorPlaywrightAgent::didCreateInspectorController(WebPageProxy& page)
++{
++    if (!m_isEnabled)
++        return;
++
++    ASSERT(m_frontendChannel);
++    m_frontendDispatcher->pageProxyCreated(buildPageProxyInfo(page));
++
++    // Auto-connect to all new pages.
++    String pageProxyID = toPageProxyIDProtocolString(page);
++    auto pageProxyChannel = makeUnique<PageProxyChannel>(*m_frontendChannel, pageProxyID, page);
++    page.inspectorController().connectFrontend(*pageProxyChannel);
++    // Always pause new targets if controlled remotely.
++    page.inspectorController().setPauseOnStart(true);
++    m_pageProxyChannels.set(pageProxyID, WTFMove(pageProxyChannel));
++}
++
++void InspectorPlaywrightAgent::willDestroyInspectorController(WebPageProxy& page)
++{
++    if (!m_isEnabled)
 +        return;
 +
 +    m_frontendDispatcher->pageProxyDestroyed(toPageProxyIDProtocolString(page));
 +
 +    auto it = m_browserContextDeletions.find(page.sessionID());
-+    if (it == m_browserContextDeletions.end())
-+        return;
-+
-+    it->value->willDestroyPage(page);
-+    if (it->value->isFinished())
-+        m_browserContextDeletions.remove(it);
-+}
-+
-+void InspectorPlaywrightAgent::didCreateFrontendAndBackend(FrontendRouter*, BackendDispatcher*)
-+{
-+    m_isConnected = true;
-+    for (auto& pool : WebProcessPool::allProcessPools()) {
-+        auto* dataStore = pool->websiteDataStore();
-+        if (dataStore)
-+            dataStore->setDownloadInstrumentation(this);
++    if (it != m_browserContextDeletions.end()) {
++        it->value->willDestroyPage(page);
++        if (it->value->isFinished())
++            m_browserContextDeletions.remove(it);
 +    }
++
++    String pageProxyID = toPageProxyIDProtocolString(page);
++    auto channelIt = m_pageProxyChannels.find(pageProxyID);
++    ASSERT(channelIt != m_pageProxyChannels.end());
++    channelIt->value->disconnect();
++    m_pageProxyChannels.remove(channelIt);
 +}
 +
 +void InspectorPlaywrightAgent::didFailProvisionalLoad(WebPageProxy& page, uint64_t navigationID, const String& error)
 +{
-+    if (!m_isConnected)
++    if (!m_isEnabled)
 +        return;
 +
 +    m_frontendDispatcher->provisionalLoadFailed(toPageProxyIDProtocolString(page), String::number(navigationID), error);
@@ -10165,15 +9953,40 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +
 +void InspectorPlaywrightAgent::willCreateNewPage(WebPageProxy& page, const WebCore::WindowFeatures& features, const URL& url)
 +{
-+    if (!m_isConnected)
++    if (!m_isEnabled)
 +        return;
 +
 +    m_frontendDispatcher->windowOpen(toPageProxyIDProtocolString(page), url.string(), getEnabledWindowFeatures(features));
 +}
 +
-+void InspectorPlaywrightAgent::willDestroyFrontendAndBackend(DisconnectReason)
++void InspectorPlaywrightAgent::enable(ErrorString&)
 +{
-+    m_isConnected = false;
++    if (m_isEnabled)
++        return;
++
++    m_isEnabled = true;
++    for (auto& pool : WebProcessPool::allProcessPools()) {
++        auto* dataStore = pool->websiteDataStore();
++        if (dataStore)
++            dataStore->setDownloadInstrumentation(this);
++        for (auto& process : pool->processes()) {
++            for (auto* page : process->pages())
++                didCreateInspectorController(*page);
++        }
++    }
++}
++
++void InspectorPlaywrightAgent::disable(ErrorString&)
++{
++    if (!m_isEnabled)
++        return;
++
++    m_isEnabled = false;
++
++    for (auto it = m_pageProxyChannels.begin(); it != m_pageProxyChannels.end(); ++it)
++        it->value->disconnect();
++    m_pageProxyChannels.clear();
++
 +    for (auto& pool : WebProcessPool::allProcessPools()) {
 +        auto* dataStore = pool->websiteDataStore();
 +        if (dataStore) {
@@ -10302,8 +10115,8 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +
 +void InspectorPlaywrightAgent::navigate(const String& url, const String& pageProxyID, const String* frameID, const String* referrer, Ref<NavigateCallback>&& callback)
 +{
-+    WebPageProxy* page = m_pageProxyIDMap.findPageProxy(pageProxyID);
-+    if (!page) {
++    auto* pageProxyChannel = m_pageProxyChannels.get(pageProxyID);
++    if (!pageProxyChannel) {
 +        callback->sendFailure("Cannot find page proxy with provided 'pageProxyId'"_s);
 +        return;
 +    }
@@ -10327,13 +10140,13 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +            return;
 +        }
 +
-+        if (frame->page() != page) {
++        if (frame->page() != &pageProxyChannel->page()) {
 +            callback->sendFailure("Frame with specified is not from the specified page"_s);
 +            return;
 +        }
 +    }
 +
-+    page->inspectorController().navigate(WTFMove(resourceRequest), frame, [callback = WTFMove(callback)](const String& error, uint64_t navigationID) {
++    pageProxyChannel->page().inspectorController().navigate(WTFMove(resourceRequest), frame, [callback = WTFMove(callback)](const String& error, uint64_t navigationID) {
 +        if (!error.isEmpty()) {
 +            callback->sendFailure(error);
 +            return;
@@ -10346,7 +10159,7 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +    });
 +}
 +
-+void InspectorPlaywrightAgent::setIgnoreCertificateErrors(Inspector::ErrorString& errorString, const String* browserContextID, bool ignore)
++void InspectorPlaywrightAgent::setIgnoreCertificateErrors(ErrorString& errorString, const String* browserContextID, bool ignore)
 +{
 +    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
 +    if (!errorString.isEmpty())
@@ -10371,7 +10184,7 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +        [callback = WTFMove(callback)](Vector<WebCore::Cookie> allCookies) {
 +            if (!callback->isActive())
 +                return;
-+            auto cookies = JSON::ArrayOf<Inspector::Protocol::Playwright::Cookie>::create();
++            auto cookies = JSON::ArrayOf<Protocol::Playwright::Cookie>::create();
 +            for (const auto& cookie : allCookies)
 +                cookies->addItem(buildObjectForCookie(cookie));
 +            callback->sendSuccess(WTFMove(cookies));
@@ -10459,7 +10272,7 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +        }, 0);
 +}
 +
-+void InspectorPlaywrightAgent::setLanguages(Inspector::ErrorString& errorString, const JSON::Array& languages, const String* browserContextID)
++void InspectorPlaywrightAgent::setLanguages(ErrorString& errorString, const JSON::Array& languages, const String* browserContextID)
 +{
 +    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
 +    if (!errorString.isEmpty())
@@ -10478,7 +10291,7 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +    browserContext.dataStore->setLanguagesForAutomation(WTFMove(items));
 +}
 +
-+void InspectorPlaywrightAgent::setDownloadBehavior(Inspector::ErrorString& errorString, const String* behavior, const String* downloadPath, const String* browserContextID)
++void InspectorPlaywrightAgent::setDownloadBehavior(ErrorString& errorString, const String* behavior, const String* downloadPath, const String* browserContextID)
 +{
 +    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
 +    if (!errorString.isEmpty())
@@ -10491,7 +10304,7 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +    browserContext.dataStore->setDownloadForAutomation(allow, downloadPath ? *downloadPath : String());
 +}
 +
-+void InspectorPlaywrightAgent::setGeolocationOverride(Inspector::ErrorString& errorString, const String* browserContextID, const JSON::Object* geolocation)
++void InspectorPlaywrightAgent::setGeolocationOverride(ErrorString& errorString, const String* browserContextID, const JSON::Object* geolocation)
 +{
 +    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
 +    if (!errorString.isEmpty())
@@ -10522,39 +10335,27 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +
 +void InspectorPlaywrightAgent::downloadCreated(const String& uuid, const WebCore::ResourceRequest& request, const FrameInfoData& frameInfoData, WebPageProxy* page)
 +{
-+    if (!m_isConnected)
++    if (!m_isEnabled)
 +        return;
 +    String frameID = WebCore::InspectorPageAgent::makeFrameID(page->process().coreProcessIdentifier(), frameInfoData.frameID ? *frameInfoData.frameID : page->mainFrame()->frameID());
 +    m_frontendDispatcher->downloadCreated(uuid, request.url().string(),
-+        InspectorPlaywrightAgent::toPageProxyIDProtocolString(*page),
-+        InspectorPlaywrightAgent::toBrowserContextIDProtocolString(page->sessionID()),
++        toPageProxyIDProtocolString(*page),
++        toBrowserContextIDProtocolString(page->sessionID()),
 +        frameID);
 +}
 +
 +void InspectorPlaywrightAgent::downloadFilenameSuggested(const String& uuid, const String& suggestedFilename)
 +{
-+    if (!m_isConnected)
++    if (!m_isEnabled)
 +        return;
 +    m_frontendDispatcher->downloadFilenameSuggested(uuid, suggestedFilename);
 +}
 +
 +void InspectorPlaywrightAgent::downloadFinished(const String& uuid, const String& error)
 +{
-+    if (!m_isConnected)
++    if (!m_isEnabled)
 +        return;
 +    m_frontendDispatcher->downloadFinished(uuid, error);
-+}
-+
-+String InspectorPlaywrightAgent::toBrowserContextIDProtocolString(const PAL::SessionID& sessionID)
-+{
-+    StringBuilder builder;
-+    builder.append(hex(sessionID.toUInt64(), 16));
-+    return builder.toString();
-+}
-+
-+String InspectorPlaywrightAgent::toPageProxyIDProtocolString(const WebPageProxy& page)
-+{
-+    return makeString(page.identifier().toUInt64());
 +}
 +
 +BrowserContext InspectorPlaywrightAgent::lookupBrowserContext(ErrorString& errorString, const String* browserContextID)
@@ -10582,10 +10383,10 @@ index 0000000000000000000000000000000000000000..5e13d6225bb86abd7dd3553a5f690c4e
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..6a371421a504243925aac4ba0e6a0227f1453aea
+index 0000000000000000000000000000000000000000..25d91f9aca7835d08106797cb10652515a4d6a09
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
-@@ -0,0 +1,127 @@
+@@ -0,0 +1,119 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -10616,14 +10417,12 @@ index 0000000000000000000000000000000000000000..6a371421a504243925aac4ba0e6a0227
 +#if ENABLE(REMOTE_INSPECTOR)
 +
 +#include "InspectorPlaywrightAgentClient.h"
-+#include <JavaScriptCore/InspectorAgentBase.h>
 +#include <JavaScriptCore/InspectorBackendDispatchers.h>
++#include "WebPageInspectorController.h"
 +#include "WebProcessPool.h"
 +#include <wtf/HashMap.h>
-+#include <pal/SessionID.h>
 +#include <wtf/Forward.h>
 +#include <wtf/Noncopyable.h>
-+#include <wtf/URL.h>
 +
 +namespace Inspector {
 +class BackendDispatcher;
@@ -10636,43 +10435,39 @@ index 0000000000000000000000000000000000000000..6a371421a504243925aac4ba0e6a0227
 +class SessionID;
 +}
 +
-+namespace WebCore {
-+struct WindowFeatures;
-+}
-+
 +namespace WebKit {
 +
-+class NetworkProcess;
 +class WebFrameProxy;
 +
-+class PageProxyIDMap {
-+public:
-+    virtual WebPageProxy* findPageProxy(const String& pageProxyID) = 0;
-+
-+protected:
-+    virtual ~PageProxyIDMap() = default;
-+};
-+
 +class InspectorPlaywrightAgent final
-+    : public Inspector::InspectorAgentBase
++    : public WebPageInspectorControllerObserver
 +    , public Inspector::PlaywrightBackendDispatcherHandler
 +    , public DownloadInstrumentation {
 +    WTF_MAKE_NONCOPYABLE(InspectorPlaywrightAgent);
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    InspectorPlaywrightAgent(Inspector::FrontendRouter&, Inspector::BackendDispatcher&, InspectorPlaywrightAgentClient*, PageProxyIDMap&);
++    explicit InspectorPlaywrightAgent(std::unique_ptr<InspectorPlaywrightAgentClient> client);
 +    ~InspectorPlaywrightAgent() override;
 +
-+    void didCreateWebPageProxy(const WebPageProxy&);
-+    void willDestroyWebPageProxy(const WebPageProxy&);
-+    void didFailProvisionalLoad(WebPageProxy&, uint64_t navigationID, const String& error);
-+    void willCreateNewPage(WebPageProxy&, const WebCore::WindowFeatures&, const URL&);
++    // Transport
++    void connectFrontend(Inspector::FrontendChannel&);
++    void disconnectFrontend();
++    void dispatchMessageFromFrontend(const String& message);
 +
-+    // InspectorAgentBase
-+    void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) override;
-+    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
++private:
++    class BrowserContextDeletion;
++    class PageProxyChannel;
++    class TargetHandler;
++
++    // WebPageInspectorControllerObserver
++    void didCreateInspectorController(WebPageProxy&) override;
++    void willDestroyInspectorController(WebPageProxy&) override;
++    void didFailProvisionalLoad(WebPageProxy&, uint64_t navigationID, const String& error) override;
++    void willCreateNewPage(WebPageProxy&, const WebCore::WindowFeatures&, const URL&) override;
 +
 +    // PlaywrightDispatcherHandler
++    void enable(Inspector::ErrorString&) override;
++    void disable(Inspector::ErrorString&) override;
 +    void close(Ref<CloseCallback>&&) override;
 +    void createContext(Inspector::ErrorString&, String* browserContextID) override;
 +    void deleteContext(const String& browserContextID, Ref<DeleteContextCallback>&& callback) override;
@@ -10688,26 +10483,24 @@ index 0000000000000000000000000000000000000000..6a371421a504243925aac4ba0e6a0227
 +    void setLanguages(Inspector::ErrorString&, const JSON::Array& languages, const String* browserContextID) override;
 +    void setDownloadBehavior(Inspector::ErrorString&, const String* behavior, const String* downloadPath, const String* browserContextID) override;
 +
-+    static String toBrowserContextIDProtocolString(const PAL::SessionID&);
-+    static String toPageProxyIDProtocolString(const WebPageProxy&);
-+
 +    // DownloadInstrumentation
 +    void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) override;
 +    void downloadFilenameSuggested(const String& uuid, const String& suggestedFilename) override;
 +    void downloadFinished(const String& uuid, const String& error) override;
 +
-+private:
-+    class BrowserContextDeletion;
 +    BrowserContext lookupBrowserContext(Inspector::ErrorString&, const String* browserContextID);
 +    WebFrameProxy* frameForID(const String& frameID, String& error);
 +
++    Inspector::FrontendChannel* m_frontendChannel { nullptr };
++    Ref<Inspector::FrontendRouter> m_frontendRouter;
++    Ref<Inspector::BackendDispatcher> m_backendDispatcher;
++    std::unique_ptr<InspectorPlaywrightAgentClient> m_client;
 +    std::unique_ptr<Inspector::PlaywrightFrontendDispatcher> m_frontendDispatcher;
-+    Ref<Inspector::PlaywrightBackendDispatcher> m_backendDispatcher;
-+    InspectorPlaywrightAgentClient* m_client;
-+    PageProxyIDMap& m_pageProxyIDMap;
++    Ref<Inspector::PlaywrightBackendDispatcher> m_playwrightDispatcher;
++    HashMap<String, std::unique_ptr<PageProxyChannel>> m_pageProxyChannels;
 +    HashMap<String, BrowserContext> m_browserContexts;
 +    HashMap<PAL::SessionID, std::unique_ptr<BrowserContextDeletion>> m_browserContextDeletions;
-+    bool m_isConnected { false };
++    bool m_isEnabled { false };
 +};
 +
 +} // namespace WebKit
@@ -10810,7 +10603,7 @@ index 8fc767f7356167fd581602a3f0e8e5ea2021266f..941a50a358450d71df810a1bcaced233
  #endif
 diff --git a/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..e842999cf436a92f5279642a4edccd10ede7b3e2
+index 0000000000000000000000000000000000000000..f5025df794fd34f1b08d7a37e7a1f3c8a14ada97
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
 @@ -0,0 +1,221 @@
@@ -10844,7 +10637,7 @@ index 0000000000000000000000000000000000000000..e842999cf436a92f5279642a4edccd10
 +
 +#if ENABLE(REMOTE_INSPECTOR)
 +
-+#include "BrowserInspectorController.h"
++#include "InspectorPlaywrightAgent.h"
 +#include <JavaScriptCore/InspectorFrontendChannel.h>
 +#include <wtf/MainThread.h>
 +#include <wtf/RunLoop.h>
@@ -10952,8 +10745,8 @@ index 0000000000000000000000000000000000000000..e842999cf436a92f5279642a4edccd10
 +    Ref<WorkQueue> m_senderQueue;
 +};
 +
-+RemoteInspectorPipe::RemoteInspectorPipe(BrowserInspectorController& browserInspectorController)
-+    : m_browserInspectorController(browserInspectorController)
++RemoteInspectorPipe::RemoteInspectorPipe(InspectorPlaywrightAgent& playwrightAgent)
++    : m_playwrightAgent(playwrightAgent)
 +{
 +    // Initialize main loop before creating WorkQueue
 +    WTF::RunLoop::initializeMainRunLoop();
@@ -10976,7 +10769,7 @@ index 0000000000000000000000000000000000000000..e842999cf436a92f5279642a4edccd10
 +    writeHandle = reinterpret_cast<HANDLE>(_get_osfhandle(writeFD));
 +#endif
 +
-+    m_browserInspectorController.connectFrontend(*m_remoteFrontendChannel);
++    m_playwrightAgent.connectFrontend(*m_remoteFrontendChannel);
 +    m_terminated = false;
 +    m_receiverThread = Thread::create("Inspector pipe reader", [this] {
 +        workerRun();
@@ -10989,7 +10782,7 @@ index 0000000000000000000000000000000000000000..e842999cf436a92f5279642a4edccd10
 +    if (!m_receiverThread)
 +        return;
 +
-+    m_browserInspectorController.disconnectFrontend();
++    m_playwrightAgent.disconnectFrontend();
 +
 +    m_terminated = true;
 +    m_receiverThread->waitForCompletion();
@@ -11020,7 +10813,7 @@ index 0000000000000000000000000000000000000000..e842999cf436a92f5279642a4edccd10
 +                String message = String::fromUTF8(line.data() + start, end - start);
 +                RunLoop::main().dispatch([this, message] {
 +                    if (!m_terminated)
-+                        m_browserInspectorController.dispatchMessageFromFrontend(message);
++                        m_playwrightAgent.dispatchMessageFromFrontend(message);
 +                });
 +            }
 +            ++end;
@@ -11037,7 +10830,7 @@ index 0000000000000000000000000000000000000000..e842999cf436a92f5279642a4edccd10
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/RemoteInspectorPipe.h b/Source/WebKit/UIProcess/RemoteInspectorPipe.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..b1307da8b9ee02d63ef98d276473d65a1d8c3556
+index 0000000000000000000000000000000000000000..6d04f9290135069359ce6bf8726546482fd1dc95
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/RemoteInspectorPipe.h
 @@ -0,0 +1,65 @@
@@ -11080,13 +10873,13 @@ index 0000000000000000000000000000000000000000..b1307da8b9ee02d63ef98d276473d65a
 +
 +namespace WebKit {
 +
-+class BrowserInspectorController;
++class InspectorPlaywrightAgent;
 +
 +class RemoteInspectorPipe {
 +    WTF_MAKE_NONCOPYABLE(RemoteInspectorPipe);
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    explicit RemoteInspectorPipe(BrowserInspectorController&);
++    explicit RemoteInspectorPipe(InspectorPlaywrightAgent&);
 +    ~RemoteInspectorPipe();
 +
 +private:
@@ -11100,7 +10893,7 @@ index 0000000000000000000000000000000000000000..b1307da8b9ee02d63ef98d276473d65a
 +    RefPtr<Thread> m_receiverThread;
 +    std::atomic<bool> m_terminated { false };
 +    std::unique_ptr<Inspector::FrontendChannel> m_remoteFrontendChannel;
-+    BrowserInspectorController& m_browserInspectorController;
++    InspectorPlaywrightAgent& m_playwrightAgent;
 +};
 +
 +} // namespace WebKit
@@ -13754,16 +13547,15 @@ index 0000000000000000000000000000000000000000..c3d7cacea987ba2b094d5022c670705e
 + 
 +} // namespace WebKit
 diff --git a/Source/WebKit/WebKit.xcodeproj/project.pbxproj b/Source/WebKit/WebKit.xcodeproj/project.pbxproj
-index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7aa6c762b 100644
+index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..8117733cabe9c59443f41d5f9ef2b5e9d70efce1 100644
 --- a/Source/WebKit/WebKit.xcodeproj/project.pbxproj
 +++ b/Source/WebKit/WebKit.xcodeproj/project.pbxproj
-@@ -1777,6 +1777,19 @@
+@@ -1777,6 +1777,18 @@
  		CEE4AE2B1A5DCF430002F49B /* UIKitSPI.h in Headers */ = {isa = PBXBuildFile; fileRef = CEE4AE2A1A5DCF430002F49B /* UIKitSPI.h */; };
  		D3B9484711FF4B6500032B39 /* WebPopupMenu.h in Headers */ = {isa = PBXBuildFile; fileRef = D3B9484311FF4B6500032B39 /* WebPopupMenu.h */; };
  		D3B9484911FF4B6500032B39 /* WebSearchPopupMenu.h in Headers */ = {isa = PBXBuildFile; fileRef = D3B9484511FF4B6500032B39 /* WebSearchPopupMenu.h */; };
 +		D71A94322370E025002C4D9E /* InspectorPlaywrightAgentClientMac.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94302370E025002C4D9E /* InspectorPlaywrightAgentClientMac.h */; };
 +		D71A94342370E07A002C4D9E /* InspectorPlaywrightAgentClient.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94332370E07A002C4D9E /* InspectorPlaywrightAgentClient.h */; };
-+		D71A94382370F032002C4D9E /* BrowserInspectorController.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94372370F032002C4D9E /* BrowserInspectorController.h */; };
 +		D71A943A2370F061002C4D9E /* RemoteInspectorPipe.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94392370F060002C4D9E /* RemoteInspectorPipe.h */; };
 +		D71A94422371F67E002C4D9E /* WebPageInspectorEmulationAgent.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A943F2371F67E002C4D9E /* WebPageInspectorEmulationAgent.h */; };
 +		D71A94432371F67E002C4D9E /* WebPageInspectorInputAgent.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94402371F67E002C4D9E /* WebPageInspectorInputAgent.h */; };
@@ -13777,7 +13569,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  		DF462E0F23F22F5500EFF35F /* WKHTTPCookieStorePrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = DF462E0E23F22F5300EFF35F /* WKHTTPCookieStorePrivate.h */; settings = {ATTRIBUTES = (Private, ); }; };
  		DF462E1223F338BE00EFF35F /* WKContentWorldPrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = DF462E1123F338AD00EFF35F /* WKContentWorldPrivate.h */; settings = {ATTRIBUTES = (Private, ); }; };
  		E105FE5418D7B9DE008F57A8 /* EditingRange.h in Headers */ = {isa = PBXBuildFile; fileRef = E105FE5318D7B9DE008F57A8 /* EditingRange.h */; };
-@@ -1830,6 +1843,7 @@
+@@ -1830,6 +1842,7 @@
  		E5CB07DC20E1678F0022C183 /* WKFormColorControl.h in Headers */ = {isa = PBXBuildFile; fileRef = E5CB07DA20E1678F0022C183 /* WKFormColorControl.h */; };
  		ECA680D81E690E2500731D20 /* WebProcessCocoa.h in Headers */ = {isa = PBXBuildFile; fileRef = ECA680D71E690DF800731D20 /* WebProcessCocoa.h */; settings = {ATTRIBUTES = (Private, ); }; };
  		ED82A7F2128C6FAF004477B3 /* WKBundlePageOverlay.h in Headers */ = {isa = PBXBuildFile; fileRef = 1A22F0FF1289FCD90085E74F /* WKBundlePageOverlay.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -13785,14 +13577,13 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  		F409BA181E6E64BC009DA28E /* WKDragDestinationAction.h in Headers */ = {isa = PBXBuildFile; fileRef = F409BA171E6E64B3009DA28E /* WKDragDestinationAction.h */; settings = {ATTRIBUTES = (Private, ); }; };
  		F42D634122A0EFDF00D2FB3A /* WebAutocorrectionData.h in Headers */ = {isa = PBXBuildFile; fileRef = F42D633F22A0EFD300D2FB3A /* WebAutocorrectionData.h */; };
  		F430E9422247335F005FE053 /* WebsiteMetaViewportPolicy.h in Headers */ = {isa = PBXBuildFile; fileRef = F430E941224732A9005FE053 /* WebsiteMetaViewportPolicy.h */; };
-@@ -5246,6 +5260,20 @@
+@@ -5246,6 +5259,19 @@
  		D3B9484311FF4B6500032B39 /* WebPopupMenu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebPopupMenu.h; sourceTree = "<group>"; };
  		D3B9484411FF4B6500032B39 /* WebSearchPopupMenu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WebSearchPopupMenu.cpp; sourceTree = "<group>"; };
  		D3B9484511FF4B6500032B39 /* WebSearchPopupMenu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebSearchPopupMenu.h; sourceTree = "<group>"; };
 +		D71A942C2370DF81002C4D9E /* WKBrowserInspector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKBrowserInspector.h; sourceTree = "<group>"; };
 +		D71A94302370E025002C4D9E /* InspectorPlaywrightAgentClientMac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorPlaywrightAgentClientMac.h; sourceTree = "<group>"; };
 +		D71A94332370E07A002C4D9E /* InspectorPlaywrightAgentClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorPlaywrightAgentClient.h; sourceTree = "<group>"; };
-+		D71A94372370F032002C4D9E /* BrowserInspectorController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BrowserInspectorController.h; sourceTree = "<group>"; };
 +		D71A94392370F060002C4D9E /* RemoteInspectorPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RemoteInspectorPipe.h; sourceTree = "<group>"; };
 +		D71A943F2371F67E002C4D9E /* WebPageInspectorEmulationAgent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebPageInspectorEmulationAgent.h; sourceTree = "<group>"; };
 +		D71A94402371F67E002C4D9E /* WebPageInspectorInputAgent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebPageInspectorInputAgent.h; sourceTree = "<group>"; };
@@ -13806,7 +13597,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  		DF462E0E23F22F5300EFF35F /* WKHTTPCookieStorePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKHTTPCookieStorePrivate.h; sourceTree = "<group>"; };
  		DF462E1123F338AD00EFF35F /* WKContentWorldPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKContentWorldPrivate.h; sourceTree = "<group>"; };
  		DF58C6311371AC5800F9A37C /* NativeWebWheelEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NativeWebWheelEvent.h; sourceTree = "<group>"; };
-@@ -5350,6 +5378,9 @@
+@@ -5350,6 +5376,9 @@
  		ECA680D71E690DF800731D20 /* WebProcessCocoa.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WebProcessCocoa.h; sourceTree = "<group>"; };
  		ECBFC1DB1E6A4D66000300C7 /* ExtraPublicSymbolsForTAPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ExtraPublicSymbolsForTAPI.h; sourceTree = "<group>"; };
  		F036978715F4BF0500C3A80E /* WebColorPicker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WebColorPicker.cpp; sourceTree = "<group>"; };
@@ -13816,7 +13607,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  		F409BA171E6E64B3009DA28E /* WKDragDestinationAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKDragDestinationAction.h; sourceTree = "<group>"; };
  		F40D1B68220BDC0F00B49A01 /* WebAutocorrectionContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WebAutocorrectionContext.h; path = ios/WebAutocorrectionContext.h; sourceTree = "<group>"; };
  		F41056612130699A0092281D /* APIAttachmentCocoa.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = APIAttachmentCocoa.mm; sourceTree = "<group>"; };
-@@ -7193,6 +7224,7 @@
+@@ -7193,6 +7222,7 @@
  		37C4C08318149C2A003688B9 /* Cocoa */ = {
  			isa = PBXGroup;
  			children = (
@@ -13824,7 +13615,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  				1A43E826188F38E2009E4D30 /* Deprecated */,
  				37A5E01218BBF937000A081E /* _WKActivatedElementInfo.h */,
  				37A5E01118BBF937000A081E /* _WKActivatedElementInfo.mm */,
-@@ -8489,6 +8521,8 @@
+@@ -8489,6 +8519,8 @@
  			children = (
  				9197940423DBC4BB00257892 /* InspectorBrowserAgent.cpp */,
  				9197940323DBC4BB00257892 /* InspectorBrowserAgent.h */,
@@ -13833,7 +13624,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  			);
  			path = Agents;
  			sourceTree = "<group>";
-@@ -8496,6 +8530,7 @@
+@@ -8496,6 +8528,7 @@
  		91D970D623DA6D550057DBC3 /* mac */ = {
  			isa = PBXGroup;
  			children = (
@@ -13841,7 +13632,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  				A5D3504D1D78F0D2005124A9 /* RemoteWebInspectorProxyMac.mm */,
  				1CA8B935127C774E00576C2B /* WebInspectorProxyMac.mm */,
  				994BADF11F7D77EA00B571E7 /* WKInspectorViewController.h */,
-@@ -8913,6 +8948,13 @@
+@@ -8913,6 +8946,12 @@
  		BC032DC310F438260058C15A /* UIProcess */ = {
  			isa = PBXGroup;
  			children = (
@@ -13850,12 +13641,11 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
 +				D71A943F2371F67E002C4D9E /* WebPageInspectorEmulationAgent.h */,
 +				D71A94402371F67E002C4D9E /* WebPageInspectorInputAgent.h */,
 +				D71A94392370F060002C4D9E /* RemoteInspectorPipe.h */,
-+				D71A94372370F032002C4D9E /* BrowserInspectorController.h */,
 +				D71A94332370E07A002C4D9E /* InspectorPlaywrightAgentClient.h */,
  				BC032DC410F4387C0058C15A /* API */,
  				512F588D12A8836F00629530 /* Authentication */,
  				9955A6E81C79809000EB6A93 /* Automation */,
-@@ -9197,6 +9239,7 @@
+@@ -9197,6 +9236,7 @@
  		BC0C376610F807660076D7CB /* C */ = {
  			isa = PBXGroup;
  			children = (
@@ -13863,7 +13653,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  				5123CF18133D25E60056F800 /* cg */,
  				6EE849C41368D9040038D481 /* mac */,
  				BCB63477116BF10600603215 /* WebKit2_C.h */,
-@@ -9797,6 +9840,11 @@
+@@ -9797,6 +9837,11 @@
  		BCCF085C113F3B7500C650C5 /* mac */ = {
  			isa = PBXGroup;
  			children = (
@@ -13875,7 +13665,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  				B878B613133428DC006888E9 /* CorrectionPanel.h */,
  				B878B614133428DC006888E9 /* CorrectionPanel.mm */,
  				C1817362205844A900DFDA65 /* DisplayLink.cpp */,
-@@ -10573,6 +10621,7 @@
+@@ -10573,6 +10618,7 @@
  				991F492F23A812C60054642B /* _WKInspectorDebuggableInfo.h in Headers */,
  				99036AE223A949CF0000B06A /* _WKInspectorDebuggableInfoInternal.h in Headers */,
  				9197940C23DBC50300257892 /* _WKInspectorDelegate.h in Headers */,
@@ -13883,15 +13673,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  				5CAFDE472130846A00B1F7E1 /* _WKInspectorInternal.h in Headers */,
  				9979CA58237F49F10039EC05 /* _WKInspectorPrivate.h in Headers */,
  				A5C0F0AB2000658200536536 /* _WKInspectorWindow.h in Headers */,
-@@ -10697,6 +10746,7 @@
- 				7C89D2981A6753B2003A5FDE /* APIPageConfiguration.h in Headers */,
- 				1AC1336C18565C7A00F3EC05 /* APIPageHandle.h in Headers */,
- 				1AFDD3151891B54000153970 /* APIPolicyClient.h in Headers */,
-+				D71A94382370F032002C4D9E /* BrowserInspectorController.h in Headers */,
- 				7CE4D2201A4914CA00C7F152 /* APIProcessPoolConfiguration.h in Headers */,
- 				49BCA19223A177660028A836 /* APIResourceLoadStatisticsFirstParty.h in Headers */,
- 				49BCA19723A1930D0028A836 /* APIResourceLoadStatisticsThirdParty.h in Headers */,
-@@ -10824,6 +10874,7 @@
+@@ -10824,6 +10870,7 @@
  				BC06F43A12DBCCFB002D78DE /* GeolocationPermissionRequestProxy.h in Headers */,
  				2DA944A41884E4F000ED86DB /* GestureTypes.h in Headers */,
  				2DA049B8180CCD0A00AAFA9E /* GraphicsLayerCARemote.h in Headers */,
@@ -13899,7 +13681,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  				C0CE72AD1247E78D00BC0EC4 /* HandleMessage.h in Headers */,
  				1AC75A1B1B3368270056745B /* HangDetectionDisabler.h in Headers */,
  				57AC8F50217FEED90055438C /* HidConnection.h in Headers */,
-@@ -10952,8 +11003,10 @@
+@@ -10952,8 +10999,10 @@
  				41DC45961E3D6E2200B11F51 /* NetworkRTCProvider.h in Headers */,
  				413075AB1DE85F330039EC69 /* NetworkRTCSocket.h in Headers */,
  				5C20CBA01BB1ECD800895BB1 /* NetworkSession.h in Headers */,
@@ -13910,7 +13692,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  				570DAAC22303730300E8FC04 /* NfcConnection.h in Headers */,
  				570DAAAE23026F5C00E8FC04 /* NfcService.h in Headers */,
  				31A2EC5614899C0900810D71 /* NotificationPermissionRequest.h in Headers */,
-@@ -11037,6 +11090,7 @@
+@@ -11037,6 +11086,7 @@
  				CD2865EE2255562000606AC7 /* ProcessTaskStateObserver.h in Headers */,
  				463FD4821EB94EC000A2982C /* ProcessTerminationReason.h in Headers */,
  				86E67A251910B9D100004AB7 /* ProcessThrottler.h in Headers */,
@@ -13918,7 +13700,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  				83048AE61ACA45DC0082C832 /* ProcessThrottlerClient.h in Headers */,
  				A1E688701F6E2BAB007006A6 /* QuarantineSPI.h in Headers */,
  				1A0C227E2451130A00ED614D /* QuickLookThumbnailingSoftLink.h in Headers */,
-@@ -11334,6 +11388,7 @@
+@@ -11334,6 +11384,7 @@
  				A543E30D215C8A9000279CD9 /* WebPageInspectorTargetController.h in Headers */,
  				A543E307215AD13700279CD9 /* WebPageInspectorTargetFrontendChannel.h in Headers */,
  				C0CE72A11247E71D00BC0EC4 /* WebPageMessages.h in Headers */,
@@ -13926,7 +13708,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  				2D5C9D0619C81D8F00B3C5C1 /* WebPageOverlay.h in Headers */,
  				46C392292316EC4D008EED9B /* WebPageProxyIdentifier.h in Headers */,
  				BCBD3915125BB1A800D2C29F /* WebPageProxyMessages.h in Headers */,
-@@ -11464,6 +11519,7 @@
+@@ -11464,6 +11515,7 @@
  				BCD25F1711D6BDE100169B0E /* WKBundleFrame.h in Headers */,
  				BCF049E611FE20F600F86A58 /* WKBundleFramePrivate.h in Headers */,
  				BC49862F124D18C100D834E1 /* WKBundleHitTestResult.h in Headers */,
@@ -13934,7 +13716,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  				BC204EF211C83EC8008F3375 /* WKBundleInitialize.h in Headers */,
  				65B86F1E12F11DE300B7DD8A /* WKBundleInspector.h in Headers */,
  				1A8B66B41BC45B010082DF77 /* WKBundleMac.h in Headers */,
-@@ -11516,6 +11572,7 @@
+@@ -11516,6 +11568,7 @@
  				5C795D71229F3757003FF1C4 /* WKContextMenuElementInfoPrivate.h in Headers */,
  				51A555F6128C6C47009ABCEC /* WKContextMenuItem.h in Headers */,
  				51A55601128C6D92009ABCEC /* WKContextMenuItemTypes.h in Headers */,
@@ -13942,7 +13724,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  				A1EA02381DABFF7E0096021F /* WKContextMenuListener.h in Headers */,
  				BCC938E11180DE440085E5FE /* WKContextPrivate.h in Headers */,
  				9FB5F395169E6A80002C25BF /* WKContextPrivateMac.h in Headers */,
-@@ -11666,6 +11723,7 @@
+@@ -11666,6 +11719,7 @@
  				1AB8A1F818400BB800E9AE69 /* WKPageContextMenuClient.h in Headers */,
  				8372DB251A674C8F00C697C5 /* WKPageDiagnosticLoggingClient.h in Headers */,
  				1AB8A1F418400B8F00E9AE69 /* WKPageFindClient.h in Headers */,
@@ -13950,7 +13732,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  				1AB8A1F618400B9D00E9AE69 /* WKPageFindMatchesClient.h in Headers */,
  				1AB8A1F018400B0000E9AE69 /* WKPageFormClient.h in Headers */,
  				BC7B633712A45ABA00D174A4 /* WKPageGroup.h in Headers */,
-@@ -12720,6 +12778,7 @@
+@@ -12720,6 +12774,7 @@
  				CDA93DB122F8BCF400490A69 /* FullscreenTouchSecheuristicParameters.cpp in Sources */,
  				2749F6442146561B008380BF /* InjectedBundleNodeHandle.cpp in Sources */,
  				2749F6452146561E008380BF /* InjectedBundleRangeHandle.cpp in Sources */,
@@ -13958,7 +13740,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  				2D913441212CF9F000128AFD /* JSNPMethod.cpp in Sources */,
  				2D913442212CF9F000128AFD /* JSNPObject.cpp in Sources */,
  				2984F588164BA095004BC0C6 /* LegacyCustomProtocolManagerMessageReceiver.cpp in Sources */,
-@@ -12731,6 +12790,7 @@
+@@ -12731,6 +12786,7 @@
  				2D92A781212B6A7100F493FD /* MessageReceiverMap.cpp in Sources */,
  				2D92A782212B6A7100F493FD /* MessageSender.cpp in Sources */,
  				2D92A77A212B6A6100F493FD /* Module.cpp in Sources */,
@@ -13966,7 +13748,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  				57B826452304F14000B72EB0 /* NearFieldSoftLink.mm in Sources */,
  				2D913443212CF9F000128AFD /* NetscapeBrowserFuncs.cpp in Sources */,
  				2D913444212CF9F000128AFD /* NetscapePlugin.cpp in Sources */,
-@@ -12755,6 +12815,7 @@
+@@ -12755,6 +12811,7 @@
  				1A2D8439127F65D5001EB962 /* NPObjectMessageReceiverMessageReceiver.cpp in Sources */,
  				2D92A792212B6AD400F493FD /* NPObjectProxy.cpp in Sources */,
  				2D92A793212B6AD400F493FD /* NPRemoteObjectMap.cpp in Sources */,
@@ -13974,7 +13756,7 @@ index 2b7069a13d8c04f5df8c838e6bb26563ce6fe766..5a269fa4fbb1a8c0798a34099a8777b7
  				2D913447212CF9F000128AFD /* NPRuntimeObjectMap.cpp in Sources */,
  				2D913448212CF9F000128AFD /* NPRuntimeUtilities.cpp in Sources */,
  				2D92A794212B6AD400F493FD /* NPVariantData.cpp in Sources */,
-@@ -13038,6 +13099,7 @@
+@@ -13038,6 +13095,7 @@
  				2D92A78C212B6AB100F493FD /* WebMouseEvent.cpp in Sources */,
  				31BA924D148831260062EDB5 /* WebNotificationManagerMessageReceiver.cpp in Sources */,
  				2DF6FE52212E110900469030 /* WebPage.cpp in Sources */,
