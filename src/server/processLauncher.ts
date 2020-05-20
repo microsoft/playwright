@@ -73,7 +73,6 @@ type LaunchResult = {
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
   const logger = options.logger;
   const stdio: ('ignore' | 'pipe')[] = options.pipe ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe'];
-  logger.startLaunchRecording();
   logger._log(browserLog, `<launching> ${options.executablePath} ${options.args.join(' ')}`);
   const spawnedProcess = childProcess.spawn(
       options.executablePath,

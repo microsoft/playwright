@@ -19,7 +19,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
-import { helper, assert, isDebugMode, debugAssert } from '../helper';
+import { helper, assert, isDebugMode } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
 import * as ws from 'ws';
 import { launchProcess } from './processLauncher';
@@ -29,7 +29,7 @@ import { BrowserArgOptions, LaunchServerOptions, BrowserTypeBase, processBrowser
 import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { Events } from '../events';
 import { ConnectionTransport, ProtocolRequest } from '../transport';
-import { InnerLogger, logError } from '../logger';
+import { InnerLogger, logError, RootLogger } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
 import { CRDevTools } from '../chromium/crDevTools';
 import { BrowserBase, BrowserOptions } from '../browser';
@@ -47,19 +47,19 @@ export class Chromium extends BrowserTypeBase {
     return new CRDevTools(path.join(this._browserPath, 'devtools-preferences.json'));
   }
 
-  async _connectToServer(browserServer: BrowserServer, persistent: boolean, transport: ConnectionTransport, downloadsPath: string): Promise<BrowserBase> {
+  async _connectToServer(browserServer: BrowserServer, persistent: boolean): Promise<BrowserBase> {
     const options = browserServer._launchOptions;
     let devtools = this._devtools;
     if ((options as any).__testHookForDevTools) {
       devtools = this._createDevTools();
       await (options as any).__testHookForDevTools(devtools);
     }
-    return await CRBrowser.connect(transport, {
+    return await CRBrowser.connect(browserServer._transport, {
       slowMo: options.slowMo,
       persistent,
-      headful: !processBrowserArgOptions(options).headless,
+      headful: browserServer._headful,
       logger: browserServer._logger,
-      downloadsPath,
+      downloadsPath: browserServer._downloadsPath,
       ownedServer: browserServer,
     }, devtools);
   }
@@ -68,7 +68,7 @@ export class Chromium extends BrowserTypeBase {
     return CRBrowser.connect(transport, options);
   }
 
-  async _launchServer(options: LaunchServerOptions, launchType: LaunchType, browserServer: BrowserServer, userDataDir?: string): Promise<{ transport?: ConnectionTransport, downloadsPath: string }> {
+  async _launchServer(options: LaunchServerOptions, launchType: LaunchType, logger: RootLogger, deadline: number, userDataDir?: string): Promise<BrowserServer> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -80,7 +80,6 @@ export class Chromium extends BrowserTypeBase {
       port = 0,
     } = options;
     assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
-    const logger = browserServer._logger;
 
     let temporaryUserDataDir: string | null = null;
     if (!userDataDir) {
@@ -106,6 +105,7 @@ export class Chromium extends BrowserTypeBase {
     // Note: it is important to define these variables before launchProcess, so that we don't get
     // "Cannot access 'browserServer' before initialization" if something went wrong.
     let transport: PipeTransport | undefined = undefined;
+    let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose, downloadsPath } = await launchProcess({
       executablePath: chromeExecutable,
       args: chromeArguments,
@@ -119,7 +119,6 @@ export class Chromium extends BrowserTypeBase {
       attemptToGracefullyClose: async () => {
         if ((options as any).__testHookGracefullyClose)
           await (options as any).__testHookGracefullyClose();
-        debugAssert(browserServer._isInitialized());
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
         // our connection ignores kBrowserCloseMessageId.
@@ -128,14 +127,15 @@ export class Chromium extends BrowserTypeBase {
         t.send(message);
       },
       onkill: (exitCode, signal) => {
-        browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
+        if (browserServer)
+          browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
       },
     });
 
     const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
     transport = new PipeTransport(stdio[3], stdio[4], logger);
-    browserServer._initialize(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, logger, port) : null);
-    return { transport, downloadsPath };
+    browserServer = new BrowserServer(options, launchedProcess, gracefullyClose, transport, downloadsPath, launchType === 'server' ? wrapTransportWithWebSocket(transport, logger, port) : null);
+    return browserServer;
   }
 
   private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string): string[] {

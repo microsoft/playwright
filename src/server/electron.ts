@@ -168,8 +168,7 @@ export class Electron  {
       handleSIGTERM = true,
       handleSIGHUP = true,
     } = options;
-    const browserServer = new BrowserServer(options);
-
+    const deadline = TimeoutSettings.computeDeadline(options.timeout, 30000);
     let app: ElectronApplication | undefined = undefined;
 
     const logger = new RootLogger(options.logger);
@@ -192,18 +191,14 @@ export class Electron  {
       },
     });
 
-    const deadline = browserServer._launchDeadline;
     const timeoutError = new TimeoutError(`Timed out while trying to connect to Electron!`);
     const nodeMatch = await waitForLine(launchedProcess, launchedProcess.stderr, /^Debugger listening on (ws:\/\/.*)$/, helper.timeUntilDeadline(deadline), timeoutError);
-    const nodeConnection = await WebSocketTransport.connect(nodeMatch[1], transport => {
-      return new CRConnection(transport, logger);
-    });
+    const nodeTransport = await WebSocketTransport.connect(nodeMatch[1], logger, deadline);
+    const nodeConnection = new CRConnection(nodeTransport, logger);
 
     const chromeMatch = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, helper.timeUntilDeadline(deadline), timeoutError);
-    const chromeTransport = await WebSocketTransport.connect(chromeMatch[1], transport => {
-      return transport;
-    }, logger);
-    browserServer._initialize(launchedProcess, gracefullyClose, null);
+    const chromeTransport = await WebSocketTransport.connect(chromeMatch[1], logger, deadline);
+    const browserServer = new BrowserServer(options, launchedProcess, gracefullyClose, chromeTransport, '', null);
     const browser = await CRBrowser.connect(chromeTransport, { headful: true, logger, persistent: true, viewport: null, ownedServer: browserServer, downloadsPath: '' });
     app = new ElectronApplication(logger, browser, nodeConnection);
     await app._init();

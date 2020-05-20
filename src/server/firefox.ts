@@ -24,12 +24,12 @@ import { TimeoutError } from '../errors';
 import { Events } from '../events';
 import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
-import { helper, assert, debugAssert } from '../helper';
+import { helper, assert } from '../helper';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { BrowserArgOptions, LaunchServerOptions, BrowserTypeBase, processBrowserArgOptions, LaunchType } from './browserType';
 import { launchProcess, waitForLine } from './processLauncher';
 import { ConnectionTransport, SequenceNumberMixer, WebSocketTransport } from '../transport';
-import { InnerLogger, logError } from '../logger';
+import { InnerLogger, logError, RootLogger } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
 import { BrowserBase, BrowserOptions } from '../browser';
 
@@ -40,26 +40,22 @@ export class Firefox extends BrowserTypeBase {
     super(packagePath, browser);
   }
 
-  _connectToServer(browserServer: BrowserServer, persistent: boolean, transport: ConnectionTransport, downloadsPath: string): Promise<BrowserBase> {
-    const options = browserServer._launchOptions;
-    // TODO: connect to the underlying socket.
-    return WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
-      return FFBrowser.connect(transport, {
-        slowMo: options.slowMo,
-        logger: browserServer._logger,
-        persistent,
-        downloadsPath,
-        headful: !processBrowserArgOptions(options).headless,
-        ownedServer: browserServer,
-      });
-    }, browserServer._logger);
+  _connectToServer(browserServer: BrowserServer, persistent: boolean): Promise<BrowserBase> {
+    return FFBrowser.connect(browserServer._transport, {
+      slowMo: browserServer._launchOptions.slowMo,
+      logger: browserServer._logger,
+      persistent,
+      downloadsPath: browserServer._downloadsPath,
+      headful: browserServer._headful,
+      ownedServer: browserServer,
+    });
   }
 
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
     return FFBrowser.connect(transport, options);
   }
 
-  async _launchServer(options: LaunchServerOptions, launchType: LaunchType, browserServer: BrowserServer, userDataDir?: string): Promise<{ downloadsPath: string }> {
+  async _launchServer(options: LaunchServerOptions, launchType: LaunchType, logger: RootLogger, deadline: number, userDataDir?: string): Promise<BrowserServer> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -72,7 +68,6 @@ export class Firefox extends BrowserTypeBase {
       port = 0,
     } = options;
     assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
-    const logger = browserServer._logger;
 
     let temporaryProfileDir = null;
     if (!userDataDir) {
@@ -93,8 +88,9 @@ export class Firefox extends BrowserTypeBase {
       throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
 
     // Note: it is important to define these variables before launchProcess, so that we don't get
-    // "Cannot access 'browserServer' before initialization" if something went wrong.
-    let browserWSEndpoint: string | undefined = undefined;
+    // "Cannot access 'transport' before initialization" if something went wrong.
+    let browserServer: BrowserServer | undefined = undefined;
+    let transport: ConnectionTransport | undefined = undefined;
     const { launchedProcess, gracefullyClose, downloadsPath } = await launchProcess({
       executablePath: firefoxExecutable,
       args: firefoxArguments,
@@ -112,14 +108,14 @@ export class Firefox extends BrowserTypeBase {
       attemptToGracefullyClose: async () => {
         if ((options as any).__testHookGracefullyClose)
           await (options as any).__testHookGracefullyClose();
-        debugAssert(browserServer._isInitialized());
+
         // We try to gracefully close to prevent crash reporting and core dumps.
-        const transport = await WebSocketTransport.connect(browserWSEndpoint!, async transport => transport);
         const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
-        transport.send(message);
+        transport!.send(message);
       },
       onkill: (exitCode, signal) => {
-        browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
+        if (browserServer)
+          browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
       },
     });
 
@@ -127,12 +123,17 @@ export class Firefox extends BrowserTypeBase {
     const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
     const innerEndpoint = match[1];
 
-    const webSocketWrapper = launchType === 'server' ?
-      (await WebSocketTransport.connect(innerEndpoint, t => wrapTransportWithWebSocket(t, logger, port), logger)) :
-      new WebSocketWrapper(innerEndpoint, []);
-    browserWSEndpoint = webSocketWrapper.wsEndpoint;
-    browserServer._initialize(launchedProcess, gracefullyClose, webSocketWrapper);
-    return { downloadsPath };
+    try {
+      // If we can't communicate with Firefox on start, kill the process and exit.
+      transport = await WebSocketTransport.connect(innerEndpoint, logger, deadline);
+    } catch (e) {
+      helper.killProcess(launchedProcess);
+      throw e;
+    }
+
+    const webSocketWrapper = launchType === 'server' ? wrapTransportWithWebSocket(transport, logger, port) : null;
+    browserServer = new BrowserServer(options, launchedProcess, gracefullyClose, transport, downloadsPath, webSocketWrapper);
+    return browserServer;
   }
 
   private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {

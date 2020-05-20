@@ -20,7 +20,8 @@ import * as browserPaths from '../install/browserPaths';
 import { Logger, RootLogger } from '../logger';
 import { ConnectionTransport, WebSocketTransport } from '../transport';
 import { BrowserBase, BrowserOptions, Browser } from '../browser';
-import { assert } from '../helper';
+import { assert, helper } from '../helper';
+import { TimeoutSettings } from '../timeoutSettings';
 
 export type BrowserArgOptions = {
   headless?: boolean,
@@ -48,6 +49,7 @@ export type ConnectOptions = {
   wsEndpoint: string,
   slowMo?: number,
   logger?: Logger,
+  timeout?: number,
 };
 export type LaunchType = 'local' | 'server' | 'persistent';
 export type LaunchOptions = LaunchOptionsBase & { slowMo?: number };
@@ -86,42 +88,88 @@ export abstract class BrowserTypeBase implements BrowserType {
 
   async launch(options: LaunchOptions = {}): Promise<Browser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
-    const browserServer = new BrowserServer(options);
-    const { transport, downloadsPath } = await this._launchServer(options, 'local', browserServer);
-    return await browserServer._initializeOrClose(async () => {
-      return this._connectToServer(browserServer, false, transport!, downloadsPath);
-    });
+    return this._innerLaunch('local', options);
   }
 
   async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
-    const browserServer = new BrowserServer(options);
-    const { transport, downloadsPath } = await this._launchServer(options, 'persistent', browserServer, userDataDir);
+    const browser = await this._innerLaunch('persistent', options, userDataDir);
+    return browser._defaultContext!;
+  }
 
-    return await browserServer._initializeOrClose(async () => {
-      const browser = await this._connectToServer(browserServer, true, transport!, downloadsPath);
+  async _innerLaunch(launchType: LaunchType, options: LaunchOptions, userDataDir?: string): Promise<BrowserBase> {
+    const deadline = TimeoutSettings.computeDeadline(options.timeout, 30000);
+    const logger = new RootLogger(options.logger);
+    logger.startLaunchRecording();
+
+    let browserServer: BrowserServer | undefined;
+    try {
+      browserServer = await this._launchServer(options, launchType, logger, deadline, userDataDir);
+      const promise = this._innerLaunchPromise(browserServer, launchType, options);
+      const browser = await helper.waitWithDeadline(promise, 'the browser to launch', deadline, 'pw:browser*');
+      return browser;
+    } catch (e) {
+      e.message += '\n=============== Process output during launch: ===============\n' +
+          logger.launchRecording() +
+          '\n=============================================================';
+      if (browserServer)
+        await browserServer._closeOrKill(deadline);
+      throw e;
+    } finally {
+      logger.stopLaunchRecording();
+    }
+  }
+
+  async _innerLaunchPromise(browserServer: BrowserServer, launchType: LaunchType, options: LaunchOptions): Promise<BrowserBase> {
+    if ((options as any).__testHookBeforeCreateBrowser)
+      await (options as any).__testHookBeforeCreateBrowser();
+
+    const browser = await this._connectToServer(browserServer, launchType === 'persistent');
+    if (launchType === 'persistent' && (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))) {
       const context = browser._defaultContext!;
-      if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
-        await context._loadDefaultContext();
-      return context;
-    });
+      await context._loadDefaultContext();
+    }
+    return browser;
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
-    const browserServer = new BrowserServer(options);
-    await this._launchServer(options, 'server', browserServer);
-    return browserServer;
+    const logger = new RootLogger(options.logger);
+    return this._launchServer(options, 'server', logger, TimeoutSettings.computeDeadline(options.timeout, 30000));
   }
 
   async connect(options: ConnectOptions): Promise<Browser> {
+    const deadline = TimeoutSettings.computeDeadline(options.timeout, 30000);
     const logger = new RootLogger(options.logger);
-    return await WebSocketTransport.connect(options.wsEndpoint, async transport => {
-      if ((options as any).__testHookBeforeCreateBrowser)
-        await (options as any).__testHookBeforeCreateBrowser();
-      return this._connectToTransport(transport, { slowMo: options.slowMo, logger, downloadsPath: '' });
-    }, logger);
+    logger.startLaunchRecording();
+
+    let transport: ConnectionTransport | undefined;
+    try {
+      transport = await WebSocketTransport.connect(options.wsEndpoint, logger, deadline);
+      const promise = this._innerConnectPromise(transport, options, logger);
+      const browser = await helper.waitWithDeadline(promise, 'connect to browser', deadline, 'pw:browser*');
+      logger.stopLaunchRecording();
+      return browser;
+    } catch (e) {
+      e.message += '\n=============== Process output during connect: ===============\n' +
+          logger.launchRecording() +
+          '\n=============================================================';
+      try {
+        if (transport)
+          transport.close();
+      } catch (e) {
+      }
+      throw e;
+    } finally {
+      logger.stopLaunchRecording();
+    }
   }
 
-  abstract _launchServer(options: LaunchServerOptions, launchType: LaunchType, browserServer: BrowserServer, userDataDir?: string): Promise<{ transport?: ConnectionTransport, downloadsPath: string }>;
-  abstract _connectToServer(browserServer: BrowserServer, persistent: boolean, transport: ConnectionTransport, downloadsPath: string): Promise<BrowserBase>;
+  async _innerConnectPromise(transport: ConnectionTransport, options: ConnectOptions, logger: RootLogger): Promise<Browser> {
+    if ((options as any).__testHookBeforeCreateBrowser)
+      await (options as any).__testHookBeforeCreateBrowser();
+    return this._connectToTransport(transport, { slowMo: options.slowMo, logger, downloadsPath: '' });
+  }
+
+  abstract _launchServer(options: LaunchServerOptions, launchType: LaunchType, logger: RootLogger, deadline: number, userDataDir?: string): Promise<BrowserServer>;
+  abstract _connectToServer(browserServer: BrowserServer, persistent: boolean): Promise<BrowserBase>;
   abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BrowserBase>;
 }
