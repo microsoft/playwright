@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-const { Playwright } = require('playwright-core/lib/server/playwright');
+const { Playwright } = require('./lib/server/playwright');
 
 module.exports = new Playwright(__dirname, require('./browsers.json')['browsers']);

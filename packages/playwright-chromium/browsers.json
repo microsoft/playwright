@@ -1,8 +1,0 @@
-{
-  "browsers": [
-    {
-      "name": "chromium",
-      "revision": "767256"
-    }
-  ]
-}

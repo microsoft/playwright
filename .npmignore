@@ -12,6 +12,10 @@ lib/injected/
 
 # root for "playwright-core" package
 !index.js
+!install.js
+!README.md
+!LICENSE
+!NOTICE
 
 # browser descriptor
 !browsers.json

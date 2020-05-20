@@ -14,6 +14,4 @@
  * limitations under the License.
  */
 
-const { installBrowsersWithProgressBar } = require('./lib/install/installer');
-
-installBrowsersWithProgressBar(__dirname);
+/* NOTE: playwright-core does not install browsers by design. */

@@ -16,5 +16,4 @@ yarn.lock
 /src/firefox/protocol.ts
 /src/webkit/protocol.ts
 lib/
-playwright-*.tgz
 /types/*

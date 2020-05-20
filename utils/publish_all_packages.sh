@@ -2,7 +2,16 @@
 set -e
 set -x
 
-trap "cd $(pwd -P)" EXIT
+function cleanup {
+  # Cleanup all possibly created package tars.
+  [[ ! -z "${PLAYWRIGHT_TGZ}" ]] && rm -rf "${PLAYWRIGHT_TGZ}"
+  [[ ! -z "${PLAYWRIGHT_CORE_TGZ}" ]] && rm -rf "${PLAYWRIGHT_CORE_TGZ}"
+  [[ ! -z "${PLAYWRIGHT_WEBKIT_TGZ}" ]] && rm -rf "${PLAYWRIGHT_WEBKIT_TGZ}"
+  [[ ! -z "${PLAYWRIGHT_FIREFOX_TGZ}" ]] && rm -rf "${PLAYWRIGHT_FIREFOX_TGZ}"
+  [[ ! -z "${PLAYWRIGHT_CHROMIUM_TGZ}" ]] && rm -rf "${PLAYWRIGHT_CHROMIUM_TGZ}"
+}
+
+trap "cleanup; cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 
 if [[ $1 == "--help" ]]; then
@@ -66,11 +75,16 @@ else
   exit 1
 fi
 
-npm run clean
-npm publish .                            --tag="${NPM_PUBLISH_TAG}"
-npm publish packages/playwright-firefox  --tag="${NPM_PUBLISH_TAG}"
-npm publish packages/playwright-webkit   --tag="${NPM_PUBLISH_TAG}"
-npm publish packages/playwright-chromium --tag="${NPM_PUBLISH_TAG}"
-npm publish packages/playwright          --tag="${NPM_PUBLISH_TAG}"
+PLAYWRIGHT_TGZ="$(node ./packages/build_package.js playwright ./playwright.tgz)"
+PLAYWRIGHT_CORE_TGZ="$(node ./packages/build_package.js playwright-core ./playwright-core.tgz)"
+PLAYWRIGHT_WEBKIT_TGZ="$(node ./packages/build_package.js playwright-webkit ./playwright-webkit.tgz)"
+PLAYWRIGHT_FIREFOX_TGZ="$(node ./packages/build_package.js playwright-firefox ./playwright-firefox.tgz)"
+PLAYWRIGHT_CHROMIUM_TGZ="$(node ./packages/build_package.js playwright-chromium ./playwright-chromium.tgz)"
+
+npm publish ${PLAYWRIGHT_TGZ}           --tag="${NPM_PUBLISH_TAG}" --dry-run
+npm publish ${PLAYWRIGHT_CORE_TGZ}      --tag="${NPM_PUBLISH_TAG}" --dry-run
+npm publish ${PLAYWRIGHT_WEBKIT_TGZ}    --tag="${NPM_PUBLISH_TAG}" --dry-run
+npm publish ${PLAYWRIGHT_FIREFOX_TGZ}   --tag="${NPM_PUBLISH_TAG}" --dry-run
+npm publish ${PLAYWRIGHT_CHROMIUM_TGZ}  --tag="${NPM_PUBLISH_TAG}" --dry-run
 
 echo "Done."

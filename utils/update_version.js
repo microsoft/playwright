@@ -59,17 +59,9 @@ if (version === '--next') {
   version = version.substring(1);
 }
 
-
 updatePackage(path.join(__dirname, '..', 'package.json'), packageJSON => {
   packageJSON.version = version;
 });
-
-for (const packageName of ['playwright-chromium', 'playwright-firefox', 'playwright-webkit', 'playwright']) {
-  updatePackage(path.join(__dirname, '..', 'packages', packageName, 'package.json'), packageJSON => {
-    packageJSON.version = version;
-    packageJSON.dependencies['playwright-core'] = `=${version}`;
-  });
-}
 
 function updatePackage(packageJSONPath, transform) {
   console.log(`Updating ${packageJSONPath} to ${version}.`);
