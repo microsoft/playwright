@@ -70,7 +70,7 @@ export class ElectronApplication extends ExtendedEventEmitter {
   constructor(logger: InnerLogger, browser: CRBrowser, nodeConnection: CRConnection) {
     super();
     this._logger = logger;
-    this._browserContext = browser._defaultContext!;
+    this._browserContext = browser._defaultContext as CRBrowserContext;
     this._browserContext.on(Events.BrowserContext.Close, () => this.emit(ElectronEvents.ElectronApplication.Close));
     this._browserContext.on(Events.BrowserContext.Page, event => this._onPage(event));
     this._nodeConnection = nodeConnection;

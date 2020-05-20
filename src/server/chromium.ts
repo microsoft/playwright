@@ -25,17 +25,16 @@ import * as ws from 'ws';
 import { launchProcess } from './processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
 import { PipeTransport } from './pipeTransport';
-import { LaunchOptions, BrowserArgOptions, ConnectOptions, LaunchServerOptions, AbstractBrowserType, processBrowserArgOptions } from './browserType';
-import { LaunchType } from '../browser';
+import { BrowserArgOptions, LaunchServerOptions, BrowserTypeBase, processBrowserArgOptions, LaunchType } from './browserType';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { Events } from '../events';
-import { ConnectionTransport, ProtocolRequest, WebSocketTransport } from '../transport';
-import { BrowserContext } from '../browserContext';
-import { InnerLogger, logError, RootLogger } from '../logger';
+import { ConnectionTransport, ProtocolRequest } from '../transport';
+import { InnerLogger, logError } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
 import { CRDevTools } from '../chromium/crDevTools';
+import { BrowserBase, BrowserOptions } from '../browser';
 
-export class Chromium extends AbstractBrowserType<CRBrowser> {
+export class Chromium extends BrowserTypeBase {
   private _devtools: CRDevTools | undefined;
 
   constructor(packagePath: string, browser: BrowserDescriptor) {
@@ -48,52 +47,28 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
     return new CRDevTools(path.join(this._browserPath, 'devtools-preferences.json'));
   }
 
-  async launch(options: LaunchOptions = {}): Promise<CRBrowser> {
-    assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
-    const browserServer = new BrowserServer(options);
-    const { transport, downloadsPath } = await this._launchServer(options, 'local', browserServer);
-    return await browserServer._initializeOrClose(async () => {
-      let devtools = this._devtools;
-      if ((options as any).__testHookForDevTools) {
-        devtools = this._createDevTools();
-        await (options as any).__testHookForDevTools(devtools);
-      }
-      return await CRBrowser.connect(transport!, {
-        slowMo: options.slowMo,
-        headful: !processBrowserArgOptions(options).headless,
-        logger: browserServer._logger,
-        downloadsPath,
-        ownedServer: browserServer,
-      }, devtools);
-    });
+  async _connectToServer(browserServer: BrowserServer, persistent: boolean, transport: ConnectionTransport, downloadsPath: string): Promise<BrowserBase> {
+    const options = browserServer._launchOptions;
+    let devtools = this._devtools;
+    if ((options as any).__testHookForDevTools) {
+      devtools = this._createDevTools();
+      await (options as any).__testHookForDevTools(devtools);
+    }
+    return await CRBrowser.connect(transport, {
+      slowMo: options.slowMo,
+      persistent,
+      headful: !processBrowserArgOptions(options).headless,
+      logger: browserServer._logger,
+      downloadsPath,
+      ownedServer: browserServer,
+    }, devtools);
   }
 
-  async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
-    const browserServer = new BrowserServer(options);
-    await this._launchServer(options, 'server', browserServer);
-    return browserServer;
+  _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<CRBrowser> {
+    return CRBrowser.connect(transport, options);
   }
 
-  async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
-    const browserServer = new BrowserServer(options);
-    const { transport, downloadsPath } = await this._launchServer(options, 'persistent', browserServer, userDataDir);
-    return await browserServer._initializeOrClose(async () => {
-      const browser = await CRBrowser.connect(transport!, {
-        slowMo: options.slowMo,
-        persistent: true,
-        logger: browserServer._logger,
-        downloadsPath,
-        headful: !processBrowserArgOptions(options).headless,
-        ownedServer: browserServer
-      }, this._devtools);
-      const context = browser._defaultContext!;
-      if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
-        await context._loadDefaultContext();
-      return context;
-    });
-  }
-
-  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, browserServer: BrowserServer, userDataDir?: string): Promise<{ transport?: ConnectionTransport, downloadsPath: string }> {
+  async _launchServer(options: LaunchServerOptions, launchType: LaunchType, browserServer: BrowserServer, userDataDir?: string): Promise<{ transport?: ConnectionTransport, downloadsPath: string }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -161,15 +136,6 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
     transport = new PipeTransport(stdio[3], stdio[4], logger);
     browserServer._initialize(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, logger, port) : null);
     return { transport, downloadsPath };
-  }
-
-  async connect(options: ConnectOptions): Promise<CRBrowser> {
-    const logger = new RootLogger(options.logger);
-    return await WebSocketTransport.connect(options.wsEndpoint, async transport => {
-      if ((options as any).__testHookBeforeCreateBrowser)
-        await (options as any).__testHookBeforeCreateBrowser();
-      return CRBrowser.connect(transport, { slowMo: options.slowMo, logger, downloadsPath: '' });
-    }, logger);
   }
 
   private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string): string[] {

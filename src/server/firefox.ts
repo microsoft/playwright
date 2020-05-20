@@ -20,73 +20,46 @@ import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
 import * as ws from 'ws';
-import { LaunchType } from '../browser';
-import { BrowserContext } from '../browserContext';
 import { TimeoutError } from '../errors';
 import { Events } from '../events';
 import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
 import { helper, assert, debugAssert } from '../helper';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
-import { BrowserArgOptions, LaunchOptions, LaunchServerOptions, ConnectOptions, AbstractBrowserType, processBrowserArgOptions } from './browserType';
+import { BrowserArgOptions, LaunchServerOptions, BrowserTypeBase, processBrowserArgOptions, LaunchType } from './browserType';
 import { launchProcess, waitForLine } from './processLauncher';
 import { ConnectionTransport, SequenceNumberMixer, WebSocketTransport } from '../transport';
-import { RootLogger, InnerLogger, logError } from '../logger';
+import { InnerLogger, logError } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
+import { BrowserBase, BrowserOptions } from '../browser';
 
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 
-export class Firefox extends AbstractBrowserType<FFBrowser> {
+export class Firefox extends BrowserTypeBase {
   constructor(packagePath: string, browser: BrowserDescriptor) {
     super(packagePath, browser);
   }
 
-  async launch(options: LaunchOptions = {}): Promise<FFBrowser> {
-    assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
-    const browserServer = new BrowserServer(options);
-    const { downloadsPath } = await this._launchServer(options, 'local', browserServer);
-    return await browserServer._initializeOrClose(async () => {
-      const browser = await WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
-        return FFBrowser.connect(transport, {
-          slowMo: options.slowMo,
-          logger: browserServer._logger,
-          downloadsPath,
-          headful: !processBrowserArgOptions(options).headless,
-          ownedServer: browserServer,
-        });
-      }, browserServer._logger);
-      return browser;
-    });
+  _connectToServer(browserServer: BrowserServer, persistent: boolean, transport: ConnectionTransport, downloadsPath: string): Promise<BrowserBase> {
+    const options = browserServer._launchOptions;
+    // TODO: connect to the underlying socket.
+    return WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
+      return FFBrowser.connect(transport, {
+        slowMo: options.slowMo,
+        logger: browserServer._logger,
+        persistent,
+        downloadsPath,
+        headful: !processBrowserArgOptions(options).headless,
+        ownedServer: browserServer,
+      });
+    }, browserServer._logger);
   }
 
-  async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
-    const browserServer = new BrowserServer(options);
-    await this._launchServer(options, 'server', browserServer);
-    return browserServer;
+  _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
+    return FFBrowser.connect(transport, options);
   }
 
-  async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
-    const browserServer = new BrowserServer(options);
-    const { downloadsPath } = await this._launchServer(options, 'persistent', browserServer, userDataDir);
-    return await browserServer._initializeOrClose(async () => {
-      const browser = await WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
-        return FFBrowser.connect(transport, {
-          slowMo: options.slowMo,
-          logger: browserServer._logger,
-          persistent: true,
-          downloadsPath,
-          ownedServer: browserServer,
-          headful: !processBrowserArgOptions(options).headless,
-        });
-      }, browserServer._logger);
-      const context = browser._defaultContext!;
-      if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
-        await context._loadDefaultContext();
-      return context;
-    });
-  }
-
-  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, browserServer: BrowserServer, userDataDir?: string): Promise<{ downloadsPath: string }> {
+  async _launchServer(options: LaunchServerOptions, launchType: LaunchType, browserServer: BrowserServer, userDataDir?: string): Promise<{ downloadsPath: string }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -143,7 +116,7 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
         // We try to gracefully close to prevent crash reporting and core dumps.
         const transport = await WebSocketTransport.connect(browserWSEndpoint!, async transport => transport);
         const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
-        await transport.send(message);
+        transport.send(message);
       },
       onkill: (exitCode, signal) => {
         browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
@@ -160,15 +133,6 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
     browserWSEndpoint = webSocketWrapper.wsEndpoint;
     browserServer._initialize(launchedProcess, gracefullyClose, webSocketWrapper);
     return { downloadsPath };
-  }
-
-  async connect(options: ConnectOptions): Promise<FFBrowser> {
-    const logger = new RootLogger(options.logger);
-    return await WebSocketTransport.connect(options.wsEndpoint, async transport => {
-      if ((options as any).__testHookBeforeCreateBrowser)
-        await (options as any).__testHookBeforeCreateBrowser();
-      return FFBrowser.connect(transport, { slowMo: options.slowMo, logger, downloadsPath: '' });
-    }, logger);
   }
 
   private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {

@@ -32,7 +32,6 @@ const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) Appl
 export class WKBrowser extends BrowserBase {
   private readonly _connection: WKConnection;
   readonly _browserSession: WKSession;
-  readonly _defaultContext: WKBrowserContext | null = null;
   readonly _contexts = new Map<string, WKBrowserContext>();
   readonly _wkPages = new Map<string, WKPage>();
   private readonly _eventListeners: RegisteredListener[];
@@ -132,7 +131,7 @@ export class WKBrowser extends BrowserBase {
       context = this._contexts.get(pageProxyInfo.browserContextId) || null;
     }
     if (!context)
-      context = this._defaultContext;
+      context = this._defaultContext as WKBrowserContext;
     if (!context)
       return;
     const pageProxySession = new WKSession(this._connection, pageProxyId, `The page has been closed.`, (message: any) => {

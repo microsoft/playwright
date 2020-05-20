@@ -36,7 +36,6 @@ export class CRBrowser extends BrowserBase {
   readonly _connection: CRConnection;
   _session: CRSession;
   private _clientRootSessionPromise: Promise<CRSession> | null = null;
-  readonly _defaultContext: CRBrowserContext | null = null;
   readonly _contexts = new Map<string, CRBrowserContext>();
   _crPages = new Map<string, CRPage>();
   _backgroundPages = new Map<string, CRPage>();
@@ -123,7 +122,7 @@ export class CRBrowser extends BrowserBase {
     if (!context) {
       // TODO: auto attach only to pages from our contexts.
       // assert(this._defaultContext);
-      context = this._defaultContext;
+      context = this._defaultContext as CRBrowserContext;
     }
 
     if (targetInfo.type === 'other' && targetInfo.url.startsWith('devtools://devtools') && this._devtools) {
