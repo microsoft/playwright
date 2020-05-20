@@ -341,7 +341,7 @@ describe('Frame.waitForSelector', function() {
     let error = null;
     await page.waitForSelector('div', { state: 'hidden', timeout: 1000 }).catch(e => error = e);
     expect(error).toBeTruthy();
-    expect(error.message).toContain('waiting for selector "[hidden] div" failed: timeout');
+    expect(error.message).toContain('waiting for selector "div" to be hidden failed: timeout');
   });
   it('should respond to node attribute mutation', async({page, server}) => {
     let divFound = false;
