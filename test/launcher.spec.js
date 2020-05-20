@@ -54,13 +54,19 @@ describe('Playwright', function() {
     it('should handle timeout', async({browserType, defaultBrowserOptions}) => {
       const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
       const error = await browserType.launch(options).catch(e => e);
-      expect(error.message).toBe('Waiting for the browser to launch failed: timeout exceeded. Re-run with the DEBUG=pw:browser* env variable to see the debug log.');
+      expect(error.message).toContain('Waiting for the browser to launch failed: timeout exceeded. Re-run with the DEBUG=pw:browser* env variable to see the debug log.');
     });
     it('should handle exception', async({browserType, defaultBrowserOptions}) => {
       const e = new Error('Dummy');
       const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
       const error = await browserType.launch(options).catch(e => e);
       expect(error).toBe(e);
+    });
+    it('should report launch log', async({browserType, defaultBrowserOptions}) => {
+      const e = new Error('Dummy');
+      const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
+      const error = await browserType.launch(options).catch(e => e);
+      expect(error.message).toContain('<launching>');
     });
   });
 
@@ -102,7 +108,7 @@ describe('Playwright', function() {
       const userDataDir = await makeUserDataDir();
       const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
       const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
-      expect(error.message).toBe('Waiting for the browser to launch failed: timeout exceeded. Re-run with the DEBUG=pw:browser* env variable to see the debug log.');
+      expect(error.message).toContain('Waiting for the browser to launch failed: timeout exceeded. Re-run with the DEBUG=pw:browser* env variable to see the debug log.');
       await removeUserDataDir(userDataDir);
     });
     it('should handle exception', async({browserType, defaultBrowserOptions}) => {

@@ -26,14 +26,13 @@ import { TimeoutError } from '../errors';
 import { Events } from '../events';
 import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
-import { helper, assert } from '../helper';
+import { helper, assert, debugAssert } from '../helper';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { BrowserArgOptions, LaunchOptions, LaunchServerOptions, ConnectOptions, AbstractBrowserType, processBrowserArgOptions } from './browserType';
 import { launchProcess, waitForLine } from './processLauncher';
 import { ConnectionTransport, SequenceNumberMixer, WebSocketTransport } from '../transport';
 import { RootLogger, InnerLogger, logError } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
-import { TimeoutSettings } from '../timeoutSettings';
 
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 
@@ -44,46 +43,42 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
 
   async launch(options: LaunchOptions = {}): Promise<FFBrowser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
-    const { timeout = 30000 } = options;
-    const deadline = TimeoutSettings.computeDeadline(timeout);
-    const { browserServer, downloadsPath, logger } = await this._launchServer(options, 'local');
-    return await browserServer._initializeOrClose(deadline, async () => {
-      if ((options as any).__testHookBeforeCreateBrowser)
-        await (options as any).__testHookBeforeCreateBrowser();
+    const browserServer = new BrowserServer(options);
+    const { downloadsPath } = await this._launchServer(options, 'local', browserServer);
+    return await browserServer._initializeOrClose(async () => {
       const browser = await WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
         return FFBrowser.connect(transport, {
           slowMo: options.slowMo,
-          logger,
+          logger: browserServer._logger,
           downloadsPath,
           headful: !processBrowserArgOptions(options).headless,
           ownedServer: browserServer,
         });
-      }, logger);
+      }, browserServer._logger);
       return browser;
     });
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
-    return (await this._launchServer(options, 'server')).browserServer;
+    const browserServer = new BrowserServer(options);
+    await this._launchServer(options, 'server', browserServer);
+    return browserServer;
   }
 
   async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
-    const { timeout = 30000 } = options;
-    const deadline = TimeoutSettings.computeDeadline(timeout);
-    const { browserServer, downloadsPath, logger } = await this._launchServer(options, 'persistent', userDataDir);
-    return await browserServer._initializeOrClose(deadline, async () => {
-      if ((options as any).__testHookBeforeCreateBrowser)
-        await (options as any).__testHookBeforeCreateBrowser();
+    const browserServer = new BrowserServer(options);
+    const { downloadsPath } = await this._launchServer(options, 'persistent', browserServer, userDataDir);
+    return await browserServer._initializeOrClose(async () => {
       const browser = await WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
         return FFBrowser.connect(transport, {
           slowMo: options.slowMo,
-          logger,
+          logger: browserServer._logger,
           persistent: true,
           downloadsPath,
           ownedServer: browserServer,
           headful: !processBrowserArgOptions(options).headless,
         });
-      }, logger);
+      }, browserServer._logger);
       const context = browser._defaultContext!;
       if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
         await context._loadDefaultContext();
@@ -91,7 +86,7 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
     });
   }
 
-  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, userDataDir?: string): Promise<{ browserServer: BrowserServer, downloadsPath: string, logger: InnerLogger }> {
+  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, browserServer: BrowserServer, userDataDir?: string): Promise<{ downloadsPath: string }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -104,7 +99,7 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
       port = 0,
     } = options;
     assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
-    const logger = new RootLogger(options.logger);
+    const logger = browserServer._logger;
 
     let temporaryProfileDir = null;
     if (!userDataDir) {
@@ -126,7 +121,6 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
 
     // Note: it is important to define these variables before launchProcess, so that we don't get
     // "Cannot access 'browserServer' before initialization" if something went wrong.
-    let browserServer: BrowserServer | undefined = undefined;
     let browserWSEndpoint: string | undefined = undefined;
     const { launchedProcess, gracefullyClose, downloadsPath } = await launchProcess({
       executablePath: firefoxExecutable,
@@ -143,15 +137,14 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
       pipe: false,
       tempDir: temporaryProfileDir || undefined,
       attemptToGracefullyClose: async () => {
-        assert(browserServer);
+        debugAssert(browserServer._isInitialized());
         // We try to gracefully close to prevent crash reporting and core dumps.
         const transport = await WebSocketTransport.connect(browserWSEndpoint!, async transport => transport);
         const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
         await transport.send(message);
       },
       onkill: (exitCode, signal) => {
-        if (browserServer)
-          browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
+        browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
       },
     });
 
@@ -163,8 +156,8 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
       (await WebSocketTransport.connect(innerEndpoint, t => wrapTransportWithWebSocket(t, logger, port), logger)) :
       new WebSocketWrapper(innerEndpoint, []);
     browserWSEndpoint = webSocketWrapper.wsEndpoint;
-    browserServer = new BrowserServer(launchedProcess, gracefullyClose, webSocketWrapper);
-    return { browserServer, downloadsPath, logger };
+    browserServer._initialize(launchedProcess, gracefullyClose, webSocketWrapper);
+    return { downloadsPath };
   }
 
   async connect(options: ConnectOptions): Promise<FFBrowser> {

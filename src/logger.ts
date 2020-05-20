@@ -41,24 +41,32 @@ export function logError(logger: InnerLogger): (error: Error) => void {
 }
 
 export class RootLogger implements InnerLogger {
-  private _userSink: Logger | undefined;
-  private _debugSink: DebugLoggerSink;
+  private _logger = new MultiplexingLogger();
 
   constructor(userSink: Logger | undefined) {
-    this._userSink = userSink;
-    this._debugSink = new DebugLoggerSink();
+    if (userSink)
+      this._logger.add('user', userSink);
+    this._logger.add('debug', new DebugLogger());
   }
 
   _isLogEnabled(log: Log): boolean {
-    return (this._userSink && this._userSink.isEnabled(log.name, log.severity || 'info')) ||
-        this._debugSink.isEnabled(log.name, log.severity || 'info');
+    return this._logger.isEnabled(log.name, log.severity || 'info');
   }
 
   _log(log: Log, message: string | Error, ...args: any[]) {
-    if (this._userSink && this._userSink.isEnabled(log.name, log.severity || 'info'))
-      this._userSink.log(log.name, log.severity || 'info', message, args, log.color ? { color: log.color } : {});
-    if (this._debugSink.isEnabled(log.name, log.severity || 'info'))
-      this._debugSink.log(log.name, log.severity || 'info', message, args, log.color ? { color: log.color } : {});
+    if (this._logger.isEnabled(log.name, log.severity || 'info'))
+      this._logger.log(log.name, log.severity || 'info', message, args, log.color ? { color: log.color } : {});
+  }
+
+  startLaunchRecording() {
+    this._logger.add(`launch`, new RecordingLogger('browser'));
+  }
+
+  stopLaunchRecording(): string {
+    const logger = this._logger.remove(`launch`) as RecordingLogger;
+    if (logger)
+      return logger.recording();
+    return '';
   }
 }
 
@@ -72,7 +80,55 @@ const colorMap = new Map<string, number>([
   ['reset', 0],
 ]);
 
-class DebugLoggerSink implements Logger {
+class MultiplexingLogger implements Logger {
+  private _loggers = new Map<string, Logger>();
+
+  add(id: string, logger: Logger) {
+    this._loggers.set(id, logger);
+  }
+
+  remove(id: string): Logger | undefined {
+    const logger = this._loggers.get(id);
+    this._loggers.delete(id);
+    return logger;
+  }
+
+  isEnabled(name: string, severity: LoggerSeverity): boolean {
+    for (const logger of this._loggers.values()) {
+      if (logger.isEnabled(name, severity))
+        return true;
+    }
+    return false;
+  }
+
+  log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }) {
+    for (const logger of this._loggers.values())
+      logger.log(name, severity, message, args, hints);
+  }
+}
+
+export class RecordingLogger implements Logger {
+  private _prefix: string;
+  private _recording: string[] = [];
+
+  constructor(prefix: string) {
+    this._prefix = prefix;
+  }
+
+  isEnabled(name: string, severity: LoggerSeverity): boolean {
+    return name.startsWith(this._prefix);
+  }
+
+  log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }) {
+    this._recording.push(String(message));
+  }
+
+  recording(): string {
+    return this._recording.join('\n');
+  }
+}
+
+class DebugLogger implements Logger {
   private _debuggers = new Map<string, debug.IDebugger>();
 
   isEnabled(name: string, severity: LoggerSeverity): boolean {
