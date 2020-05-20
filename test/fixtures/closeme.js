@@ -1,11 +1,16 @@
 (async() => {
-  const [, , playwrightIndex, browserType, options, exitOnClose] = process.argv;
-  const browserServer = await require(playwrightIndex)[browserType].launchServer(JSON.parse(options));
+  const { playwrightFile, browserTypeName, launchOptions, stallOnClose } = JSON.parse(process.argv[2]);
+  if (stallOnClose) {
+    launchOptions.__testHookGracefullyClose = () => {
+      console.log(`(stalled=>true)`);
+      return new Promise(() => {});
+    };
+  }
+  const browserServer = await require(playwrightFile)[browserTypeName].launchServer(launchOptions);
   browserServer.on('close', (exitCode, signal) => {
-    console.log(`browserClose:${exitCode}:${signal}:browserClose`);
-    if (exitOnClose)
-      process.exit(0);
+    console.log(`(exitCode=>${exitCode})`);
+    console.log(`(signal=>${signal})`);
   });
-  console.log(`browserPid:${browserServer.process().pid}:browserPid`);
-  console.log(`browserWS:${browserServer.wsEndpoint()}:browserWS`);
+  console.log(`(pid=>${browserServer.process().pid})`);
+  console.log(`(wsEndpoint=>${browserServer.wsEndpoint()})`);
 })();

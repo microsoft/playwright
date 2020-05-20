@@ -111,18 +111,21 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   const downloadsPath = options.omitDownloads ? '' : await mkdtempAsync(DOWNLOADS_FOLDER);
 
   let processClosed = false;
-  const waitForProcessToClose = new Promise((fulfill, reject) => {
-    spawnedProcess.once('exit', (exitCode, signal) => {
-      logger._log(browserLog, `<process did exit ${exitCode}, ${signal}>`);
-      processClosed = true;
-      helper.removeEventListeners(listeners);
-      options.onkill(exitCode, signal);
-      // Cleanup as processes exit.
-      Promise.all([
-        options.omitDownloads ? Promise.resolve() : removeFolderAsync(downloadsPath),
-        options.tempDir ? removeFolderAsync(options.tempDir) : Promise.resolve()
-      ]).catch((err: Error) => console.error(err)).then(fulfill);
-    });
+  let fulfillClose = () => {};
+  const waitForClose = new Promise(f => fulfillClose = f);
+  let fulfillCleanup = () => {};
+  const waitForCleanup = new Promise(f => fulfillCleanup = f);
+  spawnedProcess.once('exit', (exitCode, signal) => {
+    logger._log(browserLog, `<process did exit ${exitCode}, ${signal}>`);
+    processClosed = true;
+    helper.removeEventListeners(listeners);
+    options.onkill(exitCode, signal);
+    fulfillClose();
+    // Cleanup as processes exit.
+    Promise.all([
+      options.omitDownloads ? Promise.resolve() : removeFolderAsync(downloadsPath),
+      options.tempDir ? removeFolderAsync(options.tempDir) : Promise.resolve()
+    ]).catch((err: Error) => console.error(err)).then(fulfillCleanup);
   });
 
   const listeners = [ helper.addEventListener(process, 'exit', killProcess) ];
@@ -145,12 +148,13 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     if (gracefullyClosing) {
       logger._log(browserLog, `<forecefully close>`);
       killProcess();
+      await waitForClose;  // Ensure the process is dead and we called options.onkill.
       return;
     }
     gracefullyClosing = true;
     logger._log(browserLog, `<gracefully close start>`);
     await options.attemptToGracefullyClose().catch(() => killProcess());
-    await waitForProcessToClose;
+    await waitForCleanup;  // Ensure the process is dead and we have cleaned up.
     logger._log(browserLog, `<gracefully close end>`);
   }
 
@@ -169,10 +173,12 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
         // the process might have already stopped
       }
     }
-    // Attempt to remove temporary profile directory to avoid littering.
+    // Attempt to remove temporary directories to avoid littering.
     try {
       if (options.tempDir)
         removeFolder.sync(options.tempDir);
+      if (!options.omitDownloads)
+        removeFolder.sync(downloadsPath);
     } catch (e) { }
   }
 

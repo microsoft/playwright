@@ -142,6 +142,8 @@ export class Chromium extends AbstractBrowserType<CRBrowser> {
       pipe: true,
       tempDir: temporaryUserDataDir || undefined,
       attemptToGracefullyClose: async () => {
+        if ((options as any).__testHookGracefullyClose)
+          await (options as any).__testHookGracefullyClose();
         debugAssert(browserServer._isInitialized());
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
