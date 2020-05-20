@@ -16,7 +16,6 @@
  */
 
 import * as dom from '../dom';
-import * as js from '../javascript';
 import * as frames from '../frames';
 import { helper, RegisteredListener, assert } from '../helper';
 import * as network from '../network';
@@ -38,6 +37,7 @@ import * as types from '../types';
 import { ConsoleMessage } from '../console';
 import { NotConnectedError } from '../errors';
 import { logError } from '../logger';
+import * as debugSupport from '../debug/debugSupport';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -432,7 +432,7 @@ class FrameSession {
       lifecycleEventsEnabled = this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
       this._client.send('Runtime.enable', {}),
       this._client.send('Page.addScriptToEvaluateOnNewDocument', {
-        source: js.generateSourceUrl(),
+        source: debugSupport.generateSourceUrl(),
         worldName: UTILITY_WORLD_NAME,
       }),
       this._networkManager.initialize(),

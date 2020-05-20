@@ -18,8 +18,8 @@
 import { CRSession } from './crConnection';
 import { assert, helper, RegisteredListener } from '../helper';
 import { Protocol } from './protocol';
-import * as js from '../javascript';
 import * as types from '../types';
+import * as debugSupport from '../debug/debugSupport';
 import { logError, InnerLogger } from '../logger';
 
 type JSRange = {
@@ -125,7 +125,7 @@ class JSCoverage {
 
   async _onScriptParsed(event: Protocol.Debugger.scriptParsedPayload) {
     // Ignore playwright-injected scripts
-    if (js.isPlaywrightSourceUrl(event.url))
+    if (debugSupport.isPlaywrightSourceUrl(event.url))
       return;
     this._scriptIds.add(event.scriptId);
     // Ignore other anonymous scripts unless the reportAnonymousScripts option is true.

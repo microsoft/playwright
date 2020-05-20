@@ -20,6 +20,7 @@ import { helper } from '../helper';
 import { valueFromRemoteObject, getExceptionMessage, releaseObject } from './crProtocolHelper';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
+import * as debugSupport from '../debug/debugSupport';
 
 export class CRExecutionContext implements js.ExecutionContextDelegate {
   _client: CRSession;
@@ -32,7 +33,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
 
   async rawEvaluate(expression: string): Promise<js.RemoteObject> {
     const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.evaluate', {
-      expression: js.ensureSourceUrl(expression),
+      expression: debugSupport.ensureSourceUrl(expression),
       contextId: this._contextId,
     }).catch(rewriteError);
     if (exceptionDetails)
@@ -44,7 +45,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     if (helper.isString(pageFunction)) {
       return this._callOnUtilityScript(context,
           `evaluate`, [
-            { value: js.ensureSourceUrl(pageFunction) },
+            { value: debugSupport.ensureSourceUrl(pageFunction) },
           ], returnByValue, () => { });
     }
 
@@ -85,7 +86,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     try {
       const utilityScript = await context.utilityScript();
       const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
-        functionDeclaration: `function (...args) { return this.${method}(...args) }${js.generateSourceUrl()}`,
+        functionDeclaration: `function (...args) { return this.${method}(...args) }` + debugSupport.generateSourceUrl(),
         objectId: utilityScript._remoteObject.objectId,
         arguments: [
           { value: returnByValue },
@@ -128,7 +129,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     const remoteObject = toRemoteObject(handle);
     if (remoteObject.objectId) {
       const response = await this._client.send('Runtime.callFunctionOn', {
-        functionDeclaration: 'function() { return this; }',
+        functionDeclaration: 'function() { return this; }' + debugSupport.generateSourceUrl(),
         objectId: remoteObject.objectId,
         returnByValue: true,
         awaitPromise: true,
