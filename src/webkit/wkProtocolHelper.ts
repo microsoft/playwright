@@ -18,8 +18,10 @@
 import { assert } from '../helper';
 import { WKSession } from './wkConnection';
 import { Protocol } from './protocol';
+import * as js from '../javascript';
 
-export function valueFromRemoteObject(remoteObject: Protocol.Runtime.RemoteObject): any {
+export function valueFromRemoteObject(ro: js.RemoteObject): any {
+  const remoteObject = ro as Protocol.Runtime.RemoteObject;
   assert(!remoteObject.objectId, 'Cannot extract value when objectId is given');
   if (remoteObject.type === 'number') {
     if (remoteObject.value === null) {
@@ -43,7 +45,7 @@ export function valueFromRemoteObject(remoteObject: Protocol.Runtime.RemoteObjec
   return remoteObject.value;
 }
 
-export async function releaseObject(client: WKSession, remoteObject: Protocol.Runtime.RemoteObject) {
+export async function releaseObject(client: WKSession, remoteObject: js.RemoteObject) {
   if (!remoteObject.objectId)
     return;
   await client.send('Runtime.releaseObject', {objectId: remoteObject.objectId}).catch(error => {});

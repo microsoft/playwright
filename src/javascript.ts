@@ -18,11 +18,14 @@ import * as types from './types';
 import * as dom from './dom';
 import * as fs from 'fs';
 import * as util from 'util';
+import * as js from './javascript';
+import * as utilityScriptSource from './generated/utilityScriptSource';
 import { helper, getCallerFilePath, isDebugMode } from './helper';
 import { InnerLogger } from './logger';
 
 export interface ExecutionContextDelegate {
   evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: string | Function, ...args: any[]): Promise<any>;
+  rawEvaluate(pageFunction: string): Promise<RemoteObject>;
   getProperties(handle: JSHandle): Promise<Map<string, JSHandle>>;
   releaseHandle(handle: JSHandle): Promise<void>;
   handleToString(handle: JSHandle, includeType: boolean): string;
@@ -32,6 +35,7 @@ export interface ExecutionContextDelegate {
 export class ExecutionContext {
   readonly _delegate: ExecutionContextDelegate;
   readonly _logger: InnerLogger;
+  private _utilityScriptPromise: Promise<js.JSHandle> | undefined;
 
   constructor(delegate: ExecutionContextDelegate, logger: InnerLogger) {
     this._delegate = delegate;
@@ -58,17 +62,32 @@ export class ExecutionContext {
     return this.doEvaluateInternal(false /* returnByValue */, true /* waitForNavigations */, pageFunction, ...args);
   }
 
+  utilityScript(): Promise<js.JSHandle> {
+    if (!this._utilityScriptPromise) {
+      const source = `new (${utilityScriptSource.source})()`;
+      this._utilityScriptPromise = this._delegate.rawEvaluate(source).then(object => this.createHandle(object));
+    }
+    return this._utilityScriptPromise;
+  }
+
   createHandle(remoteObject: any): JSHandle {
     return new JSHandle(this, remoteObject);
   }
 }
 
+export type RemoteObject = {
+  type?: string,
+  subtype?: string,
+  objectId?: string,
+  value?: any
+};
+
 export class JSHandle<T = any> {
   readonly _context: ExecutionContext;
-  readonly _remoteObject: any;
+  readonly _remoteObject: RemoteObject;
   _disposed = false;
 
-  constructor(context: ExecutionContext, remoteObject: any) {
+  constructor(context: ExecutionContext, remoteObject: RemoteObject) {
     this._context = context;
     this._remoteObject = remoteObject;
   }
@@ -202,39 +221,6 @@ export async function prepareFunctionCall<T>(
   if (error)
     throw new Error(error);
 
-  if (!guids.length) {
-    const sourceMapUrl = await generateSourceMapUrl(originalText, { line: 0, column: 0 });
-    functionText += sourceMapUrl;
-    return { functionText, values: args, handles: [], dispose: () => {} };
-  }
-
-  const wrappedFunctionText = `(...__playwright__args__) => {
-    return (${functionText})(...(() => {
-      const args = __playwright__args__;
-      __playwright__args__ = undefined;
-      const argCount = args[0];
-      const handleCount = args[argCount + 1];
-      const handles = { __proto__: null };
-      for (let i = 0; i < handleCount; i++)
-        handles[args[argCount + 2 + i]] = args[argCount + 2 + handleCount + i];
-      const visit = (arg) => {
-        if ((typeof arg === 'string') && (arg in handles))
-          return handles[arg];
-        if (arg && (typeof arg === 'object')) {
-          for (const name of Object.keys(arg))
-            arg[name] = visit(arg[name]);
-        }
-        return arg;
-      };
-      const result = [];
-      for (let i = 0; i < argCount; i++)
-        result[i] = visit(args[i + 1]);
-      return result;
-    })());
-  }`;
-  const compiledPosition = findPosition(wrappedFunctionText, wrappedFunctionText.indexOf(functionText));
-  functionText = wrappedFunctionText;
-
   const resolved = await Promise.all(handles);
   const resultHandles: T[] = [];
   for (let i = 0; i < resolved.length; i++) {
@@ -251,7 +237,7 @@ export async function prepareFunctionCall<T>(
     toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
   };
 
-  const sourceMapUrl = await generateSourceMapUrl(originalText, compiledPosition);
+  const sourceMapUrl = await generateSourceMapUrl(originalText);
   functionText += sourceMapUrl;
   return { functionText, values: [ args.length, ...args, guids.length, ...guids ], handles: resultHandles, dispose };
 }
@@ -276,7 +262,7 @@ type Position = {
   column: number;
 };
 
-async function generateSourceMapUrl(functionText: string, compiledPosition: Position): Promise<string> {
+async function generateSourceMapUrl(functionText: string): Promise<string> {
   if (!isDebugMode())
     return generateSourceUrl();
   const filePath = getCallerFilePath();
@@ -289,7 +275,7 @@ async function generateSourceMapUrl(functionText: string, compiledPosition: Posi
       return generateSourceUrl();
     const sourcePosition = findPosition(source, index);
     const delta = findPosition(functionText, functionText.length);
-    const sourceMap = generateSourceMap(filePath, sourcePosition, compiledPosition, delta);
+    const sourceMap = generateSourceMap(filePath, sourcePosition, { line: 0, column: 0 }, delta);
     return `\n//# sourceMappingURL=data:application/json;base64,${Buffer.from(sourceMap).toString('base64')}\n`;
   } catch (e) {
     return generateSourceUrl();

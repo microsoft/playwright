@@ -373,7 +373,7 @@ export class FFPage implements PageDelegate {
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
     const { contentFrameId } = await this._session.send('Page.describeNode', {
       frameId: handle._context.frame._id,
-      objectId: toRemoteObject(handle).objectId!,
+      objectId: handle._remoteObject.objectId!,
     });
     if (!contentFrameId)
       return null;
@@ -383,7 +383,7 @@ export class FFPage implements PageDelegate {
   async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
     const { ownerFrameId } = await this._session.send('Page.describeNode', {
       frameId: handle._context.frame._id,
-      objectId: toRemoteObject(handle).objectId!,
+      objectId: handle._remoteObject.objectId!,
     });
     return ownerFrameId || null;
   }
@@ -414,7 +414,7 @@ export class FFPage implements PageDelegate {
   async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<void> {
     await this._session.send('Page.scrollIntoViewIfNeeded', {
       frameId: handle._context.frame._id,
-      objectId: toRemoteObject(handle).objectId!,
+      objectId: handle._remoteObject.objectId!,
       rect,
     }).catch(e => {
       if (e instanceof Error && e.message.includes('Node is detached from document'))
@@ -433,7 +433,7 @@ export class FFPage implements PageDelegate {
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     const result = await this._session.send('Page.getContentQuads', {
       frameId: handle._context.frame._id,
-      objectId: toRemoteObject(handle).objectId!,
+      objectId: handle._remoteObject.objectId!,
     }).catch(logError(this._page));
     if (!result)
       return null;
@@ -452,7 +452,7 @@ export class FFPage implements PageDelegate {
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
     const result = await this._session.send('Page.adoptNode', {
       frameId: handle._context.frame._id,
-      objectId: toRemoteObject(handle).objectId!,
+      objectId: handle._remoteObject.objectId!,
       executionContextId: (to._delegate as FFExecutionContext)._executionContextId
     });
     if (!result.remoteObject)
@@ -482,8 +482,4 @@ export class FFPage implements PageDelegate {
       throw new Error('Frame has been detached.');
     return result.handle;
   }
-}
-
-function toRemoteObject(handle: dom.ElementHandle): Protocol.Runtime.RemoteObject {
-  return handle._remoteObject;
 }

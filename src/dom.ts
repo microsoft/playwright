@@ -81,7 +81,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
           ${custom.join(',\n')}
         ])
       `;
-      this._injectedPromise = this.doEvaluateInternal(false /* returnByValue */, false /* waitForNavigations */, source);
+      this._injectedPromise = this._delegate.rawEvaluate(source).then(object => this.createHandle(object));
     }
     return this._injectedPromise;
   }
