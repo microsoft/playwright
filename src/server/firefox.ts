@@ -137,6 +137,8 @@ export class Firefox extends AbstractBrowserType<FFBrowser> {
       pipe: false,
       tempDir: temporaryProfileDir || undefined,
       attemptToGracefullyClose: async () => {
+        if ((options as any).__testHookGracefullyClose)
+          await (options as any).__testHookGracefullyClose();
         debugAssert(browserServer._isInitialized());
         // We try to gracefully close to prevent crash reporting and core dumps.
         const transport = await WebSocketTransport.connect(browserWSEndpoint!, async transport => transport);

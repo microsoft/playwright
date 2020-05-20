@@ -19,57 +19,90 @@ const path = require('path');
 const {spawn, execSync} = require('child_process');
 const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX} = require('./utils').testOptions(browserType);
 
-async function testSignal(state, action, exitOnClose) {
-  const options = Object.assign({}, state.defaultBrowserOptions, {
-    handleSIGINT: true,
-    handleSIGTERM: true,
-    handleSIGHUP: true,
-    executablePath: state.browserType.executablePath(),
-    logger: undefined,
-  });
-  const res = spawn('node', [path.join(__dirname, 'fixtures', 'closeme.js'), path.join(state.playwrightPath, 'index-for-dev'), state.browserType.name(), JSON.stringify(options), exitOnClose ? 'true' : '']);
-  let wsEndPointCallback;
-  const wsEndPointPromise = new Promise(x => wsEndPointCallback = x);
-  let output = '';
-  let browserExitCode = 'none';
-  let browserSignal = 'none';
-  let browserPid;
-  res.stdout.on('data', data => {
-    output += data.toString();
-    // Uncomment to debug these tests.
-    // console.log(data.toString());
-    let match = output.match(/browserWS:(.+):browserWS/);
-    if (match)
-      wsEndPointCallback(match[1]);
-    match = output.match(/browserClose:([^:]+):([^:]+):browserClose/);
-    if (match) {
-      browserExitCode = match[1];
-      browserSignal = match[2];
-    }
-    match = output.match(/browserPid:([^:]+):browserPid/);
-    if (match)
-      browserPid = +match[1];
-  });
-  res.on('error', (...args) => console.log("ERROR", ...args));
-  const browser = await state.browserType.connect({ wsEndpoint: await wsEndPointPromise });
-  const promises = [
-    new Promise(resolve => browser.once('disconnected', resolve)),
-    new Promise(resolve => res.on('exit', resolve)),
-  ];
-  action(res, browserPid);
-  const [, exitCode] = await Promise.all(promises);
-  return { exitCode, browserSignal, browserExitCode, output };
+class Wrapper {
+  constructor(state, extraOptions) {
+    this._output = new Map();
+    this._outputCallback = new Map();
+
+    this._browserType = state.browserType;
+    const launchOptions = {...state.defaultBrowserOptions,
+      handleSIGINT: true,
+      handleSIGTERM: true,
+      handleSIGHUP: true,
+      executablePath: state.browserType.executablePath(),
+      logger: undefined,
+    };
+    const options = {
+      playwrightFile: path.join(state.playwrightPath, 'index-for-dev'),
+      browserTypeName: state.browserType.name(),
+      launchOptions,
+      ...extraOptions,
+    };
+    this._child = spawn('node', [path.join(__dirname, 'fixtures', 'closeme.js'), JSON.stringify(options)]);
+    this._child.on('error', (...args) => console.log("ERROR", ...args));
+    this._exitPromise = new Promise(resolve => this._child.on('exit', resolve));
+
+    let outputString = '';
+    this._child.stdout.on('data', data => {
+      outputString += data.toString();
+      // Uncomment to debug.
+      // console.log(data.toString());
+      let match;
+      while (match = outputString.match(/\(([^()]+)=>([^()]+)\)/)) {
+        const key = match[1];
+        const value = match[2];
+        this._addOutput(key, value);
+        outputString = outputString.substring(match.index + match[0].length);
+      }
+    });
+  }
+
+  _addOutput(key, value) {
+    this._output.set(key, value);
+    const cb = this._outputCallback.get(key);
+    this._outputCallback.delete(key);
+    if (cb)
+      cb();
+  }
+
+  async out(key) {
+    if (!this._output.has(key))
+      await new Promise(f => this._outputCallback.set(key, f));
+    return this._output.get(key);
+  }
+
+  async connect() {
+    const wsEndpoint = await this.out('wsEndpoint');
+    const browser = await this._browserType.connect({ wsEndpoint });
+    this._exitAndDisconnectPromise = Promise.all([
+      this._exitPromise,
+      new Promise(resolve => browser.once('disconnected', resolve)),
+    ]).then(([exitCode]) => exitCode);
+  }
+
+  child() {
+    return this._child;
+  }
+
+  async childExitCode() {
+    return await this._exitAndDisconnectPromise;
+  }
+}
+
+async function setup(state, options = {}) {
+  const wrapper = new Wrapper(state, options);
+  await wrapper.connect();
+  return wrapper;
 }
 
 describe('Fixtures', function() {
   it.slow()('should close the browser when the node process closes', async state => {
-    const result = await testSignal(state, child => {
-      if (WIN)
-        execSync(`taskkill /pid ${child.pid} /T /F`);
-      else
-        process.kill(child.pid);
-    });
-    expect(result.exitCode).toBe(WIN ? 1 : 0);
+    const wrapper = await setup(state);
+    if (WIN)
+      execSync(`taskkill /pid ${wrapper.child().pid} /T /F`);
+    else
+      process.kill(wrapper.child().pid);
+    expect(await wrapper.childExitCode()).toBe(WIN ? 1 : 0);
     // We might not get browser exitCode in time when killing the parent node process,
     // so we don't check it here.
   });
@@ -77,65 +110,70 @@ describe('Fixtures', function() {
   describe.skip(WIN).skip(!HEADLESS)('signals', () => {
     // Cannot reliably send signals on Windows.
     it.slow()('should report browser close signal', async state => {
-      const result = await testSignal(state, (child, browserPid) => process.kill(browserPid), true);
-      expect(result.exitCode).toBe(0);
-      expect(result.browserExitCode).toBe('null');
-      expect(result.browserSignal).toBe('SIGTERM');
+      const wrapper = await setup(state);
+      const pid = await wrapper.out('pid');
+      process.kill(-pid, 'SIGTERM');
+      expect(await wrapper.out('exitCode')).toBe('null');
+      expect(await wrapper.out('signal')).toBe('SIGTERM');
+      process.kill(wrapper.child().pid);
+      await wrapper.childExitCode();
     });
     it.slow()('should report browser close signal 2', async state => {
-      const result = await testSignal(state, (child, browserPid) => process.kill(browserPid, 'SIGKILL'), true);
-      expect(result.exitCode).toBe(0);
-      expect(result.browserExitCode).toBe('null');
-      expect(result.browserSignal).toBe('SIGKILL');
+      const wrapper = await setup(state);
+      const pid = await wrapper.out('pid');
+      process.kill(-pid, 'SIGKILL');
+      expect(await wrapper.out('exitCode')).toBe('null');
+      expect(await wrapper.out('signal')).toBe('SIGKILL');
+      process.kill(wrapper.child().pid);
+      await wrapper.childExitCode();
     });
     it.slow()('should close the browser on SIGINT', async state => {
-      const result = await testSignal(state, child => process.kill(child.pid, 'SIGINT'));
-      expect(result.exitCode).toBe(130);
-      expect(result.browserExitCode).toBe('0');
-      expect(result.browserSignal).toBe('null');
+      const wrapper = await setup(state);
+      process.kill(wrapper.child().pid, 'SIGINT');
+      expect(await wrapper.out('exitCode')).toBe('0');
+      expect(await wrapper.out('signal')).toBe('null');
+      expect(await wrapper.childExitCode()).toBe(130);
     });
     it.slow()('should close the browser on SIGTERM', async state => {
-      const result = await testSignal(state, child => process.kill(child.pid, 'SIGTERM'));
-      expect(result.exitCode).toBe(0);
-      expect(result.browserExitCode).toBe('0');
-      expect(result.browserSignal).toBe('null');
+      const wrapper = await setup(state);
+      process.kill(wrapper.child().pid, 'SIGTERM');
+      expect(await wrapper.out('exitCode')).toBe('0');
+      expect(await wrapper.out('signal')).toBe('null');
+      expect(await wrapper.childExitCode()).toBe(0);
     });
     it.slow()('should close the browser on SIGHUP', async state => {
-      const result = await testSignal(state, child => process.kill(child.pid, 'SIGHUP'));
-      expect(result.exitCode).toBe(0);
-      expect(result.browserExitCode).toBe('0');
-      expect(result.browserSignal).toBe('null');
+      const wrapper = await setup(state);
+      process.kill(wrapper.child().pid, 'SIGHUP');
+      expect(await wrapper.out('exitCode')).toBe('0');
+      expect(await wrapper.out('signal')).toBe('null');
+      expect(await wrapper.childExitCode()).toBe(0);
     });
     it.slow()('should kill the browser on double SIGINT', async state => {
-      const result = await testSignal(state, child => {
-        process.kill(child.pid, 'SIGINT');
-        process.kill(child.pid, 'SIGINT');
-      });
-      expect(result.exitCode).toBe(130);
-      // TODO: ideally, we would expect the SIGKILL on the browser from
-      // force kill, but that's racy with sending two signals.
+      const wrapper = await setup(state, { stallOnClose: true });
+      process.kill(wrapper.child().pid, 'SIGINT');
+      await wrapper.out('stalled');
+      process.kill(wrapper.child().pid, 'SIGINT');
+      expect(await wrapper.out('exitCode')).toBe('null');
+      expect(await wrapper.out('signal')).toBe('SIGKILL');
+      expect(await wrapper.childExitCode()).toBe(130);
     });
-    // TODO: flaky - https://app.circleci.com/pipelines/github/microsoft/playwright/582/workflows/b49033ce-fe20-4029-b665-13fb331f842e/jobs/579
-    it.slow().fail(FFOX && LINUX)('should kill the browser on SIGINT + SIGTERM', async state => {
-      const result = await testSignal(state, child => {
-        process.kill(child.pid, 'SIGINT');
-        process.kill(child.pid, 'SIGTERM');
-      });
-      expect(result.exitCode).toBe(130);
-      // TODO: ideally, we would expect the SIGKILL on the browser from
-      // force kill, but that's racy with sending two signals.
+    it.slow()('should kill the browser on SIGINT + SIGTERM', async state => {
+      const wrapper = await setup(state, { stallOnClose: true });
+      process.kill(wrapper.child().pid, 'SIGINT');
+      await wrapper.out('stalled');
+      process.kill(wrapper.child().pid, 'SIGTERM');
+      expect(await wrapper.out('exitCode')).toBe('null');
+      expect(await wrapper.out('signal')).toBe('SIGKILL');
+      expect(await wrapper.childExitCode()).toBe(0);
     });
-    // TODO: flaky!
-    // - firefox: https://github.com/microsoft/playwright/pull/1911/checks?check_run_id=607148951
-    // - chromium: https://travis-ci.com/github/microsoft/playwright/builds/161356178
-    it.slow().fail((FFOX || CHROMIUM) && LINUX)('should kill the browser on SIGTERM + SIGINT', async state => {
-      const result = await testSignal(state, child => {
-        process.kill(child.pid, 'SIGTERM');
-        process.kill(child.pid, 'SIGINT');
-      });
-      expect(result.exitCode).toBe(130);
-      // TODO: ideally, we would expect the SIGKILL on the browser from
-      // force kill, but that's racy with sending two signals.
+    it.slow()('should kill the browser on SIGTERM + SIGINT', async state => {
+      const wrapper = await setup(state, { stallOnClose: true });
+      process.kill(wrapper.child().pid, 'SIGTERM');
+      await wrapper.out('stalled');
+      process.kill(wrapper.child().pid, 'SIGINT');
+      expect(await wrapper.out('exitCode')).toBe('null');
+      expect(await wrapper.out('signal')).toBe('SIGKILL');
+      expect(await wrapper.childExitCode()).toBe(130);
     });
   });
 });
