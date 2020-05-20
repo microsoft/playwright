@@ -9581,7 +9581,7 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..3a695349c679f8685093eb685911d16a9e8f6bcc
+index 0000000000000000000000000000000000000000..4d8217108bd02f5efb2351adca1038d607ade7ea
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 @@ -0,0 +1,796 @@
@@ -10184,7 +10184,7 @@ index 0000000000000000000000000000000000000000..3a695349c679f8685093eb685911d16a
 +        [callback = WTFMove(callback)](Vector<WebCore::Cookie> allCookies) {
 +            if (!callback->isActive())
 +                return;
-+            auto cookies = JSON::ArrayOf<Protocol::Playwright::Cookie>::create();
++            auto cookies = JSON::ArrayOf<Inspector::Protocol::Playwright::Cookie>::create();
 +            for (const auto& cookie : allCookies)
 +                cookies->addItem(buildObjectForCookie(cookie));
 +            callback->sendSuccess(WTFMove(cookies));
