@@ -116,16 +116,20 @@ These are some of the corner cases that Playwright aims to support.
 
 ### Targeting
 
-  - Button with span/label inside that has `pointer-events: none`.
+  - Element has `pointer-events: none`.
 
     ```html
-    <button>
-      <label style="pointer-events:none">Click target</label>
-    </button>
+    <label style="pointer-events:none">Click target</label>
     ```
 
-    Playwright assumes that in such a case the first parent receiving pointer events is a click target.
-    This is very convenient with something like `text=Click target` selector that actually targets the inner element but wants to click on the parent button.
+    Playwright will wait until `pointer-events: none` goes away or times out. However, if the element is inside of a `<button>` tag, Playwright will
+    wait until the button can accept pointer events.
+
+    ```html
+    <button style="pointer-events: none">
+      <label>Click target</label>
+    </button>
+    ```
 
 
 ## Unsupported click scenarios
@@ -231,15 +235,3 @@ Other scenarios are perfectly fine, but Playwright cannot support them, and we u
 
     We consider this a bug in the page, because in most circumstances users will not be able to click the element.
     When the overlay element is actually handling the input instead of the target element, use `{force: true}` option to skip the checks and click anyway.
-
-  - `pointer-events` changes dynamically.
-
-    ```html
-    <button style="pointer-events: none">Click me</button>
-    <script>
-      setTimeout(() => document.querySelector('button').style.pointerEvents = 'auto', 5000);
-    </script>
-    ```
-
-    We consider this a bug in the page, because users will not be able to click the element when they see it.
-
