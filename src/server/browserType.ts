@@ -17,7 +17,10 @@
 import { BrowserContext } from '../browserContext';
 import { BrowserServer } from './browserServer';
 import * as browserPaths from '../install/browserPaths';
-import { Logger } from '../logger';
+import { Logger, RootLogger } from '../logger';
+import { ConnectionTransport, WebSocketTransport } from '../transport';
+import { BrowserBase, BrowserOptions, Browser } from '../browser';
+import { assert } from '../helper';
 
 export type BrowserArgOptions = {
   headless?: boolean,
@@ -25,7 +28,7 @@ export type BrowserArgOptions = {
   devtools?: boolean,
 };
 
-export type LaunchOptionsBase = BrowserArgOptions & {
+type LaunchOptionsBase = BrowserArgOptions & {
   executablePath?: string,
   ignoreDefaultArgs?: boolean | string[],
   handleSIGINT?: boolean,
@@ -46,9 +49,11 @@ export type ConnectOptions = {
   slowMo?: number,
   logger?: Logger,
 };
+export type LaunchType = 'local' | 'server' | 'persistent';
 export type LaunchOptions = LaunchOptionsBase & { slowMo?: number };
 export type LaunchServerOptions = LaunchOptionsBase & { port?: number };
-export interface BrowserType<Browser> {
+
+export interface BrowserType {
   executablePath(): string;
   name(): string;
   launch(options?: LaunchOptions): Promise<Browser>;
@@ -57,7 +62,7 @@ export interface BrowserType<Browser> {
   connect(options: ConnectOptions): Promise<Browser>;
 }
 
-export abstract class AbstractBrowserType<Browser> implements BrowserType<Browser> {
+export abstract class BrowserTypeBase implements BrowserType {
   private _name: string;
   private _executablePath: string | undefined;
   readonly _browserPath: string;
@@ -79,8 +84,44 @@ export abstract class AbstractBrowserType<Browser> implements BrowserType<Browse
     return this._name;
   }
 
-  abstract launch(options?: LaunchOptions): Promise<Browser>;
-  abstract launchServer(options?: LaunchServerOptions): Promise<BrowserServer>;
-  abstract launchPersistentContext(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext>;
-  abstract connect(options: ConnectOptions): Promise<Browser>;
+  async launch(options: LaunchOptions = {}): Promise<Browser> {
+    assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
+    const browserServer = new BrowserServer(options);
+    const { transport, downloadsPath } = await this._launchServer(options, 'local', browserServer);
+    return await browserServer._initializeOrClose(async () => {
+      return this._connectToServer(browserServer, false, transport!, downloadsPath);
+    });
+  }
+
+  async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
+    const browserServer = new BrowserServer(options);
+    const { transport, downloadsPath } = await this._launchServer(options, 'persistent', browserServer, userDataDir);
+
+    return await browserServer._initializeOrClose(async () => {
+      const browser = await this._connectToServer(browserServer, true, transport!, downloadsPath);
+      const context = browser._defaultContext!;
+      if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
+        await context._loadDefaultContext();
+      return context;
+    });
+  }
+
+  async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
+    const browserServer = new BrowserServer(options);
+    await this._launchServer(options, 'server', browserServer);
+    return browserServer;
+  }
+
+  async connect(options: ConnectOptions): Promise<Browser> {
+    const logger = new RootLogger(options.logger);
+    return await WebSocketTransport.connect(options.wsEndpoint, async transport => {
+      if ((options as any).__testHookBeforeCreateBrowser)
+        await (options as any).__testHookBeforeCreateBrowser();
+      return this._connectToTransport(transport, { slowMo: options.slowMo, logger, downloadsPath: '' });
+    }, logger);
+  }
+
+  abstract _launchServer(options: LaunchServerOptions, launchType: LaunchType, browserServer: BrowserServer, userDataDir?: string): Promise<{ transport?: ConnectionTransport, downloadsPath: string }>;
+  abstract _connectToServer(browserServer: BrowserServer, persistent: boolean, transport: ConnectionTransport, downloadsPath: string): Promise<BrowserBase>;
+  abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BrowserBase>;
 }

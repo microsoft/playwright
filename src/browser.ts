@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BrowserContext, BrowserContextOptions } from './browserContext';
+import { BrowserContext, BrowserContextOptions, BrowserContextBase } from './browserContext';
 import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Download } from './download';
@@ -44,6 +44,7 @@ export interface Browser extends EventEmitter {
 export abstract class BrowserBase extends EventEmitter implements Browser, InnerLogger {
   readonly _options: BrowserOptions;
   private _downloads = new Map<string, Download>();
+  _defaultContext: BrowserContextBase | null = null;
 
   constructor(options: BrowserOptions) {
     super();
@@ -102,4 +103,3 @@ export abstract class BrowserBase extends EventEmitter implements Browser, Inner
   }
 }
 
-export type LaunchType = 'local' | 'server' | 'persistent';

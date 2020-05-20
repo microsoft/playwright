@@ -19,7 +19,7 @@ import { EventEmitter } from 'events';
 import { helper } from '../helper';
 import { RootLogger } from '../logger';
 import { TimeoutSettings } from '../timeoutSettings';
-import { LaunchOptionsBase } from './browserType';
+import { LaunchOptions } from './browserType';
 
 export class WebSocketWrapper {
   readonly wsEndpoint: string;
@@ -54,11 +54,11 @@ export class BrowserServer extends EventEmitter {
   private _process: ChildProcess | undefined;
   private _gracefullyClose: (() => Promise<void>) | undefined;
   private _webSocketWrapper: WebSocketWrapper | null = null;
-  private _launchOptions: LaunchOptionsBase;
+  readonly _launchOptions: LaunchOptions;
   readonly _logger: RootLogger;
   readonly _launchDeadline: number;
 
-  constructor(options: LaunchOptionsBase) {
+  constructor(options: LaunchOptions) {
     super();
     this._launchOptions = options;
     this._logger = new RootLogger(options.logger);

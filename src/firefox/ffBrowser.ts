@@ -31,7 +31,6 @@ import { Protocol } from './protocol';
 export class FFBrowser extends BrowserBase {
   _connection: FFConnection;
   readonly _ffPages: Map<string, FFPage>;
-  readonly _defaultContext: FFBrowserContext | null = null;
   readonly _contexts: Map<string, FFBrowserContext>;
   private _eventListeners: RegisteredListener[];
 
@@ -91,7 +90,7 @@ export class FFBrowser extends BrowserBase {
   _onAttachedToTarget(payload: Protocol.Browser.attachedToTargetPayload) {
     const {targetId, browserContextId, openerId, type} = payload.targetInfo;
     assert(type === 'page');
-    const context = browserContextId ? this._contexts.get(browserContextId)! : this._defaultContext;
+    const context = browserContextId ? this._contexts.get(browserContextId)! : this._defaultContext as FFBrowserContext;
     assert(context, `Unknown context id:${browserContextId}, _defaultContext: ${this._defaultContext}`);
     const session = this._connection.createSession(payload.sessionId, type);
     const opener = openerId ? this._ffPages.get(openerId)! : null;

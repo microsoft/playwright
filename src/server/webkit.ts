@@ -24,62 +24,37 @@ import * as os from 'os';
 import * as util from 'util';
 import { helper, assert } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
-import { LaunchOptions, BrowserArgOptions, LaunchServerOptions, ConnectOptions, AbstractBrowserType, processBrowserArgOptions } from './browserType';
-import { ConnectionTransport, SequenceNumberMixer, WebSocketTransport } from '../transport';
+import { BrowserArgOptions, LaunchServerOptions, BrowserTypeBase, processBrowserArgOptions, LaunchType } from './browserType';
+import { ConnectionTransport, SequenceNumberMixer } from '../transport';
 import * as ws from 'ws';
-import { LaunchType } from '../browser';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { Events } from '../events';
-import { BrowserContext } from '../browserContext';
 import { InnerLogger, logError, RootLogger } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
+import { BrowserBase, BrowserOptions } from '../browser';
 
-export class WebKit extends AbstractBrowserType<WKBrowser> {
+export class WebKit extends BrowserTypeBase {
   constructor(packagePath: string, browser: BrowserDescriptor) {
     super(packagePath, browser);
   }
 
-  async launch(options: LaunchOptions = {}): Promise<WKBrowser> {
-    assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
-    const browserServer = new BrowserServer(options);
-    const { transport, downloadsPath } = await this._launchServer(options, 'local', browserServer);
-    return await browserServer._initializeOrClose(async () => {
-      return await WKBrowser.connect(transport!, {
-        slowMo: options.slowMo,
-        headful: !processBrowserArgOptions(options).headless,
-        logger: browserServer._logger,
-        downloadsPath,
-        ownedServer: browserServer
-      });
+  _connectToServer(browserServer: BrowserServer, persistent: boolean, transport: ConnectionTransport, downloadsPath: string): Promise<BrowserBase> {
+    const options = browserServer._launchOptions;
+    return WKBrowser.connect(transport, {
+      slowMo: options.slowMo,
+      headful: !processBrowserArgOptions(options).headless,
+      logger: browserServer._logger,
+      persistent,
+      downloadsPath,
+      ownedServer: browserServer
     });
   }
 
-  async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
-    const browserServer = new BrowserServer(options);
-    await this._launchServer(options, 'server', browserServer);
-    return browserServer;
+  _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
+    return WKBrowser.connect(transport, options);
   }
 
-  async launchPersistentContext(userDataDir: string, options: LaunchOptions = {}): Promise<BrowserContext> {
-    const browserServer = new BrowserServer(options);
-    const { transport, downloadsPath } = await this._launchServer(options, 'persistent', browserServer, userDataDir);
-    return await browserServer._initializeOrClose(async () => {
-      const browser = await WKBrowser.connect(transport!, {
-        slowMo: options.slowMo,
-        headful: !processBrowserArgOptions(options).headless,
-        logger: browserServer._logger,
-        persistent: true,
-        downloadsPath,
-        ownedServer: browserServer
-      });
-      const context = browser._defaultContext!;
-      if (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))
-        await context._loadDefaultContext();
-      return context;
-    });
-  }
-
-  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, browserServer: BrowserServer, userDataDir?: string): Promise<{ transport?: ConnectionTransport, downloadsPath: string, logger: RootLogger }> {
+  async _launchServer(options: LaunchServerOptions, launchType: LaunchType, browserServer: BrowserServer, userDataDir?: string): Promise<{ transport?: ConnectionTransport, downloadsPath: string, logger: RootLogger }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -142,15 +117,6 @@ export class WebKit extends AbstractBrowserType<WKBrowser> {
     transport = new PipeTransport(stdio[3], stdio[4], logger);
     browserServer._initialize(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, logger, port || 0) : null);
     return { transport, downloadsPath, logger };
-  }
-
-  async connect(options: ConnectOptions): Promise<WKBrowser> {
-    const logger = new RootLogger(options.logger);
-    return await WebSocketTransport.connect(options.wsEndpoint, async transport => {
-      if ((options as any).__testHookBeforeCreateBrowser)
-        await (options as any).__testHookBeforeCreateBrowser();
-      return WKBrowser.connect(transport, { slowMo: options.slowMo, logger, downloadsPath: '' });
-    }, logger);
   }
 
   _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {
