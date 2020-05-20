@@ -88,6 +88,7 @@ playwright.chromium.launch().then(async browser => {
 
 import * as crypto from 'crypto';
 import * as fs from 'fs';
+import { EventEmitter } from 'events';
 
 playwright.chromium.launch().then(async browser => {
   const page = await browser.newPage();
@@ -729,3 +730,14 @@ playwright.chromium.launch().then(async browser => {
   // Register the engine. Selectors will be prefixed with "tag=".
   await playwright.selectors.register('tag', createTagNameEngine);
 })();
+
+// Event listeners
+(async function() {
+  const eventEmitter = {} as (playwright.Page|playwright.BrowserContext|EventEmitter);
+  const listener = () => {};
+  eventEmitter.addListener('close', listener)
+              .on('close', listener)
+              .once('close', listener)
+              .removeListener('close', listener)
+              .off('close', listener);
+});

@@ -159,7 +159,7 @@ function createEventDescriptions(classDesc) {
 function classBody(classDesc) {
   const parts = [];
   const eventDescriptions = createEventDescriptions(classDesc);
-  for (const method of ['on', 'once', 'addListener']) {
+  for (const method of ['on', 'once', 'addListener', 'removeListener', 'off']) {
     for (const {eventName, params, comment} of eventDescriptions) {
         if (comment)
           parts.push(writeComment(comment, '  '));
