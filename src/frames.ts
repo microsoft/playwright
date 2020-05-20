@@ -451,7 +451,7 @@ export class Frame {
 
     const deadline = this._page._timeoutSettings.computeDeadline(options);
     const { world, task } = selectors._waitForSelectorTask(selector, state, deadline);
-    const result = await this._scheduleRerunnableTask(task, world, deadline, `selector "${selectorToString(selector, state)}"`);
+    const result = await this._scheduleRerunnableTask(task, world, deadline, `selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
     if (!result.asElement()) {
       result.dispose();
       return null;
@@ -469,7 +469,7 @@ export class Frame {
   async dispatchEvent(selector: string, type: string, eventInit?: Object, options?: types.TimeoutOptions): Promise<void> {
     const deadline = this._page._timeoutSettings.computeDeadline(options);
     const task = selectors._dispatchEventTask(selector, type, eventInit || {}, deadline);
-    const result = await this._scheduleRerunnableTask(task, 'main', deadline, `selector "${selectorToString(selector, 'attached')}"`);
+    const result = await this._scheduleRerunnableTask(task, 'main', deadline, `selector "${selector}"`);
     result.dispose();
   }
 
@@ -968,17 +968,6 @@ class RerunnableTask {
       clearTimeout(this._timeoutTimer);
     this._contextData.rerunnableTasks.delete(this);
   }
-}
-
-function selectorToString(selector: string, state: 'attached' | 'detached' | 'visible' | 'hidden'): string {
-  let label;
-  switch (state) {
-    case 'visible': label = '[visible] '; break;
-    case 'hidden': label = '[hidden] '; break;
-    case 'attached': label = ''; break;
-    case 'detached': label = '[detached]'; break;
-  }
-  return `${label}${selector}`;
 }
 
 export class SignalBarrier {
