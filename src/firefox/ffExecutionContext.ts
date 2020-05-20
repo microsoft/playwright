@@ -29,6 +29,16 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     this._executionContextId = executionContextId;
   }
 
+  async rawEvaluate(expression: string): Promise<js.RemoteObject> {
+    const payload = await this._session.send('Runtime.evaluate', {
+      expression: js.ensureSourceUrl(expression),
+      returnByValue: false,
+      executionContextId: this._executionContextId,
+    }).catch(rewriteError);
+    checkException(payload.exceptionDetails);
+    return payload.result!;
+  }
+
   async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
     if (helper.isString(pageFunction)) {
       const payload = await this._session.send('Runtime.evaluate', {
@@ -59,9 +69,12 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     });
 
     try {
+      const utilityScript = await context.utilityScript();
       const payload = await this._session.send('Runtime.callFunction', {
-        functionDeclaration: functionText,
+        functionDeclaration: `(utilityScript, ...args) => utilityScript.evaluate(...args)`,
         args: [
+          { objectId: utilityScript._remoteObject.objectId, value: undefined },
+          { value: functionText },
           ...values.map(value => ({ value })),
           ...handles,
         ],
@@ -74,16 +87,6 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
       return context.createHandle(payload.result);
     } finally {
       dispose();
-    }
-
-    function rewriteError(error: Error): (Protocol.Runtime.evaluateReturnValue | Protocol.Runtime.callFunctionReturnValue) {
-      if (error.message.includes('cyclic object value') || error.message.includes('Object is not serializable'))
-        return {result: {type: 'undefined', value: undefined}};
-      if (error.message.includes('Failed to find execution context with id') || error.message.includes('Execution context was destroyed!'))
-        throw new Error('Execution context was destroyed, most likely because of a navigation.');
-      if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
-        error.message += ' Are you passing a nested JSHandle?';
-      throw error;
     }
   }
 
@@ -113,7 +116,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
   async handleJSONValue<T>(handle: js.JSHandle<T>): Promise<T> {
     const payload = handle._remoteObject;
     if (!payload.objectId)
-      return deserializeValue(payload);
+      return deserializeValue(payload as Protocol.Runtime.RemoteObject);
     const simpleValue = await this._session.send('Runtime.callFunction', {
       executionContextId: this._executionContextId,
       returnByValue: true,
@@ -127,7 +130,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     const payload = handle._remoteObject;
     if (payload.objectId)
       return 'JSHandle@' + (payload.subtype || payload.type);
-    return (includeType ? 'JSHandle:' : '') + deserializeValue(payload);
+    return (includeType ? 'JSHandle:' : '') + deserializeValue(payload as Protocol.Runtime.RemoteObject);
   }
 
   private _toCallArgument(payload: any): any {
@@ -154,4 +157,14 @@ export function deserializeValue({unserializableValue, value}: Protocol.Runtime.
   if (unserializableValue === 'NaN')
     return NaN;
   return value;
+}
+
+function rewriteError(error: Error): (Protocol.Runtime.evaluateReturnValue | Protocol.Runtime.callFunctionReturnValue) {
+  if (error.message.includes('cyclic object value') || error.message.includes('Object is not serializable'))
+    return {result: {type: 'undefined', value: undefined}};
+  if (error.message.includes('Failed to find execution context with id') || error.message.includes('Execution context was destroyed!'))
+    throw new Error('Execution context was destroyed, most likely because of a navigation.');
+  if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
+    error.message += ' Are you passing a nested JSHandle?';
+  throw error;
 }

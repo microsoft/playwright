@@ -300,6 +300,32 @@ describe('Page.evaluate', function() {
     await page.goto(server.PREFIX + '/empty.html');
     expect(await page.evaluate(() => new Function('return true')())).toBe(true);
   });
+  it('should work with non-strict expressions', async({page, server}) => {
+    expect(await page.evaluate(() => {
+      y = 3.14;
+      return y;
+    })).toBe(3.14);
+  });
+  it('should respect use strict expression', async({page, server}) => {
+    const error = await page.evaluate(() => {
+      "use strict";
+      variableY = 3.14;
+      return variableY;
+    }).catch(e => e);
+    expect(error.message).toContain('variableY');
+  });
+  it('should not leak utility script', async({page, server}) => {
+    expect(await page.evaluate(() => this === window)).toBe(true);
+  });
+  it('should not leak handles', async({page, server}) => {
+    const error = await page.evaluate(() => handles.length).catch(e => e);
+    expect(error.message).toContain(' handles');
+  });
+  it('should work with CSP', async({page, server}) => {
+    server.setCSP('/empty.html', `script-src 'self'`);
+    await page.goto(server.EMPTY_PAGE);
+    expect(await page.evaluate(() => 2 + 2)).toBe(4);
+  });
 });
 
 describe('Page.addInitScript', function() {

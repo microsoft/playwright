@@ -30,6 +30,16 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     this._contextId = contextPayload.id;
   }
 
+  async rawEvaluate(expression: string): Promise<js.RemoteObject> {
+    const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.evaluate', {
+      expression: js.ensureSourceUrl(expression),
+      contextId: this._contextId,
+    }).catch(rewriteError);
+    if (exceptionDetails)
+      throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
+    return remoteObject;
+  }
+
   async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
     if (helper.isString(pageFunction)) {
       const contextId = this._contextId;
@@ -72,10 +82,12 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     });
 
     try {
+      const utilityScript = await context.utilityScript();
       const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
-        functionDeclaration: functionText,
-        executionContextId: this._contextId,
+        functionDeclaration: `function (...args) { return this.evaluate(...args) }${js.generateSourceUrl()}`,
+        objectId: utilityScript._remoteObject.objectId,
         arguments: [
+          { value: functionText },
           ...values.map(value => ({ value })),
           ...handles,
         ],
@@ -88,19 +100,6 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
       return returnByValue ? valueFromRemoteObject(remoteObject) : context.createHandle(remoteObject);
     } finally {
       dispose();
-    }
-
-    function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {
-      if (error.message.includes('Object reference chain is too long'))
-        return {result: {type: 'undefined'}};
-      if (error.message.includes('Object couldn\'t be returned by value'))
-        return {result: {type: 'undefined'}};
-
-      if (error.message.endsWith('Cannot find context with specified id') || error.message.endsWith('Inspected target navigated or closed') || error.message.endsWith('Execution context was destroyed.'))
-        throw new Error('Execution context was destroyed, most likely because of a navigation.');
-      if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
-        error.message += ' Are you passing a nested JSHandle?';
-      throw error;
     }
   }
 
@@ -151,4 +150,17 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
 
 function toRemoteObject(handle: js.JSHandle): Protocol.Runtime.RemoteObject {
   return handle._remoteObject as Protocol.Runtime.RemoteObject;
+}
+
+function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {
+  if (error.message.includes('Object reference chain is too long'))
+    return {result: {type: 'undefined'}};
+  if (error.message.includes('Object couldn\'t be returned by value'))
+    return {result: {type: 'undefined'}};
+
+  if (error.message.endsWith('Cannot find context with specified id') || error.message.endsWith('Inspected target navigated or closed') || error.message.endsWith('Execution context was destroyed.'))
+    throw new Error('Execution context was destroyed, most likely because of a navigation.');
+  if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
+    error.message += ' Are you passing a nested JSHandle?';
+  throw error;
 }

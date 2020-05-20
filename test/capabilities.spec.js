@@ -33,4 +33,16 @@ describe('Capabilities', function() {
     }, server.PORT);
     expect(value).toBe('incoming');
   });
+
+  it.fail(FFOX)('should respect CSP', async({page, server}) => {
+    server.setCSP('/empty.html', 'script-src ' + server.PREFIX);
+    await page.goto(server.EMPTY_PAGE);
+    expect(await page.evaluate(() => new Promise(f => setTimeout(() => {
+      try {
+        f(eval("'failed'"));
+      } catch (e) {
+        f('success');
+      }
+    }, 0)))).toBe('success');
+  });
 });

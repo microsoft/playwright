@@ -760,7 +760,7 @@ class FrameSession {
 
   async _getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
     const nodeInfo = await this._client.send('DOM.describeNode', {
-      objectId: toRemoteObject(handle).objectId
+      objectId: handle._remoteObject.objectId
     });
     if (!nodeInfo || typeof nodeInfo.node.frameId !== 'string')
       return null;
@@ -777,7 +777,7 @@ class FrameSession {
     });
     if (!documentElement)
       return null;
-    const remoteObject = toRemoteObject(documentElement);
+    const remoteObject = documentElement._remoteObject;
     if (!remoteObject.objectId)
       return null;
     const nodeInfo = await this._client.send('DOM.describeNode', {
@@ -791,7 +791,7 @@ class FrameSession {
 
   async _getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
     const result = await this._client.send('DOM.getBoxModel', {
-      objectId: toRemoteObject(handle).objectId
+      objectId: handle._remoteObject.objectId
     }).catch(logError(this._page));
     if (!result)
       return null;
@@ -805,7 +805,7 @@ class FrameSession {
 
   async _scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<void> {
     await this._client.send('DOM.scrollIntoViewIfNeeded', {
-      objectId: toRemoteObject(handle).objectId,
+      objectId: handle._remoteObject.objectId,
       rect,
     }).catch(e => {
       if (e instanceof Error && e.message.includes('Node is detached from document'))
@@ -821,7 +821,7 @@ class FrameSession {
 
   async _getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     const result = await this._client.send('DOM.getContentQuads', {
-      objectId: toRemoteObject(handle).objectId
+      objectId: handle._remoteObject.objectId
     }).catch(logError(this._page));
     if (!result)
       return null;
@@ -835,7 +835,7 @@ class FrameSession {
 
   async _adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
     const nodeInfo = await this._client.send('DOM.describeNode', {
-      objectId: toRemoteObject(handle).objectId,
+      objectId: handle._remoteObject.objectId,
     });
     return this._adoptBackendNodeId(nodeInfo.node.backendNodeId, to) as Promise<dom.ElementHandle<T>>;
   }
@@ -849,10 +849,6 @@ class FrameSession {
       throw new Error('Unable to adopt element handle from a different document');
     return to.createHandle(result.object).asElement()!;
   }
-}
-
-function toRemoteObject(handle: js.JSHandle): Protocol.Runtime.RemoteObject {
-  return handle._remoteObject as Protocol.Runtime.RemoteObject;
 }
 
 async function emulateLocale(session: CRSession, locale: string) {
