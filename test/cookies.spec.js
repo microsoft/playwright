@@ -88,12 +88,14 @@ describe('BrowserContext.cookies', function() {
   });
   it('should get multiple cookies', async({context, page, server}) => {
     await page.goto(server.EMPTY_PAGE);
-    await page.evaluate(() => {
+    const documentCookie = await page.evaluate(() => {
       document.cookie = 'username=John Doe';
       document.cookie = 'password=1234';
+      return document.cookie.split('; ').sort().join('; ');
     });
     const cookies = await context.cookies();
     cookies.sort((a, b) => a.name.localeCompare(b.name));
+    expect(documentCookie).toBe('password=1234; username=John Doe');
     expect(cookies).toEqual([
       {
         name: 'password',
