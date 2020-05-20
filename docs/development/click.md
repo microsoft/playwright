@@ -116,14 +116,20 @@ These are some of the corner cases that Playwright aims to support.
 
 ### Targeting
 
-  - Element that has `pointer-events: none`.
+  - Element has `pointer-events: none`.
 
     ```html
     <label style="pointer-events:none">Click target</label>
     ```
 
-    Playwright will wait until `pointer-events: none` goes away or times out. However, if element is inside of a `<button>` tag, Playwright will
-    wait until button can accept pointer events.
+    Playwright will wait until `pointer-events: none` goes away or times out. However, if the element is inside of a `<button>` tag, Playwright will
+    wait until the button can accept pointer events.
+
+    ```html
+    <button style="pointer-events: none">
+      <label>Click target</label>
+    </button>
+    ```
 
 
 ## Unsupported click scenarios
