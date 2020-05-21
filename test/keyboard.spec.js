@@ -377,4 +377,12 @@ describe('Keyboard', function() {
       expect(await page.evaluate('lastKeyIdentifier')).toBe(keyIdentifier);
     }
   });
+  it.fail(WEBKIT && MAC)('should scroll with PageDown', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/scrollable.html');
+    // A click is required for WebKit to send the event into the body.
+    await page.click('body');
+    await page.keyboard.press('PageDown');
+    // We can't wait for the scroll to finish, so just wait for it to start.
+    await page.waitForFunction(() => scrollY > 0);
+  });
 });
