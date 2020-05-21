@@ -125,21 +125,13 @@ export class WebSocketTransport implements ConnectionTransport {
   onmessage?: (message: ProtocolResponse) => void;
   onclose?: () => void;
 
-  // 'onmessage' handler must be installed synchronously when 'onopen' callback is invoked to
-  // avoid missing incoming messages.
-  static connect<T>(url: string, onopen: (transport: ConnectionTransport) => Promise<T> | T, logger?: InnerLogger): Promise<T> {
+  static connect(url: string, logger?: InnerLogger): Promise<ConnectionTransport> {
     logger && logger._log({ name: 'browser' }, `<ws connecting> ${url}`);
     const transport = new WebSocketTransport(url, logger);
-    return new Promise<T>((fulfill, reject) => {
+    return new Promise((fulfill, reject) => {
       transport._ws.addEventListener('open', async () => {
         logger && logger._log({ name: 'browser' }, `<ws connected> ${url}`);
-        try {
-          fulfill(await onopen(transport));
-        } catch (e) {
-          logger && logger._log({ name: 'browser' }, `<ws disconnecting> ${url}`);
-          try { transport._ws.close(); } catch (ignored) {}
-          reject(e);
-        }
+        fulfill(transport);
       });
       transport._ws.addEventListener('error', event => {
         logger && logger._log({ name: 'browser' }, `<ws connect error> ${url} ${event.message}`);

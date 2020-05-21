@@ -40,19 +40,18 @@ export class Firefox extends BrowserTypeBase {
     super(packagePath, browser);
   }
 
-  _connectToServer(browserServer: BrowserServer, persistent: boolean, transport: ConnectionTransport, downloadsPath: string): Promise<BrowserBase> {
+  async _connectToServer(browserServer: BrowserServer, persistent: boolean, transport: ConnectionTransport, downloadsPath: string): Promise<BrowserBase> {
     const options = browserServer._launchOptions;
     // TODO: connect to the underlying socket.
-    return WebSocketTransport.connect(browserServer.wsEndpoint()!, transport => {
-      return FFBrowser.connect(transport, {
-        slowMo: options.slowMo,
-        logger: browserServer._logger,
-        persistent,
-        downloadsPath,
-        headful: !processBrowserArgOptions(options).headless,
-        ownedServer: browserServer,
-      });
-    }, browserServer._logger);
+    const ffTransport = await WebSocketTransport.connect(browserServer.wsEndpoint()!, browserServer._logger);
+    return FFBrowser.connect(ffTransport, {
+      slowMo: options.slowMo,
+      logger: browserServer._logger,
+      persistent,
+      downloadsPath,
+      headful: !processBrowserArgOptions(options).headless,
+      ownedServer: browserServer,
+    });
   }
 
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
@@ -114,7 +113,7 @@ export class Firefox extends BrowserTypeBase {
           await (options as any).__testHookGracefullyClose();
         debugAssert(browserServer._isInitialized());
         // We try to gracefully close to prevent crash reporting and core dumps.
-        const transport = await WebSocketTransport.connect(browserWSEndpoint!, async transport => transport);
+        const transport = await WebSocketTransport.connect(browserWSEndpoint!);
         const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
         transport.send(message);
       },
@@ -128,7 +127,7 @@ export class Firefox extends BrowserTypeBase {
     const innerEndpoint = match[1];
 
     const webSocketWrapper = launchType === 'server' ?
-      (await WebSocketTransport.connect(innerEndpoint, t => wrapTransportWithWebSocket(t, logger, port), logger)) :
+      wrapTransportWithWebSocket(await WebSocketTransport.connect(innerEndpoint, logger), logger, port) :
       new WebSocketWrapper(innerEndpoint, []);
     browserWSEndpoint = webSocketWrapper.wsEndpoint;
     browserServer._initialize(launchedProcess, gracefullyClose, webSocketWrapper);

@@ -195,14 +195,11 @@ export class Electron  {
     const deadline = browserServer._launchDeadline;
     const timeoutError = new TimeoutError(`Timed out while trying to connect to Electron!`);
     const nodeMatch = await waitForLine(launchedProcess, launchedProcess.stderr, /^Debugger listening on (ws:\/\/.*)$/, helper.timeUntilDeadline(deadline), timeoutError);
-    const nodeConnection = await WebSocketTransport.connect(nodeMatch[1], transport => {
-      return new CRConnection(transport, logger);
-    });
+    const transport = await WebSocketTransport.connect(nodeMatch[1]);
+    const nodeConnection = new CRConnection(transport, logger);
 
     const chromeMatch = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, helper.timeUntilDeadline(deadline), timeoutError);
-    const chromeTransport = await WebSocketTransport.connect(chromeMatch[1], transport => {
-      return transport;
-    }, logger);
+    const chromeTransport = await WebSocketTransport.connect(chromeMatch[1], logger);
     browserServer._initialize(launchedProcess, gracefullyClose, null);
     const browser = await CRBrowser.connect(chromeTransport, { headful: true, logger, persistent: true, viewport: null, ownedServer: browserServer, downloadsPath: '' });
     app = new ElectronApplication(logger, browser, nodeConnection);

@@ -114,11 +114,10 @@ export abstract class BrowserTypeBase implements BrowserType {
 
   async connect(options: ConnectOptions): Promise<Browser> {
     const logger = new RootLogger(options.logger);
-    return await WebSocketTransport.connect(options.wsEndpoint, async transport => {
-      if ((options as any).__testHookBeforeCreateBrowser)
-        await (options as any).__testHookBeforeCreateBrowser();
-      return this._connectToTransport(transport, { slowMo: options.slowMo, logger, downloadsPath: '' });
-    }, logger);
+    const transport = await WebSocketTransport.connect(options.wsEndpoint, logger);
+    if ((options as any).__testHookBeforeCreateBrowser)
+      await (options as any).__testHookBeforeCreateBrowser();
+    return this._connectToTransport(transport, { slowMo: options.slowMo, logger, downloadsPath: '' });
   }
 
   abstract _launchServer(options: LaunchServerOptions, launchType: LaunchType, browserServer: BrowserServer, userDataDir?: string): Promise<{ transport?: ConnectionTransport, downloadsPath: string }>;
