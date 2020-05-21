@@ -23,9 +23,11 @@ describe('BrowserContext.cookies', function() {
   });
   it('should get a cookie', async({context, page, server}) => {
     await page.goto(server.EMPTY_PAGE);
-    await page.evaluate(() => {
+    const documentCookie = await page.evaluate(() => {
       document.cookie = 'username=John Doe';
+      return document.cookie;
     });
+    expect(documentCookie).toBe('username=John Doe');
     expect(await context.cookies()).toEqual([{
       name: 'username',
       value: 'John Doe',
@@ -41,10 +43,12 @@ describe('BrowserContext.cookies', function() {
     await page.goto(server.EMPTY_PAGE);
     // @see https://en.wikipedia.org/wiki/Year_2038_problem
     const date = +(new Date('1/1/2038'));
-    await page.evaluate(timestamp => {
+    const documentCookie = await page.evaluate(timestamp => {
       const date = new Date(timestamp);
       document.cookie = `username=John Doe;expires=${date.toUTCString()}`;
+      return document.cookie;
     }, date);
+    expect(documentCookie).toBe('username=John Doe');
     expect(await context.cookies()).toEqual([{
       name: 'username',
       value: 'John Doe',
@@ -171,10 +175,12 @@ describe('BrowserContext.addCookies', function() {
     await page.goto(server.EMPTY_PAGE);
     // @see https://en.wikipedia.org/wiki/Year_2038_problem
     const date = +(new Date('1/1/2038'));
-    await page.evaluate(timestamp => {
+    const documentCookie = await page.evaluate(timestamp => {
       const date = new Date(timestamp);
       document.cookie = `username=John Doe;expires=${date.toUTCString()}`;
+      return document.cookie;
     }, date);
+    expect(documentCookie).toBe('username=John Doe');
     const cookies = await context.cookies();
     await context.clearCookies();
     expect(await context.cookies()).toEqual([]);
