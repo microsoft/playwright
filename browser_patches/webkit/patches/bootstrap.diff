@@ -12960,10 +12960,10 @@ index 0000000000000000000000000000000000000000..6113f4cd60a5d72b8ead61176cb43200
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm b/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..832e52038cf42ea73246e036a66ad9e1fc87fa78
+index 0000000000000000000000000000000000000000..78bd14ef515e4022dbc251945d60248a791d50b3
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm
-@@ -0,0 +1,122 @@
+@@ -0,0 +1,124 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -13063,8 +13063,10 @@ index 0000000000000000000000000000000000000000..832e52038cf42ea73246e036a66ad9e1
 +void WebPageInspectorInputAgent::platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& commands, WallTime timestamp)
 +{
 +    Vector<WebCore::KeypressCommand> macCommands;
-+    for (const String& command : commands)
++    for (const String& command : commands) {
++      m_page.registerKeypressCommandName(command);
 +      macCommands.append(WebCore::KeypressCommand(command.utf8().data()));
++    }
 +    if (text.length() > 0 && macCommands.size() == 0)
 +      macCommands.append(WebCore::KeypressCommand("insertText:", text));
 +    NativeWebKeyboardEvent event(
