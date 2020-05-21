@@ -735,15 +735,15 @@ export class WKPage implements PageDelegate {
     return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
   }
 
-  async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<void> {
-    await this._session.send('DOM.scrollIntoViewIfNeeded', {
+  async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'success' | 'invisible'> {
+    return await this._session.send('DOM.scrollIntoViewIfNeeded', {
       objectId: toRemoteObject(handle).objectId!,
       rect,
-    }).catch(e => {
+    }).then(() => 'success' as const).catch(e => {
+      if (e instanceof Error && e.message.includes('Node does not have a layout object'))
+        return 'invisible';
       if (e instanceof Error && e.message.includes('Node is detached from document'))
         throw new NotConnectedError();
-      if (e instanceof Error && e.message.includes('Node does not have a layout object'))
-        e.message = 'Node is either not visible or not an HTMLElement';
       throw e;
     });
   }

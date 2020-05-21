@@ -171,15 +171,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       injected.dispatchEvent(node, type, eventInit), { type, eventInit });
   }
 
-  async _scrollRectIntoViewIfNeeded(rect?: types.Rect): Promise<void> {
-    await this._page._delegate.scrollRectIntoViewIfNeeded(this, rect);
+  async _scrollRectIntoViewIfNeeded(rect?: types.Rect): Promise<'success' | 'invisible'> {
+    return await this._page._delegate.scrollRectIntoViewIfNeeded(this, rect);
   }
 
   async scrollIntoViewIfNeeded() {
     await this._scrollRectIntoViewIfNeeded();
   }
 
-  private async _clickablePoint(): Promise<types.Point> {
+  private async _clickablePoint(): Promise<types.Point | 'invisible' | 'outsideviewport'> {
     const intersectQuadWithViewport = (quad: types.Quad): types.Quad => {
       return quad.map(point => ({
         x: Math.min(Math.max(point.x, 0), metrics.width),
@@ -204,11 +204,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       this._page._delegate.layoutViewport(),
     ] as const);
     if (!quads || !quads.length)
-      throw new Error('Node is either not visible or not an HTMLElement');
+      return 'invisible';
 
     const filtered = quads.map(quad => intersectQuadWithViewport(quad)).filter(quad => computeQuadArea(quad) > 1);
     if (!filtered.length)
-      throw new Error('Node is either not visible or not an HTMLElement');
+      return 'outsideviewport';
     // Return the middle point of the first quad.
     const result = { x: 0, y: 0 };
     for (const point of filtered[0]) {
@@ -218,22 +218,18 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  private async _offsetPoint(offset: types.Point): Promise<types.Point> {
+  private async _offsetPoint(offset: types.Point): Promise<types.Point | 'invisible'> {
     const [box, border] = await Promise.all([
       this.boundingBox(),
       this._evaluateInUtility(({ injected, node }) => injected.getElementBorderWidth(node), {}).catch(logError(this._context._logger)),
     ]);
-    const point = { x: offset.x, y: offset.y };
-    if (box) {
-      point.x += box.x;
-      point.y += box.y;
-    }
-    if (border) {
-      // Make point relative to the padding box to align with offsetX/offsetY.
-      point.x += border.left;
-      point.y += border.top;
-    }
-    return point;
+    if (!box || !border)
+      return 'invisible';
+    // Make point relative to the padding box to align with offsetX/offsetY.
+    return {
+      x: box.x + border.left + offset.x,
+      y: box.y + border.top + offset.y,
+    };
   }
 
   async _retryPointerAction(actionName: string, action: (point: types.Point) => Promise<void>, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
@@ -257,11 +253,30 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await this._page._delegate.setActivityPaused(true);
       paused = true;
 
-      // Scroll into view and calculate the point again while paused just in case something has moved.
       this._page._log(inputLog, 'scrolling into view if needed...');
-      await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
+      const scrolled = await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
+      if (scrolled === 'invisible') {
+        if (force)
+          throw new Error('Element is not visible');
+        this._page._log(inputLog, '...element is not visible, retrying input action');
+        return 'retry';
+      }
       this._page._log(inputLog, '...done scrolling');
-      const point = roundPoint(position ? await this._offsetPoint(position) : await this._clickablePoint());
+
+      const maybePoint = position ? await this._offsetPoint(position) : await this._clickablePoint();
+      if (maybePoint === 'invisible') {
+        if (force)
+          throw new Error('Element is not visible');
+        this._page._log(inputLog, 'element is not visibile, retrying input action');
+        return 'retry';
+      }
+      if (maybePoint === 'outsideviewport') {
+        if (force)
+          throw new Error('Element is outside of the viewport');
+        this._page._log(inputLog, 'element is outside of the viewport, retrying input action');
+        return 'retry';
+      }
+      const point = roundPoint(maybePoint);
 
       if (!force) {
         if ((options as any).__testHookBeforeHitTarget)

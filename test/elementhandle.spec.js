@@ -254,25 +254,25 @@ describe('ElementHandle.click', function() {
     await button.click().catch(err => error = err);
     expect(error.message).toContain('Element is not attached to the DOM');
   });
-  it('should throw for hidden nodes', async({page, server}) => {
+  it('should throw for hidden nodes with force', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     const button = await page.$('button');
     await page.evaluate(button => button.style.display = 'none', button);
     const error = await button.click({ force: true }).catch(err => err);
-    expect(error.message).toBe('Node is either not visible or not an HTMLElement');
+    expect(error.message).toBe('Element is not visible');
   });
-  it('should throw for recursively hidden nodes', async({page, server}) => {
+  it('should throw for recursively hidden nodes with force', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     const button = await page.$('button');
     await page.evaluate(button => button.parentElement.style.display = 'none', button);
     const error = await button.click({ force: true }).catch(err => err);
-    expect(error.message).toBe('Node is either not visible or not an HTMLElement');
+    expect(error.message).toBe('Element is not visible');
   });
-  it('should throw for <br> elements', async({page, server}) => {
+  it('should throw for <br> elements with force', async({page, server}) => {
     await page.setContent('hello<br>goodbye');
     const br = await page.$('br');
     const error = await br.click({ force: true }).catch(err => err);
-    expect(error.message).toBe('Node is either not visible or not an HTMLElement');
+    expect(error.message).toBe('Element is outside of the viewport');
   });
 });
 
