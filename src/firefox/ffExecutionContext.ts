@@ -41,15 +41,10 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
 
   async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
     if (helper.isString(pageFunction)) {
-      const payload = await this._session.send('Runtime.evaluate', {
-        expression: js.ensureSourceUrl(pageFunction),
-        returnByValue,
-        executionContextId: this._executionContextId,
-      }).catch(rewriteError);
-      checkException(payload.exceptionDetails);
-      if (returnByValue)
-        return deserializeValue(payload.result!);
-      return context.createHandle(payload.result);
+      return this._callOnUtilityScript(context,
+          `evaluate`, [
+            { value: pageFunction },
+          ], returnByValue, () => {});
     }
     if (typeof pageFunction !== 'function')
       throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
@@ -68,15 +63,23 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
       return { value };
     });
 
-    try {
-      const utilityScript = await context.utilityScript();
-      const payload = await this._session.send('Runtime.callFunction', {
-        functionDeclaration: `(utilityScript, ...args) => utilityScript.evaluate(...args)`,
-        args: [
-          { objectId: utilityScript._remoteObject.objectId, value: undefined },
+    return this._callOnUtilityScript(context,
+        `callFunction`, [
           { value: functionText },
           ...values.map(value => ({ value })),
           ...handles,
+        ], returnByValue, dispose);
+  }
+
+  private async _callOnUtilityScript(context: js.ExecutionContext, method: string, args: Protocol.Runtime.CallFunctionArgument[], returnByValue: boolean, dispose: () => void) {
+    try {
+      const utilityScript = await context.utilityScript();
+      const payload = await this._session.send('Runtime.callFunction', {
+        functionDeclaration: `(utilityScript, ...args) => utilityScript.${method}(...args)`,
+        args: [
+          { objectId: utilityScript._remoteObject.objectId, value: undefined },
+          { value: returnByValue },
+          ...args
         ],
         returnByValue,
         executionContextId: this._executionContextId

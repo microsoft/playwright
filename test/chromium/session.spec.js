@@ -42,13 +42,15 @@ describe('ChromiumBrowserContext.createSession', function() {
     // JS coverage enables and then disables Debugger domain.
     await page.coverage.startJSCoverage();
     await page.coverage.stopJSCoverage();
+    page.on('console', console.log);
     // generate a script in page and wait for the event.
-    const [event] = await Promise.all([
-      new Promise(f => client.on('Debugger.scriptParsed', f)),
+    await Promise.all([
+      new Promise(f => client.on('Debugger.scriptParsed', event => {
+        if (event.url === 'foo.js')
+          f();
+      })),
       page.evaluate('//# sourceURL=foo.js')
     ]);
-    // expect events to be dispatched.
-    expect(event.url).toBe('foo.js');
   });
   it('should be able to detach session', async function({page, browser, server}) {
     const client = await page.context().newCDPSession(page);
