@@ -377,4 +377,13 @@ describe('Keyboard', function() {
       expect(await page.evaluate('lastKeyIdentifier')).toBe(keyIdentifier);
     }
   });
+  it.fail(WEBKIT && MAC)('should not crash on keypress w/ command', async({page, server}) => {
+    // https://github.com/microsoft/playwright/issues/2322
+    const keysWithCommands = [
+      'Backspace', 'Tab', 'Enter', 'NumpadEnter', 'Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+      'F5', 'Delete', 'Home', 'End', 'PageUp', 'PageDown'
+    ];
+    for (const key of keysWithCommands)
+      await page.keyboard.press(key);
+  });
 });
