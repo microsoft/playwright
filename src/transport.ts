@@ -119,39 +119,33 @@ export class DeferWriteTransport implements ConnectionTransport {
 }
 
 export class WebSocketTransport implements ConnectionTransport {
-  _ws: WebSocket;
-  _logger?: InnerLogger;
+  private _ws: WebSocket;
+  private _logger: InnerLogger;
 
   onmessage?: (message: ProtocolResponse) => void;
   onclose?: () => void;
 
-  // 'onmessage' handler must be installed synchronously when 'onopen' callback is invoked to
-  // avoid missing incoming messages.
-  static connect<T>(url: string, onopen: (transport: ConnectionTransport) => Promise<T> | T, logger?: InnerLogger): Promise<T> {
-    logger && logger._log({ name: 'browser' }, `<ws connecting> ${url}`);
-    const transport = new WebSocketTransport(url, logger);
-    return new Promise<T>((fulfill, reject) => {
+  static connect(url: string, logger: InnerLogger, deadline: number): Promise<ConnectionTransport> {
+    logger._log({ name: 'browser' }, `<ws connecting> ${url}`);
+    const transport = new WebSocketTransport(url, logger, deadline);
+    return new Promise<ConnectionTransport>((fulfill, reject) => {
       transport._ws.addEventListener('open', async () => {
-        logger && logger._log({ name: 'browser' }, `<ws connected> ${url}`);
-        try {
-          fulfill(await onopen(transport));
-        } catch (e) {
-          logger && logger._log({ name: 'browser' }, `<ws disconnecting> ${url}`);
-          try { transport._ws.close(); } catch (ignored) {}
-          reject(e);
-        }
+        logger._log({ name: 'browser' }, `<ws connected> ${url}`);
+        fulfill(transport);
       });
       transport._ws.addEventListener('error', event => {
-        logger && logger._log({ name: 'browser' }, `<ws connect error> ${url} ${event.message}`);
+        logger._log({ name: 'browser' }, `<ws connect error> ${url} ${event.message}`);
         reject(new Error('WebSocket error: ' + event.message));
+        transport._ws.close();
       });
     });
   }
 
-  constructor(url: string, logger: InnerLogger | undefined) {
+  constructor(url: string, logger: InnerLogger, deadline: number) {
     this._ws = new WebSocket(url, [], {
       perMessageDeflate: false,
-      maxPayload: 256 * 1024 * 1024, // 256Mb
+      maxPayload: 256 * 1024 * 1024, // 256Mb,
+      handshakeTimeout: helper.timeUntilDeadline(deadline)
     });
     this._logger = logger;
     // The 'ws' module in node sometimes sends us multiple messages in a single task.

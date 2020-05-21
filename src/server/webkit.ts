@@ -38,14 +38,13 @@ export class WebKit extends BrowserTypeBase {
     super(packagePath, browser);
   }
 
-  _connectToServer(browserServer: BrowserServer, persistent: boolean, transport: ConnectionTransport, downloadsPath: string): Promise<BrowserBase> {
-    const options = browserServer._launchOptions;
-    return WKBrowser.connect(transport, {
-      slowMo: options.slowMo,
-      headful: !processBrowserArgOptions(options).headless,
+  _connectToServer(browserServer: BrowserServer, persistent: boolean): Promise<BrowserBase> {
+    return WKBrowser.connect(browserServer._transport, {
+      slowMo: browserServer._launchOptions.slowMo,
+      headful: browserServer._headful,
       logger: browserServer._logger,
       persistent,
-      downloadsPath,
+      downloadsPath: browserServer._downloadsPath,
       ownedServer: browserServer
     });
   }
@@ -54,7 +53,7 @@ export class WebKit extends BrowserTypeBase {
     return WKBrowser.connect(transport, options);
   }
 
-  async _launchServer(options: LaunchServerOptions, launchType: LaunchType, browserServer: BrowserServer, userDataDir?: string): Promise<{ transport?: ConnectionTransport, downloadsPath: string, logger: RootLogger }> {
+  async _launchServer(options: LaunchServerOptions, launchType: LaunchType, logger: RootLogger, deadline: number, userDataDir?: string): Promise<BrowserServer> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -66,7 +65,6 @@ export class WebKit extends BrowserTypeBase {
       port = 0,
     } = options;
     assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
-    const logger = browserServer._logger;
 
     let temporaryUserDataDir: string | null = null;
     if (!userDataDir) {
@@ -89,6 +87,7 @@ export class WebKit extends BrowserTypeBase {
     // Note: it is important to define these variables before launchProcess, so that we don't get
     // "Cannot access 'browserServer' before initialization" if something went wrong.
     let transport: ConnectionTransport | undefined = undefined;
+    let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose, downloadsPath } = await launchProcess({
       executablePath: webkitExecutable,
       args: webkitArguments,
@@ -102,21 +101,21 @@ export class WebKit extends BrowserTypeBase {
       attemptToGracefullyClose: async () => {
         if ((options as any).__testHookGracefullyClose)
           await (options as any).__testHookGracefullyClose();
-        assert(transport);
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
         // our connection ignores kBrowserCloseMessageId.
-        transport.send({method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId});
+        transport!.send({method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId});
       },
       onkill: (exitCode, signal) => {
-        browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
+        if (browserServer)
+          browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
       },
     });
 
     const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
     transport = new PipeTransport(stdio[3], stdio[4], logger);
-    browserServer._initialize(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, logger, port || 0) : null);
-    return { transport, downloadsPath, logger };
+    browserServer = new BrowserServer(options, launchedProcess, gracefullyClose, transport, downloadsPath, launchType === 'server' ? wrapTransportWithWebSocket(transport, logger, port || 0) : null);
+    return browserServer;
   }
 
   _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {

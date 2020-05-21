@@ -62,11 +62,15 @@ export class RootLogger implements InnerLogger {
     this._logger.add(`launch`, new RecordingLogger('browser'));
   }
 
-  stopLaunchRecording(): string {
-    const logger = this._logger.remove(`launch`) as RecordingLogger;
+  launchRecording(): string {
+    const logger = this._logger.get(`launch`) as RecordingLogger;
     if (logger)
       return logger.recording();
     return '';
+  }
+
+  stopLaunchRecording() {
+    this._logger.remove(`launch`);
   }
 }
 
@@ -87,10 +91,12 @@ class MultiplexingLogger implements Logger {
     this._loggers.set(id, logger);
   }
 
-  remove(id: string): Logger | undefined {
-    const logger = this._loggers.get(id);
+  get(id: string): Logger | undefined {
+    return this._loggers.get(id);
+  }
+
+  remove(id: string) {
     this._loggers.delete(id);
-    return logger;
   }
 
   isEnabled(name: string, severity: LoggerSeverity): boolean {

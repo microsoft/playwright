@@ -21,6 +21,7 @@ import * as fs from 'fs';
 import * as util from 'util';
 import { TimeoutError } from './errors';
 import * as types from './types';
+import { ChildProcess, execSync } from 'child_process';
 
 // NOTE: update this to point to playwright/lib when moving this file.
 const PLAYWRIGHT_LIB_PATH = __dirname;
@@ -331,6 +332,19 @@ class Helper {
 
   static optionsWithUpdatedTimeout<T extends types.TimeoutOptions>(options: T | undefined, deadline: number): T {
     return { ...(options || {}) as T, timeout: this.timeUntilDeadline(deadline) };
+  }
+
+  static killProcess(proc: ChildProcess) {
+    if (proc.pid && !proc.killed) {
+      try {
+        if (process.platform === 'win32')
+          execSync(`taskkill /pid ${proc.pid} /T /F`);
+        else
+          process.kill(-proc.pid, 'SIGKILL');
+      } catch (e) {
+        // the process might have already stopped
+      }
+    }
   }
 }
 
