@@ -55,8 +55,8 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
 
   async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
     try {
-      let response = await this._evaluateRemoteObject(context, pageFunction, args);
-      if (response.result.type === 'object' && response.result.className === 'Promise') {
+      let response = await this._evaluateRemoteObject(context, pageFunction, args, returnByValue);
+      if (response.result.objectId && response.result.className === 'Promise') {
         response = await Promise.race([
           this._executionContextDestroyedPromise.then(() => contextDestroyedResult),
           this._session.send('Runtime.awaitPromise', {
@@ -79,14 +79,15 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     }
   }
 
-  private async _evaluateRemoteObject(context: js.ExecutionContext, pageFunction: Function | string, args: any[]): Promise<any> {
+  private async _evaluateRemoteObject(context: js.ExecutionContext, pageFunction: Function | string, args: any[], returnByValue: boolean): Promise<Protocol.Runtime.callFunctionOnReturnValue> {
     if (helper.isString(pageFunction)) {
-      const contextId = this._contextId;
-      const expression: string = pageFunction;
-      return await this._session.send('Runtime.evaluate', {
-        expression: js.ensureSourceUrl(expression),
-        contextId,
-        returnByValue: false,
+      const utilityScript = await context.utilityScript();
+      const functionDeclaration = `function (returnByValue, pageFunction) { return this.evaluate(returnByValue, pageFunction); }${js.generateSourceUrl()}`;
+      return await this._session.send('Runtime.callFunctionOn', {
+        functionDeclaration,
+        objectId: utilityScript._remoteObject.objectId!,
+        arguments: [ { value: returnByValue }, { value: pageFunction } ],
+        returnByValue: false, // We need to return real Promise if that is a promise.
         emulateUserGesture: true
       });
     }
@@ -110,12 +111,12 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
 
     try {
       const utilityScript = await context.utilityScript();
-      const callParams = this._serializeFunctionAndArguments(functionText, values, handles);
+      const callParams = this._serializeFunctionAndArguments(functionText, values, handles, returnByValue);
       return await this._session.send('Runtime.callFunctionOn', {
         functionDeclaration: callParams.functionText,
         objectId: utilityScript._remoteObject.objectId!,
-        arguments: [ ...callParams.callArguments ],
-        returnByValue: false,
+        arguments: callParams.callArguments,
+        returnByValue: false, // We need to return real Promise if that is a promise.
         emulateUserGesture: true
       });
     } finally {
@@ -123,9 +124,9 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     }
   }
 
-  private _serializeFunctionAndArguments(originalText: string, values: any[], handles: MaybeCallArgument[]): { functionText: string, callArguments: Protocol.Runtime.CallArgument[] } {
+  private _serializeFunctionAndArguments(originalText: string, values: any[], handles: MaybeCallArgument[], returnByValue: boolean): { functionText: string, callArguments: Protocol.Runtime.CallArgument[]} {
     const callArguments: Protocol.Runtime.CallArgument[] = values.map(value => ({ value }));
-    let functionText = `function (functionText, ...args) { return this.evaluate(functionText, ...args); }${js.generateSourceUrl()}`;
+    let functionText = `function (returnByValue, functionText, ...args) { return this.callFunction(returnByValue, functionText, ...args); }${js.generateSourceUrl()}`;
     if (handles.some(handle => 'unserializable' in handle)) {
       const paramStrings = [];
       for (let i = 0; i < callArguments.length; i++)
@@ -138,11 +139,11 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
           callArguments.push(handle);
         }
       }
-      functionText = `function (functionText, ...a) { return  this.evaluate(functionText, ${paramStrings.join(',')}); }${js.generateSourceUrl()}`;
+      functionText = `function (returnByValue, functionText, ...a) { return  this.callFunction(returnByValue, functionText, ${paramStrings.join(',')}); }${js.generateSourceUrl()}`;
     } else {
       callArguments.push(...(handles as Protocol.Runtime.CallArgument[]));
     }
-    return { functionText, callArguments: [ { value: originalText }, ...callArguments ] };
+    return { functionText, callArguments: [ { value: returnByValue }, { value: originalText }, ...callArguments ] };
 
     function unserializableToString(arg: any) {
       if (Object.is(arg, -0))

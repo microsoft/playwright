@@ -42,18 +42,10 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
 
   async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
     if (helper.isString(pageFunction)) {
-      const contextId = this._contextId;
-      const expression: string = pageFunction;
-      const {exceptionDetails, result: remoteObject} = await this._client.send('Runtime.evaluate', {
-        expression: js.ensureSourceUrl(expression),
-        contextId,
-        returnByValue,
-        awaitPromise: true,
-        userGesture: true
-      }).catch(rewriteError);
-      if (exceptionDetails)
-        throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
-      return returnByValue ? valueFromRemoteObject(remoteObject) : context.createHandle(remoteObject);
+      return this._callOnUtilityScript(context,
+          `evaluate`, [
+            { value: js.ensureSourceUrl(pageFunction) },
+          ], returnByValue, () => { });
     }
 
     if (typeof pageFunction !== 'function')
@@ -81,15 +73,23 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
       return { value };
     });
 
-    try {
-      const utilityScript = await context.utilityScript();
-      const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
-        functionDeclaration: `function (...args) { return this.evaluate(...args) }${js.generateSourceUrl()}`,
-        objectId: utilityScript._remoteObject.objectId,
-        arguments: [
+    return this._callOnUtilityScript(context,
+        'callFunction', [
           { value: functionText },
           ...values.map(value => ({ value })),
           ...handles,
+        ], returnByValue, dispose);
+  }
+
+  private async _callOnUtilityScript(context: js.ExecutionContext, method: string, args: Protocol.Runtime.CallArgument[], returnByValue: boolean, dispose: () => void) {
+    try {
+      const utilityScript = await context.utilityScript();
+      const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
+        functionDeclaration: `function (...args) { return this.${method}(...args) }${js.generateSourceUrl()}`,
+        objectId: utilityScript._remoteObject.objectId,
+        arguments: [
+          { value: returnByValue },
+          ...args
         ],
         returnByValue,
         awaitPromise: true,

@@ -15,7 +15,12 @@
  */
 
 export default class UtilityScript {
-  evaluate(functionText: string, ...args: any[]) {
+  evaluate(returnByValue: boolean, expression: string) {
+    const result = global.eval(expression);
+    return returnByValue ? this._serialize(result) : result;
+  }
+
+  callFunction(returnByValue: boolean, functionText: string, ...args: any[]) {
     const argCount = args[0] as number;
     const handleCount = args[argCount + 1] as number;
     const handles = { __proto__: null } as any;
@@ -34,6 +39,19 @@ export default class UtilityScript {
     for (let i = 0; i < argCount; i++)
       processedArgs[i] = visit(args[i + 1]);
     const func = global.eval('(' + functionText + ')');
-    return func(...processedArgs);
+    const result = func(...processedArgs);
+    return returnByValue ? this._serialize(result) : result;
+  }
+
+  private _serialize(value: any): any {
+    if (value instanceof Error) {
+      const error = value;
+      if ('captureStackTrace' in global.Error) {
+        // v8
+        return error.stack;
+      }
+      return `${error.name}: ${error.message}\n${error.stack}`;
+    }
+    return value;
   }
 }
