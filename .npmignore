@@ -1,3 +1,6 @@
+# NOTE: .npmignore is copied over to every subpackage in //packages when NPM packages
+# are built.
+#
 # this ignores everything by default, except for package.json and LICENSE and README.md
 # see https://docs.npmjs.com/misc/developers
 **/*
@@ -10,8 +13,11 @@ lib/injected/
 !types/*
 !index.d.ts
 
-# root for "playwright-core" package
 !index.js
+!install.js
+!README.md
+!LICENSE
+!NOTICE
 
 # browser descriptor
 !browsers.json

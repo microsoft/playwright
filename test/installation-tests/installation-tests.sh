@@ -5,31 +5,22 @@ set +x
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 
-# 1. Pack all packages.
-
 rm -rf ./output
 mkdir ./output
 cd ./output
-
-npm pack ../../..
-npm pack ../../../packages/playwright
-npm pack ../../../packages/playwright-chromium
-npm pack ../../../packages/playwright-webkit
-npm pack ../../../packages/playwright-firefox
 
 # cleanup environment
 unset PLAYWRIGHT_DOWNLOAD_HOST
 unset PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
 export PLAYWRIGHT_BROWSERS_PATH=0
 
-# There is no option to specify output for `npm pack`, but the format is
-# fixed.
-PACKAGE_VERSION=$(node -e 'console.log(require("../../../package.json").version)')
-PLAYWRIGHT_CORE_TGZ="$(pwd -P)/playwright-core-${PACKAGE_VERSION}.tgz"
-PLAYWRIGHT_TGZ="$(pwd -P)/playwright-${PACKAGE_VERSION}.tgz"
-PLAYWRIGHT_CHROMIUM_TGZ="$(pwd -P)/playwright-chromium-${PACKAGE_VERSION}.tgz"
-PLAYWRIGHT_WEBKIT_TGZ="$(pwd -P)/playwright-webkit-${PACKAGE_VERSION}.tgz"
-PLAYWRIGHT_FIREFOX_TGZ="$(pwd -P)/playwright-firefox-${PACKAGE_VERSION}.tgz"
+# Pack all packages and put them in our output folder.
+PACKAGE_BUILDER="../../../packages/build_package.js"
+PLAYWRIGHT_CORE_TGZ="$(node ${PACKAGE_BUILDER} playwright-core ./playwright-core.tgz)"
+PLAYWRIGHT_TGZ="$(node ${PACKAGE_BUILDER} playwright ./playwright.tgz)"
+PLAYWRIGHT_CHROMIUM_TGZ="$(node ${PACKAGE_BUILDER} playwright-chromium ./playwright-chromium.tgz)"
+PLAYWRIGHT_WEBKIT_TGZ="$(node ${PACKAGE_BUILDER} playwright-webkit ./playwright-webkit.tgz)"
+PLAYWRIGHT_FIREFOX_TGZ="$(node ${PACKAGE_BUILDER} playwright-firefox ./playwright-firefox.tgz)"
 
 SANITY_JS="$(pwd -P)/../sanity.js"
 TEST_ROOT="$(pwd -P)"
