@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-import { BrowserContext, BrowserContextOptions, BrowserContextBase } from './browserContext';
+import { BrowserContext, BrowserContextOptions, BrowserContextBase, PersistentContextOptions } from './browserContext';
 import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Download } from './download';
 import type { BrowserServer } from './server/browserServer';
 import { Events } from './events';
 import { InnerLogger, Log } from './logger';
-import * as types from './types';
 
 export type BrowserOptions = {
   logger: InnerLogger,
-  downloadsPath: string,
+  downloadsPath?: string,
   headful?: boolean,
-  persistent?: boolean,
+  persistent?: PersistentContextOptions,  // Undefined means no persistent context.
   slowMo?: number,
-  viewport?: types.Size | null,
   ownedServer?: BrowserServer,
 };
 
@@ -64,7 +62,7 @@ export abstract class BrowserBase extends EventEmitter implements Browser, Inner
   }
 
   _downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string) {
-    const download = new Download(page, this._options.downloadsPath, uuid, url, suggestedFilename);
+    const download = new Download(page, this._options.downloadsPath || '', uuid, url, suggestedFilename);
     this._downloads.set(uuid, download);
   }
 

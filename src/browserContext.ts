@@ -27,7 +27,7 @@ import { BrowserBase } from './browser';
 import { Log, InnerLogger, Logger, RootLogger } from './logger';
 import { FunctionWithSource } from './frames';
 
-export type BrowserContextOptions = {
+export type PersistentContextOptions = {
   viewport?: types.Size | null,
   ignoreHTTPSErrors?: boolean,
   javaScriptEnabled?: boolean,
@@ -44,6 +44,9 @@ export type BrowserContextOptions = {
   isMobile?: boolean,
   hasTouch?: boolean,
   colorScheme?: types.ColorScheme,
+};
+
+export type BrowserContextOptions = PersistentContextOptions & {
   acceptDownloads?: boolean,
   logger?: Logger,
 };
@@ -188,9 +191,15 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
       await this.waitForEvent('page');
     const pages = this.pages();
     await pages[0].waitForLoadState();
-    if (pages.length !== 1 || pages[0].url() !== 'about:blank') {
-      await this.close().catch(e => null);
+    if (pages.length !== 1 || pages[0].url() !== 'about:blank')
       throw new Error(`Arguments can not specify page to be opened (first url is ${pages[0].url()})`);
+    if (this._options.isMobile || this._options.locale) {
+      // Workaround for:
+      // - chromium fails to change isMobile for existing page;
+      // - webkit fails to change locale for existing page.
+      const oldPage = pages[0];
+      await this.newPage();
+      await oldPage.close();
     }
   }
 }
@@ -203,7 +212,28 @@ export function assertBrowserContextIsNotOwned(context: BrowserContextBase) {
 }
 
 export function validateBrowserContextOptions(options: BrowserContextOptions): BrowserContextOptions {
-  const result = { ...options };
+  // Copy all fields manually to strip any extra junk.
+  // Especially useful when we share context and launch options for launchPersistent.
+  const result: BrowserContextOptions = {
+    ignoreHTTPSErrors: options.ignoreHTTPSErrors,
+    bypassCSP: options.bypassCSP,
+    locale: options.locale,
+    timezoneId: options.timezoneId,
+    offline: options.offline,
+    colorScheme: options.colorScheme,
+    acceptDownloads: options.acceptDownloads,
+    viewport: options.viewport,
+    javaScriptEnabled: options.javaScriptEnabled,
+    userAgent: options.userAgent,
+    geolocation: options.geolocation,
+    permissions: options.permissions,
+    extraHTTPHeaders: options.extraHTTPHeaders,
+    httpCredentials: options.httpCredentials,
+    deviceScaleFactor: options.deviceScaleFactor,
+    isMobile: options.isMobile,
+    hasTouch: options.hasTouch,
+    logger: options.logger,
+  };
   if (result.viewport === null && result.deviceScaleFactor !== undefined)
     throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
   if (result.viewport === null && result.isMobile !== undefined)
@@ -217,6 +247,12 @@ export function validateBrowserContextOptions(options: BrowserContextOptions): B
   if (result.extraHTTPHeaders)
     result.extraHTTPHeaders = network.verifyHeaders(result.extraHTTPHeaders);
   return result;
+}
+
+export function validatePersistentContextOptions(options: PersistentContextOptions): PersistentContextOptions {
+  if ((options as any).acceptDownloads !== undefined)
+    throw new Error(`Option "acceptDownloads" is not supported for persistent context`);
+  return validateBrowserContextOptions(options);
 }
 
 export function verifyGeolocation(geolocation: types.Geolocation): types.Geolocation {

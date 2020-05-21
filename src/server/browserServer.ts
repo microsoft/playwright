@@ -56,11 +56,11 @@ export class BrowserServer extends EventEmitter {
   private _webSocketWrapper: WebSocketWrapper | null = null;
   readonly _launchOptions: LaunchOptions;
   readonly _logger: RootLogger;
-  readonly _downloadsPath: string;
+  readonly _downloadsPath: string | undefined;
   readonly _transport: ConnectionTransport;
   readonly _headful: boolean;
 
-  constructor(options: LaunchOptions, process: ChildProcess, gracefullyClose: () => Promise<void>, transport: ConnectionTransport, downloadsPath: string, webSocketWrapper: WebSocketWrapper | null) {
+  constructor(options: LaunchOptions, process: ChildProcess, gracefullyClose: () => Promise<void>, transport: ConnectionTransport, downloadsPath: string | undefined, webSocketWrapper: WebSocketWrapper | null) {
     super();
     this._launchOptions = options;
     this._headful = !processBrowserArgOptions(options).headless;

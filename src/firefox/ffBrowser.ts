@@ -37,7 +37,14 @@ export class FFBrowser extends BrowserBase {
   static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
     const connection = new FFConnection(SlowMoTransport.wrap(transport, options.slowMo), options.logger);
     const browser = new FFBrowser(connection, options);
-    await connection.send('Browser.enable', { attachToDefaultContext: !!options.persistent });
+    const promises: Promise<any>[] = [
+      connection.send('Browser.enable', { attachToDefaultContext: !!options.persistent }),
+    ];
+    if (options.persistent) {
+      browser._defaultContext = new FFBrowserContext(browser, null, options.persistent);
+      promises.push((browser._defaultContext as FFBrowserContext)._initialize());
+    }
+    await Promise.all(promises);
     return browser;
   }
 
@@ -45,9 +52,6 @@ export class FFBrowser extends BrowserBase {
     super(options);
     this._connection = connection;
     this._ffPages = new Map();
-
-    if (options.persistent)
-      this._defaultContext = new FFBrowserContext(this, null, validateBrowserContextOptions({}));
     this._contexts = new Map();
     this._connection.on(ConnectionEvents.Disconnected, () => {
       for (const context of this._contexts.values())
@@ -151,16 +155,18 @@ export class FFBrowserContext extends BrowserContextBase {
   }
 
   async _initialize() {
+    assert(!this._ffPages().length);
     const browserContextId = this._browserContextId || undefined;
-    const promises: Promise<any>[] = [
-      this._browser._connection.send('Browser.setDownloadOptions', {
+    const promises: Promise<any>[] = [];
+    if (this._browser._options.downloadsPath) {
+      promises.push(this._browser._connection.send('Browser.setDownloadOptions', {
         browserContextId,
         downloadOptions: {
           behavior: this._options.acceptDownloads ? 'saveToDisk' : 'cancel',
           downloadsDir: this._browser._options.downloadsPath,
         },
-      }),
-    ];
+      }));
+    }
     if (this._options.viewport) {
       const viewport = {
         viewportSize: { width: this._options.viewport.width, height: this._options.viewport.height },

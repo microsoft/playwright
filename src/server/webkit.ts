@@ -32,13 +32,14 @@ import { Events } from '../events';
 import { InnerLogger, logError, RootLogger } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
 import { BrowserBase, BrowserOptions } from '../browser';
+import { PersistentContextOptions } from '../browserContext';
 
 export class WebKit extends BrowserTypeBase {
   constructor(packagePath: string, browser: BrowserDescriptor) {
     super(packagePath, browser);
   }
 
-  _connectToServer(browserServer: BrowserServer, persistent: boolean): Promise<BrowserBase> {
+  _connectToServer(browserServer: BrowserServer, persistent: PersistentContextOptions | undefined): Promise<BrowserBase> {
     return WKBrowser.connect(browserServer._transport, {
       slowMo: browserServer._launchOptions.slowMo,
       headful: browserServer._headful,

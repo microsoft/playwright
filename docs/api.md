@@ -4031,9 +4031,32 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   - `env` <[Object]<[string], [string]|[number]|[boolean]>> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
-- returns: <[Promise]<[BrowserContext]>> Promise which resolves to the browser app instance.
+  - `ignoreHTTPSErrors` <[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+  - `bypassCSP` <[boolean]> Toggles bypassing page's Content-Security-Policy.
+  - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+    - `width` <[number]> page width in pixels.
+    - `height` <[number]> page height in pixels.
+  - `userAgent` <[string]> Specific user agent to use in this context.
+  - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
+  - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported in Firefox.
+  - `hasTouch` <[boolean]> Specifies if viewport supports touch events. Defaults to false.
+  - `javaScriptEnabled` <[boolean]> Whether or not to enable JavaScript in the context. Defaults to true.
+  - `timezoneId` <[string]> Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
+  - `geolocation` <[Object]>
+    - `latitude` <[number]> Latitude between -90 and 90.
+    - `longitude` <[number]> Longitude between -180 and 180.
+    - `accuracy` <[number]> Non-negative accuracy value. Defaults to `0`.
+  - `locale` <[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
+  - `permissions` <[Array]<[string]>> A list of permissions to grant to all pages in this context. See [browserContext.grantPermissions](#browsercontextgrantpermissionspermissions-options) for more details.
+  - `extraHTTPHeaders` <[Object]<[string], [string]>> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+  - `offline` <[boolean]> Whether to emulate network being offline. Defaults to `false`.
+  - `httpCredentials` <[Object]> Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+    - `username` <[string]>
+    - `password` <[string]>
+  - `colorScheme` <"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
+- returns: <[Promise]<[BrowserContext]>> Promise that resolves to the persistent browser context instance.
 
-Launches browser instance that uses persistent storage located at `userDataDir`.
+Launches browser that uses persistent storage located at `userDataDir` and returns the only context. Closing this context will automatically close the browser.
 
 #### browserType.launchServer([options])
 - `options` <[Object]> Set of configurable options to set on the browser. Can have the following fields:
