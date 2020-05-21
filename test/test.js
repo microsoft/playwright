@@ -74,7 +74,7 @@ function collect(browserNames) {
 
   // TODO: this should be a preinstalled playwright by default.
   const playwrightPath = config.playwrightPath;
-  const playwright = require('.');
+  const playwright = require('..');
   const { setUnderTest } = require(require('path').join(playwrightPath, 'lib/helper.js'));
   setUnderTest();
 
