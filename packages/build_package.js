@@ -19,9 +19,44 @@ const path = require('path');
 const rmSync = require('rimraf').sync;
 const ncp = require('ncp');
 const {spawnSync} = require('child_process');
+const util = require('util');
 
-const FILENAME = path.basename(__filename);
+const writeFileAsync = util.promisify(fs.writeFile.bind(fs));
+const cpAsync = util.promisify(ncp);
+
+const SCRIPT_NAME = path.basename(__filename);
 const ROOT_PATH = path.join(__dirname, '..');
+
+const PACKAGE_FILES = ['lib', 'types', 'NOTICE', 'LICENSE', '.npmignore'];
+
+const PACKAGES = {
+  'playwright': {
+    description: 'A high-level API to automate web browsers',
+    whitelistedBrowsers: ['chromium', 'firefox', 'webkit'],
+    // We copy README.md additionally for Playwright so that it looks nice on NPM.
+    files: [...PACKAGE_FILES, 'README.md'],
+  },
+  'playwright-core': {
+    description: 'A high-level API to automate web browsers',
+    whitelistedBrowsers: [],
+    files: PACKAGE_FILES,
+  },
+  'playwright-webkit': {
+    description: 'A high-level API to automate WebKit',
+    whitelistedBrowsers: ['webkit'],
+    files: PACKAGE_FILES,
+  },
+  'playwright-firefox': {
+    description: 'A high-level API to automate Firefox',
+    whitelistedBrowsers: ['firefox'],
+    files: PACKAGE_FILES,
+  },
+  'playwright-chromium': {
+    description: 'A high-level API to automate Chromium',
+    whitelistedBrowsers: ['chromium'],
+    files: PACKAGE_FILES,
+  },
+};
 
 const cleanupPaths = [];
 
@@ -32,11 +67,11 @@ if (args.some(arg => arg === '--help')) {
   process.exit(1);
 } else if (args.length < 1) {
   console.log(`Please specify package name, e.g. 'playwright' or 'playwright-chromium'.`);
-  console.log(`Try running ${FILENAME} --help`);
+  console.log(`Try running ${SCRIPT_NAME} --help`);
   process.exit(1);
 } else if (args.length < 2) {
   console.log(`Please specify output path`);
-  console.log(`Try running ${FILENAME} --help`);
+  console.log(`Try running ${SCRIPT_NAME} --help`);
   process.exit(1);
 }
 
@@ -61,46 +96,23 @@ if (!args.some(arg => arg === '--no-cleanup')) {
 const packageName = args[0];
 const outputPath = path.resolve(args[1]);
 const packagePath = path.join(__dirname, packageName);
+const package = PACKAGES[packageName];
+if (!package) {
+  console.log(`ERROR: unknown package ${packageName}`);
+  process.exit(1);
+}
 
 (async () => {
-  // 3. figure package description and browsers based on name
-  let description = '';
-  let whitelistedBrowsers = [];
-  if (packageName === 'playwright') {
-    description = 'A high-level API to automate web browsers';
-    whitelistedBrowsers = ['chromium', 'firefox', 'webkit'];
-    // For Playwright, we need to copy README.md
-    await copyToPackage('README.md');
-  } else if (packageName === 'playwright-core') {
-    description = 'A high-level API to automate web browsers';
-    whitelistedBrowsers = [];
-  } else if (packageName === 'playwright-webkit') {
-    description = 'A high-level API to automate WebKit';
-    whitelistedBrowsers = ['webkit'];
-  } else if (packageName === 'playwright-firefox') {
-    description = 'A high-level API to automate Firefox';
-    whitelistedBrowsers = ['firefox'];
-  } else if (packageName === 'playwright-chromium') {
-    description = 'A high-level API to automate Chromium';
-    whitelistedBrowsers = ['chromium'];
-  } else {
-    console.log(`ERROR: unknown package ${packageName}`);
-    process.exit(1);
-  }
+  // 3. Copy package files.
+  for (const file of package.files)
+    await copyToPackage(file);
 
-  // 4. Copy files & directories from playwright-internal to package.
-  await copyToPackage('lib');
-  await copyToPackage('types');
-  await copyToPackage('NOTICE');
-  await copyToPackage('LICENSE');
-  await copyToPackage('.npmignore');
-
-  // 5. Generate package.json
+  // 4. Generate package.json
   const packageJSON = require(path.join(ROOT_PATH, 'package.json'));
   await writeToPackage('package.json', JSON.stringify({
     name: packageName,
     version: packageJSON.version,
-    description,
+    description: package.description,
     repository: packageJSON.repository,
     engines: packageJSON.engines,
     homepage: packageJSON.homepage,
@@ -113,12 +125,12 @@ const packagePath = path.join(__dirname, packageName);
     dependencies: packageJSON.dependencies
   }, null, 2));
 
-  // 6. Generate browsers.json
+  // 5. Generate browsers.json
   const browsersJSON = require(path.join(ROOT_PATH, 'browsers.json'));
-  browsersJSON.browsers = browsersJSON.browsers.filter(browser => whitelistedBrowsers.includes(browser.name));
+  browsersJSON.browsers = browsersJSON.browsers.filter(browser => package.whitelistedBrowsers.includes(browser.name));
   await writeToPackage('browsers.json', JSON.stringify(browsersJSON, null, 2));
 
-  // 7. Run npm pack
+  // 6. Run npm pack
   const {stdout, stderr, status} = spawnSync('npm', ['pack'], {cwd: packagePath, encoding: 'utf8'});
   if (status !== 0) {
     console.log(`ERROR: "npm pack" failed`);
@@ -127,7 +139,7 @@ const packagePath = path.join(__dirname, packageName);
   }
   const tgzName = stdout.trim();
 
-  // 8. Move result to the outputPath
+  // 7. Move result to the outputPath
   fs.renameSync(path.join(packagePath, tgzName), outputPath);
   console.log(outputPath);
 })();
@@ -136,14 +148,7 @@ async function writeToPackage(fileName, content) {
   const toPath = path.join(packagePath, fileName);
   cleanupPaths.push(toPath);
   console.error(`- generating: //${path.relative(ROOT_PATH, toPath)}`);
-  await new Promise((resolve, reject) => {
-    fs.writeFile(toPath, content, error => {
-      if (error)
-        reject(error);
-      else
-        resolve();
-    });
-  });
+  await writeFileAsync(toPath, content);
 }
 
 async function copyToPackage(fileOrDirectoryName) {
@@ -151,26 +156,19 @@ async function copyToPackage(fileOrDirectoryName) {
   const toPath = path.join(packagePath, fileOrDirectoryName);
   cleanupPaths.push(toPath);
   console.error(`- copying: //${path.relative(ROOT_PATH, fromPath)} -> //${path.relative(ROOT_PATH, toPath)}`);
-  await new Promise((resolve, reject) => {
-    ncp(fromPath, toPath, error => {
-      if (error)
-        reject(error);
-      else
-        resolve();
-    });
-  });
+  await cpAsync(fromPath, toPath);
 }
 
 function usage() {
   return `
-usage: ${FILENAME} <package-name> <output-path> [--no-cleanup]
+usage: ${SCRIPT_NAME} <package-name> <output-path> [--no-cleanup]
 
 Creates a .tgz of the package and saves it at the given output path
 
   --no-cleanup    skip cleaning up generated files from package directory
 
 Example:
-  ${FILENAME} playwright ./playwright.tgz
+  ${SCRIPT_NAME} playwright ./playwright.tgz
 `;
 }
 
