@@ -81,10 +81,10 @@ PLAYWRIGHT_WEBKIT_TGZ="$(node ./packages/build_package.js playwright-webkit ./pl
 PLAYWRIGHT_FIREFOX_TGZ="$(node ./packages/build_package.js playwright-firefox ./playwright-firefox.tgz)"
 PLAYWRIGHT_CHROMIUM_TGZ="$(node ./packages/build_package.js playwright-chromium ./playwright-chromium.tgz)"
 
-npm publish ${PLAYWRIGHT_TGZ}           --tag="${NPM_PUBLISH_TAG}" --dry-run
-npm publish ${PLAYWRIGHT_CORE_TGZ}      --tag="${NPM_PUBLISH_TAG}" --dry-run
-npm publish ${PLAYWRIGHT_WEBKIT_TGZ}    --tag="${NPM_PUBLISH_TAG}" --dry-run
-npm publish ${PLAYWRIGHT_FIREFOX_TGZ}   --tag="${NPM_PUBLISH_TAG}" --dry-run
-npm publish ${PLAYWRIGHT_CHROMIUM_TGZ}  --tag="${NPM_PUBLISH_TAG}" --dry-run
+npm publish ${PLAYWRIGHT_TGZ}           --tag="${NPM_PUBLISH_TAG}"
+npm publish ${PLAYWRIGHT_CORE_TGZ}      --tag="${NPM_PUBLISH_TAG}"
+npm publish ${PLAYWRIGHT_WEBKIT_TGZ}    --tag="${NPM_PUBLISH_TAG}"
+npm publish ${PLAYWRIGHT_FIREFOX_TGZ}   --tag="${NPM_PUBLISH_TAG}"
+npm publish ${PLAYWRIGHT_CHROMIUM_TGZ}  --tag="${NPM_PUBLISH_TAG}"
 
 echo "Done."
