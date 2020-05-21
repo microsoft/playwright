@@ -7223,6 +7223,19 @@ index 1d2febfba8833912f72216aa53c8c20090ee2d8b..1b2c3d84b15b12f1a187c0b7622db43c
  } WKPageUIClientV14;
  
  #ifdef __cplusplus
+diff --git a/Source/WebKit/UIProcess/API/C/WKWebsiteDataStoreRef.cpp b/Source/WebKit/UIProcess/API/C/WKWebsiteDataStoreRef.cpp
+index b0ab3fc0e8fbe918d323620f0c6e8062282101a8..c1b55d019e440af4950b6c0c6fdc79afa8df9003 100644
+--- a/Source/WebKit/UIProcess/API/C/WKWebsiteDataStoreRef.cpp
++++ b/Source/WebKit/UIProcess/API/C/WKWebsiteDataStoreRef.cpp
+@@ -621,7 +621,7 @@ void WKWebsiteDataStoreSetResourceLoadStatisticsToSameSiteStrictCookiesForTestin
+ void WKWebsiteDataStoreSetAppBoundDomainsForTesting(WKArrayRef originURLsRef, void* context, WKWebsiteDataStoreSetAppBoundDomainsForTestingFunction completionHandler)
+ {
+ #if PLATFORM(COCOA)
+-    RefPtr<API::Array> originURLsArray = toImpl(originURLsRef);
++    RefPtr<API::Array> originURLsArray = WebKit::toImpl(originURLsRef);
+     size_t newSize = originURLsArray ? originURLsArray->size() : 0;
+     HashSet<WebCore::RegistrableDomain> domains;
+     domains.reserveInitialCapacity(newSize);
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/WKProcessPool.mm b/Source/WebKit/UIProcess/API/Cocoa/WKProcessPool.mm
 index 569557047cf56dc88e674efed4b9b3a0988b8dda..4e885f9c5459d89217039f7800b49ec4ba5b3e59 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/WKProcessPool.mm
