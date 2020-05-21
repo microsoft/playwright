@@ -124,7 +124,20 @@ export abstract class BrowserTypeBase implements BrowserType {
     if ((options as any).__testHookBeforeCreateBrowser)
       await (options as any).__testHookBeforeCreateBrowser();
 
-    const browser = await this._connectToServer(browserServer, persistent);
+    const browserOptions: BrowserOptions = {
+      slowMo: options.slowMo,
+      persistent,
+      headful: browserServer._headful,
+      logger: browserServer._logger,
+      downloadsPath: browserServer._downloadsPath,
+      ownedServer: browserServer,
+    };
+    for (const [key, value] of Object.entries(options)) {
+      if (key.startsWith('__testHook'))
+        (browserOptions as any)[key] = value;
+    }
+
+    const browser = await this._connectToTransport(browserServer._transport, browserOptions);
     if (persistent && (!options.ignoreDefaultArgs || Array.isArray(options.ignoreDefaultArgs))) {
       const context = browser._defaultContext!;
       await context._loadDefaultContext();
@@ -171,6 +184,5 @@ export abstract class BrowserTypeBase implements BrowserType {
   }
 
   abstract _launchServer(options: LaunchServerOptions, launchType: LaunchType, logger: RootLogger, deadline: number, userDataDir?: string): Promise<BrowserServer>;
-  abstract _connectToServer(browserServer: BrowserServer, persistent: PersistentContextOptions | undefined): Promise<BrowserBase>;
   abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BrowserBase>;
 }
