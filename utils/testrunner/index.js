@@ -114,6 +114,9 @@ class DefaultTestRunner {
   async run() {
     let reporter = null;
 
+    const testRuns = this._repeater.createTestRuns(this._filter.filter(this._collector.tests()));
+    this._parallel = Math.min(testRuns.length, this._parallel);
+
     if (this._needReporter) {
       const reporterDelegate = {
         focusedSuites: () => this._filter.focusedSuites(this._collector.suites()),
@@ -145,7 +148,6 @@ class DefaultTestRunner {
       return result;
     }
 
-    const testRuns = this._repeater.createTestRuns(this._filter.filter(this._collector.tests()));
     const testRunner = new TestRunner();
     const result = await testRunner.run(testRuns, {
       parallel: this._parallel,

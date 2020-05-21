@@ -41,6 +41,8 @@ function collect(browserNames) {
     parallel = parseInt(process.env.PW_PARALLEL_TESTS.trim(), 10);
   if (getCLIArgument('-j'))
     parallel = parseInt(getCLIArgument('-j'), 10);
+  else
+    parallel = require('os').cpus().length;
   require('events').defaultMaxListeners *= parallel;
 
   let timeout = process.env.CI ? 30 * 1000 : 10 * 1000;
