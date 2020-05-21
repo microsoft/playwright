@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const playwright = require('../../index-for-dev');
+const playwright = require('../../');
 const path = require('path');
 const Source = require('./Source');
 const Message = require('./Message');

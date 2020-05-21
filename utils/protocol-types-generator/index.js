@@ -17,7 +17,7 @@ async function generateProtocol(name, executablePath) {
 
 async function generateChromiumProtocol(executablePath) {
   const outputPath = path.join(__dirname, '..', '..', 'src', 'chromium', 'protocol.ts');
-  const playwright = await require('../../index-for-dev').chromium;
+  const playwright = require('../../index').chromium;
   const defaultArgs = playwright._defaultArgs.bind(playwright);
   playwright._defaultArgs = (...args) => {
     const result = defaultArgs(...args);
