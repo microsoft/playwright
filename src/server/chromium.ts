@@ -32,8 +32,7 @@ import { ConnectionTransport, ProtocolRequest } from '../transport';
 import { InnerLogger, logError, RootLogger } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
 import { CRDevTools } from '../chromium/crDevTools';
-import { BrowserBase, BrowserOptions } from '../browser';
-import { PersistentContextOptions } from '../browserContext';
+import { BrowserOptions } from '../browser';
 
 export class Chromium extends BrowserTypeBase {
   private _devtools: CRDevTools | undefined;
@@ -48,25 +47,13 @@ export class Chromium extends BrowserTypeBase {
     return new CRDevTools(path.join(this._browserPath, 'devtools-preferences.json'));
   }
 
-  async _connectToServer(browserServer: BrowserServer, persistent: PersistentContextOptions | undefined): Promise<BrowserBase> {
-    const options = browserServer._launchOptions;
+  async _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<CRBrowser> {
     let devtools = this._devtools;
     if ((options as any).__testHookForDevTools) {
       devtools = this._createDevTools();
       await (options as any).__testHookForDevTools(devtools);
     }
-    return await CRBrowser.connect(browserServer._transport, {
-      slowMo: options.slowMo,
-      persistent,
-      headful: browserServer._headful,
-      logger: browserServer._logger,
-      downloadsPath: browserServer._downloadsPath,
-      ownedServer: browserServer,
-    }, devtools);
-  }
-
-  _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<CRBrowser> {
-    return CRBrowser.connect(transport, options);
+    return CRBrowser.connect(transport, options, devtools);
   }
 
   async _launchServer(options: LaunchServerOptions, launchType: LaunchType, logger: RootLogger, deadline: number, userDataDir?: string): Promise<BrowserServer> {

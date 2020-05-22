@@ -30,26 +30,9 @@ import * as ws from 'ws';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
 import { Events } from '../events';
 import { InnerLogger, logError, RootLogger } from '../logger';
-import { BrowserDescriptor } from '../install/browserPaths';
-import { BrowserBase, BrowserOptions } from '../browser';
-import { PersistentContextOptions } from '../browserContext';
+import { BrowserOptions } from '../browser';
 
 export class WebKit extends BrowserTypeBase {
-  constructor(packagePath: string, browser: BrowserDescriptor) {
-    super(packagePath, browser);
-  }
-
-  _connectToServer(browserServer: BrowserServer, persistent: PersistentContextOptions | undefined): Promise<BrowserBase> {
-    return WKBrowser.connect(browserServer._transport, {
-      slowMo: browserServer._launchOptions.slowMo,
-      headful: browserServer._headful,
-      logger: browserServer._logger,
-      persistent,
-      downloadsPath: browserServer._downloadsPath,
-      ownedServer: browserServer
-    });
-  }
-
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
     return WKBrowser.connect(transport, options);
   }
