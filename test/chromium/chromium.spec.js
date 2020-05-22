@@ -72,4 +72,22 @@ describe('Chromium-Specific Page Tests', function() {
     // make it work with Edgium.
     expect(serverRequest.headers.intervention).toContain('feature/5718547946799104');
   });
+  it.fail().skip(HEADLESS)('Discarded tabs should still exist as pages post-discard', async({browser, server}) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+
+    const pageToDiscard = await context.newPage();
+    await pageToDiscard.goto(server.EMPTY_PAGE);
+
+    const pageDiscardUI = await context.newPage();
+    await pageDiscardUI.goto("chrome://discards");
+    const pagesBeforeDiscard = await context.pages();
+
+    await pageDiscardUI.click(`css=#tab-discards-info-table-body > tr:nth-child(2) > td.actions-cell > div:nth-child(3)`);
+    await new Promise(res => setTimeout(res, 1_000));
+
+    const pagesAfterDiscard = await context.pages();
+    expect(pagesAfterDiscard.length).toBe(pagesBeforeDiscard.length);
+  });
 });
