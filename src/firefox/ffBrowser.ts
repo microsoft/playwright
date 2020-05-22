@@ -207,14 +207,6 @@ export class FFBrowserContext extends BrowserContextBase {
     return Array.from(this._browser._ffPages.values()).filter(ffPage => ffPage._browserContext === this);
   }
 
-  setDefaultNavigationTimeout(timeout: number) {
-    this._timeoutSettings.setDefaultNavigationTimeout(timeout);
-  }
-
-  setDefaultTimeout(timeout: number) {
-    this._timeoutSettings.setDefaultTimeout(timeout);
-  }
-
   pages(): Page[] {
     return this._ffPages().map(ffPage => ffPage._initializedPage).filter(pageOrNull => !!pageOrNull) as Page[];
   }
