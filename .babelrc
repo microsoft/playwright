@@ -3,6 +3,7 @@
     "@babel/preset-typescript"
   ],
   "plugins": [
+    "@babel/plugin-proposal-class-properties",
     ["@babel/plugin-transform-modules-commonjs", {"noInterop": true}]
   ],
   "ignore": [
