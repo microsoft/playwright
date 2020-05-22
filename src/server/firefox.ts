@@ -22,7 +22,7 @@ import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
 import { helper } from '../helper';
 import { WebSocketWrapper } from './browserServer';
-import { BrowserArgOptions, BrowserTypeBase, processBrowserArgOptions, LaunchType } from './browserType';
+import { BrowserArgOptions, BrowserTypeBase, processBrowserArgOptions } from './browserType';
 import { Env } from './processLauncher';
 import { ConnectionTransport, SequenceNumberMixer } from '../transport';
 import { InnerLogger, logError } from '../logger';
@@ -56,7 +56,7 @@ export class Firefox extends BrowserTypeBase {
     return wrapTransportWithWebSocket(transport, logger, port);
   }
 
-  _defaultArgs(options: BrowserArgOptions, launchType: LaunchType, userDataDir: string): string[] {
+  _defaultArgs(options: BrowserArgOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { devtools, headless } = processBrowserArgOptions(options);
     const { args = [] } = options;
     if (devtools)
@@ -77,7 +77,7 @@ export class Firefox extends BrowserTypeBase {
     firefoxArguments.push(`-profile`, userDataDir);
     firefoxArguments.push('-juggler', '0');
     firefoxArguments.push(...args);
-    if (launchType === 'persistent')
+    if (isPersistent)
       firefoxArguments.push('about:blank');
     else
       firefoxArguments.push('-silent');

@@ -21,7 +21,7 @@ import { CRBrowser } from '../chromium/crBrowser';
 import * as ws from 'ws';
 import { Env } from './processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
-import { BrowserArgOptions, BrowserTypeBase, processBrowserArgOptions, LaunchType } from './browserType';
+import { BrowserArgOptions, BrowserTypeBase, processBrowserArgOptions } from './browserType';
 import { WebSocketWrapper } from './browserServer';
 import { ConnectionTransport, ProtocolRequest } from '../transport';
 import { InnerLogger, logError } from '../logger';
@@ -66,7 +66,7 @@ export class Chromium extends BrowserTypeBase {
     return wrapTransportWithWebSocket(transport, logger, port);
   }
 
-  _defaultArgs(options: BrowserArgOptions, launchType: LaunchType, userDataDir: string): string[] {
+  _defaultArgs(options: BrowserArgOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { devtools, headless } = processBrowserArgOptions(options);
     const { args = [] } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
@@ -89,7 +89,7 @@ export class Chromium extends BrowserTypeBase {
       );
     }
     chromeArguments.push(...args);
-    if (launchType === 'persistent')
+    if (isPersistent)
       chromeArguments.push('about:blank');
     else
       chromeArguments.push('--no-startup-window');

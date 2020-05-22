@@ -20,7 +20,7 @@ import { Env } from './processLauncher';
 import * as path from 'path';
 import { helper } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
-import { BrowserArgOptions, BrowserTypeBase, processBrowserArgOptions, LaunchType } from './browserType';
+import { BrowserArgOptions, BrowserTypeBase, processBrowserArgOptions } from './browserType';
 import { ConnectionTransport, SequenceNumberMixer } from '../transport';
 import * as ws from 'ws';
 import { WebSocketWrapper } from './browserServer';
@@ -49,7 +49,7 @@ export class WebKit extends BrowserTypeBase {
     return wrapTransportWithWebSocket(transport, logger, port);
   }
 
-  _defaultArgs(options: BrowserArgOptions, launchType: LaunchType, userDataDir: string): string[] {
+  _defaultArgs(options: BrowserArgOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { devtools, headless } = processBrowserArgOptions(options);
     const { args = [] } = options;
     if (devtools)
@@ -62,12 +62,12 @@ export class WebKit extends BrowserTypeBase {
     const webkitArguments = ['--inspector-pipe'];
     if (headless)
       webkitArguments.push('--headless');
-    if (launchType === 'persistent')
+    if (isPersistent)
       webkitArguments.push(`--user-data-dir=${userDataDir}`);
     else
       webkitArguments.push(`--no-startup-window`);
     webkitArguments.push(...args);
-    if (launchType === 'persistent')
+    if (isPersistent)
       webkitArguments.push('about:blank');
     return webkitArguments;
   }

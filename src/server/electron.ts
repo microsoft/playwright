@@ -183,7 +183,7 @@ export class Electron  {
       logger,
       pipe: true,
       cwd: options.cwd,
-      omitDownloads: true,
+      tempDirectories: [],
       attemptToGracefullyClose: () => app!.close(),
       onkill: (exitCode, signal) => {
         if (app)
@@ -198,7 +198,7 @@ export class Electron  {
 
     const chromeMatch = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, helper.timeUntilDeadline(deadline), timeoutError);
     const chromeTransport = await WebSocketTransport.connect(chromeMatch[1], logger, deadline);
-    const browserServer = new BrowserServer(options, launchedProcess, gracefullyClose, chromeTransport, undefined, null);
+    const browserServer = new BrowserServer(launchedProcess, gracefullyClose);
     const browser = await CRBrowser.connect(chromeTransport, { headful: true, logger, persistent: { viewport: null }, ownedServer: browserServer });
     app = new ElectronApplication(logger, browser, nodeConnection);
     await app._init();

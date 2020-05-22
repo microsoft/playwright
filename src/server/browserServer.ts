@@ -17,13 +17,11 @@
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import { helper } from '../helper';
-import { RootLogger } from '../logger';
-import { LaunchOptions, processBrowserArgOptions } from './browserType';
-import { ConnectionTransport } from '../transport';
 
 export class WebSocketWrapper {
   readonly wsEndpoint: string;
   private _bindings: (Map<any, any> | Set<any>)[];
+
   constructor(wsEndpoint: string, bindings: (Map<any, any>|Set<any>)[]) {
     this.wsEndpoint = wsEndpoint;
     this._bindings = bindings;
@@ -53,24 +51,12 @@ export class WebSocketWrapper {
 export class BrowserServer extends EventEmitter {
   private _process: ChildProcess;
   private _gracefullyClose: (() => Promise<void>);
-  private _webSocketWrapper: WebSocketWrapper | null = null;
-  readonly _launchOptions: LaunchOptions;
-  readonly _logger: RootLogger;
-  readonly _downloadsPath: string | undefined;
-  readonly _transport: ConnectionTransport;
-  readonly _headful: boolean;
+  _webSocketWrapper: WebSocketWrapper | null = null;
 
-  constructor(options: LaunchOptions, process: ChildProcess, gracefullyClose: () => Promise<void>, transport: ConnectionTransport, downloadsPath: string | undefined, webSocketWrapper: WebSocketWrapper | null) {
+  constructor(process: ChildProcess, gracefullyClose: () => Promise<void>) {
     super();
-    this._launchOptions = options;
-    this._headful = !processBrowserArgOptions(options).headless;
-    this._logger = new RootLogger(options.logger);
-
     this._process = process;
     this._gracefullyClose = gracefullyClose;
-    this._transport = transport;
-    this._downloadsPath = downloadsPath;
-    this._webSocketWrapper = webSocketWrapper;
   }
 
   process(): ChildProcess {

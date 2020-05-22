@@ -17,9 +17,6 @@
 
 import * as childProcess from 'child_process';
 import { Log, RootLogger } from '../logger';
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
 import * as readline from 'readline';
 import * as removeFolder from 'rimraf';
 import * as stream from 'stream';
@@ -28,8 +25,6 @@ import { TimeoutError } from '../errors';
 import { helper } from '../helper';
 
 const removeFolderAsync = util.promisify(removeFolder);
-const mkdtempAsync = util.promisify(fs.mkdtemp);
-const DOWNLOADS_FOLDER = path.join(os.tmpdir(), 'playwright_downloads-');
 
 const browserLog: Log = {
   name: 'browser',
@@ -55,10 +50,9 @@ export type LaunchProcessOptions = {
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
   pipe?: boolean,
-  tempDir?: string,
+  tempDirectories: string[],
 
   cwd?: string,
-  omitDownloads?: boolean,
 
   // Note: attemptToGracefullyClose should reject if it does not close the browser.
   attemptToGracefullyClose: () => Promise<any>,
@@ -69,10 +63,15 @@ export type LaunchProcessOptions = {
 type LaunchResult = {
   launchedProcess: childProcess.ChildProcess,
   gracefullyClose: () => Promise<void>,
-  downloadsPath: string
 };
 
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
+  const cleanup = async () => {
+    await Promise.all(options.tempDirectories.map(dir => {
+      return removeFolderAsync(dir).catch((err: Error) => console.error(err));
+    }));
+  };
+
   const logger = options.logger;
   const stdio: ('ignore' | 'pipe')[] = options.pipe ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe'];
   logger._log(browserLog, `<launching> ${options.executablePath} ${options.args.join(' ')}`);
@@ -90,12 +89,12 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
       }
   );
   if (!spawnedProcess.pid) {
-    let reject: (e: Error) => void;
-    const result = new Promise<LaunchResult>((f, r) => reject = r);
+    let failed: (e: Error) => void;
+    const failedPromise = new Promise<Error>((f, r) => failed = f);
     spawnedProcess.once('error', error => {
-      reject(new Error('Failed to launch browser: ' + error));
+      failed(new Error('Failed to launch browser: ' + error));
     });
-    return result;
+    return cleanup().then(() => failedPromise).then(e => Promise.reject(e));
   }
   logger._log(browserLog, `<launched> pid=${spawnedProcess.pid}`);
 
@@ -109,8 +108,6 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     logger._log(browserStdErrLog, data);
   });
 
-  const downloadsPath = options.omitDownloads ? '' : await mkdtempAsync(DOWNLOADS_FOLDER);
-
   let processClosed = false;
   let fulfillClose = () => {};
   const waitForClose = new Promise(f => fulfillClose = f);
@@ -122,11 +119,8 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     helper.removeEventListeners(listeners);
     options.onkill(exitCode, signal);
     fulfillClose();
-    // Cleanup as processes exit.
-    Promise.all([
-      options.omitDownloads ? Promise.resolve() : removeFolderAsync(downloadsPath),
-      options.tempDir ? removeFolderAsync(options.tempDir) : Promise.resolve()
-    ]).catch((err: Error) => console.error(err)).then(fulfillCleanup);
+    // Cleanup as process exits.
+    cleanup().then(fulfillCleanup);
   });
 
   const listeners = [ helper.addEventListener(process, 'exit', killProcess) ];
@@ -174,16 +168,14 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
         // the process might have already stopped
       }
     }
-    // Attempt to remove temporary directories to avoid littering.
     try {
-      if (options.tempDir)
-        removeFolder.sync(options.tempDir);
-      if (!options.omitDownloads)
-        removeFolder.sync(downloadsPath);
+      // Attempt to remove temporary directories to avoid littering.
+      for (const dir of options.tempDirectories)
+        removeFolder.sync(dir);
     } catch (e) { }
   }
 
-  return { launchedProcess: spawnedProcess, gracefullyClose, downloadsPath };
+  return { launchedProcess: spawnedProcess, gracefullyClose };
 }
 
 export function waitForLine(process: childProcess.ChildProcess, inputStream: stream.Readable, regex: RegExp, timeout: number, timeoutError: TimeoutError): Promise<RegExpMatchArray> {
