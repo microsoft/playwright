@@ -138,6 +138,26 @@ describe('window.open', function() {
     await context.close();
     expect(size).toEqual({width: 400, height: 500});
   });
+  it('should use viewport size from window features', async function({browser, server}) {
+    const context = await browser.newContext({
+      viewport: { width: 700, height: 700 }
+    });
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    const [size, popup] = await Promise.all([
+      page.evaluate(() => {
+        const win = window.open(window.location.href, 'Title', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=600,height=300,top=0,left=0');
+        return { width: win.innerWidth, height: win.innerHeight };
+      }),
+      page.waitForEvent('popup'),
+    ]);
+    await popup.setViewportSize({ width: 500, height: 400 });
+    await popup.waitForLoadState();
+    const resized = await popup.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
+    await context.close();
+    expect(size).toEqual({width: 600, height: 300});
+    expect(resized).toEqual({width: 500, height: 400});
+  });
   it('should respect routes from browser context', async function({browser, server}) {
     const context = await browser.newContext();
     const page = await context.newPage();

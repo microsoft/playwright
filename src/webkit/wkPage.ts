@@ -16,7 +16,7 @@
  */
 
 import * as frames from '../frames';
-import { helper, RegisteredListener, assert } from '../helper';
+import { helper, RegisteredListener, assert, debugAssert } from '../helper';
 import * as dom from '../dom';
 import * as network from '../network';
 import { WKSession } from './wkConnection';
@@ -68,6 +68,10 @@ export class WKPage implements PageDelegate {
   _firstNonInitialNavigationCommittedReject = (e: Error) => {};
   private _lastConsoleMessage: { derivedType: string, text: string, handles: JSHandle[]; count: number, location: ConsoleMessageLocation; } | null = null;
 
+  // Holds window features for the next popup being opened via window.open,
+  // until the popup page proxy arrives.
+  private _nextWindowOpenPopupFeatures?: string[];
+
   constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null) {
     this._pageProxySession = pageProxySession;
     this._opener = opener;
@@ -90,6 +94,12 @@ export class WKPage implements PageDelegate {
       this._firstNonInitialNavigationCommittedFulfill = f;
       this._firstNonInitialNavigationCommittedReject = r;
     });
+    if (opener && browserContext._options.viewport !== null && opener._nextWindowOpenPopupFeatures) {
+      const viewportSize = helper.getViewportSizeFromWindowFeatures(opener._nextWindowOpenPopupFeatures);
+      opener._nextWindowOpenPopupFeatures = undefined;
+      if (viewportSize)
+        this._page._state.viewportSize = viewportSize;
+    }
   }
 
   private async _initializePageProxySession() {
@@ -241,6 +251,11 @@ export class WKPage implements PageDelegate {
     if (errorText.includes('cancelled'))
       errorText += '; maybe frame was detached?';
     this._page._frameManager.provisionalLoadFailed(this._page.mainFrame(), event.loaderId, errorText);
+  }
+
+  handleWindowOpen(event: Protocol.Playwright.windowOpenPayload) {
+    debugAssert(!this._nextWindowOpenPopupFeatures);
+    this._nextWindowOpenPopupFeatures = event.windowFeatures;
   }
 
   async pageOrError(): Promise<Page | Error> {

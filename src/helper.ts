@@ -346,6 +346,16 @@ class Helper {
       }
     }
   }
+
+  static getViewportSizeFromWindowFeatures(features: string[]): types.Size | null {
+    const widthString = features.find(f => f.startsWith('width='));
+    const heightString = features.find(f => f.startsWith('height='));
+    const width = widthString ? parseInt(widthString.substring(6), 10) : NaN;
+    const height = heightString ? parseInt(heightString.substring(7), 10) : NaN;
+    if (!Number.isNaN(width) && !Number.isNaN(height))
+      return { width, height };
+    return null;
+  }
 }
 
 export function assert(value: any, message?: string): asserts value {

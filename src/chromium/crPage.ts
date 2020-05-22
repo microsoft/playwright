@@ -56,6 +56,13 @@ export class CRPage implements PageDelegate {
   private readonly _pagePromise: Promise<Page | Error>;
   _initializedPage: Page | null = null;
 
+  // Holds window features for the next popup being opened via window.open,
+  // until the popup target arrives. This could be racy if two oopifs
+  // simultaneously call window.open with window features: the order
+  // of their Page.windowOpen events is not guaranteed to match the order
+  // of new popup targets.
+  readonly _nextWindowOpenPopupFeatures: string[][] = [];
+
   constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, hasUIWindow: boolean) {
     this._targetId = targetId;
     this._opener = opener;
@@ -68,6 +75,12 @@ export class CRPage implements PageDelegate {
     this._mainFrameSession = new FrameSession(this, client, targetId, null);
     this._sessions.set(targetId, this._mainFrameSession);
     client.once(CRSessionEvents.Disconnected, () => this._page._didDisconnect());
+    if (opener && browserContext._options.viewport !== null) {
+      const features = opener._nextWindowOpenPopupFeatures.shift() || [];
+      const viewportSize = helper.getViewportSizeFromWindowFeatures(features);
+      if (viewportSize)
+        this._page._state.viewportSize = viewportSize;
+    }
     this._pagePromise = this._mainFrameSession._initialize(hasUIWindow).then(() => this._initializedPage = this._page).catch(e => e);
   }
 
@@ -372,6 +385,7 @@ class FrameSession {
       helper.addEventListener(this._client, 'Runtime.executionContextsCleared', event => this._onExecutionContextsCleared()),
       helper.addEventListener(this._client, 'Target.attachedToTarget', event => this._onAttachedToTarget(event)),
       helper.addEventListener(this._client, 'Target.detachedFromTarget', event => this._onDetachedFromTarget(event)),
+      helper.addEventListener(this._client, 'Page.windowOpen', event => this._onWindowOpen(event)),
     ];
   }
 
@@ -589,6 +603,10 @@ class FrameSession {
   _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {
     this._crPage.removeFrameSession(event.targetId!);
     this._page._removeWorker(event.sessionId);
+  }
+
+  _onWindowOpen(event: Protocol.Page.windowOpenPayload) {
+    this._crPage._nextWindowOpenPopupFeatures.push(event.windowFeatures);
   }
 
   async _onConsoleAPI(event: Protocol.Runtime.consoleAPICalledPayload) {

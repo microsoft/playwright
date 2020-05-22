@@ -57,6 +57,7 @@ export class WKBrowser extends BrowserBase {
       helper.addEventListener(this._browserSession, 'Playwright.pageProxyCreated', this._onPageProxyCreated.bind(this)),
       helper.addEventListener(this._browserSession, 'Playwright.pageProxyDestroyed', this._onPageProxyDestroyed.bind(this)),
       helper.addEventListener(this._browserSession, 'Playwright.provisionalLoadFailed', event => this._onProvisionalLoadFailed(event)),
+      helper.addEventListener(this._browserSession, 'Playwright.windowOpen', event => this._onWindowOpen(event)),
       helper.addEventListener(this._browserSession, 'Playwright.downloadCreated', this._onDownloadCreated.bind(this)),
       helper.addEventListener(this._browserSession, 'Playwright.downloadFilenameSuggested', this._onDownloadFilenameSuggested.bind(this)),
       helper.addEventListener(this._browserSession, 'Playwright.downloadFinished', this._onDownloadFinished.bind(this)),
@@ -178,6 +179,13 @@ export class WKBrowser extends BrowserBase {
     if (!wkPage)
       return;
     wkPage.handleProvisionalLoadFailed(event);
+  }
+
+  _onWindowOpen(event: Protocol.Playwright.windowOpenPayload) {
+    const wkPage = this._wkPages.get(event.pageProxyId);
+    if (!wkPage)
+      return;
+    wkPage.handleWindowOpen(event);
   }
 
   isConnected(): boolean {
