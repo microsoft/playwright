@@ -40,10 +40,7 @@ const rmAsync = util.promisify(require('rimraf'));
   }));
   if (outdatedFiles.some(Boolean)) {
     console.log(`Rebuilding playwright...`);
-    try {
-      execSync('npm run build');
-    } catch (e) {
-    }
+    execSync('npm run build');
   }
   await downloadAllBrowsersAndGenerateProtocolTypes();
 })();

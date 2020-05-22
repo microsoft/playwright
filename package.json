@@ -29,8 +29,8 @@
     "debug-test": "node --inspect-brk test/test.js",
     "clean": "rimraf lib && rimraf types",
     "prepare": "node install-from-github.js",
-    "build": "node utils/runWebpack.js --mode='development' && babel --extensions '.ts' --out-dir ./lib src",
-    "watch": "node utils/runWebpack.js --mode='development' --watch --silent | babel --watch --extensions '.ts' --out-dir ./lib src",
+    "build": "node utils/runWebpack.js --mode='development' && cross-env babel --extensions '.ts' --out-dir lib src",
+    "watch": "node utils/runWebpack.js --mode='development' --watch --silent | cross-env babel --watch --extensions '.ts' --out-dir lib src",
     "test-types": "npm run generate-types && npx -p typescript@3.7.5 tsc -p utils/generate_types/test/tsconfig.json",
     "generate-types": "node utils/generate_types/"
   },
