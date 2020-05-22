@@ -15,112 +15,48 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import * as util from 'util';
 import * as ws from 'ws';
-import { TimeoutError } from '../errors';
-import { Events } from '../events';
 import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
-import { helper, assert } from '../helper';
-import { BrowserServer, WebSocketWrapper } from './browserServer';
-import { BrowserArgOptions, LaunchServerOptions, BrowserTypeBase, processBrowserArgOptions, LaunchType } from './browserType';
-import { launchProcess, waitForLine } from './processLauncher';
-import { ConnectionTransport, SequenceNumberMixer, WebSocketTransport } from '../transport';
-import { InnerLogger, logError, RootLogger } from '../logger';
+import { helper } from '../helper';
+import { WebSocketWrapper } from './browserServer';
+import { BrowserArgOptions, BrowserTypeBase, processBrowserArgOptions, LaunchType } from './browserType';
+import { Env } from './processLauncher';
+import { ConnectionTransport, SequenceNumberMixer } from '../transport';
+import { InnerLogger, logError } from '../logger';
 import { BrowserOptions } from '../browser';
-
-const mkdtempAsync = util.promisify(fs.mkdtemp);
+import { BrowserDescriptor } from '../install/browserPaths';
 
 export class Firefox extends BrowserTypeBase {
+  constructor(packagePath: string, browser: BrowserDescriptor) {
+    const websocketRegex = /^Juggler listening on (ws:\/\/.*)$/;
+    super(packagePath, browser, websocketRegex /* use websocket not pipe */);
+  }
+
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
     return FFBrowser.connect(transport, options);
   }
 
-  async _launchServer(options: LaunchServerOptions, launchType: LaunchType, logger: RootLogger, deadline: number, userDataDir?: string): Promise<BrowserServer> {
-    const {
-      ignoreDefaultArgs = false,
-      args = [],
-      executablePath = null,
-      env = process.env,
-      handleSIGHUP = true,
-      handleSIGINT = true,
-      handleSIGTERM = true,
-      timeout = 30000,
-      port = 0,
-    } = options;
-    assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
-
-    let temporaryProfileDir = null;
-    if (!userDataDir) {
-      userDataDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_firefox_profile-'));
-      temporaryProfileDir = userDataDir;
-    }
-
-    const firefoxArguments = [];
-    if (!ignoreDefaultArgs)
-      firefoxArguments.push(...this._defaultArgs(options, launchType, userDataDir, 0));
-    else if (Array.isArray(ignoreDefaultArgs))
-      firefoxArguments.push(...this._defaultArgs(options, launchType, userDataDir, 0).filter(arg => !ignoreDefaultArgs.includes(arg)));
-    else
-      firefoxArguments.push(...args);
-
-    const firefoxExecutable = executablePath || this.executablePath();
-    if (!firefoxExecutable)
-      throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
-
-    // Note: it is important to define these variables before launchProcess, so that we don't get
-    // "Cannot access 'transport' before initialization" if something went wrong.
-    let browserServer: BrowserServer | undefined = undefined;
-    let transport: ConnectionTransport | undefined = undefined;
-    const { launchedProcess, gracefullyClose, downloadsPath } = await launchProcess({
-      executablePath: firefoxExecutable,
-      args: firefoxArguments,
-      env: os.platform() === 'linux' ? {
-        ...env,
-        // On linux Juggler ships the libstdc++ it was linked against.
-        LD_LIBRARY_PATH: `${path.dirname(firefoxExecutable)}:${process.env.LD_LIBRARY_PATH}`,
-      } : env,
-      handleSIGINT,
-      handleSIGTERM,
-      handleSIGHUP,
-      logger,
-      pipe: false,
-      tempDir: temporaryProfileDir || undefined,
-      attemptToGracefullyClose: async () => {
-        if ((options as any).__testHookGracefullyClose)
-          await (options as any).__testHookGracefullyClose();
-
-        // We try to gracefully close to prevent crash reporting and core dumps.
-        const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
-        transport!.send(message);
-      },
-      onkill: (exitCode, signal) => {
-        if (browserServer)
-          browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
-      },
-    });
-
-    const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Firefox!`);
-    const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
-    const innerEndpoint = match[1];
-
-    try {
-      // If we can't communicate with Firefox on start, kill the process and exit.
-      transport = await WebSocketTransport.connect(innerEndpoint, logger, deadline);
-    } catch (e) {
-      helper.killProcess(launchedProcess);
-      throw e;
-    }
-
-    const webSocketWrapper = launchType === 'server' ? wrapTransportWithWebSocket(transport, logger, port) : null;
-    browserServer = new BrowserServer(options, launchedProcess, gracefullyClose, transport, downloadsPath, webSocketWrapper);
-    return browserServer;
+  _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
+    return os.platform() === 'linux' ? {
+      ...env,
+      // On linux Juggler ships the libstdc++ it was linked against.
+      LD_LIBRARY_PATH: `${path.dirname(executable)}:${process.env.LD_LIBRARY_PATH}`,
+    } : env;
   }
 
-  private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {
+  _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
+    const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
+    transport.send(message);
+  }
+
+  _wrapTransportWithWebSocket(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketWrapper {
+    return wrapTransportWithWebSocket(transport, logger, port);
+  }
+
+  _defaultArgs(options: BrowserArgOptions, launchType: LaunchType, userDataDir: string): string[] {
     const { devtools, headless } = processBrowserArgOptions(options);
     const { args = [] } = options;
     if (devtools)
@@ -139,7 +75,7 @@ export class Firefox extends BrowserTypeBase {
       firefoxArguments.push('-foreground');
     }
     firefoxArguments.push(`-profile`, userDataDir);
-    firefoxArguments.push('-juggler', String(port));
+    firefoxArguments.push('-juggler', '0');
     firefoxArguments.push(...args);
     if (launchType === 'persistent')
       firefoxArguments.push('about:blank');
