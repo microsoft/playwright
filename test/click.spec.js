@@ -138,12 +138,12 @@ describe('Page.click', function() {
     await page.click('button');
     expect(await page.evaluate(() => result)).toBe('Clicked');
   });
-  it('should not wait with false waitFor', async({page, server}) => {
+  it('should not wait with force', async({page, server}) => {
     let error = null;
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.display = 'none');
     await page.click('button', { force: true }).catch(e => error = e);
-    expect(error.message).toBe('Node is either not visible or not an HTMLElement');
+    expect(error.message).toBe('Element is not visible');
     expect(await page.evaluate(() => result)).toBe('Was not clicked');
   });
   it('should waitFor display:none to be gone', async({page, server}) => {
@@ -590,6 +590,61 @@ describe('Page.click', function() {
     await promise;
     expect(clicked).toBe(true);
     expect(await page.evaluate(() => window.clicked)).toBe(true);
+  });
+  it('should retry when element is animating from outside the viewport', async({page, server}) => {
+    await page.setContent(`<style>
+      @keyframes move {
+        from { left: -300px; }
+        to { left: 0; }
+      }
+      button {
+        position: absolute;
+        left: -300px;
+        top: 0;
+        bottom: 0;
+        width: 200px;
+      }
+      button.animated {
+        animation: 1s linear 1s move forwards;
+      }
+      </style>
+      <div style="position: relative; width: 300px; height: 300px;">
+        <button onclick="window.clicked=true"></button>
+      </div>
+    `);
+    const handle = await page.$('button');
+    const promise = handle.click();
+    await handle.evaluate(button => button.className = 'animated');
+    await promise;
+    expect(await page.evaluate(() => window.clicked)).toBe(true);
+  });
+  it('should fail when element is animating from outside the viewport with force', async({page, server}) => {
+    await page.setContent(`<style>
+      @keyframes move {
+        from { left: -300px; }
+        to { left: 0; }
+      }
+      button {
+        position: absolute;
+        left: -300px;
+        top: 0;
+        bottom: 0;
+        width: 200px;
+      }
+      button.animated {
+        animation: 1s linear 1s move forwards;
+      }
+      </style>
+      <div style="position: relative; width: 300px; height: 300px;">
+        <button onclick="window.clicked=true"></button>
+      </div>
+    `);
+    const handle = await page.$('button');
+    const promise = handle.click({ force: true }).catch(e => e);
+    await handle.evaluate(button => button.className = 'animated');
+    const error = await promise;
+    expect(await page.evaluate(() => window.clicked)).toBe(undefined);
+    expect(error.message).toBe('Element is outside of the viewport');
   });
   it('should fail when element jumps during hit testing', async({page, server}) => {
     await page.setContent('<button>Click me</button>');
