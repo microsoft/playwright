@@ -15,21 +15,16 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as os from 'os';
 import * as path from 'path';
-import * as util from 'util';
 import { helper, assert, isDebugMode } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
 import * as ws from 'ws';
-import { launchProcess } from './processLauncher';
+import { Env } from './processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
-import { PipeTransport } from './pipeTransport';
-import { BrowserArgOptions, LaunchServerOptions, BrowserTypeBase, processBrowserArgOptions, LaunchType } from './browserType';
-import { BrowserServer, WebSocketWrapper } from './browserServer';
-import { Events } from '../events';
+import { BrowserArgOptions, BrowserTypeBase, processBrowserArgOptions, LaunchType } from './browserType';
+import { WebSocketWrapper } from './browserServer';
 import { ConnectionTransport, ProtocolRequest } from '../transport';
-import { InnerLogger, logError, RootLogger } from '../logger';
+import { InnerLogger, logError } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
 import { CRDevTools } from '../chromium/crDevTools';
 import { BrowserOptions } from '../browser';
@@ -38,7 +33,7 @@ export class Chromium extends BrowserTypeBase {
   private _devtools: CRDevTools | undefined;
 
   constructor(packagePath: string, browser: BrowserDescriptor) {
-    super(packagePath, browser);
+    super(packagePath, browser, null /* use pipe not websocket */);
     if (isDebugMode())
       this._devtools = this._createDevTools();
   }
@@ -56,77 +51,22 @@ export class Chromium extends BrowserTypeBase {
     return CRBrowser.connect(transport, options, devtools);
   }
 
-  async _launchServer(options: LaunchServerOptions, launchType: LaunchType, logger: RootLogger, deadline: number, userDataDir?: string): Promise<BrowserServer> {
-    const {
-      ignoreDefaultArgs = false,
-      args = [],
-      executablePath = null,
-      env = process.env,
-      handleSIGINT = true,
-      handleSIGTERM = true,
-      handleSIGHUP = true,
-      port = 0,
-    } = options;
-    assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
-
-    let temporaryUserDataDir: string | null = null;
-    if (!userDataDir) {
-      userDataDir = await mkdtempAsync(CHROMIUM_PROFILE_PATH);
-      temporaryUserDataDir = userDataDir;
-    }
-
+  _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
     const runningAsRoot = process.geteuid && process.geteuid() === 0;
-    assert(!runningAsRoot || args.includes('--no-sandbox'), 'Cannot launch Chromium as root without --no-sandbox. See https://crbug.com/638180.');
-
-    const chromeArguments = [];
-    if (!ignoreDefaultArgs)
-      chromeArguments.push(...this._defaultArgs(options, launchType, userDataDir));
-    else if (Array.isArray(ignoreDefaultArgs))
-      chromeArguments.push(...this._defaultArgs(options, launchType, userDataDir).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
-    else
-      chromeArguments.push(...args);
-
-    const chromeExecutable = executablePath || this.executablePath();
-    if (!chromeExecutable)
-      throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
-
-    // Note: it is important to define these variables before launchProcess, so that we don't get
-    // "Cannot access 'browserServer' before initialization" if something went wrong.
-    let transport: PipeTransport | undefined = undefined;
-    let browserServer: BrowserServer | undefined = undefined;
-    const { launchedProcess, gracefullyClose, downloadsPath } = await launchProcess({
-      executablePath: chromeExecutable,
-      args: chromeArguments,
-      env,
-      handleSIGINT,
-      handleSIGTERM,
-      handleSIGHUP,
-      logger,
-      pipe: true,
-      tempDir: temporaryUserDataDir || undefined,
-      attemptToGracefullyClose: async () => {
-        if ((options as any).__testHookGracefullyClose)
-          await (options as any).__testHookGracefullyClose();
-        // We try to gracefully close to prevent crash reporting and core dumps.
-        // Note that it's fine to reuse the pipe transport, since
-        // our connection ignores kBrowserCloseMessageId.
-        const t = transport!;
-        const message: ProtocolRequest = { method: 'Browser.close', id: kBrowserCloseMessageId, params: {} };
-        t.send(message);
-      },
-      onkill: (exitCode, signal) => {
-        if (browserServer)
-          browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
-      },
-    });
-
-    const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
-    transport = new PipeTransport(stdio[3], stdio[4], logger);
-    browserServer = new BrowserServer(options, launchedProcess, gracefullyClose, transport, downloadsPath, launchType === 'server' ? wrapTransportWithWebSocket(transport, logger, port) : null);
-    return browserServer;
+    assert(!runningAsRoot || browserArguments.includes('--no-sandbox'), 'Cannot launch Chromium as root without --no-sandbox. See https://crbug.com/638180.');
+    return env;
   }
 
-  private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string): string[] {
+  _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
+    const message: ProtocolRequest = { method: 'Browser.close', id: kBrowserCloseMessageId, params: {} };
+    transport.send(message);
+  }
+
+  _wrapTransportWithWebSocket(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketWrapper {
+    return wrapTransportWithWebSocket(transport, logger, port);
+  }
+
+  _defaultArgs(options: BrowserArgOptions, launchType: LaunchType, userDataDir: string): string[] {
     const { devtools, headless } = processBrowserArgOptions(options);
     const { args = [] } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
@@ -300,10 +240,6 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Inne
   return new WebSocketWrapper(wsEndpoint, [awaitingBrowserTarget, sessionToData, socketToBrowserSession]);
 }
 
-
-const mkdtempAsync = util.promisify(fs.mkdtemp);
-
-const CHROMIUM_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_dev_profile-');
 
 const DEFAULT_ARGS = [
   '--disable-background-networking',

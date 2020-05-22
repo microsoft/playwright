@@ -44,10 +44,12 @@ const browserStdErrLog: Log = {
   severity: 'warning'
 };
 
+export type Env = {[key: string]: string | number | boolean | undefined};
+
 export type LaunchProcessOptions = {
   executablePath: string,
   args: string[],
-  env?: {[key: string]: string | number | boolean | undefined},
+  env?: Env,
 
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,

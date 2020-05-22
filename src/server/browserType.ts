@@ -14,14 +14,22 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import * as util from 'util';
 import { BrowserContext, PersistentContextOptions, validatePersistentContextOptions } from '../browserContext';
-import { BrowserServer } from './browserServer';
+import { BrowserServer, WebSocketWrapper } from './browserServer';
 import * as browserPaths from '../install/browserPaths';
-import { Logger, RootLogger } from '../logger';
+import { Logger, RootLogger, InnerLogger } from '../logger';
 import { ConnectionTransport, WebSocketTransport } from '../transport';
 import { BrowserBase, BrowserOptions, Browser } from '../browser';
 import { assert, helper } from '../helper';
 import { TimeoutSettings } from '../timeoutSettings';
+import { launchProcess, Env, waitForLine } from './processLauncher';
+import { Events } from '../events';
+import { TimeoutError } from '../errors';
+import { PipeTransport } from './pipeTransport';
 
 export type BrowserArgOptions = {
   headless?: boolean,
@@ -37,7 +45,7 @@ type LaunchOptionsBase = BrowserArgOptions & {
   handleSIGHUP?: boolean,
   timeout?: number,
   logger?: Logger,
-  env?: {[key: string]: string|number|boolean}
+  env?: Env,
 };
 
 export function processBrowserArgOptions(options: LaunchOptionsBase): { devtools: boolean, headless: boolean } {
@@ -45,7 +53,7 @@ export function processBrowserArgOptions(options: LaunchOptionsBase): { devtools
   return { devtools, headless };
 }
 
-export type ConnectOptions = {
+type ConnectOptions = {
   wsEndpoint: string,
   slowMo?: number,
   logger?: Logger,
@@ -53,7 +61,7 @@ export type ConnectOptions = {
 };
 export type LaunchType = 'local' | 'server' | 'persistent';
 export type LaunchOptions = LaunchOptionsBase & { slowMo?: number };
-export type LaunchServerOptions = LaunchOptionsBase & { port?: number };
+type LaunchServerOptions = LaunchOptionsBase & { port?: number };
 
 export interface BrowserType {
   executablePath(): string;
@@ -64,16 +72,20 @@ export interface BrowserType {
   connect(options: ConnectOptions): Promise<Browser>;
 }
 
+const mkdtempAsync = util.promisify(fs.mkdtemp);
+
 export abstract class BrowserTypeBase implements BrowserType {
   private _name: string;
   private _executablePath: string | undefined;
+  private _webSocketRegexNotPipe: RegExp | null;
   readonly _browserPath: string;
 
-  constructor(packagePath: string, browser: browserPaths.BrowserDescriptor) {
+  constructor(packagePath: string, browser: browserPaths.BrowserDescriptor, webSocketRegexNotPipe: RegExp | null) {
     this._name = browser.name;
     const browsersPath = browserPaths.browsersPath(packagePath);
     this._browserPath = browserPaths.browserDirectory(browsersPath, browser);
     this._executablePath = browserPaths.executablePath(this._browserPath, browser);
+    this._webSocketRegexNotPipe = webSocketRegexNotPipe;
   }
 
   executablePath(): string {
@@ -183,6 +195,88 @@ export abstract class BrowserTypeBase implements BrowserType {
     return this._connectToTransport(transport, { slowMo: options.slowMo, logger });
   }
 
-  abstract _launchServer(options: LaunchServerOptions, launchType: LaunchType, logger: RootLogger, deadline: number, userDataDir?: string): Promise<BrowserServer>;
+  private async _launchServer(options: LaunchServerOptions, launchType: LaunchType, logger: RootLogger, deadline: number, userDataDir?: string): Promise<BrowserServer> {
+    const {
+      ignoreDefaultArgs = false,
+      args = [],
+      executablePath = null,
+      env = process.env,
+      handleSIGINT = true,
+      handleSIGTERM = true,
+      handleSIGHUP = true,
+      port = 0,
+    } = options;
+    assert(!port || launchType === 'server', 'Cannot specify a port without launching as a server.');
+
+    let temporaryUserDataDir: string | null = null;
+    if (!userDataDir) {
+      userDataDir = await mkdtempAsync(path.join(os.tmpdir(), `playwright_${this._name}dev_profile-`));
+      temporaryUserDataDir = userDataDir;
+    }
+
+    const browserArguments = [];
+    if (!ignoreDefaultArgs)
+      browserArguments.push(...this._defaultArgs(options, launchType, userDataDir));
+    else if (Array.isArray(ignoreDefaultArgs))
+      browserArguments.push(...this._defaultArgs(options, launchType, userDataDir).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
+    else
+      browserArguments.push(...args);
+
+    const executable = executablePath || this.executablePath();
+    if (!executable)
+      throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
+
+    // Note: it is important to define these variables before launchProcess, so that we don't get
+    // "Cannot access 'browserServer' before initialization" if something went wrong.
+    let transport: ConnectionTransport | undefined = undefined;
+    let browserServer: BrowserServer | undefined = undefined;
+    const { launchedProcess, gracefullyClose, downloadsPath } = await launchProcess({
+      executablePath: executable,
+      args: browserArguments,
+      env: this._amendEnvironment(env, userDataDir, executable, browserArguments),
+      handleSIGINT,
+      handleSIGTERM,
+      handleSIGHUP,
+      logger,
+      pipe: !this._webSocketRegexNotPipe,
+      tempDir: temporaryUserDataDir || undefined,
+      attemptToGracefullyClose: async () => {
+        if ((options as any).__testHookGracefullyClose)
+          await (options as any).__testHookGracefullyClose();
+        // We try to gracefully close to prevent crash reporting and core dumps.
+        // Note that it's fine to reuse the pipe transport, since
+        // our connection ignores kBrowserCloseMessageId.
+        this._attemptToGracefullyCloseBrowser(transport!);
+      },
+      onkill: (exitCode, signal) => {
+        if (browserServer)
+          browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
+      },
+    });
+
+    try {
+      if (this._webSocketRegexNotPipe) {
+        const timeoutError = new TimeoutError(`Timed out while trying to connect to the browser!`);
+        const match = await waitForLine(launchedProcess, launchedProcess.stdout, this._webSocketRegexNotPipe, helper.timeUntilDeadline(deadline), timeoutError);
+        const innerEndpoint = match[1];
+        transport = await WebSocketTransport.connect(innerEndpoint, logger, deadline);
+      } else {
+        const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
+        transport = new PipeTransport(stdio[3], stdio[4], logger);
+      }
+    } catch (e) {
+      // If we can't establish a connection, kill the process and exit.
+      helper.killProcess(launchedProcess);
+      throw e;
+    }
+    browserServer = new BrowserServer(options, launchedProcess, gracefullyClose, transport, downloadsPath,
+        launchType === 'server' ? this._wrapTransportWithWebSocket(transport, logger, port) : null);
+    return browserServer;
+  }
+
+  abstract _defaultArgs(options: BrowserArgOptions, launchType: LaunchType, userDataDir: string): string[];
   abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BrowserBase>;
+  abstract _wrapTransportWithWebSocket(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketWrapper;
+  abstract _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;
+  abstract _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void;
 }
