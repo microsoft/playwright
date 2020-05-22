@@ -92,7 +92,11 @@ describe('Headful', function() {
       iframe.src = src;
       return promise;
     }, server.CROSS_PROCESS_PREFIX + '/grid.html');
-    await page.frames()[1].evaluate(`document.cookie = 'username=John Doe'`);
+    const documentCookie = await page.frames()[1].evaluate(() => {
+      document.cookie = 'username=John Doe';
+      return document.cookie;
+    });
+    expect(documentCookie).toBe('username=John Doe');
     await page.waitForTimeout(2000);
     const allowsThirdParty = CHROMIUM || FFOX;
     const cookies = await page.context().cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
