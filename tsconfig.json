@@ -5,7 +5,7 @@
     "lib": ["esnext", "dom", "DOM.Iterable"],
     "sourceMap": true,
     "rootDir": "./src",
-    "outDir": "./lib",
+    "noEmit": true,
     "strict": true,
     "declaration": false
   },

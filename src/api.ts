@@ -15,8 +15,8 @@
  */
 
 export { Accessibility } from './accessibility';
-export { Browser } from './browser';
-export { BrowserContext } from './browserContext';
+export { BrowserBase as Browser } from './browser';
+export { BrowserContextBase as BrowserContext } from './browserContext';
 export { ConsoleMessage } from './console';
 export { Dialog } from './dialog';
 export { Download } from './download';

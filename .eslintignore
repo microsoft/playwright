@@ -6,9 +6,9 @@ utils/testrunner/examples/
 lib/
 *.js
 src/generated/*
-src/chromium/protocol.ts
-src/firefox/protocol.ts
-src/webkit/protocol.ts
+src/chromium/protocol.d.ts
+src/firefox/protocol.d.ts
+src/webkit/protocol.d.ts
 /types/*
 /index.d.ts
 utils/generate_types/overrides.d.ts

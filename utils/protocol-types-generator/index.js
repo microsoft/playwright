@@ -16,7 +16,7 @@ async function generateProtocol(name, executablePath) {
 }
 
 async function generateChromiumProtocol(executablePath) {
-  const outputPath = path.join(__dirname, '..', '..', 'src', 'chromium', 'protocol.ts');
+  const outputPath = path.join(__dirname, '..', '..', 'src', 'chromium', 'protocol.d.ts');
   const playwright = await require('../../index-for-dev').chromium;
   const defaultArgs = playwright._defaultArgs.bind(playwright);
   playwright._defaultArgs = (...args) => {
@@ -30,14 +30,14 @@ async function generateChromiumProtocol(executablePath) {
   const json = JSON.parse(await page.evaluate(() => document.documentElement.innerText));
   await browser.close();
   await fs.promises.writeFile(outputPath, jsonToTS(json));
-  console.log(`Wrote protocol.ts to ${path.relative(process.cwd(), outputPath)}`);
+  console.log(`Wrote protocol.d.ts to ${path.relative(process.cwd(), outputPath)}`);
 }
 
 async function generateWebKitProtocol(folderPath) {
-  const outputPath = path.join(__dirname, '..', '..', 'src', 'webkit', 'protocol.ts');
+  const outputPath = path.join(__dirname, '..', '..', 'src', 'webkit', 'protocol.d.ts');
   const json = JSON.parse(await fs.promises.readFile(path.join(folderPath, '..', 'protocol.json'), 'utf8'));
   await fs.promises.writeFile(outputPath, jsonToTS({domains: json}));
-  console.log(`Wrote protocol.ts for WebKit to ${path.relative(process.cwd(), outputPath)}`);
+  console.log(`Wrote protocol.d.ts for WebKit to ${path.relative(process.cwd(), outputPath)}`);
 }
 
 function jsonToTS(json) {
@@ -129,7 +129,7 @@ function typeOfProperty(property, domain) {
 }
 
 async function generateFirefoxProtocol(executablePath) {
-  const outputPath = path.join(__dirname, '..', '..', 'src', 'firefox', 'protocol.ts');
+  const outputPath = path.join(__dirname, '..', '..', 'src', 'firefox', 'protocol.d.ts');
   const omnija = os.platform() === 'darwin' ?
     path.join(executablePath, '..', '..', 'Resources', 'omni.ja') :
     path.join(executablePath, '..', 'omni.ja');
@@ -173,7 +173,7 @@ async function generateFirefoxProtocol(executablePath) {
   }
   const json = vm.runInContext(`(${inject})();${protocolJSCode}; this.protocol;`, ctx);
   await fs.promises.writeFile(outputPath, firefoxJSONToTS(json));
-  console.log(`Wrote protocol.ts for Firefox to ${path.relative(process.cwd(), outputPath)}`);
+  console.log(`Wrote protocol.d.ts for Firefox to ${path.relative(process.cwd(), outputPath)}`);
 }
 
 function firefoxJSONToTS(json) {

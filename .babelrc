@@ -1,0 +1,12 @@
+{
+  "presets": [
+    "@babel/preset-typescript"
+  ],
+  "plugins": [
+    ["@babel/plugin-transform-modules-commonjs", {"noInterop": true}]
+  ],
+  "ignore": [
+    "**/*.d.ts",
+    "src/injected/**/*"
+  ]
+}

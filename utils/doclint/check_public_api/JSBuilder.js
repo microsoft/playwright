@@ -106,7 +106,7 @@ function checkSources(sources) {
       }
     }
     if (fileName.endsWith('/api.ts') && ts.isExportSpecifier(node))
-      apiClassNames.add(expandPrefix((node.propertyName || node.name).text));
+      apiClassNames.add(expandPrefix(node.name.text));
     ts.forEachChild(node, visit);
   }
 

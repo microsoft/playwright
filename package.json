@@ -29,8 +29,8 @@
     "debug-test": "node --inspect-brk test/test.js",
     "clean": "rimraf lib && rimraf types",
     "prepare": "node install-from-github.js",
-    "build": "node utils/runWebpack.js --mode='development' && tsc -p .",
-    "watch": "node utils/runWebpack.js --mode='development' --watch --silent | tsc -w -p .",
+    "build": "node utils/runWebpack.js --mode='development' && babel --extensions '.ts' --out-dir ./lib src",
+    "watch": "node utils/runWebpack.js --mode='development' --watch --silent | babel --watch --extensions '.ts' --out-dir ./lib src",
     "test-types": "npm run generate-types && npx -p typescript@3.7.5 tsc -p utils/generate_types/test/tsconfig.json",
     "generate-types": "node utils/generate_types/"
   },
@@ -51,6 +51,10 @@
     "ws": "^6.1.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.6",
+    "@babel/plugin-transform-modules-commonjs": "^7.9.6",
+    "@babel/preset-typescript": "^7.9.0",
     "@types/debug": "0.0.31",
     "@types/extract-zip": "^1.6.2",
     "@types/mime": "^2.0.1",
