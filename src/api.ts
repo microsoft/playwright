@@ -22,7 +22,7 @@ export { Dialog } from './dialog';
 export { Download } from './download';
 export { ElementHandle } from './dom';
 export { FileChooser } from './fileChooser';
-export { Logger } from './logger';
+export type { Logger } from './logger';
 export { TimeoutError } from './errors';
 export { Frame } from './frames';
 export { Keyboard, Mouse } from './input';
@@ -40,5 +40,5 @@ export { FFBrowser as FirefoxBrowser } from './firefox/ffBrowser';
 
 export { WKBrowser as WebKitBrowser } from './webkit/wkBrowser';
 
-export { BrowserType } from './server/browserType';
+export { BrowserTypeBase as BrowserType } from './server/browserType';
 export { BrowserServer } from './server/browserServer';

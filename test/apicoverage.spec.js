@@ -23,6 +23,8 @@
  */
 function traceAPICoverage(apiCoverage, events, className, classType) {
   className = className.substring(0, 1).toLowerCase() + className.substring(1);
+  if (!classType)
+    throw new Error(`Class ${className} does not exist. Did you mean to export it as a type?`);
   for (const methodName of Reflect.ownKeys(classType.prototype)) {
     const method = Reflect.get(classType.prototype, methodName);
     if (methodName === 'constructor' || typeof methodName !== 'string' || methodName.startsWith('_') || typeof method !== 'function')
