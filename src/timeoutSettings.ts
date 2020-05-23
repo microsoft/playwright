@@ -19,7 +19,7 @@ import { TimeoutOptions } from './types';
 import { helper } from './helper';
 import * as debugSupport from './debug/debugSupport';
 
-const DEFAULT_TIMEOUT = debugSupport.isDebugMode() ? 0 : 30000;
+export const DEFAULT_TIMEOUT = debugSupport.isDebugMode() ? 0 : 30000;
 
 export class TimeoutSettings {
   private _parent: TimeoutSettings | undefined;

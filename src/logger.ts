@@ -57,21 +57,6 @@ export class RootLogger implements InnerLogger {
     if (this._logger.isEnabled(log.name, log.severity || 'info'))
       this._logger.log(log.name, log.severity || 'info', message, args, log.color ? { color: log.color } : {});
   }
-
-  startLaunchRecording() {
-    this._logger.add(`launch`, new RecordingLogger('browser'));
-  }
-
-  launchRecording(): string {
-    const logger = this._logger.get(`launch`) as RecordingLogger;
-    if (logger)
-      return logger.recording();
-    return '';
-  }
-
-  stopLaunchRecording() {
-    this._logger.remove(`launch`);
-  }
 }
 
 const colorMap = new Map<string, number>([
@@ -110,27 +95,6 @@ class MultiplexingLogger implements Logger {
   log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }) {
     for (const logger of this._loggers.values())
       logger.log(name, severity, message, args, hints);
-  }
-}
-
-export class RecordingLogger implements Logger {
-  private _prefix: string;
-  private _recording: string[] = [];
-
-  constructor(prefix: string) {
-    this._prefix = prefix;
-  }
-
-  isEnabled(name: string, severity: LoggerSeverity): boolean {
-    return name.startsWith(this._prefix);
-  }
-
-  log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }) {
-    this._recording.push(String(message));
-  }
-
-  recording(): string {
-    return this._recording.join('\n');
   }
 }
 

@@ -15,8 +15,8 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { EventEmitter } from 'events';
 import { helper } from '../helper';
+import { EventEmitter } from 'events';
 
 export class WebSocketWrapper {
   readonly wsEndpoint: string;
