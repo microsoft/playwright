@@ -38,9 +38,11 @@ describe('launchPersistentContext()', function() {
   it('context.cookies() should work', async state => {
     const { page, server } = await launch(state);
     await page.goto(server.EMPTY_PAGE);
-    await page.evaluate(() => {
+    const documentCookie = await page.evaluate(() => {
       document.cookie = 'username=John Doe';
+      return document.cookie;
     });
+    expect(documentCookie).toBe('username=John Doe');
     expect(await page.context().cookies()).toEqual([{
       name: 'username',
       value: 'John Doe',
@@ -105,7 +107,11 @@ describe('launchPersistentContext()', function() {
       iframe.src = src;
       return promise;
     }, server.CROSS_PROCESS_PREFIX + '/grid.html');
-    await page.frames()[1].evaluate(`document.cookie = 'username=John Doe'`);
+    const documentCookie = await page.frames()[1].evaluate(() => {
+      document.cookie = 'username=John Doe';
+      return document.cookie;
+    });
+    expect(documentCookie).toBe('username=John Doe');
     await page.waitForTimeout(2000);
     const allowsThirdParty = CHROMIUM || FFOX;
     const cookies = await context.cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
