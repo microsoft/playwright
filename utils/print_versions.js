@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const pw = require('../index-for-dev.js');
+const pw = require('..');
 const child_process = require('child_process');
 
 for (const browserType of [pw.chromium, pw.firefox]) {
