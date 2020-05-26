@@ -283,7 +283,7 @@ jobs:
         node-version: ${{ matrix.node_version }}
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
-    - run: bash test/installation-tests/installation-tests.sh
+    - run: bash packages/installation-tests/installation-tests.sh
 
   headful_linux:
     name: "Headful Linux"
