@@ -39,7 +39,7 @@ $ ls ./packages/playwright # inspect the folder
 
 ## Testing packages
 
-To test packages, use [`//packages/installation-tests/installation-tests.sh`](../tests/installation-tests/installation-tests.sh).
+To test packages, use [`//packages/installation-tests/installation-tests.sh`](./installation-tests/installation-tests.sh).
 
 
 ## Publishing packages
