@@ -18,7 +18,7 @@ Each version of Playwright needs specific versions of browser binaries to operat
 - `~/.cache/ms-playwright` on Linux
 
 ```sh
-npm i playwright
+npm i -D playwright
 ```
 
 These browsers will take few hundreds of megabytes of the disk space when installed:
@@ -33,7 +33,7 @@ du -hs ./Library/Caches/ms-playwright/*
 You can override default behavior using environment variables. When installing Playwright, ask it to download browsers into a specific location:
 
 ```sh
-$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers npm i playwright
+$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers npm i -D playwright
 ```
 
 When running Playwright scripts, ask it to search for browsers in a shared location:
@@ -65,7 +65,7 @@ binaries. In this case, Playwright can be configured to download from a custom
 location using the `PLAYWRIGHT_DOWNLOAD_HOST` env variable.
 
 ```sh
-$ PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i playwright
+$ PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i -D playwright
 ```
 
 <br>
@@ -78,7 +78,7 @@ browser binaries are managed separately.
 This can be done by setting `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` variable before installation.
 
 ```sh
-$ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i playwright
+$ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
 ```
 
 <br>
@@ -97,7 +97,7 @@ Using these packages is as easy as using a regular Playwright:
 Install a specific package
 
 ```sh
-$ npm i playwright-webkit
+$ npm i -D playwright-webkit
 ```
 
 Require package

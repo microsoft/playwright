@@ -4393,7 +4393,7 @@ If Playwright doesn't find them in the environment, a lowercased variant of thes
 
 ```sh
 # Install browsers to the shared location.
-$ PLAYWRIGHT_BROWSERS_PATH=$HOME/playwright-browsers npm install playwright
+$ PLAYWRIGHT_BROWSERS_PATH=$HOME/playwright-browsers npm install --save-dev playwright
 # Use shared location to find browsers.
 $ PLAYWRIGHT_BROWSERS_PATH=$HOME/playwright-browsers node playwright-script.js
 ```

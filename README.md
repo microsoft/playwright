@@ -17,7 +17,7 @@ Headless execution is supported for all the browsers on all platforms.
 ## Usage
 
 ```
-npm i playwright
+npm i -D playwright
 ```
 
 This installs Playwright and browser binaries for Chromium, Firefox and WebKit. Once installed, you can `require` Playwright in a Node.js script and automate web browser interactions.

@@ -15,7 +15,7 @@
 Use npm or Yarn to install Playwright in your Node.js project. Playwright requires Node.js 10 or higher.
 
 ```sh
-npm i playwright
+npm i -D playwright
 ```
 
 During installation, Playwright downloads browser binaries for Chromium, Firefox and WebKit. This sets up your environment for browser automation with just one command. It is possible to modify this default behavior for monorepos and other scenarios. See [installation parameters](installation.md) for mode details.
