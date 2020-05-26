@@ -30,7 +30,7 @@ import { Events } from './events';
 import { Protocol } from './protocol';
 import { CRExecutionContext } from './crExecutionContext';
 import { logError } from '../logger';
-import { CRDevTools } from './crDevTools';
+import { CRDevTools } from '../debug/crDevTools';
 
 export class CRBrowser extends BrowserBase {
   readonly _connection: CRConnection;

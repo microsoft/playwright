@@ -19,6 +19,7 @@ import { helper } from '../helper';
 import * as js from '../javascript';
 import { FFSession } from './ffConnection';
 import { Protocol } from './protocol';
+import * as debugSupport from '../debug/debugSupport';
 
 export class FFExecutionContext implements js.ExecutionContextDelegate {
   _session: FFSession;
@@ -31,7 +32,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
 
   async rawEvaluate(expression: string): Promise<js.RemoteObject> {
     const payload = await this._session.send('Runtime.evaluate', {
-      expression: js.ensureSourceUrl(expression),
+      expression: debugSupport.ensureSourceUrl(expression),
       returnByValue: false,
       executionContextId: this._executionContextId,
     }).catch(rewriteError);
@@ -43,7 +44,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     if (helper.isString(pageFunction)) {
       return this._callOnUtilityScript(context,
           `evaluate`, [
-            { value: pageFunction },
+            { value: debugSupport.ensureSourceUrl(pageFunction) },
           ], returnByValue, () => {});
     }
     if (typeof pageFunction !== 'function')
@@ -75,7 +76,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     try {
       const utilityScript = await context.utilityScript();
       const payload = await this._session.send('Runtime.callFunction', {
-        functionDeclaration: `(utilityScript, ...args) => utilityScript.${method}(...args)`,
+        functionDeclaration: `(utilityScript, ...args) => utilityScript.${method}(...args)` + debugSupport.generateSourceUrl(),
         args: [
           { objectId: utilityScript._remoteObject.objectId, value: undefined },
           { value: returnByValue },
@@ -123,7 +124,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     const simpleValue = await this._session.send('Runtime.callFunction', {
       executionContextId: this._executionContextId,
       returnByValue: true,
-      functionDeclaration: ((e: any) => e).toString() + js.generateSourceUrl(),
+      functionDeclaration: ((e: any) => e).toString() + debugSupport.generateSourceUrl(),
       args: [this._toCallArgument(payload)],
     });
     return deserializeValue(simpleValue.result!);
