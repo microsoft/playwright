@@ -26,6 +26,7 @@ SANITY_JS="$(pwd -P)/../sanity.js"
 TEST_ROOT="$(pwd -P)"
 
 function run_tests {
+  test_typescript_types
   test_skip_browser_download
   test_playwright_global_installation_subsequent_installs
   test_playwright_should_work
@@ -35,11 +36,32 @@ function run_tests {
   test_playwright_global_installation
 }
 
+function test_typescript_types {
+  initialize_test "${FUNCNAME[0]}"
+
+  # install all packages.
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_CORE_TGZ}
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ}
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_FIREFOX_TGZ}
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_WEBKIT_TGZ}
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_CHROMIUM_TGZ}
+
+  # typecheck all packages.
+  for PKG_NAME in "playwright" \
+                  "playwright-core" \
+                  "playwright-firefox" \
+                  "playwright-chromium" \
+                  "playwright-webkit"
+  do
+    echo "Checking types of ${PKG_NAME}"
+    echo "import { Page } from '${PKG_NAME}';" > "${PKG_NAME}.ts" && tsc "${PKG_NAME}.ts"
+  done;
+}
+
 function test_playwright_global_installation {
   initialize_test "${FUNCNAME[0]}"
 
   local BROWSERS="$(pwd -P)/browsers"
-  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_CORE_TGZ}
   PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_TGZ}
   if [[ ! -d "${BROWSERS}" ]]; then
     echo "Directory for shared browsers was not created!"
@@ -61,7 +83,6 @@ function test_playwright_global_installation_subsequent_installs {
   local BROWSERS="$(pwd -P)/browsers"
 
   mkdir install-1 && pushd install-1 && npm init -y
-  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_CORE_TGZ}
   PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_TGZ}
   # Note: the `npm install` would not actually crash, the error
   # is merely logged to the console. To reproduce the error, we should make
@@ -74,7 +95,6 @@ function test_playwright_global_installation_subsequent_installs {
 function test_skip_browser_download {
   initialize_test "${FUNCNAME[0]}"
 
-  npm install ${PLAYWRIGHT_CORE_TGZ}
   OUTPUT=$(PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ})
   if [[ "${OUTPUT}" != *"Skipping browsers download because"* ]]; then
     echo "missing log message that browsers download is skipped"
@@ -90,7 +110,6 @@ function test_skip_browser_download {
 function test_playwright_should_work {
   initialize_test "${FUNCNAME[0]}"
 
-  npm install ${PLAYWRIGHT_CORE_TGZ}
   npm install ${PLAYWRIGHT_TGZ}
   cp ${SANITY_JS} . && node sanity.js playwright chromium firefox webkit
 }
@@ -98,7 +117,6 @@ function test_playwright_should_work {
 function test_playwright_chromium_should_work {
   initialize_test "${FUNCNAME[0]}"
 
-  npm install ${PLAYWRIGHT_CORE_TGZ}
   npm install ${PLAYWRIGHT_CHROMIUM_TGZ}
   cp ${SANITY_JS} . && node sanity.js playwright-chromium chromium
 }
@@ -106,7 +124,6 @@ function test_playwright_chromium_should_work {
 function test_playwright_webkit_should_work {
   initialize_test "${FUNCNAME[0]}"
 
-  npm install ${PLAYWRIGHT_CORE_TGZ}
   npm install ${PLAYWRIGHT_WEBKIT_TGZ}
   cp ${SANITY_JS} . && node sanity.js playwright-webkit webkit
 }
@@ -114,7 +131,6 @@ function test_playwright_webkit_should_work {
 function test_playwright_firefox_should_work {
   initialize_test "${FUNCNAME[0]}"
 
-  npm install ${PLAYWRIGHT_CORE_TGZ}
   npm install ${PLAYWRIGHT_FIREFOX_TGZ}
   cp ${SANITY_JS} . && node sanity.js playwright-firefox firefox
 }
