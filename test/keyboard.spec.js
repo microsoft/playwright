@@ -377,7 +377,7 @@ describe('Keyboard', function() {
       expect(await page.evaluate('lastKeyIdentifier')).toBe(keyIdentifier);
     }
   });
-  it.fail(WEBKIT && MAC)('should scroll with PageDown', async({page, server}) => {
+  it('should scroll with PageDown', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/scrollable.html');
     // A click is required for WebKit to send the event into the body.
     await page.click('body');
