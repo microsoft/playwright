@@ -14,44 +14,38 @@
  * limitations under the License.
  */
 
+import { serializeAsCallArgument, parseEvaluationResultValue } from '../remoteObject';
+
 export default class UtilityScript {
   evaluate(returnByValue: boolean, expression: string) {
     const result = global.eval(expression);
-    return returnByValue ? this._serialize(result) : result;
+    return returnByValue ? this._promiseAwareJsonValueNoThrow(result) : result;
   }
 
   callFunction(returnByValue: boolean, functionText: string, ...args: any[]) {
     const argCount = args[0] as number;
-    const handleCount = args[argCount + 1] as number;
-    const handles = { __proto__: null } as any;
-    for (let i = 0; i < handleCount; i++)
-      handles[args[argCount + 2 + i]] = args[argCount + 2 + handleCount + i];
-    const visit = (arg: any) => {
-      if ((typeof arg === 'string') && (arg in handles))
-        return handles[arg];
-      if (arg && (typeof arg === 'object')) {
-        for (const name of Object.keys(arg))
-          arg[name] = visit(arg[name]);
-      }
-      return arg;
-    };
-    const processedArgs  = [];
-    for (let i = 0; i < argCount; i++)
-      processedArgs[i] = visit(args[i + 1]);
+    const handles = args.slice(argCount + 1);
+    const parameters = args.slice(1, argCount + 1).map(a => parseEvaluationResultValue(a, handles));
     const func = global.eval('(' + functionText + ')');
-    const result = func(...processedArgs);
-    return returnByValue ? this._serialize(result) : result;
+    const result = func(...parameters);
+    return returnByValue ? this._promiseAwareJsonValueNoThrow(result) : result;
   }
 
-  private _serialize(value: any): any {
-    if (value instanceof Error) {
-      const error = value;
-      if ('captureStackTrace' in global.Error) {
-        // v8
-        return error.stack;
+  jsonValue(returnByValue: true, value: any) {
+    return serializeAsCallArgument(value, (value: any) => ({ fallThrough: value }));
+  }
+
+  private _promiseAwareJsonValueNoThrow(value: any) {
+    const safeJson = (value: any) => {
+      try {
+        return this.jsonValue(true, value);
+      } catch (e) {
+        return undefined;
       }
-      return `${error.name}: ${error.message}\n${error.stack}`;
-    }
-    return value;
+    };
+
+    if (value && typeof value === 'object' && typeof value.then === 'function')
+      return value.then(safeJson);
+    return safeJson(value);
   }
 }

@@ -20,6 +20,7 @@ import * as js from '../javascript';
 import { FFSession } from './ffConnection';
 import { Protocol } from './protocol';
 import * as debugSupport from '../debug/debugSupport';
+import { RemoteObject, parseEvaluationResultValue } from '../remoteObject';
 
 export class FFExecutionContext implements js.ExecutionContextDelegate {
   _session: FFSession;
@@ -30,7 +31,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     this._executionContextId = executionContextId;
   }
 
-  async rawEvaluate(expression: string): Promise<js.RemoteObject> {
+  async rawEvaluate(expression: string): Promise<RemoteObject> {
     const payload = await this._session.send('Runtime.evaluate', {
       expression: debugSupport.ensureSourceUrl(expression),
       returnByValue: false,
@@ -50,25 +51,13 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     if (typeof pageFunction !== 'function')
       throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
 
-    const { functionText, values, handles, dispose } = await js.prepareFunctionCall<Protocol.Runtime.CallFunctionArgument>(pageFunction, context, args, (value: any) => {
-      if (Object.is(value, -0))
-        return { handle: { unserializableValue: '-0' } };
-      if (Object.is(value, Infinity))
-        return { handle: { unserializableValue: 'Infinity' } };
-      if (Object.is(value, -Infinity))
-        return { handle: { unserializableValue: '-Infinity' } };
-      if (Object.is(value, NaN))
-        return { handle: { unserializableValue: 'NaN' } };
-      if (value && (value instanceof js.JSHandle))
-        return { handle: this._toCallArgument(value._remoteObject) };
-      return { value };
-    });
+    const { functionText, values, handles, dispose } = await js.prepareFunctionCall(pageFunction, context, args);
 
     return this._callOnUtilityScript(context,
         `callFunction`, [
           { value: functionText },
           ...values.map(value => ({ value })),
-          ...handles,
+          ...handles.map(handle => ({ objectId: handle.objectId, value: handle.value })),
         ], returnByValue, dispose);
   }
 
@@ -78,7 +67,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
       const payload = await this._session.send('Runtime.callFunction', {
         functionDeclaration: `(utilityScript, ...args) => utilityScript.${method}(...args)` + debugSupport.generateSourceUrl(),
         args: [
-          { objectId: utilityScript._remoteObject.objectId, value: undefined },
+          { objectId: utilityScript._objectId, value: undefined },
           { value: returnByValue },
           ...args
         ],
@@ -87,15 +76,15 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
       }).catch(rewriteError);
       checkException(payload.exceptionDetails);
       if (returnByValue)
-        return deserializeValue(payload.result!);
-      return context.createHandle(payload.result);
+        return parseEvaluationResultValue(payload.result!.value);
+      return context.createHandle(payload.result!);
     } finally {
       dispose();
     }
   }
 
   async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
-    const objectId = handle._remoteObject.objectId;
+    const objectId = handle._objectId;
     if (!objectId)
       return new Map();
     const response = await this._session.send('Runtime.getObjectProperties', {
@@ -109,36 +98,22 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async releaseHandle(handle: js.JSHandle): Promise<void> {
-    if (!handle._remoteObject.objectId)
+    if (!handle._objectId)
       return;
     await this._session.send('Runtime.disposeObject', {
       executionContextId: this._executionContextId,
-      objectId: handle._remoteObject.objectId,
+      objectId: handle._objectId,
     }).catch(error => {});
   }
 
   async handleJSONValue<T>(handle: js.JSHandle<T>): Promise<T> {
-    const payload = handle._remoteObject;
-    if (!payload.objectId)
-      return deserializeValue(payload as Protocol.Runtime.RemoteObject);
-    const simpleValue = await this._session.send('Runtime.callFunction', {
-      executionContextId: this._executionContextId,
-      returnByValue: true,
-      functionDeclaration: ((e: any) => e).toString() + debugSupport.generateSourceUrl(),
-      args: [this._toCallArgument(payload)],
-    });
-    return deserializeValue(simpleValue.result!);
-  }
-
-  handleToString(handle: js.JSHandle, includeType: boolean): string {
-    const payload = handle._remoteObject;
-    if (payload.objectId)
-      return 'JSHandle@' + (payload.subtype || payload.type);
-    return (includeType ? 'JSHandle:' : '') + deserializeValue(payload as Protocol.Runtime.RemoteObject);
-  }
-
-  private _toCallArgument(payload: any): any {
-    return { value: payload.value, unserializableValue: payload.unserializableValue, objectId: payload.objectId };
+    if (handle._objectId) {
+      return await this._callOnUtilityScript(handle._context,
+          `jsonValue`, [
+            { objectId: handle._objectId, value: undefined },
+          ], true, () => {});
+    }
+    return handle._value;
   }
 }
 
@@ -149,18 +124,6 @@ function checkException(exceptionDetails?: Protocol.Runtime.ExceptionDetails) {
     throw new Error('Evaluation failed: ' + JSON.stringify(exceptionDetails.value));
   else
     throw new Error('Evaluation failed: ' + exceptionDetails.text + '\n' + exceptionDetails.stack);
-}
-
-export function deserializeValue({unserializableValue, value}: Protocol.Runtime.RemoteObject) {
-  if (unserializableValue === 'Infinity')
-    return Infinity;
-  if (unserializableValue === '-Infinity')
-    return -Infinity;
-  if (unserializableValue === '-0')
-    return -0;
-  if (unserializableValue === 'NaN')
-    return NaN;
-  return value;
 }
 
 function rewriteError(error: Error): (Protocol.Runtime.evaluateReturnValue | Protocol.Runtime.callFunctionReturnValue) {

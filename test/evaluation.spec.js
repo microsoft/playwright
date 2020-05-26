@@ -40,6 +40,44 @@ describe('Page.evaluate', function() {
     const result = await page.evaluate(a => a, -Infinity);
     expect(Object.is(result, -Infinity)).toBe(true);
   });
+  it('should roundtrip unserializable values', async({page}) => {
+    const value = {
+      infinity: Infinity,
+      nInfinity: -Infinity,
+      nZero: -0,
+      nan: NaN,
+    };
+    const result = await page.evaluate(value => value, value);
+    expect(result).toEqual(value);
+  });
+  it('should roundtrip promise to value', async({page}) => {
+    {
+      const result = await page.evaluate(value => Promise.resolve(value), null);
+      expect(result === null).toBeTruthy();
+    }
+    {
+      const result = await page.evaluate(value => Promise.resolve(value), Infinity);
+      expect(result === Infinity).toBeTruthy();
+    }
+    {
+      const result = await page.evaluate(value => Promise.resolve(value), -0);
+      expect(result === -0).toBeTruthy();
+    }
+    {
+      const result = await page.evaluate(value => Promise.resolve(value), undefined);
+      expect(result === undefined).toBeTruthy();
+    }
+  });
+  it('should roundtrip promise to unserializable values', async({page}) => {
+    const value = {
+      infinity: Infinity,
+      nInfinity: -Infinity,
+      nZero: -0,
+      nan: NaN,
+    };
+    const result = await page.evaluate(value => Promise.resolve(value), value);
+    expect(result).toEqual(value);
+  });
   it('should transfer arrays', async({page, server}) => {
     const result = await page.evaluate(a => a, [1, 2, 3]);
     expect(result).toEqual([1,2,3]);
@@ -61,7 +99,7 @@ describe('Page.evaluate', function() {
     expect(await page.evaluate('globalVar')).toBe(123);
   });
   it('should return undefined for objects with symbols', async({page, server}) => {
-    expect(await page.evaluate(() => [Symbol('foo4')])).toBe(undefined);
+    expect(await page.evaluate(() => [Symbol('foo4')])).toEqual([undefined]);
     expect(await page.evaluate(() => {
       const a = { };
       a[Symbol('foo4')] = 42;
@@ -69,7 +107,7 @@ describe('Page.evaluate', function() {
     })).toEqual({});
     expect(await page.evaluate(() => {
       return { foo: [{ a: Symbol('foo4') }] };
-    })).toBe(undefined);
+    })).toEqual({ foo: [ { a: undefined } ] });
   });
   it('should work with function shorthands', async({page, server}) => {
     const a = {
@@ -287,7 +325,8 @@ describe('Page.evaluate', function() {
     const result = await page.evaluate(() => ({abc: 123}));
     expect(result).toEqual({abc: 123});
   });
-  it('should await promise from popup', async function({page, server}) {
+  it.fail(FFOX)('should await promise from popup', async function({page, server}) {
+    // Something is wrong about the way Firefox waits for the chained promise
     await page.goto(server.EMPTY_PAGE);
     const result = await page.evaluate(() => {
       const win = window.open('about:blank');
@@ -339,19 +378,29 @@ describe('Page.evaluate', function() {
     const error = await page.evaluate(`new Error('error message')`);
     expect(error).toContain('Error: error message');
   });
-  it('should evaluate date as {}', async({page}) => {
-    const result = await page.evaluate(() => ({ date: new Date() }));
-    expect(result).toEqual({ date: {} });
+  it('should evaluate date', async({page}) => {
+    const result = await page.evaluate(() => ({ date: new Date('2020-05-27T01:31:38.506Z') }));
+    expect(result).toEqual({ date: new Date('2020-05-27T01:31:38.506Z') });
   });
-  it('should jsonValue() date as {}', async({page}) => {
-    const resultHandle = await page.evaluateHandle(() => ({ date: new Date() }));
-    expect(await resultHandle.jsonValue()).toEqual({ date: {} });
+  it('should roundtrip date', async({page}) => {
+    const date = new Date('2020-05-27T01:31:38.506Z');
+    const result = await page.evaluate(date => date, date);
+    expect(result.toUTCString()).toEqual(date.toUTCString());
   });
-  it.fail(FFOX)('should not use toJSON when evaluating', async({page, server}) => {
+  it('should roundtrip regex', async({page}) => {
+    const regex = /hello/im;
+    const result = await page.evaluate(regex => regex, regex);
+    expect(result.toString()).toEqual(regex.toString());
+  });
+  it('should jsonValue() date', async({page}) => {
+    const resultHandle = await page.evaluateHandle(() => ({ date: new Date('2020-05-27T01:31:38.506Z') }));
+    expect(await resultHandle.jsonValue()).toEqual({ date: new Date('2020-05-27T01:31:38.506Z') });
+  });
+  it('should not use toJSON when evaluating', async({page, server}) => {
     const result = await page.evaluate(() => ({ toJSON: () => 'string', data: 'data' }));
     expect(result).toEqual({ data: 'data', toJSON: {} });
   });
-  it.fail(FFOX)('should not use toJSON in jsonValue', async({page, server}) => {
+  it('should not use toJSON in jsonValue', async({page, server}) => {
     const resultHandle = await page.evaluateHandle(() => ({ toJSON: () => 'string', data: 'data' }));
     expect(await resultHandle.jsonValue()).toEqual({ data: 'data', toJSON: {} });
   });

@@ -19,7 +19,7 @@ import { Protocol } from './protocol';
 import * as dom from '../dom';
 
 export async function getAccessibilityTree(session: WKSession, needle?: dom.ElementHandle) {
-  const objectId = needle ? needle._remoteObject.objectId : undefined;
+  const objectId = needle ? needle._objectId : undefined;
   const {axNode} = await session.send('Page.accessibilitySnapshot', { objectId });
   const tree = new WKAXNode(axNode);
   return {

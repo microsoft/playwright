@@ -665,7 +665,7 @@ class FrameSession {
   _onLogEntryAdded(event: Protocol.Log.entryAddedPayload) {
     const {level, text, args, source, url, lineNumber} = event.entry;
     if (args)
-      args.map(arg => releaseObject(this._client, arg));
+      args.map(arg => releaseObject(this._client, arg.objectId!));
     if (source !== 'worker')
       this._page.emit(Events.Page.Console, new ConsoleMessage(level, text, [], {url, lineNumber}));
   }
@@ -778,7 +778,7 @@ class FrameSession {
 
   async _getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
     const nodeInfo = await this._client.send('DOM.describeNode', {
-      objectId: handle._remoteObject.objectId
+      objectId: handle._objectId
     });
     if (!nodeInfo || typeof nodeInfo.node.frameId !== 'string')
       return null;
@@ -795,11 +795,10 @@ class FrameSession {
     });
     if (!documentElement)
       return null;
-    const remoteObject = documentElement._remoteObject;
-    if (!remoteObject.objectId)
+    if (!documentElement._objectId)
       return null;
     const nodeInfo = await this._client.send('DOM.describeNode', {
-      objectId: remoteObject.objectId
+      objectId: documentElement._objectId
     });
     const frameId = nodeInfo && typeof nodeInfo.node.frameId === 'string' ?
       nodeInfo.node.frameId : null;
@@ -809,7 +808,7 @@ class FrameSession {
 
   async _getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
     const result = await this._client.send('DOM.getBoxModel', {
-      objectId: handle._remoteObject.objectId
+      objectId: handle._objectId
     }).catch(logError(this._page));
     if (!result)
       return null;
@@ -823,7 +822,7 @@ class FrameSession {
 
   async _scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'success' | 'invisible'> {
     return await this._client.send('DOM.scrollIntoViewIfNeeded', {
-      objectId: handle._remoteObject.objectId,
+      objectId: handle._objectId,
       rect,
     }).then(() => 'success' as const).catch(e => {
       if (e instanceof Error && e.message.includes('Node does not have a layout object'))
@@ -839,7 +838,7 @@ class FrameSession {
 
   async _getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     const result = await this._client.send('DOM.getContentQuads', {
-      objectId: handle._remoteObject.objectId
+      objectId: handle._objectId
     }).catch(logError(this._page));
     if (!result)
       return null;
@@ -853,7 +852,7 @@ class FrameSession {
 
   async _adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
     const nodeInfo = await this._client.send('DOM.describeNode', {
-      objectId: handle._remoteObject.objectId,
+      objectId: handle._objectId,
     });
     return this._adoptBackendNodeId(nodeInfo.node.backendNodeId, to) as Promise<dom.ElementHandle<T>>;
   }
