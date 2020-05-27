@@ -16,10 +16,7 @@
 
 import * as fs from 'fs';
 import * as util from 'util';
-import * as path from 'path';
-
-// NOTE: update this to point to playwright/lib when moving this file.
-const PLAYWRIGHT_LIB_PATH = path.normalize(path.join(__dirname, '..'));
+import { getCallerFilePath } from './stackTrace';
 
 type Position = {
   line: number;
@@ -117,29 +114,4 @@ function advancePosition(position: Position, delta: Position) {
     line: position.line + delta.line,
     column: delta.column + (delta.line ? 0 : position.column),
   };
-}
-
-function getCallerFilePath(): string | null {
-  const error = new Error();
-  const stackFrames = (error.stack || '').split('\n').slice(1);
-  // Find first stackframe that doesn't point to PLAYWRIGHT_LIB_PATH.
-  for (let frame of stackFrames) {
-    frame = frame.trim();
-    if (!frame.startsWith('at '))
-      return null;
-    if (frame.endsWith(')')) {
-      const from = frame.indexOf('(');
-      frame = frame.substring(from + 1, frame.length - 1);
-    } else {
-      frame = frame.substring('at '.length);
-    }
-    const match = frame.match(/^(?:async )?(.*):(\d+):(\d+)$/);
-    if (!match)
-      return null;
-    const filePath = match[1];
-    if (filePath.startsWith(PLAYWRIGHT_LIB_PATH))
-      continue;
-    return filePath;
-  }
-  return null;
 }
