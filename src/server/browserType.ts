@@ -112,7 +112,7 @@ export abstract class BrowserTypeBase implements BrowserType {
   }
 
   async _innerLaunch(options: LaunchOptions, persistent: PersistentContextOptions | undefined, userDataDir?: string): Promise<BrowserBase> {
-    const deadline = TimeoutSettings.computeDeadline(options.timeout, 30000);
+    const deadline = TimeoutSettings.computeDeadline(options.timeout);
     const logger = new RootLogger(options.logger);
     logger.startLaunchRecording();
 
@@ -159,13 +159,13 @@ export abstract class BrowserTypeBase implements BrowserType {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launchServer`. Use `browserType.launchPersistentContext` instead');
     const { port = 0 } = options;
     const logger = new RootLogger(options.logger);
-    const { browserServer, transport } = await this._launchServer(options, false, logger, TimeoutSettings.computeDeadline(options.timeout, 30000));
+    const { browserServer, transport } = await this._launchServer(options, false, logger, TimeoutSettings.computeDeadline(options.timeout));
     browserServer._webSocketWrapper = this._wrapTransportWithWebSocket(transport, logger, port);
     return browserServer;
   }
 
   async connect(options: ConnectOptions): Promise<Browser> {
-    const deadline = TimeoutSettings.computeDeadline(options.timeout, 30000);
+    const deadline = TimeoutSettings.computeDeadline(options.timeout);
     const logger = new RootLogger(options.logger);
     logger.startLaunchRecording();
 

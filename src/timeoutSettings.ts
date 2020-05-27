@@ -17,8 +17,9 @@
 
 import { TimeoutOptions } from './types';
 import { helper } from './helper';
+import * as debugSupport from './debug/debugSupport';
 
-const DEFAULT_TIMEOUT = 30000;
+const DEFAULT_TIMEOUT = debugSupport.isDebugMode() ? 0 : 30000;
 
 export class TimeoutSettings {
   private _parent: TimeoutSettings | undefined;
@@ -55,16 +56,13 @@ export class TimeoutSettings {
     return DEFAULT_TIMEOUT;
   }
 
-  computeDeadline(options?: TimeoutOptions) {
-    const { timeout } = options || {};
-    return TimeoutSettings.computeDeadline(typeof timeout === 'number' ? timeout : this._timeout());
+  computeDeadline(options: TimeoutOptions = {}) {
+    return TimeoutSettings.computeDeadline(options.timeout, this._timeout());
   }
 
-  static computeDeadline(timeout: number | undefined, defaultValue = 30000): number {
-    if (timeout === 0)
-      return Number.MAX_SAFE_INTEGER;
-    else if (typeof timeout === 'number')
-      return helper.monotonicTime() + timeout;
-    return helper.monotonicTime() + defaultValue;
+  static computeDeadline(timeout: number | undefined, defaultValue = DEFAULT_TIMEOUT): number {
+    if (typeof timeout !== 'number')
+      timeout = defaultValue;
+    return timeout ? helper.monotonicTime() + timeout : Number.MAX_SAFE_INTEGER;
   }
 }

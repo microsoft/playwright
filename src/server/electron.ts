@@ -168,7 +168,7 @@ export class Electron  {
       handleSIGTERM = true,
       handleSIGHUP = true,
     } = options;
-    const deadline = TimeoutSettings.computeDeadline(options.timeout, 30000);
+    const deadline = TimeoutSettings.computeDeadline(options.timeout);
     let app: ElectronApplication | undefined = undefined;
 
     const logger = new RootLogger(options.logger);
