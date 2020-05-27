@@ -173,7 +173,7 @@ export class Electron  {
 
     const logger = new RootLogger(options.logger);
     const electronArguments = ['--inspect=0', '--remote-debugging-port=0', '--require', path.join(__dirname, 'electronLoader.js'), ...args];
-    const { launchedProcess, gracefullyClose } = await launchProcess({
+    const { launchedProcess, gracefullyClose, kill } = await launchProcess({
       executablePath,
       args: electronArguments,
       env,
@@ -185,7 +185,7 @@ export class Electron  {
       cwd: options.cwd,
       tempDirectories: [],
       attemptToGracefullyClose: () => app!.close(),
-      onkill: (exitCode, signal) => {
+      onExit: (exitCode, signal) => {
         if (app)
           app.emit(ElectronEvents.ElectronApplication.Close, exitCode, signal);
       },
@@ -198,7 +198,7 @@ export class Electron  {
 
     const chromeMatch = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, helper.timeUntilDeadline(deadline), timeoutError);
     const chromeTransport = await WebSocketTransport.connect(chromeMatch[1], logger, deadline);
-    const browserServer = new BrowserServer(launchedProcess, gracefullyClose);
+    const browserServer = new BrowserServer(launchedProcess, gracefullyClose, kill);
     const browser = await CRBrowser.connect(chromeTransport, { headful: true, logger, persistent: { viewport: null }, ownedServer: browserServer });
     app = new ElectronApplication(logger, browser, nodeConnection);
     await app._init();

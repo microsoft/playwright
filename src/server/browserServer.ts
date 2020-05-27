@@ -50,13 +50,15 @@ export class WebSocketWrapper {
 
 export class BrowserServer extends EventEmitter {
   private _process: ChildProcess;
-  private _gracefullyClose: (() => Promise<void>);
+  private _gracefullyClose: () => Promise<void>;
+  private _kill: () => Promise<void>;
   _webSocketWrapper: WebSocketWrapper | null = null;
 
-  constructor(process: ChildProcess, gracefullyClose: () => Promise<void>) {
+  constructor(process: ChildProcess, gracefullyClose: () => Promise<void>, kill: () => Promise<void>) {
     super();
     this._process = process;
     this._gracefullyClose = gracefullyClose;
+    this._kill = kill;
   }
 
   process(): ChildProcess {
@@ -67,8 +69,8 @@ export class BrowserServer extends EventEmitter {
     return this._webSocketWrapper ? this._webSocketWrapper.wsEndpoint : '';
   }
 
-  kill() {
-    helper.killProcess(this._process);
+  async kill(): Promise<void> {
+    await this._kill();
   }
 
   async close(): Promise<void> {
@@ -84,7 +86,7 @@ export class BrowserServer extends EventEmitter {
     try {
       await helper.waitWithDeadline(this.close(), '', deadline, ''); // The error message is ignored.
     } catch (ignored) {
-      this.kill();
+      await this.kill(); // Make sure to await actual process exit.
     }
   }
 }

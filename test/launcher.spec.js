@@ -223,8 +223,8 @@ describe('Browser.close', function() {
   });
 });
 
-describe('browserType.launch |webSocket| option', function() {
-  it('should support the webSocket option', async({browserType, defaultBrowserOptions}) => {
+describe('browserType.launchServer', function() {
+  it('should work', async({browserType, defaultBrowserOptions}) => {
     const browserServer = await browserType.launchServer(defaultBrowserOptions);
     const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
     const browserContext = await browser.newContext();
@@ -237,7 +237,7 @@ describe('browserType.launch |webSocket| option', function() {
     await browserServer._checkLeaks();
     await browserServer.close();
   });
-  it('should fire "disconnected" when closing with webSocket', async({browserType, defaultBrowserOptions}) => {
+  it('should fire "disconnected" when closing the server', async({browserType, defaultBrowserOptions}) => {
     const browserServer = await browserType.launchServer(defaultBrowserOptions);
     const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
     const disconnectedEventPromise = new Promise(resolve => browser.once('disconnected', resolve));
@@ -247,6 +247,19 @@ describe('browserType.launch |webSocket| option', function() {
       disconnectedEventPromise,
       closedPromise,
     ]);
+  });
+  it('should fire "close" event during kill', async({browserType, defaultBrowserOptions}) => {
+    const order = [];
+    const browserServer = await browserType.launchServer(defaultBrowserOptions);
+    const closedPromise = new Promise(f => browserServer.on('close', () => {
+      order.push('closed');
+      f();
+    }));
+    await Promise.all([
+      browserServer.kill().then(() => order.push('killed')),
+      closedPromise,
+    ]);
+    expect(order).toEqual(['closed', 'killed']);
   });
 });
 
