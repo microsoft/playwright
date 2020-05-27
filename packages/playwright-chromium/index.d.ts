@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as types from 'playwright-core/types/types';
+import * as types from './types/types';
 
-export * from 'playwright-core/types/types';
+export * from './types/types';
 export const chromium: types.BrowserType<types.ChromiumBrowser>;
