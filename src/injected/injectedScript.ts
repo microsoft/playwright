@@ -211,7 +211,7 @@ export default class InjectedScript {
         return { status: 'error', error: 'Cannot fill input of type "' + type + '".' };
       if (type === 'number') {
         value = value.trim();
-        if (!value || isNaN(Number(value)))
+        if (isNaN(Number(value)))
           return { status: 'error', error: 'Cannot type text into input[type=number].' };
       }
       if (input.disabled)
