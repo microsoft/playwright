@@ -20,6 +20,7 @@ import * as util from 'util';
 import * as frames from './frames';
 import { assert, helper } from './helper';
 import { Page } from './page';
+import { URLSearchParams } from 'url';
 
 export type NetworkCookie = {
   name: string,
@@ -153,7 +154,29 @@ export class Request {
     return this._postData;
   }
 
-  headers(): {[key: string]: string} {
+  postDataJSON(): Object | null {
+    if (!this._postData)
+      return null;
+
+    const contentType = this.headers()['content-type'];
+    if (!contentType)
+      return null;
+
+    if (contentType === 'application/x-www-form-urlencoded') {
+      const entries: Record<string, string> = {};
+      const parsed = new URLSearchParams(this._postData);
+      for (const [k, v] of parsed.entries())
+        entries[k] = v;
+      return entries;
+    }
+
+    if (contentType.startsWith('application/json'))
+      return JSON.parse(this._postData);
+
+    return null;
+  }
+
+  headers(): { [key: string]: string } {
     return { ...this._headers };
   }
 
