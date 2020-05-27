@@ -291,7 +291,7 @@ export class CRBrowserContext extends BrowserContextBase {
 
   async _initialize() {
     assert(!Array.from(this._browser._crPages.values()).some(page => page._browserContext === this));
-    const promises: Promise<any>[] = [];
+    const promises: Promise<any>[] = [ super._initialize() ];
     if (this._browser._options.downloadsPath) {
       promises.push(this._browser._session.send('Browser.setDownloadBehavior', {
         behavior: this._options.acceptDownloads ? 'allowAndName' : 'deny',

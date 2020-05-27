@@ -213,7 +213,7 @@ export class WKBrowserContext extends BrowserContextBase {
   async _initialize() {
     assert(!this._wkPages().length);
     const browserContextId = this._browserContextId;
-    const promises: Promise<any>[] = [];
+    const promises: Promise<any>[] = [ super._initialize() ];
     if (this._browser._options.downloadsPath) {
       promises.push(this._browser._browserSession.send('Playwright.setDownloadBehavior', {
         behavior: this._options.acceptDownloads ? 'allow' : 'deny',
