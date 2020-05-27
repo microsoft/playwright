@@ -157,7 +157,6 @@ describe('Request.postDataJSON', function () {
     page.on('request', r => request = r);
     await page.evaluate(() => fetch('./post', { method: 'POST', body: JSON.stringify({ foo: 'bar' }) }));
     expect(request).toBeTruthy();
-    console.log(request.headers())
     expect(request.postDataJSON()).toEqual(null);
   });
 
