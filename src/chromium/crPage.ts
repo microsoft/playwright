@@ -38,6 +38,7 @@ import { ConsoleMessage } from '../console';
 import { NotConnectedError } from '../errors';
 import { logError } from '../logger';
 import * as debugSupport from '../debug/debugSupport';
+import { rewriteErrorMessage } from '../debug/stackTrace';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -321,7 +322,7 @@ export class CRPage implements PageDelegate {
     const parentSession = this._sessionForFrame(parent);
     const { backendNodeId } = await parentSession._client.send('DOM.getFrameOwner', { frameId: frame._id }).catch(e => {
       if (e instanceof Error && e.message.includes('Frame with the given id was not found.'))
-        e.message = 'Frame has been detached.';
+        rewriteErrorMessage(e, 'Frame has been detached.');
       throw e;
     });
     parent = frame.parentFrame();

@@ -20,6 +20,7 @@ import { assert } from '../helper';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse, protocolLog } from '../transport';
 import { Protocol } from './protocol';
 import { InnerLogger } from '../logger';
+import { rewriteErrorMessage } from '../debug/stackTrace';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('Disconnected'),
@@ -112,7 +113,7 @@ export class FFConnection extends EventEmitter {
     this._transport.onmessage = undefined;
     this._transport.onclose = undefined;
     for (const callback of this._callbacks.values())
-      callback.reject(rewriteError(callback.error, `Protocol error (${callback.method}): Target closed.`));
+      callback.reject(rewriteErrorMessage(callback.error, `Protocol error (${callback.method}): Target closed.`));
     this._callbacks.clear();
     for (const session of this._sessions.values())
       session.dispose();
@@ -200,7 +201,7 @@ export class FFSession extends EventEmitter {
 
   dispose() {
     for (const callback of this._callbacks.values())
-      callback.reject(rewriteError(callback.error, `Protocol error (${callback.method}): Target closed.`));
+      callback.reject(rewriteErrorMessage(callback.error, `Protocol error (${callback.method}): Target closed.`));
     this._callbacks.clear();
     this._disposed = true;
     this._connection._sessions.delete(this._sessionId);
@@ -212,12 +213,7 @@ function createProtocolError(error: Error, method: string, protocolError: { mess
   let message = `Protocol error (${method}): ${protocolError.message}`;
   if ('data' in protocolError)
     message += ` ${protocolError.data}`;
-  return rewriteError(error, message);
-}
-
-function rewriteError(error: Error, message: string): Error {
-  error.message = message;
-  return error;
+  return rewriteErrorMessage(error, message);
 }
 
 function rewriteInjectedScriptEvaluationLog(message: ProtocolRequest): string {

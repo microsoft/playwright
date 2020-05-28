@@ -20,6 +20,7 @@ import { assert } from '../helper';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse, protocolLog } from '../transport';
 import { Protocol } from './protocol';
 import { InnerLogger } from '../logger';
+import { rewriteErrorMessage } from '../debug/stackTrace';
 
 // WKPlaywright uses this special id to issue Browser.close command which we
 // should ignore.
@@ -147,7 +148,7 @@ export class WKSession extends EventEmitter {
 
   dispose() {
     for (const callback of this._callbacks.values())
-      callback.reject(rewriteError(callback.error, `Protocol error (${callback.method}): ${this.errorText}`));
+      callback.reject(rewriteErrorMessage(callback.error, `Protocol error (${callback.method}): ${this.errorText}`));
     this._callbacks.clear();
     this._disposed = true;
   }
@@ -173,12 +174,7 @@ export function createProtocolError(error: Error, method: string, protocolError:
   let message = `Protocol error (${method}): ${protocolError.message}`;
   if ('data' in protocolError)
     message += ` ${JSON.stringify(protocolError.data)}`;
-  return rewriteError(error, message);
-}
-
-export function rewriteError(error: Error, message: string): Error {
-  error.message = message;
-  return error;
+  return rewriteErrorMessage(error, message);
 }
 
 export function isSwappedOutError(e: Error) {

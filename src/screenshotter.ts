@@ -22,6 +22,7 @@ import * as dom from './dom';
 import { assert, helper } from './helper';
 import { Page } from './page';
 import * as types from './types';
+import { rewriteErrorMessage } from './debug/stackTrace';
 
 export class Screenshotter {
   private _queue = new TaskQueue();
@@ -220,6 +221,6 @@ function validateScreenshotOptions(options: types.ScreenshotOptions): 'png' | 'j
 export const kScreenshotDuringNavigationError = 'Cannot take a screenshot while page is navigating';
 function rewriteError(e: any) {
   if (typeof e === 'object' && e instanceof Error && e.message.includes('Execution context was destroyed'))
-    e.message = kScreenshotDuringNavigationError;
+    rewriteErrorMessage(e, kScreenshotDuringNavigationError);
   throw e;
 }

@@ -33,6 +33,7 @@ import { Protocol } from './protocol';
 import { selectors } from '../selectors';
 import { NotConnectedError } from '../errors';
 import { logError } from '../logger';
+import { rewriteErrorMessage } from '../debug/stackTrace';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -360,7 +361,7 @@ export class FFPage implements PageDelegate {
       clip: documentRect,
     }).catch(e => {
       if (e instanceof Error && e.message.includes('document.documentElement is null'))
-        e.message = kScreenshotDuringNavigationError;
+        rewriteErrorMessage(e, kScreenshotDuringNavigationError);
       throw e;
     });
     return Buffer.from(data, 'base64');
