@@ -259,6 +259,33 @@ describe('Response.statusText', function() {
   });
 });
 
+describe('Request.resourceType', function() {
+  it.fail(FFOX || WEBKIT)('should return event source', async ({page, server}) => {
+    const SSE_MESSAGE = {foo: 'bar'};
+    // 1. Setup server-sent events on server that immediately sends a message to the client.
+    server.setRoute('/sse', (req, res) => {
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Connection': 'keep-alive',
+        'Cache-Control': 'no-cache',
+      });
+      res.write(`data: ${JSON.stringify(SSE_MESSAGE)}\n\n`);
+    });
+    // 2. Subscribe to page request events.
+    await page.goto(server.EMPTY_PAGE);
+    const requests = [];
+    page.on('request', request => requests.push(request));
+    // 3. Connect to EventSource in browser and return first message.
+    expect(await page.evaluate(() => {
+      const eventSource = new EventSource('/sse');
+      return new Promise(resolve => {
+        eventSource.onmessage = e => resolve(JSON.parse(e.data));
+      });
+    })).toEqual(SSE_MESSAGE);
+    expect(requests[0].resourceType()).toBe('eventsource');
+  });
+});
+
 describe('Network Events', function() {
   it('Page.Events.Request', async({page, server}) => {
     const requests = [];
