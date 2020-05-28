@@ -65,9 +65,9 @@ export class FrameExecutionContext extends js.ExecutionContext {
     }, Number.MAX_SAFE_INTEGER, waitForNavigations ? undefined : { noWaitAfter: true });
   }
 
-  createHandle(remoteObject: any): js.JSHandle {
+  createHandle(remoteObject: js.RemoteObject): js.JSHandle {
     if (this.frame._page._delegate.isElementHandle(remoteObject))
-      return new ElementHandle(this, remoteObject);
+      return new ElementHandle(this, remoteObject.objectId!);
     return super.createHandle(remoteObject);
   }
 
@@ -81,7 +81,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
           ${custom.join(',\n')}
         ])
       `;
-      this._injectedPromise = this._delegate.rawEvaluate(source).then(object => this.createHandle(object));
+      this._injectedPromise = this._delegate.rawEvaluate(source).then(objectId => new js.JSHandle(this, 'object', objectId));
     }
     return this._injectedPromise;
   }
@@ -90,9 +90,11 @@ export class FrameExecutionContext extends js.ExecutionContext {
 export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   readonly _context: FrameExecutionContext;
   readonly _page: Page;
+  readonly _objectId: string;
 
-  constructor(context: FrameExecutionContext, remoteObject: any) {
-    super(context, remoteObject);
+  constructor(context: FrameExecutionContext, objectId: string) {
+    super(context, 'node', objectId);
+    this._objectId = objectId;
     this._context = context;
     this._page = context.frame._page;
   }

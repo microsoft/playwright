@@ -20,7 +20,7 @@ import * as js from '../javascript';
 import { FFSession } from './ffConnection';
 import { Protocol } from './protocol';
 import * as debugSupport from '../debug/debugSupport';
-import { RemoteObject, parseEvaluationResultValue } from '../remoteObject';
+import { parseEvaluationResultValue } from '../utilityScriptSerializers';
 
 export class FFExecutionContext implements js.ExecutionContextDelegate {
   _session: FFSession;
@@ -31,14 +31,14 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     this._executionContextId = executionContextId;
   }
 
-  async rawEvaluate(expression: string): Promise<RemoteObject> {
+  async rawEvaluate(expression: string): Promise<string> {
     const payload = await this._session.send('Runtime.evaluate', {
       expression: debugSupport.ensureSourceUrl(expression),
       returnByValue: false,
       executionContextId: this._executionContextId,
     }).catch(rewriteError);
     checkException(payload.exceptionDetails);
-    return payload.result!;
+    return payload.result!.objectId!;
   }
 
   async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
@@ -97,6 +97,10 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     return result;
   }
 
+  createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
+    return new js.JSHandle(context, remoteObject.subtype || remoteObject.type || '', remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
+  }
+
   async releaseHandle(handle: js.JSHandle): Promise<void> {
     if (!handle._objectId)
       return;
@@ -134,4 +138,10 @@ function rewriteError(error: Error): (Protocol.Runtime.evaluateReturnValue | Pro
   if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
     error.message += ' Are you passing a nested JSHandle?';
   throw error;
+}
+
+function potentiallyUnserializableValue(remoteObject: Protocol.Runtime.RemoteObject): any {
+  const value = remoteObject.value;
+  const unserializableValue = remoteObject.unserializableValue;
+  return unserializableValue ? js.parseUnserializableValue(unserializableValue) : value;
 }

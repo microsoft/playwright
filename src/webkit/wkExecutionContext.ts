@@ -20,7 +20,7 @@ import { helper } from '../helper';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
 import * as debugSupport from '../debug/debugSupport';
-import { RemoteObject, parseEvaluationResultValue } from '../remoteObject';
+import { parseEvaluationResultValue } from '../utilityScriptSerializers';
 
 export class WKExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: WKSession;
@@ -40,7 +40,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     this._contextDestroyedCallback();
   }
 
-  async rawEvaluate(expression: string): Promise<RemoteObject> {
+  async rawEvaluate(expression: string): Promise<string> {
     const contextId = this._contextId;
     const response = await this._session.send('Runtime.evaluate', {
       expression: debugSupport.ensureSourceUrl(expression),
@@ -49,7 +49,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     });
     if (response.wasThrown)
       throw new Error('Evaluation failed: ' + response.result.description);
-    return response.result;
+    return response.result.objectId!;
   }
 
   async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
@@ -154,6 +154,11 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     return result;
   }
 
+  createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
+    const isPromise = remoteObject.className === 'Promise';
+    return new js.JSHandle(context, isPromise ? 'promise' : remoteObject.subtype || remoteObject.type, remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
+  }
+
   async releaseHandle(handle: js.JSHandle): Promise<void> {
     if (!handle._objectId)
       return;
@@ -183,3 +188,9 @@ const contextDestroyedResult = {
     description: 'Protocol error: Execution context was destroyed, most likely because of a navigation.'
   } as Protocol.Runtime.RemoteObject
 };
+
+function potentiallyUnserializableValue(remoteObject: Protocol.Runtime.RemoteObject): any {
+  const value = remoteObject.value;
+  const unserializableValue = remoteObject.type === 'number' && value === null ? remoteObject.description : undefined;
+  return unserializableValue ? js.parseUnserializableValue(unserializableValue) : value;
+}

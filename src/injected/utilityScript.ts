@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { serializeAsCallArgument, parseEvaluationResultValue } from '../remoteObject';
+import { serializeAsCallArgument, parseEvaluationResultValue } from '../utilityScriptSerializers';
 
 export default class UtilityScript {
   evaluate(returnByValue: boolean, expression: string) {

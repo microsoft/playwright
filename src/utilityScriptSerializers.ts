@@ -16,16 +16,6 @@
 
 // This file can't have dependencies, it is a part of the utility script.
 
-export type RemoteObject = {
-  type?: string,
-  subtype?: string,
-  className?: string,
-  objectId?: string,
-  value?: any,
-  unserializableValue?: string
-  description?: string
-};
-
 export function parseEvaluationResultValue(value: any, handles: any[] = []): any {
   // { type: 'undefined' } does not even have value.
   if (value === 'undefined')

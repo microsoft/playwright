@@ -21,7 +21,7 @@ import { getExceptionMessage, releaseObject } from './crProtocolHelper';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
 import * as debugSupport from '../debug/debugSupport';
-import { RemoteObject, parseEvaluationResultValue } from '../remoteObject';
+import { parseEvaluationResultValue } from '../utilityScriptSerializers';
 
 export class CRExecutionContext implements js.ExecutionContextDelegate {
   _client: CRSession;
@@ -32,14 +32,14 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     this._contextId = contextPayload.id;
   }
 
-  async rawEvaluate(expression: string): Promise<RemoteObject> {
+  async rawEvaluate(expression: string): Promise<string> {
     const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.evaluate', {
       expression: debugSupport.ensureSourceUrl(expression),
       contextId: this._contextId,
     }).catch(rewriteError);
     if (exceptionDetails)
       throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
-    return remoteObject;
+    return remoteObject.objectId!;
   }
 
   async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
@@ -100,6 +100,10 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     return result;
   }
 
+  createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
+    return new js.JSHandle(context, remoteObject.subtype || remoteObject.type, remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
+  }
+
   async releaseHandle(handle: js.JSHandle): Promise<void> {
     if (!handle._objectId)
       return;
@@ -128,4 +132,10 @@ function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {
   if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
     error.message += ' Are you passing a nested JSHandle?';
   throw error;
+}
+
+function potentiallyUnserializableValue(remoteObject: Protocol.Runtime.RemoteObject): any {
+  const value = remoteObject.value;
+  const unserializableValue = remoteObject.unserializableValue;
+  return unserializableValue ? js.parseUnserializableValue(unserializableValue) : value;
 }

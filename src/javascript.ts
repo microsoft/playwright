@@ -19,12 +19,18 @@ import * as dom from './dom';
 import * as utilityScriptSource from './generated/utilityScriptSource';
 import { InnerLogger } from './logger';
 import * as debugSupport from './debug/debugSupport';
-import { RemoteObject, serializeAsCallArgument } from './remoteObject';
+import { serializeAsCallArgument } from './utilityScriptSerializers';
+
+export type RemoteObject = {
+  objectId?: string,
+  value?: any
+};
 
 export interface ExecutionContextDelegate {
   evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: string | Function, ...args: any[]): Promise<any>;
-  rawEvaluate(pageFunction: string): Promise<RemoteObject>;
+  rawEvaluate(pageFunction: string): Promise<string>;
   getProperties(handle: JSHandle): Promise<Map<string, JSHandle>>;
+  createHandle(context: ExecutionContext, remoteObject: RemoteObject): JSHandle;
   releaseHandle(handle: JSHandle): Promise<void>;
   handleJSONValue<T>(handle: JSHandle<T>): Promise<T>;
 }
@@ -62,13 +68,13 @@ export class ExecutionContext {
   utilityScript(): Promise<JSHandle> {
     if (!this._utilityScriptPromise) {
       const source = `new (${utilityScriptSource.source})()`;
-      this._utilityScriptPromise = this._delegate.rawEvaluate(source).then(object => this.createHandle(object));
+      this._utilityScriptPromise = this._delegate.rawEvaluate(source).then(objectId => new JSHandle(this, 'object', objectId));
     }
     return this._utilityScriptPromise;
   }
 
   createHandle(remoteObject: RemoteObject): JSHandle {
-    return new JSHandle(this, remoteObject);
+    return this._delegate.createHandle(this, remoteObject);
   }
 }
 
@@ -79,14 +85,11 @@ export class JSHandle<T = any> {
   readonly _value: any;
   private _type: string;
 
-  constructor(context: ExecutionContext, remoteObject: RemoteObject) {
+  constructor(context: ExecutionContext, type: string, objectId?: string, value?: any) {
     this._context = context;
-    this._objectId = remoteObject.objectId;
-    // Remote objects for primitive (or unserializable) objects carry value.
-    this._value = potentiallyUnserializableValue(remoteObject);
-    // WebKit does not have a 'promise' type.
-    const isPromise = remoteObject.className === 'Promise';
-    this._type = isPromise ? 'promise' : remoteObject.subtype || remoteObject.type || 'object';
+    this._objectId = objectId;
+    this._value = value;
+    this._type = type;
   }
 
   async evaluate<R, Arg>(pageFunction: types.FuncOn<T, Arg, R>, arg: Arg): Promise<R>;
@@ -207,13 +210,7 @@ export async function prepareFunctionCall(
   return { functionText, values: [ args.length, ...args ], handles: resultHandles, dispose };
 }
 
-function potentiallyUnserializableValue(remoteObject: RemoteObject): any {
-  const value = remoteObject.value;
-  let unserializableValue = remoteObject.unserializableValue;
-  if (remoteObject.type === 'number' && value === null)
-    unserializableValue = remoteObject.description;
-  if (!unserializableValue)
-    return value;
+export function parseUnserializableValue(unserializableValue: string): any {
   if (unserializableValue === 'NaN')
     return NaN;
   if (unserializableValue === 'Infinity')
@@ -222,5 +219,4 @@ function potentiallyUnserializableValue(remoteObject: RemoteObject): any {
     return -Infinity;
   if (unserializableValue === '-0')
     return -0;
-  return undefined;
 }

@@ -710,7 +710,7 @@ export class WKPage implements PageDelegate {
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
     const nodeInfo = await this._session.send('DOM.describeNode', {
-      objectId: handle._objectId!
+      objectId: handle._objectId
     });
     if (!nodeInfo.contentFrameId)
       return null;
@@ -751,7 +751,7 @@ export class WKPage implements PageDelegate {
 
   async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'success' | 'invisible'> {
     return await this._session.send('DOM.scrollIntoViewIfNeeded', {
-      objectId: handle._objectId!,
+      objectId: handle._objectId,
       rect,
     }).then(() => 'success' as const).catch(e => {
       if (e instanceof Error && e.message.includes('Node does not have a layout object'))
@@ -771,7 +771,7 @@ export class WKPage implements PageDelegate {
 
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     const result = await this._session.send('DOM.getContentQuads', {
-      objectId: handle._objectId!
+      objectId: handle._objectId
     }).catch(logError(this._page));
     if (!result)
       return null;
@@ -788,13 +788,13 @@ export class WKPage implements PageDelegate {
   }
 
   async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
-    const objectId = handle._objectId!;
+    const objectId = handle._objectId;
     await this._session.send('DOM.setInputFiles', { objectId, files: dom.toFileTransferPayload(files) });
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
     const result = await this._session.send('DOM.resolveNode', {
-      objectId: handle._objectId!,
+      objectId: handle._objectId,
       executionContextId: (to._delegate as WKExecutionContext)._contextId
     }).catch(logError(this._page));
     if (!result || result.object.subtype === 'null')
