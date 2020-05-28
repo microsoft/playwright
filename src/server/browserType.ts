@@ -28,6 +28,7 @@ import { assert, helper } from '../helper';
 import { TimeoutSettings } from '../timeoutSettings';
 import { launchProcess, Env, waitForLine } from './processLauncher';
 import { Events } from '../events';
+import { rewriteErrorMessage } from '../debug/stackTrace';
 import { TimeoutError } from '../errors';
 import { PipeTransport } from './pipeTransport';
 
@@ -134,9 +135,9 @@ export abstract class BrowserTypeBase implements BrowserType {
       const browser = await helper.waitWithDeadline(promise, 'the browser to launch', deadline, 'pw:browser*');
       return browser;
     } catch (e) {
-      e.message += '\n=============== Process output during launch: ===============\n' +
+      rewriteErrorMessage(e, e.message + '\n=============== Process output during launch: ===============\n' +
           logger.launchRecording() +
-          '\n=============================================================';
+          '\n=============================================================');
       if (browserServer)
         await browserServer._closeOrKill(deadline);
       throw e;
@@ -182,9 +183,9 @@ export abstract class BrowserTypeBase implements BrowserType {
       logger.stopLaunchRecording();
       return browser;
     } catch (e) {
-      e.message += '\n=============== Process output during connect: ===============\n' +
+      rewriteErrorMessage(e, e.message + '\n=============== Process output during connect: ===============\n' +
           logger.launchRecording() +
-          '\n=============================================================';
+          '\n=============================================================');
       try {
         if (transport)
           transport.close();

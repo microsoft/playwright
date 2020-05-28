@@ -21,6 +21,7 @@ import { getExceptionMessage, releaseObject } from './crProtocolHelper';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
 import * as debugSupport from '../debug/debugSupport';
+import { rewriteErrorMessage } from '../debug/stackTrace';
 import { parseEvaluationResultValue } from '../utilityScriptSerializers';
 
 export class CRExecutionContext implements js.ExecutionContextDelegate {
@@ -130,7 +131,7 @@ function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {
   if (error.message.endsWith('Cannot find context with specified id') || error.message.endsWith('Inspected target navigated or closed') || error.message.endsWith('Execution context was destroyed.'))
     throw new Error('Execution context was destroyed, most likely because of a navigation.');
   if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
-    error.message += ' Are you passing a nested JSHandle?';
+    rewriteErrorMessage(error, error.message + ' Are you passing a nested JSHandle?');
   throw error;
 }
 
