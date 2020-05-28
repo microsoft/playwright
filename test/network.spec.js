@@ -260,7 +260,7 @@ describe('Response.statusText', function() {
 });
 
 describe('Request.resourceType', function() {
-  it.fail(FFOX || WEBKIT)('should return event source', async ({page, server}) => {
+  it.fail(FFOX)('should return event source', async ({page, server}) => {
     const SSE_MESSAGE = {foo: 'bar'};
     // 1. Setup server-sent events on server that immediately sends a message to the client.
     server.setRoute('/sse', (req, res) => {
