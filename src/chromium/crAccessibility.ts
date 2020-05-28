@@ -95,7 +95,7 @@ class CRAXNode implements accessibility.AXNode {
   }
 
   async _findElement(element: dom.ElementHandle): Promise<CRAXNode | null> {
-    const objectId = element._objectId!;
+    const objectId = element._objectId;
     const {node: {backendNodeId}} = await this._client.send('DOM.describeNode', { objectId });
     const needle = this.find(node => node._payload.backendDOMNodeId === backendNodeId);
     return needle || null;
