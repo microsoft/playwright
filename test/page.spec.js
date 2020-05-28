@@ -739,7 +739,7 @@ describe('Page.addScriptTag', function() {
     expect(await page.evaluate(() => __injected)).toBe(35);
   });
 
-  it.fail(FFOX && WIN)('should throw when added with content to the CSP page', async({page, server}) => {
+  it.fail(FFOX)('should throw when added with content to the CSP page', async({page, server}) => {
     // Firefox fires onload for blocked script before it issues the CSP console error.
     await page.goto(server.PREFIX + '/csp.html');
     let error = null;
