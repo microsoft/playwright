@@ -219,6 +219,9 @@ export function parseSelector(selector: string): types.ParsedSelector {
     } else if (c === quote) {
       quote = undefined;
       index++;
+    } else if (!quote && (c === '"' || c === '\'' || c === '`')) {
+      quote = c;
+      index++;
     } else if (!quote && c === '>' && selector[index + 1] === '>') {
       append();
       index += 2;
