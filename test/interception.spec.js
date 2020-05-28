@@ -587,6 +587,33 @@ describe('Request.fulfill', function() {
     expect(text).toBe('done');
     expect(interceptedRequest.headers()['origin']).toEqual(server.PREFIX);
   });
+  it('should throw when sending an invalid header', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+
+    const route = await new Promise(async done => {
+      await page.route('**/*', async route => {
+        await evalPromise;
+        done(route);
+      });
+      const evalPromise = page.evaluate(() => void fetch('./something'));
+    });
+    const invalidValueError = await route.fulfill({
+      status: 200,
+      headers: {
+        x: 'a\nb',
+      },
+      body: 'hello world',
+    }).catch(e => e);
+    expect(invalidValueError.message).toContain('Invalid header value');
+    const invalidNameError = await route.fulfill({
+      status: 200,
+      headers: {
+        "x{": 'a',
+      },
+      body: 'hello world',
+    }).catch(e => e);
+    expect(invalidNameError.message).toContain('Invalid header name');
+  });
 });
 
 describe('Interception vs isNavigationRequest', () => {

@@ -342,6 +342,7 @@ class InterceptableRequest implements network.RouteDelegate {
 
     const responseHeaders: { [s: string]: string; } = {};
     if (response.headers) {
+      network.verifyHeaders(response.headers);
       for (const header of Object.keys(response.headers))
         responseHeaders[header.toLowerCase()] = response.headers[header];
     }

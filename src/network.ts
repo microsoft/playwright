@@ -247,6 +247,8 @@ export class Route {
 
   async fulfill(response: FulfillResponse & { path?: string }) {
     assert(!this._handled, 'Route is already handled!');
+    if (response.headers)
+      verifyHeaders(response.headers);
     this._handled = true;
     if (response.path) {
       response = {
@@ -261,6 +263,8 @@ export class Route {
 
   async continue(overrides: { method?: string; headers?: Headers; postData?: string } = {}) {
     assert(!this._handled, 'Route is already handled!');
+    if (overrides.headers)
+      verifyHeaders(overrides.headers);
     await this._delegate.continue(overrides);
   }
 }
@@ -435,7 +439,11 @@ export function verifyHeaders(headers: Headers): Headers {
   const result: Headers = {};
   for (const key of Object.keys(headers)) {
     const value = headers[key];
+    if (value === undefined)
+      continue;
     assert(helper.isString(value), `Expected value of header "${key}" to be String, but "${typeof value}" is found.`);
+    assert(key.length && !/[^\!-\~]|[()<>@,;:\\"\/[\]?={}]/g.test(key), `Invalid header name: ${JSON.stringify(key)}`);
+    assert(!/[\0\r\n]/g.test(value), `Invalid header value: ${JSON.stringify(value)}`);
     result[key] = value;
   }
   return result;
