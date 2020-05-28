@@ -70,11 +70,18 @@ serverEnvironment.afterEach(async(state) => {
 });
 
 const customEnvironment = new Environment('Golden+CheckContexts');
+
+// simulate globalSetup per browserType that happens only once regardless of TestWorker.
+const hasBeenCleaned = new Set();
+
 customEnvironment.beforeAll(async state => {
   const { OUTPUT_DIR, GOLDEN_DIR } = require('./utils').testOptions(state.browserType);
-  if (fs.existsSync(OUTPUT_DIR))
-    rm(OUTPUT_DIR);
-  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+  if (!hasBeenCleaned.has(state.browserType)) {
+    hasBeenCleaned.add(state.browserType);
+    if (fs.existsSync(OUTPUT_DIR))
+      rm(OUTPUT_DIR);
+    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+  }
   state.golden = goldenName => ({ goldenPath: GOLDEN_DIR, outputPath: OUTPUT_DIR, goldenName });
 });
 customEnvironment.afterAll(async state => {
