@@ -1164,16 +1164,15 @@ describe('Page.fill', function() {
     await page.fill('input', '-10e5');
     expect(await page.evaluate(() => input.value)).toBe('-10e5');
   });
-  it('should not be able to fill input[type=number] with empty string', async({page}) => {
-    await page.setContent(`<input id="input" type="number"></input>`);
-    let error = null;
-    await page.fill('input', '').catch(e => error = e);
-    expect(error.message).toContain('Cannot type text into input[type=number].');
+  it('should be able to fill input[type=number] with empty string', async({page}) => {
+    await page.setContent(`<input id="input" type="number" value="123"></input>`);
+    await page.fill('input', '');
+    expect(await page.evaluate(() => input.value)).toBe('');
   });
   it('should not be able to fill text into the input[type=number]', async({page}) => {
     await page.setContent(`<input id="input" type="number"></input>`);
     let error = null;
-    await page.fill('input', '').catch(e => error = e);
+    await page.fill('input', 'abc').catch(e => error = e);
     expect(error.message).toContain('Cannot type text into input[type=number].');
   });
   it('should be able to clear', async({page, server}) => {
