@@ -1273,10 +1273,10 @@ index 0000000000000000000000000000000000000000..31806fde2a7df437ad9f604ad7df15f5
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Screencast.json b/Source/JavaScriptCore/inspector/protocol/Screencast.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..dd8bc8a94df9f3ffe5be0686c2a58eb412351f6d
+index 0000000000000000000000000000000000000000..c29970d4e2f1c8b13d7d9716365eb5b6e65e080c
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Screencast.json
-@@ -0,0 +1,38 @@
+@@ -0,0 +1,50 @@
 +{
 +    "domain": "Screencast",
 +    "availability": ["web"],
@@ -1303,6 +1303,18 @@ index 0000000000000000000000000000000000000000..dd8bc8a94df9f3ffe5be0686c2a58eb4
 +        {
 +            "name": "frameAck",
 +            "description": "Sent by the client when a frame has been received."
++        },
++        {
++            "name": "startVideoRecording",
++            "description": "Starts recoring video to speified file.",
++            "parameters": [
++                { "name": "file", "type": "string", "description": "Output file location." }
++            ]
++        },
++        {
++            "name": "stopVideoRecording",
++            "async": true,
++            "description": "Stops recoding video. Returns after the file has been closed."
 +        }
 +    ],
 +    "events": [
@@ -4277,10 +4289,10 @@ index 6c75829502336b0806db2531e78186d2c559e44c..1ad6b8e863c56fd572910db6c6fb524d
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp b/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..13ca5202e8e3ee5add01634037c2111798c58936
+index 0000000000000000000000000000000000000000..f534b449377965cce02feb91355f320f43cdcbed
 --- /dev/null
 +++ b/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,150 @@
+@@ -0,0 +1,160 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -4387,6 +4399,16 @@ index 0000000000000000000000000000000000000000..13ca5202e8e3ee5add01634037c21117
 +    --m_inflightFrames;
 +}
 +
++void InspectorScreencastAgent::startVideoRecording(Inspector::ErrorString& errorString, const String&)
++{
++    errorString = "Not implemented."_s;
++}
++
++void InspectorScreencastAgent::stopVideoRecording(Ref<StopVideoRecordingCallback>&& callback)
++{
++    callback->sendFailure("Not implemented."_s);
++}
++
 +bool InspectorScreencastAgent::isEnabled() const
 +{
 +    return m_instrumentingAgents.inspectorScreencastAgent();
@@ -4433,10 +4455,10 @@ index 0000000000000000000000000000000000000000..13ca5202e8e3ee5add01634037c21117
 +#endif  // PLATFORM(WPE) || PLATFORM(WIN)
 diff --git a/Source/WebCore/inspector/agents/InspectorScreencastAgent.h b/Source/WebCore/inspector/agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..031911914c9fd89fb3ee8e42a95f97cdf1b9c4cd
+index 0000000000000000000000000000000000000000..965437fd3cd0857e6a30bc99032ff6b450b2c833
 --- /dev/null
 +++ b/Source/WebCore/inspector/agents/InspectorScreencastAgent.h
-@@ -0,0 +1,79 @@
+@@ -0,0 +1,81 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -4498,6 +4520,8 @@ index 0000000000000000000000000000000000000000..031911914c9fd89fb3ee8e42a95f97cd
 +    void start(Inspector::ErrorString&, const String& format, const int* quality) override;
 +    void stop(Inspector::ErrorString&) override;
 +    void frameAck(Inspector::ErrorString&) override;
++    void startVideoRecording(Inspector::ErrorString&, const String& file) override;
++    void stopVideoRecording(Ref<StopVideoRecordingCallback>&&) override;
 +
 +    void willDisplay();
 +
@@ -5304,6 +5328,27 @@ index 892d8de6d345d91fda80cfa5334c4aa68b757da3..a22497d801a349487be10b15139e9c76
  #endif
  
  #if PLATFORM(IOS_FAMILY)
+diff --git a/Source/WebCore/platform/graphics/cairo/CairoUtilities.cpp b/Source/WebCore/platform/graphics/cairo/CairoUtilities.cpp
+index 9c197ed122c1d0f303a347dec0ce128e4d54942d..15b64635e6adf2965180d4cf4983a3f5190488e5 100644
+--- a/Source/WebCore/platform/graphics/cairo/CairoUtilities.cpp
++++ b/Source/WebCore/platform/graphics/cairo/CairoUtilities.cpp
+@@ -38,6 +38,7 @@
+ #include "Path.h"
+ #include "RefPtrCairo.h"
+ #include "Region.h"
++#include <cairo-xlib.h>
+ #include <wtf/Assertions.h>
+ #include <wtf/NeverDestroyed.h>
+ #include <wtf/UniqueArray.h>
+@@ -337,6 +338,8 @@ IntSize cairoSurfaceSize(cairo_surface_t* surface)
+         ASSERT(cairo_surface_get_type(surface) == CAIRO_SURFACE_TYPE_IMAGE);
+         return IntSize(cairo_image_surface_get_width(surface), cairo_image_surface_get_height(surface));
+ #endif
++    case CAIRO_SURFACE_TYPE_XLIB:
++        return IntSize(cairo_xlib_surface_get_width(surface), cairo_xlib_surface_get_height(surface));
+     default:
+         ASSERT_NOT_REACHED();
+         return IntSize();
 diff --git a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp b/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
 index d79728555b7db9b59cb615c55a7a7a6851cb57c8..61d3cc4b488e35ef9e1afa1ce3ac5f5d60ebe9a7 100644
 --- a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
@@ -6530,6 +6575,30 @@ index 407361f036e79891767d807fbb63c9044b260a70..24773d8f349d441e2b6b1981baa5af17
      return makeUnique<WebSocketTask>(channel, soupSession(), soupMessage.get(), protocol);
  }
  
+diff --git a/Source/WebKit/PlatformGTK.cmake b/Source/WebKit/PlatformGTK.cmake
+index f829dc36172fd11514c00f4191d04a4545c64432..80316193cbbc3cd8501b6abd09292afe188601f0 100644
+--- a/Source/WebKit/PlatformGTK.cmake
++++ b/Source/WebKit/PlatformGTK.cmake
+@@ -446,6 +446,9 @@ list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES
+     ${GSTREAMER_PBUTILS_INCLUDE_DIRS}
+     ${GTK_INCLUDE_DIRS}
+     ${LIBSOUP_INCLUDE_DIRS}
++# Playwright begin
++    ${LIBVPX_INCLUDE_DIRS}
++# Playwright end
+ )
+ 
+ if (USE_WPE_RENDERER)
+@@ -499,6 +502,9 @@ if (USE_LIBWEBRTC)
+     list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES
+         "${THIRDPARTY_DIR}/libwebrtc/Source/"
+         "${THIRDPARTY_DIR}/libwebrtc/Source/webrtc"
++# Playwright begin
++        "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/include"
++# Playwright end
+     )
+ endif ()
+ 
 diff --git a/Source/WebKit/PlatformWPE.cmake b/Source/WebKit/PlatformWPE.cmake
 index 8320e310e6c466924a083ee46ae31f5486420fcd..33e1a5f6d846a490bb66848cfc1518a5b17104fd 100644
 --- a/Source/WebKit/PlatformWPE.cmake
@@ -6986,7 +7055,7 @@ index b72ac530c1d19d4803dd548186a4fbfbff899dd0..298205de7664a1c3cd4d330d7154999d
  UIProcess/Inspector/mac/WebInspectorProxyMac.mm
  UIProcess/Inspector/mac/WKInspectorViewController.mm
 diff --git a/Source/WebKit/SourcesGTK.txt b/Source/WebKit/SourcesGTK.txt
-index 76f1e08ca934a654edc48e199ce3eb120604c28c..4c2d98de146282d0be953bb2c1ddee856f4c60b7 100644
+index 76f1e08ca934a654edc48e199ce3eb120604c28c..197c27cc33b70dc62ad27776e7d0a185cc9321d0 100644
 --- a/Source/WebKit/SourcesGTK.txt
 +++ b/Source/WebKit/SourcesGTK.txt
 @@ -136,6 +136,7 @@ UIProcess/API/glib/WebKitAuthenticationRequest.cpp @no-unify
@@ -6997,7 +7066,15 @@ index 76f1e08ca934a654edc48e199ce3eb120604c28c..4c2d98de146282d0be953bb2c1ddee85
  UIProcess/API/glib/WebKitContextMenuClient.cpp @no-unify
  UIProcess/API/glib/WebKitCookieManager.cpp @no-unify
  UIProcess/API/glib/WebKitCredential.cpp @no-unify
-@@ -247,6 +248,7 @@ UIProcess/WebsiteData/unix/WebsiteDataStoreUnix.cpp
+@@ -227,6 +228,7 @@ UIProcess/geoclue/GeoclueGeolocationProvider.cpp
+ 
+ UIProcess/Inspector/glib/RemoteInspectorClient.cpp
+ 
++UIProcess/Inspector/Agents/ScreencastEncoder.cpp
+ UIProcess/Inspector/gtk/RemoteWebInspectorProxyGtk.cpp
+ UIProcess/Inspector/gtk/WebInspectorProxyGtk.cpp
+ UIProcess/Inspector/gtk/WebKitInspectorWindow.cpp
+@@ -247,6 +249,7 @@ UIProcess/WebsiteData/unix/WebsiteDataStoreUnix.cpp
  
  UIProcess/cairo/BackingStoreCairo.cpp @no-unify
  
@@ -7005,7 +7082,7 @@ index 76f1e08ca934a654edc48e199ce3eb120604c28c..4c2d98de146282d0be953bb2c1ddee85
  UIProcess/glib/WebProcessPoolGLib.cpp
  UIProcess/glib/WebProcessProxyGLib.cpp
  UIProcess/glib/WebsiteDataStoreGLib.cpp @no-unify
-@@ -262,6 +264,7 @@ UIProcess/gtk/ClipboardGtk3.cpp @no-unify
+@@ -262,6 +265,7 @@ UIProcess/gtk/ClipboardGtk3.cpp @no-unify
  UIProcess/gtk/ClipboardGtk4.cpp @no-unify
  UIProcess/gtk/GestureController.cpp
  UIProcess/gtk/HardwareAccelerationManager.cpp
@@ -7013,7 +7090,7 @@ index 76f1e08ca934a654edc48e199ce3eb120604c28c..4c2d98de146282d0be953bb2c1ddee85
  UIProcess/gtk/KeyBindingTranslator.cpp
  UIProcess/gtk/PointerLockManager.cpp @no-unify
  UIProcess/gtk/PointerLockManagerWayland.cpp @no-unify
-@@ -272,6 +275,8 @@ UIProcess/gtk/WaylandCompositor.cpp @no-unify
+@@ -272,6 +276,8 @@ UIProcess/gtk/WaylandCompositor.cpp @no-unify
  UIProcess/gtk/WebColorPickerGtk.cpp
  UIProcess/gtk/WebContextMenuProxyGtk.cpp
  UIProcess/gtk/WebDataListSuggestionsDropdownGtk.cpp
@@ -8395,26 +8472,35 @@ index 6bbd1cabd27ae2847648a8c2edcf9acfcd556ff5..38d101b9a96986e40f6e9f0261fa429a
  {
      m_hasReceivedFirstUpdate = true;
 diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
-index d7695088e7cfc4f638f157338754f9f157489749..ba114d47ac079661702e44f19853398f5c1d6b55 100644
+index d7695088e7cfc4f638f157338754f9f157489749..2a5ebd52478027c65d66551b77becbfb006a95c4 100644
 --- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
 +++ b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
-@@ -30,6 +30,7 @@
+@@ -30,6 +30,8 @@
  #include "BackingStore.h"
  #include "DrawingAreaProxy.h"
  #include "LayerTreeContext.h"
++#include <wtf/Function.h>
 +#include <wtf/HashMap.h>
  #include <wtf/RunLoop.h>
  
  namespace WebCore {
-@@ -49,6 +50,7 @@ public:
+@@ -49,6 +51,15 @@ public:
  
      bool isInAcceleratedCompositingMode() const { return !m_layerTreeContext.isEmpty(); }
      const LayerTreeContext& layerTreeContext() const { return m_layerTreeContext; }
 +    void waitForSizeUpdate(Function<void ()>&&);
++
++    using PaintCallback = Function<void(cairo_surface_t*)>;
++    void setPaintCallback(PaintCallback&& callback) { m_paintCallback = WTFMove(callback); }
++    void didPaint(cairo_surface_t* surface)
++    {
++        if (m_paintCallback)
++            m_paintCallback(surface);
++    }
  
  private:
      // DrawingAreaProxy
-@@ -126,6 +128,8 @@ private:
+@@ -126,12 +137,15 @@ private:
      // For a new Drawing Area don't draw anything until the WebProcess has sent over the first content.
      bool m_hasReceivedFirstUpdate { false };
  
@@ -8423,6 +8509,13 @@ index d7695088e7cfc4f638f157338754f9f157489749..ba114d47ac079661702e44f19853398f
  #if !PLATFORM(WPE)
      bool m_isBackingStoreDiscardable { true };
      std::unique_ptr<BackingStore> m_backingStore;
+     RunLoop::Timer<DrawingAreaProxyCoordinatedGraphics> m_discardBackingStoreTimer;
+ #endif
+     std::unique_ptr<DrawingMonitor> m_drawingMonitor;
++    PaintCallback m_paintCallback;
+ };
+ 
+ } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
 index 592fa4c4d9a45eb1e9b95e0cdabc8d404b40018d..e7889c60fffb8979ee3965295b3221989ea48e05 100644
 --- a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
@@ -8525,10 +8618,10 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
      // The timeout we use when waiting for a DidUpdateGeometry message.
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..f301bc4d2782a4ba1deca8bb59da46c00ae09896
+index 0000000000000000000000000000000000000000..abc002273f8cd4a92b31f37c901227657d8e1c88
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,206 @@
+@@ -0,0 +1,251 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8565,6 +8658,8 @@ index 0000000000000000000000000000000000000000..f301bc4d2782a4ba1deca8bb59da46c0
 +#include <WebCore/NotImplemented.h>
 +
 +#if PLATFORM(GTK)
++#include "DrawingAreaProxyCoordinatedGraphics.h"
++#include "ScreencastEncoder.h"
 +#include <WebCore/ImageBufferUtilitiesCairo.h>
 +#include <gtk/gtk.h>
 +#include <wtf/text/Base64.h>
@@ -8653,6 +8748,49 @@ index 0000000000000000000000000000000000000000..f301bc4d2782a4ba1deca8bb59da46c0
 +#endif
 +}
 +
++void InspectorScreencastAgent::startVideoRecording(Inspector::ErrorString& errorString, const String& file)
++{
++#if PLATFORM(GTK)
++    if (m_encoder) {
++        errorString = "Already recording."_s;
++        return;
++    }
++
++    m_encoder = makeUnique<ScreencastEncoder>();
++    if (auto* drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(m_page.drawingArea())) {
++        m_encoder->init(file, drawingArea->size().width(), drawingArea->size().height());
++        drawingArea->setPaintCallback([encoder = m_encoder.get()] (cairo_surface_t* surface) {
++            encoder->encodeFrame(surface);
++        });
++    } else {
++        m_encoder = nullptr;
++        errorString = "Cannot get drawing area."_s;
++        return;
++    }
++#else
++    errorString = "Not implemented."_s;
++#endif
++}
++
++void InspectorScreencastAgent::stopVideoRecording(Ref<StopVideoRecordingCallback>&& callback)
++{
++#if PLATFORM(GTK)
++    if (!m_encoder) {
++        callback->sendFailure("Not recording."_s);
++        return;
++    }
++
++    if (auto* drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(m_page.drawingArea()))
++        drawingArea->setPaintCallback(nullptr);
++
++    m_encoder->finish();
++    m_encoder = nullptr;
++    callback->sendSuccess();
++#else
++    callback->sendFailure("Not implemented."_s);
++#endif
++}
++
 +void InspectorScreencastAgent::scheduleSnapshot()
 +{
 +    if (!m_enabled)
@@ -8737,10 +8875,10 @@ index 0000000000000000000000000000000000000000..f301bc4d2782a4ba1deca8bb59da46c0
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..a1d8892da8bebd48346a4ccb9e9836dab9da7909
+index 0000000000000000000000000000000000000000..a957c3b2586d67caa78b96bb8644bab8d8919e14
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
-@@ -0,0 +1,78 @@
+@@ -0,0 +1,85 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8784,6 +8922,7 @@ index 0000000000000000000000000000000000000000..a1d8892da8bebd48346a4ccb9e9836da
 +
 +namespace WebKit {
 +
++class ScreencastEncoder;
 +class WebPageProxy;
 +
 +class InspectorScreencastAgent : public Inspector::InspectorAgentBase, public Inspector::ScreencastBackendDispatcherHandler, public CanMakeWeakPtr<InspectorScreencastAgent> {
@@ -8799,6 +8938,9 @@ index 0000000000000000000000000000000000000000..a1d8892da8bebd48346a4ccb9e9836da
 +    void start(Inspector::ErrorString&, const String& format, const int* quality) override;
 +    void stop(Inspector::ErrorString&) override;
 +    void frameAck(Inspector::ErrorString&) override;
++    void startVideoRecording(Inspector::ErrorString&, const String& file) override;
++    void stopVideoRecording(Ref<StopVideoRecordingCallback>&&) override;
++
 +
 +private:
 +#if PLATFORM(GTK)
@@ -8816,6 +8958,413 @@ index 0000000000000000000000000000000000000000..a1d8892da8bebd48346a4ccb9e9836da
 +    enum class ImageFormat { Jpeg, Png };
 +    ImageFormat m_format { ImageFormat::Jpeg };
 +    Optional<int> m_quality;
++#if PLATFORM(GTK)
++    std::unique_ptr<ScreencastEncoder> m_encoder;
++#endif
++};
++
++} // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..ba60958fd56bf1a648212ea6ca413cb17c2647a8
+--- /dev/null
++++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
+@@ -0,0 +1,339 @@
++/*
++ * Copyright (C) 2020 Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "config.h"
++#include "ScreencastEncoder.h"
++
++#include <WebCore/CairoUtilities.h>
++#include <cairo.h>
++#include <libyuv.h>
++#include <vpx/vp8.h>
++#include <vpx/vp8cx.h>
++#include <vpx/vpx_encoder.h>
++
++using namespace WebCore;
++
++namespace WebKit {
++
++namespace {
++// Defines the dimension of a macro block. This is used to compute the active
++// map for the encoder.
++const int kMacroBlockSize = 16;
++
++void createImage(IntSize size,
++                 std::unique_ptr<vpx_image_t>& out_image,
++                 std::unique_ptr<uint8_t[]>& out_image_buffer) {
++  std::unique_ptr<vpx_image_t> image(new vpx_image_t());
++  memset(image.get(), 0, sizeof(vpx_image_t));
++
++  // libvpx seems to require both to be assigned.
++  image->d_w = size.width();
++  image->w = size.width();
++  image->d_h = size.height();
++  image->h = size.height();
++
++  // I420
++  image->fmt = VPX_IMG_FMT_YV12;
++  image->x_chroma_shift = 1;
++  image->y_chroma_shift = 1;
++
++  // libyuv's fast-path requires 16-byte aligned pointers and strides, so pad
++  // the Y, U and V planes' strides to multiples of 16 bytes.
++  const int y_stride = ((image->w - 1) & ~15) + 16;
++  const int uv_unaligned_stride = y_stride >> image->x_chroma_shift;
++  const int uv_stride = ((uv_unaligned_stride - 1) & ~15) + 16;
++
++  // libvpx accesses the source image in macro blocks, and will over-read
++  // if the image is not padded out to the next macroblock: crbug.com/119633.
++  // Pad the Y, U and V planes' height out to compensate.
++  // Assuming macroblocks are 16x16, aligning the planes' strides above also
++  // macroblock aligned them.
++  static_assert(kMacroBlockSize == 16, "macroblock_size_not_16");
++  const int y_rows = ((image->h - 1) & ~(kMacroBlockSize-1)) + kMacroBlockSize;
++  const int uv_rows = y_rows >> image->y_chroma_shift;
++
++  // Allocate a YUV buffer large enough for the aligned data & padding.
++  const int buffer_size = y_stride * y_rows + 2*uv_stride * uv_rows;
++  std::unique_ptr<uint8_t[]> image_buffer(new uint8_t[buffer_size]);
++
++  // Reset image value to 128 so we just need to fill in the y plane.
++  memset(image_buffer.get(), 128, buffer_size);
++
++  // Fill in the information for |image_|.
++  unsigned char* uchar_buffer =
++      reinterpret_cast<unsigned char*>(image_buffer.get());
++  image->planes[0] = uchar_buffer;
++  image->planes[1] = image->planes[0] + y_stride * y_rows;
++  image->planes[2] = image->planes[1] + uv_stride * uv_rows;
++  image->stride[0] = y_stride;
++  image->stride[1] = uv_stride;
++  image->stride[2] = uv_stride;
++
++  out_image = std::move(image);
++  out_image_buffer = std::move(image_buffer);
++}
++
++void mem_put_le16(void *vmem, int val) {
++  unsigned char *mem = (unsigned char *)vmem;
++
++  mem[0] = (unsigned char)((val >> 0) & 0xff);
++  mem[1] = (unsigned char)((val >> 8) & 0xff);
++}
++
++void mem_put_le32(void *vmem, int val) {
++  unsigned char *mem = (unsigned char *)vmem;
++
++  mem[0] = (unsigned char)((val >>  0) & 0xff);
++  mem[1] = (unsigned char)((val >>  8) & 0xff);
++  mem[2] = (unsigned char)((val >> 16) & 0xff);
++  mem[3] = (unsigned char)((val >> 24) & 0xff);
++}
++
++void ivf_write_file_header_with_video_info(FILE *outfile, unsigned int fourcc,
++                                           int frame_cnt, int frame_width,
++                                           int frame_height,
++                                           vpx_rational_t timebase) {
++  char header[32];
++
++  header[0] = 'D';
++  header[1] = 'K';
++  header[2] = 'I';
++  header[3] = 'F';
++  mem_put_le16(header + 4, 0);              // version
++  mem_put_le16(header + 6, 32);             // header size
++  mem_put_le32(header + 8, fourcc);         // fourcc
++  mem_put_le16(header + 12, frame_width);   // width
++  mem_put_le16(header + 14, frame_height);  // height
++  mem_put_le32(header + 16, timebase.den);  // rate
++  mem_put_le32(header + 20, timebase.num);  // scale
++  mem_put_le32(header + 24, frame_cnt);     // length
++  mem_put_le32(header + 28, 0);             // unused
++
++  fwrite(header, 1, 32, outfile);
++}
++
++void ivf_write_file_header(FILE *outfile, const struct vpx_codec_enc_cfg *cfg,
++                           unsigned int fourcc, int frame_cnt) {
++  ivf_write_file_header_with_video_info(outfile, fourcc, frame_cnt, cfg->g_w,
++                                        cfg->g_h, cfg->g_timebase);
++}
++
++void ivf_write_frame_header(FILE *outfile, int64_t pts, size_t frame_size) {
++  char header[12];
++
++  mem_put_le32(header, (int)frame_size);
++  mem_put_le32(header + 4, (int)(pts & 0xFFFFFFFF));
++  mem_put_le32(header + 8, (int)(pts >> 32));
++  fwrite(header, 1, 12, outfile);
++}
++
++void ivf_write_frame_size(FILE *outfile, size_t frame_size) {
++  char header[4];
++
++  mem_put_le32(header, (int)frame_size);
++  fwrite(header, 1, 4, outfile);
++}
++
++
++int encode_frame(vpx_codec_ctx_t *codec, vpx_image_t *img,
++                 int frame_index, FILE* file) {
++    vpx_codec_iter_t iter = nullptr;
++    const vpx_codec_cx_pkt_t *pkt = nullptr;
++    int flags = 0;
++    const vpx_codec_err_t res = vpx_codec_encode(codec, img, frame_index, 1, flags, VPX_DL_REALTIME);
++    if (res != VPX_CODEC_OK) {
++        fprintf(stderr, "Failed to encode frame: %d\n", res);
++        return 0;
++    }
++
++    int got_pkts = 0;
++    while ((pkt = vpx_codec_get_cx_data(codec, &iter)) != nullptr) {
++        got_pkts = 1;
++
++        fprintf(stderr, "    pkt->kind=%d\n", pkt->kind);
++        if (pkt->kind == VPX_CODEC_CX_FRAME_PKT) {
++            const int keyframe = (pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0;
++            ivf_write_frame_header(file, pkt->data.frame.pts, pkt->data.frame.sz);
++            if (fwrite(pkt->data.frame.buf, 1, pkt->data.frame.sz, file) != pkt->data.frame.sz) {
++                fprintf(stderr, "Failed to write compressed frame\n");
++                return 0;
++            }
++
++            fprintf(stderr, "    writtend frame (key=%d)\n", keyframe);
++        }
++    }
++
++    return got_pkts;
++}
++
++} // namespace
++
++
++struct ScreencastEncoder::CodecInfo {
++    uint32_t fourcc = 0;
++    vpx_codec_ctx_t codec;
++    vpx_codec_enc_cfg_t cfg;
++    vpx_codec_iface_t* codec_interface = nullptr;
++    FILE* file = nullptr;
++};
++
++ScreencastEncoder::ScreencastEncoder()
++{
++}
++
++ScreencastEncoder::~ScreencastEncoder()
++{
++    finish();
++}
++
++#define VP8_FOURCC 0x30385056
++#define VP9_FOURCC 0x30395056
++
++void ScreencastEncoder::init(const String& filePath, int w, int h)
++{
++    vpx_codec_ctx_t codec;
++    vpx_codec_enc_cfg_t cfg;
++    const int fps = 30;
++
++    const uint32_t fourcc = VP8_FOURCC;
++    vpx_codec_iface_t* codec_interface = vpx_codec_vp8_cx();
++
++    if (!codec_interface) {
++        fprintf(stderr, "Unsupported codec.\n");
++        return;
++    }
++
++    if (w <= 0 || h <= 0 || (w % 2) != 0 || (h % 2) != 0) {
++        fprintf(stderr, "Invalid frame size: %dx%d\n", w, h);
++        return;
++    }
++
++    vpx_codec_err_t res = vpx_codec_enc_config_default(codec_interface, &cfg, 0);
++    if (res) {
++        fprintf(stderr, "Failed to get default codec config.\n");
++        return;
++    }
++
++    cfg.g_w = w;
++    cfg.g_h = h;
++    cfg.g_timebase.num = 1;
++    cfg.g_timebase.den = fps;
++    cfg.rc_target_bitrate = 200;
++    cfg.g_error_resilient = VPX_ERROR_RESILIENT_DEFAULT;
++
++    if (vpx_codec_enc_init(&codec, codec_interface, &cfg, 0)) {
++        fprintf(stderr, "Failed to initialize encoder\n");
++        return;
++    }
++
++    FILE* file = fopen(filePath.utf8().data(), "wb");
++    if (!file) {
++      fprintf(stderr, "%s can't be written to.\n", filePath.utf8().data());
++      return;
++    }
++
++    ivf_write_file_header(file, &cfg, fourcc, 0);
++
++    m_codecInfo.reset(new CodecInfo());
++    m_codecInfo->fourcc = fourcc;
++    m_codecInfo->codec = codec;
++    m_codecInfo->cfg = cfg;
++    m_codecInfo->codec_interface = codec_interface;
++    m_codecInfo->file = file;
++
++    fprintf(stderr, "ScreencastEncoder initialized: %s\n", vpx_codec_iface_name(codec_interface));
++}
++
++void ScreencastEncoder::encodeFrame(cairo_surface_t* drawingAreaSurface)
++{
++    fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
++    // fprintf(stderr, "cairo_surface_get_type(image)=%d CAIRO_SURFACE_TYPE_IMAGE=%d CAIRO_SURFACE_TYPE_XLIB=%d\n", cairo_surface_get_type(drawingAreaSurface), CAIRO_SURFACE_TYPE_IMAGE, CAIRO_SURFACE_TYPE_XLIB);
++    // fprintf(stderr, "cairo_image_surface_get_format(image)=%d CAIRO_FORMAT_ARGB32=%d\n", cairo_image_surface_get_format(drawingAreaSurface), CAIRO_FORMAT_ARGB32);
++
++    IntSize size = cairoSurfaceSize(drawingAreaSurface);
++    if (size.isZero()) {
++        fprintf(stderr, "Cairo surface size is 0\n");
++        return;
++    }
++
++    // TODO: scale image if the size has changed.
++    // TODO: adjust device scale factor?
++    RefPtr<cairo_surface_t> newSurface = adoptRef(cairo_image_surface_create(CAIRO_FORMAT_ARGB32, size.width(), size.height()));
++    {
++        RefPtr<cairo_t> cr = adoptRef(cairo_create(newSurface.get()));
++        cairo_set_source_surface(cr.get(), drawingAreaSurface, 0, 0);
++        cairo_paint(cr.get());
++    }
++    cairo_surface_flush(newSurface.get());
++
++    std::unique_ptr<vpx_image_t> image;
++    std::unique_ptr<uint8_t[]> image_buffer;
++    createImage(size, image, image_buffer);
++
++
++    // Convert the updated region to YUV ready for encoding.
++    const uint8_t* rgba_data = cairo_image_surface_get_data(newSurface.get());
++    int rgba_stride = cairo_image_surface_get_stride(newSurface.get());
++
++    const int y_stride = image->stride[0];
++    ASSERT(image->stride[1] == image->stride[2]);
++    const int uv_stride = image->stride[1];
++    uint8_t* y_data = image->planes[0];
++    uint8_t* u_data = image->planes[1];
++    uint8_t* v_data = image->planes[2];
++
++    // TODO: redraw only damaged regions?
++    libyuv::ARGBToI420(rgba_data, rgba_stride,
++                        y_data, y_stride,
++                        u_data, uv_stride,
++                        v_data, uv_stride,
++                        size.width(), size.height());
++    if (encode_frame(&m_codecInfo->codec, image.get(), m_frameCount, m_codecInfo->file))
++        ++m_frameCount;
++}
++
++void ScreencastEncoder::finish()
++{
++    if (!m_codecInfo)
++        return;
++
++    // Flush encoder.
++    while (encode_frame(&m_codecInfo->codec, NULL, -1, m_codecInfo->file)) {
++        fprintf(stderr, "flushed frame\n");
++        ++m_frameCount;
++    }
++
++
++    fprintf(stderr, "ScreencastEncoder::finish %d frames\n", m_frameCount);
++    rewind(m_codecInfo->file);
++    ivf_write_file_header(m_codecInfo->file, &m_codecInfo->cfg, m_codecInfo->fourcc, m_frameCount);
++    fclose(m_codecInfo->file);
++
++    m_codecInfo = nullptr;
++    m_frameCount = 0;
++}
++
++
++} // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..944d7166b9e6c74579eb43883c04042d2a7f86e3
+--- /dev/null
++++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
+@@ -0,0 +1,53 @@
++/*
++ * Copyright (C) 2020 Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#pragma once
++
++#include <wtf/Forward.h>
++#include <wtf/Noncopyable.h>
++#include <wtf/WeakPtr.h>
++
++namespace WebKit {
++
++class WebPageProxy;
++
++class ScreencastEncoder {
++    WTF_MAKE_NONCOPYABLE(ScreencastEncoder);
++    WTF_MAKE_FAST_ALLOCATED;
++public:
++    ScreencastEncoder();
++    ~ScreencastEncoder();
++
++    void init(const String& filePath, int width, int height);
++    void encodeFrame(cairo_surface_t*);
++    void finish();
++
++private:
++  struct CodecInfo;
++  std::unique_ptr<CodecInfo> m_codecInfo;
++  int m_frameCount { 0 };
 +};
 +
 +} // namespace WebKit
@@ -12325,6 +12874,20 @@ index 0000000000000000000000000000000000000000..4cba2671042d3517e4b8f66e7b2bb780
 +} // namespace API
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
+diff --git a/Source/WebKit/UIProcess/gtk/AcceleratedBackingStoreX11.cpp b/Source/WebKit/UIProcess/gtk/AcceleratedBackingStoreX11.cpp
+index be19b6007c9c0fbfffb859e40fd34751493fe7d1..bedd37fb70f878b9bf87beef0f9968c1ec24457e 100644
+--- a/Source/WebKit/UIProcess/gtk/AcceleratedBackingStoreX11.cpp
++++ b/Source/WebKit/UIProcess/gtk/AcceleratedBackingStoreX11.cpp
+@@ -256,6 +256,9 @@ bool AcceleratedBackingStoreX11::paint(cairo_t* cr, const IntRect& clipRect)
+ 
+     cairo_restore(cr);
+ 
++    if (auto* drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(m_webPage.drawingArea()))
++        drawingArea->didPaint(m_surface.get());
++
+     cairo_surface_flush(m_surface.get());
+ 
+     return true;
 diff --git a/Source/WebKit/UIProcess/gtk/InspectorTargetProxyGtk.cpp b/Source/WebKit/UIProcess/gtk/InspectorTargetProxyGtk.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..8a86cc348bc210b71bb463dcb3057f575ad7c1d3
@@ -14239,8 +14802,39 @@ index ad9bfdd5321d17b108e414ac96e0222fdeae97cc..9fc34ccd13b6001b4b1c423dc48cadee
  
  // For backwards compatibility with the WebBackForwardList API, we honor both
  // a per-WebView and a per-preferences setting for whether to use the back/forward cache.
+diff --git a/Source/cmake/FindLibVPX.cmake b/Source/cmake/FindLibVPX.cmake
+new file mode 100644
+index 0000000000000000000000000000000000000000..dd6a53e2d57318489b7e49dd7373706d5d9dc387
+--- /dev/null
++++ b/Source/cmake/FindLibVPX.cmake
+@@ -0,0 +1,25 @@
++# Find LibVPX
++
++find_package(PkgConfig QUIET)
++pkg_check_modules(PC_LIBVPX REQUIRED vpx)
++
++find_path(LIBVPX_INCLUDE_DIRS
++    NAMES vpx/vp8.h
++    HINTS ${PC_LIBVPX_INCLUDEDIR}
++          ${PC_LIBVPX_INCLUDE_DIRS}
++)
++
++find_library(LIBVPX_LIBRARIES
++    NAMES vpx
++    HINTS ${PC_LIBVPX_LIBDIR}
++          ${PC_LIBVPX_LIBRARY_DIRS}
++)
++
++include(FindPackageHandleStandardArgs)
++FIND_PACKAGE_HANDLE_STANDARD_ARGS(LibVPX REQUIRED_VARS LIBVPX_INCLUDE_DIRS LIBVPX_LIBRARIES
++                                         VERSION_VAR   PC_LIBVPX_VERSION)
++
++mark_as_advanced(
++    LIBVPX_INCLUDE_DIRS
++    LIBVPX_LIBRARIES
++)
 diff --git a/Source/cmake/OptionsGTK.cmake b/Source/cmake/OptionsGTK.cmake
-index b1ac2660496e0e250a58063be5f970cf38c7ea7a..9aa2e9d07abeb3c3851fe731efbca2307152aa71 100644
+index b1ac2660496e0e250a58063be5f970cf38c7ea7a..ec51505cff30a16dc9da98a05e95de0f41cb8256 100644
 --- a/Source/cmake/OptionsGTK.cmake
 +++ b/Source/cmake/OptionsGTK.cmake
 @@ -5,6 +5,7 @@ WEBKIT_OPTION_BEGIN()
@@ -14251,7 +14845,18 @@ index b1ac2660496e0e250a58063be5f970cf38c7ea7a..9aa2e9d07abeb3c3851fe731efbca230
  
  if (USE_GTK4)
      set(WEBKITGTK_API_VERSION 5.0)
-@@ -197,6 +198,13 @@ if (USE_GTK4)
+@@ -55,6 +56,10 @@ find_package(EGL)
+ find_package(OpenGL)
+ find_package(OpenGLES2)
+ 
++# Playwright begin
++find_package(LibVPX REQUIRED)
++# Playwright end
++
+ include(GStreamerDefinitions)
+ 
+ SET_AND_EXPOSE_TO_BUILD(USE_ATK TRUE)
+@@ -197,6 +202,13 @@ if (USE_GTK4)
  WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_NETSCAPE_PLUGIN_API PRIVATE OFF)
  endif ()
  
