@@ -3941,8 +3941,9 @@ Emitted when the browser server closes.
 Closes the browser gracefully and makes sure the process is terminated.
 
 #### browserServer.kill()
+- returns: <[Promise]>
 
-Kills the browser process.
+Kills the browser process and waits for the process to exit.
 
 #### browserServer.process()
 - returns: <[ChildProcess]> Spawned browser application process.

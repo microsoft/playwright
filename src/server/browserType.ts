@@ -230,7 +230,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     // "Cannot access 'browserServer' before initialization" if something went wrong.
     let transport: ConnectionTransport | undefined = undefined;
     let browserServer: BrowserServer | undefined = undefined;
-    const { launchedProcess, gracefullyClose } = await launchProcess({
+    const { launchedProcess, gracefullyClose, kill } = await launchProcess({
       executablePath: executable,
       args: browserArguments,
       env: this._amendEnvironment(env, userDataDir, executable, browserArguments),
@@ -248,7 +248,7 @@ export abstract class BrowserTypeBase implements BrowserType {
         // our connection ignores kBrowserCloseMessageId.
         this._attemptToGracefullyCloseBrowser(transport!);
       },
-      onkill: (exitCode, signal) => {
+      onExit: (exitCode, signal) => {
         if (browserServer)
           browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
       },
@@ -269,7 +269,7 @@ export abstract class BrowserTypeBase implements BrowserType {
       helper.killProcess(launchedProcess);
       throw e;
     }
-    browserServer = new BrowserServer(launchedProcess, gracefullyClose);
+    browserServer = new BrowserServer(launchedProcess, gracefullyClose, kill);
     return { browserServer, downloadsPath, transport };
   }
 

@@ -56,13 +56,14 @@ export type LaunchProcessOptions = {
 
   // Note: attemptToGracefullyClose should reject if it does not close the browser.
   attemptToGracefullyClose: () => Promise<any>,
-  onkill: (exitCode: number | null, signal: string | null) => void,
+  onExit: (exitCode: number | null, signal: string | null) => void,
   logger: RootLogger,
 };
 
 type LaunchResult = {
   launchedProcess: childProcess.ChildProcess,
   gracefullyClose: () => Promise<void>,
+  kill: () => Promise<void>,
 };
 
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
@@ -110,14 +111,14 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
 
   let processClosed = false;
   let fulfillClose = () => {};
-  const waitForClose = new Promise(f => fulfillClose = f);
+  const waitForClose = new Promise<void>(f => fulfillClose = f);
   let fulfillCleanup = () => {};
-  const waitForCleanup = new Promise(f => fulfillCleanup = f);
+  const waitForCleanup = new Promise<void>(f => fulfillCleanup = f);
   spawnedProcess.once('exit', (exitCode, signal) => {
     logger._log(browserLog, `<process did exit ${exitCode}, ${signal}>`);
     processClosed = true;
     helper.removeEventListeners(listeners);
-    options.onkill(exitCode, signal);
+    options.onExit(exitCode, signal);
     fulfillClose();
     // Cleanup as process exits.
     cleanup().then(fulfillCleanup);
@@ -175,7 +176,12 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     } catch (e) { }
   }
 
-  return { launchedProcess: spawnedProcess, gracefullyClose };
+  function killAndWait() {
+    killProcess();
+    return waitForCleanup;
+  }
+
+  return { launchedProcess: spawnedProcess, gracefullyClose, kill: killAndWait };
 }
 
 export function waitForLine(process: childProcess.ChildProcess, inputStream: stream.Readable, regex: RegExp, timeout: number, timeoutError: TimeoutError): Promise<RegExpMatchArray> {
