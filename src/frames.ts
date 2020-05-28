@@ -29,6 +29,7 @@ import { selectors } from './selectors';
 import * as types from './types';
 import { waitForTimeoutWasUsed } from './hints';
 import { BrowserContext } from './browserContext';
+import { rewriteErrorMessage } from './debug/stackTrace';
 
 type ContextType = 'main' | 'utility';
 type ContextData = {
@@ -1063,7 +1064,7 @@ export class FrameTask {
       return result!;
     this.done();
     if (this._url)
-      error.message = error.message + ` while navigating to ${this._url}`;
+      rewriteErrorMessage(error, error.message + ` while navigating to ${this._url}`);
     throw error;
   }
 

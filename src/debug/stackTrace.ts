@@ -79,3 +79,14 @@ export function getCurrentApiCall(prefix = PLAYWRIGHT_LIB_PATH): string {
   }
   return parts.join('.');
 }
+
+export function rewriteErrorMessage(e: Error, newMessage: string): Error {
+  if (e.stack) {
+    const index = e.stack.indexOf(e.message);
+    if (index !== -1)
+      e.stack = e.stack.substring(0, index) + newMessage + e.stack.substring(index + e.message.length);
+  }
+  e.message = newMessage;
+  return e;
+}
+

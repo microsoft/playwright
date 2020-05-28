@@ -20,6 +20,7 @@ import { ConnectionTransport, ProtocolRequest, ProtocolResponse, protocolLog } f
 import { Protocol } from './protocol';
 import { EventEmitter } from 'events';
 import { InnerLogger } from '../logger';
+import { rewriteErrorMessage } from '../debug/stackTrace';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('ConnectionEvents.Disconnected')
@@ -189,7 +190,7 @@ export class CRSession extends EventEmitter {
 
   _onClosed() {
     for (const callback of this._callbacks.values())
-      callback.reject(rewriteError(callback.error, `Protocol error (${callback.method}): Target closed.`));
+      callback.reject(rewriteErrorMessage(callback.error, `Protocol error (${callback.method}): Target closed.`));
     this._callbacks.clear();
     this._connection = null;
     Promise.resolve().then(() => this.emit(CRSessionEvents.Disconnected));
@@ -200,12 +201,7 @@ function createProtocolError(error: Error, method: string, protocolError: { mess
   let message = `Protocol error (${method}): ${protocolError.message}`;
   if ('data' in protocolError)
     message += ` ${protocolError.data}`;
-  return rewriteError(error, message);
-}
-
-function rewriteError(error: Error, message: string): Error {
-  error.message = message;
-  return error;
+  return rewriteErrorMessage(error, message);
 }
 
 function rewriteInjectedScriptEvaluationLog(message: ProtocolRequest): string {
