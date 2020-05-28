@@ -26,6 +26,7 @@ import { Download } from './download';
 import { BrowserBase } from './browser';
 import { Log, InnerLogger, Logger, RootLogger } from './logger';
 import { FunctionWithSource } from './frames';
+import * as debugSupport from './debug/debugSupport';
 
 export type PersistentContextOptions = {
   viewport?: types.Size | null,
@@ -93,6 +94,10 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
     this._options = options;
     this._logger = options.logger ? new RootLogger(options.logger) : browserBase;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
+  }
+
+  async _initialize() {
+    await debugSupport.installConsoleHelpers(this);
   }
 
   protected _abortPromiseForEvent(event: string) {

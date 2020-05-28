@@ -378,7 +378,7 @@ export default class InjectedScript {
     if (!element || !element.isConnected)
       return { status: 'notconnected' };
     element = element.closest('button, [role=button]') || element;
-    let hitElement = this._deepElementFromPoint(document, point.x, point.y);
+    let hitElement = this.deepElementFromPoint(document, point.x, point.y);
     while (hitElement && hitElement !== element)
       hitElement = this._parentElementOrShadowHost(hitElement);
     return { status: 'success', value: hitElement === element };
@@ -408,7 +408,7 @@ export default class InjectedScript {
       return (element.parentNode as ShadowRoot).host;
   }
 
-  private _deepElementFromPoint(document: Document, x: number, y: number): Element | undefined {
+  deepElementFromPoint(document: Document, x: number, y: number): Element | undefined {
     let container: Document | ShadowRoot | null = document;
     let element: Element | undefined;
     while (container) {
