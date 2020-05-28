@@ -50,13 +50,13 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     this._session = session;
     this._requestId = event.requestId;
     const headers = headersObject(event.request.headers);
-    let resourceType = event.type;
-    if (!resourceType && redirectedFrom && redirectedFrom.resourceType())
+    let resourceType = 'other';
+    if (event.type)
+      resourceType = event.type.toLowerCase();
+    if (redirectedFrom && redirectedFrom.resourceType())
       resourceType = redirectedFrom.resourceType();
     else if (headers['accept'] === 'text/event-stream')
       resourceType = 'eventsource';
-    else
-      resourceType = 'other';
     this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId, event.request.url,
         resourceType, event.request.method, event.request.postData || null, headers);
     this._interceptedPromise = new Promise(f => this._interceptedCallback = f);
