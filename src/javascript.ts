@@ -16,17 +16,16 @@
 
 import * as types from './types';
 import * as dom from './dom';
-import { helper } from './helper';
 import * as utilityScriptSource from './generated/utilityScriptSource';
 import { InnerLogger } from './logger';
 import * as debugSupport from './debug/debugSupport';
+import { RemoteObject, serializeAsCallArgument } from './remoteObject';
 
 export interface ExecutionContextDelegate {
   evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: string | Function, ...args: any[]): Promise<any>;
   rawEvaluate(pageFunction: string): Promise<RemoteObject>;
   getProperties(handle: JSHandle): Promise<Map<string, JSHandle>>;
   releaseHandle(handle: JSHandle): Promise<void>;
-  handleToString(handle: JSHandle, includeType: boolean): string;
   handleJSONValue<T>(handle: JSHandle<T>): Promise<T>;
 }
 
@@ -68,26 +67,26 @@ export class ExecutionContext {
     return this._utilityScriptPromise;
   }
 
-  createHandle(remoteObject: any): JSHandle {
+  createHandle(remoteObject: RemoteObject): JSHandle {
     return new JSHandle(this, remoteObject);
   }
 }
 
-export type RemoteObject = {
-  type?: string,
-  subtype?: string,
-  objectId?: string,
-  value?: any
-};
-
 export class JSHandle<T = any> {
   readonly _context: ExecutionContext;
-  readonly _remoteObject: RemoteObject;
   _disposed = false;
+  readonly _objectId: string | undefined;
+  readonly _value: any;
+  private _type: string;
 
   constructor(context: ExecutionContext, remoteObject: RemoteObject) {
     this._context = context;
-    this._remoteObject = remoteObject;
+    this._objectId = remoteObject.objectId;
+    // Remote objects for primitive (or unserializable) objects carry value.
+    this._value = potentiallyUnserializableValue(remoteObject);
+    // WebKit does not have a 'promise' type.
+    const isPromise = remoteObject.className === 'Promise';
+    this._type = isPromise ? 'promise' : remoteObject.subtype || remoteObject.type || 'object';
   }
 
   async evaluate<R, Arg>(pageFunction: types.FuncOn<T, Arg, R>, arg: Arg): Promise<R>;
@@ -133,16 +132,26 @@ export class JSHandle<T = any> {
     await this._context._delegate.releaseHandle(this);
   }
 
+  _handleToString(includeType: boolean): string {
+    if (this._objectId)
+      return 'JSHandle@' + this._type;
+    return (includeType ? 'JSHandle:' : '') + this._value;
+  }
+
   toString(): string {
-    return this._context._delegate.handleToString(this, true /* includeType */);
+    return this._handleToString(true);
   }
 }
 
-export async function prepareFunctionCall<T>(
+type CallArgument = {
+  value?: any,
+  objectId?: string
+}
+
+export async function prepareFunctionCall(
   pageFunction: Function,
   context: ExecutionContext,
-  args: any[],
-  toCallArgumentIfNeeded: (value: any) => { handle?: T, value?: any }): Promise<{ functionText: string, values: any[], handles: T[], dispose: () => void }> {
+  args: any[]): Promise<{ functionText: string, values: any[], handles: CallArgument[], dispose: () => void }> {
 
   const originalText = pageFunction.toString();
   let functionText = originalText;
@@ -163,78 +172,55 @@ export async function prepareFunctionCall<T>(
     }
   }
 
-  const guids: string[] = [];
-  const handles: (Promise<JSHandle | T>)[] = [];
+  const handles: (Promise<JSHandle>)[] = [];
   const toDispose: Promise<JSHandle>[] = [];
-  const pushHandle = (handle: Promise<JSHandle | T>): string => {
-    const guid = helper.guid();
-    guids.push(guid);
+  const pushHandle = (handle: Promise<JSHandle>): number => {
     handles.push(handle);
-    return guid;
+    return handles.length - 1;
   };
 
-  const visited = new Set<any>();
-  let error: string | undefined;
-  const visit = (arg: any, depth: number): any => {
-    if (!depth) {
-      error = 'Argument nesting is too deep';
-      return;
-    }
-    if (visited.has(arg)) {
-      error = 'Argument is a circular structure';
-      return;
-    }
-    if (Array.isArray(arg)) {
-      visited.add(arg);
-      const result = [];
-      for (let i = 0; i < arg.length; ++i)
-        result.push(visit(arg[i], depth - 1));
-      visited.delete(arg);
-      return result;
-    }
-    if (arg && (typeof arg === 'object') && !(arg instanceof JSHandle)) {
-      visited.add(arg);
-      const result: any = {};
-      for (const name of Object.keys(arg))
-        result[name] = visit(arg[name], depth - 1);
-      visited.delete(arg);
-      return result;
-    }
-    if (arg && (arg instanceof JSHandle)) {
-      if (arg._disposed)
-        throw new Error('JSHandle is disposed!');
-      const adopted = context.adoptIfNeeded(arg);
-      if (adopted === null)
-        return pushHandle(Promise.resolve(arg));
-      toDispose.push(adopted);
-      return pushHandle(adopted);
-    }
-    const { handle, value } = toCallArgumentIfNeeded(arg);
-    if (handle)
-      return pushHandle(Promise.resolve(handle));
-    return value;
-  };
-
-  args = args.map(arg => visit(arg, 100));
-  if (error)
-    throw new Error(error);
-
-  const resolved = await Promise.all(handles);
-  const resultHandles: T[] = [];
-  for (let i = 0; i < resolved.length; i++) {
-    const handle = resolved[i];
+  args = args.map(arg => serializeAsCallArgument(arg, (handle: any): { h?: number, fallThrough?: any } => {
     if (handle instanceof JSHandle) {
-      if (handle._context !== context)
-        throw new Error('JSHandles can be evaluated only in the context they were created!');
-      resultHandles.push(toCallArgumentIfNeeded(handle).handle!);
-    } else {
-      resultHandles.push(handle);
+      if (!handle._objectId)
+        return { fallThrough: handle._value };
+      if (handle._disposed)
+        throw new Error('JSHandle is disposed!');
+      const adopted = context.adoptIfNeeded(handle);
+      if (adopted === null)
+        return { h: pushHandle(Promise.resolve(handle)) };
+      toDispose.push(adopted);
+      return { h: pushHandle(adopted) };
     }
+    return { fallThrough: handle };
+  }));
+  const resultHandles: CallArgument[] = [];
+  for (const handle of await Promise.all(handles)) {
+    if (handle._context !== context)
+      throw new Error('JSHandles can be evaluated only in the context they were created!');
+    resultHandles.push({ objectId: handle._objectId });
   }
   const dispose = () => {
     toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
   };
 
   functionText += await debugSupport.generateSourceMapUrl(originalText, functionText);
-  return { functionText, values: [ args.length, ...args, guids.length, ...guids ], handles: resultHandles, dispose };
+  return { functionText, values: [ args.length, ...args ], handles: resultHandles, dispose };
+}
+
+function potentiallyUnserializableValue(remoteObject: RemoteObject): any {
+  const value = remoteObject.value;
+  let unserializableValue = remoteObject.unserializableValue;
+  if (remoteObject.type === 'number' && value === null)
+    unserializableValue = remoteObject.description;
+  if (!unserializableValue)
+    return value;
+  if (unserializableValue === 'NaN')
+    return NaN;
+  if (unserializableValue === 'Infinity')
+    return Infinity;
+  if (unserializableValue === '-Infinity')
+    return -Infinity;
+  if (unserializableValue === '-0')
+    return -0;
+  return undefined;
 }

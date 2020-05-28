@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { assert } from '../helper';
 import { CRSession } from './crConnection';
 import { Protocol } from './protocol';
 import * as fs from 'fs';
@@ -35,31 +34,8 @@ export function getExceptionMessage(exceptionDetails: Protocol.Runtime.Exception
   return message;
 }
 
-export function valueFromRemoteObject(remoteObject: Protocol.Runtime.RemoteObject): any {
-  assert(!remoteObject.objectId, 'Cannot extract value when objectId is given');
-  if (remoteObject.unserializableValue) {
-    if (remoteObject.type === 'bigint' && typeof BigInt !== 'undefined')
-      return BigInt(remoteObject.unserializableValue.replace('n', ''));
-    switch (remoteObject.unserializableValue) {
-      case '-0':
-        return -0;
-      case 'NaN':
-        return NaN;
-      case 'Infinity':
-        return Infinity;
-      case '-Infinity':
-        return -Infinity;
-      default:
-        throw new Error('Unsupported unserializable value: ' + remoteObject.unserializableValue);
-    }
-  }
-  return remoteObject.value;
-}
-
-export async function releaseObject(client: CRSession, remoteObject: Protocol.Runtime.RemoteObject) {
-  if (!remoteObject.objectId)
-    return;
-  await client.send('Runtime.releaseObject', {objectId: remoteObject.objectId}).catch(error => {});
+export async function releaseObject(client: CRSession, objectId: string) {
+  await client.send('Runtime.releaseObject', { objectId }).catch(error => {});
 }
 
 export async function readProtocolStream(client: CRSession, handle: string, path: string | null): Promise<Buffer> {

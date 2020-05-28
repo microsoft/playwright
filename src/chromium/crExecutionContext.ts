@@ -17,10 +17,11 @@
 
 import { CRSession } from './crConnection';
 import { helper } from '../helper';
-import { valueFromRemoteObject, getExceptionMessage, releaseObject } from './crProtocolHelper';
+import { getExceptionMessage, releaseObject } from './crProtocolHelper';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
 import * as debugSupport from '../debug/debugSupport';
+import { RemoteObject, parseEvaluationResultValue } from '../remoteObject';
 
 export class CRExecutionContext implements js.ExecutionContextDelegate {
   _client: CRSession;
@@ -31,7 +32,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     this._contextId = contextPayload.id;
   }
 
-  async rawEvaluate(expression: string): Promise<js.RemoteObject> {
+  async rawEvaluate(expression: string): Promise<RemoteObject> {
     const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.evaluate', {
       expression: debugSupport.ensureSourceUrl(expression),
       contextId: this._contextId,
@@ -51,29 +52,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
 
     if (typeof pageFunction !== 'function')
       throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
-
-    const { functionText, values, handles, dispose } = await js.prepareFunctionCall<Protocol.Runtime.CallArgument>(pageFunction, context, args, (value: any) => {
-      if (typeof value === 'bigint') // eslint-disable-line valid-typeof
-        return { handle: { unserializableValue: `${value.toString()}n` } };
-      if (Object.is(value, -0))
-        return { handle: { unserializableValue: '-0' } };
-      if (Object.is(value, Infinity))
-        return { handle: { unserializableValue: 'Infinity' } };
-      if (Object.is(value, -Infinity))
-        return { handle: { unserializableValue: '-Infinity' } };
-      if (Object.is(value, NaN))
-        return { handle: { unserializableValue: 'NaN' } };
-      if (value && (value instanceof js.JSHandle)) {
-        const remoteObject = toRemoteObject(value);
-        if (remoteObject.unserializableValue)
-          return { handle: { unserializableValue: remoteObject.unserializableValue } };
-        if (!remoteObject.objectId)
-          return { handle: { value: remoteObject.value } };
-        return { handle: { objectId: remoteObject.objectId } };
-      }
-      return { value };
-    });
-
+    const { functionText, values, handles, dispose } = await js.prepareFunctionCall(pageFunction, context, args);
     return this._callOnUtilityScript(context,
         'callFunction', [
           { value: functionText },
@@ -87,7 +66,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
       const utilityScript = await context.utilityScript();
       const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
         functionDeclaration: `function (...args) { return this.${method}(...args) }` + debugSupport.generateSourceUrl(),
-        objectId: utilityScript._remoteObject.objectId,
+        objectId: utilityScript._objectId,
         arguments: [
           { value: returnByValue },
           ...args
@@ -98,14 +77,14 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
       }).catch(rewriteError);
       if (exceptionDetails)
         throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
-      return returnByValue ? valueFromRemoteObject(remoteObject) : context.createHandle(remoteObject);
+      return returnByValue ? parseEvaluationResultValue(remoteObject.value) : context.createHandle(remoteObject);
     } finally {
       dispose();
     }
   }
 
   async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
-    const objectId = toRemoteObject(handle).objectId;
+    const objectId = handle._objectId;
     if (!objectId)
       return new Map();
     const response = await this._client.send('Runtime.getProperties', {
@@ -114,7 +93,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     });
     const result = new Map();
     for (const property of response.result) {
-      if (!property.enumerable)
+      if (!property.enumerable || !property.value)
         continue;
       result.set(property.name, handle._context.createHandle(property.value));
     }
@@ -122,35 +101,20 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async releaseHandle(handle: js.JSHandle): Promise<void> {
-    await releaseObject(this._client, toRemoteObject(handle));
+    if (!handle._objectId)
+      return;
+    await releaseObject(this._client, handle._objectId);
   }
 
   async handleJSONValue<T>(handle: js.JSHandle<T>): Promise<T> {
-    const remoteObject = toRemoteObject(handle);
-    if (remoteObject.objectId) {
-      const response = await this._client.send('Runtime.callFunctionOn', {
-        functionDeclaration: 'function() { return this; }' + debugSupport.generateSourceUrl(),
-        objectId: remoteObject.objectId,
-        returnByValue: true,
-        awaitPromise: true,
-      });
-      return valueFromRemoteObject(response.result);
+    if (handle._objectId) {
+      return this._callOnUtilityScript(handle._context,
+          `jsonValue`, [
+            { objectId: handle._objectId },
+          ], true, () => {});
     }
-    return valueFromRemoteObject(remoteObject);
+    return handle._value;
   }
-
-  handleToString(handle: js.JSHandle, includeType: boolean): string {
-    const object = toRemoteObject(handle);
-    if (object.objectId) {
-      const type =  object.subtype || object.type;
-      return 'JSHandle@' + type;
-    }
-    return (includeType ? 'JSHandle:' : '') + valueFromRemoteObject(object);
-  }
-}
-
-function toRemoteObject(handle: js.JSHandle): Protocol.Runtime.RemoteObject {
-  return handle._remoteObject as Protocol.Runtime.RemoteObject;
 }
 
 function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {

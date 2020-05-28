@@ -58,16 +58,6 @@ describe('Page.evaluateHandle', function() {
       a2: { bar: 5, arr: [{ baz: ['baz'] }] }
     });
   });
-  it('should throw for deep objects', async({page, server}) => {
-    let a = { x: 1 };
-    for (let i = 0; i < 98; i++)
-      a = { x: a };
-    expect(await page.evaluate(x => x, a)).toEqual(a);
-    let error = await page.evaluate(x => x, {a}).catch(e => e);
-    expect(error.message).toBe('Argument nesting is too deep');
-    error = await page.evaluate(x => x, [a]).catch(e => e);
-    expect(error.message).toBe('Argument nesting is too deep');
-  });
   it('should throw for circular objects', async({page, server}) => {
     const a = { x: 1 };
     a.y = a;
@@ -137,7 +127,23 @@ describe('JSHandle.getProperty', function() {
     expect(await nullHandle.jsonValue()).toEqual(null);
     const emptyhandle = await aHandle.getProperty('empty');
     expect(String(await emptyhandle.jsonValue())).toEqual('undefined');
-  })
+  });
+  it('should work with unserializable values', async({page, server}) => {
+    const aHandle = await page.evaluateHandle(() => ({
+      infinity: Infinity,
+      nInfinity: -Infinity,
+      nan: NaN,
+      nzero: -0
+    }));
+    const infinityHandle = await aHandle.getProperty('infinity');
+    expect(await infinityHandle.jsonValue()).toEqual(Infinity);
+    const nInfinityHandle = await aHandle.getProperty('nInfinity');
+    expect(await nInfinityHandle.jsonValue()).toEqual(-Infinity);
+    const nanHandle = await aHandle.getProperty('nan');
+    expect(String(await nanHandle.jsonValue())).toEqual('NaN');
+    const nzeroHandle = await aHandle.getProperty('nzero');
+    expect(await nzeroHandle.jsonValue()).toEqual(-0);
+  });
 });
 
 describe('JSHandle.jsonValue', function() {
@@ -155,12 +161,7 @@ describe('JSHandle.jsonValue', function() {
     const windowHandle = await page.evaluateHandle('window');
     let error = null;
     await windowHandle.jsonValue().catch(e => error = e);
-    if (WEBKIT)
-      expect(error.message).toContain('Object has too long reference chain');
-    else if (CHROMIUM)
-      expect(error.message).toContain('Object reference chain is too long');
-    else if (FFOX)
-      expect(error.message).toContain('Object is not serializable');
+    expect(error.message).toContain('Argument is a circular structure');
   });
   it('should work with tricky values', async({page, server}) => {
     const aHandle = await page.evaluateHandle(() => ({a: 1}));

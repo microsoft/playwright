@@ -17,12 +17,10 @@
 
 import { WKSession, isSwappedOutError } from './wkConnection';
 import { helper } from '../helper';
-import { valueFromRemoteObject, releaseObject } from './wkProtocolHelper';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
 import * as debugSupport from '../debug/debugSupport';
-
-type MaybeCallArgument = Protocol.Runtime.CallArgument | { unserializable: any };
+import { RemoteObject, parseEvaluationResultValue } from '../remoteObject';
 
 export class WKExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: WKSession;
@@ -42,7 +40,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     this._contextDestroyedCallback();
   }
 
-  async rawEvaluate(expression: string): Promise<js.RemoteObject> {
+  async rawEvaluate(expression: string): Promise<RemoteObject> {
     const contextId = this._contextId;
     const response = await this._session.send('Runtime.evaluate', {
       expression: debugSupport.ensureSourceUrl(expression),
@@ -71,8 +69,8 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       if (!returnByValue)
         return context.createHandle(response.result);
       if (response.result.objectId)
-        return await this._returnObjectByValue(response.result.objectId);
-      return valueFromRemoteObject(response.result);
+        return await this._returnObjectByValue(context, response.result.objectId);
+      return parseEvaluationResultValue(response.result.value);
     } catch (error) {
       if (isSwappedOutError(error) || error.message.includes('Missing injected script for given'))
         throw new Error('Execution context was destroyed, most likely because of a navigation.');
@@ -86,8 +84,10 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       const functionDeclaration = `function (returnByValue, pageFunction) { return this.evaluate(returnByValue, pageFunction); }` + debugSupport.generateSourceUrl();
       return await this._session.send('Runtime.callFunctionOn', {
         functionDeclaration,
-        objectId: utilityScript._remoteObject.objectId!,
-        arguments: [ { value: returnByValue }, { value: debugSupport.ensureSourceUrl(pageFunction) } ],
+        objectId: utilityScript._objectId!,
+        arguments: [
+          { value: returnByValue },
+          { value: debugSupport.ensureSourceUrl(pageFunction) } ],
         returnByValue: false, // We need to return real Promise if that is a promise.
         emulateUserGesture: true
       });
@@ -96,27 +96,19 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     if (typeof pageFunction !== 'function')
       throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
 
-    const { functionText, values, handles, dispose } = await js.prepareFunctionCall<MaybeCallArgument>(pageFunction, context, args, (value: any) => {
-      if (typeof value === 'bigint' || Object.is(value, -0) || Object.is(value, Infinity) || Object.is(value, -Infinity) || Object.is(value, NaN))
-        return { handle: { unserializable: value } };
-      if (value && (value instanceof js.JSHandle)) {
-        const remoteObject = value._remoteObject;
-        if (!remoteObject.objectId && !Object.is(valueFromRemoteObject(remoteObject), remoteObject.value))
-          return { handle: { unserializable: value } };
-        if (!remoteObject.objectId)
-          return { handle: { value: valueFromRemoteObject(remoteObject) } };
-        return { handle: { objectId: remoteObject.objectId } };
-      }
-      return { value };
-    });
+    const { functionText, values, handles, dispose } = await js.prepareFunctionCall(pageFunction, context, args);
 
     try {
       const utilityScript = await context.utilityScript();
-      const callParams = this._serializeFunctionAndArguments(functionText, values, handles, returnByValue);
       return await this._session.send('Runtime.callFunctionOn', {
-        functionDeclaration: callParams.functionText + debugSupport.generateSourceUrl(),
-        objectId: utilityScript._remoteObject.objectId!,
-        arguments: callParams.callArguments,
+        functionDeclaration: `function (...args) { return this.callFunction(...args) }` + debugSupport.generateSourceUrl(),
+        objectId: utilityScript._objectId!,
+        arguments: [
+          { value: returnByValue },
+          { value: functionText },
+          ...values.map(value => ({ value })),
+          ...handles,
+        ],
         returnByValue: false, // We need to return real Promise if that is a promise.
         emulateUserGesture: true
       });
@@ -125,56 +117,19 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     }
   }
 
-  private _serializeFunctionAndArguments(originalText: string, values: any[], handles: MaybeCallArgument[], returnByValue: boolean): { functionText: string, callArguments: Protocol.Runtime.CallArgument[]} {
-    const callArguments: Protocol.Runtime.CallArgument[] = values.map(value => ({ value }));
-    let functionText = `function (returnByValue, functionText, ...args) { return this.callFunction(returnByValue, functionText, ...args); }`;
-    if (handles.some(handle => 'unserializable' in handle)) {
-      const paramStrings = [];
-      for (let i = 0; i < callArguments.length; i++)
-        paramStrings.push('a[' + i + ']');
-      for (const handle of handles) {
-        if ('unserializable' in handle) {
-          paramStrings.push(unserializableToString(handle.unserializable));
-        } else {
-          paramStrings.push('a[' + callArguments.length + ']');
-          callArguments.push(handle);
-        }
-      }
-      functionText = `function (returnByValue, functionText, ...a) { return  this.callFunction(returnByValue, functionText, ${paramStrings.join(',')}); }`;
-    } else {
-      callArguments.push(...(handles as Protocol.Runtime.CallArgument[]));
-    }
-    return { functionText, callArguments: [ { value: returnByValue }, { value: originalText }, ...callArguments ] };
-
-    function unserializableToString(arg: any) {
-      if (Object.is(arg, -0))
-        return '-0';
-      if (Object.is(arg, Infinity))
-        return 'Infinity';
-      if (Object.is(arg, -Infinity))
-        return '-Infinity';
-      if (Object.is(arg, NaN))
-        return 'NaN';
-      if (arg instanceof js.JSHandle) {
-        const remoteObj = arg._remoteObject;
-        if (!remoteObj.objectId)
-          return valueFromRemoteObject(remoteObj);
-      }
-      throw new Error('Unsupported value: ' + arg + ' (' + (typeof arg) + ')');
-    }
-  }
-
-  private async _returnObjectByValue(objectId: Protocol.Runtime.RemoteObjectId): Promise<any> {
+  private async _returnObjectByValue(context: js.ExecutionContext, objectId: Protocol.Runtime.RemoteObjectId): Promise<any> {
+    // This is different from handleJSONValue in that it does not throw.
     try {
+      const utilityScript = await context.utilityScript();
       const serializeResponse = await this._session.send('Runtime.callFunctionOn', {
-        // Serialize object using standard JSON implementation to correctly pass 'undefined'.
-        functionDeclaration: 'function(){return this}\n' + debugSupport.generateSourceUrl(),
-        objectId: objectId,
+        functionDeclaration: 'object => object' + debugSupport.generateSourceUrl(),
+        objectId: utilityScript._objectId!,
+        arguments: [ { objectId } ],
         returnByValue: true
       });
       if (serializeResponse.wasThrown)
         return undefined;
-      return serializeResponse.result.value;
+      return parseEvaluationResultValue(serializeResponse.result.value);
     } catch (e) {
       if (isSwappedOutError(e))
         return contextDestroyedResult;
@@ -183,7 +138,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
-    const objectId = handle._remoteObject.objectId;
+    const objectId = handle._objectId;
     if (!objectId)
       return new Map();
     const response = await this._session.send('Runtime.getProperties', {
@@ -192,7 +147,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     });
     const result = new Map();
     for (const property of response.properties) {
-      if (!property.enumerable)
+      if (!property.enumerable || !property.value)
         continue;
       result.set(property.name, handle._context.createHandle(property.value));
     }
@@ -200,32 +155,25 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async releaseHandle(handle: js.JSHandle): Promise<void> {
-    await releaseObject(this._session, handle._remoteObject);
+    if (!handle._objectId)
+      return;
+    await this._session.send('Runtime.releaseObject', {objectId: handle._objectId}).catch(error => {});
   }
 
   async handleJSONValue<T>(handle: js.JSHandle<T>): Promise<T> {
-    const remoteObject = handle._remoteObject;
-    if (remoteObject.objectId) {
+    if (handle._objectId) {
+      const utilityScript = await handle._context.utilityScript();
       const response = await this._session.send('Runtime.callFunctionOn', {
-        functionDeclaration: 'function() { return this; }' + debugSupport.generateSourceUrl(),
-        objectId: remoteObject.objectId,
+        functionDeclaration: 'function (object) { return this.jsonValue(true, object); }' + debugSupport.generateSourceUrl(),
+        objectId: utilityScript._objectId!,
+        arguments: [ { objectId: handle._objectId } ],
         returnByValue: true
       });
-      return valueFromRemoteObject(response.result);
+      if (response.wasThrown)
+        throw new Error('Evaluation failed: ' + response.result.description);
+      return parseEvaluationResultValue(response.result.value);
     }
-    return valueFromRemoteObject(remoteObject);
-  }
-
-  handleToString(handle: js.JSHandle, includeType: boolean): string {
-    const object = handle._remoteObject as Protocol.Runtime.RemoteObject;
-    if (object.objectId) {
-      let type: string =  object.subtype || object.type;
-      // FIXME: promise doesn't have special subtype in WebKit.
-      if (object.className === 'Promise')
-        type = 'promise';
-      return 'JSHandle@' + type;
-    }
-    return (includeType ? 'JSHandle:' : '') + valueFromRemoteObject(object);
+    return handle._value;
   }
 }
 
