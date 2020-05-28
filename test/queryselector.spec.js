@@ -494,6 +494,14 @@ describe('text selector', () => {
     expect(await page.$eval(`text="`, e => e.outerHTML)).toBe('<div> " </div>');
     expect(await page.$eval(`text='`, e => e.outerHTML)).toBe('<div> \' </div>');
 
+    await page.setContent(`<div>Hi''&gt;&gt;foo=bar</div>`);
+    expect(await page.$eval(`text="Hi''>>foo=bar"`, e => e.outerHTML)).toBe(`<div>Hi''&gt;&gt;foo=bar</div>`);
+    await page.setContent(`<div>Hi'"&gt;&gt;foo=bar</div>`);
+    expect(await page.$eval(`text="Hi'\\">>foo=bar"`, e => e.outerHTML)).toBe(`<div>Hi'"&gt;&gt;foo=bar</div>`);
+
+    await page.setContent(`<div>Hi&gt;&gt;<span></span></div>`);
+    expect(await page.$eval(`text="Hi>>">>span`, e => e.outerHTML)).toBe(`<span></span>`);
+
     await page.setContent(`<div>a<br>b</div><div>a</div>`);
     expect(await page.$eval(`text=a`, e => e.outerHTML)).toBe('<div>a<br>b</div>');
     expect(await page.$eval(`text=b`, e => e.outerHTML)).toBe('<div>a<br>b</div>');
@@ -621,6 +629,30 @@ describe('css selector', () => {
     expect(await page.$eval(`css=div[attr='hello,world!']`, e => e.outerHTML)).toBe('<div attr="hello,world!"></div>');
     expect(await page.$eval(`css=[attr='hello,world!']`, e => e.outerHTML)).toBe('<div attr="hello,world!"></div>');
     expect(await page.$eval(`css=div[attr="hello,world!"],span`, e => e.outerHTML)).toBe('<span></span>');
+  });
+
+  it('should work with attribute selectors', async({page}) => {
+    await page.setContent(`<div attr="hello world" attr2="hello-''>>foo=bar[]" attr3="] span"><span></span></div>`);
+    await page.evaluate(() => window.div = document.querySelector('div'));
+    const selectors = [
+      `[attr="hello world"]`,
+      `[attr = "hello world"]`,
+      `[attr ~= world]`,
+      `[attr ^=hello ]`,
+      `[attr $= world ]`,
+      `[attr *= "llo wor" ]`,
+      `[attr2 |= hello]`,
+      `[attr = "Hello World" i ]`,
+      `[attr *= "llo WOR"i]`,
+      `[attr $= woRLD i]`,
+      `[attr2 = "hello-''>>foo=bar[]"]`,
+      `[attr2 $="foo=bar[]"]`,
+    ];
+    for (const selector of selectors)
+      expect(await page.$eval(selector, e => e === div)).toBe(true);
+    expect(await page.$eval(`[attr*=hello] span`, e => e.parentNode === div)).toBe(true);
+    expect(await page.$eval(`[attr*=hello] >> span`, e => e.parentNode === div)).toBe(true);
+    expect(await page.$eval(`[attr3="] span"] >> span`, e => e.parentNode === div)).toBe(true);
   });
 });
 
