@@ -140,6 +140,34 @@ describe('Request.postData', function() {
   });
 });
 
+describe('Request.postDataJSON', function () {
+  it('should parse the JSON payload', async ({ page, server }) => {
+    await page.goto(server.EMPTY_PAGE);
+    server.setRoute('/post', (req, res) => res.end());
+    let request = null;
+    page.on('request', r => request = r);
+    await page.evaluate(() => fetch('./post', { method: 'POST', body: JSON.stringify({ foo: 'bar' }) }));
+    expect(request).toBeTruthy();
+    expect(request.postDataJSON()).toEqual({ "foo": "bar" });
+  });
+
+  it('should parse the data if content-type is application/x-www-form-urlencoded', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    server.setRoute('/post', (req, res) => res.end());
+    let request = null;
+    page.on('request', r => request = r);
+    await page.setContent(`<form method='POST' action='/post'><input type='text' name='foo' value='bar'><input type='number' name='baz' value='123'><input type='submit'></form>`);
+    await page.click('input[type=submit]');
+    expect(request).toBeTruthy();
+    expect(request.postDataJSON()).toEqual({'foo':'bar','baz':'123'});
+  })
+
+  it('should be |undefined| when there is no post data', async ({ page, server }) => {
+    const response = await page.goto(server.EMPTY_PAGE);
+    expect(response.request().postDataJSON()).toBe(null);
+  });
+});
+
 describe('Response.text', function() {
   it('should work', async({page, server}) => {
     const response = await page.goto(server.PREFIX + '/simple.json');
