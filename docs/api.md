@@ -3540,7 +3540,9 @@ Whether this request is driving frame's navigation.
 - returns: <?[string]> Request's post body, if any.
 
 #### request.postDataJSON()
-- returns: <?[Object]> Parsed request's body if the request is JSON or form-urlencoded if any.
+- returns: <?[Object]> Parsed request's body for `form-urlencoded` and JSON as a fallback if any.
+
+When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned. Otherwise it will be parsed as JSON.
 
 #### request.redirectedFrom()
 - returns: <?[Request]> Request that was redirected by the server to this one, if any.

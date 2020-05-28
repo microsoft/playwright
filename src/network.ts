@@ -170,13 +170,10 @@ export class Request {
       return entries;
     }
 
-    if (contentType.startsWith('application/json'))
-      return JSON.parse(this._postData);
-
-    return null;
+    return JSON.parse(this._postData);
   }
 
-  headers(): { [key: string]: string } {
+  headers(): {[key: string]: string} {
     return { ...this._headers };
   }
 
