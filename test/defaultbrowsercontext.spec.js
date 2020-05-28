@@ -300,13 +300,16 @@ describe('launchPersistentContext()', function() {
     await removeUserDataDir(userDataDir);
     await removeUserDataDir(userDataDir2);
   });
-  it.slow().fail(WIN && CHROMIUM)('should restore cookies from userDataDir', async({browserType, defaultBrowserOptions,  server}) => {
-    // TODO: Flaky! See https://github.com/microsoft/playwright/pull/1795/checks?check_run_id=587685496
+  it.slow()('should restore cookies from userDataDir', async({browserType, defaultBrowserOptions,  server}) => {
     const userDataDir = await makeUserDataDir();
     const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
     const page = await browserContext.newPage();
     await page.goto(server.EMPTY_PAGE);
-    await page.evaluate(() => document.cookie = 'doSomethingOnlyOnce=true; expires=Fri, 31 Dec 9999 23:59:59 GMT');
+    const documentCookie = await page.evaluate(() => {
+      document.cookie = 'doSomethingOnlyOnce=true; expires=Fri, 31 Dec 9999 23:59:59 GMT';
+      return document.cookie;
+    });
+    expect(documentCookie).toBe('doSomethingOnlyOnce=true');
     await browserContext.close();
 
     const browserContext2 = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
@@ -319,7 +322,7 @@ describe('launchPersistentContext()', function() {
     const browserContext3 = await browserType.launchPersistentContext(userDataDir2, defaultBrowserOptions);
     const page3 = await browserContext3.newPage();
     await page3.goto(server.EMPTY_PAGE);
-    expect(await page3.evaluate(() => localStorage.hey)).not.toBe('doSomethingOnlyOnce=true');
+    expect(await page3.evaluate(() => document.cookie)).not.toBe('doSomethingOnlyOnce=true');
     await browserContext3.close();
 
     // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
