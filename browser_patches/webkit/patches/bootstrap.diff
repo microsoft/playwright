@@ -5329,26 +5329,31 @@ index 892d8de6d345d91fda80cfa5334c4aa68b757da3..a22497d801a349487be10b15139e9c76
  
  #if PLATFORM(IOS_FAMILY)
 diff --git a/Source/WebCore/platform/graphics/cairo/CairoUtilities.cpp b/Source/WebCore/platform/graphics/cairo/CairoUtilities.cpp
-index 9c197ed122c1d0f303a347dec0ce128e4d54942d..15b64635e6adf2965180d4cf4983a3f5190488e5 100644
+index 9c197ed122c1d0f303a347dec0ce128e4d54942d..5c18867470a3255238463b1065155cdcd0f33c8a 100644
 --- a/Source/WebCore/platform/graphics/cairo/CairoUtilities.cpp
 +++ b/Source/WebCore/platform/graphics/cairo/CairoUtilities.cpp
-@@ -38,6 +38,7 @@
- #include "Path.h"
- #include "RefPtrCairo.h"
- #include "Region.h"
+@@ -50,6 +50,10 @@
+ #include <cairo-gl.h>
+ #endif
+ 
++#if PLATFORM(GTK)
 +#include <cairo-xlib.h>
- #include <wtf/Assertions.h>
- #include <wtf/NeverDestroyed.h>
- #include <wtf/UniqueArray.h>
-@@ -337,6 +338,8 @@ IntSize cairoSurfaceSize(cairo_surface_t* surface)
++#endif
++
+ #if OS(WINDOWS)
+ #include <cairo-win32.h>
+ #endif
+@@ -336,6 +340,10 @@ IntSize cairoSurfaceSize(cairo_surface_t* surface)
+         ASSERT(surface);
          ASSERT(cairo_surface_get_type(surface) == CAIRO_SURFACE_TYPE_IMAGE);
          return IntSize(cairo_image_surface_get_width(surface), cairo_image_surface_get_height(surface));
- #endif
++#endif
++#if PLATFORM(GTK)
 +    case CAIRO_SURFACE_TYPE_XLIB:
 +        return IntSize(cairo_xlib_surface_get_width(surface), cairo_xlib_surface_get_height(surface));
+ #endif
      default:
          ASSERT_NOT_REACHED();
-         return IntSize();
 diff --git a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp b/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
 index d79728555b7db9b59cb615c55a7a7a6851cb57c8..61d3cc4b488e35ef9e1afa1ce3ac5f5d60ebe9a7 100644
 --- a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
