@@ -137,6 +137,10 @@ const causeToResourceType: {[key: string]: string} = {
   TYPE_WEB_MANIFEST: 'manifest',
 };
 
+const internalCauseToResourceType: {[key: string]: string} = {
+  TYPE_INTERNAL_EVENTSOURCE: 'eventsource',
+};
+
 class InterceptableRequest implements network.RouteDelegate {
   readonly request: network.Request;
   _id: string;
@@ -151,7 +155,7 @@ class InterceptableRequest implements network.RouteDelegate {
       headers[name.toLowerCase()] = value;
 
     this.request = new network.Request(payload.isIntercepted ? this : null, frame, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
-        payload.url, causeToResourceType[payload.cause] || 'other', payload.method, payload.postData || null, headers);
+        payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, payload.postData || null, headers);
   }
 
   async continue(overrides: { method?: string; headers?: network.Headers; postData?: string }) {
