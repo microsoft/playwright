@@ -8971,11 +8971,13 @@ index 0000000000000000000000000000000000000000..a957c3b2586d67caa78b96bb8644bab8
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..ba60958fd56bf1a648212ea6ca413cb17c2647a8
+index 0000000000000000000000000000000000000000..50a43d2bae34e04d3bdf96616e085636a15393ef
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,339 @@
+@@ -0,0 +1,341 @@
 +/*
++ * Copyright (c) 2010, The WebM Project authors. All rights reserved.
++ * Copyright (c) 2013 The Chromium Authors. All rights reserved.
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
 + * Redistribution and use in source and binary forms, with or without
