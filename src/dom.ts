@@ -340,6 +340,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     for (const option of selectOptions) {
       if (option instanceof ElementHandle)
         continue;
+      if (!option)
+        continue;
       if (option.value !== undefined)
         assert(helper.isString(option.value), 'Values must be strings. Found value "' + option.value + '" of type "' + (typeof option.value) + '"');
       if (option.label !== undefined)

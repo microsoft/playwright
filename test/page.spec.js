@@ -953,6 +953,14 @@ describe('Page.select', function() {
     const result = await page.selectOption('select', []);
     expect(result).toEqual([]);
   });
+  it('should ignore nulls',async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/select.html');
+    await page.evaluate(() => makeMultiple());
+    const result = await page.selectOption('select', ['blue', null, 'black','magenta']);
+    expect(result.reduce((accumulator,current) => ['blue', 'black', 'magenta'].includes(current) && accumulator, true)).toEqual(true);
+    await page.selectOption('select', null);
+    expect(await page.$eval('select', select => Array.from(select.options).every(option => !option.selected))).toEqual(true);
+  });
   it('should deselect all options when passed no values for a multiple select',async({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.evaluate(() => makeMultiple());
