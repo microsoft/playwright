@@ -53,7 +53,6 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
       const browsers = JSON.parse((await fsReadFileAsync(path.join(linkTarget, 'browsers.json'))).toString())['browsers'];
       allBrowsers.push(...browsers);
     } catch (e) {
-      logPolitely('Failed to process descriptor at ' + fileName);
       await fsUnlinkAsync(linkPath).catch(e => {});
     }
   }
