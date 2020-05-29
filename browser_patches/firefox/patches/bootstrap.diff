@@ -3086,10 +3086,10 @@ index 0000000000000000000000000000000000000000..921cea40e11588805a0ab014e810c6af
 +this.TargetRegistry = TargetRegistry;
 diff --git a/juggler/components/juggler.js b/juggler/components/juggler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..4905a1bc7c585d3d1bf33430991d190cee75e332
+index 0000000000000000000000000000000000000000..216de102b24a7aacd090bde858338ca7f1b0b3de
 --- /dev/null
 +++ b/juggler/components/juggler.js
-@@ -0,0 +1,80 @@
+@@ -0,0 +1,100 @@
 +const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Dispatcher} = ChromeUtils.import("chrome://juggler/content/protocol/Dispatcher.js");
@@ -3120,9 +3120,21 @@ index 0000000000000000000000000000000000000000..4905a1bc7c585d3d1bf33430991d190c
 +  /* nsICommandLineHandler */
 +  handle: async function(cmdLine) {
 +    const jugglerFlag = cmdLine.handleFlagWithParam("juggler", false);
-+    if (!jugglerFlag || isNaN(jugglerFlag))
++    if (!jugglerFlag)
 +      return;
-+    const port = parseInt(jugglerFlag, 10);
++    let port = 0;
++    let userPrefs = {};
++    if (isNaN(jugglerFlag)) {
++      try {
++        const jugglerValue = JSON.parse(jugglerFlag);
++        port = jugglerValue.port || 0;
++        userPrefs = jugglerValue.userPrefs;
++      } catch (e) {
++        throw new Error("juggler should either be a number or a JSON string");
++      }
++    } else {
++      port = parseInt(jugglerFlag, 10);
++    }
 +    const silent = cmdLine.preventDefault;
 +    if (silent)
 +      Services.startup.enterLastWindowClosingSurvivalArea();
@@ -3155,6 +3167,14 @@ index 0000000000000000000000000000000000000000..4905a1bc7c585d3d1bf33430991d190c
 +    });
 +
 +    Services.mm.loadFrameScript(FRAME_SCRIPT, true /* aAllowDelayedLoad */);
++    for (const [name, value] of Object.entries(userPrefs)) {
++      if (typeof value === 'string')
++        Services.prefs.setCharPref(name, value);
++      else if (typeof value === 'number')
++        Services.prefs.setIntPref(name, value);
++      else if (typeof value === 'bool')
++        Services.prefs.setBoolPref(name, value);
++    }
 +    dump(`Juggler listening on ws://127.0.0.1:${this._server.port}/${token}\n`);
 +  },
 +
