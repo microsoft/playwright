@@ -18,6 +18,11 @@
 const utils = require('./utils');
 const {FFOX, CHROMIUM, WEBKIT, WIN} = utils.testOptions(browserType);
 
+async function giveItAChanceToClick(page) {
+  for (let i = 0; i < 5; i++)
+    await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
+}
+
 describe('Page.click', function() {
   it('should click the button', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
@@ -151,10 +156,7 @@ describe('Page.click', function() {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.display = 'none');
     const clicked = page.click('button', { timeout: 0 }).then(() => done = true);
-    for (let i = 0; i < 10; i++) {
-      // Do enough double rafs to check for possible races.
-      await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
-    }
+    await giveItAChanceToClick(page);
     expect(await page.evaluate(() => result)).toBe('Was not clicked');
     expect(done).toBe(false);
     await page.$eval('button', b => b.style.display = 'block');
@@ -167,10 +169,7 @@ describe('Page.click', function() {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.visibility = 'hidden');
     const clicked = page.click('button', { timeout: 0 }).then(() => done = true);
-    for (let i = 0; i < 10; i++) {
-      // Do enough double rafs to check for possible races.
-      await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
-    }
+    await giveItAChanceToClick(page);
     expect(await page.evaluate(() => result)).toBe('Was not clicked');
     expect(done).toBe(false);
     await page.$eval('button', b => b.style.visibility = 'visible');
@@ -197,10 +196,7 @@ describe('Page.click', function() {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.parentElement.style.display = 'none');
     const clicked = page.click('button', { timeout: 0 }).then(() => done = true);
-    for (let i = 0; i < 10; i++) {
-      // Do enough double rafs to check for possible races.
-      await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
-    }
+    await giveItAChanceToClick(page);
     expect(done).toBe(false);
     await page.$eval('button', b => b.parentElement.style.display = 'block');
     await clicked;
@@ -460,8 +456,7 @@ describe('Page.click', function() {
     expect(clicked).toBe(false);
 
     await page.$eval('.flyover', flyOver => flyOver.style.left = '0');
-    await page.evaluate(() => new Promise(requestAnimationFrame));
-    await page.evaluate(() => new Promise(requestAnimationFrame));
+    await giveItAChanceToClick(page);
     expect(clicked).toBe(false);
 
     await page.$eval('.flyover', flyOver => flyOver.style.left = '200px');
@@ -503,6 +498,45 @@ describe('Page.click', function() {
     expect(await page.evaluate(() => window.result)).toBe('Was not clicked');
   });
 
+  it('should wait for button to be enabled', async({page, server}) => {
+    await page.setContent('<button onclick="javascript:window.__CLICKED=true;" disabled><span>Click target</span></button>');
+    let done = false;
+    const clickPromise = page.click('text=Click target').then(() => done = true);
+    await giveItAChanceToClick(page);
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
+    expect(done).toBe(false);
+    await page.evaluate(() => document.querySelector('button').removeAttribute('disabled'));
+    await clickPromise;
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  });
+  it('should wait for input to be enabled', async({page, server}) => {
+    await page.setContent('<input onclick="javascript:window.__CLICKED=true;" disabled>');
+    let done = false;
+    const clickPromise = page.click('input').then(() => done = true);
+    await giveItAChanceToClick(page);
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
+    expect(done).toBe(false);
+    await page.evaluate(() => document.querySelector('input').removeAttribute('disabled'));
+    await clickPromise;
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  });
+  it('should wait for select to be enabled', async({page, server}) => {
+    await page.setContent('<select onclick="javascript:window.__CLICKED=true;" disabled><option selected>Hello</option></select>');
+    let done = false;
+    const clickPromise = page.click('select').then(() => done = true);
+    await giveItAChanceToClick(page);
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
+    expect(done).toBe(false);
+    await page.evaluate(() => document.querySelector('select').removeAttribute('disabled'));
+    await clickPromise;
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  });
+  it('should click disabled div', async({page, server}) => {
+    await page.setContent('<div onclick="javascript:window.__CLICKED=true;" disabled>Click target</div>');
+    await page.click('text=Click target');
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  });
+
   it('should climb dom for inner label with pointer-events:none', async({page, server}) => {
     await page.setContent('<button onclick="javascript:window.__CLICKED=true;"><label style="pointer-events:none">Click target</label></button>');
     await page.click('text=Click target');
@@ -515,11 +549,11 @@ describe('Page.click', function() {
   });
   it('should wait for BUTTON to be clickable when it has pointer-events:none', async({page, server}) => {
     await page.setContent('<button onclick="javascript:window.__CLICKED=true;" style="pointer-events:none"><span>Click target</span></button>');
-    const clickPromise = page.click('text=Click target');
-    // Do a few roundtrips to the page.
-    for (let i = 0; i < 5; ++i)
-      expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
-    // remove `pointer-events: none` css from button.
+    let done = false;
+    const clickPromise = page.click('text=Click target').then(() => done = true);
+    await giveItAChanceToClick(page);
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
+    expect(done).toBe(false);
     await page.evaluate(() => document.querySelector('button').style.removeProperty('pointer-events'));
     await clickPromise;
     expect(await page.evaluate(() => window.__CLICKED)).toBe(true);

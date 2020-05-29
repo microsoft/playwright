@@ -248,7 +248,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async _performPointerAction(actionName: string, action: (point: types.Point) => Promise<void>, deadline: number, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<'done' | 'retry'> {
     const { force = false, position } = options;
     if (!force)
-      await this._waitForDisplayedAtStablePosition(deadline);
+      await this._waitForDisplayedAtStablePositionAndEnabled(deadline);
 
     let paused = false;
     try {
@@ -489,16 +489,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  async _waitForDisplayedAtStablePosition(deadline: number): Promise<void> {
-    this._page._log(inputLog, 'waiting for element to be displayed and not moving...');
+  async _waitForDisplayedAtStablePositionAndEnabled(deadline: number): Promise<void> {
+    this._page._log(inputLog, 'waiting for element to be displayed, enabled and not moving...');
     const rafCount =  this._page._delegate.rafCountForStablePosition();
     const stablePromise = this._evaluateInUtility(({ injected, node }, { rafCount, timeout }) => {
-      return injected.waitForDisplayedAtStablePosition(node, rafCount, timeout);
+      return injected.waitForDisplayedAtStablePositionAndEnabled(node, rafCount, timeout);
     }, { rafCount, timeout: helper.timeUntilDeadline(deadline) });
     const timeoutMessage = 'element to be displayed and not moving';
     const injectedResult = await helper.waitWithDeadline(stablePromise, timeoutMessage, deadline, 'pw:input');
     handleInjectedResult(injectedResult, timeoutMessage);
-    this._page._log(inputLog, '...element is displayed and does not move');
+    this._page._log(inputLog, '...element is displayed, enabled and does not move');
   }
 
   async _checkHitTargetAt(point: types.Point): Promise<boolean> {
