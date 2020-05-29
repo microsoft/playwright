@@ -245,6 +245,15 @@ module.exports = {
 
     {
       files: [
+        './firefox/launcher.spec.js',
+      ],
+      browsers: ['firefox'],
+      title: '[Firefox]',
+      environments: [customEnvironment],
+    },
+
+    {
+      files: [
         './electron/electron.spec.js',
       ],
       browsers: ['chromium'],

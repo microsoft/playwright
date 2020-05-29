@@ -36,6 +36,10 @@ export type BrowserArgOptions = {
   devtools?: boolean,
 };
 
+export type FirefoxUserPrefsOptions = {
+  firefoxUserPrefs?: { [key: string]: string | number | boolean },
+};
+
 type LaunchOptionsBase = BrowserArgOptions & {
   executablePath?: string,
   ignoreDefaultArgs?: boolean | string[],
@@ -64,8 +68,8 @@ type LaunchServerOptions = LaunchOptionsBase & { port?: number };
 export interface BrowserType {
   executablePath(): string;
   name(): string;
-  launch(options?: LaunchOptions): Promise<Browser>;
-  launchServer(options?: LaunchServerOptions): Promise<BrowserServer>;
+  launch(options?: LaunchOptions & FirefoxUserPrefsOptions): Promise<Browser>;
+  launchServer(options?: LaunchServerOptions & FirefoxUserPrefsOptions): Promise<BrowserServer>;
   launchPersistentContext(userDataDir: string, options?: LaunchOptions & PersistentContextOptions): Promise<BrowserContext>;
   connect(options: ConnectOptions): Promise<Browser>;
 }
