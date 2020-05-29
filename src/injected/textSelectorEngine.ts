@@ -80,9 +80,24 @@ function createMatcher(selector: string): Matcher {
   return text => text.toLowerCase().includes(selector);
 }
 
+// Skips <head>, <script> and <style> elements and all their children.
+const nodeFilter: NodeFilter = {
+  acceptNode: node => {
+    return node.nodeName === 'HEAD' || node.nodeName === 'SCRIPT' || node.nodeName === 'STYLE' ?
+      NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+  }
+};
+
+// If we are querying inside a filtered element, nodeFilter is never called, so we need a separate check.
+function isFilteredNode(root: SelectorRoot, document: Document) {
+  return root.nodeName === 'SCRIPT' || root.nodeName === 'STYLE' || document.head && document.head.contains(root);
+}
+
 function queryInternal(root: SelectorRoot, matcher: Matcher, shadow: boolean): Element | undefined {
   const document = root instanceof Document ? root : root.ownerDocument!;
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+  if (isFilteredNode(root, document))
+    return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, nodeFilter);
   const shadowRoots: ShadowRoot[] = [];
   if (shadow && (root as Element).shadowRoot)
     shadowRoots.push((root as Element).shadowRoot!);
@@ -94,7 +109,7 @@ function queryInternal(root: SelectorRoot, matcher: Matcher, shadow: boolean): E
 
     const textParent = (node && node.nodeType === Node.TEXT_NODE) ? node.parentElement : null;
     if (lastTextParent && textParent !== lastTextParent) {
-      if (lastTextParent.nodeName !== 'SCRIPT' && lastTextParent.nodeName !== 'STYLE' && matcher(lastText))
+      if (matcher(lastText))
         return lastTextParent;
       lastText = '';
     }
@@ -122,7 +137,9 @@ function queryInternal(root: SelectorRoot, matcher: Matcher, shadow: boolean): E
 
 function queryAllInternal(root: SelectorRoot, matcher: Matcher, shadow: boolean, result: Element[]) {
   const document = root instanceof Document ? root : root.ownerDocument!;
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+  if (isFilteredNode(root, document))
+    return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, nodeFilter);
   const shadowRoots: ShadowRoot[] = [];
   if (shadow && (root as Element).shadowRoot)
     shadowRoots.push((root as Element).shadowRoot!);
@@ -134,7 +151,7 @@ function queryAllInternal(root: SelectorRoot, matcher: Matcher, shadow: boolean,
 
     const textParent = (node && node.nodeType === Node.TEXT_NODE) ? node.parentElement : null;
     if (lastTextParent && textParent !== lastTextParent) {
-      if (lastTextParent.nodeName !== 'SCRIPT' && lastTextParent.nodeName !== 'STYLE' && matcher(lastText))
+      if (matcher(lastText))
         result.push(lastTextParent);
       lastText = '';
     }
