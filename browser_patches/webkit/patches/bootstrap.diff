@@ -8647,10 +8647,10 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
      // The timeout we use when waiting for a DidUpdateGeometry message.
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..abc002273f8cd4a92b31f37c901227657d8e1c88
+index 0000000000000000000000000000000000000000..eac34bd46ae7b391d81fb0f21762024f2f97c8fa
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,251 @@
+@@ -0,0 +1,252 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8785,14 +8785,15 @@ index 0000000000000000000000000000000000000000..abc002273f8cd4a92b31f37c90122765
 +        return;
 +    }
 +
-+    m_encoder = makeUnique<ScreencastEncoder>();
 +    if (auto* drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(m_page.drawingArea())) {
-+        m_encoder->init(file, drawingArea->size().width(), drawingArea->size().height());
++        m_encoder = ScreencastEncoder::create(errorString, file, drawingArea->size().width(), drawingArea->size().height());
++        if (!m_encoder)
++            return;
++
 +        drawingArea->setPaintCallback([encoder = m_encoder.get()] (cairo_surface_t* surface) {
 +            encoder->encodeFrame(surface);
 +        });
 +    } else {
-+        m_encoder = nullptr;
 +        errorString = "Cannot get drawing area."_s;
 +        return;
 +    }
@@ -8995,10 +8996,10 @@ index 0000000000000000000000000000000000000000..a957c3b2586d67caa78b96bb8644bab8
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..50a43d2bae34e04d3bdf96616e085636a15393ef
+index 0000000000000000000000000000000000000000..05af437266cb8d561e848c63fdb4056e79c12ff0
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,341 @@
+@@ -0,0 +1,344 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -9159,50 +9160,74 @@ index 0000000000000000000000000000000000000000..50a43d2bae34e04d3bdf96616e085636
 +  fwrite(header, 1, 4, outfile);
 +}
 +
-+
-+int encode_frame(vpx_codec_ctx_t *codec, vpx_image_t *img,
-+                 int frame_index, FILE* file) {
-+    vpx_codec_iter_t iter = nullptr;
-+    const vpx_codec_cx_pkt_t *pkt = nullptr;
-+    int flags = 0;
-+    const vpx_codec_err_t res = vpx_codec_encode(codec, img, frame_index, 1, flags, VPX_DL_REALTIME);
-+    if (res != VPX_CODEC_OK) {
-+        fprintf(stderr, "Failed to encode frame: %d\n", res);
-+        return 0;
-+    }
-+
-+    int got_pkts = 0;
-+    while ((pkt = vpx_codec_get_cx_data(codec, &iter)) != nullptr) {
-+        got_pkts = 1;
-+
-+        fprintf(stderr, "    pkt->kind=%d\n", pkt->kind);
-+        if (pkt->kind == VPX_CODEC_CX_FRAME_PKT) {
-+            const int keyframe = (pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0;
-+            ivf_write_frame_header(file, pkt->data.frame.pts, pkt->data.frame.sz);
-+            if (fwrite(pkt->data.frame.buf, 1, pkt->data.frame.sz, file) != pkt->data.frame.sz) {
-+                fprintf(stderr, "Failed to write compressed frame\n");
-+                return 0;
-+            }
-+
-+            fprintf(stderr, "    writtend frame (key=%d)\n", keyframe);
-+        }
-+    }
-+
-+    return got_pkts;
-+}
-+
 +} // namespace
 +
++class ScreencastEncoder::VPXCodec {
++public:
++    VPXCodec(uint32_t fourcc, vpx_codec_ctx_t codec, vpx_codec_enc_cfg_t cfg, FILE* file)
++        : m_fourcc(fourcc)
++        , m_codec(codec)
++        , m_cfg(cfg)
++        , m_file(file)
++    {
++        ivf_write_file_header(m_file, &m_cfg, m_fourcc, 0);
++    }
 +
-+struct ScreencastEncoder::CodecInfo {
-+    uint32_t fourcc = 0;
-+    vpx_codec_ctx_t codec;
-+    vpx_codec_enc_cfg_t cfg;
-+    vpx_codec_iface_t* codec_interface = nullptr;
-+    FILE* file = nullptr;
++    bool encodeFrame(vpx_image_t *img)
++    {
++        vpx_codec_iter_t iter = nullptr;
++        const vpx_codec_cx_pkt_t *pkt = nullptr;
++        int flags = 0;
++        const vpx_codec_err_t res = vpx_codec_encode(&m_codec, img, m_frameCount, 1, flags, VPX_DL_REALTIME);
++        if (res != VPX_CODEC_OK) {
++            fprintf(stderr, "Failed to encode frame: %s\n", vpx_codec_error(&m_codec));
++            return false;
++        }
++
++        bool gotPkts = false;
++        while ((pkt = vpx_codec_get_cx_data(&m_codec, &iter)) != nullptr) {
++            gotPkts = true;
++
++            fprintf(stderr, "    pkt->kind=%d\n", pkt->kind);
++            if (pkt->kind == VPX_CODEC_CX_FRAME_PKT) {
++                const int keyframe = (pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0;
++                ivf_write_frame_header(m_file, pkt->data.frame.pts, pkt->data.frame.sz);
++                if (fwrite(pkt->data.frame.buf, 1, pkt->data.frame.sz, m_file) != pkt->data.frame.sz) {
++                    fprintf(stderr, "Failed to write compressed frame\n");
++                    return 0;
++                }
++
++                ++m_frameCount;
++                fprintf(stderr, "    writtend frame (key=%d)\n", keyframe);
++            }
++        }
++
++        return gotPkts;
++    }
++
++    void finish()
++    {
++        // Flush encoder.
++        while (encodeFrame(nullptr))
++            ++m_frameCount;
++
++        rewind(m_file);
++        // Update total frame count.
++        ivf_write_file_header(m_file, &m_cfg, m_fourcc, m_frameCount);
++        fclose(m_file);
++        fprintf(stderr, "ScreencastEncoder::finish %d frames\n", m_frameCount);
++    }
++
++private:
++    uint32_t m_fourcc = 0;
++    vpx_codec_ctx_t m_codec;
++    vpx_codec_enc_cfg_t m_cfg;
++    FILE* m_file = nullptr;
++    int m_frameCount = 0;
 +};
 +
-+ScreencastEncoder::ScreencastEncoder()
++ScreencastEncoder::ScreencastEncoder(std::unique_ptr<VPXCodec>&& vpxCodec)
++    : m_vpxCodec(WTFMove(vpxCodec))
 +{
 +}
 +
@@ -9214,59 +9239,51 @@ index 0000000000000000000000000000000000000000..50a43d2bae34e04d3bdf96616e085636
 +#define VP8_FOURCC 0x30385056
 +#define VP9_FOURCC 0x30395056
 +
-+void ScreencastEncoder::init(const String& filePath, int w, int h)
++std::unique_ptr<ScreencastEncoder> ScreencastEncoder::create(String& errorString, const String& filePath, int w, int h)
 +{
-+    vpx_codec_ctx_t codec;
-+    vpx_codec_enc_cfg_t cfg;
-+    const int fps = 30;
-+
 +    const uint32_t fourcc = VP8_FOURCC;
 +    vpx_codec_iface_t* codec_interface = vpx_codec_vp8_cx();
-+
 +    if (!codec_interface) {
-+        fprintf(stderr, "Unsupported codec.\n");
-+        return;
++        errorString = "Codec not found.";
++        return nullptr;
 +    }
 +
 +    if (w <= 0 || h <= 0 || (w % 2) != 0 || (h % 2) != 0) {
-+        fprintf(stderr, "Invalid frame size: %dx%d\n", w, h);
-+        return;
++        errorString = makeString("Invalid frame size: "_s, w, "x"_s, h);
++        return nullptr;
 +    }
 +
-+    vpx_codec_err_t res = vpx_codec_enc_config_default(codec_interface, &cfg, 0);
-+    if (res) {
-+        fprintf(stderr, "Failed to get default codec config.\n");
-+        return;
++    vpx_codec_enc_cfg_t cfg;
++    memset(&cfg, 0, sizeof(cfg));
++    vpx_codec_err_t error = vpx_codec_enc_config_default(codec_interface, &cfg, 0);
++    if (error) {
++        errorString = makeString("Failed to get default codec config: "_s, vpx_codec_err_to_string(error));
++        return nullptr;
 +    }
 +
 +    cfg.g_w = w;
 +    cfg.g_h = h;
++    const int fps = 30;
 +    cfg.g_timebase.num = 1;
 +    cfg.g_timebase.den = fps;
 +    cfg.rc_target_bitrate = 200;
 +    cfg.g_error_resilient = VPX_ERROR_RESILIENT_DEFAULT;
 +
++    vpx_codec_ctx_t codec;
 +    if (vpx_codec_enc_init(&codec, codec_interface, &cfg, 0)) {
-+        fprintf(stderr, "Failed to initialize encoder\n");
-+        return;
++        errorString = makeString("Failed to initialize encoder: "_s, vpx_codec_error(&codec));
++        return nullptr;
 +    }
 +
 +    FILE* file = fopen(filePath.utf8().data(), "wb");
 +    if (!file) {
-+      fprintf(stderr, "%s can't be written to.\n", filePath.utf8().data());
-+      return;
++        errorString = makeString("Failed to open file '", filePath, "' for writing: ", strerror(errno));
++        return nullptr;
 +    }
 +
-+    ivf_write_file_header(file, &cfg, fourcc, 0);
-+
-+    m_codecInfo.reset(new CodecInfo());
-+    m_codecInfo->fourcc = fourcc;
-+    m_codecInfo->codec = codec;
-+    m_codecInfo->cfg = cfg;
-+    m_codecInfo->codec_interface = codec_interface;
-+    m_codecInfo->file = file;
-+
-+    fprintf(stderr, "ScreencastEncoder initialized: %s\n", vpx_codec_iface_name(codec_interface));
++    std::unique_ptr<VPXCodec> vpxCodec(new VPXCodec(fourcc, codec, cfg, file));
++    fprintf(stderr, "ScreencastEncoder initialized with: %s\n", vpx_codec_iface_name(codec_interface));
++    return makeUnique<ScreencastEncoder>(WTFMove(vpxCodec));
 +}
 +
 +void ScreencastEncoder::encodeFrame(cairo_surface_t* drawingAreaSurface)
@@ -9313,36 +9330,23 @@ index 0000000000000000000000000000000000000000..50a43d2bae34e04d3bdf96616e085636
 +                        u_data, uv_stride,
 +                        v_data, uv_stride,
 +                        size.width(), size.height());
-+    if (encode_frame(&m_codecInfo->codec, image.get(), m_frameCount, m_codecInfo->file))
-+        ++m_frameCount;
++    m_vpxCodec->encodeFrame(image.get());
 +}
 +
 +void ScreencastEncoder::finish()
 +{
-+    if (!m_codecInfo)
++    if (!m_vpxCodec)
 +        return;
 +
-+    // Flush encoder.
-+    while (encode_frame(&m_codecInfo->codec, NULL, -1, m_codecInfo->file)) {
-+        fprintf(stderr, "flushed frame\n");
-+        ++m_frameCount;
-+    }
-+
-+
-+    fprintf(stderr, "ScreencastEncoder::finish %d frames\n", m_frameCount);
-+    rewind(m_codecInfo->file);
-+    ivf_write_file_header(m_codecInfo->file, &m_codecInfo->cfg, m_codecInfo->fourcc, m_frameCount);
-+    fclose(m_codecInfo->file);
-+
-+    m_codecInfo = nullptr;
-+    m_frameCount = 0;
++    m_vpxCodec->finish();
++    m_vpxCodec = nullptr;
 +}
 +
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..944d7166b9e6c74579eb43883c04042d2a7f86e3
+index 0000000000000000000000000000000000000000..6ab23625bca03927ef060cc5be6919fe70b836bd
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
 @@ -0,0 +1,53 @@
@@ -9385,17 +9389,17 @@ index 0000000000000000000000000000000000000000..944d7166b9e6c74579eb43883c04042d
 +    WTF_MAKE_NONCOPYABLE(ScreencastEncoder);
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    ScreencastEncoder();
++    static std::unique_ptr<ScreencastEncoder> create(String& errorString, const String& filePath, int width, int height);
++
++    class VPXCodec;
++    explicit ScreencastEncoder(std::unique_ptr<VPXCodec>&&);
 +    ~ScreencastEncoder();
 +
-+    void init(const String& filePath, int width, int height);
 +    void encodeFrame(cairo_surface_t*);
 +    void finish();
 +
 +private:
-+  struct CodecInfo;
-+  std::unique_ptr<CodecInfo> m_codecInfo;
-+  int m_frameCount { 0 };
++    std::unique_ptr<VPXCodec> m_vpxCodec;
 +};
 +
 +} // namespace WebKit
