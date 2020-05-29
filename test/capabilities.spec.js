@@ -34,15 +34,17 @@ describe('Capabilities', function() {
     expect(value).toBe('incoming');
   });
 
-  it.fail(FFOX)('should respect CSP', async({page, server}) => {
-    server.setCSP('/empty.html', 'script-src ' + server.PREFIX);
+  it('should respect CSP', async({page, server}) => {
+    server.setRoute('/empty.html', async (req, res) => {
+      res.setHeader('Content-Security-Policy', `script-src 'unsafe-inline';`);
+      res.end(`
+        <script>
+          window.testStatus = 'SUCCESS';
+          window.testStatus = eval("'FAILED'");
+        </script>`);
+    });
+
     await page.goto(server.EMPTY_PAGE);
-    expect(await page.evaluate(() => new Promise(f => setTimeout(() => {
-      try {
-        f(eval("'failed'"));
-      } catch (e) {
-        f('success');
-      }
-    }, 0)))).toBe('success');
+    expect(await page.evaluate(() => window.testStatus)).toBe('SUCCESS');
   });
 });
