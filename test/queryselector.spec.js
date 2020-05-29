@@ -551,6 +551,32 @@ describe('text selector', () => {
     expect(await page.$(`text="with"`)).toBe(null);
   });
 
+  it('should skip head, script and style', async({page}) => {
+    await page.setContent(`
+      <head>
+        <title>title</title>
+        <script>var script</script>
+        <style>.style {}</style>
+      </head>
+      <body>
+        <script>var script</script>
+        <style>.style {}</style>
+        <div>title script style</div>
+      </body>`);
+    const head = await page.$('head');
+    const title = await page.$('title');
+    const script = await page.$('body script');
+    const style = await page.$('body style');
+    for (const text of ['title', 'script', 'style']) {
+      expect(await page.$eval(`text=${text}`, e => e.nodeName)).toBe('DIV');
+      expect(await page.$$eval(`text=${text}`, els => els.map(e => e.nodeName).join('|'))).toBe('DIV');
+      for (const root of [head, title, script, style]) {
+        expect(await root.$(`text=${text}`)).toBe(null);
+        expect(await root.$$eval(`text=${text}`, els => els.length)).toBe(0);
+      }
+    }
+  });
+
   it('should match input[type=button|submit]', async({page}) => {
     await page.setContent(`<input type="submit" value="hello"><input type="button" value="world">`);
     expect(await page.$eval(`text=hello`, e => e.outerHTML)).toBe('<input type="submit" value="hello">');
