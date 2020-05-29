@@ -1612,7 +1612,7 @@ await browser.close();
 
 Page routes take precedence over browser context routes (set up with [browserContext.route(url, handler)](#browsercontextrouteurl-handler)) when request matches both handlers.
 
-> **NOTE** Enabling rouing disables http cache.
+> **NOTE** Enabling routing disables http cache.
 
 #### page.screenshot([options])
 - `options` <[Object]> Options object which might have the following properties:
