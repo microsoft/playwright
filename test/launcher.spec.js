@@ -53,7 +53,7 @@ describe('Playwright', function() {
     it('should handle timeout', async({browserType, defaultBrowserOptions}) => {
       const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
       const error = await browserType.launch(options).catch(e => e);
-      expect(error.message).toContain('Waiting for the browser to launch failed: timeout exceeded. Re-run with the DEBUG=pw:browser* env variable to see the debug log.');
+      expect(error.message).toContain(`Timeout 5000ms exceeded during ${browserType.name()}.launch.`);
     });
     it('should handle exception', async({browserType, defaultBrowserOptions}) => {
       const e = new Error('Dummy');
@@ -285,11 +285,10 @@ describe('browserType.connect', function() {
   });
   it.slow()('should handle exceptions during connect', async({browserType, defaultBrowserOptions, server}) => {
     const browserServer = await browserType.launchServer(defaultBrowserOptions);
-    const e = new Error('Dummy');
-    const __testHookBeforeCreateBrowser = () => { throw e };
+    const __testHookBeforeCreateBrowser = () => { throw new Error('Dummy') };
     const error = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint(), __testHookBeforeCreateBrowser }).catch(e => e);
     await browserServer._checkLeaks();
     await browserServer.close();
-    expect(error).toBe(e);
+    expect(error.message).toContain('Dummy');
   });
 });

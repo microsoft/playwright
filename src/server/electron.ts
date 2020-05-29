@@ -18,10 +18,8 @@ import * as path from 'path';
 import { CRBrowser, CRBrowserContext } from '../chromium/crBrowser';
 import { CRConnection, CRSession } from '../chromium/crConnection';
 import { CRExecutionContext } from '../chromium/crExecutionContext';
-import { TimeoutError } from '../errors';
 import { Events } from '../events';
 import { ExtendedEventEmitter } from '../extendedEventEmitter';
-import { helper } from '../helper';
 import * as js from '../javascript';
 import { InnerLogger, Logger, RootLogger } from '../logger';
 import { Page } from '../page';
@@ -32,6 +30,7 @@ import { BrowserServer } from './browserServer';
 import { launchProcess, waitForLine } from './processLauncher';
 import { BrowserContext } from '../browserContext';
 import type {BrowserWindow} from 'electron';
+import { Progress } from '../progress';
 
 type ElectronLaunchOptions = {
   args?: string[],
@@ -168,40 +167,39 @@ export class Electron  {
       handleSIGTERM = true,
       handleSIGHUP = true,
     } = options;
-    const deadline = TimeoutSettings.computeDeadline(options.timeout);
-    let app: ElectronApplication | undefined = undefined;
-
     const logger = new RootLogger(options.logger);
-    const electronArguments = ['--inspect=0', '--remote-debugging-port=0', '--require', path.join(__dirname, 'electronLoader.js'), ...args];
-    const { launchedProcess, gracefullyClose, kill } = await launchProcess({
-      executablePath,
-      args: electronArguments,
-      env,
-      handleSIGINT,
-      handleSIGTERM,
-      handleSIGHUP,
-      logger,
-      pipe: true,
-      cwd: options.cwd,
-      tempDirectories: [],
-      attemptToGracefullyClose: () => app!.close(),
-      onExit: (exitCode, signal) => {
-        if (app)
-          app.emit(ElectronEvents.ElectronApplication.Close, exitCode, signal);
-      },
-    });
+    return Progress.runCancelableTask(async progress => {
+      let app: ElectronApplication | undefined = undefined;
+      const electronArguments = ['--inspect=0', '--remote-debugging-port=0', '--require', path.join(__dirname, 'electronLoader.js'), ...args];
+      const { launchedProcess, gracefullyClose, kill } = await launchProcess({
+        executablePath,
+        args: electronArguments,
+        env,
+        handleSIGINT,
+        handleSIGTERM,
+        handleSIGHUP,
+        progress,
+        pipe: true,
+        cwd: options.cwd,
+        tempDirectories: [],
+        attemptToGracefullyClose: () => app!.close(),
+        onExit: (exitCode, signal) => {
+          if (app)
+            app.emit(ElectronEvents.ElectronApplication.Close, exitCode, signal);
+        },
+      });
 
-    const timeoutError = new TimeoutError(`Timed out while trying to connect to Electron!`);
-    const nodeMatch = await waitForLine(launchedProcess, launchedProcess.stderr, /^Debugger listening on (ws:\/\/.*)$/, helper.timeUntilDeadline(deadline), timeoutError);
-    const nodeTransport = await WebSocketTransport.connect(nodeMatch[1], logger, deadline);
-    const nodeConnection = new CRConnection(nodeTransport, logger);
+      const nodeMatch = await waitForLine(progress, launchedProcess, launchedProcess.stderr, /^Debugger listening on (ws:\/\/.*)$/);
+      const nodeTransport = await WebSocketTransport.connect(progress, nodeMatch[1]);
+      const nodeConnection = new CRConnection(nodeTransport, logger);
 
-    const chromeMatch = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, helper.timeUntilDeadline(deadline), timeoutError);
-    const chromeTransport = await WebSocketTransport.connect(chromeMatch[1], logger, deadline);
-    const browserServer = new BrowserServer(launchedProcess, gracefullyClose, kill);
-    const browser = await CRBrowser.connect(chromeTransport, { headful: true, logger, persistent: { viewport: null }, ownedServer: browserServer });
-    app = new ElectronApplication(logger, browser, nodeConnection);
-    await app._init();
-    return app;
+      const chromeMatch = await waitForLine(progress, launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/);
+      const chromeTransport = await WebSocketTransport.connect(progress, chromeMatch[1]);
+      const browserServer = new BrowserServer(launchedProcess, gracefullyClose, kill);
+      const browser = await CRBrowser.connect(chromeTransport, { headful: true, logger, persistent: { viewport: null }, ownedServer: browserServer });
+      app = new ElectronApplication(logger, browser, nodeConnection);
+      await app._init();
+      return app;
+    }, options, logger);
   }
 }

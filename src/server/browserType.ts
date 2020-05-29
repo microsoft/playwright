@@ -24,13 +24,11 @@ import * as browserPaths from '../install/browserPaths';
 import { Logger, RootLogger, InnerLogger } from '../logger';
 import { ConnectionTransport, WebSocketTransport } from '../transport';
 import { BrowserBase, BrowserOptions, Browser } from '../browser';
-import { assert, helper } from '../helper';
-import { TimeoutSettings } from '../timeoutSettings';
+import { assert } from '../helper';
 import { launchProcess, Env, waitForLine } from './processLauncher';
 import { Events } from '../events';
-import { rewriteErrorMessage } from '../debug/stackTrace';
-import { TimeoutError } from '../errors';
 import { PipeTransport } from './pipeTransport';
+import { Progress } from '../progress';
 
 export type BrowserArgOptions = {
   headless?: boolean,
@@ -102,56 +100,36 @@ export abstract class BrowserTypeBase implements BrowserType {
   async launch(options: LaunchOptions = {}): Promise<Browser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
-    return this._innerLaunch(options, undefined);
+    const logger = new RootLogger(options.logger);
+    const browser = await Progress.runCancelableTask(progress => this._innerLaunch(progress, options, logger, undefined), options, logger);
+    return browser;
   }
 
   async launchPersistentContext(userDataDir: string, options: LaunchOptions & PersistentContextOptions = {}): Promise<BrowserContext> {
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     const persistent = validatePersistentContextOptions(options);
-    const browser = await this._innerLaunch(options, persistent, userDataDir);
+    const logger = new RootLogger(options.logger);
+    const browser = await Progress.runCancelableTask(progress => this._innerLaunch(progress, options, logger, persistent, userDataDir), options, logger);
     return browser._defaultContext!;
   }
 
-  async _innerLaunch(options: LaunchOptions, persistent: PersistentContextOptions | undefined, userDataDir?: string): Promise<BrowserBase> {
-    const deadline = TimeoutSettings.computeDeadline(options.timeout);
-    const logger = new RootLogger(options.logger);
-    logger.startLaunchRecording();
-
-    let browserServer: BrowserServer | undefined;
-    try {
-      const launched = await this._launchServer(options, !!persistent, logger, deadline, userDataDir);
-      browserServer = launched.browserServer;
-      const browserOptions: BrowserOptions = {
-        slowMo: options.slowMo,
-        persistent,
-        headful: !processBrowserArgOptions(options).headless,
-        logger,
-        downloadsPath: launched.downloadsPath,
-        ownedServer: browserServer,
-      };
-      copyTestHooks(options, browserOptions);
-      const hasCustomArguments = !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs);
-      const promise = this._innerCreateBrowser(launched.transport, browserOptions, hasCustomArguments);
-      const browser = await helper.waitWithDeadline(promise, 'the browser to launch', deadline, 'pw:browser*');
-      return browser;
-    } catch (e) {
-      rewriteErrorMessage(e, e.message + '\n=============== Process output during launch: ===============\n' +
-          logger.launchRecording() +
-          '\n=============================================================');
-      if (browserServer)
-        await browserServer._closeOrKill(deadline);
-      throw e;
-    } finally {
-      logger.stopLaunchRecording();
-    }
-  }
-
-  async _innerCreateBrowser(transport: ConnectionTransport, browserOptions: BrowserOptions, hasCustomArguments: boolean): Promise<BrowserBase> {
-    if ((browserOptions as any).__testHookBeforeCreateBrowser)
-      await (browserOptions as any).__testHookBeforeCreateBrowser();
+  async _innerLaunch(progress: Progress, options: LaunchOptions, logger: RootLogger, persistent: PersistentContextOptions | undefined, userDataDir?: string): Promise<BrowserBase> {
+    const { browserServer, downloadsPath, transport } = await this._launchServer(progress, options, !!persistent, logger, userDataDir);
+    if ((options as any).__testHookBeforeCreateBrowser)
+      await (options as any).__testHookBeforeCreateBrowser();
+    const browserOptions: BrowserOptions = {
+      slowMo: options.slowMo,
+      persistent,
+      headful: !processBrowserArgOptions(options).headless,
+      logger,
+      downloadsPath,
+      ownedServer: browserServer,
+    };
+    copyTestHooks(options, browserOptions);
     const browser = await this._connectToTransport(transport, browserOptions);
     // We assume no control when using custom arguments, and do not prepare the default context in that case.
-    if (browserOptions.persistent && !hasCustomArguments)
+    const hasCustomArguments = !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs);
+    if (persistent && !hasCustomArguments)
       await browser._defaultContext!._loadDefaultContext();
     return browser;
   }
@@ -160,44 +138,26 @@ export abstract class BrowserTypeBase implements BrowserType {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launchServer`. Use `browserType.launchPersistentContext` instead');
     const { port = 0 } = options;
     const logger = new RootLogger(options.logger);
-    const { browserServer, transport } = await this._launchServer(options, false, logger, TimeoutSettings.computeDeadline(options.timeout));
-    browserServer._webSocketWrapper = this._wrapTransportWithWebSocket(transport, logger, port);
-    return browserServer;
+    return Progress.runCancelableTask(async progress => {
+      const { browserServer, transport } = await this._launchServer(progress, options, false, logger);
+      browserServer._webSocketWrapper = this._wrapTransportWithWebSocket(transport, logger, port);
+      return browserServer;
+    }, options, logger);
   }
 
   async connect(options: ConnectOptions): Promise<Browser> {
-    const deadline = TimeoutSettings.computeDeadline(options.timeout);
     const logger = new RootLogger(options.logger);
-    logger.startLaunchRecording();
-
-    let transport: ConnectionTransport | undefined;
-    try {
-      transport = await WebSocketTransport.connect(options.wsEndpoint, logger, deadline);
-      const browserOptions: BrowserOptions = {
-        slowMo: options.slowMo,
-        logger,
-      };
-      copyTestHooks(options, browserOptions);
-      const promise = this._innerCreateBrowser(transport, browserOptions, false);
-      const browser = await helper.waitWithDeadline(promise, 'connect to browser', deadline, 'pw:browser*');
-      logger.stopLaunchRecording();
+    return Progress.runCancelableTask(async progress => {
+      const transport = await WebSocketTransport.connect(progress, options.wsEndpoint);
+      progress.cleanupWhenCanceled(() => transport.closeAndWait());
+      if ((options as any).__testHookBeforeCreateBrowser)
+        await (options as any).__testHookBeforeCreateBrowser();
+      const browser = await this._connectToTransport(transport, { slowMo: options.slowMo, logger });
       return browser;
-    } catch (e) {
-      rewriteErrorMessage(e, e.message + '\n=============== Process output during connect: ===============\n' +
-          logger.launchRecording() +
-          '\n=============================================================');
-      try {
-        if (transport)
-          transport.close();
-      } catch (e) {
-      }
-      throw e;
-    } finally {
-      logger.stopLaunchRecording();
-    }
+    }, options, logger);
   }
 
-  private async _launchServer(options: LaunchServerOptions, isPersistent: boolean, logger: RootLogger, deadline: number, userDataDir?: string): Promise<{ browserServer: BrowserServer, downloadsPath: string, transport: ConnectionTransport }> {
+  private async _launchServer(progress: Progress, options: LaunchServerOptions, isPersistent: boolean, logger: RootLogger, userDataDir?: string): Promise<{ browserServer: BrowserServer, downloadsPath: string, transport: ConnectionTransport }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -238,7 +198,7 @@ export abstract class BrowserTypeBase implements BrowserType {
       handleSIGINT,
       handleSIGTERM,
       handleSIGHUP,
-      logger,
+      progress,
       pipe: !this._webSocketRegexNotPipe,
       tempDirectories,
       attemptToGracefullyClose: async () => {
@@ -254,23 +214,17 @@ export abstract class BrowserTypeBase implements BrowserType {
           browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
       },
     });
-
-    try {
-      if (this._webSocketRegexNotPipe) {
-        const timeoutError = new TimeoutError(`Timed out while trying to connect to the browser!`);
-        const match = await waitForLine(launchedProcess, launchedProcess.stdout, this._webSocketRegexNotPipe, helper.timeUntilDeadline(deadline), timeoutError);
-        const innerEndpoint = match[1];
-        transport = await WebSocketTransport.connect(innerEndpoint, logger, deadline);
-      } else {
-        const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
-        transport = new PipeTransport(stdio[3], stdio[4], logger);
-      }
-    } catch (e) {
-      // If we can't establish a connection, kill the process and exit.
-      helper.killProcess(launchedProcess);
-      throw e;
-    }
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, kill);
+    progress.cleanupWhenCanceled(() => browserServer && browserServer._closeOrKill(progress.deadline));
+
+    if (this._webSocketRegexNotPipe) {
+      const match = await waitForLine(progress, launchedProcess, launchedProcess.stdout, this._webSocketRegexNotPipe);
+      const innerEndpoint = match[1];
+      transport = await WebSocketTransport.connect(progress, innerEndpoint);
+    } else {
+      const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
+      transport = new PipeTransport(stdio[3], stdio[4], logger);
+    }
     return { browserServer, downloadsPath, transport };
   }
 
