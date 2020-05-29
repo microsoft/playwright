@@ -524,6 +524,17 @@ describe('Page.click', function() {
     await clickPromise;
     expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
   });
+  it('should wait for LABEL to be clickable when it has pointer-events:none', async({page, server}) => {
+    await page.setContent('<label onclick="javascript:window.__CLICKED=true;" style="pointer-events:none"><span>Click target</span></label>');
+    const clickPromise = page.click('text=Click target');
+    // Do a few roundtrips to the page.
+    for (let i = 0; i < 5; ++i)
+      expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
+    // remove `pointer-events: none` css from button.
+    await page.evaluate(() => document.querySelector('label').style.removeProperty('pointer-events'));
+    await clickPromise;
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  });
   it('should update modifiers correctly', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.click('button', { modifiers: ['Shift'] });
