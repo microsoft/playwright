@@ -113,6 +113,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return utility.doEvaluateInternal(true /* returnByValue */, true /* waitForNavigations */, pageFunction, { injected: await utility.injectedScript(), node: this }, arg);
   }
 
+  async _evaluateHandleInUtility<R, Arg>(pageFunction: types.FuncOn<{ injected: InjectedScript, node: T }, Arg, R>, arg: Arg): Promise<js.JSHandle<R>> {
+    const utility = await this._context.frame._utilityContext();
+    return utility.doEvaluateInternal(false /* returnByValue */, true /* waitForNavigations */, pageFunction, { injected: await utility.injectedScript(), node: this }, arg);
+  }
+
   async ownerFrame(): Promise<frames.Frame | null> {
     const frameId = await this._page._delegate.getOwnerFrame(this);
     if (!frameId)
@@ -349,7 +354,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }
     return await this._page._frameManager.waitForSignalsCreatedBy<string[]>(async () => {
       const injectedResult = await this._evaluateInUtility(({ injected, node }, selectOptions) => injected.selectOptions(node, selectOptions), selectOptions);
-      return handleInjectedResult(injectedResult, '');
+      return handleInjectedResult(injectedResult);
     }, deadline, options);
   }
 
@@ -359,7 +364,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const deadline = this._page._timeoutSettings.computeDeadline(options);
     await this._page._frameManager.waitForSignalsCreatedBy(async () => {
       const injectedResult = await this._evaluateInUtility(({ injected, node }, value) => injected.fill(node, value), value);
-      const needsInput = handleInjectedResult(injectedResult, '');
+      const needsInput = handleInjectedResult(injectedResult);
       if (needsInput) {
         if (value)
           await this._page.keyboard.insertText(value);
@@ -372,7 +377,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async selectText(): Promise<void> {
     this._page._log(inputLog, `elementHandle.selectText()`);
     const injectedResult = await this._evaluateInUtility(({ injected, node }) => injected.selectText(node), {});
-    handleInjectedResult(injectedResult, '');
+    handleInjectedResult(injectedResult);
   }
 
   async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options?: types.NavigatingActionWaitOptions) {
@@ -386,7 +391,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const input = node as Node as HTMLInputElement;
       return { status: 'success', value: input.multiple };
     }, {});
-    const multiple = handleInjectedResult(injectedResult, '');
+    const multiple = handleInjectedResult(injectedResult);
     let ff: string[] | types.FilePayload[];
     if (!Array.isArray(files))
       ff = [ files ] as string[] | types.FilePayload[];
@@ -414,7 +419,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async focus() {
     this._page._log(inputLog, `elementHandle.focus()`);
     const injectedResult = await this._evaluateInUtility(({ injected, node }) => injected.focusNode(node), {});
-    handleInjectedResult(injectedResult, '');
+    handleInjectedResult(injectedResult);
   }
 
   async type(text: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
@@ -492,13 +497,17 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async _waitForDisplayedAtStablePositionAndEnabled(deadline: number): Promise<void> {
     this._page._log(inputLog, 'waiting for element to be displayed, enabled and not moving...');
     const rafCount =  this._page._delegate.rafCountForStablePosition();
-    const stablePromise = this._evaluateInUtility(({ injected, node }, { rafCount, timeout }) => {
-      return injected.waitForDisplayedAtStablePositionAndEnabled(node, rafCount, timeout);
-    }, { rafCount, timeout: helper.timeUntilDeadline(deadline) });
-    const timeoutMessage = 'element to be displayed and not moving';
-    const injectedResult = await helper.waitWithDeadline(stablePromise, timeoutMessage, deadline, 'pw:input');
-    handleInjectedResult(injectedResult, timeoutMessage);
-    this._page._log(inputLog, '...element is displayed, enabled and does not move');
+    const poll = await this._evaluateHandleInUtility(({ injected, node }, { rafCount }) => {
+      return injected.waitForDisplayedAtStablePositionAndEnabled(node, rafCount);
+    }, { rafCount });
+    try {
+      const stablePromise = poll.evaluate(poll => poll.result);
+      const injectedResult = await helper.waitWithDeadline(stablePromise, 'element to be displayed and not moving', deadline, 'pw:input');
+      handleInjectedResult(injectedResult);
+    } finally {
+      poll.evaluate(poll => poll.cancel()).catch(e => {}).then(() => poll.dispose());
+    }
+    this._page._log(inputLog, '...element is displayed and does not move');
   }
 
   async _checkHitTargetAt(point: types.Point): Promise<boolean> {
@@ -514,7 +523,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const injectedResult = await this._evaluateInUtility(({ injected, node }, { point }) => {
       return injected.checkHitTargetAt(node, point);
     }, { point });
-    return handleInjectedResult(injectedResult, '');
+    return handleInjectedResult(injectedResult);
   }
 }
 
@@ -526,11 +535,9 @@ export function toFileTransferPayload(files: types.FilePayload[]): types.FileTra
   }));
 }
 
-function handleInjectedResult<T = undefined>(injectedResult: types.InjectedScriptResult<T>, timeoutMessage: string): T {
+function handleInjectedResult<T = undefined>(injectedResult: types.InjectedScriptResult<T>): T {
   if (injectedResult.status === 'notconnected')
     throw new NotConnectedError();
-  if (injectedResult.status === 'timeout')
-    throw new TimeoutError(`waiting for ${timeoutMessage} failed: timeout exceeded. Re-run with the DEBUG=pw:input env variable to see the debug log.`);
   if (injectedResult.status === 'error')
     throw new Error(injectedResult.error);
   return injectedResult.value as T;

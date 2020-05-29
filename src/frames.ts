@@ -36,7 +36,7 @@ type ContextData = {
   contextPromise: Promise<dom.FrameExecutionContext>;
   contextResolveCallback: (c: dom.FrameExecutionContext) => void;
   context: dom.FrameExecutionContext | null;
-  rerunnableTasks: Set<RerunnableTask>;
+  rerunnableTasks: Set<RerunnableTask<any>>;
 };
 
 export type GotoOptions = types.NavigateOptions & {
@@ -451,7 +451,7 @@ export class Frame {
       throw new Error(`Unsupported waitFor option "${state}"`);
 
     const deadline = this._page._timeoutSettings.computeDeadline(options);
-    const { world, task } = selectors._waitForSelectorTask(selector, state, deadline);
+    const { world, task } = selectors._waitForSelectorTask(selector, state);
     const result = await this._scheduleRerunnableTask(task, world, deadline, `selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
     if (!result.asElement()) {
       result.dispose();
@@ -469,7 +469,7 @@ export class Frame {
 
   async dispatchEvent(selector: string, type: string, eventInit?: Object, options?: types.TimeoutOptions): Promise<void> {
     const deadline = this._page._timeoutSettings.computeDeadline(options);
-    const task = selectors._dispatchEventTask(selector, type, eventInit || {}, deadline);
+    const task = selectors._dispatchEventTask(selector, type, eventInit || {});
     const result = await this._scheduleRerunnableTask(task, 'main', deadline, `selector "${selector}"`);
     result.dispose();
   }
@@ -700,7 +700,7 @@ export class Frame {
     this._page._log(dom.inputLog, `(page|frame).${actionName}("${selector}")`);
     while (!helper.isPastDeadline(deadline)) {
       try {
-        const { world, task } = selectors._waitForSelectorTask(selector, 'attached', deadline);
+        const { world, task } = selectors._waitForSelectorTask(selector, 'attached');
         this._page._log(dom.inputLog, `waiting for the selector "${selector}"`);
         const handle = await this._scheduleRerunnableTask(task, world, deadline, `selector "${selector}"`);
         this._page._log(dom.inputLog, `...got element for the selector`);
@@ -812,11 +812,11 @@ export class Frame {
       throw new Error('Unknown polling options: ' + polling);
     const predicateBody = helper.isString(pageFunction) ? 'return (' + pageFunction + ')' : 'return (' + pageFunction + ')(arg)';
 
-    const task = async (context: dom.FrameExecutionContext) => context.evaluateHandleInternal(({ injected, predicateBody, polling, timeout, arg }) => {
-      const innerPredicate = new Function('arg', predicateBody);
-      return injected.poll(polling, timeout, () => innerPredicate(arg));
-    }, { injected: await context.injectedScript(), predicateBody, polling, timeout: helper.timeUntilDeadline(deadline), arg });
-    return this._scheduleRerunnableTask(task, 'main', deadline) as any as types.SmartHandle<R>;
+    const task = async (context: dom.FrameExecutionContext) => context.evaluateHandleInternal(({ injected, predicateBody, polling, arg }) => {
+      const innerPredicate = new Function('arg', predicateBody) as (arg: any) => R;
+      return injected.poll(polling, () => innerPredicate(arg));
+    }, { injected: await context.injectedScript(), predicateBody, polling, arg });
+    return this._scheduleRerunnableTask(task, 'main', deadline);
   }
 
   async title(): Promise<string> {
@@ -836,10 +836,9 @@ export class Frame {
     this._parentFrame = null;
   }
 
-  private _scheduleRerunnableTask(task: Task, contextType: ContextType, deadline: number, title?: string): Promise<js.JSHandle> {
+  private _scheduleRerunnableTask<T>(task: SchedulableTask<T>, contextType: ContextType, deadline: number, title?: string): Promise<types.SmartHandle<T>> {
     const data = this._contextData.get(contextType)!;
     const rerunnableTask = new RerunnableTask(data, task, deadline, title);
-    data.rerunnableTasks.add(rerunnableTask);
     if (data.context)
       rerunnableTask.rerun(data.context);
     return rerunnableTask.promise;
@@ -890,84 +889,77 @@ export class Frame {
   }
 }
 
-type Task = (context: dom.FrameExecutionContext) => Promise<js.JSHandle>;
+export type SchedulableTask<T> = (context: dom.FrameExecutionContext) => Promise<js.JSHandle<types.CancelablePoll<T>>>;
 
-class RerunnableTask {
-  readonly promise: Promise<js.JSHandle>;
-  private _contextData: ContextData;
-  private _task: Task;
-  private _runCount: number;
-  private _resolve: (result: js.JSHandle) => void = () => {};
+class RerunnableTask<T> {
+  readonly promise: Promise<types.SmartHandle<T>>;
+  terminate: (reason: Error) => void = () => {};
+  private _task: SchedulableTask<T>;
+  private _resolve: (result: types.SmartHandle<T>) => void = () => {};
   private _reject: (reason: Error) => void = () => {};
-  private _timeoutTimer?: NodeJS.Timer;
-  private _terminated = false;
+  private _terminatedPromise: Promise<Error>;
 
-  constructor(data: ContextData, task: Task, deadline: number, title?: string) {
-    this._contextData = data;
+  constructor(data: ContextData, task: SchedulableTask<T>, deadline: number, title?: string) {
     this._task = task;
-    this._runCount = 0;
-    this.promise = new Promise<js.JSHandle>((resolve, reject) => {
-      this._resolve = resolve;
-      this._reject = reject;
-    });
+    data.rerunnableTasks.add(this);
+
     // Since page navigation requires us to re-install the pageScript, we should track
     // timeout on our end.
     const timeoutError = new TimeoutError(`waiting for ${title || 'function'} failed: timeout exceeded. Re-run with the DEBUG=pw:input env variable to see the debug log.`);
-    this._timeoutTimer = setTimeout(() => this.terminate(timeoutError), helper.timeUntilDeadline(deadline));
-  }
+    let timeoutTimer: NodeJS.Timer | undefined;
+    this._terminatedPromise = new Promise(resolve => {
+      timeoutTimer = setTimeout(() => resolve(timeoutError), helper.timeUntilDeadline(deadline));
+      this.terminate = resolve;
+    });
 
-  terminate(error: Error) {
-    this._terminated = true;
-    this._reject(error);
-    this._doCleanup();
+    // This promise is either resolved with the task result, or rejected with a meaningful
+    // evaluation error.
+    const resultPromise = new Promise<types.SmartHandle<T>>((resolve, reject) => {
+      this._resolve = resolve;
+      this._reject = reject;
+    });
+    const failPromise = this._terminatedPromise.then(error => Promise.reject(error));
+
+    this.promise = Promise.race([resultPromise, failPromise]).finally(() => {
+      if (timeoutTimer)
+        clearTimeout(timeoutTimer);
+      data.rerunnableTasks.delete(this);
+    });
   }
 
   async rerun(context: dom.FrameExecutionContext) {
-    const runCount = ++this._runCount;
-    let success: js.JSHandle | null = null;
-    let error = null;
+    let poll: js.JSHandle<types.CancelablePoll<T>> | null = null;
+
+    // On timeout or error, cancel current poll.
+    const cancelPoll = () => {
+      if (!poll)
+        return;
+      const copy = poll;
+      poll = null;
+      copy.evaluate(p => p.cancel()).catch(e => {}).then(() => copy.dispose());
+    };
+    this._terminatedPromise.then(cancelPoll);
+
     try {
-      success = await this._task(context);
+      poll = await this._task(context);
+      const result = await poll.evaluateHandle(poll => poll.result);
+      cancelPoll();
+      this._resolve(result);
     } catch (e) {
-      error = e;
+      cancelPoll();
+
+      // When the page is navigated, the promise is rejected.
+      // We will try again in the new execution context.
+      if (e.message.includes('Execution context was destroyed'))
+        return;
+
+      // We could have tried to evaluate in a context which was already
+      // destroyed.
+      if (e.message.includes('Cannot find context with specified id'))
+        return;
+
+      this._reject(e);
     }
-
-    if (this._terminated || runCount !== this._runCount) {
-      if (success)
-        success.dispose();
-      return;
-    }
-
-    // Ignore timeouts in pageScript - we track timeouts ourselves.
-    // If execution context has been already destroyed, `context.evaluate` will
-    // throw an error - ignore this predicate run altogether.
-    if (!error && await context.evaluateInternal(s => !s, success).catch(e => true)) {
-      success!.dispose();
-      return;
-    }
-
-    // When the page is navigated, the promise is rejected.
-    // We will try again in the new execution context.
-    if (error && error.message.includes('Execution context was destroyed'))
-      return;
-
-    // We could have tried to evaluate in a context which was already
-    // destroyed.
-    if (error && error.message.includes('Cannot find context with specified id'))
-      return;
-
-    if (error)
-      this._reject(error);
-    else
-      this._resolve(success!);
-
-    this._doCleanup();
-  }
-
-  _doCleanup() {
-    if (this._timeoutTimer)
-      clearTimeout(this._timeoutTimer);
-    this._contextData.rerunnableTasks.delete(this);
   }
 }
 

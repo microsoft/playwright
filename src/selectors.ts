@@ -111,12 +111,12 @@ export class Selectors {
     return result;
   }
 
-  _waitForSelectorTask(selector: string, state: 'attached' | 'detached' | 'visible' | 'hidden', deadline: number): { world: 'main' | 'utility', task: (context: dom.FrameExecutionContext) => Promise<js.JSHandle> } {
+  _waitForSelectorTask(selector: string, state: 'attached' | 'detached' | 'visible' | 'hidden'): { world: 'main' | 'utility', task: frames.SchedulableTask<Element | boolean> } {
     const parsed = this._parseSelector(selector);
     const task = async (context: dom.FrameExecutionContext) => {
       const injectedScript = await context.injectedScript();
-      return injectedScript.evaluateHandle((injected, { parsed, state, timeout }) => {
-        return injected.poll('raf', timeout, () => {
+      return injectedScript.evaluateHandle((injected, { parsed, state }) => {
+        return injected.poll('raf', () => {
           const element = injected.querySelector(parsed, document);
           switch (state) {
             case 'attached':
@@ -129,23 +129,23 @@ export class Selectors {
               return !element || !injected.isVisible(element);
           }
         });
-      }, { parsed, state, timeout: helper.timeUntilDeadline(deadline) });
+      }, { parsed, state });
     };
     return { world: this._needsMainContext(parsed) ? 'main' : 'utility', task };
   }
 
-  _dispatchEventTask(selector: string, type: string, eventInit: Object, deadline: number): (context: dom.FrameExecutionContext) => Promise<js.JSHandle> {
+  _dispatchEventTask(selector: string, type: string, eventInit: Object): frames.SchedulableTask<Element> {
     const parsed = this._parseSelector(selector);
     const task = async (context: dom.FrameExecutionContext) => {
       const injectedScript = await context.injectedScript();
-      return injectedScript.evaluateHandle((injected, { parsed, type, eventInit, timeout }) => {
-        return injected.poll('raf', timeout, () => {
+      return injectedScript.evaluateHandle((injected, { parsed, type, eventInit }) => {
+        return injected.poll('raf', () => {
           const element = injected.querySelector(parsed, document);
           if (element)
             injected.dispatchEvent(element, type, eventInit);
           return element || false;
         });
-      }, { parsed, type, eventInit, timeout: helper.timeUntilDeadline(deadline) });
+      }, { parsed, type, eventInit });
     };
     return task;
   }
