@@ -40,6 +40,8 @@ async function generateWebKitProtocol(folderPath) {
   console.log(`Wrote protocol.ts for WebKit to ${path.relative(process.cwd(), outputPath)}`);
 }
 
+const conditionFilter = command => command.condition !== 'defined(WTF_PLATFORM_IOS_FAMILY) && WTF_PLATFORM_IOS_FAMILY';
+
 function jsonToTS(json) {
   return `// This is generated from /utils/protocol-types-generator/index.js
 type binary = string;
@@ -69,7 +71,7 @@ export module Protocol {${json.domains.map(domain => `${domain.description ? `
       ${parameter.name}${parameter.optional ? '?' : ''}: ${typeOfProperty(parameter)};`).join(``)}
     }` : `
     export type ${event.name}Payload = void;`}`).join('')}
-    ${(domain.commands || []).map(command => `${command.description ? `
+    ${(domain.commands || []).filter(conditionFilter).map(command => `${command.description ? `
     /**
      * ${command.description}
      */` : ''}
@@ -90,10 +92,10 @@ export module Protocol {${json.domains.map(domain => `${domain.description ? `
   export interface Events {${json.domains.map(domain => (domain.events || []).map(event => `
     "${domain.domain}.${event.name}": ${domain.domain}.${event.name}Payload;`).join('')).join('')}
   }
-  export interface CommandParameters {${json.domains.map(domain => (domain.commands || []).map(command => `
+  export interface CommandParameters {${json.domains.map(domain => (domain.commands || []).filter(conditionFilter).map(command => `
     "${domain.domain}.${command.name}": ${domain.domain}.${command.name}Parameters;`).join('')).join('')}
   }
-  export interface CommandReturnValues {${json.domains.map(domain => (domain.commands || []).map(command => `
+  export interface CommandReturnValues {${json.domains.map(domain => (domain.commands || []).filter(conditionFilter).map(command => `
     "${domain.domain}.${command.name}": ${domain.domain}.${command.name}ReturnValue;`).join('')).join('')}
   }
 }
