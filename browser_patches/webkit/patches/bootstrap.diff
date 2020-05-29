@@ -772,9 +772,18 @@ index 777a54166ed6664561b3f8249a6abb4ac59d0480..e738f34f65fa8137a16bf7b66bc237b8
              "name": "webSocketWillSendHandshakeRequest",
              "description": "Fired when WebSocket is about to initiate handshake.",
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index d27512a4f00779b8f1171999953fdc76107a9815..8fc6eebd1677a0acf548aaeb9f78c5856847553f 100644
+index d27512a4f00779b8f1171999953fdc76107a9815..0eebb1b70f149429967866111e014efbc15757f8 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
+@@ -27,7 +27,7 @@
+         {
+             "id": "ResourceType",
+             "type": "string",
+-            "enum": ["Document", "StyleSheet", "Image", "Font", "Script", "XHR", "Fetch", "Ping", "Beacon", "WebSocket", "Other"],
++            "enum": ["Document", "StyleSheet", "Image", "Font", "Script", "XHR", "Fetch", "Ping", "Beacon", "WebSocket", "EventSource", "Other"],
+             "description": "Resource type as it was perceived by the rendering engine."
+         },
+         {
 @@ -111,6 +111,41 @@
                  { "name": "secure", "type": "boolean", "description": "True if cookie is secure." },
                  { "name": "sameSite", "$ref": "CookieSameSitePolicy", "description": "Cookie Same-Site policy." }
@@ -1999,7 +2008,7 @@ index d2f18172df139dd68cf94b715e847da18a8a5845..378faa8166d57167344fbd224bcf2582
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index 0c442ee908877d2067d65e87441652a8cf00c88e..6fb448784e0d97fe60eb233853905138992c6bb6 100644
+index 0c442ee908877d2067d65e87441652a8cf00c88e..6fcf3be1b5a2f1e82d8762b093144413462f8bc7 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
 @@ -81,6 +81,12 @@
@@ -2098,7 +2107,7 @@ index 0c442ee908877d2067d65e87441652a8cf00c88e..6fb448784e0d97fe60eb233853905138
  void InspectorInstrumentation::defaultAppearanceDidChangeImpl(InstrumentingAgents& instrumentingAgents, bool useDarkAppearance)
  {
      if (InspectorPageAgent* inspectorPageAgent = instrumentingAgents.inspectorPageAgent())
-@@ -1295,6 +1317,43 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
+@@ -1295,6 +1317,49 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
          layerTreeAgent->renderLayerDestroyed(renderLayer);
  }
  
@@ -2139,10 +2148,16 @@ index 0c442ee908877d2067d65e87441652a8cf00c88e..6fb448784e0d97fe60eb233853905138
 +    return false;
 +}
 +
++void InspectorInstrumentation::willSendEventSourceRequestImpl(InstrumentingAgents& instrumentingAgents)
++{
++    if (InspectorNetworkAgent* networkAgent = instrumentingAgents.inspectorNetworkAgent())
++        networkAgent->willSendEventSourceRequest();
++}
++
  InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope& workerGlobalScope)
  {
      return workerGlobalScope.inspectorController().m_instrumentingAgents;
-@@ -1306,6 +1365,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForPage(Page&
+@@ -1306,6 +1371,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForPage(Page&
      return page.inspectorController().m_instrumentingAgents.get();
  }
  
@@ -2157,7 +2172,7 @@ index 0c442ee908877d2067d65e87441652a8cf00c88e..6fb448784e0d97fe60eb233853905138
  {
      if (is<Document>(context))
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.h b/Source/WebCore/inspector/InspectorInstrumentation.h
-index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..cd95112f4ed24429dfe27343228592e1d4ff7db4 100644
+index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..5a5474a5bbb635fec0ed9e5bdf1388743be92a14 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.h
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.h
 @@ -31,6 +31,7 @@
@@ -2201,7 +2216,15 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..cd95112f4ed24429dfe27343228592e1
      static void willComposite(Frame&);
      static void didComposite(Frame&);
      static void willPaint(RenderObject&);
-@@ -198,6 +205,7 @@ public:
+@@ -191,6 +198,7 @@ public:
+     static void applyUserAgentOverride(Frame&, String&);
+     static void applyEmulatedMedia(Frame&, String&);
+ 
++
+     static void willSendRequest(Frame*, unsigned long identifier, DocumentLoader*, ResourceRequest&, const ResourceResponse& redirectResponse);
+     static void didLoadResourceFromMemoryCache(Page&, DocumentLoader*, CachedResource*);
+     static void didReceiveResourceResponse(Frame&, unsigned long identifier, DocumentLoader*, const ResourceResponse&, ResourceLoader*);
+@@ -198,6 +206,7 @@ public:
      static void didReceiveData(Frame*, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoading(Frame*, DocumentLoader*, unsigned long identifier, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoading(Frame*, DocumentLoader*, unsigned long identifier, const ResourceError&);
@@ -2209,7 +2232,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..cd95112f4ed24429dfe27343228592e1
  
      static void willSendRequest(WorkerGlobalScope&, unsigned long identifier, ResourceRequest&);
      static void didReceiveResourceResponse(WorkerGlobalScope&, unsigned long identifier, const ResourceResponse&);
-@@ -224,11 +232,11 @@ public:
+@@ -224,11 +233,11 @@ public:
      static void frameDetachedFromParent(Frame&);
      static void didCommitLoad(Frame&, DocumentLoader*);
      static void frameDocumentUpdated(Frame&);
@@ -2222,7 +2245,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..cd95112f4ed24429dfe27343228592e1
      static void defaultAppearanceDidChange(Page&, bool useDarkAppearance);
      static void willDestroyCachedResource(CachedResource&);
  
-@@ -318,6 +326,13 @@ public:
+@@ -318,6 +327,14 @@ public:
      static void layerTreeDidChange(Page*);
      static void renderLayerDestroyed(Page*, const RenderLayer&);
  
@@ -2232,11 +2255,12 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..cd95112f4ed24429dfe27343228592e1
 +    static void willCheckNewWindowPolicy(Frame&, const URL&);
 +    static void didCheckNewWindowPolicy(Frame&, bool allowed);
 +    static bool interceptRequest(ResourceLoader&, Function<void(bool handled)>&&);
++    static void willSendEventSourceRequest(ScriptExecutionContext* context);
 +
      static void frontendCreated();
      static void frontendDeleted();
      static bool hasFrontends() { return InspectorInstrumentationPublic::hasFrontends(); }
-@@ -333,6 +348,8 @@ public:
+@@ -333,6 +350,8 @@ public:
      static void registerInstrumentingAgents(InstrumentingAgents&);
      static void unregisterInstrumentingAgents(InstrumentingAgents&);
  
@@ -2245,7 +2269,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..cd95112f4ed24429dfe27343228592e1
  private:
      static void didClearWindowObjectInWorldImpl(InstrumentingAgents&, Frame&, DOMWrapperWorld&);
      static bool isDebuggerPausedImpl(InstrumentingAgents&);
-@@ -400,6 +417,9 @@ private:
+@@ -400,6 +419,9 @@ private:
      static void willLayoutImpl(InstrumentingAgents&, Frame&);
      static void didLayoutImpl(InstrumentingAgents&, RenderObject&);
      static void didScrollImpl(InstrumentingAgents&);
@@ -2255,7 +2279,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..cd95112f4ed24429dfe27343228592e1
      static void willCompositeImpl(InstrumentingAgents&, Frame&);
      static void didCompositeImpl(InstrumentingAgents&);
      static void willPaintImpl(InstrumentingAgents&, RenderObject&);
-@@ -419,6 +439,7 @@ private:
+@@ -419,6 +441,7 @@ private:
      static void didReceiveDataImpl(InstrumentingAgents&, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const ResourceError&);
@@ -2263,7 +2287,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..cd95112f4ed24429dfe27343228592e1
      static void willLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void didLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void scriptImportedImpl(InstrumentingAgents&, unsigned long identifier, const String& sourceString);
-@@ -429,11 +450,11 @@ private:
+@@ -429,11 +452,11 @@ private:
      static void frameDetachedFromParentImpl(InstrumentingAgents&, Frame&);
      static void didCommitLoadImpl(InstrumentingAgents&, Frame&, DocumentLoader*);
      static void frameDocumentUpdatedImpl(InstrumentingAgents&, Frame&);
@@ -2276,7 +2300,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..cd95112f4ed24429dfe27343228592e1
      static void defaultAppearanceDidChangeImpl(InstrumentingAgents&, bool useDarkAppearance);
      static void willDestroyCachedResourceImpl(CachedResource&);
  
-@@ -519,6 +540,13 @@ private:
+@@ -519,6 +542,14 @@ private:
      static void layerTreeDidChangeImpl(InstrumentingAgents&);
      static void renderLayerDestroyedImpl(InstrumentingAgents&, const RenderLayer&);
  
@@ -2286,11 +2310,12 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..cd95112f4ed24429dfe27343228592e1
 +    static void willCheckNewWindowPolicyImpl(InstrumentingAgents&, const URL&);
 +    static void didCheckNewWindowPolicyImpl(InstrumentingAgents&, bool allowed);
 +    static bool interceptRequestImpl(InstrumentingAgents&, ResourceLoader&, Function<void(bool handled)>&&);
++    static void willSendEventSourceRequestImpl(InstrumentingAgents&);
 +
      static InstrumentingAgents& instrumentingAgentsForPage(Page&);
      static InstrumentingAgents& instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope&);
  
-@@ -968,6 +996,14 @@ inline void InspectorInstrumentation::didScroll(Page& page)
+@@ -968,6 +999,14 @@ inline void InspectorInstrumentation::didScroll(Page& page)
      didScrollImpl(instrumentingAgentsForPage(page));
  }
  
@@ -2305,7 +2330,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..cd95112f4ed24429dfe27343228592e1
  inline void InspectorInstrumentation::willComposite(Frame& frame)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1107,6 +1143,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
+@@ -1107,6 +1146,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
          didFailLoadingImpl(*instrumentingAgents, identifier, loader, error);
  }
  
@@ -2319,7 +2344,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..cd95112f4ed24429dfe27343228592e1
  inline void InspectorInstrumentation::didFailLoading(WorkerGlobalScope& workerGlobalScope, unsigned long identifier, const ResourceError& error)
  {
      didFailLoadingImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), identifier, nullptr, error);
-@@ -1202,13 +1245,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
+@@ -1202,13 +1248,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
          frameDocumentUpdatedImpl(*instrumentingAgents, frame);
  }
  
@@ -2333,7 +2358,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..cd95112f4ed24429dfe27343228592e1
  inline void InspectorInstrumentation::frameStartedLoading(Frame& frame)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1237,6 +1273,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
+@@ -1237,6 +1276,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
          frameClearedScheduledNavigationImpl(*instrumentingAgents, frame);
  }
  
@@ -2347,7 +2372,7 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..cd95112f4ed24429dfe27343228592e1
  inline void InspectorInstrumentation::defaultAppearanceDidChange(Page& page, bool useDarkAppearance)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1687,6 +1730,50 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
+@@ -1687,6 +1733,57 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
          renderLayerDestroyedImpl(*instrumentingAgents, renderLayer);
  }
  
@@ -2393,6 +2418,13 @@ index 03bdd55cc930de0cfc61f8d9e4210f4952aa4633..cd95112f4ed24429dfe27343228592e1
 +    if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForFrame(loader.frame()))
 +        return interceptRequestImpl(*instrumentingAgents, loader, WTFMove(handler));
 +    return false;
++}
++
++inline void InspectorInstrumentation::willSendEventSourceRequest(ScriptExecutionContext* context)
++{
++    FAST_RETURN_IF_NO_FRONTENDS(void());
++    if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForContext(context))
++        willSendEventSourceRequestImpl(*instrumentingAgents);
 +}
 +
  inline InstrumentingAgents* InspectorInstrumentation::instrumentingAgentsForContext(ScriptExecutionContext* context)
@@ -2904,7 +2936,7 @@ index ddbb5d5347f3beabe3cfab201d6838c896d21e39..25f1798cad5a4ef135a27d3bd5146798
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index afcdd2a7faffe0bec982072d894bc85c6e30c44c..6d9e9d4f220a0cff557fb3b020bf29d8c2964d04 100644
+index afcdd2a7faffe0bec982072d894bc85c6e30c44c..36f598e87df3d2d44a885f170f15a81f1a0bce7b 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -44,6 +44,7 @@
@@ -2949,7 +2981,19 @@ index afcdd2a7faffe0bec982072d894bc85c6e30c44c..6d9e9d4f220a0cff557fb3b020bf29d8
      auto protocolResourceType = InspectorPageAgent::resourceTypeJSON(type);
  
      Document* document = loader && loader->frame() ? loader->frame()->document() : nullptr;
-@@ -841,6 +855,7 @@ void InspectorNetworkAgent::disable(ErrorString&)
+@@ -485,7 +499,10 @@ static InspectorPageAgent::ResourceType resourceTypeForLoadType(InspectorInstrum
+ void InspectorNetworkAgent::willSendRequest(unsigned long identifier, DocumentLoader* loader, ResourceRequest& request, const ResourceResponse& redirectResponse)
+ {
+     auto* cachedResource = loader ? InspectorPageAgent::cachedResource(loader->frame(), request.url()) : nullptr;
+-    willSendRequest(identifier, loader, request, redirectResponse, resourceTypeForCachedResource(cachedResource));
++    InspectorPageAgent::ResourceType resourceType = m_willSendEventSourceRequest ? InspectorPageAgent::EventSource : resourceTypeForCachedResource(cachedResource);
++    m_willSendEventSourceRequest = false;
++
++    willSendRequest(identifier, loader, request, redirectResponse, resourceType);
+ }
+ 
+ void InspectorNetworkAgent::willSendRequestOfType(unsigned long identifier, DocumentLoader* loader, ResourceRequest& request, InspectorInstrumentation::LoadType loadType)
+@@ -841,6 +858,7 @@ void InspectorNetworkAgent::disable(ErrorString&)
      m_resourcesData->clear();
      m_extraRequestHeaders.clear();
  
@@ -2957,7 +3001,7 @@ index afcdd2a7faffe0bec982072d894bc85c6e30c44c..6d9e9d4f220a0cff557fb3b020bf29d8
      continuePendingResponses();
  
      setResourceCachingDisabled(false);
-@@ -864,6 +879,16 @@ bool InspectorNetworkAgent::shouldIntercept(URL url)
+@@ -864,6 +882,16 @@ bool InspectorNetworkAgent::shouldIntercept(URL url)
      return false;
  }
  
@@ -2974,7 +3018,7 @@ index afcdd2a7faffe0bec982072d894bc85c6e30c44c..6d9e9d4f220a0cff557fb3b020bf29d8
  void InspectorNetworkAgent::continuePendingResponses()
  {
      for (auto& pendingInterceptResponse : m_pendingInterceptResponses.values())
-@@ -1020,17 +1045,15 @@ void InspectorNetworkAgent::resolveWebSocket(ErrorString& errorString, const Str
+@@ -1020,17 +1048,15 @@ void InspectorNetworkAgent::resolveWebSocket(ErrorString& errorString, const Str
      result = injectedScript.wrapObject(webSocketAsScriptValue(state, webSocket), objectGroupName);
  }
  
@@ -2996,12 +3040,11 @@ index afcdd2a7faffe0bec982072d894bc85c6e30c44c..6d9e9d4f220a0cff557fb3b020bf29d8
  }
  
  void InspectorNetworkAgent::addInterception(ErrorString& errorString, const String& url, const bool* optionalCaseSensitive, const bool* optionalIsRegex, const String* networkStageString)
-@@ -1112,19 +1135,133 @@ void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response,
+@@ -1112,19 +1138,137 @@ void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response,
      m_frontendDispatcher->responseIntercepted(requestId, buildObjectForResourceResponse(response, nullptr));
  }
  
 -void InspectorNetworkAgent::interceptContinue(ErrorString& errorString, const String& requestId)
--{
 +bool InspectorNetworkAgent::interceptRequest(ResourceLoader& loader, Function<void(bool handled)>&& handler) {
 +    if (!m_interceptionEnabled || !m_interceptRequests)
 +        return false;
@@ -3014,8 +3057,12 @@ index afcdd2a7faffe0bec982072d894bc85c6e30c44c..6d9e9d4f220a0cff557fb3b020bf29d8
 +    return true;
 +}
 +
++void InspectorNetworkAgent::willSendEventSourceRequest() {
++    m_willSendEventSourceRequest = true;
++}
++
 +void InspectorNetworkAgent::interceptContinue(ErrorString& errorString, const String& requestId, const String* method, const JSON::Object* headers, const String* postData)
-+{
+ {
 +    auto pendingRequest = m_pendingInterceptRequests.take(requestId);
 +    if (pendingRequest) {
 +        ResourceLoader* loader = pendingRequest->m_loader.get();
@@ -3136,7 +3183,7 @@ index afcdd2a7faffe0bec982072d894bc85c6e30c44c..6d9e9d4f220a0cff557fb3b020bf29d8
      auto pendingInterceptResponse = m_pendingInterceptResponses.take(requestId);
      if (!pendingInterceptResponse) {
          errorString = "Missing pending intercept response for given requestId"_s;
-@@ -1152,20 +1289,26 @@ void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, cons
+@@ -1152,20 +1296,26 @@ void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, cons
      }
  
      RefPtr<SharedBuffer> overrideData;
@@ -3167,7 +3214,7 @@ index afcdd2a7faffe0bec982072d894bc85c6e30c44c..6d9e9d4f220a0cff557fb3b020bf29d8
  bool InspectorNetworkAgent::shouldTreatAsText(const String& mimeType)
  {
      return startsWithLettersIgnoringASCIICase(mimeType, "text/")
-@@ -1295,6 +1438,11 @@ void InspectorNetworkAgent::searchInRequest(ErrorString& errorString, const Stri
+@@ -1295,6 +1445,11 @@ void InspectorNetworkAgent::searchInRequest(ErrorString& errorString, const Stri
      results = ContentSearchUtilities::searchInTextByLines(resourceData->content(), query, caseSensitive, isRegex);
  }
  
@@ -3180,7 +3227,7 @@ index afcdd2a7faffe0bec982072d894bc85c6e30c44c..6d9e9d4f220a0cff557fb3b020bf29d8
  {
      m_resourcesData->clear(loaderIdentifier(&loader));
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
-index bfd131e9b5856c84da7724805e71397b7c7486a9..724353b696bfc01c7f0aaf4a04a36dd22967b2f7 100644
+index bfd131e9b5856c84da7724805e71397b7c7486a9..47255591796d4723d4708e31bcae5c65a91f71d1 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
 @@ -87,11 +87,13 @@ public:
@@ -3200,11 +3247,12 @@ index bfd131e9b5856c84da7724805e71397b7c7486a9..724353b696bfc01c7f0aaf4a04a36dd2
  
      // InspectorInstrumentation
      void willRecalculateStyle();
-@@ -121,10 +123,13 @@ public:
+@@ -121,10 +123,14 @@ public:
      bool willInterceptRequest(const ResourceRequest&);
      bool shouldInterceptResponse(const ResourceResponse&);
      void interceptResponse(const ResourceResponse&, unsigned long identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
 +    bool interceptRequest(ResourceLoader& loader, Function<void(bool handled)>&&);
++    void willSendEventSourceRequest();
  
      void searchOtherRequests(const JSC::Yarr::RegularExpression&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::SearchResult>>&);
      void searchInRequest(ErrorString&, const String& requestId, const String& query, bool caseSensitive, bool isRegex, RefPtr<JSON::ArrayOf<Inspector::Protocol::GenericTypes::SearchMatch>>&);
@@ -3214,7 +3262,7 @@ index bfd131e9b5856c84da7724805e71397b7c7486a9..724353b696bfc01c7f0aaf4a04a36dd2
  protected:
      InspectorNetworkAgent(WebAgentContext&);
  
-@@ -141,6 +146,7 @@ private:
+@@ -141,6 +147,7 @@ private:
      void willSendRequest(unsigned long identifier, DocumentLoader*, ResourceRequest&, const ResourceResponse& redirectResponse, InspectorPageAgent::ResourceType);
  
      bool shouldIntercept(URL);
@@ -3222,7 +3270,7 @@ index bfd131e9b5856c84da7724805e71397b7c7486a9..724353b696bfc01c7f0aaf4a04a36dd2
      void continuePendingResponses();
  
      WebSocket* webSocketForRequestId(const String& requestId);
-@@ -191,6 +197,15 @@ private:
+@@ -191,6 +198,15 @@ private:
          bool m_responded { false };
      };
  
@@ -3238,7 +3286,7 @@ index bfd131e9b5856c84da7724805e71397b7c7486a9..724353b696bfc01c7f0aaf4a04a36dd2
      std::unique_ptr<Inspector::NetworkFrontendDispatcher> m_frontendDispatcher;
      RefPtr<Inspector::NetworkBackendDispatcher> m_backendDispatcher;
      Inspector::InjectedScriptManager& m_injectedScriptManager;
-@@ -214,6 +229,7 @@ private:
+@@ -214,6 +230,7 @@ private:
      };
      Vector<Intercept> m_intercepts;
      HashMap<String, std::unique_ptr<PendingInterceptResponse>> m_pendingInterceptResponses;
@@ -3246,16 +3294,17 @@ index bfd131e9b5856c84da7724805e71397b7c7486a9..724353b696bfc01c7f0aaf4a04a36dd2
  
      // FIXME: InspectorNetworkAgent should not be aware of style recalculation.
      RefPtr<Inspector::Protocol::Network::Initiator> m_styleRecalculationInitiator;
-@@ -222,6 +238,7 @@ private:
+@@ -222,6 +239,8 @@ private:
      bool m_enabled { false };
      bool m_loadingXHRSynchronously { false };
      bool m_interceptionEnabled { false };
 +    bool m_interceptRequests { false };
++    bool m_willSendEventSourceRequest { false };
  };
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index 02edd43859609cc0fcd79bababd6f33955070da9..95d010d4462db3c17c1f06da74e615992f9fbd0d 100644
+index 02edd43859609cc0fcd79bababd6f33955070da9..53098a7edfdb02f466699c1c0ccbcc49030bd064 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,20 +32,27 @@
@@ -3334,7 +3383,16 @@ index 02edd43859609cc0fcd79bababd6f33955070da9..95d010d4462db3c17c1f06da74e61599
  static bool decodeBuffer(const char* buffer, unsigned size, const String& textEncodingName, String* result)
  {
      if (buffer) {
-@@ -326,6 +348,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
+@@ -237,6 +259,8 @@ Inspector::Protocol::Page::ResourceType InspectorPageAgent::resourceTypeJSON(Ins
+         return Inspector::Protocol::Page::ResourceType::Beacon;
+     case WebSocketResource:
+         return Inspector::Protocol::Page::ResourceType::WebSocket;
++    case EventSource:
++        return Inspector::Protocol::Page::ResourceType::EventSource;
+     case OtherResource:
+         return Inspector::Protocol::Page::ResourceType::Other;
+ #if ENABLE(APPLICATION_MANIFEST)
+@@ -326,6 +350,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
      , m_frontendDispatcher(makeUnique<Inspector::PageFrontendDispatcher>(context.frontendRouter))
      , m_backendDispatcher(Inspector::PageBackendDispatcher::create(context.backendDispatcher, this))
      , m_inspectedPage(context.inspectedPage)
@@ -3342,7 +3400,7 @@ index 02edd43859609cc0fcd79bababd6f33955070da9..95d010d4462db3c17c1f06da74e61599
      , m_client(client)
      , m_overlay(overlay)
  {
-@@ -359,11 +382,20 @@ void InspectorPageAgent::enable(ErrorString& errorString)
+@@ -359,11 +384,20 @@ void InspectorPageAgent::enable(ErrorString& errorString)
  #if HAVE(OS_DARK_MODE_SUPPORT)
      defaultAppearanceDidChange(m_inspectedPage.defaultUseDarkAppearance());
  #endif
@@ -3363,7 +3421,7 @@ index 02edd43859609cc0fcd79bababd6f33955070da9..95d010d4462db3c17c1f06da74e61599
  
      ErrorString unused;
      setShowPaintRects(unused, false);
-@@ -409,12 +441,34 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
+@@ -409,12 +443,34 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
      m_inspectedPage.mainFrame().loader().reload(reloadOptions);
  }
  
@@ -3400,7 +3458,7 @@ index 02edd43859609cc0fcd79bababd6f33955070da9..95d010d4462db3c17c1f06da74e61599
      FrameLoadRequest frameLoadRequest { *frame.document(), frame.document()->securityOrigin(), WTFMove(resourceRequest), "_self"_s, InitiatedByMainFrame::Unknown };
      frameLoadRequest.disableNavigationToInvalidURL();
      frame.loader().changeLocation(WTFMove(frameLoadRequest));
-@@ -786,15 +840,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
+@@ -786,15 +842,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
      m_overlay->setShowPaintRects(show);
  }
  
@@ -3422,7 +3480,7 @@ index 02edd43859609cc0fcd79bababd6f33955070da9..95d010d4462db3c17c1f06da74e61599
  }
  
  void InspectorPageAgent::frameNavigated(Frame& frame)
-@@ -802,13 +857,23 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
+@@ -802,13 +859,23 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
      m_frontendDispatcher->frameNavigated(buildObjectForFrame(&frame));
  }
  
@@ -3449,7 +3507,7 @@ index 02edd43859609cc0fcd79bababd6f33955070da9..95d010d4462db3c17c1f06da74e61599
  }
  
  Frame* InspectorPageAgent::frameForId(const String& frameId)
-@@ -820,20 +885,18 @@ String InspectorPageAgent::frameId(Frame* frame)
+@@ -820,20 +887,18 @@ String InspectorPageAgent::frameId(Frame* frame)
  {
      if (!frame)
          return emptyString();
@@ -3476,7 +3534,7 @@ index 02edd43859609cc0fcd79bababd6f33955070da9..95d010d4462db3c17c1f06da74e61599
  }
  
  Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& frameId)
-@@ -844,11 +907,6 @@ Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& f
+@@ -844,11 +909,6 @@ Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& f
      return frame;
  }
  
@@ -3488,7 +3546,7 @@ index 02edd43859609cc0fcd79bababd6f33955070da9..95d010d4462db3c17c1f06da74e61599
  void InspectorPageAgent::frameStartedLoading(Frame& frame)
  {
      m_frontendDispatcher->frameStartedLoading(frameId(&frame));
-@@ -869,6 +927,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -869,6 +929,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -3501,7 +3559,7 @@ index 02edd43859609cc0fcd79bababd6f33955070da9..95d010d4462db3c17c1f06da74e61599
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
      m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -926,6 +990,48 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -926,6 +992,48 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -3550,7 +3608,7 @@ index 02edd43859609cc0fcd79bababd6f33955070da9..95d010d4462db3c17c1f06da74e61599
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -1069,6 +1175,29 @@ void InspectorPageAgent::snapshotRect(ErrorString& errorString, int x, int y, in
+@@ -1069,6 +1177,29 @@ void InspectorPageAgent::snapshotRect(ErrorString& errorString, int x, int y, in
      *outDataURL = snapshot->toDataURL("image/png"_s, WTF::nullopt, PreserveResolution::Yes);
  }
  
@@ -3580,7 +3638,7 @@ index 02edd43859609cc0fcd79bababd6f33955070da9..95d010d4462db3c17c1f06da74e61599
  void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  {
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
-@@ -1086,4 +1215,578 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -1086,4 +1217,578 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -4160,7 +4218,7 @@ index 02edd43859609cc0fcd79bababd6f33955070da9..95d010d4462db3c17c1f06da74e61599
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 6c75829502336b0806db2531e78186d2c559e44c..1ad6b8e863c56fd572910db6c6fb524d367f2ad8 100644
+index 6c75829502336b0806db2531e78186d2c559e44c..92f6531ee7f7399fcc93d873aac80c2dd75865c3 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -34,17 +34,23 @@
@@ -4187,7 +4245,14 @@ index 6c75829502336b0806db2531e78186d2c559e44c..1ad6b8e863c56fd572910db6c6fb524d
  class InspectorClient;
  class InspectorOverlay;
  class Page;
-@@ -77,6 +83,7 @@ public:
+@@ -71,12 +77,14 @@ public:
+         PingResource,
+         BeaconResource,
+         WebSocketResource,
++        EventSource,
+ #if ENABLE(APPLICATION_MANIFEST)
+         ApplicationManifestResource,
+ #endif
          OtherResource,
      };
  
@@ -4195,7 +4260,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..1ad6b8e863c56fd572910db6c6fb524d
      static bool sharedBufferContent(RefPtr<SharedBuffer>&&, const String& textEncodingName, bool withBase64Encode, String* result);
      static Vector<CachedResource*> cachedResourcesForFrame(Frame*);
      static void resourceContent(ErrorString&, Frame*, const URL&, String* result, bool* base64Encoded);
-@@ -97,7 +104,9 @@ public:
+@@ -97,7 +105,9 @@ public:
      void enable(ErrorString&) override;
      void disable(ErrorString&) override;
      void reload(ErrorString&, const bool* optionalReloadFromOrigin, const bool* optionalRevalidateAllResources) override;
@@ -4206,7 +4271,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..1ad6b8e863c56fd572910db6c6fb524d
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
      void getCookies(ErrorString&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::Cookie>>& cookies) override;
-@@ -112,20 +121,32 @@ public:
+@@ -112,20 +122,32 @@ public:
      void setShowPaintRects(ErrorString&, bool show) override;
      void setEmulatedMedia(ErrorString&, const String&) override;
      void setForcedAppearance(ErrorString&, const String&) override;
@@ -4243,7 +4308,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..1ad6b8e863c56fd572910db6c6fb524d
      void defaultAppearanceDidChange(bool useDarkAppearance);
      void applyUserAgentOverride(String&);
      void applyEmulatedMedia(String&);
-@@ -134,6 +155,12 @@ public:
+@@ -134,6 +156,12 @@ public:
      void didLayout();
      void didScroll();
      void didRecalculateStyle();
@@ -4256,7 +4321,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..1ad6b8e863c56fd572910db6c6fb524d
  
      Frame* frameForId(const String& frameId);
      WEBCORE_EXPORT String frameId(Frame*);
-@@ -142,6 +169,7 @@ public:
+@@ -142,6 +170,7 @@ public:
  
  private:
      double timestamp();
@@ -4264,7 +4329,7 @@ index 6c75829502336b0806db2531e78186d2c559e44c..1ad6b8e863c56fd572910db6c6fb524d
  
      static bool mainResourceContent(Frame*, bool withBase64Encode, String* result);
      static bool dataContent(const char* data, unsigned size, const String& textEncodingName, bool withBase64Encode, String* result);
-@@ -153,18 +181,20 @@ private:
+@@ -153,18 +182,20 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -5045,6 +5110,26 @@ index 6ffc83c012ffe095046414051161d7506af192a1..8b5095998153f0c3a5762022459dbd09
 -
      Timer m_hoverTimer;
      bool m_hasScheduledCursorUpdate { false };
+ 
+diff --git a/Source/WebCore/page/EventSource.cpp b/Source/WebCore/page/EventSource.cpp
+index 757765c3b4872d5a6f92b34e3f2ac67eaaf2dd82..89c1878afea0b81fcfd6fd1b44e307256cef7fbe 100644
+--- a/Source/WebCore/page/EventSource.cpp
++++ b/Source/WebCore/page/EventSource.cpp
+@@ -36,6 +36,7 @@
+ #include "CachedResourceRequestInitiators.h"
+ #include "ContentSecurityPolicy.h"
+ #include "EventNames.h"
++#include "InspectorInstrumentation.h"
+ #include "MessageEvent.h"
+ #include "ResourceError.h"
+ #include "ResourceRequest.h"
+@@ -93,6 +94,7 @@ EventSource::~EventSource()
+ 
+ void EventSource::connect()
+ {
++    InspectorInstrumentation::willSendEventSourceRequest(scriptExecutionContext());
+     ASSERT(m_state == CONNECTING);
+     ASSERT(!m_requestInFlight);
  
 diff --git a/Source/WebCore/page/Frame.cpp b/Source/WebCore/page/Frame.cpp
 index 540f456ee82199bbff71e6688bc0e81fa525dda9..a8bc604ba4a04e180af0605cfe246958d8329026 100644
@@ -8971,13 +9056,11 @@ index 0000000000000000000000000000000000000000..a957c3b2586d67caa78b96bb8644bab8
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..50a43d2bae34e04d3bdf96616e085636a15393ef
+index 0000000000000000000000000000000000000000..ba60958fd56bf1a648212ea6ca413cb17c2647a8
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,341 @@
+@@ -0,0 +1,339 @@
 +/*
-+ * Copyright (c) 2010, The WebM Project authors. All rights reserved.
-+ * Copyright (c) 2013 The Chromium Authors. All rights reserved.
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
 + * Redistribution and use in source and binary forms, with or without
