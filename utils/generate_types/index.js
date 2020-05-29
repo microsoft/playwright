@@ -32,7 +32,7 @@ let documentation;
   if (!fs.existsSync(typesDir))
     fs.mkdirSync(typesDir)
   fs.writeFileSync(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'chromium', 'protocol.ts')), 'utf8');
-  const browser = await chromium.launch();
+  const browser = await chromium.launch({args: ["--no-sandbox"]});
   const page = await browser.newPage();
   const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
   const {documentation: mdDocumentation} = await require('../doclint/check_public_api/MDBuilder')(page, [api]);

@@ -24,7 +24,7 @@ async function generateChromiumProtocol(executablePath) {
     result.push('--remote-debugging-port=9339');
     return result;
   };
-  const browser = await playwright.launch({ executablePath });
+  const browser = await playwright.launch({ executablePath, args: ['--no-sandbox'] });
   const page = await browser.newPage();
   await page.goto(`http://localhost:9339/json/protocol`);
   const json = JSON.parse(await page.evaluate(() => document.documentElement.innerText));
