@@ -332,8 +332,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     this._page._log(inputLog, `elementHandle.selectOption(%s)`, values);
     const deadline = this._page._timeoutSettings.computeDeadline(options);
     let vals: string[] | ElementHandle[] | types.SelectOption[];
-    if(!values)
-      vals = []
+    if (!values)
+      vals = [];
     else if (!Array.isArray(values))
       vals = [ values ] as (string[] | ElementHandle[] | types.SelectOption[]);
     else
