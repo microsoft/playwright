@@ -175,8 +175,6 @@ export default class InjectedScript {
     for (let index = 0; index < options.length; index++) {
       const option = options[index];
       option.selected = optionsToSelect.some(optionToSelect => {
-        if (!optionToSelect)
-          return false;
         if (optionToSelect instanceof Node)
           return option === optionToSelect;
         let matches = true;

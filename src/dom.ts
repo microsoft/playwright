@@ -332,15 +332,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     this._page._log(inputLog, `elementHandle.selectOption(%s)`, values);
     const deadline = this._page._timeoutSettings.computeDeadline(options);
     let vals: string[] | ElementHandle[] | types.SelectOption[];
-    if (!Array.isArray(values))
+    if(!values)
+      vals = []
+    else if (!Array.isArray(values))
       vals = [ values ] as (string[] | ElementHandle[] | types.SelectOption[]);
     else
       vals = values;
     const selectOptions = (vals as any).map((value: any) => typeof value === 'object' ? value : { value });
     for (const option of selectOptions) {
+      assert(option, 'Value items must not be null');
       if (option instanceof ElementHandle)
-        continue;
-      if (!option)
         continue;
       if (option.value !== undefined)
         assert(helper.isString(option.value), 'Values must be strings. Found value "' + option.value + '" of type "' + (typeof option.value) + '"');
