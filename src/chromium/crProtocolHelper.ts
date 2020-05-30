@@ -22,7 +22,7 @@ import * as util from 'util';
 
 export function getExceptionMessage(exceptionDetails: Protocol.Runtime.ExceptionDetails): string {
   if (exceptionDetails.exception)
-    return exceptionDetails.exception.description || String(exceptionDetails.exception.value);
+    return exceptionDetails.exception.description || String(exceptionDetails.exception.value) || exceptionDetails.exception.type;
   let message = exceptionDetails.text;
   if (exceptionDetails.stackTrace) {
     for (const callframe of exceptionDetails.stackTrace.callFrames) {
