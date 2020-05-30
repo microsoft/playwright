@@ -21,7 +21,15 @@ import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { createTextSelector } from './textSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 
-type Predicate<T> = () => T;
+type Falsy = false | 0 | '' | undefined | null;
+type Predicate<T> = () => T | Falsy;
+type InjectedScriptProgress = {
+  canceled: boolean;
+};
+
+function asCancelablePoll<T>(result: T): types.CancelablePoll<T> {
+  return { result: Promise.resolve(result), cancel: () => {} };
+}
 
 export default class InjectedScript {
   readonly engines: Map<string, SelectorEngine>;
@@ -103,19 +111,13 @@ export default class InjectedScript {
     return rect.width > 0 && rect.height > 0;
   }
 
-  private _pollRaf<T>(predicate: Predicate<T>, timeout: number): Promise<T | undefined> {
-    let timedOut = false;
-    if (timeout)
-      setTimeout(() => timedOut = true, timeout);
-
-    let fulfill: (result?: any) => void;
-    const result = new Promise<T | undefined>(x => fulfill = x);
+  private _pollRaf<T>(progress: InjectedScriptProgress, predicate: Predicate<T>): Promise<T> {
+    let fulfill: (result: T) => void;
+    const result = new Promise<T>(x => fulfill = x);
 
     const onRaf = () => {
-      if (timedOut) {
-        fulfill();
+      if (progress.canceled)
         return;
-      }
       const success = predicate();
       if (success)
         fulfill(success);
@@ -127,18 +129,12 @@ export default class InjectedScript {
     return result;
   }
 
-  private _pollInterval<T>(pollInterval: number, predicate: Predicate<T>, timeout: number): Promise<T | undefined> {
-    let timedOut = false;
-    if (timeout)
-      setTimeout(() => timedOut = true, timeout);
-
-    let fulfill: (result?: any) => void;
-    const result = new Promise<T | undefined>(x => fulfill = x);
+  private _pollInterval<T>(progress: InjectedScriptProgress, pollInterval: number, predicate: Predicate<T>): Promise<T> {
+    let fulfill: (result: T) => void;
+    const result = new Promise<T>(x => fulfill = x);
     const onTimeout = () => {
-      if (timedOut) {
-        fulfill();
+      if (progress.canceled)
         return;
-      }
       const success = predicate();
       if (success)
         fulfill(success);
@@ -150,10 +146,11 @@ export default class InjectedScript {
     return result;
   }
 
-  poll<T>(polling: 'raf' | number, timeout: number, predicate: Predicate<T>): Promise<T | undefined> {
-    if (polling === 'raf')
-      return this._pollRaf(predicate, timeout);
-    return this._pollInterval(polling, predicate, timeout);
+  poll<T>(polling: 'raf' | number, predicate: Predicate<T>): types.CancelablePoll<T> {
+    const progress = { canceled: false };
+    const cancel = () => { progress.canceled = true; };
+    const result = polling === 'raf' ? this._pollRaf(progress, predicate) : this._pollInterval(progress, polling, predicate);
+    return { result, cancel };
   }
 
   getElementBorderWidth(node: Node): { left: number; top: number; } {
@@ -330,25 +327,25 @@ export default class InjectedScript {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  async waitForDisplayedAtStablePositionAndEnabled(node: Node, rafCount: number, timeout: number): Promise<types.InjectedScriptResult> {
+  waitForDisplayedAtStablePositionAndEnabled(node: Node, rafCount: number): types.CancelablePoll<types.InjectedScriptResult> {
     if (!node.isConnected)
-      return { status: 'notconnected' };
+      return asCancelablePoll({ status: 'notconnected' });
     const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
     if (!element)
-      return { status: 'notconnected' };
+      return asCancelablePoll({ status: 'notconnected' });
 
     let lastRect: types.Rect | undefined;
     let counter = 0;
     let samePositionCounter = 0;
     let lastTime = 0;
-    const result = await this.poll('raf', timeout, (): 'notconnected' | boolean => {
+    return this.poll('raf', (): types.InjectedScriptResult | false => {
       // First raf happens in the same animation frame as evaluation, so it does not produce
       // any client rect difference compared to synchronous call. We skip the synchronous call
       // and only force layout during actual rafs as a small optimisation.
       if (++counter === 1)
         return false;
       if (!node.isConnected)
-        return 'notconnected';
+        return { status: 'notconnected' };
 
       // Drop frames that are shorter than 16ms - WebKit Win bug.
       const time = performance.now();
@@ -373,9 +370,8 @@ export default class InjectedScript {
       const elementOrButton = element.closest('button, [role=button]') || element;
       const isDisabled = ['BUTTON', 'INPUT', 'SELECT'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
 
-      return isDisplayedAndStable && isVisible && !isDisabled;
+      return isDisplayedAndStable && isVisible && !isDisabled ? { status: 'success' } : false;
     });
-    return { status: result === 'notconnected' ? 'notconnected' : (result ? 'success' : 'timeout') };
   }
 
   checkHitTargetAt(node: Node, point: types.Point): types.InjectedScriptResult<boolean> {
