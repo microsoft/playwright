@@ -330,7 +330,7 @@ export default class InjectedScript {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  async waitForDisplayedAtStablePosition(node: Node, rafCount: number, timeout: number): Promise<types.InjectedScriptResult> {
+  async waitForDisplayedAtStablePositionAndEnabled(node: Node, rafCount: number, timeout: number): Promise<types.InjectedScriptResult> {
     if (!node.isConnected)
       return { status: 'notconnected' };
     const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
@@ -360,15 +360,20 @@ export default class InjectedScript {
       const clientRect = element.getBoundingClientRect();
       const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
       const samePosition = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height && rect.width > 0 && rect.height > 0;
+      lastRect = rect;
       if (samePosition)
         ++samePositionCounter;
       else
         samePositionCounter = 0;
-      let isDisplayedAndStable = samePositionCounter >= rafCount;
+      const isDisplayedAndStable = samePositionCounter >= rafCount;
+
       const style = element.ownerDocument && element.ownerDocument.defaultView ? element.ownerDocument.defaultView.getComputedStyle(element) : undefined;
-      isDisplayedAndStable = isDisplayedAndStable && (!!style && style.visibility !== 'hidden');
-      lastRect = rect;
-      return !!isDisplayedAndStable;
+      const isVisible = !!style && style.visibility !== 'hidden';
+
+      const elementOrButton = element.closest('button, [role=button]') || element;
+      const isDisabled = ['BUTTON', 'INPUT', 'SELECT'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
+
+      return isDisplayedAndStable && isVisible && !isDisabled;
     });
     return { status: result === 'notconnected' ? 'notconnected' : (result ? 'success' : 'timeout') };
   }
