@@ -16,13 +16,14 @@
  */
 
 import * as os from 'os';
+import * as fs from 'fs';
 import * as path from 'path';
 import * as ws from 'ws';
 import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
 import { helper } from '../helper';
 import { WebSocketWrapper } from './browserServer';
-import { BrowserArgOptions, BrowserTypeBase, processBrowserArgOptions } from './browserType';
+import { BrowserArgOptions, BrowserTypeBase, processBrowserArgOptions, FirefoxUserPrefsOptions } from './browserType';
 import { Env } from './processLauncher';
 import { ConnectionTransport, SequenceNumberMixer } from '../transport';
 import { InnerLogger, logError } from '../logger';
@@ -56,7 +57,7 @@ export class Firefox extends BrowserTypeBase {
     return wrapTransportWithWebSocket(transport, logger, port);
   }
 
-  _defaultArgs(options: BrowserArgOptions, isPersistent: boolean, userDataDir: string): string[] {
+  _defaultArgs(options: BrowserArgOptions & FirefoxUserPrefsOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { devtools, headless } = processBrowserArgOptions(options);
     const { args = [] } = options;
     if (devtools)
@@ -66,7 +67,12 @@ export class Firefox extends BrowserTypeBase {
       throw new Error('Pass userDataDir parameter instead of specifying -profile argument');
     if (args.find(arg => arg.startsWith('-juggler')))
       throw new Error('Use the port parameter instead of -juggler argument');
-
+    if (options.firefoxUserPrefs) {
+      const lines: string[] = [];
+      for (const [name, value] of Object.entries(options.firefoxUserPrefs))
+        lines.push(`user_pref(${JSON.stringify(name)}, ${JSON.stringify(value)});`);
+      fs.writeFileSync(path.join(userDataDir, 'user.js'), lines.join('\n'));
+    }
     const firefoxArguments = ['-no-remote'];
     if (headless) {
       firefoxArguments.push('-headless');
