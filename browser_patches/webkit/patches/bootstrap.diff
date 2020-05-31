@@ -8915,10 +8915,10 @@ index 0000000000000000000000000000000000000000..a957c3b2586d67caa78b96bb8644bab8
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..05af437266cb8d561e848c63fdb4056e79c12ff0
+index 0000000000000000000000000000000000000000..6e0c7ffce5201430c04c95247e812324ddd10d22
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,344 @@
+@@ -0,0 +1,335 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -9072,13 +9072,6 @@ index 0000000000000000000000000000000000000000..05af437266cb8d561e848c63fdb4056e
 +  fwrite(header, 1, 12, outfile);
 +}
 +
-+void ivf_write_frame_size(FILE *outfile, size_t frame_size) {
-+  char header[4];
-+
-+  mem_put_le32(header, (int)frame_size);
-+  fwrite(header, 1, 4, outfile);
-+}
-+
 +} // namespace
 +
 +class ScreencastEncoder::VPXCodec {
@@ -9097,7 +9090,8 @@ index 0000000000000000000000000000000000000000..05af437266cb8d561e848c63fdb4056e
 +        vpx_codec_iter_t iter = nullptr;
 +        const vpx_codec_cx_pkt_t *pkt = nullptr;
 +        int flags = 0;
-+        const vpx_codec_err_t res = vpx_codec_encode(&m_codec, img, m_frameCount, 1, flags, VPX_DL_REALTIME);
++        unsigned long duration =  1;
++        const vpx_codec_err_t res = vpx_codec_encode(&m_codec, img, m_pts, duration, flags, VPX_DL_REALTIME);
 +        if (res != VPX_CODEC_OK) {
 +            fprintf(stderr, "Failed to encode frame: %s\n", vpx_codec_error(&m_codec));
 +            return false;
@@ -9107,17 +9101,16 @@ index 0000000000000000000000000000000000000000..05af437266cb8d561e848c63fdb4056e
 +        while ((pkt = vpx_codec_get_cx_data(&m_codec, &iter)) != nullptr) {
 +            gotPkts = true;
 +
-+            fprintf(stderr, "    pkt->kind=%d\n", pkt->kind);
 +            if (pkt->kind == VPX_CODEC_CX_FRAME_PKT) {
-+                const int keyframe = (pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0;
-+                ivf_write_frame_header(m_file, pkt->data.frame.pts, pkt->data.frame.sz);
++                ivf_write_frame_header(m_file, m_pts, pkt->data.frame.sz);
 +                if (fwrite(pkt->data.frame.buf, 1, pkt->data.frame.sz, m_file) != pkt->data.frame.sz) {
 +                    fprintf(stderr, "Failed to write compressed frame\n");
 +                    return 0;
 +                }
-+
++                bool keyframe = (pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0;
++                fprintf(stderr, "  %spts=%ld sz=%ld\n", keyframe ? "[K] " : "", pkt->data.frame.pts, pkt->data.frame.sz);
++                m_pts += pkt->data.frame.duration;
 +                ++m_frameCount;
-+                fprintf(stderr, "    writtend frame (key=%d)\n", keyframe);
 +            }
 +        }
 +
@@ -9143,6 +9136,7 @@ index 0000000000000000000000000000000000000000..05af437266cb8d561e848c63fdb4056e
 +    vpx_codec_enc_cfg_t m_cfg;
 +    FILE* m_file = nullptr;
 +    int m_frameCount = 0;
++    int64_t m_pts;
 +};
 +
 +ScreencastEncoder::ScreencastEncoder(std::unique_ptr<VPXCodec>&& vpxCodec)
@@ -9185,7 +9179,6 @@ index 0000000000000000000000000000000000000000..05af437266cb8d561e848c63fdb4056e
 +    const int fps = 30;
 +    cfg.g_timebase.num = 1;
 +    cfg.g_timebase.den = fps;
-+    cfg.rc_target_bitrate = 200;
 +    cfg.g_error_resilient = VPX_ERROR_RESILIENT_DEFAULT;
 +
 +    vpx_codec_ctx_t codec;
@@ -9208,8 +9201,6 @@ index 0000000000000000000000000000000000000000..05af437266cb8d561e848c63fdb4056e
 +void ScreencastEncoder::encodeFrame(cairo_surface_t* drawingAreaSurface)
 +{
 +    fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
-+    // fprintf(stderr, "cairo_surface_get_type(image)=%d CAIRO_SURFACE_TYPE_IMAGE=%d CAIRO_SURFACE_TYPE_XLIB=%d\n", cairo_surface_get_type(drawingAreaSurface), CAIRO_SURFACE_TYPE_IMAGE, CAIRO_SURFACE_TYPE_XLIB);
-+    // fprintf(stderr, "cairo_image_surface_get_format(image)=%d CAIRO_FORMAT_ARGB32=%d\n", cairo_image_surface_get_format(drawingAreaSurface), CAIRO_FORMAT_ARGB32);
 +
 +    IntSize size = cairoSurfaceSize(drawingAreaSurface);
 +    if (size.isZero()) {
@@ -12593,6 +12584,29 @@ index 964c6315e38f5e0a0303febce45b1e975054f0b4..117d8c7c74bc81b34cfc0fe2b11a5429
  #if HAVE(APP_SSO)
      UniqueRef<SOAuthorizationCoordinator> m_soAuthorizationCoordinator;
  #endif
+diff --git a/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp b/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
+index dc0a70b8824afdc7ec3dd1f69f4d9b51942924f6..012bf01a2307986292589ab1808f1df05dc060f7 100644
+--- a/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
++++ b/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
+@@ -27,6 +27,7 @@
+ #include "config.h"
+ #include "BackingStore.h"
+ 
++#include "DrawingAreaProxyCoordinatedGraphics.h"
+ #include "ShareableBitmap.h"
+ #include "UpdateInfo.h"
+ #include "WebPageProxy.h"
+@@ -72,6 +73,10 @@ void BackingStore::paint(cairo_t* context, const IntRect& rect)
+     cairo_rectangle(context, rect.x(), rect.y(), rect.width(), rect.height());
+     cairo_fill(context);
+     cairo_restore(context);
++#if PLATFORM(GTK)
++    if (auto* drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(m_webPageProxy.drawingArea()))
++        drawingArea->didPaint(m_backend->surface());
++#endif
+ }
+ 
+ void BackingStore::incorporateUpdate(ShareableBitmap* bitmap, const UpdateInfo& updateInfo)
 diff --git a/Source/WebKit/UIProcess/geoclue/GeoclueGeolocationProvider.cpp b/Source/WebKit/UIProcess/geoclue/GeoclueGeolocationProvider.cpp
 index 7ba39332bce6e28f0f4b2f7acf636f835c54f486..7c3d8125df147b6049075491b12cce1dc84bf514 100644
 --- a/Source/WebKit/UIProcess/geoclue/GeoclueGeolocationProvider.cpp
