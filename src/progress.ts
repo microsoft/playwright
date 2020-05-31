@@ -24,27 +24,31 @@ import { getCurrentApiCall, rewriteErrorMessage } from './debug/stackTrace';
 class AbortError extends Error {}
 
 export class Progress {
-  static async runCancelableTask<T>(task: (progress: Progress) => Promise<T>, timeoutOptions: types.TimeoutOptions, logger: InnerLogger, apiName?: string): Promise<T> {
+  static async runCancelableTask<T>(task: (progress: Progress) => Promise<T>, timeoutOptions: types.TimeoutOptions, logger: InnerLogger, timeoutSettings?: TimeoutSettings, apiName?: string): Promise<T> {
+    apiName = apiName || getCurrentApiCall();
+
+    const defaultTimeout = timeoutSettings ? timeoutSettings.timeout() : DEFAULT_TIMEOUT;
+    const { timeout = defaultTimeout } = timeoutOptions;
+    const deadline = TimeoutSettings.computeDeadline(timeout);
+
+    let rejectCancelPromise: (error: Error) => void = () => {};
+    const cancelPromise = new Promise<T>((resolve, x) => rejectCancelPromise = x);
+    const timeoutError = new TimeoutError(`Timeout ${timeout}ms exceeded during ${apiName}.`);
+    const timer = setTimeout(() => rejectCancelPromise(timeoutError), helper.timeUntilDeadline(deadline));
+
     let resolveCancelation = () => {};
-    const progress = new Progress(timeoutOptions, logger, new Promise(resolve => resolveCancelation = resolve), apiName);
-
-    const { timeout = DEFAULT_TIMEOUT } = timeoutOptions;
-    const timeoutError = new TimeoutError(`Timeout ${timeout}ms exceeded during ${progress.apiName}.`);
-    let rejectWithTimeout: (error: Error) => void;
-    const timeoutPromise = new Promise<T>((resolve, x) => rejectWithTimeout = x);
-    const timeoutTimer = setTimeout(() => rejectWithTimeout(timeoutError), helper.timeUntilDeadline(progress.deadline));
-
+    const progress = new Progress(deadline, logger, new Promise(resolve => resolveCancelation = resolve), rejectCancelPromise, apiName);
     try {
       const promise = task(progress);
-      const result = await Promise.race([promise, timeoutPromise]);
-      clearTimeout(timeoutTimer);
+      const result = await Promise.race([promise, cancelPromise]);
+      clearTimeout(timer);
       progress._running = false;
       progress._logRecording = [];
       return result;
     } catch (e) {
       resolveCancelation();
-      rewriteErrorMessage(e, e.message + formatLogRecording(progress._logRecording, progress.apiName));
-      clearTimeout(timeoutTimer);
+      rewriteErrorMessage(e, e.message + formatLogRecording(progress._logRecording, apiName));
+      clearTimeout(timer);
       progress._running = false;
       progress._logRecording = [];
       await Promise.all(progress._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));
@@ -54,6 +58,7 @@ export class Progress {
 
   readonly apiName: string;
   readonly deadline: number;  // To be removed?
+  readonly cancel: (error: Error) => void;
   readonly _canceled: Promise<any>;
 
   private _logger: InnerLogger;
@@ -61,9 +66,10 @@ export class Progress {
   private _cleanups: (() => any)[] = [];
   private _running = true;
 
-  constructor(options: types.TimeoutOptions, logger: InnerLogger, canceled: Promise<any>, apiName?: string) {
-    this.apiName = apiName || getCurrentApiCall();
-    this.deadline = TimeoutSettings.computeDeadline(options.timeout);
+  constructor(deadline: number, logger: InnerLogger, canceled: Promise<any>, cancel: (error: Error) => void, apiName: string) {
+    this.deadline = deadline;
+    this.apiName = apiName;
+    this.cancel = cancel;
     this._canceled = canceled;
     this._logger = logger;
   }
@@ -108,6 +114,8 @@ async function runCleanup(cleanup: () => any) {
 }
 
 function formatLogRecording(log: string[], name: string): string {
+  if (!log.length)
+    return '';
   name = ` ${name} logs `;
   const headerLength = 60;
   const leftLength = (headerLength - name.length) / 2;

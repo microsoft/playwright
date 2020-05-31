@@ -18,6 +18,7 @@ import * as path from 'path';
 
 // NOTE: update this to point to playwright/lib when moving this file.
 const PLAYWRIGHT_LIB_PATH = path.normalize(path.join(__dirname, '..'));
+const APICOVERAGE = path.normalize(path.join(__dirname, '..', '..', 'test', 'apicoverage'));
 
 type ParsedStackFrame = { filePath: string, functionName: string };
 
@@ -67,7 +68,7 @@ export function getCurrentApiCall(prefix = PLAYWRIGHT_LIB_PATH): string {
   let apiName: string = '';
   for (const frame of stackFrames) {
     const parsed = parseStackFrame(frame);
-    if (!parsed || (!parsed.filePath.startsWith(prefix) && parsed.filePath !== __filename))
+    if (!parsed || (!parsed.filePath.startsWith(prefix) && !parsed.filePath.startsWith(APICOVERAGE) && parsed.filePath !== __filename))
       break;
     apiName = parsed.functionName;
   }
