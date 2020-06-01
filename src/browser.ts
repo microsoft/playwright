@@ -21,8 +21,9 @@ import { Download } from './download';
 import type { BrowserServer } from './server/browserServer';
 import { Events } from './events';
 import { InnerLogger, Log } from './logger';
+import { ProxyOptions } from './types';
 
-export type BrowserOptions = {
+export type BrowserOptions = ProxyOptions & {
   logger: InnerLogger,
   downloadsPath?: string,
   headful?: boolean,

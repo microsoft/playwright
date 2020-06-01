@@ -51,7 +51,7 @@ export class WebKit extends BrowserTypeBase {
 
   _defaultArgs(options: BrowserArgOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { devtools, headless } = processBrowserArgOptions(options);
-    const { args = [] } = options;
+    const { args = [], proxy } = options;
     if (devtools)
       console.warn('devtools parameter as a launch argument in WebKit is not supported. Also starting Web Inspector manually will terminate the execution in WebKit.');
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir='));
@@ -66,6 +66,26 @@ export class WebKit extends BrowserTypeBase {
       webkitArguments.push(`--user-data-dir=${userDataDir}`);
     else
       webkitArguments.push(`--no-startup-window`);
+    if (proxy) {
+      let proxyURL = new URL(proxy.server);
+      if (!['http:', 'https:', 'socks5:'].includes(proxyURL.protocol))
+        proxyURL = new URL('all://' + proxy.server);
+      if (process.platform === 'darwin') {
+        if (proxyURL.protocol === 'socks5:') {
+          webkitArguments.push(`--proxy-socks=${proxyURL.href}`);
+        } else {
+          webkitArguments.push(`--proxy-http=http://${proxyURL.host}`);
+          webkitArguments.push(`--proxy-https=https://${proxyURL.host}`);
+        }
+      } else if (process.platform === 'linux') {
+        if (proxyURL.protocol === 'socks5:')
+          webkitArguments.push(`--proxy=${proxyURL.href}`);
+        else
+          webkitArguments.push(`--proxy=${proxyURL.host}`);
+        if (proxy.bypass)
+          webkitArguments.push(...proxy.bypass.split(',').map(t => `--ignore-host=${t.trim()}`));
+      }
+    }
     webkitArguments.push(...args);
     if (isPersistent)
       webkitArguments.push('about:blank');

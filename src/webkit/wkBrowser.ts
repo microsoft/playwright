@@ -208,6 +208,7 @@ export class WKBrowserContext extends BrowserContextBase {
     this._browser = browser;
     this._browserContextId = browserContextId;
     this._evaluateOnNewDocumentSources = [];
+    this._authenticateProxyViaHeader();
   }
 
   async _initialize() {

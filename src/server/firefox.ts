@@ -59,7 +59,7 @@ export class Firefox extends BrowserTypeBase {
 
   _defaultArgs(options: BrowserArgOptions & FirefoxUserPrefsOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { devtools, headless } = processBrowserArgOptions(options);
-    const { args = [] } = options;
+    const { args = [], proxy } = options;
     if (devtools)
       console.warn('devtools parameter is not supported as a launch argument in Firefox. You can launch the devtools window manually.');
     const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
@@ -67,6 +67,25 @@ export class Firefox extends BrowserTypeBase {
       throw new Error('Pass userDataDir parameter instead of specifying -profile argument');
     if (args.find(arg => arg.startsWith('-juggler')))
       throw new Error('Use the port parameter instead of -juggler argument');
+    if (proxy) {
+      options.firefoxUserPrefs = options.firefoxUserPrefs || {};
+      options.firefoxUserPrefs['network.proxy.type'] = 1;
+      let proxyURL = new URL(proxy.server);
+      if (!['http:', 'https:', 'socks5:'].includes(proxyURL.protocol))
+        proxyURL = new URL('all://' + proxy.server);
+      const isSocks = proxyURL.protocol === 'socks5:';
+      if (isSocks) {
+        options.firefoxUserPrefs['network.proxy.socks'] = proxyURL.hostname;
+        options.firefoxUserPrefs['network.proxy.socks_port'] = parseInt(proxyURL.port, 10);
+      } else {
+        options.firefoxUserPrefs['network.proxy.http'] = proxyURL.hostname;
+        options.firefoxUserPrefs['network.proxy.http_port'] = parseInt(proxyURL.port, 10);
+        options.firefoxUserPrefs['network.proxy.ssl'] = proxyURL.hostname;
+        options.firefoxUserPrefs['network.proxy.ssl_port'] = parseInt(proxyURL.port, 10);
+      }
+      if (proxy.bypass)
+        options.firefoxUserPrefs['network.proxy.no_proxies_on'] = proxy.bypass;
+    }
     if (options.firefoxUserPrefs) {
       const lines: string[] = [];
       for (const [name, value] of Object.entries(options.firefoxUserPrefs))

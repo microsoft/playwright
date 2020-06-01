@@ -29,8 +29,9 @@ import { launchProcess, Env, waitForLine } from './processLauncher';
 import { Events } from '../events';
 import { PipeTransport } from './pipeTransport';
 import { Progress } from '../progress';
+import { ProxyOptions } from '../types';
 
-export type BrowserArgOptions = {
+export type BrowserArgOptions = ProxyOptions & {
   headless?: boolean,
   args?: string[],
   devtools?: boolean,
@@ -128,6 +129,7 @@ export abstract class BrowserTypeBase implements BrowserType {
       logger,
       downloadsPath,
       ownedServer: browserServer,
+      proxy: options.proxy
     };
     copyTestHooks(options, browserOptions);
     const browser = await this._connectToTransport(transport, browserOptions);

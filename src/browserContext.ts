@@ -207,6 +207,22 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
       await oldPage.close();
     }
   }
+
+  protected _authenticateProxyViaHeader() {
+    const { username, password } = this._browserBase._options.proxy || {};
+    if (username && password) {
+      this._options.httpCredentials = { username, password };
+      this._options.extraHTTPHeaders = this._options.extraHTTPHeaders || {};
+      const token = Buffer.from(`${username}:${password}`).toString('base64');
+      this._options.extraHTTPHeaders['Proxy-Authorization'] = `Basic ${token}`;
+    }
+  }
+
+  protected _authenticateProxyViaCredentials() {
+    const { username, password } = this._browserBase._options.proxy || {};
+    if (username && password)
+      this._options.httpCredentials = { username, password };
+  }
 }
 
 export function assertBrowserContextIsNotOwned(context: BrowserContextBase) {

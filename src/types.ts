@@ -173,3 +173,12 @@ export type CancelablePoll<T> = {
   result: Promise<T>,
   cancel: () => void,
 };
+
+export type ProxyOptions = {
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string
+  }
+}

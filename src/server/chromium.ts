@@ -69,7 +69,7 @@ export class Chromium extends BrowserTypeBase {
 
   _defaultArgs(options: BrowserArgOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { devtools, headless } = processBrowserArgOptions(options);
-    const { args = [] } = options;
+    const { args = [], proxy } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
       throw new Error('Pass userDataDir parameter instead of specifying --user-data-dir argument');
@@ -88,6 +88,23 @@ export class Chromium extends BrowserTypeBase {
           '--hide-scrollbars',
           '--mute-audio'
       );
+    }
+    if (proxy) {
+      let proxyURL = new URL(proxy.server);
+      if (!['http:', 'https:', 'socks5:'].includes(proxyURL.protocol))
+        proxyURL = new URL('all://' + proxy.server);
+      const isSocks = proxyURL.protocol === 'socks5:';
+      // https://www.chromium.org/developers/design-documents/network-settings
+      const server = isSocks ? proxyURL.href : proxyURL.host;
+      if (isSocks) {
+        // https://www.chromium.org/developers/design-documents/network-stack/socks-proxy
+        chromeArguments.push(`--host-resolver-rules="MAP * ~NOTFOUND , EXCLUDE ${proxyURL.hostname}"`);
+      }
+      chromeArguments.push(`--proxy-server=${server}`);
+      if (proxy.bypass) {
+        const patterns = proxy.bypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t);
+        chromeArguments.push(`--proxy-bypass-list=${patterns.join(';')}`);
+      }
     }
     chromeArguments.push(...args);
     if (isPersistent)
