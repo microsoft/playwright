@@ -70,7 +70,7 @@ class Helper {
       const isAsync = method.constructor.name === 'AsyncFunction';
       if (!isAsync)
         continue;
-      Reflect.set(classType.prototype, methodName, function(this: any, ...args: any[]) {
+      const override = function(this: any, ...args: any[]) {
         const syncStack: any = {};
         Error.captureStackTrace(syncStack);
         return method.call(this, ...args).catch((e: any) => {
@@ -80,7 +80,9 @@ class Helper {
             e.stack += '\n  -- ASYNC --\n' + stack;
           throw e;
         });
-      });
+      };
+      Object.defineProperty(override, 'name', { writable: false, value: methodName });
+      Reflect.set(classType.prototype, methodName, override);
     }
   }
 

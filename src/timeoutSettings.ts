@@ -48,16 +48,16 @@ export class TimeoutSettings {
     return DEFAULT_TIMEOUT;
   }
 
-  private _timeout(): number {
+  timeout(): number {
     if (this._defaultTimeout !== null)
       return this._defaultTimeout;
     if (this._parent)
-      return this._parent._timeout();
+      return this._parent.timeout();
     return DEFAULT_TIMEOUT;
   }
 
   computeDeadline(options: TimeoutOptions = {}) {
-    return TimeoutSettings.computeDeadline(options.timeout, this._timeout());
+    return TimeoutSettings.computeDeadline(options.timeout, this.timeout());
   }
 
   static computeDeadline(timeout: number | undefined, defaultValue = DEFAULT_TIMEOUT): number {
