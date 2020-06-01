@@ -8649,10 +8649,10 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
      // The timeout we use when waiting for a DidUpdateGeometry message.
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..eac34bd46ae7b391d81fb0f21762024f2f97c8fa
+index 0000000000000000000000000000000000000000..b58cea323c822ca6352e1cf907ab214e25345592
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,252 @@
+@@ -0,0 +1,253 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8815,9 +8815,10 @@ index 0000000000000000000000000000000000000000..eac34bd46ae7b391d81fb0f21762024f
 +    if (auto* drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(m_page.drawingArea()))
 +        drawingArea->setPaintCallback(nullptr);
 +
-+    m_encoder->finish();
++    m_encoder->finish([protectRef = m_encoder.copyRef(), callback = WTFMove(callback)] {
++        callback->sendSuccess();
++    });
 +    m_encoder = nullptr;
-+    callback->sendSuccess();
 +#else
 +    callback->sendFailure("Not implemented."_s);
 +#endif
@@ -8907,7 +8908,7 @@ index 0000000000000000000000000000000000000000..eac34bd46ae7b391d81fb0f21762024f
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..a957c3b2586d67caa78b96bb8644bab8d8919e14
+index 0000000000000000000000000000000000000000..77d4a06e4717629916241dc47cb057f4f6121743
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 @@ -0,0 +1,85 @@
@@ -8991,17 +8992,17 @@ index 0000000000000000000000000000000000000000..a957c3b2586d67caa78b96bb8644bab8
 +    ImageFormat m_format { ImageFormat::Jpeg };
 +    Optional<int> m_quality;
 +#if PLATFORM(GTK)
-+    std::unique_ptr<ScreencastEncoder> m_encoder;
++    RefPtr<ScreencastEncoder> m_encoder;
 +#endif
 +};
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..6e0c7ffce5201430c04c95247e812324ddd10d22
+index 0000000000000000000000000000000000000000..46b324bf95e2d61fd4b9e67b7d646105fab943b1
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,335 @@
+@@ -0,0 +1,400 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -9038,6 +9039,9 @@ index 0000000000000000000000000000000000000000..6e0c7ffce5201430c04c95247e812324
 +#include <vpx/vp8.h>
 +#include <vpx/vp8cx.h>
 +#include <vpx/vpx_encoder.h>
++#include <wtf/MonotonicTime.h>
++#include <wtf/RunLoop.h>
++#include <wtf/WorkQueue.h>
 +
 +using namespace WebCore;
 +
@@ -9157,10 +9161,60 @@ index 0000000000000000000000000000000000000000..6e0c7ffce5201430c04c95247e812324
 +
 +} // namespace
 +
++class ScreencastEncoder::VPXFrame {
++    WTF_MAKE_NONCOPYABLE(VPXFrame);
++    WTF_MAKE_FAST_ALLOCATED;
++public:
++    VPXFrame(RefPtr<cairo_surface_t>&& surface, IntSize size)
++        : m_surface(WTFMove(surface))
++        , m_size(size)
++    { }
++
++    void setDuration(int duration) { m_duration = duration; }
++    int duration() const { return m_duration; }
++
++    vpx_image_t* convertToVpxImage()
++    {
++        if (m_image)
++            return m_image.get();
++
++        createImage(m_size, m_image, m_imageBuffer);
++
++        // Convert the updated region to YUV ready for encoding.
++        const uint8_t* rgba_data = cairo_image_surface_get_data(m_surface.get());
++        int rgba_stride = cairo_image_surface_get_stride(m_surface.get());
++
++        const int y_stride = m_image->stride[0];
++        ASSERT(m_image->stride[1] == m_image->stride[2]);
++        const int uv_stride = m_image->stride[1];
++        uint8_t* y_data = m_image->planes[0];
++        uint8_t* u_data = m_image->planes[1];
++        uint8_t* v_data = m_image->planes[2];
++
++        // TODO: redraw only damaged regions?
++        libyuv::ARGBToI420(rgba_data, rgba_stride,
++                            y_data, y_stride,
++                            u_data, uv_stride,
++                            v_data, uv_stride,
++                            m_size.width(), m_size.height());
++
++        return m_image.get();
++    }
++
++private:
++    RefPtr<cairo_surface_t> m_surface;
++    IntSize m_size;
++    int m_duration = 0;
++    std::unique_ptr<uint8_t[]> m_imageBuffer;
++    std::unique_ptr<vpx_image_t> m_image;
++};
++
++
 +class ScreencastEncoder::VPXCodec {
 +public:
 +    VPXCodec(uint32_t fourcc, vpx_codec_ctx_t codec, vpx_codec_enc_cfg_t cfg, FILE* file)
-+        : m_fourcc(fourcc)
++        : m_encoderQueue(WorkQueue::create("Screencast encoder"))
++        , m_fourcc(fourcc)
 +        , m_codec(codec)
 +        , m_cfg(cfg)
 +        , m_file(file)
@@ -9168,12 +9222,27 @@ index 0000000000000000000000000000000000000000..6e0c7ffce5201430c04c95247e812324
 +        ivf_write_file_header(m_file, &m_cfg, m_fourcc, 0);
 +    }
 +
-+    bool encodeFrame(vpx_image_t *img)
++    void encodeFrameAsync(std::unique_ptr<VPXFrame>&& frame)
++    {
++        m_encoderQueue->dispatch([this, frame = WTFMove(frame)] {
++            encodeFrame(frame->convertToVpxImage(), frame->duration());
++        });
++    }
++
++    void finishAsync(Function<void()>&& callback)
++    {
++        m_encoderQueue->dispatch([this, callback = WTFMove(callback)] {
++            finish();
++            callback();
++        });
++    }
++
++private:
++    bool encodeFrame(vpx_image_t *img, int duration)
 +    {
 +        vpx_codec_iter_t iter = nullptr;
 +        const vpx_codec_cx_pkt_t *pkt = nullptr;
 +        int flags = 0;
-+        unsigned long duration =  1;
 +        const vpx_codec_err_t res = vpx_codec_encode(&m_codec, img, m_pts, duration, flags, VPX_DL_REALTIME);
 +        if (res != VPX_CODEC_OK) {
 +            fprintf(stderr, "Failed to encode frame: %s\n", vpx_codec_error(&m_codec));
@@ -9191,9 +9260,9 @@ index 0000000000000000000000000000000000000000..6e0c7ffce5201430c04c95247e812324
 +                    return 0;
 +                }
 +                bool keyframe = (pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0;
-+                fprintf(stderr, "  %spts=%ld sz=%ld\n", keyframe ? "[K] " : "", pkt->data.frame.pts, pkt->data.frame.sz);
-+                m_pts += pkt->data.frame.duration;
 +                ++m_frameCount;
++                fprintf(stderr, "  #%03d %spts=%ld sz=%ld\n", m_frameCount, keyframe ? "[K] " : "", pkt->data.frame.pts, pkt->data.frame.sz);
++                m_pts += pkt->data.frame.duration;
 +            }
 +        }
 +
@@ -9203,7 +9272,7 @@ index 0000000000000000000000000000000000000000..6e0c7ffce5201430c04c95247e812324
 +    void finish()
 +    {
 +        // Flush encoder.
-+        while (encodeFrame(nullptr))
++        while (encodeFrame(nullptr, 1))
 +            ++m_frameCount;
 +
 +        rewind(m_file);
@@ -9213,13 +9282,13 @@ index 0000000000000000000000000000000000000000..6e0c7ffce5201430c04c95247e812324
 +        fprintf(stderr, "ScreencastEncoder::finish %d frames\n", m_frameCount);
 +    }
 +
-+private:
-+    uint32_t m_fourcc = 0;
++    Ref<WorkQueue> m_encoderQueue;
++    uint32_t m_fourcc { 0 };
 +    vpx_codec_ctx_t m_codec;
 +    vpx_codec_enc_cfg_t m_cfg;
-+    FILE* m_file = nullptr;
-+    int m_frameCount = 0;
-+    int64_t m_pts;
++    FILE* m_file { nullptr };
++    int m_frameCount { 0 };
++    int64_t m_pts { 0 };
 +};
 +
 +ScreencastEncoder::ScreencastEncoder(std::unique_ptr<VPXCodec>&& vpxCodec)
@@ -9229,13 +9298,15 @@ index 0000000000000000000000000000000000000000..6e0c7ffce5201430c04c95247e812324
 +
 +ScreencastEncoder::~ScreencastEncoder()
 +{
-+    finish();
 +}
 +
 +#define VP8_FOURCC 0x30385056
 +#define VP9_FOURCC 0x30395056
 +
-+std::unique_ptr<ScreencastEncoder> ScreencastEncoder::create(String& errorString, const String& filePath, int w, int h)
++static const int fps = 30;
++
++
++RefPtr<ScreencastEncoder> ScreencastEncoder::create(String& errorString, const String& filePath, int w, int h)
 +{
 +    const uint32_t fourcc = VP8_FOURCC;
 +    vpx_codec_iface_t* codec_interface = vpx_codec_vp8_cx();
@@ -9259,7 +9330,6 @@ index 0000000000000000000000000000000000000000..6e0c7ffce5201430c04c95247e812324
 +
 +    cfg.g_w = w;
 +    cfg.g_h = h;
-+    const int fps = 30;
 +    cfg.g_timebase.num = 1;
 +    cfg.g_timebase.den = fps;
 +    cfg.g_error_resilient = VPX_ERROR_RESILIENT_DEFAULT;
@@ -9278,13 +9348,25 @@ index 0000000000000000000000000000000000000000..6e0c7ffce5201430c04c95247e812324
 +
 +    std::unique_ptr<VPXCodec> vpxCodec(new VPXCodec(fourcc, codec, cfg, file));
 +    fprintf(stderr, "ScreencastEncoder initialized with: %s\n", vpx_codec_iface_name(codec_interface));
-+    return makeUnique<ScreencastEncoder>(WTFMove(vpxCodec));
++    return adoptRef(new ScreencastEncoder(WTFMove(vpxCodec)));
++}
++
++void ScreencastEncoder::flushLastFrame()
++{
++    MonotonicTime now = MonotonicTime::now();
++    if (m_lastFrameTimestamp) {
++        Seconds seconds = now - m_lastFrameTimestamp;
++        int duration = 1 + seconds.seconds() * fps; // Duration in timebase units
++        m_lastFrame->setDuration(duration);
++        m_vpxCodec->encodeFrameAsync(WTFMove(m_lastFrame));
++    }
++    m_lastFrameTimestamp = now;
 +}
 +
 +void ScreencastEncoder::encodeFrame(cairo_surface_t* drawingAreaSurface)
 +{
 +    fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
-+
++    flushLastFrame();
 +    IntSize size = cairoSurfaceSize(drawingAreaSurface);
 +    if (size.isZero()) {
 +        fprintf(stderr, "Cairo surface size is 0\n");
@@ -9293,56 +9375,40 @@ index 0000000000000000000000000000000000000000..6e0c7ffce5201430c04c95247e812324
 +
 +    // TODO: scale image if the size has changed.
 +    // TODO: adjust device scale factor?
-+    RefPtr<cairo_surface_t> newSurface = adoptRef(cairo_image_surface_create(CAIRO_FORMAT_ARGB32, size.width(), size.height()));
++    RefPtr<cairo_surface_t> surface = adoptRef(cairo_image_surface_create(CAIRO_FORMAT_ARGB32, size.width(), size.height()));
 +    {
-+        RefPtr<cairo_t> cr = adoptRef(cairo_create(newSurface.get()));
++        RefPtr<cairo_t> cr = adoptRef(cairo_create(surface.get()));
 +        cairo_set_source_surface(cr.get(), drawingAreaSurface, 0, 0);
 +        cairo_paint(cr.get());
 +    }
-+    cairo_surface_flush(newSurface.get());
++    cairo_surface_flush(surface.get());
 +
-+    std::unique_ptr<vpx_image_t> image;
-+    std::unique_ptr<uint8_t[]> image_buffer;
-+    createImage(size, image, image_buffer);
-+
-+
-+    // Convert the updated region to YUV ready for encoding.
-+    const uint8_t* rgba_data = cairo_image_surface_get_data(newSurface.get());
-+    int rgba_stride = cairo_image_surface_get_stride(newSurface.get());
-+
-+    const int y_stride = image->stride[0];
-+    ASSERT(image->stride[1] == image->stride[2]);
-+    const int uv_stride = image->stride[1];
-+    uint8_t* y_data = image->planes[0];
-+    uint8_t* u_data = image->planes[1];
-+    uint8_t* v_data = image->planes[2];
-+
-+    // TODO: redraw only damaged regions?
-+    libyuv::ARGBToI420(rgba_data, rgba_stride,
-+                        y_data, y_stride,
-+                        u_data, uv_stride,
-+                        v_data, uv_stride,
-+                        size.width(), size.height());
-+    m_vpxCodec->encodeFrame(image.get());
++    m_lastFrame = makeUnique<VPXFrame>(WTFMove(surface), size);
 +}
 +
-+void ScreencastEncoder::finish()
++void ScreencastEncoder::finish(Function<void()>&& callback)
 +{
-+    if (!m_vpxCodec)
++    if (!m_vpxCodec) {
++        callback();
 +        return;
++    }
 +
-+    m_vpxCodec->finish();
-+    m_vpxCodec = nullptr;
++    flushLastFrame();
++    m_vpxCodec->finishAsync([callback = WTFMove(callback)] () mutable {
++        RunLoop::main().dispatch([callback = WTFMove(callback)] {
++            callback();
++        });
++    });
 +}
 +
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..6ab23625bca03927ef060cc5be6919fe70b836bd
+index 0000000000000000000000000000000000000000..b0c8e5aadcdc44e741fe1b2df5f28eee20f7be3f
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
-@@ -0,0 +1,53 @@
+@@ -0,0 +1,59 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -9372,27 +9438,33 @@ index 0000000000000000000000000000000000000000..6ab23625bca03927ef060cc5be6919fe
 +
 +#include <wtf/Forward.h>
 +#include <wtf/Noncopyable.h>
++#include <wtf/ThreadSafeRefCounted.h>
 +#include <wtf/WeakPtr.h>
 +
 +namespace WebKit {
 +
 +class WebPageProxy;
 +
-+class ScreencastEncoder {
++class ScreencastEncoder : public ThreadSafeRefCounted<ScreencastEncoder> {
 +    WTF_MAKE_NONCOPYABLE(ScreencastEncoder);
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    static std::unique_ptr<ScreencastEncoder> create(String& errorString, const String& filePath, int width, int height);
++    static RefPtr<ScreencastEncoder> create(String& errorString, const String& filePath, int width, int height);
 +
 +    class VPXCodec;
 +    explicit ScreencastEncoder(std::unique_ptr<VPXCodec>&&);
 +    ~ScreencastEncoder();
 +
 +    void encodeFrame(cairo_surface_t*);
-+    void finish();
++    void finish(Function<void()>&& callback);
 +
 +private:
++    void flushLastFrame();
++
 +    std::unique_ptr<VPXCodec> m_vpxCodec;
++    MonotonicTime m_lastFrameTimestamp;
++    class VPXFrame;
++    std::unique_ptr<VPXFrame> m_lastFrame;
 +};
 +
 +} // namespace WebKit
