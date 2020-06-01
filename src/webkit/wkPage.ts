@@ -762,9 +762,6 @@ export class WKPage implements PageDelegate {
     });
   }
 
-  async setActivityPaused(paused: boolean): Promise<void> {
-  }
-
   rafCountForStablePosition(): number {
     return process.platform === 'win32' ? 5 : 1;
   }

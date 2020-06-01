@@ -273,10 +273,6 @@ export class CRPage implements PageDelegate {
     return this._sessionForHandle(handle)._scrollRectIntoViewIfNeeded(handle, rect);
   }
 
-  async setActivityPaused(paused: boolean): Promise<void> {
-    await this._forAllFrameSessions(frame => frame._setActivityPaused(paused));
-  }
-
   rafCountForStablePosition(): number {
     return 1;
   }
@@ -832,9 +828,6 @@ class FrameSession {
         throw new NotConnectedError();
       throw e;
     });
-  }
-
-  async _setActivityPaused(paused: boolean): Promise<void> {
   }
 
   async _getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {

@@ -706,61 +706,6 @@ describe('Page.click', function() {
     expect(error.message).toContain('timeout exceeded');
     expect(error.message).toContain('DEBUG=pw:input');
   });
-  it.skip(true)('should pause animations', async({page}) => {
-    // This test requires pausing the page.
-    await page.setContent(`<style>
-      @keyframes spinner {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-      .spinner {
-        animation: spinner 2s linear infinite;
-        animation-delay: 500ms;
-      }
-      </style>
-      <div class="spinner" style="width: 500px; height: 500px; display: flex; justify-content: center;" >
-        <button id="target"
-                style="width: 30px; height: 30px; background-color: green"
-                onclick="window.clicked=true"></button>
-      </div>
-    `);
-    await page.click('#target', { __testHookBeforeHitTarget: () => new Promise(f => setTimeout(f, 1000)) });
-    expect(await page.evaluate(() => window.clicked)).toBe(true);
-  });
-  it.skip(true)('should defer timers', async({page}) => {
-    // This test requires pausing the page.
-    await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);
-    await page.click('button', { __testHookBeforeHitTarget: async () => {
-      // Schedule a timer that hides the element
-      await page.evaluate(() => setTimeout(() => button.style.display = 'none', 0));
-      // Allow enough time for timer to fire
-      await page.waitForTimeout(500);
-    }});
-    expect(await page.evaluate(() => window.clicked)).toBe(true);
-  });
-  it.skip(true)('should defer rafs', async({page}) => {
-    // This test requires pausing the page.
-    await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);
-    await page.click('button', { __testHookBeforeHitTarget: async () => {
-      // Schedule a timer that hides the element
-      await page.evaluate(() => requestAnimationFrame(() => button.style.display = 'none'));
-      // Allow enough time for raf to fire
-      await page.waitForTimeout(500);
-    }});
-    expect(await page.evaluate(() => window.clicked)).toBe(true);
-  });
-  it.skip(true)('should defer fetch', async({page, server}) => {
-    // This test requires pausing the page.
-    await page.goto(server.EMPTY_PAGE);
-    await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);
-    await page.click('button', { __testHookBeforeHitTarget: async () => {
-      // Fetch that would immediately delete button.
-      page.evaluate(() => fetch(window.location.href).then(() => button.style.display = 'none'));
-      // Allow enough time for raf to fire
-      await page.waitForTimeout(500);
-    }});
-    expect(await page.evaluate(() => window.clicked)).toBe(true);
-  });
   it('should dispatch microtasks in order', async({page, server}) => {
     await page.setContent(`
       <button id=button>Click me</button>
