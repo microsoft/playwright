@@ -774,9 +774,18 @@ index 777a54166ed6664561b3f8249a6abb4ac59d0480..e738f34f65fa8137a16bf7b66bc237b8
              "name": "webSocketWillSendHandshakeRequest",
              "description": "Fired when WebSocket is about to initiate handshake.",
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index 4f709771dc3d0611fffc95921e38b20649aebd9c..28d1c898084380493c63ac5b4614b30b43fe7b3e 100644
+index 4f709771dc3d0611fffc95921e38b20649aebd9c..76b728d56d9977616e8b3f9c6e2952b841cddd37 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
+@@ -27,7 +27,7 @@
+         {
+             "id": "ResourceType",
+             "type": "string",
+-            "enum": ["Document", "StyleSheet", "Image", "Font", "Script", "XHR", "Fetch", "Ping", "Beacon", "WebSocket", "Other"],
++            "enum": ["Document", "StyleSheet", "Image", "Font", "Script", "XHR", "Fetch", "Ping", "Beacon", "WebSocket", "EventSource", "Other"],
+             "description": "Resource type as it was perceived by the rendering engine."
+         },
+         {
 @@ -112,6 +112,41 @@
                  { "name": "secure", "type": "boolean", "description": "True if cookie is secure." },
                  { "name": "sameSite", "$ref": "CookieSameSitePolicy", "description": "Cookie Same-Site policy." }
@@ -2899,7 +2908,7 @@ index ddbb5d5347f3beabe3cfab201d6838c896d21e39..25f1798cad5a4ef135a27d3bd5146798
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index afcdd2a7faffe0bec982072d894bc85c6e30c44c..8d3ffb0b2a13c0dbd9348a5df9f8ef51ca34fac3 100644
+index afcdd2a7faffe0bec982072d894bc85c6e30c44c..fa970ef615c6a4a74cde5092f85d72d79a9ab373 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -44,6 +44,7 @@
@@ -2918,7 +2927,24 @@ index afcdd2a7faffe0bec982072d894bc85c6e30c44c..8d3ffb0b2a13c0dbd9348a5df9f8ef51
  #include "Page.h"
  #include "PlatformStrategies.h"
  #include "ProgressTracker.h"
-@@ -841,6 +843,7 @@ void InspectorNetworkAgent::disable(ErrorString&)
+@@ -484,8 +486,14 @@ static InspectorPageAgent::ResourceType resourceTypeForLoadType(InspectorInstrum
+ 
+ void InspectorNetworkAgent::willSendRequest(unsigned long identifier, DocumentLoader* loader, ResourceRequest& request, const ResourceResponse& redirectResponse)
+ {
+-    auto* cachedResource = loader ? InspectorPageAgent::cachedResource(loader->frame(), request.url()) : nullptr;
+-    willSendRequest(identifier, loader, request, redirectResponse, resourceTypeForCachedResource(cachedResource));
++    InspectorPageAgent::ResourceType resourceType;
++    if (request.initiatorIdentifier() == initiatorIdentifierForEventSource()) {
++      resourceType = InspectorPageAgent::EventSource;
++    } else {
++      auto* cachedResource = loader ? InspectorPageAgent::cachedResource(loader->frame(), request.url()) : nullptr;
++      resourceType = resourceTypeForCachedResource(cachedResource);
++    }
++    willSendRequest(identifier, loader, request, redirectResponse, resourceType);
+ }
+ 
+ void InspectorNetworkAgent::willSendRequestOfType(unsigned long identifier, DocumentLoader* loader, ResourceRequest& request, InspectorInstrumentation::LoadType loadType)
+@@ -841,6 +849,7 @@ void InspectorNetworkAgent::disable(ErrorString&)
      m_resourcesData->clear();
      m_extraRequestHeaders.clear();
  
@@ -2926,7 +2952,7 @@ index afcdd2a7faffe0bec982072d894bc85c6e30c44c..8d3ffb0b2a13c0dbd9348a5df9f8ef51
      continuePendingResponses();
  
      setResourceCachingDisabled(false);
-@@ -864,6 +867,16 @@ bool InspectorNetworkAgent::shouldIntercept(URL url)
+@@ -864,6 +873,16 @@ bool InspectorNetworkAgent::shouldIntercept(URL url)
      return false;
  }
  
@@ -2943,7 +2969,7 @@ index afcdd2a7faffe0bec982072d894bc85c6e30c44c..8d3ffb0b2a13c0dbd9348a5df9f8ef51
  void InspectorNetworkAgent::continuePendingResponses()
  {
      for (auto& pendingInterceptResponse : m_pendingInterceptResponses.values())
-@@ -1020,17 +1033,15 @@ void InspectorNetworkAgent::resolveWebSocket(ErrorString& errorString, const Str
+@@ -1020,17 +1039,15 @@ void InspectorNetworkAgent::resolveWebSocket(ErrorString& errorString, const Str
      result = injectedScript.wrapObject(webSocketAsScriptValue(state, webSocket), objectGroupName);
  }
  
@@ -2965,7 +2991,7 @@ index afcdd2a7faffe0bec982072d894bc85c6e30c44c..8d3ffb0b2a13c0dbd9348a5df9f8ef51
  }
  
  void InspectorNetworkAgent::addInterception(ErrorString& errorString, const String& url, const bool* optionalCaseSensitive, const bool* optionalIsRegex, const String* networkStageString)
-@@ -1112,19 +1123,133 @@ void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response,
+@@ -1112,19 +1129,133 @@ void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response,
      m_frontendDispatcher->responseIntercepted(requestId, buildObjectForResourceResponse(response, nullptr));
  }
  
@@ -3105,7 +3131,7 @@ index afcdd2a7faffe0bec982072d894bc85c6e30c44c..8d3ffb0b2a13c0dbd9348a5df9f8ef51
      auto pendingInterceptResponse = m_pendingInterceptResponses.take(requestId);
      if (!pendingInterceptResponse) {
          errorString = "Missing pending intercept response for given requestId"_s;
-@@ -1152,20 +1277,26 @@ void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, cons
+@@ -1152,20 +1283,26 @@ void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, cons
      }
  
      RefPtr<SharedBuffer> overrideData;
@@ -3136,11 +3162,32 @@ index afcdd2a7faffe0bec982072d894bc85c6e30c44c..8d3ffb0b2a13c0dbd9348a5df9f8ef51
  bool InspectorNetworkAgent::shouldTreatAsText(const String& mimeType)
  {
      return startsWithLettersIgnoringASCIICase(mimeType, "text/")
+@@ -1206,6 +1343,12 @@ Optional<String> InspectorNetworkAgent::textContentForCachedResource(CachedResou
+     return WTF::nullopt;
+ }
+ 
++// static
++String InspectorNetworkAgent::initiatorIdentifierForEventSource()
++{
++    return "InspectorNetworkAgent: eventSource"_s;
++}
++
+ bool InspectorNetworkAgent::cachedResourceContent(CachedResource& resource, String* result, bool* base64Encoded)
+ {
+     ASSERT(result);
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
-index bfd131e9b5856c84da7724805e71397b7c7486a9..957db7e4092dc74bca35a86ddcb4c3020573115b 100644
+index bfd131e9b5856c84da7724805e71397b7c7486a9..8f5fe68c21fac2780b0d2aff4f0e63cd8b2858b4 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
-@@ -87,11 +87,13 @@ public:
+@@ -73,6 +73,7 @@ public:
+     static Ref<TextResourceDecoder> createTextDecoder(const String& mimeType, const String& textEncodingName);
+     static Optional<String> textContentForCachedResource(CachedResource&);
+     static bool cachedResourceContent(CachedResource&, String* result, bool* base64Encoded);
++    static String initiatorIdentifierForEventSource();
+ 
+     // InspectorAgentBase
+     void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) final;
+@@ -87,11 +88,13 @@ public:
      void loadResource(const String& frameId, const String& url, Ref<LoadResourceCallback>&&) final;
      void getSerializedCertificate(ErrorString&, const String& requestId, String* serializedCertificate) final;
      void resolveWebSocket(ErrorString&, const String& requestId, const String* objectGroup, RefPtr<Inspector::Protocol::Runtime::RemoteObject>&) final;
@@ -3157,7 +3204,7 @@ index bfd131e9b5856c84da7724805e71397b7c7486a9..957db7e4092dc74bca35a86ddcb4c302
  
      // InspectorInstrumentation
      void willRecalculateStyle();
-@@ -121,6 +123,7 @@ public:
+@@ -121,6 +124,7 @@ public:
      bool willInterceptRequest(const ResourceRequest&);
      bool shouldInterceptResponse(const ResourceResponse&);
      void interceptResponse(const ResourceResponse&, unsigned long identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
@@ -3165,7 +3212,7 @@ index bfd131e9b5856c84da7724805e71397b7c7486a9..957db7e4092dc74bca35a86ddcb4c302
  
      void searchOtherRequests(const JSC::Yarr::RegularExpression&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::SearchResult>>&);
      void searchInRequest(ErrorString&, const String& requestId, const String& query, bool caseSensitive, bool isRegex, RefPtr<JSON::ArrayOf<Inspector::Protocol::GenericTypes::SearchMatch>>&);
-@@ -141,6 +144,7 @@ private:
+@@ -141,6 +145,7 @@ private:
      void willSendRequest(unsigned long identifier, DocumentLoader*, ResourceRequest&, const ResourceResponse& redirectResponse, InspectorPageAgent::ResourceType);
  
      bool shouldIntercept(URL);
@@ -3173,7 +3220,7 @@ index bfd131e9b5856c84da7724805e71397b7c7486a9..957db7e4092dc74bca35a86ddcb4c302
      void continuePendingResponses();
  
      WebSocket* webSocketForRequestId(const String& requestId);
-@@ -191,6 +195,15 @@ private:
+@@ -191,6 +196,15 @@ private:
          bool m_responded { false };
      };
  
@@ -3189,7 +3236,7 @@ index bfd131e9b5856c84da7724805e71397b7c7486a9..957db7e4092dc74bca35a86ddcb4c302
      std::unique_ptr<Inspector::NetworkFrontendDispatcher> m_frontendDispatcher;
      RefPtr<Inspector::NetworkBackendDispatcher> m_backendDispatcher;
      Inspector::InjectedScriptManager& m_injectedScriptManager;
-@@ -214,6 +227,7 @@ private:
+@@ -214,6 +228,7 @@ private:
      };
      Vector<Intercept> m_intercepts;
      HashMap<String, std::unique_ptr<PendingInterceptResponse>> m_pendingInterceptResponses;
@@ -3197,7 +3244,7 @@ index bfd131e9b5856c84da7724805e71397b7c7486a9..957db7e4092dc74bca35a86ddcb4c302
  
      // FIXME: InspectorNetworkAgent should not be aware of style recalculation.
      RefPtr<Inspector::Protocol::Network::Initiator> m_styleRecalculationInitiator;
-@@ -222,6 +236,7 @@ private:
+@@ -222,6 +237,7 @@ private:
      bool m_enabled { false };
      bool m_loadingXHRSynchronously { false };
      bool m_interceptionEnabled { false };
@@ -3206,7 +3253,7 @@ index bfd131e9b5856c84da7724805e71397b7c7486a9..957db7e4092dc74bca35a86ddcb4c302
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index 43522894e0f9300f018f725a42bbc4c59c747844..47b01e8ac1a6587c73ab3da34c9f6d04ba604228 100644
+index 43522894e0f9300f018f725a42bbc4c59c747844..86c7031d94ae0be55e1d092173f9bd631e365643 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,20 +32,27 @@
@@ -3285,7 +3332,16 @@ index 43522894e0f9300f018f725a42bbc4c59c747844..47b01e8ac1a6587c73ab3da34c9f6d04
  static bool decodeBuffer(const char* buffer, unsigned size, const String& textEncodingName, String* result)
  {
      if (buffer) {
-@@ -326,6 +348,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
+@@ -237,6 +259,8 @@ Inspector::Protocol::Page::ResourceType InspectorPageAgent::resourceTypeJSON(Ins
+         return Inspector::Protocol::Page::ResourceType::Beacon;
+     case WebSocketResource:
+         return Inspector::Protocol::Page::ResourceType::WebSocket;
++    case EventSource:
++        return Inspector::Protocol::Page::ResourceType::EventSource;
+     case OtherResource:
+         return Inspector::Protocol::Page::ResourceType::Other;
+ #if ENABLE(APPLICATION_MANIFEST)
+@@ -326,6 +350,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
      , m_frontendDispatcher(makeUnique<Inspector::PageFrontendDispatcher>(context.frontendRouter))
      , m_backendDispatcher(Inspector::PageBackendDispatcher::create(context.backendDispatcher, this))
      , m_inspectedPage(context.inspectedPage)
@@ -3293,7 +3349,7 @@ index 43522894e0f9300f018f725a42bbc4c59c747844..47b01e8ac1a6587c73ab3da34c9f6d04
      , m_client(client)
      , m_overlay(overlay)
  {
-@@ -359,11 +382,20 @@ void InspectorPageAgent::enable(ErrorString& errorString)
+@@ -359,11 +384,20 @@ void InspectorPageAgent::enable(ErrorString& errorString)
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      defaultAppearanceDidChange(m_inspectedPage.defaultUseDarkAppearance());
  #endif
@@ -3314,7 +3370,7 @@ index 43522894e0f9300f018f725a42bbc4c59c747844..47b01e8ac1a6587c73ab3da34c9f6d04
  
      ErrorString unused;
      setShowPaintRects(unused, false);
-@@ -413,6 +445,18 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
+@@ -413,6 +447,18 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
      m_inspectedPage.mainFrame().loader().reload(reloadOptions);
  }
  
@@ -3333,7 +3389,7 @@ index 43522894e0f9300f018f725a42bbc4c59c747844..47b01e8ac1a6587c73ab3da34c9f6d04
  void InspectorPageAgent::navigate(ErrorString&, const String& url)
  {
      UserGestureIndicator indicator { ProcessingUserGesture };
-@@ -792,15 +836,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
+@@ -792,15 +838,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
      m_overlay->setShowPaintRects(show);
  }
  
@@ -3355,7 +3411,7 @@ index 43522894e0f9300f018f725a42bbc4c59c747844..47b01e8ac1a6587c73ab3da34c9f6d04
  }
  
  void InspectorPageAgent::frameNavigated(Frame& frame)
-@@ -808,13 +853,23 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
+@@ -808,13 +855,23 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
      m_frontendDispatcher->frameNavigated(buildObjectForFrame(&frame));
  }
  
@@ -3382,7 +3438,7 @@ index 43522894e0f9300f018f725a42bbc4c59c747844..47b01e8ac1a6587c73ab3da34c9f6d04
  }
  
  Frame* InspectorPageAgent::frameForId(const String& frameId)
-@@ -826,20 +881,18 @@ String InspectorPageAgent::frameId(Frame* frame)
+@@ -826,20 +883,18 @@ String InspectorPageAgent::frameId(Frame* frame)
  {
      if (!frame)
          return emptyString();
@@ -3409,7 +3465,7 @@ index 43522894e0f9300f018f725a42bbc4c59c747844..47b01e8ac1a6587c73ab3da34c9f6d04
  }
  
  Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& frameId)
-@@ -850,11 +903,6 @@ Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& f
+@@ -850,11 +905,6 @@ Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& f
      return frame;
  }
  
@@ -3421,7 +3477,7 @@ index 43522894e0f9300f018f725a42bbc4c59c747844..47b01e8ac1a6587c73ab3da34c9f6d04
  void InspectorPageAgent::frameStartedLoading(Frame& frame)
  {
      m_frontendDispatcher->frameStartedLoading(frameId(&frame));
-@@ -875,6 +923,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -875,6 +925,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -3434,7 +3490,7 @@ index 43522894e0f9300f018f725a42bbc4c59c747844..47b01e8ac1a6587c73ab3da34c9f6d04
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
-@@ -934,6 +988,48 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -934,6 +990,48 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -3483,7 +3539,7 @@ index 43522894e0f9300f018f725a42bbc4c59c747844..47b01e8ac1a6587c73ab3da34c9f6d04
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -1074,6 +1170,29 @@ void InspectorPageAgent::snapshotRect(ErrorString& errorString, int x, int y, in
+@@ -1074,6 +1172,29 @@ void InspectorPageAgent::snapshotRect(ErrorString& errorString, int x, int y, in
      *outDataURL = snapshot->toDataURL("image/png"_s, WTF::nullopt, PreserveResolution::Yes);
  }
  
@@ -3513,7 +3569,7 @@ index 43522894e0f9300f018f725a42bbc4c59c747844..47b01e8ac1a6587c73ab3da34c9f6d04
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
  void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  {
-@@ -1088,4 +1207,578 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -1088,4 +1209,578 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  }
  #endif
  
@@ -4093,7 +4149,7 @@ index 43522894e0f9300f018f725a42bbc4c59c747844..47b01e8ac1a6587c73ab3da34c9f6d04
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 3bcd0487cfc8766baa01c7804173a15747b47b2d..2669ebff9be0fd5856cd6357a09e6fc88a1dc440 100644
+index 3bcd0487cfc8766baa01c7804173a15747b47b2d..3b5c230d7e00b9d7e248be8730ab22ab1d4fe40b 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -34,17 +34,23 @@
@@ -4120,7 +4176,14 @@ index 3bcd0487cfc8766baa01c7804173a15747b47b2d..2669ebff9be0fd5856cd6357a09e6fc8
  class InspectorClient;
  class InspectorOverlay;
  class Page;
-@@ -77,6 +83,7 @@ public:
+@@ -71,12 +77,14 @@ public:
+         PingResource,
+         BeaconResource,
+         WebSocketResource,
++        EventSource,
+ #if ENABLE(APPLICATION_MANIFEST)
+         ApplicationManifestResource,
+ #endif
          OtherResource,
      };
  
@@ -4128,7 +4191,7 @@ index 3bcd0487cfc8766baa01c7804173a15747b47b2d..2669ebff9be0fd5856cd6357a09e6fc8
      static bool sharedBufferContent(RefPtr<SharedBuffer>&&, const String& textEncodingName, bool withBase64Encode, String* result);
      static Vector<CachedResource*> cachedResourcesForFrame(Frame*);
      static void resourceContent(ErrorString&, Frame*, const URL&, String* result, bool* base64Encoded);
-@@ -97,6 +104,8 @@ public:
+@@ -97,6 +105,8 @@ public:
      void enable(ErrorString&) override;
      void disable(ErrorString&) override;
      void reload(ErrorString&, const bool* optionalReloadFromOrigin, const bool* optionalRevalidateAllResources) override;
@@ -4137,7 +4200,7 @@ index 3bcd0487cfc8766baa01c7804173a15747b47b2d..2669ebff9be0fd5856cd6357a09e6fc8
      void navigate(ErrorString&, const String& url) override;
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
-@@ -116,22 +125,35 @@ public:
+@@ -116,22 +126,35 @@ public:
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      void setForcedAppearance(ErrorString&, const String&) override;
  #endif
@@ -4176,7 +4239,7 @@ index 3bcd0487cfc8766baa01c7804173a15747b47b2d..2669ebff9be0fd5856cd6357a09e6fc8
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      void defaultAppearanceDidChange(bool useDarkAppearance);
  #endif
-@@ -142,6 +164,12 @@ public:
+@@ -142,6 +165,12 @@ public:
      void didLayout();
      void didScroll();
      void didRecalculateStyle();
@@ -4189,7 +4252,7 @@ index 3bcd0487cfc8766baa01c7804173a15747b47b2d..2669ebff9be0fd5856cd6357a09e6fc8
  
      Frame* frameForId(const String& frameId);
      WEBCORE_EXPORT String frameId(Frame*);
-@@ -150,6 +178,7 @@ public:
+@@ -150,6 +179,7 @@ public:
  
  private:
      double timestamp();
@@ -4197,7 +4260,7 @@ index 3bcd0487cfc8766baa01c7804173a15747b47b2d..2669ebff9be0fd5856cd6357a09e6fc8
  
      static bool mainResourceContent(Frame*, bool withBase64Encode, String* result);
      static bool dataContent(const char* data, unsigned size, const String& textEncodingName, bool withBase64Encode, String* result);
-@@ -161,17 +190,19 @@ private:
+@@ -161,17 +191,19 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -4969,6 +5032,26 @@ index 6ffc83c012ffe095046414051161d7506af192a1..8b5095998153f0c3a5762022459dbd09
      Timer m_hoverTimer;
      bool m_hasScheduledCursorUpdate { false };
  
+diff --git a/Source/WebCore/page/EventSource.cpp b/Source/WebCore/page/EventSource.cpp
+index 757765c3b4872d5a6f92b34e3f2ac67eaaf2dd82..69c4ef67941cee93213ccac1aa04d2cb1db08782 100644
+--- a/Source/WebCore/page/EventSource.cpp
++++ b/Source/WebCore/page/EventSource.cpp
+@@ -36,6 +36,7 @@
+ #include "CachedResourceRequestInitiators.h"
+ #include "ContentSecurityPolicy.h"
+ #include "EventNames.h"
++#include "InspectorNetworkAgent.h"
+ #include "MessageEvent.h"
+ #include "ResourceError.h"
+ #include "ResourceRequest.h"
+@@ -97,6 +98,7 @@ void EventSource::connect()
+     ASSERT(!m_requestInFlight);
+ 
+     ResourceRequest request { m_url };
++    request.setInitiatorIdentifier(InspectorNetworkAgent::initiatorIdentifierForEventSource());
+     request.setHTTPMethod("GET");
+     request.setHTTPHeaderField(HTTPHeaderName::Accept, "text/event-stream");
+     request.setHTTPHeaderField(HTTPHeaderName::CacheControl, "no-cache");
 diff --git a/Source/WebCore/page/Frame.cpp b/Source/WebCore/page/Frame.cpp
 index b86e95e4ee5db3e0876ccfbb891dbeb179b32298..241d4b82bb36d1389ce8b4598d00b7bf25d0b2f8 100644
 --- a/Source/WebCore/page/Frame.cpp
