@@ -169,7 +169,14 @@ export type InjectedScriptResult<T = undefined> =
   { status: 'notconnected' } |
   { status: 'error', error: string };
 
-export type CancelablePoll<T> = {
+export type InjectedScriptProgress = {
+  canceled: boolean,
+  log: (message: string) => void,
+};
+
+export type InjectedScriptLogs = { current: string[], next: Promise<InjectedScriptLogs> };
+export type InjectedScriptPoll<T> = {
   result: Promise<T>,
+  logs: Promise<InjectedScriptLogs>,
   cancel: () => void,
 };

@@ -74,6 +74,10 @@ export class Progress {
     this._logger = logger;
   }
 
+  isCanceled(): boolean {
+    return !this._running;
+  }
+
   cleanupWhenCanceled(cleanup: () => any) {
     if (this._running)
       this._cleanups.push(cleanup);
