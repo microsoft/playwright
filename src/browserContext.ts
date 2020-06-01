@@ -50,6 +50,7 @@ export type PersistentContextOptions = {
 export type BrowserContextOptions = PersistentContextOptions & {
   acceptDownloads?: boolean,
   logger?: Logger,
+  proxy?: types.ProxySettings,
 };
 
 export interface BrowserContext extends InnerLogger {
@@ -207,6 +208,26 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
       await oldPage.close();
     }
   }
+
+  protected _authenticateProxyViaHeader() {
+    const proxy = this._options.proxy || this._browserBase._options.proxy || { username: undefined, password: undefined };
+    const { username, password } = proxy;
+    if (username) {
+      this._options.httpCredentials = { username, password: password! };
+      this._options.extraHTTPHeaders = this._options.extraHTTPHeaders || {};
+      const token = Buffer.from(`${username}:${password}`).toString('base64');
+      this._options.extraHTTPHeaders['Proxy-Authorization'] = `Basic ${token}`;
+    }
+  }
+
+  protected _authenticateProxyViaCredentials() {
+    const proxy = this._options.proxy || this._browserBase._options.proxy;
+    if (!proxy)
+      return;
+    const { username, password } = proxy;
+    if (username && password)
+      this._options.httpCredentials = { username, password };
+  }
 }
 
 export function assertBrowserContextIsNotOwned(context: BrowserContextBase) {
@@ -216,7 +237,7 @@ export function assertBrowserContextIsNotOwned(context: BrowserContextBase) {
   }
 }
 
-export function validateBrowserContextOptions(options: BrowserContextOptions): BrowserContextOptions {
+function validateCommonBrowserContextOptions(options: BrowserContextOptions): BrowserContextOptions {
   // Copy all fields manually to strip any extra junk.
   // Especially useful when we share context and launch options for launchPersistent.
   const result: BrowserContextOptions = {
@@ -238,6 +259,7 @@ export function validateBrowserContextOptions(options: BrowserContextOptions): B
     isMobile: options.isMobile,
     hasTouch: options.hasTouch,
     logger: options.logger,
+    proxy: options.proxy,
   };
   if (result.viewport === null && result.deviceScaleFactor !== undefined)
     throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
@@ -251,13 +273,21 @@ export function validateBrowserContextOptions(options: BrowserContextOptions): B
     result.geolocation = verifyGeolocation(result.geolocation);
   if (result.extraHTTPHeaders)
     result.extraHTTPHeaders = network.verifyHeaders(result.extraHTTPHeaders);
+  if (result.proxy)
+    result.proxy = verifyProxySettings(result.proxy);
   return result;
+}
+
+export function validateBrowserContextOptions(browserBase: BrowserBase, options: BrowserContextOptions): BrowserContextOptions {
+  if (options.proxy && !browserBase._options.proxyPerContext)
+    throw new Error(`"proxy" option requires browser to be launched with "proxyPerContext: true"`);
+  return validateCommonBrowserContextOptions(options);
 }
 
 export function validatePersistentContextOptions(options: PersistentContextOptions): PersistentContextOptions {
   if ((options as any).acceptDownloads !== undefined)
     throw new Error(`Option "acceptDownloads" is not supported for persistent context`);
-  return validateBrowserContextOptions(options);
+  return validateCommonBrowserContextOptions(options);
 }
 
 export function verifyGeolocation(geolocation: types.Geolocation): types.Geolocation {
@@ -271,4 +301,18 @@ export function verifyGeolocation(geolocation: types.Geolocation): types.Geoloca
   if (!helper.isNumber(accuracy) || accuracy < 0)
     throw new Error(`Invalid accuracy "${accuracy}": precondition 0 <= ACCURACY failed.`);
   return result;
+}
+
+export function verifyProxySettings(proxy: types.ProxySettings): types.ProxySettings {
+  let { server, bypass } = proxy;
+  if (!helper.isString(server))
+    throw new Error(`Invalid proxy.server: ` + server);
+  let url = new URL(server);
+  if (!['http:', 'https:', 'socks5:'].includes(url.protocol)) {
+    url = new URL('http://' + server);
+    server = `${url.protocol}//${url.host}`;
+  }
+  if (bypass)
+    bypass = bypass.split(',').map(t => t.trim()).join(',');
+  return { ...proxy, server, bypass };
 }

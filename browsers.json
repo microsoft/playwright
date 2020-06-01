@@ -2,15 +2,15 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "775089"
+      "revision": "775529"
     },
     {
       "name": "firefox",
-      "revision": "1101"
+      "revision": "1103"
     },
     {
       "name": "webkit",
-      "revision": "1263"
+      "revision": "1268"
     }
   ]
 }

@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+const socks = require('socksv5');
 const utils = require('./utils');
 const {FFOX, CHROMIUM, WEBKIT, MAC} = utils.testOptions(browserType);
 

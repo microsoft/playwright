@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
-import { BrowserContext, PersistentContextOptions, validatePersistentContextOptions } from '../browserContext';
+import { BrowserContext, PersistentContextOptions, validatePersistentContextOptions, verifyProxySettings } from '../browserContext';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
 import * as browserPaths from '../install/browserPaths';
 import { Logger, RootLogger, InnerLogger } from '../logger';
@@ -29,11 +29,13 @@ import { launchProcess, Env, waitForLine } from './processLauncher';
 import { Events } from '../events';
 import { PipeTransport } from './pipeTransport';
 import { Progress, runAbortableTask } from '../progress';
+import { ProxySettings } from '../types';
 
 export type BrowserArgOptions = {
   headless?: boolean,
   args?: string[],
   devtools?: boolean,
+  proxy?: ProxySettings,
 };
 
 export type FirefoxUserPrefsOptions = {
@@ -62,13 +64,19 @@ type ConnectOptions = {
   logger?: Logger,
   timeout?: number,
 };
+
+type AllowPerContextProxyOption = {
+  proxyPerContext?: boolean,
+};
+
 export type LaunchOptions = LaunchOptionsBase & { slowMo?: number };
-type LaunchServerOptions = LaunchOptionsBase & { port?: number };
+export type NonPersistentLaunchOptions = LaunchOptions & AllowPerContextProxyOption;
+export type LaunchServerOptions = LaunchOptionsBase & AllowPerContextProxyOption & { port?: number };
 
 export interface BrowserType {
   executablePath(): string;
   name(): string;
-  launch(options?: LaunchOptions & FirefoxUserPrefsOptions): Promise<Browser>;
+  launch(options?: NonPersistentLaunchOptions & FirefoxUserPrefsOptions): Promise<Browser>;
   launchServer(options?: LaunchServerOptions & FirefoxUserPrefsOptions): Promise<BrowserServer>;
   launchPersistentContext(userDataDir: string, options?: LaunchOptions & PersistentContextOptions): Promise<BrowserContext>;
   connect(options: ConnectOptions): Promise<Browser>;
@@ -103,9 +111,11 @@ export abstract class BrowserTypeBase implements BrowserType {
     return this._name;
   }
 
-  async launch(options: LaunchOptions = {}): Promise<Browser> {
+  async launch(options: NonPersistentLaunchOptions = {}): Promise<Browser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
+    if (options.proxy && options.proxyPerContext)
+      throw new Error('Either "proxy" or "proxyPerContext" option can be specified');
     const logger = new RootLogger(options.logger);
     const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, logger, undefined), options, logger);
     return browser;
@@ -119,7 +129,8 @@ export abstract class BrowserTypeBase implements BrowserType {
     return browser._defaultContext!;
   }
 
-  async _innerLaunch(progress: Progress, options: LaunchOptions, logger: RootLogger, persistent: PersistentContextOptions | undefined, userDataDir?: string): Promise<BrowserBase> {
+  async _innerLaunch(progress: Progress, options: LaunchOptions & { proxyPerContext?: boolean }, logger: RootLogger, persistent: PersistentContextOptions | undefined, userDataDir?: string): Promise<BrowserBase> {
+    options.proxy = options.proxy ? verifyProxySettings(options.proxy) : undefined;
     const { browserServer, downloadsPath, transport } = await this._launchServer(progress, options, !!persistent, logger, userDataDir);
     if ((options as any).__testHookBeforeCreateBrowser)
       await (options as any).__testHookBeforeCreateBrowser();
@@ -130,6 +141,8 @@ export abstract class BrowserTypeBase implements BrowserType {
       logger,
       downloadsPath,
       ownedServer: browserServer,
+      proxy: options.proxy,
+      proxyPerContext: !!options.proxyPerContext
     };
     copyTestHooks(options, browserOptions);
     const browser = await this._connectToTransport(transport, browserOptions);
@@ -142,6 +155,8 @@ export abstract class BrowserTypeBase implements BrowserType {
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launchServer`. Use `browserType.launchPersistentContext` instead');
+    if (options.proxy && options.proxyPerContext)
+      throw new Error('Either "proxy" or "proxyPerContext" option can be specified');
     const { port = 0 } = options;
     const logger = new RootLogger(options.logger);
     return runAbortableTask(async progress => {
@@ -158,7 +173,7 @@ export abstract class BrowserTypeBase implements BrowserType {
       progress.cleanupWhenAborted(() => transport.closeAndWait());
       if ((options as any).__testHookBeforeCreateBrowser)
         await (options as any).__testHookBeforeCreateBrowser();
-      const browser = await this._connectToTransport(transport, { slowMo: options.slowMo, logger });
+      const browser = await this._connectToTransport(transport, { slowMo: options.slowMo, logger, proxyPerContext: true });
       return browser;
     }, options, logger);
   }
@@ -234,7 +249,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     return { browserServer, downloadsPath, transport };
   }
 
-  abstract _defaultArgs(options: BrowserArgOptions, isPersistent: boolean, userDataDir: string): string[];
+  abstract _defaultArgs(options: LaunchServerOptions, isPersistent: boolean, userDataDir: string): string[];
   abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BrowserBase>;
   abstract _wrapTransportWithWebSocket(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketWrapper;
   abstract _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;

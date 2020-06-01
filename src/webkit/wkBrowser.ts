@@ -76,8 +76,11 @@ export class WKBrowser extends BrowserBase {
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
-    options = validateBrowserContextOptions(options);
-    const { browserContextId } = await this._browserSession.send('Playwright.createContext');
+    options = validateBrowserContextOptions(this, options);
+    const { browserContextId } = await this._browserSession.send('Playwright.createContext', {
+      proxyServer: options.proxy ? options.proxy.server : undefined,
+      proxyBypassList: options.proxy ? options.proxy.bypass : undefined
+    });
     options.userAgent = options.userAgent || DEFAULT_USER_AGENT;
     const context = new WKBrowserContext(this, browserContextId, options);
     await context._initialize();
@@ -208,6 +211,7 @@ export class WKBrowserContext extends BrowserContextBase {
     this._browser = browser;
     this._browserContextId = browserContextId;
     this._evaluateOnNewDocumentSources = [];
+    this._authenticateProxyViaHeader();
   }
 
   async _initialize() {

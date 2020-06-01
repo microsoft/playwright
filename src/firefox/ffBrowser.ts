@@ -71,7 +71,7 @@ export class FFBrowser extends BrowserBase {
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
-    options = validateBrowserContextOptions(options);
+    options = validateBrowserContextOptions(this, options);
     if (options.isMobile)
       throw new Error('options.isMobile is not supported in Firefox');
     const { browserContextId } = await this._connection.send('Browser.createBrowserContext', { removeOnDetach: true });
@@ -152,6 +152,7 @@ export class FFBrowserContext extends BrowserContextBase {
     this._browser = browser;
     this._browserContextId = browserContextId;
     this._evaluateOnNewDocumentSources = [];
+    this._authenticateProxyViaHeader();
   }
 
   async _initialize() {
@@ -188,6 +189,21 @@ export class FFBrowserContext extends BrowserContextBase {
       promises.push(this._browser._connection.send('Browser.setLocaleOverride', { browserContextId, locale: this._options.locale }));
     if (this._options.timezoneId)
       promises.push(this._browser._connection.send('Browser.setTimezoneOverride', { browserContextId, timezoneId: this._options.timezoneId }));
+    if (this._options.proxy) {
+      const proxyServer = new URL(this._options.proxy.server);
+      let type: 'http' | 'https' | 'socks' = 'http';
+      switch (proxyServer.protocol) {
+        case 'https:': type = 'https'; break;
+        case 'socks5:': type = 'socks'; break;
+      }
+      promises.push(this._browser._connection.send('Browser.setProxy', {
+        browserContextId,
+        type,
+        host: proxyServer.hostname,
+        port: parseInt(proxyServer.port, 10),
+        bypass: this._options.proxy.bypass ? this._options.proxy.bypass.split(',') : [],
+      }));
+    }
     if (this._options.permissions)
       promises.push(this.grantPermissions(this._options.permissions));
     if (this._options.extraHTTPHeaders || this._options.locale)

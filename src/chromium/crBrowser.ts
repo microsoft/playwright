@@ -101,8 +101,12 @@ export class CRBrowser extends BrowserBase {
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
-    options = validateBrowserContextOptions(options);
-    const { browserContextId } = await this._session.send('Target.createBrowserContext', { disposeOnDetach: true });
+    options = validateBrowserContextOptions(this, options);
+    const { browserContextId } = await this._session.send('Target.createBrowserContext', {
+      disposeOnDetach: true,
+      proxyServer: options.proxy ? options.proxy.server : undefined,
+      proxyBypassList: options.proxy ? options.proxy.bypass : undefined
+    });
     const context = new CRBrowserContext(this, browserContextId, options);
     await context._initialize();
     this._contexts.set(browserContextId, context);
@@ -287,6 +291,7 @@ export class CRBrowserContext extends BrowserContextBase {
     this._browser = browser;
     this._browserContextId = browserContextId;
     this._evaluateOnNewDocumentSources = [];
+    this._authenticateProxyViaCredentials();
   }
 
   async _initialize() {

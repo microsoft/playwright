@@ -21,6 +21,7 @@ import { Download } from './download';
 import type { BrowserServer } from './server/browserServer';
 import { Events } from './events';
 import { InnerLogger, Log } from './logger';
+import { ProxySettings } from './types';
 
 export type BrowserOptions = {
   logger: InnerLogger,
@@ -29,6 +30,8 @@ export type BrowserOptions = {
   persistent?: PersistentContextOptions,  // Undefined means no persistent context.
   slowMo?: number,
   ownedServer?: BrowserServer,
+  proxy?: ProxySettings,
+  proxyPerContext: boolean
 };
 
 export interface Browser extends EventEmitter {
