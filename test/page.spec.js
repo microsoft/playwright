@@ -1013,6 +1013,11 @@ describe('Page.select', function() {
 });
 
 describe('Page.fill', function() {
+  async function giveItAChanceToFill(page) {
+    for (let i = 0; i < 5; i++)
+      await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
+  }
+
   it('should fill textarea', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.fill('textarea', 'some value');
@@ -1113,27 +1118,47 @@ describe('Page.fill', function() {
     await page.fill('textarea', 123).catch(e => error = e);
     expect(error.message).toContain('Value must be string.');
   });
-  it('should throw on disabled and readonly elements', async({page, server}) => {
+  it('should retry on disabled element', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.$eval('input', i => i.disabled = true);
-    const disabledError = await page.fill('input', 'some value').catch(e => e);
-    expect(disabledError.message).toBe('Cannot fill a disabled input.');
+    let done = false;
 
+    const promise = page.fill('input', 'some value').then(() => done = true);
+    await giveItAChanceToFill(page);
+    expect(done).toBe(false);
+    expect(await page.evaluate(() => result)).toBe('');
+
+    await page.$eval('input', i => i.disabled = false);
+    await promise;
+    expect(await page.evaluate(() => result)).toBe('some value');
+  });
+  it('should retry on readonly element', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.$eval('textarea', i => i.readOnly = true);
-    const readonlyError = await page.fill('textarea', 'some value').catch(e => e);
-    expect(readonlyError.message).toBe('Cannot fill a readonly textarea.');
+    let done = false;
+
+    const promise = page.fill('textarea', 'some value').then(() => done = true);
+    await giveItAChanceToFill(page);
+    expect(done).toBe(false);
+    expect(await page.evaluate(() => result)).toBe('');
+
+    await page.$eval('textarea', i => i.readOnly = false);
+    await promise;
+    expect(await page.evaluate(() => result)).toBe('some value');
   });
-  it('should throw on hidden and invisible elements', async({page, server}) => {
+  it('should retry on invisible element', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.$eval('input', i => i.style.display = 'none');
-    const invisibleError = await page.fill('input', 'some value', { force: true }).catch(e => e);
-    expect(invisibleError.message).toBe('Element is not visible');
+    let done = false;
 
-    await page.goto(server.PREFIX + '/input/textarea.html');
-    await page.$eval('input', i => i.style.visibility = 'hidden');
-    const hiddenError = await page.fill('input', 'some value', { force: true }).catch(e => e);
-    expect(hiddenError.message).toBe('Element is not visible');
+    const promise = page.fill('input', 'some value').then(() => done = true);
+    await giveItAChanceToFill(page);
+    expect(done).toBe(false);
+    expect(await page.evaluate(() => result)).toBe('');
+
+    await page.$eval('input', i => i.style.display = 'inline');
+    await promise;
+    expect(await page.evaluate(() => result)).toBe('some value');
   });
   it('should be able to fill the body', async({page}) => {
     await page.setContent(`<body contentEditable="true"></body>`);
