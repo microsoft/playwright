@@ -89,7 +89,7 @@ export class CRPage implements PageDelegate {
     await Promise.all(Array.from(this._sessions.values()).map(frame => cb(frame)));
   }
 
-  _sessionForFrame(frame: frames.Frame): FrameSession {
+  private _sessionForFrame(frame: frames.Frame): FrameSession {
     // Frame id equals target id.
     while (!this._sessions.has(frame._id)) {
       const parent = frame.parentFrame();
@@ -103,29 +103,6 @@ export class CRPage implements PageDelegate {
   private _sessionForHandle(handle: dom.ElementHandle): FrameSession {
     const frame = handle._context.frame;
     return this._sessionForFrame(frame);
-  }
-
-  addFrameSession(targetId: Protocol.Target.TargetID, session: CRSession) {
-    // Frame id equals target id.
-    const frame = this._page._frameManager.frame(targetId);
-    assert(frame);
-    const parentSession = this._sessionForFrame(frame);
-    this._page._frameManager.removeChildFramesRecursively(frame);
-    const frameSession = new FrameSession(this, session, targetId, parentSession);
-    this._sessions.set(targetId, frameSession);
-    frameSession._initialize(false).catch(e => e);
-  }
-
-  removeFrameSession(targetId: Protocol.Target.TargetID) {
-    const frameSession = this._sessions.get(targetId);
-    if (!frameSession)
-      return;
-    // Frame id equals target id.
-    const frame = this._page._frameManager.frame(targetId);
-    if (frame)
-      this._page._frameManager.removeChildFramesRecursively(frame);
-    frameSession.dispose();
-    this._sessions.delete(targetId);
   }
 
   async pageOrError(): Promise<Page | Error> {
@@ -340,6 +317,9 @@ class FrameSession {
   private _firstNonInitialNavigationCommittedFulfill = () => {};
   private _firstNonInitialNavigationCommittedReject = (e: Error) => {};
   private _windowId: number | undefined;
+  // Marks the oopif session that remote -> local transition has happened in the parent.
+  // See Target.detachedFromTarget handler for details.
+  private _swappedIn = false;
 
   constructor(crPage: CRPage, client: CRSession, targetId: string, parentSession: FrameSession | null) {
     this._client = client;
@@ -471,6 +451,7 @@ class FrameSession {
   dispose() {
     helper.removeEventListeners(this._eventListeners);
     this._networkManager.dispose();
+    this._crPage._sessions.delete(this._targetId);
   }
 
   async _navigate(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
@@ -502,8 +483,10 @@ class FrameSession {
   }
 
   _onFrameAttached(frameId: string, parentFrameId: string | null) {
-    if (this._crPage._sessions.has(frameId) && frameId !== this._targetId) {
+    const frameSession = this._crPage._sessions.get(frameId);
+    if (frameSession && frameId !== this._targetId) {
       // This is a remote -> local frame transition.
+      frameSession._swappedIn = true;
       const frame = this._page._frameManager.frame(frameId)!;
       this._page._frameManager.removeChildFramesRecursively(frame);
       return;
@@ -565,7 +548,13 @@ class FrameSession {
     const session = CRConnection.fromSession(this._client).session(event.sessionId)!;
 
     if (event.targetInfo.type === 'iframe') {
-      this._crPage.addFrameSession(event.targetInfo.targetId, session);
+      // Frame id equals target id.
+      const targetId = event.targetInfo.targetId;
+      const frame = this._page._frameManager.frame(targetId)!;
+      this._page._frameManager.removeChildFramesRecursively(frame);
+      const frameSession = new FrameSession(this._crPage, session, targetId, this);
+      this._crPage._sessions.set(targetId, frameSession);
+      frameSession._initialize(false).catch(e => e);
       return;
     }
 
@@ -598,8 +587,31 @@ class FrameSession {
   }
 
   _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {
-    this._crPage.removeFrameSession(event.targetId!);
+    // This might be a worker...
     this._page._removeWorker(event.sessionId);
+
+    // ... or an oopif.
+    const childFrameSession = this._crPage._sessions.get(event.targetId!);
+    if (!childFrameSession)
+      return;
+
+    // Usually, we get frameAttached in this session first and mark child as swappedIn.
+    if (childFrameSession._swappedIn) {
+      childFrameSession.dispose();
+      return;
+    }
+
+    // However, sometimes we get detachedFromTarget before frameAttached.
+    // In this case we don't know wheter this is a remote frame detach,
+    // or just a remote -> local transition. In the latter case, frameAttached
+    // is already inflight, so let's make a safe roundtrip to ensure it arrives.
+    this._client.send('Page.enable').catch(e => null).then(() => {
+      // Child was not swapped in - that means frameAttached did not happen and
+      // this is remote detach rather than remote -> local swap.
+      if (!childFrameSession._swappedIn)
+        this._page._frameManager.frameDetached(event.targetId!);
+      childFrameSession.dispose();
+    });
   }
 
   _onWindowOpen(event: Protocol.Page.windowOpenPayload) {
