@@ -255,70 +255,57 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (!force)
       await this._waitForDisplayedAtStablePositionAndEnabled(deadline);
 
-    let paused = false;
-    try {
-      await this._page._delegate.setActivityPaused(true);
-      paused = true;
-
-      this._page._log(inputLog, 'scrolling into view if needed...');
-      const scrolled = await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
-      if (scrolled === 'invisible') {
-        if (force)
-          throw new Error('Element is not visible');
-        this._page._log(inputLog, '...element is not visible, retrying input action');
-        return 'retry';
-      }
-      this._page._log(inputLog, '...done scrolling');
-
-      const maybePoint = position ? await this._offsetPoint(position) : await this._clickablePoint();
-      if (maybePoint === 'invisible') {
-        if (force)
-          throw new Error('Element is not visible');
-        this._page._log(inputLog, 'element is not visibile, retrying input action');
-        return 'retry';
-      }
-      if (maybePoint === 'outsideviewport') {
-        if (force)
-          throw new Error('Element is outside of the viewport');
-        this._page._log(inputLog, 'element is outside of the viewport, retrying input action');
-        return 'retry';
-      }
-      const point = roundPoint(maybePoint);
-
-      if (!force) {
-        if ((options as any).__testHookBeforeHitTarget)
-          await (options as any).__testHookBeforeHitTarget();
-        this._page._log(inputLog, `checking that element receives pointer events at (${point.x},${point.y})...`);
-        const matchesHitTarget = await this._checkHitTargetAt(point);
-        if (!matchesHitTarget) {
-          this._page._log(inputLog, '...element does not receive pointer events, retrying input action');
-          await this._page._delegate.setActivityPaused(false);
-          paused = false;
-          return 'retry';
-        }
-        this._page._log(inputLog, `...element does receive pointer events, continuing input action`);
-      }
-
-      await this._page._frameManager.waitForSignalsCreatedBy(async () => {
-        let restoreModifiers: input.Modifier[] | undefined;
-        if (options && options.modifiers)
-          restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
-        this._page._log(inputLog, `performing "${actionName}" action...`);
-        await action(point);
-        this._page._log(inputLog, `... "${actionName}" action done`);
-        this._page._log(inputLog, 'waiting for scheduled navigations to finish...');
-        await this._page._delegate.setActivityPaused(false);
-        paused = false;
-        if (restoreModifiers)
-          await this._page.keyboard._ensureModifiers(restoreModifiers);
-      }, deadline, options, true);
-      this._page._log(inputLog, '...navigations have finished');
-
-      return 'done';
-    } finally {
-      if (paused)
-        await this._page._delegate.setActivityPaused(false);
+    this._page._log(inputLog, 'scrolling into view if needed...');
+    const scrolled = await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
+    if (scrolled === 'invisible') {
+      if (force)
+        throw new Error('Element is not visible');
+      this._page._log(inputLog, '...element is not visible, retrying input action');
+      return 'retry';
     }
+    this._page._log(inputLog, '...done scrolling');
+
+    const maybePoint = position ? await this._offsetPoint(position) : await this._clickablePoint();
+    if (maybePoint === 'invisible') {
+      if (force)
+        throw new Error('Element is not visible');
+      this._page._log(inputLog, 'element is not visibile, retrying input action');
+      return 'retry';
+    }
+    if (maybePoint === 'outsideviewport') {
+      if (force)
+        throw new Error('Element is outside of the viewport');
+      this._page._log(inputLog, 'element is outside of the viewport, retrying input action');
+      return 'retry';
+    }
+    const point = roundPoint(maybePoint);
+
+    if (!force) {
+      if ((options as any).__testHookBeforeHitTarget)
+        await (options as any).__testHookBeforeHitTarget();
+      this._page._log(inputLog, `checking that element receives pointer events at (${point.x},${point.y})...`);
+      const matchesHitTarget = await this._checkHitTargetAt(point);
+      if (!matchesHitTarget) {
+        this._page._log(inputLog, '...element does not receive pointer events, retrying input action');
+        return 'retry';
+      }
+      this._page._log(inputLog, `...element does receive pointer events, continuing input action`);
+    }
+
+    await this._page._frameManager.waitForSignalsCreatedBy(async () => {
+      let restoreModifiers: input.Modifier[] | undefined;
+      if (options && options.modifiers)
+        restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
+      this._page._log(inputLog, `performing "${actionName}" action...`);
+      await action(point);
+      this._page._log(inputLog, `... "${actionName}" action done`);
+      this._page._log(inputLog, 'waiting for scheduled navigations to finish...');
+      if (restoreModifiers)
+        await this._page.keyboard._ensureModifiers(restoreModifiers);
+    }, deadline, options, true);
+    this._page._log(inputLog, '...navigations have finished');
+
+    return 'done';
   }
 
   hover(options?: PointerActionOptions & types.PointerActionWaitOptions): Promise<void> {

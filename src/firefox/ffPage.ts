@@ -424,9 +424,6 @@ export class FFPage implements PageDelegate {
     });
   }
 
-  async setActivityPaused(paused: boolean): Promise<void> {
-  }
-
   rafCountForStablePosition(): number {
     return 1;
   }
