@@ -18,6 +18,11 @@
 const utils = require('./utils');
 const {FFOX, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
 
+async function giveItTimeToLog(frame) {
+  await frame.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
+  await frame.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
+}
+
 describe('Page.waitForTimeout', function() {
   it('should timeout', async({page, server}) => {
     const startTime = Date.now();
@@ -196,6 +201,67 @@ describe('Frame.waitForSelector', function() {
     const eHandle = await watchdog;
     const tagName = await eHandle.getProperty('tagName').then(e => e.jsonValue());
     expect(tagName).toBe('DIV');
+  });
+  it('should report logs while waiting for visible', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    const frame = page.mainFrame();
+    const watchdog = frame.waitForSelector('div', { timeout: 5000 });
+
+    await frame.evaluate(() => {
+      const div = document.createElement('div');
+      div.className = 'foo bar';
+      div.id = 'mydiv';
+      div.style.display = 'none';
+      document.body.appendChild(div);
+    });
+    await giveItTimeToLog(frame);
+
+    await frame.evaluate(() => document.querySelector('div').remove());
+    await giveItTimeToLog(frame);
+
+    await frame.evaluate(() => {
+      const div = document.createElement('div');
+      div.className = 'another';
+      div.style.display = 'none';
+      document.body.appendChild(div);
+    });
+    await giveItTimeToLog(frame);
+
+    const error = await watchdog.catch(e => e);
+    expect(error.message).toContain(`Timeout 5000ms exceeded during frame.waitForSelector.`);
+    expect(error.message).toContain(`Waiting for selector "div" to be visible...`);
+    expect(error.message).toContain(`selector resolved to "div#mydiv.foo.bar" that is not visible`);
+    expect(error.message).toContain(`selector did not resolve to any element`);
+    expect(error.message).toContain(`selector resolved to "div.another" that is not visible`);
+  });
+  it('should report logs while waiting for hidden', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    const frame = page.mainFrame();
+    await frame.evaluate(() => {
+      const div = document.createElement('div');
+      div.className = 'foo bar';
+      div.id = 'mydiv';
+      div.textContent = 'hello';
+      document.body.appendChild(div);
+    });
+
+    const watchdog = frame.waitForSelector('div', { state: 'hidden', timeout: 5000 });
+    await giveItTimeToLog(frame);
+
+    await frame.evaluate(() => {
+      document.querySelector('div').remove();
+      const div = document.createElement('div');
+      div.className = 'another';
+      div.textContent = 'hello';
+      document.body.appendChild(div);
+    });
+    await giveItTimeToLog(frame);
+
+    const error = await watchdog.catch(e => e);
+    expect(error.message).toContain(`Timeout 5000ms exceeded during frame.waitForSelector.`);
+    expect(error.message).toContain(`Waiting for selector "div" to be hidden...`);
+    expect(error.message).toContain(`selector resolved to "div#mydiv.foo.bar" that is still visible`);
+    expect(error.message).toContain(`selector resolved to "div.another" that is still visible`);
   });
   it('should resolve promise when node is added in shadow dom', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);

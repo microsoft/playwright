@@ -29,6 +29,7 @@ import { selectors } from './selectors';
 import * as types from './types';
 import { NotConnectedError, TimeoutError } from './errors';
 import { Log, logError } from './logger';
+import { Progress } from './progress';
 
 export type PointerActionOptions = {
   modifiers?: input.Modifier[];
@@ -511,6 +512,42 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return injected.checkHitTargetAt(node, point);
     }, { point });
     return handleInjectedResult(injectedResult);
+  }
+}
+
+// Handles an InjectedScriptPoll running in injected script:
+// - streams logs into progress;
+// - cancels the poll when progress cancels.
+export class InjectedScriptPollHandler {
+  private _progress: Progress;
+  private _poll: js.JSHandle<types.InjectedScriptPoll<any>> | null;
+
+  constructor(progress: Progress, poll: js.JSHandle<types.InjectedScriptPoll<any>>) {
+    this._progress = progress;
+    this._poll = poll;
+    this._progress.cleanupWhenCanceled(() => this.cancel());
+    this._streamLogs(poll.evaluateHandle(poll => poll.logs));
+  }
+
+  private _streamLogs(logsPromise: Promise<js.JSHandle<types.InjectedScriptLogs>>) {
+    // We continuously get a chunk of logs, stream them to the progress and wait for the next chunk.
+    logsPromise.catch(e => null).then(logs => {
+      if (!logs || !this._poll || this._progress.isCanceled())
+        return;
+      logs.evaluate(logs => logs.current).catch(e => [] as string[]).then(messages => {
+        for (const message of messages)
+          this._progress.log(inputLog, message);
+      });
+      this._streamLogs(logs.evaluateHandle(logs => logs.next));
+    });
+  }
+
+  cancel() {
+    if (!this._poll)
+      return;
+    const copy = this._poll;
+    this._poll = null;
+    copy.evaluate(p => p.cancel()).catch(e => {}).then(() => copy.dispose());
   }
 }
 

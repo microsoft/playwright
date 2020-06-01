@@ -116,17 +116,42 @@ export class Selectors {
     const task = async (context: dom.FrameExecutionContext) => {
       const injectedScript = await context.injectedScript();
       return injectedScript.evaluateHandle((injected, { parsed, state }) => {
-        return injected.poll('raf', () => {
+        let lastElement: Element | undefined;
+
+        return injected.poll('raf', (progress: types.InjectedScriptProgress) => {
           const element = injected.querySelector(parsed, document);
+
+          const log = (suffix: string) => {
+            if (lastElement === element)
+              return;
+            lastElement = element;
+            if (!element)
+              progress.log(`selector did not resolve to any element`);
+            else
+              progress.log(`selector resolved to "${injected.previewElement(element)}"${suffix ? ' ' + suffix : ''}`);
+          };
+
           switch (state) {
-            case 'attached':
+            case 'attached': {
               return element || false;
-            case 'detached':
+            }
+            case 'detached': {
+              if (element)
+                log('');
               return !element;
-            case 'visible':
-              return element && injected.isVisible(element) ? element : false;
-            case 'hidden':
-              return !element || !injected.isVisible(element);
+            }
+            case 'visible': {
+              const result = element && injected.isVisible(element) ? element : false;
+              if (!result)
+                log('that is not visible');
+              return result;
+            }
+            case 'hidden': {
+              const result = !element || !injected.isVisible(element);
+              if (!result)
+                log('that is still visible');
+              return result;
+            }
           }
         });
       }, { parsed, state });

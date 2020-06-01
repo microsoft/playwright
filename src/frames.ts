@@ -898,7 +898,7 @@ export class Frame {
   }
 }
 
-export type SchedulableTask<T> = (context: dom.FrameExecutionContext) => Promise<js.JSHandle<types.CancelablePoll<T>>>;
+export type SchedulableTask<T> = (context: dom.FrameExecutionContext) => Promise<js.JSHandle<types.InjectedScriptPoll<T>>>;
 
 class RerunnableTask<T> {
   readonly promise: Promise<types.SmartHandle<T>>;
@@ -919,29 +919,19 @@ class RerunnableTask<T> {
   }
 
   terminate(error: Error) {
-    this._progress.cancel(error);
+    this._reject(error);
   }
 
   async rerun(context: dom.FrameExecutionContext) {
-    let poll: js.JSHandle<types.CancelablePoll<T>> | null = null;
-
-    // On timeout or error, cancel current poll.
-    const cancelPoll = () => {
-      if (!poll)
-        return;
-      const copy = poll;
-      poll = null;
-      copy.evaluate(p => p.cancel()).catch(e => {}).then(() => copy.dispose());
-    };
-    this._progress.cleanupWhenCanceled(cancelPoll);
-
+    let pollHandler: dom.InjectedScriptPollHandler | null = null;
     try {
-      poll = await this._task(context);
+      const poll = await this._task(context);
+      pollHandler = new dom.InjectedScriptPollHandler(this._progress, poll);
       const result = await poll.evaluateHandle(poll => poll.result);
-      cancelPoll();
       this._resolve(result);
     } catch (e) {
-      cancelPoll();
+      if (pollHandler)
+        pollHandler.cancel();
 
       // When the page is navigated, the promise is rejected.
       // We will try again in the new execution context.
