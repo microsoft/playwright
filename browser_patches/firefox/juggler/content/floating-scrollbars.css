@@ -1,0 +1,51 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+@namespace html url("http://www.w3.org/1999/xhtml");
+
+/* Restrict all styles to `*|*:not(html|select) > scrollbar` so that scrollbars
+   inside a <select> are excluded (including them hides the select arrow on
+   Windows).  We want to include both the root scrollbars for the document as
+   well as any overflow: scroll elements within the page, while excluding
+   <select>. */
+*|*:not(html|select) > scrollbar {
+  -moz-appearance: none !important;
+  position: relative;
+  background-color: transparent;
+  background-image: none;
+  z-index: 2147483647;
+  padding: 2px;
+  border: none;
+}
+
+/* Scrollbar code will reset the margin to the correct side depending on
+   where layout actually puts the scrollbar */
+*|*:not(html|select) > scrollbar[orient="vertical"] {
+  margin-left: -10px;
+  min-width: 10px;
+  max-width: 10px;
+}
+
+*|*:not(html|select) > scrollbar[orient="horizontal"] {
+  margin-top: -10px;
+  min-height: 10px;
+  max-height: 10px;
+}
+
+*|*:not(html|select) > scrollbar slider {
+  -moz-appearance: none !important;
+}
+
+*|*:not(html|select) > scrollbar thumb {
+  -moz-appearance: none !important;
+  background-color: rgba(0,0,0,0.2);
+  border-width: 0px !important;
+  border-radius: 3px !important;
+}
+
+*|*:not(html|select) > scrollbar scrollbarbutton,
+*|*:not(html|select) > scrollbar gripper {
+  display: none;
+}
