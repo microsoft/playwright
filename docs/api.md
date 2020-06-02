@@ -3999,9 +3999,9 @@ This methods attaches Playwright to an existing browser instance.
   - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. If an array is given, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`.
   - `proxy` <[Object]> Network proxy settings.
     - `server` <[string]> Proxy to be used for all requests. For HTTP and HTTPS it is specified in the form `myproxy:3128`. For SOCKS5 proxy explicitly specify the protocol as in `socks5://myproxy.:3128`.
-    - `bypass` <[string]> Coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
-    - `username` <[string]> Username to use if HTTP(S) proxy requires authentication.
-    - `password` <[string]> Password to use if HTTP(S) proxy requires authentication.
+    - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+    - `username` <[string]> Optional username to use if HTTP(S) proxy requires authentication.
+    - `password` <[string]> Optional password to use if HTTP(S) proxy requires authentication.
   - `firefoxUserPrefs` <[Object]> Firefox user preferences. Learn more about the Firefox user preferences at [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
@@ -4038,9 +4038,9 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use any of the default arguments. If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
   - `proxy` <[Object]> Network proxy settings.
     - `server` <[string]> Proxy to be used for all requests. For HTTP and HTTPS it is specified in the form `myproxy:3128`. For SOCKS5 proxy explicitly specify the protocol as in `socks5://myproxy.:3128`.
-    - `bypass` <[string]> Coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
-    - `username` <[string]> Username to use if HTTP(S) proxy requires authentication.
-    - `password` <[string]> Password to use if HTTP(S) proxy requires authentication.
+    - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+    - `username` <[string]> Optional username to use if HTTP(S) proxy requires authentication.
+    - `password` <[string]> Optional password to use if HTTP(S) proxy requires authentication.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
@@ -4085,9 +4085,9 @@ Launches browser that uses persistent storage located at `userDataDir` and retur
   - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use any of the default arguments. If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
   - `proxy` <[Object]> Network proxy settings.
     - `server` <[string]> Proxy to be used for all requests. For HTTP and HTTPS it is specified in the form `myproxy:3128`. For SOCKS5 proxy explicitly specify the protocol as in `socks5://myproxy.:3128`.
-    - `bypass` <[string]> Coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
-    - `username` <[string]> Username to use if HTTP(S) proxy requires authentication.
-    - `password` <[string]> Password to use if HTTP(S) proxy requires authentication.
+    - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+    - `username` <[string]> Optional username to use if HTTP(S) proxy requires authentication.
+    - `password` <[string]> Optional password to use if HTTP(S) proxy requires authentication.
   - `firefoxUserPrefs` <[Object]> Firefox user preferences. Learn more about the Firefox user preferences at [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
