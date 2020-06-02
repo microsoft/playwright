@@ -122,90 +122,6 @@ void createCrashReport(EXCEPTION_POINTERS* exceptionPointers)
     }
 }
 
-bool askProxySettings(HWND hwnd, ProxySettings& settings)
-{
-    class ProxyDialog : public Dialog {
-    public:
-        ProxyDialog(ProxySettings& settings)
-            : settings { settings }
-        {
-        }
-
-    protected:
-        ProxySettings& settings;
-
-        void setup() final
-        {
-            auto command = commandForProxyChoice();
-            proxyChoice().set(command);
-            setText(IDC_PROXY_URL, settings.url);
-            setText(IDC_PROXY_EXCLUDE, settings.excludeHosts);
-        }
-
-        void ok() final
-        {
-            settings.url = getText(IDC_PROXY_URL);
-            settings.excludeHosts = getText(IDC_PROXY_EXCLUDE);
-            updateProxyChoice(proxyChoice().get());
-        }
-
-        bool validate() final
-        {
-            bool valid = true;
-
-            if (proxyChoice().get() == IDC_PROXY_CUSTOM) {
-                setEnabled(IDC_PROXY_URL, true);
-                setEnabled(IDC_PROXY_EXCLUDE, true);
-
-                if (!getTextLength(IDC_PROXY_URL))
-                    valid = false;
-            } else {
-                setEnabled(IDC_PROXY_URL, false);
-                setEnabled(IDC_PROXY_EXCLUDE, false);
-            }
-
-            return valid;
-        }
-
-        RadioGroup proxyChoice()
-        {
-            return radioGroup(IDC_PROXY_DEFAULT, IDC_PROXY_DISABLE);
-        }
-
-        int commandForProxyChoice()
-        {
-            if (!settings.enable)
-                return IDC_PROXY_DISABLE;
-            if (settings.custom)
-                return IDC_PROXY_CUSTOM;
-            return IDC_PROXY_DEFAULT;
-        }
-
-        void updateProxyChoice(int command)
-        {
-            switch (command) {
-            case IDC_PROXY_DEFAULT:
-                settings.enable = true;
-                settings.custom = false;
-                break;
-            case IDC_PROXY_CUSTOM:
-                settings.enable = true;
-                settings.custom = true;
-                break;
-            case IDC_PROXY_DISABLE:
-                settings.enable = false;
-                settings.custom = false;
-                break;
-            default:
-                break;
-            }
-        }
-    };
-
-    ProxyDialog dialog { settings };
-    return dialog.run(hInst, hwnd, IDD_PROXY);
-}
-
 Optional<Credential> askCredential(HWND hwnd, const std::wstring& realm)
 {
     struct AuthDialog : public Dialog {
@@ -274,6 +190,10 @@ CommandLineOptions parseCommandLine()
             options.inspectorPipe = true;
         else if (!wcsncmp(argv[i], L"--user-data-dir=", 16))
             options.userDataDir = argv[i] + 16;
+        else if (!wcsncmp(argv[i], L"--curl-proxy=", 13))
+            options.curloptProxy = argv[i] + 13;
+        else if (!wcsncmp(argv[i], L"--curl-noproxy=", 15))
+            options.curloptNoproxy = argv[i] + 15;
         else if (!wcsicmp(argv[i], L"--headless"))
             options.headless = true;
         else if (!wcsicmp(argv[i], L"--no-startup-window"))
