@@ -212,53 +212,55 @@ export default class InjectedScript {
     return { status: 'success', value: options.filter(option => option.selected).map(option => option.value) };
   }
 
-  fill(node: Node, value: string): types.InjectedScriptResult<boolean> {
-    if (node.nodeType !== Node.ELEMENT_NODE)
-      return { status: 'error', error: 'Node is not of type HTMLElement' };
-    const element = node as HTMLElement;
-    if (!element.isConnected)
-      return { status: 'notconnected' };
-    if (!this.isVisible(element))
-      return { status: 'error', error: 'Element is not visible' };
-    if (element.nodeName.toLowerCase() === 'input') {
-      const input = element as HTMLInputElement;
-      const type = (input.getAttribute('type') || '').toLowerCase();
-      const kDateTypes = new Set(['date', 'time', 'datetime', 'datetime-local']);
-      const kTextInputTypes = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
-      if (!kTextInputTypes.has(type) && !kDateTypes.has(type))
-        return { status: 'error', error: 'Cannot fill input of type "' + type + '".' };
-      if (type === 'number') {
-        value = value.trim();
-        if (isNaN(Number(value)))
-          return { status: 'error', error: 'Cannot type text into input[type=number].' };
+  waitForEnabledAndFill(node: Node, value: string): types.InjectedScriptPoll<types.InjectedScriptResult<boolean>> {
+    return this.poll('raf', () => {
+      if (node.nodeType !== Node.ELEMENT_NODE)
+        return { status: 'error', error: 'Node is not of type HTMLElement' };
+      const element = node as HTMLElement;
+      if (!element.isConnected)
+        return { status: 'notconnected' };
+      if (!this.isVisible(element))
+        return false;
+      if (element.nodeName.toLowerCase() === 'input') {
+        const input = element as HTMLInputElement;
+        const type = (input.getAttribute('type') || '').toLowerCase();
+        const kDateTypes = new Set(['date', 'time', 'datetime', 'datetime-local']);
+        const kTextInputTypes = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
+        if (!kTextInputTypes.has(type) && !kDateTypes.has(type))
+          return { status: 'error', error: 'Cannot fill input of type "' + type + '".' };
+        if (type === 'number') {
+          value = value.trim();
+          if (isNaN(Number(value)))
+            return { status: 'error', error: 'Cannot type text into input[type=number].' };
+        }
+        if (input.disabled)
+          return false;
+        if (input.readOnly)
+          return false;
+        if (kDateTypes.has(type)) {
+          value = value.trim();
+          input.focus();
+          input.value = value;
+          if (input.value !== value)
+            return { status: 'error', error: `Malformed ${type} "${value}"` };
+          element.dispatchEvent(new Event('input', { 'bubbles': true }));
+          element.dispatchEvent(new Event('change', { 'bubbles': true }));
+          return { status: 'success', value: false };  // We have already changed the value, no need to input it.
+        }
+      } else if (element.nodeName.toLowerCase() === 'textarea') {
+        const textarea = element as HTMLTextAreaElement;
+        if (textarea.disabled)
+          return false;
+        if (textarea.readOnly)
+          return false;
+      } else if (!element.isContentEditable) {
+        return { status: 'error', error: 'Element is not an <input>, <textarea> or [contenteditable] element.' };
       }
-      if (input.disabled)
-        return { status: 'error', error: 'Cannot fill a disabled input.' };
-      if (input.readOnly)
-        return { status: 'error', error: 'Cannot fill a readonly input.' };
-      if (kDateTypes.has(type)) {
-        value = value.trim();
-        input.focus();
-        input.value = value;
-        if (input.value !== value)
-          return { status: 'error', error: `Malformed ${type} "${value}"` };
-        element.dispatchEvent(new Event('input', { 'bubbles': true }));
-        element.dispatchEvent(new Event('change', { 'bubbles': true }));
-        return { status: 'success', value: false };  // We have already changed the value, no need to input it.
-      }
-    } else if (element.nodeName.toLowerCase() === 'textarea') {
-      const textarea = element as HTMLTextAreaElement;
-      if (textarea.disabled)
-        return { status: 'error', error: 'Cannot fill a disabled textarea.' };
-      if (textarea.readOnly)
-        return { status: 'error', error: 'Cannot fill a readonly textarea.' };
-    } else if (!element.isContentEditable) {
-      return { status: 'error', error: 'Element is not an <input>, <textarea> or [contenteditable] element.' };
-    }
-    const result = this.selectText(node);
-    if (result.status === 'success')
-      return { status: 'success', value: true };  // Still need to input the value.
-    return result;
+      const result = this.selectText(node);
+      if (result.status === 'success')
+        return { status: 'success', value: true };  // Still need to input the value.
+      return result;
+    });
   }
 
   selectText(node: Node): types.InjectedScriptResult {

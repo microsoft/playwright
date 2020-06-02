@@ -351,13 +351,21 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
     const deadline = this._page._timeoutSettings.computeDeadline(options);
     await this._page._frameManager.waitForSignalsCreatedBy(async () => {
-      const injectedResult = await this._evaluateInUtility(({ injected, node }, value) => injected.fill(node, value), value);
-      const needsInput = handleInjectedResult(injectedResult);
-      if (needsInput) {
-        if (value)
-          await this._page.keyboard.insertText(value);
-        else
-          await this._page.keyboard.press('Delete');
+      const poll = await this._evaluateHandleInUtility(({ injected, node }, { value }) => {
+        return injected.waitForEnabledAndFill(node, value);
+      }, { value });
+      try {
+        const filledPromise = poll.evaluate(poll => poll.result);
+        const injectedResult = await helper.waitWithDeadline(filledPromise, 'element to be visible and enabled', deadline, 'pw:input');
+        const needsInput = handleInjectedResult(injectedResult);
+        if (needsInput) {
+          if (value)
+            await this._page.keyboard.insertText(value);
+          else
+            await this._page.keyboard.press('Delete');
+        }
+      } finally {
+        poll.evaluate(poll => poll.cancel()).catch(e => {}).then(() => poll.dispose());
       }
     }, deadline, options, true);
   }
