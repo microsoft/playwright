@@ -1054,7 +1054,7 @@ describe('Page.fill', function() {
   it.skip(WEBKIT)('should throw on incorrect date', async({page, server}) => {
     await page.setContent('<input type=date>');
     const error = await page.fill('input', '2020-13-05').catch(e => e);
-    expect(error.message).toBe('Malformed date "2020-13-05"');
+    expect(error.message).toContain('Malformed date "2020-13-05"');
   });
   it('should fill time input', async({page, server}) => {
     await page.setContent('<input type=time>');
@@ -1064,7 +1064,7 @@ describe('Page.fill', function() {
   it.skip(WEBKIT)('should throw on incorrect time', async({page, server}) => {
     await page.setContent('<input type=time>');
     const error = await page.fill('input', '25:05').catch(e => e);
-    expect(error.message).toBe('Malformed time "25:05"');
+    expect(error.message).toContain('Malformed time "25:05"');
   });
   it('should fill datetime-local input', async({page, server}) => {
     await page.setContent('<input type=datetime-local>');
@@ -1074,7 +1074,7 @@ describe('Page.fill', function() {
   it.skip(WEBKIT || FFOX)('should throw on incorrect datetime-local', async({page, server}) => {
     await page.setContent('<input type=datetime-local>');
     const error = await page.fill('input', 'abc').catch(e => e);
-    expect(error.message).toBe('Malformed datetime-local "abc"');
+    expect(error.message).toContain('Malformed datetime-local "abc"');
   });
   it('should fill contenteditable', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
