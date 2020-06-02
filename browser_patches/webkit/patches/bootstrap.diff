@@ -7253,7 +7253,7 @@ index 08f54ff5057f8d04e26adfe2c0e3a472647935e7..8f3ae0f0346514cec926ea7babff40c2
  WK_EXPORT WKApplicationCacheManagerRef WKContextGetApplicationCacheManager(WKContextRef context) WK_C_API_DEPRECATED_WITH_REPLACEMENT(WKWebsiteDataStoreGetDefaultDataStore);
  WK_EXPORT WKCookieManagerRef WKContextGetCookieManager(WKContextRef context) WK_C_API_DEPRECATED;
 diff --git a/Source/WebKit/UIProcess/API/C/WKInspector.cpp b/Source/WebKit/UIProcess/API/C/WKInspector.cpp
-index 39327c5c9230591e4f52e4574c416e36687788f0..269dc87a6ab35481d2b45bea86fff893a9bddfb2 100644
+index 39327c5c9230591e4f52e4574c416e36687788f0..450033d87fefb743ab7240ce317fae221f91dcf5 100644
 --- a/Source/WebKit/UIProcess/API/C/WKInspector.cpp
 +++ b/Source/WebKit/UIProcess/API/C/WKInspector.cpp
 @@ -28,6 +28,11 @@
@@ -7272,25 +7272,26 @@ index 39327c5c9230591e4f52e4574c416e36687788f0..269dc87a6ab35481d2b45bea86fff893
      toImpl(inspectorRef)->toggleElementSelection();
  }
  
-+void WKInspectorInitializeRemoteInspectorPipe(CreatePageCallback createPage, QuitCallback quit)
++void WKInspectorInitializeRemoteInspectorPipe(ConfigureDataStoreCallback configureDataStore, CreatePageCallback createPage, QuitCallback quit)
 +{
 +#if PLATFORM(WIN)
-+    initializeBrowserInspectorPipe(makeUnique<InspectorPlaywrightAgentClientWin>(createPage, quit));
++    initializeBrowserInspectorPipe(makeUnique<InspectorPlaywrightAgentClientWin>(configureDataStore, createPage, quit));
 +#endif
 +}
 +
  #endif // !PLATFORM(IOS_FAMILY)
 diff --git a/Source/WebKit/UIProcess/API/C/WKInspector.h b/Source/WebKit/UIProcess/API/C/WKInspector.h
-index 026121d114c5fcad84c1396be8d692625beaa3bd..1f707641766b51e3bddcdde0c49ee8cfcd83db0b 100644
+index 026121d114c5fcad84c1396be8d692625beaa3bd..edd6e5cae033124c589959a42522fde07a42fdf6 100644
 --- a/Source/WebKit/UIProcess/API/C/WKInspector.h
 +++ b/Source/WebKit/UIProcess/API/C/WKInspector.h
-@@ -66,6 +66,9 @@ WK_EXPORT void WKInspectorTogglePageProfiling(WKInspectorRef inspector);
+@@ -66,6 +66,10 @@ WK_EXPORT void WKInspectorTogglePageProfiling(WKInspectorRef inspector);
  WK_EXPORT bool WKInspectorIsElementSelectionActive(WKInspectorRef inspector);
  WK_EXPORT void WKInspectorToggleElementSelection(WKInspectorRef inspector);
  
++typedef void (*ConfigureDataStoreCallback)(WKWebsiteDataStoreRef dataStore);
 +typedef WKPageRef (*CreatePageCallback)(WKPageConfigurationRef configuration);
 +typedef void (*QuitCallback)();
-+WK_EXPORT void WKInspectorInitializeRemoteInspectorPipe(CreatePageCallback, QuitCallback);
++WK_EXPORT void WKInspectorInitializeRemoteInspectorPipe(ConfigureDataStoreCallback, CreatePageCallback, QuitCallback);
  #ifdef __cplusplus
  }
  #endif
@@ -7634,7 +7635,7 @@ index 2bdb8b9e7256f22096ebaa5d51959aa52389ca0a..2141d9d17497861a6c711f99306de109
  
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..1884526cd6ce7d436af6596ab3a45b103031dba1
+index 0000000000000000000000000000000000000000..c7f51f06dcbc233aef69d9d8b6bf91e70e817096
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp
 @@ -0,0 +1,136 @@
@@ -7768,10 +7769,10 @@ index 0000000000000000000000000000000000000000..1884526cd6ce7d436af6596ab3a45b10
 + * Creates browser inspector and configures pipe handler to communicate with
 + * the parent process.
 + */
-+void webkit_browser_inspector_initialize_pipe(GMainLoop* mainLoop)
++void webkit_browser_inspector_initialize_pipe(GMainLoop* mainLoop, const char* defaultProxyURI, const char* const* ignoreHosts)
 +{
 +#if ENABLE(REMOTE_INSPECTOR)
-+    WebKit::initializeBrowserInspectorPipe(makeUnique<WebKit::InspectorPlaywrightAgentClientGlib>(mainLoop));
++    WebKit::initializeBrowserInspectorPipe(makeUnique<WebKit::InspectorPlaywrightAgentClientGlib>(mainLoop, defaultProxyURI, ignoreHosts));
 +#endif
 +}
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspectorPrivate.h b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspectorPrivate.h
@@ -7991,10 +7992,10 @@ index bdf555ce6cc24c0f1b0182a7fb1e383a576915af..d78bf2c1beafc60e1f750b1e3a44b9a3
      webkitWebViewBaseForwardNextKeyEvent(webkitWebViewBase);
 diff --git a/Source/WebKit/UIProcess/API/gtk/WebKitBrowserInspector.h b/Source/WebKit/UIProcess/API/gtk/WebKitBrowserInspector.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..a51cfebc270ca5a91cd94645eeeb005ba9a67caf
+index 0000000000000000000000000000000000000000..1044d9b4df51acb52fb7ee03456b5a64ef7039a8
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/gtk/WebKitBrowserInspector.h
-@@ -0,0 +1,79 @@
+@@ -0,0 +1,81 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -8069,7 +8070,9 @@ index 0000000000000000000000000000000000000000..a51cfebc270ca5a91cd94645eeeb005b
 +webkit_browser_inspector_get_default                  (void);
 +
 +WEBKIT_API void
-+webkit_browser_inspector_initialize_pipe              (GMainLoop*);
++webkit_browser_inspector_initialize_pipe              (GMainLoop*,
++                                                      const char* defaultProxyURI,
++                                                      const char* const* ignoreHosts);
 +
 +G_END_DECLS
 +
@@ -8088,10 +8091,10 @@ index 930b17b6629e04d0dfa2222bbc3217877c6e1812..395462e5f01c195231e9296d1204167c
  #include <webkit2/WebKitContextMenuItem.h>
 diff --git a/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h b/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..6dffa4fa10a9a64f778a0a77c760c2e76b2f9968
+index 0000000000000000000000000000000000000000..0e8b78b60e8f306c98295afb5c7e5ed150e4918e
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h
-@@ -0,0 +1,79 @@
+@@ -0,0 +1,81 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -8166,7 +8169,9 @@ index 0000000000000000000000000000000000000000..6dffa4fa10a9a64f778a0a77c760c2e7
 +webkit_browser_inspector_get_default                  (void);
 +
 +WEBKIT_API void
-+webkit_browser_inspector_initialize_pipe              (GMainLoop*);
++webkit_browser_inspector_initialize_pipe              (GMainLoop*,
++                                                      const char* defaultProxyURI,
++                                                      const char* const* ignoreHosts);
 +
 +G_END_DECLS
 +
@@ -12813,10 +12818,10 @@ index 31d29091985f34a65134a2b0e7cb3ace1dae441d..571ceac8a4b291fa6e91eb8b17065c0a
  };
 diff --git a/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..c16ef9d7c0ba6b4aca36b0aad68296505dbacb50
+index 0000000000000000000000000000000000000000..df004bb6b16fe69773d7a664b3633ea421cafc62
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
-@@ -0,0 +1,115 @@
+@@ -0,0 +1,127 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -12860,9 +12865,20 @@ index 0000000000000000000000000000000000000000..c16ef9d7c0ba6b4aca36b0aad6829650
 +
 +namespace WebKit {
 +
-+InspectorPlaywrightAgentClientGlib::InspectorPlaywrightAgentClientGlib(GMainLoop* mainLoop)
++InspectorPlaywrightAgentClientGlib::InspectorPlaywrightAgentClientGlib(GMainLoop* mainLoop, const WTF::CString& proxyURI, const char* const* ignoreHosts)
 +    : m_mainLoop(mainLoop)
 +{
++    if (!proxyURI.isNull()) {
++        String proxy = String::fromUTF8(proxyURI);
++        m_proxySettings.mode = WebCore::SoupNetworkProxySettings::Mode::Custom;
++        if (proxy.startsWith("socks5://")) {
++            m_proxySettings.defaultProxyURL = proxyURI;
++        } else {
++            m_proxySettings.proxyMap.set("http", String("http://" + proxy).utf8());
++            m_proxySettings.proxyMap.set("https", String("https://" + proxy).utf8());
++        }
++        m_proxySettings.ignoreHosts.reset(g_strdupv(const_cast<char**>(ignoreHosts)));
++    }
 +}
 +
 +RefPtr<WebPageProxy> InspectorPlaywrightAgentClientGlib::createPage(WTF::String& error, const BrowserContext& browserContext)
@@ -12921,6 +12937,7 @@ index 0000000000000000000000000000000000000000..c16ef9d7c0ba6b4aca36b0aad6829650
 +    browserContext.dataStore = &webkitWebsiteDataManagerGetDataStore(data_manager.get());
 +    PAL::SessionID sessionID = sessionIDFromContext(context.get());
 +    m_idToContext.set(sessionID, WTFMove(context));
++    browserContext.processPool->setNetworkProxySettings(m_proxySettings);
 +    return browserContext;
 +}
 +
@@ -12934,10 +12951,10 @@ index 0000000000000000000000000000000000000000..c16ef9d7c0ba6b4aca36b0aad6829650
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.h b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..4cba2671042d3517e4b8f66e7b2bb780d57aa402
+index 0000000000000000000000000000000000000000..df62288c96e8ffda5b318b2c28beb2d70e2bdaa3
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.h
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,61 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -12968,6 +12985,7 @@ index 0000000000000000000000000000000000000000..4cba2671042d3517e4b8f66e7b2bb780
 +#if ENABLE(REMOTE_INSPECTOR)
 +
 +#include "InspectorPlaywrightAgentClient.h"
++#include <WebCore/SoupNetworkProxySettings.h>
 +#include "WebKitWebContext.h"
 +#include <wtf/Forward.h>
 +#include <wtf/HashMap.h>
@@ -12979,7 +12997,7 @@ index 0000000000000000000000000000000000000000..4cba2671042d3517e4b8f66e7b2bb780
 +class InspectorPlaywrightAgentClientGlib : public InspectorPlaywrightAgentClient {
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    InspectorPlaywrightAgentClientGlib(GMainLoop* mainLoop);
++    InspectorPlaywrightAgentClientGlib(GMainLoop* mainLoop, const WTF::CString& proxyURI, const char* const* ignoreHosts);
 +    ~InspectorPlaywrightAgentClientGlib() override = default;
 +
 +    RefPtr<WebPageProxy> createPage(WTF::String& error, const BrowserContext&) override;
@@ -12992,6 +13010,7 @@ index 0000000000000000000000000000000000000000..4cba2671042d3517e4b8f66e7b2bb780
 +
 +    HashMap<PAL::SessionID, GRefPtr<WebKitWebContext>> m_idToContext;
 +    GMainLoop* m_mainLoop;
++    WebCore::SoupNetworkProxySettings m_proxySettings;
 +};
 +
 +} // namespace API
@@ -13776,10 +13795,10 @@ index 0000000000000000000000000000000000000000..78bd14ef515e4022dbc251945d60248a
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.cpp b/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..9ea75b043513fe4c56b3af33d2082375971a75f7
+index 0000000000000000000000000000000000000000..aec85e2cb5748511b0fb0dacf08542f76653bbd3
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.cpp
-@@ -0,0 +1,82 @@
+@@ -0,0 +1,84 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -13826,8 +13845,9 @@ index 0000000000000000000000000000000000000000..9ea75b043513fe4c56b3af33d2082375
 +
 +namespace WebKit {
 +
-+InspectorPlaywrightAgentClientWin::InspectorPlaywrightAgentClientWin(CreatePageCallback createPage, QuitCallback quit)
-+    : m_createPage(createPage)
++InspectorPlaywrightAgentClientWin::InspectorPlaywrightAgentClientWin(ConfigureDataStoreCallback configureDataStore, CreatePageCallback createPage, QuitCallback quit)
++    : m_configureDataStore(configureDataStore)
++    , m_createPage(createPage)
 +    , m_quit(quit)
 +{
 +}
@@ -13851,6 +13871,7 @@ index 0000000000000000000000000000000000000000..9ea75b043513fe4c56b3af33d2082375
 +    BrowserContext browserContext;
 +    browserContext.processPool = WebKit::WebProcessPool::create(config);
 +    browserContext.dataStore = WebKit::WebsiteDataStore::createNonPersistent();
++    m_configureDataStore(toAPI(browserContext.dataStore.get()));
 +    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
 +    return browserContext;
 +}
@@ -13864,10 +13885,10 @@ index 0000000000000000000000000000000000000000..9ea75b043513fe4c56b3af33d2082375
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.h b/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..2536fe399ef9a5916803954e1f4971a24b7ca4ec
+index 0000000000000000000000000000000000000000..a6ddbceee54ae59f29c89f5f6c8680ff554ecd35
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.h
-@@ -0,0 +1,58 @@
+@@ -0,0 +1,60 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -13902,6 +13923,7 @@ index 0000000000000000000000000000000000000000..2536fe399ef9a5916803954e1f4971a2
 +#include <wtf/Forward.h>
 +#include <wtf/text/StringHash.h>
 +
++typedef void (*ConfigureDataStoreCallback)(WKWebsiteDataStoreRef dataStore);
 +typedef WKPageRef (*CreatePageCallback)(WKPageConfigurationRef configuration);
 +typedef void (*QuitCallback)();
 +
@@ -13910,7 +13932,7 @@ index 0000000000000000000000000000000000000000..2536fe399ef9a5916803954e1f4971a2
 +class InspectorPlaywrightAgentClientWin : public InspectorPlaywrightAgentClient {
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    InspectorPlaywrightAgentClientWin(CreatePageCallback, QuitCallback);
++    InspectorPlaywrightAgentClientWin(ConfigureDataStoreCallback, CreatePageCallback, QuitCallback);
 +    ~InspectorPlaywrightAgentClientWin() override = default;
 +
 +    RefPtr<WebPageProxy> createPage(WTF::String& error, const BrowserContext&) override;
@@ -13919,6 +13941,7 @@ index 0000000000000000000000000000000000000000..2536fe399ef9a5916803954e1f4971a2
 +    void deleteBrowserContext(WTF::String& error, PAL::SessionID) override;
 +
 +private:
++    ConfigureDataStoreCallback m_configureDataStore;
 +    CreatePageCallback m_createPage;
 +    QuitCallback m_quit;
 +};
@@ -15139,7 +15162,7 @@ index 1570d65effb5d601ee3c44a2a7461436f4691c2c..65e62adad0c3684e5cec2f6bc8e7f528
  
  #endif
 diff --git a/Tools/MiniBrowser/gtk/main.c b/Tools/MiniBrowser/gtk/main.c
-index 2ff45b938cffabe95fe17137393b8b6c506d4993..bd28310341f4f47612dbbea350e83a6d182953c3 100644
+index 2ff45b938cffabe95fe17137393b8b6c506d4993..ec7ac8bbe174e0c1edbe425b392c9fd6695cb4b8 100644
 --- a/Tools/MiniBrowser/gtk/main.c
 +++ b/Tools/MiniBrowser/gtk/main.c
 @@ -54,6 +54,10 @@ static const char *cookiesFile;
@@ -15193,7 +15216,7 @@ index 2ff45b938cffabe95fe17137393b8b6c506d4993..bd28310341f4f47612dbbea350e83a6d
 +    WebKitBrowserInspector* browserInspector = webkit_browser_inspector_get_default();
 +    g_signal_connect(browserInspector, "create-new-page", G_CALLBACK(createNewPage), NULL);
 +
-+    webkit_browser_inspector_initialize_pipe(NULL);
++    webkit_browser_inspector_initialize_pipe(NULL, proxy, ignoreHosts);
 +}
 +
  int main(int argc, char *argv[])
@@ -15233,7 +15256,23 @@ index 2ff45b938cffabe95fe17137393b8b6c506d4993..bd28310341f4f47612dbbea350e83a6d
      g_object_unref(manager);
  
      if (cookiesPolicy) {
-@@ -633,9 +689,7 @@ int main(int argc, char *argv[])
+@@ -572,7 +628,14 @@ int main(int argc, char *argv[])
+     }
+ 
+     if (proxy) {
+-        WebKitNetworkProxySettings *webkitProxySettings = webkit_network_proxy_settings_new(proxy, ignoreHosts);
++        WebKitNetworkProxySettings* webkitProxySettings;
++        if (g_str_has_prefix(proxy, "socks5://")) {
++            webkitProxySettings = webkit_network_proxy_settings_new(proxy, ignoreHosts);
++        } else {
++            webkitProxySettings = webkit_network_proxy_settings_new("", ignoreHosts);
++            webkit_network_proxy_settings_add_proxy_for_scheme(webkitProxySettings, "http", g_strconcat("http", proxy));
++            webkit_network_proxy_settings_add_proxy_for_scheme(webkitProxySettings, "https", g_strconcat("https", proxy));
++        }
+         webkit_web_context_set_network_proxy_settings(webContext, WEBKIT_NETWORK_PROXY_MODE_CUSTOM, webkitProxySettings);
+         webkit_network_proxy_settings_free(webkitProxySettings);
+     }
+@@ -633,9 +696,7 @@ int main(int argc, char *argv[])
              WebKitWebView *webView = createBrowserTab(mainWindow, webkitSettings, userContentManager);
              if (!i)
                  firstTab = GTK_WIDGET(webView);
@@ -15244,7 +15283,7 @@ index 2ff45b938cffabe95fe17137393b8b6c506d4993..bd28310341f4f47612dbbea350e83a6d
          }
      } else {
          WebKitWebView *webView = createBrowserTab(mainWindow, webkitSettings, userContentManager);
-@@ -657,8 +711,7 @@ int main(int argc, char *argv[])
+@@ -657,8 +718,7 @@ int main(int argc, char *argv[])
  
      browser_main();
  
@@ -15255,7 +15294,7 @@ index 2ff45b938cffabe95fe17137393b8b6c506d4993..bd28310341f4f47612dbbea350e83a6d
      return 0;
  }
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..6d403133b37b9518a526f046ddc45686be6b9e3e 100644
+index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..02756b2bbdb664d0445eec83eeeee8e0c9590720 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
 @@ -43,6 +43,9 @@ static gboolean headlessMode;
@@ -15362,7 +15401,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..6d403133b37b9518a526f046ddc45686
 +{
 +    WebKitBrowserInspector* browserInspector = webkit_browser_inspector_get_default();
 +    g_signal_connect(browserInspector, "create-new-page", G_CALLBACK(createNewPage), NULL);
-+    webkit_browser_inspector_initialize_pipe(mainLoop);
++    webkit_browser_inspector_initialize_pipe(mainLoop,  proxy, ignoreHosts);
 +}
 +
  int main(int argc, char *argv[])
@@ -15406,7 +15445,23 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..6d403133b37b9518a526f046ddc45686
  
      if (cookiesPolicy) {
          auto* cookieManager = webkit_web_context_get_cookie_manager(webContext);
-@@ -301,8 +384,6 @@ int main(int argc, char *argv[])
+@@ -238,7 +321,14 @@ int main(int argc, char *argv[])
+     }
+ 
+     if (proxy) {
+-        auto* webkitProxySettings = webkit_network_proxy_settings_new(proxy, ignoreHosts);
++        WebKitNetworkProxySettings* webkitProxySettings;
++        if (g_str_has_prefix(proxy, "socks5://")) {
++            webkitProxySettings = webkit_network_proxy_settings_new(proxy, ignoreHosts);
++        } else {
++            webkitProxySettings = webkit_network_proxy_settings_new("", ignoreHosts);
++            webkit_network_proxy_settings_add_proxy_for_scheme(webkitProxySettings, "http", g_strconcat("http", proxy));
++            webkit_network_proxy_settings_add_proxy_for_scheme(webkitProxySettings, "https", g_strconcat("https", proxy));
++        }
+         webkit_web_context_set_network_proxy_settings(webContext, WEBKIT_NETWORK_PROXY_MODE_CUSTOM, webkitProxySettings);
+         webkit_network_proxy_settings_free(webkitProxySettings);
+     }
+@@ -301,8 +391,6 @@ int main(int argc, char *argv[])
          backendPtr->setAccessibleChild(ATK_OBJECT(accessible));
  #endif
  
@@ -15415,7 +15470,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..6d403133b37b9518a526f046ddc45686
      webkit_web_context_set_automation_allowed(webContext, automationMode);
      g_signal_connect(webContext, "automation-started", G_CALLBACK(automationStartedCallback), webView);
      g_signal_connect(webView, "permission-request", G_CALLBACK(decidePermissionRequest), nullptr);
-@@ -318,16 +399,9 @@ int main(int argc, char *argv[])
+@@ -318,16 +406,9 @@ int main(int argc, char *argv[])
          webkit_web_view_set_background_color(webView, &color);
  
      if (uriArguments) {
@@ -15435,7 +15490,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..6d403133b37b9518a526f046ddc45686
          webkit_web_view_load_uri(webView, "about:blank");
      else
          webkit_web_view_load_uri(webView, "https://wpewebkit.org");
-@@ -337,8 +411,7 @@ int main(int argc, char *argv[])
+@@ -337,8 +418,7 @@ int main(int argc, char *argv[])
      g_hash_table_destroy(openViews);
  
  

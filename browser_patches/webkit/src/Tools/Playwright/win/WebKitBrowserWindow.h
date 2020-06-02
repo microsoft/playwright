@@ -76,7 +76,6 @@ private:
     BrowserWindowClient& m_client;
     WKRetainPtr<WKViewRef> m_view;
     HWND m_hMainWnd { nullptr };
-    ProxySettings m_proxy { };
     std::unordered_map<std::wstring, std::wstring> m_acceptedServerTrustCerts;
     WKPageRunJavaScriptAlertResultListenerRef m_alertDialog = { };
     WKPageRunJavaScriptConfirmResultListenerRef m_confirmDialog = { };

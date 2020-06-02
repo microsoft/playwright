@@ -38,6 +38,8 @@ struct CommandLineOptions {
     bool noStartupWindow { };
     _bstr_t requestedURL;
     _bstr_t userDataDir;
+    _bstr_t curloptProxy;
+    _bstr_t curloptNoproxy;
 
     CommandLineOptions()
     {
@@ -49,19 +51,11 @@ struct Credential {
     std::wstring password;
 };
 
-struct ProxySettings {
-    bool enable { true };
-    bool custom { false };
-    std::wstring url;
-    std::wstring excludeHosts;
-};
-
 void computeFullDesktopFrame();
 bool getAppDataFolder(_bstr_t& directory);
 CommandLineOptions parseCommandLine();
 void createCrashReport(EXCEPTION_POINTERS*);
 Optional<Credential> askCredential(HWND, const std::wstring& realm);
-bool askProxySettings(HWND, ProxySettings&);
 
 bool askServerTrustEvaluation(HWND, const std::wstring& text);
 std::wstring replaceString(std::wstring src, const std::wstring& oldValue, const std::wstring& newValue);
