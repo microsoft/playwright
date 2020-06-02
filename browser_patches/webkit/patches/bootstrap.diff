@@ -5334,32 +5334,6 @@ index 892d8de6d345d91fda80cfa5334c4aa68b757da3..a22497d801a349487be10b15139e9c76
  #endif
  
  #if PLATFORM(IOS_FAMILY)
-diff --git a/Source/WebCore/platform/graphics/cairo/CairoUtilities.cpp b/Source/WebCore/platform/graphics/cairo/CairoUtilities.cpp
-index 34d935b359e2e74278928f7b5358ad3ea7a70ae2..ad6dbb9c9196baa9c1d280a8fe107a77f5457c2a 100644
---- a/Source/WebCore/platform/graphics/cairo/CairoUtilities.cpp
-+++ b/Source/WebCore/platform/graphics/cairo/CairoUtilities.cpp
-@@ -50,6 +50,10 @@
- #include <cairo-gl.h>
- #endif
- 
-+#if PLATFORM(GTK)
-+#include <cairo-xlib.h>
-+#endif
-+
- #if OS(WINDOWS)
- #include <cairo-win32.h>
- #endif
-@@ -331,6 +335,10 @@ IntSize cairoSurfaceSize(cairo_surface_t* surface)
-         ASSERT(surface);
-         ASSERT(cairo_surface_get_type(surface) == CAIRO_SURFACE_TYPE_IMAGE);
-         return IntSize(cairo_image_surface_get_width(surface), cairo_image_surface_get_height(surface));
-+#endif
-+#if PLATFORM(GTK)
-+    case CAIRO_SURFACE_TYPE_XLIB:
-+        return IntSize(cairo_xlib_surface_get_width(surface), cairo_xlib_surface_get_height(surface));
- #endif
-     default:
-         ASSERT_NOT_REACHED();
 diff --git a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp b/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
 index d79728555b7db9b59cb615c55a7a7a6851cb57c8..61d3cc4b488e35ef9e1afa1ce3ac5f5d60ebe9a7 100644
 --- a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
@@ -8508,7 +8482,7 @@ index 6bbd1cabd27ae2847648a8c2edcf9acfcd556ff5..38d101b9a96986e40f6e9f0261fa429a
  {
      m_hasReceivedFirstUpdate = true;
 diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
-index d7695088e7cfc4f638f157338754f9f157489749..2a5ebd52478027c65d66551b77becbfb006a95c4 100644
+index d7695088e7cfc4f638f157338754f9f157489749..74a3654235d5e24a39d3714ec4d2f45a8803c816 100644
 --- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
 +++ b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
 @@ -30,6 +30,8 @@
@@ -8526,12 +8500,12 @@ index d7695088e7cfc4f638f157338754f9f157489749..2a5ebd52478027c65d66551b77becbfb
      const LayerTreeContext& layerTreeContext() const { return m_layerTreeContext; }
 +    void waitForSizeUpdate(Function<void ()>&&);
 +
-+    using PaintCallback = Function<void(cairo_surface_t*)>;
++    using PaintCallback = Function<void(cairo_surface_t*, WebCore::IntSize)>;
 +    void setPaintCallback(PaintCallback&& callback) { m_paintCallback = WTFMove(callback); }
-+    void didPaint(cairo_surface_t* surface)
++    void didPaint(cairo_surface_t* surface, WebCore::IntSize size)
 +    {
 +        if (m_paintCallback)
-+            m_paintCallback(surface);
++            m_paintCallback(surface, size);
 +    }
  
  private:
@@ -8654,7 +8628,7 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
      // The timeout we use when waiting for a DidUpdateGeometry message.
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..b58cea323c822ca6352e1cf907ab214e25345592
+index 0000000000000000000000000000000000000000..c7257e534657af462bd095e6f5150b7a316c906d
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 @@ -0,0 +1,253 @@
@@ -8793,12 +8767,12 @@ index 0000000000000000000000000000000000000000..b58cea323c822ca6352e1cf907ab214e
 +    }
 +
 +    if (auto* drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(m_page.drawingArea())) {
-+        m_encoder = ScreencastEncoder::create(errorString, file, drawingArea->size().width(), drawingArea->size().height());
++        m_encoder = ScreencastEncoder::create(errorString, file, drawingArea->size());
 +        if (!m_encoder)
 +            return;
 +
-+        drawingArea->setPaintCallback([encoder = m_encoder.get()] (cairo_surface_t* surface) {
-+            encoder->encodeFrame(surface);
++        drawingArea->setPaintCallback([encoder = m_encoder.get()] (cairo_surface_t* surface, WebCore::IntSize size) {
++            encoder->encodeFrame(surface, size);
 +        });
 +    } else {
 +        errorString = "Cannot get drawing area."_s;
@@ -9004,10 +8978,10 @@ index 0000000000000000000000000000000000000000..77d4a06e4717629916241dc47cb057f4
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..46b324bf95e2d61fd4b9e67b7d646105fab943b1
+index 0000000000000000000000000000000000000000..33ba73912ecfc92622d829ddde6fcea933728d4b
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,400 @@
+@@ -0,0 +1,406 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -9038,7 +9012,6 @@ index 0000000000000000000000000000000000000000..46b324bf95e2d61fd4b9e67b7d646105
 +#include "config.h"
 +#include "ScreencastEncoder.h"
 +
-+#include <WebCore/CairoUtilities.h>
 +#include <cairo.h>
 +#include <libyuv.h>
 +#include <vpx/vp8.h>
@@ -9057,17 +9030,17 @@ index 0000000000000000000000000000000000000000..46b324bf95e2d61fd4b9e67b7d646105
 +// map for the encoder.
 +const int kMacroBlockSize = 16;
 +
-+void createImage(IntSize size,
++void createImage(unsigned int width, unsigned int height,
 +                 std::unique_ptr<vpx_image_t>& out_image,
 +                 std::unique_ptr<uint8_t[]>& out_image_buffer) {
 +  std::unique_ptr<vpx_image_t> image(new vpx_image_t());
 +  memset(image.get(), 0, sizeof(vpx_image_t));
 +
 +  // libvpx seems to require both to be assigned.
-+  image->d_w = size.width();
-+  image->w = size.width();
-+  image->d_h = size.height();
-+  image->h = size.height();
++  image->d_w = width;
++  image->w = width;
++  image->d_h = height;
++  image->h = height;
 +
 +  // I420
 +  image->fmt = VPX_IMG_FMT_YV12;
@@ -9170,48 +9143,37 @@ index 0000000000000000000000000000000000000000..46b324bf95e2d61fd4b9e67b7d646105
 +    WTF_MAKE_NONCOPYABLE(VPXFrame);
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    VPXFrame(RefPtr<cairo_surface_t>&& surface, IntSize size)
++    explicit VPXFrame(RefPtr<cairo_surface_t>&& surface)
 +        : m_surface(WTFMove(surface))
-+        , m_size(size)
 +    { }
 +
 +    void setDuration(int duration) { m_duration = duration; }
 +    int duration() const { return m_duration; }
 +
-+    vpx_image_t* convertToVpxImage()
++    void convertToVpxImage(vpx_image_t* image)
 +    {
-+        if (m_image)
-+            return m_image.get();
-+
-+        createImage(m_size, m_image, m_imageBuffer);
-+
 +        // Convert the updated region to YUV ready for encoding.
 +        const uint8_t* rgba_data = cairo_image_surface_get_data(m_surface.get());
 +        int rgba_stride = cairo_image_surface_get_stride(m_surface.get());
 +
-+        const int y_stride = m_image->stride[0];
-+        ASSERT(m_image->stride[1] == m_image->stride[2]);
-+        const int uv_stride = m_image->stride[1];
-+        uint8_t* y_data = m_image->planes[0];
-+        uint8_t* u_data = m_image->planes[1];
-+        uint8_t* v_data = m_image->planes[2];
++        const int y_stride = image->stride[0];
++        ASSERT(image->stride[1] == image->stride[2]);
++        const int uv_stride = image->stride[1];
++        uint8_t* y_data = image->planes[0];
++        uint8_t* u_data = image->planes[1];
++        uint8_t* v_data = image->planes[2];
 +
 +        // TODO: redraw only damaged regions?
 +        libyuv::ARGBToI420(rgba_data, rgba_stride,
 +                            y_data, y_stride,
 +                            u_data, uv_stride,
 +                            v_data, uv_stride,
-+                            m_size.width(), m_size.height());
-+
-+        return m_image.get();
++                            image->w, image->h);
 +    }
 +
 +private:
 +    RefPtr<cairo_surface_t> m_surface;
-+    IntSize m_size;
 +    int m_duration = 0;
-+    std::unique_ptr<uint8_t[]> m_imageBuffer;
-+    std::unique_ptr<vpx_image_t> m_image;
 +};
 +
 +
@@ -9225,12 +9187,15 @@ index 0000000000000000000000000000000000000000..46b324bf95e2d61fd4b9e67b7d646105
 +        , m_file(file)
 +    {
 +        ivf_write_file_header(m_file, &m_cfg, m_fourcc, 0);
++
++        createImage(cfg.g_w, cfg.g_h, m_image, m_imageBuffer);
 +    }
 +
 +    void encodeFrameAsync(std::unique_ptr<VPXFrame>&& frame)
 +    {
 +        m_encoderQueue->dispatch([this, frame = WTFMove(frame)] {
-+            encodeFrame(frame->convertToVpxImage(), frame->duration());
++            frame->convertToVpxImage(m_image.get());
++            encodeFrame(m_image.get(), frame->duration());
 +        });
 +    }
 +
@@ -9294,11 +9259,15 @@ index 0000000000000000000000000000000000000000..46b324bf95e2d61fd4b9e67b7d646105
 +    FILE* m_file { nullptr };
 +    int m_frameCount { 0 };
 +    int64_t m_pts { 0 };
++    std::unique_ptr<uint8_t[]> m_imageBuffer;
++    std::unique_ptr<vpx_image_t> m_image;
 +};
 +
-+ScreencastEncoder::ScreencastEncoder(std::unique_ptr<VPXCodec>&& vpxCodec)
++ScreencastEncoder::ScreencastEncoder(std::unique_ptr<VPXCodec>&& vpxCodec, IntSize size)
 +    : m_vpxCodec(WTFMove(vpxCodec))
++    , m_size(size)
 +{
++    ASSERT(!size.isZero());
 +}
 +
 +ScreencastEncoder::~ScreencastEncoder()
@@ -9311,7 +9280,7 @@ index 0000000000000000000000000000000000000000..46b324bf95e2d61fd4b9e67b7d646105
 +static const int fps = 30;
 +
 +
-+RefPtr<ScreencastEncoder> ScreencastEncoder::create(String& errorString, const String& filePath, int w, int h)
++RefPtr<ScreencastEncoder> ScreencastEncoder::create(String& errorString, const String& filePath, IntSize size)
 +{
 +    const uint32_t fourcc = VP8_FOURCC;
 +    vpx_codec_iface_t* codec_interface = vpx_codec_vp8_cx();
@@ -9320,8 +9289,8 @@ index 0000000000000000000000000000000000000000..46b324bf95e2d61fd4b9e67b7d646105
 +        return nullptr;
 +    }
 +
-+    if (w <= 0 || h <= 0 || (w % 2) != 0 || (h % 2) != 0) {
-+        errorString = makeString("Invalid frame size: "_s, w, "x"_s, h);
++    if (size.width() <= 0 || size.height() <= 0 || (size.width() % 2) != 0 || (size.height() % 2) != 0) {
++        errorString = makeString("Invalid frame size: "_s, size.width(), "x"_s, size.height());
 +        return nullptr;
 +    }
 +
@@ -9333,8 +9302,8 @@ index 0000000000000000000000000000000000000000..46b324bf95e2d61fd4b9e67b7d646105
 +        return nullptr;
 +    }
 +
-+    cfg.g_w = w;
-+    cfg.g_h = h;
++    cfg.g_w = size.width();
++    cfg.g_h = size.height();
 +    cfg.g_timebase.num = 1;
 +    cfg.g_timebase.den = fps;
 +    cfg.g_error_resilient = VPX_ERROR_RESILIENT_DEFAULT;
@@ -9353,7 +9322,7 @@ index 0000000000000000000000000000000000000000..46b324bf95e2d61fd4b9e67b7d646105
 +
 +    std::unique_ptr<VPXCodec> vpxCodec(new VPXCodec(fourcc, codec, cfg, file));
 +    fprintf(stderr, "ScreencastEncoder initialized with: %s\n", vpx_codec_iface_name(codec_interface));
-+    return adoptRef(new ScreencastEncoder(WTFMove(vpxCodec)));
++    return adoptRef(new ScreencastEncoder(WTFMove(vpxCodec), size));
 +}
 +
 +void ScreencastEncoder::flushLastFrame()
@@ -9368,27 +9337,38 @@ index 0000000000000000000000000000000000000000..46b324bf95e2d61fd4b9e67b7d646105
 +    m_lastFrameTimestamp = now;
 +}
 +
-+void ScreencastEncoder::encodeFrame(cairo_surface_t* drawingAreaSurface)
++void ScreencastEncoder::encodeFrame(cairo_surface_t* drawingAreaSurface, IntSize size)
 +{
 +    fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
 +    flushLastFrame();
-+    IntSize size = cairoSurfaceSize(drawingAreaSurface);
 +    if (size.isZero()) {
 +        fprintf(stderr, "Cairo surface size is 0\n");
 +        return;
 +    }
 +
-+    // TODO: scale image if the size has changed.
 +    // TODO: adjust device scale factor?
-+    RefPtr<cairo_surface_t> surface = adoptRef(cairo_image_surface_create(CAIRO_FORMAT_ARGB32, size.width(), size.height()));
++    RefPtr<cairo_surface_t> surface = adoptRef(cairo_image_surface_create(CAIRO_FORMAT_ARGB32, m_size.width(), m_size.height()));
 +    {
 +        RefPtr<cairo_t> cr = adoptRef(cairo_create(surface.get()));
++
++        cairo_matrix_t transform;
++        if (size.width() > m_size.width() || size.height() > m_size.height()) {
++            double sx = static_cast<double>(m_size.width()) / size.width();
++            double sy = static_cast<double>(m_size.height()) / size.height();
++            if (sx < sy)
++              sy = sx;
++            else
++              sx = sy;
++            cairo_matrix_init_scale(&transform, sx, sy);
++            cairo_transform(cr.get(), &transform);
++        }
++
 +        cairo_set_source_surface(cr.get(), drawingAreaSurface, 0, 0);
 +        cairo_paint(cr.get());
 +    }
 +    cairo_surface_flush(surface.get());
 +
-+    m_lastFrame = makeUnique<VPXFrame>(WTFMove(surface), size);
++    m_lastFrame = makeUnique<VPXFrame>(WTFMove(surface));
 +}
 +
 +void ScreencastEncoder::finish(Function<void()>&& callback)
@@ -9410,10 +9390,10 @@ index 0000000000000000000000000000000000000000..46b324bf95e2d61fd4b9e67b7d646105
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..b0c8e5aadcdc44e741fe1b2df5f28eee20f7be3f
+index 0000000000000000000000000000000000000000..01993e4925b6bea6741873e503f1fc3b401facee
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,61 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -9441,6 +9421,7 @@ index 0000000000000000000000000000000000000000..b0c8e5aadcdc44e741fe1b2df5f28eee
 +
 +#pragma once
 +
++#include <WebCore/IntSize.h>
 +#include <wtf/Forward.h>
 +#include <wtf/Noncopyable.h>
 +#include <wtf/ThreadSafeRefCounted.h>
@@ -9454,19 +9435,20 @@ index 0000000000000000000000000000000000000000..b0c8e5aadcdc44e741fe1b2df5f28eee
 +    WTF_MAKE_NONCOPYABLE(ScreencastEncoder);
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    static RefPtr<ScreencastEncoder> create(String& errorString, const String& filePath, int width, int height);
++    static RefPtr<ScreencastEncoder> create(String& errorString, const String& filePath, WebCore::IntSize);
 +
 +    class VPXCodec;
-+    explicit ScreencastEncoder(std::unique_ptr<VPXCodec>&&);
++    ScreencastEncoder(std::unique_ptr<VPXCodec>&&, WebCore::IntSize);
 +    ~ScreencastEncoder();
 +
-+    void encodeFrame(cairo_surface_t*);
++    void encodeFrame(cairo_surface_t*, WebCore::IntSize);
 +    void finish(Function<void()>&& callback);
 +
 +private:
 +    void flushLastFrame();
 +
 +    std::unique_ptr<VPXCodec> m_vpxCodec;
++    const WebCore::IntSize m_size;
 +    MonotonicTime m_lastFrameTimestamp;
 +    class VPXFrame;
 +    std::unique_ptr<VPXFrame> m_lastFrame;
@@ -12745,7 +12727,7 @@ index 964c6315e38f5e0a0303febce45b1e975054f0b4..117d8c7c74bc81b34cfc0fe2b11a5429
      UniqueRef<SOAuthorizationCoordinator> m_soAuthorizationCoordinator;
  #endif
 diff --git a/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp b/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
-index dc0a70b8824afdc7ec3dd1f69f4d9b51942924f6..012bf01a2307986292589ab1808f1df05dc060f7 100644
+index dc0a70b8824afdc7ec3dd1f69f4d9b51942924f6..f31988b5b9b896f17994bcf15c72b5f384d65afb 100644
 --- a/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
 +++ b/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
 @@ -27,6 +27,7 @@
@@ -12762,7 +12744,7 @@ index dc0a70b8824afdc7ec3dd1f69f4d9b51942924f6..012bf01a2307986292589ab1808f1df0
      cairo_restore(context);
 +#if PLATFORM(GTK)
 +    if (auto* drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(m_webPageProxy.drawingArea()))
-+        drawingArea->didPaint(m_backend->surface());
++        drawingArea->didPaint(m_backend->surface(), drawingArea->size());
 +#endif
  }
  
@@ -13017,7 +12999,7 @@ index 0000000000000000000000000000000000000000..df62288c96e8ffda5b318b2c28beb2d7
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/gtk/AcceleratedBackingStoreX11.cpp b/Source/WebKit/UIProcess/gtk/AcceleratedBackingStoreX11.cpp
-index be19b6007c9c0fbfffb859e40fd34751493fe7d1..bedd37fb70f878b9bf87beef0f9968c1ec24457e 100644
+index be19b6007c9c0fbfffb859e40fd34751493fe7d1..dd51b743f0bb5ba5a537edd1caf0005054c89839 100644
 --- a/Source/WebKit/UIProcess/gtk/AcceleratedBackingStoreX11.cpp
 +++ b/Source/WebKit/UIProcess/gtk/AcceleratedBackingStoreX11.cpp
 @@ -256,6 +256,9 @@ bool AcceleratedBackingStoreX11::paint(cairo_t* cr, const IntRect& clipRect)
@@ -13025,7 +13007,7 @@ index be19b6007c9c0fbfffb859e40fd34751493fe7d1..bedd37fb70f878b9bf87beef0f9968c1
      cairo_restore(cr);
  
 +    if (auto* drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(m_webPage.drawingArea()))
-+        drawingArea->didPaint(m_surface.get());
++        drawingArea->didPaint(m_surface.get(), drawingArea->size());
 +
      cairo_surface_flush(m_surface.get());
  
