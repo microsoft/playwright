@@ -416,3 +416,13 @@ describe('ElementHandle.check', () => {
     expect(await page.evaluate(() => checkbox.checked)).toBe(false);
   });
 });
+
+describe('ElementHandle.selectOption', function() {
+  it('should select single option', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/select.html');
+    const select = await page.$('select');
+    await select.selectOption('blue');
+    expect(await page.evaluate(() => result.onInput)).toEqual(['blue']);
+    expect(await page.evaluate(() => result.onChange)).toEqual(['blue']);
+  });
+});

@@ -83,13 +83,13 @@ export class JSHandle<T = any> {
   _disposed = false;
   readonly _objectId: string | undefined;
   readonly _value: any;
-  private _type: string;
+  private _objectType: string;
 
   constructor(context: ExecutionContext, type: string, objectId?: string, value?: any) {
     this._context = context;
     this._objectId = objectId;
     this._value = value;
-    this._type = type;
+    this._objectType = type;
   }
 
   async evaluate<R, Arg>(pageFunction: types.FuncOn<T, Arg, R>, arg: Arg): Promise<R>;
@@ -137,7 +137,7 @@ export class JSHandle<T = any> {
 
   _handleToString(includeType: boolean): string {
     if (this._objectId)
-      return 'JSHandle@' + this._type;
+      return 'JSHandle@' + this._objectType;
     return (includeType ? 'JSHandle:' : '') + this._value;
   }
 
