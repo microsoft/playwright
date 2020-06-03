@@ -586,14 +586,16 @@ export class Worker extends EventEmitter {
   async evaluate<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<R>;
   async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
-    return (await this._executionContextPromise).evaluateInternal(pageFunction, arg);
+    const context = await this._executionContextPromise;
+    return context._delegate.evaluate(context, true /* returnByValue */, pageFunction, arg);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
-    return (await this._executionContextPromise).evaluateHandleInternal(pageFunction, arg);
+    const context = await this._executionContextPromise;
+    return context._delegate.evaluate(context, false /* returnByValue */, pageFunction, arg);
   }
 }
 
