@@ -1277,10 +1277,10 @@ index 0000000000000000000000000000000000000000..31806fde2a7df437ad9f604ad7df15f5
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Screencast.json b/Source/JavaScriptCore/inspector/protocol/Screencast.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..c29970d4e2f1c8b13d7d9716365eb5b6e65e080c
+index 0000000000000000000000000000000000000000..a2ab788ee75f3d4703153882eada4ee8e2701166
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Screencast.json
-@@ -0,0 +1,50 @@
+@@ -0,0 +1,52 @@
 +{
 +    "domain": "Screencast",
 +    "availability": ["web"],
@@ -1312,7 +1312,9 @@ index 0000000000000000000000000000000000000000..c29970d4e2f1c8b13d7d9716365eb5b6
 +            "name": "startVideoRecording",
 +            "description": "Starts recoring video to speified file.",
 +            "parameters": [
-+                { "name": "file", "type": "string", "description": "Output file location." }
++                { "name": "file", "type": "string", "description": "Output file location." },
++                { "name": "width", "type": "integer" },
++                { "name": "height", "type": "integer" }
 +            ]
 +        },
 +        {
@@ -8628,10 +8630,10 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
      // The timeout we use when waiting for a DidUpdateGeometry message.
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..c7257e534657af462bd095e6f5150b7a316c906d
+index 0000000000000000000000000000000000000000..103febd9eed246c6cc1f21f7e5e4f5a56bb03ac5
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,253 @@
+@@ -0,0 +1,257 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8711,12 +8713,12 @@ index 0000000000000000000000000000000000000000..c7257e534657af462bd095e6f5150b7a
 +    } else if (format == "png") {
 +        m_format = ImageFormat::Png;
 +    } else {
-+        errorString = "Unsupported format."_s;
++        errorString = "Unsupported format"_s;
 +        return;
 +    }
 +
 +    if (quality && (*quality < 0 || *quality >100)) {
-+        errorString = "Unsupported quality."_s;
++        errorString = "Unsupported quality"_s;
 +        return;
 +    }
 +
@@ -8758,16 +8760,20 @@ index 0000000000000000000000000000000000000000..c7257e534657af462bd095e6f5150b7a
 +#endif
 +}
 +
-+void InspectorScreencastAgent::startVideoRecording(Inspector::ErrorString& errorString, const String& file)
++void InspectorScreencastAgent::startVideoRecording(Inspector::ErrorString& errorString, const String& file, int width, int height)
 +{
 +#if PLATFORM(GTK)
 +    if (m_encoder) {
-+        errorString = "Already recording."_s;
++        errorString = "Already recording"_s;
++        return;
++    }
++    if (width < 10 || width > 10000 || height < 10 || height > 10000) {
++        errorString = "Invalid size"_s;
 +        return;
 +    }
 +
 +    if (auto* drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(m_page.drawingArea())) {
-+        m_encoder = ScreencastEncoder::create(errorString, file, drawingArea->size());
++        m_encoder = ScreencastEncoder::create(errorString, file, IntSize(width, height));
 +        if (!m_encoder)
 +            return;
 +
@@ -8775,11 +8781,11 @@ index 0000000000000000000000000000000000000000..c7257e534657af462bd095e6f5150b7a
 +            encoder->encodeFrame(surface, size);
 +        });
 +    } else {
-+        errorString = "Cannot get drawing area."_s;
++        errorString = "Cannot get drawing area"_s;
 +        return;
 +    }
 +#else
-+    errorString = "Not implemented."_s;
++    errorString = "Not implemented"_s;
 +#endif
 +}
 +
@@ -8787,7 +8793,7 @@ index 0000000000000000000000000000000000000000..c7257e534657af462bd095e6f5150b7a
 +{
 +#if PLATFORM(GTK)
 +    if (!m_encoder) {
-+        callback->sendFailure("Not recording."_s);
++        callback->sendFailure("Not recording"_s);
 +        return;
 +    }
 +
@@ -8799,7 +8805,7 @@ index 0000000000000000000000000000000000000000..c7257e534657af462bd095e6f5150b7a
 +    });
 +    m_encoder = nullptr;
 +#else
-+    callback->sendFailure("Not implemented."_s);
++    callback->sendFailure("Not implemented"_s);
 +#endif
 +}
 +
@@ -8887,7 +8893,7 @@ index 0000000000000000000000000000000000000000..c7257e534657af462bd095e6f5150b7a
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..77d4a06e4717629916241dc47cb057f4f6121743
+index 0000000000000000000000000000000000000000..2f96d82a650993bc0b0469453e7634d20771d797
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 @@ -0,0 +1,85 @@
@@ -8950,7 +8956,7 @@ index 0000000000000000000000000000000000000000..77d4a06e4717629916241dc47cb057f4
 +    void start(Inspector::ErrorString&, const String& format, const int* quality) override;
 +    void stop(Inspector::ErrorString&) override;
 +    void frameAck(Inspector::ErrorString&) override;
-+    void startVideoRecording(Inspector::ErrorString&, const String& file) override;
++    void startVideoRecording(Inspector::ErrorString&, const String& file, int width, int height) override;
 +    void stopVideoRecording(Ref<StopVideoRecordingCallback>&&) override;
 +
 +
@@ -8978,10 +8984,10 @@ index 0000000000000000000000000000000000000000..77d4a06e4717629916241dc47cb057f4
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..33ba73912ecfc92622d829ddde6fcea933728d4b
+index 0000000000000000000000000000000000000000..d75a8076d663ca75d1c42702087d2b0787215f24
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,406 @@
+@@ -0,0 +1,392 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -9099,7 +9105,7 @@ index 0000000000000000000000000000000000000000..33ba73912ecfc92622d829ddde6fcea9
 +  mem[3] = (unsigned char)((val >> 24) & 0xff);
 +}
 +
-+void ivf_write_file_header_with_video_info(FILE *outfile, unsigned int fourcc,
++void ivf_write_file_header_with_video_info(FILE *outfile, uint32_t fourcc,
 +                                           int frame_cnt, int frame_width,
 +                                           int frame_height,
 +                                           vpx_rational_t timebase) {
@@ -9123,7 +9129,7 @@ index 0000000000000000000000000000000000000000..33ba73912ecfc92622d829ddde6fcea9
 +}
 +
 +void ivf_write_file_header(FILE *outfile, const struct vpx_codec_enc_cfg *cfg,
-+                           unsigned int fourcc, int frame_cnt) {
++                           uint32_t fourcc, int frame_cnt) {
 +  ivf_write_file_header_with_video_info(outfile, fourcc, frame_cnt, cfg->g_w,
 +                                        cfg->g_h, cfg->g_timebase);
 +}
@@ -9274,15 +9280,13 @@ index 0000000000000000000000000000000000000000..33ba73912ecfc92622d829ddde6fcea9
 +{
 +}
 +
-+#define VP8_FOURCC 0x30385056
-+#define VP9_FOURCC 0x30395056
-+
-+static const int fps = 30;
-+
++static constexpr uint32_t vp8fourcc = 0x30385056;
++static constexpr uint32_t vp9fourcc = 0x30395056;
++static constexpr int fps = 30;
 +
 +RefPtr<ScreencastEncoder> ScreencastEncoder::create(String& errorString, const String& filePath, IntSize size)
 +{
-+    const uint32_t fourcc = VP8_FOURCC;
++    const uint32_t fourcc = vp8fourcc;
 +    vpx_codec_iface_t* codec_interface = vpx_codec_vp8_cx();
 +    if (!codec_interface) {
 +        errorString = "Codec not found.";
@@ -9350,19 +9354,7 @@ index 0000000000000000000000000000000000000000..33ba73912ecfc92622d829ddde6fcea9
 +    RefPtr<cairo_surface_t> surface = adoptRef(cairo_image_surface_create(CAIRO_FORMAT_ARGB32, m_size.width(), m_size.height()));
 +    {
 +        RefPtr<cairo_t> cr = adoptRef(cairo_create(surface.get()));
-+
-+        cairo_matrix_t transform;
-+        if (size.width() > m_size.width() || size.height() > m_size.height()) {
-+            double sx = static_cast<double>(m_size.width()) / size.width();
-+            double sy = static_cast<double>(m_size.height()) / size.height();
-+            if (sx < sy)
-+              sy = sx;
-+            else
-+              sx = sy;
-+            cairo_matrix_init_scale(&transform, sx, sy);
-+            cairo_transform(cr.get(), &transform);
-+        }
-+
++        // Record top left part of the drawing area that fits into the frame.
 +        cairo_set_source_surface(cr.get(), drawingAreaSurface, 0, 0);
 +        cairo_paint(cr.get());
 +    }
