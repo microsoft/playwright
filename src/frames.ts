@@ -105,23 +105,21 @@ export class FrameManager {
     }
   }
 
-  // TODO: take progress parameter.
-  async waitForSignalsCreatedBy<T>(action: () => Promise<T>, deadline: number, options: types.NavigatingActionWaitOptions = {}, input?: boolean): Promise<T> {
-    if (options.noWaitAfter)
+  async waitForSignalsCreatedBy<T>(progress: Progress | null, noWaitAfter: boolean | undefined, action: () => Promise<T>, source?: 'input'): Promise<T> {
+    if (noWaitAfter)
       return action();
-    const barrier = new SignalBarrier(options, deadline);
+    const barrier = new SignalBarrier(progress);
     this._signalBarriers.add(barrier);
-    try {
-      const result = await action();
-      if (input)
-        await this._page._delegate.inputActionEpilogue();
-      await barrier.waitFor();
-      // Resolve in the next task, after all waitForNavigations.
-      await new Promise(helper.makeWaitForNextTask());
-      return result;
-    } finally {
-      this._signalBarriers.delete(barrier);
-    }
+    if (progress)
+      progress.cleanupWhenCanceled(() => this._signalBarriers.delete(barrier));
+    const result = await action();
+    if (source === 'input')
+      await this._page._delegate.inputActionEpilogue();
+    await barrier.waitFor();
+    this._signalBarriers.delete(barrier);
+    // Resolve in the next task, after all waitForNavigations.
+    await new Promise(helper.makeWaitForNextTask());
+    return result;
   }
 
   frameWillPotentiallyRequestNavigation() {
@@ -732,8 +730,7 @@ export class Frame {
   }
 
   async fill(selector: string, value: string, options: types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options,
-        (progress, handle) => handle._fill(progress, value, options));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._fill(progress, value, options));
   }
 
   async focus(selector: string, options: types.TimeoutOptions = {}) {
@@ -761,23 +758,19 @@ export class Frame {
   }
 
   async selectOption(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return await this._retryWithSelectorIfNotConnected(selector, options,
-        (progress, handle) => handle.selectOption(values, helper.optionsWithUpdatedTimeout(options, progress.deadline)));
+    return this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._selectOption(progress, values, options));
   }
 
   async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
-    await this._retryWithSelectorIfNotConnected(selector, options,
-        (progress, handle) => handle.setInputFiles(files, helper.optionsWithUpdatedTimeout(options, progress.deadline)));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._setInputFiles(progress, files, options));
   }
 
   async type(selector: string, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options,
-        (progress, handle) => handle.type(text, helper.optionsWithUpdatedTimeout(options, progress.deadline)));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._type(progress, text, options));
   }
 
   async press(selector: string, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options,
-        (progress, handle) => handle.press(key, helper.optionsWithUpdatedTimeout(options, progress.deadline)));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._press(progress, key, options));
   }
 
   async check(selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
@@ -937,15 +930,13 @@ class RerunnableTask<T> {
 }
 
 export class SignalBarrier {
-  private _options: types.NavigatingActionWaitOptions;
+  private _progress: Progress | null;
   private _protectCount = 0;
   private _promise: Promise<void>;
   private _promiseCallback = () => {};
-  private _deadline: number;
 
-  constructor(options: types.NavigatingActionWaitOptions, deadline: number) {
-    this._options = options;
-    this._deadline = deadline;
+  constructor(progress: Progress | null) {
+    this._progress = progress;
     this._promise = new Promise(f => this._promiseCallback = f);
     this.retain();
   }
@@ -957,8 +948,8 @@ export class SignalBarrier {
 
   async addFrameNavigation(frame: Frame) {
     this.retain();
-    const options = helper.optionsWithUpdatedTimeout(this._options, this._deadline);
-    await frame._waitForNavigation({...options, waitUntil: 'commit'}).catch(e => {});
+    const timeout = this._progress ? helper.timeUntilDeadline(this._progress.deadline) : undefined;
+    await frame._waitForNavigation({timeout, waitUntil: 'commit'}).catch(e => {});
     this.release();
   }
 

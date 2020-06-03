@@ -61,9 +61,9 @@ export class FrameExecutionContext extends js.ExecutionContext {
   }
 
   async doEvaluateInternal(returnByValue: boolean, waitForNavigations: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
-    return await this.frame._page._frameManager.waitForSignalsCreatedBy(async () => {
+    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, !waitForNavigations, async () => {
       return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
-    }, Number.MAX_SAFE_INTEGER, waitForNavigations ? undefined : { noWaitAfter: true });
+    });
   }
 
   createHandle(remoteObject: js.RemoteObject): js.JSHandle {
@@ -241,7 +241,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _retryPointerAction(progress: Progress, action: (point: types.Point) => Promise<void>, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
-    progress.log(inputLog, progress.apiName);
     while (!progress.isCanceled()) {
       const result = await this._performPointerAction(progress, action, options);
       if (result === 'done')
@@ -291,7 +290,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       progress.log(inputLog, `...element does receive pointer events, continuing input action`);
     }
 
-    await this._page._frameManager.waitForSignalsCreatedBy(async () => {
+    await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       let restoreModifiers: input.Modifier[] | undefined;
       if (options && options.modifiers)
         restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
@@ -301,7 +300,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       progress.log(inputLog, 'waiting for scheduled navigations to finish...');
       if (restoreModifiers)
         await this._page.keyboard._ensureModifiers(restoreModifiers);
-    }, progress.deadline, options, true);
+    }, 'input');
     progress.log(inputLog, '...navigations have finished');
 
     return 'done';
@@ -331,9 +330,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._retryPointerAction(progress, point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
-  async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options?: types.NavigatingActionWaitOptions): Promise<string[]> {
-    this._page._log(inputLog, `elementHandle.selectOption(%s)`, values);
-    const deadline = this._page._timeoutSettings.computeDeadline(options);
+  async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
+    return Progress.runCancelableTask(progress => this._selectOption(progress, values, options), options, this._page, this._page._timeoutSettings);
+  }
+
+  async _selectOption(progress: Progress, values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options: types.NavigatingActionWaitOptions): Promise<string[]> {
+    progress.log(inputLog, progress.apiName);
     let vals: string[] | ElementHandle[] | types.SelectOption[];
     if (!Array.isArray(values))
       vals = [ values ] as (string[] | ElementHandle[] | types.SelectOption[]);
@@ -350,10 +352,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (option.index !== undefined)
         assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
     }
-    return await this._page._frameManager.waitForSignalsCreatedBy<string[]>(async () => {
+    return this._page._frameManager.waitForSignalsCreatedBy<string[]>(progress, options.noWaitAfter, async () => {
       const injectedResult = await this._evaluateInUtility(({ injected, node }, selectOptions) => injected.selectOptions(node, selectOptions), selectOptions);
       return handleInjectedResult(injectedResult);
-    }, deadline, options);
+    });
   }
 
   async fill(value: string, options: types.NavigatingActionWaitOptions = {}): Promise<void> {
@@ -363,7 +365,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions): Promise<void> {
     progress.log(inputLog, `elementHandle.fill("${value}")`);
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
-    await this._page._frameManager.waitForSignalsCreatedBy(async () => {
+    await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       const poll = await this._evaluateHandleInUtility(({ injected, node }, { value }) => {
         return injected.waitForEnabledAndFill(node, value);
       }, { value });
@@ -376,7 +378,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         else
           await this._page.keyboard.press('Delete');
       }
-    }, progress.deadline, options, true);
+    }, 'input');
   }
 
   async selectText(): Promise<void> {
@@ -385,9 +387,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     handleInjectedResult(injectedResult);
   }
 
-  async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options?: types.NavigatingActionWaitOptions) {
-    this._page._log(inputLog, `elementHandle.setInputFiles(...)`);
-    const deadline = this._page._timeoutSettings.computeDeadline(options);
+  async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}) {
+    return Progress.runCancelableTask(async progress => this._setInputFiles(progress, files, options), options, this._page, this._page._timeoutSettings);
+  }
+
+  async _setInputFiles(progress: Progress, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions) {
+    progress.log(inputLog, progress.apiName);
     const injectedResult = await this._evaluateInUtility(({ node }): types.InjectedScriptResult<boolean> => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node as Node as Element).tagName !== 'INPUT')
         return { status: 'error', error: 'Node is not an HTMLInputElement' };
@@ -416,9 +421,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         filePayloads.push(item);
       }
     }
-    await this._page._frameManager.waitForSignalsCreatedBy(async () => {
+    await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, filePayloads);
-    }, deadline, options);
+    });
   }
 
   async focus() {
@@ -427,22 +432,28 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     handleInjectedResult(injectedResult);
   }
 
-  async type(text: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
-    this._page._log(inputLog, `elementHandle.type("${text}")`);
-    const deadline = this._page._timeoutSettings.computeDeadline(options);
-    await this._page._frameManager.waitForSignalsCreatedBy(async () => {
-      await this.focus();
-      await this._page.keyboard.type(text, options);
-    }, deadline, options, true);
+  async type(text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
+    return Progress.runCancelableTask(progress => this._type(progress, text, options), options, this._page, this._page._timeoutSettings);
   }
 
-  async press(key: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
-    this._page._log(inputLog, `elementHandle.press("${key}")`);
-    const deadline = this._page._timeoutSettings.computeDeadline(options);
-    await this._page._frameManager.waitForSignalsCreatedBy(async () => {
+  async _type(progress: Progress, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions) {
+    progress.log(inputLog, `elementHandle.type("${text}")`);
+    return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
+      await this.focus();
+      await this._page.keyboard.type(text, options);
+    }, 'input');
+  }
+
+  async press(key: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
+    return Progress.runCancelableTask(progress => this._press(progress, key, options), options, this._page, this._page._timeoutSettings);
+  }
+
+  async _press(progress: Progress, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions) {
+    progress.log(inputLog, `elementHandle.press("${key}")`);
+    return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       await this.focus();
       await this._page.keyboard.press(key, options);
-    }, deadline, options, true);
+    }, 'input');
   }
 
   async check(options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {

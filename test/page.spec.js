@@ -850,7 +850,7 @@ describe('Page.title', function() {
   });
 });
 
-describe('Page.select', function() {
+describe('Page.selectOption', function() {
   it('should select single option', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.selectOption('select', 'blue');
