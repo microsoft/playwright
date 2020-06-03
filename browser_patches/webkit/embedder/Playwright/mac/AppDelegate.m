@@ -89,6 +89,7 @@ const NSActivityOptions ActivityOptions =
 
     _initialURL = nil;
     _userDataDir = nil;
+    _proxyServer = nil;
     NSArray *arguments = [[NSProcessInfo processInfo] arguments];
     NSRange subargs = NSMakeRange(1, [arguments count] - 1);
     NSArray *subArray = [arguments subarrayWithRange:subargs];
@@ -99,6 +100,10 @@ const NSActivityOptions ActivityOptions =
         if ([argument hasPrefix:@"--user-data-dir="]) {
             NSRange range = NSMakeRange(16, [argument length] - 16);
             _userDataDir = [[argument substringWithRange:range] copy];
+        }
+        if ([argument hasPrefix:@"--proxy="]) {
+            NSRange range = NSMakeRange(8, [argument length] - 8);
+            _proxyServer = [[argument substringWithRange:range] copy];
         }
     }
 
@@ -124,6 +129,39 @@ const NSActivityOptions ActivityOptions =
 {
     if ([NSApp respondsToSelector:@selector(setAutomaticCustomizeTouchBarMenuItemEnabled:)])
         [NSApp setAutomaticCustomizeTouchBarMenuItemEnabled:YES];
+}
+
+
+- (NSDictionary *)proxyConfiguration:(NSString *)proxyServer
+{
+    if (!proxyServer)
+        return nil;
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
+    NSMutableDictionary *dictionary = [[[NSMutableDictionary alloc] init] autorelease];
+    if ([proxyServer hasPrefix:@"socks5://"]) {
+        NSURL *socksProxy = [NSURL URLWithString:proxyServer];
+        [dictionary setObject:[socksProxy host] forKey:(NSString *)kCFStreamPropertySOCKSProxyHost];
+        NSNumber *port = [socksProxy port];
+        if (port)
+            [dictionary setObject:port forKey:(NSString *)kCFStreamPropertySOCKSProxyPort];
+    } else {
+        NSURL *httpProxy = [NSURL URLWithString: [NSString stringWithFormat:@"http://%@", proxyServer]];
+        NSString *host = [httpProxy host];
+        NSNumber *port = [httpProxy port];
+        [dictionary setObject:host forKey:(NSString *)kCFStreamPropertyHTTPProxyHost];
+        [dictionary setObject:host forKey:(NSString *)kCFStreamPropertyHTTPSProxyHost];
+        if (port) {
+            [dictionary setObject:port forKey:(NSString *)kCFStreamPropertyHTTPProxyPort];
+            [dictionary setObject:port forKey:(NSString *)kCFStreamPropertyHTTPSProxyPort];
+        }
+    }
+
+#pragma clang diagnostic pop
+
+    return dictionary;
 }
 
 - (WKWebsiteDataStore *)persistentDataStore
@@ -166,6 +204,7 @@ const NSActivityOptions ActivityOptions =
             NSURL *webSqlDirectory = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/WebSQL", _userDataDir]];
             [configuration _setWebSQLDatabaseDirectory:webSqlDirectory];
         }
+        [configuration setProxyConfiguration:[self proxyConfiguration:_proxyServer]];
         dataStore = [[WKWebsiteDataStore alloc] _initWithConfiguration:configuration];
     }
 
@@ -275,12 +314,16 @@ const NSActivityOptions ActivityOptions =
     return [webView autorelease];
 }
 
-- (_WKBrowserContext *)createBrowserContext
+- (_WKBrowserContext *)createBrowserContext:(NSString *)proxyServer
 {
     _WKBrowserContext *browserContext = [[_WKBrowserContext alloc] init];
     _WKProcessPoolConfiguration *processConfiguration = [[[_WKProcessPoolConfiguration alloc] init] autorelease];
     processConfiguration.forceOverlayScrollbars = YES;
-    browserContext.dataStore = [WKWebsiteDataStore nonPersistentDataStore];
+    _WKWebsiteDataStoreConfiguration *dataStoreConfiguration = [[[_WKWebsiteDataStoreConfiguration alloc] initNonPersistentConfiguration] autorelease];
+    if (!proxyServer || ![proxyServer length])
+        proxyServer = _proxyServer;
+    [dataStoreConfiguration setProxyConfiguration:[self proxyConfiguration:proxyServer]];
+    browserContext.dataStore = [[WKWebsiteDataStore alloc] _initWithConfiguration:dataStoreConfiguration];
     browserContext.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
     [browserContext.processPool _setDownloadDelegate:self];
     [_browserContexts addObject:browserContext];

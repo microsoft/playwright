@@ -1028,10 +1028,10 @@ index 4f709771dc3d0611fffc95921e38b20649aebd9c..76b728d56d9977616e8b3f9c6e2952b8
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Playwright.json b/Source/JavaScriptCore/inspector/protocol/Playwright.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..31806fde2a7df437ad9f604ad7df15f53555e9af
+index 0000000000000000000000000000000000000000..18dbf54b9b825907a0693b40ef06c25b82aef2ae
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Playwright.json
-@@ -0,0 +1,243 @@
+@@ -0,0 +1,247 @@
 +{
 +    "domain": "Playwright",
 +    "availability": ["web"],
@@ -1121,6 +1121,10 @@ index 0000000000000000000000000000000000000000..31806fde2a7df437ad9f604ad7df15f5
 +        {
 +            "name": "createContext",
 +            "description": "Creates new ephemeral browser context.",
++            "parameters": [
++                { "name": "proxyServer", "type": "string", "optional": true, "description": "Proxy server, similar to the one passed to --proxy-server" },
++                { "name": "proxyBypassList", "type": "string", "optional": true, "description": "Proxy bypass list, similar to the one passed to --proxy-bypass-list" }
++            ],
 +            "returns": [
 +                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." }
 +            ]
@@ -7439,7 +7443,7 @@ index 591428f7f579e76ff01bc94b83f5994af8e48e00..03fc6cf2d3074d9227d7815ac5c72fdb
      Vector<WebKit::WebsiteDataRecord> result;
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.h b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..b64d1a6d54ec15a99164294706543cee626d1050
+index 0000000000000000000000000000000000000000..2d7788193f85ce53860d2996650560a7dcc73457
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.h
 @@ -0,0 +1,55 @@
@@ -7485,7 +7489,7 @@ index 0000000000000000000000000000000000000000..b64d1a6d54ec15a99164294706543cee
 +
 +@protocol _WKBrowserInspectorDelegate <NSObject>
 +- (WKWebView *)createNewPage:(uint64_t)sessionID;
-+- (_WKBrowserContext *)createBrowserContext;
++- (_WKBrowserContext *)createBrowserContext:(NSString *)proxyServer;
 +- (void)deleteBrowserContext:(uint64_t)sessionID;
 +- (void)quit;
 +@end
@@ -10222,7 +10226,7 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..4d8217108bd02f5efb2351adca1038d607ade7ea
+index 0000000000000000000000000000000000000000..cf42d771f07a944dfb5654161f18a072b109aa77
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 @@ -0,0 +1,796 @@
@@ -10673,9 +10677,9 @@ index 0000000000000000000000000000000000000000..4d8217108bd02f5efb2351adca1038d6
 +
 +}
 +
-+void InspectorPlaywrightAgent::createContext(ErrorString& errorString, String* browserContextID)
++void InspectorPlaywrightAgent::createContext(ErrorString& errorString, const String* proxyServer, const String* proxyBypassList, String* browserContextID)
 +{
-+    BrowserContext browserContext = m_client->createBrowserContext(errorString);
++    BrowserContext browserContext = m_client->createBrowserContext(errorString, proxyServer ? *proxyServer : String(), proxyBypassList ? *proxyBypassList : String());
 +    if (!errorString.isEmpty())
 +        return;
 +    browserContext.processPool->setPrimaryDataStore(*browserContext.dataStore);
@@ -11024,7 +11028,7 @@ index 0000000000000000000000000000000000000000..4d8217108bd02f5efb2351adca1038d6
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..25d91f9aca7835d08106797cb10652515a4d6a09
+index 0000000000000000000000000000000000000000..510bf2b25ff7953aab8af77232568b629fe9846e
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 @@ -0,0 +1,119 @@
@@ -11110,7 +11114,7 @@ index 0000000000000000000000000000000000000000..25d91f9aca7835d08106797cb1065251
 +    void enable(Inspector::ErrorString&) override;
 +    void disable(Inspector::ErrorString&) override;
 +    void close(Ref<CloseCallback>&&) override;
-+    void createContext(Inspector::ErrorString&, String* browserContextID) override;
++    void createContext(Inspector::ErrorString&, const String* proxyServer, const String* proxyBypassList, String* browserContextID) override;
 +    void deleteContext(const String& browserContextID, Ref<DeleteContextCallback>&& callback) override;
 +    void createPage(Inspector::ErrorString&, const String* browserContextID, String* pageProxyID) override;
 +    void navigate(const String& url, const String& pageProxyID, const String* frameId, const String* referrer, Ref<NavigateCallback>&&) override;
@@ -11149,7 +11153,7 @@ index 0000000000000000000000000000000000000000..25d91f9aca7835d08106797cb1065251
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgentClient.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgentClient.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..d2f02082007b41b9e20dc6bb4751743835d60fce
+index 0000000000000000000000000000000000000000..b254875dc7404aed56680db05bac65b6d5f9c50a
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgentClient.h
 @@ -0,0 +1,56 @@
@@ -11202,7 +11206,7 @@ index 0000000000000000000000000000000000000000..d2f02082007b41b9e20dc6bb47517438
 +    virtual ~InspectorPlaywrightAgentClient() = default;
 +    virtual RefPtr<WebKit::WebPageProxy> createPage(WTF::String& error, const BrowserContext& context) = 0;
 +    virtual void closeBrowser() = 0;
-+    virtual BrowserContext createBrowserContext(WTF::String& error) = 0;
++    virtual BrowserContext createBrowserContext(WTF::String& error, const WTF::String& proxyServer, const WTF::String& proxyBypassList) = 0;
 +    virtual void deleteBrowserContext(WTF::String& error, PAL::SessionID) = 0;
 +};
 +
@@ -12792,10 +12796,10 @@ index 31d29091985f34a65134a2b0e7cb3ace1dae441d..571ceac8a4b291fa6e91eb8b17065c0a
  };
 diff --git a/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..df004bb6b16fe69773d7a664b3633ea421cafc62
+index 0000000000000000000000000000000000000000..1619f5b10ea9a3dc2f7de22d4018acc462f46013
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
-@@ -0,0 +1,127 @@
+@@ -0,0 +1,156 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -12839,20 +12843,43 @@ index 0000000000000000000000000000000000000000..df004bb6b16fe69773d7a664b3633ea4
 +
 +namespace WebKit {
 +
-+InspectorPlaywrightAgentClientGlib::InspectorPlaywrightAgentClientGlib(GMainLoop* mainLoop, const WTF::CString& proxyURI, const char* const* ignoreHosts)
-+    : m_mainLoop(mainLoop)
++static WebCore::SoupNetworkProxySettings parseRawProxySettings(const String& proxyServer, const char* const* ignoreHosts)
 +{
-+    if (!proxyURI.isNull()) {
-+        String proxy = String::fromUTF8(proxyURI);
-+        m_proxySettings.mode = WebCore::SoupNetworkProxySettings::Mode::Custom;
-+        if (proxy.startsWith("socks5://")) {
-+            m_proxySettings.defaultProxyURL = proxyURI;
-+        } else {
-+            m_proxySettings.proxyMap.set("http", String("http://" + proxy).utf8());
-+            m_proxySettings.proxyMap.set("https", String("https://" + proxy).utf8());
-+        }
-+        m_proxySettings.ignoreHosts.reset(g_strdupv(const_cast<char**>(ignoreHosts)));
++    WebCore::SoupNetworkProxySettings settings;
++    if (proxyServer.isEmpty())
++        return settings;
++
++    settings.mode = WebCore::SoupNetworkProxySettings::Mode::Custom;
++
++    if (proxyServer.startsWith("socks5://")) {
++        settings.defaultProxyURL = proxyServer.utf8();
++    } else {
++        settings.proxyMap.set("http", String("http://" + proxyServer).utf8());
++        settings.proxyMap.set("https", String("https://" + proxyServer).utf8());
 +    }
++    settings.ignoreHosts.reset(g_strdupv(const_cast<char**>(ignoreHosts)));
++    return settings;
++}
++
++static WebCore::SoupNetworkProxySettings parseProxySettings(const String& proxyServer, const String& proxyBypassList)
++{
++    Vector<const char*> ignoreHosts;
++    if (!proxyBypassList.isEmpty()) {
++        Vector<String> tokens = proxyBypassList.split(',');
++        Vector<CString> protectTokens;
++        for (String token : tokens) {
++            CString cstr = token.utf8();
++            ignoreHosts.append(cstr.data());
++            protectTokens.append(WTFMove(cstr));
++        }
++    }
++    return parseRawProxySettings(proxyServer, ignoreHosts.data());
++}
++
++InspectorPlaywrightAgentClientGlib::InspectorPlaywrightAgentClientGlib(GMainLoop* mainLoop, const WTF::String& proxyURI, const char* const* ignoreHosts)
++    : m_mainLoop(mainLoop)
++    , m_proxySettings(parseRawProxySettings(proxyURI, ignoreHosts))
++{
 +}
 +
 +RefPtr<WebPageProxy> InspectorPlaywrightAgentClientGlib::createPage(WTF::String& error, const BrowserContext& browserContext)
@@ -12898,7 +12925,7 @@ index 0000000000000000000000000000000000000000..df004bb6b16fe69773d7a664b3633ea4
 +    return websiteDataStore.sessionID();
 +}
 +
-+BrowserContext InspectorPlaywrightAgentClientGlib::createBrowserContext(WTF::String& error)
++BrowserContext InspectorPlaywrightAgentClientGlib::createBrowserContext(WTF::String& error, const WTF::String& proxyServer, const WTF::String& proxyBypassList)
 +{
 +    BrowserContext browserContext;
 +    GRefPtr<WebKitWebsiteDataManager> data_manager = adoptGRef(webkit_website_data_manager_new_ephemeral());
@@ -12911,7 +12938,13 @@ index 0000000000000000000000000000000000000000..df004bb6b16fe69773d7a664b3633ea4
 +    browserContext.dataStore = &webkitWebsiteDataManagerGetDataStore(data_manager.get());
 +    PAL::SessionID sessionID = sessionIDFromContext(context.get());
 +    m_idToContext.set(sessionID, WTFMove(context));
-+    browserContext.processPool->setNetworkProxySettings(m_proxySettings);
++
++    if (!proxyServer.isEmpty()) {
++        WebCore::SoupNetworkProxySettings contextProxySettings = parseProxySettings(proxyServer, proxyBypassList);
++        browserContext.processPool->setNetworkProxySettings(contextProxySettings);
++    } else {
++        browserContext.processPool->setNetworkProxySettings(m_proxySettings);
++    }
 +    return browserContext;
 +}
 +
@@ -12925,7 +12958,7 @@ index 0000000000000000000000000000000000000000..df004bb6b16fe69773d7a664b3633ea4
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.h b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..df62288c96e8ffda5b318b2c28beb2d70e2bdaa3
+index 0000000000000000000000000000000000000000..a073a77390b206deb794efe937df4f35d7198608
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.h
 @@ -0,0 +1,61 @@
@@ -12971,12 +13004,12 @@ index 0000000000000000000000000000000000000000..df62288c96e8ffda5b318b2c28beb2d7
 +class InspectorPlaywrightAgentClientGlib : public InspectorPlaywrightAgentClient {
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    InspectorPlaywrightAgentClientGlib(GMainLoop* mainLoop, const WTF::CString& proxyURI, const char* const* ignoreHosts);
++    InspectorPlaywrightAgentClientGlib(GMainLoop* mainLoop, const WTF::String& proxyURI, const char* const* ignoreHosts);
 +    ~InspectorPlaywrightAgentClientGlib() override = default;
 +
 +    RefPtr<WebPageProxy> createPage(WTF::String& error, const BrowserContext&) override;
 +    void closeBrowser() override;
-+    BrowserContext createBrowserContext(WTF::String& error) override;
++    BrowserContext createBrowserContext(WTF::String& error, const WTF::String& proxyServer, const WTF::String& proxyBypassList) override;
 +    void deleteBrowserContext(WTF::String& error, PAL::SessionID) override;
 +
 +private:
@@ -13255,7 +13288,7 @@ index 9badecb2a422c837c5d33e22a44467b8159b4a37..3ebddb7a281ecc488d0896e47e4ad701
  
 diff --git a/Source/WebKit/UIProcess/mac/InspectorPlaywrightAgentClientMac.h b/Source/WebKit/UIProcess/mac/InspectorPlaywrightAgentClientMac.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..b75c2ce5ce9e9da3a33bca41ab548ec7a2f819ed
+index 0000000000000000000000000000000000000000..bce31b16fe37dc2a981389a6160e4094bf2b0f74
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/InspectorPlaywrightAgentClientMac.h
 @@ -0,0 +1,51 @@
@@ -13301,7 +13334,7 @@ index 0000000000000000000000000000000000000000..b75c2ce5ce9e9da3a33bca41ab548ec7
 +
 +    RefPtr<WebPageProxy> createPage(WTF::String& error, const BrowserContext&) override;
 +    void closeBrowser() override;
-+    BrowserContext createBrowserContext(WTF::String& error) override;
++    BrowserContext createBrowserContext(WTF::String& error, const WTF::String& proxyServer, const WTF::String& proxyBypassList) override;
 +    void deleteBrowserContext(WTF::String& error, PAL::SessionID) override;
 +
 +private:
@@ -13312,7 +13345,7 @@ index 0000000000000000000000000000000000000000..b75c2ce5ce9e9da3a33bca41ab548ec7
 +} // namespace API
 diff --git a/Source/WebKit/UIProcess/mac/InspectorPlaywrightAgentClientMac.mm b/Source/WebKit/UIProcess/mac/InspectorPlaywrightAgentClientMac.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..5db92c0580fd4f216ac86ede56eaac2eabec27da
+index 0000000000000000000000000000000000000000..b20118cb4bcd3bc962d5b5b052e408c2a0881aae
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/InspectorPlaywrightAgentClientMac.mm
 @@ -0,0 +1,77 @@
@@ -13378,9 +13411,9 @@ index 0000000000000000000000000000000000000000..5db92c0580fd4f216ac86ede56eaac2e
 +    [delegate_ quit];
 +}
 +
-+BrowserContext InspectorPlaywrightAgentClientMac::createBrowserContext(WTF::String& error)
++BrowserContext InspectorPlaywrightAgentClientMac::createBrowserContext(WTF::String& error, const WTF::String& proxyServer, const WTF::String& proxyBypassList)
 +{
-+    _WKBrowserContext* wkBrowserContext = [[delegate_ createBrowserContext] autorelease];
++    _WKBrowserContext* wkBrowserContext = [[delegate_ createBrowserContext:proxyServer] autorelease];
 +    BrowserContext browserContext;
 +    browserContext.processPool = &static_cast<WebProcessPool&>([[wkBrowserContext processPool] _apiObject]);
 +    browserContext.dataStore = &static_cast<WebsiteDataStore&>([[wkBrowserContext dataStore] _apiObject]);
@@ -13769,10 +13802,10 @@ index 0000000000000000000000000000000000000000..78bd14ef515e4022dbc251945d60248a
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.cpp b/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..aec85e2cb5748511b0fb0dacf08542f76653bbd3
+index 0000000000000000000000000000000000000000..ac82d055b9a544502ab5e4bda7fd3a003e595992
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.cpp
-@@ -0,0 +1,84 @@
+@@ -0,0 +1,94 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -13812,6 +13845,7 @@ index 0000000000000000000000000000000000000000..aec85e2cb5748511b0fb0dacf08542f7
 +#include "WebProcessPool.h"
 +#include "WebView.h"
 +#include "WKAPICast.h"
++#include <WebCore/CurlProxySettings.h>
 +#include <wtf/HashMap.h>
 +#include <wtf/RefPtr.h>
 +#include <wtf/text/StringView.h>
@@ -13839,13 +13873,22 @@ index 0000000000000000000000000000000000000000..aec85e2cb5748511b0fb0dacf08542f7
 +    m_quit();
 +}
 +
-+BrowserContext InspectorPlaywrightAgentClientWin::createBrowserContext(WTF::String& error)
++BrowserContext InspectorPlaywrightAgentClientWin::createBrowserContext(WTF::String& error, const WTF::String& proxyServer, const WTF::String& proxyBypassList)
 +{
 +    auto config = API::ProcessPoolConfiguration::create();
 +    BrowserContext browserContext;
 +    browserContext.processPool = WebKit::WebProcessPool::create(config);
 +    browserContext.dataStore = WebKit::WebsiteDataStore::createNonPersistent();
 +    m_configureDataStore(toAPI(browserContext.dataStore.get()));
++    if (!proxyServer.isEmpty()) {
++        URL proxyURL;
++        if (proxyServer.startsWith("socks5://"))
++          proxyURL = URL(URL(), proxyServer);
++        else if (!proxyServer.startsWith("http"))
++          proxyURL = URL(URL(), "http://" + proxyServer);
++        WebCore::CurlProxySettings settings(WTFMove(proxyURL), String(proxyBypassList));
++        browserContext.dataStore->setNetworkProxySettings(WTFMove(settings));
++    }
 +    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
 +    return browserContext;
 +}
@@ -13859,7 +13902,7 @@ index 0000000000000000000000000000000000000000..aec85e2cb5748511b0fb0dacf08542f7
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.h b/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..a6ddbceee54ae59f29c89f5f6c8680ff554ecd35
+index 0000000000000000000000000000000000000000..e18db39e5e9fe3e70658b4596c636eac083222b4
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.h
 @@ -0,0 +1,60 @@
@@ -13911,7 +13954,7 @@ index 0000000000000000000000000000000000000000..a6ddbceee54ae59f29c89f5f6c8680ff
 +
 +    RefPtr<WebPageProxy> createPage(WTF::String& error, const BrowserContext&) override;
 +    void closeBrowser() override;
-+    BrowserContext createBrowserContext(WTF::String& error) override;
++    BrowserContext createBrowserContext(WTF::String& error, const WTF::String& proxyServer, const WTF::String& proxyBypassList) override;
 +    void deleteBrowserContext(WTF::String& error, PAL::SessionID) override;
 +
 +private:
