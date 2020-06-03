@@ -148,7 +148,7 @@ describe('Page.click', function() {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.display = 'none');
     await page.click('button', { force: true }).catch(e => error = e);
-    expect(error.message).toBe('Element is not visible');
+    expect(error.message).toContain('Element is not visible');
     expect(await page.evaluate(() => result)).toBe('Was not clicked');
   });
   it('should waitFor display:none to be gone', async({page, server}) => {
@@ -180,16 +180,16 @@ describe('Page.click', function() {
   it('should timeout waiting for display:none to be gone', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.display = 'none');
-    const error = await page.click('button', { timeout: 100 }).catch(e => e);
-    expect(error.message).toContain('timeout exceeded');
-    expect(error.message).toContain('DEBUG=pw:input');
+    const error = await page.click('button', { timeout: 5000 }).catch(e => e);
+    expect(error.message).toContain('Timeout 5000ms exceeded during page.click.');
+    expect(error.message).toContain('waiting for element to be displayed, enabled and not moving...');
   });
   it('should timeout waiting for visbility:hidden to be gone', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.visibility = 'hidden');
-    const error = await page.click('button', { timeout: 100 }).catch(e => e);
-    expect(error.message).toContain('timeout exceeded');
-    expect(error.message).toContain('DEBUG=pw:input');
+    const error = await page.click('button', { timeout: 5000 }).catch(e => e);
+    expect(error.message).toContain('Timeout 5000ms exceeded during page.click.');
+    expect(error.message).toContain('waiting for element to be displayed, enabled and not moving...');
   });
   it('should waitFor visible when parent is hidden', async({page, server}) => {
     let done = false;
@@ -429,9 +429,9 @@ describe('Page.click', function() {
       button.style.transition = 'margin 5s linear 0s';
       button.style.marginLeft = '200px';
     });
-    const error = await button.click({ timeout: 100 }).catch(e => e);
-    expect(error.message).toContain('timeout exceeded');
-    expect(error.message).toContain('DEBUG=pw:input');
+    const error = await button.click({ timeout: 5000 }).catch(e => e);
+    expect(error.message).toContain('Timeout 5000ms exceeded during elementHandle.click.');
+    expect(error.message).toContain('waiting for element to be displayed, enabled and not moving...');
   });
   it('should wait for becoming hit target', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
@@ -477,9 +477,9 @@ describe('Page.click', function() {
       blocker.style.top = '0';
       document.body.appendChild(blocker);
     });
-    const error = await button.click({ timeout: 100 }).catch(e => e);
-    expect(error.message).toContain('timeout exceeded');
-    expect(error.message).toContain('DEBUG=pw:input');
+    const error = await button.click({ timeout: 5000 }).catch(e => e);
+    expect(error.message).toContain('Timeout 5000ms exceeded during elementHandle.click.');
+    expect(error.message).toContain('...element does not receive pointer events, retrying input action');
   });
   it('should fail when obscured and not waiting for hit target', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
@@ -689,7 +689,7 @@ describe('Page.click', function() {
     await handle.evaluate(button => button.className = 'animated');
     const error = await promise;
     expect(await page.evaluate(() => window.clicked)).toBe(undefined);
-    expect(error.message).toBe('Element is outside of the viewport');
+    expect(error.message).toContain('Element is outside of the viewport');
   });
   it('should fail when element jumps during hit testing', async({page, server}) => {
     await page.setContent('<button>Click me</button>');
@@ -699,12 +699,12 @@ describe('Page.click', function() {
       const margin = parseInt(document.querySelector('button').style.marginLeft || 0) + 100;
       document.querySelector('button').style.marginLeft = margin + 'px';
     });
-    const promise = handle.click({ timeout: 1000, __testHookBeforeHitTarget }).then(() => clicked = true).catch(e => e);
+    const promise = handle.click({ timeout: 5000, __testHookBeforeHitTarget }).then(() => clicked = true).catch(e => e);
     const error = await promise;
     expect(clicked).toBe(false);
     expect(await page.evaluate(() => window.clicked)).toBe(undefined);
-    expect(error.message).toContain('timeout exceeded');
-    expect(error.message).toContain('DEBUG=pw:input');
+    expect(error.message).toContain('Timeout 5000ms exceeded during elementHandle.click.');
+    expect(error.message).toContain('...element does not receive pointer events, retrying input action');
   });
   it('should dispatch microtasks in order', async({page, server}) => {
     await page.setContent(`

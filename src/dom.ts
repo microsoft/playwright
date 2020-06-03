@@ -27,7 +27,7 @@ import * as js from './javascript';
 import { Page } from './page';
 import { selectors } from './selectors';
 import * as types from './types';
-import { NotConnectedError, TimeoutError } from './errors';
+import { NotConnectedError } from './errors';
 import { Log, logError } from './logger';
 import { Progress } from './progress';
 
@@ -240,43 +240,41 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     };
   }
 
-  async _retryPointerAction(actionName: string, action: (point: types.Point) => Promise<void>, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
-    this._page._log(inputLog, `elementHandle.${actionName}()`);
-    const deadline = this._page._timeoutSettings.computeDeadline(options);
-    while (!helper.isPastDeadline(deadline)) {
-      const result = await this._performPointerAction(actionName, action, deadline, options);
+  async _retryPointerAction(progress: Progress, action: (point: types.Point) => Promise<void>, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
+    progress.log(inputLog, progress.apiName);
+    while (!progress.isCanceled()) {
+      const result = await this._performPointerAction(progress, action, options);
       if (result === 'done')
         return;
     }
-    throw new TimeoutError(`waiting for element to receive pointer events failed: timeout exceeded. Re-run with the DEBUG=pw:input env variable to see the debug log.`);
   }
 
-  async _performPointerAction(actionName: string, action: (point: types.Point) => Promise<void>, deadline: number, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<'done' | 'retry'> {
+  async _performPointerAction(progress: Progress, action: (point: types.Point) => Promise<void>, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'done' | 'retry'> {
     const { force = false, position } = options;
     if (!force)
-      await this._waitForDisplayedAtStablePositionAndEnabled(deadline);
+      await this._waitForDisplayedAtStablePositionAndEnabled(progress);
 
-    this._page._log(inputLog, 'scrolling into view if needed...');
+    progress.log(inputLog, 'scrolling into view if needed...');
     const scrolled = await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
     if (scrolled === 'invisible') {
       if (force)
         throw new Error('Element is not visible');
-      this._page._log(inputLog, '...element is not visible, retrying input action');
+      progress.log(inputLog, '...element is not visible, retrying input action');
       return 'retry';
     }
-    this._page._log(inputLog, '...done scrolling');
+    progress.log(inputLog, '...done scrolling');
 
     const maybePoint = position ? await this._offsetPoint(position) : await this._clickablePoint();
     if (maybePoint === 'invisible') {
       if (force)
         throw new Error('Element is not visible');
-      this._page._log(inputLog, 'element is not visibile, retrying input action');
+      progress.log(inputLog, 'element is not visibile, retrying input action');
       return 'retry';
     }
     if (maybePoint === 'outsideviewport') {
       if (force)
         throw new Error('Element is outside of the viewport');
-      this._page._log(inputLog, 'element is outside of the viewport, retrying input action');
+      progress.log(inputLog, 'element is outside of the viewport, retrying input action');
       return 'retry';
     }
     const point = roundPoint(maybePoint);
@@ -284,41 +282,53 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (!force) {
       if ((options as any).__testHookBeforeHitTarget)
         await (options as any).__testHookBeforeHitTarget();
-      this._page._log(inputLog, `checking that element receives pointer events at (${point.x},${point.y})...`);
+      progress.log(inputLog, `checking that element receives pointer events at (${point.x},${point.y})...`);
       const matchesHitTarget = await this._checkHitTargetAt(point);
       if (!matchesHitTarget) {
-        this._page._log(inputLog, '...element does not receive pointer events, retrying input action');
+        progress.log(inputLog, '...element does not receive pointer events, retrying input action');
         return 'retry';
       }
-      this._page._log(inputLog, `...element does receive pointer events, continuing input action`);
+      progress.log(inputLog, `...element does receive pointer events, continuing input action`);
     }
 
     await this._page._frameManager.waitForSignalsCreatedBy(async () => {
       let restoreModifiers: input.Modifier[] | undefined;
       if (options && options.modifiers)
         restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
-      this._page._log(inputLog, `performing "${actionName}" action...`);
+      progress.log(inputLog, `performing ${progress.apiName} action...`);
       await action(point);
-      this._page._log(inputLog, `... "${actionName}" action done`);
-      this._page._log(inputLog, 'waiting for scheduled navigations to finish...');
+      progress.log(inputLog, `...${progress.apiName} action done`);
+      progress.log(inputLog, 'waiting for scheduled navigations to finish...');
       if (restoreModifiers)
         await this._page.keyboard._ensureModifiers(restoreModifiers);
-    }, deadline, options, true);
-    this._page._log(inputLog, '...navigations have finished');
+    }, progress.deadline, options, true);
+    progress.log(inputLog, '...navigations have finished');
 
     return 'done';
   }
 
-  hover(options?: PointerActionOptions & types.PointerActionWaitOptions): Promise<void> {
-    return this._retryPointerAction('hover', point => this._page.mouse.move(point.x, point.y), options);
+  hover(options: PointerActionOptions & types.PointerActionWaitOptions = {}): Promise<void> {
+    return Progress.runCancelableTask(progress => this._hover(progress, options), options, this._page, this._page._timeoutSettings);
   }
 
-  click(options?: ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
-    return this._retryPointerAction('click', point => this._page.mouse.click(point.x, point.y, options), options);
+  _hover(progress: Progress, options: PointerActionOptions & types.PointerActionWaitOptions): Promise<void> {
+    return this._retryPointerAction(progress, point => this._page.mouse.move(point.x, point.y), options);
   }
 
-  dblclick(options?: MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
-    return this._retryPointerAction('dblclick', point => this._page.mouse.dblclick(point.x, point.y, options), options);
+  click(options: ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
+    return Progress.runCancelableTask(progress => this._click(progress, options), options, this._page, this._page._timeoutSettings);
+  }
+
+  _click(progress: Progress, options: ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
+    return this._retryPointerAction(progress, point => this._page.mouse.click(point.x, point.y, options), options);
+  }
+
+  dblclick(options: MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
+    return Progress.runCancelableTask(progress => this._dblclick(progress, options), options, this._page, this._page._timeoutSettings);
+  }
+
+  _dblclick(progress: Progress, options: MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
+    return this._retryPointerAction(progress, point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
   async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options?: types.NavigatingActionWaitOptions): Promise<string[]> {
@@ -346,28 +356,27 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, deadline, options);
   }
 
-  async fill(value: string, options?: types.NavigatingActionWaitOptions): Promise<void> {
-    this._page._log(inputLog, `elementHandle.fill(${value})`);
+  async fill(value: string, options: types.NavigatingActionWaitOptions = {}): Promise<void> {
+    return Progress.runCancelableTask(progress => this._fill(progress, value, options), options, this._page, this._page._timeoutSettings);
+  }
+
+  async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions): Promise<void> {
+    progress.log(inputLog, `elementHandle.fill("${value}")`);
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
-    const deadline = this._page._timeoutSettings.computeDeadline(options);
     await this._page._frameManager.waitForSignalsCreatedBy(async () => {
       const poll = await this._evaluateHandleInUtility(({ injected, node }, { value }) => {
         return injected.waitForEnabledAndFill(node, value);
       }, { value });
-      try {
-        const filledPromise = poll.evaluate(poll => poll.result);
-        const injectedResult = await helper.waitWithDeadline(filledPromise, 'element to be visible and enabled', deadline, 'pw:input');
-        const needsInput = handleInjectedResult(injectedResult);
-        if (needsInput) {
-          if (value)
-            await this._page.keyboard.insertText(value);
-          else
-            await this._page.keyboard.press('Delete');
-        }
-      } finally {
-        poll.evaluate(poll => poll.cancel()).catch(e => {}).then(() => poll.dispose());
+      new InjectedScriptPollHandler(progress, poll);
+      const injectedResult = await poll.evaluate(poll => poll.result);
+      const needsInput = handleInjectedResult(injectedResult);
+      if (needsInput) {
+        if (value)
+          await this._page.keyboard.insertText(value);
+        else
+          await this._page.keyboard.press('Delete');
       }
-    }, deadline, options, true);
+    }, progress.deadline, options, true);
   }
 
   async selectText(): Promise<void> {
@@ -436,20 +445,24 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, deadline, options, true);
   }
 
-  async check(options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    this._page._log(inputLog, `elementHandle.check()`);
-    await this._setChecked(true, options);
+  async check(options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+    return Progress.runCancelableTask(async progress => {
+      progress.log(inputLog, `elementHandle.check()`);
+      await this._setChecked(progress, true, options);
+    }, options, this._page, this._page._timeoutSettings);
   }
 
-  async uncheck(options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    this._page._log(inputLog, `elementHandle.uncheck()`);
-    await this._setChecked(false, options);
+  async uncheck(options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+    return Progress.runCancelableTask(async progress => {
+      progress.log(inputLog, `elementHandle.uncheck()`);
+      await this._setChecked(progress, false, options);
+    }, options, this._page, this._page._timeoutSettings);
   }
 
-  private async _setChecked(state: boolean, options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+  async _setChecked(progress: Progress, state: boolean, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     if (await this._evaluateInUtility(({ injected, node }) => injected.isCheckboxChecked(node), {}) === state)
       return;
-    await this.click(options);
+    await this._click(progress, options);
     if (await this._evaluateInUtility(({ injected, node }) => injected.isCheckboxChecked(node), {}) !== state)
       throw new Error('Unable to click checkbox');
   }
@@ -490,20 +503,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  async _waitForDisplayedAtStablePositionAndEnabled(deadline: number): Promise<void> {
-    this._page._log(inputLog, 'waiting for element to be displayed, enabled and not moving...');
+  async _waitForDisplayedAtStablePositionAndEnabled(progress: Progress): Promise<void> {
+    progress.log(inputLog, 'waiting for element to be displayed, enabled and not moving...');
     const rafCount =  this._page._delegate.rafCountForStablePosition();
     const poll = await this._evaluateHandleInUtility(({ injected, node }, { rafCount }) => {
       return injected.waitForDisplayedAtStablePositionAndEnabled(node, rafCount);
     }, { rafCount });
-    try {
-      const stablePromise = poll.evaluate(poll => poll.result);
-      const injectedResult = await helper.waitWithDeadline(stablePromise, 'element to be displayed and not moving', deadline, 'pw:input');
-      handleInjectedResult(injectedResult);
-    } finally {
-      poll.evaluate(poll => poll.cancel()).catch(e => {}).then(() => poll.dispose());
-    }
-    this._page._log(inputLog, '...element is displayed and does not move');
+    new InjectedScriptPollHandler(progress, poll);
+    const injectedResult = await poll.evaluate(poll => poll.result);
+    handleInjectedResult(injectedResult);
+    progress.log(inputLog, '...element is displayed and does not move');
   }
 
   async _checkHitTargetAt(point: types.Point): Promise<boolean> {

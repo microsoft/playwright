@@ -105,6 +105,7 @@ export class FrameManager {
     }
   }
 
+  // TODO: take progress parameter.
   async waitForSignalsCreatedBy<T>(action: () => Promise<T>, deadline: number, options: types.NavigatingActionWaitOptions = {}, input?: boolean): Promise<T> {
     if (options.noWaitAfter)
       return action();
@@ -697,107 +698,94 @@ export class Frame {
   }
 
   private async _retryWithSelectorIfNotConnected<R>(
-    actionName: string,
     selector: string, options: types.TimeoutOptions,
-    action: (handle: dom.ElementHandle<Element>, deadline: number) => Promise<R>): Promise<R> {
-    const deadline = this._page._timeoutSettings.computeDeadline(options);
-    this._page._log(dom.inputLog, `(page|frame).${actionName}("${selector}")`);
-    while (!helper.isPastDeadline(deadline)) {
-      try {
-        const { world, task } = selectors._waitForSelectorTask(selector, 'attached');
-        this._page._log(dom.inputLog, `waiting for the selector "${selector}"`);
-        const handle = await Progress.runCancelableTask(
-            progress => this._scheduleRerunnableTask(progress, world, task),
-            options, this._page, this._page._timeoutSettings);
-        this._page._log(dom.inputLog, `...got element for the selector`);
-        const element = handle.asElement() as dom.ElementHandle<Element>;
+    action: (progress: Progress, handle: dom.ElementHandle<Element>) => Promise<R>): Promise<R> {
+    return Progress.runCancelableTask(async progress => {
+      progress.log(dom.inputLog, `${progress.apiName}("${selector}")`);
+      while (!progress.isCanceled()) {
         try {
-          return await action(element, deadline);
-        } finally {
+          const { world, task } = selectors._waitForSelectorTask(selector, 'attached');
+          progress.log(dom.inputLog, `waiting for the selector "${selector}"`);
+          const handle = await this._scheduleRerunnableTask(progress, world, task);
+          progress.log(dom.inputLog, `...got element for the selector`);
+          const element = handle.asElement() as dom.ElementHandle<Element>;
+          progress.cleanupWhenCanceled(() => element.dispose());
+          const result = await action(progress, element);
           element.dispose();
+          return result;
+        } catch (e) {
+          if (!(e instanceof NotConnectedError))
+            throw e;
+          progress.log(dom.inputLog, 'element was detached from the DOM, retrying');
         }
-      } catch (e) {
-        if (!(e instanceof NotConnectedError))
-          throw e;
-        this._page._log(dom.inputLog, 'Element was detached from the DOM, retrying');
       }
-    }
-    throw new TimeoutError(`waiting for selector "${selector}" failed: timeout exceeded. Re-run with the DEBUG=pw:input env variable to see the debug log.`);
+      return undefined as any;
+    }, options, this._page, this._page._timeoutSettings);
   }
 
   async click(selector: string, options: dom.ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected('click', selector, options,
-        (handle, deadline) => handle.click(helper.optionsWithUpdatedTimeout(options, deadline)));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._click(progress, options));
   }
 
   async dblclick(selector: string, options: dom.MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected('dblclick', selector, options,
-        (handle, deadline) => handle.dblclick(helper.optionsWithUpdatedTimeout(options, deadline)));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._dblclick(progress, options));
   }
 
   async fill(selector: string, value: string, options: types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected('fill', selector, options,
-        (handle, deadline) => handle.fill(value, helper.optionsWithUpdatedTimeout(options, deadline)));
+    await this._retryWithSelectorIfNotConnected(selector, options,
+        (progress, handle) => handle._fill(progress, value, options));
   }
 
   async focus(selector: string, options: types.TimeoutOptions = {}) {
-    await this._retryWithSelectorIfNotConnected('focus', selector, options,
-        (handle, deadline) => handle.focus());
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.focus());
   }
 
   async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<null|string> {
-    return await this._retryWithSelectorIfNotConnected('textContent', selector, options,
-        (handle, deadline) => handle.textContent());
+    return await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.textContent());
   }
 
   async innerText(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
-    return await this._retryWithSelectorIfNotConnected('innerText', selector, options,
-        (handle, deadline) => handle.innerText());
+    return await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.innerText());
   }
 
   async innerHTML(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
-    return await this._retryWithSelectorIfNotConnected('innerHTML', selector, options,
-        (handle, deadline) => handle.innerHTML());
+    return await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.innerHTML());
   }
 
   async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
-    return await this._retryWithSelectorIfNotConnected('getAttribute', selector, options,
-        (handle, deadline) => handle.getAttribute(name) as Promise<string>);
+    return await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.getAttribute(name));
   }
 
   async hover(selector: string, options: dom.PointerActionOptions & types.PointerActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected('hover', selector, options,
-        (handle, deadline) => handle.hover(helper.optionsWithUpdatedTimeout(options, deadline)));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._hover(progress, options));
   }
 
   async selectOption(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return await this._retryWithSelectorIfNotConnected('selectOption', selector, options,
-        (handle, deadline) => handle.selectOption(values, helper.optionsWithUpdatedTimeout(options, deadline)));
+    return await this._retryWithSelectorIfNotConnected(selector, options,
+        (progress, handle) => handle.selectOption(values, helper.optionsWithUpdatedTimeout(options, progress.deadline)));
   }
 
   async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
-    await this._retryWithSelectorIfNotConnected('setInputFiles', selector, options,
-        (handle, deadline) => handle.setInputFiles(files, helper.optionsWithUpdatedTimeout(options, deadline)));
+    await this._retryWithSelectorIfNotConnected(selector, options,
+        (progress, handle) => handle.setInputFiles(files, helper.optionsWithUpdatedTimeout(options, progress.deadline)));
   }
 
   async type(selector: string, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected('type', selector, options,
-        (handle, deadline) => handle.type(text, helper.optionsWithUpdatedTimeout(options, deadline)));
+    await this._retryWithSelectorIfNotConnected(selector, options,
+        (progress, handle) => handle.type(text, helper.optionsWithUpdatedTimeout(options, progress.deadline)));
   }
 
   async press(selector: string, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected('press', selector, options,
-        (handle, deadline) => handle.press(key, helper.optionsWithUpdatedTimeout(options, deadline)));
+    await this._retryWithSelectorIfNotConnected(selector, options,
+        (progress, handle) => handle.press(key, helper.optionsWithUpdatedTimeout(options, progress.deadline)));
   }
 
   async check(selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected('check', selector, options,
-        (handle, deadline) => handle.check(helper.optionsWithUpdatedTimeout(options, deadline)));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._setChecked(progress, true, options));
   }
 
   async uncheck(selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected('uncheck', selector, options,
-        (handle, deadline) => handle.uncheck(helper.optionsWithUpdatedTimeout(options, deadline)));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._setChecked(progress, false, options));
   }
 
   async waitForTimeout(timeout: number) {
