@@ -63,7 +63,7 @@ createZipForLinux() {
     LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/WPENetworkProcess | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' | xargs cp -t $tmpdir
     LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/WPEWebProcess | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' | xargs cp -t $tmpdir
     # Copy libvpx.so.5 as Ubuntu 20.04 comes with libvpx.so.6
-    ldd /home/yurys/WebKit/WebKitBuild/GTK/Release/bin/MiniBrowser | grep -o '[^ ]*\/libvpx.so.5[^ ]*' | xargs cp -t $tmpdir
+    ldd WebKitBuild/WPE/Release/bin/MiniBrowser | grep -o '[^ ]*\/libvpx.so.5[^ ]*' | xargs cp -t $tmpdir
     mkdir -p $tmpdir/gio/modules
     cp -t $tmpdir/gio/modules $PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib/gio/modules/*
 
@@ -76,7 +76,7 @@ createZipForLinux() {
     # copy all relevant shared objects
     LD_LIBRARY_PATH="$PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib" ldd WebKitBuild/GTK/Release/bin/MiniBrowser | grep -o '[^ ]*WebKitBuild/GTK/[^ ]*' | xargs cp -t $tmpdir
     # Copy libvpx.so.5 as Ubuntu 20.04 comes with libvpx.so.6
-    ldd /home/yurys/WebKit/WebKitBuild/GTK/Release/bin/MiniBrowser | grep -o '[^ ]*\/libvpx.so.5[^ ]*' | xargs cp -t $tmpdir
+    ldd WebKitBuild/GTK/Release/bin/MiniBrowser | grep -o '[^ ]*\/libvpx.so.5[^ ]*' | xargs cp -t $tmpdir
     mkdir -p $tmpdir/gio/modules
     cp -t $tmpdir/gio/modules $PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib/gio/modules/*
 
