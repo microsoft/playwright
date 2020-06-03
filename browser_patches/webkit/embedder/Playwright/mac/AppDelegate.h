@@ -39,6 +39,7 @@
     NSMutableSet *_dialogs;
     NSString* _initialURL;
     NSString* _userDataDir;
+    NSString* _proxyServer;
     IBOutlet NSMenuItem *_newWebKit2WindowItem;
 }
 
