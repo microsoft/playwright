@@ -141,22 +141,21 @@ const NSActivityOptions ActivityOptions =
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
     NSMutableDictionary *dictionary = [[[NSMutableDictionary alloc] init] autorelease];
+    NSURL *proxyURL = [NSURL URLWithString:proxyServer];
+    NSString *host = [proxyURL host];
+    NSNumber *port = [proxyURL port];
     if ([proxyServer hasPrefix:@"socks5://"]) {
-        NSURL *socksProxy = [NSURL URLWithString:proxyServer];
-        [dictionary setObject:[socksProxy host] forKey:(NSString *)kCFStreamPropertySOCKSProxyHost];
-        NSNumber *port = [socksProxy port];
+        [dictionary setObject:host forKey:(NSString *)kCFStreamPropertySOCKSProxyHost];
         if (port)
             [dictionary setObject:port forKey:(NSString *)kCFStreamPropertySOCKSProxyPort];
-    } else {
-        NSURL *httpProxy = [NSURL URLWithString: [NSString stringWithFormat:@"http://%@", proxyServer]];
-        NSString *host = [httpProxy host];
-        NSNumber *port = [httpProxy port];
-        [dictionary setObject:host forKey:(NSString *)kCFStreamPropertyHTTPProxyHost];
+    } else if ([proxyServer hasPrefix:@"https://"]) {
         [dictionary setObject:host forKey:(NSString *)kCFStreamPropertyHTTPSProxyHost];
-        if (port) {
-            [dictionary setObject:port forKey:(NSString *)kCFStreamPropertyHTTPProxyPort];
+        if (port)
             [dictionary setObject:port forKey:(NSString *)kCFStreamPropertyHTTPSProxyPort];
-        }
+    } else {
+        [dictionary setObject:host forKey:(NSString *)kCFStreamPropertyHTTPProxyHost];
+        if (port)
+            [dictionary setObject:port forKey:(NSString *)kCFStreamPropertyHTTPProxyPort];
     }
 
 #pragma clang diagnostic pop

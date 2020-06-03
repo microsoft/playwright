@@ -12760,10 +12760,10 @@ index 31d29091985f34a65134a2b0e7cb3ace1dae441d..571ceac8a4b291fa6e91eb8b17065c0a
  };
 diff --git a/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..1619f5b10ea9a3dc2f7de22d4018acc462f46013
+index 0000000000000000000000000000000000000000..79aa5407901c07f63a53ac0e441cd6a9b9c65d07
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
-@@ -0,0 +1,156 @@
+@@ -0,0 +1,150 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -12814,13 +12814,7 @@ index 0000000000000000000000000000000000000000..1619f5b10ea9a3dc2f7de22d4018acc4
 +        return settings;
 +
 +    settings.mode = WebCore::SoupNetworkProxySettings::Mode::Custom;
-+
-+    if (proxyServer.startsWith("socks5://")) {
-+        settings.defaultProxyURL = proxyServer.utf8();
-+    } else {
-+        settings.proxyMap.set("http", String("http://" + proxyServer).utf8());
-+        settings.proxyMap.set("https", String("https://" + proxyServer).utf8());
-+    }
++    settings.defaultProxyURL = proxyServer.utf8();
 +    settings.ignoreHosts.reset(g_strdupv(const_cast<char**>(ignoreHosts)));
 +    return settings;
 +}
@@ -13766,10 +13760,10 @@ index 0000000000000000000000000000000000000000..78bd14ef515e4022dbc251945d60248a
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.cpp b/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..ac82d055b9a544502ab5e4bda7fd3a003e595992
+index 0000000000000000000000000000000000000000..4e5910f0f1d1b237b7c5637ccbc4fe3f374ff391
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/win/InspectorPlaywrightAgentClientWin.cpp
-@@ -0,0 +1,94 @@
+@@ -0,0 +1,90 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -13845,11 +13839,7 @@ index 0000000000000000000000000000000000000000..ac82d055b9a544502ab5e4bda7fd3a00
 +    browserContext.dataStore = WebKit::WebsiteDataStore::createNonPersistent();
 +    m_configureDataStore(toAPI(browserContext.dataStore.get()));
 +    if (!proxyServer.isEmpty()) {
-+        URL proxyURL;
-+        if (proxyServer.startsWith("socks5://"))
-+          proxyURL = URL(URL(), proxyServer);
-+        else if (!proxyServer.startsWith("http"))
-+          proxyURL = URL(URL(), "http://" + proxyServer);
++        URL proxyURL = URL(URL(), proxyServer);
 +        WebCore::CurlProxySettings settings(WTFMove(proxyURL), String(proxyBypassList));
 +        browserContext.dataStore->setNetworkProxySettings(WTFMove(settings));
 +    }
@@ -15143,7 +15133,7 @@ index 1570d65effb5d601ee3c44a2a7461436f4691c2c..65e62adad0c3684e5cec2f6bc8e7f528
  
  #endif
 diff --git a/Tools/MiniBrowser/gtk/main.c b/Tools/MiniBrowser/gtk/main.c
-index 2ff45b938cffabe95fe17137393b8b6c506d4993..ec7ac8bbe174e0c1edbe425b392c9fd6695cb4b8 100644
+index 2ff45b938cffabe95fe17137393b8b6c506d4993..79180075025fd323cc9e818c76603d0fcea74c1d 100644
 --- a/Tools/MiniBrowser/gtk/main.c
 +++ b/Tools/MiniBrowser/gtk/main.c
 @@ -54,6 +54,10 @@ static const char *cookiesFile;
@@ -15237,23 +15227,16 @@ index 2ff45b938cffabe95fe17137393b8b6c506d4993..ec7ac8bbe174e0c1edbe425b392c9fd6
      g_object_unref(manager);
  
      if (cookiesPolicy) {
-@@ -572,7 +628,14 @@ int main(int argc, char *argv[])
+@@ -572,7 +628,7 @@ int main(int argc, char *argv[])
      }
  
      if (proxy) {
 -        WebKitNetworkProxySettings *webkitProxySettings = webkit_network_proxy_settings_new(proxy, ignoreHosts);
-+        WebKitNetworkProxySettings* webkitProxySettings;
-+        if (g_str_has_prefix(proxy, "socks5://")) {
-+            webkitProxySettings = webkit_network_proxy_settings_new(proxy, ignoreHosts);
-+        } else {
-+            webkitProxySettings = webkit_network_proxy_settings_new("", ignoreHosts);
-+            webkit_network_proxy_settings_add_proxy_for_scheme(webkitProxySettings, "http", g_strconcat("http", proxy));
-+            webkit_network_proxy_settings_add_proxy_for_scheme(webkitProxySettings, "https", g_strconcat("https", proxy));
-+        }
++        WebKitNetworkProxySettings* webkitProxySettings = webkit_network_proxy_settings_new(proxy, ignoreHosts);
          webkit_web_context_set_network_proxy_settings(webContext, WEBKIT_NETWORK_PROXY_MODE_CUSTOM, webkitProxySettings);
          webkit_network_proxy_settings_free(webkitProxySettings);
      }
-@@ -633,9 +696,7 @@ int main(int argc, char *argv[])
+@@ -633,9 +689,7 @@ int main(int argc, char *argv[])
              WebKitWebView *webView = createBrowserTab(mainWindow, webkitSettings, userContentManager);
              if (!i)
                  firstTab = GTK_WIDGET(webView);
@@ -15264,7 +15247,7 @@ index 2ff45b938cffabe95fe17137393b8b6c506d4993..ec7ac8bbe174e0c1edbe425b392c9fd6
          }
      } else {
          WebKitWebView *webView = createBrowserTab(mainWindow, webkitSettings, userContentManager);
-@@ -657,8 +718,7 @@ int main(int argc, char *argv[])
+@@ -657,8 +711,7 @@ int main(int argc, char *argv[])
  
      browser_main();
  
@@ -15275,7 +15258,7 @@ index 2ff45b938cffabe95fe17137393b8b6c506d4993..ec7ac8bbe174e0c1edbe425b392c9fd6
      return 0;
  }
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..02756b2bbdb664d0445eec83eeeee8e0c9590720 100644
+index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..9344a1edd2f9931583c04de2a25a2ec71b2702e8 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
 @@ -43,6 +43,9 @@ static gboolean headlessMode;
@@ -15426,23 +15409,16 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..02756b2bbdb664d0445eec83eeeee8e0
  
      if (cookiesPolicy) {
          auto* cookieManager = webkit_web_context_get_cookie_manager(webContext);
-@@ -238,7 +321,14 @@ int main(int argc, char *argv[])
+@@ -238,7 +321,7 @@ int main(int argc, char *argv[])
      }
  
      if (proxy) {
 -        auto* webkitProxySettings = webkit_network_proxy_settings_new(proxy, ignoreHosts);
-+        WebKitNetworkProxySettings* webkitProxySettings;
-+        if (g_str_has_prefix(proxy, "socks5://")) {
-+            webkitProxySettings = webkit_network_proxy_settings_new(proxy, ignoreHosts);
-+        } else {
-+            webkitProxySettings = webkit_network_proxy_settings_new("", ignoreHosts);
-+            webkit_network_proxy_settings_add_proxy_for_scheme(webkitProxySettings, "http", g_strconcat("http", proxy));
-+            webkit_network_proxy_settings_add_proxy_for_scheme(webkitProxySettings, "https", g_strconcat("https", proxy));
-+        }
++        WebKitNetworkProxySettings* webkitProxySettings = webkit_network_proxy_settings_new(proxy, ignoreHosts);
          webkit_web_context_set_network_proxy_settings(webContext, WEBKIT_NETWORK_PROXY_MODE_CUSTOM, webkitProxySettings);
          webkit_network_proxy_settings_free(webkitProxySettings);
      }
-@@ -301,8 +391,6 @@ int main(int argc, char *argv[])
+@@ -301,8 +384,6 @@ int main(int argc, char *argv[])
          backendPtr->setAccessibleChild(ATK_OBJECT(accessible));
  #endif
  
@@ -15451,7 +15427,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..02756b2bbdb664d0445eec83eeeee8e0
      webkit_web_context_set_automation_allowed(webContext, automationMode);
      g_signal_connect(webContext, "automation-started", G_CALLBACK(automationStartedCallback), webView);
      g_signal_connect(webView, "permission-request", G_CALLBACK(decidePermissionRequest), nullptr);
-@@ -318,16 +406,9 @@ int main(int argc, char *argv[])
+@@ -318,16 +399,9 @@ int main(int argc, char *argv[])
          webkit_web_view_set_background_color(webView, &color);
  
      if (uriArguments) {
@@ -15471,7 +15447,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..02756b2bbdb664d0445eec83eeeee8e0
          webkit_web_view_load_uri(webView, "about:blank");
      else
          webkit_web_view_load_uri(webView, "https://wpewebkit.org");
-@@ -337,8 +418,7 @@ int main(int argc, char *argv[])
+@@ -337,8 +411,7 @@ int main(int argc, char *argv[])
      g_hash_table_destroy(openViews);
  
  
