@@ -16,7 +16,6 @@
  */
 
 import { CRSession } from './crConnection';
-import { helper } from '../helper';
 import { getExceptionMessage, releaseObject } from './crProtocolHelper';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
@@ -43,45 +42,22 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     return remoteObject.objectId!;
   }
 
-  async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
-    if (helper.isString(pageFunction)) {
-      return this._callOnUtilityScript(context,
-          `evaluate`, [
-            { value: debugSupport.ensureSourceUrl(pageFunction) },
-          ], returnByValue, () => { });
-    }
-
-    if (typeof pageFunction !== 'function')
-      throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
-    const { functionText, values, handles, dispose } = await js.prepareFunctionCall(pageFunction, context, args);
-    return this._callOnUtilityScript(context,
-        'callFunction', [
-          { value: functionText },
-          ...values.map(value => ({ value })),
-          ...handles,
-        ], returnByValue, dispose);
-  }
-
-  private async _callOnUtilityScript(context: js.ExecutionContext, method: string, args: Protocol.Runtime.CallArgument[], returnByValue: boolean, dispose: () => void) {
-    try {
-      const utilityScript = await context.utilityScript();
-      const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
-        functionDeclaration: `function (...args) { return this.${method}(...args) }` + debugSupport.generateSourceUrl(),
-        objectId: utilityScript._objectId,
-        arguments: [
-          { value: returnByValue },
-          ...args
-        ],
-        returnByValue,
-        awaitPromise: true,
-        userGesture: true
-      }).catch(rewriteError);
-      if (exceptionDetails)
-        throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
-      return returnByValue ? parseEvaluationResultValue(remoteObject.value) : context.createHandle(remoteObject);
-    } finally {
-      dispose();
-    }
+  async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], objectIds: string[]): Promise<any> {
+    const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
+      functionDeclaration: expression,
+      objectId: utilityScript._objectId,
+      arguments: [
+        { objectId: utilityScript._objectId },
+        ...values.map(value => ({ value })),
+        ...objectIds.map(objectId => ({ objectId })),
+      ],
+      returnByValue,
+      awaitPromise: true,
+      userGesture: true
+    }).catch(rewriteError);
+    if (exceptionDetails)
+      throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
+    return returnByValue ? parseEvaluationResultValue(remoteObject.value) : utilityScript._context.createHandle(remoteObject);
   }
 
   async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
@@ -109,16 +85,6 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     if (!handle._objectId)
       return;
     await releaseObject(this._client, handle._objectId);
-  }
-
-  async handleJSONValue<T>(handle: js.JSHandle<T>): Promise<T> {
-    if (handle._objectId) {
-      return this._callOnUtilityScript(handle._context,
-          `jsonValue`, [
-            { objectId: handle._objectId },
-          ], true, () => {});
-    }
-    return handle._value;
   }
 }
 

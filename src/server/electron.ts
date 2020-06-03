@@ -133,7 +133,7 @@ export class ElectronApplication extends ExtendedEventEmitter {
       this._nodeExecutionContext = new js.ExecutionContext(new CRExecutionContext(this._nodeSession, event.context), this._logger);
     });
     await this._nodeSession.send('Runtime.enable', {}).catch(e => {});
-    this._nodeElectronHandle = await this._nodeExecutionContext!._delegate.evaluate(this._nodeExecutionContext!, false /* returnByValue */, () => {
+    this._nodeElectronHandle = await js.evaluate(this._nodeExecutionContext!, false /* returnByValue */, () => {
       // Resolving the race between the debugger and the boot-time script.
       if ((global as any)._playwrightRun)
         return (global as any)._playwrightRun();

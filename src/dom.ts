@@ -64,7 +64,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
   async evaluateInternal<Arg, R>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R>;
   async evaluateInternal(pageFunction: never, ...args: never[]): Promise<any> {
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return this._delegate.evaluate(this, true /* returnByValue */, pageFunction, ...args);
+      return js.evaluate(this, true /* returnByValue */, pageFunction, ...args);
     });
   }
 
@@ -72,7 +72,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
   async evaluateHandleInternal<Arg, R>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
   async evaluateHandleInternal(pageFunction: never, ...args: never[]): Promise<any> {
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return this._delegate.evaluate(this, false /* returnByValue */, pageFunction, ...args);
+      return js.evaluate(this, false /* returnByValue */, pageFunction, ...args);
     });
   }
 

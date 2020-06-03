@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { helper } from '../helper';
 import * as js from '../javascript';
 import { FFSession } from './ffConnection';
 import { Protocol } from './protocol';
@@ -42,46 +41,21 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     return payload.result!.objectId!;
   }
 
-  async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
-    if (helper.isString(pageFunction)) {
-      return this._callOnUtilityScript(context,
-          `evaluate`, [
-            { value: debugSupport.ensureSourceUrl(pageFunction) },
-          ], returnByValue, () => {});
-    }
-    if (typeof pageFunction !== 'function')
-      throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
-
-    const { functionText, values, handles, dispose } = await js.prepareFunctionCall(pageFunction, context, args);
-
-    return this._callOnUtilityScript(context,
-        `callFunction`, [
-          { value: functionText },
-          ...values.map(value => ({ value })),
-          ...handles.map(handle => ({ objectId: handle.objectId, value: handle.value })),
-        ], returnByValue, dispose);
-  }
-
-  private async _callOnUtilityScript(context: js.ExecutionContext, method: string, args: Protocol.Runtime.CallFunctionArgument[], returnByValue: boolean, dispose: () => void) {
-    try {
-      const utilityScript = await context.utilityScript();
-      const payload = await this._session.send('Runtime.callFunction', {
-        functionDeclaration: `(utilityScript, ...args) => utilityScript.${method}(...args)` + debugSupport.generateSourceUrl(),
-        args: [
-          { objectId: utilityScript._objectId, value: undefined },
-          { value: returnByValue },
-          ...args
-        ],
-        returnByValue,
-        executionContextId: this._executionContextId
-      }).catch(rewriteError);
-      checkException(payload.exceptionDetails);
-      if (returnByValue)
-        return parseEvaluationResultValue(payload.result!.value);
-      return context.createHandle(payload.result!);
-    } finally {
-      dispose();
-    }
+  async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], objectIds: string[]): Promise<any> {
+    const payload = await this._session.send('Runtime.callFunction', {
+      functionDeclaration: expression,
+      args: [
+        { objectId: utilityScript._objectId, value: undefined },
+        ...values.map(value => ({ value })),
+        ...objectIds.map(objectId => ({ objectId, value: undefined })),
+      ],
+      returnByValue,
+      executionContextId: this._executionContextId
+    }).catch(rewriteError);
+    checkException(payload.exceptionDetails);
+    if (returnByValue)
+      return parseEvaluationResultValue(payload.result!.value);
+    return utilityScript._context.createHandle(payload.result!);
   }
 
   async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
@@ -109,16 +83,6 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
       executionContextId: this._executionContextId,
       objectId: handle._objectId,
     }).catch(error => {});
-  }
-
-  async handleJSONValue<T>(handle: js.JSHandle<T>): Promise<T> {
-    if (handle._objectId) {
-      return await this._callOnUtilityScript(handle._context,
-          `jsonValue`, [
-            { objectId: handle._objectId, value: undefined },
-          ], true, () => {});
-    }
-    return handle._value;
   }
 }
 

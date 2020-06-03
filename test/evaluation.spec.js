@@ -309,6 +309,22 @@ describe('Page.evaluate', function() {
     });
     expect(result).toEqual([42]);
   });
+  it.fail(WEBKIT)('should not throw an error when evaluation does a synchronous navigation and returns an object', async({page, server}) => {
+    // It is imporant to be on about:blank for sync reload.
+    const result = await page.evaluate(() => {
+      window.location.reload();
+      return {a: 42};
+    });
+    expect(result).toEqual({a: 42});
+  });
+  it('should not throw an error when evaluation does a synchronous navigation and returns undefined', async({page, server}) => {
+    // It is imporant to be on about:blank for sync reload.
+    const result = await page.evaluate(() => {
+      window.location.reload();
+      return undefined;
+    });
+    expect(result).toBe(undefined);
+  });
   it.slow()('should transfer 100Mb of data from page to node.js', async({page, server}) => {
     const a = await page.evaluate(() => Array(100 * 1024 * 1024 + 1).join('a'));
     expect(a.length).toBe(100 * 1024 * 1024);
