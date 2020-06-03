@@ -45,24 +45,8 @@ export class ExecutionContext {
     this._logger = logger;
   }
 
-  doEvaluateInternal(returnByValue: boolean, waitForNavigations: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
-    return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
-  }
-
   adoptIfNeeded(handle: JSHandle): Promise<JSHandle> | null {
     return null;
-  }
-
-  async evaluateInternal<R>(pageFunction: types.Func0<R>): Promise<R>;
-  async evaluateInternal<Arg, R>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R>;
-  async evaluateInternal(pageFunction: never, ...args: never[]): Promise<any> {
-    return this.doEvaluateInternal(true /* returnByValue */, true /* waitForNavigations */, pageFunction, ...args);
-  }
-
-  async evaluateHandleInternal<R>(pageFunction: types.Func0<R>): Promise<types.SmartHandle<R>>;
-  async evaluateHandleInternal<Arg, R>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
-  async evaluateHandleInternal(pageFunction: never, ...args: never[]): Promise<any> {
-    return this.doEvaluateInternal(false /* returnByValue */, true /* waitForNavigations */, pageFunction, ...args);
   }
 
   utilityScript(): Promise<JSHandle> {
@@ -95,13 +79,13 @@ export class JSHandle<T = any> {
   async evaluate<R, Arg>(pageFunction: types.FuncOn<T, Arg, R>, arg: Arg): Promise<R>;
   async evaluate<R>(pageFunction: types.FuncOn<T, void, R>, arg?: any): Promise<R>;
   async evaluate<R, Arg>(pageFunction: types.FuncOn<T, Arg, R>, arg: Arg): Promise<R> {
-    return this._context.doEvaluateInternal(true /* returnByValue */, true /* waitForNavigations */, pageFunction, this, arg);
+    return this._context._delegate.evaluate(this._context, true /* returnByValue */, pageFunction, this, arg);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: types.FuncOn<T, Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: types.FuncOn<T, void, R>, arg?: any): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: types.FuncOn<T, Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
-    return this._context.doEvaluateInternal(false /* returnByValue */, true /* waitForNavigations */, pageFunction, this, arg);
+    return this._context._delegate.evaluate(this._context, false /* returnByValue */, pageFunction, this, arg);
   }
 
   async getProperty(propertyName: string): Promise<JSHandle> {

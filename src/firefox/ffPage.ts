@@ -443,7 +443,7 @@ export class FFPage implements PageDelegate {
   }
 
   async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
-    await handle._evaluateInUtility(({ injected, node }, files) =>
+    await handle._evaluateInUtility(([injected, node, files]) =>
       injected.setInputFiles(node, files), dom.toFileTransferPayload(files));
   }
 

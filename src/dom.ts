@@ -60,9 +60,19 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return null;
   }
 
-  async doEvaluateInternal(returnByValue: boolean, waitForNavigations: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
-    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, !waitForNavigations, async () => {
-      return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
+  async evaluateInternal<R>(pageFunction: types.Func0<R>): Promise<R>;
+  async evaluateInternal<Arg, R>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R>;
+  async evaluateInternal(pageFunction: never, ...args: never[]): Promise<any> {
+    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
+      return this._delegate.evaluate(this, true /* returnByValue */, pageFunction, ...args);
+    });
+  }
+
+  async evaluateHandleInternal<R>(pageFunction: types.Func0<R>): Promise<types.SmartHandle<R>>;
+  async evaluateHandleInternal<Arg, R>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
+  async evaluateHandleInternal(pageFunction: never, ...args: never[]): Promise<any> {
+    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
+      return this._delegate.evaluate(this, false /* returnByValue */, pageFunction, ...args);
     });
   }
 
@@ -104,19 +114,19 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this;
   }
 
-  async _evaluateInMain<R, Arg>(pageFunction: types.FuncOn<{ injected: InjectedScript, node: T }, Arg, R>, arg: Arg): Promise<R> {
+  async _evaluateInMain<R, Arg>(pageFunction: types.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {
     const main = await this._context.frame._mainContext();
-    return main.doEvaluateInternal(true /* returnByValue */, true /* waitForNavigations */, pageFunction, { injected: await main.injectedScript(), node: this }, arg);
+    return main.evaluateInternal(pageFunction, [await main.injectedScript(), this, arg]);
   }
 
-  async _evaluateInUtility<R, Arg>(pageFunction: types.FuncOn<{ injected: InjectedScript, node: T }, Arg, R>, arg: Arg): Promise<R> {
+  async _evaluateInUtility<R, Arg>(pageFunction: types.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {
     const utility = await this._context.frame._utilityContext();
-    return utility.doEvaluateInternal(true /* returnByValue */, true /* waitForNavigations */, pageFunction, { injected: await utility.injectedScript(), node: this }, arg);
+    return utility.evaluateInternal(pageFunction, [await utility.injectedScript(), this, arg]);
   }
 
-  async _evaluateHandleInUtility<R, Arg>(pageFunction: types.FuncOn<{ injected: InjectedScript, node: T }, Arg, R>, arg: Arg): Promise<js.JSHandle<R>> {
+  async _evaluateHandleInUtility<R, Arg>(pageFunction: types.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<js.JSHandle<R>> {
     const utility = await this._context.frame._utilityContext();
-    return utility.doEvaluateInternal(false /* returnByValue */, true /* waitForNavigations */, pageFunction, { injected: await utility.injectedScript(), node: this }, arg);
+    return utility.evaluateHandleInternal(pageFunction, [await utility.injectedScript(), this, arg]);
   }
 
   async ownerFrame(): Promise<frames.Frame | null> {
@@ -135,14 +145,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async contentFrame(): Promise<frames.Frame | null> {
-    const isFrameElement = await this._evaluateInUtility(({node}) => node && (node.nodeName === 'IFRAME' || node.nodeName === 'FRAME'), {});
+    const isFrameElement = await this._evaluateInUtility(([injected, node]) => node && (node.nodeName === 'IFRAME' || node.nodeName === 'FRAME'), {});
     if (!isFrameElement)
       return null;
     return this._page._delegate.getContentFrame(this);
   }
 
   async getAttribute(name: string): Promise<string | null> {
-    return this._evaluateInUtility(({node}, name: string) => {
+    return this._evaluateInUtility(([injeced, node, name]) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         throw new Error('Not an element');
       const element = node as unknown as Element;
@@ -151,11 +161,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async textContent(): Promise<string | null> {
-    return this._evaluateInUtility(({node}) => node.textContent, {});
+    return this._evaluateInUtility(([injected, node]) => node.textContent, {});
   }
 
   async innerText(): Promise<string> {
-    return this._evaluateInUtility(({node}) => {
+    return this._evaluateInUtility(([injected, node]) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         throw new Error('Not an element');
       if (node.namespaceURI !== 'http://www.w3.org/1999/xhtml')
@@ -166,7 +176,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async innerHTML(): Promise<string> {
-    return this._evaluateInUtility(({node}) => {
+    return this._evaluateInUtility(([injected, node]) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         throw new Error('Not an element');
       const element = node as unknown as Element;
@@ -175,7 +185,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async dispatchEvent(type: string, eventInit: Object = {}) {
-    await this._evaluateInMain(({ injected, node }, { type, eventInit }) =>
+    await this._evaluateInMain(([injected, node, { type, eventInit }]) =>
       injected.dispatchEvent(node, type, eventInit), { type, eventInit });
   }
 
@@ -229,7 +239,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   private async _offsetPoint(offset: types.Point): Promise<types.Point | 'invisible'> {
     const [box, border] = await Promise.all([
       this.boundingBox(),
-      this._evaluateInUtility(({ injected, node }) => injected.getElementBorderWidth(node), {}).catch(logError(this._context._logger)),
+      this._evaluateInUtility(([injected, node]) => injected.getElementBorderWidth(node), {}).catch(logError(this._context._logger)),
     ]);
     if (!box || !border)
       return 'invisible';
@@ -353,7 +363,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
     }
     return this._page._frameManager.waitForSignalsCreatedBy<string[]>(progress, options.noWaitAfter, async () => {
-      const injectedResult = await this._evaluateInUtility(({ injected, node }, selectOptions) => injected.selectOptions(node, selectOptions), selectOptions);
+      const injectedResult = await this._evaluateInUtility(([injected, node, selectOptions]) => injected.selectOptions(node, selectOptions), selectOptions);
       return handleInjectedResult(injectedResult);
     });
   }
@@ -366,9 +376,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     progress.log(inputLog, `elementHandle.fill("${value}")`);
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
-      const poll = await this._evaluateHandleInUtility(({ injected, node }, { value }) => {
+      const poll = await this._evaluateHandleInUtility(([injected, node, value]) => {
         return injected.waitForEnabledAndFill(node, value);
-      }, { value });
+      }, value);
       new InjectedScriptPollHandler(progress, poll);
       const injectedResult = await poll.evaluate(poll => poll.result);
       const needsInput = handleInjectedResult(injectedResult);
@@ -383,7 +393,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async selectText(): Promise<void> {
     this._page._log(inputLog, `elementHandle.selectText()`);
-    const injectedResult = await this._evaluateInUtility(({ injected, node }) => injected.selectText(node), {});
+    const injectedResult = await this._evaluateInUtility(([injected, node]) => injected.selectText(node), {});
     handleInjectedResult(injectedResult);
   }
 
@@ -393,7 +403,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _setInputFiles(progress: Progress, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions) {
     progress.log(inputLog, progress.apiName);
-    const injectedResult = await this._evaluateInUtility(({ node }): types.InjectedScriptResult<boolean> => {
+    const injectedResult = await this._evaluateInUtility(([injected, node]): types.InjectedScriptResult<boolean> => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node as Node as Element).tagName !== 'INPUT')
         return { status: 'error', error: 'Node is not an HTMLInputElement' };
       if (!node.isConnected)
@@ -428,7 +438,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async focus() {
     this._page._log(inputLog, `elementHandle.focus()`);
-    const injectedResult = await this._evaluateInUtility(({ injected, node }) => injected.focusNode(node), {});
+    const injectedResult = await this._evaluateInUtility(([injected, node]) => injected.focusNode(node), {});
     handleInjectedResult(injectedResult);
   }
 
@@ -471,10 +481,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _setChecked(progress: Progress, state: boolean, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    if (await this._evaluateInUtility(({ injected, node }) => injected.isCheckboxChecked(node), {}) === state)
+    if (await this._evaluateInUtility(([injected, node]) => injected.isCheckboxChecked(node), {}) === state)
       return;
     await this._click(progress, options);
-    if (await this._evaluateInUtility(({ injected, node }) => injected.isCheckboxChecked(node), {}) !== state)
+    if (await this._evaluateInUtility(([injected, node]) => injected.isCheckboxChecked(node), {}) !== state)
       throw new Error('Unable to click checkbox');
   }
 
@@ -517,9 +527,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async _waitForDisplayedAtStablePositionAndEnabled(progress: Progress): Promise<void> {
     progress.log(inputLog, 'waiting for element to be displayed, enabled and not moving...');
     const rafCount =  this._page._delegate.rafCountForStablePosition();
-    const poll = await this._evaluateHandleInUtility(({ injected, node }, { rafCount }) => {
+    const poll = await this._evaluateHandleInUtility(([injected, node, rafCount]) => {
       return injected.waitForDisplayedAtStablePositionAndEnabled(node, rafCount);
-    }, { rafCount });
+    }, rafCount);
     new InjectedScriptPollHandler(progress, poll);
     const injectedResult = await poll.evaluate(poll => poll.result);
     handleInjectedResult(injectedResult);
@@ -536,9 +546,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       // Translate from viewport coordinates to frame coordinates.
       point = { x: point.x - box.x, y: point.y - box.y };
     }
-    const injectedResult = await this._evaluateInUtility(({ injected, node }, { point }) => {
+    const injectedResult = await this._evaluateInUtility(([injected, node, point]) => {
       return injected.checkHitTargetAt(node, point);
-    }, { point });
+    }, point);
     return handleInjectedResult(injectedResult);
   }
 }
