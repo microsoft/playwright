@@ -4286,7 +4286,7 @@ index 3bcd0487cfc8766baa01c7804173a15747b47b2d..3b5c230d7e00b9d7e248be8730ab22ab
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp b/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..f534b449377965cce02feb91355f320f43cdcbed
+index 0000000000000000000000000000000000000000..fc70eb56148276a0e3848b68f69799deb8f7e248
 --- /dev/null
 +++ b/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp
 @@ -0,0 +1,160 @@
@@ -4396,7 +4396,7 @@ index 0000000000000000000000000000000000000000..f534b449377965cce02feb91355f320f
 +    --m_inflightFrames;
 +}
 +
-+void InspectorScreencastAgent::startVideoRecording(Inspector::ErrorString& errorString, const String&)
++void InspectorScreencastAgent::startVideoRecording(Inspector::ErrorString& errorString, const String&, int, int)
 +{
 +    errorString = "Not implemented."_s;
 +}
@@ -4452,7 +4452,7 @@ index 0000000000000000000000000000000000000000..f534b449377965cce02feb91355f320f
 +#endif  // PLATFORM(WPE) || PLATFORM(WIN)
 diff --git a/Source/WebCore/inspector/agents/InspectorScreencastAgent.h b/Source/WebCore/inspector/agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..965437fd3cd0857e6a30bc99032ff6b450b2c833
+index 0000000000000000000000000000000000000000..8c1a662351c8bb406484dd6ec4750de42f07cad2
 --- /dev/null
 +++ b/Source/WebCore/inspector/agents/InspectorScreencastAgent.h
 @@ -0,0 +1,81 @@
@@ -4517,7 +4517,7 @@ index 0000000000000000000000000000000000000000..965437fd3cd0857e6a30bc99032ff6b4
 +    void start(Inspector::ErrorString&, const String& format, const int* quality) override;
 +    void stop(Inspector::ErrorString&) override;
 +    void frameAck(Inspector::ErrorString&) override;
-+    void startVideoRecording(Inspector::ErrorString&, const String& file) override;
++    void startVideoRecording(Inspector::ErrorString&, const String& file, int width, int height) override;
 +    void stopVideoRecording(Ref<StopVideoRecordingCallback>&&) override;
 +
 +    void willDisplay();
