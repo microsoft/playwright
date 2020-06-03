@@ -7784,7 +7784,7 @@ index 07da96138db1333ce5a49093dc2187fd12032214..fc149b28dc25133f4618a8ac24039abe
      bool canRunBeforeUnloadConfirmPanel() const final { return true; }
  
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp b/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp
-index 041bfb545c6af6220a8266d356ac19d90791cb83..60702f314fdd96aa2804efbf9983e224d249f10a 100644
+index 041bfb545c6af6220a8266d356ac19d90791cb83..814558c67bfdb9c3cf635f62608349a8e0307229 100644
 --- a/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp
 @@ -119,8 +119,8 @@ enum {
@@ -7807,7 +7807,19 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..60702f314fdd96aa2804efbf9983e224
  #if !USE(GTK4)
      bool useSystemAppearanceForScrollbars;
  #endif
-@@ -335,10 +335,10 @@ static void webkitWebContextGetProperty(GObject* object, guint propID, GValue* v
+@@ -306,11 +306,9 @@ WEBKIT_DEFINE_TYPE(WebKitWebContext, webkit_web_context, G_TYPE_OBJECT)
+ 
+ static const char* injectedBundleDirectory()
+ {
+-#if ENABLE(DEVELOPER_MODE)
+     const char* bundleDirectory = g_getenv("WEBKIT_INJECTED_BUNDLE_PATH");
+     if (bundleDirectory && g_file_test(bundleDirectory, G_FILE_TEST_IS_DIR))
+         return bundleDirectory;
+-#endif
+ 
+ #if PLATFORM(GTK)
+     static const char* injectedBundlePath = LIBDIR G_DIR_SEPARATOR_S "webkit2gtk-" WEBKITGTK_API_VERSION_STRING
+@@ -335,10 +333,10 @@ static void webkitWebContextGetProperty(GObject* object, guint propID, GValue* v
      case PROP_WEBSITE_DATA_MANAGER:
          g_value_set_object(value, webkit_web_context_get_website_data_manager(context));
          break;
@@ -7819,7 +7831,7 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..60702f314fdd96aa2804efbf9983e224
  #if !USE(GTK4)
      case PROP_USE_SYSYEM_APPEARANCE_FOR_SCROLLBARS:
          g_value_set_boolean(value, webkit_web_context_get_use_system_appearance_for_scrollbars(context));
-@@ -365,10 +365,10 @@ static void webkitWebContextSetProperty(GObject* object, guint propID, const GVa
+@@ -365,10 +363,10 @@ static void webkitWebContextSetProperty(GObject* object, guint propID, const GVa
          context->priv->websiteDataManager = manager ? WEBKIT_WEBSITE_DATA_MANAGER(manager) : nullptr;
          break;
      }
@@ -7831,7 +7843,7 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..60702f314fdd96aa2804efbf9983e224
  #if !USE(GTK4)
      case PROP_USE_SYSYEM_APPEARANCE_FOR_SCROLLBARS:
          webkit_web_context_set_use_system_appearance_for_scrollbars(context, g_value_get_boolean(value));
-@@ -391,8 +391,8 @@ static void webkitWebContextConstructed(GObject* object)
+@@ -391,8 +389,8 @@ static void webkitWebContextConstructed(GObject* object)
  
      API::ProcessPoolConfiguration configuration;
      configuration.setInjectedBundlePath(FileSystem::stringFromFileSystemRepresentation(bundleFilename.get()));
@@ -7841,7 +7853,7 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..60702f314fdd96aa2804efbf9983e224
  #if !USE(GTK4)
      configuration.setUseSystemAppearanceForScrollbars(priv->useSystemAppearanceForScrollbars);
  #endif
-@@ -404,6 +404,11 @@ static void webkitWebContextConstructed(GObject* object)
+@@ -404,6 +402,11 @@ static void webkitWebContextConstructed(GObject* object)
      if (!webkit_website_data_manager_is_ephemeral(priv->websiteDataManager.get()))
          configuration.setHSTSStorageDirectory(FileSystem::stringFromFileSystemRepresentation(webkit_website_data_manager_get_hsts_cache_directory(priv->websiteDataManager.get())));
  
@@ -7853,7 +7865,7 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..60702f314fdd96aa2804efbf9983e224
      priv->processPool = WebProcessPool::create(configuration);
      priv->processPool->setPrimaryDataStore(webkitWebsiteDataManagerGetDataStore(priv->websiteDataManager.get()));
      priv->processPool->setUserMessageHandler([webContext](UserMessage&& message, CompletionHandler<void(UserMessage&&)>&& completionHandler) {
-@@ -515,7 +520,6 @@ static void webkit_web_context_class_init(WebKitWebContextClass* webContextClass
+@@ -515,7 +518,6 @@ static void webkit_web_context_class_init(WebKitWebContextClass* webContextClass
              WEBKIT_TYPE_WEBSITE_DATA_MANAGER,
              static_cast<GParamFlags>(WEBKIT_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY)));
  
@@ -7861,7 +7873,7 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..60702f314fdd96aa2804efbf9983e224
      /**
       * WebKitWebContext:process-swap-on-cross-site-navigation-enabled:
       *
-@@ -539,6 +543,7 @@ static void webkit_web_context_class_init(WebKitWebContextClass* webContextClass
+@@ -539,6 +541,7 @@ static void webkit_web_context_class_init(WebKitWebContextClass* webContextClass
              FALSE,
              static_cast<GParamFlags>(WEBKIT_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY)));
  
