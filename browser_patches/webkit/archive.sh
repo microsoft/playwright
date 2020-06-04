@@ -136,7 +136,7 @@ createZipForMac() {
   ditto {./WebKitBuild/Release,$tmpdir}/WebInspectorUI.framework
   ditto {./WebKitBuild/Release,$tmpdir}/WebKit.framework
   ditto {./WebKitBuild/Release,$tmpdir}/WebKitLegacy.framework
-  ditto {..,$tmpdir}/pw_run.sh
+  ditto {$SCRIPTS_DIR,$tmpdir}/pw_run.sh
   # copy protocol
   node $SCRIPTS_DIR/concat_protocol.js > $tmpdir/protocol.json
 
@@ -146,8 +146,7 @@ createZipForMac() {
 }
 
 trap "cd $(pwd -P)" EXIT
-
-SCRIPTS_DIR="$(dirname "$0")"
-cd $SCRIPTS_DIR
+cd "$(dirname "$0")"
+SCRIPTS_DIR="$(pwd -P)"
 
 main "$@"
