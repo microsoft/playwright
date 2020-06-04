@@ -588,9 +588,48 @@ describe('text selector', () => {
     expect(await page.$eval(`text=root1`, e => e.textContent)).toBe('Hello from root1');
     expect(await page.$eval(`text=root2`, e => e.textContent)).toBe('Hello from root2');
     expect(await page.$eval(`text=root3`, e => e.textContent)).toBe('Hello from root3');
+    expect(await page.$eval(`#root1 >> text=from root3`, e => e.textContent)).toBe('Hello from root3');
+    expect(await page.$eval(`#target >> text=from root2`, e => e.textContent)).toBe('Hello from root2');
     expect(await page.$(`text:light=root1`)).toBe(null);
     expect(await page.$(`text:light=root2`)).toBe(null);
     expect(await page.$(`text:light=root3`)).toBe(null);
+  });
+
+  it('should prioritize light dom over shadow dom in the same parent', async({page, server}) => {
+    await page.evaluate(() => {
+      const div = document.createElement('div');
+      document.body.appendChild(div);
+
+      div.attachShadow({ mode: 'open' });
+      const shadowSpan = document.createElement('span');
+      shadowSpan.textContent = 'Hello from shadow';
+      div.shadowRoot.appendChild(shadowSpan);
+
+      const lightSpan = document.createElement('span');
+      lightSpan.textContent = 'Hello from light';
+      div.appendChild(lightSpan);
+    });
+    expect(await page.$eval(`div >> text=Hello`, e => e.textContent)).toBe('Hello from light');
+  });
+
+  it('should waitForSelector with distributed elements', async({page, server}) => {
+    const promise = page.waitForSelector(`div >> text=Hello`);
+    await page.evaluate(() => {
+      const div = document.createElement('div');
+      document.body.appendChild(div);
+
+      div.attachShadow({ mode: 'open' });
+      const shadowSpan = document.createElement('span');
+      shadowSpan.textContent = 'Hello from shadow';
+      div.shadowRoot.appendChild(shadowSpan);
+      div.shadowRoot.appendChild(document.createElement('slot'));
+
+      const lightSpan = document.createElement('span');
+      lightSpan.textContent = 'Hello from light';
+      div.appendChild(lightSpan);
+    });
+    const handle = await promise;
+    expect(await handle.textContent()).toBe('Hello from light');
   });
 });
 
