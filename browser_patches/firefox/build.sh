@@ -40,7 +40,11 @@ fi
 OBJ_FOLDER="obj-build-playwright"
 echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 
-./mach build
+if [[ $1 == "--juggler" ]]; then
+  ./mach build faster
+else
+  ./mach build
+fi
 
 if [[ "$(uname)" == "Darwin" ]]; then
   node ../install-preferences.js $PWD/${OBJ_FOLDER}/dist
