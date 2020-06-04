@@ -151,6 +151,10 @@ class BrowserHandler {
     this._targetRegistry.browserContextForId(browserContextId).httpCredentials = nullToUndefined(credentials);
   }
 
+  async setProxy({browserContextId, type, host, port}) {
+    this._targetRegistry.browserContextForId(browserContextId).proxy = { type, host, port };
+  }
+
   setRequestInterception({browserContextId, enabled}) {
     this._targetRegistry.browserContextForId(browserContextId).requestInterceptionEnabled = enabled;
   }
