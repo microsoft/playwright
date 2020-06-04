@@ -148,14 +148,13 @@ const NSActivityOptions ActivityOptions =
         [dictionary setObject:host forKey:(NSString *)kCFStreamPropertySOCKSProxyHost];
         if (port)
             [dictionary setObject:port forKey:(NSString *)kCFStreamPropertySOCKSProxyPort];
-    } else if ([proxyServer hasPrefix:@"https://"]) {
-        [dictionary setObject:host forKey:(NSString *)kCFStreamPropertyHTTPSProxyHost];
-        if (port)
-            [dictionary setObject:port forKey:(NSString *)kCFStreamPropertyHTTPSProxyPort];
     } else {
+        [dictionary setObject:host forKey:(NSString *)kCFStreamPropertyHTTPSProxyHost];
         [dictionary setObject:host forKey:(NSString *)kCFStreamPropertyHTTPProxyHost];
-        if (port)
+        if (port) {
+            [dictionary setObject:port forKey:(NSString *)kCFStreamPropertyHTTPSProxyPort];
             [dictionary setObject:port forKey:(NSString *)kCFStreamPropertyHTTPProxyPort];
+        }
     }
 
 #pragma clang diagnostic pop
