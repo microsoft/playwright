@@ -20,19 +20,20 @@ import * as utilityScriptSource from './generated/utilityScriptSource';
 import { InnerLogger } from './logger';
 import * as debugSupport from './debug/debugSupport';
 import { serializeAsCallArgument } from './utilityScriptSerializers';
+import { helper } from './helper';
 
+type ObjectId = string;
 export type RemoteObject = {
-  objectId?: string,
+  objectId?: ObjectId,
   value?: any
 };
 
 export interface ExecutionContextDelegate {
-  evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: string | Function, ...args: any[]): Promise<any>;
-  rawEvaluate(pageFunction: string): Promise<string>;
+  rawEvaluate(expression: string): Promise<ObjectId>;
+  evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: JSHandle<any>, values: any[], objectIds: ObjectId[]): Promise<any>;
   getProperties(handle: JSHandle): Promise<Map<string, JSHandle>>;
   createHandle(context: ExecutionContext, remoteObject: RemoteObject): JSHandle;
   releaseHandle(handle: JSHandle): Promise<void>;
-  handleJSONValue<T>(handle: JSHandle<T>): Promise<T>;
 }
 
 export class ExecutionContext {
@@ -65,11 +66,11 @@ export class ExecutionContext {
 export class JSHandle<T = any> {
   readonly _context: ExecutionContext;
   _disposed = false;
-  readonly _objectId: string | undefined;
+  readonly _objectId: ObjectId | undefined;
   readonly _value: any;
   private _objectType: string;
 
-  constructor(context: ExecutionContext, type: string, objectId?: string, value?: any) {
+  constructor(context: ExecutionContext, type: string, objectId?: ObjectId, value?: any) {
     this._context = context;
     this._objectId = objectId;
     this._value = value;
@@ -79,13 +80,13 @@ export class JSHandle<T = any> {
   async evaluate<R, Arg>(pageFunction: types.FuncOn<T, Arg, R>, arg: Arg): Promise<R>;
   async evaluate<R>(pageFunction: types.FuncOn<T, void, R>, arg?: any): Promise<R>;
   async evaluate<R, Arg>(pageFunction: types.FuncOn<T, Arg, R>, arg: Arg): Promise<R> {
-    return this._context._delegate.evaluate(this._context, true /* returnByValue */, pageFunction, this, arg);
+    return evaluate(this._context, true /* returnByValue */, pageFunction, this, arg);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: types.FuncOn<T, Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: types.FuncOn<T, void, R>, arg?: any): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: types.FuncOn<T, Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
-    return this._context._delegate.evaluate(this._context, false /* returnByValue */, pageFunction, this, arg);
+    return evaluate(this._context, false /* returnByValue */, pageFunction, this, arg);
   }
 
   async getProperty(propertyName: string): Promise<JSHandle> {
@@ -104,8 +105,12 @@ export class JSHandle<T = any> {
     return this._context._delegate.getProperties(this);
   }
 
-  jsonValue(): Promise<T> {
-    return this._context._delegate.handleJSONValue(this);
+  async jsonValue(): Promise<T> {
+    if (!this._objectId)
+      return this._value;
+    const utilityScript = await this._context.utilityScript();
+    const script = `(utilityScript, ...args) => utilityScript.jsonValue(...args)` + debugSupport.generateSourceUrl();
+    return this._context._delegate.evaluateWithArguments(script, true, utilityScript, [true], [this._objectId]);
   }
 
   asElement(): dom.ElementHandle | null {
@@ -130,15 +135,14 @@ export class JSHandle<T = any> {
   }
 }
 
-type CallArgument = {
-  value?: any,
-  objectId?: string
-}
-
-export async function prepareFunctionCall(
-  pageFunction: Function,
-  context: ExecutionContext,
-  args: any[]): Promise<{ functionText: string, values: any[], handles: CallArgument[], dispose: () => void }> {
+export async function evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
+  const utilityScript = await context.utilityScript();
+  if (helper.isString(pageFunction)) {
+    const script = `(utilityScript, ...args) => utilityScript.evaluate(...args)` + debugSupport.generateSourceUrl();
+    return context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, [returnByValue, debugSupport.ensureSourceUrl(pageFunction)], []);
+  }
+  if (typeof pageFunction !== 'function')
+    throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
 
   const originalText = pageFunction.toString();
   let functionText = originalText;
@@ -180,18 +184,24 @@ export async function prepareFunctionCall(
     }
     return { fallThrough: handle };
   }));
-  const resultHandles: CallArgument[] = [];
+
+  const utilityScriptObjectIds: ObjectId[] = [];
   for (const handle of await Promise.all(handles)) {
     if (handle._context !== context)
       throw new Error('JSHandles can be evaluated only in the context they were created!');
-    resultHandles.push({ objectId: handle._objectId });
+    utilityScriptObjectIds.push(handle._objectId!);
   }
-  const dispose = () => {
-    toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
-  };
 
   functionText += await debugSupport.generateSourceMapUrl(originalText, functionText);
-  return { functionText, values: [ args.length, ...args ], handles: resultHandles, dispose };
+  // See UtilityScript for arguments.
+  const utilityScriptValues = [returnByValue, functionText, args.length, ...args];
+
+  const script = `(utilityScript, ...args) => utilityScript.callFunction(...args)` + debugSupport.generateSourceUrl();
+  try {
+    return context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, utilityScriptValues, utilityScriptObjectIds);
+  } finally {
+    toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
+  }
 }
 
 export function parseUnserializableValue(unserializableValue: string): any {
