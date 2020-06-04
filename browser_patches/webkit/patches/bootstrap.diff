@@ -8976,10 +8976,10 @@ index 0000000000000000000000000000000000000000..2f96d82a650993bc0b0469453e7634d2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..d75a8076d663ca75d1c42702087d2b0787215f24
+index 0000000000000000000000000000000000000000..39ebb8bf0cd3bda7913e9f029eeff5256de3fcac
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,392 @@
+@@ -0,0 +1,395 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -9193,7 +9193,10 @@ index 0000000000000000000000000000000000000000..d75a8076d663ca75d1c42702087d2b07
 +    {
 +        m_encoderQueue->dispatch([this, frame = WTFMove(frame)] {
 +            frame->convertToVpxImage(m_image.get());
-+            encodeFrame(m_image.get(), frame->duration());
++            // TODO: figure out why passing duration to the codec results in much
++            // worse visual quality and makes video stutter.
++            for (int i = 0; i < frame->duration(); i++)
++                encodeFrame(m_image.get(), 1);
 +        });
 +    }
 +
