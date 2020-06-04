@@ -14589,6 +14589,24 @@ index 22f9c46ecdf08834321840ffe71a5114616a3357..cf551cd6111e86421e7311c403715d62
  void WebChromeClient::runOpenPanel(Frame& frame, FileChooser& fileChooser)
  {
      if (m_page.activeOpenPanelResultListener())
+diff --git a/Source/WebKit/WebProcess/WebCoreSupport/WebFrameLoaderClient.cpp b/Source/WebKit/WebProcess/WebCoreSupport/WebFrameLoaderClient.cpp
+index 4ada29373feb20a60b50c54d6d9cd95d3f781b24..f4f73c9aa61e9f4cfb2d6da296960040fb7ca661 100644
+--- a/Source/WebKit/WebProcess/WebCoreSupport/WebFrameLoaderClient.cpp
++++ b/Source/WebKit/WebProcess/WebCoreSupport/WebFrameLoaderClient.cpp
+@@ -1537,13 +1537,6 @@ void WebFrameLoaderClient::transitionToCommittedForNewPage()
+     if (webPage->scrollPinningBehavior() != DoNotPin)
+         view->setScrollPinningBehavior(webPage->scrollPinningBehavior());
+ 
+-#if USE(COORDINATED_GRAPHICS)
+-    if (shouldUseFixedLayout) {
+-        view->setDelegatesScrolling(shouldUseFixedLayout);
+-        view->setPaintsEntireContents(shouldUseFixedLayout);
+-        return;
+-    }
+-#endif
+ }
+ 
+ void WebFrameLoaderClient::didRestoreFromBackForwardCache()
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 index 564126e14e22882e7896fcff3e6d32f722eec47b..71fbdd4d4cb720a1ce5b34ababac61915241d2f2 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
