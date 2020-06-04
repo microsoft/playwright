@@ -252,6 +252,10 @@ class TargetRegistry {
     return this._browserContextIdToBrowserContext.get(browserContextId);
   }
 
+  browserContextForUserContextId(userContextId) {
+    return this._userContextIdToBrowserContext.get(userContextId);
+  }
+
   async newPage({browserContextId}) {
     let window;
     let created = false;
@@ -458,6 +462,7 @@ class BrowserContext {
     this._registry._browserContextIdToBrowserContext.set(this.browserContextId, this);
     this._registry._userContextIdToBrowserContext.set(this.userContextId, this);
     this.removeOnDetach = removeOnDetach;
+    this.proxy = undefined;
     this.extraHTTPHeaders = undefined;
     this.httpCredentials = undefined;
     this.requestInterceptionEnabled = undefined;

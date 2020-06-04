@@ -19,6 +19,8 @@ const Cm = Components.manager;
 const CC = Components.Constructor;
 const helper = new Helper();
 
+const UINT32_MAX = Math.pow(2, 32)-1;
+
 const BinaryInputStream = CC('@mozilla.org/binaryinputstream;1', 'nsIBinaryInputStream', 'setInputStream');
 const BinaryOutputStream = CC('@mozilla.org/binaryoutputstream;1', 'nsIBinaryOutputStream', 'setOutputStream');
 const StorageStream = CC('@mozilla.org/storagestream;1', 'nsIStorageStream', 'init');
@@ -152,6 +154,31 @@ class NetworkObserver {
     this._pendingAuthentication = new Set();  // pre-auth id
     this._postAuthChannelIdToRequestId = new Map();  // pre-auth id => post-auth id
     this._bodyListeners = new Map();  // channel id => ResponseBodyListener.
+
+    const protocolProxyService = Cc['@mozilla.org/network/protocol-proxy-service;1'].getService();
+    this._channelProxyFilter = {
+      QueryInterface: ChromeUtils.generateQI([Ci.nsIProtocolProxyChannelFilter]),
+      applyFilter: (channel, defaultProxyInfo, proxyFilter) => {
+        const originAttributes = channel.loadInfo && channel.loadInfo.originAttributes;
+        const browserContext = originAttributes ? this._targetRegistry.browserContextForUserContextId(originAttributes.userContextId) : null;
+        const proxy = browserContext ? browserContext.proxy : null;
+        if (!proxy) {
+          proxyFilter.onProxyFilterResult(defaultProxyInfo);
+          return;
+        }
+        proxyFilter.onProxyFilterResult(protocolProxyService.newProxyInfo(
+            proxy.type,
+            proxy.host,
+            proxy.port,
+            '', /* aProxyAuthorizationHeader */
+            '', /* aConnectionIsolationKey */
+            0, /* aFlags */
+            UINT32_MAX, /* aFailoverTimeout */
+            null, /* failover proxy */
+        ));
+      },
+    };
+    protocolProxyService.registerChannelFilter(this._channelProxyFilter, 0 /* position */);
 
     this._channelSink = {
       QueryInterface: ChromeUtils.generateQI([Ci.nsIChannelEventSink]),
