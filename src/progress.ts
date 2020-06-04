@@ -16,97 +16,109 @@
 
 import { InnerLogger, Log } from './logger';
 import { TimeoutError } from './errors';
-import { helper } from './helper';
+import { helper, assert } from './helper';
 import * as types from './types';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from './timeoutSettings';
 import { getCurrentApiCall, rewriteErrorMessage } from './debug/stackTrace';
 
-class AbortError extends Error {}
+export interface Progress {
+  readonly apiName: string;
+  readonly deadline: number;  // To be removed?
+  readonly aborted: Promise<void>;
+  isRunning(): boolean;
+  cleanupWhenAborted(cleanup: () => any): void;
+  log(log: Log, message: string | Error): void;
+}
 
-export class Progress {
-  static async runCancelableTask<T>(task: (progress: Progress) => Promise<T>, timeoutOptions: types.TimeoutOptions, logger: InnerLogger, timeoutSettings?: TimeoutSettings, apiName?: string): Promise<T> {
-    apiName = apiName || getCurrentApiCall();
+export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeoutOptions: types.TimeoutOptions, logger: InnerLogger, timeoutSettingsOrDefaultTimeout?: TimeoutSettings | number, apiName?: string): Promise<T> {
+  const controller = new ProgressController(timeoutOptions, logger, timeoutSettingsOrDefaultTimeout, apiName);
+  return controller.run(task);
+}
 
-    const defaultTimeout = timeoutSettings ? timeoutSettings.timeout() : DEFAULT_TIMEOUT;
+export class ProgressController {
+  // Promise and callback that forcefully abort the progress.
+  // This promise always rejects.
+  private _forceAbort: (error: Error) => void = () => {};
+  private _forceAbortPromise: Promise<any>;
+
+  // Promise and callback that resolve once the progress is aborted.
+  // This includes the force abort and also rejection of the task itself (failure).
+  private _aborted = () => {};
+  private _abortedPromise: Promise<void>;
+
+  // Cleanups to be run only in the case of abort.
+  private _cleanups: (() => any)[] = [];
+
+  private _logger: InnerLogger;
+  private _logRecording: string[] = [];
+  private _state: 'before' | 'running' | 'aborted' | 'finished' = 'before';
+  private _apiName: string;
+  private _deadline: number;
+  private _timeout: number;
+
+  constructor(timeoutOptions: types.TimeoutOptions, logger: InnerLogger, timeoutSettingsOrDefaultTimeout?: TimeoutSettings | number, apiName?: string) {
+    this._apiName = apiName || getCurrentApiCall();
+    this._logger = logger;
+
+    // TODO: figure out nice timeout parameters.
+    let defaultTimeout = DEFAULT_TIMEOUT;
+    if (typeof timeoutSettingsOrDefaultTimeout === 'number')
+      defaultTimeout = timeoutSettingsOrDefaultTimeout;
+    if (timeoutSettingsOrDefaultTimeout instanceof TimeoutSettings)
+      defaultTimeout = timeoutSettingsOrDefaultTimeout.timeout();
     const { timeout = defaultTimeout } = timeoutOptions;
-    const deadline = TimeoutSettings.computeDeadline(timeout);
+    this._timeout = timeout;
+    this._deadline = TimeoutSettings.computeDeadline(timeout);
 
-    let rejectCancelPromise: (error: Error) => void = () => {};
-    const cancelPromise = new Promise<T>((resolve, x) => rejectCancelPromise = x);
-    const timeoutError = new TimeoutError(`Timeout ${timeout}ms exceeded during ${apiName}.`);
-    const timer = setTimeout(() => rejectCancelPromise(timeoutError), helper.timeUntilDeadline(deadline));
+    this._forceAbortPromise = new Promise((resolve, reject) => this._forceAbort = reject);
+    this._forceAbortPromise.catch(e => null);  // Prevent unhandle promsie rejection.
+    this._abortedPromise = new Promise(resolve => this._aborted = resolve);
+  }
 
-    let resolveCancelation = () => {};
-    const progress = new Progress(deadline, logger, new Promise(resolve => resolveCancelation = resolve), rejectCancelPromise, apiName);
+  async run<T>(task: (progress: Progress) => Promise<T>): Promise<T> {
+    assert(this._state === 'before');
+    this._state = 'running';
+
+    const progress: Progress = {
+      apiName: this._apiName,
+      deadline: this._deadline,
+      aborted: this._abortedPromise,
+      isRunning: () => this._state === 'running',
+      cleanupWhenAborted: (cleanup: () => any) => {
+        if (this._state === 'running')
+          this._cleanups.push(cleanup);
+        else
+          runCleanup(cleanup);
+      },
+      log: (log: Log, message: string | Error) => {
+        if (this._state === 'running')
+          this._logRecording.push(message.toString());
+        this._logger._log(log, message);
+      },
+    };
+
+    const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded during ${this._apiName}.`);
+    const timer = setTimeout(() => this._forceAbort(timeoutError), helper.timeUntilDeadline(this._deadline));
     try {
       const promise = task(progress);
-      const result = await Promise.race([promise, cancelPromise]);
+      const result = await Promise.race([promise, this._forceAbortPromise]);
       clearTimeout(timer);
-      progress._running = false;
-      progress._logRecording = [];
+      this._state = 'finished';
+      this._logRecording = [];
       return result;
     } catch (e) {
-      resolveCancelation();
-      rewriteErrorMessage(e, e.message + formatLogRecording(progress._logRecording, apiName));
+      this._aborted();
+      rewriteErrorMessage(e, e.message + formatLogRecording(this._logRecording, this._apiName));
       clearTimeout(timer);
-      progress._running = false;
-      progress._logRecording = [];
-      await Promise.all(progress._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));
+      this._state = 'aborted';
+      this._logRecording = [];
+      await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));
       throw e;
     }
   }
 
-  readonly apiName: string;
-  readonly deadline: number;  // To be removed?
-  readonly cancel: (error: Error) => void;
-  readonly _canceled: Promise<any>;
-
-  private _logger: InnerLogger;
-  private _logRecording: string[] = [];
-  private _cleanups: (() => any)[] = [];
-  private _running = true;
-
-  constructor(deadline: number, logger: InnerLogger, canceled: Promise<any>, cancel: (error: Error) => void, apiName: string) {
-    this.deadline = deadline;
-    this.apiName = apiName;
-    this.cancel = cancel;
-    this._canceled = canceled;
-    this._logger = logger;
-  }
-
-  isCanceled(): boolean {
-    return !this._running;
-  }
-
-  cleanupWhenCanceled(cleanup: () => any) {
-    if (this._running)
-      this._cleanups.push(cleanup);
-    else
-      runCleanup(cleanup);
-  }
-
-  throwIfCanceled() {
-    if (!this._running)
-      throw new AbortError();
-  }
-
-  race<T>(promise: Promise<T>, cleanup?: () => any): Promise<T> {
-    const canceled = this._canceled.then(async error => {
-      if (cleanup)
-        await runCleanup(cleanup);
-      throw error;
-    });
-    const success = promise.then(result => {
-      cleanup = undefined;
-      return result;
-    });
-    return Promise.race<T>([success, canceled]);
-  }
-
-  log(log: Log, message: string | Error): void {
-    if (this._running)
-      this._logRecording.push(message.toString());
-    this._logger._log(log, message);
+  abort(error: Error) {
+    this._forceAbort(error);
   }
 }
 

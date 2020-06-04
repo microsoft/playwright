@@ -220,7 +220,7 @@ class Reporter {
         const lineNumber = location.lineNumber();
         if (lineNumber < lines.length) {
           const lineNumberLength = (lineNumber + 1 + '').length;
-          const FROM = Math.max(test.location().lineNumber() - 1, lineNumber - 5);
+          const FROM = Math.max(0, lineNumber - 5);
           const snippet = lines.slice(FROM, lineNumber).map((line, index) => `    ${(FROM + index + 1 + '').padStart(lineNumberLength, ' ')} | ${line}`).join('\n');
           const pointer = `    ` + ' '.repeat(lineNumberLength) + '   ' + '~'.repeat(location.columnNumber() - 1) + '^';
           console.log('\n' + snippet + '\n' + colors.grey(pointer) + '\n');

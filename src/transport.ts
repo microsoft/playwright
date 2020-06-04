@@ -127,10 +127,15 @@ export class WebSocketTransport implements ConnectionTransport {
   onmessage?: (message: ProtocolResponse) => void;
   onclose?: () => void;
 
-  static connect(progress: Progress, url: string): Promise<WebSocketTransport> {
+  static async connect(progress: Progress, url: string): Promise<WebSocketTransport> {
     progress.log(browserLog, `<ws connecting> ${url}`);
     const transport = new WebSocketTransport(progress, url);
-    const promise = new Promise<WebSocketTransport>((fulfill, reject) => {
+    let success = false;
+    progress.aborted.then(() => {
+      if (!success)
+        transport.closeAndWait().catch(e => null);
+    });
+    await new Promise<WebSocketTransport>((fulfill, reject) => {
       transport._ws.addEventListener('open', async () => {
         progress.log(browserLog, `<ws connected> ${url}`);
         fulfill(transport);
@@ -141,7 +146,8 @@ export class WebSocketTransport implements ConnectionTransport {
         transport._ws.close();
       });
     });
-    return progress.race(promise, () => transport.closeAndWait());
+    success = true;
+    return transport;
   }
 
   constructor(progress: Progress, url: string) {

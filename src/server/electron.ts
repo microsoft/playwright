@@ -30,7 +30,7 @@ import { BrowserServer } from './browserServer';
 import { launchProcess, waitForLine } from './processLauncher';
 import { BrowserContext } from '../browserContext';
 import type {BrowserWindow} from 'electron';
-import { Progress } from '../progress';
+import { runAbortableTask } from '../progress';
 
 type ElectronLaunchOptions = {
   args?: string[],
@@ -168,7 +168,7 @@ export class Electron  {
       handleSIGHUP = true,
     } = options;
     const logger = new RootLogger(options.logger);
-    return Progress.runCancelableTask(async progress => {
+    return runAbortableTask(async progress => {
       let app: ElectronApplication | undefined = undefined;
       const electronArguments = ['--inspect=0', '--remote-debugging-port=0', '--require', path.join(__dirname, 'electronLoader.js'), ...args];
       const { launchedProcess, gracefullyClose, kill } = await launchProcess({
