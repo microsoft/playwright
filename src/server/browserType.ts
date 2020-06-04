@@ -77,18 +77,20 @@ export interface BrowserType {
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 const DOWNLOADS_FOLDER = path.join(os.tmpdir(), 'playwright_downloads-');
 
+type WebSocketNotPipe = { webSocketRegex: RegExp, stream: 'stdout' | 'stderr' };
+
 export abstract class BrowserTypeBase implements BrowserType {
   private _name: string;
   private _executablePath: string | undefined;
-  private _webSocketRegexNotPipe: RegExp | null;
+  private _webSocketNotPipe: WebSocketNotPipe | null;
   readonly _browserPath: string;
 
-  constructor(packagePath: string, browser: browserPaths.BrowserDescriptor, webSocketRegexNotPipe: RegExp | null) {
+  constructor(packagePath: string, browser: browserPaths.BrowserDescriptor, webSocketOrPipe: WebSocketNotPipe | null) {
     this._name = browser.name;
     const browsersPath = browserPaths.browsersPath(packagePath);
     this._browserPath = browserPaths.browserDirectory(browsersPath, browser);
     this._executablePath = browserPaths.executablePath(this._browserPath, browser);
-    this._webSocketRegexNotPipe = webSocketRegexNotPipe;
+    this._webSocketNotPipe = webSocketOrPipe;
   }
 
   executablePath(): string {
@@ -203,7 +205,7 @@ export abstract class BrowserTypeBase implements BrowserType {
       handleSIGTERM,
       handleSIGHUP,
       progress,
-      pipe: !this._webSocketRegexNotPipe,
+      pipe: !this._webSocketNotPipe,
       tempDirectories,
       attemptToGracefullyClose: async () => {
         if ((options as any).__testHookGracefullyClose)
@@ -221,8 +223,8 @@ export abstract class BrowserTypeBase implements BrowserType {
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, kill);
     progress.cleanupWhenCanceled(() => browserServer && browserServer._closeOrKill(progress.deadline));
 
-    if (this._webSocketRegexNotPipe) {
-      const match = await waitForLine(progress, launchedProcess, launchedProcess.stdout, this._webSocketRegexNotPipe);
+    if (this._webSocketNotPipe) {
+      const match = await waitForLine(progress, launchedProcess, this._webSocketNotPipe.stream === 'stdout' ? launchedProcess.stdout : launchedProcess.stderr, this._webSocketNotPipe.webSocketRegex);
       const innerEndpoint = match[1];
       transport = await WebSocketTransport.connect(progress, innerEndpoint);
     } else {

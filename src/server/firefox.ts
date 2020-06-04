@@ -32,8 +32,8 @@ import { BrowserDescriptor } from '../install/browserPaths';
 
 export class Firefox extends BrowserTypeBase {
   constructor(packagePath: string, browser: BrowserDescriptor) {
-    const websocketRegex = /^Juggler listening on (ws:\/\/.*)$/;
-    super(packagePath, browser, websocketRegex /* use websocket not pipe */);
+    const webSocketRegex = /^Juggler listening on (ws:\/\/.*)$/;
+    super(packagePath, browser, { webSocketRegex, stream: 'stdout' });
   }
 
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
