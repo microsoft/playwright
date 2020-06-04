@@ -263,6 +263,7 @@ const Browser = {
       params: {
         browserContextId: t.Optional(t.String),
         type: t.Enum(['http', 'https', 'socks', 'socks4']),
+        bypass: t.Array(t.String),
         host: t.String,
         port: t.Number,
       },

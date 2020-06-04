@@ -166,6 +166,10 @@ class NetworkObserver {
           proxyFilter.onProxyFilterResult(defaultProxyInfo);
           return;
         }
+        if (proxy.bypass.some(domain => channel.URI.host.endsWith(domain))) {
+          proxyFilter.onProxyFilterResult(defaultProxyInfo);
+          return;
+        }
         proxyFilter.onProxyFilterResult(protocolProxyService.newProxyInfo(
             proxy.type,
             proxy.host,
