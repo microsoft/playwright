@@ -65,11 +65,6 @@ export type WaitForNavigationOptions = TimeoutOptions & {
   url?: URLMatch
 };
 
-export type ExtendedWaitForNavigationOptions = TimeoutOptions & {
-  waitUntil?: LifecycleEvent | 'commit',
-  url?: URLMatch
-};
-
 export type ElementScreenshotOptions = {
   type?: 'png' | 'jpeg',
   path?: string,

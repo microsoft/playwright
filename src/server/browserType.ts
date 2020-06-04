@@ -28,7 +28,7 @@ import { assert } from '../helper';
 import { launchProcess, Env, waitForLine } from './processLauncher';
 import { Events } from '../events';
 import { PipeTransport } from './pipeTransport';
-import { Progress } from '../progress';
+import { Progress, runAbortableTask } from '../progress';
 
 export type BrowserArgOptions = {
   headless?: boolean,
@@ -105,7 +105,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     const logger = new RootLogger(options.logger);
-    const browser = await Progress.runCancelableTask(progress => this._innerLaunch(progress, options, logger, undefined), options, logger);
+    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, logger, undefined), options, logger);
     return browser;
   }
 
@@ -113,7 +113,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     const persistent = validatePersistentContextOptions(options);
     const logger = new RootLogger(options.logger);
-    const browser = await Progress.runCancelableTask(progress => this._innerLaunch(progress, options, logger, persistent, userDataDir), options, logger);
+    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, logger, persistent, userDataDir), options, logger);
     return browser._defaultContext!;
   }
 
@@ -142,7 +142,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launchServer`. Use `browserType.launchPersistentContext` instead');
     const { port = 0 } = options;
     const logger = new RootLogger(options.logger);
-    return Progress.runCancelableTask(async progress => {
+    return runAbortableTask(async progress => {
       const { browserServer, transport } = await this._launchServer(progress, options, false, logger);
       browserServer._webSocketWrapper = this._wrapTransportWithWebSocket(transport, logger, port);
       return browserServer;
@@ -151,9 +151,9 @@ export abstract class BrowserTypeBase implements BrowserType {
 
   async connect(options: ConnectOptions): Promise<Browser> {
     const logger = new RootLogger(options.logger);
-    return Progress.runCancelableTask(async progress => {
+    return runAbortableTask(async progress => {
       const transport = await WebSocketTransport.connect(progress, options.wsEndpoint);
-      progress.cleanupWhenCanceled(() => transport.closeAndWait());
+      progress.cleanupWhenAborted(() => transport.closeAndWait());
       if ((options as any).__testHookBeforeCreateBrowser)
         await (options as any).__testHookBeforeCreateBrowser();
       const browser = await this._connectToTransport(transport, { slowMo: options.slowMo, logger });
@@ -219,7 +219,7 @@ export abstract class BrowserTypeBase implements BrowserType {
       },
     });
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, kill);
-    progress.cleanupWhenCanceled(() => browserServer && browserServer._closeOrKill(progress.deadline));
+    progress.cleanupWhenAborted(() => browserServer && browserServer._closeOrKill(progress.deadline));
 
     if (this._webSocketRegexNotPipe) {
       const match = await waitForLine(progress, launchedProcess, launchedProcess.stdout, this._webSocketRegexNotPipe);

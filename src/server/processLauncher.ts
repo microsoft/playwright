@@ -194,7 +194,7 @@ export function waitForLine(progress: Progress, process: childProcess.ChildProce
       helper.addEventListener(process, 'error', reject)
     ];
 
-    progress.cleanupWhenCanceled(cleanup);
+    progress.cleanupWhenAborted(cleanup);
 
     function onLine(line: string) {
       const match = line.match(regex);
