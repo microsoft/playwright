@@ -30,6 +30,8 @@ import { BrowserName, BrowserPlatform, BrowserDescriptor } from './browserPaths'
 
 const unlinkAsync = util.promisify(fs.unlink.bind(fs));
 const chmodAsync = util.promisify(fs.chmod.bind(fs));
+const mkdtempAsync = util.promisify(fs.mkdtemp.bind(fs));
+const renameAsync = util.promisify(fs.rename.bind(fs));
 const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
 export type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
@@ -110,8 +112,10 @@ export async function downloadBrowserWithProgressBar(browserPath: string, browse
   const zipPath = path.join(os.tmpdir(), `playwright-download-${browser.name}-${browserPaths.hostPlatform}-${browser.revision}.zip`);
   try {
     await downloadFile(url, zipPath, progress);
-    await extract(zipPath, { dir: browserPath});
-    await chmodAsync(browserPaths.executablePath(browserPath, browser)!, 0o755);
+    const extractPath = await mkdtempAsync(path.join(os.tmpdir(), `playwright-extract-${browser.name}-${browserPaths.hostPlatform}-${browser.revision}-`));
+    await extract(zipPath, { dir: extractPath});
+    await chmodAsync(browserPaths.executablePath(extractPath, browser)!, 0o755);
+    await renameAsync(extractPath, browserPath);
   } catch (e) {
     process.exitCode = 1;
     throw e;
