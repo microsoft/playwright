@@ -19,7 +19,6 @@ import * as mime from 'mime';
 import * as util from 'util';
 import * as frames from './frames';
 import { assert, helper } from './helper';
-import { Page } from './page';
 import { URLSearchParams } from 'url';
 
 export type NetworkCookie = {
@@ -112,14 +111,12 @@ export class Request {
   private _frame: frames.Frame;
   private _waitForResponsePromise: Promise<Response | null>;
   private _waitForResponsePromiseCallback: (value: Response | null) => void = () => {};
-  readonly _page: Page;
 
   constructor(routeDelegate: RouteDelegate | null, frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: string | null, headers: Headers) {
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     this._routeDelegate = routeDelegate;
     this._frame = frame;
-    this._page = frame._page;
     this._redirectedFrom = redirectedFrom;
     if (redirectedFrom)
       redirectedFrom._redirectedTo = this;

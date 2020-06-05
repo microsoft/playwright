@@ -287,7 +287,7 @@ export class WKPage implements PageDelegate {
         pageOrError = e;
       }
       if (targetInfo.isPaused)
-        this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(logError(this._page));
+        this._pageProxySession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
       if ((pageOrError instanceof Page) && this._page.mainFrame().url() === '') {
         try {
           // Initial empty page has an empty url. We should wait until the first real url has been loaded,
@@ -309,7 +309,7 @@ export class WKPage implements PageDelegate {
       this._provisionalPage = new WKProvisionalPage(session, this);
       if (targetInfo.isPaused) {
         this._provisionalPage.initializationPromise.then(() => {
-          this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(logError(this._page));
+          this._pageProxySession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
         });
       }
     }
@@ -652,7 +652,7 @@ export class WKPage implements PageDelegate {
 
   private async _evaluateBindingScript(binding: PageBinding): Promise<void> {
     const script = this._bindingToScript(binding);
-    await Promise.all(this._page.frames().map(frame => frame.evaluate(script).catch(logError(this._page))));
+    await Promise.all(this._page.frames().map(frame => frame.evaluate(script).catch(e => {})));
   }
 
   async evaluateOnNewDocument(script: string): Promise<void> {
@@ -680,10 +680,10 @@ export class WKPage implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    this._pageProxySession.send('Target.close', {
+    this._pageProxySession.sendMayFail('Target.close', {
       targetId: this._session.sessionId,
       runBeforeUnload
-    }).catch(logError(this._page));
+    });
   }
 
   canScreenshotOutsideViewport(): boolean {
@@ -767,9 +767,9 @@ export class WKPage implements PageDelegate {
   }
 
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
-    const result = await this._session.send('DOM.getContentQuads', {
+    const result = await this._session.sendMayFail('DOM.getContentQuads', {
       objectId: handle._objectId
-    }).catch(logError(this._page));
+    });
     if (!result)
       return null;
     return result.quads.map(quad => [
@@ -790,10 +790,10 @@ export class WKPage implements PageDelegate {
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
-    const result = await this._session.send('DOM.resolveNode', {
+    const result = await this._session.sendMayFail('DOM.resolveNode', {
       objectId: handle._objectId,
       executionContextId: (to._delegate as WKExecutionContext)._contextId
-    }).catch(logError(this._page));
+    });
     if (!result || result.object.subtype === 'null')
       throw new Error('Unable to adopt element handle from a different document');
     return to.createHandle(result.object) as dom.ElementHandle<T>;

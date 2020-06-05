@@ -32,7 +32,6 @@ import { FFNetworkManager, headersArray } from './ffNetworkManager';
 import { Protocol } from './protocol';
 import { selectors } from '../selectors';
 import { NotConnectedError } from '../errors';
-import { logError } from '../logger';
 import { rewriteErrorMessage } from '../debug/stackTrace';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -193,7 +192,7 @@ export class FFPage implements PageDelegate {
         params.type,
         params.message,
         async (accept: boolean, promptText?: string) => {
-          await this._session.send('Page.handleDialog', { dialogId: params.dialogId, accept, promptText }).catch(logError(this._page));
+          await this._session.sendMayFail('Page.handleDialog', { dialogId: params.dialogId, accept, promptText });
         },
         params.defaultValue));
   }
@@ -429,10 +428,10 @@ export class FFPage implements PageDelegate {
   }
 
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
-    const result = await this._session.send('Page.getContentQuads', {
+    const result = await this._session.sendMayFail('Page.getContentQuads', {
       frameId: handle._context.frame._id,
       objectId: handle._objectId,
-    }).catch(logError(this._page));
+    });
     if (!result)
       return null;
     return result.quads.map(quad => [ quad.p1, quad.p2, quad.p3, quad.p4 ]);
