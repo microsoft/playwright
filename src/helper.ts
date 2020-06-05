@@ -19,9 +19,7 @@ import * as crypto from 'crypto';
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as util from 'util';
-import { TimeoutError } from './errors';
 import * as types from './types';
-import { ChildProcess, execSync } from 'child_process';
 
 export type RegisteredListener = {
   emitter: EventEmitter;
@@ -122,59 +120,6 @@ class Helper {
 
   static isBoolean(obj: any): obj is boolean {
     return typeof obj === 'boolean' || obj instanceof Boolean;
-  }
-
-  static async waitForEvent(
-    emitter: EventEmitter,
-    eventName: (string | symbol),
-    predicate: Function,
-    deadline: number,
-    abortPromise: Promise<Error>): Promise<any> {
-    let resolveCallback: (event: any) => void = () => {};
-    let rejectCallback: (error: any) => void = () => {};
-    const promise = new Promise((resolve, reject) => {
-      resolveCallback = resolve;
-      rejectCallback = reject;
-    });
-
-    // Add listener.
-    const listener = Helper.addEventListener(emitter, eventName, event => {
-      try {
-        if (!predicate(event))
-          return;
-        resolveCallback(event);
-      } catch (e) {
-        rejectCallback(e);
-      }
-    });
-
-    // Reject upon timeout.
-    const eventTimeout = setTimeout(() => {
-      rejectCallback(new TimeoutError(`Timeout exceeded while waiting for ${String(eventName)}`));
-    }, helper.timeUntilDeadline(deadline));
-
-    // Reject upon abort.
-    abortPromise.then(rejectCallback);
-
-    try {
-      return await promise;
-    } finally {
-      Helper.removeEventListeners([listener]);
-      clearTimeout(eventTimeout);
-    }
-  }
-
-  static async waitWithDeadline<T>(promise: Promise<T>, taskName: string, deadline: number, debugName: string): Promise<T> {
-    let reject: (error: Error) => void;
-    const timeoutError = new TimeoutError(`Waiting for ${taskName} failed: timeout exceeded. Re-run with the DEBUG=${debugName} env variable to see the debug log.`);
-    const timeoutPromise = new Promise<T>((resolve, x) => reject = x);
-    const timeoutTimer = setTimeout(() => reject(timeoutError), helper.timeUntilDeadline(deadline));
-    try {
-      return await Promise.race([promise, timeoutPromise]);
-    } finally {
-      if (timeoutTimer)
-        clearTimeout(timeoutTimer);
-    }
   }
 
   static globToRegex(glob: string): RegExp {
@@ -321,29 +266,8 @@ class Helper {
     return seconds * 1000 + (nanoseconds / 1000000 | 0);
   }
 
-  static isPastDeadline(deadline: number) {
-    return deadline !== Number.MAX_SAFE_INTEGER && this.monotonicTime() >= deadline;
-  }
-
   static timeUntilDeadline(deadline: number): number {
     return Math.min(deadline - this.monotonicTime(), 2147483647); // 2^31-1 safe setTimeout in Node.
-  }
-
-  static optionsWithUpdatedTimeout<T extends types.TimeoutOptions>(options: T | undefined, deadline: number): T {
-    return { ...(options || {}) as T, timeout: this.timeUntilDeadline(deadline) };
-  }
-
-  static killProcess(proc: ChildProcess) {
-    if (proc.pid && !proc.killed) {
-      try {
-        if (process.platform === 'win32')
-          execSync(`taskkill /pid ${proc.pid} /T /F`);
-        else
-          process.kill(-proc.pid, 'SIGKILL');
-      } catch (e) {
-        // the process might have already stopped
-      }
-    }
   }
 
   static getViewportSizeFromWindowFeatures(features: string[]): types.Size | null {

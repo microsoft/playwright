@@ -83,10 +83,16 @@ export class BrowserServer extends EventEmitter {
   }
 
   async _closeOrKill(deadline: number): Promise<void> {
+    let timer: NodeJS.Timer;
     try {
-      await helper.waitWithDeadline(this.close(), '', deadline, ''); // The error message is ignored.
+      await Promise.race([
+        this.close(),
+        new Promise((resolve, reject) => timer = setTimeout(reject, helper.timeUntilDeadline(deadline))),
+      ]);
     } catch (ignored) {
-      await this.kill(); // Make sure to await actual process exit.
+      await this.kill().catch(ignored => {}); // Make sure to await actual process exit.
+    } finally {
+      clearTimeout(timer!);
     }
   }
 }

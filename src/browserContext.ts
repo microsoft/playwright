@@ -104,8 +104,12 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
     return event === Events.BrowserContext.Close ? super._abortPromiseForEvent(event) : this._closePromise;
   }
 
-  protected _computeDeadline(options?: types.TimeoutOptions): number {
-    return this._timeoutSettings.computeDeadline(options);
+  protected _getLogger(): InnerLogger {
+    return this._logger;
+  }
+
+  protected _getTimeoutSettings(): TimeoutSettings {
+    return this._timeoutSettings;
   }
 
   _browserClosed() {
