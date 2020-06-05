@@ -287,6 +287,7 @@ export class CRBrowserContext extends BrowserContextBase {
     this._browser = browser;
     this._browserContextId = browserContextId;
     this._evaluateOnNewDocumentSources = [];
+    this._authenticateProxyViaCredentials();
   }
 
   async _initialize() {

@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
-import { BrowserContext, PersistentContextOptions, validatePersistentContextOptions } from '../browserContext';
+import { BrowserContext, PersistentContextOptions, validatePersistentContextOptions, verifyProxySettings } from '../browserContext';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
 import * as browserPaths from '../install/browserPaths';
 import { Logger, RootLogger, InnerLogger } from '../logger';
@@ -29,11 +29,13 @@ import { launchProcess, Env, waitForLine } from './processLauncher';
 import { Events } from '../events';
 import { PipeTransport } from './pipeTransport';
 import { Progress, runAbortableTask } from '../progress';
+import { ProxySettings } from '../types';
 
 export type BrowserArgOptions = {
   headless?: boolean,
   args?: string[],
   devtools?: boolean,
+  proxy?: ProxySettings,
 };
 
 export type FirefoxUserPrefsOptions = {
@@ -120,6 +122,7 @@ export abstract class BrowserTypeBase implements BrowserType {
   }
 
   async _innerLaunch(progress: Progress, options: LaunchOptions, logger: RootLogger, persistent: PersistentContextOptions | undefined, userDataDir?: string): Promise<BrowserBase> {
+    options.proxy = options.proxy ? verifyProxySettings(options.proxy) : undefined;
     const { browserServer, downloadsPath, transport } = await this._launchServer(progress, options, !!persistent, logger, userDataDir);
     if ((options as any).__testHookBeforeCreateBrowser)
       await (options as any).__testHookBeforeCreateBrowser();
@@ -130,6 +133,7 @@ export abstract class BrowserTypeBase implements BrowserType {
       logger,
       downloadsPath,
       ownedServer: browserServer,
+      proxy: options.proxy,
     };
     copyTestHooks(options, browserOptions);
     const browser = await this._connectToTransport(transport, browserOptions);

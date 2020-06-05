@@ -207,6 +207,26 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
       await oldPage.close();
     }
   }
+
+  protected _authenticateProxyViaHeader() {
+    const proxy = this._browserBase._options.proxy || { username: undefined, password: undefined };
+    const { username, password } = proxy;
+    if (username) {
+      this._options.httpCredentials = { username, password: password! };
+      this._options.extraHTTPHeaders = this._options.extraHTTPHeaders || {};
+      const token = Buffer.from(`${username}:${password}`).toString('base64');
+      this._options.extraHTTPHeaders['Proxy-Authorization'] = `Basic ${token}`;
+    }
+  }
+
+  protected _authenticateProxyViaCredentials() {
+    const proxy = this._browserBase._options.proxy;
+    if (!proxy)
+      return;
+    const { username, password } = proxy;
+    if (username && password)
+      this._options.httpCredentials = { username, password };
+  }
 }
 
 export function assertBrowserContextIsNotOwned(context: BrowserContextBase) {
@@ -271,4 +291,18 @@ export function verifyGeolocation(geolocation: types.Geolocation): types.Geoloca
   if (!helper.isNumber(accuracy) || accuracy < 0)
     throw new Error(`Invalid accuracy "${accuracy}": precondition 0 <= ACCURACY failed.`);
   return result;
+}
+
+export function verifyProxySettings(proxy: types.ProxySettings): types.ProxySettings {
+  let { server, bypass } = proxy;
+  if (!helper.isString(server))
+    throw new Error(`Invalid proxy.server: ` + server);
+  let url = new URL(server);
+  if (!['http:', 'https:', 'socks5:'].includes(url.protocol)) {
+    url = new URL('http://' + server);
+    server = `${url.protocol}//${url.host}`;
+  }
+  if (bypass)
+    bypass = bypass.split(',').map(t => t.trim()).join(',');
+  return { ...proxy, server, bypass };
 }

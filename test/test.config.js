@@ -228,6 +228,7 @@ module.exports = {
         './logger.spec.js',
         './headful.spec.js',
         './multiclient.spec.js',
+        './proxy.spec.js',
       ],
       environments: [customEnvironment],
     },
