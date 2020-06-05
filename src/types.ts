@@ -178,3 +178,10 @@ export type InjectedScriptPoll<T> = {
   logs: Promise<InjectedScriptLogs>,
   cancel: () => void,
 };
+
+export type ProxySettings = {
+  server: string,
+  bypass?: string,
+  username?: string,
+  password?: string
+}

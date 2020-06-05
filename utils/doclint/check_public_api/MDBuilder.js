@@ -70,6 +70,8 @@ class MDOutline {
             property.required = defaultRequired;
             if (property.comment.toLowerCase().includes('defaults to '))
               property.required = false;
+            if (property.comment.startsWith('Optional '))
+              property.required = false;
             if (property.comment.toLowerCase().includes('if applicable.'))
               property.required = false;
             if (property.comment.toLowerCase().includes('if available.'))
