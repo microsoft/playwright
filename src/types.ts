@@ -176,6 +176,7 @@ export type InjectedScriptLogs = { current: string[], next: Promise<InjectedScri
 export type InjectedScriptPoll<T> = {
   result: Promise<T>,
   logs: Promise<InjectedScriptLogs>,
+  takeLastLogs: () => string[],
   cancel: () => void,
 };
 

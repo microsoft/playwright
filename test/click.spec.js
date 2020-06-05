@@ -182,14 +182,14 @@ describe('Page.click', function() {
     await page.$eval('button', b => b.style.display = 'none');
     const error = await page.click('button', { timeout: 5000 }).catch(e => e);
     expect(error.message).toContain('Timeout 5000ms exceeded during page.click.');
-    expect(error.message).toContain('waiting for element to be displayed, enabled and not moving...');
+    expect(error.message).toContain('waiting for element to be displayed, enabled and not moving');
   });
   it('should timeout waiting for visbility:hidden to be gone', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.visibility = 'hidden');
     const error = await page.click('button', { timeout: 5000 }).catch(e => e);
     expect(error.message).toContain('Timeout 5000ms exceeded during page.click.');
-    expect(error.message).toContain('waiting for element to be displayed, enabled and not moving...');
+    expect(error.message).toContain('waiting for element to be displayed, enabled and not moving');
   });
   it('should waitFor visible when parent is hidden', async({page, server}) => {
     let done = false;
@@ -431,7 +431,7 @@ describe('Page.click', function() {
     });
     const error = await button.click({ timeout: 5000 }).catch(e => e);
     expect(error.message).toContain('Timeout 5000ms exceeded during elementHandle.click.');
-    expect(error.message).toContain('waiting for element to be displayed, enabled and not moving...');
+    expect(error.message).toContain('waiting for element to be displayed, enabled and not moving');
   });
   it('should wait for becoming hit target', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
@@ -479,7 +479,8 @@ describe('Page.click', function() {
     });
     const error = await button.click({ timeout: 5000 }).catch(e => e);
     expect(error.message).toContain('Timeout 5000ms exceeded during elementHandle.click.');
-    expect(error.message).toContain('...element does not receive pointer events, retrying input action');
+    expect(error.message).toContain('element does not receive pointer events');
+    expect(error.message).toContain('retrying elementHandle.click action');
   });
   it('should fail when obscured and not waiting for hit target', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
@@ -704,7 +705,8 @@ describe('Page.click', function() {
     expect(clicked).toBe(false);
     expect(await page.evaluate(() => window.clicked)).toBe(undefined);
     expect(error.message).toContain('Timeout 5000ms exceeded during elementHandle.click.');
-    expect(error.message).toContain('...element does not receive pointer events, retrying input action');
+    expect(error.message).toContain('element does not receive pointer events');
+    expect(error.message).toContain('retrying elementHandle.click action');
   });
   it('should dispatch microtasks in order', async({page, server}) => {
     await page.setContent(`

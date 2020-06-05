@@ -919,7 +919,7 @@ describe('Frame.goto', function() {
     const url = server.PREFIX + '/frames/child-redirect.html';
     const error = await page.goto(url, { timeout: 5000, waitUntil: 'networkidle' }).catch(e => e);
     expect(error.message).toContain('Timeout 5000ms exceeded during page.goto.');
-    expect(error.message).toContain(`page.goto("${url}"), waiting until "networkidle"`);
+    expect(error.message).toContain(`navigating to "${url}", waiting until "networkidle"`);
     expect(error.message).toContain(`navigated to "${url}"`);
     expect(error.message).toContain(`navigated to "${server.PREFIX + '/frames/one-frame.html'}"`);
     expect(error.message).toContain(`"domcontentloaded" event fired`);

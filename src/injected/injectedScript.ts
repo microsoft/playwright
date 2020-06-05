@@ -165,6 +165,7 @@ export default class InjectedScript {
       logs,
       result: poll(progress),
       cancel: () => { progress.canceled = true; },
+      takeLastLogs: () => currentLogs,
     };
   }
 
@@ -448,11 +449,33 @@ export default class InjectedScript {
   }
 
   previewElement(element: Element): string {
-    const id = element.id ? '#' + element.id : '';
-    const classes = Array.from(element.classList).map(c => '.' + c).join('');
-    return `${element.nodeName.toLowerCase()}${id}${classes}`;
+    const attrs = [];
+    for (let i = 0; i < element.attributes.length; i++) {
+      if (element.attributes[i].name !== 'style')
+        attrs.push(` ${element.attributes[i].name}="${element.attributes[i].value}"`);
+    }
+    attrs.sort((a, b) => a.length - b.length);
+    let attrText = attrs.join('');
+    if (attrText.length > 50)
+      attrText = attrText.substring(0, 49) + '\u2026';
+    if (autoClosingTags.has(element.nodeName))
+      return `<${element.nodeName.toLowerCase()}${attrText}/>`;
+
+    const children = element.childNodes;
+    let onlyText = false;
+    if (children.length <= 5) {
+      onlyText = true;
+      for (let i = 0; i < children.length; i++)
+        onlyText = onlyText && children[i].nodeType === Node.TEXT_NODE;
+    }
+    let text = onlyText ? (element.textContent || '') : '';
+    if (text.length > 50)
+      text = text.substring(0, 49) + '\u2026';
+    return `<${element.nodeName.toLowerCase()}${attrText}>${text}</${element.nodeName.toLowerCase()}>`;
   }
 }
+
+const autoClosingTags = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
 
 const eventType = new Map<string, 'mouse'|'keyboard'|'touch'|'pointer'|'focus'|'drag'>([
   ['auxclick', 'mouse'],

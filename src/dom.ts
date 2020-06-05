@@ -246,10 +246,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _retryPointerAction(progress: Progress, action: (point: types.Point) => Promise<void>, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
+    let first = true;
     while (progress.isRunning()) {
+      progress.log(apiLog, `${first ? 'attempting' : 'retrying'} ${progress.apiName} action`);
       const result = await this._performPointerAction(progress, action, options);
       if (result === 'done')
         return;
+      first = false;
     }
   }
 
@@ -258,27 +261,27 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (!force)
       await this._waitForDisplayedAtStablePositionAndEnabled(progress);
 
-    progress.log(apiLog, 'scrolling into view if needed...');
+    progress.log(apiLog, '  scrolling into view if needed');
     const scrolled = await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
     if (scrolled === 'invisible') {
       if (force)
         throw new Error('Element is not visible');
-      progress.log(apiLog, '...element is not visible, retrying input action');
+      progress.log(apiLog, '  element is not visible');
       return 'retry';
     }
-    progress.log(apiLog, '...done scrolling');
+    progress.log(apiLog, '  done scrolling');
 
     const maybePoint = position ? await this._offsetPoint(position) : await this._clickablePoint();
     if (maybePoint === 'invisible') {
       if (force)
         throw new Error('Element is not visible');
-      progress.log(apiLog, 'element is not visibile, retrying input action');
+      progress.log(apiLog, '  element is not visibile');
       return 'retry';
     }
     if (maybePoint === 'outsideviewport') {
       if (force)
         throw new Error('Element is outside of the viewport');
-      progress.log(apiLog, 'element is outside of the viewport, retrying input action');
+      progress.log(apiLog, '  element is outside of the viewport');
       return 'retry';
     }
     const point = roundPoint(maybePoint);
@@ -286,29 +289,29 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (!force) {
       if ((options as any).__testHookBeforeHitTarget)
         await (options as any).__testHookBeforeHitTarget();
-      progress.log(apiLog, `checking that element receives pointer events at (${point.x},${point.y})...`);
+      progress.log(apiLog, `  checking that element receives pointer events at (${point.x},${point.y})`);
       const matchesHitTarget = await this._checkHitTargetAt(point);
       if (!matchesHitTarget) {
-        progress.log(apiLog, '...element does not receive pointer events, retrying input action');
+        progress.log(apiLog, '  element does not receive pointer events');
         return 'retry';
       }
-      progress.log(apiLog, `...element does receive pointer events, continuing input action`);
+      progress.log(apiLog, `  element does receive pointer events, continuing input action`);
     }
 
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       let restoreModifiers: input.Modifier[] | undefined;
       if (options && options.modifiers)
         restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
-      progress.log(apiLog, `performing ${progress.apiName} action...`);
+      progress.log(apiLog, `  performing ${progress.apiName} action`);
       await action(point);
-      progress.log(apiLog, `...${progress.apiName} action done`);
-      progress.log(apiLog, 'waiting for scheduled navigations to finish...');
+      progress.log(apiLog, `  ${progress.apiName} action done`);
+      progress.log(apiLog, '  waiting for scheduled navigations to finish');
       if ((options as any).__testHookAfterPointerAction)
         await (options as any).__testHookAfterPointerAction();
       if (restoreModifiers)
         await this._page.keyboard._ensureModifiers(restoreModifiers);
     }, 'input');
-    progress.log(apiLog, '...navigations have finished');
+    progress.log(apiLog, '  navigations have finished');
 
     return 'done';
   }
@@ -342,7 +345,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _selectOption(progress: Progress, values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options: types.NavigatingActionWaitOptions): Promise<string[]> {
-    progress.log(apiLog, progress.apiName);
     let vals: string[] | ElementHandle[] | types.SelectOption[];
     if (!Array.isArray(values))
       vals = [ values ] as (string[] | ElementHandle[] | types.SelectOption[]);
@@ -376,8 +378,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const poll = await this._evaluateHandleInUtility(([injected, node, value]) => {
         return injected.waitForEnabledAndFill(node, value);
       }, value);
-      new InjectedScriptPollHandler(progress, poll);
-      const injectedResult = await poll.evaluate(poll => poll.result);
+      const pollHandler = new InjectedScriptPollHandler(progress, poll);
+      const injectedResult = await pollHandler.finish();
       const needsInput = handleInjectedResult(injectedResult);
       if (needsInput) {
         if (value)
@@ -399,7 +401,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _setInputFiles(progress: Progress, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions) {
-    progress.log(apiLog, progress.apiName);
     const injectedResult = await this._evaluateInUtility(([injected, node]): types.InjectedScriptResult<boolean> => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node as Node as Element).tagName !== 'INPUT')
         return { status: 'error', error: 'Node is not an HTMLInputElement' };
@@ -522,15 +523,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _waitForDisplayedAtStablePositionAndEnabled(progress: Progress): Promise<void> {
-    progress.log(apiLog, 'waiting for element to be displayed, enabled and not moving...');
+    progress.log(apiLog, '  waiting for element to be displayed, enabled and not moving');
     const rafCount =  this._page._delegate.rafCountForStablePosition();
     const poll = await this._evaluateHandleInUtility(([injected, node, rafCount]) => {
       return injected.waitForDisplayedAtStablePositionAndEnabled(node, rafCount);
     }, rafCount);
-    new InjectedScriptPollHandler(progress, poll);
-    const injectedResult = await poll.evaluate(poll => poll.result);
+    const pollHandler = new InjectedScriptPollHandler<types.InjectedScriptResult>(progress, poll);
+    const injectedResult = await pollHandler.finish();
     handleInjectedResult(injectedResult);
-    progress.log(apiLog, '...element is displayed and does not move');
+    progress.log(apiLog, '  element is displayed and does not move');
   }
 
   async _checkHitTargetAt(point: types.Point): Promise<boolean> {
@@ -553,11 +554,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 // Handles an InjectedScriptPoll running in injected script:
 // - streams logs into progress;
 // - cancels the poll when progress cancels.
-export class InjectedScriptPollHandler {
+export class InjectedScriptPollHandler<T> {
   private _progress: Progress;
-  private _poll: js.JSHandle<types.InjectedScriptPoll<any>> | null;
+  private _poll: js.JSHandle<types.InjectedScriptPoll<T>> | null;
 
-  constructor(progress: Progress, poll: js.JSHandle<types.InjectedScriptPoll<any>>) {
+  constructor(progress: Progress, poll: js.JSHandle<types.InjectedScriptPoll<T>>) {
     this._progress = progress;
     this._poll = poll;
     this._progress.cleanupWhenAborted(() => this.cancel());
@@ -575,6 +576,35 @@ export class InjectedScriptPollHandler {
       });
       this._streamLogs(logs.evaluateHandle(logs => logs.next));
     });
+  }
+
+  async finishHandle(): Promise<types.SmartHandle<T>> {
+    try {
+      const result = await this._poll!.evaluateHandle(poll => poll.result);
+      await this._finishInternal();
+      return result;
+    } finally {
+      this.cancel();
+    }
+  }
+
+  async finish(): Promise<T> {
+    try {
+      const result = await this._poll!.evaluate(poll => poll.result);
+      await this._finishInternal();
+      return result;
+    } finally {
+      this.cancel();
+    }
+  }
+
+  private async _finishInternal() {
+    if (!this._poll)
+      return;
+    // Retrieve all the logs before continuing.
+    const messages = await this._poll.evaluate(poll => poll.takeLastLogs()).catch(e => [] as string[]);
+    for (const message of messages)
+      this._progress.log(apiLog, message);
   }
 
   cancel() {

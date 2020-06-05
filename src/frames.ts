@@ -345,7 +345,7 @@ export class Frame {
     const progressController = new ProgressController(this._page, this._page._timeoutSettings.navigationTimeout(options));
     abortProgressOnFrameDetach(progressController, this);
     return progressController.run(async progress => {
-      progress.log(apiLog, `${progress.apiName}("${url}"), waiting until "${options.waitUntil || 'load'}"`);
+      progress.log(apiLog, `navigating to "${url}", waiting until "${options.waitUntil || 'load'}"`);
       const headers = (this._page._state.extraHTTPHeaders || {});
       let referer = headers['referer'] || headers['Referer'];
       if (options.referer !== undefined) {
@@ -455,7 +455,7 @@ export class Frame {
       throw new Error(`Unsupported waitFor option "${state}"`);
     const { world, task } = selectors._waitForSelectorTask(selector, state);
     return runAbortableTask(async progress => {
-      progress.log(apiLog, `Waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}...`);
+      progress.log(apiLog, `waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
       const result = await this._scheduleRerunnableTask(progress, world, task);
       if (!result.asElement()) {
         result.dispose();
@@ -524,12 +524,11 @@ export class Frame {
     abortProgressOnFrameDetach(progressController, this);
     return progressController.run(async progress => {
       const waitUntil = options.waitUntil === undefined ? 'load' : options.waitUntil;
-      progress.log(apiLog, `${progress.apiName}(), waiting until "${waitUntil}"`);
+      progress.log(apiLog, `setting frame content, waiting until "${waitUntil}"`);
       const tag = `--playwright--set--content--${this._id}--${++this._setContentCounter}--`;
       const context = await this._utilityContext();
       const lifecyclePromise = new Promise((resolve, reject) => {
         this._page._frameManager._consoleMessageTags.set(tag, () => {
-          progress.log(apiLog, 'content written');
           // Clear lifecycle right after document.open() - see 'tag' below.
           this._page._frameManager.clearFrameLifecycle(this);
           this._waitForLoadState(progress, waitUntil).then(resolve).catch(reject);
@@ -710,13 +709,11 @@ export class Frame {
     selector: string, options: types.TimeoutOptions,
     action: (progress: Progress, handle: dom.ElementHandle<Element>) => Promise<R>): Promise<R> {
     return runAbortableTask(async progress => {
-      progress.log(apiLog, `${progress.apiName}("${selector}")`);
       while (progress.isRunning()) {
         try {
+          progress.log(apiLog, `waiting for selector "${selector}"`);
           const { world, task } = selectors._waitForSelectorTask(selector, 'attached');
-          progress.log(apiLog, `waiting for the selector "${selector}"`);
           const handle = await this._scheduleRerunnableTask(progress, world, task);
-          progress.log(apiLog, `...got element for the selector`);
           const element = handle.asElement() as dom.ElementHandle<Element>;
           progress.cleanupWhenAborted(() => element.dispose());
           const result = await action(progress, element);
@@ -915,16 +912,11 @@ class RerunnableTask<T> {
   }
 
   async rerun(context: dom.FrameExecutionContext) {
-    let pollHandler: dom.InjectedScriptPollHandler | null = null;
     try {
-      const poll = await this._task(context);
-      pollHandler = new dom.InjectedScriptPollHandler(this._progress, poll);
-      const result = await poll.evaluateHandle(poll => poll.result);
+      const pollHandler = new dom.InjectedScriptPollHandler(this._progress, await this._task(context));
+      const result = await pollHandler.finishHandle();
       this._resolve(result);
     } catch (e) {
-      if (pollHandler)
-        pollHandler.cancel();
-
       // When the page is navigated, the promise is rejected.
       // We will try again in the new execution context.
       if (e.message.includes('Execution context was destroyed'))

@@ -192,7 +192,7 @@ describe('Auto waiting', () => {
     const __testHookAfterPointerAction = () => new Promise(f => setTimeout(f, 6000));
     const error = await page.click('a', { timeout: 5000, __testHookAfterPointerAction }).catch(e => e);
     expect(error.message).toContain('Timeout 5000ms exceeded during page.click.');
-    expect(error.message).toContain('waiting for scheduled navigations to finish...');
+    expect(error.message).toContain('waiting for scheduled navigations to finish');
     expect(error.message).toContain(`navigated to "${server.PREFIX + '/frames/one-frame.html'}"`);
   });
 });
