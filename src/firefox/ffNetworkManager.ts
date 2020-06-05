@@ -21,7 +21,6 @@ import { Page } from '../page';
 import * as network from '../network';
 import * as frames from '../frames';
 import { Protocol } from './protocol';
-import { logError } from '../logger';
 
 export class FFNetworkManager {
   private _session: FFSession;
@@ -164,12 +163,12 @@ class InterceptableRequest implements network.RouteDelegate {
       headers,
       postData
     } = overrides;
-    await this._session.send('Network.resumeInterceptedRequest', {
+    await this._session.sendMayFail('Network.resumeInterceptedRequest', {
       requestId: this._id,
       method,
       headers: headers ? headersArray(headers) : undefined,
       postData: postData ? Buffer.from(postData).toString('base64') : undefined
-    }).catch(logError(this.request._page));
+    });
   }
 
   async fulfill(response: network.FulfillResponse) {
@@ -185,20 +184,20 @@ class InterceptableRequest implements network.RouteDelegate {
     if (responseBody && !('content-length' in responseHeaders))
       responseHeaders['content-length'] = String(Buffer.byteLength(responseBody));
 
-    await this._session.send('Network.fulfillInterceptedRequest', {
+    await this._session.sendMayFail('Network.fulfillInterceptedRequest', {
       requestId: this._id,
       status: response.status || 200,
       statusText: network.STATUS_TEXTS[String(response.status || 200)] || '',
       headers: headersArray(responseHeaders),
       base64body: responseBody ? responseBody.toString('base64') : undefined,
-    }).catch(logError(this.request._page));
+    });
   }
 
   async abort(errorCode: string) {
-    await this._session.send('Network.abortInterceptedRequest', {
+    await this._session.sendMayFail('Network.abortInterceptedRequest', {
       requestId: this._id,
       errorCode,
-    }).catch(logError(this.request._page));
+    });
   }
 }
 

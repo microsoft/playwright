@@ -23,7 +23,6 @@ import * as network from '../network';
 import * as frames from '../frames';
 import { Credentials } from '../types';
 import { CRPage } from './crPage';
-import { logError } from '../logger';
 
 export class CRNetworkManager {
   private _client: CRSession;
@@ -130,26 +129,26 @@ export class CRNetworkManager {
       this._attemptedAuthentications.add(event.requestId);
     }
     const {username, password} = this._credentials || {username: undefined, password: undefined};
-    this._client.send('Fetch.continueWithAuth', {
+    this._client._sendMayFail('Fetch.continueWithAuth', {
       requestId: event.requestId,
       authChallengeResponse: { response, username, password },
-    }).catch(logError(this._page));
+    });
   }
 
   _onRequestPaused(workerFrame: frames.Frame | undefined, event: Protocol.Fetch.requestPausedPayload) {
     if (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled) {
-      this._client.send('Fetch.continueRequest', {
+      this._client._sendMayFail('Fetch.continueRequest', {
         requestId: event.requestId
-      }).catch(logError(this._page));
+      });
     }
     if (!event.networkId) {
       // Fetch without networkId means that request was not recongnized by inspector, and
       // it will never receive Network.requestWillBeSent. Most likely, this is an internal request
       // that we can safely fail.
-      this._client.send('Fetch.failRequest', {
+      this._client._sendMayFail('Fetch.failRequest', {
         requestId: event.requestId,
         errorReason: 'Aborted',
-      }).catch(logError(this._page));
+      });
       return;
     }
     if (event.request.url.startsWith('data:'))
@@ -189,7 +188,7 @@ export class CRNetworkManager {
 
     if (!frame) {
       if (requestPausedEvent)
-        this._client.send('Fetch.continueRequest', { requestId: requestPausedEvent.requestId }).catch(logError(this._page));
+        this._client._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId });
       return;
     }
     const isNavigationRequest = requestWillBeSentEvent.requestId === requestWillBeSentEvent.loaderId && requestWillBeSentEvent.type === 'Document';
@@ -325,15 +324,13 @@ class InterceptableRequest implements network.RouteDelegate {
   }
 
   async continue(overrides: { method?: string; headers?: network.Headers; postData?: string } = {}) {
-    await this._client.send('Fetch.continueRequest', {
+    // In certain cases, protocol will return error if the request was already canceled
+    // or the page was closed. We should tolerate these errors.
+    await this._client._sendMayFail('Fetch.continueRequest', {
       requestId: this._interceptionId!,
       headers: overrides.headers ? headersArray(overrides.headers) : undefined,
       method: overrides.method,
       postData: overrides.postData
-    }).catch(error => {
-      // In certain cases, protocol will return error if the request was already canceled
-      // or the page was closed. We should tolerate these errors.
-      logError(this.request._page)(error);
     });
   }
 
@@ -350,29 +347,25 @@ class InterceptableRequest implements network.RouteDelegate {
     if (responseBody && !('content-length' in responseHeaders))
       responseHeaders['content-length'] = String(Buffer.byteLength(responseBody));
 
-    await this._client.send('Fetch.fulfillRequest', {
+    // In certain cases, protocol will return error if the request was already canceled
+    // or the page was closed. We should tolerate these errors.
+    await this._client._sendMayFail('Fetch.fulfillRequest', {
       requestId: this._interceptionId!,
       responseCode: response.status || 200,
       responsePhrase: network.STATUS_TEXTS[String(response.status || 200)],
       responseHeaders: headersArray(responseHeaders),
       body: responseBody ? responseBody.toString('base64') : undefined,
-    }).catch(error => {
-      // In certain cases, protocol will return error if the request was already canceled
-      // or the page was closed. We should tolerate these errors.
-      logError(this.request._page)(error);
     });
   }
 
   async abort(errorCode: string = 'failed') {
     const errorReason = errorReasons[errorCode];
     assert(errorReason, 'Unknown error code: ' + errorCode);
-    await this._client.send('Fetch.failRequest', {
+    // In certain cases, protocol will return error if the request was already canceled
+    // or the page was closed. We should tolerate these errors.
+    await this._client._sendMayFail('Fetch.failRequest', {
       requestId: this._interceptionId!,
       errorReason
-    }).catch(error => {
-      // In certain cases, protocol will return error if the request was already canceled
-      // or the page was closed. We should tolerate these errors.
-      logError(this.request._page)(error);
     });
   }
 }

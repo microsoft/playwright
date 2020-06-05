@@ -20,7 +20,6 @@ import { assert, helper } from '../helper';
 import * as network from '../network';
 import { Protocol } from './protocol';
 import { WKSession } from './wkConnection';
-import { logError } from '../logger';
 
 const errorReasons: { [reason: string]: string } = {
   'aborted': 'Cancellation',
@@ -59,11 +58,9 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     const reason = errorReasons[errorCode];
     assert(reason, 'Unknown error code: ' + errorCode);
     await this._interceptedPromise;
-    await this._session.send('Network.interceptAsError', { requestId: this._requestId, reason }).catch(error => {
-      // In certain cases, protocol will return error if the request was already canceled
-      // or the page was closed. We should tolerate these errors.
-      logError(this.request._page);
-    });
+    // In certain cases, protocol will return error if the request was already canceled
+    // or the page was closed. We should tolerate these errors.
+    await this._session.sendMayFail('Network.interceptAsError', { requestId: this._requestId, reason });
   }
 
   async fulfill(response: network.FulfillResponse) {
@@ -89,7 +86,9 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     if (responseBody && !('content-length' in responseHeaders))
       responseHeaders['content-length'] = String(Buffer.byteLength(responseBody));
 
-    await this._session.send('Network.interceptWithResponse', {
+    // In certain cases, protocol will return error if the request was already canceled
+    // or the page was closed. We should tolerate these errors.
+    await this._session.sendMayFail('Network.interceptWithResponse', {
       requestId: this._requestId,
       status: response.status || 200,
       statusText: network.STATUS_TEXTS[String(response.status || 200)],
@@ -97,24 +96,18 @@ export class WKInterceptableRequest implements network.RouteDelegate {
       headers: responseHeaders,
       base64Encoded,
       content: responseBody
-    }).catch(error => {
-      // In certain cases, protocol will return error if the request was already canceled
-      // or the page was closed. We should tolerate these errors.
-      logError(this.request._page);
     });
   }
 
   async continue(overrides: { method?: string; headers?: network.Headers; postData?: string }) {
     await this._interceptedPromise;
-    await this._session.send('Network.interceptContinue', {
+    // In certain cases, protocol will return error if the request was already canceled
+    // or the page was closed. We should tolerate these errors.
+    await this._session.sendMayFail('Network.interceptContinue', {
       requestId: this._requestId,
       method: overrides.method,
       headers: overrides.headers,
       postData: overrides.postData ? Buffer.from(overrides.postData).toString('base64') : undefined
-    }).catch((error: Error) => {
-      // In certain cases, protocol will return error if the request was already canceled
-      // or the page was closed. We should tolerate these errors.
-      logError(this.request._page);
     });
   }
 
