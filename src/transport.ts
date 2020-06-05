@@ -154,7 +154,7 @@ export class WebSocketTransport implements ConnectionTransport {
     this._ws = new WebSocket(url, [], {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb,
-      handshakeTimeout: helper.timeUntilDeadline(progress.deadline)
+      handshakeTimeout: progress.timeUntilDeadline(),
     });
     this._progress = progress;
     // The 'ws' module in node sometimes sends us multiple messages in a single task.

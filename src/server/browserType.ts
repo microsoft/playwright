@@ -30,6 +30,7 @@ import { Events } from '../events';
 import { PipeTransport } from './pipeTransport';
 import { Progress, runAbortableTask } from '../progress';
 import { ProxySettings } from '../types';
+import { TimeoutSettings } from '../timeoutSettings';
 
 export type BrowserArgOptions = {
   headless?: boolean,
@@ -109,7 +110,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     const logger = new RootLogger(options.logger);
-    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, logger, undefined), options, logger);
+    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, logger, undefined), logger, TimeoutSettings.timeout(options));
     return browser;
   }
 
@@ -117,7 +118,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     const persistent = validatePersistentContextOptions(options);
     const logger = new RootLogger(options.logger);
-    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, logger, persistent, userDataDir), options, logger);
+    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, logger, persistent, userDataDir), logger, TimeoutSettings.timeout(options));
     return browser._defaultContext!;
   }
 
@@ -152,7 +153,7 @@ export abstract class BrowserTypeBase implements BrowserType {
       const { browserServer, transport } = await this._launchServer(progress, options, false, logger);
       browserServer._webSocketWrapper = this._wrapTransportWithWebSocket(transport, logger, port);
       return browserServer;
-    }, options, logger);
+    }, logger, TimeoutSettings.timeout(options));
   }
 
   async connect(options: ConnectOptions): Promise<Browser> {
@@ -164,7 +165,7 @@ export abstract class BrowserTypeBase implements BrowserType {
         await (options as any).__testHookBeforeCreateBrowser();
       const browser = await this._connectToTransport(transport, { slowMo: options.slowMo, logger });
       return browser;
-    }, options, logger);
+    }, logger, TimeoutSettings.timeout(options));
   }
 
   private async _launchServer(progress: Progress, options: LaunchServerOptions, isPersistent: boolean, logger: RootLogger, userDataDir?: string): Promise<{ browserServer: BrowserServer, downloadsPath: string, transport: ConnectionTransport }> {
@@ -225,7 +226,7 @@ export abstract class BrowserTypeBase implements BrowserType {
       },
     });
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, kill);
-    progress.cleanupWhenAborted(() => browserServer && browserServer._closeOrKill(progress.deadline));
+    progress.cleanupWhenAborted(() => browserServer && browserServer._closeOrKill(progress.timeUntilDeadline()));
 
     if (this._webSocketNotPipe) {
       const match = await waitForLine(progress, launchedProcess, this._webSocketNotPipe.stream === 'stdout' ? launchedProcess.stdout : launchedProcess.stderr, this._webSocketNotPipe.webSocketRegex);

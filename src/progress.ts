@@ -16,22 +16,20 @@
 
 import { InnerLogger, Log } from './logger';
 import { TimeoutError } from './errors';
-import { helper, assert } from './helper';
-import * as types from './types';
-import { DEFAULT_TIMEOUT, TimeoutSettings } from './timeoutSettings';
+import { assert } from './helper';
 import { getCurrentApiCall, rewriteErrorMessage } from './debug/stackTrace';
 
 export interface Progress {
   readonly apiName: string;
-  readonly deadline: number;  // To be removed?
   readonly aborted: Promise<void>;
+  timeUntilDeadline(): number;
   isRunning(): boolean;
   cleanupWhenAborted(cleanup: () => any): void;
   log(log: Log, message: string | Error): void;
 }
 
-export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeoutOptions: types.TimeoutOptions, logger: InnerLogger, timeoutSettingsOrDefaultTimeout?: TimeoutSettings | number, apiName?: string): Promise<T> {
-  const controller = new ProgressController(timeoutOptions, logger, timeoutSettingsOrDefaultTimeout, apiName);
+export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, logger: InnerLogger, timeout: number, apiName?: string): Promise<T> {
+  const controller = new ProgressController(logger, timeout, apiName);
   return controller.run(task);
 }
 
@@ -56,19 +54,12 @@ export class ProgressController {
   private _deadline: number;
   private _timeout: number;
 
-  constructor(timeoutOptions: types.TimeoutOptions, logger: InnerLogger, timeoutSettingsOrDefaultTimeout?: TimeoutSettings | number, apiName?: string) {
+  constructor(logger: InnerLogger, timeout: number, apiName?: string) {
     this._apiName = apiName || getCurrentApiCall();
     this._logger = logger;
 
-    // TODO: figure out nice timeout parameters.
-    let defaultTimeout = DEFAULT_TIMEOUT;
-    if (typeof timeoutSettingsOrDefaultTimeout === 'number')
-      defaultTimeout = timeoutSettingsOrDefaultTimeout;
-    if (timeoutSettingsOrDefaultTimeout instanceof TimeoutSettings)
-      defaultTimeout = timeoutSettingsOrDefaultTimeout.timeout();
-    const { timeout = defaultTimeout } = timeoutOptions;
     this._timeout = timeout;
-    this._deadline = TimeoutSettings.computeDeadline(timeout);
+    this._deadline = timeout ? monotonicTime() + timeout : 0;
 
     this._forceAbortPromise = new Promise((resolve, reject) => this._forceAbort = reject);
     this._forceAbortPromise.catch(e => null);  // Prevent unhandle promsie rejection.
@@ -81,8 +72,8 @@ export class ProgressController {
 
     const progress: Progress = {
       apiName: this._apiName,
-      deadline: this._deadline,
       aborted: this._abortedPromise,
+      timeUntilDeadline: () => this._deadline ? this._deadline - monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
       isRunning: () => this._state === 'running',
       cleanupWhenAborted: (cleanup: () => any) => {
         if (this._state === 'running')
@@ -98,7 +89,7 @@ export class ProgressController {
     };
 
     const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded during ${this._apiName}.`);
-    const timer = setTimeout(() => this._forceAbort(timeoutError), helper.timeUntilDeadline(this._deadline));
+    const timer = setTimeout(() => this._forceAbort(timeoutError), progress.timeUntilDeadline());
     try {
       const promise = task(progress);
       const result = await Promise.race([promise, this._forceAbortPromise]);
@@ -137,4 +128,9 @@ function formatLogRecording(log: string[], name: string): string {
   const leftLength = (headerLength - name.length) / 2;
   const rightLength = headerLength - name.length - leftLength;
   return `\n${'='.repeat(leftLength)}${name}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
+}
+
+function monotonicTime(): number {
+  const [seconds, nanoseconds] = process.hrtime();
+  return seconds * 1000 + (nanoseconds / 1000000 | 0);
 }

@@ -261,15 +261,6 @@ class Helper {
     return crypto.randomBytes(16).toString('hex');
   }
 
-  static monotonicTime(): number {
-    const [seconds, nanoseconds] = process.hrtime();
-    return seconds * 1000 + (nanoseconds / 1000000 | 0);
-  }
-
-  static timeUntilDeadline(deadline: number): number {
-    return Math.min(deadline - this.monotonicTime(), 2147483647); // 2^31-1 safe setTimeout in Node.
-  }
-
   static getViewportSizeFromWindowFeatures(features: string[]): types.Size | null {
     const widthString = features.find(f => f.startsWith('width='));
     const heightString = features.find(f => f.startsWith('height='));

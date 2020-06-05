@@ -204,6 +204,6 @@ export class Electron  {
       app = new ElectronApplication(logger, browser, nodeConnection);
       await app._init();
       return app;
-    }, options, logger);
+    }, logger, TimeoutSettings.timeout(options));
   }
 }

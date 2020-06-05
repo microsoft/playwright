@@ -314,7 +314,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   hover(options: PointerActionOptions & types.PointerActionWaitOptions = {}): Promise<void> {
-    return runAbortableTask(progress => this._hover(progress, options), options, this._page, this._page._timeoutSettings);
+    return runAbortableTask(progress => this._hover(progress, options), this._page, this._page._timeoutSettings.timeout(options));
   }
 
   _hover(progress: Progress, options: PointerActionOptions & types.PointerActionWaitOptions): Promise<void> {
@@ -322,7 +322,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   click(options: ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return runAbortableTask(progress => this._click(progress, options), options, this._page, this._page._timeoutSettings);
+    return runAbortableTask(progress => this._click(progress, options), this._page, this._page._timeoutSettings.timeout(options));
   }
 
   _click(progress: Progress, options: ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
@@ -330,7 +330,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   dblclick(options: MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return runAbortableTask(progress => this._dblclick(progress, options), options, this._page, this._page._timeoutSettings);
+    return runAbortableTask(progress => this._dblclick(progress, options), this._page, this._page._timeoutSettings.timeout(options));
   }
 
   _dblclick(progress: Progress, options: MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
@@ -338,7 +338,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return runAbortableTask(progress => this._selectOption(progress, values, options), options, this._page, this._page._timeoutSettings);
+    return runAbortableTask(progress => this._selectOption(progress, values, options), this._page, this._page._timeoutSettings.timeout(options));
   }
 
   async _selectOption(progress: Progress, values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options: types.NavigatingActionWaitOptions): Promise<string[]> {
@@ -366,7 +366,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async fill(value: string, options: types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return runAbortableTask(progress => this._fill(progress, value, options), options, this._page, this._page._timeoutSettings);
+    return runAbortableTask(progress => this._fill(progress, value, options), this._page, this._page._timeoutSettings.timeout(options));
   }
 
   async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions): Promise<void> {
@@ -395,7 +395,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}) {
-    return runAbortableTask(async progress => this._setInputFiles(progress, files, options), options, this._page, this._page._timeoutSettings);
+    return runAbortableTask(async progress => this._setInputFiles(progress, files, options), this._page, this._page._timeoutSettings.timeout(options));
   }
 
   async _setInputFiles(progress: Progress, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions) {
@@ -440,7 +440,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async type(text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
-    return runAbortableTask(progress => this._type(progress, text, options), options, this._page, this._page._timeoutSettings);
+    return runAbortableTask(progress => this._type(progress, text, options), this._page, this._page._timeoutSettings.timeout(options));
   }
 
   async _type(progress: Progress, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions) {
@@ -452,7 +452,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async press(key: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
-    return runAbortableTask(progress => this._press(progress, key, options), options, this._page, this._page._timeoutSettings);
+    return runAbortableTask(progress => this._press(progress, key, options), this._page, this._page._timeoutSettings.timeout(options));
   }
 
   async _press(progress: Progress, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions) {
@@ -467,14 +467,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return runAbortableTask(async progress => {
       progress.log(apiLog, `elementHandle.check()`);
       await this._setChecked(progress, true, options);
-    }, options, this._page, this._page._timeoutSettings);
+    }, this._page, this._page._timeoutSettings.timeout(options));
   }
 
   async uncheck(options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
     return runAbortableTask(async progress => {
       progress.log(apiLog, `elementHandle.uncheck()`);
       await this._setChecked(progress, false, options);
-    }, options, this._page, this._page._timeoutSettings);
+    }, this._page, this._page._timeoutSettings.timeout(options));
   }
 
   async _setChecked(progress: Progress, state: boolean, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
