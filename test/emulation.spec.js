@@ -16,7 +16,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, LINUX} = utils.testOptions(browserType);
 const iPhone = playwright.devices['iPhone 6'];
 const iPhoneLandscape = playwright.devices['iPhone 6 landscape'];
 
@@ -204,6 +204,22 @@ describe.skip(FFOX)('Page.emulate', function() {
     await page.evaluate(button => button.style.marginTop = '200px', button);
     await button.click();
     expect(await page.evaluate(() => result)).toBe('Clicked');
+    await context.close();
+  });
+  it('should scroll to click', async({browser, server}) => {
+    const context = await browser.newContext({
+      viewport: {
+        width: 400,
+        height: 400,
+      },
+      deviceScaleFactor: 1,
+      isMobile: true
+    });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/input/scrollable.html');
+    const element = await page.$('#button-91');
+    await element.click();
+    expect(await element.textContent()).toBe('clicked');
     await context.close();
   });
 });
