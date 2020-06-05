@@ -90,6 +90,7 @@ const NSActivityOptions ActivityOptions =
     _initialURL = nil;
     _userDataDir = nil;
     _proxyServer = nil;
+    _proxyBypassList = nil;
     NSArray *arguments = [[NSProcessInfo processInfo] arguments];
     NSRange subargs = NSMakeRange(1, [arguments count] - 1);
     NSArray *subArray = [arguments subarrayWithRange:subargs];
@@ -104,6 +105,10 @@ const NSActivityOptions ActivityOptions =
         if ([argument hasPrefix:@"--proxy="]) {
             NSRange range = NSMakeRange(8, [argument length] - 8);
             _proxyServer = [[argument substringWithRange:range] copy];
+        }
+        if ([argument hasPrefix:@"--proxy-bypass-list="]) {
+            NSRange range = NSMakeRange(20, [argument length] - 20);
+            _proxyBypassList = [[argument substringWithRange:range] copy];
         }
     }
 
@@ -132,9 +137,9 @@ const NSActivityOptions ActivityOptions =
 }
 
 
-- (NSDictionary *)proxyConfiguration:(NSString *)proxyServer
+- (NSDictionary *)proxyConfiguration:(NSString *)proxyServer WithBypassList:(NSString *)proxyBypassList
 {
-    if (!proxyServer)
+    if (!proxyServer || ![proxyServer length])
         return nil;
 
 #pragma clang diagnostic push
@@ -155,6 +160,11 @@ const NSActivityOptions ActivityOptions =
             [dictionary setObject:port forKey:(NSString *)kCFStreamPropertyHTTPSProxyPort];
             [dictionary setObject:port forKey:(NSString *)kCFStreamPropertyHTTPProxyPort];
         }
+    }
+
+    if (proxyBypassList && [proxyBypassList length]) {
+        NSArray* bypassList = [proxyBypassList componentsSeparatedByString:@","];
+        [dictionary setObject:bypassList forKey:@"ExceptionsList"];
     }
 
 #pragma clang diagnostic pop
@@ -202,7 +212,7 @@ const NSActivityOptions ActivityOptions =
             NSURL *webSqlDirectory = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/WebSQL", _userDataDir]];
             [configuration _setWebSQLDatabaseDirectory:webSqlDirectory];
         }
-        [configuration setProxyConfiguration:[self proxyConfiguration:_proxyServer]];
+        [configuration setProxyConfiguration:[self proxyConfiguration:_proxyServer WithBypassList:_proxyBypassList]];
         dataStore = [[WKWebsiteDataStore alloc] _initWithConfiguration:configuration];
     }
 
@@ -312,7 +322,7 @@ const NSActivityOptions ActivityOptions =
     return [webView autorelease];
 }
 
-- (_WKBrowserContext *)createBrowserContext:(NSString *)proxyServer
+- (_WKBrowserContext *)createBrowserContext:(NSString *)proxyServer WithBypassList:(NSString *) proxyBypassList
 {
     _WKBrowserContext *browserContext = [[_WKBrowserContext alloc] init];
     _WKProcessPoolConfiguration *processConfiguration = [[[_WKProcessPoolConfiguration alloc] init] autorelease];
@@ -320,7 +330,9 @@ const NSActivityOptions ActivityOptions =
     _WKWebsiteDataStoreConfiguration *dataStoreConfiguration = [[[_WKWebsiteDataStoreConfiguration alloc] initNonPersistentConfiguration] autorelease];
     if (!proxyServer || ![proxyServer length])
         proxyServer = _proxyServer;
-    [dataStoreConfiguration setProxyConfiguration:[self proxyConfiguration:proxyServer]];
+    if (!proxyBypassList || ![proxyBypassList length])
+        proxyBypassList = _proxyBypassList;
+    [dataStoreConfiguration setProxyConfiguration:[self proxyConfiguration:proxyServer WithBypassList:proxyBypassList]];
     browserContext.dataStore = [[WKWebsiteDataStore alloc] _initWithConfiguration:dataStoreConfiguration];
     browserContext.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
     [browserContext.processPool _setDownloadDelegate:self];

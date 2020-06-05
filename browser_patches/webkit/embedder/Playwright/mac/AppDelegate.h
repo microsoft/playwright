@@ -40,6 +40,7 @@
     NSString* _initialURL;
     NSString* _userDataDir;
     NSString* _proxyServer;
+    NSString* _proxyBypassList;
     IBOutlet NSMenuItem *_newWebKit2WindowItem;
 }
 

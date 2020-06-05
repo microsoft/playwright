@@ -7419,7 +7419,7 @@ index 591428f7f579e76ff01bc94b83f5994af8e48e00..03fc6cf2d3074d9227d7815ac5c72fdb
      Vector<WebKit::WebsiteDataRecord> result;
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.h b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..2d7788193f85ce53860d2996650560a7dcc73457
+index 0000000000000000000000000000000000000000..5fabe06a3289689246c36dfd96eb9900a48b2b0f
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.h
 @@ -0,0 +1,55 @@
@@ -7465,7 +7465,7 @@ index 0000000000000000000000000000000000000000..2d7788193f85ce53860d2996650560a7
 +
 +@protocol _WKBrowserInspectorDelegate <NSObject>
 +- (WKWebView *)createNewPage:(uint64_t)sessionID;
-+- (_WKBrowserContext *)createBrowserContext:(NSString *)proxyServer;
++- (_WKBrowserContext *)createBrowserContext:(NSString *)proxyServer WithBypassList:(NSString *)proxyBypassList;
 +- (void)deleteBrowserContext:(uint64_t)sessionID;
 +- (void)quit;
 +@end
@@ -13318,7 +13318,7 @@ index 0000000000000000000000000000000000000000..bce31b16fe37dc2a981389a6160e4094
 +} // namespace API
 diff --git a/Source/WebKit/UIProcess/mac/InspectorPlaywrightAgentClientMac.mm b/Source/WebKit/UIProcess/mac/InspectorPlaywrightAgentClientMac.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..b20118cb4bcd3bc962d5b5b052e408c2a0881aae
+index 0000000000000000000000000000000000000000..600a1687094f5a209f24dc951206ba7faf4de991
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/InspectorPlaywrightAgentClientMac.mm
 @@ -0,0 +1,77 @@
@@ -13386,7 +13386,7 @@ index 0000000000000000000000000000000000000000..b20118cb4bcd3bc962d5b5b052e408c2
 +
 +BrowserContext InspectorPlaywrightAgentClientMac::createBrowserContext(WTF::String& error, const WTF::String& proxyServer, const WTF::String& proxyBypassList)
 +{
-+    _WKBrowserContext* wkBrowserContext = [[delegate_ createBrowserContext:proxyServer] autorelease];
++    _WKBrowserContext* wkBrowserContext = [[delegate_ createBrowserContext:proxyServer WithBypassList:proxyBypassList] autorelease];
 +    BrowserContext browserContext;
 +    browserContext.processPool = &static_cast<WebProcessPool&>([[wkBrowserContext processPool] _apiObject]);
 +    browserContext.dataStore = &static_cast<WebsiteDataStore&>([[wkBrowserContext dataStore] _apiObject]);
