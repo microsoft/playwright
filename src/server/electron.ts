@@ -153,8 +153,12 @@ export class ElectronApplication extends ExtendedEventEmitter {
     return this._nodeElectronHandle!.evaluateHandle(pageFunction, arg);
   }
 
-  protected _computeDeadline(options?: types.TimeoutOptions): number {
-    return this._timeoutSettings.computeDeadline(options);
+  protected _getLogger(): InnerLogger {
+    return this._logger;
+  }
+
+  protected _getTimeoutSettings(): TimeoutSettings {
+    return this._timeoutSettings;
   }
 }
 

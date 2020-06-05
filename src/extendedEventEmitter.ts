@@ -15,23 +15,43 @@
  */
 
 import { EventEmitter } from 'events';
-import { helper } from './helper';
-import { TimeoutOptions } from './types';
+import { helper, RegisteredListener } from './helper';
+import { ProgressController } from './progress';
+import { InnerLogger } from './logger';
+import { TimeoutSettings } from './timeoutSettings';
 
-export class ExtendedEventEmitter extends EventEmitter {
+export abstract class ExtendedEventEmitter extends EventEmitter {
   protected _abortPromiseForEvent(event: string) {
     return new Promise<Error>(() => void 0);
   }
+  protected abstract _getLogger(): InnerLogger;
+  protected abstract _getTimeoutSettings(): TimeoutSettings;
 
-  protected _computeDeadline(options?: TimeoutOptions): number {
-    throw new Error('unimplemented');
-  }
+  async waitForEvent(event: string, optionsOrPredicate: Function | { predicate?: Function, timeout?: number } = {}): Promise<any> {
+    const options = typeof optionsOrPredicate === 'function' ? { predicate: optionsOrPredicate } : optionsOrPredicate;
+    const { predicate = () => true } = options;
 
-  async waitForEvent(event: string, optionsOrPredicate: Function|{ predicate?: Function, timeout?: number } = {}): Promise<any> {
-    const deadline = this._computeDeadline(typeof optionsOrPredicate === 'function' ? undefined : optionsOrPredicate);
-    const {
-      predicate = () => true,
-    } = typeof optionsOrPredicate === 'function' ? {predicate: optionsOrPredicate} : optionsOrPredicate;
-    return helper.waitForEvent(this, event, predicate, deadline, this._abortPromiseForEvent(event));
+    const progressController = new ProgressController(options, this._getLogger(), this._getTimeoutSettings());
+    this._abortPromiseForEvent(event).then(error => progressController.abort(error));
+
+    return progressController.run(async progress => {
+      const listeners: RegisteredListener[] = [];
+      const promise = new Promise((resolve, reject) => {
+        listeners.push(helper.addEventListener(this, event, eventArg => {
+          try {
+            if (!predicate(eventArg))
+              return;
+            resolve(eventArg);
+          } catch (e) {
+            reject(e);
+          }
+        }));
+      });
+      progress.cleanupWhenAborted(() => helper.removeEventListeners(listeners));
+
+      const result = await promise;
+      helper.removeEventListeners(listeners);
+      return result;
+    });
   }
 }
