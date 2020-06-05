@@ -940,7 +940,7 @@ class RerunnableTask<T> {
   }
 }
 
-export class SignalBarrier {
+class SignalBarrier {
   private _progress: Progress | null;
   private _protectCount = 0;
   private _promise: Promise<void>;
@@ -976,43 +976,26 @@ export class SignalBarrier {
 
   release() {
     --this._protectCount;
-    this._maybeResolve();
-  }
-
-  private async _maybeResolve() {
     if (!this._protectCount)
       this._promiseCallback();
   }
 }
 
-export class FrameTask {
-  private _frame: Frame;
-  private _requestMap = new Map<string, network.Request>();
+class FrameTask {
+  private readonly _frame: Frame;
+  private readonly _requestMap = new Map<string, network.Request>();
   private readonly _progress: Progress | null = null;
-
-  onNewDocument: (documentId: string, error?: Error) => void;
-  onSameDocument: (documentId?: string, error?: Error) => void;
-  onLifecycle: (frame: Frame, lifecycleEvent?: types.LifecycleEvent) => void;
+  private _onSameDocument?: { url?: types.URLMatch, resolve: () => void };
+  private _onSpecificDocument?: { expectedDocumentId: string, resolve: () => void, reject: (error: Error) => void };
+  private _onNewDocument?: { url?: types.URLMatch, resolve: (documentId: string) => void, reject: (error: Error) => void };
+  private _onLifecycle?: { waitUntil: types.LifecycleEvent, resolve: () => void };
 
   constructor(frame: Frame, progress: Progress | null) {
     this._frame = frame;
     frame._frameTasks.add(this);
     this._progress = progress;
-    this.onSameDocument = this._logUrl.bind(this);
-    this.onNewDocument = this._logUrl.bind(this);
-    this.onLifecycle = this._logLifecycle.bind(this);
     if (progress)
       progress.cleanupWhenAborted(() => this.done());
-  }
-
-  private _logUrl(documentId?: string, error?: Error) {
-    if (this._progress && !error)
-      this._progress.log(apiLog, `navigated to "${this._frame._url}"`);
-  }
-
-  private _logLifecycle(frame: Frame, lifecycleEvent?: types.LifecycleEvent) {
-    if (this._progress && frame === this._frame && lifecycleEvent && frame._url !== 'about:blank')
-      this._progress.log(apiLog, `"${lifecycleEvent}" event fired`);
   }
 
   onRequest(request: network.Request) {
@@ -1025,43 +1008,59 @@ export class FrameTask {
     return this._requestMap.get(documentId);
   }
 
+  onSameDocument() {
+    if (this._progress)
+      this._progress.log(apiLog, `navigated to "${this._frame._url}"`);
+    if (this._onSameDocument && helper.urlMatches(this._frame.url(), this._onSameDocument.url))
+      this._onSameDocument.resolve();
+  }
+
+  onNewDocument(documentId: string, error?: Error) {
+    if (this._progress && !error)
+      this._progress.log(apiLog, `navigated to "${this._frame._url}"`);
+    if (this._onSpecificDocument) {
+      if (documentId === this._onSpecificDocument.expectedDocumentId) {
+        if (error)
+          this._onSpecificDocument.reject(error);
+        else
+          this._onSpecificDocument.resolve();
+      } else if (!error) {
+        this._onSpecificDocument.reject(new Error('Navigation interrupted by another one'));
+      }
+    }
+    if (this._onNewDocument) {
+      if (error)
+        this._onNewDocument.reject(error);
+      else if (helper.urlMatches(this._frame.url(), this._onNewDocument.url))
+        this._onNewDocument.resolve(documentId);
+    }
+  }
+
+  onLifecycle(frame: Frame, lifecycleEvent: types.LifecycleEvent) {
+    if (this._progress && frame === this._frame && frame._url !== 'about:blank')
+      this._progress.log(apiLog, `"${lifecycleEvent}" event fired`);
+    if (this._onLifecycle && this._checkLifecycleRecursively(this._frame, this._onLifecycle.waitUntil))
+      this._onLifecycle.resolve();
+  }
+
   waitForSameDocumentNavigation(url?: types.URLMatch): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.onSameDocument = () => {
-        this._logUrl();
-        if (helper.urlMatches(this._frame.url(), url))
-          resolve();
-      };
+    return new Promise(resolve => {
+      assert(!this._onSameDocument);
+      this._onSameDocument = { url, resolve };
     });
   }
 
   waitForSpecificDocument(expectedDocumentId: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.onNewDocument = (documentId: string, error?: Error) => {
-        this._logUrl(documentId, error);
-        if (documentId === expectedDocumentId) {
-          if (!error)
-            resolve();
-          else
-            reject(error);
-        } else if (!error) {
-          reject(new Error('Navigation interrupted by another one'));
-        }
-      };
+      assert(!this._onSpecificDocument);
+      this._onSpecificDocument = { expectedDocumentId, resolve, reject };
     });
   }
 
   waitForNewDocument(url?: types.URLMatch): Promise<string> {
     return new Promise((resolve, reject) => {
-      this.onNewDocument = (documentId: string, error?: Error) => {
-        this._logUrl(documentId, error);
-        if (!error && !helper.urlMatches(this._frame.url(), url))
-          return;
-        if (error)
-          reject(error);
-        else
-          resolve(documentId);
-      };
+      assert(!this._onNewDocument);
+      this._onNewDocument = { url, resolve, reject };
     });
   }
 
@@ -1070,25 +1069,22 @@ export class FrameTask {
       waitUntil = 'networkidle';
     if (!types.kLifecycleEvents.has(waitUntil))
       throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
-    return new Promise((resolve, reject) => {
-      this.onLifecycle = (frame: Frame, lifecycleEvent?: types.LifecycleEvent) => {
-        this._logLifecycle(frame, lifecycleEvent);
-        if (!checkLifecycleRecursively(this._frame))
-          return;
-        resolve();
-      };
-      this.onLifecycle(this._frame);
+    if (this._checkLifecycleRecursively(this._frame, waitUntil))
+      return Promise.resolve();
+    return new Promise(resolve => {
+      assert(!this._onLifecycle);
+      this._onLifecycle = { waitUntil, resolve };
     });
+  }
 
-    function checkLifecycleRecursively(frame: Frame): boolean {
-      if (!frame._firedLifecycleEvents.has(waitUntil))
+  private _checkLifecycleRecursively(frame: Frame, waitUntil: types.LifecycleEvent): boolean {
+    if (!frame._firedLifecycleEvents.has(waitUntil))
+      return false;
+    for (const child of frame.childFrames()) {
+      if (!this._checkLifecycleRecursively(child, waitUntil))
         return false;
-      for (const child of frame.childFrames()) {
-        if (!checkLifecycleRecursively(child))
-          return false;
-      }
-      return true;
     }
+    return true;
   }
 
   done() {
