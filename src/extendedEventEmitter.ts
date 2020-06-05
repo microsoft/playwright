@@ -31,7 +31,7 @@ export abstract class ExtendedEventEmitter extends EventEmitter {
     const options = typeof optionsOrPredicate === 'function' ? { predicate: optionsOrPredicate } : optionsOrPredicate;
     const { predicate = () => true } = options;
 
-    const progressController = new ProgressController(options, this._getLogger(), this._getTimeoutSettings());
+    const progressController = new ProgressController(this._getLogger(), this._getTimeoutSettings().timeout(options));
     this._abortPromiseForEvent(event).then(error => progressController.abort(error));
 
     return progressController.run(async progress => {

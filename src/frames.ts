@@ -342,7 +342,7 @@ export class Frame {
   }
 
   async goto(url: string, options: GotoOptions = {}): Promise<network.Response | null> {
-    const progressController = new ProgressController(options, this._page, this._page._timeoutSettings.navigationTimeout());
+    const progressController = new ProgressController(this._page, this._page._timeoutSettings.navigationTimeout(options));
     abortProgressOnFrameDetach(progressController, this);
     return progressController.run(async progress => {
       progress.log(apiLog, `${progress.apiName}("${url}"), waiting until "${options.waitUntil || 'load'}"`);
@@ -377,7 +377,7 @@ export class Frame {
   }
 
   async waitForNavigation(options: types.WaitForNavigationOptions = {}): Promise<network.Response | null> {
-    const progressController = new ProgressController(options, this._page, this._page._timeoutSettings.navigationTimeout());
+    const progressController = new ProgressController(this._page, this._page._timeoutSettings.navigationTimeout(options));
     abortProgressOnFrameDetach(progressController, this);
     return progressController.run(async progress => {
       const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
@@ -396,7 +396,7 @@ export class Frame {
   }
 
   async waitForLoadState(state: types.LifecycleEvent = 'load', options: types.TimeoutOptions = {}): Promise<void> {
-    const progressController = new ProgressController(options, this._page, this._page._timeoutSettings.navigationTimeout());
+    const progressController = new ProgressController(this._page, this._page._timeoutSettings.navigationTimeout(options));
     abortProgressOnFrameDetach(progressController, this);
     return progressController.run(progress => this._waitForLoadState(progress, state));
   }
@@ -469,16 +469,16 @@ export class Frame {
         return adopted;
       }
       return handle;
-    }, options, this._page, this._page._timeoutSettings);
+    }, this._page, this._page._timeoutSettings.timeout(options));
   }
 
-  async dispatchEvent(selector: string, type: string, eventInit?: Object, options?: types.TimeoutOptions): Promise<void> {
+  async dispatchEvent(selector: string, type: string, eventInit?: Object, options: types.TimeoutOptions = {}): Promise<void> {
     const task = selectors._dispatchEventTask(selector, type, eventInit || {});
     return runAbortableTask(async progress => {
       progress.log(apiLog, `Dispatching "${type}" event on selector "${selector}"...`);
       const result = await this._scheduleRerunnableTask(progress, 'main', task);
       result.dispose();
-    }, options || {}, this._page, this._page._timeoutSettings);
+    }, this._page, this._page._timeoutSettings.timeout(options));
   }
 
   async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
@@ -520,7 +520,7 @@ export class Frame {
   }
 
   async setContent(html: string, options: types.NavigateOptions = {}): Promise<void> {
-    const progressController = new ProgressController(options, this._page, this._page._timeoutSettings.navigationTimeout());
+    const progressController = new ProgressController(this._page, this._page._timeoutSettings.navigationTimeout(options));
     abortProgressOnFrameDetach(progressController, this);
     return progressController.run(async progress => {
       const waitUntil = options.waitUntil === undefined ? 'load' : options.waitUntil;
@@ -729,7 +729,7 @@ export class Frame {
         }
       }
       return undefined as any;
-    }, options, this._page, this._page._timeoutSettings);
+    }, this._page, this._page._timeoutSettings.timeout(options));
   }
 
   async click(selector: string, options: dom.ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
@@ -817,7 +817,7 @@ export class Frame {
     };
     return runAbortableTask(
         progress => this._scheduleRerunnableTask(progress, 'main', task),
-        options, this._page, this._page._timeoutSettings);
+        this._page, this._page._timeoutSettings.timeout(options));
   }
 
   async title(): Promise<string> {

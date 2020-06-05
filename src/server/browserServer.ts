@@ -15,7 +15,6 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { helper } from '../helper';
 import { EventEmitter } from 'events';
 
 export class WebSocketWrapper {
@@ -82,12 +81,12 @@ export class BrowserServer extends EventEmitter {
       await this._webSocketWrapper.checkLeaks();
   }
 
-  async _closeOrKill(deadline: number): Promise<void> {
+  async _closeOrKill(timeout: number): Promise<void> {
     let timer: NodeJS.Timer;
     try {
       await Promise.race([
         this.close(),
-        new Promise((resolve, reject) => timer = setTimeout(reject, helper.timeUntilDeadline(deadline))),
+        new Promise((resolve, reject) => timer = setTimeout(reject, timeout)),
       ]);
     } catch (ignored) {
       await this.kill().catch(ignored => {}); // Make sure to await actual process exit.
