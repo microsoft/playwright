@@ -59,19 +59,9 @@ createZipForLinux() {
     # copy all relevant binaries
     cp -t $tmpdir ./WebKitBuild/WPE/Release/bin/MiniBrowser ./WebKitBuild/WPE/Release/bin/WPE*Process
     # copy all relevant shared objects
-    # - exclude gstreamer plugins
-    LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/MiniBrowser \
-        | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' \
-        | grep -v '/libgst.*so' \
-        | xargs cp -t $tmpdir
-    LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/WPENetworkProcess \
-        | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' \
-        | grep -v '/libgst.*so' \
-        | xargs cp -t $tmpdir
-    LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/WPEWebProcess \
-        | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' \
-        | grep -v '/libgst.*so' \
-        | xargs cp -t $tmpdir
+    LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/MiniBrowser | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' | xargs cp -t $tmpdir
+    LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/WPENetworkProcess | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' | xargs cp -t $tmpdir
+    LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/WPEWebProcess | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' | xargs cp -t $tmpdir
     # Copy libvpx.so.5 as Ubuntu 20.04 comes with libvpx.so.6
     ldd WebKitBuild/WPE/Release/bin/MiniBrowser | grep -o '[^ ]*\/libvpx.so.5[^ ]*' | xargs cp -t $tmpdir
     # Injected bundle is loaded dynamicly via dlopen => not bt listed by ldd.
@@ -86,14 +76,7 @@ createZipForLinux() {
     # copy all relevant binaries
     cp -t $tmpdir ./WebKitBuild/GTK/Release/bin/MiniBrowser ./WebKitBuild/GTK/Release/bin/WebKit*Process
     # copy all relevant shared objects
-    # - exclude gstreamer plugins
-    # - exclude libdrm
-    LD_LIBRARY_PATH="$PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib" ldd WebKitBuild/GTK/Release/bin/MiniBrowser \
-        | grep -o '[^ ]*WebKitBuild/GTK/[^ ]*' \
-        | grep -v '/libgst.*so' \
-        | grep -v '/libdrm.so' \
-        | xargs cp -t $tmpdir
-
+    LD_LIBRARY_PATH="$PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib" ldd WebKitBuild/GTK/Release/bin/MiniBrowser | grep -o '[^ ]*WebKitBuild/GTK/[^ ]*' | xargs cp -t $tmpdir
     # Injected bundle is loaded dynamicly via dlopen => not bt listed by ldd.
     cp -t $tmpdir WebKitBuild/GTK/Release/lib/libwebkit2gtkinjectedbundle.so
     # Copy libvpx.so.5 as Ubuntu 20.04 comes with libvpx.so.6
