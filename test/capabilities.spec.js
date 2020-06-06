@@ -47,7 +47,7 @@ describe('Capabilities', function() {
     await page.goto(server.EMPTY_PAGE);
     expect(await page.evaluate(() => window.testStatus)).toBe('SUCCESS');
   });
-  it('should play video', async({page, server}) => {
+  it.fail(WEBKIT)('should play video', async({page, server}) => {
     await page.goto(server.PREFIX + '/video.html');
     await page.$eval('video', v => v.play());
     await page.$eval('video', v => v.pause());
