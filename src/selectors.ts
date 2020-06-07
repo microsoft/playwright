@@ -120,38 +120,25 @@ export class Selectors {
 
         return injected.poll('raf', (progress: types.InjectedScriptProgress) => {
           const element = injected.querySelector(parsed, document);
+          const visible = element ? injected.isVisible(element) : false;
 
-          const log = (suffix: string) => {
-            if (lastElement === element)
-              return;
+          if (lastElement !== element) {
             lastElement = element;
             if (!element)
-              progress.log(`selector did not resolve to any element`);
+              progress.log(`  selector did not resolve to any element`);
             else
-              progress.log(`selector resolved to "${injected.previewElement(element)}"${suffix ? ' ' + suffix : ''}`);
-          };
+              progress.log(`  selector resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewElement(element)}`);
+          }
 
           switch (state) {
-            case 'attached': {
+            case 'attached':
               return element || false;
-            }
-            case 'detached': {
-              if (element)
-                log('');
+            case 'detached':
               return !element;
-            }
-            case 'visible': {
-              const result = element && injected.isVisible(element) ? element : false;
-              if (!result)
-                log('that is not visible');
-              return result;
-            }
-            case 'hidden': {
-              const result = !element || !injected.isVisible(element);
-              if (!result)
-                log('that is still visible');
-              return result;
-            }
+            case 'visible':
+              return visible ? element : false;
+            case 'hidden':
+              return !visible;
           }
         });
       }, { parsed, state });

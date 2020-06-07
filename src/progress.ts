@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { InnerLogger, Log } from './logger';
+import { InnerLogger, Log, apiLog } from './logger';
 import { TimeoutError } from './errors';
 import { assert } from './helper';
 import { getCurrentApiCall, rewriteErrorMessage } from './debug/stackTrace';
@@ -82,11 +82,15 @@ export class ProgressController {
           runCleanup(cleanup);
       },
       log: (log: Log, message: string | Error) => {
-        if (this._state === 'running')
+        if (this._state === 'running') {
           this._logRecording.push(message.toString());
-        this._logger._log(log, message);
+          this._logger._log(log, '  ' + message);
+        } else {
+          this._logger._log(log, message);
+        }
       },
     };
+    this._logger._log(apiLog, `=> ${this._apiName} started`);
 
     const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded during ${this._apiName}.`);
     const timer = setTimeout(() => this._forceAbort(timeoutError), progress.timeUntilDeadline());
@@ -96,6 +100,7 @@ export class ProgressController {
       clearTimeout(timer);
       this._state = 'finished';
       this._logRecording = [];
+      this._logger._log(apiLog, `<= ${this._apiName} succeeded`);
       return result;
     } catch (e) {
       this._aborted();
@@ -103,6 +108,7 @@ export class ProgressController {
       clearTimeout(timer);
       this._state = 'aborted';
       this._logRecording = [];
+      this._logger._log(apiLog, `<= ${this._apiName} failed`);
       await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));
       throw e;
     }

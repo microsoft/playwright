@@ -211,7 +211,9 @@ describe('Frame.waitForSelector', function() {
       const div = document.createElement('div');
       div.className = 'foo bar';
       div.id = 'mydiv';
-      div.style.display = 'none';
+      div.setAttribute('style', 'display: none');
+      div.setAttribute('foo', '123456789012345678901234567890123456789012345678901234567890');
+      div.textContent = 'abcdefghijklmnopqrstuvwyxzabcdefghijklmnopqrstuvwyxzabcdefghijklmnopqrstuvwyxz';
       document.body.appendChild(div);
     });
     await giveItTimeToLog(frame);
@@ -229,10 +231,10 @@ describe('Frame.waitForSelector', function() {
 
     const error = await watchdog.catch(e => e);
     expect(error.message).toContain(`Timeout 5000ms exceeded during frame.waitForSelector.`);
-    expect(error.message).toContain(`Waiting for selector "div" to be visible...`);
-    expect(error.message).toContain(`selector resolved to "div#mydiv.foo.bar" that is not visible`);
+    expect(error.message).toContain(`waiting for selector "div" to be visible`);
+    expect(error.message).toContain(`selector resolved to hidden <div id="mydiv" class="foo bar" foo="1234567890123456…>abcdefghijklmnopqrstuvwyxzabcdefghijklmnopqrstuvw…</div>`);
     expect(error.message).toContain(`selector did not resolve to any element`);
-    expect(error.message).toContain(`selector resolved to "div.another" that is not visible`);
+    expect(error.message).toContain(`selector resolved to hidden <div class="another"></div>`);
   });
   it('should report logs while waiting for hidden', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
@@ -259,9 +261,9 @@ describe('Frame.waitForSelector', function() {
 
     const error = await watchdog.catch(e => e);
     expect(error.message).toContain(`Timeout 5000ms exceeded during frame.waitForSelector.`);
-    expect(error.message).toContain(`Waiting for selector "div" to be hidden...`);
-    expect(error.message).toContain(`selector resolved to "div#mydiv.foo.bar" that is still visible`);
-    expect(error.message).toContain(`selector resolved to "div.another" that is still visible`);
+    expect(error.message).toContain(`waiting for selector "div" to be hidden`);
+    expect(error.message).toContain(`selector resolved to visible <div id="mydiv" class="foo bar">hello</div>`);
+    expect(error.message).toContain(`selector resolved to visible <div class="another">hello</div>`);
   });
   it('should resolve promise when node is added in shadow dom', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
@@ -400,7 +402,7 @@ describe('Frame.waitForSelector', function() {
     await page.waitForSelector('div', { timeout: 10, state: 'attached' }).catch(e => error = e);
     expect(error).toBeTruthy();
     expect(error.message).toContain('Timeout 10ms exceeded during page.waitForSelector');
-    expect(error.message).toContain('Waiting for selector "div"...');
+    expect(error.message).toContain('waiting for selector "div"');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
   it('should have an error message specifically for awaiting an element to be hidden', async({page, server}) => {
@@ -409,7 +411,7 @@ describe('Frame.waitForSelector', function() {
     await page.waitForSelector('div', { state: 'hidden', timeout: 1000 }).catch(e => error = e);
     expect(error).toBeTruthy();
     expect(error.message).toContain('Timeout 1000ms exceeded during page.waitForSelector');
-    expect(error.message).toContain('Waiting for selector "div" to be hidden...');
+    expect(error.message).toContain('waiting for selector "div" to be hidden');
   });
   it('should respond to node attribute mutation', async({page, server}) => {
     let divFound = false;
@@ -490,7 +492,7 @@ describe('Frame.waitForSelector xpath', function() {
     await page.waitForSelector('//div', { state: 'attached', timeout: 10 }).catch(e => error = e);
     expect(error).toBeTruthy();
     expect(error.message).toContain('Timeout 10ms exceeded during page.waitForSelector');
-    expect(error.message).toContain('Waiting for selector "//div"...');
+    expect(error.message).toContain('waiting for selector "//div"');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
   it('should run in specified frame', async({page, server}) => {
