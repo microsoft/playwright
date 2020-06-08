@@ -195,23 +195,6 @@ export class WebSocketTransport implements ConnectionTransport {
   }
 }
 
-export class SequenceNumberMixer<V> {
-  static _lastSequenceNumber = 1;
-  private _values = new Map<number, V>();
-
-  generate(value: V): number {
-    const sequenceNumber = ++SequenceNumberMixer._lastSequenceNumber;
-    this._values.set(sequenceNumber, value);
-    return sequenceNumber;
-  }
-
-  take(sequenceNumber: number): V | undefined {
-    const value = this._values.get(sequenceNumber);
-    this._values.delete(sequenceNumber);
-    return value;
-  }
-}
-
 export class InterceptingTransport implements ConnectionTransport {
   private readonly _delegate: ConnectionTransport;
   private _interceptor: (message: ProtocolRequest) => ProtocolRequest;

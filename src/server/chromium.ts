@@ -16,19 +16,19 @@
  */
 
 import * as path from 'path';
-import { helper, assert, getFromENV, logPolitely } from '../helper';
+import { assert, getFromENV, logPolitely } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
 import * as ws from 'ws';
 import { Env } from './processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
 import { LaunchOptionsBase, BrowserTypeBase, processBrowserArgOptions } from './browserType';
-import { WebSocketWrapper } from './browserServer';
-import { ConnectionTransport, ProtocolRequest } from '../transport';
-import { InnerLogger, logError } from '../logger';
+import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
+import { InnerLogger } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
 import { CRDevTools } from '../debug/crDevTools';
 import * as debugSupport from '../debug/debugSupport';
 import { BrowserOptions } from '../browser';
+import { WebSocketServer } from './webSocketServer';
 
 export class Chromium extends BrowserTypeBase {
   private _devtools: CRDevTools | undefined;
@@ -73,8 +73,8 @@ export class Chromium extends BrowserTypeBase {
     transport.send(message);
   }
 
-  _wrapTransportWithWebSocket(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketWrapper {
-    return wrapTransportWithWebSocket(transport, logger, port);
+  _startWebSocketServer(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketServer {
+    return startWebSocketServer(transport, logger, port);
   }
 
   _defaultArgs(options: LaunchOptionsBase, isPersistent: boolean, userDataDir: string): string[] {
@@ -132,21 +132,17 @@ type SessionData = {
   parent?: string,
 };
 
-function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketWrapper {
-  const server = new ws.Server({ port });
-  const guid = helper.guid();
-
+function startWebSocketServer(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketServer {
   const awaitingBrowserTarget = new Map<number, ws>();
   const sessionToData = new Map<string, SessionData>();
   const socketToBrowserSession = new Map<ws, { sessionId?: string, queue?: ProtocolRequest[] }>();
-  let lastSequenceNumber = 1;
 
   function addSession(sessionId: string, socket: ws, parentSessionId?: string) {
     sessionToData.set(sessionId, {
       socket,
       children: new Set(),
       isBrowserSession: !parentSessionId,
-      parent: parentSessionId
+      parent: parentSessionId,
     });
     if (parentSessionId)
       sessionToData.get(parentSessionId)!.children.add(sessionId);
@@ -161,77 +157,76 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Inne
     sessionToData.delete(sessionId);
   }
 
-  transport.onmessage = message => {
-    if (typeof message.id === 'number' && awaitingBrowserTarget.has(message.id)) {
-      const freshSocket = awaitingBrowserTarget.get(message.id)!;
-      awaitingBrowserTarget.delete(message.id);
+  const server = new WebSocketServer(transport, logger, port, {
+    onBrowserResponse(seqNum: number, source: ws, message: ProtocolResponse) {
+      if (awaitingBrowserTarget.has(seqNum)) {
+        const freshSocket = awaitingBrowserTarget.get(seqNum)!;
+        awaitingBrowserTarget.delete(seqNum);
 
-      const sessionId = message.result.sessionId;
-      if (freshSocket.readyState !== ws.CLOSED && freshSocket.readyState !== ws.CLOSING) {
-        const { queue } = socketToBrowserSession.get(freshSocket)!;
-        for (const item of queue!) {
-          item.sessionId = sessionId;
-          transport.send(item);
+        const sessionId = message.result.sessionId;
+        if (freshSocket.readyState !== ws.CLOSED && freshSocket.readyState !== ws.CLOSING) {
+          const { queue } = socketToBrowserSession.get(freshSocket)!;
+          for (const item of queue!) {
+            item.sessionId = sessionId;
+            server.sendMessageToBrowser(item, source);
+          }
+          socketToBrowserSession.set(freshSocket, { sessionId });
+          addSession(sessionId, freshSocket);
+        } else {
+          server.sendMessageToBrowserOneWay('Target.detachFromTarget', { sessionId });
+          socketToBrowserSession.delete(freshSocket);
         }
-        socketToBrowserSession.set(freshSocket, { sessionId });
-        addSession(sessionId, freshSocket);
-      } else {
-        transport.send({
-          id: ++lastSequenceNumber,
-          method: 'Target.detachFromTarget',
-          params: { sessionId }
-        });
-        socketToBrowserSession.delete(freshSocket);
+        return;
       }
-      return;
-    }
 
-    // At this point everything we care about has sessionId.
-    if (!message.sessionId)
-      return;
+      if (message.id === -1)
+        return;
 
-    const data = sessionToData.get(message.sessionId);
-    if (data && data.socket.readyState !== ws.CLOSING) {
-      if (message.method === 'Target.attachedToTarget')
-        addSession(message.params.sessionId, data.socket, message.sessionId);
-      if (message.method === 'Target.detachedFromTarget')
-        removeSession(message.params.sessionId);
-      // Strip session ids from the browser sessions.
-      if (data.isBrowserSession)
-        delete message.sessionId;
-      data.socket.send(JSON.stringify(message));
-    }
-  };
+      // At this point everything we care about has sessionId.
+      if (!message.sessionId)
+        return;
 
-  transport.onclose = () => {
-    for (const socket of socketToBrowserSession.keys()) {
-      socket.removeListener('close', (socket as any).__closeListener);
-      socket.close(undefined, 'Browser disconnected');
-    }
-    server.close();
-    transport.onmessage = undefined;
-    transport.onclose = undefined;
-  };
+      const data = sessionToData.get(message.sessionId);
+      if (data && data.socket.readyState !== ws.CLOSING) {
+        if (data.isBrowserSession)
+          delete message.sessionId;
+        data.socket.send(JSON.stringify(message));
+      }
+    },
 
-  server.on('connection', (socket: ws, req) => {
-    if (req.url !== '/' + guid) {
-      socket.close();
-      return;
-    }
-    socketToBrowserSession.set(socket, { queue: [] });
+    onBrowserNotification(message: ProtocolResponse) {
+      // At this point everything we care about has sessionId.
+      if (!message.sessionId)
+        return;
 
-    transport.send({
-      id: ++lastSequenceNumber,
-      method: 'Target.attachToBrowserTarget',
-      params: {}
-    });
-    awaitingBrowserTarget.set(lastSequenceNumber, socket);
+      const data = sessionToData.get(message.sessionId);
+      if (data && data.socket.readyState !== ws.CLOSING) {
+        if (message.method === 'Target.attachedToTarget')
+          addSession(message.params.sessionId, data.socket, message.sessionId);
+        if (message.method === 'Target.detachedFromTarget')
+          removeSession(message.params.sessionId);
+        // Strip session ids from the browser sessions.
+        if (data.isBrowserSession)
+          delete message.sessionId;
+        data.socket.send(JSON.stringify(message));
+      }
+    },
 
-    socket.on('message', (message: string) => {
-      const parsedMessage = JSON.parse(Buffer.from(message).toString()) as ProtocolRequest;
+    onClientAttached(socket: ws) {
+      socketToBrowserSession.set(socket, { queue: [] });
+
+      const seqNum = server.sendMessageToBrowser({
+        id: -1, // Proxy-initiated request.
+        method: 'Target.attachToBrowserTarget',
+        params: {}
+      }, socket);
+      awaitingBrowserTarget.set(seqNum, socket);
+    },
+
+    onClientRequest(socket: ws, message: ProtocolRequest) {
       // If message has sessionId, pass through.
-      if (parsedMessage.sessionId) {
-        transport.send(parsedMessage);
+      if (message.sessionId) {
+        server.sendMessageToBrowser(message, socket);
         return;
       }
 
@@ -239,33 +234,24 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Inne
       const session = socketToBrowserSession.get(socket)!;
       if (session.sessionId) {
         // We have it, use it.
-        parsedMessage.sessionId = session.sessionId;
-        transport.send(parsedMessage);
+        message.sessionId = session.sessionId;
+        server.sendMessageToBrowser(message, socket);
         return;
       }
       // Pending session id, queue the message.
-      session.queue!.push(parsedMessage);
-    });
+      session.queue!.push(message);
+    },
 
-    socket.on('error', logError(logger));
-
-    socket.on('close', (socket as any).__closeListener = () => {
+    onClientDetached(socket: ws) {
       const session = socketToBrowserSession.get(socket);
       if (!session || !session.sessionId)
         return;
       removeSession(session.sessionId);
       socketToBrowserSession.delete(socket);
-      transport.send({
-        id: ++lastSequenceNumber,
-        method: 'Target.detachFromTarget',
-        params: { sessionId: session.sessionId }
-      });
-    });
+      server.sendMessageToBrowserOneWay('Target.detachFromTarget', { sessionId: session.sessionId });
+    }
   });
-
-  const address = server.address();
-  const wsEndpoint = typeof address === 'string' ? `${address}/${guid}` : `ws://127.0.0.1:${address.port}/${guid}`;
-  return new WebSocketWrapper(wsEndpoint, [awaitingBrowserTarget, sessionToData, socketToBrowserSession]);
+  return server;
 }
 
 

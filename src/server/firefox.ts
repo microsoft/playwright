@@ -21,14 +21,13 @@ import * as path from 'path';
 import * as ws from 'ws';
 import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
-import { helper } from '../helper';
-import { WebSocketWrapper } from './browserServer';
 import { LaunchOptionsBase, BrowserTypeBase, processBrowserArgOptions, FirefoxUserPrefsOptions } from './browserType';
 import { Env } from './processLauncher';
-import { ConnectionTransport, SequenceNumberMixer } from '../transport';
-import { InnerLogger, logError } from '../logger';
+import { ConnectionTransport, ProtocolResponse, ProtocolRequest } from '../transport';
+import { InnerLogger } from '../logger';
 import { BrowserOptions } from '../browser';
 import { BrowserDescriptor } from '../install/browserPaths';
+import { WebSocketServer } from './webSocketServer';
 
 export class Firefox extends BrowserTypeBase {
   constructor(packagePath: string, browser: BrowserDescriptor) {
@@ -53,8 +52,8 @@ export class Firefox extends BrowserTypeBase {
     transport.send(message);
   }
 
-  _wrapTransportWithWebSocket(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketWrapper {
-    return wrapTransportWithWebSocket(transport, logger, port);
+  _startWebSocketServer(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketServer {
+    return startWebSocketServer(transport, logger, port);
   }
 
   _defaultArgs(options: LaunchOptionsBase & FirefoxUserPrefsOptions, isPersistent: boolean, userDataDir: string): string[] {
@@ -108,39 +107,36 @@ export class Firefox extends BrowserTypeBase {
   }
 }
 
-function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketWrapper {
-  const server = new ws.Server({ port });
-  const guid = helper.guid();
-  const idMixer = new SequenceNumberMixer<{id: number, socket: ws}>();
+type SessionData = {
+ socket: ws,
+};
+
+function startWebSocketServer(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketServer {
   const pendingBrowserContextCreations = new Set<number>();
   const pendingBrowserContextDeletions = new Map<number, string>();
   const browserContextIds = new Map<string, ws>();
-  const sessionToSocket = new Map<string, ws>();
-  const sockets = new Set<ws>();
+  const sessionToData = new Map<string, SessionData>();
 
-  transport.onmessage = message => {
-    if (typeof message.id === 'number') {
+  function removeSession(sessionId: string): SessionData | undefined {
+    const data = sessionToData.get(sessionId);
+    if (!data)
+      return;
+    sessionToData.delete(sessionId);
+    return data;
+  }
+
+  const server = new WebSocketServer(transport, logger, port, {
+    onBrowserResponse(seqNum: number, source: ws, message: ProtocolResponse) {
       // Process command response.
-      const seqNum = message.id;
-      const value = idMixer.take(seqNum);
-      if (!value)
-        return;
-      const { id, socket } = value;
-
-      if (socket.readyState === ws.CLOSING) {
-        if (pendingBrowserContextCreations.has(id)) {
-          transport.send({
-            id: ++SequenceNumberMixer._lastSequenceNumber,
-            method: 'Browser.removeBrowserContext',
-            params: { browserContextId: message.result.browserContextId }
-          });
-        }
+      if (source.readyState === ws.CLOSING || source.readyState === ws.CLOSED) {
+        if (pendingBrowserContextCreations.has(seqNum))
+          server.sendMessageToBrowserOneWay('Browser.removeBrowserContext', { browserContextId: message.result.browserContextId });
         return;
       }
 
       if (pendingBrowserContextCreations.has(seqNum)) {
         // Browser.createBrowserContext response -> establish context attribution.
-        browserContextIds.set(message.result.browserContextId, socket);
+        browserContextIds.set(message.result.browserContextId, source);
         pendingBrowserContextCreations.delete(seqNum);
       }
 
@@ -151,88 +147,59 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Inne
         pendingBrowserContextDeletions.delete(seqNum);
       }
 
-      message.id = id;
-      socket.send(JSON.stringify(message));
+      source.send(JSON.stringify(message));
       return;
-    }
+    },
 
-    // Process notification response.
-    const { method, params, sessionId } = message;
-    if (sessionId) {
-      const socket = sessionToSocket.get(sessionId);
-      if (!socket || socket.readyState === ws.CLOSING) {
-        // Drop unattributed messages on the floor.
+    onBrowserNotification(message: ProtocolResponse) {
+      // Process notification response.
+      const { method, params, sessionId } = message;
+      if (sessionId) {
+        const data = sessionToData.get(sessionId);
+        if (!data || data.socket.readyState === ws.CLOSING) {
+          // Drop unattributed messages on the floor.
+          return;
+        }
+        data.socket.send(JSON.stringify(message));
         return;
       }
-      socket.send(JSON.stringify(message));
-      return;
-    }
-    if (method === 'Browser.attachedToTarget') {
-      const socket = browserContextIds.get(params.targetInfo.browserContextId);
-      if (!socket || socket.readyState === ws.CLOSING) {
-        // Drop unattributed messages on the floor.
-        return;
-      }
-      sessionToSocket.set(params.sessionId, socket);
-      socket.send(JSON.stringify(message));
-      return;
-    }
-    if (method === 'Browser.detachedFromTarget') {
-      const socket = sessionToSocket.get(params.sessionId);
-      sessionToSocket.delete(params.sessionId);
-      if (socket && socket.readyState !== ws.CLOSING)
+      if (method === 'Browser.attachedToTarget') {
+        const socket = browserContextIds.get(params.targetInfo.browserContextId);
+        if (!socket || socket.readyState === ws.CLOSING) {
+          // Drop unattributed messages on the floor.
+          return;
+        }
+        sessionToData.set(params.sessionId, { socket });
         socket.send(JSON.stringify(message));
-      return;
-    }
-  };
+        return;
+      }
+      if (method === 'Browser.detachedFromTarget') {
+        const data = removeSession(params.sessionId);
+        if (data && data.socket.readyState !== ws.CLOSING)
+          data.socket.send(JSON.stringify(message));
+        return;
+      }
+    },
 
-  transport.onclose = () => {
-    for (const socket of sockets) {
-      socket.removeListener('close', (socket as any).__closeListener);
-      socket.close(undefined, 'Browser disconnected');
-    }
-    server.close();
-    transport.onmessage = undefined;
-    transport.onclose = undefined;
-  };
+    onClientAttached() {},
 
-  server.on('connection', (socket: ws, req) => {
-    if (req.url !== '/' + guid) {
-      socket.close();
-      return;
-    }
-    sockets.add(socket);
-
-    socket.on('message', (message: string) => {
-      const parsedMessage = JSON.parse(Buffer.from(message).toString());
-      const { id, method, params } = parsedMessage;
-      const seqNum = idMixer.generate({ id, socket });
-      transport.send({ ...parsedMessage, id: seqNum });
+    onClientRequest(socket: ws, message: ProtocolRequest) {
+      const { method, params } = message;
+      const seqNum = server.sendMessageToBrowser(message, socket);
       if (method === 'Browser.createBrowserContext')
         pendingBrowserContextCreations.add(seqNum);
       if (method === 'Browser.removeBrowserContext')
         pendingBrowserContextDeletions.set(seqNum, params.browserContextId);
-    });
+    },
 
-    socket.on('error', logError(logger));
-
-    socket.on('close', (socket as any).__closeListener = () => {
+    onClientDetached(socket: ws) {
       for (const [browserContextId, s] of browserContextIds) {
         if (s === socket) {
-          transport.send({
-            id: ++SequenceNumberMixer._lastSequenceNumber,
-            method: 'Browser.removeBrowserContext',
-            params: { browserContextId }
-          });
+          server.sendMessageToBrowserOneWay('Browser.removeBrowserContext', { browserContextId });
           browserContextIds.delete(browserContextId);
         }
       }
-      sockets.delete(socket);
-    });
+    }
   });
-
-  const address = server.address();
-  const wsEndpoint = typeof address === 'string' ? `${address}/${guid}` : `ws://127.0.0.1:${address.port}/${guid}`;
-  return new WebSocketWrapper(wsEndpoint,
-      [pendingBrowserContextCreations, pendingBrowserContextDeletions, browserContextIds, sessionToSocket, sockets]);
+  return server;
 }
