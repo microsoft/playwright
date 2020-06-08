@@ -8606,10 +8606,10 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
      // The timeout we use when waiting for a DidUpdateGeometry message.
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..d796a81ab5dae0627fab017f77074d411c4da40a
+index 0000000000000000000000000000000000000000..4da3a8e8e55b60c29240692ce2bb316de8b28cb1
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,255 @@
+@@ -0,0 +1,259 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8682,8 +8682,12 @@ index 0000000000000000000000000000000000000000..d796a81ab5dae0627fab017f77074d41
 +#if USE(COORDINATED_GRAPHICS)
 +void InspectorScreencastAgent::didPaint(cairo_surface_t* surface)
 +{
++#if PLATFORM(GTK)
 +    if (m_encoder)
 +        m_encoder->encodeFrame(surface, m_page.drawingArea()->size());
++#else
++    UNUSED_PARAM(surface);
++#endif
 +}
 +#endif
 +
