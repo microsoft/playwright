@@ -67,6 +67,12 @@ CommandLineHandler.prototype = {
     });
 
     Services.mm.loadFrameScript(FRAME_SCRIPT, true /* aAllowDelayedLoad */);
+    if (Cc["@mozilla.org/gfx/info;1"].getService(Ci.nsIGfxInfo).isHeadless) {
+      const styleSheetService = Cc["@mozilla.org/content/style-sheet-service;1"].getService(Components.interfaces.nsIStyleSheetService);
+      const ioService = Cc["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService);
+      const uri = ioService.newURI('chrome://juggler/content/content/hidden-scrollbars.css', null, null);
+      styleSheetService.loadAndRegisterSheet(uri, styleSheetService.AGENT_SHEET);
+    }
     dump(`Juggler listening on ws://127.0.0.1:${this._server.port}/${token}\n`);
   },
 

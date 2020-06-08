@@ -70,6 +70,8 @@ class FrameTree {
   _frameForWorker(workerDebugger) {
     if (workerDebugger.type !== Ci.nsIWorkerDebugger.TYPE_DEDICATED)
       return null;
+    if (!workerDebugger.window)
+      return null;
     const docShell = workerDebugger.window.docShell;
     return this._docShellToFrame.get(docShell) || null;
   }
