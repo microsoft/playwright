@@ -18,8 +18,6 @@
 import * as extract from 'extract-zip';
 import * as fs from 'fs';
 import * as ProxyAgent from 'https-proxy-agent';
-import * as os from 'os';
-import * as path from 'path';
 import * as ProgressBar from 'progress';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
