@@ -18,8 +18,6 @@
 import * as extract from 'extract-zip';
 import * as fs from 'fs';
 import * as ProxyAgent from 'https-proxy-agent';
-import * as os from 'os';
-import * as path from 'path';
 import * as ProgressBar from 'progress';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
@@ -30,7 +28,6 @@ import { BrowserName, BrowserPlatform, BrowserDescriptor } from './browserPaths'
 
 const unlinkAsync = util.promisify(fs.unlink.bind(fs));
 const chmodAsync = util.promisify(fs.chmod.bind(fs));
-const mkdtempAsync = util.promisify(fs.mkdtemp.bind(fs));
 const renameAsync = util.promisify(fs.rename.bind(fs));
 const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
@@ -109,10 +106,10 @@ export async function downloadBrowserWithProgressBar(browserPath: string, browse
   }
 
   const url = revisionURL(browser);
-  const zipPath = path.join(os.tmpdir(), `playwright-download-${browser.name}-${browserPaths.hostPlatform}-${browser.revision}.zip`);
+  const zipPath = browserPaths.browserZipFile(browserPath, browser);
   try {
     await downloadFile(url, zipPath, progress);
-    const extractPath = await mkdtempAsync(path.join(os.tmpdir(), `playwright-extract-${browser.name}-${browserPaths.hostPlatform}-${browser.revision}-`));
+    const extractPath = browserPaths.browserExtractDirectory(browserPath, browser);
     await extract(zipPath, { dir: extractPath});
     await chmodAsync(browserPaths.executablePath(extractPath, browser)!, 0o755);
     await renameAsync(extractPath, browserPath);
