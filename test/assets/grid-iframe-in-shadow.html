@@ -1,0 +1,16 @@
+<style>
+  body, html {
+    margin: 0;
+  }
+</style>
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  const shadow = container.attachShadow({mode: 'open'});
+  const iframe = document.createElement('iframe');
+  iframe.src = './grid.html';
+  iframe.style.cssText = 'width: 300px; height: 300px; margin: 0; padding: 0; border: 0;';
+  shadow.appendChild(iframe);
+});
+</script>
