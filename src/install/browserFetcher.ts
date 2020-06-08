@@ -112,7 +112,7 @@ export async function downloadBrowserWithProgressBar(browserPath: string, browse
   const zipPath = path.join(os.tmpdir(), `playwright-download-${browser.name}-${browserPaths.hostPlatform}-${browser.revision}.zip`);
   try {
     await downloadFile(url, zipPath, progress);
-    const extractPath = await mkdtempAsync(path.join(os.tmpdir(), `playwright-extract-${browser.name}-${browserPaths.hostPlatform}-${browser.revision}-`));
+    const extractPath = await mkdtempAsync(path.join(path.dirname(browserPath), `playwright-extract-${browser.name}-${browserPaths.hostPlatform}-${browser.revision}-`));
     await extract(zipPath, { dir: extractPath});
     await chmodAsync(browserPaths.executablePath(extractPath, browser)!, 0o755);
     await renameAsync(extractPath, browserPath);
