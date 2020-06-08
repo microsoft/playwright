@@ -104,7 +104,7 @@ export class ProgressController {
       return result;
     } catch (e) {
       this._aborted();
-      rewriteErrorMessage(e, e.message + formatLogRecording(this._logRecording, this._apiName));
+      rewriteErrorMessage(e, e.message + formatLogRecording(this._logRecording, this._apiName) + kLoggingNote);
       clearTimeout(timer);
       this._state = 'aborted';
       this._logRecording = [];
@@ -125,6 +125,8 @@ async function runCleanup(cleanup: () => any) {
   } catch (e) {
   }
 }
+
+const kLoggingNote = `\nNote: use DEBUG=pw:api environment variable and rerun to capture Playwright logs.`;
 
 function formatLogRecording(log: string[], name: string): string {
   if (!log.length)
