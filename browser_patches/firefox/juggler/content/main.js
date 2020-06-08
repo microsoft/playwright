@@ -6,11 +6,9 @@ const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
 const {NetworkMonitor} = ChromeUtils.import('chrome://juggler/content/content/NetworkMonitor.js');
-const {ScrollbarManager} = ChromeUtils.import('chrome://juggler/content/content/ScrollbarManager.js');
 const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
 const {PageAgent} = ChromeUtils.import('chrome://juggler/content/content/PageAgent.js');
 
-const scrollbarManager = new ScrollbarManager(docShell);
 let frameTree;
 let networkMonitor;
 const helper = new Helper();
@@ -182,7 +180,6 @@ function initialize() {
       for (const sessionId of sessions.keys())
         disposeContentSession(sessionId);
 
-      scrollbarManager.dispose();
       networkMonitor.dispose();
       frameTree.dispose();
     }),
