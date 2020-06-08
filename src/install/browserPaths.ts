@@ -108,3 +108,21 @@ export function isBrowserDirectory(browserPath: string): boolean {
   const baseName = path.basename(browserPath);
   return baseName.startsWith('chromium-') || baseName.startsWith('firefox-') || baseName.startsWith('webkit-');
 }
+
+export function isBrowserExtractDirectory(browserPath: string): boolean {
+  const baseName = path.basename(browserPath);
+  return baseName.startsWith('playwright-extract-');
+}
+
+export function browserExtractDirectory(browserPath: string, browser: BrowserDescriptor): string {
+  return (path.join(path.dirname(browserPath), `playwright-extract-${browser.name}-${hostPlatform}-${browser.revision}`));
+}
+
+export function isBrowserZipFile(browserPath: string): boolean {
+  const baseName = path.basename(browserPath);
+  return baseName.startsWith('playwright-download-') && baseName.endsWith('.zip');
+}
+
+export function browserZipFile(browserPath: string, browser: BrowserDescriptor): string {
+  return path.join(path.dirname(browserPath), `playwright-download-${browser.name}-${hostPlatform}-${browser.revision}.zip`);
+}

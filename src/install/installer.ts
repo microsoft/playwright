@@ -28,7 +28,7 @@ const fsReaddirAsync = util.promisify(fs.readdir.bind(fs));
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 const fsUnlinkAsync = util.promisify(fs.unlink.bind(fs));
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
-const removeFolderAsync = util.promisify(removeFolder);
+const rmAsync = util.promisify(removeFolder);
 
 export async function installBrowsersWithProgressBar(packagePath: string) {
   const browsersPath = browserPaths.browsersPath(packagePath);
@@ -60,7 +60,14 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
     }
   }
 
-  // 2. Delete all unused browsers.
+  // 2. Delete all stale browser extract directories and .zip files.
+  // NOTE: this must not run concurrently with other installations.
+  let staleFiles = (await fsReaddirAsync(browsersPath)).map(file => path.join(browsersPath, file));
+  staleFiles = staleFiles.filter(file => browserPaths.isBrowserZipFile(file) || browserPaths.isBrowserExtractDirectory(file));
+  for (const staleFile of staleFiles)
+    await rmAsync(staleFile).catch(e => {});
+
+  // 3. Delete all unused browsers.
   let downloadedBrowsers = (await fsReaddirAsync(browsersPath)).map(file => path.join(browsersPath, file));
   downloadedBrowsers = downloadedBrowsers.filter(file => browserPaths.isBrowserDirectory(file));
   const directories = new Set<string>(downloadedBrowsers);
@@ -68,10 +75,10 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
     directories.delete(browserPaths.browserDirectory(browsersPath, browser));
   for (const directory of directories) {
     logPolitely('Removing unused browser at ' + directory);
-    await removeFolderAsync(directory).catch(e => {});
+    await rmAsync(directory).catch(e => {});
   }
 
-  // 3. Install missing browsers for this package.
+  // 4. Install missing browsers for this package.
   const myBrowsers = JSON.parse((await fsReadFileAsync(path.join(packagePath, 'browsers.json'))).toString())['browsers'] as browserPaths.BrowserDescriptor[];
   for (const browser of myBrowsers) {
     const browserPath = browserPaths.browserDirectory(browsersPath, browser);
