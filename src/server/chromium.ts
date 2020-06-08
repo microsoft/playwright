@@ -21,7 +21,7 @@ import { CRBrowser } from '../chromium/crBrowser';
 import * as ws from 'ws';
 import { Env } from './processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
-import { BrowserArgOptions, BrowserTypeBase, processBrowserArgOptions } from './browserType';
+import { LaunchOptionsBase, BrowserTypeBase, processBrowserArgOptions } from './browserType';
 import { WebSocketWrapper } from './browserServer';
 import { ConnectionTransport, ProtocolRequest } from '../transport';
 import { InnerLogger, logError } from '../logger';
@@ -77,7 +77,7 @@ export class Chromium extends BrowserTypeBase {
     return wrapTransportWithWebSocket(transport, logger, port);
   }
 
-  _defaultArgs(options: BrowserArgOptions, isPersistent: boolean, userDataDir: string): string[] {
+  _defaultArgs(options: LaunchOptionsBase, isPersistent: boolean, userDataDir: string): string[] {
     const { devtools, headless } = processBrowserArgOptions(options);
     const { args = [], proxy } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));

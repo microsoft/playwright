@@ -54,7 +54,6 @@ export class CRBrowser extends BrowserBase {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
       return browser;
     }
-
     browser._defaultContext = new CRBrowserContext(browser, null, options.persistent);
 
     const existingTargetAttachPromises: Promise<any>[] = [];
