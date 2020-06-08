@@ -106,16 +106,21 @@ export default class InjectedScript {
 
   private _pollRaf<T>(progress: types.InjectedScriptProgress, predicate: Predicate<T>): Promise<T> {
     let fulfill: (result: T) => void;
-    const result = new Promise<T>(x => fulfill = x);
+    let reject: (error: Error) => void;
+    const result = new Promise<T>((f, r) => { fulfill = f; reject = r; });
 
     const onRaf = () => {
       if (progress.canceled)
         return;
-      const success = predicate(progress);
-      if (success)
-        fulfill(success);
-      else
-        requestAnimationFrame(onRaf);
+      try {
+        const success = predicate(progress);
+        if (success)
+          fulfill(success);
+        else
+          requestAnimationFrame(onRaf);
+      } catch (e) {
+        reject(e);
+      }
     };
 
     onRaf();
@@ -124,15 +129,21 @@ export default class InjectedScript {
 
   private _pollInterval<T>(progress: types.InjectedScriptProgress, pollInterval: number, predicate: Predicate<T>): Promise<T> {
     let fulfill: (result: T) => void;
-    const result = new Promise<T>(x => fulfill = x);
+    let reject: (error: Error) => void;
+    const result = new Promise<T>((f, r) => { fulfill = f; reject = r; });
+
     const onTimeout = () => {
       if (progress.canceled)
         return;
-      const success = predicate(progress);
-      if (success)
-        fulfill(success);
-      else
-        setTimeout(onTimeout, pollInterval);
+      try {
+        const success = predicate(progress);
+        if (success)
+          fulfill(success);
+        else
+          setTimeout(onTimeout, pollInterval);
+      } catch (e) {
+        reject(e);
+      }
     };
 
     onTimeout();

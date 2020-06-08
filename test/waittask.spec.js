@@ -66,6 +66,23 @@ describe('Frame.waitForFunction', function() {
     await page.evaluate(() => window.__FOO = 'hit');
     await watchdog;
   });
+  it('should fail with predicate throwing on first call', async({page, server}) => {
+    const error = await page.waitForFunction(() => { throw new Error('oh my'); }).catch(e => e);
+    expect(error.message).toContain('oh my');
+  });
+  it('should fail with predicate throwing sometimes', async({page, server}) => {
+    const error = await page.waitForFunction(() => {
+      window.counter = (window.counter || 0) + 1;
+      if (window.counter === 3)
+        throw new Error('Bad counter!');
+      return window.counter === 5 ? 'result' : false;
+    }).catch(e => e);
+    expect(error.message).toContain('Bad counter!');
+  });
+  it('should fail with ReferenceError on wrong page', async({page, server}) => {
+    const error = await page.waitForFunction(() => globalVar === 123).catch(e => e);
+    expect(error.message).toContain('globalVar');
+  });
   it('should work with strict CSP policy', async({page, server}) => {
     server.setCSP('/empty.html', 'script-src ' + server.PREFIX);
     await page.goto(server.EMPTY_PAGE);
