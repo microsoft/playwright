@@ -156,7 +156,6 @@ axTypes.AXTree = {
   value: t.Optional(t.String),
   description: t.Optional(t.String),
 
-  value: t.Optional(t.String),
   roledescription: t.Optional(t.String),
   valuetext: t.Optional(t.String),
   orientation: t.Optional(t.String),
@@ -207,7 +206,7 @@ const Browser = {
     },
     'downloadCreated': {
       uuid: t.String,
-      browserContextId: t.String,
+      browserContextId: t.Optional(t.String),
       pageTargetId: t.String,
       url: t.String,
       suggestedFileName: t.String,
