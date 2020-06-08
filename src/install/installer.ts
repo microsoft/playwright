@@ -64,8 +64,10 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
   // NOTE: this must not run concurrently with other installations.
   let staleFiles = (await fsReaddirAsync(browsersPath)).map(file => path.join(browsersPath, file));
   staleFiles = staleFiles.filter(file => browserPaths.isBrowserZipFile(file) || browserPaths.isBrowserExtractDirectory(file));
-  for (const staleFile of staleFiles)
+  for (const staleFile of staleFiles) {
+    logPolitely('Removing leftover from interrupted installation ' + staleFile);
     await rmAsync(staleFile).catch(e => {});
+  }
 
   // 3. Delete all unused browsers.
   let downloadedBrowsers = (await fsReaddirAsync(browsersPath)).map(file => path.join(browsersPath, file));
