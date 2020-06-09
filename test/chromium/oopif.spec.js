@@ -150,13 +150,12 @@ describe('OOPIF', function() {
     expect(await countOOPIFs(browser)).toBe(1);
     expect(intercepted).toBe(true);
   });
-  it.fail(CHROMIUM)('should take screenshot', async({browser, page, server}) => {
-    // Screenshot differs on the bots, needs debugging.
+  it('should take screenshot', async({browser, page, server, golden}) => {
     await page.setViewportSize({width: 500, height: 500});
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(page.frames().length).toBe(2);
     expect(await countOOPIFs(browser)).toBe(1);
-    expect(await page.screenshot()).toBeGolden('screenshot-iframe.png');
+    expect(await page.screenshot()).toBeGolden(golden('screenshot-oopif.png'));
   });
   it('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {
     await page.route('**/*', route => route.continue());
