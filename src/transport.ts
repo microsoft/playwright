@@ -26,7 +26,6 @@ export type ProtocolRequest = {
   method: string;
   params: any;
   sessionId?: string;
-  pageProxyId?: string;
 };
 
 export type ProtocolResponse = {
@@ -37,6 +36,7 @@ export type ProtocolResponse = {
   params?: any;
   result?: any;
   pageProxyId?: string;
+  browserContextId?: string;
 };
 
 export interface ConnectionTransport {

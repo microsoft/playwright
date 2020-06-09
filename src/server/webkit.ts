@@ -95,7 +95,6 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Inne
   const pendingBrowserContextCreations = new Set<number>();
   const pendingBrowserContextDeletions = new Map<number, string>();
   const browserContextIds = new Map<string, ws>();
-  const pageProxyIds = new Map<string, ws>();
   const sockets = new Set<ws>();
 
   transport.onmessage = message => {
@@ -108,7 +107,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Inne
         return;
       const { id, socket } = value;
 
-      if (socket.readyState === ws.CLOSING) {
+      if (socket.readyState === ws.CLOSED || socket.readyState === ws.CLOSING) {
         if (pendingBrowserContextCreations.has(id)) {
           transport.send({
             id: ++SequenceNumberMixer._lastSequenceNumber,
@@ -137,40 +136,16 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Inne
       return;
     }
 
-    // Process notification response.
-    const { method, params, pageProxyId } = message;
-    if (pageProxyId) {
-      const socket = pageProxyIds.get(pageProxyId);
-      if (!socket || socket.readyState === ws.CLOSING) {
-        // Drop unattributed messages on the floor.
-        return;
-      }
-      socket.send(JSON.stringify(message));
+    // Every notification either has a browserContextId top-level field or
+    // has a browserContextId parameter.
+    const { params, browserContextId } = message;
+    const contextId = browserContextId || params.browserContextId;
+    const socket = browserContextIds.get(contextId);
+    if (!socket || socket.readyState === ws.CLOSING) {
+      // Drop unattributed messages on the floor.
       return;
     }
-    if (method === 'Playwright.pageProxyCreated') {
-      const socket = browserContextIds.get(params.pageProxyInfo.browserContextId);
-      if (!socket || socket.readyState === ws.CLOSING) {
-        // Drop unattributed messages on the floor.
-        return;
-      }
-      pageProxyIds.set(params.pageProxyInfo.pageProxyId, socket);
-      socket.send(JSON.stringify(message));
-      return;
-    }
-    if (method === 'Playwright.pageProxyDestroyed') {
-      const socket = pageProxyIds.get(params.pageProxyId);
-      pageProxyIds.delete(params.pageProxyId);
-      if (socket && socket.readyState !== ws.CLOSING)
-        socket.send(JSON.stringify(message));
-      return;
-    }
-    if (method === 'Playwright.provisionalLoadFailed') {
-      const socket = pageProxyIds.get(params.pageProxyId);
-      if (socket && socket.readyState !== ws.CLOSING)
-        socket.send(JSON.stringify(message));
-      return;
-    }
+    socket.send(JSON.stringify(message));
   };
 
   transport.onclose = () => {
@@ -204,10 +179,6 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Inne
     socket.on('error', logError(logger));
 
     socket.on('close', (socket as any).__closeListener = () => {
-      for (const [pageProxyId, s] of pageProxyIds) {
-        if (s === socket)
-          pageProxyIds.delete(pageProxyId);
-      }
       for (const [browserContextId, s] of browserContextIds) {
         if (s === socket) {
           transport.send({
@@ -226,5 +197,5 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, logger: Inne
   const wsEndpoint = typeof address === 'string' ? `${address}/${guid}` : `ws://127.0.0.1:${address.port}/${guid}`;
 
   return new WebSocketWrapper(wsEndpoint,
-      [pendingBrowserContextCreations, pendingBrowserContextDeletions, browserContextIds, pageProxyIds, sockets]);
+      [pendingBrowserContextCreations, pendingBrowserContextDeletions, browserContextIds, sockets]);
 }
