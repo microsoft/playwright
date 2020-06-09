@@ -22,7 +22,5 @@ juggler.jar:
   content/content/PageAgent.js (content/PageAgent.js)
   content/content/Runtime.js (content/Runtime.js)
   content/content/WorkerMain.js (content/WorkerMain.js)
-  content/content/ScrollbarManager.js (content/ScrollbarManager.js)
-  content/content/floating-scrollbars.css (content/floating-scrollbars.css)
   content/content/hidden-scrollbars.css (content/hidden-scrollbars.css)
 
