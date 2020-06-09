@@ -1030,10 +1030,10 @@ index 3b8fa18bd7e8d95d7e8f95b442afc63e550ce63a..edeabe67bd568be7fbe66781fce61a42
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Playwright.json b/Source/JavaScriptCore/inspector/protocol/Playwright.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..18dbf54b9b825907a0693b40ef06c25b82aef2ae
+index 0000000000000000000000000000000000000000..dd4c318ec4b9b49ce937266ba899e54f8e6fa932
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Playwright.json
-@@ -0,0 +1,247 @@
+@@ -0,0 +1,244 @@
 +{
 +    "domain": "Playwright",
 +    "availability": ["web"],
@@ -1047,16 +1047,6 @@ index 0000000000000000000000000000000000000000..18dbf54b9b825907a0693b40ef06c25b
 +            "id": "PageProxyID",
 +            "type": "string",
 +            "description": "Id of WebPageProxy."
-+        },
-+        {
-+            "id": "PageProxyInfo",
-+            "type": "object",
-+            "description": "Tab info object",
-+            "properties": [
-+                { "name": "pageProxyId", "$ref": "PageProxyID" },
-+                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
-+                { "name": "openerId", "$ref": "PageProxyID", "optional": true, "description": "Unique identifier of the opening page. Only set for pages created by window.open()." }
-+            ]
 +        },
 +        {
 +            "id": "CookieSameSitePolicy",
@@ -1228,12 +1218,15 @@ index 0000000000000000000000000000000000000000..18dbf54b9b825907a0693b40ef06c25b
 +        {
 +            "name": "pageProxyCreated",
 +            "parameters": [
-+                { "name": "pageProxyInfo", "$ref": "PageProxyInfo" }
++                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
++                { "name": "pageProxyId", "$ref": "PageProxyID" },
++                { "name": "openerId", "$ref": "PageProxyID", "optional": true, "description": "Unique identifier of the opening page. Only set for pages created by window.open()." }
 +            ]
 +        },
 +        {
 +            "name": "pageProxyDestroyed",
 +            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +                { "name": "pageProxyId", "$ref": "PageProxyID" }
 +            ]
 +        },
@@ -1241,6 +1234,7 @@ index 0000000000000000000000000000000000000000..18dbf54b9b825907a0693b40ef06c25b
 +            "name": "provisionalLoadFailed",
 +            "description": "Fired when provisional load fails.",
 +            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +                { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
 +                { "name": "loaderId", "$ref": "Network.LoaderId", "description": "Identifier of the loader associated with the navigation." },
 +                { "name": "error", "type": "string", "description": "Localized error string." }
@@ -1250,6 +1244,7 @@ index 0000000000000000000000000000000000000000..18dbf54b9b825907a0693b40ef06c25b
 +          "name": "windowOpen",
 +          "description": "Fired when page opens a new window.",
 +          "parameters": [
++              { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +              { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
 +              { "name": "url", "type": "string" },
 +              { "name": "windowFeatures", "type": "array", "items": { "type": "string" } }
@@ -1258,16 +1253,17 @@ index 0000000000000000000000000000000000000000..18dbf54b9b825907a0693b40ef06c25b
 +        {
 +            "name": "downloadCreated",
 +            "parameters": [
-+                { "name": "uuid", "type": "string" },
-+                { "name": "url", "type": "string" },
++                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +                { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
-+                { "name": "browserContextId", "$ref": "ContextID" },
-+                { "name": "frameId", "$ref": "Network.FrameId", "description": "Unique identifier of the originating frame." }
++                { "name": "frameId", "$ref": "Network.FrameId", "description": "Unique identifier of the originating frame." },
++                { "name": "uuid", "type": "string" },
++                { "name": "url", "type": "string" }
 +            ]
 +        },
 +        {
 +            "name": "downloadFilenameSuggested",
 +            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +                { "name": "uuid", "type": "string" },
 +                { "name": "suggestedFilename", "type": "string" }
 +            ]
@@ -1275,6 +1271,7 @@ index 0000000000000000000000000000000000000000..18dbf54b9b825907a0693b40ef06c25b
 +        {
 +            "name": "downloadFinished",
 +            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +                { "name": "uuid", "type": "string" },
 +                { "name": "error", "type": "string" }
 +            ]
@@ -8505,7 +8502,7 @@ index d7695088e7cfc4f638f157338754f9f157489749..d7ed4f58f033ebfc13142f2d6e8814d6
      bool m_isBackingStoreDiscardable { true };
      std::unique_ptr<BackingStore> m_backingStore;
 diff --git a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
-index c5de4e7d0f59194f43a023b089e372c58cf8ee06..211f4c1baf5d1a66cd08ee8147e96f7ec6c0098a 100644
+index c5de4e7d0f59194f43a023b089e372c58cf8ee06..5eeb2e9ec737efbb27d0f4e4c160eca6e6dbc0a8 100644
 --- a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
 +++ b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
 @@ -42,8 +42,10 @@
@@ -8526,7 +8523,7 @@ index c5de4e7d0f59194f43a023b089e372c58cf8ee06..211f4c1baf5d1a66cd08ee8147e96f7e
 +    , m_uuid(createCanonicalUUIDString())
  {
 +    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
-+      instrumentation->downloadCreated(m_uuid, m_request, frameInfoData, originatingPage);
++      instrumentation->downloadCreated(*m_dataStore, m_uuid, m_request, frameInfoData, originatingPage);
  }
  
  DownloadProxy::~DownloadProxy()
@@ -8537,7 +8534,7 @@ index c5de4e7d0f59194f43a023b089e372c58cf8ee06..211f4c1baf5d1a66cd08ee8147e96f7e
 -    
 +
 +    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
-+      instrumentation->downloadFilenameSuggested(m_uuid, suggestedFilename);
++      instrumentation->downloadFilenameSuggested(*m_dataStore, m_uuid, suggestedFilename);
 +
 +    if (m_processPool->networkProcess() && m_dataStore->allowDownloadForAutomation()) {
 +        SandboxExtension::Handle sandboxExtensionHandle;
@@ -8558,7 +8555,7 @@ index c5de4e7d0f59194f43a023b089e372c58cf8ee06..211f4c1baf5d1a66cd08ee8147e96f7e
  
      m_processPool->downloadClient().didFinish(*this);
 +    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
-+      instrumentation->downloadFinished(m_uuid, String());
++      instrumentation->downloadFinished(*m_dataStore, m_uuid, String());
  
      // This can cause the DownloadProxy object to be deleted.
      m_downloadProxyMap.downloadFinished(*this);
@@ -8567,7 +8564,7 @@ index c5de4e7d0f59194f43a023b089e372c58cf8ee06..211f4c1baf5d1a66cd08ee8147e96f7e
  
      m_processPool->downloadClient().didFail(*this, error);
 +    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
-+      instrumentation->downloadFinished(m_uuid, error.localizedDescription());
++      instrumentation->downloadFinished(*m_dataStore, m_uuid, error.localizedDescription());
  
      // This can cause the DownloadProxy object to be deleted.
      m_downloadProxyMap.downloadFinished(*this);
@@ -8576,7 +8573,7 @@ index c5de4e7d0f59194f43a023b089e372c58cf8ee06..211f4c1baf5d1a66cd08ee8147e96f7e
  
      m_processPool->downloadClient().didCancel(*this);
 +    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
-+      instrumentation->downloadFinished(m_uuid, "canceled"_s);
++      instrumentation->downloadFinished(*m_dataStore, m_uuid, "canceled"_s);
  
      // This can cause the DownloadProxy object to be deleted.
      m_downloadProxyMap.downloadFinished(*this);
@@ -10225,10 +10222,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..cf42d771f07a944dfb5654161f18a072b109aa77
+index 0000000000000000000000000000000000000000..ebe29e3f923b3cd74b9595328fce85359e19a741
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,796 @@
+@@ -0,0 +1,810 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -10297,8 +10294,9 @@ index 0000000000000000000000000000000000000000..cf42d771f07a944dfb5654161f18a072
 +class InspectorPlaywrightAgent::PageProxyChannel : public FrontendChannel {
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    PageProxyChannel(FrontendChannel& frontendChannel, String pageProxyID, WebPageProxy& page)
-+        : m_pageProxyID(pageProxyID)
++    PageProxyChannel(FrontendChannel& frontendChannel, String browserContextID, String pageProxyID, WebPageProxy& page)
++        : m_browserContextID(browserContextID)
++        , m_pageProxyID(pageProxyID)
 +        , m_frontendChannel(frontendChannel)
 +        , m_page(page)
 +    {
@@ -10334,10 +10332,12 @@ index 0000000000000000000000000000000000000000..cf42d771f07a944dfb5654161f18a072
 +        if (!parsedMessage->asObject(messageObject))
 +            return message;
 +
++        messageObject->setString("browserContextId"_s, m_browserContextID);
 +        messageObject->setString("pageProxyId"_s, m_pageProxyID);
 +        return messageObject->toJSONString();
 +    }
 +
++    String m_browserContextID;
 +    String m_pageProxyID;
 +    FrontendChannel& m_frontendChannel;
 +    WebPageProxy& m_page;
@@ -10420,17 +10420,6 @@ index 0000000000000000000000000000000000000000..cf42d771f07a944dfb5654161f18a072
 +        .setSession(cookie.session)
 +        .setSameSite(cookieSameSitePolicy(cookie.sameSite))
 +        .release();
-+}
-+
-+Ref<Inspector::Protocol::Playwright::PageProxyInfo> buildPageProxyInfo(const WebPageProxy& page) {
-+    auto result = Inspector::Protocol::Playwright::PageProxyInfo::create()
-+        .setPageProxyId(toPageProxyIDProtocolString(page))
-+        .setBrowserContextId(toBrowserContextIDProtocolString(page.sessionID()))
-+        .release();
-+    auto* opener = page.configuration().relatedPage();
-+    if (opener)
-+        result->setOpenerId(toPageProxyIDProtocolString(*opener));
-+    return result;
 +}
 +
 +}  // namespace
@@ -10555,11 +10544,19 @@ index 0000000000000000000000000000000000000000..cf42d771f07a944dfb5654161f18a072
 +        return;
 +
 +    ASSERT(m_frontendChannel);
-+    m_frontendDispatcher->pageProxyCreated(buildPageProxyInfo(page));
++
++    String browserContextID = toBrowserContextIDProtocolString(page.sessionID());
++    String pageProxyID = toPageProxyIDProtocolString(page);
++    auto* opener = page.configuration().relatedPage();
++    String openerId;
++    if (opener)
++        openerId = toPageProxyIDProtocolString(*opener);
++
++    m_frontendDispatcher->pageProxyCreated(
++        browserContextID, pageProxyID, openerId.isNull() ? nullptr : &openerId);
 +
 +    // Auto-connect to all new pages.
-+    String pageProxyID = toPageProxyIDProtocolString(page);
-+    auto pageProxyChannel = makeUnique<PageProxyChannel>(*m_frontendChannel, pageProxyID, page);
++    auto pageProxyChannel = makeUnique<PageProxyChannel>(*m_frontendChannel, browserContextID, pageProxyID, page);
 +    page.inspectorController().connectFrontend(*pageProxyChannel);
 +    // Always pause new targets if controlled remotely.
 +    page.inspectorController().setPauseOnStart(true);
@@ -10571,7 +10568,9 @@ index 0000000000000000000000000000000000000000..cf42d771f07a944dfb5654161f18a072
 +    if (!m_isEnabled)
 +        return;
 +
-+    m_frontendDispatcher->pageProxyDestroyed(toPageProxyIDProtocolString(page));
++    m_frontendDispatcher->pageProxyDestroyed(
++        toBrowserContextIDProtocolString(page.sessionID()),
++        toPageProxyIDProtocolString(page));
 +
 +    auto it = m_browserContextDeletions.find(page.sessionID());
 +    if (it != m_browserContextDeletions.end()) {
@@ -10592,7 +10591,10 @@ index 0000000000000000000000000000000000000000..cf42d771f07a944dfb5654161f18a072
 +    if (!m_isEnabled)
 +        return;
 +
-+    m_frontendDispatcher->provisionalLoadFailed(toPageProxyIDProtocolString(page), String::number(navigationID), error);
++    m_frontendDispatcher->provisionalLoadFailed(
++        toBrowserContextIDProtocolString(page.sessionID()),
++        toPageProxyIDProtocolString(page),
++        String::number(navigationID), error);
 +}
 +
 +void InspectorPlaywrightAgent::willCreateNewPage(WebPageProxy& page, const WebCore::WindowFeatures& features, const URL& url)
@@ -10600,7 +10602,11 @@ index 0000000000000000000000000000000000000000..cf42d771f07a944dfb5654161f18a072
 +    if (!m_isEnabled)
 +        return;
 +
-+    m_frontendDispatcher->windowOpen(toPageProxyIDProtocolString(page), url.string(), getEnabledWindowFeatures(features));
++    m_frontendDispatcher->windowOpen(
++        toBrowserContextIDProtocolString(page.sessionID()),
++        toPageProxyIDProtocolString(page),
++        url.string(),
++        getEnabledWindowFeatures(features));
 +}
 +
 +void InspectorPlaywrightAgent::enable(ErrorString&)
@@ -10977,29 +10983,34 @@ index 0000000000000000000000000000000000000000..cf42d771f07a944dfb5654161f18a072
 +    }
 +}
 +
-+void InspectorPlaywrightAgent::downloadCreated(const String& uuid, const WebCore::ResourceRequest& request, const FrameInfoData& frameInfoData, WebPageProxy* page)
++void InspectorPlaywrightAgent::downloadCreated(const WebsiteDataStore& dataStore, const String& uuid, const WebCore::ResourceRequest& request, const FrameInfoData& frameInfoData, WebPageProxy* page)
 +{
 +    if (!m_isEnabled)
 +        return;
 +    String frameID = WebCore::InspectorPageAgent::makeFrameID(page->process().coreProcessIdentifier(), frameInfoData.frameID ? *frameInfoData.frameID : page->mainFrame()->frameID());
-+    m_frontendDispatcher->downloadCreated(uuid, request.url().string(),
++    m_frontendDispatcher->downloadCreated(
++        toBrowserContextIDProtocolString(dataStore.sessionID()),
 +        toPageProxyIDProtocolString(*page),
-+        toBrowserContextIDProtocolString(page->sessionID()),
-+        frameID);
++        frameID,
++        uuid, request.url().string());
 +}
 +
-+void InspectorPlaywrightAgent::downloadFilenameSuggested(const String& uuid, const String& suggestedFilename)
++void InspectorPlaywrightAgent::downloadFilenameSuggested(const WebsiteDataStore& dataStore, const String& uuid, const String& suggestedFilename)
 +{
 +    if (!m_isEnabled)
 +        return;
-+    m_frontendDispatcher->downloadFilenameSuggested(uuid, suggestedFilename);
++    m_frontendDispatcher->downloadFilenameSuggested(
++        toBrowserContextIDProtocolString(dataStore.sessionID()),
++        uuid, suggestedFilename);
 +}
 +
-+void InspectorPlaywrightAgent::downloadFinished(const String& uuid, const String& error)
++void InspectorPlaywrightAgent::downloadFinished(const WebsiteDataStore& dataStore, const String& uuid, const String& error)
 +{
 +    if (!m_isEnabled)
 +        return;
-+    m_frontendDispatcher->downloadFinished(uuid, error);
++    m_frontendDispatcher->downloadFinished(
++        toBrowserContextIDProtocolString(dataStore.sessionID()),
++        uuid, error);
 +}
 +
 +BrowserContext InspectorPlaywrightAgent::lookupBrowserContext(ErrorString& errorString, const String* browserContextID)
@@ -11027,7 +11038,7 @@ index 0000000000000000000000000000000000000000..cf42d771f07a944dfb5654161f18a072
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..510bf2b25ff7953aab8af77232568b629fe9846e
+index 0000000000000000000000000000000000000000..7b1b0c063c792ce7dddf338242d1914539cae76d
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 @@ -0,0 +1,119 @@
@@ -11128,9 +11139,9 @@ index 0000000000000000000000000000000000000000..510bf2b25ff7953aab8af77232568b62
 +    void setDownloadBehavior(Inspector::ErrorString&, const String* behavior, const String* downloadPath, const String* browserContextID) override;
 +
 +    // DownloadInstrumentation
-+    void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) override;
-+    void downloadFilenameSuggested(const String& uuid, const String& suggestedFilename) override;
-+    void downloadFinished(const String& uuid, const String& error) override;
++    void downloadCreated(const WebsiteDataStore&, const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) override;
++    void downloadFilenameSuggested(const WebsiteDataStore&, const String& uuid, const String& suggestedFilename) override;
++    void downloadFinished(const WebsiteDataStore&, const String& uuid, const String& error) override;
 +
 +    BrowserContext lookupBrowserContext(Inspector::ErrorString&, const String* browserContextID);
 +    WebFrameProxy* frameForID(const String& frameID, String& error);
@@ -12656,7 +12667,7 @@ index 0f556a4e0a0d015e67d88ed709842afa6dc426ae..319513d3835edf1ee798eca3db688d71
  void WebsiteDataStore::forwardAppBoundDomainsToITPIfInitialized(CompletionHandler<void()>&& completionHandler)
  {
 diff --git a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
-index 964c6315e38f5e0a0303febce45b1e975054f0b4..117d8c7c74bc81b34cfc0fe2b11a54299ed24c8f 100644
+index 964c6315e38f5e0a0303febce45b1e975054f0b4..6b6c4f18b617d0a87d05a17db739808929dff2a6 100644
 --- a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
 +++ b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
 @@ -83,6 +83,7 @@ class WebResourceLoadStatisticsStore;
@@ -12667,22 +12678,24 @@ index 964c6315e38f5e0a0303febce45b1e975054f0b4..117d8c7c74bc81b34cfc0fe2b11a5429
  struct WebsiteDataRecord;
  struct WebsiteDataStoreParameters;
  
-@@ -96,6 +97,14 @@ enum class StorageAccessPromptStatus;
+@@ -96,6 +97,16 @@ enum class StorageAccessPromptStatus;
  struct PluginModuleInfo;
  #endif
  
++class WebsiteDataStore;
++
 +class DownloadInstrumentation {
 +public:
-+    virtual void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) = 0;
-+    virtual void downloadFilenameSuggested(const String& uuid, const String& suggestedFilename) = 0;
-+    virtual void downloadFinished(const String& uuid, const String& error) = 0;
++    virtual void downloadCreated(const WebsiteDataStore&, const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) = 0;
++    virtual void downloadFilenameSuggested(const WebsiteDataStore&, const String& uuid, const String& suggestedFilename) = 0;
++    virtual void downloadFinished(const WebsiteDataStore&, const String& uuid, const String& error) = 0;
 +    virtual ~DownloadInstrumentation() = default;
 +};
 +
  class WebsiteDataStore : public API::ObjectImpl<API::Object::Type::WebsiteDataStore>, public Identified<WebsiteDataStore>, public CanMakeWeakPtr<WebsiteDataStore>  {
  public:
      static Ref<WebsiteDataStore> defaultDataStore();
-@@ -290,6 +299,14 @@ public:
+@@ -290,6 +301,14 @@ public:
      static WTF::String defaultJavaScriptConfigurationDirectory();
      static bool http3Enabled();
  
@@ -12697,7 +12710,7 @@ index 964c6315e38f5e0a0303febce45b1e975054f0b4..117d8c7c74bc81b34cfc0fe2b11a5429
      void resetQuota(CompletionHandler<void()>&&);
      void hasAppBoundSession(CompletionHandler<void(bool)>&&) const;
      void clearAppBoundSession(CompletionHandler<void()>&&);
-@@ -390,6 +407,11 @@ private:
+@@ -390,6 +409,11 @@ private:
  
      RefPtr<API::HTTPCookieStore> m_cookieStore;
  
