@@ -17,7 +17,6 @@
 import * as types from './types';
 import * as dom from './dom';
 import * as utilityScriptSource from './generated/utilityScriptSource';
-import { InnerLogger } from './logger';
 import * as debugSupport from './debug/debugSupport';
 import { serializeAsCallArgument } from './utilityScriptSerializers';
 import { helper } from './helper';
@@ -38,12 +37,10 @@ export interface ExecutionContextDelegate {
 
 export class ExecutionContext {
   readonly _delegate: ExecutionContextDelegate;
-  readonly _logger: InnerLogger;
   private _utilityScriptPromise: Promise<JSHandle> | undefined;
 
-  constructor(delegate: ExecutionContextDelegate, logger: InnerLogger) {
+  constructor(delegate: ExecutionContextDelegate) {
     this._delegate = delegate;
-    this._logger = logger;
   }
 
   adoptIfNeeded(handle: JSHandle): Promise<JSHandle> | null {

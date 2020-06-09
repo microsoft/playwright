@@ -27,7 +27,7 @@ export function waitForTimeoutWasUsed(page: Page) {
   if (waitForTimeoutWasUsedReported)
     return;
   waitForTimeoutWasUsedReported = true;
-  page._log(hintsLog, `WARNING: page.waitForTimeout(timeout) should only be used for debugging.
+  page._logger.log(hintsLog, `WARNING: page.waitForTimeout(timeout) should only be used for debugging.
 Tests using the timer in production are going to be flaky.
 Use signals such as network events, selectors becoming visible, etc. instead.`);
 }

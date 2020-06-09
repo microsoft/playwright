@@ -79,14 +79,14 @@ export class FFConnection extends EventEmitter {
   }
 
   _rawSend(message: ProtocolRequest) {
-    if (this._logger._isLogEnabled(protocolLog))
-      this._logger._log(protocolLog, 'SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
+    if (this._logger.isLogEnabled(protocolLog))
+      this._logger.log(protocolLog, 'SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
     this._transport.send(message);
   }
 
   async _onMessage(message: ProtocolResponse) {
-    if (this._logger._isLogEnabled(protocolLog))
-      this._logger._log(protocolLog, '◀ RECV ' + JSON.stringify(message));
+    if (this._logger.isLogEnabled(protocolLog))
+      this._logger.log(protocolLog, '◀ RECV ' + JSON.stringify(message));
     if (message.id === kBrowserCloseMessageId)
       return;
     if (message.sessionId) {
@@ -187,7 +187,7 @@ export class FFSession extends EventEmitter {
 
   sendMayFail<T extends keyof Protocol.CommandParameters>(method: T, params?: Protocol.CommandParameters[T]): Promise<Protocol.CommandReturnValues[T] | void> {
     return this.send(method, params).catch(error => {
-      this._connection._logger._log(errorLog, error, []);
+      this._connection._logger.log(errorLog, error, []);
     });
   }
 
