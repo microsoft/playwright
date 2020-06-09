@@ -268,8 +268,26 @@ class PageAgent {
     for (const context of this._runtime.executionContexts())
       this._onExecutionContextCreated(context);
 
-    if (this._frameTree.isPageReady())
+    if (this._frameTree.isPageReady()) {
       this._browserPage.emit('pageReady', {});
+      const mainFrame = this._frameTree.mainFrame();
+      const domWindow = mainFrame.domWindow();
+      const document = domWindow ? domWindow.document : null;
+      const readyState = document ? document.readyState : null;
+      // Sometimes we initialize later than the first about:blank page is opened.
+      // In this case, the page might've been loaded already, and we need to issue
+      // the `DOMContentLoaded` and `load` events.
+      if (mainFrame.url() === 'about:blank' && readyState === 'complete') {
+        this._browserPage.emit('pageEventFired', {
+          frameId: this._frameTree.mainFrame().id(),
+          name: 'DOMContentLoaded',
+        });
+        this._browserPage.emit('pageEventFired', {
+          frameId: this._frameTree.mainFrame().id(),
+          name: 'load',
+        });
+      }
+    }
   }
 
   _onExecutionContextCreated(executionContext) {
