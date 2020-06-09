@@ -120,7 +120,7 @@ function collect(browserNames) {
 
     const browserEnvironment = new Environment(browserName);
     browserEnvironment.beforeAll(async state => {
-      state._logger = utils.createTestLogger(config.dumpProtocolOnFailure);
+      state._logger = utils.createTestLogger(config.dumpLogOnFailure);
       state.browser = await state.browserType.launch({...launchOptions, logger: state._logger});
     });
     browserEnvironment.afterAll(async state => {

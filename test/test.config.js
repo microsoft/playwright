@@ -150,7 +150,7 @@ function setupTestRunner(testRunner) {
 
 module.exports = {
   playwrightPath,
-  dumpProtocolOnFailure: valueFromEnv('DEBUGP', false),
+  dumpLogOnFailure: valueFromEnv('DEBUGP', false),
   launchOptions: {
     executablePath: {
       chromium: process.env.CRPATH,
