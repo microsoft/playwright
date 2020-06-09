@@ -66,6 +66,13 @@ describe('Page.click', function() {
     ]).catch(e => {});
     await context.close();
   });
+  it('should avoid side effects after timeout', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/button.html');
+    const error = await page.click('button', { timeout: 2000, __testHookBeforePointerAction: () => new Promise(f => setTimeout(f, 2500))}).catch(e => e);
+    await page.waitForTimeout(5000);  // Give it some time to click after the test hook is done waiting.
+    expect(await page.evaluate(() => result)).toBe('Was not clicked');
+    expect(error.message).toContain('Timeout 2000ms exceeded during page.click.');
+  });
   it('should click the button after navigation ', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.click('button');

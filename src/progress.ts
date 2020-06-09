@@ -26,6 +26,7 @@ export interface Progress {
   isRunning(): boolean;
   cleanupWhenAborted(cleanup: () => any): void;
   log(log: Log, message: string | Error): void;
+  throwIfAborted(): void;
 }
 
 export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, logger: InnerLogger, timeout: number, apiName?: string): Promise<T> {
@@ -89,6 +90,10 @@ export class ProgressController {
           this._logger.log(log, message);
         }
       },
+      throwIfAborted: () => {
+        if (this._state === 'aborted')
+          throw new AbortedError();
+      },
     };
     this._logger.log(apiLog, `=> ${this._apiName} started`);
 
@@ -142,3 +147,5 @@ function monotonicTime(): number {
   const [seconds, nanoseconds] = process.hrtime();
   return seconds * 1000 + (nanoseconds / 1000000 | 0);
 }
+
+class AbortedError extends Error {}
