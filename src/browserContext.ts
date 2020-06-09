@@ -28,7 +28,7 @@ import { Log, InnerLogger, Logger, RootLogger } from './logger';
 import { FunctionWithSource } from './frames';
 import * as debugSupport from './debug/debugSupport';
 
-export type PersistentContextOptions = {
+type CommonContextOptions = {
   viewport?: types.Size | null,
   ignoreHTTPSErrors?: boolean,
   javaScriptEnabled?: boolean,
@@ -45,10 +45,11 @@ export type PersistentContextOptions = {
   isMobile?: boolean,
   hasTouch?: boolean,
   colorScheme?: types.ColorScheme,
+  acceptDownloads?: boolean,
 };
 
-export type BrowserContextOptions = PersistentContextOptions & {
-  acceptDownloads?: boolean,
+export type PersistentContextOptions = CommonContextOptions;
+export type BrowserContextOptions = CommonContextOptions & {
   logger?: Logger,
 };
 
@@ -276,12 +277,6 @@ export function validateBrowserContextOptions(options: BrowserContextOptions): B
   if (result.extraHTTPHeaders)
     result.extraHTTPHeaders = network.verifyHeaders(result.extraHTTPHeaders);
   return result;
-}
-
-export function validatePersistentContextOptions(options: PersistentContextOptions): PersistentContextOptions {
-  if ((options as any).acceptDownloads !== undefined)
-    throw new Error(`Option "acceptDownloads" is not supported for persistent context`);
-  return validateBrowserContextOptions(options);
 }
 
 export function verifyGeolocation(geolocation: types.Geolocation): types.Geolocation {

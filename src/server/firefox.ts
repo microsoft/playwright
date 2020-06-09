@@ -23,7 +23,7 @@ import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
 import { helper } from '../helper';
 import { WebSocketWrapper } from './browserServer';
-import { BrowserArgOptions, BrowserTypeBase, processBrowserArgOptions, FirefoxUserPrefsOptions } from './browserType';
+import { LaunchOptionsBase, BrowserTypeBase, processBrowserArgOptions, FirefoxUserPrefsOptions } from './browserType';
 import { Env } from './processLauncher';
 import { ConnectionTransport, SequenceNumberMixer } from '../transport';
 import { InnerLogger, logError } from '../logger';
@@ -57,7 +57,7 @@ export class Firefox extends BrowserTypeBase {
     return wrapTransportWithWebSocket(transport, logger, port);
   }
 
-  _defaultArgs(options: BrowserArgOptions & FirefoxUserPrefsOptions, isPersistent: boolean, userDataDir: string): string[] {
+  _defaultArgs(options: LaunchOptionsBase & FirefoxUserPrefsOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { devtools, headless } = processBrowserArgOptions(options);
     const { args = [], proxy } = options;
     if (devtools)

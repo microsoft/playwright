@@ -18,8 +18,10 @@
 import * as crypto from 'crypto';
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
+import * as removeFolder from 'rimraf';
 import * as util from 'util';
 import * as types from './types';
+const removeFolderAsync = util.promisify(removeFolder);
 
 export type RegisteredListener = {
   emitter: EventEmitter;
@@ -269,6 +271,12 @@ class Helper {
     if (!Number.isNaN(width) && !Number.isNaN(height))
       return { width, height };
     return null;
+  }
+
+  static async removeFolders(dirs: string[]) {
+    await Promise.all(dirs.map(dir => {
+      return removeFolderAsync(dir).catch((err: Error) => console.error(err));
+    }));
   }
 }
 

@@ -223,6 +223,7 @@ module.exports = {
     {
       files: [
         './defaultbrowsercontext.spec.js',
+        './downloadsPath.spec.js',
         './fixtures.spec.js',
         './launcher.spec.js',
         './logger.spec.js',

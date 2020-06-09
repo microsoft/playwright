@@ -374,15 +374,4 @@ describe('launchPersistentContext()', function() {
     expect(error).toBe(e);
     await removeUserDataDir(userDataDir);
   });
-  it('should throw on unsupported options', async ({browserType, defaultBrowserOptions}) => {
-    const userDataDir = await makeUserDataDir();
-    const optionNames = [ 'acceptDownloads' ];
-    for (const option of optionNames) {
-      const options = { ...defaultBrowserOptions };
-      options[option] = 'hello';
-      const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
-      expect(error.message).toBe(`Option "${option}" is not supported for persistent context`);
-    }
-    await removeUserDataDir(userDataDir);
-  });
 });

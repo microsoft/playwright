@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
-import { BrowserContext, PersistentContextOptions, validatePersistentContextOptions, verifyProxySettings } from '../browserContext';
+import { BrowserContext, PersistentContextOptions, verifyProxySettings, validateBrowserContextOptions } from '../browserContext';
 import { BrowserServer, WebSocketWrapper } from './browserServer';
 import * as browserPaths from '../install/browserPaths';
 import { Logger, RootLogger, InnerLogger } from '../logger';
@@ -32,19 +32,13 @@ import { Progress, runAbortableTask } from '../progress';
 import { ProxySettings } from '../types';
 import { TimeoutSettings } from '../timeoutSettings';
 
-export type BrowserArgOptions = {
-  headless?: boolean,
-  args?: string[],
-  devtools?: boolean,
-  proxy?: ProxySettings,
-};
-
 export type FirefoxUserPrefsOptions = {
   firefoxUserPrefs?: { [key: string]: string | number | boolean },
 };
 
-type LaunchOptionsBase = BrowserArgOptions & {
+export type LaunchOptionsBase = {
   executablePath?: string,
+  args?: string[],
   ignoreDefaultArgs?: boolean | string[],
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
@@ -52,6 +46,10 @@ type LaunchOptionsBase = BrowserArgOptions & {
   timeout?: number,
   logger?: Logger,
   env?: Env,
+  headless?: boolean,
+  devtools?: boolean,
+  proxy?: ProxySettings,
+  downloadsPath?: string,
 };
 
 export function processBrowserArgOptions(options: LaunchOptionsBase): { devtools: boolean, headless: boolean } {
@@ -77,6 +75,7 @@ export interface BrowserType {
   connect(options: ConnectOptions): Promise<Browser>;
 }
 
+const mkdirAsync = util.promisify(fs.mkdir);
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 const DOWNLOADS_FOLDER = path.join(os.tmpdir(), 'playwright_downloads-');
 
@@ -116,7 +115,7 @@ export abstract class BrowserTypeBase implements BrowserType {
 
   async launchPersistentContext(userDataDir: string, options: LaunchOptions & PersistentContextOptions = {}): Promise<BrowserContext> {
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
-    const persistent = validatePersistentContextOptions(options);
+    const persistent = validateBrowserContextOptions(options);
     const logger = new RootLogger(options.logger);
     const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, logger, persistent, userDataDir), logger, TimeoutSettings.timeout(options));
     return browser._defaultContext!;
@@ -179,8 +178,16 @@ export abstract class BrowserTypeBase implements BrowserType {
       handleSIGHUP = true,
     } = options;
 
-    const downloadsPath = await mkdtempAsync(DOWNLOADS_FOLDER);
-    const tempDirectories = [downloadsPath];
+    const tempDirectories = [];
+    let downloadsPath: string;
+    if (options.downloadsPath) {
+      downloadsPath = options.downloadsPath;
+      await mkdirAsync(options.downloadsPath, { recursive: true });
+    } else {
+      downloadsPath = await mkdtempAsync(DOWNLOADS_FOLDER);
+      tempDirectories.push(downloadsPath);
+    }
+
     if (!userDataDir) {
       userDataDir = await mkdtempAsync(path.join(os.tmpdir(), `playwright_${this._name}dev_profile-`));
       tempDirectories.push(userDataDir);
@@ -239,7 +246,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     return { browserServer, downloadsPath, transport };
   }
 
-  abstract _defaultArgs(options: BrowserArgOptions, isPersistent: boolean, userDataDir: string): string[];
+  abstract _defaultArgs(options: LaunchOptionsBase, isPersistent: boolean, userDataDir: string): string[];
   abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BrowserBase>;
   abstract _wrapTransportWithWebSocket(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketWrapper;
   abstract _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;

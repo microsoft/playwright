@@ -20,11 +20,8 @@ import { Log } from '../logger';
 import * as readline from 'readline';
 import * as removeFolder from 'rimraf';
 import * as stream from 'stream';
-import * as util from 'util';
 import { helper } from '../helper';
 import { Progress } from '../progress';
-
-const removeFolderAsync = util.promisify(removeFolder);
 
 export const browserLog: Log = {
   name: 'browser',
@@ -67,11 +64,7 @@ type LaunchResult = {
 };
 
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
-  const cleanup = async () => {
-    await Promise.all(options.tempDirectories.map(dir => {
-      return removeFolderAsync(dir).catch((err: Error) => console.error(err));
-    }));
-  };
+  const cleanup = () => helper.removeFolders(options.tempDirectories);
 
   const progress = options.progress;
   const stdio: ('ignore' | 'pipe')[] = options.pipe ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe'];
