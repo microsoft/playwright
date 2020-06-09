@@ -31,7 +31,7 @@ import * as accessibility from './accessibility';
 import { ExtendedEventEmitter } from './extendedEventEmitter';
 import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
-import { logError, InnerLogger, Log } from './logger';
+import { logError, InnerLogger } from './logger';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -88,7 +88,7 @@ type PageState = {
   extraHTTPHeaders: network.Headers | null;
 };
 
-export class Page extends ExtendedEventEmitter implements InnerLogger {
+export class Page extends ExtendedEventEmitter {
   private _closed = false;
   private _closedCallback: () => void;
   private _closedPromise: Promise<void>;
@@ -100,6 +100,7 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
   readonly mouse: input.Mouse;
   readonly _timeoutSettings: TimeoutSettings;
   readonly _delegate: PageDelegate;
+  readonly _logger: InnerLogger;
   readonly _state: PageState;
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _screenshotter: Screenshotter;
@@ -114,6 +115,7 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
   constructor(delegate: PageDelegate, browserContext: BrowserContextBase) {
     super();
     this._delegate = delegate;
+    this._logger = browserContext._logger;
     this._closedCallback = () => {};
     this._closedPromise = new Promise(f => this._closedCallback = f);
     this._disconnectedCallback = () => {};
@@ -141,7 +143,7 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
   }
 
   protected _getLogger(): InnerLogger {
-    return this;
+    return this._logger;
   }
 
   protected _getTimeoutSettings(): TimeoutSettings {
@@ -552,33 +554,23 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
       this._delegate.setFileChooserIntercepted(false);
     return this;
   }
-
-  _isLogEnabled(log: Log): boolean {
-    return this._browserContext._isLogEnabled(log);
-  }
-
-  _log(log: Log, message: string | Error, ...args: any[]) {
-    return this._browserContext._log(log, message, ...args);
-  }
 }
 
 export class Worker extends EventEmitter {
-  private _logger: InnerLogger;
   private _url: string;
   private _executionContextPromise: Promise<js.ExecutionContext>;
   private _executionContextCallback: (value?: js.ExecutionContext) => void;
   _existingExecutionContext: js.ExecutionContext | null = null;
 
-  constructor(logger: InnerLogger, url: string) {
+  constructor(url: string) {
     super();
-    this._logger = logger;
     this._url = url;
     this._executionContextCallback = () => {};
     this._executionContextPromise = new Promise(x => this._executionContextCallback = x);
   }
 
   _createExecutionContext(delegate: js.ExecutionContextDelegate) {
-    this._existingExecutionContext = new js.ExecutionContext(delegate, this._logger);
+    this._existingExecutionContext = new js.ExecutionContext(delegate);
     this._executionContextCallback(this._existingExecutionContext);
   }
 
@@ -627,7 +619,7 @@ export class PageBinding {
       else
         expression = helper.evaluationString(deliverErrorValue, name, seq, error);
     }
-    context.evaluateInternal(expression).catch(logError(page));
+    context.evaluateInternal(expression).catch(logError(page._logger));
 
     function deliverResult(name: string, seq: number, result: any) {
       (window as any)[name]['callbacks'].get(seq).resolve(result);

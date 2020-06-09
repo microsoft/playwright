@@ -21,7 +21,7 @@ import { CRExecutionContext } from '../chromium/crExecutionContext';
 import { Events } from '../events';
 import { ExtendedEventEmitter } from '../extendedEventEmitter';
 import * as js from '../javascript';
-import { InnerLogger, Logger, RootLogger } from '../logger';
+import { InnerLogger, Logger } from '../logger';
 import { Page } from '../page';
 import { TimeoutSettings } from '../timeoutSettings';
 import { WebSocketTransport } from '../transport';
@@ -130,7 +130,7 @@ export class ElectronApplication extends ExtendedEventEmitter {
 
   async _init()  {
     this._nodeSession.once('Runtime.executionContextCreated', event => {
-      this._nodeExecutionContext = new js.ExecutionContext(new CRExecutionContext(this._nodeSession, event.context), this._logger);
+      this._nodeExecutionContext = new js.ExecutionContext(new CRExecutionContext(this._nodeSession, event.context));
     });
     await this._nodeSession.send('Runtime.enable', {}).catch(e => {});
     this._nodeElectronHandle = await js.evaluate(this._nodeExecutionContext!, false /* returnByValue */, () => {
@@ -171,7 +171,7 @@ export class Electron  {
       handleSIGTERM = true,
       handleSIGHUP = true,
     } = options;
-    const logger = new RootLogger(options.logger);
+    const logger = new InnerLogger(options.logger);
     return runAbortableTask(async progress => {
       let app: ElectronApplication | undefined = undefined;
       const electronArguments = ['--inspect=0', '--remote-debugging-port=0', '--require', path.join(__dirname, 'electronLoader.js'), ...args];

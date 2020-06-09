@@ -24,7 +24,7 @@ import { Events } from './events';
 import { ExtendedEventEmitter } from './extendedEventEmitter';
 import { Download } from './download';
 import { BrowserBase } from './browser';
-import { Log, InnerLogger, Logger, RootLogger } from './logger';
+import { InnerLogger, Logger } from './logger';
 import { FunctionWithSource } from './frames';
 import * as debugSupport from './debug/debugSupport';
 
@@ -53,7 +53,7 @@ export type BrowserContextOptions = CommonContextOptions & {
   logger?: Logger,
 };
 
-export interface BrowserContext extends InnerLogger {
+export interface BrowserContext {
   setDefaultNavigationTimeout(timeout: number): void;
   setDefaultTimeout(timeout: number): void;
   pages(): Page[];
@@ -87,13 +87,13 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
   readonly _permissions = new Map<string, string[]>();
   readonly _downloads = new Set<Download>();
   readonly _browserBase: BrowserBase;
-  private _logger: InnerLogger;
+  readonly _logger: InnerLogger;
 
   constructor(browserBase: BrowserBase, options: BrowserContextOptions) {
     super();
     this._browserBase = browserBase;
     this._options = options;
-    this._logger = options.logger ? new RootLogger(options.logger) : browserBase;
+    this._logger = options.logger ? new InnerLogger(options.logger) : browserBase._options.logger;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
   }
 
@@ -186,14 +186,6 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
-  }
-
-  _isLogEnabled(log: Log): boolean {
-    return this._logger._isLogEnabled(log);
-  }
-
-  _log(log: Log, message: string | Error, ...args: any[]) {
-    return this._logger._log(log, message, ...args);
   }
 
   async _loadDefaultContext() {

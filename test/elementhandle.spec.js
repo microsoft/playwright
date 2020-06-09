@@ -426,3 +426,13 @@ describe('ElementHandle.selectOption', function() {
     expect(await page.evaluate(() => result.onChange)).toEqual(['blue']);
   });
 });
+
+describe('ElementHandle.focus', function() {
+  it('should focus a button', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/button.html');
+    const button = await page.$('button');
+    expect(await button.evaluate(button => document.activeElement === button)).toBe(false);
+    await button.focus();
+    expect(await button.evaluate(button => document.activeElement === button)).toBe(true);
+  });
+});

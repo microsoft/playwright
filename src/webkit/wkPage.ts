@@ -37,7 +37,6 @@ import { selectors } from '../selectors';
 import * as jpeg from 'jpeg-js';
 import * as png from 'pngjs';
 import { NotConnectedError } from '../errors';
-import { logError } from '../logger';
 import { ConsoleMessageLocation } from '../console';
 import { JSHandle } from '../javascript';
 
@@ -364,7 +363,7 @@ export class WKPage implements PageDelegate {
     // as well to always be in sync with the backend.
     if (this._provisionalPage)
       sessions.push(this._provisionalPage._session);
-    await Promise.all(sessions.map(session => callback(session).catch(logError(this._page))));
+    await Promise.all(sessions.map(session => callback(session).catch(e => {})));
   }
 
   private _onFrameScheduledNavigation(frameId: string) {
