@@ -166,7 +166,7 @@ export class WKSession extends EventEmitter {
         callback.reject(createProtocolError(callback.error, callback.method, object.error));
       else
         callback.resolve(object.result);
-    } else if (object.id) {
+    } else if (object.id && !object.error) {
       // Response might come after session has been disposed and rejected all callbacks.
       assert(this.isDisposed());
     } else {

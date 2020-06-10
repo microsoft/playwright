@@ -124,15 +124,14 @@ export class WKBrowser extends BrowserBase {
   }
 
   _onPageProxyCreated(event: Protocol.Playwright.pageProxyCreatedPayload) {
-    const { pageProxyInfo } = event;
-    const pageProxyId = pageProxyInfo.pageProxyId;
+    const pageProxyId = event.pageProxyId;
     let context: WKBrowserContext | null = null;
-    if (pageProxyInfo.browserContextId) {
+    if (event.browserContextId) {
       // FIXME: we don't know about the default context id, so assume that all targets from
       // unknown contexts are created in the 'default' context which can in practice be represented
       // by multiple actual contexts in WebKit. Solving this properly will require adding context
       // lifecycle events.
-      context = this._contexts.get(pageProxyInfo.browserContextId) || null;
+      context = this._contexts.get(event.browserContextId) || null;
     }
     if (!context)
       context = this._defaultContext as WKBrowserContext;
@@ -141,7 +140,7 @@ export class WKBrowser extends BrowserBase {
     const pageProxySession = new WKSession(this._connection, pageProxyId, `The page has been closed.`, (message: any) => {
       this._connection.rawSend({ ...message, pageProxyId });
     });
-    const opener = pageProxyInfo.openerId ? this._wkPages.get(pageProxyInfo.openerId) : undefined;
+    const opener = event.openerId ? this._wkPages.get(event.openerId) : undefined;
     const wkPage = new WKPage(context, pageProxySession, opener || null);
     this._wkPages.set(pageProxyId, wkPage);
 
