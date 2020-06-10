@@ -21,6 +21,8 @@ import * as fs from 'fs';
 import * as removeFolder from 'rimraf';
 import * as util from 'util';
 import * as types from './types';
+import { Progress } from './progress';
+
 const removeFolderAsync = util.promisify(removeFolder);
 
 export type RegisteredListener = {
@@ -277,6 +279,25 @@ class Helper {
     await Promise.all(dirs.map(dir => {
       return removeFolderAsync(dir).catch((err: Error) => console.error(err));
     }));
+  }
+
+  static async waitForEvent(progress: Progress, emitter: EventEmitter, event: string, predicate?: Function): Promise<any> {
+    const listeners: RegisteredListener[] = [];
+    const promise = new Promise((resolve, reject) => {
+      listeners.push(helper.addEventListener(emitter, event, eventArg => {
+        try {
+          if (predicate && !predicate(eventArg))
+            return;
+          resolve(eventArg);
+        } catch (e) {
+          reject(e);
+        }
+      }));
+    });
+    progress.cleanupWhenAborted(() => helper.removeEventListeners(listeners));
+    const result = await promise;
+    helper.removeEventListeners(listeners);
+    return result;
   }
 }
 

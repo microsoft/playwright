@@ -28,10 +28,10 @@ import { Events } from './events';
 import { BrowserContext, BrowserContextBase } from './browserContext';
 import { ConsoleMessage, ConsoleMessageLocation } from './console';
 import * as accessibility from './accessibility';
-import { ExtendedEventEmitter } from './extendedEventEmitter';
 import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
 import { logError, InnerLogger } from './logger';
+import { ProgressController } from './progress';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -88,7 +88,7 @@ type PageState = {
   extraHTTPHeaders: network.Headers | null;
 };
 
-export class Page extends ExtendedEventEmitter {
+export class Page extends EventEmitter {
   private _closed = false;
   private _closedCallback: () => void;
   private _closedPromise: Promise<void>;
@@ -136,18 +136,6 @@ export class Page extends ExtendedEventEmitter {
     if (delegate.pdf)
       this.pdf = delegate.pdf.bind(delegate);
     this.coverage = delegate.coverage ? delegate.coverage() : null;
-  }
-
-  protected _abortPromiseForEvent(event: string) {
-    return this._disconnectedPromise;
-  }
-
-  protected _getLogger(): InnerLogger {
-    return this._logger;
-  }
-
-  protected _getTimeoutSettings(): TimeoutSettings {
-    return this._timeoutSettings;
   }
 
   _didClose() {
@@ -335,6 +323,13 @@ export class Page extends ExtendedEventEmitter {
       return urlOrPredicate(response);
     };
     return this.waitForEvent(Events.Page.Response, { predicate, timeout: options.timeout });
+  }
+
+  async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
+    const options = typeof optionsOrPredicate === 'function' ? { predicate: optionsOrPredicate } : optionsOrPredicate;
+    const progressController = new ProgressController(this._logger, this._timeoutSettings.timeout(options));
+    this._disconnectedPromise.then(error => progressController.abort(error));
+    return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate));
   }
 
   async goBack(options?: types.NavigateOptions): Promise<network.Response | null> {

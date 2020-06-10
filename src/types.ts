@@ -185,4 +185,6 @@ export type ProxySettings = {
   bypass?: string,
   username?: string,
   password?: string
-}
+};
+
+export type WaitForEventOptions = Function | { predicate?: Function, timeout?: number };
