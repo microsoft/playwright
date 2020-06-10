@@ -170,6 +170,7 @@ export type InjectedScriptResult<T = undefined> =
 export type InjectedScriptProgress = {
   canceled: boolean,
   log: (message: string) => void,
+  logRepeating: (message: string) => void,
 };
 
 export type InjectedScriptLogs = { current: string[], next: Promise<InjectedScriptLogs> };

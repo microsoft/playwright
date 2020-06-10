@@ -383,12 +383,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     progress.log(apiLog, `elementHandle.fill("${value}")`);
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
+      progress.log(apiLog, '  waiting for element to be visible, enabled and editable');
       const poll = await this._evaluateHandleInUtility(([injected, node, value]) => {
         return injected.waitForEnabledAndFill(node, value);
       }, value);
       const pollHandler = new InjectedScriptPollHandler(progress, poll);
       const injectedResult = await pollHandler.finish();
       const needsInput = handleInjectedResult(injectedResult);
+      progress.log(apiLog, '  element is visible, enabled and editable');
       progress.throwIfAborted();  // Avoid action that has side-effects.
       if (needsInput) {
         if (value)
@@ -535,7 +537,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _waitForDisplayedAtStablePositionAndEnabled(progress: Progress): Promise<void> {
-    progress.log(apiLog, '  waiting for element to be displayed, enabled and not moving');
+    progress.log(apiLog, '  waiting for element to be visible, enabled and not moving');
     const rafCount =  this._page._delegate.rafCountForStablePosition();
     const poll = this._evaluateHandleInUtility(([injected, node, rafCount]) => {
       return injected.waitForDisplayedAtStablePositionAndEnabled(node, rafCount);
@@ -543,7 +545,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const pollHandler = new InjectedScriptPollHandler<types.InjectedScriptResult>(progress, await poll);
     const injectedResult = await pollHandler.finish();
     handleInjectedResult(injectedResult);
-    progress.log(apiLog, '  element is displayed and does not move');
+    progress.log(apiLog, '  element is visible, enabled and does not move');
   }
 
   async _checkHitTargetAt(point: types.Point): Promise<boolean> {

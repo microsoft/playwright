@@ -189,14 +189,16 @@ describe('Page.click', function() {
     await page.$eval('button', b => b.style.display = 'none');
     const error = await page.click('button', { timeout: 5000 }).catch(e => e);
     expect(error.message).toContain('Timeout 5000ms exceeded during page.click.');
-    expect(error.message).toContain('waiting for element to be displayed, enabled and not moving');
+    expect(error.message).toContain('waiting for element to be visible, enabled and not moving');
+    expect(error.message).toContain('element is not visible - waiting');
   });
   it('should timeout waiting for visbility:hidden to be gone', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.visibility = 'hidden');
     const error = await page.click('button', { timeout: 5000 }).catch(e => e);
     expect(error.message).toContain('Timeout 5000ms exceeded during page.click.');
-    expect(error.message).toContain('waiting for element to be displayed, enabled and not moving');
+    expect(error.message).toContain('waiting for element to be visible, enabled and not moving');
+    expect(error.message).toContain('element is not visible - waiting');
   });
   it('should waitFor visible when parent is hidden', async({page, server}) => {
     let done = false;
@@ -438,7 +440,8 @@ describe('Page.click', function() {
     });
     const error = await button.click({ timeout: 5000 }).catch(e => e);
     expect(error.message).toContain('Timeout 5000ms exceeded during elementHandle.click.');
-    expect(error.message).toContain('waiting for element to be displayed, enabled and not moving');
+    expect(error.message).toContain('waiting for element to be visible, enabled and not moving');
+    expect(error.message).toContain('element is moving - waiting');
   });
   it('should wait for becoming hit target', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
@@ -516,6 +519,13 @@ describe('Page.click', function() {
     await page.evaluate(() => document.querySelector('button').removeAttribute('disabled'));
     await clickPromise;
     expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  });
+  it('should timeout waiting for button to be enabled', async({page, server}) => {
+    await page.setContent('<button onclick="javascript:window.__CLICKED=true;" disabled><span>Click target</span></button>');
+    const error = await page.click('text=Click target', { timeout: 3000 }).catch(e => e);
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
+    expect(error.message).toContain('Timeout 3000ms exceeded during page.click.');
+    expect(error.message).toContain('element is disabled - waiting');
   });
   it('should wait for input to be enabled', async({page, server}) => {
     await page.setContent('<input onclick="javascript:window.__CLICKED=true;" disabled>');
