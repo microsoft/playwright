@@ -262,6 +262,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await this._waitForDisplayedAtStablePositionAndEnabled(progress);
 
     progress.log(apiLog, '  scrolling into view if needed');
+    progress.throwIfAborted();  // Avoid action that has side-effects.
     const scrolled = await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
     if (scrolled === 'invisible') {
       if (force)
@@ -299,6 +300,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }
 
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
+      if ((options as any).__testHookBeforePointerAction)
+        await (options as any).__testHookBeforePointerAction();
+      progress.throwIfAborted();  // Avoid action that has side-effects.
       let restoreModifiers: input.Modifier[] | undefined;
       if (options && options.modifiers)
         restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
@@ -362,6 +366,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
     }
     return this._page._frameManager.waitForSignalsCreatedBy<string[]>(progress, options.noWaitAfter, async () => {
+      progress.throwIfAborted();  // Avoid action that has side-effects.
       const injectedResult = await this._evaluateInUtility(([injected, node, selectOptions]) => injected.selectOptions(node, selectOptions), selectOptions);
       return handleInjectedResult(injectedResult);
     });
@@ -381,6 +386,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const pollHandler = new InjectedScriptPollHandler(progress, poll);
       const injectedResult = await pollHandler.finish();
       const needsInput = handleInjectedResult(injectedResult);
+      progress.throwIfAborted();  // Avoid action that has side-effects.
       if (needsInput) {
         if (value)
           await this._page.keyboard.insertText(value);
@@ -392,6 +398,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async selectText(): Promise<void> {
     return runAbortableTask(async progress => {
+      progress.throwIfAborted();  // Avoid action that has side-effects.
       const injectedResult = await this._evaluateInUtility(([injected, node]) => injected.selectText(node), {});
       handleInjectedResult(injectedResult);
     }, this._page._logger, 0);
@@ -431,6 +438,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       }
     }
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
+      progress.throwIfAborted();  // Avoid action that has side-effects.
       await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, filePayloads);
     });
   }
@@ -440,6 +448,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _focus(progress: Progress) {
+    progress.throwIfAborted();  // Avoid action that has side-effects.
     const injectedResult = await this._evaluateInUtility(([injected, node]) => injected.focusNode(node), {});
     handleInjectedResult(injectedResult);
   }
@@ -452,6 +461,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     progress.log(apiLog, `elementHandle.type("${text}")`);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       await this._focus(progress);
+      progress.throwIfAborted();  // Avoid action that has side-effects.
       await this._page.keyboard.type(text, options);
     }, 'input');
   }
@@ -464,22 +474,17 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     progress.log(apiLog, `elementHandle.press("${key}")`);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       await this._focus(progress);
+      progress.throwIfAborted();  // Avoid action that has side-effects.
       await this._page.keyboard.press(key, options);
     }, 'input');
   }
 
   async check(options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    return runAbortableTask(async progress => {
-      progress.log(apiLog, `elementHandle.check()`);
-      await this._setChecked(progress, true, options);
-    }, this._page._logger, this._page._timeoutSettings.timeout(options));
+    return runAbortableTask(progress => this._setChecked(progress, true, options), this._page._logger, this._page._timeoutSettings.timeout(options));
   }
 
   async uncheck(options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    return runAbortableTask(async progress => {
-      progress.log(apiLog, `elementHandle.uncheck()`);
-      await this._setChecked(progress, false, options);
-    }, this._page._logger, this._page._timeoutSettings.timeout(options));
+    return runAbortableTask(progress => this._setChecked(progress, false, options), this._page._logger, this._page._timeoutSettings.timeout(options));
   }
 
   async _setChecked(progress: Progress, state: boolean, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
@@ -529,10 +534,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async _waitForDisplayedAtStablePositionAndEnabled(progress: Progress): Promise<void> {
     progress.log(apiLog, '  waiting for element to be displayed, enabled and not moving');
     const rafCount =  this._page._delegate.rafCountForStablePosition();
-    const poll = await this._evaluateHandleInUtility(([injected, node, rafCount]) => {
+    const poll = this._evaluateHandleInUtility(([injected, node, rafCount]) => {
       return injected.waitForDisplayedAtStablePositionAndEnabled(node, rafCount);
     }, rafCount);
-    const pollHandler = new InjectedScriptPollHandler<types.InjectedScriptResult>(progress, poll);
+    const pollHandler = new InjectedScriptPollHandler<types.InjectedScriptResult>(progress, await poll);
     const injectedResult = await pollHandler.finish();
     handleInjectedResult(injectedResult);
     progress.log(apiLog, '  element is displayed and does not move');
@@ -565,6 +570,9 @@ export class InjectedScriptPollHandler<T> {
   constructor(progress: Progress, poll: js.JSHandle<types.InjectedScriptPoll<T>>) {
     this._progress = progress;
     this._poll = poll;
+    // Ensure we cancel the poll before progress aborts and returns:
+    //   - no unnecessary work in the page;
+    //   - no possible side effects after progress promsie rejects.
     this._progress.cleanupWhenAborted(() => this.cancel());
     this._streamLogs(poll.evaluateHandle(poll => poll.logs));
   }
@@ -588,7 +596,7 @@ export class InjectedScriptPollHandler<T> {
       await this._finishInternal();
       return result;
     } finally {
-      this.cancel();
+      await this.cancel();
     }
   }
 
@@ -598,7 +606,7 @@ export class InjectedScriptPollHandler<T> {
       await this._finishInternal();
       return result;
     } finally {
-      this.cancel();
+      await this.cancel();
     }
   }
 
@@ -611,12 +619,13 @@ export class InjectedScriptPollHandler<T> {
       this._progress.log(apiLog, message);
   }
 
-  cancel() {
+  async cancel() {
     if (!this._poll)
       return;
     const copy = this._poll;
     this._poll = null;
-    copy.evaluate(p => p.cancel()).catch(e => {}).then(() => copy.dispose());
+    await copy.evaluate(p => p.cancel()).catch(e => {});
+    copy.dispose();
   }
 }
 

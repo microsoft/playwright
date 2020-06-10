@@ -57,6 +57,21 @@ describe('Frame.waitForFunction', function() {
     }, {}, {polling});
     expect(await timeDelta.jsonValue()).not.toBeLessThan(polling);
   });
+  it('should avoid side effects after timeout', async({page, server}) => {
+    let counter = 0;
+    page.on('console', () => ++counter);
+
+    const error = await page.waitForFunction(() => {
+      window.counter = (window.counter || 0) + 1;
+      console.log(window.counter);
+    }, {}, { polling: 1, timeout: 1000 }).catch(e => e);
+
+    const savedCounter = counter;
+    await page.waitForTimeout(2000); // Give it some time to produce more logs.
+
+    expect(error.message).toContain('Timeout 1000ms exceeded during page.waitForFunction');
+    expect(counter).toBe(savedCounter);
+  });
   it('should throw on polling:mutation', async({page, server}) => {
     const error = await page.waitForFunction(() => true, {}, {polling: 'mutation'}).catch(e => e);
     expect(error.message).toBe('Unknown polling option: mutation');
