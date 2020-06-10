@@ -269,14 +269,7 @@ class TargetRegistry {
       window = Services.ww.openWindow(null, AppConstants.BROWSER_CHROME_URL, '_blank', features, args);
       created = true;
     }
-    if (window.document.readyState !== 'complete') {
-      await new Promise(fulfill => {
-        window.addEventListener('load', function listener() {
-          window.removeEventListener('load', listener);
-          fulfill();
-        });
-      });
-    }
+    await waitForWindowReady(window);
     const browserContext = this.browserContextForId(browserContextId);
     const tab = window.gBrowser.addTab('about:blank', {
       userContextId: browserContext.userContextId,
@@ -655,6 +648,29 @@ class BrowserContext {
 
 function dirPath(path) {
   return path.substring(0, path.lastIndexOf('/') + 1);
+}
+
+async function waitForWindowReady(window) {
+  if (window.delayedStartupPromise) {
+    await window.delayedStartupPromise;
+  } else {
+    await new Promise((resolve => {
+      Services.obs.addObserver(function observer(aSubject, aTopic) {
+        if (window == aSubject) {
+          Services.obs.removeObserver(observer, aTopic);
+          resolve();
+        }
+      }, "browser-delayed-startup-finished");
+    }));
+  }
+  if (window.document.readyState !== 'complete') {
+    await new Promise(fulfill => {
+      window.addEventListener('load', function listener() {
+        window.removeEventListener('load', listener);
+        fulfill();
+      });
+    });
+  }
 }
 
 function setViewportSizeForBrowser(viewportSize, browser) {
