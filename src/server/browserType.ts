@@ -19,7 +19,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
 import { BrowserContext, PersistentContextOptions, verifyProxySettings, validateBrowserContextOptions } from '../browserContext';
-import { BrowserServer, WebSocketWrapper } from './browserServer';
+import { BrowserServer } from './browserServer';
 import * as browserPaths from '../install/browserPaths';
 import { Logger, InnerLogger } from '../logger';
 import { ConnectionTransport, WebSocketTransport } from '../transport';
@@ -31,6 +31,7 @@ import { PipeTransport } from './pipeTransport';
 import { Progress, runAbortableTask } from '../progress';
 import { ProxySettings } from '../types';
 import { TimeoutSettings } from '../timeoutSettings';
+import { WebSocketServer } from './webSocketServer';
 
 export type FirefoxUserPrefsOptions = {
   firefoxUserPrefs?: { [key: string]: string | number | boolean },
@@ -150,7 +151,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     const logger = new InnerLogger(options.logger);
     return runAbortableTask(async progress => {
       const { browserServer, transport } = await this._launchServer(progress, options, false, logger);
-      browserServer._webSocketWrapper = this._wrapTransportWithWebSocket(transport, logger, port);
+      browserServer._webSocketServer = this._startWebSocketServer(transport, logger, port);
       return browserServer;
     }, logger, TimeoutSettings.timeout(options));
   }
@@ -248,7 +249,7 @@ export abstract class BrowserTypeBase implements BrowserType {
 
   abstract _defaultArgs(options: LaunchOptionsBase, isPersistent: boolean, userDataDir: string): string[];
   abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BrowserBase>;
-  abstract _wrapTransportWithWebSocket(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketWrapper;
+  abstract _startWebSocketServer(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketServer;
   abstract _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;
   abstract _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void;
 }
