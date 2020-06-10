@@ -10222,10 +10222,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..ebe29e3f923b3cd74b9595328fce85359e19a741
+index 0000000000000000000000000000000000000000..cea80a8f37fe56b3dc6eb3b36744c70c43a74282
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,810 @@
+@@ -0,0 +1,819 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -10515,6 +10515,9 @@ index 0000000000000000000000000000000000000000..ebe29e3f923b3cd74b9595328fce8535
 +void InspectorPlaywrightAgent::dispatchMessageFromFrontend(const String& message)
 +{
 +    m_backendDispatcher->dispatch(message, [&](const RefPtr<JSON::Object>& messageObject) {
++        RefPtr<JSON::Value> idValue;
++        if (!messageObject->getValue("id"_s, idValue))
++            return BackendDispatcher::InterceptionResult::Continue;
 +        RefPtr<JSON::Value> pageProxyIDValue;
 +        if (!messageObject->getValue("pageProxyId"_s, pageProxyIDValue))
 +            return BackendDispatcher::InterceptionResult::Continue;
@@ -10526,13 +10529,19 @@ index 0000000000000000000000000000000000000000..ebe29e3f923b3cd74b9595328fce8535
 +            return BackendDispatcher::InterceptionResult::Intercepted;
 +        }
 +
-+
 +        if (auto pageProxyChannel = m_pageProxyChannels.get(pageProxyID)) {
 +            pageProxyChannel->dispatchMessageFromFrontend(message);
 +            return BackendDispatcher::InterceptionResult::Intercepted;
 +        }
 +
-+        m_backendDispatcher->reportProtocolError(BackendDispatcher::InvalidRequest, "Cannot find page proxy with provided 'pageProxyId'"_s);
++        long requestId = 0;
++        if (!idValue->asInteger(requestId)) {
++            m_backendDispatcher->reportProtocolError(BackendDispatcher::InvalidRequest, "The type of 'id' must be number"_s);
++            m_backendDispatcher->sendPendingErrors();
++            return BackendDispatcher::InterceptionResult::Intercepted;
++        }
++
++        m_backendDispatcher->reportProtocolError(requestId, BackendDispatcher::InvalidParams, "Cannot find page proxy with provided 'pageProxyId'"_s);
 +        m_backendDispatcher->sendPendingErrors();
 +        return BackendDispatcher::InterceptionResult::Intercepted;
 +    });
