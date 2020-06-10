@@ -19,7 +19,7 @@ import { EventEmitter } from 'events';
 import { assert } from '../helper';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse, protocolLog } from '../transport';
 import { Protocol } from './protocol';
-import { InnerLogger } from '../logger';
+import { InnerLogger, errorLog } from '../logger';
 import { rewriteErrorMessage } from '../debug/stackTrace';
 
 export const ConnectionEvents = {
@@ -34,7 +34,7 @@ export class FFConnection extends EventEmitter {
   private _lastId: number;
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
   private _transport: ConnectionTransport;
-  private _logger: InnerLogger;
+  readonly _logger: InnerLogger;
   readonly _sessions: Map<string, FFSession>;
   _closed: boolean;
 
@@ -79,14 +79,14 @@ export class FFConnection extends EventEmitter {
   }
 
   _rawSend(message: ProtocolRequest) {
-    if (this._logger._isLogEnabled(protocolLog))
-      this._logger._log(protocolLog, 'SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
+    if (this._logger.isLogEnabled(protocolLog))
+      this._logger.log(protocolLog, 'SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
     this._transport.send(message);
   }
 
   async _onMessage(message: ProtocolResponse) {
-    if (this._logger._isLogEnabled(protocolLog))
-      this._logger._log(protocolLog, '◀ RECV ' + JSON.stringify(message));
+    if (this._logger.isLogEnabled(protocolLog))
+      this._logger.log(protocolLog, '◀ RECV ' + JSON.stringify(message));
     if (message.id === kBrowserCloseMessageId)
       return;
     if (message.sessionId) {
@@ -182,6 +182,12 @@ export class FFSession extends EventEmitter {
     this._rawSend({method, params, id});
     return new Promise((resolve, reject) => {
       this._callbacks.set(id, {resolve, reject, error: new Error(), method});
+    });
+  }
+
+  sendMayFail<T extends keyof Protocol.CommandParameters>(method: T, params?: Protocol.CommandParameters[T]): Promise<Protocol.CommandReturnValues[T] | void> {
+    return this.send(method, params).catch(error => {
+      this._connection._logger.log(errorLog, error, []);
     });
   }
 

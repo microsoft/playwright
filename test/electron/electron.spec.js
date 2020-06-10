@@ -16,40 +16,23 @@
 
 const path = require('path');
 const config = require('../test.config');
+const utils = require('../utils');
 
 const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
 
 describe('Electron', function() {
   beforeEach(async (state, testRun) => {
     const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
+    state.logger = utils.createTestLogger(config.dumpLogOnFailure, testRun);
     state.application = await playwright.electron.launch(electronPath, {
       args: [path.join(__dirname, 'testApp.js')],
       // This is for our own extensive protocol logging, customers don't need it.
-      logger: {
-        isEnabled: (name, severity) => {
-          return name === 'browser' ||
-              (name === 'protocol' && config.dumpProtocolOnFailure);
-        },
-        log: (name, severity, message, args) => {
-          if (name === 'browser') {
-            if (severity === 'warning')
-              testRun.log(`\x1b[31m[browser]\x1b[0m ${message}`)
-            else
-              testRun.log(`\x1b[33m[browser]\x1b[0m ${message}`)
-          } else if (name === 'protocol' && config.dumpProtocolOnFailure) {
-            testRun.log(`\x1b[32m[protocol]\x1b[0m ${message}`)
-          }
-        }
-      }
+      logger: state.logger,
     });
   });
   afterEach(async (state, testRun) => {
     await state.application.close();
-    // This is for our own extensive protocol logging, customers don't need it.
-    if (config.dumpProtocolOnFailure) {
-      if (testRun.ok())
-        testRun.output().splice(0);
-    }
+    state.logger.setTestRun(null);
   });
   it('should script application', async ({ application }) => {
     const appPath = await application.evaluate(async ({ app }) => app.getAppPath());

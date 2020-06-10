@@ -41,6 +41,18 @@ describe('OOPIF', function() {
     expect(page.frames().length).toBe(2);
     expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
   });
+  it('should handle oopif detach', async function({browser, page, server, context}) {
+    await page.goto(server.PREFIX + '/dynamic-oopif.html');
+    expect(await countOOPIFs(browser)).toBe(1);
+    expect(page.frames().length).toBe(2);
+    const frame = page.frames()[1];
+    expect(await frame.evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
+    const [detachedFrame] = await Promise.all([
+      page.waitForEvent('framedetached'),
+      page.evaluate(() => document.querySelector('iframe').remove()),
+    ]);
+    expect(detachedFrame).toBe(frame);
+  });
   it('should handle remote -> local -> remote transitions', async function({browser, page, server, context}) {
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(page.frames().length).toBe(2);
@@ -138,13 +150,12 @@ describe('OOPIF', function() {
     expect(await countOOPIFs(browser)).toBe(1);
     expect(intercepted).toBe(true);
   });
-  it.fail(CHROMIUM)('should take screenshot', async({browser, page, server}) => {
-    // Screenshot differs on the bots, needs debugging.
+  it('should take screenshot', async({browser, page, server, golden}) => {
     await page.setViewportSize({width: 500, height: 500});
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(page.frames().length).toBe(2);
     expect(await countOOPIFs(browser)).toBe(1);
-    expect(await page.screenshot()).toBeGolden('screenshot-iframe.png');
+    expect(await page.screenshot()).toBeGolden(golden('screenshot-oopif.png'));
   });
   it('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {
     await page.route('**/*', route => route.continue());

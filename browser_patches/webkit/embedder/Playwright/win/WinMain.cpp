@@ -36,6 +36,7 @@
 #include <WebKit/WKContext.h>
 #include <WebKit/WKWebsiteDataStoreConfigurationRef.h>
 #include <WebKit/WKWebsiteDataStoreRef.h>
+#include <WebKit/WKWebsiteDataStoreRefCurl.h>
 #include <wtf/win/SoftLinking.h>
 #include "WebKitBrowserWindow.h"
 #include <wtf/MainThread.h>
@@ -44,17 +45,27 @@
 SOFT_LINK_LIBRARY(user32);
 SOFT_LINK_OPTIONAL(user32, SetProcessDpiAwarenessContext, BOOL, STDAPICALLTYPE, (DPI_AWARENESS_CONTEXT));
 
-WKRetainPtr<WKStringRef> toWK(const std::string& string)
+CommandLineOptions g_options;
+
+static WKRetainPtr<WKStringRef> toWK(const std::string& string)
 {
     return adoptWK(WKStringCreateWithUTF8CString(string.c_str()));
 }
 
-std::string toUTF8String(const wchar_t* src, size_t srcLength)
+static std::string toUTF8String(const wchar_t* src, size_t srcLength)
 {
     int length = WideCharToMultiByte(CP_UTF8, 0, src, srcLength, 0, 0, nullptr, nullptr);
     std::vector<char> buffer(length);
     size_t actualLength = WideCharToMultiByte(CP_UTF8, 0, src, srcLength, buffer.data(), length, nullptr, nullptr);
     return { buffer.data(), actualLength };
+}
+
+static void configureDataStore(WKWebsiteDataStoreRef dataStore) {
+    if (g_options.curloptProxy.length()) {
+        auto curloptProxy = createWKURL(g_options.curloptProxy);
+        auto curloptNoproxy = createWKString(g_options.curloptNoproxy);
+        WKWebsiteDataStoreEnableCustomNetworkProxySettings(dataStore, curloptProxy.get(), curloptNoproxy.get());
+    }
 }
 
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpstrCmdLine, _In_ int nCmdShow)
@@ -73,14 +84,15 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     InitCtrlEx.dwICC  = 0x00004000; // ICC_STANDARD_CLASSES;
     InitCommonControlsEx(&InitCtrlEx);
 
-    auto options = parseCommandLine();
-    if (options.inspectorPipe) {
+    g_options = parseCommandLine();
+    if (g_options.inspectorPipe) {
         WKInspectorInitializeRemoteInspectorPipe(
+            configureDataStore,
             WebKitBrowserWindow::createPageCallback,
             []() { PostQuitMessage(0); });
     }
 
-    if (options.useFullDesktop)
+    if (g_options.useFullDesktop)
         computeFullDesktopFrame();
 
     // Init COM
@@ -89,12 +101,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     if (SetProcessDpiAwarenessContextPtr())
         SetProcessDpiAwarenessContextPtr()(DPI_AWARENESS_CONTEXT_UNAWARE);
 
-    MainWindow::configure(options.headless, options.noStartupWindow);
+    MainWindow::configure(g_options.headless, g_options.noStartupWindow);
 
-    if (!options.noStartupWindow) {
+    if (!g_options.noStartupWindow) {
         auto configuration = adoptWK(WKWebsiteDataStoreConfigurationCreate());
-        if (options.userDataDir.length()) {
-            std::string profileFolder = toUTF8String(options.userDataDir, options.userDataDir.length());
+        if (g_options.userDataDir.length()) {
+            std::string profileFolder = toUTF8String(g_options.userDataDir, g_options.userDataDir.length());
             WKWebsiteDataStoreConfigurationSetApplicationCacheDirectory(configuration.get(), toWK(profileFolder + "\\ApplicationCache").get());
             WKWebsiteDataStoreConfigurationSetNetworkCacheDirectory(configuration.get(), toWK(profileFolder + "\\Cache").get());
             WKWebsiteDataStoreConfigurationSetCacheStorageDirectory(configuration.get(), toWK(profileFolder + "\\CacheStorage").get());
@@ -108,6 +120,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         auto context = adoptWK(WKContextCreateWithConfiguration(nullptr));
         auto dataStore = adoptWK(WKWebsiteDataStoreCreateWithConfiguration(configuration.get()));
         WKContextSetPrimaryDataStore(context.get(), dataStore.get());
+        configureDataStore(dataStore.get());
 
         auto* mainWindow = new MainWindow();
         auto conf = adoptWK(WKPageConfigurationCreate());
@@ -117,8 +130,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         if (FAILED(hr))
             goto exit;
 
-        if (options.requestedURL.length())
-            mainWindow->loadURL(options.requestedURL.GetBSTR());
+        if (g_options.requestedURL.length())
+            mainWindow->loadURL(g_options.requestedURL.GetBSTR());
         else
             mainWindow->loadURL(L"about:blank");
     }

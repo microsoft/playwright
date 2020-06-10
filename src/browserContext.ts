@@ -24,11 +24,11 @@ import { Events } from './events';
 import { ExtendedEventEmitter } from './extendedEventEmitter';
 import { Download } from './download';
 import { BrowserBase } from './browser';
-import { Log, InnerLogger, Logger, RootLogger } from './logger';
+import { InnerLogger, Logger } from './logger';
 import { FunctionWithSource } from './frames';
 import * as debugSupport from './debug/debugSupport';
 
-export type PersistentContextOptions = {
+type CommonContextOptions = {
   viewport?: types.Size | null,
   ignoreHTTPSErrors?: boolean,
   javaScriptEnabled?: boolean,
@@ -45,14 +45,15 @@ export type PersistentContextOptions = {
   isMobile?: boolean,
   hasTouch?: boolean,
   colorScheme?: types.ColorScheme,
+  acceptDownloads?: boolean,
 };
 
-export type BrowserContextOptions = PersistentContextOptions & {
-  acceptDownloads?: boolean,
+export type PersistentContextOptions = CommonContextOptions;
+export type BrowserContextOptions = CommonContextOptions & {
   logger?: Logger,
 };
 
-export interface BrowserContext extends InnerLogger {
+export interface BrowserContext {
   setDefaultNavigationTimeout(timeout: number): void;
   setDefaultTimeout(timeout: number): void;
   pages(): Page[];
@@ -86,13 +87,13 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
   readonly _permissions = new Map<string, string[]>();
   readonly _downloads = new Set<Download>();
   readonly _browserBase: BrowserBase;
-  private _logger: InnerLogger;
+  readonly _logger: InnerLogger;
 
   constructor(browserBase: BrowserBase, options: BrowserContextOptions) {
     super();
     this._browserBase = browserBase;
     this._options = options;
-    this._logger = options.logger ? new RootLogger(options.logger) : browserBase;
+    this._logger = options.logger ? new InnerLogger(options.logger) : browserBase._options.logger;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
   }
 
@@ -104,8 +105,12 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
     return event === Events.BrowserContext.Close ? super._abortPromiseForEvent(event) : this._closePromise;
   }
 
-  protected _computeDeadline(options?: types.TimeoutOptions): number {
-    return this._timeoutSettings.computeDeadline(options);
+  protected _getLogger(): InnerLogger {
+    return this._logger;
+  }
+
+  protected _getTimeoutSettings(): TimeoutSettings {
+    return this._timeoutSettings;
   }
 
   _browserClosed() {
@@ -183,14 +188,6 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  _isLogEnabled(log: Log): boolean {
-    return this._logger._isLogEnabled(log);
-  }
-
-  _log(log: Log, message: string | Error, ...args: any[]) {
-    return this._logger._log(log, message, ...args);
-  }
-
   async _loadDefaultContext() {
     if (!this.pages().length)
       await this.waitForEvent('page');
@@ -206,6 +203,26 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
       await this.newPage();
       await oldPage.close();
     }
+  }
+
+  protected _authenticateProxyViaHeader() {
+    const proxy = this._browserBase._options.proxy || { username: undefined, password: undefined };
+    const { username, password } = proxy;
+    if (username) {
+      this._options.httpCredentials = { username, password: password! };
+      this._options.extraHTTPHeaders = this._options.extraHTTPHeaders || {};
+      const token = Buffer.from(`${username}:${password}`).toString('base64');
+      this._options.extraHTTPHeaders['Proxy-Authorization'] = `Basic ${token}`;
+    }
+  }
+
+  protected _authenticateProxyViaCredentials() {
+    const proxy = this._browserBase._options.proxy;
+    if (!proxy)
+      return;
+    const { username, password } = proxy;
+    if (username && password)
+      this._options.httpCredentials = { username, password };
   }
 }
 
@@ -254,12 +271,6 @@ export function validateBrowserContextOptions(options: BrowserContextOptions): B
   return result;
 }
 
-export function validatePersistentContextOptions(options: PersistentContextOptions): PersistentContextOptions {
-  if ((options as any).acceptDownloads !== undefined)
-    throw new Error(`Option "acceptDownloads" is not supported for persistent context`);
-  return validateBrowserContextOptions(options);
-}
-
 export function verifyGeolocation(geolocation: types.Geolocation): types.Geolocation {
   const result = { ...geolocation };
   result.accuracy = result.accuracy || 0;
@@ -271,4 +282,18 @@ export function verifyGeolocation(geolocation: types.Geolocation): types.Geoloca
   if (!helper.isNumber(accuracy) || accuracy < 0)
     throw new Error(`Invalid accuracy "${accuracy}": precondition 0 <= ACCURACY failed.`);
   return result;
+}
+
+export function verifyProxySettings(proxy: types.ProxySettings): types.ProxySettings {
+  let { server, bypass } = proxy;
+  if (!helper.isString(server))
+    throw new Error(`Invalid proxy.server: ` + server);
+  let url = new URL(server);
+  if (!['http:', 'https:', 'socks5:'].includes(url.protocol)) {
+    url = new URL('http://' + server);
+    server = `${url.protocol}//${url.host}`;
+  }
+  if (bypass)
+    bypass = bypass.split(',').map(t => t.trim()).join(',');
+  return { ...proxy, server, bypass };
 }

@@ -7,18 +7,16 @@ cd "$(dirname $0)"
 cd "checkout"
 
 if [[ "$(uname)" == "Darwin" ]]; then
-  # Firefox currently does not build on 10.15 out of the box - it requires SDK for 10.14.
+  # Firefox currently does not build on 10.15 out of the box - it requires SDK for 10.11.
   # Make sure the SDK is out there.
-  if [[ $(sw_vers -productVersion) == 10.15* ]]; then
-    if ! [[ -d $HOME/SDK-archive/MacOSX10.14.sdk ]]; then
-      echo "As of Nov 2019, Firefox does not build on Mac 10.15 without 10.14 SDK."
-      echo "Check out instructions on getting 10.14 sdk at https://developer.mozilla.org/en-US/docs/Mozilla/Developer_guide/Build_Instructions/Mac_OS_X_Prerequisites"
-      echo "and make sure to put SDK to $HOME/SDK-archive/MacOSX10.14.sdk/"
-      exit 1
-    else
-      echo "-- configuting .mozconfig with 10.14 SDK path"
-      echo "ac_add_options --with-macos-sdk=$HOME/SDK-archive/MacOSX10.14.sdk/" > .mozconfig
-    fi
+  if ! [[ -d $HOME/SDK-archive/MacOSX10.11.sdk ]]; then
+    echo "As of Jun 2020, Firefox does not build on Mac without 10.11 SDK."
+    echo "Check out instructions on getting 10.11 sdk at https://firefox-source-docs.mozilla.org/setup/macos_build.html"
+    echo "and make sure to put SDK to $HOME/SDK-archive/MacOSX10.11.sdk/"
+    exit 1
+  else
+    echo "-- configuting .mozconfig with 10.11 SDK path"
+    echo "ac_add_options --with-macos-sdk=$HOME/SDK-archive/MacOSX10.11.sdk/" > .mozconfig
   fi
   echo "-- building on Mac"
 elif [[ "$(uname)" == "Linux" ]]; then
@@ -40,7 +38,11 @@ fi
 OBJ_FOLDER="obj-build-playwright"
 echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 
-./mach build
+if [[ $1 == "--juggler" ]]; then
+  ./mach build faster
+else
+  ./mach build
+fi
 
 if [[ "$(uname)" == "Darwin" ]]; then
   node ../install-preferences.js $PWD/${OBJ_FOLDER}/dist

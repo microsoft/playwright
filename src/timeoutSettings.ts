@@ -16,7 +16,6 @@
  */
 
 import { TimeoutOptions } from './types';
-import { helper } from './helper';
 import * as debugSupport from './debug/debugSupport';
 
 const DEFAULT_TIMEOUT = debugSupport.isDebugMode() ? 0 : 30000;
@@ -38,31 +37,31 @@ export class TimeoutSettings {
     this._defaultNavigationTimeout = timeout;
   }
 
-  navigationTimeout(): number {
+  navigationTimeout(options: TimeoutOptions): number {
+    if (typeof options.timeout === 'number')
+      return options.timeout;
     if (this._defaultNavigationTimeout !== null)
       return this._defaultNavigationTimeout;
     if (this._defaultTimeout !== null)
       return this._defaultTimeout;
     if (this._parent)
-      return this._parent.navigationTimeout();
+      return this._parent.navigationTimeout(options);
     return DEFAULT_TIMEOUT;
   }
 
-  private _timeout(): number {
+  timeout(options: TimeoutOptions): number {
+    if (typeof options.timeout === 'number')
+      return options.timeout;
     if (this._defaultTimeout !== null)
       return this._defaultTimeout;
     if (this._parent)
-      return this._parent._timeout();
+      return this._parent.timeout(options);
     return DEFAULT_TIMEOUT;
   }
 
-  computeDeadline(options: TimeoutOptions = {}) {
-    return TimeoutSettings.computeDeadline(options.timeout, this._timeout());
-  }
-
-  static computeDeadline(timeout: number | undefined, defaultValue = DEFAULT_TIMEOUT): number {
-    if (typeof timeout !== 'number')
-      timeout = defaultValue;
-    return timeout ? helper.monotonicTime() + timeout : Number.MAX_SAFE_INTEGER;
+  static timeout(options: TimeoutOptions): number {
+    if (typeof options.timeout === 'number')
+      return options.timeout;
+    return DEFAULT_TIMEOUT;
   }
 }

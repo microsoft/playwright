@@ -1,7 +1,7 @@
 {
   "name": "playwright-internal",
   "private": true,
-  "version": "1.0.0-post",
+  "version": "1.1.0-post",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -73,6 +73,7 @@
     "ncp": "^2.0.0",
     "node-stream-zip": "^1.8.2",
     "pixelmatch": "^4.0.2",
+    "socksv5": "0.0.6",
     "text-diff": "^1.0.1",
     "ts-loader": "^6.1.2",
     "typescript": "^3.8.3",

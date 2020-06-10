@@ -36,7 +36,6 @@ import { CRBrowserContext } from './crBrowser';
 import * as types from '../types';
 import { ConsoleMessage } from '../console';
 import { NotConnectedError } from '../errors';
-import { logError } from '../logger';
 import * as debugSupport from '../debug/debugSupport';
 import { rewriteErrorMessage } from '../debug/stackTrace';
 
@@ -70,7 +69,7 @@ export class CRPage implements PageDelegate {
     this.rawKeyboard = new RawKeyboardImpl(client);
     this.rawMouse = new RawMouseImpl(client);
     this._pdf = new CRPDF(client);
-    this._coverage = new CRCoverage(client, browserContext);
+    this._coverage = new CRCoverage(client);
     this._browserContext = browserContext;
     this._page = new Page(this, browserContext);
     this._mainFrameSession = new FrameSession(this, client, targetId, null);
@@ -89,7 +88,7 @@ export class CRPage implements PageDelegate {
     await Promise.all(Array.from(this._sessions.values()).map(frame => cb(frame)));
   }
 
-  _sessionForFrame(frame: frames.Frame): FrameSession {
+  private _sessionForFrame(frame: frames.Frame): FrameSession {
     // Frame id equals target id.
     while (!this._sessions.has(frame._id)) {
       const parent = frame.parentFrame();
@@ -103,29 +102,6 @@ export class CRPage implements PageDelegate {
   private _sessionForHandle(handle: dom.ElementHandle): FrameSession {
     const frame = handle._context.frame;
     return this._sessionForFrame(frame);
-  }
-
-  addFrameSession(targetId: Protocol.Target.TargetID, session: CRSession) {
-    // Frame id equals target id.
-    const frame = this._page._frameManager.frame(targetId);
-    assert(frame);
-    const parentSession = this._sessionForFrame(frame);
-    this._page._frameManager.removeChildFramesRecursively(frame);
-    const frameSession = new FrameSession(this, session, targetId, parentSession);
-    this._sessions.set(targetId, frameSession);
-    frameSession._initialize(false).catch(e => e);
-  }
-
-  removeFrameSession(targetId: Protocol.Target.TargetID) {
-    const frameSession = this._sessions.get(targetId);
-    if (!frameSession)
-      return;
-    // Frame id equals target id.
-    const frame = this._page._frameManager.frame(targetId);
-    if (frame)
-      this._page._frameManager.removeChildFramesRecursively(frame);
-    frameSession.dispose();
-    this._sessions.delete(targetId);
   }
 
   async pageOrError(): Promise<Page | Error> {
@@ -144,7 +120,7 @@ export class CRPage implements PageDelegate {
 
   async exposeBinding(binding: PageBinding) {
     await this._forAllFrameSessions(frame => frame._initBinding(binding));
-    await Promise.all(this._page.frames().map(frame => frame.evaluate(binding.source).catch(logError(this._page))));
+    await Promise.all(this._page.frames().map(frame => frame.evaluate(binding.source).catch(e => {})));
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
@@ -273,10 +249,6 @@ export class CRPage implements PageDelegate {
     return this._sessionForHandle(handle)._scrollRectIntoViewIfNeeded(handle, rect);
   }
 
-  async setActivityPaused(paused: boolean): Promise<void> {
-    await this._forAllFrameSessions(frame => frame._setActivityPaused(paused));
-  }
-
   rafCountForStablePosition(): number {
     return 1;
   }
@@ -291,7 +263,7 @@ export class CRPage implements PageDelegate {
   }
 
   async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
-    await handle._evaluateInUtility(({ injected, node }, files) =>
+    await handle._evaluateInUtility(([injected, node, files]) =>
       injected.setInputFiles(node, files), dom.toFileTransferPayload(files));
   }
 
@@ -344,6 +316,9 @@ class FrameSession {
   private _firstNonInitialNavigationCommittedFulfill = () => {};
   private _firstNonInitialNavigationCommittedReject = (e: Error) => {};
   private _windowId: number | undefined;
+  // Marks the oopif session that remote -> local transition has happened in the parent.
+  // See Target.detachedFromTarget handler for details.
+  private _swappedIn = false;
 
   constructor(crPage: CRPage, client: CRSession, targetId: string, parentSession: FrameSession | null) {
     this._client = client;
@@ -408,13 +383,13 @@ class FrameSession {
         const localFrames = this._isMainFrame() ? this._page.frames() : [ this._page._frameManager.frame(this._targetId)! ];
         for (const frame of localFrames) {
           // Note: frames might be removed before we send these.
-          this._client.send('Page.createIsolatedWorld', {
+          this._client._sendMayFail('Page.createIsolatedWorld', {
             frameId: frame._id,
             grantUniveralAccess: true,
             worldName: UTILITY_WORLD_NAME,
-          }).catch(logError(this._page));
+          });
           for (const binding of this._crPage._browserContext._pageBindings.values())
-            frame.evaluate(binding.source).catch(logError(this._page));
+            frame.evaluate(binding.source).catch(e => {});
         }
         const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
         if (isInitialEmptyPage) {
@@ -475,6 +450,7 @@ class FrameSession {
   dispose() {
     helper.removeEventListeners(this._eventListeners);
     this._networkManager.dispose();
+    this._crPage._sessions.delete(this._targetId);
   }
 
   async _navigate(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
@@ -506,8 +482,10 @@ class FrameSession {
   }
 
   _onFrameAttached(frameId: string, parentFrameId: string | null) {
-    if (this._crPage._sessions.has(frameId) && frameId !== this._targetId) {
+    const frameSession = this._crPage._sessions.get(frameId);
+    if (frameSession && frameId !== this._targetId) {
       // This is a remote -> local frame transition.
+      frameSession._swappedIn = true;
       const frame = this._page._frameManager.frame(frameId)!;
       this._page._frameManager.removeChildFramesRecursively(frame);
       return;
@@ -569,29 +547,35 @@ class FrameSession {
     const session = CRConnection.fromSession(this._client).session(event.sessionId)!;
 
     if (event.targetInfo.type === 'iframe') {
-      this._crPage.addFrameSession(event.targetInfo.targetId, session);
+      // Frame id equals target id.
+      const targetId = event.targetInfo.targetId;
+      const frame = this._page._frameManager.frame(targetId)!;
+      this._page._frameManager.removeChildFramesRecursively(frame);
+      const frameSession = new FrameSession(this._crPage, session, targetId, this);
+      this._crPage._sessions.set(targetId, frameSession);
+      frameSession._initialize(false).catch(e => e);
       return;
     }
 
     if (event.targetInfo.type !== 'worker') {
       // Ideally, detaching should resume any target, but there is a bug in the backend.
-      session.send('Runtime.runIfWaitingForDebugger').catch(logError(this._page)).then(() => {
-        this._client.send('Target.detachFromTarget', { sessionId: event.sessionId }).catch(logError(this._page));
+      session._sendMayFail('Runtime.runIfWaitingForDebugger').then(() => {
+        this._client._sendMayFail('Target.detachFromTarget', { sessionId: event.sessionId });
       });
       return;
     }
 
     const url = event.targetInfo.url;
-    const worker = new Worker(this._page, url);
+    const worker = new Worker(url);
     this._page._addWorker(event.sessionId, worker);
     session.once('Runtime.executionContextCreated', async event => {
       worker._createExecutionContext(new CRExecutionContext(session, event.context));
     });
     Promise.all([
-      session.send('Runtime.enable'),
-      session.send('Network.enable'),
-      session.send('Runtime.runIfWaitingForDebugger'),
-    ]).catch(logError(this._page));  // This might fail if the target is closed before we initialize.
+      session._sendMayFail('Runtime.enable'),
+      session._sendMayFail('Network.enable'),
+      session._sendMayFail('Runtime.runIfWaitingForDebugger'),
+    ]);  // This might fail if the target is closed before we initialize.
     session.on('Runtime.consoleAPICalled', event => {
       const args = event.args.map(o => worker._existingExecutionContext!.createHandle(o));
       this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
@@ -602,8 +586,31 @@ class FrameSession {
   }
 
   _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {
-    this._crPage.removeFrameSession(event.targetId!);
+    // This might be a worker...
     this._page._removeWorker(event.sessionId);
+
+    // ... or an oopif.
+    const childFrameSession = this._crPage._sessions.get(event.targetId!);
+    if (!childFrameSession)
+      return;
+
+    // Usually, we get frameAttached in this session first and mark child as swappedIn.
+    if (childFrameSession._swappedIn) {
+      childFrameSession.dispose();
+      return;
+    }
+
+    // However, sometimes we get detachedFromTarget before frameAttached.
+    // In this case we don't know wheter this is a remote frame detach,
+    // or just a remote -> local transition. In the latter case, frameAttached
+    // is already inflight, so let's make a safe roundtrip to ensure it arrives.
+    this._client.send('Page.enable').catch(e => null).then(() => {
+      // Child was not swapped in - that means frameAttached did not happen and
+      // this is remote detach rather than remote -> local swap.
+      if (!childFrameSession._swappedIn)
+        this._page._frameManager.frameDetached(event.targetId!);
+      childFrameSession.dispose();
+    });
   }
 
   _onWindowOpen(event: Protocol.Page.windowOpenPayload) {
@@ -808,9 +815,9 @@ class FrameSession {
   }
 
   async _getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
-    const result = await this._client.send('DOM.getBoxModel', {
+    const result = await this._client._sendMayFail('DOM.getBoxModel', {
       objectId: handle._objectId
-    }).catch(logError(this._page));
+    });
     if (!result)
       return null;
     const quad = result.model.border;
@@ -834,13 +841,10 @@ class FrameSession {
     });
   }
 
-  async _setActivityPaused(paused: boolean): Promise<void> {
-  }
-
   async _getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
-    const result = await this._client.send('DOM.getContentQuads', {
+    const result = await this._client._sendMayFail('DOM.getContentQuads', {
       objectId: handle._objectId
-    }).catch(logError(this._page));
+    });
     if (!result)
       return null;
     return result.quads.map(quad => [
@@ -859,10 +863,10 @@ class FrameSession {
   }
 
   async _adoptBackendNodeId(backendNodeId: Protocol.DOM.BackendNodeId, to: dom.FrameExecutionContext): Promise<dom.ElementHandle> {
-    const result = await this._client.send('DOM.resolveNode', {
+    const result = await this._client._sendMayFail('DOM.resolveNode', {
       backendNodeId,
       executionContextId: (to._delegate as CRExecutionContext)._contextId,
-    }).catch(logError(this._page));
+    });
     if (!result || result.object.subtype === 'null')
       throw new Error('Unable to adopt element handle from a different document');
     return to.createHandle(result.object).asElement()!;

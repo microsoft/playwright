@@ -22,6 +22,9 @@ type Unboxed<Arg> =
   Arg extends dom.ElementHandle<infer T> ? T :
   Arg extends js.JSHandle<infer T> ? T :
   Arg extends NoHandles<Arg> ? Arg :
+  Arg extends [infer A0] ? [Unboxed<A0>] :
+  Arg extends [infer A0, infer A1] ? [Unboxed<A0>, Unboxed<A1>] :
+  Arg extends [infer A0, infer A1, infer A2] ? [Unboxed<A0>, Unboxed<A1>, Unboxed<A2>] :
   Arg extends Array<infer T> ? Array<Unboxed<T>> :
   Arg extends object ? { [Key in keyof Arg]: Unboxed<Arg[Key]> } :
   Arg;
@@ -59,11 +62,6 @@ export type PointerActionWaitOptions = TimeoutOptions & {
 
 export type WaitForNavigationOptions = TimeoutOptions & {
   waitUntil?: LifecycleEvent,
-  url?: URLMatch
-};
-
-export type ExtendedWaitForNavigationOptions = TimeoutOptions & {
-  waitUntil?: LifecycleEvent | 'commit',
   url?: URLMatch
 };
 
@@ -167,5 +165,24 @@ export type ParsedSelector = {
 export type InjectedScriptResult<T = undefined> =
   (T extends undefined ? { status: 'success', value?: T} : { status: 'success', value: T }) |
   { status: 'notconnected' } |
-  { status: 'timeout' } |
   { status: 'error', error: string };
+
+export type InjectedScriptProgress = {
+  canceled: boolean,
+  log: (message: string) => void,
+};
+
+export type InjectedScriptLogs = { current: string[], next: Promise<InjectedScriptLogs> };
+export type InjectedScriptPoll<T> = {
+  result: Promise<T>,
+  logs: Promise<InjectedScriptLogs>,
+  takeLastLogs: () => string[],
+  cancel: () => void,
+};
+
+export type ProxySettings = {
+  server: string,
+  bypass?: string,
+  username?: string,
+  password?: string
+}

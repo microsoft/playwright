@@ -16,13 +16,14 @@
  */
 
 import * as os from 'os';
+import * as fs from 'fs';
 import * as path from 'path';
 import * as ws from 'ws';
 import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
 import { helper } from '../helper';
 import { WebSocketWrapper } from './browserServer';
-import { BrowserArgOptions, BrowserTypeBase, processBrowserArgOptions } from './browserType';
+import { LaunchOptionsBase, BrowserTypeBase, processBrowserArgOptions, FirefoxUserPrefsOptions } from './browserType';
 import { Env } from './processLauncher';
 import { ConnectionTransport, SequenceNumberMixer } from '../transport';
 import { InnerLogger, logError } from '../logger';
@@ -31,8 +32,8 @@ import { BrowserDescriptor } from '../install/browserPaths';
 
 export class Firefox extends BrowserTypeBase {
   constructor(packagePath: string, browser: BrowserDescriptor) {
-    const websocketRegex = /^Juggler listening on (ws:\/\/.*)$/;
-    super(packagePath, browser, websocketRegex /* use websocket not pipe */);
+    const webSocketRegex = /^Juggler listening on (ws:\/\/.*)$/;
+    super(packagePath, browser, { webSocketRegex, stream: 'stdout' });
   }
 
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
@@ -56,9 +57,9 @@ export class Firefox extends BrowserTypeBase {
     return wrapTransportWithWebSocket(transport, logger, port);
   }
 
-  _defaultArgs(options: BrowserArgOptions, isPersistent: boolean, userDataDir: string): string[] {
+  _defaultArgs(options: LaunchOptionsBase & FirefoxUserPrefsOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { devtools, headless } = processBrowserArgOptions(options);
-    const { args = [] } = options;
+    const { args = [], proxy } = options;
     if (devtools)
       console.warn('devtools parameter is not supported as a launch argument in Firefox. You can launch the devtools window manually.');
     const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
@@ -66,7 +67,29 @@ export class Firefox extends BrowserTypeBase {
       throw new Error('Pass userDataDir parameter instead of specifying -profile argument');
     if (args.find(arg => arg.startsWith('-juggler')))
       throw new Error('Use the port parameter instead of -juggler argument');
-
+    if (proxy) {
+      options.firefoxUserPrefs = options.firefoxUserPrefs || {};
+      options.firefoxUserPrefs['network.proxy.type'] = 1;
+      const proxyServer = new URL(proxy.server);
+      const isSocks = proxyServer.protocol === 'socks5:';
+      if (isSocks) {
+        options.firefoxUserPrefs['network.proxy.socks'] = proxyServer.hostname;
+        options.firefoxUserPrefs['network.proxy.socks_port'] = parseInt(proxyServer.port, 10);
+      } else {
+        options.firefoxUserPrefs['network.proxy.http'] = proxyServer.hostname;
+        options.firefoxUserPrefs['network.proxy.http_port'] = parseInt(proxyServer.port, 10);
+        options.firefoxUserPrefs['network.proxy.ssl'] = proxyServer.hostname;
+        options.firefoxUserPrefs['network.proxy.ssl_port'] = parseInt(proxyServer.port, 10);
+      }
+      if (proxy.bypass)
+        options.firefoxUserPrefs['network.proxy.no_proxies_on'] = proxy.bypass;
+    }
+    if (options.firefoxUserPrefs) {
+      const lines: string[] = [];
+      for (const [name, value] of Object.entries(options.firefoxUserPrefs))
+        lines.push(`user_pref(${JSON.stringify(name)}, ${JSON.stringify(value)});`);
+      fs.writeFileSync(path.join(userDataDir, 'user.js'), lines.join('\n'));
+    }
     const firefoxArguments = ['-no-remote'];
     if (headless) {
       firefoxArguments.push('-headless');

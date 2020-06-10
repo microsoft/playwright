@@ -38,15 +38,21 @@ FRIENDLY_CHECKOUT_PATH="";
 BUILD_NUMBER_UPSTREAM_URL=""
 CHECKOUT_PATH=""
 EXPORT_PATH=""
+EXTRA_FOLDER_PW_PATH=""
+EXTRA_FOLDER_CHECKOUT_RELPATH=""
 if [[ ("$1" == "firefox") || ("$1" == "firefox/") || ("$1" == "ff") ]]; then
   FRIENDLY_CHECKOUT_PATH="//browser_patches/firefox/checkout";
   CHECKOUT_PATH="$PWD/firefox/checkout"
+  EXTRA_FOLDER_PW_PATH="$PWD/firefox/juggler"
+  EXTRA_FOLDER_CHECKOUT_RELPATH="juggler"
   EXPORT_PATH="$PWD/firefox"
   BUILD_NUMBER_UPSTREAM_URL="https://raw.githubusercontent.com/microsoft/playwright/master/browser_patches/firefox/BUILD_NUMBER"
   source "./firefox/UPSTREAM_CONFIG.sh"
 elif [[ ("$1" == "webkit") || ("$1" == "webkit/") || ("$1" == "wk") ]]; then
   FRIENDLY_CHECKOUT_PATH="//browser_patches/webkit/checkout";
   CHECKOUT_PATH="$PWD/webkit/checkout"
+  EXTRA_FOLDER_PW_PATH="$PWD/webkit/embedder/Playwright"
+  EXTRA_FOLDER_CHECKOUT_RELPATH="Tools/Playwright"
   EXPORT_PATH="$PWD/webkit"
   BUILD_NUMBER_UPSTREAM_URL="https://raw.githubusercontent.com/microsoft/playwright/master/browser_patches/webkit/BUILD_NUMBER"
   source "./webkit/UPSTREAM_CONFIG.sh"
@@ -110,7 +116,7 @@ fi
 
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 NEW_BASE_REVISION=$(git merge-base $REMOTE_BROWSER_UPSTREAM/$BASE_BRANCH $CURRENT_BRANCH)
-NEW_DIFF=$(git diff --diff-algorithm=myers --full-index $NEW_BASE_REVISION $CURRENT_BRANCH -- . ":!Tools/Playwright")
+NEW_DIFF=$(git diff --diff-algorithm=myers --full-index $NEW_BASE_REVISION $CURRENT_BRANCH -- . ":!${EXTRA_FOLDER_CHECKOUT_RELPATH}")
 
 # Increment BUILD_NUMBER
 BUILD_NUMBER=$(curl ${BUILD_NUMBER_UPSTREAM_URL})
@@ -122,12 +128,10 @@ BASE_REVISION=\"$NEW_BASE_REVISION\"" > $EXPORT_PATH/UPSTREAM_CONFIG.sh
 echo "$NEW_DIFF" > $EXPORT_PATH/patches/$PATCH_NAME
 echo $BUILD_NUMBER > $EXPORT_PATH/BUILD_NUMBER
 
-if [[ ("$1" == "webkit") || ("$1" == "webkit/") || ("$1" == "wk") ]]; then
-echo "-- patching WebKit embedders"
-rm -rf $EXPORT_PATH/src/*
-mkdir $EXPORT_PATH/src/Tools
-cp -r Tools/Playwright $EXPORT_PATH/src/Tools/
-fi
+echo "-- exporting standalone folder"
+rm -rf "${EXTRA_FOLDER_PW_PATH}"
+mkdir -p $(dirname "${EXTRA_FOLDER_PW_PATH}")
+cp -r "${EXTRA_FOLDER_CHECKOUT_RELPATH}" "${EXTRA_FOLDER_PW_PATH}"
 
 NEW_BASE_REVISION_TEXT="$NEW_BASE_REVISION (not changed)"
 if [[ "$NEW_BASE_REVISION" != "$BASE_REVISION" ]]; then

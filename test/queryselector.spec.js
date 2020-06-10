@@ -551,6 +551,32 @@ describe('text selector', () => {
     expect(await page.$(`text="with"`)).toBe(null);
   });
 
+  it('should skip head, script and style', async({page}) => {
+    await page.setContent(`
+      <head>
+        <title>title</title>
+        <script>var script</script>
+        <style>.style {}</style>
+      </head>
+      <body>
+        <script>var script</script>
+        <style>.style {}</style>
+        <div>title script style</div>
+      </body>`);
+    const head = await page.$('head');
+    const title = await page.$('title');
+    const script = await page.$('body script');
+    const style = await page.$('body style');
+    for (const text of ['title', 'script', 'style']) {
+      expect(await page.$eval(`text=${text}`, e => e.nodeName)).toBe('DIV');
+      expect(await page.$$eval(`text=${text}`, els => els.map(e => e.nodeName).join('|'))).toBe('DIV');
+      for (const root of [head, title, script, style]) {
+        expect(await root.$(`text=${text}`)).toBe(null);
+        expect(await root.$$eval(`text=${text}`, els => els.length)).toBe(0);
+      }
+    }
+  });
+
   it('should match input[type=button|submit]', async({page}) => {
     await page.setContent(`<input type="submit" value="hello"><input type="button" value="world">`);
     expect(await page.$eval(`text=hello`, e => e.outerHTML)).toBe('<input type="submit" value="hello">');
@@ -562,9 +588,48 @@ describe('text selector', () => {
     expect(await page.$eval(`text=root1`, e => e.textContent)).toBe('Hello from root1');
     expect(await page.$eval(`text=root2`, e => e.textContent)).toBe('Hello from root2');
     expect(await page.$eval(`text=root3`, e => e.textContent)).toBe('Hello from root3');
+    expect(await page.$eval(`#root1 >> text=from root3`, e => e.textContent)).toBe('Hello from root3');
+    expect(await page.$eval(`#target >> text=from root2`, e => e.textContent)).toBe('Hello from root2');
     expect(await page.$(`text:light=root1`)).toBe(null);
     expect(await page.$(`text:light=root2`)).toBe(null);
     expect(await page.$(`text:light=root3`)).toBe(null);
+  });
+
+  it('should prioritize light dom over shadow dom in the same parent', async({page, server}) => {
+    await page.evaluate(() => {
+      const div = document.createElement('div');
+      document.body.appendChild(div);
+
+      div.attachShadow({ mode: 'open' });
+      const shadowSpan = document.createElement('span');
+      shadowSpan.textContent = 'Hello from shadow';
+      div.shadowRoot.appendChild(shadowSpan);
+
+      const lightSpan = document.createElement('span');
+      lightSpan.textContent = 'Hello from light';
+      div.appendChild(lightSpan);
+    });
+    expect(await page.$eval(`div >> text=Hello`, e => e.textContent)).toBe('Hello from light');
+  });
+
+  it('should waitForSelector with distributed elements', async({page, server}) => {
+    const promise = page.waitForSelector(`div >> text=Hello`);
+    await page.evaluate(() => {
+      const div = document.createElement('div');
+      document.body.appendChild(div);
+
+      div.attachShadow({ mode: 'open' });
+      const shadowSpan = document.createElement('span');
+      shadowSpan.textContent = 'Hello from shadow';
+      div.shadowRoot.appendChild(shadowSpan);
+      div.shadowRoot.appendChild(document.createElement('slot'));
+
+      const lightSpan = document.createElement('span');
+      lightSpan.textContent = 'Hello from light';
+      div.appendChild(lightSpan);
+    });
+    const handle = await promise;
+    expect(await handle.textContent()).toBe('Hello from light');
   });
 });
 

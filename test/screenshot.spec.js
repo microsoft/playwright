@@ -223,6 +223,11 @@ describe.skip(ffheadful)('Page.screenshot', function() {
     expect(screenshot).toBeGolden(golden('screenshot-device-scale-factor.png'));
     await context.close();
   });
+  it('should work with iframe in shadow', async({browser, page, server, golden}) => {
+    await page.setViewportSize({width: 500, height: 500});
+    await page.goto(server.PREFIX + '/grid-iframe-in-shadow.html');
+    expect(await page.screenshot()).toBeGolden(golden('screenshot-iframe.png'));
+  });
 });
 
 describe.skip(ffheadful)('ElementHandle.screenshot', function() {

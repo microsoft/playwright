@@ -30,24 +30,29 @@ function runLinux() {
   if [[ -d $SCRIPT_PATH/$MINIBROWSER_FOLDER ]]; then
     LD_PATH="$SCRIPT_PATH/$MINIBROWSER_FOLDER"
     GIO_DIR="$SCRIPT_PATH/$MINIBROWSER_FOLDER/gio/modules"
+    BUNDLE_DIR="$LD_PATH"
     MINIBROWSER="$SCRIPT_PATH/$MINIBROWSER_FOLDER/MiniBrowser"
   elif [[ -d $SCRIPT_PATH/checkout/$BUILD_FOLDER ]]; then
     LD_PATH="$SCRIPT_PATH/checkout/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib:$SCRIPT_PATH/checkout/$BUILD_FOLDER/Release/bin"
     GIO_DIR="$SCRIPT_PATH/checkout/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib/gio/modules"
+    BUNDLE_DIR="$SCRIPT_PATH/checkout/$BUILD_FOLDER/Release/lib"
     MINIBROWSER="$SCRIPT_PATH/checkout/$BUILD_FOLDER/Release/bin/MiniBrowser"
   elif [[ -f $SCRIPT_PATH/MiniBrowser ]]; then
     LD_PATH="$SCRIPT_PATH"
     GIO_DIR="$SCRIPT_PATH/gio/modules"
+    BUNDLE_DIR="$SCRIPT_PATH"
     MINIBROWSER="$SCRIPT_PATH/MiniBrowser"
   elif [[ -d $SCRIPT_PATH/$BUILD_FOLDER ]]; then
     LD_PATH="$SCRIPT_PATH/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib:$SCRIPT_PATH/$BUILD_FOLDER/Release/bin"
     GIO_DIR="$SCRIPT_PATH/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib/gio/modules"
+    BUNDLE_DIR="$SCRIPT_PATH/$BUILD_FOLDER/Release/lib"
     MINIBROWSER="$SCRIPT_PATH/$BUILD_FOLDER/Release/bin/MiniBrowser"
   else
     echo "Cannot find a MiniBrowser.app in neither location" 1>&2
     exit 1
   fi
-  GIO_MODULE_DIR="$GIO_DIR" LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$LD_PATH" "$MINIBROWSER" "$@"
+
+  GIO_MODULE_DIR="$GIO_DIR" LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$LD_PATH" WEBKIT_INJECTED_BUNDLE_PATH="$BUNDLE_DIR" "$MINIBROWSER" "$@"
 }
 
 SCRIPT_PATH="$(cd "$(dirname "$0")" ; pwd -P)"

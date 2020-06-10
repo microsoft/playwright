@@ -150,7 +150,7 @@ function setupTestRunner(testRunner) {
 
 module.exports = {
   playwrightPath,
-  dumpProtocolOnFailure: valueFromEnv('DEBUGP', false),
+  dumpLogOnFailure: valueFromEnv('DEBUGP', false),
   launchOptions: {
     executablePath: {
       chromium: process.env.CRPATH,
@@ -223,11 +223,13 @@ module.exports = {
     {
       files: [
         './defaultbrowsercontext.spec.js',
+        './downloadsPath.spec.js',
         './fixtures.spec.js',
         './launcher.spec.js',
         './logger.spec.js',
         './headful.spec.js',
         './multiclient.spec.js',
+        './proxy.spec.js',
       ],
       environments: [customEnvironment],
     },
@@ -240,6 +242,15 @@ module.exports = {
       ],
       browsers: ['chromium'],
       title: '[Chromium]',
+      environments: [customEnvironment],
+    },
+
+    {
+      files: [
+        './firefox/launcher.spec.js',
+      ],
+      browsers: ['firefox'],
+      title: '[Firefox]',
       environments: [customEnvironment],
     },
 

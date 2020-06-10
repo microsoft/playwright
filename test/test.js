@@ -16,7 +16,6 @@
  */
 
 const fs = require('fs');
-const path = require('path');
 const utils = require('./utils');
 const TestRunner = require('../utils/testrunner/');
 const {Environment} = require('../utils/testrunner/Test');
@@ -57,7 +56,7 @@ function collect(browserNames) {
 
   const testRunner = new TestRunner({
     timeout,
-    totalTimeout: process.env.CI ? 30 * 60 * 1000 : 0, // 30 minutes on CI
+    totalTimeout: process.env.CI ? 30 * 60 * 1000 * browserNames.length : 0, // 30 minutes per browser on CI
     parallel,
     breakOnFailure: process.argv.indexOf('--break-on-failure') !== -1,
     verbose: process.argv.includes('--verbose'),
@@ -121,7 +120,7 @@ function collect(browserNames) {
 
     const browserEnvironment = new Environment(browserName);
     browserEnvironment.beforeAll(async state => {
-      state._logger = utils.createTestLogger(config.dumpProtocolOnFailure);
+      state._logger = utils.createTestLogger(config.dumpLogOnFailure);
       state.browser = await state.browserType.launch({...launchOptions, logger: state._logger});
     });
     browserEnvironment.afterAll(async state => {

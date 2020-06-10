@@ -363,7 +363,7 @@ describe('launchPersistentContext()', function() {
     const userDataDir = await makeUserDataDir();
     const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
     const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
-    expect(error.message).toContain('Waiting for the browser to launch failed: timeout exceeded. Re-run with the DEBUG=pw:browser* env variable to see the debug log.');
+    expect(error.message).toContain(`Timeout 5000ms exceeded during ${browserType.name()}.launchPersistentContext.`);
     await removeUserDataDir(userDataDir);
   });
   it('should handle exception', async({browserType, defaultBrowserOptions}) => {
@@ -372,17 +372,6 @@ describe('launchPersistentContext()', function() {
     const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; } };
     const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
     expect(error).toBe(e);
-    await removeUserDataDir(userDataDir);
-  });
-  it('should throw on unsupported options', async ({browserType, defaultBrowserOptions}) => {
-    const userDataDir = await makeUserDataDir();
-    const optionNames = [ 'acceptDownloads' ];
-    for (const option of optionNames) {
-      const options = { ...defaultBrowserOptions };
-      options[option] = 'hello';
-      const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
-      expect(error.message).toBe(`Option "${option}" is not supported for persistent context`);
-    }
     await removeUserDataDir(userDataDir);
   });
 });

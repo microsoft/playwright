@@ -20,7 +20,8 @@ import { EventEmitter } from 'events';
 import { Download } from './download';
 import type { BrowserServer } from './server/browserServer';
 import { Events } from './events';
-import { InnerLogger, Log } from './logger';
+import { InnerLogger } from './logger';
+import { ProxySettings } from './types';
 
 export type BrowserOptions = {
   logger: InnerLogger,
@@ -29,6 +30,7 @@ export type BrowserOptions = {
   persistent?: PersistentContextOptions,  // Undefined means no persistent context.
   slowMo?: number,
   ownedServer?: BrowserServer,
+  proxy?: ProxySettings,
 };
 
 export interface Browser extends EventEmitter {
@@ -39,7 +41,7 @@ export interface Browser extends EventEmitter {
   close(): Promise<void>;
 }
 
-export abstract class BrowserBase extends EventEmitter implements Browser, InnerLogger {
+export abstract class BrowserBase extends EventEmitter implements Browser {
   readonly _options: BrowserOptions;
   private _downloads = new Map<string, Download>();
   _defaultContext: BrowserContextBase | null = null;
@@ -90,14 +92,6 @@ export abstract class BrowserBase extends EventEmitter implements Browser, Inner
     }
     if (this.isConnected())
       await new Promise(x => this.once(Events.Browser.Disconnected, x));
-  }
-
-  _isLogEnabled(log: Log): boolean {
-    return this._options.logger._isLogEnabled(log);
-  }
-
-  _log(log: Log, message: string | Error, ...args: any[]) {
-    return this._options.logger._log(log, message, ...args);
   }
 }
 

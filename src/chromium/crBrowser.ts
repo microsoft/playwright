@@ -29,7 +29,6 @@ import { readProtocolStream } from './crProtocolHelper';
 import { Events } from './events';
 import { Protocol } from './protocol';
 import { CRExecutionContext } from './crExecutionContext';
-import { logError } from '../logger';
 import { CRDevTools } from '../debug/crDevTools';
 
 export class CRBrowser extends BrowserBase {
@@ -55,7 +54,6 @@ export class CRBrowser extends BrowserBase {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
       return browser;
     }
-
     browser._defaultContext = new CRBrowserContext(browser, null, options.persistent);
 
     const existingTargetAttachPromises: Promise<any>[] = [];
@@ -133,8 +131,8 @@ export class CRBrowser extends BrowserBase {
     if (targetInfo.type === 'other' || !context) {
       if (waitingForDebugger) {
         // Ideally, detaching should resume any target, but there is a bug in the backend.
-        session.send('Runtime.runIfWaitingForDebugger').catch(logError(this)).then(() => {
-          this._session.send('Target.detachFromTarget', { sessionId }).catch(logError(this));
+        session._sendMayFail('Runtime.runIfWaitingForDebugger').then(() => {
+          this._session._sendMayFail('Target.detachFromTarget', { sessionId });
         });
       }
       return;
@@ -266,7 +264,7 @@ class CRServiceWorker extends Worker {
   readonly _browserContext: CRBrowserContext;
 
   constructor(browserContext: CRBrowserContext, session: CRSession, url: string) {
-    super(browserContext, url);
+    super(url);
     this._browserContext = browserContext;
     session.once('Runtime.executionContextCreated', event => {
       this._createExecutionContext(new CRExecutionContext(session, event.context));
@@ -287,6 +285,7 @@ export class CRBrowserContext extends BrowserContextBase {
     this._browser = browser;
     this._browserContextId = browserContextId;
     this._evaluateOnNewDocumentSources = [];
+    this._authenticateProxyViaCredentials();
   }
 
   async _initialize() {

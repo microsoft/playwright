@@ -31,7 +31,7 @@ import * as accessibility from './accessibility';
 import { ExtendedEventEmitter } from './extendedEventEmitter';
 import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
-import { logError, InnerLogger, Log } from './logger';
+import { logError, InnerLogger } from './logger';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -69,7 +69,6 @@ export interface PageDelegate {
   getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null>;
   getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle>;
   scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'success' | 'invisible'>;
-  setActivityPaused(paused: boolean): Promise<void>;
   rafCountForStablePosition(): number;
 
   getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}>;
@@ -89,7 +88,7 @@ type PageState = {
   extraHTTPHeaders: network.Headers | null;
 };
 
-export class Page extends ExtendedEventEmitter implements InnerLogger {
+export class Page extends ExtendedEventEmitter {
   private _closed = false;
   private _closedCallback: () => void;
   private _closedPromise: Promise<void>;
@@ -101,6 +100,7 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
   readonly mouse: input.Mouse;
   readonly _timeoutSettings: TimeoutSettings;
   readonly _delegate: PageDelegate;
+  readonly _logger: InnerLogger;
   readonly _state: PageState;
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _screenshotter: Screenshotter;
@@ -115,6 +115,7 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
   constructor(delegate: PageDelegate, browserContext: BrowserContextBase) {
     super();
     this._delegate = delegate;
+    this._logger = browserContext._logger;
     this._closedCallback = () => {};
     this._closedPromise = new Promise(f => this._closedCallback = f);
     this._disconnectedCallback = () => {};
@@ -141,8 +142,12 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
     return this._disconnectedPromise;
   }
 
-  protected _computeDeadline(options?: types.TimeoutOptions): number {
-    return this._timeoutSettings.computeDeadline(options);
+  protected _getLogger(): InnerLogger {
+    return this._logger;
+  }
+
+  protected _getTimeoutSettings(): TimeoutSettings {
+    return this._timeoutSettings;
   }
 
   _didClose() {
@@ -315,21 +320,21 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
   }
 
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: network.Request) => boolean), options: types.TimeoutOptions = {}): Promise<network.Request> {
-    const deadline = this._timeoutSettings.computeDeadline(options);
-    return helper.waitForEvent(this, Events.Page.Request, (request: network.Request) => {
+    const predicate = (request: network.Request) => {
       if (helper.isString(urlOrPredicate) || helper.isRegExp(urlOrPredicate))
         return helper.urlMatches(request.url(), urlOrPredicate);
       return urlOrPredicate(request);
-    }, deadline, this._disconnectedPromise);
+    };
+    return this.waitForEvent(Events.Page.Request, { predicate, timeout: options.timeout });
   }
 
   async waitForResponse(urlOrPredicate: string | RegExp | ((r: network.Response) => boolean), options: types.TimeoutOptions = {}): Promise<network.Response> {
-    const deadline = this._timeoutSettings.computeDeadline(options);
-    return helper.waitForEvent(this, Events.Page.Response, (response: network.Response) => {
+    const predicate = (response: network.Response) => {
       if (helper.isString(urlOrPredicate) || helper.isRegExp(urlOrPredicate))
         return helper.urlMatches(response.url(), urlOrPredicate);
       return urlOrPredicate(response);
-    }, deadline, this._disconnectedPromise);
+    };
+    return this.waitForEvent(Events.Page.Response, { predicate, timeout: options.timeout });
   }
 
   async goBack(options?: types.NavigateOptions): Promise<network.Response | null> {
@@ -549,33 +554,23 @@ export class Page extends ExtendedEventEmitter implements InnerLogger {
       this._delegate.setFileChooserIntercepted(false);
     return this;
   }
-
-  _isLogEnabled(log: Log): boolean {
-    return this._browserContext._isLogEnabled(log);
-  }
-
-  _log(log: Log, message: string | Error, ...args: any[]) {
-    return this._browserContext._log(log, message, ...args);
-  }
 }
 
 export class Worker extends EventEmitter {
-  private _logger: InnerLogger;
   private _url: string;
   private _executionContextPromise: Promise<js.ExecutionContext>;
   private _executionContextCallback: (value?: js.ExecutionContext) => void;
   _existingExecutionContext: js.ExecutionContext | null = null;
 
-  constructor(logger: InnerLogger, url: string) {
+  constructor(url: string) {
     super();
-    this._logger = logger;
     this._url = url;
     this._executionContextCallback = () => {};
     this._executionContextPromise = new Promise(x => this._executionContextCallback = x);
   }
 
   _createExecutionContext(delegate: js.ExecutionContextDelegate) {
-    this._existingExecutionContext = new js.ExecutionContext(delegate, this._logger);
+    this._existingExecutionContext = new js.ExecutionContext(delegate);
     this._executionContextCallback(this._existingExecutionContext);
   }
 
@@ -587,14 +582,14 @@ export class Worker extends EventEmitter {
   async evaluate<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<R>;
   async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
-    return (await this._executionContextPromise).evaluateInternal(pageFunction, arg);
+    return js.evaluate(await this._executionContextPromise, true /* returnByValue */, pageFunction, arg);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
-    return (await this._executionContextPromise).evaluateHandleInternal(pageFunction, arg);
+    return js.evaluate(await this._executionContextPromise, false /* returnByValue */, pageFunction, arg);
   }
 }
 
@@ -624,7 +619,7 @@ export class PageBinding {
       else
         expression = helper.evaluationString(deliverErrorValue, name, seq, error);
     }
-    context.evaluateInternal(expression).catch(logError(page));
+    context.evaluateInternal(expression).catch(logError(page._logger));
 
     function deliverResult(name: string, seq: number, result: any) {
       (window as any)[name]['callbacks'].get(seq).resolve(result);

@@ -21,7 +21,8 @@ import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { createTextSelector } from './textSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 
-type Predicate<T> = () => T;
+type Falsy = false | 0 | '' | undefined | null;
+type Predicate<T> = (progress: types.InjectedScriptProgress) => T | Falsy;
 
 export default class InjectedScript {
   readonly engines: Map<string, SelectorEngine>;
@@ -103,57 +104,86 @@ export default class InjectedScript {
     return rect.width > 0 && rect.height > 0;
   }
 
-  private _pollRaf<T>(predicate: Predicate<T>, timeout: number): Promise<T | undefined> {
-    let timedOut = false;
-    if (timeout)
-      setTimeout(() => timedOut = true, timeout);
-
-    let fulfill: (result?: any) => void;
-    const result = new Promise<T | undefined>(x => fulfill = x);
+  private _pollRaf<T>(progress: types.InjectedScriptProgress, predicate: Predicate<T>): Promise<T> {
+    let fulfill: (result: T) => void;
+    let reject: (error: Error) => void;
+    const result = new Promise<T>((f, r) => { fulfill = f; reject = r; });
 
     const onRaf = () => {
-      if (timedOut) {
-        fulfill();
+      if (progress.canceled)
         return;
+      try {
+        const success = predicate(progress);
+        if (success)
+          fulfill(success);
+        else
+          requestAnimationFrame(onRaf);
+      } catch (e) {
+        reject(e);
       }
-      const success = predicate();
-      if (success)
-        fulfill(success);
-      else
-        requestAnimationFrame(onRaf);
     };
 
     onRaf();
     return result;
   }
 
-  private _pollInterval<T>(pollInterval: number, predicate: Predicate<T>, timeout: number): Promise<T | undefined> {
-    let timedOut = false;
-    if (timeout)
-      setTimeout(() => timedOut = true, timeout);
+  private _pollInterval<T>(progress: types.InjectedScriptProgress, pollInterval: number, predicate: Predicate<T>): Promise<T> {
+    let fulfill: (result: T) => void;
+    let reject: (error: Error) => void;
+    const result = new Promise<T>((f, r) => { fulfill = f; reject = r; });
 
-    let fulfill: (result?: any) => void;
-    const result = new Promise<T | undefined>(x => fulfill = x);
     const onTimeout = () => {
-      if (timedOut) {
-        fulfill();
+      if (progress.canceled)
         return;
+      try {
+        const success = predicate(progress);
+        if (success)
+          fulfill(success);
+        else
+          setTimeout(onTimeout, pollInterval);
+      } catch (e) {
+        reject(e);
       }
-      const success = predicate();
-      if (success)
-        fulfill(success);
-      else
-        setTimeout(onTimeout, pollInterval);
     };
 
     onTimeout();
     return result;
   }
 
-  poll<T>(polling: 'raf' | number, timeout: number, predicate: Predicate<T>): Promise<T | undefined> {
-    if (polling === 'raf')
-      return this._pollRaf(predicate, timeout);
-    return this._pollInterval(polling, predicate, timeout);
+  private _runCancellablePoll<T>(poll: (progess: types.InjectedScriptProgress) => Promise<T>): types.InjectedScriptPoll<T> {
+    let currentLogs: string[] = [];
+    let logReady = () => {};
+    const createLogsPromise = () => new Promise<types.InjectedScriptLogs>(fulfill => {
+      logReady = () => {
+        const current = currentLogs;
+        currentLogs = [];
+        fulfill({ current, next: createLogsPromise() });
+      };
+    });
+
+    const progress: types.InjectedScriptProgress = {
+      canceled: false,
+      log: (message: string) => {
+        currentLogs.push(message);
+        logReady();
+      },
+    };
+
+    // It is important to create logs promise before running the poll to capture logs from the first run.
+    const logs = createLogsPromise();
+
+    return {
+      logs,
+      result: poll(progress),
+      cancel: () => { progress.canceled = true; },
+      takeLastLogs: () => currentLogs,
+    };
+  }
+
+  poll<T>(polling: 'raf' | number, predicate: Predicate<T>): types.InjectedScriptPoll<T> {
+    return this._runCancellablePoll(progress => {
+      return polling === 'raf' ? this._pollRaf(progress, predicate) : this._pollInterval(progress, polling, predicate);
+    });
   }
 
   getElementBorderWidth(node: Node): { left: number; top: number; } {
@@ -194,53 +224,55 @@ export default class InjectedScript {
     return { status: 'success', value: options.filter(option => option.selected).map(option => option.value) };
   }
 
-  fill(node: Node, value: string): types.InjectedScriptResult<boolean> {
-    if (node.nodeType !== Node.ELEMENT_NODE)
-      return { status: 'error', error: 'Node is not of type HTMLElement' };
-    const element = node as HTMLElement;
-    if (!element.isConnected)
-      return { status: 'notconnected' };
-    if (!this.isVisible(element))
-      return { status: 'error', error: 'Element is not visible' };
-    if (element.nodeName.toLowerCase() === 'input') {
-      const input = element as HTMLInputElement;
-      const type = (input.getAttribute('type') || '').toLowerCase();
-      const kDateTypes = new Set(['date', 'time', 'datetime', 'datetime-local']);
-      const kTextInputTypes = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
-      if (!kTextInputTypes.has(type) && !kDateTypes.has(type))
-        return { status: 'error', error: 'Cannot fill input of type "' + type + '".' };
-      if (type === 'number') {
-        value = value.trim();
-        if (isNaN(Number(value)))
-          return { status: 'error', error: 'Cannot type text into input[type=number].' };
+  waitForEnabledAndFill(node: Node, value: string): types.InjectedScriptPoll<types.InjectedScriptResult<boolean>> {
+    return this.poll('raf', () => {
+      if (node.nodeType !== Node.ELEMENT_NODE)
+        return { status: 'error', error: 'Node is not of type HTMLElement' };
+      const element = node as HTMLElement;
+      if (!element.isConnected)
+        return { status: 'notconnected' };
+      if (!this.isVisible(element))
+        return false;
+      if (element.nodeName.toLowerCase() === 'input') {
+        const input = element as HTMLInputElement;
+        const type = (input.getAttribute('type') || '').toLowerCase();
+        const kDateTypes = new Set(['date', 'time', 'datetime', 'datetime-local']);
+        const kTextInputTypes = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
+        if (!kTextInputTypes.has(type) && !kDateTypes.has(type))
+          return { status: 'error', error: 'Cannot fill input of type "' + type + '".' };
+        if (type === 'number') {
+          value = value.trim();
+          if (isNaN(Number(value)))
+            return { status: 'error', error: 'Cannot type text into input[type=number].' };
+        }
+        if (input.disabled)
+          return false;
+        if (input.readOnly)
+          return false;
+        if (kDateTypes.has(type)) {
+          value = value.trim();
+          input.focus();
+          input.value = value;
+          if (input.value !== value)
+            return { status: 'error', error: `Malformed ${type} "${value}"` };
+          element.dispatchEvent(new Event('input', { 'bubbles': true }));
+          element.dispatchEvent(new Event('change', { 'bubbles': true }));
+          return { status: 'success', value: false };  // We have already changed the value, no need to input it.
+        }
+      } else if (element.nodeName.toLowerCase() === 'textarea') {
+        const textarea = element as HTMLTextAreaElement;
+        if (textarea.disabled)
+          return false;
+        if (textarea.readOnly)
+          return false;
+      } else if (!element.isContentEditable) {
+        return { status: 'error', error: 'Element is not an <input>, <textarea> or [contenteditable] element.' };
       }
-      if (input.disabled)
-        return { status: 'error', error: 'Cannot fill a disabled input.' };
-      if (input.readOnly)
-        return { status: 'error', error: 'Cannot fill a readonly input.' };
-      if (kDateTypes.has(type)) {
-        value = value.trim();
-        input.focus();
-        input.value = value;
-        if (input.value !== value)
-          return { status: 'error', error: `Malformed ${type} "${value}"` };
-        element.dispatchEvent(new Event('input', { 'bubbles': true }));
-        element.dispatchEvent(new Event('change', { 'bubbles': true }));
-        return { status: 'success', value: false };  // We have already changed the value, no need to input it.
-      }
-    } else if (element.nodeName.toLowerCase() === 'textarea') {
-      const textarea = element as HTMLTextAreaElement;
-      if (textarea.disabled)
-        return { status: 'error', error: 'Cannot fill a disabled textarea.' };
-      if (textarea.readOnly)
-        return { status: 'error', error: 'Cannot fill a readonly textarea.' };
-    } else if (!element.isContentEditable) {
-      return { status: 'error', error: 'Element is not an <input>, <textarea> or [contenteditable] element.' };
-    }
-    const result = this.selectText(node);
-    if (result.status === 'success')
-      return { status: 'success', value: true };  // Still need to input the value.
-    return result;
+      const result = this.selectText(node);
+      if (result.status === 'success')
+        return { status: 'success', value: true };  // Still need to input the value.
+      return result;
+    });
   }
 
   selectText(node: Node): types.InjectedScriptResult {
@@ -330,47 +362,53 @@ export default class InjectedScript {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  async waitForDisplayedAtStablePosition(node: Node, rafCount: number, timeout: number): Promise<types.InjectedScriptResult> {
-    if (!node.isConnected)
-      return { status: 'notconnected' };
-    const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
-    if (!element)
-      return { status: 'notconnected' };
-
-    let lastRect: types.Rect | undefined;
-    let counter = 0;
-    let samePositionCounter = 0;
-    let lastTime = 0;
-    const result = await this.poll('raf', timeout, (): 'notconnected' | boolean => {
-      // First raf happens in the same animation frame as evaluation, so it does not produce
-      // any client rect difference compared to synchronous call. We skip the synchronous call
-      // and only force layout during actual rafs as a small optimisation.
-      if (++counter === 1)
-        return false;
+  waitForDisplayedAtStablePositionAndEnabled(node: Node, rafCount: number): types.InjectedScriptPoll<types.InjectedScriptResult> {
+    return this._runCancellablePoll(async progress => {
       if (!node.isConnected)
-        return 'notconnected';
+        return { status: 'notconnected' };
+      const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+      if (!element)
+        return { status: 'notconnected' };
 
-      // Drop frames that are shorter than 16ms - WebKit Win bug.
-      const time = performance.now();
-      if (rafCount > 1 && time - lastTime < 15)
-        return false;
-      lastTime = time;
+      let lastRect: types.Rect | undefined;
+      let counter = 0;
+      let samePositionCounter = 0;
+      let lastTime = 0;
+      return this._pollRaf(progress, (): types.InjectedScriptResult | false => {
+        // First raf happens in the same animation frame as evaluation, so it does not produce
+        // any client rect difference compared to synchronous call. We skip the synchronous call
+        // and only force layout during actual rafs as a small optimisation.
+        if (++counter === 1)
+          return false;
+        if (!node.isConnected)
+          return { status: 'notconnected' };
 
-      // Note: this logic should be similar to isVisible() to avoid surprises.
-      const clientRect = element.getBoundingClientRect();
-      const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
-      const samePosition = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height && rect.width > 0 && rect.height > 0;
-      if (samePosition)
-        ++samePositionCounter;
-      else
-        samePositionCounter = 0;
-      let isDisplayedAndStable = samePositionCounter >= rafCount;
-      const style = element.ownerDocument && element.ownerDocument.defaultView ? element.ownerDocument.defaultView.getComputedStyle(element) : undefined;
-      isDisplayedAndStable = isDisplayedAndStable && (!!style && style.visibility !== 'hidden');
-      lastRect = rect;
-      return !!isDisplayedAndStable;
+        // Drop frames that are shorter than 16ms - WebKit Win bug.
+        const time = performance.now();
+        if (rafCount > 1 && time - lastTime < 15)
+          return false;
+        lastTime = time;
+
+        // Note: this logic should be similar to isVisible() to avoid surprises.
+        const clientRect = element.getBoundingClientRect();
+        const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
+        const samePosition = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height && rect.width > 0 && rect.height > 0;
+        lastRect = rect;
+        if (samePosition)
+          ++samePositionCounter;
+        else
+          samePositionCounter = 0;
+        const isDisplayedAndStable = samePositionCounter >= rafCount;
+
+        const style = element.ownerDocument && element.ownerDocument.defaultView ? element.ownerDocument.defaultView.getComputedStyle(element) : undefined;
+        const isVisible = !!style && style.visibility !== 'hidden';
+
+        const elementOrButton = element.closest('button, [role=button]') || element;
+        const isDisabled = ['BUTTON', 'INPUT', 'SELECT'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
+
+        return isDisplayedAndStable && isVisible && !isDisabled ? { status: 'success' } : false;
+      });
     });
-    return { status: result === 'notconnected' ? 'notconnected' : (result ? 'success' : 'timeout') };
   }
 
   checkHitTargetAt(node: Node, point: types.Point): types.InjectedScriptResult<boolean> {
@@ -420,7 +458,35 @@ export default class InjectedScript {
     }
     return element;
   }
+
+  previewElement(element: Element): string {
+    const attrs = [];
+    for (let i = 0; i < element.attributes.length; i++) {
+      if (element.attributes[i].name !== 'style')
+        attrs.push(` ${element.attributes[i].name}="${element.attributes[i].value}"`);
+    }
+    attrs.sort((a, b) => a.length - b.length);
+    let attrText = attrs.join('');
+    if (attrText.length > 50)
+      attrText = attrText.substring(0, 49) + '\u2026';
+    if (autoClosingTags.has(element.nodeName))
+      return `<${element.nodeName.toLowerCase()}${attrText}/>`;
+
+    const children = element.childNodes;
+    let onlyText = false;
+    if (children.length <= 5) {
+      onlyText = true;
+      for (let i = 0; i < children.length; i++)
+        onlyText = onlyText && children[i].nodeType === Node.TEXT_NODE;
+    }
+    let text = onlyText ? (element.textContent || '') : '';
+    if (text.length > 50)
+      text = text.substring(0, 49) + '\u2026';
+    return `<${element.nodeName.toLowerCase()}${attrText}>${text}</${element.nodeName.toLowerCase()}>`;
+  }
 }
+
+const autoClosingTags = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
 
 const eventType = new Map<string, 'mouse'|'keyboard'|'touch'|'pointer'|'focus'|'drag'>([
   ['auxclick', 'mouse'],

@@ -28,10 +28,12 @@ function traceAPICoverage(apiCoverage, events, className, classType) {
     if (methodName === 'constructor' || typeof methodName !== 'string' || methodName.startsWith('_') || typeof method !== 'function')
       continue;
     apiCoverage.set(`${className}.${methodName}`, false);
-    Reflect.set(classType.prototype, methodName, function(...args) {
+    const override = function(...args) {
       apiCoverage.set(`${className}.${methodName}`, true);
       return method.call(this, ...args);
-    });
+    };
+    Object.defineProperty(override, 'name', { writable: false, value: methodName });
+    Reflect.set(classType.prototype, methodName, override);
   }
 
   if (events[classType.name]) {

@@ -187,6 +187,14 @@ describe('Auto waiting', () => {
     await page.click('input[type=submit]');
     await page.goto(server.EMPTY_PAGE);
   });
+  it('should report navigation in the log when clicking anchor', async({page, server}) => {
+    await page.setContent(`<a href="${server.PREFIX + '/frames/one-frame.html'}">click me</a>`);
+    const __testHookAfterPointerAction = () => new Promise(f => setTimeout(f, 6000));
+    const error = await page.click('a', { timeout: 5000, __testHookAfterPointerAction }).catch(e => e);
+    expect(error.message).toContain('Timeout 5000ms exceeded during page.click.');
+    expect(error.message).toContain('waiting for scheduled navigations to finish');
+    expect(error.message).toContain(`navigated to "${server.PREFIX + '/frames/one-frame.html'}"`);
+  });
 });
 
 describe('Auto waiting should not hang when', () => {

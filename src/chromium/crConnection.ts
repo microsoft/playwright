@@ -19,7 +19,7 @@ import { assert } from '../helper';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse, protocolLog } from '../transport';
 import { Protocol } from './protocol';
 import { EventEmitter } from 'events';
-import { InnerLogger } from '../logger';
+import { InnerLogger, errorLog } from '../logger';
 import { rewriteErrorMessage } from '../debug/stackTrace';
 
 export const ConnectionEvents = {
@@ -36,7 +36,7 @@ export class CRConnection extends EventEmitter {
   private readonly _sessions = new Map<string, CRSession>();
   readonly rootSession: CRSession;
   _closed = false;
-  private _logger: InnerLogger;
+  readonly _logger: InnerLogger;
 
   constructor(transport: ConnectionTransport, logger: InnerLogger) {
     super();
@@ -62,15 +62,15 @@ export class CRConnection extends EventEmitter {
     const message: ProtocolRequest = { id, method, params };
     if (sessionId)
       message.sessionId = sessionId;
-    if (this._logger._isLogEnabled(protocolLog))
-      this._logger._log(protocolLog, 'SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
+    if (this._logger.isLogEnabled(protocolLog))
+      this._logger.log(protocolLog, 'SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
     this._transport.send(message);
     return id;
   }
 
   async _onMessage(message: ProtocolResponse) {
-    if (this._logger._isLogEnabled(protocolLog))
-      this._logger._log(protocolLog, '◀ RECV ' + JSON.stringify(message));
+    if (this._logger.isLogEnabled(protocolLog))
+      this._logger.log(protocolLog, '◀ RECV ' + JSON.stringify(message));
     if (message.id === kBrowserCloseMessageId)
       return;
     if (message.method === 'Target.attachedToTarget') {
@@ -162,6 +162,13 @@ export class CRSession extends EventEmitter {
     const id = this._connection._rawSend(this._sessionId, method, params);
     return new Promise((resolve, reject) => {
       this._callbacks.set(id, {resolve, reject, error: new Error(), method});
+    });
+  }
+
+  _sendMayFail<T extends keyof Protocol.CommandParameters>(method: T, params?: Protocol.CommandParameters[T]): Promise<Protocol.CommandReturnValues[T] | void> {
+    return this.send(method, params).catch(error => {
+      if (this._connection)
+        this._connection._logger.log(errorLog, error, []);
     });
   }
 

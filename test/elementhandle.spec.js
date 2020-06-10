@@ -259,20 +259,34 @@ describe('ElementHandle.click', function() {
     const button = await page.$('button');
     await page.evaluate(button => button.style.display = 'none', button);
     const error = await button.click({ force: true }).catch(err => err);
-    expect(error.message).toBe('Element is not visible');
+    expect(error.message).toContain('Element is not visible');
   });
   it('should throw for recursively hidden nodes with force', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     const button = await page.$('button');
     await page.evaluate(button => button.parentElement.style.display = 'none', button);
     const error = await button.click({ force: true }).catch(err => err);
-    expect(error.message).toBe('Element is not visible');
+    expect(error.message).toContain('Element is not visible');
   });
   it('should throw for <br> elements with force', async({page, server}) => {
     await page.setContent('hello<br>goodbye');
     const br = await page.$('br');
     const error = await br.click({ force: true }).catch(err => err);
-    expect(error.message).toBe('Element is outside of the viewport');
+    expect(error.message).toContain('Element is outside of the viewport');
+  });
+  it('should double click the button', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/button.html');
+    await page.evaluate(() => {
+      window.double = false;
+      const button = document.querySelector('button');
+      button.addEventListener('dblclick', event => {
+        window.double = true;
+      });
+    });
+    const button = await page.$('button');
+    await button.dblclick();
+    expect(await page.evaluate('double')).toBe(true);
+    expect(await page.evaluate('result')).toBe('Clicked');
   });
 });
 
@@ -385,5 +399,40 @@ describe('ElementHandle convenience API', function() {
     const handle = await page.$('#inner');
     expect(await handle.textContent()).toBe('Text,\nmore text');
     expect(await page.textContent('#inner')).toBe('Text,\nmore text');
+  });
+});
+
+describe('ElementHandle.check', () => {
+  it('should check the box', async({page}) => {
+    await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
+    const input = await page.$('input');
+    await input.check();
+    expect(await page.evaluate(() => checkbox.checked)).toBe(true);
+  });
+  it('should uncheck the box', async({page}) => {
+    await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
+    const input = await page.$('input');
+    await input.uncheck();
+    expect(await page.evaluate(() => checkbox.checked)).toBe(false);
+  });
+});
+
+describe('ElementHandle.selectOption', function() {
+  it('should select single option', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/select.html');
+    const select = await page.$('select');
+    await select.selectOption('blue');
+    expect(await page.evaluate(() => result.onInput)).toEqual(['blue']);
+    expect(await page.evaluate(() => result.onChange)).toEqual(['blue']);
+  });
+});
+
+describe('ElementHandle.focus', function() {
+  it('should focus a button', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/button.html');
+    const button = await page.$('button');
+    expect(await button.evaluate(button => document.activeElement === button)).toBe(false);
+    await button.focus();
+    expect(await button.evaluate(button => document.activeElement === button)).toBe(true);
   });
 });

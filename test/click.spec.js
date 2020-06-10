@@ -18,6 +18,11 @@
 const utils = require('./utils');
 const {FFOX, CHROMIUM, WEBKIT, WIN} = utils.testOptions(browserType);
 
+async function giveItAChanceToClick(page) {
+  for (let i = 0; i < 5; i++)
+    await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
+}
+
 describe('Page.click', function() {
   it('should click the button', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
@@ -60,6 +65,13 @@ describe('Page.click', function() {
       page.mouse.click(1, 2),
     ]).catch(e => {});
     await context.close();
+  });
+  it('should avoid side effects after timeout', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/button.html');
+    const error = await page.click('button', { timeout: 2000, __testHookBeforePointerAction: () => new Promise(f => setTimeout(f, 2500))}).catch(e => e);
+    await page.waitForTimeout(5000);  // Give it some time to click after the test hook is done waiting.
+    expect(await page.evaluate(() => result)).toBe('Was not clicked');
+    expect(error.message).toContain('Timeout 2000ms exceeded during page.click.');
   });
   it('should click the button after navigation ', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
@@ -143,7 +155,7 @@ describe('Page.click', function() {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.display = 'none');
     await page.click('button', { force: true }).catch(e => error = e);
-    expect(error.message).toBe('Element is not visible');
+    expect(error.message).toContain('Element is not visible');
     expect(await page.evaluate(() => result)).toBe('Was not clicked');
   });
   it('should waitFor display:none to be gone', async({page, server}) => {
@@ -151,10 +163,7 @@ describe('Page.click', function() {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.display = 'none');
     const clicked = page.click('button', { timeout: 0 }).then(() => done = true);
-    for (let i = 0; i < 10; i++) {
-      // Do enough double rafs to check for possible races.
-      await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
-    }
+    await giveItAChanceToClick(page);
     expect(await page.evaluate(() => result)).toBe('Was not clicked');
     expect(done).toBe(false);
     await page.$eval('button', b => b.style.display = 'block');
@@ -167,10 +176,7 @@ describe('Page.click', function() {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.visibility = 'hidden');
     const clicked = page.click('button', { timeout: 0 }).then(() => done = true);
-    for (let i = 0; i < 10; i++) {
-      // Do enough double rafs to check for possible races.
-      await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
-    }
+    await giveItAChanceToClick(page);
     expect(await page.evaluate(() => result)).toBe('Was not clicked');
     expect(done).toBe(false);
     await page.$eval('button', b => b.style.visibility = 'visible');
@@ -181,26 +187,23 @@ describe('Page.click', function() {
   it('should timeout waiting for display:none to be gone', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.display = 'none');
-    const error = await page.click('button', { timeout: 100 }).catch(e => e);
-    expect(error.message).toContain('timeout exceeded');
-    expect(error.message).toContain('DEBUG=pw:input');
+    const error = await page.click('button', { timeout: 5000 }).catch(e => e);
+    expect(error.message).toContain('Timeout 5000ms exceeded during page.click.');
+    expect(error.message).toContain('waiting for element to be displayed, enabled and not moving');
   });
   it('should timeout waiting for visbility:hidden to be gone', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.visibility = 'hidden');
-    const error = await page.click('button', { timeout: 100 }).catch(e => e);
-    expect(error.message).toContain('timeout exceeded');
-    expect(error.message).toContain('DEBUG=pw:input');
+    const error = await page.click('button', { timeout: 5000 }).catch(e => e);
+    expect(error.message).toContain('Timeout 5000ms exceeded during page.click.');
+    expect(error.message).toContain('waiting for element to be displayed, enabled and not moving');
   });
   it('should waitFor visible when parent is hidden', async({page, server}) => {
     let done = false;
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.parentElement.style.display = 'none');
     const clicked = page.click('button', { timeout: 0 }).then(() => done = true);
-    for (let i = 0; i < 10; i++) {
-      // Do enough double rafs to check for possible races.
-      await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
-    }
+    await giveItAChanceToClick(page);
     expect(done).toBe(false);
     await page.$eval('button', b => b.parentElement.style.display = 'block');
     await clicked;
@@ -433,9 +436,9 @@ describe('Page.click', function() {
       button.style.transition = 'margin 5s linear 0s';
       button.style.marginLeft = '200px';
     });
-    const error = await button.click({ timeout: 100 }).catch(e => e);
-    expect(error.message).toContain('timeout exceeded');
-    expect(error.message).toContain('DEBUG=pw:input');
+    const error = await button.click({ timeout: 5000 }).catch(e => e);
+    expect(error.message).toContain('Timeout 5000ms exceeded during elementHandle.click.');
+    expect(error.message).toContain('waiting for element to be displayed, enabled and not moving');
   });
   it('should wait for becoming hit target', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
@@ -460,8 +463,7 @@ describe('Page.click', function() {
     expect(clicked).toBe(false);
 
     await page.$eval('.flyover', flyOver => flyOver.style.left = '0');
-    await page.evaluate(() => new Promise(requestAnimationFrame));
-    await page.evaluate(() => new Promise(requestAnimationFrame));
+    await giveItAChanceToClick(page);
     expect(clicked).toBe(false);
 
     await page.$eval('.flyover', flyOver => flyOver.style.left = '200px');
@@ -482,9 +484,10 @@ describe('Page.click', function() {
       blocker.style.top = '0';
       document.body.appendChild(blocker);
     });
-    const error = await button.click({ timeout: 100 }).catch(e => e);
-    expect(error.message).toContain('timeout exceeded');
-    expect(error.message).toContain('DEBUG=pw:input');
+    const error = await button.click({ timeout: 5000 }).catch(e => e);
+    expect(error.message).toContain('Timeout 5000ms exceeded during elementHandle.click.');
+    expect(error.message).toContain('element does not receive pointer events');
+    expect(error.message).toContain('retrying elementHandle.click action');
   });
   it('should fail when obscured and not waiting for hit target', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
@@ -503,6 +506,45 @@ describe('Page.click', function() {
     expect(await page.evaluate(() => window.result)).toBe('Was not clicked');
   });
 
+  it('should wait for button to be enabled', async({page, server}) => {
+    await page.setContent('<button onclick="javascript:window.__CLICKED=true;" disabled><span>Click target</span></button>');
+    let done = false;
+    const clickPromise = page.click('text=Click target').then(() => done = true);
+    await giveItAChanceToClick(page);
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
+    expect(done).toBe(false);
+    await page.evaluate(() => document.querySelector('button').removeAttribute('disabled'));
+    await clickPromise;
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  });
+  it('should wait for input to be enabled', async({page, server}) => {
+    await page.setContent('<input onclick="javascript:window.__CLICKED=true;" disabled>');
+    let done = false;
+    const clickPromise = page.click('input').then(() => done = true);
+    await giveItAChanceToClick(page);
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
+    expect(done).toBe(false);
+    await page.evaluate(() => document.querySelector('input').removeAttribute('disabled'));
+    await clickPromise;
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  });
+  it('should wait for select to be enabled', async({page, server}) => {
+    await page.setContent('<select onclick="javascript:window.__CLICKED=true;" disabled><option selected>Hello</option></select>');
+    let done = false;
+    const clickPromise = page.click('select').then(() => done = true);
+    await giveItAChanceToClick(page);
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
+    expect(done).toBe(false);
+    await page.evaluate(() => document.querySelector('select').removeAttribute('disabled'));
+    await clickPromise;
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  });
+  it('should click disabled div', async({page, server}) => {
+    await page.setContent('<div onclick="javascript:window.__CLICKED=true;" disabled>Click target</div>');
+    await page.click('text=Click target');
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  });
+
   it('should climb dom for inner label with pointer-events:none', async({page, server}) => {
     await page.setContent('<button onclick="javascript:window.__CLICKED=true;"><label style="pointer-events:none">Click target</label></button>');
     await page.click('text=Click target');
@@ -515,12 +557,23 @@ describe('Page.click', function() {
   });
   it('should wait for BUTTON to be clickable when it has pointer-events:none', async({page, server}) => {
     await page.setContent('<button onclick="javascript:window.__CLICKED=true;" style="pointer-events:none"><span>Click target</span></button>');
+    let done = false;
+    const clickPromise = page.click('text=Click target').then(() => done = true);
+    await giveItAChanceToClick(page);
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
+    expect(done).toBe(false);
+    await page.evaluate(() => document.querySelector('button').style.removeProperty('pointer-events'));
+    await clickPromise;
+    expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  });
+  it('should wait for LABEL to be clickable when it has pointer-events:none', async({page, server}) => {
+    await page.setContent('<label onclick="javascript:window.__CLICKED=true;" style="pointer-events:none"><span>Click target</span></label>');
     const clickPromise = page.click('text=Click target');
     // Do a few roundtrips to the page.
     for (let i = 0; i < 5; ++i)
       expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
     // remove `pointer-events: none` css from button.
-    await page.evaluate(() => document.querySelector('button').style.removeProperty('pointer-events'));
+    await page.evaluate(() => document.querySelector('label').style.removeProperty('pointer-events'));
     await clickPromise;
     expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
   });
@@ -644,7 +697,7 @@ describe('Page.click', function() {
     await handle.evaluate(button => button.className = 'animated');
     const error = await promise;
     expect(await page.evaluate(() => window.clicked)).toBe(undefined);
-    expect(error.message).toBe('Element is outside of the viewport');
+    expect(error.message).toContain('Element is outside of the viewport');
   });
   it('should fail when element jumps during hit testing', async({page, server}) => {
     await page.setContent('<button>Click me</button>');
@@ -654,67 +707,13 @@ describe('Page.click', function() {
       const margin = parseInt(document.querySelector('button').style.marginLeft || 0) + 100;
       document.querySelector('button').style.marginLeft = margin + 'px';
     });
-    const promise = handle.click({ timeout: 1000, __testHookBeforeHitTarget }).then(() => clicked = true).catch(e => e);
+    const promise = handle.click({ timeout: 5000, __testHookBeforeHitTarget }).then(() => clicked = true).catch(e => e);
     const error = await promise;
     expect(clicked).toBe(false);
     expect(await page.evaluate(() => window.clicked)).toBe(undefined);
-    expect(error.message).toContain('timeout exceeded');
-    expect(error.message).toContain('DEBUG=pw:input');
-  });
-  it.skip(true)('should pause animations', async({page}) => {
-    // This test requires pausing the page.
-    await page.setContent(`<style>
-      @keyframes spinner {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-      .spinner {
-        animation: spinner 2s linear infinite;
-        animation-delay: 500ms;
-      }
-      </style>
-      <div class="spinner" style="width: 500px; height: 500px; display: flex; justify-content: center;" >
-        <button id="target"
-                style="width: 30px; height: 30px; background-color: green"
-                onclick="window.clicked=true"></button>
-      </div>
-    `);
-    await page.click('#target', { __testHookBeforeHitTarget: () => new Promise(f => setTimeout(f, 1000)) });
-    expect(await page.evaluate(() => window.clicked)).toBe(true);
-  });
-  it.skip(true)('should defer timers', async({page}) => {
-    // This test requires pausing the page.
-    await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);
-    await page.click('button', { __testHookBeforeHitTarget: async () => {
-      // Schedule a timer that hides the element
-      await page.evaluate(() => setTimeout(() => button.style.display = 'none', 0));
-      // Allow enough time for timer to fire
-      await page.waitForTimeout(500);
-    }});
-    expect(await page.evaluate(() => window.clicked)).toBe(true);
-  });
-  it.skip(true)('should defer rafs', async({page}) => {
-    // This test requires pausing the page.
-    await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);
-    await page.click('button', { __testHookBeforeHitTarget: async () => {
-      // Schedule a timer that hides the element
-      await page.evaluate(() => requestAnimationFrame(() => button.style.display = 'none'));
-      // Allow enough time for raf to fire
-      await page.waitForTimeout(500);
-    }});
-    expect(await page.evaluate(() => window.clicked)).toBe(true);
-  });
-  it.skip(true)('should defer fetch', async({page, server}) => {
-    // This test requires pausing the page.
-    await page.goto(server.EMPTY_PAGE);
-    await page.setContent(`<button id=button onclick="window.clicked=true">Click me</button>`);
-    await page.click('button', { __testHookBeforeHitTarget: async () => {
-      // Fetch that would immediately delete button.
-      page.evaluate(() => fetch(window.location.href).then(() => button.style.display = 'none'));
-      // Allow enough time for raf to fire
-      await page.waitForTimeout(500);
-    }});
-    expect(await page.evaluate(() => window.clicked)).toBe(true);
+    expect(error.message).toContain('Timeout 5000ms exceeded during elementHandle.click.');
+    expect(error.message).toContain('element does not receive pointer events');
+    expect(error.message).toContain('retrying elementHandle.click action');
   });
   it('should dispatch microtasks in order', async({page, server}) => {
     await page.setContent(`

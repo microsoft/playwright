@@ -1,0 +1,26 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+juggler.jar:
+% content juggler %content/
+  content/Helper.js (Helper.js)
+  content/NetworkObserver.js (NetworkObserver.js)
+  content/TargetRegistry.js (TargetRegistry.js)
+  content/SimpleChannel.js (SimpleChannel.js)
+  content/protocol/PrimitiveTypes.js (protocol/PrimitiveTypes.js)
+  content/protocol/Protocol.js (protocol/Protocol.js)
+  content/protocol/Dispatcher.js (protocol/Dispatcher.js)
+  content/protocol/PageHandler.js (protocol/PageHandler.js)
+  content/protocol/RuntimeHandler.js (protocol/RuntimeHandler.js)
+  content/protocol/NetworkHandler.js (protocol/NetworkHandler.js)
+  content/protocol/BrowserHandler.js (protocol/BrowserHandler.js)
+  content/protocol/AccessibilityHandler.js (protocol/AccessibilityHandler.js)
+  content/content/main.js (content/main.js)
+  content/content/FrameTree.js (content/FrameTree.js)
+  content/content/NetworkMonitor.js (content/NetworkMonitor.js)
+  content/content/PageAgent.js (content/PageAgent.js)
+  content/content/Runtime.js (content/Runtime.js)
+  content/content/WorkerMain.js (content/WorkerMain.js)
+  content/content/hidden-scrollbars.css (content/hidden-scrollbars.css)
+

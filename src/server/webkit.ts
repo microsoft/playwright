@@ -20,7 +20,7 @@ import { Env } from './processLauncher';
 import * as path from 'path';
 import { helper } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
-import { BrowserArgOptions, BrowserTypeBase, processBrowserArgOptions } from './browserType';
+import { LaunchOptionsBase, BrowserTypeBase, processBrowserArgOptions } from './browserType';
 import { ConnectionTransport, SequenceNumberMixer } from '../transport';
 import * as ws from 'ws';
 import { WebSocketWrapper } from './browserServer';
@@ -49,9 +49,9 @@ export class WebKit extends BrowserTypeBase {
     return wrapTransportWithWebSocket(transport, logger, port);
   }
 
-  _defaultArgs(options: BrowserArgOptions, isPersistent: boolean, userDataDir: string): string[] {
+  _defaultArgs(options: LaunchOptionsBase, isPersistent: boolean, userDataDir: string): string[] {
     const { devtools, headless } = processBrowserArgOptions(options);
-    const { args = [] } = options;
+    const { args = [], proxy } = options;
     if (devtools)
       console.warn('devtools parameter as a launch argument in WebKit is not supported. Also starting Web Inspector manually will terminate the execution in WebKit.');
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir='));
@@ -66,6 +66,21 @@ export class WebKit extends BrowserTypeBase {
       webkitArguments.push(`--user-data-dir=${userDataDir}`);
     else
       webkitArguments.push(`--no-startup-window`);
+    if (proxy) {
+      if (process.platform === 'darwin') {
+        webkitArguments.push(`--proxy=${proxy.server}`);
+        if (proxy.bypass)
+          webkitArguments.push(`--proxy-bypass-list=${proxy.bypass}`);
+      } else if (process.platform === 'linux') {
+        webkitArguments.push(`--proxy=${proxy.server}`);
+        if (proxy.bypass)
+          webkitArguments.push(...proxy.bypass.split(',').map(t => `--ignore-host=${t}`));
+      } else if (process.platform === 'win32') {
+        webkitArguments.push(`--curl-proxy=${proxy.server}`);
+        if (proxy.bypass)
+          webkitArguments.push(`--curl-noproxy=${proxy.bypass}`);
+      }
+    }
     webkitArguments.push(...args);
     if (isPersistent)
       webkitArguments.push('about:blank');

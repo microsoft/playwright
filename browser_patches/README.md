@@ -6,6 +6,8 @@ Ideally, all these changes should be upstreamed.
 For the time being, it is possible to setup a browser checkout
 and develop from there.
 
+[WebKit upstream status](webkit/upstream_status.md)
+
 ## 1. Setting up local browser checkout
 
 From the `playwright` repo, run the following command:

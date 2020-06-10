@@ -51,9 +51,9 @@ createZipForLinux() {
   mkdir -p $tmpdir
 
   # copy runner
-  cp -t $tmpdir ../pw_run.sh
+  cp -t $tmpdir $SCRIPTS_DIR/pw_run.sh
   # copy protocol
-  node ../concat_protocol.js > $tmpdir/protocol.json
+  node $SCRIPTS_DIR/concat_protocol.js > $tmpdir/protocol.json
 
   if [[ "$LINUX_FLAVOR" == "--wpe" ]]; then
     # copy all relevant binaries
@@ -62,6 +62,10 @@ createZipForLinux() {
     LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/MiniBrowser | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' | xargs cp -t $tmpdir
     LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/WPENetworkProcess | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' | xargs cp -t $tmpdir
     LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/WPEWebProcess | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' | xargs cp -t $tmpdir
+    # Copy libvpx.so.5 as Ubuntu 20.04 comes with libvpx.so.6
+    ldd WebKitBuild/WPE/Release/bin/MiniBrowser | grep -o '[^ ]*\/libvpx.so.5[^ ]*' | xargs cp -t $tmpdir
+    # Injected bundle is loaded dynamicly via dlopen => not bt listed by ldd.
+    cp -t $tmpdir WebKitBuild/WPE/Release/lib/libWPEInjectedBundle.so
     mkdir -p $tmpdir/gio/modules
     cp -t $tmpdir/gio/modules $PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib/gio/modules/*
 
@@ -73,6 +77,10 @@ createZipForLinux() {
     cp -t $tmpdir ./WebKitBuild/GTK/Release/bin/MiniBrowser ./WebKitBuild/GTK/Release/bin/WebKit*Process
     # copy all relevant shared objects
     LD_LIBRARY_PATH="$PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib" ldd WebKitBuild/GTK/Release/bin/MiniBrowser | grep -o '[^ ]*WebKitBuild/GTK/[^ ]*' | xargs cp -t $tmpdir
+    # Injected bundle is loaded dynamicly via dlopen => not bt listed by ldd.
+    cp -t $tmpdir WebKitBuild/GTK/Release/lib/libwebkit2gtkinjectedbundle.so
+    # Copy libvpx.so.5 as Ubuntu 20.04 comes with libvpx.so.6
+    ldd WebKitBuild/GTK/Release/bin/MiniBrowser | grep -o '[^ ]*\/libvpx.so.5[^ ]*' | xargs cp -t $tmpdir
     mkdir -p $tmpdir/gio/modules
     cp -t $tmpdir/gio/modules $PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib/gio/modules/*
 
@@ -107,7 +115,7 @@ createZipForWindows() {
   cd -
 
   # copy protocol
-  node ../concat_protocol.js > $tmpdir/protocol.json
+  node $SCRIPTS_DIR/concat_protocol.js > $tmpdir/protocol.json
   # tar resulting directory and cleanup TMP.
   cd $tmpdir
   zip -r $ZIP_PATH ./
@@ -132,9 +140,9 @@ createZipForMac() {
   ditto {./WebKitBuild/Release,$tmpdir}/WebInspectorUI.framework
   ditto {./WebKitBuild/Release,$tmpdir}/WebKit.framework
   ditto {./WebKitBuild/Release,$tmpdir}/WebKitLegacy.framework
-  ditto {..,$tmpdir}/pw_run.sh
+  ditto {$SCRIPTS_DIR,$tmpdir}/pw_run.sh
   # copy protocol
-  node ../concat_protocol.js > $tmpdir/protocol.json
+  node $SCRIPTS_DIR/concat_protocol.js > $tmpdir/protocol.json
 
   # zip resulting directory and cleanup TMP.
   ditto -c -k $tmpdir $ZIP_PATH
@@ -143,5 +151,6 @@ createZipForMac() {
 
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
+SCRIPTS_DIR="$(pwd -P)"
 
 main "$@"
