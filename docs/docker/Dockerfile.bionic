@@ -35,7 +35,8 @@ RUN apt-get install -y libwoff1 \
 
 RUN apt-get install -y libnss3 \
                        libxss1 \
-                       libasound2
+                       libasound2 \
+                       fonts-noto-color-emoji
 
 # 4. Install Firefox dependencies
 
