@@ -344,18 +344,21 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._retryPointerAction(progress, point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
-  async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
+  async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
     return runAbortableTask(progress => this._selectOption(progress, values, options), this._page._logger, this._page._timeoutSettings.timeout(options));
   }
 
-  async _selectOption(progress: Progress, values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options: types.NavigatingActionWaitOptions): Promise<string[]> {
+  async _selectOption(progress: Progress, values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions): Promise<string[]> {
     let vals: string[] | ElementHandle[] | types.SelectOption[];
-    if (!Array.isArray(values))
+    if (values === null)
+      vals = [];
+    else if (!Array.isArray(values))
       vals = [ values ] as (string[] | ElementHandle[] | types.SelectOption[]);
     else
       vals = values;
     const selectOptions = (vals as any).map((value: any) => typeof value === 'object' ? value : { value });
     for (const option of selectOptions) {
+      assert(option !== null, 'Value items must not be null');
       if (option instanceof ElementHandle)
         continue;
       if (option.value !== undefined)

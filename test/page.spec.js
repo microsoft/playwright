@@ -953,6 +953,21 @@ describe('Page.selectOption', function() {
     const result = await page.selectOption('select', []);
     expect(result).toEqual([]);
   });
+  it('should not allow null items',async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/select.html');
+    await page.evaluate(() => makeMultiple());
+    let error = null
+    await page.selectOption('select', ['blue', null, 'black','magenta']).catch(e => error = e);
+    expect(error.message).toContain('Value items must not be null');
+  });
+  it('should unselect with null',async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/select.html');
+    await page.evaluate(() => makeMultiple());
+    const result = await page.selectOption('select', ['blue', 'black','magenta']);
+    expect(result.reduce((accumulator,current) => ['blue', 'black', 'magenta'].includes(current) && accumulator, true)).toEqual(true);
+    await page.selectOption('select', null);
+    expect(await page.$eval('select', select => Array.from(select.options).every(option => !option.selected))).toEqual(true);
+  });
   it('should deselect all options when passed no values for a multiple select',async({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.evaluate(() => makeMultiple());
