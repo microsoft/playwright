@@ -481,7 +481,7 @@ export class Page extends ExtendedEventEmitter {
     return this.mainFrame().hover(selector, options);
   }
 
-  async selectOption(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options?: types.NavigatingActionWaitOptions): Promise<string[]> {
+  async selectOption(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[] | null, options?: types.NavigatingActionWaitOptions): Promise<string[]> {
     return this.mainFrame().selectOption(selector, values, options);
   }
 
