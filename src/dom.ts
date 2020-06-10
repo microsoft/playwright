@@ -328,11 +328,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._retryPointerAction('dblclick', point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
-  async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options?: types.NavigatingActionWaitOptions): Promise<string[]> {
+  async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options?: types.NavigatingActionWaitOptions): Promise<string[]> {
     this._page._log(inputLog, `elementHandle.selectOption(%s)`, values);
     const deadline = this._page._timeoutSettings.computeDeadline(options);
     let vals: string[] | ElementHandle[] | types.SelectOption[];
-    if (!values)
+    if (values === null)
       vals = [];
     else if (!Array.isArray(values))
       vals = [ values ] as (string[] | ElementHandle[] | types.SelectOption[]);
@@ -340,7 +340,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       vals = values;
     const selectOptions = (vals as any).map((value: any) => typeof value === 'object' ? value : { value });
     for (const option of selectOptions) {
-      assert(option, 'Value items must not be null');
+      assert(option !== null, 'Value items must not be null');
       if (option instanceof ElementHandle)
         continue;
       if (option.value !== undefined)
