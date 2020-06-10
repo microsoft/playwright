@@ -19,7 +19,6 @@ import { CRBrowser, CRBrowserContext } from '../chromium/crBrowser';
 import { CRConnection, CRSession } from '../chromium/crConnection';
 import { CRExecutionContext } from '../chromium/crExecutionContext';
 import { Events } from '../events';
-import { ExtendedEventEmitter } from '../extendedEventEmitter';
 import * as js from '../javascript';
 import { InnerLogger, Logger } from '../logger';
 import { Page } from '../page';
@@ -30,7 +29,9 @@ import { BrowserServer } from './browserServer';
 import { launchProcess, waitForLine } from './processLauncher';
 import { BrowserContext } from '../browserContext';
 import type {BrowserWindow} from 'electron';
-import { runAbortableTask } from '../progress';
+import { runAbortableTask, ProgressController } from '../progress';
+import { EventEmitter } from 'events';
+import { helper } from '../helper';
 
 type ElectronLaunchOptions = {
   args?: string[],
@@ -55,7 +56,7 @@ interface ElectronPage extends Page {
   _browserWindowId: number;
 }
 
-export class ElectronApplication extends ExtendedEventEmitter {
+export class ElectronApplication extends EventEmitter {
   private _logger: InnerLogger;
   private _browserContext: CRBrowserContext;
   private _nodeConnection: CRConnection;
@@ -128,6 +129,14 @@ export class ElectronApplication extends ExtendedEventEmitter {
     this._nodeConnection.close();
   }
 
+  async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
+    const options = typeof optionsOrPredicate === 'function' ? { predicate: optionsOrPredicate } : optionsOrPredicate;
+    const progressController = new ProgressController(this._logger, this._timeoutSettings.timeout(options));
+    if (event !== ElectronEvents.ElectronApplication.Close)
+      this._browserContext._closePromise.then(error => progressController.abort(error));
+    return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate));
+  }
+
   async _init()  {
     this._nodeSession.once('Runtime.executionContextCreated', event => {
       this._nodeExecutionContext = new js.ExecutionContext(new CRExecutionContext(this._nodeSession, event.context));
@@ -151,14 +160,6 @@ export class ElectronApplication extends ExtendedEventEmitter {
   async evaluateHandle<R>(pageFunction: types.FuncOn<any, void, R>, arg?: any): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: types.FuncOn<any, Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
     return this._nodeElectronHandle!.evaluateHandle(pageFunction, arg);
-  }
-
-  protected _getLogger(): InnerLogger {
-    return this._logger;
-  }
-
-  protected _getTimeoutSettings(): TimeoutSettings {
-    return this._timeoutSettings;
   }
 }
 

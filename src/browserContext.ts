@@ -21,12 +21,13 @@ import { Page, PageBinding } from './page';
 import { TimeoutSettings } from './timeoutSettings';
 import * as types from './types';
 import { Events } from './events';
-import { ExtendedEventEmitter } from './extendedEventEmitter';
 import { Download } from './download';
 import { BrowserBase } from './browser';
 import { InnerLogger, Logger } from './logger';
 import { FunctionWithSource } from './frames';
 import * as debugSupport from './debug/debugSupport';
+import { EventEmitter } from 'events';
+import { ProgressController } from './progress';
 
 type CommonContextOptions = {
   viewport?: types.Size | null,
@@ -76,13 +77,13 @@ export interface BrowserContext {
   close(): Promise<void>;
 }
 
-export abstract class BrowserContextBase extends ExtendedEventEmitter implements BrowserContext {
+export abstract class BrowserContextBase extends EventEmitter implements BrowserContext {
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: BrowserContextOptions;
   _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
   _closed = false;
-  private readonly _closePromise: Promise<Error>;
+  readonly _closePromise: Promise<Error>;
   private _closePromiseFulfill: ((error: Error) => void) | undefined;
   readonly _permissions = new Map<string, string[]>();
   readonly _downloads = new Set<Download>();
@@ -101,16 +102,12 @@ export abstract class BrowserContextBase extends ExtendedEventEmitter implements
     await debugSupport.installConsoleHelpers(this);
   }
 
-  protected _abortPromiseForEvent(event: string) {
-    return event === Events.BrowserContext.Close ? super._abortPromiseForEvent(event) : this._closePromise;
-  }
-
-  protected _getLogger(): InnerLogger {
-    return this._logger;
-  }
-
-  protected _getTimeoutSettings(): TimeoutSettings {
-    return this._timeoutSettings;
+  async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
+    const options = typeof optionsOrPredicate === 'function' ? { predicate: optionsOrPredicate } : optionsOrPredicate;
+    const progressController = new ProgressController(this._logger, this._timeoutSettings.timeout(options));
+    if (event !== Events.BrowserContext.Close)
+      this._closePromise.then(error => progressController.abort(error));
+    return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate));
   }
 
   _browserClosed() {
