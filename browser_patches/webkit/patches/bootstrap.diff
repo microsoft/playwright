@@ -8675,7 +8675,7 @@ index d7695088e7cfc4f638f157338754f9f157489749..d7ed4f58f033ebfc13142f2d6e8814d6
      bool m_isBackingStoreDiscardable { true };
      std::unique_ptr<BackingStore> m_backingStore;
 diff --git a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
-index c5de4e7d0f59194f43a023b089e372c58cf8ee06..5eeb2e9ec737efbb27d0f4e4c160eca6e6dbc0a8 100644
+index c5de4e7d0f59194f43a023b089e372c58cf8ee06..c0f38eccf578c14d13cb3b42788f988b9917e7ac 100644
 --- a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
 +++ b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
 @@ -42,8 +42,10 @@
@@ -8741,7 +8741,13 @@ index c5de4e7d0f59194f43a023b089e372c58cf8ee06..5eeb2e9ec737efbb27d0f4e4c160eca6
  
      // This can cause the DownloadProxy object to be deleted.
      m_downloadProxyMap.downloadFinished(*this);
-@@ -237,6 +260,8 @@ void DownloadProxy::didCancel(const IPC::DataReference& resumeData)
+@@ -234,9 +257,14 @@ void DownloadProxy::didFail(const ResourceError& error, const IPC::DataReference
+ 
+ void DownloadProxy::didCancel(const IPC::DataReference& resumeData)
+ {
++    if (!m_processPool)
++        return;
++
      m_resumeData = createData(resumeData);
  
      m_processPool->downloadClient().didCancel(*this);
