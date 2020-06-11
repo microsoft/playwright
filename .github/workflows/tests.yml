@@ -30,7 +30,7 @@ jobs:
     - run: ulimit -c unlimited
     - run: mkdir -p coredumps
     # Set core dump file name pattern
-    - run: sudo bash -c 'echo "coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
+    - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     - run: xvfb-run --auto-servernum -- bash -c "npm run ccoverage 2>./chromium-linux-testrun.log"
@@ -124,7 +124,7 @@ jobs:
     - run: ulimit -c unlimited
     - run: mkdir -p coredumps
     # Set core dump file name pattern
-    - run: sudo bash -c 'echo "coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
+    - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     - run: xvfb-run --auto-servernum -- bash -c "npm run wcoverage 2>./webkit-linux-testrun.log"
@@ -218,7 +218,7 @@ jobs:
     - run: ulimit -c unlimited
     - run: mkdir -p coredumps
     # Set core dump file name pattern
-    - run: sudo bash -c 'echo "coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
+    - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     - run: xvfb-run --auto-servernum -- bash -c "npm run fcoverage 2>./firefox-linux-testrun.log"
