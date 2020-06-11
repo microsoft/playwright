@@ -161,11 +161,17 @@ export default class InjectedScript {
       };
     });
 
+    let lastLog = '';
     const progress: types.InjectedScriptProgress = {
       canceled: false,
       log: (message: string) => {
+        lastLog = message;
         currentLogs.push(message);
         logReady();
+      },
+      logRepeating: (message: string) => {
+        if (message !== lastLog)
+          progress.log(message);
       },
     };
 
@@ -225,14 +231,16 @@ export default class InjectedScript {
   }
 
   waitForEnabledAndFill(node: Node, value: string): types.InjectedScriptPoll<types.InjectedScriptResult<boolean>> {
-    return this.poll('raf', () => {
+    return this.poll('raf', progress => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         return { status: 'error', error: 'Node is not of type HTMLElement' };
       const element = node as HTMLElement;
       if (!element.isConnected)
         return { status: 'notconnected' };
-      if (!this.isVisible(element))
+      if (!this.isVisible(element)) {
+        progress.logRepeating('    element is not visible - waiting...');
         return false;
+      }
       if (element.nodeName.toLowerCase() === 'input') {
         const input = element as HTMLInputElement;
         const type = (input.getAttribute('type') || '').toLowerCase();
@@ -245,10 +253,14 @@ export default class InjectedScript {
           if (isNaN(Number(value)))
             return { status: 'error', error: 'Cannot type text into input[type=number].' };
         }
-        if (input.disabled)
+        if (input.disabled) {
+          progress.logRepeating('    element is disabled - waiting...');
           return false;
-        if (input.readOnly)
+        }
+        if (input.readOnly) {
+          progress.logRepeating('    element is readonly - waiting...');
           return false;
+        }
         if (kDateTypes.has(type)) {
           value = value.trim();
           input.focus();
@@ -261,10 +273,14 @@ export default class InjectedScript {
         }
       } else if (element.nodeName.toLowerCase() === 'textarea') {
         const textarea = element as HTMLTextAreaElement;
-        if (textarea.disabled)
+        if (textarea.disabled) {
+          progress.logRepeating('    element is disabled - waiting...');
           return false;
-        if (textarea.readOnly)
+        }
+        if (textarea.readOnly) {
+          progress.logRepeating('    element is readonly - waiting...');
           return false;
+        }
       } else if (!element.isContentEditable) {
         return { status: 'error', error: 'Element is not an <input>, <textarea> or [contenteditable] element.' };
       }
@@ -392,13 +408,15 @@ export default class InjectedScript {
         // Note: this logic should be similar to isVisible() to avoid surprises.
         const clientRect = element.getBoundingClientRect();
         const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
-        const samePosition = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height && rect.width > 0 && rect.height > 0;
-        lastRect = rect;
+        const samePosition = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height;
+        const isDisplayed = rect.width > 0 && rect.height > 0;
         if (samePosition)
           ++samePositionCounter;
         else
           samePositionCounter = 0;
-        const isDisplayedAndStable = samePositionCounter >= rafCount;
+        const isStable = samePositionCounter >= rafCount;
+        const isStableForLogs = isStable || !lastRect;
+        lastRect = rect;
 
         const style = element.ownerDocument && element.ownerDocument.defaultView ? element.ownerDocument.defaultView.getComputedStyle(element) : undefined;
         const isVisible = !!style && style.visibility !== 'hidden';
@@ -406,7 +424,16 @@ export default class InjectedScript {
         const elementOrButton = element.closest('button, [role=button]') || element;
         const isDisabled = ['BUTTON', 'INPUT', 'SELECT'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
 
-        return isDisplayedAndStable && isVisible && !isDisabled ? { status: 'success' } : false;
+        if (isDisplayed && isStable && isVisible && !isDisabled)
+          return { status: 'success' };
+
+        if (!isDisplayed || !isVisible)
+          progress.logRepeating(`    element is not visible - waiting...`);
+        else if (!isStableForLogs)
+          progress.logRepeating(`    element is moving - waiting...`);
+        else if (isDisabled)
+          progress.logRepeating(`    element is disabled - waiting...`);
+        return false;
       });
     });
   }
