@@ -103,6 +103,7 @@ export class Page extends EventEmitter {
   readonly _logger: InnerLogger;
   readonly _state: PageState;
   readonly _pageBindings = new Map<string, PageBinding>();
+  readonly _evaluateOnNewDocumentSources: string[] = [];
   readonly _screenshotter: Screenshotter;
   readonly _frameManager: frames.FrameManager;
   readonly accessibility: accessibility.Accessibility;
@@ -379,7 +380,9 @@ export class Page extends EventEmitter {
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
-    await this._delegate.evaluateOnNewDocument(await helper.evaluationScript(script, arg));
+    const source = await helper.evaluationScript(script, arg);
+    this._evaluateOnNewDocumentSources.push(source);
+    await this._delegate.evaluateOnNewDocument(source);
   }
 
   _needsRequestInterception(): boolean {

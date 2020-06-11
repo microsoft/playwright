@@ -440,7 +440,11 @@ class FrameSession {
     promises.push(this._updateEmulateMedia());
     for (const binding of this._crPage._browserContext._pageBindings.values())
       promises.push(this._initBinding(binding));
+    for (const binding of this._crPage._page._pageBindings.values())
+      promises.push(this._initBinding(binding));
     for (const source of this._crPage._browserContext._evaluateOnNewDocumentSources)
+      promises.push(this._evaluateOnNewDocument(source));
+    for (const source of this._crPage._page._evaluateOnNewDocumentSources)
       promises.push(this._evaluateOnNewDocument(source));
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
     promises.push(this._firstNonInitialNavigationCommittedPromise);
