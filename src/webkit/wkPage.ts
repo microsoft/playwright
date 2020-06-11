@@ -59,7 +59,6 @@ export class WKPage implements PageDelegate {
   private _mainFrameContextId?: number;
   private _sessionListeners: RegisteredListener[] = [];
   private _eventListeners: RegisteredListener[];
-  private readonly _evaluateOnNewDocumentSources: string[] = [];
   readonly _browserContext: WKBrowserContext;
   _initializedPage: Page | null = null;
   private _firstNonInitialNavigationCommittedPromise: Promise<void>;
@@ -655,7 +654,6 @@ export class WKPage implements PageDelegate {
   }
 
   async evaluateOnNewDocument(script: string): Promise<void> {
-    this._evaluateOnNewDocumentSources.push(script);
     await this._updateBootstrapScript();
   }
 
@@ -670,7 +668,7 @@ export class WKPage implements PageDelegate {
     for (const binding of this._page._pageBindings.values())
       scripts.push(this._bindingToScript(binding));
     scripts.push(...this._browserContext._evaluateOnNewDocumentSources);
-    scripts.push(...this._evaluateOnNewDocumentSources);
+    scripts.push(...this._page._evaluateOnNewDocumentSources);
     return scripts.join(';');
   }
 
