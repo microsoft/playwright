@@ -64,6 +64,8 @@ createZipForLinux() {
     LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/WPEWebProcess | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' | xargs cp -t $tmpdir
     # Copy libvpx.so.5 as Ubuntu 20.04 comes with libvpx.so.6
     ldd WebKitBuild/WPE/Release/bin/MiniBrowser | grep -o '[^ ]*\/libvpx.so.5[^ ]*' | xargs cp -t $tmpdir
+    # Copy some wayland libraries required for Web Process t
+    cp -d -t $tmpdir WebKitBuild/WPE/DependenciesWPE/Root/lib/libva-wayland*
     # Injected bundle is loaded dynamicly via dlopen => not bt listed by ldd.
     cp -t $tmpdir WebKitBuild/WPE/Release/lib/libWPEInjectedBundle.so
     mkdir -p $tmpdir/gio/modules
