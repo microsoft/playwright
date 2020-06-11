@@ -19,7 +19,7 @@ export class Formatter {
   private _lines: string[] = [];
 
   constructor(indent: number = 2) {
-    this._baseIndent = [...Array(indent + 1)].join(' ');
+    this._baseIndent = ' '.repeat(indent);
   }
 
   prepend(text: string) {

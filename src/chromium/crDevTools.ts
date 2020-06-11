@@ -16,7 +16,7 @@
 
 import * as fs from 'fs';
 import * as util from 'util';
-import { CRSession } from '../chromium/crConnection';
+import { CRSession } from './crConnection';
 
 const kBindingName = '__pw_devtools__';
 

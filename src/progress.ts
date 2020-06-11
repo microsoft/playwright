@@ -17,7 +17,7 @@
 import { InnerLogger, Log, apiLog } from './logger';
 import { TimeoutError } from './errors';
 import { assert } from './helper';
-import { getCurrentApiCall, rewriteErrorMessage } from './debug/stackTrace';
+import { getCurrentApiCall, rewriteErrorMessage } from './utils/stackTrace';
 
 export interface Progress {
   readonly apiName: string;

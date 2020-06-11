@@ -17,13 +17,37 @@
 import * as fs from 'fs';
 import * as util from 'util';
 import { getCallerFilePath } from './stackTrace';
+import { helper } from '../helper';
 
 type Position = {
   line: number;
   column: number;
 };
 
-export async function generateSourceMapUrl(functionText: string, generatedText: string): Promise<string | undefined> {
+let sourceUrlCounter = 0;
+const playwrightSourceUrlPrefix = '__playwright_evaluation_script__';
+const sourceUrlRegex = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
+
+export function isPlaywrightSourceUrl(s: string): boolean {
+  return s.startsWith(playwrightSourceUrlPrefix);
+}
+
+export function ensureSourceUrl(expression: string): string {
+  return sourceUrlRegex.test(expression) ? expression : expression + generateSourceUrl();
+}
+
+export async function generateSourceMapUrl(functionText: string, generatedText: string): Promise<string> {
+  if (!helper.isDebugMode())
+    return generateSourceUrl();
+  const sourceMapUrl = await innerGenerateSourceMapUrl(functionText, generatedText);
+  return sourceMapUrl || generateSourceUrl();
+}
+
+export function generateSourceUrl(): string {
+  return `\n//# sourceURL=${playwrightSourceUrlPrefix}${sourceUrlCounter++}\n`;
+}
+
+async function innerGenerateSourceMapUrl(functionText: string, generatedText: string): Promise<string | undefined> {
   const filePath = getCallerFilePath();
   if (!filePath)
     return;

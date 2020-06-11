@@ -36,8 +36,8 @@ import { CRBrowserContext } from './crBrowser';
 import * as types from '../types';
 import { ConsoleMessage } from '../console';
 import { NotConnectedError } from '../errors';
-import * as debugSupport from '../debug/debugSupport';
-import { rewriteErrorMessage } from '../debug/stackTrace';
+import * as sourceMap from '../utils/sourceMap';
+import { rewriteErrorMessage } from '../utils/stackTrace';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -408,7 +408,7 @@ class FrameSession {
       lifecycleEventsEnabled = this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
       this._client.send('Runtime.enable', {}),
       this._client.send('Page.addScriptToEvaluateOnNewDocument', {
-        source: debugSupport.generateSourceUrl(),
+        source: sourceMap.generateSourceUrl(),
         worldName: UTILITY_WORLD_NAME,
       }),
       this._networkManager.initialize(),

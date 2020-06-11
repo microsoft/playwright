@@ -15,8 +15,8 @@
  */
 
 import * as dom from '../dom';
-import { Formatter, formatColors } from './formatter';
-import { Action, NavigationSignal, actionTitle } from './actions';
+import { Formatter, formatColors } from '../utils/formatter';
+import { Action, NavigationSignal, actionTitle } from './recorderActions';
 
 export class Script {
   private _actions: Action[] = [];
@@ -56,6 +56,7 @@ export class Script {
   generate(browserType: string) {
     const formatter = new Formatter();
     const { cst, cmt, fnc, kwd, prp, str } = formatColors;
+
     formatter.add(`
       ${kwd('const')} { ${cst('chromium')}. ${cst('firefox')}, ${cst('webkit')} } = ${fnc('require')}(${str('playwright')});
 
@@ -63,45 +64,63 @@ export class Script {
         ${kwd('const')} ${cst('browser')} = ${kwd('await')} ${cst(`${browserType}`)}.${fnc('launch')}();
         ${kwd('const')} ${cst('page')} = ${kwd('await')} ${cst('browser')}.${fnc('newPage')}();
     `);
+
     for (const action of this._compact()) {
       formatter.newLine();
       formatter.add(cmt(actionTitle(action)));
       let navigationSignal: NavigationSignal | undefined;
       if (action.name !== 'navigate' && action.signals && action.signals.length)
         navigationSignal = action.signals[action.signals.length - 1];
+
       if (navigationSignal) {
         formatter.add(`${kwd('await')} ${cst('Promise')}.${fnc('all')}([
           ${cst('page')}.${fnc('waitForNavigation')}({ ${prp('url')}: ${str(navigationSignal.url)} }),`);
       }
+
+      const subject = action.frameUrl ?
+        `${cst('page')}.${fnc('frame')}(${formatObject({ url: action.frameUrl })})` : cst('page');
+
       const prefix = navigationSignal ? '' : kwd('await') + ' ';
       const suffix = navigationSignal ? '' : ';';
-      if (action.name === 'click') {
-        let method = 'click';
-        if (action.clickCount === 2)
-          method = 'dblclick';
-        const modifiers = toModifiers(action.modifiers);
-        const options: dom.ClickOptions = {};
-        if (action.button !== 'left')
-          options.button = action.button;
-        if (modifiers.length)
-          options.modifiers = modifiers;
-        if (action.clickCount > 2)
-          options.clickCount = action.clickCount;
-        const optionsString = formatOptions(options);
-        formatter.add(`${prefix}${cst('page')}.${fnc(method)}(${str(action.selector)}${optionsString})${suffix}`);
+      switch (action.name)  {
+        case 'click': {
+          let method = 'click';
+          if (action.clickCount === 2)
+            method = 'dblclick';
+          const modifiers = toModifiers(action.modifiers);
+          const options: dom.ClickOptions = {};
+          if (action.button !== 'left')
+            options.button = action.button;
+          if (modifiers.length)
+            options.modifiers = modifiers;
+          if (action.clickCount > 2)
+            options.clickCount = action.clickCount;
+          const optionsString = formatOptions(options);
+          formatter.add(`${prefix}${subject}.${fnc(method)}(${str(action.selector)}${optionsString})${suffix}`);
+          break;
+        }
+        case 'check':
+          formatter.add(`${prefix}${subject}.${fnc('check')}(${str(action.selector)})${suffix}`);
+          break;
+        case 'uncheck':
+          formatter.add(`${prefix}${subject}.${fnc('uncheck')}(${str(action.selector)})${suffix}`);
+          break;
+        case 'fill':
+          formatter.add(`${prefix}${subject}.${fnc('fill')}(${str(action.selector)}, ${str(action.text)})${suffix}`);
+          break;
+        case 'press': {
+          const modifiers = toModifiers(action.modifiers);
+          const shortcut = [...modifiers, action.key].join('+');
+          formatter.add(`${prefix}${subject}.${fnc('press')}(${str(action.selector)}, ${str(shortcut)})${suffix}`);
+          break;
+        }
+        case 'navigate':
+          formatter.add(`${prefix}${subject}.${fnc('goto')}(${str(action.url)})${suffix}`);
+          break;
+        case 'select':
+          formatter.add(`${prefix}${subject}.${fnc('select')}(${str(action.selector)}, ${formatObject(action.options.length > 1 ? action.options : action.options[0])})${suffix}`);
+          break;
       }
-      if (action.name === 'check')
-        formatter.add(`${prefix}${cst('page')}.${fnc('check')}(${str(action.selector)})${suffix}`);
-      if (action.name === 'uncheck')
-        formatter.add(`${prefix}${cst('page')}.${fnc('uncheck')}(${str(action.selector)})${suffix}`);
-      if (action.name === 'fill')
-        formatter.add(`${prefix}${cst('page')}.${fnc('fill')}(${str(action.selector)}, ${str(action.text)})${suffix}`);
-      if (action.name === 'press')
-        formatter.add(`${prefix}${cst('page')}.${fnc('press')}(${str(action.selector)}, ${str(action.key)})${suffix}`);
-      if (action.name === 'navigate')
-        formatter.add(`${prefix}${cst('page')}.${fnc('goto')}(${str(action.url)})${suffix}`);
-      if (action.name === 'select')
-        formatter.add(`${prefix}${cst('page')}.${fnc('select')}(${str(action.selector)}, ${formatObject(action.options.length > 1 ? action.options : action.options[0])})${suffix}`);
       if (navigationSignal)
         formatter.add(`]);`);
     }
@@ -132,7 +151,7 @@ function formatObject(value: any): string {
     const tokens: string[] = [];
     for (const key of keys)
       tokens.push(`${prp(key)}: ${formatObject(value[key])}`);
-    return `{ ${tokens.join(', ')} }`;
+    return `{${tokens.join(', ')}}`;
   }
   return String(value);
 }

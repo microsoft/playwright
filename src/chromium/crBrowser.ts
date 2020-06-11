@@ -29,7 +29,7 @@ import { readProtocolStream } from './crProtocolHelper';
 import { Events } from './events';
 import { Protocol } from './protocol';
 import { CRExecutionContext } from './crExecutionContext';
-import { CRDevTools } from '../debug/crDevTools';
+import { CRDevTools } from './crDevTools';
 
 export class CRBrowser extends BrowserBase {
   readonly _connection: CRConnection;

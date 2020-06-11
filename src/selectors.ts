@@ -19,6 +19,7 @@ import * as frames from './frames';
 import { helper, assert } from './helper';
 import * as js from './javascript';
 import * as types from './types';
+import { ParsedSelector, parseSelector } from './common/selectorParser';
 
 export class Selectors {
   readonly _builtinEngines: Set<string>;
@@ -53,7 +54,7 @@ export class Selectors {
     ++this._generation;
   }
 
-  private _needsMainContext(parsed: types.ParsedSelector): boolean {
+  private _needsMainContext(parsed: ParsedSelector): boolean {
     return parsed.parts.some(({name}) => {
       const custom = this._engines.get(name);
       return custom ? !custom.contentScript : false;
@@ -170,7 +171,7 @@ export class Selectors {
     }, { target: handle, name });
   }
 
-  private _parseSelector(selector: string): types.ParsedSelector {
+  private _parseSelector(selector: string): ParsedSelector {
     assert(helper.isString(selector), `selector must be a string`);
     const parsed = parseSelector(selector);
     for (const {name} of parsed.parts) {
@@ -182,66 +183,3 @@ export class Selectors {
 }
 
 export const selectors = new Selectors();
-
-export function parseSelector(selector: string): types.ParsedSelector {
-  let index = 0;
-  let quote: string | undefined;
-  let start = 0;
-  const result: types.ParsedSelector = { parts: [] };
-  const append = () => {
-    const part = selector.substring(start, index).trim();
-    const eqIndex = part.indexOf('=');
-    let name: string;
-    let body: string;
-    if (eqIndex !== -1 && part.substring(0, eqIndex).trim().match(/^[a-zA-Z_0-9-+:*]+$/)) {
-      name = part.substring(0, eqIndex).trim();
-      body = part.substring(eqIndex + 1);
-    } else if (part.length > 1 && part[0] === '"' && part[part.length - 1] === '"') {
-      name = 'text';
-      body = part;
-    } else if (part.length > 1 && part[0] === "'" && part[part.length - 1] === "'") {
-      name = 'text';
-      body = part;
-    } else if (/^\(*\/\//.test(part)) {
-      // If selector starts with '//' or '//' prefixed with multiple opening
-      // parenthesis, consider xpath. @see https://github.com/microsoft/playwright/issues/817
-      name = 'xpath';
-      body = part;
-    } else {
-      name = 'css';
-      body = part;
-    }
-    name = name.toLowerCase();
-    let capture = false;
-    if (name[0] === '*') {
-      capture = true;
-      name = name.substring(1);
-    }
-    result.parts.push({ name, body });
-    if (capture) {
-      if (result.capture !== undefined)
-        throw new Error(`Only one of the selectors can capture using * modifier`);
-      result.capture = result.parts.length - 1;
-    }
-  };
-  while (index < selector.length) {
-    const c = selector[index];
-    if (c === '\\' && index + 1 < selector.length) {
-      index += 2;
-    } else if (c === quote) {
-      quote = undefined;
-      index++;
-    } else if (!quote && (c === '"' || c === '\'' || c === '`')) {
-      quote = c;
-      index++;
-    } else if (!quote && c === '>' && selector[index + 1] === '>') {
-      append();
-      index += 2;
-      start = index;
-    } else {
-      index++;
-    }
-  }
-  append();
-  return result;
-}

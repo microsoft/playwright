@@ -24,7 +24,7 @@ import * as browserPaths from '../install/browserPaths';
 import { Logger, InnerLogger } from '../logger';
 import { ConnectionTransport, WebSocketTransport } from '../transport';
 import { BrowserBase, BrowserOptions, Browser } from '../browser';
-import { assert } from '../helper';
+import { assert, helper } from '../helper';
 import { launchProcess, Env, waitForLine } from './processLauncher';
 import { Events } from '../events';
 import { PipeTransport } from './pipeTransport';
@@ -260,6 +260,6 @@ function copyTestHooks(from: object, to: object) {
 }
 
 function validateLaunchOptions<Options extends LaunchOptionsBase>(options: Options): Options {
-  const { devtools = false, headless = !devtools } = options;
+  const { devtools = false, headless = !helper.isDebugMode() && !devtools } = options;
   return { ...options, devtools, headless };
 }

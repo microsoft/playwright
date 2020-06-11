@@ -17,8 +17,8 @@
 import * as types from './types';
 import * as dom from './dom';
 import * as utilityScriptSource from './generated/utilityScriptSource';
-import * as debugSupport from './debug/debugSupport';
-import { serializeAsCallArgument } from './utilityScriptSerializers';
+import * as sourceMap from './utils/sourceMap';
+import { serializeAsCallArgument } from './common/utilityScriptSerializers';
 import { helper } from './helper';
 
 type ObjectId = string;
@@ -106,7 +106,7 @@ export class JSHandle<T = any> {
     if (!this._objectId)
       return this._value;
     const utilityScript = await this._context.utilityScript();
-    const script = `(utilityScript, ...args) => utilityScript.jsonValue(...args)` + debugSupport.generateSourceUrl();
+    const script = `(utilityScript, ...args) => utilityScript.jsonValue(...args)` + sourceMap.generateSourceUrl();
     return this._context._delegate.evaluateWithArguments(script, true, utilityScript, [true], [this._objectId]);
   }
 
@@ -135,8 +135,8 @@ export class JSHandle<T = any> {
 export async function evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
   const utilityScript = await context.utilityScript();
   if (helper.isString(pageFunction)) {
-    const script = `(utilityScript, ...args) => utilityScript.evaluate(...args)` + debugSupport.generateSourceUrl();
-    return context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, [returnByValue, debugSupport.ensureSourceUrl(pageFunction)], []);
+    const script = `(utilityScript, ...args) => utilityScript.evaluate(...args)` + sourceMap.generateSourceUrl();
+    return context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, [returnByValue, sourceMap.ensureSourceUrl(pageFunction)], []);
   }
   if (typeof pageFunction !== 'function')
     throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
@@ -189,11 +189,11 @@ export async function evaluate(context: ExecutionContext, returnByValue: boolean
     utilityScriptObjectIds.push(handle._objectId!);
   }
 
-  functionText += await debugSupport.generateSourceMapUrl(originalText, functionText);
+  functionText += await sourceMap.generateSourceMapUrl(originalText, functionText);
   // See UtilityScript for arguments.
   const utilityScriptValues = [returnByValue, functionText, args.length, ...args];
 
-  const script = `(utilityScript, ...args) => utilityScript.callFunction(...args)` + debugSupport.generateSourceUrl();
+  const script = `(utilityScript, ...args) => utilityScript.callFunction(...args)` + sourceMap.generateSourceUrl();
   try {
     return context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, utilityScriptValues, utilityScriptObjectIds);
   } finally {

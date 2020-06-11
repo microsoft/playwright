@@ -33,6 +33,8 @@ export type RegisteredListener = {
 
 export type Listener = (...args: any[]) => void;
 
+const isDebugModeEnv = !!getFromENV('PWDEBUG');
+
 class Helper {
   static evaluationString(fun: Function | string, ...args: any[]): string {
     if (Helper.isString(fun)) {
@@ -298,6 +300,10 @@ class Helper {
     const result = await promise;
     helper.removeEventListeners(listeners);
     return result;
+  }
+
+  static isDebugMode(): boolean {
+    return isDebugModeEnv;
   }
 }
 

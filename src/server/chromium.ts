@@ -16,7 +16,7 @@
  */
 
 import * as path from 'path';
-import { assert, getFromENV, logPolitely } from '../helper';
+import { assert, getFromENV, logPolitely, helper } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
 import * as ws from 'ws';
 import { Env } from './processLauncher';
@@ -25,8 +25,7 @@ import { LaunchOptionsBase, BrowserTypeBase } from './browserType';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { InnerLogger } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
-import { CRDevTools } from '../debug/crDevTools';
-import * as debugSupport from '../debug/debugSupport';
+import { CRDevTools } from '../chromium/crDevTools';
 import { BrowserOptions } from '../browser';
 import { WebSocketServer } from './webSocketServer';
 
@@ -45,7 +44,7 @@ export class Chromium extends BrowserTypeBase {
 
     super(packagePath, browser, debugPort ? { webSocketRegex: /^DevTools listening on (ws:\/\/.*)$/, stream: 'stderr' } : null);
     this._debugPort = debugPort;
-    if (debugSupport.isDebugMode())
+    if (helper.isDebugMode())
       this._devtools = this._createDevTools();
   }
 

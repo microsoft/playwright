@@ -22,7 +22,7 @@ import * as dom from './dom';
 import { assert, helper } from './helper';
 import { Page } from './page';
 import * as types from './types';
-import { rewriteErrorMessage } from './debug/stackTrace';
+import { rewriteErrorMessage } from './utils/stackTrace';
 
 export class Screenshotter {
   private _queue = new TaskQueue();

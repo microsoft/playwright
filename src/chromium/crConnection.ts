@@ -20,7 +20,7 @@ import { ConnectionTransport, ProtocolRequest, ProtocolResponse, protocolLog } f
 import { Protocol } from './protocol';
 import { EventEmitter } from 'events';
 import { InnerLogger, errorLog } from '../logger';
-import { rewriteErrorMessage } from '../debug/stackTrace';
+import { rewriteErrorMessage } from '../utils/stackTrace';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('ConnectionEvents.Disconnected')

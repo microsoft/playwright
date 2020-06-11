@@ -20,6 +20,7 @@ import { createCSSEngine } from './cssSelectorEngine';
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { createTextSelector } from './textSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
+import { ParsedSelector } from '../common/selectorParser';
 
 type Falsy = false | 0 | '' | undefined | null;
 type Predicate<T> = (progress: types.InjectedScriptProgress) => T | Falsy;
@@ -48,13 +49,13 @@ export default class InjectedScript {
       this.engines.set(name, engine);
   }
 
-  querySelector(selector: types.ParsedSelector, root: Node): Element | undefined {
+  querySelector(selector: ParsedSelector, root: Node): Element | undefined {
     if (!(root as any)['querySelector'])
       throw new Error('Node is not queryable.');
     return this._querySelectorRecursively(root as SelectorRoot, selector, 0);
   }
 
-  private _querySelectorRecursively(root: SelectorRoot, selector: types.ParsedSelector, index: number): Element | undefined {
+  private _querySelectorRecursively(root: SelectorRoot, selector: ParsedSelector, index: number): Element | undefined {
     const current = selector.parts[index];
     if (index === selector.parts.length - 1)
       return this.engines.get(current.name)!.query(root, current.body);
@@ -66,7 +67,7 @@ export default class InjectedScript {
     }
   }
 
-  querySelectorAll(selector: types.ParsedSelector, root: Node): Element[] {
+  querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
     if (!(root as any)['querySelectorAll'])
       throw new Error('Node is not queryable.');
     const capture = selector.capture === undefined ? selector.parts.length - 1 : selector.capture;
