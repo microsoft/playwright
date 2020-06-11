@@ -747,6 +747,29 @@ describe('Page.click', function() {
     await page.click('button');
     expect(await page.evaluate(() => window.result)).toBe(1);
   });
+  it.fail(true)('should retarget when element is recycled during hit testing', async ({page, server}) => {
+    await page.goto(server.PREFIX + '/react.html');
+    await page.evaluate(() => {
+      class MyButton extends React.Component {
+        render() {
+          return e('button', { onClick: () => window[this.props.name] = true }, this.props.name);
+        }
+      }
+      window.TwoButtons = class TwoButtons extends React.Component {
+        render() {
+          const buttons = this.props.names.map(name => e(MyButton, { name }));
+          return e('div', {}, buttons);
+        }
+      }
+      renderComponent(e(TwoButtons, { names: ['button1', 'button2'] }));
+    });
+    const __testHookAfterStable = () => page.evaluate(() => {
+      renderComponent(e(TwoButtons, { names: ['button2', 'button1'] }));
+    });
+    await page.click('text=button1', { __testHookAfterStable });
+    expect(await page.evaluate(() => window.button1)).toBe(true);
+    expect(await page.evaluate(() => window.button2)).toBe(undefined);
+  });
 });
 
 describe('Page.check', function() {
