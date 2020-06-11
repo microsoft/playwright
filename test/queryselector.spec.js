@@ -789,10 +789,7 @@ describe('selectors.register', () => {
     // Can be chained to css.
     expect(await page.$eval('main=ignored >> css=section', e => e.nodeName)).toBe('SECTION');
   });
-  it('should update', async ({page}) => {
-    await page.setContent('<div><dummy id=d1></dummy></div><span><dummy id=d2></dummy></span>');
-    expect(await page.$eval('div', e => e.nodeName)).toBe('DIV');
-
+  it('should handle errors', async ({page}) => {
     let error = await page.$('neverregister=ignored').catch(e => e);
     expect(error.message).toBe('Unknown engine "neverregister" while parsing selector neverregister=ignored');
 
@@ -812,8 +809,6 @@ describe('selectors.register', () => {
     expect(error.message).toBe('Selector engine name may only contain [a-zA-Z0-9_] characters');
 
     await registerEngine('dummy', createDummySelector);
-    expect(await page.$eval('dummy=ignored', e => e.id)).toBe('d1');
-    expect(await page.$eval('css=span >> dummy=ignored', e => e.id)).toBe('d2');
 
     error = await playwright.selectors.register('dummy', createDummySelector).catch(e => e);
     expect(error.message).toBe('"dummy" selector engine has been already registered');
