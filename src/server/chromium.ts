@@ -21,7 +21,7 @@ import { CRBrowser } from '../chromium/crBrowser';
 import * as ws from 'ws';
 import { Env } from './processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
-import { LaunchOptionsBase, BrowserTypeBase, processBrowserArgOptions } from './browserType';
+import { LaunchOptionsBase, BrowserTypeBase } from './browserType';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { InnerLogger } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
@@ -78,7 +78,6 @@ export class Chromium extends BrowserTypeBase {
   }
 
   _defaultArgs(options: LaunchOptionsBase, isPersistent: boolean, userDataDir: string): string[] {
-    const { devtools, headless } = processBrowserArgOptions(options);
     const { args = [], proxy } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
@@ -93,9 +92,9 @@ export class Chromium extends BrowserTypeBase {
       chromeArguments.push('--remote-debugging-port=' + this._debugPort);
     else
       chromeArguments.push('--remote-debugging-pipe');
-    if (devtools)
+    if (options.devtools)
       chromeArguments.push('--auto-open-devtools-for-tabs');
-    if (headless) {
+    if (options.headless) {
       chromeArguments.push(
           '--headless',
           '--hide-scrollbars',

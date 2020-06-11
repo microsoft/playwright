@@ -19,7 +19,7 @@ import { WKBrowser } from '../webkit/wkBrowser';
 import { Env } from './processLauncher';
 import * as path from 'path';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
-import { LaunchOptionsBase, BrowserTypeBase, processBrowserArgOptions } from './browserType';
+import { LaunchOptionsBase, BrowserTypeBase } from './browserType';
 import { ConnectionTransport, ProtocolResponse, ProtocolRequest } from '../transport';
 import * as ws from 'ws';
 import { InnerLogger } from '../logger';
@@ -50,8 +50,7 @@ export class WebKit extends BrowserTypeBase {
   }
 
   _defaultArgs(options: LaunchOptionsBase, isPersistent: boolean, userDataDir: string): string[] {
-    const { devtools, headless } = processBrowserArgOptions(options);
-    const { args = [], proxy } = options;
+    const { args = [], proxy, devtools, headless } = options;
     if (devtools)
       console.warn('devtools parameter as a launch argument in WebKit is not supported. Also starting Web Inspector manually will terminate the execution in WebKit.');
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir='));

@@ -53,11 +53,6 @@ export type LaunchOptionsBase = {
   downloadsPath?: string,
 };
 
-export function processBrowserArgOptions(options: LaunchOptionsBase): { devtools: boolean, headless: boolean } {
-  const { devtools = false, headless = !devtools } = options;
-  return { devtools, headless };
-}
-
 type ConnectOptions = {
   wsEndpoint: string,
   slowMo?: number,
@@ -109,6 +104,7 @@ export abstract class BrowserTypeBase implements BrowserType {
   async launch(options: LaunchOptions = {}): Promise<Browser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
+    options = validateLaunchOptions(options);
     const logger = new InnerLogger(options.logger);
     const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, logger, undefined), logger, TimeoutSettings.timeout(options));
     return browser;
@@ -116,6 +112,7 @@ export abstract class BrowserTypeBase implements BrowserType {
 
   async launchPersistentContext(userDataDir: string, options: LaunchOptions & PersistentContextOptions = {}): Promise<BrowserContext> {
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
+    options = validateLaunchOptions(options);
     const persistent = validateBrowserContextOptions(options);
     const logger = new InnerLogger(options.logger);
     const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, logger, persistent, userDataDir), logger, TimeoutSettings.timeout(options));
@@ -130,7 +127,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     const browserOptions: BrowserOptions = {
       slowMo: options.slowMo,
       persistent,
-      headful: !processBrowserArgOptions(options).headless,
+      headful: !options.headless,
       logger,
       downloadsPath,
       ownedServer: browserServer,
@@ -147,8 +144,9 @@ export abstract class BrowserTypeBase implements BrowserType {
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launchServer`. Use `browserType.launchPersistentContext` instead');
-    const { port = 0 } = options;
+    options = validateLaunchOptions(options);
     const logger = new InnerLogger(options.logger);
+    const { port = 0 } = options;
     return runAbortableTask(async progress => {
       const { browserServer, transport } = await this._launchServer(progress, options, false, logger);
       browserServer._webSocketServer = this._startWebSocketServer(transport, logger, port);
@@ -259,4 +257,9 @@ function copyTestHooks(from: object, to: object) {
     if (key.startsWith('__testHook'))
       (to as any)[key] = value;
   }
+}
+
+function validateLaunchOptions<Options extends LaunchOptionsBase>(options: Options): Options {
+  const { devtools = false, headless = !devtools } = options;
+  return { ...options, devtools, headless };
 }
