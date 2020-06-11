@@ -260,6 +260,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const { force = false, position } = options;
     if (!force)
       await this._waitForDisplayedAtStablePositionAndEnabled(progress);
+    if ((options as any).__testHookAfterStable)
+      await (options as any).__testHookAfterStable();
 
     progress.log(apiLog, '  scrolling into view if needed');
     progress.throwIfAborted();  // Avoid action that has side-effects.
