@@ -54,6 +54,8 @@ describe('Playwright', function() {
       const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
       const error = await browserType.launch(options).catch(e => e);
       expect(error.message).toContain(`Timeout 5000ms exceeded during ${browserType.name()}.launch.`);
+      expect(error.message).toContain(`[browser] <launching>`);
+      expect(error.message).toContain(`[browser] <launched> pid=`);
     });
     it('should handle exception', async({browserType, defaultBrowserOptions}) => {
       const e = new Error('Dummy');

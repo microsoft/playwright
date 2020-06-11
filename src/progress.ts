@@ -84,7 +84,7 @@ export class ProgressController {
       },
       log: (log: Log, message: string | Error) => {
         if (this._state === 'running') {
-          this._logRecording.push(message.toString());
+          this._logRecording.push(`[${log.name}] ${message.toString()}`);
           this._logger.log(log, '  ' + message);
         } else {
           this._logger.log(log, message);
