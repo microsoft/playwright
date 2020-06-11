@@ -32,6 +32,7 @@ import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
 import { logError, InnerLogger } from './logger';
 import { ProgressController } from './progress';
+import { Recorder } from './recorder/recorder';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -501,6 +502,10 @@ export class Page extends EventEmitter {
 
   async uncheck(selector: string, options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     return this.mainFrame().uncheck(selector, options);
+  }
+
+  async _startRecordingUser() {
+    new Recorder(this).start();
   }
 
   async waitForTimeout(timeout: number) {
