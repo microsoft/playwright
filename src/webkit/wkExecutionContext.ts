@@ -81,17 +81,16 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       if (!returnByValue)
         return utilityScript._context.createHandle(response.result);
       if (response.result.objectId)
-        return await this._returnObjectByValue(utilityScript._context, response.result.objectId);
+        return await this._returnObjectByValue(utilityScript, response.result.objectId);
       return parseEvaluationResultValue(response.result.value);
     } catch (error) {
       throw rewriteError(error);
     }
   }
 
-  private async _returnObjectByValue(context: js.ExecutionContext, objectId: Protocol.Runtime.RemoteObjectId): Promise<any> {
+  private async _returnObjectByValue(utilityScript: js.JSHandle<any>, objectId: Protocol.Runtime.RemoteObjectId): Promise<any> {
     // This is different from handleJSONValue in that it does not throw.
     try {
-      const utilityScript = await context.utilityScript();
       const serializeResponse = await this._session.send('Runtime.callFunctionOn', {
         functionDeclaration: 'object => object' + sourceMap.generateSourceUrl(),
         objectId: utilityScript._objectId!,

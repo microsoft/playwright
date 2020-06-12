@@ -20,6 +20,7 @@ import * as utilityScriptSource from './generated/utilityScriptSource';
 import * as sourceMap from './utils/sourceMap';
 import { serializeAsCallArgument } from './common/utilityScriptSerializers';
 import { helper } from './helper';
+import UtilityScript from './injected/utilityScript';
 
 type ObjectId = string;
 export type RemoteObject = {
@@ -47,7 +48,7 @@ export class ExecutionContext {
     return null;
   }
 
-  utilityScript(): Promise<JSHandle> {
+  utilityScript(): Promise<JSHandle<UtilityScript>> {
     if (!this._utilityScriptPromise) {
       const source = `new (${utilityScriptSource.source})()`;
       this._utilityScriptPromise = this._delegate.rawEvaluate(source).then(objectId => new JSHandle(this, 'object', objectId));
@@ -66,12 +67,16 @@ export class JSHandle<T = any> {
   readonly _objectId: ObjectId | undefined;
   readonly _value: any;
   private _objectType: string;
+  protected _preview: string;
 
   constructor(context: ExecutionContext, type: string, objectId?: ObjectId, value?: any) {
     this._context = context;
     this._objectId = objectId;
     this._value = value;
     this._objectType = type;
+    if (this._objectId)
+      this._value = 'JSHandle@' + this._objectType;
+    this._preview = 'JSHandle@' + String(this._objectId ? this._objectType : this._value);
   }
 
   async evaluate<R, Arg>(pageFunction: types.FuncOn<T, Arg, R>, arg: Arg): Promise<R>;
@@ -121,14 +126,8 @@ export class JSHandle<T = any> {
     await this._context._delegate.releaseHandle(this);
   }
 
-  _handleToString(includeType: boolean): string {
-    if (this._objectId)
-      return 'JSHandle@' + this._objectType;
-    return (includeType ? 'JSHandle:' : '') + this._value;
-  }
-
   toString(): string {
-    return this._handleToString(true);
+    return this._preview;
   }
 }
 

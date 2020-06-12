@@ -121,6 +121,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     this._objectId = objectId;
     this._context = context;
     this._page = context.frame._page;
+    this._initializePreview().catch(e => {});
+  }
+
+  async _initializePreview() {
+    const utility = await this._context.injectedScript();
+    this._preview = await utility.evaluate((injected, e) => 'JSHandle@' + injected.previewNode(e), this);
   }
 
   asElement(): ElementHandle<T> | null {

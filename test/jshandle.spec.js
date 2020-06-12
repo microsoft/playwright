@@ -236,9 +236,9 @@ describe('JSHandle.asElement', function() {
 describe('JSHandle.toString', function() {
   it('should work for primitives', async({page, server}) => {
     const numberHandle = await page.evaluateHandle(() => 2);
-    expect(numberHandle.toString()).toBe('JSHandle:2');
+    expect(numberHandle.toString()).toBe('JSHandle@2');
     const stringHandle = await page.evaluateHandle(() => 'a');
-    expect(stringHandle.toString()).toBe('JSHandle:a');
+    expect(stringHandle.toString()).toBe('JSHandle@a');
   });
   it('should work for complicated objects', async({page, server}) => {
     const aHandle = await page.evaluateHandle(() => window);
@@ -252,15 +252,15 @@ describe('JSHandle.toString', function() {
   });
   it('should work with different subtypes', async({page, server}) => {
     expect((await page.evaluateHandle('(function(){})')).toString()).toBe('JSHandle@function');
-    expect((await page.evaluateHandle('12')).toString()).toBe('JSHandle:12');
-    expect((await page.evaluateHandle('true')).toString()).toBe('JSHandle:true');
-    expect((await page.evaluateHandle('undefined')).toString()).toBe('JSHandle:undefined');
-    expect((await page.evaluateHandle('"foo"')).toString()).toBe('JSHandle:foo');
+    expect((await page.evaluateHandle('12')).toString()).toBe('JSHandle@12');
+    expect((await page.evaluateHandle('true')).toString()).toBe('JSHandle@true');
+    expect((await page.evaluateHandle('undefined')).toString()).toBe('JSHandle@undefined');
+    expect((await page.evaluateHandle('"foo"')).toString()).toBe('JSHandle@foo');
     expect((await page.evaluateHandle('Symbol()')).toString()).toBe('JSHandle@symbol');
     expect((await page.evaluateHandle('new Map()')).toString()).toBe('JSHandle@map');
     expect((await page.evaluateHandle('new Set()')).toString()).toBe('JSHandle@set');
     expect((await page.evaluateHandle('[]')).toString()).toBe('JSHandle@array');
-    expect((await page.evaluateHandle('null')).toString()).toBe('JSHandle:null');
+    expect((await page.evaluateHandle('null')).toString()).toBe('JSHandle@null');
     expect((await page.evaluateHandle('/foo/')).toString()).toBe('JSHandle@regexp');
     expect((await page.evaluateHandle('document.body')).toString()).toBe('JSHandle@node');
     expect((await page.evaluateHandle('new Date()')).toString()).toBe('JSHandle@date');

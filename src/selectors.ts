@@ -24,7 +24,6 @@ import { ParsedSelector, parseSelector } from './common/selectorParser';
 export class Selectors {
   readonly _builtinEngines: Set<string>;
   readonly _engines: Map<string, { source: string, contentScript: boolean }>;
-  _generation = 0;
 
   constructor() {
     // Note: keep in sync with SelectorEvaluator class.
@@ -51,7 +50,6 @@ export class Selectors {
     if (this._engines.has(name))
       throw new Error(`"${name}" selector engine has been already registered`);
     this._engines.set(name, { source, contentScript });
-    ++this._generation;
   }
 
   private _needsMainContext(parsed: ParsedSelector): boolean {
@@ -128,7 +126,7 @@ export class Selectors {
             if (!element)
               progress.log(`  selector did not resolve to any element`);
             else
-              progress.log(`  selector resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewElement(element)}`);
+              progress.log(`  selector resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewNode(element)}`);
           }
 
           switch (state) {

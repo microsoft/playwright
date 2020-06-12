@@ -376,6 +376,18 @@ describe('ElementHandle.selectText', function() {
 
 
 describe('ElementHandle convenience API', function() {
+  it('should have a nice preview', async({page, server}) => {
+    await page.goto(`${server.PREFIX}/dom.html`);
+    const outer = await page.$('#outer');
+    const inner = await page.$('#inner');
+    const check = await page.$('#check');
+    const text = await inner.evaluateHandle(e => e.firstChild);
+    await page.evaluate(() => 1);  // Give them a chance to calculate the preview.
+    expect(String(outer)).toBe('JSHandle@<div id="outer" name="value">…</div>');
+    expect(String(inner)).toBe('JSHandle@<div id="inner">Text,↵more text</div>');
+    expect(String(text)).toBe('JSHandle@#text=Text,↵more text');
+    expect(String(check)).toBe('JSHandle@<input checked id="check" foo="bar"" type="checkbox"/>');
+  });
   it('getAttribute should work', async({page, server}) => {
     await page.goto(`${server.PREFIX}/dom.html`);
     const handle = await page.$('#outer');
