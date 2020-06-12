@@ -51,7 +51,7 @@ jobs:
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: coredumps
+        name: chromium-linux-coredumps
         path: coredumps
 
   chromium_mac:
@@ -144,7 +144,7 @@ jobs:
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: coredumps
+        name: webkit-linux-coredumps
         path: coredumps
 
   webkit_mac:
@@ -237,7 +237,7 @@ jobs:
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: coredumps
+        name: firefox-linux-coredumps
         path: coredumps
 
   firefox_mac:
