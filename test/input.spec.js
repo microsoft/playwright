@@ -135,26 +135,12 @@ describe('Page.waitForFileChooser', function() {
     expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
   });
   it('should detect mime type', async({page, server}) => {
-    let callback;
-    const result = new Promise(f => callback = f);
+    let files;
     server.setRoute('/upload', async (req, res) => {
       const form = new formidable.IncomingForm();
-      form.parse(req, function(err, fields, { file1, file2 }) {
-        expect(file1.name).toBe('file-to-upload.txt');
-        expect(file1.type).toBe('text/plain');
-        expect(
-            fs.readFileSync(file1.path).toString()
-          ).toBe(
-            fs.readFileSync(path.join(__dirname, '/assets/file-to-upload.txt')).toString()
-          );
-        expect(file2.name).toBe('pptr.png');
-        expect(file2.type).toBe('image/png');
-        expect(
-          fs.readFileSync(file2.path).toString()
-        ).toBe(
-          fs.readFileSync(path.join(__dirname, '/assets/pptr.png')).toString()
-        );
-      callback();
+      form.parse(req, function(err, fields, f) {
+        files = f;
+        res.end();
       });
     });
     await page.goto(server.EMPTY_PAGE);
@@ -166,8 +152,19 @@ describe('Page.waitForFileChooser', function() {
       </form>`)
     await (await page.$('input[name=file1]')).setInputFiles(path.join(__dirname, '/assets/file-to-upload.txt'));
     await (await page.$('input[name=file2]')).setInputFiles(path.join(__dirname, '/assets/pptr.png'));
-    page.click('input[type=submit]');
-    await result;
+    await Promise.all([
+      page.click('input[type=submit]'),
+      server.waitForRequest('/upload'),
+    ]);
+    const { file1, file2 } = files;
+    expect(file1.name).toBe('file-to-upload.txt');
+    expect(file1.type).toBe('text/plain');
+    expect(fs.readFileSync(file1.path).toString()).toBe(
+      fs.readFileSync(path.join(__dirname, '/assets/file-to-upload.txt')).toString());
+    expect(file2.name).toBe('pptr.png');
+    expect(file2.type).toBe('image/png');
+    expect(fs.readFileSync(file2.path).toString()).toBe(
+      fs.readFileSync(path.join(__dirname, '/assets/pptr.png')).toString());
   });
   it('should be able to read selected file', async({page, server}) => {
     await page.setContent(`<input type=file>`);
