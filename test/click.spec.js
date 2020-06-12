@@ -621,7 +621,6 @@ describe('Page.click', function() {
     const error = await promise;
     expect(await page.evaluate(() => window.clicked)).toBe(undefined);
     expect(error.message).toContain('Element is not attached to the DOM');
-    expect(error.name).toContain('NotConnectedError');
   });
   it('should fail when element detaches after animation', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/animating-button.html');
@@ -632,7 +631,6 @@ describe('Page.click', function() {
     const error = await promise;
     expect(await page.evaluate(() => window.clicked)).toBe(undefined);
     expect(error.message).toContain('Element is not attached to the DOM');
-    expect(error.name).toContain('NotConnectedError');
   });
   it('should retry when element detaches after animation', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/animating-button.html');

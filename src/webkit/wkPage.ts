@@ -36,7 +36,6 @@ import { WKBrowserContext } from './wkBrowser';
 import { selectors } from '../selectors';
 import * as jpeg from 'jpeg-js';
 import * as png from 'pngjs';
-import { NotConnectedError } from '../errors';
 import { ConsoleMessageLocation } from '../console';
 import { JSHandle } from '../javascript';
 
@@ -746,15 +745,15 @@ export class WKPage implements PageDelegate {
     return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
   }
 
-  async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'success' | 'invisible'> {
+  async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'notvisible' | 'notconnected' | 'done'> {
     return await this._session.send('DOM.scrollIntoViewIfNeeded', {
       objectId: handle._objectId,
       rect,
-    }).then(() => 'success' as const).catch(e => {
+    }).then(() => 'done' as const).catch(e => {
       if (e instanceof Error && e.message.includes('Node does not have a layout object'))
-        return 'invisible';
+        return 'notvisible';
       if (e instanceof Error && e.message.includes('Node is detached from document'))
-        throw new NotConnectedError();
+        return 'notconnected';
       throw e;
     });
   }

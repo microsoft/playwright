@@ -35,7 +35,6 @@ import { CRPDF } from './crPdf';
 import { CRBrowserContext } from './crBrowser';
 import * as types from '../types';
 import { ConsoleMessage } from '../console';
-import { NotConnectedError } from '../errors';
 import * as sourceMap from '../utils/sourceMap';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 
@@ -245,7 +244,7 @@ export class CRPage implements PageDelegate {
     return this._sessionForHandle(handle)._getBoundingBox(handle);
   }
 
-  async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'success' | 'invisible'> {
+  async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'notvisible' | 'notconnected' | 'done'> {
     return this._sessionForHandle(handle)._scrollRectIntoViewIfNeeded(handle, rect);
   }
 
@@ -832,15 +831,15 @@ class FrameSession {
     return {x, y, width, height};
   }
 
-  async _scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'success' | 'invisible'> {
+  async _scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'notvisible' | 'notconnected' | 'done'> {
     return await this._client.send('DOM.scrollIntoViewIfNeeded', {
       objectId: handle._objectId,
       rect,
-    }).then(() => 'success' as const).catch(e => {
+    }).then(() => 'done' as const).catch(e => {
       if (e instanceof Error && e.message.includes('Node does not have a layout object'))
-        return 'invisible';
+        return 'notvisible';
       if (e instanceof Error && e.message.includes('Node is detached from document'))
-        throw new NotConnectedError();
+        return 'notconnected';
       throw e;
     });
   }

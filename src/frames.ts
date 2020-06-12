@@ -19,7 +19,6 @@ import * as fs from 'fs';
 import * as util from 'util';
 import { ConsoleMessage } from './console';
 import * as dom from './dom';
-import { NotConnectedError } from './errors';
 import { Events } from './events';
 import { assert, helper, RegisteredListener, assertMaxArguments, debugAssert } from './helper';
 import * as js from './javascript';
@@ -452,7 +451,7 @@ export class Frame {
       throw new Error('options.waitFor is not supported, did you mean options.state?');
     const { state = 'visible' } = options;
     if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
-      throw new Error(`Unsupported waitFor option "${state}"`);
+      throw new Error(`Unsupported state option "${state}"`);
     const { world, task } = selectors._waitForSelectorTask(selector, state);
     return runAbortableTask(async progress => {
       progress.log(apiLog, `waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
@@ -707,23 +706,21 @@ export class Frame {
 
   private async _retryWithSelectorIfNotConnected<R>(
     selector: string, options: types.TimeoutOptions,
-    action: (progress: Progress, handle: dom.ElementHandle<Element>) => Promise<R>): Promise<R> {
+    action: (progress: Progress, handle: dom.ElementHandle<Element>) => Promise<R | 'notconnected'>): Promise<R> {
     return runAbortableTask(async progress => {
       while (progress.isRunning()) {
-        try {
-          progress.log(apiLog, `waiting for selector "${selector}"`);
-          const { world, task } = selectors._waitForSelectorTask(selector, 'attached');
-          const handle = await this._scheduleRerunnableTask(progress, world, task);
-          const element = handle.asElement() as dom.ElementHandle<Element>;
-          progress.cleanupWhenAborted(() => element.dispose());
-          const result = await action(progress, element);
-          element.dispose();
-          return result;
-        } catch (e) {
-          if (!(e instanceof NotConnectedError))
-            throw e;
+        progress.log(apiLog, `waiting for selector "${selector}"`);
+        const { world, task } = selectors._waitForSelectorTask(selector, 'attached');
+        const handle = await this._scheduleRerunnableTask(progress, world, task);
+        const element = handle.asElement() as dom.ElementHandle<Element>;
+        progress.cleanupWhenAborted(() => element.dispose());
+        const result = await action(progress, element);
+        element.dispose();
+        if (result === 'notconnected') {
           progress.log(apiLog, 'element was detached from the DOM, retrying');
+          continue;
         }
+        return result;
       }
       return undefined as any;
     }, this._page._logger, this._page._timeoutSettings.timeout(options));
@@ -803,7 +800,7 @@ export class Frame {
     else if (helper.isNumber(polling))
       assert(polling > 0, 'Cannot poll with non-positive interval: ' + polling);
     else
-      throw new Error('Unknown polling options: ' + polling);
+      throw new Error('Unknown polling option: ' + polling);
     const predicateBody = helper.isString(pageFunction) ? 'return (' + pageFunction + ')' : 'return (' + pageFunction + ')(arg)';
     const task = async (context: dom.FrameExecutionContext) => {
       const injectedScript = await context.injectedScript();

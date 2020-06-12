@@ -200,11 +200,11 @@ export default class InjectedScript {
     return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
   }
 
-  selectOptions(node: Node, optionsToSelect: (Node | types.SelectOption)[]): types.InjectedScriptResult<string[]> {
+  selectOptions(node: Node, optionsToSelect: (Node | types.SelectOption)[]): types.InjectedScriptResult<string[] | 'notconnected'> {
     if (node.nodeName.toLowerCase() !== 'select')
-      return { status: 'error', error: 'Element is not a <select> element.' };
+      return { error: 'Element is not a <select> element.' };
     if (!node.isConnected)
-      return { status: 'notconnected' };
+      return { value: 'notconnected' };
     const element = node as HTMLSelectElement;
 
     const options = Array.from(element.options);
@@ -228,16 +228,16 @@ export default class InjectedScript {
     }
     element.dispatchEvent(new Event('input', { 'bubbles': true }));
     element.dispatchEvent(new Event('change', { 'bubbles': true }));
-    return { status: 'success', value: options.filter(option => option.selected).map(option => option.value) };
+    return { value: options.filter(option => option.selected).map(option => option.value) };
   }
 
-  waitForEnabledAndFill(node: Node, value: string): types.InjectedScriptPoll<types.InjectedScriptResult<boolean>> {
+  waitForEnabledAndFill(node: Node, value: string): types.InjectedScriptPoll<types.InjectedScriptResult<'notconnected' | 'needsinput' | 'done'>> {
     return this.poll('raf', progress => {
       if (node.nodeType !== Node.ELEMENT_NODE)
-        return { status: 'error', error: 'Node is not of type HTMLElement' };
+        return { error: 'Node is not of type HTMLElement' };
       const element = node as HTMLElement;
       if (!element.isConnected)
-        return { status: 'notconnected' };
+        return { value: 'notconnected' };
       if (!this.isVisible(element)) {
         progress.logRepeating('    element is not visible - waiting...');
         return false;
@@ -248,11 +248,11 @@ export default class InjectedScript {
         const kDateTypes = new Set(['date', 'time', 'datetime', 'datetime-local']);
         const kTextInputTypes = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
         if (!kTextInputTypes.has(type) && !kDateTypes.has(type))
-          return { status: 'error', error: 'Cannot fill input of type "' + type + '".' };
+          return { error: 'Cannot fill input of type "' + type + '".' };
         if (type === 'number') {
           value = value.trim();
           if (isNaN(Number(value)))
-            return { status: 'error', error: 'Cannot type text into input[type=number].' };
+            return { error: 'Cannot type text into input[type=number].' };
         }
         if (input.disabled) {
           progress.logRepeating('    element is disabled - waiting...');
@@ -267,10 +267,10 @@ export default class InjectedScript {
           input.focus();
           input.value = value;
           if (input.value !== value)
-            return { status: 'error', error: `Malformed ${type} "${value}"` };
+            return { error: `Malformed ${type} "${value}"` };
           element.dispatchEvent(new Event('input', { 'bubbles': true }));
           element.dispatchEvent(new Event('change', { 'bubbles': true }));
-          return { status: 'success', value: false };  // We have already changed the value, no need to input it.
+          return { value: 'done' };  // We have already changed the value, no need to input it.
         }
       } else if (element.nodeName.toLowerCase() === 'textarea') {
         const textarea = element as HTMLTextAreaElement;
@@ -283,54 +283,56 @@ export default class InjectedScript {
           return false;
         }
       } else if (!element.isContentEditable) {
-        return { status: 'error', error: 'Element is not an <input>, <textarea> or [contenteditable] element.' };
+        return { error: 'Element is not an <input>, <textarea> or [contenteditable] element.' };
       }
       const result = this.selectText(node);
-      if (result.status === 'success')
-        return { status: 'success', value: true };  // Still need to input the value.
-      return result;
+      if (result.error)
+        return { error: result.error };
+      if (result.value === 'notconnected')
+        return { value: 'notconnected' };
+      return { value: 'needsinput' };  // Still need to input the value.
     });
   }
 
-  selectText(node: Node): types.InjectedScriptResult {
+  selectText(node: Node): types.InjectedScriptResult<'notconnected' | 'done'> {
     if (node.nodeType !== Node.ELEMENT_NODE)
-      return { status: 'error', error: 'Node is not of type HTMLElement' };
+      return { error: 'Node is not of type HTMLElement' };
     if (!node.isConnected)
-      return { status: 'notconnected' };
+      return { value: 'notconnected' };
     const element = node as HTMLElement;
     if (!this.isVisible(element))
-      return { status: 'error', error: 'Element is not visible' };
+      return { error: 'Element is not visible' };
     if (element.nodeName.toLowerCase() === 'input') {
       const input = element as HTMLInputElement;
       input.select();
       input.focus();
-      return { status: 'success' };
+      return { value: 'done' };
     }
     if (element.nodeName.toLowerCase() === 'textarea') {
       const textarea = element as HTMLTextAreaElement;
       textarea.selectionStart = 0;
       textarea.selectionEnd = textarea.value.length;
       textarea.focus();
-      return { status: 'success' };
+      return { value: 'done' };
     }
     const range = element.ownerDocument!.createRange();
     range.selectNodeContents(element);
     const selection = element.ownerDocument!.defaultView!.getSelection();
     if (!selection)
-      return { status: 'error', error: 'Element belongs to invisible iframe.' };
+      return { error: 'Element belongs to invisible iframe.' };
     selection.removeAllRanges();
     selection.addRange(range);
     element.focus();
-    return { status: 'success' };
+    return { value: 'done' };
   }
 
-  focusNode(node: Node): types.InjectedScriptResult {
+  focusNode(node: Node): types.InjectedScriptResult<'notconnected' | 'done'> {
     if (!node.isConnected)
-      return { status: 'notconnected' };
+      return { value: 'notconnected' };
     if (!(node as any)['focus'])
-      return { status: 'error', error: 'Node is not an HTML or SVG element.' };
+      return { error: 'Node is not an HTML or SVG element.' };
     (node as HTMLElement | SVGElement).focus();
-    return { status: 'success' };
+    return { value: 'done' };
   }
 
   isCheckboxChecked(node: Node) {
@@ -379,26 +381,26 @@ export default class InjectedScript {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  waitForDisplayedAtStablePositionAndEnabled(node: Node, rafCount: number): types.InjectedScriptPoll<types.InjectedScriptResult> {
+  waitForDisplayedAtStablePositionAndEnabled(node: Node, rafCount: number): types.InjectedScriptPoll<types.InjectedScriptResult<'notconnected' | 'done'>> {
     return this._runCancellablePoll(async progress => {
       if (!node.isConnected)
-        return { status: 'notconnected' };
+        return { value: 'notconnected' };
       const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
       if (!element)
-        return { status: 'notconnected' };
+        return { value: 'notconnected' };
 
       let lastRect: types.Rect | undefined;
       let counter = 0;
       let samePositionCounter = 0;
       let lastTime = 0;
-      return this._pollRaf(progress, (): types.InjectedScriptResult | false => {
+      return this._pollRaf(progress, (): types.InjectedScriptResult<'notconnected' | 'done'> | false => {
         // First raf happens in the same animation frame as evaluation, so it does not produce
         // any client rect difference compared to synchronous call. We skip the synchronous call
         // and only force layout during actual rafs as a small optimisation.
         if (++counter === 1)
           return false;
         if (!node.isConnected)
-          return { status: 'notconnected' };
+          return { value: 'notconnected' };
 
         // Drop frames that are shorter than 16ms - WebKit Win bug.
         const time = performance.now();
@@ -426,7 +428,7 @@ export default class InjectedScript {
         const isDisabled = ['BUTTON', 'INPUT', 'SELECT'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
 
         if (isDisplayed && isStable && isVisible && !isDisabled)
-          return { status: 'success' };
+          return { value: 'done' };
 
         if (!isDisplayed || !isVisible)
           progress.logRepeating(`    element is not visible - waiting...`);
@@ -439,15 +441,15 @@ export default class InjectedScript {
     });
   }
 
-  checkHitTargetAt(node: Node, point: types.Point): types.InjectedScriptResult<boolean> {
+  checkHitTargetAt(node: Node, point: types.Point): types.InjectedScriptResult<'notconnected' | 'nothittarget' | 'done'> {
     let element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
     if (!element || !element.isConnected)
-      return { status: 'notconnected' };
+      return { value: 'notconnected' };
     element = element.closest('button, [role=button]') || element;
     let hitElement = this.deepElementFromPoint(document, point.x, point.y);
     while (hitElement && hitElement !== element)
       hitElement = this._parentElementOrShadowHost(hitElement);
-    return { status: 'success', value: hitElement === element };
+    return { value: hitElement === element ? 'done' : 'nothittarget' };
   }
 
   dispatchEvent(node: Node, type: string, eventInit: Object) {
