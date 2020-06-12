@@ -20,50 +20,49 @@ export type ActionName =
   'press' |
   'select';
 
-export type ClickAction = {
+export type ActionBase = {
+  signals: Signal[],
+  frameUrl?: string,
+}
+
+export type ClickAction = ActionBase & {
   name: 'click',
-  signals?: Signal[],
   selector: string,
   button: 'left' | 'middle' | 'right',
   modifiers: number,
   clickCount: number,
 };
 
-export type CheckAction = {
+export type CheckAction = ActionBase & {
   name: 'check',
-  signals?: Signal[],
   selector: string,
 };
 
-export type UncheckAction = {
+export type UncheckAction = ActionBase & {
   name: 'uncheck',
-  signals?: Signal[],
   selector: string,
 };
 
-export type FillAction = {
+export type FillAction = ActionBase & {
   name: 'fill',
-  signals?: Signal[],
   selector: string,
-  text: string
+  text: string,
 };
 
-export type NavigateAction = {
+export type NavigateAction = ActionBase & {
   name: 'navigate',
-  signals?: Signal[],
-  url: string
+  url: string,
 };
 
-export type PressAction = {
+export type PressAction = ActionBase & {
   name: 'press',
-  signals?: Signal[],
   selector: string,
-  key: string
+  key: string,
+  modifiers: number,
 };
 
-export type SelectAction = {
+export type SelectAction = ActionBase & {
   name: 'select',
-  signals?: Signal[],
   selector: string,
   options: string[],
 };
@@ -97,7 +96,7 @@ export function actionTitle(action: Action): string {
     case 'fill':
       return 'Fill';
     case 'navigate':
-      return 'Navigate';
+      return 'Go to';
     case 'press':
       return 'Press';
     case 'select':

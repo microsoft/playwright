@@ -19,13 +19,12 @@ import { helper } from './helper';
 import * as network from './network';
 import { Page, PageBinding } from './page';
 import { TimeoutSettings } from './timeoutSettings';
+import * as frames from './frames';
 import * as types from './types';
 import { Events } from './events';
 import { Download } from './download';
 import { BrowserBase } from './browser';
 import { InnerLogger, Logger } from './logger';
-import { FunctionWithSource } from './frames';
-import * as debugSupport from './debug/debugSupport';
 import { EventEmitter } from 'events';
 import { ProgressController } from './progress';
 
@@ -69,7 +68,7 @@ export interface BrowserContext {
   setOffline(offline: boolean): Promise<void>;
   setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void>;
   addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any): Promise<void>;
-  exposeBinding(name: string, playwrightBinding: FunctionWithSource): Promise<void>;
+  exposeBinding(name: string, playwrightBinding: frames.FunctionWithSource): Promise<void>;
   exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
   route(url: types.URLMatch, handler: network.RouteHandler): Promise<void>;
   unroute(url: types.URLMatch, handler?: network.RouteHandler): Promise<void>;
@@ -99,7 +98,21 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   }
 
   async _initialize() {
-    await debugSupport.installConsoleHelpers(this);
+    if (!helper.isDebugMode())
+      return;
+
+    const installInFrame = async (frame: frames.Frame) => {
+      try {
+        const mainContext = await frame._mainContext();
+        await mainContext.debugScript();
+      } catch (e) {
+      }
+    };
+    this.on(Events.BrowserContext.Page, (page: Page) => {
+      for (const frame of page.frames())
+        installInFrame(frame);
+      page.on(Events.Page.FrameNavigated, installInFrame);
+    });
   }
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
@@ -147,7 +160,7 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
     await this.exposeBinding(name, (options, ...args: any) => playwrightFunction(...args));
   }
 
-  async exposeBinding(name: string, playwrightBinding: FunctionWithSource): Promise<void> {
+  async exposeBinding(name: string, playwrightBinding: frames.FunctionWithSource): Promise<void> {
     for (const page of this.pages()) {
       if (page._pageBindings.has(name))
         throw new Error(`Function "${name}" has been already registered in one of the pages`);

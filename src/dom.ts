@@ -22,6 +22,7 @@ import * as frames from './frames';
 import { assert, helper } from './helper';
 import InjectedScript from './injected/injectedScript';
 import * as injectedScriptSource from './generated/injectedScriptSource';
+import * as debugScriptSource from './generated/debugScriptSource';
 import * as input from './input';
 import * as js from './javascript';
 import { Page } from './page';
@@ -30,6 +31,7 @@ import * as types from './types';
 import { NotConnectedError } from './errors';
 import { apiLog } from './logger';
 import { Progress, runAbortableTask } from './progress';
+import DebugScript from './debug/injected/debugScript';
 
 export type PointerActionOptions = {
   modifiers?: input.Modifier[];
@@ -42,7 +44,8 @@ export type MultiClickOptions = PointerActionOptions & input.MouseMultiClickOpti
 
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
-  private _injectedPromise?: Promise<js.JSHandle>;
+  private _injectedScriptPromise?: Promise<js.JSHandle>;
+  private _debugScriptPromise?: Promise<js.JSHandle | undefined>;
 
   constructor(delegate: js.ExecutionContextDelegate, frame: frames.Frame) {
     super(delegate);
@@ -78,7 +81,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
   }
 
   injectedScript(): Promise<js.JSHandle<InjectedScript>> {
-    if (!this._injectedPromise) {
+    if (!this._injectedScriptPromise) {
       const custom: string[] = [];
       for (const [name, { source }] of selectors._engines)
         custom.push(`{ name: '${name}', engine: (${source}) }`);
@@ -87,9 +90,24 @@ export class FrameExecutionContext extends js.ExecutionContext {
           ${custom.join(',\n')}
         ])
       `;
-      this._injectedPromise = this._delegate.rawEvaluate(source).then(objectId => new js.JSHandle(this, 'object', objectId));
+      this._injectedScriptPromise = this._delegate.rawEvaluate(source).then(objectId => new js.JSHandle(this, 'object', objectId));
     }
-    return this._injectedPromise;
+    return this._injectedScriptPromise;
+  }
+
+  debugScript(): Promise<js.JSHandle<DebugScript> | undefined> {
+    if (!helper.isDebugMode())
+      return Promise.resolve(undefined);
+
+    if (!this._debugScriptPromise) {
+      const source = `new (${debugScriptSource.source})()`;
+      this._debugScriptPromise = this._delegate.rawEvaluate(source).then(objectId => new js.JSHandle(this, 'object', objectId)).then(async debugScript => {
+        const injectedScript = await this.injectedScript();
+        await debugScript.evaluate((debugScript: DebugScript, injectedScript) => debugScript.initialize(injectedScript), injectedScript);
+        return debugScript;
+      }).catch(e => undefined);
+    }
+    return this._debugScriptPromise;
   }
 }
 

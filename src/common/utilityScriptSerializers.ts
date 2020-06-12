@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// This file can't have dependencies, it is a part of the utility script.
-
 export function parseEvaluationResultValue(value: any, handles: any[] = []): any {
   // { type: 'undefined' } does not even have value.
   if (value === 'undefined')

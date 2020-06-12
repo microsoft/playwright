@@ -18,8 +18,8 @@
 import { WKSession, isSwappedOutError } from './wkConnection';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
-import * as debugSupport from '../debug/debugSupport';
-import { parseEvaluationResultValue } from '../utilityScriptSerializers';
+import { parseEvaluationResultValue } from '../common/utilityScriptSerializers';
+import * as sourceMap from '../utils/sourceMap';
 
 export class WKExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: WKSession;
@@ -42,7 +42,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   async rawEvaluate(expression: string): Promise<string> {
     try {
       const response = await this._session.send('Runtime.evaluate', {
-        expression: debugSupport.ensureSourceUrl(expression),
+        expression: sourceMap.ensureSourceUrl(expression),
         contextId: this._contextId,
         returnByValue: false
       });
@@ -93,7 +93,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     try {
       const utilityScript = await context.utilityScript();
       const serializeResponse = await this._session.send('Runtime.callFunctionOn', {
-        functionDeclaration: 'object => object' + debugSupport.generateSourceUrl(),
+        functionDeclaration: 'object => object' + sourceMap.generateSourceUrl(),
         objectId: utilityScript._objectId!,
         arguments: [ { objectId } ],
         returnByValue: true

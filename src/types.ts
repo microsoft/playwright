@@ -154,14 +154,6 @@ export type JSCoverageOptions = {
   reportAnonymousScripts?: boolean,
 };
 
-export type ParsedSelector = {
-  parts: {
-    name: string,
-    body: string,
-  }[],
-  capture?: number,
-};
-
 export type InjectedScriptResult<T = undefined> =
   (T extends undefined ? { status: 'success', value?: T} : { status: 'success', value: T }) |
   { status: 'notconnected' } |

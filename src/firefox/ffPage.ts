@@ -32,7 +32,7 @@ import { FFNetworkManager, headersArray } from './ffNetworkManager';
 import { Protocol } from './protocol';
 import { selectors } from '../selectors';
 import { NotConnectedError } from '../errors';
-import { rewriteErrorMessage } from '../debug/stackTrace';
+import { rewriteErrorMessage } from '../utils/stackTrace';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 

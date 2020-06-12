@@ -20,7 +20,7 @@ import { assert } from '../helper';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse, protocolLog } from '../transport';
 import { Protocol } from './protocol';
 import { InnerLogger, errorLog } from '../logger';
-import { rewriteErrorMessage } from '../debug/stackTrace';
+import { rewriteErrorMessage } from '../utils/stackTrace';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('Disconnected'),
