@@ -1280,10 +1280,10 @@ index 0000000000000000000000000000000000000000..dd4c318ec4b9b49ce937266ba899e54f
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Screencast.json b/Source/JavaScriptCore/inspector/protocol/Screencast.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..a2ab788ee75f3d4703153882eada4ee8e2701166
+index 0000000000000000000000000000000000000000..5da42efd27406d66ad6a2f23e27d79f1512a7a3a
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Screencast.json
-@@ -0,0 +1,52 @@
+@@ -0,0 +1,53 @@
 +{
 +    "domain": "Screencast",
 +    "availability": ["web"],
@@ -1317,7 +1317,8 @@ index 0000000000000000000000000000000000000000..a2ab788ee75f3d4703153882eada4ee8
 +            "parameters": [
 +                { "name": "file", "type": "string", "description": "Output file location." },
 +                { "name": "width", "type": "integer" },
-+                { "name": "height", "type": "integer" }
++                { "name": "height", "type": "integer" },
++                { "name": "scale", "type": "number", "optional": true }
 +            ]
 +        },
 +        {
@@ -4289,7 +4290,7 @@ index 3bcd0487cfc8766baa01c7804173a15747b47b2d..3b5c230d7e00b9d7e248be8730ab22ab
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp b/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..fc70eb56148276a0e3848b68f69799deb8f7e248
+index 0000000000000000000000000000000000000000..1b0060aed698b86b6a25c52cb14c1250814dee4e
 --- /dev/null
 +++ b/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp
 @@ -0,0 +1,160 @@
@@ -4399,7 +4400,7 @@ index 0000000000000000000000000000000000000000..fc70eb56148276a0e3848b68f69799de
 +    --m_inflightFrames;
 +}
 +
-+void InspectorScreencastAgent::startVideoRecording(Inspector::ErrorString& errorString, const String&, int, int)
++void InspectorScreencastAgent::startVideoRecording(Inspector::ErrorString& errorString, const String&, int, int, const double*)
 +{
 +    errorString = "Not implemented."_s;
 +}
@@ -4455,7 +4456,7 @@ index 0000000000000000000000000000000000000000..fc70eb56148276a0e3848b68f69799de
 +#endif  // PLATFORM(WPE) || PLATFORM(WIN)
 diff --git a/Source/WebCore/inspector/agents/InspectorScreencastAgent.h b/Source/WebCore/inspector/agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..8c1a662351c8bb406484dd6ec4750de42f07cad2
+index 0000000000000000000000000000000000000000..f725430dd38ec528396b8edae12a9a941bb0b835
 --- /dev/null
 +++ b/Source/WebCore/inspector/agents/InspectorScreencastAgent.h
 @@ -0,0 +1,81 @@
@@ -4520,7 +4521,7 @@ index 0000000000000000000000000000000000000000..8c1a662351c8bb406484dd6ec4750de4
 +    void start(Inspector::ErrorString&, const String& format, const int* quality) override;
 +    void stop(Inspector::ErrorString&) override;
 +    void frameAck(Inspector::ErrorString&) override;
-+    void startVideoRecording(Inspector::ErrorString&, const String& file, int width, int height) override;
++    void startVideoRecording(Inspector::ErrorString&, const String& file, int width, int height, const double* scale) override;
 +    void stopVideoRecording(Ref<StopVideoRecordingCallback>&&) override;
 +
 +    void willDisplay();
@@ -8782,10 +8783,10 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
      // The timeout we use when waiting for a DidUpdateGeometry message.
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..88892d0e1128a23f8f586610691800fc306b2a0d
+index 0000000000000000000000000000000000000000..d9f9c4b81174f9f0a8ae77cf5163a259ccd58fad
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,263 @@
+@@ -0,0 +1,271 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8928,7 +8929,7 @@ index 0000000000000000000000000000000000000000..88892d0e1128a23f8f586610691800fc
 +#endif
 +}
 +
-+void InspectorScreencastAgent::startVideoRecording(Inspector::ErrorString& errorString, const String& file, int width, int height)
++void InspectorScreencastAgent::startVideoRecording(Inspector::ErrorString& errorString, const String& file, int width, int height, const double* scale)
 +{
 +#if PLATFORM(GTK) || PLATFORM(WPE)
 +    if (m_encoder) {
@@ -8940,8 +8941,16 @@ index 0000000000000000000000000000000000000000..88892d0e1128a23f8f586610691800fc
 +        errorString = "Invalid size"_s;
 +        return;
 +    }
++    Optional<double> optionalScale;
++    if (scale) {
++        if (*scale <= 0 || *scale > 1) {
++            errorString = "Unsupported scale"_s;
++            return;
++        }
 +
-+    m_encoder = ScreencastEncoder::create(errorString, file, IntSize(width, height));
++        optionalScale = *scale;
++    }
++    m_encoder = ScreencastEncoder::create(errorString, file, IntSize(width, height), optionalScale);
 +    if (!m_encoder)
 +        return;
 +
@@ -9051,7 +9060,7 @@ index 0000000000000000000000000000000000000000..88892d0e1128a23f8f586610691800fc
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..be0d7aa673210ca4d0c11c7789ee69edd680c2a1
+index 0000000000000000000000000000000000000000..9b18c5ff9e18cd1c40df8ccd2daefeb7974e4d74
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 @@ -0,0 +1,89 @@
@@ -9118,7 +9127,7 @@ index 0000000000000000000000000000000000000000..be0d7aa673210ca4d0c11c7789ee69ed
 +    void start(Inspector::ErrorString&, const String& format, const int* quality) override;
 +    void stop(Inspector::ErrorString&) override;
 +    void frameAck(Inspector::ErrorString&) override;
-+    void startVideoRecording(Inspector::ErrorString&, const String& file, int width, int height) override;
++    void startVideoRecording(Inspector::ErrorString&, const String& file, int width, int height, const double* scale) override;
 +    void stopVideoRecording(Ref<StopVideoRecordingCallback>&&) override;
 +
 +
@@ -9146,10 +9155,10 @@ index 0000000000000000000000000000000000000000..be0d7aa673210ca4d0c11c7789ee69ed
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..4fe06984b854ec4d36a0b1c7c6ba534d35880c1f
+index 0000000000000000000000000000000000000000..3fe6f5d5b0bf43f79e452addb8ac21bf3c3bf904
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,401 @@
+@@ -0,0 +1,410 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -9434,9 +9443,10 @@ index 0000000000000000000000000000000000000000..4fe06984b854ec4d36a0b1c7c6ba534d
 +    std::unique_ptr<vpx_image_t> m_image;
 +};
 +
-+ScreencastEncoder::ScreencastEncoder(std::unique_ptr<VPXCodec>&& vpxCodec, IntSize size)
++ScreencastEncoder::ScreencastEncoder(std::unique_ptr<VPXCodec>&& vpxCodec, IntSize size, Optional<double> scale)
 +    : m_vpxCodec(WTFMove(vpxCodec))
 +    , m_size(size)
++    , m_scale(scale)
 +{
 +    ASSERT(!size.isZero());
 +}
@@ -9449,7 +9459,7 @@ index 0000000000000000000000000000000000000000..4fe06984b854ec4d36a0b1c7c6ba534d
 +static constexpr uint32_t vp9fourcc = 0x30395056;
 +static constexpr int fps = 30;
 +
-+RefPtr<ScreencastEncoder> ScreencastEncoder::create(String& errorString, const String& filePath, IntSize size)
++RefPtr<ScreencastEncoder> ScreencastEncoder::create(String& errorString, const String& filePath, IntSize size, Optional<double> scale)
 +{
 +    const uint32_t fourcc = vp8fourcc;
 +    vpx_codec_iface_t* codec_interface = vpx_codec_vp8_cx();
@@ -9491,7 +9501,7 @@ index 0000000000000000000000000000000000000000..4fe06984b854ec4d36a0b1c7c6ba534d
 +
 +    std::unique_ptr<VPXCodec> vpxCodec(new VPXCodec(fourcc, codec, cfg, file));
 +    fprintf(stderr, "ScreencastEncoder initialized with: %s\n", vpx_codec_iface_name(codec_interface));
-+    return adoptRef(new ScreencastEncoder(WTFMove(vpxCodec), size));
++    return adoptRef(new ScreencastEncoder(WTFMove(vpxCodec), size, scale));
 +}
 +
 +void ScreencastEncoder::flushLastFrame()
@@ -9525,6 +9535,14 @@ index 0000000000000000000000000000000000000000..4fe06984b854ec4d36a0b1c7c6ba534d
 +    RefPtr<cairo_surface_t> surface = adoptRef(cairo_image_surface_create(CAIRO_FORMAT_ARGB32, m_size.width(), m_size.height()));
 +    {
 +        RefPtr<cairo_t> cr = adoptRef(cairo_create(surface.get()));
++
++        // TODO: compare to libyuv scale functions?
++        cairo_matrix_t transform;
++        if (m_scale) {
++            cairo_matrix_init_scale(&transform, *m_scale, *m_scale);
++            cairo_transform(cr.get(), &transform);
++        }
++
 +        // Record top left part of the drawing area that fits into the frame.
 +        cairo_set_source_surface(cr.get(), drawingAreaSurface, 0, 0);
 +        cairo_paint(cr.get());
@@ -9553,10 +9571,10 @@ index 0000000000000000000000000000000000000000..4fe06984b854ec4d36a0b1c7c6ba534d
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..01993e4925b6bea6741873e503f1fc3b401facee
+index 0000000000000000000000000000000000000000..0f1209d8e96391d050261dcef4225b30fecc90cd
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
-@@ -0,0 +1,61 @@
+@@ -0,0 +1,62 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -9598,10 +9616,10 @@ index 0000000000000000000000000000000000000000..01993e4925b6bea6741873e503f1fc3b
 +    WTF_MAKE_NONCOPYABLE(ScreencastEncoder);
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    static RefPtr<ScreencastEncoder> create(String& errorString, const String& filePath, WebCore::IntSize);
++    static RefPtr<ScreencastEncoder> create(String& errorString, const String& filePath, WebCore::IntSize, Optional<double> scale);
 +
 +    class VPXCodec;
-+    ScreencastEncoder(std::unique_ptr<VPXCodec>&&, WebCore::IntSize);
++    ScreencastEncoder(std::unique_ptr<VPXCodec>&&, WebCore::IntSize, Optional<double> scale);
 +    ~ScreencastEncoder();
 +
 +    void encodeFrame(cairo_surface_t*, WebCore::IntSize);
@@ -9612,6 +9630,7 @@ index 0000000000000000000000000000000000000000..01993e4925b6bea6741873e503f1fc3b
 +
 +    std::unique_ptr<VPXCodec> m_vpxCodec;
 +    const WebCore::IntSize m_size;
++    Optional<double> m_scale;
 +    MonotonicTime m_lastFrameTimestamp;
 +    class VPXFrame;
 +    std::unique_ptr<VPXFrame> m_lastFrame;
