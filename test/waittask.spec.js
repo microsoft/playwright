@@ -463,25 +463,25 @@ describe('Frame.waitForSelector', function() {
     await page.waitForSelector('.zombo', { timeout: 10 }).catch(e => error = e);
     expect(error.stack).toContain('waittask.spec.js');
   });
-  it('should throw for unknown waitFor option', async({page, server}) => {
+  it('should throw for unknown state option', async({page, server}) => {
     await page.setContent('<section>test</section>');
     const error = await page.waitForSelector('section', { state: 'foo' }).catch(e => e);
-    expect(error.message).toContain('Unsupported waitFor option');
+    expect(error.message).toContain('Unsupported state option "foo"');
   });
   it('should throw for visibility option', async({page, server}) => {
     await page.setContent('<section>test</section>');
     const error = await page.waitForSelector('section', { visibility: 'hidden' }).catch(e => e);
     expect(error.message).toBe('options.visibility is not supported, did you mean options.state?');
   });
-  it('should throw for true waitFor option', async({page, server}) => {
+  it('should throw for true state option', async({page, server}) => {
     await page.setContent('<section>test</section>');
     const error = await page.waitForSelector('section', { state: true }).catch(e => e);
-    expect(error.message).toContain('Unsupported waitFor option');
+    expect(error.message).toContain('Unsupported state option "true"');
   });
-  it('should throw for false waitFor option', async({page, server}) => {
+  it('should throw for false state option', async({page, server}) => {
     await page.setContent('<section>test</section>');
     const error = await page.waitForSelector('section', { state: false }).catch(e => e);
-    expect(error.message).toContain('Unsupported waitFor option');
+    expect(error.message).toContain('Unsupported state option "false"');
   });
   it('should support >> selector syntax', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);

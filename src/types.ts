@@ -154,10 +154,7 @@ export type JSCoverageOptions = {
   reportAnonymousScripts?: boolean,
 };
 
-export type InjectedScriptResult<T = undefined> =
-  (T extends undefined ? { status: 'success', value?: T} : { status: 'success', value: T }) |
-  { status: 'notconnected' } |
-  { status: 'error', error: string };
+export type InjectedScriptResult<T> = { error?: string, value?: T };
 
 export type InjectedScriptProgress = {
   canceled: boolean,
