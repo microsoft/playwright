@@ -170,12 +170,15 @@ describe('Page.route', function() {
   });
   it('should be abortable', async({page, server}) => {
     await page.route(/\.css$/, route => route.abort());
-    let failedRequests = 0;
-    page.on('requestfailed', event => ++failedRequests);
+    let failed = false;
+    page.on('requestfailed', request => {
+      if (request.url().includes('.css'))
+        failed = true;
+    });
     const response = await page.goto(server.PREFIX + '/one-style.html');
     expect(response.ok()).toBe(true);
     expect(response.request().failure()).toBe(null);
-    expect(failedRequests).toBe(1);
+    expect(failed).toBe(true);
   });
   it('should be abortable with custom error codes', async({page, server}) => {
     await page.route('**/*', route => route.abort('internetdisconnected'));
