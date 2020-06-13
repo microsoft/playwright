@@ -33,19 +33,34 @@ du -hs ./Library/Caches/ms-playwright/*
 You can override default behavior using environment variables. When installing Playwright, ask it to download browsers into a specific location:
 
 ```sh
+# Linux/macOS
 $ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers npm i -D playwright
+
+# Windows
+$ set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+$ npm i -D playwright
 ```
 
 When running Playwright scripts, ask it to search for browsers in a shared location:
 
 ```sh
+# Linux/macOS
 $ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers node playwright-script.js
+
+# Windows
+$ set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+$ node playwright-script.js
 ```
 
 Or you can opt into the hermetic install and place binaries under the `node_modules/` folder:
 
 ```sh
-$ PLAYWRIGHT_BROWSERS_PATH=0 node playwright-script.js
+# Linux/macOS
+$ PLAYWRIGHT_BROWSERS_PATH=0 npm i -D playwright
+
+# Windows
+$ set PLAYWRIGHT_BROWSERS_PATH=0
+$ npm i -D playwright
 ```
 
 Playwright keeps track of packages that need those browsers and will garbage collect them as you update Playwright to the newer versions.
@@ -65,7 +80,12 @@ binaries. In this case, Playwright can be configured to download from a custom
 location using the `PLAYWRIGHT_DOWNLOAD_HOST` env variable.
 
 ```sh
+# Linux/macOS
 $ PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i -D playwright
+
+# Windows
+$ set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
+$ npm i -D playwright
 ```
 
 <br>
@@ -78,7 +98,12 @@ browser binaries are managed separately.
 This can be done by setting `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` variable before installation.
 
 ```sh
+# Linux/macOS
 $ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
+
+# Windows
+$ set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+$ npm i -D playwright
 ```
 
 <br>
@@ -108,6 +133,6 @@ const { webkit } = require('playwright-webkit');
 
 (async () => {
   const browser = await webkit.launch();
-  // ....
+  // ...
 })();
 ```
