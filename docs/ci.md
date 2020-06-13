@@ -10,10 +10,12 @@ Playwright tests can be executed to run on your CI environments. To simplify thi
   * [Travis CI](#travis-ci)
   * [CircleCI](#circleci)
   * [AppVeyor](#appveyor)
+  * [Bitbucket Pipelines](#bitbucket-pipelines)
 - [Caching browsers](#caching-browsers)
     - [Exception: `node_modules` are cached](#exception-nodemodules-are-cached)
     - [Directories to cache](#directories-to-cache)
 - [Debugging browser launches](#debugging-browser-launches)
+- [Running headful](#running-headful)
 <!-- GEN:stop -->
 
 Broadly, configuration on CI involves **ensuring system dependencies** are in place, **installing Playwright and browsers** (typically with `npm install`), and **running tests** (typically with `npm test`). Windows and macOS build agents do not require any additional system dependencies. Linux build agents can require additional dependencies, depending on the Linux distribution.
@@ -66,7 +68,18 @@ Suggested configuration
 
 For Windows or macOS agents, no additional configuration required, just install Playwright and run your tests.
 
-For Linux agents, refer to [our Docker setup](docker/README.md) to see additional dependencies that need to be installed.
+For Linux agents, you can use [our Docker container](docker/README.md) with Azure Pipelines support for [running containerized jobs](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/container-phases?view=azure-devops). Alternatively, you can refer to the [Dockerfile](docker/README.md) to see additional dependencies that need to be installed on a Ubuntu agent.
+
+```yml
+pool:
+  vmImage: 'ubuntu-18.04'
+
+container: aslushnikov/playwright:bionic
+
+steps:
+- script: npm install
+- script: npm run test
+```
 
 ### Travis CI
 
@@ -146,6 +159,21 @@ We run our tests on CircleCI, with our [pre-built Docker image](docker/README.md
 
 We run our tests on Windows agents in AppVeyor. Use our [AppVeyor configuration](/.appveyor.yml) to create your own.
 
+### Bitbucket Pipelines
+
+Bitbucket Pipelines can use public [Docker images as build environments](https://confluence.atlassian.com/bitbucket/use-docker-images-as-build-environments-792298897.html). To run Playwright tests on Bitbucket, use our public Docker image ([see Dockerfile](docker/README.md)).
+
+```yml
+image: aslushnikov/playwright:bionic
+```
+
+While the Docker image supports sandboxing for Chromium, it does not work in the Bitbucket Pipelines environment. To launch Chromium on Bitbucket Pipelines, use the `--no-sandbox` launch argument.
+
+```js
+const { chromium } = require('playwright');
+const browser = await chromium.launch({ args: ['--no-sandbox'] });
+```
+
 ## Caching browsers
 
 By default, Playwright downloads browser binaries when the Playwright NPM package
@@ -192,4 +220,20 @@ Playwright supports the `DEBUG` environment variable to output debug logs during
 
 ```
 DEBUG=pw:browser* npm run test
+```
+
+## Running headful
+
+By default, Playwright launches browsers in headless mode. This can be changed by passing a flag when the browser is launched.
+
+```js
+// Works across chromium, firefox and webkit
+const { chromium } = require('playwright');
+const browser = await chromium.launch({ headless: false });
+```
+
+On Linux agents, headful execution requires [Xvfb](https://en.wikipedia.org/wiki/Xvfb) to be installed. Our [Docker image](docker/README.md) and GitHub Action have Xvfb pre-installed. To run browsers in headful mode with Xvfb, add `xvfb-run` before the Node.js command.
+
+```
+xvfb-run node index.js
 ```
