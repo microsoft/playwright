@@ -243,7 +243,7 @@ export class CRPage implements PageDelegate {
     return this._sessionForHandle(handle)._getBoundingBox(handle);
   }
 
-  async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'notvisible' | 'notconnected' | 'done'> {
+  async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
     return this._sessionForHandle(handle)._scrollRectIntoViewIfNeeded(handle, rect);
   }
 
@@ -825,15 +825,15 @@ class FrameSession {
     return {x, y, width, height};
   }
 
-  async _scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'notvisible' | 'notconnected' | 'done'> {
+  async _scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
     return await this._client.send('DOM.scrollIntoViewIfNeeded', {
       objectId: handle._objectId,
       rect,
     }).then(() => 'done' as const).catch(e => {
       if (e instanceof Error && e.message.includes('Node does not have a layout object'))
-        return 'notvisible';
+        return 'error:notvisible';
       if (e instanceof Error && e.message.includes('Node is detached from document'))
-        return 'notconnected';
+        return 'error:notconnected';
       throw e;
     });
   }

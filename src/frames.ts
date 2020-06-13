@@ -714,7 +714,7 @@ export class Frame {
 
   private async _retryWithSelectorIfNotConnected<R>(
     selector: string, options: types.TimeoutOptions,
-    action: (progress: Progress, handle: dom.ElementHandle<Element>) => Promise<R | 'notconnected'>,
+    action: (progress: Progress, handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>,
     apiName: string): Promise<R> {
     return this._runAbortableTask(async progress => {
       while (progress.isRunning()) {
@@ -725,7 +725,7 @@ export class Frame {
         progress.cleanupWhenAborted(() => element.dispose());
         const result = await action(progress, element);
         element.dispose();
-        if (result === 'notconnected') {
+        if (result === 'error:notconnected') {
           progress.logger.info('element was detached from the DOM, retrying');
           continue;
         }
@@ -814,7 +814,9 @@ export class Frame {
       const injectedScript = await context.injectedScript();
       return context.evaluateHandleInternal(({ injectedScript, predicateBody, polling, arg }) => {
         const innerPredicate = new Function('arg', predicateBody) as (arg: any) => R;
-        return injectedScript.poll(polling, () => innerPredicate(arg));
+        if (polling === 'raf')
+          return injectedScript.pollRaf((progress, continuePolling) => innerPredicate(arg) || continuePolling);
+        return injectedScript.pollInterval(polling, (progress, continuePolling) => innerPredicate(arg) || continuePolling);
       }, { injectedScript, predicateBody, polling, arg });
     };
     return this._runAbortableTask(

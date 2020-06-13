@@ -21,9 +21,9 @@ import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { createTextSelector } from './textSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 import { ParsedSelector } from '../common/selectorParser';
+import { FatalDOMError } from '../common/domErrors';
 
-type Falsy = false | 0 | '' | undefined | null;
-type Predicate<T> = (progress: types.InjectedScriptProgress) => T | Falsy;
+type Predicate<T> = (progress: types.InjectedScriptProgress, continuePolling: symbol) => T | symbol;
 
 export default class InjectedScript {
   readonly engines: Map<string, SelectorEngine>;
@@ -105,53 +105,59 @@ export default class InjectedScript {
     return rect.width > 0 && rect.height > 0;
   }
 
-  private _pollRaf<T>(progress: types.InjectedScriptProgress, predicate: Predicate<T>): Promise<T> {
-    let fulfill: (result: T) => void;
-    let reject: (error: Error) => void;
-    const result = new Promise<T>((f, r) => { fulfill = f; reject = r; });
+  pollRaf<T>(predicate: Predicate<T>): types.InjectedScriptPoll<T> {
+    return this._runAbortableTask(progress => {
+      let fulfill: (result: T) => void;
+      let reject: (error: Error) => void;
+      const result = new Promise<T>((f, r) => { fulfill = f; reject = r; });
 
-    const onRaf = () => {
-      if (progress.canceled)
-        return;
-      try {
-        const success = predicate(progress);
-        if (success)
-          fulfill(success);
-        else
-          requestAnimationFrame(onRaf);
-      } catch (e) {
-        reject(e);
-      }
-    };
+      const onRaf = () => {
+        if (progress.aborted)
+          return;
+        try {
+          const continuePolling = Symbol('continuePolling');
+          const success = predicate(progress, continuePolling);
+          if (success !== continuePolling)
+            fulfill(success as T);
+          else
+            requestAnimationFrame(onRaf);
+        } catch (e) {
+          reject(e);
+        }
+      };
 
-    onRaf();
-    return result;
+      onRaf();
+      return result;
+    });
   }
 
-  private _pollInterval<T>(progress: types.InjectedScriptProgress, pollInterval: number, predicate: Predicate<T>): Promise<T> {
-    let fulfill: (result: T) => void;
-    let reject: (error: Error) => void;
-    const result = new Promise<T>((f, r) => { fulfill = f; reject = r; });
+  pollInterval<T>(pollInterval: number, predicate: Predicate<T>): types.InjectedScriptPoll<T> {
+    return this._runAbortableTask(progress => {
+      let fulfill: (result: T) => void;
+      let reject: (error: Error) => void;
+      const result = new Promise<T>((f, r) => { fulfill = f; reject = r; });
 
-    const onTimeout = () => {
-      if (progress.canceled)
-        return;
-      try {
-        const success = predicate(progress);
-        if (success)
-          fulfill(success);
-        else
-          setTimeout(onTimeout, pollInterval);
-      } catch (e) {
-        reject(e);
-      }
-    };
+      const onTimeout = () => {
+        if (progress.aborted)
+          return;
+        try {
+          const continuePolling = Symbol('continuePolling');
+          const success = predicate(progress, continuePolling);
+          if (success !== continuePolling)
+            fulfill(success as T);
+          else
+            setTimeout(onTimeout, pollInterval);
+        } catch (e) {
+          reject(e);
+        }
+      };
 
-    onTimeout();
-    return result;
+      onTimeout();
+      return result;
+    });
   }
 
-  private _runCancellablePoll<T>(poll: (progess: types.InjectedScriptProgress) => Promise<T>): types.InjectedScriptPoll<T> {
+  private _runAbortableTask<T>(task: (progess: types.InjectedScriptProgress) => Promise<T>): types.InjectedScriptPoll<T> {
     let currentLogs: string[] = [];
     let logReady = () => {};
     const createLogsPromise = () => new Promise<types.InjectedScriptLogs>(fulfill => {
@@ -164,7 +170,7 @@ export default class InjectedScript {
 
     let lastLog = '';
     const progress: types.InjectedScriptProgress = {
-      canceled: false,
+      aborted: false,
       log: (message: string) => {
         lastLog = message;
         currentLogs.push(message);
@@ -181,16 +187,10 @@ export default class InjectedScript {
 
     return {
       logs,
-      result: poll(progress),
-      cancel: () => { progress.canceled = true; },
+      result: task(progress),
+      cancel: () => { progress.aborted = true; },
       takeLastLogs: () => currentLogs,
     };
-  }
-
-  poll<T>(polling: 'raf' | number, predicate: Predicate<T>): types.InjectedScriptPoll<T> {
-    return this._runCancellablePoll(progress => {
-      return polling === 'raf' ? this._pollRaf(progress, predicate) : this._pollInterval(progress, polling, predicate);
-    });
   }
 
   getElementBorderWidth(node: Node): { left: number; top: number; } {
@@ -200,11 +200,11 @@ export default class InjectedScript {
     return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
   }
 
-  selectOptions(node: Node, optionsToSelect: (Node | types.SelectOption)[]): types.InjectedScriptResult<string[] | 'notconnected'> {
+  selectOptions(node: Node, optionsToSelect: (Node | types.SelectOption)[]): string[] | 'error:notconnected' | FatalDOMError {
     if (node.nodeName.toLowerCase() !== 'select')
-      return { error: 'Element is not a <select> element.' };
+      return 'error:notselect';
     if (!node.isConnected)
-      return { value: 'notconnected' };
+      return 'error:notconnected';
     const element = node as HTMLSelectElement;
 
     const options = Array.from(element.options);
@@ -228,93 +228,95 @@ export default class InjectedScript {
     }
     element.dispatchEvent(new Event('input', { 'bubbles': true }));
     element.dispatchEvent(new Event('change', { 'bubbles': true }));
-    return { value: options.filter(option => option.selected).map(option => option.value) };
+    return options.filter(option => option.selected).map(option => option.value);
   }
 
-  waitForEnabledAndFill(node: Node, value: string): types.InjectedScriptPoll<types.InjectedScriptResult<'notconnected' | 'needsinput' | 'done'>> {
-    return this.poll('raf', progress => {
+  waitForEnabledAndFill(node: Node, value: string): types.InjectedScriptPoll<FatalDOMError | 'error:notconnected' | 'needsinput' | 'done'> {
+    return this.pollRaf((progress, continuePolling) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
-        return { error: 'Node is not of type HTMLElement' };
+        return 'error:notelement';
       const element = node as Element;
       if (!element.isConnected)
-        return { value: 'notconnected' };
+        return 'error:notconnected';
       if (!this.isVisible(element)) {
         progress.logRepeating('    element is not visible - waiting...');
-        return false;
+        return continuePolling;
       }
       if (element.nodeName.toLowerCase() === 'input') {
         const input = element as HTMLInputElement;
         const type = (input.getAttribute('type') || '').toLowerCase();
         const kDateTypes = new Set(['date', 'time', 'datetime', 'datetime-local']);
         const kTextInputTypes = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
-        if (!kTextInputTypes.has(type) && !kDateTypes.has(type))
-          return { error: 'Cannot fill input of type "' + type + '".' };
+        if (!kTextInputTypes.has(type) && !kDateTypes.has(type)) {
+          progress.log(`    input of type "${type}" cannot be filled`);
+          return 'error:notfillableinputtype';
+        }
         if (type === 'number') {
           value = value.trim();
           if (isNaN(Number(value)))
-            return { error: 'Cannot type text into input[type=number].' };
+            return 'error:notfillablenumberinput';
         }
         if (input.disabled) {
           progress.logRepeating('    element is disabled - waiting...');
-          return false;
+          return continuePolling;
         }
         if (input.readOnly) {
           progress.logRepeating('    element is readonly - waiting...');
-          return false;
+          return continuePolling;
         }
         if (kDateTypes.has(type)) {
           value = value.trim();
           input.focus();
           input.value = value;
           if (input.value !== value)
-            return { error: `Malformed ${type} "${value}"` };
+            return 'error:notvaliddate';
           element.dispatchEvent(new Event('input', { 'bubbles': true }));
           element.dispatchEvent(new Event('change', { 'bubbles': true }));
-          return { value: 'done' };  // We have already changed the value, no need to input it.
+          return 'done';  // We have already changed the value, no need to input it.
         }
       } else if (element.nodeName.toLowerCase() === 'textarea') {
         const textarea = element as HTMLTextAreaElement;
         if (textarea.disabled) {
           progress.logRepeating('    element is disabled - waiting...');
-          return false;
+          return continuePolling;
         }
         if (textarea.readOnly) {
           progress.logRepeating('    element is readonly - waiting...');
-          return false;
+          return continuePolling;
         }
       } else if (!(element as HTMLElement).isContentEditable) {
-        return { error: 'Element is not an <input>, <textarea> or [contenteditable] element.' };
+        return 'error:notfillableelement';
       }
       const result = this._selectText(element);
-      if (result === 'notvisible') {
+      if (result === 'error:notvisible') {
         progress.logRepeating('    element is not visible - waiting...');
-        return false;
+        return continuePolling;
       }
-      return { value: 'needsinput' };  // Still need to input the value.
+      return 'needsinput';  // Still need to input the value.
     });
   }
 
-  waitForVisibleAndSelectText(node: Node): types.InjectedScriptPoll<types.InjectedScriptResult<'notconnected' | 'done'>> {
-    return this.poll('raf', progress => {
+  waitForVisibleAndSelectText(node: Node): types.InjectedScriptPoll<FatalDOMError | 'error:notconnected' | 'done'> {
+    return this.pollRaf((progress, continuePolling) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
-        return { error: 'Node is not of type HTMLElement' };
+        return 'error:notelement';
       if (!node.isConnected)
-        return { value: 'notconnected' };
+        return 'error:notconnected';
       const element = node as Element;
       if (!this.isVisible(element)) {
         progress.logRepeating('    element is not visible - waiting...');
-        return false;
+        return continuePolling;
       }
       const result = this._selectText(element);
-      if (result === 'notvisible') {
+      if (result === 'error:notvisible') {
         progress.logRepeating('    element is not visible - waiting...');
-        return false;
+        return continuePolling;
       }
-      return { value: result };
+      return result;
     });
   }
 
-  private _selectText(element: Element): 'notvisible' | 'done' {
+  private _selectText(element: Element): 'error:notvisible' | 'error:notconnected' | 'done' {
     if (element.nodeName.toLowerCase() === 'input') {
       const input = element as HTMLInputElement;
       input.select();
@@ -332,33 +334,33 @@ export default class InjectedScript {
     range.selectNodeContents(element);
     const selection = element.ownerDocument.defaultView!.getSelection();
     if (!selection)
-      return 'notvisible';
+      return 'error:notvisible';
     selection.removeAllRanges();
     selection.addRange(range);
     (element as HTMLElement | SVGElement).focus();
     return 'done';
   }
 
-  waitForNodeVisible(node: Node): types.InjectedScriptPoll<types.InjectedScriptResult<'notconnected' | 'done'>> {
-    return this.poll('raf', progress => {
+  waitForNodeVisible(node: Node): types.InjectedScriptPoll<'error:notconnected' | 'done'> {
+    return this.pollRaf((progress, continuePolling) => {
       const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
       if (!node.isConnected || !element)
-        return { value: 'notconnected' };
+        return 'error:notconnected';
       if (!this.isVisible(element)) {
         progress.logRepeating('    element is not visible - waiting...');
-        return false;
+        return continuePolling;
       }
-      return { value: 'done' };
+      return 'done';
     });
   }
 
-  focusNode(node: Node): types.InjectedScriptResult<'notconnected' | 'done'> {
+  focusNode(node: Node): FatalDOMError | 'error:notconnected' | 'done' {
     if (!node.isConnected)
-      return { value: 'notconnected' };
-    if (!(node as any)['focus'])
-      return { error: 'Node is not an HTML or SVG element.' };
+      return 'error:notconnected';
+    if (node.nodeType !== Node.ELEMENT_NODE)
+      return 'error:notelement';
     (node as HTMLElement | SVGElement).focus();
-    return { value: 'done' };
+    return 'done';
   }
 
   isCheckboxChecked(node: Node) {
@@ -407,75 +409,72 @@ export default class InjectedScript {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  waitForDisplayedAtStablePositionAndEnabled(node: Node, rafCount: number): types.InjectedScriptPoll<types.InjectedScriptResult<'notconnected' | 'done'>> {
-    return this._runCancellablePoll(async progress => {
+  waitForDisplayedAtStablePositionAndEnabled(node: Node, rafCount: number): types.InjectedScriptPoll<'error:notconnected' | 'done'> {
+    let lastRect: types.Rect | undefined;
+    let counter = 0;
+    let samePositionCounter = 0;
+    let lastTime = 0;
+
+    return this.pollRaf((progress, continuePolling) => {
+      // First raf happens in the same animation frame as evaluation, so it does not produce
+      // any client rect difference compared to synchronous call. We skip the synchronous call
+      // and only force layout during actual rafs as a small optimisation.
+      if (++counter === 1)
+        return continuePolling;
+
       if (!node.isConnected)
-        return { value: 'notconnected' };
+        return 'error:notconnected';
       const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
       if (!element)
-        return { value: 'notconnected' };
+        return 'error:notconnected';
 
-      let lastRect: types.Rect | undefined;
-      let counter = 0;
-      let samePositionCounter = 0;
-      let lastTime = 0;
-      return this._pollRaf(progress, (): types.InjectedScriptResult<'notconnected' | 'done'> | false => {
-        // First raf happens in the same animation frame as evaluation, so it does not produce
-        // any client rect difference compared to synchronous call. We skip the synchronous call
-        // and only force layout during actual rafs as a small optimisation.
-        if (++counter === 1)
-          return false;
-        if (!node.isConnected)
-          return { value: 'notconnected' };
+      // Drop frames that are shorter than 16ms - WebKit Win bug.
+      const time = performance.now();
+      if (rafCount > 1 && time - lastTime < 15)
+        return continuePolling;
+      lastTime = time;
 
-        // Drop frames that are shorter than 16ms - WebKit Win bug.
-        const time = performance.now();
-        if (rafCount > 1 && time - lastTime < 15)
-          return false;
-        lastTime = time;
+      // Note: this logic should be similar to isVisible() to avoid surprises.
+      const clientRect = element.getBoundingClientRect();
+      const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
+      const samePosition = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height;
+      const isDisplayed = rect.width > 0 && rect.height > 0;
+      if (samePosition)
+        ++samePositionCounter;
+      else
+        samePositionCounter = 0;
+      const isStable = samePositionCounter >= rafCount;
+      const isStableForLogs = isStable || !lastRect;
+      lastRect = rect;
 
-        // Note: this logic should be similar to isVisible() to avoid surprises.
-        const clientRect = element.getBoundingClientRect();
-        const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
-        const samePosition = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height;
-        const isDisplayed = rect.width > 0 && rect.height > 0;
-        if (samePosition)
-          ++samePositionCounter;
-        else
-          samePositionCounter = 0;
-        const isStable = samePositionCounter >= rafCount;
-        const isStableForLogs = isStable || !lastRect;
-        lastRect = rect;
+      const style = element.ownerDocument && element.ownerDocument.defaultView ? element.ownerDocument.defaultView.getComputedStyle(element) : undefined;
+      const isVisible = !!style && style.visibility !== 'hidden';
 
-        const style = element.ownerDocument && element.ownerDocument.defaultView ? element.ownerDocument.defaultView.getComputedStyle(element) : undefined;
-        const isVisible = !!style && style.visibility !== 'hidden';
+      const elementOrButton = element.closest('button, [role=button]') || element;
+      const isDisabled = ['BUTTON', 'INPUT', 'SELECT'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
 
-        const elementOrButton = element.closest('button, [role=button]') || element;
-        const isDisabled = ['BUTTON', 'INPUT', 'SELECT'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
+      if (isDisplayed && isStable && isVisible && !isDisabled)
+        return 'done';
 
-        if (isDisplayed && isStable && isVisible && !isDisabled)
-          return { value: 'done' };
-
-        if (!isDisplayed || !isVisible)
-          progress.logRepeating(`    element is not visible - waiting...`);
-        else if (!isStableForLogs)
-          progress.logRepeating(`    element is moving - waiting...`);
-        else if (isDisabled)
-          progress.logRepeating(`    element is disabled - waiting...`);
-        return false;
-      });
+      if (!isDisplayed || !isVisible)
+        progress.logRepeating(`    element is not visible - waiting...`);
+      else if (!isStableForLogs)
+        progress.logRepeating(`    element is moving - waiting...`);
+      else if (isDisabled)
+        progress.logRepeating(`    element is disabled - waiting...`);
+      return continuePolling;
     });
   }
 
-  checkHitTargetAt(node: Node, point: types.Point): types.InjectedScriptResult<'notconnected' | 'nothittarget' | 'done'> {
+  checkHitTargetAt(node: Node, point: types.Point): 'error:notconnected' | 'error:nothittarget' | 'done' {
     let element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
     if (!element || !element.isConnected)
-      return { value: 'notconnected' };
+      return 'error:notconnected';
     element = element.closest('button, [role=button]') || element;
     let hitElement = this.deepElementFromPoint(document, point.x, point.y);
     while (hitElement && hitElement !== element)
       hitElement = this._parentElementOrShadowHost(hitElement);
-    return { value: hitElement === element ? 'done' : 'nothittarget' };
+    return hitElement === element ? 'done' : 'error:nothittarget';
   }
 
   dispatchEvent(node: Node, type: string, eventInit: Object) {

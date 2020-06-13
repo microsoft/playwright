@@ -1302,10 +1302,11 @@ const fs = require('fs');
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully filled. The promise will be rejected if there is no element matching `selector`.
+- returns: <[Promise]>
 
-This method focuses the element and triggers an `input` event after filling.
-If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matching `selector`, the method throws an error. Note that you can pass an empty string to clear the input field.
+This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling.
+If the element matching `selector` is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
+Note that you can pass an empty string to clear the input field.
 
 To send fine-grained keyboard events, use [`page.type`](#pagetypeselector-text-options).
 
@@ -2253,10 +2254,11 @@ await resultHandle.dispose();
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully filled. The promise will be rejected if there is no element matching `selector`.
+- returns: <[Promise]>
 
-This method focuses the element and triggers an `input` event after filling.
-If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matching `selector`, the method throws an error.
+This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling.
+If the element matching `selector` is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
+Note that you can pass an empty string to clear the input field.
 
 To send fine-grained keyboard events, use [`frame.type`](#frametypeselector-text-options).
 
@@ -2791,10 +2793,11 @@ await elementHandle.dispatchEvent('dragstart', { dataTransfer });
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element is successfully filled.
+- returns: <[Promise]>
 
-This method focuses the element and triggers an `input` event after filling.
-If element is not a text `<input>`, `<textarea>` or `[contenteditable]` element, the method throws an error.
+This method waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling.
+If the element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
+Note that you can pass an empty string to clear the input field.
 
 #### elementHandle.focus()
 - returns: <[Promise]>

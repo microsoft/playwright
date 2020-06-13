@@ -1049,7 +1049,7 @@ describe('Page.fill', function() {
       await page.$eval('input', (input, type) => input.setAttribute('type', type), type);
       let error = null;
       await page.fill('input', '').catch(e => error = e);
-      expect(error.message).toContain('Cannot fill input of type');
+      expect(error.message).toContain(`input of type "${type}" cannot be filled`);
     }
   });
   it('should fill different input types', async({page, server}) => {
@@ -1069,7 +1069,7 @@ describe('Page.fill', function() {
   it.skip(WEBKIT)('should throw on incorrect date', async({page, server}) => {
     await page.setContent('<input type=date>');
     const error = await page.fill('input', '2020-13-05').catch(e => e);
-    expect(error.message).toContain('Malformed date "2020-13-05"');
+    expect(error.message).toContain('Malformed value');
   });
   it('should fill time input', async({page, server}) => {
     await page.setContent('<input type=time>');
@@ -1079,7 +1079,7 @@ describe('Page.fill', function() {
   it.skip(WEBKIT)('should throw on incorrect time', async({page, server}) => {
     await page.setContent('<input type=time>');
     const error = await page.fill('input', '25:05').catch(e => e);
-    expect(error.message).toContain('Malformed time "25:05"');
+    expect(error.message).toContain('Malformed value');
   });
   it('should fill datetime-local input', async({page, server}) => {
     await page.setContent('<input type=datetime-local>');
@@ -1089,7 +1089,7 @@ describe('Page.fill', function() {
   it.skip(WEBKIT || FFOX)('should throw on incorrect datetime-local', async({page, server}) => {
     await page.setContent('<input type=datetime-local>');
     const error = await page.fill('input', 'abc').catch(e => e);
-    expect(error.message).toContain('Malformed datetime-local "abc"');
+    expect(error.message).toContain('Malformed value');
   });
   it('should fill contenteditable', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
@@ -1213,7 +1213,7 @@ describe('Page.fill', function() {
     await page.setContent(`<input id="input" type="number"></input>`);
     let error = null;
     await page.fill('input', 'abc').catch(e => error = e);
-    expect(error.message).toContain('Cannot type text into input[type=number].');
+    expect(error.message).toContain('Cannot type text into input[type=number]');
   });
   it('should be able to clear', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
