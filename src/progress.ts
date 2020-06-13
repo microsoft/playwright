@@ -29,6 +29,12 @@ export interface Progress {
   throwIfAborted(): void;
 }
 
+let runningTaskCount = 0;
+
+export function isRunningTask(): boolean {
+  return !!runningTaskCount;
+}
+
 export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, logger: InnerLogger, timeout: number, apiName?: string): Promise<T> {
   const controller = new ProgressController(logger, timeout, apiName);
   return controller.run(task);
@@ -70,6 +76,7 @@ export class ProgressController {
   async run<T>(task: (progress: Progress) => Promise<T>): Promise<T> {
     assert(this._state === 'before');
     this._state = 'running';
+    ++runningTaskCount;
 
     const progress: Progress = {
       apiName: this._apiName,
@@ -104,7 +111,6 @@ export class ProgressController {
       const result = await Promise.race([promise, this._forceAbortPromise]);
       clearTimeout(timer);
       this._state = 'finished';
-      this._logRecording = [];
       this._logger.log(apiLog, `<= ${this._apiName} succeeded`);
       return result;
     } catch (e) {
@@ -112,10 +118,12 @@ export class ProgressController {
       rewriteErrorMessage(e, e.message + formatLogRecording(this._logRecording, this._apiName) + kLoggingNote);
       clearTimeout(timer);
       this._state = 'aborted';
-      this._logRecording = [];
       this._logger.log(apiLog, `<= ${this._apiName} failed`);
       await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));
       throw e;
+    } finally {
+      this._logRecording = [];
+      --runningTaskCount;
     }
   }
 

@@ -16,10 +16,12 @@
 
 export class Formatter {
   private _baseIndent: string;
+  private _baseOffset: string;
   private _lines: string[] = [];
 
-  constructor(indent: number = 2) {
-    this._baseIndent = ' '.repeat(indent);
+  constructor(offset = 0) {
+    this._baseIndent = ' '.repeat(2);
+    this._baseOffset = ' '.repeat(offset);
   }
 
   prepend(text: string) {
@@ -49,7 +51,7 @@ export class Formatter {
       line = spaces + extraSpaces + line;
       if (line.endsWith('{') || line.endsWith('['))
         spaces += this._baseIndent;
-      return line;
+      return this._baseOffset + line;
     }).join('\n');
   }
 }
@@ -62,7 +64,7 @@ export const formatColors: { cst: StringFormatter; kwd: StringFormatter; fnc: St
   fnc: text => `\u001b[38;5;223m${text}\x1b[0m`,
   prp: text => `\u001b[38;5;159m${text}\x1b[0m`,
   str: text => `\u001b[38;5;130m${quote(text)}\x1b[0m`,
-  cmt: text => `// \u001b[38;5;23m${text}\x1b[0m`
+  cmt: text => `\u001b[38;5;23m// ${text}\x1b[0m`
 };
 
 function quote(text: string, char: string = '\'') {

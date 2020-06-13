@@ -15,24 +15,28 @@
  */
 
 import type * as actions from '../recorderActions';
+import InjectedScript from '../../injected/injectedScript';
+import { parseSelector } from '../../common/selectorParser';
 
 declare global {
   interface Window {
-    recordPlaywrightAction?: (action: actions.Action) => void;
+    recordPlaywrightAction: (action: actions.Action) => void;
   }
 }
 
 export class Recorder {
-  constructor() {
+  private _injectedScript: InjectedScript;
+
+  constructor(injectedScript: InjectedScript) {
+    this._injectedScript = injectedScript;
+
     document.addEventListener('click', event => this._onClick(event), true);
     document.addEventListener('input', event => this._onInput(event), true);
     document.addEventListener('keydown', event => this._onKeyDown(event), true);
   }
 
   private _onClick(event: MouseEvent) {
-    if (!window.recordPlaywrightAction)
-      return;
-    const selector = this._buildSelector(event.target as Node);
+    const selector = this._buildSelector(event.target as Element);
     if ((event.target as Element).nodeName === 'SELECT')
       return;
     window.recordPlaywrightAction({
@@ -46,9 +50,7 @@ export class Recorder {
   }
 
   private _onInput(event: Event) {
-    if (!window.recordPlaywrightAction)
-      return;
-    const selector = this._buildSelector(event.target as Node);
+    const selector = this._buildSelector(event.target as Element);
     if ((event.target as Element).nodeName === 'INPUT') {
       const inputElement = event.target as HTMLInputElement;
       if ((inputElement.type || '').toLowerCase() === 'checkbox') {
@@ -78,11 +80,9 @@ export class Recorder {
   }
 
   private _onKeyDown(event: KeyboardEvent) {
-    if (!window.recordPlaywrightAction)
-      return;
     if (event.key !== 'Tab' && event.key !== 'Enter' && event.key !== 'Escape')
       return;
-    const selector = this._buildSelector(event.target as Node);
+    const selector = this._buildSelector(event.target as Element);
     window.recordPlaywrightAction({
       name: 'press',
       selector,
@@ -92,22 +92,71 @@ export class Recorder {
     });
   }
 
-  private _buildSelector(node: Node): string {
-    const element = node as Element;
-    for (const attribute of ['data-testid', 'aria-label', 'id', 'data-test-id', 'data-test']) {
+  private _buildSelector(targetElement: Element): string {
+    const path: string[] = [];
+    const root = document.documentElement;
+    for (let element: Element | null = targetElement; element && element !== root; element = element.parentElement) {
+      const selector = this._buildSelectorCandidate(element);
+      if (selector)
+        path.unshift(selector.selector);
+
+      const fullSelector = path.join(' ');
+      if (selector && selector.final)
+        return fullSelector;
+      if (targetElement === this._injectedScript.querySelector(parseSelector(fullSelector), root))
+        return fullSelector;
+    }
+    return '<selector>';
+  }
+
+  private _buildSelectorCandidate(element: Element): { final: boolean, selector: string } | null {
+    for (const attribute of ['data-testid', 'data-test-id', 'data-test']) {
       if (element.hasAttribute(attribute))
-        return `[${attribute}=${element.getAttribute(attribute)}]`;
+        return { final: true, selector: `${element.nodeName.toLocaleLowerCase()}[${attribute}=${element.getAttribute(attribute)}]` };
+    }
+    for (const attribute of ['aria-label']) {
+      if (element.hasAttribute(attribute))
+        return { final: false, selector: `${element.nodeName.toLocaleLowerCase()}[${attribute}=${element.getAttribute(attribute)}]` };
     }
     if (element.nodeName === 'INPUT') {
       if (element.hasAttribute('name'))
-        return `[input name=${element.getAttribute('name')}]`;
+        return { final: false, selector: `input[name=${element.getAttribute('name')}]` };
       if (element.hasAttribute('type'))
-        return `[input type=${element.getAttribute('type')}]`;
+        return { final: false, selector: `input[type=${element.getAttribute('type')}]` };
+    } else if (element.nodeName === 'IMG') {
+      if (element.hasAttribute('alt'))
+        return { final: false, selector: `img[alt="${element.getAttribute('alt')}"]` };
     }
-    if (element.firstChild && element.firstChild === element.lastChild && element.firstChild.nodeType === Node.TEXT_NODE)
-      return `text="${element.textContent}"`;
-    return '<selector>';
+    const textSelector = textSelectorForElement(element);
+    if (textSelector)
+      return { final: false, selector: textSelector };
+
+    // Depreoritize id, but still use it as a last resort.
+    if (element.hasAttribute('id'))
+      return { final: true, selector: `${element.nodeName.toLocaleLowerCase()}[id=${element.getAttribute('id')}]` };
+
+    return null;
   }
+}
+
+function textSelectorForElement(node: Node): string | null {
+  let needsTrim = false;
+  let onlyText: string | null = null;
+  for (const child of node.childNodes) {
+    if (child.nodeType !== Node.TEXT_NODE)
+      continue;
+    if (child.textContent && child.textContent.trim()) {
+      if (onlyText)
+        return null;
+      onlyText = child.textContent.trim();
+      needsTrim = child.textContent !== child.textContent.trim();
+    } else {
+      needsTrim = true;
+    }
+  }
+  if (!onlyText)
+    return null;
+  return needsTrim ? `text=/\\s*${escapeForRegex(onlyText)}\\s*/` : `text="${onlyText}"`;
 }
 
 function modifiersForEvent(event: MouseEvent | KeyboardEvent): number {
@@ -121,4 +170,8 @@ function buttonForEvent(event: MouseEvent): 'left' | 'middle' | 'right' {
     case 3: return 'right';
   }
   return 'left';
+}
+
+function escapeForRegex(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

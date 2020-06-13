@@ -32,7 +32,6 @@ import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
 import { logError, InnerLogger } from './logger';
 import { ProgressController } from './progress';
-import { RecorderController } from './debug/recorderController';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -502,12 +501,6 @@ export class Page extends EventEmitter {
 
   async uncheck(selector: string, options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     return this.mainFrame().uncheck(selector, options);
-  }
-
-  async _startRecordingUser() {
-    if (!helper.isDebugMode())
-      throw new Error('page._startRecordingUser is only available with PWDEBUG=1 environment variable');
-    new RecorderController(this).start();
   }
 
   async waitForTimeout(timeout: number) {

@@ -27,6 +27,6 @@ export default class DebugScript {
 
   initialize(injectedScript: InjectedScript) {
     this.consoleAPI = new ConsoleAPI(injectedScript);
-    this.recorder = new Recorder();
+    this.recorder = new Recorder(injectedScript);
   }
 }

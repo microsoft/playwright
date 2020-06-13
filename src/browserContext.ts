@@ -27,6 +27,7 @@ import { BrowserBase } from './browser';
 import { InnerLogger, Logger } from './logger';
 import { EventEmitter } from 'events';
 import { ProgressController } from './progress';
+import { DebugController } from './debug/debugController';
 
 type CommonContextOptions = {
   viewport?: types.Size | null,
@@ -98,21 +99,8 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   }
 
   async _initialize() {
-    if (!helper.isDebugMode())
-      return;
-
-    const installInFrame = async (frame: frames.Frame) => {
-      try {
-        const mainContext = await frame._mainContext();
-        await mainContext.debugScript();
-      } catch (e) {
-      }
-    };
-    this.on(Events.BrowserContext.Page, (page: Page) => {
-      for (const frame of page.frames())
-        installInFrame(frame);
-      page.on(Events.Page.FrameNavigated, installInFrame);
-    });
+    if (helper.isDebugMode())
+      new DebugController(this);
   }
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
