@@ -315,9 +315,9 @@ export default class InjectedScript {
       textarea.focus();
       return { value: 'done' };
     }
-    const range = element.ownerDocument!.createRange();
+    const range = element.ownerDocument.createRange();
     range.selectNodeContents(element);
-    const selection = element.ownerDocument!.defaultView!.getSelection();
+    const selection = element.ownerDocument.defaultView!.getSelection();
     if (!selection)
       return { error: 'Element belongs to invisible iframe.' };
     selection.removeAllRanges();
