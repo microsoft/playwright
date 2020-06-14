@@ -76,7 +76,7 @@ describe('Sanity checks', function () {
   });
 
   afterEach(async () => {
-    // Before each test close Electron application.
+    // After each test close Electron application.
     await this.app.close();
   });
 
