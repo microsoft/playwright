@@ -5,7 +5,10 @@
 - [Usage](#usage)
 - [First script](#first-script)
 - [System requirements](#system-requirements)
+- [TypeScript IDE support](#typescript-ide-support)
 - [Debugging scripts](#debugging-scripts)
+  * [Using editor debugger](#using-editor-debugger)
+  * [Verbose logging](#verbose-logging)
 <!-- GEN:stop -->
 
 <br>
@@ -80,8 +83,35 @@ Firefox and WebKit work across the 3 platforms (Windows, macOS, Linux):
 * **macOS**: Requires 10.14 or above.
 * **Linux**: Depending on your Linux distribution, you might need to install additional
   dependencies to run the browsers.
+  * Firefox requires Ubuntu 18.04+
   * For Ubuntu 18.04, the additional dependencies are defined in [our Docker image](docker/Dockerfile.bionic),
     which is based on Ubuntu.
+
+<br>
+
+## TypeScript IDE support
+
+Playwright comes with built-in support for TypeScript. Playwright type definitions will be imported automatically.
+
+It is also possible to add these types to your variables manually. In TypeScript:
+
+```ts
+let page: import('playwright').Page;
+```
+
+If you use JavaScript, you can still use TypeScript definitions for improved auto-completions and warnings in Visual Studio Code or WebStorm. Add the following to the top of your JavaScript file:
+
+```js
+//@ts-check
+// ...
+```
+
+You can also use JSDoc to set types for variables.
+
+```js
+/** @type {import('playwright').Page} */
+let page;
+```
 
 <br>
 
@@ -107,5 +137,3 @@ $ DEBUG=pw:api npm run test
 $ set DEBUG=pw:api
 $ npm run test
 ```
-
-<br>
