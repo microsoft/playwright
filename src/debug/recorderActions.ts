@@ -23,6 +23,7 @@ export type ActionName =
 export type ActionBase = {
   signals: Signal[],
   frameUrl?: string,
+  committed?: boolean,
 }
 
 export type ClickAction = ActionBase & {
@@ -74,6 +75,7 @@ export type Action = ClickAction | CheckAction | UncheckAction | FillAction | Na
 export type NavigationSignal = {
   name: 'navigation',
   url: string,
+  type: 'assert' | 'await',
 };
 
 export type Signal = NavigationSignal;

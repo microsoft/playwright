@@ -20,12 +20,14 @@ import { parseSelector } from '../../common/selectorParser';
 
 declare global {
   interface Window {
-    recordPlaywrightAction: (action: actions.Action) => void;
+    performPlaywrightAction: (action: actions.Action) => Promise<void>;
+    recordPlaywrightAction: (action: actions.Action) => Promise<void>;
   }
 }
 
 export class Recorder {
   private _injectedScript: InjectedScript;
+  private _performingAction = false;
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
@@ -35,13 +37,14 @@ export class Recorder {
     document.addEventListener('keydown', event => this._onKeyDown(event), true);
   }
 
-  private _onClick(event: MouseEvent) {
-    const selector = this._buildSelector(event.target as Element);
+  private async _onClick(event: MouseEvent) {
     if ((event.target as Element).nodeName === 'SELECT')
       return;
-    window.recordPlaywrightAction({
+
+    // Perform action consumes this event and asks Playwright to perform it.
+    this._performAction(event, {
       name: 'click',
-      selector,
+      selector: this._buildSelector(event.target as Element),
       signals: [],
       button: buttonForEvent(event),
       modifiers: modifiersForEvent(event),
@@ -49,17 +52,20 @@ export class Recorder {
     });
   }
 
-  private _onInput(event: Event) {
+  private async _onInput(event: Event) {
     const selector = this._buildSelector(event.target as Element);
     if ((event.target as Element).nodeName === 'INPUT') {
       const inputElement = event.target as HTMLInputElement;
       if ((inputElement.type || '').toLowerCase() === 'checkbox') {
-        window.recordPlaywrightAction({
+        // Perform action consumes this event and asks Playwright to perform it.
+        this._performAction(event, {
           name: inputElement.checked ? 'check' : 'uncheck',
           selector,
           signals: [],
         });
+        return;
       } else {
+        //  Non-navigating actions are simply recorded by Playwright.
         window.recordPlaywrightAction({
           name: 'fill',
           selector,
@@ -70,6 +76,7 @@ export class Recorder {
     }
     if ((event.target as Element).nodeName === 'SELECT') {
       const selectElement = event.target as HTMLSelectElement;
+      // TODO: move this to this._performAction
       window.recordPlaywrightAction({
         name: 'select',
         selector,
@@ -79,17 +86,27 @@ export class Recorder {
     }
   }
 
-  private _onKeyDown(event: KeyboardEvent) {
+  private async _onKeyDown(event: KeyboardEvent) {
     if (event.key !== 'Tab' && event.key !== 'Enter' && event.key !== 'Escape')
       return;
-    const selector = this._buildSelector(event.target as Element);
-    window.recordPlaywrightAction({
+    this._performAction(event, {
       name: 'press',
-      selector,
+      selector: this._buildSelector(event.target as Element),
       signals: [],
       key: event.key,
       modifiers: modifiersForEvent(event),
     });
+  }
+
+  private async _performAction(event: Event, action: actions.Action) {
+    // If Playwright is performing action for us, bail.
+    if (this._performingAction)
+      return;
+    // Consume as the first thing.
+    consumeEvent(event);
+    this._performingAction = true;
+    await window.performPlaywrightAction(action);
+    this._performingAction = false;
   }
 
   private _buildSelector(targetElement: Element): string {
@@ -174,4 +191,10 @@ function buttonForEvent(event: MouseEvent): 'left' | 'middle' | 'right' {
 
 function escapeForRegex(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function consumeEvent(e: Event) {
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation();
 }

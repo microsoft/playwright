@@ -25,8 +25,10 @@ export default class DebugScript {
   constructor() {
   }
 
-  initialize(injectedScript: InjectedScript) {
-    this.consoleAPI = new ConsoleAPI(injectedScript);
-    this.recorder = new Recorder(injectedScript);
+  initialize(injectedScript: InjectedScript, options: { console?: boolean, record?: boolean }) {
+    if (options.console)
+      this.consoleAPI = new ConsoleAPI(injectedScript);
+    if (options.record)
+      this.recorder = new Recorder(injectedScript);
   }
 }

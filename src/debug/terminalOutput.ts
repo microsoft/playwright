@@ -17,6 +17,9 @@
 import * as dom from '../dom';
 import { Formatter, formatColors } from '../utils/formatter';
 import { Action, NavigationSignal, actionTitle } from './recorderActions';
+import { toModifiers } from './recorderController';
+
+const { cst, cmt, fnc, kwd, prp, str } = formatColors;
 
 export class TerminalOutput {
   private _lastAction: Action | undefined;
@@ -24,9 +27,9 @@ export class TerminalOutput {
 
   constructor() {
     const formatter = new Formatter();
-    const { cst, fnc, kwd, str } = formatColors;
 
     formatter.add(`
+      ${kwd('const')} ${cst('assert')} = ${fnc('require')}(${str('assert')});
       ${kwd('const')} { ${cst('chromium')}, ${cst('firefox')}, ${cst('webkit')} } = ${fnc('require')}(${str('playwright')});
 
       (${kwd('async')}() => {
@@ -38,6 +41,7 @@ export class TerminalOutput {
   }
 
   addAction(action: Action) {
+    // We augment last action based on the type.
     let eraseLastAction = false;
     if (this._lastAction && action.name === 'fill' && this._lastAction.name === 'fill') {
       if (action.selector === this._lastAction.selector)
@@ -57,9 +61,11 @@ export class TerminalOutput {
   }
 
   _printAction(action: Action, eraseLastAction: boolean) {
+    // We erase terminating `})();` at all times.
     let eraseLines = 1;
     if (eraseLastAction && this._lastActionText)
       eraseLines += this._lastActionText.split('\n').length;
+    // And we erase the last action too if augmenting.
     for (let i = 0; i < eraseLines; ++i)
       process.stdout.write('\u001B[F\u001B[2K');
 
@@ -82,23 +88,24 @@ export class TerminalOutput {
 
   private _generateAction(action: Action): string {
     const formatter = new Formatter(2);
-    const { cst, cmt, fnc, kwd, prp, str } = formatColors;
     formatter.newLine();
     formatter.add(cmt(actionTitle(action)));
     let navigationSignal: NavigationSignal | undefined;
     if (action.name !== 'navigate' && action.signals && action.signals.length)
       navigationSignal = action.signals[action.signals.length - 1];
 
-    if (navigationSignal) {
+    const waitForNavigation = navigationSignal && navigationSignal.type === 'await';
+    const assertNavigation = navigationSignal && navigationSignal.type === 'assert';
+    if (waitForNavigation) {
       formatter.add(`${kwd('await')} ${cst('Promise')}.${fnc('all')}([
-        ${cst('page')}.${fnc('waitForNavigation')}({ ${prp('url')}: ${str(navigationSignal.url)} }),`);
+        ${cst('page')}.${fnc('waitForNavigation')}({ ${prp('url')}: ${str(navigationSignal!.url)} }),`);
     }
 
     const subject = action.frameUrl ?
       `${cst('page')}.${fnc('frame')}(${formatObject({ url: action.frameUrl })})` : cst('page');
 
-    const prefix = navigationSignal ? '' : kwd('await') + ' ';
-    const suffix = navigationSignal ? '' : ';';
+    const prefix = waitForNavigation ? '' : kwd('await') + ' ';
+    const suffix = waitForNavigation ? '' : ';';
     switch (action.name)  {
       case 'click': {
         let method = 'click';
@@ -138,8 +145,10 @@ export class TerminalOutput {
         formatter.add(`${prefix}${subject}.${fnc('select')}(${str(action.selector)}, ${formatObject(action.options.length > 1 ? action.options : action.options[0])})${suffix}`);
         break;
     }
-    if (navigationSignal)
+    if (waitForNavigation)
       formatter.add(`]);`);
+    else if (assertNavigation)
+      formatter.add(`  ${cst('assert')}.${fnc('equal')}(${cst('page')}.${fnc('url')}(), ${str(navigationSignal!.url)});`);
     return formatter.format();
   }
 }
@@ -152,7 +161,6 @@ function formatOptions(value: any): string {
 }
 
 function formatObject(value: any): string {
-  const { prp, str } = formatColors;
   if (typeof value === 'string')
     return str(value);
   if (Array.isArray(value))
@@ -169,15 +177,3 @@ function formatObject(value: any): string {
   return String(value);
 }
 
-function toModifiers(modifiers: number): ('Alt' | 'Control' | 'Meta' | 'Shift')[] {
-  const result: ('Alt' | 'Control' | 'Meta' | 'Shift')[] = [];
-  if (modifiers & 1)
-    result.push('Alt');
-  if (modifiers & 2)
-    result.push('Control');
-  if (modifiers & 4)
-    result.push('Meta');
-  if (modifiers & 8)
-    result.push('Shift');
-  return result;
-}
