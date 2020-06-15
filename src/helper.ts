@@ -33,7 +33,7 @@ export type RegisteredListener = {
 
 export type Listener = (...args: any[]) => void;
 
-const isDebugModeEnv = !!getFromENV('PWDEBUG');
+let isInDebugMode = !!getFromENV('PWDEBUG');
 
 class Helper {
   static evaluationString(fun: Function | string, ...args: any[]): string {
@@ -303,7 +303,11 @@ class Helper {
   }
 
   static isDebugMode(): boolean {
-    return isDebugModeEnv;
+    return isInDebugMode;
+  }
+
+  static setDebugMode() {
+    isInDebugMode = true;
   }
 }
 

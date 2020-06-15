@@ -59,7 +59,7 @@ function queryShadowInternal(root: SelectorRoot, attribute: string, value: strin
 }
 
 function queryShadowAllInternal(root: SelectorRoot, attribute: string, value: string, result: Element[]) {
-  const document = root instanceof Document ? root : root.ownerDocument!;
+  const document = root instanceof Document ? root : root.ownerDocument;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
   const shadowRoots = [];
   while (walker.nextNode()) {

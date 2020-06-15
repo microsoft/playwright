@@ -94,7 +94,7 @@ function isFilteredNode(root: SelectorRoot, document: Document) {
 }
 
 function queryInternal(root: SelectorRoot, matcher: Matcher, shadow: boolean): Element | undefined {
-  const document = root instanceof Document ? root : root.ownerDocument!;
+  const document = root instanceof Document ? root : root.ownerDocument;
   if (isFilteredNode(root, document))
     return;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, nodeFilter);
@@ -136,7 +136,7 @@ function queryInternal(root: SelectorRoot, matcher: Matcher, shadow: boolean): E
 }
 
 function queryAllInternal(root: SelectorRoot, matcher: Matcher, shadow: boolean, result: Element[]) {
-  const document = root instanceof Document ? root : root.ownerDocument!;
+  const document = root instanceof Document ? root : root.ownerDocument;
   if (isFilteredNode(root, document))
     return;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, nodeFilter);

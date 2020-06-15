@@ -78,7 +78,7 @@ function prepareTemplate(strings: TemplateStringsArray) {
   html += strings[strings.length - 1];
   template.innerHTML = html;
 
-  const walker = template.ownerDocument!.createTreeWalker(
+  const walker = template.ownerDocument.createTreeWalker(
       template.content, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, null, false);
   const emptyTextNodes: Node[] = [];
   const subs: Sub[] = [];
@@ -145,7 +145,7 @@ function shouldRemoveTextNode(node: Text) {
 }
 
 function renderTemplate(template: HTMLTemplateElement, subs: Sub[], values: (string | Node)[]): DocumentFragment | ChildNode {
-  const content = template.ownerDocument!.importNode(template.content, true)!;
+  const content = template.ownerDocument.importNode(template.content, true)!;
   const boundElements = Array.from(content.querySelectorAll('[dom-template-marked]'));
   for (const node of boundElements)
     node.removeAttribute('dom-template-marked');
