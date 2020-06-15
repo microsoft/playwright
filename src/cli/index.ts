@@ -23,6 +23,8 @@ import { Playwright } from '../server/playwright';
 import { BrowserType, LaunchOptions } from '../server/browserType';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import { BrowserContextOptions } from '../browserContext';
+import { setRecorderMode } from '../debug/debugController';
+import { helper } from '../helper';
 
 const playwright = new Playwright(__dirname, require('../../browsers.json')['browsers']);
 
@@ -43,6 +45,19 @@ program
       console.log('');
       console.log('  $ open');
       console.log('  $ -b webkit open https://example.com');
+    });
+
+program
+    .command('record [url]')
+    .description('open page in browser specified via -b, --browser and start recording')
+    .action(function(url, command) {
+      record(command.parent, url);
+    }).on('--help', function() {
+      console.log('');
+      console.log('Examples:');
+      console.log('');
+      console.log('  $ record');
+      console.log('  $ -b webkit record https://example.com');
     });
 
 const browsers = [
@@ -86,6 +101,12 @@ async function open(options: Options, url: string | undefined) {
     await page.goto(url);
   }
   return { browser, page };
+}
+
+async function record(options: Options, url: string | undefined) {
+  helper.setDebugMode();
+  setRecorderMode();
+  return await open(options, url);
 }
 
 function lookupBrowserType(name: string): BrowserType {
