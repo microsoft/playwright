@@ -87,10 +87,25 @@ Firefox and WebKit work across the 3 platforms (Windows, macOS, Linux):
 
 ## Debugging scripts
 
+### Using editor debugger
+
 Playwright scripts can be developed just like any other Node.js script. For example, you can use the [Node.js debugger](https://nodejs.org/api/debugger.html) or [VS Code debugging](https://code.visualstudio.com/docs/nodejs/nodejs-debugging) to set breakpoints and get fine grained control over execution.
 
   <a href="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png"><img src="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png" width="300" alt="Chromium Developer Tools"></a>
 
 It is also possible to open **browser developer tools** during execution, to inspect the DOM tree or network activity.
+
+### Verbose logging
+
+Playwright supports verbose logging with the `DEBUG` environment variable.
+
+```sh
+# Linux/macOS
+$ DEBUG=pw:api npm run test
+
+# Windows
+$ set DEBUG=pw:api
+$ npm run test
+```
 
 <br>
