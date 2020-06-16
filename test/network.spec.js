@@ -41,7 +41,7 @@ describe('Page.Events.Request', function() {
     await page.evaluate(() => fetch('/empty.html'));
     expect(requests.length).toBe(2);
   });
-  it.fail(FFOX)('should report requests and responses handled by service worker', async({page, server}) => {
+  it('should report requests and responses handled by service worker', async({page, server}) => {
     // Firefox issues Network.requestWillBeSent and nothing else.
     await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
     await page.evaluate(() => window.activationPromise);
