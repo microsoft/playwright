@@ -22,7 +22,6 @@ export type ActionName =
 
 export type ActionBase = {
   signals: Signal[],
-  frameUrl?: string,
   committed?: boolean,
 }
 
@@ -78,30 +77,35 @@ export type NavigationSignal = {
   type: 'assert' | 'await',
 };
 
-export type Signal = NavigationSignal;
+export type PopupSignal = {
+  name: 'popup',
+  popupAlias: string,
+};
+
+export type Signal = NavigationSignal | PopupSignal;
 
 export function actionTitle(action: Action): string {
   switch (action.name) {
     case 'check':
-      return 'Check';
+      return `Check ${action.selector}`;
     case 'uncheck':
-      return 'Uncheck';
+      return `Uncheck ${action.selector}`;
     case 'click': {
       if (action.clickCount === 1)
-        return 'Click';
+        return `Click ${action.selector}`;
       if (action.clickCount === 2)
-        return 'Double click';
+        return `Double click ${action.selector}`;
       if (action.clickCount === 3)
-        return 'Triple click';
+        return `Triple click ${action.selector}`;
       return `${action.clickCount}× click`;
     }
     case 'fill':
-      return 'Fill';
+      return `Fill ${action.selector}`;
     case 'navigate':
-      return 'Go to';
+      return `Go to ${action.url}`;
     case 'press':
-      return 'Press';
+      return `Press ${action.key}` + (action.modifiers ? ' with modifiers' : '');
     case 'select':
-      return 'Select';
+      return `Select ${action.selector}`;
   }
 }

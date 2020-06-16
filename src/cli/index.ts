@@ -23,7 +23,6 @@ import { Playwright } from '../server/playwright';
 import { BrowserType, LaunchOptions } from '../server/browserType';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import { BrowserContextOptions } from '../browserContext';
-import { setRecorderMode } from '../debug/debugController';
 import { helper } from '../helper';
 
 const playwright = new Playwright(__dirname, require('../../browsers.json')['browsers']);
@@ -104,8 +103,7 @@ async function open(options: Options, url: string | undefined) {
 }
 
 async function record(options: Options, url: string | undefined) {
-  helper.setDebugMode();
-  setRecorderMode();
+  helper.setRecordMode(true);
   return await open(options, url);
 }
 

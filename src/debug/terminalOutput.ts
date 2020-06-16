@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+import { Writable } from 'stream';
 import * as dom from '../dom';
-import { Formatter, formatColors } from '../utils/formatter';
-import { Action, NavigationSignal, actionTitle } from './recorderActions';
+import { Frame } from '../frames';
+import { formatColors, Formatter } from '../utils/formatter';
+import { Action, actionTitle, NavigationSignal, PopupSignal, Signal } from './recorderActions';
 import { toModifiers } from './recorderController';
 
 const { cst, cmt, fnc, kwd, prp, str } = formatColors;
@@ -24,8 +26,10 @@ const { cst, cmt, fnc, kwd, prp, str } = formatColors;
 export class TerminalOutput {
   private _lastAction: Action | undefined;
   private _lastActionText: string | undefined;
+  private _out: Writable;
 
-  constructor() {
+  constructor(out: Writable) {
+    this._out = out;
     const formatter = new Formatter();
 
     formatter.add(`
@@ -36,11 +40,10 @@ export class TerminalOutput {
         ${kwd('const')} ${cst('browser')} = ${kwd('await')} ${cst(`chromium`)}.${fnc('launch')}();
         ${kwd('const')} ${cst('page')} = ${kwd('await')} ${cst('browser')}.${fnc('newPage')}();
     `);
-    process.stdout.write(formatter.format());
-    process.stdout.write(`\n})();`);
+    this._out.write(formatter.format() + '\n`})();`\n');
   }
 
-  addAction(action: Action) {
+  addAction(pageAlias: string, frame: Frame, action: Action) {
     // We augment last action based on the type.
     let eraseLastAction = false;
     if (this._lastAction && action.name === 'fill' && this._lastAction.name === 'fill') {
@@ -57,55 +60,85 @@ export class TerminalOutput {
           eraseLastAction = true;
       }
     }
-    this._printAction(action, eraseLastAction);
+    this._printAction(pageAlias, frame, action, eraseLastAction);
   }
 
-  _printAction(action: Action, eraseLastAction: boolean) {
+  _printAction(pageAlias: string, frame: Frame, action: Action, eraseLastAction: boolean) {
     // We erase terminating `})();` at all times.
     let eraseLines = 1;
     if (eraseLastAction && this._lastActionText)
       eraseLines += this._lastActionText.split('\n').length;
     // And we erase the last action too if augmenting.
     for (let i = 0; i < eraseLines; ++i)
-      process.stdout.write('\u001B[F\u001B[2K');
+      this._out.write('\u001B[1A\u001B[2K');
 
     this._lastAction = action;
-    this._lastActionText = this._generateAction(action);
-    console.log(this._lastActionText);   // eslint-disable-line no-console
-    console.log(`})();`);   // eslint-disable-line no-console
+    this._lastActionText = this._generateAction(pageAlias, frame, action);
+    this._out.write(this._lastActionText + '\n})();\n');
   }
 
   lastAction(): Action | undefined {
     return this._lastAction;
   }
 
-  signal(signal: NavigationSignal) {
+  signal(pageAlias: string, frame: Frame, signal: Signal) {
     if (this._lastAction) {
       this._lastAction.signals.push(signal);
-      this._printAction(this._lastAction, true);
+      this._printAction(pageAlias, frame, this._lastAction, true);
     }
   }
 
-  private _generateAction(action: Action): string {
+  private _generateAction(pageAlias: string, frame: Frame, action: Action): string {
     const formatter = new Formatter(2);
     formatter.newLine();
     formatter.add(cmt(actionTitle(action)));
+
+    const subject = frame === frame._page.mainFrame() ? cst(pageAlias) :
+      `${cst(pageAlias)}.${fnc('frame')}(${formatObject({ url: frame.url() })})`;
+
     let navigationSignal: NavigationSignal | undefined;
-    if (action.name !== 'navigate' && action.signals && action.signals.length)
-      navigationSignal = action.signals[action.signals.length - 1];
+    let popupSignal: PopupSignal | undefined;
+    for (const signal of action.signals) {
+      if (signal.name === 'navigation')
+        navigationSignal = signal;
+      if (signal.name === 'popup')
+        popupSignal = signal;
+    }
 
     const waitForNavigation = navigationSignal && navigationSignal.type === 'await';
     const assertNavigation = navigationSignal && navigationSignal.type === 'assert';
-    if (waitForNavigation) {
-      formatter.add(`${kwd('await')} ${cst('Promise')}.${fnc('all')}([
-        ${cst('page')}.${fnc('waitForNavigation')}({ ${prp('url')}: ${str(navigationSignal!.url)} }),`);
+
+    const emitPromiseAll = waitForNavigation || popupSignal;
+    if (emitPromiseAll) {
+      // Generate either await Promise.all([]) or
+      // const [popup1] = await Promise.all([]).
+      let leftHandSide = '';
+      if (popupSignal)
+        leftHandSide = `${kwd('const')} [${cst(popupSignal.popupAlias)}] = `;
+      formatter.add(`${leftHandSide}${kwd('await')} ${cst('Promise')}.${fnc('all')}([`);
     }
 
-    const subject = action.frameUrl ?
-      `${cst('page')}.${fnc('frame')}(${formatObject({ url: action.frameUrl })})` : cst('page');
+    // Popup signals.
+    if (popupSignal)
+      formatter.add(`${cst(pageAlias)}.${fnc('waitForEvent')}(${str('popup')}),`);
+
+    // Navigation signal.
+    if (waitForNavigation)
+      formatter.add(`${cst(pageAlias)}.${fnc('waitForNavigation')}({ ${prp('url')}: ${str(navigationSignal!.url)} }),`);
 
     const prefix = waitForNavigation ? '' : kwd('await') + ' ';
+    const actionCall = this._generateActionCall(action);
     const suffix = waitForNavigation ? '' : ';';
+    formatter.add(`${prefix}${subject}.${actionCall}${suffix}`);
+
+    if (emitPromiseAll)
+      formatter.add(`]);`);
+    else if (assertNavigation)
+      formatter.add(`  ${cst('assert')}.${fnc('equal')}(${cst(pageAlias)}.${fnc('url')}(), ${str(navigationSignal!.url)});`);
+    return formatter.format();
+  }
+
+  private _generateActionCall(action: Action): string {
     switch (action.name)  {
       case 'click': {
         let method = 'click';
@@ -120,36 +153,24 @@ export class TerminalOutput {
         if (action.clickCount > 2)
           options.clickCount = action.clickCount;
         const optionsString = formatOptions(options);
-        formatter.add(`${prefix}${subject}.${fnc(method)}(${str(action.selector)}${optionsString})${suffix}`);
-        break;
+        return `${fnc(method)}(${str(action.selector)}${optionsString})`;
       }
       case 'check':
-        formatter.add(`${prefix}${subject}.${fnc('check')}(${str(action.selector)})${suffix}`);
-        break;
+        return `${fnc('check')}(${str(action.selector)})`;
       case 'uncheck':
-        formatter.add(`${prefix}${subject}.${fnc('uncheck')}(${str(action.selector)})${suffix}`);
-        break;
+        return `${fnc('uncheck')}(${str(action.selector)})`;
       case 'fill':
-        formatter.add(`${prefix}${subject}.${fnc('fill')}(${str(action.selector)}, ${str(action.text)})${suffix}`);
-        break;
+        return `${fnc('fill')}(${str(action.selector)}, ${str(action.text)})`;
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
-        formatter.add(`${prefix}${subject}.${fnc('press')}(${str(action.selector)}, ${str(shortcut)})${suffix}`);
-        break;
+        return `${fnc('press')}(${str(action.selector)}, ${str(shortcut)})`;
       }
       case 'navigate':
-        formatter.add(`${prefix}${subject}.${fnc('goto')}(${str(action.url)})${suffix}`);
-        break;
+        return `${fnc('goto')}(${str(action.url)})`;
       case 'select':
-        formatter.add(`${prefix}${subject}.${fnc('select')}(${str(action.selector)}, ${formatObject(action.options.length > 1 ? action.options : action.options[0])})${suffix}`);
-        break;
+        return `${fnc('selectOption')}(${str(action.selector)}, ${formatObject(action.options.length > 1 ? action.options : action.options[0])})`;
     }
-    if (waitForNavigation)
-      formatter.add(`]);`);
-    else if (assertNavigation)
-      formatter.add(`  ${cst('assert')}.${fnc('equal')}(${cst('page')}.${fnc('url')}(), ${str(navigationSignal!.url)});`);
-    return formatter.format();
   }
 }
 

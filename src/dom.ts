@@ -95,9 +95,6 @@ export class FrameExecutionContext extends js.ExecutionContext {
   }
 
   createDebugScript(options: { record?: boolean, console?: boolean }): Promise<js.JSHandle<DebugScript> | undefined> {
-    if (!helper.isDebugMode())
-      return Promise.resolve(undefined);
-
     if (!this._debugScriptPromise) {
       const source = `new (${debugScriptSource.source})()`;
       this._debugScriptPromise = this._delegate.rawEvaluate(source).then(objectId => new js.JSHandle(this, 'object', objectId)).then(async debugScript => {
