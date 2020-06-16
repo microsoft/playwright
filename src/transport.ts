@@ -17,9 +17,7 @@
 
 import * as WebSocket from 'ws';
 import { helper } from './helper';
-import { Log } from './logger';
 import { Progress } from './progress';
-import { browserLog } from './server/processLauncher';
 
 export type ProtocolRequest = {
   id: number;
@@ -128,7 +126,7 @@ export class WebSocketTransport implements ConnectionTransport {
   onclose?: () => void;
 
   static async connect(progress: Progress, url: string): Promise<WebSocketTransport> {
-    progress.log(browserLog, `<ws connecting> ${url}`);
+    progress.logger.info(`<ws connecting> ${url}`);
     const transport = new WebSocketTransport(progress, url);
     let success = false;
     progress.aborted.then(() => {
@@ -137,11 +135,11 @@ export class WebSocketTransport implements ConnectionTransport {
     });
     await new Promise<WebSocketTransport>((fulfill, reject) => {
       transport._ws.addEventListener('open', async () => {
-        progress.log(browserLog, `<ws connected> ${url}`);
+        progress.logger.info(`<ws connected> ${url}`);
         fulfill(transport);
       });
       transport._ws.addEventListener('error', event => {
-        progress.log(browserLog, `<ws connect error> ${url} ${event.message}`);
+        progress.logger.info(`<ws connect error> ${url} ${event.message}`);
         reject(new Error('WebSocket error: ' + event.message));
         transport._ws.close();
       });
@@ -171,7 +169,7 @@ export class WebSocketTransport implements ConnectionTransport {
     });
 
     this._ws.addEventListener('close', event => {
-      this._progress && this._progress.log(browserLog, `<ws disconnected> ${url}`);
+      this._progress && this._progress.logger.info(`<ws disconnected> ${url}`);
       if (this.onclose)
         this.onclose.call(null);
     });
@@ -184,7 +182,7 @@ export class WebSocketTransport implements ConnectionTransport {
   }
 
   close() {
-    this._progress && this._progress.log(browserLog, `<ws disconnecting> ${this._ws.url}`);
+    this._progress && this._progress.logger.info(`<ws disconnecting> ${this._ws.url}`);
     this._ws.close();
   }
 
@@ -229,9 +227,3 @@ export class InterceptingTransport implements ConnectionTransport {
     this._delegate.close();
   }
 }
-
-export const protocolLog: Log = {
-  name: 'protocol',
-  severity: 'verbose',
-  color: 'green'
-};

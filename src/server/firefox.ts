@@ -24,7 +24,7 @@ import { kBrowserCloseMessageId } from '../firefox/ffConnection';
 import { LaunchOptionsBase, BrowserTypeBase, FirefoxUserPrefsOptions } from './browserType';
 import { Env } from './processLauncher';
 import { ConnectionTransport, ProtocolResponse, ProtocolRequest } from '../transport';
-import { InnerLogger } from '../logger';
+import { Logger } from '../logger';
 import { BrowserOptions } from '../browser';
 import { BrowserDescriptor } from '../install/browserPaths';
 import { WebSocketServer } from './webSocketServer';
@@ -52,7 +52,7 @@ export class Firefox extends BrowserTypeBase {
     transport.send(message);
   }
 
-  _startWebSocketServer(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketServer {
+  _startWebSocketServer(transport: ConnectionTransport, logger: Logger, port: number): WebSocketServer {
     return startWebSocketServer(transport, logger, port);
   }
 
@@ -110,7 +110,7 @@ type SessionData = {
  socket: ws,
 };
 
-function startWebSocketServer(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketServer {
+function startWebSocketServer(transport: ConnectionTransport, logger: Logger, port: number): WebSocketServer {
   const pendingBrowserContextCreations = new Set<number>();
   const pendingBrowserContextDeletions = new Map<number, string>();
   const browserContextIds = new Map<string, ws>();

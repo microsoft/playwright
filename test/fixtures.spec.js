@@ -187,10 +187,4 @@ describe('StackTrace', () => {
     });
     expect(filePath).toBe(__filename);
   });
-  it('api call', async state => {
-    const stackTrace = require(path.join(state.playwrightPath, 'lib', 'utils', 'stackTrace'));
-    const callme = require('./fixtures/callback');
-    const apiCall = callme(stackTrace.getCurrentApiCall.bind(stackTrace, path.join(__dirname, 'fixtures') + path.sep));
-    expect(apiCall).toBe('callme');
-  });
 });

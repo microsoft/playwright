@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-import { InnerLogger, Log, apiLog } from './logger';
+import { Logger } from './logger';
 import { TimeoutError } from './errors';
 import { assert } from './helper';
-import { getCurrentApiCall, rewriteErrorMessage } from './utils/stackTrace';
+import { rewriteErrorMessage } from './utils/stackTrace';
 
 export interface Progress {
   readonly apiName: string;
   readonly aborted: Promise<void>;
+  readonly logger: Logger;
   timeUntilDeadline(): number;
   isRunning(): boolean;
   cleanupWhenAborted(cleanup: () => any): void;
-  log(log: Log, message: string | Error): void;
   throwIfAborted(): void;
 }
 
@@ -35,7 +35,7 @@ export function isRunningTask(): boolean {
   return !!runningTaskCount;
 }
 
-export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, logger: InnerLogger, timeout: number, apiName?: string): Promise<T> {
+export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, logger: Logger, timeout: number, apiName: string): Promise<T> {
   const controller = new ProgressController(logger, timeout, apiName);
   return controller.run(task);
 }
@@ -54,15 +54,14 @@ export class ProgressController {
   // Cleanups to be run only in the case of abort.
   private _cleanups: (() => any)[] = [];
 
-  private _logger: InnerLogger;
-  private _logRecording: string[] = [];
+  private _logger: Logger;
   private _state: 'before' | 'running' | 'aborted' | 'finished' = 'before';
   private _apiName: string;
   private _deadline: number;
   private _timeout: number;
 
-  constructor(logger: InnerLogger, timeout: number, apiName?: string) {
-    this._apiName = apiName || getCurrentApiCall();
+  constructor(logger: Logger, timeout: number, apiName: string) {
+    this._apiName = apiName;
     this._logger = logger;
 
     this._timeout = timeout;
@@ -78,9 +77,12 @@ export class ProgressController {
     this._state = 'running';
     ++runningTaskCount;
 
+    const loggerScope = this._logger.createScope(this._apiName, true);
+
     const progress: Progress = {
       apiName: this._apiName,
       aborted: this._abortedPromise,
+      logger: loggerScope,
       timeUntilDeadline: () => this._deadline ? this._deadline - monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
       isRunning: () => this._state === 'running',
       cleanupWhenAborted: (cleanup: () => any) => {
@@ -89,20 +91,11 @@ export class ProgressController {
         else
           runCleanup(cleanup);
       },
-      log: (log: Log, message: string | Error) => {
-        if (this._state === 'running') {
-          this._logRecording.push(`[${log.name}] ${message.toString()}`);
-          this._logger.log(log, '  ' + message);
-        } else {
-          this._logger.log(log, message);
-        }
-      },
       throwIfAborted: () => {
         if (this._state === 'aborted')
           throw new AbortedError();
       },
     };
-    this._logger.log(apiLog, `=> ${this._apiName} started`);
 
     const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded during ${this._apiName}.`);
     const timer = setTimeout(() => this._forceAbort(timeoutError), progress.timeUntilDeadline());
@@ -111,18 +104,17 @@ export class ProgressController {
       const result = await Promise.race([promise, this._forceAbortPromise]);
       clearTimeout(timer);
       this._state = 'finished';
-      this._logger.log(apiLog, `<= ${this._apiName} succeeded`);
+      loggerScope.endScope('succeeded');
       return result;
     } catch (e) {
       this._aborted();
-      rewriteErrorMessage(e, e.message + formatLogRecording(this._logRecording, this._apiName) + kLoggingNote);
+      rewriteErrorMessage(e, e.message + formatLogRecording(loggerScope.recording(), this._apiName) + kLoggingNote);
       clearTimeout(timer);
       this._state = 'aborted';
-      this._logger.log(apiLog, `<= ${this._apiName} failed`);
+      loggerScope.endScope(`failed`);
       await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));
       throw e;
     } finally {
-      this._logRecording = [];
       --runningTaskCount;
     }
   }
