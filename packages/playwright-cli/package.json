@@ -1,7 +1,7 @@
 {
   "name": "playwright-cli",
   "version": "0.1.0",
-  "description": "A high-level API to automate Electron",
+  "description": "Playwright CLI",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
   "scripts": {},
