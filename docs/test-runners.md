@@ -6,7 +6,6 @@ With a few lines of code, you can hook up Playwright to your favorite JavaScript
 - [Jest / Jasmine](#jest--jasmine)
 - [AVA](#ava)
 - [Mocha](#mocha)
-- [IDE support](#ide-support)
 - [Multiple Browsers](#multiple-browsers)
 <!-- GEN:stop -->
 
@@ -97,19 +96,6 @@ it('should work', async () => {
 });
 ```
 <br>
-
-## IDE support
-
-If using TypeScript, add types to your variables like:
-```ts
-let page: import('playwright').Page;
-```
-
-If using JavaScript, you can still get nice autocompletions in VSCode or WebStorm by using JSDoc.
-```js
-/** @type {import('playwright').Page} */
-let page;
-```
 
 ## Multiple Browsers
 
