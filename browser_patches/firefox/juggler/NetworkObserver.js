@@ -154,6 +154,7 @@ class NetworkObserver {
     this._pendingAuthentication = new Set();  // pre-auth id
     this._postAuthChannelIdToRequestId = new Map();  // pre-auth id => post-auth id
     this._bodyListeners = new Map();  // channel id => ResponseBodyListener.
+    this._channelsReceivedOnResponse = new Set();  // channel ids that have seen onResponse.
 
     const protocolProxyService = Cc['@mozilla.org/network/protocol-proxy-service;1'].getService();
     this._channelProxyFilter = {
@@ -255,6 +256,13 @@ class NetworkObserver {
     } else if (!(flags & Ci.nsIChannelEventSink.REDIRECT_INTERNAL)) {
       // Regular (non-internal) redirect.
       this._redirectMap.set(newRequestId, oldRequestId);
+    } else {
+      // Requests intercepted by Service Worker get redirected to a different channel with the same id.
+      // In addition, they do not receive onResponse. We update body listener to use the new channel,
+      // and it will ensure onResponse before any data is available or request finishes.
+      const bodyListener = this._bodyListeners.get(oldHttpChannel.channelId + '');
+      if (bodyListener)
+        bodyListener._httpChannel = newHttpChannel;
     }
   }
 
@@ -443,9 +451,15 @@ class NetworkObserver {
     const id = httpChannel.channelId + '';
     this._postResumeChannelIdToRequestId.delete(id);
     this._postAuthChannelIdToRequestId.delete(id);
+    this._channelsReceivedOnResponse.delete(id);
   }
 
   _onResponse(fromCache, httpChannel, topic) {
+    if (this._channelsReceivedOnResponse.has(httpChannel.channelId + '')) {
+      // We can come here twice because of service workers, see ResponseBodyLoader.
+      return;
+    }
+    this._channelsReceivedOnResponse.add(httpChannel.channelId + '');
     const pageNetwork = this._pageNetworkForChannel(httpChannel);
     if (!pageNetwork)
       return;
@@ -628,11 +642,23 @@ class ResponseBodyListener {
     this._networkObserver._bodyListeners.set(this._httpChannel.channelId + '', this);
   }
 
+  _ensureOnResponse() {
+    // For requests intercepted by Service Worker, we do not get onResponse normally,
+    // but we do get nsIRequestObserver notifications.
+    this._networkObserver._onResponse(false /* fromCache */, this._httpChannel, '');
+  }
+
   onDataAvailable(aRequest, aInputStream, aOffset, aCount) {
     if (this._disposed) {
-      this.originalListener.onDataAvailable(aRequest, aInputStream, aOffset, aCount);
+      try {
+        this.originalListener.onDataAvailable(aRequest, aInputStream, aOffset, aCount);
+      } catch (e) {
+        // Be ready to original listener exceptions.
+      }
       return;
     }
+
+    this._ensureOnResponse();
 
     const iStream = new BinaryInputStream(aInputStream);
     const sStream = new StorageStream(8192, aCount, null);
@@ -643,19 +669,32 @@ class ResponseBodyListener {
     this._chunks.push(data);
 
     oStream.writeBytes(data, aCount);
-    this.originalListener.onDataAvailable(aRequest, sStream.newInputStream(0), aOffset, aCount);
+    try {
+      this.originalListener.onDataAvailable(aRequest, sStream.newInputStream(0), aOffset, aCount);
+    } catch (e) {
+      // Be ready to original listener exceptions.
+    }
   }
 
   onStartRequest(aRequest) {
-    this.originalListener.onStartRequest(aRequest);
+    try {
+      this.originalListener.onStartRequest(aRequest);
+    } catch (e) {
+      // Be ready to original listener exceptions.
+    }
   }
 
   onStopRequest(aRequest, aStatusCode) {
-    this.originalListener.onStopRequest(aRequest, aStatusCode);
+    try {
+      this.originalListener.onStopRequest(aRequest, aStatusCode);
+    } catch (e) {
+      // Be ready to original listener exceptions.
+    }
     if (this._disposed)
       return;
 
     if (aStatusCode === 0) {
+      this._ensureOnResponse();
       const body = this._chunks.join('');
       this._networkObserver._onResponseFinished(this._pageNetwork, this._httpChannel, body);
     } else {
