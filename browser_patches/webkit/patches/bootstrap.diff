@@ -7667,10 +7667,10 @@ index 66bf24df826daa8e7284248fd1b728cb5ebff343..d40f4f4be2bf76fa300cb54a06e81ff5
  
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..c7f51f06dcbc233aef69d9d8b6bf91e70e817096
+index 0000000000000000000000000000000000000000..54529a23f53cebe6f8a96873ca6c2f31f0481ae0
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp
-@@ -0,0 +1,136 @@
+@@ -0,0 +1,158 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -7723,6 +7723,7 @@ index 0000000000000000000000000000000000000000..c7f51f06dcbc233aef69d9d8b6bf91e7
 +
 +enum {
 +    CREATE_NEW_PAGE,
++    QUIT_APPLICATION,
 +
 +    LAST_SIGNAL
 +};
@@ -7747,7 +7748,7 @@ index 0000000000000000000000000000000000000000..c7f51f06dcbc233aef69d9d8b6bf91e7
 +     * #WebKitWebContext.
 +     *
 +     * This signal is emitted when inspector receives 'Browser.createPage' command
-+     * from its remote client. If the signla is not handled the command will fail.
++     * from its remote client. If the signal is not handled the command will fail.
 +     *
 +     * Returns: %WebKitWebView that contains created page.
 +     */
@@ -7765,6 +7766,24 @@ index 0000000000000000000000000000000000000000..c7f51f06dcbc233aef69d9d8b6bf91e7
 +#endif
 +        1,
 +        WEBKIT_TYPE_WEB_CONTEXT);
++
++    /**
++     * WebKitBrowserInspector::quit-application:
++     * @inspector: the #WebKitBrowserInspector on which the signal is emitted
++     *
++     * Emitted when the inspector is requested to close the browser application.
++     *
++     * This signal is emitted when inspector receives 'Browser.close' command
++     * from its remote client. If the signal is not handled the command will fail.
++     */
++    signals[QUIT_APPLICATION] = g_signal_new(
++        "quit-application",
++        G_TYPE_FROM_CLASS(gObjectClass),
++        G_SIGNAL_RUN_LAST,
++        G_STRUCT_OFFSET(WebKitBrowserInspectorClass, quit_application),
++        nullptr, nullptr,
++        g_cclosure_marshal_VOID__VOID,
++        G_TYPE_NONE, 0);
 +}
 +
 +WebKit::WebPageProxy* webkitBrowserInspectorCreateNewPageInContext(WebKitWebContext* context)
@@ -7774,6 +7793,11 @@ index 0000000000000000000000000000000000000000..c7f51f06dcbc233aef69d9d8b6bf91e7
 +    if (!newWebView)
 +        return nullptr;
 +    return  &webkitWebViewGetPage(newWebView);
++}
++
++void webkitBrowserInspectorQuitApplication()
++{
++    g_signal_emit(webkit_browser_inspector_get_default(), signals[QUIT_APPLICATION], 0, NULL);
 +}
 +
 +static gpointer createWebKitBrowserInspector(gpointer)
@@ -7801,18 +7825,16 @@ index 0000000000000000000000000000000000000000..c7f51f06dcbc233aef69d9d8b6bf91e7
 + * Creates browser inspector and configures pipe handler to communicate with
 + * the parent process.
 + */
-+void webkit_browser_inspector_initialize_pipe(GMainLoop* mainLoop, const char* defaultProxyURI, const char* const* ignoreHosts)
++void webkit_browser_inspector_initialize_pipe(const char* defaultProxyURI, const char* const* ignoreHosts)
 +{
-+#if ENABLE(REMOTE_INSPECTOR)
-+    WebKit::initializeBrowserInspectorPipe(makeUnique<WebKit::InspectorPlaywrightAgentClientGlib>(mainLoop, defaultProxyURI, ignoreHosts));
-+#endif
++    WebKit::initializeBrowserInspectorPipe(makeUnique<WebKit::InspectorPlaywrightAgentClientGlib>(defaultProxyURI, ignoreHosts));
 +}
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspectorPrivate.h b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspectorPrivate.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..1bff4e694f19264d1be418198b7921780e4f8309
+index 0000000000000000000000000000000000000000..e0b1da48465c850f541532ed961d1b778bea6028
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspectorPrivate.h
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,32 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -7844,6 +7866,7 @@ index 0000000000000000000000000000000000000000..1bff4e694f19264d1be418198b792178
 +#include "WebPageProxy.h"
 +
 +WebKit::WebPageProxy* webkitBrowserInspectorCreateNewPageInContext(WebKitWebContext*);
++void webkitBrowserInspectorQuitApplication();
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitUIClient.cpp b/Source/WebKit/UIProcess/API/glib/WebKitUIClient.cpp
 index 2ceb2b4f49f409bbe6e6810115e36d0c84f83b5d..16d2062b746b80ace6f39d779e9c3b8796b581b1 100644
 --- a/Source/WebKit/UIProcess/API/glib/WebKitUIClient.cpp
@@ -8100,7 +8123,7 @@ index 0aee4bc9380cb47ca4900d8556d51e24d8f14be7..82d1d747a224141e9f006c634b7bfac2
      webkitWebViewBaseForwardNextKeyEvent(webkitWebViewBase);
 diff --git a/Source/WebKit/UIProcess/API/gtk/WebKitBrowserInspector.h b/Source/WebKit/UIProcess/API/gtk/WebKitBrowserInspector.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..1044d9b4df51acb52fb7ee03456b5a64ef7039a8
+index 0000000000000000000000000000000000000000..9f1a0173a5641d6f158d815b8f7b9ea66f65c26d
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/gtk/WebKitBrowserInspector.h
 @@ -0,0 +1,81 @@
@@ -8164,6 +8187,7 @@ index 0000000000000000000000000000000000000000..1044d9b4df51acb52fb7ee03456b5a64
 +
 +    WebKitWebView *(* create_new_page)           (WebKitBrowserInspector    *browser_inspector,
 +                                                  WebKitWebContext          *context);
++    WebKitWebView *(* quit_application)          (WebKitBrowserInspector    *browser_inspector);
 +
 +    void (*_webkit_reserved0) (void);
 +    void (*_webkit_reserved1) (void);
@@ -8178,9 +8202,8 @@ index 0000000000000000000000000000000000000000..1044d9b4df51acb52fb7ee03456b5a64
 +webkit_browser_inspector_get_default                  (void);
 +
 +WEBKIT_API void
-+webkit_browser_inspector_initialize_pipe              (GMainLoop*,
-+                                                      const char* defaultProxyURI,
-+                                                      const char* const* ignoreHosts);
++webkit_browser_inspector_initialize_pipe              (const char* defaultProxyURI,
++                                                       const char* const* ignoreHosts);
 +
 +G_END_DECLS
 +
@@ -8212,7 +8235,7 @@ index c8b41f407774d2337e99cc7f9151ec65be3fc532..22faf21f9a7946a7898cedfc1b6ec131
  void PageClientImpl::doneWithKeyEvent(const NativeWebKeyboardEvent&, bool)
 diff --git a/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h b/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..0e8b78b60e8f306c98295afb5c7e5ed150e4918e
+index 0000000000000000000000000000000000000000..cb1a540d341b07581ec87b922b7d007ce45ba989
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h
 @@ -0,0 +1,81 @@
@@ -8276,6 +8299,7 @@ index 0000000000000000000000000000000000000000..0e8b78b60e8f306c98295afb5c7e5ed1
 +
 +    WebKitWebView *(* create_new_page)           (WebKitBrowserInspector    *browser_inspector,
 +                                                  WebKitWebContext          *context);
++    WebKitWebView *(* quit_application)          (WebKitBrowserInspector    *browser_inspector);
 +
 +    void (*_webkit_reserved0) (void);
 +    void (*_webkit_reserved1) (void);
@@ -8290,9 +8314,8 @@ index 0000000000000000000000000000000000000000..0e8b78b60e8f306c98295afb5c7e5ed1
 +webkit_browser_inspector_get_default                  (void);
 +
 +WEBKIT_API void
-+webkit_browser_inspector_initialize_pipe              (GMainLoop*,
-+                                                      const char* defaultProxyURI,
-+                                                      const char* const* ignoreHosts);
++webkit_browser_inspector_initialize_pipe              (const char* defaultProxyURI,
++                                                       const char* const* ignoreHosts);
 +
 +G_END_DECLS
 +
@@ -13105,10 +13128,10 @@ index 31d29091985f34a65134a2b0e7cb3ace1dae441d..571ceac8a4b291fa6e91eb8b17065c0a
  };
 diff --git a/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..690cc1946b7d61aabaeca4a1013aaa0305339b76
+index 0000000000000000000000000000000000000000..a3d37d491f79d4022788e87025f988c71538346f
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
-@@ -0,0 +1,152 @@
+@@ -0,0 +1,146 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -13179,9 +13202,8 @@ index 0000000000000000000000000000000000000000..690cc1946b7d61aabaeca4a1013aaa03
 +    return parseRawProxySettings(proxyServer, ignoreHosts.data());
 +}
 +
-+InspectorPlaywrightAgentClientGlib::InspectorPlaywrightAgentClientGlib(GMainLoop* mainLoop, const WTF::String& proxyURI, const char* const* ignoreHosts)
-+    : m_mainLoop(mainLoop)
-+    , m_proxySettings(parseRawProxySettings(proxyURI, ignoreHosts))
++InspectorPlaywrightAgentClientGlib::InspectorPlaywrightAgentClientGlib(const WTF::String& proxyURI, const char* const* ignoreHosts)
++    : m_proxySettings(parseRawProxySettings(proxyURI, ignoreHosts))
 +{
 +}
 +
@@ -13213,12 +13235,7 @@ index 0000000000000000000000000000000000000000..690cc1946b7d61aabaeca4a1013aaa03
 +void InspectorPlaywrightAgentClientGlib::closeBrowser()
 +{
 +    m_idToContext.clear();
-+#if PLATFORM(GTK)
-+    gtk_main_quit();
-+#else
-+    if (m_mainLoop)
-+        g_main_loop_quit(m_mainLoop);
-+#endif
++    webkitBrowserInspectorQuitApplication();
 +    if (webkitWebContextExistingCount() > 1)
 +        fprintf(stderr, "LEAK: %d contexts are still alive when closing browser\n", webkitWebContextExistingCount());
 +}
@@ -13263,10 +13280,10 @@ index 0000000000000000000000000000000000000000..690cc1946b7d61aabaeca4a1013aaa03
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.h b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..a073a77390b206deb794efe937df4f35d7198608
+index 0000000000000000000000000000000000000000..63ff73901ceb50771820709e91796fb42f58e651
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.h
-@@ -0,0 +1,61 @@
+@@ -0,0 +1,60 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -13309,7 +13326,7 @@ index 0000000000000000000000000000000000000000..a073a77390b206deb794efe937df4f35
 +class InspectorPlaywrightAgentClientGlib : public InspectorPlaywrightAgentClient {
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    InspectorPlaywrightAgentClientGlib(GMainLoop* mainLoop, const WTF::String& proxyURI, const char* const* ignoreHosts);
++    InspectorPlaywrightAgentClientGlib(const WTF::String& proxyURI, const char* const* ignoreHosts);
 +    ~InspectorPlaywrightAgentClientGlib() override = default;
 +
 +    RefPtr<WebPageProxy> createPage(WTF::String& error, const BrowserContext&) override;
@@ -13321,7 +13338,6 @@ index 0000000000000000000000000000000000000000..a073a77390b206deb794efe937df4f35
 +    WebKitWebContext* findContext(WTF::String& error, PAL::SessionID);
 +
 +    HashMap<PAL::SessionID, GRefPtr<WebKitWebContext>> m_idToContext;
-+    GMainLoop* m_mainLoop;
 +    WebCore::SoupNetworkProxySettings m_proxySettings;
 +};
 +
@@ -15519,7 +15535,7 @@ index 62629b4c1c25ae82bd797b39bbf9de0331f8eed2..5de7900a29b0e629f1ac404bbb0dc5b4
  
  typedef struct _BrowserWindow        BrowserWindow;
 diff --git a/Tools/MiniBrowser/gtk/main.c b/Tools/MiniBrowser/gtk/main.c
-index 0b236620d9c70b4b94e280ca508113c857d75832..cb26e5bbcd5614fdaad88282f3bec8884bada31e 100644
+index 0b236620d9c70b4b94e280ca508113c857d75832..c3e8edd93cb7af98f1d44d3f74516f949bfc43f0 100644
 --- a/Tools/MiniBrowser/gtk/main.c
 +++ b/Tools/MiniBrowser/gtk/main.c
 @@ -53,7 +53,12 @@ static const char *cookiesFile;
@@ -15546,7 +15562,7 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..cb26e5bbcd5614fdaad88282f3bec888
      { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &uriArguments, 0, "[URL…]" },
      { 0, 0, 0, 0, 0, 0, 0 }
  };
-@@ -500,6 +509,35 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
+@@ -500,6 +509,41 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
      g_main_loop_quit(data->mainLoop);
  }
  
@@ -15571,18 +15587,24 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..cb26e5bbcd5614fdaad88282f3bec888
 +    return newWebView;
 +}
 +
++static void quitBroserApplication(WebKitBrowserInspector* browser_inspector)
++{
++    g_application_release(G_APPLICATION(browserApplication));
++}
++
 +static void configureBrowserInspectorPipe()
 +{
 +    WebKitBrowserInspector* browserInspector = webkit_browser_inspector_get_default();
 +    g_signal_connect(browserInspector, "create-new-page", G_CALLBACK(createNewPage), NULL);
++    g_signal_connect(browserInspector, "quit-application", G_CALLBACK(quitBroserApplication), NULL);
 +
-+    webkit_browser_inspector_initialize_pipe(NULL, proxy, ignoreHosts);
++    webkit_browser_inspector_initialize_pipe(proxy, ignoreHosts);
 +}
 +
  static void startup(GApplication *application)
  {
      const char *actionAccels[] = {
-@@ -530,12 +568,31 @@ static void startup(GApplication *application)
+@@ -530,12 +574,32 @@ static void startup(GApplication *application)
  
  static void activate(GApplication *application, WebKitSettings *webkitSettings)
  {
@@ -15591,7 +15613,8 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..cb26e5bbcd5614fdaad88282f3bec888
 +        configureBrowserInspectorPipe();
 +
 +    if (noStartupWindow) {
-+        gtk_main();
++        // Reference the application, it will be released in quitBroserApplication.
++        g_application_hold(application);
 +        g_clear_object(&webkitSettings);
 +        return;
 +    }
@@ -15615,7 +15638,7 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..cb26e5bbcd5614fdaad88282f3bec888
      g_object_unref(manager);
  
      if (cookiesPolicy) {
-@@ -554,7 +611,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
+@@ -554,7 +618,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
      }
  
      if (proxy) {
@@ -15624,7 +15647,7 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..cb26e5bbcd5614fdaad88282f3bec888
          webkit_web_context_set_network_proxy_settings(webContext, WEBKIT_NETWORK_PROXY_MODE_CUSTOM, webkitProxySettings);
          webkit_network_proxy_settings_free(webkitProxySettings);
      }
-@@ -616,9 +673,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
+@@ -616,9 +680,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
              WebKitWebView *webView = createBrowserTab(mainWindow, webkitSettings, userContentManager);
              if (!i)
                  firstTab = GTK_WIDGET(webView);
@@ -15635,7 +15658,7 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..cb26e5bbcd5614fdaad88282f3bec888
          }
      } else {
          WebKitWebView *webView = createBrowserTab(mainWindow, webkitSettings, userContentManager);
-@@ -692,9 +747,11 @@ int main(int argc, char *argv[])
+@@ -692,9 +754,11 @@ int main(int argc, char *argv[])
      }
  
      GtkApplication *application = gtk_application_new(NULL, G_APPLICATION_FLAGS_NONE);
@@ -15648,7 +15671,7 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..cb26e5bbcd5614fdaad88282f3bec888
  
      return 0;
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..3f993c33069b063f6f2446e9503b9f095974ee0f 100644
+index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..58546429c49437cef2632544c9bc8ad7296aaebd 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
 @@ -43,6 +43,9 @@ static gboolean headlessMode;
@@ -15707,7 +15730,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..3f993c33069b063f6f2446e9503b9f09
  {
      auto backend = createViewBackend(1280, 720);
      struct wpe_view_backend* wpeBackend = backend->backend();
-@@ -166,17 +193,59 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
+@@ -166,17 +193,66 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
              delete static_cast<WPEToolingBackends::ViewBackend*>(data);
          }, backend.release());
  
@@ -15759,17 +15782,24 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..3f993c33069b063f6f2446e9503b9f09
 +    return webView;
 +}
 +
++static void quitBroserApplication(WebKitBrowserInspector* browser_inspector, gpointer data)
++{
++    GMainLoop* mainLoop = static_cast<GMainLoop*>(data);
++    g_main_loop_quit(mainLoop);
++}
++
 +static void configureBrowserInspector(GMainLoop* mainLoop)
 +{
 +    WebKitBrowserInspector* browserInspector = webkit_browser_inspector_get_default();
 +    g_signal_connect(browserInspector, "create-new-page", G_CALLBACK(createNewPage), NULL);
-+    webkit_browser_inspector_initialize_pipe(mainLoop,  proxy, ignoreHosts);
++    g_signal_connect(browserInspector, "quit-application", G_CALLBACK(quitBroserApplication), mainLoop);
++    webkit_browser_inspector_initialize_pipe(proxy, ignoreHosts);
 +}
 +
  int main(int argc, char *argv[])
  {
  #if ENABLE_DEVELOPER_MODE
-@@ -211,6 +280,16 @@ int main(int argc, char *argv[])
+@@ -211,6 +287,16 @@ int main(int argc, char *argv[])
      }
  
      auto* loop = g_main_loop_new(nullptr, FALSE);
@@ -15786,7 +15816,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..3f993c33069b063f6f2446e9503b9f09
  
      auto backend = createViewBackend(1280, 720);
      struct wpe_view_backend* wpeBackend = backend->backend();
-@@ -220,7 +299,19 @@ int main(int argc, char *argv[])
+@@ -220,7 +306,19 @@ int main(int argc, char *argv[])
          return 1;
      }
  
@@ -15807,7 +15837,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..3f993c33069b063f6f2446e9503b9f09
  
      if (cookiesPolicy) {
          auto* cookieManager = webkit_web_context_get_cookie_manager(webContext);
-@@ -238,7 +329,7 @@ int main(int argc, char *argv[])
+@@ -238,7 +336,7 @@ int main(int argc, char *argv[])
      }
  
      if (proxy) {
@@ -15816,7 +15846,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..3f993c33069b063f6f2446e9503b9f09
          webkit_web_context_set_network_proxy_settings(webContext, WEBKIT_NETWORK_PROXY_MODE_CUSTOM, webkitProxySettings);
          webkit_network_proxy_settings_free(webkitProxySettings);
      }
-@@ -284,7 +375,14 @@ int main(int argc, char *argv[])
+@@ -284,7 +382,14 @@ int main(int argc, char *argv[])
      auto* viewBackend = webkit_web_view_backend_new(wpeBackend, [](gpointer data) {
          delete static_cast<WPEToolingBackends::ViewBackend*>(data);
      }, backend.release());
@@ -15832,7 +15862,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..3f993c33069b063f6f2446e9503b9f09
      auto* webView = WEBKIT_WEB_VIEW(g_object_new(WEBKIT_TYPE_WEB_VIEW,
          "backend", viewBackend,
          "web-context", webContext,
-@@ -301,8 +399,6 @@ int main(int argc, char *argv[])
+@@ -301,8 +406,6 @@ int main(int argc, char *argv[])
          backendPtr->setAccessibleChild(ATK_OBJECT(accessible));
  #endif
  
@@ -15841,7 +15871,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..3f993c33069b063f6f2446e9503b9f09
      webkit_web_context_set_automation_allowed(webContext, automationMode);
      g_signal_connect(webContext, "automation-started", G_CALLBACK(automationStartedCallback), webView);
      g_signal_connect(webView, "permission-request", G_CALLBACK(decidePermissionRequest), nullptr);
-@@ -318,16 +414,9 @@ int main(int argc, char *argv[])
+@@ -318,16 +421,9 @@ int main(int argc, char *argv[])
          webkit_web_view_set_background_color(webView, &color);
  
      if (uriArguments) {
@@ -15861,7 +15891,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..3f993c33069b063f6f2446e9503b9f09
          webkit_web_view_load_uri(webView, "about:blank");
      else
          webkit_web_view_load_uri(webView, "https://wpewebkit.org");
-@@ -337,8 +426,7 @@ int main(int argc, char *argv[])
+@@ -337,8 +433,7 @@ int main(int argc, char *argv[])
      g_hash_table_destroy(openViews);
  
  
