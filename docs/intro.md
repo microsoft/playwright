@@ -5,7 +5,10 @@
 - [Usage](#usage)
 - [First script](#first-script)
 - [System requirements](#system-requirements)
+- [TypeScript IDE support](#typescript-ide-support)
 - [Debugging scripts](#debugging-scripts)
+  * [Using editor debugger](#using-editor-debugger)
+  * [Verbose logging](#verbose-logging)
 <!-- GEN:stop -->
 
 <br>
@@ -80,12 +83,41 @@ Firefox and WebKit work across the 3 platforms (Windows, macOS, Linux):
 * **macOS**: Requires 10.14 or above.
 * **Linux**: Depending on your Linux distribution, you might need to install additional
   dependencies to run the browsers.
+  * Firefox requires Ubuntu 18.04+
   * For Ubuntu 18.04, the additional dependencies are defined in [our Docker image](docker/Dockerfile.bionic),
     which is based on Ubuntu.
 
 <br>
 
+## TypeScript IDE support
+
+Playwright comes with built-in support for TypeScript. Playwright type definitions will be imported automatically.
+
+It is also possible to add these types to your variables manually. In TypeScript:
+
+```ts
+let page: import('playwright').Page;
+```
+
+If you use JavaScript, you can still use TypeScript definitions for improved auto-completions and warnings in Visual Studio Code or WebStorm. Add the following to the top of your JavaScript file:
+
+```js
+//@ts-check
+// ...
+```
+
+You can also use JSDoc to set types for variables.
+
+```js
+/** @type {import('playwright').Page} */
+let page;
+```
+
+<br>
+
 ## Debugging scripts
+
+### Using editor debugger
 
 Playwright scripts can be developed just like any other Node.js script. For example, you can use the [Node.js debugger](https://nodejs.org/api/debugger.html) or [VS Code debugging](https://code.visualstudio.com/docs/nodejs/nodejs-debugging) to set breakpoints and get fine grained control over execution.
 
@@ -93,4 +125,15 @@ Playwright scripts can be developed just like any other Node.js script. For exam
 
 It is also possible to open **browser developer tools** during execution, to inspect the DOM tree or network activity.
 
-<br>
+### Verbose logging
+
+Playwright supports verbose logging with the `DEBUG` environment variable.
+
+```sh
+# Linux/macOS
+$ DEBUG=pw:api npm run test
+
+# Windows
+$ set DEBUG=pw:api
+$ npm run test
+```

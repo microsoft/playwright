@@ -20,15 +20,18 @@ import * as frames from '../frames';
 import { Page } from '../page';
 import { RecorderController } from './recorderController';
 
-export class DebugController {
-  private _context: BrowserContextBase;
+let isRecorderMode = false;
 
+export function setRecorderMode(): void {
+  isRecorderMode = true;
+}
+
+export class DebugController {
   constructor(context: BrowserContextBase) {
-    this._context = context;
     const installInFrame = async (frame: frames.Frame) => {
       try {
         const mainContext = await frame._mainContext();
-        await mainContext.debugScript();
+        await mainContext.createDebugScript({ console: true, record: isRecorderMode });
       } catch (e) {
       }
     };
