@@ -15434,31 +15434,39 @@ index 3845eabba3e964f9e11bb0ffcb8726fd4ea96fc4..630a6e395298bd9c03c1b131f984b0a8
      g_signal_connect(tab->webView, "permission-request", G_CALLBACK(decidePermissionRequest), tab);
      g_signal_connect(tab->webView, "run-color-chooser", G_CALLBACK(runColorChooserCallback), tab);
 diff --git a/Tools/MiniBrowser/gtk/BrowserWindow.c b/Tools/MiniBrowser/gtk/BrowserWindow.c
-index 15d805bd0c7cdeceefcd3f77f6e363fc1643ac18..32f99b083e805aaca5ddc6cad3992a4694866ede 100644
+index 15d805bd0c7cdeceefcd3f77f6e363fc1643ac18..304f43c2220324403f5f4f0f4896106593242564 100644
 --- a/Tools/MiniBrowser/gtk/BrowserWindow.c
 +++ b/Tools/MiniBrowser/gtk/BrowserWindow.c
-@@ -75,6 +75,7 @@ static const gdouble minimumZoomLevel = 0.5;
- static const gdouble maximumZoomLevel = 3;
- static const gdouble defaultZoomLevel = 1;
- static const gdouble zoomStep = 1.2;
-+static gboolean no_quit = false;
- 
- G_DEFINE_TYPE(BrowserWindow, browser_window, GTK_TYPE_APPLICATION_WINDOW)
- 
-@@ -1440,6 +1441,11 @@ void browser_window_set_background_color(BrowserWindow *window, GdkRGBA *rgba)
- #endif
+@@ -1309,6 +1309,12 @@ static gboolean browserWindowDeleteEvent(GtkWidget *widget, GdkEventAny* event)
  }
+ #endif
  
-+void browser_window_no_quit(void)
++static void zeroPreferredSize(GtkWidget* widget, gint* minimumSize, gint* naturalSize)
 +{
-+    no_quit = true;
++    *minimumSize = 10;
++    *naturalSize = 10;
 +}
 +
- WebKitWebView *browser_window_get_or_create_web_view_for_automation(BrowserWindow *window)
+ static void browser_window_class_init(BrowserWindowClass *klass)
  {
-     WebKitWebView *webView = browser_tab_get_web_view(window->activeTab);
+     GObjectClass *gobjectClass = G_OBJECT_CLASS(klass);
+@@ -1322,6 +1328,14 @@ static void browser_window_class_init(BrowserWindowClass *klass)
+     GtkWidgetClass *widgetClass = GTK_WIDGET_CLASS(klass);
+     widgetClass->delete_event = browserWindowDeleteEvent;
+ #endif
++
++// Playwrigth begin
++    // Override preferred (which is minimum :-) size to 0 so that we can
++    // emulate arbitrary resolution.
++    GtkWidgetClass* browserWidgetClass = GTK_WIDGET_CLASS(klass);
++    browserWidgetClass->get_preferred_width = zeroPreferredSize;
++    browserWidgetClass->get_preferred_height = zeroPreferredSize;
++// Playwrigth end
+ }
+ 
+ /* Public API. */
 diff --git a/Tools/MiniBrowser/gtk/BrowserWindow.h b/Tools/MiniBrowser/gtk/BrowserWindow.h
-index 62629b4c1c25ae82bd797b39bbf9de0331f8eed2..460d68989de54e9b9dc1c0528893c18dfd3a1a53 100644
+index 62629b4c1c25ae82bd797b39bbf9de0331f8eed2..5de7900a29b0e629f1ac404bbb0dc5b4e605294d 100644
 --- a/Tools/MiniBrowser/gtk/BrowserWindow.h
 +++ b/Tools/MiniBrowser/gtk/BrowserWindow.h
 @@ -37,7 +37,7 @@ G_BEGIN_DECLS
@@ -15470,19 +15478,11 @@ index 62629b4c1c25ae82bd797b39bbf9de0331f8eed2..460d68989de54e9b9dc1c0528893c18d
  #define BROWSER_ABOUT_SCHEME           "minibrowser-about"
  
  typedef struct _BrowserWindow        BrowserWindow;
-@@ -53,6 +53,7 @@ void browser_window_load_session(BrowserWindow *, const char *sessionFile);
- void browser_window_set_background_color(BrowserWindow*, GdkRGBA*);
- WebKitWebView* browser_window_get_or_create_web_view_for_automation(BrowserWindow*);
- WebKitWebView *browser_window_create_web_view_in_new_tab_for_automation(BrowserWindow*);
-+void browser_window_no_quit(void);
- 
- G_END_DECLS
- 
 diff --git a/Tools/MiniBrowser/gtk/main.c b/Tools/MiniBrowser/gtk/main.c
-index 0b236620d9c70b4b94e280ca508113c857d75832..bab8de013958533e63206be5c7456d96b2243848 100644
+index 0b236620d9c70b4b94e280ca508113c857d75832..cb26e5bbcd5614fdaad88282f3bec8884bada31e 100644
 --- a/Tools/MiniBrowser/gtk/main.c
 +++ b/Tools/MiniBrowser/gtk/main.c
-@@ -53,6 +53,10 @@ static const char *cookiesFile;
+@@ -53,7 +53,12 @@ static const char *cookiesFile;
  static const char *cookiesPolicy;
  static const char *proxy;
  static gboolean darkMode;
@@ -15491,9 +15491,11 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..bab8de013958533e63206be5c7456d96
 +static gboolean noStartupWindow;
 +static const char *userDataDir;
  static gboolean printVersion;
++static GtkApplication *browserApplication = NULL;
  
  typedef enum {
-@@ -121,6 +125,10 @@ static const GOptionEntry commandLineOptions[] =
+     MINI_BROWSER_ERROR_INVALID_ABOUT_PATH
+@@ -121,6 +126,10 @@ static const GOptionEntry commandLineOptions[] =
      { "ignore-tls-errors", 0, 0, G_OPTION_ARG_NONE, &ignoreTLSErrors, "Ignore TLS errors", NULL },
      { "content-filter", 0, 0, G_OPTION_ARG_FILENAME, &contentFilter, "JSON with content filtering rules", "FILE" },
      { "version", 'v', 0, G_OPTION_ARG_NONE, &printVersion, "Print the WebKitGTK version", NULL },
@@ -15504,7 +15506,7 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..bab8de013958533e63206be5c7456d96
      { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &uriArguments, 0, "[URL…]" },
      { 0, 0, 0, 0, 0, 0, 0 }
  };
-@@ -500,6 +508,34 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
+@@ -500,6 +509,35 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
      g_main_loop_quit(data->mainLoop);
  }
  
@@ -15521,6 +15523,7 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..bab8de013958533e63206be5c7456d96
 +        "is-controlled-by-automation", TRUE,
 +        NULL));
 +    GtkWidget *newWindow = browser_window_new(NULL, context);
++    gtk_window_set_application(GTK_WINDOW(newWindow), browserApplication);
 +    browser_window_append_view(BROWSER_WINDOW(newWindow), newWebView);
 +    gtk_widget_grab_focus(GTK_WIDGET(newWebView));
 +    gtk_widget_show(GTK_WIDGET(newWindow));
@@ -15539,7 +15542,7 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..bab8de013958533e63206be5c7456d96
  static void startup(GApplication *application)
  {
      const char *actionAccels[] = {
-@@ -530,12 +566,32 @@ static void startup(GApplication *application)
+@@ -530,12 +568,31 @@ static void startup(GApplication *application)
  
  static void activate(GApplication *application, WebKitSettings *webkitSettings)
  {
@@ -15548,7 +15551,6 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..bab8de013958533e63206be5c7456d96
 +        configureBrowserInspectorPipe();
 +
 +    if (noStartupWindow) {
-+        browser_window_no_quit();
 +        gtk_main();
 +        g_clear_object(&webkitSettings);
 +        return;
@@ -15573,7 +15575,7 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..bab8de013958533e63206be5c7456d96
      g_object_unref(manager);
  
      if (cookiesPolicy) {
-@@ -554,7 +610,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
+@@ -554,7 +611,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
      }
  
      if (proxy) {
@@ -15582,7 +15584,7 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..bab8de013958533e63206be5c7456d96
          webkit_web_context_set_network_proxy_settings(webContext, WEBKIT_NETWORK_PROXY_MODE_CUSTOM, webkitProxySettings);
          webkit_network_proxy_settings_free(webkitProxySettings);
      }
-@@ -616,9 +672,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
+@@ -616,9 +673,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
              WebKitWebView *webView = createBrowserTab(mainWindow, webkitSettings, userContentManager);
              if (!i)
                  firstTab = GTK_WIDGET(webView);
@@ -15593,6 +15595,18 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..bab8de013958533e63206be5c7456d96
          }
      } else {
          WebKitWebView *webView = createBrowserTab(mainWindow, webkitSettings, userContentManager);
+@@ -692,9 +747,11 @@ int main(int argc, char *argv[])
+     }
+ 
+     GtkApplication *application = gtk_application_new(NULL, G_APPLICATION_FLAGS_NONE);
++    browserApplication = application;
+     g_signal_connect(application, "startup", G_CALLBACK(startup), NULL);
+     g_signal_connect(application, "activate", G_CALLBACK(activate), webkitSettings);
+     g_application_run(G_APPLICATION(application), 0, NULL);
++    browserApplication = NULL;
+     g_object_unref(application);
+ 
+     return 0;
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
 index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..3f993c33069b063f6f2446e9503b9f095974ee0f 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
