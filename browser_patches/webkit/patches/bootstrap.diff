@@ -7860,7 +7860,7 @@ index 2ceb2b4f49f409bbe6e6810115e36d0c84f83b5d..16d2062b746b80ace6f39d779e9c3b87
      bool canRunBeforeUnloadConfirmPanel() const final { return true; }
  
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp b/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp
-index 041bfb545c6af6220a8266d356ac19d90791cb83..814558c67bfdb9c3cf635f62608349a8e0307229 100644
+index 041bfb545c6af6220a8266d356ac19d90791cb83..265a84c7e6f0dc494182d859d2db4b91addb3023 100644
 --- a/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp
 @@ -119,8 +119,8 @@ enum {
@@ -7919,7 +7919,27 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..814558c67bfdb9c3cf635f62608349a8
  #if !USE(GTK4)
      case PROP_USE_SYSYEM_APPEARANCE_FOR_SCROLLBARS:
          webkit_web_context_set_use_system_appearance_for_scrollbars(context, g_value_get_boolean(value));
-@@ -391,8 +389,8 @@ static void webkitWebContextConstructed(GObject* object)
+@@ -380,10 +378,19 @@ static void webkitWebContextSetProperty(GObject* object, guint propID, const GVa
+     }
+ }
+ 
++static int webkitWebContext = 0;
++
++int webkitWebContextExistingCount()
++{
++    return webkitWebContext;
++}
++
+ static void webkitWebContextConstructed(GObject* object)
+ {
+     G_OBJECT_CLASS(webkit_web_context_parent_class)->constructed(object);
+ 
++    ++webkitWebContext;
++
+     GUniquePtr<char> bundleFilename(g_build_filename(injectedBundleDirectory(), INJECTED_BUNDLE_FILENAME, nullptr));
+ 
+     WebKitWebContext* webContext = WEBKIT_WEB_CONTEXT(object);
+@@ -391,8 +398,8 @@ static void webkitWebContextConstructed(GObject* object)
  
      API::ProcessPoolConfiguration configuration;
      configuration.setInjectedBundlePath(FileSystem::stringFromFileSystemRepresentation(bundleFilename.get()));
@@ -7929,7 +7949,7 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..814558c67bfdb9c3cf635f62608349a8
  #if !USE(GTK4)
      configuration.setUseSystemAppearanceForScrollbars(priv->useSystemAppearanceForScrollbars);
  #endif
-@@ -404,6 +402,11 @@ static void webkitWebContextConstructed(GObject* object)
+@@ -404,6 +411,11 @@ static void webkitWebContextConstructed(GObject* object)
      if (!webkit_website_data_manager_is_ephemeral(priv->websiteDataManager.get()))
          configuration.setHSTSStorageDirectory(FileSystem::stringFromFileSystemRepresentation(webkit_website_data_manager_get_hsts_cache_directory(priv->websiteDataManager.get())));
  
@@ -7941,7 +7961,16 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..814558c67bfdb9c3cf635f62608349a8
      priv->processPool = WebProcessPool::create(configuration);
      priv->processPool->setPrimaryDataStore(webkitWebsiteDataManagerGetDataStore(priv->websiteDataManager.get()));
      priv->processPool->setUserMessageHandler([webContext](UserMessage&& message, CompletionHandler<void(UserMessage&&)>&& completionHandler) {
-@@ -515,7 +518,6 @@ static void webkit_web_context_class_init(WebKitWebContextClass* webContextClass
+@@ -438,6 +450,8 @@ static void webkitWebContextConstructed(GObject* object)
+ 
+ static void webkitWebContextDispose(GObject* object)
+ {
++    --webkitWebContext;
++
+     WebKitWebContextPrivate* priv = WEBKIT_WEB_CONTEXT(object)->priv;
+     if (!priv->clientsDetached) {
+         priv->clientsDetached = true;
+@@ -515,7 +529,6 @@ static void webkit_web_context_class_init(WebKitWebContextClass* webContextClass
              WEBKIT_TYPE_WEBSITE_DATA_MANAGER,
              static_cast<GParamFlags>(WEBKIT_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY)));
  
@@ -7949,7 +7978,7 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..814558c67bfdb9c3cf635f62608349a8
      /**
       * WebKitWebContext:process-swap-on-cross-site-navigation-enabled:
       *
-@@ -539,6 +541,7 @@ static void webkit_web_context_class_init(WebKitWebContextClass* webContextClass
+@@ -539,6 +552,7 @@ static void webkit_web_context_class_init(WebKitWebContextClass* webContextClass
              FALSE,
              static_cast<GParamFlags>(WEBKIT_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY)));
  
@@ -7957,6 +7986,15 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..814558c67bfdb9c3cf635f62608349a8
  #if !USE(GTK4)
      /**
       * WebKitWebContext:use-system-appearance-for-scrollbars:
+diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebContextPrivate.h b/Source/WebKit/UIProcess/API/glib/WebKitWebContextPrivate.h
+index d8569c859babfe1169c682eb686366e3d069b9ad..779802f0fe22e151783d9277d7ee5af02d5ec952 100644
+--- a/Source/WebKit/UIProcess/API/glib/WebKitWebContextPrivate.h
++++ b/Source/WebKit/UIProcess/API/glib/WebKitWebContextPrivate.h
+@@ -44,3 +44,4 @@ void webkitWebContextInitializeNotificationPermissions(WebKitWebContext*);
+ #if ENABLE(REMOTE_INSPECTOR)
+ void webkitWebContextWillCloseAutomationSession(WebKitWebContext*);
+ #endif
++int webkitWebContextExistingCount();
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp b/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
 index 50df3f448a7d38e3282e66282490f170feebaaed..c7161970015b26eac248c01b77f977a871d4a491 100644
 --- a/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
@@ -13067,10 +13105,10 @@ index 31d29091985f34a65134a2b0e7cb3ace1dae441d..571ceac8a4b291fa6e91eb8b17065c0a
  };
 diff --git a/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..79aa5407901c07f63a53ac0e441cd6a9b9c65d07
+index 0000000000000000000000000000000000000000..690cc1946b7d61aabaeca4a1013aaa0305339b76
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
-@@ -0,0 +1,150 @@
+@@ -0,0 +1,152 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -13181,6 +13219,8 @@ index 0000000000000000000000000000000000000000..79aa5407901c07f63a53ac0e441cd6a9
 +    if (m_mainLoop)
 +        g_main_loop_quit(m_mainLoop);
 +#endif
++    if (webkitWebContextExistingCount() > 1)
++        fprintf(stderr, "LEAK: %d contexts are still alive when closing browser\n", webkitWebContextExistingCount());
 +}
 +
 +static PAL::SessionID sessionIDFromContext(WebKitWebContext* context)
