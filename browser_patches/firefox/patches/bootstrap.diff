@@ -671,7 +671,7 @@ index da9d56e843a2c762dc7d5527712cdd3d30418f7f..ea9d962513dfc02682d5dfd543dd72ba
  }
  
 diff --git a/dom/base/nsINode.cpp b/dom/base/nsINode.cpp
-index 7c0d4bd261bf053c7cab4091522dc1e52118eba1..9af7b44c443955dc6355197bb94f65c229d165a3 100644
+index 7c0d4bd261bf053c7cab4091522dc1e52118eba1..e320e6bfb0402eb07ae53272264278bad9638519 100644
 --- a/dom/base/nsINode.cpp
 +++ b/dom/base/nsINode.cpp
 @@ -1260,6 +1260,48 @@ void nsINode::GetBoxQuadsFromWindowOrigin(const BoxQuadOptions& aOptions,
@@ -684,19 +684,19 @@ index 7c0d4bd261bf053c7cab4091522dc1e52118eba1..9af7b44c443955dc6355197bb94f65c2
 +  aRv = NS_ERROR_UNEXPECTED;
 +  nsCOMPtr<Document> document = OwnerDoc();
 +  if (!document) {
-+    return;
++    return aRv.ThrowNotFoundError("Node is detached from document");
 +  }
 +  PresShell* presShell = document->GetPresShell();
 +  if (!presShell) {
-+    return;
++    return aRv.ThrowNotFoundError("Node is detached from document");
 +  }
 +  if (!IsContent()) {
-+    return;
++    return aRv.ThrowNotFoundError("Node does not have a layout object");
 +  }
 +  aRv = NS_OK;
 +  nsIFrame* primaryFrame = AsContent()->GetPrimaryFrame(FlushType::Frames);
-+  if (!primaryFrame){
-+    return;
++  if (!primaryFrame) {
++    return aRv.ThrowNotFoundError("Node does not have a layout object");
 +  }
 +  nsRect rect;
 +  if (x == -1 && y == -1 && w == -1 && h == -1) {

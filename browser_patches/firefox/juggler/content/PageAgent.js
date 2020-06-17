@@ -621,23 +621,12 @@ class PageAgent {
     const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
     if (!unsafeObject.isConnected)
       throw new Error('Node is detached from document');
-    if (!unsafeObject.ownerDocument || !unsafeObject.ownerDocument.defaultView)
-      throw new Error('Node is detached from document');
-    const element = unsafeObject.nodeType === 1 ? unsafeObject : unsafeObject.parentElement;
-    if (!element)
-      throw new Error('Node is detached from document');
-    const style = unsafeObject.ownerDocument.defaultView.getComputedStyle(element);
-    if (!style || style.visibility === 'hidden')
-      throw new Error('Node is not visible');
-    const bounds = element.getBoundingClientRect();
-    if (bounds.width <= 0 || bounds.height <= 0)
-      throw new Error('Node is not visible');
     if (!rect)
       rect = { x: -1, y: -1, width: -1, height: -1};
     if (unsafeObject.scrollRectIntoViewIfNeeded)
       unsafeObject.scrollRectIntoViewIfNeeded(rect.x, rect.y, rect.width, rect.height);
     else
-      throw new Error('Node type does not support scrollRectIntoViewIfNeeded');
+      throw new Error('Node does not have a layout object');
   }
 
   _getNodeBoundingBox(unsafeObject) {
