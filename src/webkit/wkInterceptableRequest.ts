@@ -21,7 +21,7 @@ import * as network from '../network';
 import { Protocol } from './protocol';
 import { WKSession } from './wkConnection';
 
-const errorReasons: { [reason: string]: string } = {
+const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
   'aborted': 'Cancellation',
   'accessdenied': 'AccessControl',
   'addressunreachable': 'General',
@@ -55,12 +55,12 @@ export class WKInterceptableRequest implements network.RouteDelegate {
   }
 
   async abort(errorCode: string) {
-    const reason = errorReasons[errorCode];
-    assert(reason, 'Unknown error code: ' + errorCode);
+    const errorType = errorReasons[errorCode];
+    assert(errorType, 'Unknown error code: ' + errorCode);
     await this._interceptedPromise;
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
-    await this._session.sendMayFail('Network.interceptAsError', { requestId: this._requestId, reason });
+    await this._session.sendMayFail('Network.interceptRequestWithError', { requestId: this._requestId, errorType });
   }
 
   async fulfill(response: network.FulfillResponse) {
@@ -88,7 +88,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
 
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
-    await this._session.sendMayFail('Network.interceptWithResponse', {
+    await this._session.sendMayFail('Network.interceptRequestWithResponse', {
       requestId: this._requestId,
       status: response.status || 200,
       statusText: network.STATUS_TEXTS[String(response.status || 200)],
@@ -103,7 +103,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     await this._interceptedPromise;
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
-    await this._session.sendMayFail('Network.interceptContinue', {
+    await this._session.sendMayFail('Network.interceptWithRequest', {
       requestId: this._requestId,
       method: overrides.method,
       headers: overrides.headers,
