@@ -7375,10 +7375,18 @@ index 1d2febfba8833912f72216aa53c8c20090ee2d8b..1b2c3d84b15b12f1a187c0b7622db43c
  
  #ifdef __cplusplus
 diff --git a/Source/WebKit/UIProcess/API/C/WKWebsiteDataStoreRef.cpp b/Source/WebKit/UIProcess/API/C/WKWebsiteDataStoreRef.cpp
-index be5030797402d00ba0e0bc371e52c8c1d47b1ca1..c9765685d5197b87a26371bf50f55122340f1bd3 100644
+index be5030797402d00ba0e0bc371e52c8c1d47b1ca1..eb61db48a546955f39c10b4dfa631a198539ac09 100644
 --- a/Source/WebKit/UIProcess/API/C/WKWebsiteDataStoreRef.cpp
 +++ b/Source/WebKit/UIProcess/API/C/WKWebsiteDataStoreRef.cpp
-@@ -633,7 +633,7 @@ void WKWebsiteDataStoreSetResourceLoadStatisticsToSameSiteStrictCookiesForTestin
+@@ -31,6 +31,7 @@
+ #include "ShouldGrandfatherStatistics.h"
+ #include "WKAPICast.h"
+ #include "WKDictionary.h"
++#include "WKMutableArray.h"
+ #include "WKNumber.h"
+ #include "WKRetainPtr.h"
+ #include "WKSecurityOriginRef.h"
+@@ -633,7 +634,7 @@ void WKWebsiteDataStoreSetResourceLoadStatisticsToSameSiteStrictCookiesForTestin
  void WKWebsiteDataStoreSetAppBoundDomainsForTesting(WKArrayRef originURLsRef, void* context, WKWebsiteDataStoreSetAppBoundDomainsForTestingFunction completionHandler)
  {
  #if PLATFORM(COCOA)
@@ -7387,6 +7395,15 @@ index be5030797402d00ba0e0bc371e52c8c1d47b1ca1..c9765685d5197b87a26371bf50f55122
      size_t newSize = originURLsArray ? originURLsArray->size() : 0;
      HashSet<WebCore::RegistrableDomain> domains;
      domains.reserveInitialCapacity(newSize);
+@@ -824,7 +825,7 @@ void WKWebsiteDataStoreClearBundleIdentifierInNetworkProcess(WKWebsiteDataStoreR
+ void WKWebsiteDataStoreGetAllStorageAccessEntries(WKWebsiteDataStoreRef dataStoreRef, WKPageRef pageRef, void* context, WKWebsiteDataStoreGetAllStorageAccessEntriesFunction callback)
+ {
+ #if ENABLE(RESOURCE_LOAD_STATISTICS)
+-    WebKit::toImpl(dataStoreRef)->getAllStorageAccessEntries(toImpl(pageRef)->identifier(), [context, callback] (Vector<String>&& domains) {
++    WebKit::toImpl(dataStoreRef)->getAllStorageAccessEntries(WebKit::toImpl(pageRef)->identifier(), [context, callback] (Vector<String>&& domains) {
+         auto domainArrayRef = WKMutableArrayCreate();
+         for (auto domain : domains)
+             WKArrayAppendItem(domainArrayRef, adoptWK(WKStringCreateWithUTF8CString(domain.utf8().data())).get());
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/WKProcessPool.mm b/Source/WebKit/UIProcess/API/Cocoa/WKProcessPool.mm
 index 7b9469ee130d1b62c8b8187bd25748b42c40a352..dab2ff1ebaa7a9c13efe5ae75779f1c8efe19fc0 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/WKProcessPool.mm
