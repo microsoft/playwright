@@ -213,7 +213,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async scrollIntoViewIfNeeded() {
-    throwIfNotConnected(await this._scrollRectIntoViewIfNeeded());
+    const result = await this._scrollRectIntoViewIfNeeded();
+    if (result === 'notvisible')
+      throw new Error('Element is not visible');
+    throwIfNotConnected(result);
   }
 
   private async _clickablePoint(): Promise<types.Point | 'notvisible' | 'notinviewport'> {

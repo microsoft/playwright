@@ -323,6 +323,41 @@ describe('ElementHandle.scrollIntoViewIfNeeded', function() {
       await page.evaluate(() => window.scrollTo(0, 0));
     }
   });
+  it('should throw for detached element', async({page, server}) => {
+    await page.setContent('<div>Hello</div>');
+    const div = await page.$('div');
+    await div.evaluate(div => div.remove());
+    const error = await div.scrollIntoViewIfNeeded().catch(e => e);
+    expect(error.message).toContain('Element is not attached to the DOM');
+  });
+  it('should throw for display:none element', async({page, server}) => {
+    await page.setContent('<div style="display:none">Hello</div>');
+    const div = await page.$('div');
+    const error = await div.scrollIntoViewIfNeeded().catch(e => e);
+    expect(error.message).toContain('Element is not visible');
+  });
+  it('should throw for nested display:none element', async({page, server}) => {
+    await page.setContent('<span style="display:none"><div>Hello</div></span>');
+    const div = await page.$('div');
+    const error = await div.scrollIntoViewIfNeeded().catch(e => e);
+    expect(error.message).toContain('Element is not visible');
+  });
+  it('should throw for display:contents element', async({page, server}) => {
+    await page.setContent('<div style="display:contents">Hello</div>');
+    const div = await page.$('div');
+    const error = await div.scrollIntoViewIfNeeded().catch(e => e);
+    expect(error.message).toContain('Element is not visible');
+  });
+  it('should scroll a zero-sized element', async({page, server}) => {
+    await page.setContent('<br>');
+    const br = await page.$('br');
+    await br.scrollIntoViewIfNeeded();
+  });
+  it('should scroll a visibility:hidden element', async({page, server}) => {
+    await page.setContent('<div style="visibility:hidden">Hello</div>');
+    const div = await page.$('div');
+    await div.scrollIntoViewIfNeeded();
+  });
 });
 
 describe('ElementHandle.fill', function() {
