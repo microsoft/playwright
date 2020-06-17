@@ -1,5 +1,5 @@
 diff --git a/Source/JavaScriptCore/CMakeLists.txt b/Source/JavaScriptCore/CMakeLists.txt
-index a5c74c12c14ac9447b72c4e458d2e88963315d49..d2877184c6e5cec4a5c35d61d84711e1fae436d7 100644
+index 9178d6cff271b4e22b4e85f23473caa703f20fd0..e3063d09c7e817a5f1c1e22808163d2624069d50 100644
 --- a/Source/JavaScriptCore/CMakeLists.txt
 +++ b/Source/JavaScriptCore/CMakeLists.txt
 @@ -1165,22 +1165,27 @@ set(JavaScriptCore_INSPECTOR_DOMAINS
@@ -702,51 +702,12 @@ index 0000000000000000000000000000000000000000..34909cce9f6d8d7c74be4c96e40f80ca
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Network.json b/Source/JavaScriptCore/inspector/protocol/Network.json
-index f2425dd6afc0efbf1d115220fd4246afe2fb92e1..98a7adfb72c7a7f1b67df37bea6bf7c48a2c80d9 100644
+index 65ab2092b0ffd0ead3da1ddccd398d4f4179f51a..2d9ef40a20df819193c9a5867fbf6f8f8bf46b48 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Network.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Network.json
-@@ -236,7 +236,8 @@
-             "description": "Enable interception of network requests.",
-             "targetTypes": ["page"],
-             "parameters": [
--                { "name": "enabled", "type": "boolean" }
-+                { "name": "enabled", "type": "boolean" },
-+                { "name": "interceptRequests", "type": "boolean", "optional": true }
-             ]
-         },
-         {
-@@ -266,7 +267,18 @@
-             "description": "Continue an interception with no modifications.",
-             "targetTypes": ["page"],
-             "parameters": [
--                { "name": "requestId", "$ref": "RequestId", "description": "Identifier for the intercepted Network request or response to continue." }
-+                { "name": "requestId", "$ref": "RequestId", "description": "Identifier for the intercepted Network request or response to continue." },
-+                { "name": "method", "type": "string", "optional": true,"description": "HTTP request method." },
-+                { "name": "headers", "$ref": "Headers", "optional": true, "description": "HTTP response headers. Pass through original values if unmodified." },
-+                { "name": "postData", "type": "string", "optional": true, "description": "HTTP POST request data." }
-+            ]
-+        },
-+        {
-+            "name": "interceptAsError",
-+            "description": "Abort the intercepted request with given reason.",
-+            "parameters": [
-+                { "name": "requestId", "$ref": "RequestId", "description": "Identifier for the intercepted Network request." },
-+                { "name": "reason", "type": "string", "description": "Deliver error reason for the request." }
-             ]
-         },
-         {
-@@ -275,13 +287,20 @@
-             "targetTypes": ["page"],
-             "parameters": [
-                 { "name": "requestId", "$ref": "RequestId", "description": "Identifier for the intercepted Network response to modify." },
--                { "name": "content", "type": "string" },
--                { "name": "base64Encoded", "type": "boolean", "description": "True, if content was sent as base64." },
-+                { "name": "content", "type": "string", "optional": true },
-+                { "name": "base64Encoded", "type": "boolean", "optional": true, "description": "True, if content was sent as base64." },
-                 { "name": "mimeType", "type": "string", "optional": true, "description": "MIME Type for the data." },
-                 { "name": "status", "type": "integer", "optional": true, "description": "HTTP response status code. Pass through original values if unmodified." },
-                 { "name": "statusText", "type": "string", "optional": true, "description": "HTTP response status text. Pass through original values if unmodified." },
-                 { "name": "headers", "$ref": "Headers", "optional": true, "description": "HTTP response headers. Pass through original values if unmodified." }
+@@ -321,6 +321,13 @@
+                 { "name": "requestId", "$ref": "RequestId", "description": "Identifier for the intercepted Network request to fail." },
+                 { "name": "errorType", "$ref": "ResourceErrorType", "description": "Deliver error reason for the request failure." }
              ]
 +        },
 +        {
@@ -758,21 +719,6 @@ index f2425dd6afc0efbf1d115220fd4246afe2fb92e1..98a7adfb72c7a7f1b67df37bea6bf7c4
          }
      ],
      "events": [
-@@ -366,6 +385,14 @@
-                 { "name": "response", "$ref": "Response", "description": "Original response content that would proceed if this is continued." }
-             ]
-         },
-+        {
-+            "name": "requestIntercepted",
-+            "description": "Fired when HTTP request has been intercepted. The frontend must response with <code>Network.interceptContinue</code> or <code>Network.interceptWithRespons</code>` to continue this response.",
-+            "parameters": [
-+                { "name": "requestId", "$ref": "RequestId", "description": "Identifier for this intercepted network. Corresponds with an earlier <code>Network.requestWillBeSent</code>." },
-+                { "name": "request", "$ref": "Request", "description": "Original request content that would proceed if this is continued." }
-+            ]
-+        },
-         {
-             "name": "webSocketWillSendHandshakeRequest",
-             "description": "Fired when WebSocket is about to initiate handshake.",
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
 index 3b8fa18bd7e8d95d7e8f95b442afc63e550ce63a..edeabe67bd568be7fbe66781fce61a42644b0ca3 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
@@ -2009,7 +1955,7 @@ index bca5ead33d04e3b1f4d67cd335242334e93892ca..b04d073a4bacc021c3269b1efd12d683
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index ed763c11eb95646f63ecf8dda708ab88414f3290..a60cf099c1bed2646bfcff1bad8a59fff770dc50 100644
+index 191cf8d0e2562c41d03c5830c8ee06b239a8fe89..1d55aac0720950c23385e6ea9f4c1712eefd8fb1 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
 @@ -80,6 +80,12 @@
@@ -2108,7 +2054,7 @@ index ed763c11eb95646f63ecf8dda708ab88414f3290..a60cf099c1bed2646bfcff1bad8a59ff
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
  void InspectorInstrumentation::defaultAppearanceDidChangeImpl(InstrumentingAgents& instrumentingAgents, bool useDarkAppearance)
  {
-@@ -1302,6 +1324,43 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
+@@ -1315,6 +1337,36 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
          layerTreeAgent->renderLayerDestroyed(renderLayer);
  }
  
@@ -2142,17 +2088,10 @@ index ed763c11eb95646f63ecf8dda708ab88414f3290..a60cf099c1bed2646bfcff1bad8a59ff
 +        pageAgent->didCheckNewWindowPolicy(allowed);
 +}
 +
-+bool InspectorInstrumentation::interceptRequestImpl(InstrumentingAgents& instrumentingAgents, ResourceLoader& loader, Function<void(bool handled)>&& handler)
-+{
-+    if (InspectorNetworkAgent* networkAgent = instrumentingAgents.enabledNetworkAgent())
-+        return networkAgent->interceptRequest(loader, WTFMove(handler));
-+    return false;
-+}
-+
  InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope& workerGlobalScope)
  {
      return workerGlobalScope.inspectorController().m_instrumentingAgents;
-@@ -1313,6 +1372,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForPage(Page&
+@@ -1326,6 +1378,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForPage(Page&
      return page.inspectorController().m_instrumentingAgents.get();
  }
  
@@ -2167,7 +2106,7 @@ index ed763c11eb95646f63ecf8dda708ab88414f3290..a60cf099c1bed2646bfcff1bad8a59ff
  {
      if (is<Document>(context))
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.h b/Source/WebCore/inspector/InspectorInstrumentation.h
-index c7b66ba1155d91b3c5e0e312e14bd2fe73286d25..d046c6143fa7ea720540ca41fe586044a5b0461c 100644
+index 730f33251dd0274404adef8f6f3fb6e09cd6fe29..2cfd834eb2538111e3b078c4b40c5182f8e71358 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.h
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.h
 @@ -31,6 +31,7 @@
@@ -2178,22 +2117,7 @@ index c7b66ba1155d91b3c5e0e312e14bd2fe73286d25..d046c6143fa7ea720540ca41fe586044
  #include "CSSSelector.h"
  #include "CallTracerTypes.h"
  #include "CanvasBase.h"
-@@ -45,12 +46,14 @@
- #include "HitTestResult.h"
- #include "InspectorInstrumentationPublic.h"
- #include "Page.h"
-+#include "ResourceLoader.h"
- #include "StorageArea.h"
- #include "WebAnimation.h"
- #include "WorkerInspectorProxy.h"
- #include <JavaScriptCore/ConsoleMessage.h>
- #include <initializer_list>
- #include <wtf/CompletionHandler.h>
-+#include <wtf/Function.h>
- #include <wtf/MemoryPressureHandler.h>
- #include <wtf/RefPtr.h>
- 
-@@ -78,6 +81,7 @@ class DOMWrapperWorld;
+@@ -80,6 +81,7 @@ class DOMWrapperWorld;
  class Document;
  class DocumentLoader;
  class EventListener;
@@ -2201,7 +2125,7 @@ index c7b66ba1155d91b3c5e0e312e14bd2fe73286d25..d046c6143fa7ea720540ca41fe586044
  class HTTPHeaderMap;
  class InspectorTimelineAgent;
  class InstrumentingAgents;
-@@ -181,6 +185,9 @@ public:
+@@ -183,6 +185,9 @@ public:
      static void willLayout(Frame&);
      static void didLayout(Frame&, RenderObject&);
      static void didScroll(Page&);
@@ -2211,7 +2135,7 @@ index c7b66ba1155d91b3c5e0e312e14bd2fe73286d25..d046c6143fa7ea720540ca41fe586044
      static void willComposite(Frame&);
      static void didComposite(Frame&);
      static void willPaint(RenderObject&);
-@@ -198,6 +205,7 @@ public:
+@@ -200,6 +205,7 @@ public:
      static void didReceiveData(Frame*, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoading(Frame*, DocumentLoader*, unsigned long identifier, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoading(Frame*, DocumentLoader*, unsigned long identifier, const ResourceError&);
@@ -2219,7 +2143,7 @@ index c7b66ba1155d91b3c5e0e312e14bd2fe73286d25..d046c6143fa7ea720540ca41fe586044
  
      static void willSendRequest(WorkerGlobalScope&, unsigned long identifier, ResourceRequest&);
      static void didReceiveResourceResponse(WorkerGlobalScope&, unsigned long identifier, const ResourceResponse&);
-@@ -224,11 +232,11 @@ public:
+@@ -226,11 +232,11 @@ public:
      static void frameDetachedFromParent(Frame&);
      static void didCommitLoad(Frame&, DocumentLoader*);
      static void frameDocumentUpdated(Frame&);
@@ -2232,7 +2156,7 @@ index c7b66ba1155d91b3c5e0e312e14bd2fe73286d25..d046c6143fa7ea720540ca41fe586044
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      static void defaultAppearanceDidChange(Page&, bool useDarkAppearance);
  #endif
-@@ -321,6 +329,13 @@ public:
+@@ -325,6 +331,12 @@ public:
      static void layerTreeDidChange(Page*);
      static void renderLayerDestroyed(Page*, const RenderLayer&);
  
@@ -2241,12 +2165,11 @@ index c7b66ba1155d91b3c5e0e312e14bd2fe73286d25..d046c6143fa7ea720540ca41fe586044
 +    static bool shouldBypassCSP(ScriptExecutionContext*);
 +    static void willCheckNewWindowPolicy(Frame&, const URL&);
 +    static void didCheckNewWindowPolicy(Frame&, bool allowed);
-+    static bool interceptRequest(ResourceLoader&, Function<void(bool handled)>&&);
 +
      static void frontendCreated();
      static void frontendDeleted();
      static bool hasFrontends() { return InspectorInstrumentationPublic::hasFrontends(); }
-@@ -336,6 +351,8 @@ public:
+@@ -340,6 +352,8 @@ public:
      static void registerInstrumentingAgents(InstrumentingAgents&);
      static void unregisterInstrumentingAgents(InstrumentingAgents&);
  
@@ -2255,7 +2178,7 @@ index c7b66ba1155d91b3c5e0e312e14bd2fe73286d25..d046c6143fa7ea720540ca41fe586044
  private:
      static void didClearWindowObjectInWorldImpl(InstrumentingAgents&, Frame&, DOMWrapperWorld&);
      static bool isDebuggerPausedImpl(InstrumentingAgents&);
-@@ -403,6 +420,9 @@ private:
+@@ -407,6 +421,9 @@ private:
      static void willLayoutImpl(InstrumentingAgents&, Frame&);
      static void didLayoutImpl(InstrumentingAgents&, RenderObject&);
      static void didScrollImpl(InstrumentingAgents&);
@@ -2265,7 +2188,7 @@ index c7b66ba1155d91b3c5e0e312e14bd2fe73286d25..d046c6143fa7ea720540ca41fe586044
      static void willCompositeImpl(InstrumentingAgents&, Frame&);
      static void didCompositeImpl(InstrumentingAgents&);
      static void willPaintImpl(InstrumentingAgents&, RenderObject&);
-@@ -422,6 +442,7 @@ private:
+@@ -426,6 +443,7 @@ private:
      static void didReceiveDataImpl(InstrumentingAgents&, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const ResourceError&);
@@ -2273,7 +2196,7 @@ index c7b66ba1155d91b3c5e0e312e14bd2fe73286d25..d046c6143fa7ea720540ca41fe586044
      static void willLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void didLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void scriptImportedImpl(InstrumentingAgents&, unsigned long identifier, const String& sourceString);
-@@ -432,11 +453,11 @@ private:
+@@ -436,11 +454,11 @@ private:
      static void frameDetachedFromParentImpl(InstrumentingAgents&, Frame&);
      static void didCommitLoadImpl(InstrumentingAgents&, Frame&, DocumentLoader*);
      static void frameDocumentUpdatedImpl(InstrumentingAgents&, Frame&);
@@ -2286,7 +2209,7 @@ index c7b66ba1155d91b3c5e0e312e14bd2fe73286d25..d046c6143fa7ea720540ca41fe586044
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      static void defaultAppearanceDidChangeImpl(InstrumentingAgents&, bool useDarkAppearance);
  #endif
-@@ -525,6 +546,13 @@ private:
+@@ -531,6 +549,12 @@ private:
      static void layerTreeDidChangeImpl(InstrumentingAgents&);
      static void renderLayerDestroyedImpl(InstrumentingAgents&, const RenderLayer&);
  
@@ -2295,12 +2218,11 @@ index c7b66ba1155d91b3c5e0e312e14bd2fe73286d25..d046c6143fa7ea720540ca41fe586044
 +    static bool shouldBypassCSPImpl(InstrumentingAgents&);
 +    static void willCheckNewWindowPolicyImpl(InstrumentingAgents&, const URL&);
 +    static void didCheckNewWindowPolicyImpl(InstrumentingAgents&, bool allowed);
-+    static bool interceptRequestImpl(InstrumentingAgents&, ResourceLoader&, Function<void(bool handled)>&&);
 +
      static InstrumentingAgents& instrumentingAgentsForPage(Page&);
      static InstrumentingAgents& instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope&);
  
-@@ -974,6 +1002,14 @@ inline void InspectorInstrumentation::didScroll(Page& page)
+@@ -980,6 +1004,14 @@ inline void InspectorInstrumentation::didScroll(Page& page)
      didScrollImpl(instrumentingAgentsForPage(page));
  }
  
@@ -2315,7 +2237,7 @@ index c7b66ba1155d91b3c5e0e312e14bd2fe73286d25..d046c6143fa7ea720540ca41fe586044
  inline void InspectorInstrumentation::willComposite(Frame& frame)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1113,6 +1149,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
+@@ -1119,6 +1151,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
          didFailLoadingImpl(*instrumentingAgents, identifier, loader, error);
  }
  
@@ -2329,7 +2251,7 @@ index c7b66ba1155d91b3c5e0e312e14bd2fe73286d25..d046c6143fa7ea720540ca41fe586044
  inline void InspectorInstrumentation::didFailLoading(WorkerGlobalScope& workerGlobalScope, unsigned long identifier, const ResourceError& error)
  {
      didFailLoadingImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), identifier, nullptr, error);
-@@ -1208,13 +1251,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
+@@ -1214,13 +1253,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
          frameDocumentUpdatedImpl(*instrumentingAgents, frame);
  }
  
@@ -2343,7 +2265,7 @@ index c7b66ba1155d91b3c5e0e312e14bd2fe73286d25..d046c6143fa7ea720540ca41fe586044
  inline void InspectorInstrumentation::frameStartedLoading(Frame& frame)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1243,6 +1279,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
+@@ -1249,6 +1281,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
          frameClearedScheduledNavigationImpl(*instrumentingAgents, frame);
  }
  
@@ -2357,7 +2279,7 @@ index c7b66ba1155d91b3c5e0e312e14bd2fe73286d25..d046c6143fa7ea720540ca41fe586044
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
  inline void InspectorInstrumentation::defaultAppearanceDidChange(Page& page, bool useDarkAppearance)
  {
-@@ -1702,6 +1745,50 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
+@@ -1723,6 +1762,42 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
          renderLayerDestroyedImpl(*instrumentingAgents, renderLayer);
  }
  
@@ -2397,68 +2319,9 @@ index c7b66ba1155d91b3c5e0e312e14bd2fe73286d25..d046c6143fa7ea720540ca41fe586044
 +        didCheckNewWindowPolicyImpl(*instrumentingAgents, allowed);
 +}
 +
-+inline bool InspectorInstrumentation::interceptRequest(ResourceLoader& loader, Function<void(bool handled)>&& handler)
-+{
-+    FAST_RETURN_IF_NO_FRONTENDS(false);
-+    if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForFrame(loader.frame()))
-+        return interceptRequestImpl(*instrumentingAgents, loader, WTFMove(handler));
-+    return false;
-+}
-+
  inline InstrumentingAgents* InspectorInstrumentation::instrumentingAgentsForContext(ScriptExecutionContext* context)
  {
      return context ? instrumentingAgentsForContext(*context) : nullptr;
-diff --git a/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp b/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp
-index 954aaf121a9fa507d83bc10ae37de1f128f7dcfc..9f16be3dbcf4857742ec2ab131e2b2f962a2a47c 100644
---- a/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp
-+++ b/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp
-@@ -30,6 +30,11 @@
- 
- namespace WebCore {
- 
-+bool InspectorInstrumentationWebKit::interceptRequestInternal(ResourceLoader& loader, Function<void(bool handled)>&& handler)
-+{
-+    return InspectorInstrumentation::interceptRequest(loader, WTFMove(handler));
-+}
-+
- bool InspectorInstrumentationWebKit::shouldInterceptResponseInternal(const Frame& frame, const ResourceResponse& response)
- {
-     return InspectorInstrumentation::shouldInterceptResponse(frame, response);
-diff --git a/Source/WebCore/inspector/InspectorInstrumentationWebKit.h b/Source/WebCore/inspector/InspectorInstrumentationWebKit.h
-index b67e89b80b4e7a8586cac81ade5d58a1bcb0d431..c468bc0981d1fb13272b28095f9f7584840b5861 100644
---- a/Source/WebCore/inspector/InspectorInstrumentationWebKit.h
-+++ b/Source/WebCore/inspector/InspectorInstrumentationWebKit.h
-@@ -27,6 +27,7 @@
- 
- #include "InspectorInstrumentationPublic.h"
- #include <wtf/CompletionHandler.h>
-+#include <wtf/Function.h>
- 
- namespace WebCore {
- 
-@@ -36,14 +37,22 @@ class SharedBuffer;
- 
- class WEBCORE_EXPORT InspectorInstrumentationWebKit {
- public:
-+    static bool interceptRequest(ResourceLoader&, Function<void(bool handled)>&&);
-     static bool shouldInterceptResponse(const Frame*, const ResourceResponse&);
-     static void interceptResponse(const Frame*, const ResourceResponse&, unsigned long identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
- 
- private:
-+    static bool interceptRequestInternal(ResourceLoader&, Function<void(bool handled)>&&);
-     static bool shouldInterceptResponseInternal(const Frame&, const ResourceResponse&);
-     static void interceptResponseInternal(const Frame&, const ResourceResponse&, unsigned long identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
- };
- 
-+inline bool InspectorInstrumentationWebKit::interceptRequest(ResourceLoader& loader, Function<void(bool handled)>&& handler)
-+{
-+    FAST_RETURN_IF_NO_FRONTENDS(false);
-+    return interceptRequestInternal(loader, WTFMove(handler));
-+}
-+
- inline bool InspectorInstrumentationWebKit::shouldInterceptResponse(const Frame* frame, const ResourceResponse& response)
- {
-     FAST_RETURN_IF_NO_FRONTENDS(false);
 diff --git a/Source/WebCore/inspector/InstrumentingAgents.h b/Source/WebCore/inspector/InstrumentingAgents.h
 index 829dc952b8ce80e15ec9f4f343587008b5a41d2e..b94fef468607453d0c87337678d1b68046d3b963 100644
 --- a/Source/WebCore/inspector/InstrumentingAgents.h
@@ -2900,18 +2763,18 @@ index ddbb5d5347f3beabe3cfab201d6838c896d21e39..25f1798cad5a4ef135a27d3bd5146798
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index 2cf4988f13222be5418b0a23116b8dc96b1f83f7..b76642505aaeece2e8159486ac82e52ffb535dc5 100644
+index 1ccc5f5de274bd263c8bec5c72fe417ea99534fd..bbb831ec7a714a476baaa5069117c873a7033693 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-@@ -43,6 +43,7 @@
- #include "DocumentLoader.h"
+@@ -44,6 +44,7 @@
  #include "DocumentThreadableLoader.h"
+ #include "FormData.h"
  #include "Frame.h"
 +#include "FormData.h"
  #include "FrameLoader.h"
  #include "HTTPHeaderMap.h"
  #include "HTTPHeaderNames.h"
-@@ -55,6 +56,7 @@
+@@ -56,6 +57,7 @@
  #include "MIMETypeRegistry.h"
  #include "MemoryCache.h"
  #include "NetworkResourcesData.h"
@@ -2919,7 +2782,7 @@ index 2cf4988f13222be5418b0a23116b8dc96b1f83f7..b76642505aaeece2e8159486ac82e52f
  #include "Page.h"
  #include "PlatformStrategies.h"
  #include "ProgressTracker.h"
-@@ -483,8 +485,14 @@ static InspectorPageAgent::ResourceType resourceTypeForLoadType(InspectorInstrum
+@@ -485,8 +487,14 @@ static InspectorPageAgent::ResourceType resourceTypeForLoadType(InspectorInstrum
  
  void InspectorNetworkAgent::willSendRequest(unsigned long identifier, DocumentLoader* loader, ResourceRequest& request, const ResourceResponse& redirectResponse)
  {
@@ -2936,214 +2799,18 @@ index 2cf4988f13222be5418b0a23116b8dc96b1f83f7..b76642505aaeece2e8159486ac82e52f
  }
  
  void InspectorNetworkAgent::willSendRequestOfType(unsigned long identifier, DocumentLoader* loader, ResourceRequest& request, InspectorInstrumentation::LoadType loadType)
-@@ -840,6 +848,7 @@ void InspectorNetworkAgent::disable(ErrorString&)
-     m_resourcesData->clear();
-     m_extraRequestHeaders.clear();
- 
-+    continuePendingRequests();
-     continuePendingResponses();
- 
-     setResourceCachingDisabled(false);
-@@ -863,6 +872,16 @@ bool InspectorNetworkAgent::shouldIntercept(URL url)
-     return false;
- }
- 
-+void InspectorNetworkAgent::continuePendingRequests()
-+{
-+    for (auto& pendingRequest : m_pendingInterceptRequests.values()) {
-+        ResourceLoader* loader = pendingRequest->m_loader.get();
-+        if (loader->identifier())
-+            pendingRequest->m_callback(false);
-+    }
-+    m_pendingInterceptRequests.clear();
-+}
-+
- void InspectorNetworkAgent::continuePendingResponses()
- {
-     for (auto& pendingInterceptResponse : m_pendingInterceptResponses.values())
-@@ -1019,17 +1038,15 @@ void InspectorNetworkAgent::resolveWebSocket(ErrorString& errorString, const Str
-     result = injectedScript.wrapObject(webSocketAsScriptValue(state, webSocket), objectGroupName);
- }
- 
--void InspectorNetworkAgent::setInterceptionEnabled(ErrorString& errorString, bool enabled)
-+void InspectorNetworkAgent::setInterceptionEnabled(ErrorString&, bool enabled, const bool* interceptRequests)
- {
--    if (m_interceptionEnabled == enabled) {
--        errorString = m_interceptionEnabled ? "Interception already enabled"_s : "Interception already disabled"_s;
--        return;
--    }
--
-     m_interceptionEnabled = enabled;
-+    m_interceptRequests = interceptRequests && *interceptRequests;
- 
+@@ -1094,8 +1102,7 @@ bool InspectorNetworkAgent::willIntercept(const ResourceRequest& request)
      if (!m_interceptionEnabled)
-         continuePendingResponses();
-+    if (!m_interceptionEnabled || !m_interceptRequests)
-+        continuePendingRequests();
+         return false;
+ 
+-    return shouldIntercept(request.url(), NetworkStage::Request)
+-        || shouldIntercept(request.url(), NetworkStage::Response);
++    return shouldIntercept(request.url(), NetworkStage::Response);
  }
  
- void InspectorNetworkAgent::addInterception(ErrorString& errorString, const String& url, const bool* optionalCaseSensitive, const bool* optionalIsRegex, const String* networkStageString)
-@@ -1111,19 +1128,133 @@ void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response,
-     m_frontendDispatcher->responseIntercepted(requestId, buildObjectForResourceResponse(response, nullptr));
- }
- 
--void InspectorNetworkAgent::interceptContinue(ErrorString& errorString, const String& requestId)
--{
-+bool InspectorNetworkAgent::interceptRequest(ResourceLoader& loader, Function<void(bool handled)>&& handler) {
-+    if (!m_interceptionEnabled || !m_interceptRequests)
-+        return false;
-+    String requestId = IdentifiersFactory::requestId(loader.identifier());
-+    auto pendingRequest = makeUnique<PendingInterceptRequest>();
-+    pendingRequest->m_loader = &loader;
-+    pendingRequest->m_callback = WTFMove(handler);
-+    m_pendingInterceptRequests.set(requestId, WTFMove(pendingRequest));
-+    m_frontendDispatcher->requestIntercepted(requestId, buildObjectForResourceRequest(loader.request()));
-+    return true;
-+}
-+
-+void InspectorNetworkAgent::interceptContinue(ErrorString& errorString, const String& requestId, const String* method, const JSON::Object* headers, const String* postData)
-+{
-+    auto pendingRequest = m_pendingInterceptRequests.take(requestId);
-+    if (pendingRequest) {
-+        ResourceLoader* loader = pendingRequest->m_loader.get();
-+        if (!loader->identifier()) {
-+            // Do not throw upon continue of canceled requests.
-+            return;
-+        }
-+        // Safe to const cast at this point, we are only adjusting the method / headers / post.
-+        ResourceRequest* request = const_cast<ResourceRequest*>(&loader->request());
-+        if (method)
-+            request->setHTTPMethod(*method);
-+        if (headers) {
-+            HTTPHeaderMap explicitHeaders;
-+            for (auto& header : *headers) {
-+                String headerValue;
-+                if (header.value->asString(headerValue))
-+                    explicitHeaders.add(header.key, headerValue);
-+            }
-+            request->setHTTPHeaderFields(WTFMove(explicitHeaders));
-+        }
-+        if (postData) {
-+            Vector<uint8_t> buffer;
-+            if (!base64Decode(*postData, buffer)) {
-+                errorString = "Unable to decode given postData"_s;
-+                return;
-+            }
-+            Ref<FormData> data = FormData::create(buffer);
-+            request->setHTTPBody(WTFMove(data));
-+        }
-+        pendingRequest->m_callback(false);
-+        return;
-+    }
-+
-     auto pendingInterceptResponse = m_pendingInterceptResponses.take(requestId);
--    if (!pendingInterceptResponse) {
--        errorString = "Missing pending intercept response for given requestId"_s;
-+    if (pendingInterceptResponse) {
-+        pendingInterceptResponse->respondWithOriginalResponse();
-         return;
-     }
- 
--    pendingInterceptResponse->respondWithOriginalResponse();
-+    errorString = "Missing pending intercept response for given requestId"_s;
- }
- 
--void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, const String& requestId, const String& content, bool base64Encoded, const String* mimeType, const int* status, const String* statusText, const JSON::Object* headers)
-+void InspectorNetworkAgent::interceptAsError(ErrorString& errorString, const String& requestId, const String& reason)
- {
-+    auto pendingRequest = m_pendingInterceptRequests.take(requestId);
-+    if (pendingRequest) {
-+        ResourceLoader* loader = pendingRequest->m_loader.get();
-+        if (!loader->identifier()) {
-+            errorString = "Unable to abort request, it has already been processed"_s;
-+            return;
-+        }
-+        ResourceError error(errorDomainWebKitInternal, 0, loader->url(), "Request intercepted"_s, ResourceError::Type::General);
-+        if (reason == "AccessControl")
-+            error = ResourceError(errorDomainWebKitInternal, 0, loader->url(), "Access denied"_s, ResourceError::Type::AccessControl);
-+        else if (reason == "Cancellation")
-+            error = ResourceError(errorDomainWebKitInternal, 0, loader->url(), "Request canceled"_s, ResourceError::Type::Cancellation);
-+        else if (reason == "Timeout")
-+            error = ResourceError(errorDomainWebKitInternal, 0, loader->url(), "Request timed out"_s, ResourceError::Type::Timeout);
-+        loader->didFail(error);
-+        pendingRequest->m_callback(true);
-+        return;
-+    }
-+
-+    errorString = "Missing pending intercept response for given requestId"_s;
-+}
-+
-+void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, const String& requestId, const String* content, const bool* base64Encoded, const String* mimeType, const int* status, const String* statusText, const JSON::Object* headers)
-+{
-+    auto pendingRequest = m_pendingInterceptRequests.take(requestId);
-+    if (pendingRequest && status && statusText && mimeType && headers) {
-+        RefPtr<ResourceLoader> loader = pendingRequest->m_loader.get();
-+        if (!loader->identifier()) {
-+            errorString = "Unable to fulfill request, it has already been processed"_s;
-+            return;
-+        }
-+        RefPtr<SharedBuffer> data;
-+        if (base64Encoded && *base64Encoded && content) {
-+            Vector<uint8_t> buffer;
-+            if (!base64Decode(*content, buffer)) {
-+                errorString = "Unable to decode given content"_s;
-+                return;
-+            }
-+            data = SharedBuffer::create(WTFMove(buffer));
-+        } else if (content) {
-+            data = SharedBuffer::create(content->utf8().data(), content->utf8().length());
-+        }
-+
-+        ResourceResponse response(pendingRequest->m_loader->url(), *mimeType, data->size(), String());
-+        response.setSource(ResourceResponse::Source::InspectorOverride);
-+        response.setHTTPStatusCode(*status);
-+        response.setHTTPStatusText(*statusText);
-+        HTTPHeaderMap explicitHeaders;
-+        for (auto& header : *headers) {
-+            String headerValue;
-+            if (header.value->asString(headerValue))
-+                explicitHeaders.add(header.key, headerValue);
-+        }
-+        response.setHTTPHeaderFields(WTFMove(explicitHeaders));
-+        response.setHTTPHeaderField(HTTPHeaderName::ContentType, response.mimeType());
-+        if (response.isRedirection()) {
-+            loader->setRequest(loader->request().redirectedRequest(response, false));
-+            pendingRequest->m_callback(false);
-+        } else {
-+            loader->didReceiveResponse(response, [loader, data = data.releaseNonNull()]() mutable {
-+                if (data->size())
-+                    loader->didReceiveBuffer(WTFMove(data), data->size(), DataPayloadWholeResource);
-+                loader->didFinishLoading(NetworkLoadMetrics());
-+            });
-+            pendingRequest->m_callback(true);
-+        }
-+        return;
-+    }
-+
-     auto pendingInterceptResponse = m_pendingInterceptResponses.take(requestId);
-     if (!pendingInterceptResponse) {
-         errorString = "Missing pending intercept response for given requestId"_s;
-@@ -1151,20 +1282,26 @@ void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, cons
-     }
- 
-     RefPtr<SharedBuffer> overrideData;
--    if (base64Encoded) {
-+    if (base64Encoded && *base64Encoded && content) {
-         Vector<uint8_t> buffer;
--        if (!base64Decode(content, buffer)) {
-+        if (!base64Decode(*content, buffer)) {
-             errorString = "Unable to decode given content"_s;
-             pendingInterceptResponse->respondWithOriginalResponse();
-             return;
-         }
-         overrideData = SharedBuffer::create(WTFMove(buffer));
--    } else
--        overrideData = SharedBuffer::create(content.utf8().data(), content.utf8().length());
-+    } else if (content) {
-+        overrideData = SharedBuffer::create(content->utf8().data(), content->utf8().length());
-+    }
- 
-     pendingInterceptResponse->respond(overrideResponse, overrideData);
+ bool InspectorNetworkAgent::shouldInterceptRequest(const ResourceRequest& request)
+@@ -1335,6 +1342,11 @@ void InspectorNetworkAgent::interceptRequestWithError(ErrorString& errorString,
+     loader.didFail(error);
  }
  
 +void InspectorNetworkAgent::setEmulateOfflineState(ErrorString&, bool offline)
@@ -3154,7 +2821,7 @@ index 2cf4988f13222be5418b0a23116b8dc96b1f83f7..b76642505aaeece2e8159486ac82e52f
  bool InspectorNetworkAgent::shouldTreatAsText(const String& mimeType)
  {
      return startsWithLettersIgnoringASCIICase(mimeType, "text/")
-@@ -1205,6 +1342,12 @@ Optional<String> InspectorNetworkAgent::textContentForCachedResource(CachedResou
+@@ -1376,6 +1388,12 @@ Optional<String> InspectorNetworkAgent::textContentForCachedResource(CachedResou
      return WTF::nullopt;
  }
  
@@ -3168,7 +2835,7 @@ index 2cf4988f13222be5418b0a23116b8dc96b1f83f7..b76642505aaeece2e8159486ac82e52f
  {
      ASSERT(result);
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
-index bfd131e9b5856c84da7724805e71397b7c7486a9..8f5fe68c21fac2780b0d2aff4f0e63cd8b2858b4 100644
+index 3440e71a5ed5ef384620a9f62803751e983db5b1..45e0df5e6d92626ae112d92cffdd745516e4d137 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
 @@ -73,6 +73,7 @@ public:
@@ -3179,71 +2846,14 @@ index bfd131e9b5856c84da7724805e71397b7c7486a9..8f5fe68c21fac2780b0d2aff4f0e63cd
  
      // InspectorAgentBase
      void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) final;
-@@ -87,11 +88,13 @@ public:
-     void loadResource(const String& frameId, const String& url, Ref<LoadResourceCallback>&&) final;
-     void getSerializedCertificate(ErrorString&, const String& requestId, String* serializedCertificate) final;
-     void resolveWebSocket(ErrorString&, const String& requestId, const String* objectGroup, RefPtr<Inspector::Protocol::Runtime::RemoteObject>&) final;
--    void setInterceptionEnabled(ErrorString&, bool enabled) final;
-+    void setInterceptionEnabled(ErrorString&, bool enabled, const bool* interceptRequests) final;
-     void addInterception(ErrorString&, const String& url, const bool* caseSensitive, const bool* isRegex, const String* networkStageString) final;
-     void removeInterception(ErrorString&, const String& url, const bool* caseSensitive, const bool* isRegex, const String* networkStageString) final;
--    void interceptContinue(ErrorString&, const String& requestId) final;
--    void interceptWithResponse(ErrorString&, const String& requestId, const String& content, bool base64Encoded, const String* mimeType, const int* status, const String* statusText, const JSON::Object* headers) final;
-+    void interceptContinue(ErrorString&, const String& requestId, const String* method, const JSON::Object* headers, const String* postData) final;
-+    void interceptAsError(ErrorString&, const String& requestId, const String& reason) final;
-+    void interceptWithResponse(ErrorString&, const String& requestId, const String* content, const bool* base64Encoded, const String* mimeType, const int* status, const String* statusText, const JSON::Object* headers) final;
-+    void setEmulateOfflineState(ErrorString&, bool offline) final;
- 
-     // InspectorInstrumentation
-     void willRecalculateStyle();
-@@ -121,6 +124,7 @@ public:
-     bool willInterceptRequest(const ResourceRequest&);
+@@ -126,6 +127,7 @@ public:
      bool shouldInterceptResponse(const ResourceResponse&);
      void interceptResponse(const ResourceResponse&, unsigned long identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
-+    bool interceptRequest(ResourceLoader& loader, Function<void(bool handled)>&&);
+     void interceptRequest(ResourceLoader&, Function<void(const ResourceRequest&)>&&);
++    void setEmulateOfflineState(ErrorString&, bool offline) final;
  
      void searchOtherRequests(const JSC::Yarr::RegularExpression&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::SearchResult>>&);
      void searchInRequest(ErrorString&, const String& requestId, const String& query, bool caseSensitive, bool isRegex, RefPtr<JSON::ArrayOf<Inspector::Protocol::GenericTypes::SearchMatch>>&);
-@@ -141,6 +145,7 @@ private:
-     void willSendRequest(unsigned long identifier, DocumentLoader*, ResourceRequest&, const ResourceResponse& redirectResponse, InspectorPageAgent::ResourceType);
- 
-     bool shouldIntercept(URL);
-+    void continuePendingRequests();
-     void continuePendingResponses();
- 
-     WebSocket* webSocketForRequestId(const String& requestId);
-@@ -191,6 +196,15 @@ private:
-         bool m_responded { false };
-     };
- 
-+    class PendingInterceptRequest {
-+        WTF_MAKE_NONCOPYABLE(PendingInterceptRequest);
-+        WTF_MAKE_FAST_ALLOCATED;
-+    public:
-+        PendingInterceptRequest() = default;
-+        RefPtr<ResourceLoader> m_loader;
-+        CompletionHandler<void(bool handled)> m_callback;
-+    };
-+
-     std::unique_ptr<Inspector::NetworkFrontendDispatcher> m_frontendDispatcher;
-     RefPtr<Inspector::NetworkBackendDispatcher> m_backendDispatcher;
-     Inspector::InjectedScriptManager& m_injectedScriptManager;
-@@ -214,6 +228,7 @@ private:
-     };
-     Vector<Intercept> m_intercepts;
-     HashMap<String, std::unique_ptr<PendingInterceptResponse>> m_pendingInterceptResponses;
-+    HashMap<String, std::unique_ptr<PendingInterceptRequest>> m_pendingInterceptRequests;
- 
-     // FIXME: InspectorNetworkAgent should not be aware of style recalculation.
-     RefPtr<Inspector::Protocol::Network::Initiator> m_styleRecalculationInitiator;
-@@ -222,6 +237,7 @@ private:
-     bool m_enabled { false };
-     bool m_loadingXHRSynchronously { false };
-     bool m_interceptionEnabled { false };
-+    bool m_interceptRequests { false };
- };
- 
- } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 index 539e8105b66e7b2a6a05571a1e1c8cd6bdf27c90..45489cd5e978ac70be8fb33bb3e137ab5eff2d11 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
@@ -6591,10 +6201,10 @@ index 407361f036e79891767d807fbb63c9044b260a70..24773d8f349d441e2b6b1981baa5af17
  }
  
 diff --git a/Source/WebKit/PlatformGTK.cmake b/Source/WebKit/PlatformGTK.cmake
-index f0b639b5bce1a2f74a14ce89b0bcbb819c2e3974..437fcb91fe4933e5c44d67b1c5c1060148eba357 100644
+index 6cb3df1a60adee7365fa449fb07342eababa61f2..2b98bcc7847554a38fd1a565d6b7bd803284716e 100644
 --- a/Source/WebKit/PlatformGTK.cmake
 +++ b/Source/WebKit/PlatformGTK.cmake
-@@ -447,6 +447,9 @@ list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES
+@@ -448,6 +448,9 @@ list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES
      ${GSTREAMER_PBUTILS_INCLUDE_DIRS}
      ${GTK_INCLUDE_DIRS}
      ${LIBSOUP_INCLUDE_DIRS}
@@ -6604,7 +6214,7 @@ index f0b639b5bce1a2f74a14ce89b0bcbb819c2e3974..437fcb91fe4933e5c44d67b1c5c10601
  )
  
  if (USE_WPE_RENDERER)
-@@ -500,6 +503,9 @@ if (USE_LIBWEBRTC)
+@@ -501,6 +504,9 @@ if (USE_LIBWEBRTC)
      list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES
          "${THIRDPARTY_DIR}/libwebrtc/Source/"
          "${THIRDPARTY_DIR}/libwebrtc/Source/webrtc"
@@ -6615,10 +6225,10 @@ index f0b639b5bce1a2f74a14ce89b0bcbb819c2e3974..437fcb91fe4933e5c44d67b1c5c10601
  endif ()
  
 diff --git a/Source/WebKit/PlatformWPE.cmake b/Source/WebKit/PlatformWPE.cmake
-index 89cc7e3cdb233ccaf2eb1c026f42394cc714498b..54a5a7bd2e115206af3ca3caff0aea9a6b399890 100644
+index 3b153f122f13040707eea8b0bda91f15185bc1e4..2d24930d725787b9b27c105c78636c6de24b91f4 100644
 --- a/Source/WebKit/PlatformWPE.cmake
 +++ b/Source/WebKit/PlatformWPE.cmake
-@@ -256,6 +256,7 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
+@@ -257,6 +257,7 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
      "${WEBKIT_DIR}/UIProcess/API/wpe"
      "${WEBKIT_DIR}/UIProcess/CoordinatedGraphics"
      "${WEBKIT_DIR}/UIProcess/geoclue"
@@ -6626,7 +6236,7 @@ index 89cc7e3cdb233ccaf2eb1c026f42394cc714498b..54a5a7bd2e115206af3ca3caff0aea9a
      "${WEBKIT_DIR}/UIProcess/gstreamer"
      "${WEBKIT_DIR}/UIProcess/linux"
      "${WEBKIT_DIR}/UIProcess/soup"
-@@ -286,8 +287,52 @@ list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES
+@@ -287,8 +288,52 @@ list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES
      ${GSTREAMER_VIDEO_INCLUDE_DIRS}
      ${LIBSECCOMP_INCLUDE_DIRS}
      ${LIBSOUP_INCLUDE_DIRS}
@@ -7127,7 +6737,7 @@ index 2519b7ee283a4015acc2a434011d859c4a2c687e..dc10ea6013e5c3a92e3f4d3eb8bbe842
  UIProcess/Inspector/mac/WebInspectorProxyMac.mm
  UIProcess/Inspector/mac/WKInspectorViewController.mm
 diff --git a/Source/WebKit/SourcesGTK.txt b/Source/WebKit/SourcesGTK.txt
-index 54f8fa408048aad78529a58f774963b220b7c56a..53dba1ff30d0ffb01504909ee77778f6345a4a32 100644
+index 5167ae9ddcbed6c02c10415a0f998fa20a371e77..f1acae59c88542468d1e9bb2f9fba45a2d4df161 100644
 --- a/Source/WebKit/SourcesGTK.txt
 +++ b/Source/WebKit/SourcesGTK.txt
 @@ -135,6 +135,7 @@ UIProcess/API/glib/WebKitAuthenticationRequest.cpp @no-unify
@@ -7138,7 +6748,7 @@ index 54f8fa408048aad78529a58f774963b220b7c56a..53dba1ff30d0ffb01504909ee77778f6
  UIProcess/API/glib/WebKitContextMenuClient.cpp @no-unify
  UIProcess/API/glib/WebKitCookieManager.cpp @no-unify
  UIProcess/API/glib/WebKitCredential.cpp @no-unify
-@@ -230,6 +231,7 @@ UIProcess/geoclue/GeoclueGeolocationProvider.cpp
+@@ -231,6 +232,7 @@ UIProcess/geoclue/GeoclueGeolocationProvider.cpp
  
  UIProcess/Inspector/glib/RemoteInspectorClient.cpp
  
@@ -7146,7 +6756,7 @@ index 54f8fa408048aad78529a58f774963b220b7c56a..53dba1ff30d0ffb01504909ee77778f6
  UIProcess/Inspector/gtk/RemoteWebInspectorProxyGtk.cpp
  UIProcess/Inspector/gtk/WebInspectorProxyGtk.cpp
  UIProcess/Inspector/gtk/WebKitInspectorWindow.cpp
-@@ -250,6 +252,7 @@ UIProcess/WebsiteData/unix/WebsiteDataStoreUnix.cpp
+@@ -251,6 +253,7 @@ UIProcess/WebsiteData/unix/WebsiteDataStoreUnix.cpp
  
  UIProcess/cairo/BackingStoreCairo.cpp @no-unify
  
@@ -7154,7 +6764,7 @@ index 54f8fa408048aad78529a58f774963b220b7c56a..53dba1ff30d0ffb01504909ee77778f6
  UIProcess/glib/WebProcessPoolGLib.cpp
  UIProcess/glib/WebProcessProxyGLib.cpp
  UIProcess/glib/WebsiteDataStoreGLib.cpp @no-unify
-@@ -265,6 +268,7 @@ UIProcess/gtk/ClipboardGtk3.cpp @no-unify
+@@ -266,6 +269,7 @@ UIProcess/gtk/ClipboardGtk3.cpp @no-unify
  UIProcess/gtk/ClipboardGtk4.cpp @no-unify
  UIProcess/gtk/GestureController.cpp
  UIProcess/gtk/HardwareAccelerationManager.cpp
@@ -7162,7 +6772,7 @@ index 54f8fa408048aad78529a58f774963b220b7c56a..53dba1ff30d0ffb01504909ee77778f6
  UIProcess/gtk/KeyBindingTranslator.cpp
  UIProcess/gtk/PointerLockManager.cpp @no-unify
  UIProcess/gtk/PointerLockManagerWayland.cpp @no-unify
-@@ -275,6 +279,8 @@ UIProcess/gtk/WaylandCompositor.cpp @no-unify
+@@ -276,6 +280,8 @@ UIProcess/gtk/WaylandCompositor.cpp @no-unify
  UIProcess/gtk/WebColorPickerGtk.cpp
  UIProcess/gtk/WebContextMenuProxyGtk.cpp
  UIProcess/gtk/WebDataListSuggestionsDropdownGtk.cpp
@@ -7172,7 +6782,7 @@ index 54f8fa408048aad78529a58f774963b220b7c56a..53dba1ff30d0ffb01504909ee77778f6
  UIProcess/gtk/WebPasteboardProxyGtk.cpp
  UIProcess/gtk/WebPopupMenuProxyGtk.cpp
 diff --git a/Source/WebKit/SourcesWPE.txt b/Source/WebKit/SourcesWPE.txt
-index fbceb00524e7b399dce747e73efc42d0bdc34c8c..e0fc5d0580589d346cdeddbb673fb08a148e50b1 100644
+index e3f8f47f93dd929da59b356472c20ad9a0c8fb4f..70b347c057a2beb175c9853a768c770df38e9dff 100644
 --- a/Source/WebKit/SourcesWPE.txt
 +++ b/Source/WebKit/SourcesWPE.txt
 @@ -125,6 +125,7 @@ UIProcess/API/glib/WebKitAuthenticationRequest.cpp @no-unify
@@ -7183,7 +6793,7 @@ index fbceb00524e7b399dce747e73efc42d0bdc34c8c..e0fc5d0580589d346cdeddbb673fb08a
  UIProcess/API/glib/WebKitContextMenuClient.cpp @no-unify
  UIProcess/API/glib/WebKitCookieManager.cpp @no-unify
  UIProcess/API/glib/WebKitCredential.cpp @no-unify
-@@ -201,7 +202,8 @@ UIProcess/Automation/wpe/WebAutomationSessionWPE.cpp
+@@ -202,7 +203,8 @@ UIProcess/Automation/wpe/WebAutomationSessionWPE.cpp
  UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
  
  UIProcess/geoclue/GeoclueGeolocationProvider.cpp
@@ -7193,7 +6803,7 @@ index fbceb00524e7b399dce747e73efc42d0bdc34c8c..e0fc5d0580589d346cdeddbb673fb08a
  UIProcess/glib/WebProcessPoolGLib.cpp
  UIProcess/glib/WebProcessProxyGLib.cpp
  UIProcess/glib/WebsiteDataStoreGLib.cpp @no-unify
-@@ -226,6 +228,10 @@ UIProcess/linux/MemoryPressureMonitor.cpp
+@@ -227,6 +229,10 @@ UIProcess/linux/MemoryPressureMonitor.cpp
  UIProcess/soup/WebCookieManagerProxySoup.cpp
  UIProcess/soup/WebProcessPoolSoup.cpp
  
@@ -7900,10 +7510,10 @@ index 2ceb2b4f49f409bbe6e6810115e36d0c84f83b5d..16d2062b746b80ace6f39d779e9c3b87
      bool canRunBeforeUnloadConfirmPanel() const final { return true; }
  
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp b/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp
-index 041bfb545c6af6220a8266d356ac19d90791cb83..265a84c7e6f0dc494182d859d2db4b91addb3023 100644
+index c4c7d0f6c1261b51d02071a652aa093d1aa3b9d1..3e4a941ea4360b96cf1b8eb808e57ae030f148e6 100644
 --- a/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp
-@@ -119,8 +119,8 @@ enum {
+@@ -120,8 +120,8 @@ enum {
      PROP_LOCAL_STORAGE_DIRECTORY,
  #endif
      PROP_WEBSITE_DATA_MANAGER,
@@ -7913,7 +7523,7 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..265a84c7e6f0dc494182d859d2db4b91
  #if !USE(GTK4)
      PROP_USE_SYSYEM_APPEARANCE_FOR_SCROLLBARS
  #endif
-@@ -205,8 +205,8 @@ struct _WebKitWebContextPrivate {
+@@ -206,8 +206,8 @@ struct _WebKitWebContextPrivate {
  
      RefPtr<WebProcessPool> processPool;
      bool clientsDetached;
@@ -7923,7 +7533,7 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..265a84c7e6f0dc494182d859d2db4b91
  #if !USE(GTK4)
      bool useSystemAppearanceForScrollbars;
  #endif
-@@ -306,11 +306,9 @@ WEBKIT_DEFINE_TYPE(WebKitWebContext, webkit_web_context, G_TYPE_OBJECT)
+@@ -307,11 +307,9 @@ WEBKIT_DEFINE_TYPE(WebKitWebContext, webkit_web_context, G_TYPE_OBJECT)
  
  static const char* injectedBundleDirectory()
  {
@@ -7935,7 +7545,7 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..265a84c7e6f0dc494182d859d2db4b91
  
  #if PLATFORM(GTK)
      static const char* injectedBundlePath = LIBDIR G_DIR_SEPARATOR_S "webkit2gtk-" WEBKITGTK_API_VERSION_STRING
-@@ -335,10 +333,10 @@ static void webkitWebContextGetProperty(GObject* object, guint propID, GValue* v
+@@ -336,10 +334,10 @@ static void webkitWebContextGetProperty(GObject* object, guint propID, GValue* v
      case PROP_WEBSITE_DATA_MANAGER:
          g_value_set_object(value, webkit_web_context_get_website_data_manager(context));
          break;
@@ -7947,7 +7557,7 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..265a84c7e6f0dc494182d859d2db4b91
  #if !USE(GTK4)
      case PROP_USE_SYSYEM_APPEARANCE_FOR_SCROLLBARS:
          g_value_set_boolean(value, webkit_web_context_get_use_system_appearance_for_scrollbars(context));
-@@ -365,10 +363,10 @@ static void webkitWebContextSetProperty(GObject* object, guint propID, const GVa
+@@ -366,10 +364,10 @@ static void webkitWebContextSetProperty(GObject* object, guint propID, const GVa
          context->priv->websiteDataManager = manager ? WEBKIT_WEBSITE_DATA_MANAGER(manager) : nullptr;
          break;
      }
@@ -7959,7 +7569,7 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..265a84c7e6f0dc494182d859d2db4b91
  #if !USE(GTK4)
      case PROP_USE_SYSYEM_APPEARANCE_FOR_SCROLLBARS:
          webkit_web_context_set_use_system_appearance_for_scrollbars(context, g_value_get_boolean(value));
-@@ -380,10 +378,19 @@ static void webkitWebContextSetProperty(GObject* object, guint propID, const GVa
+@@ -381,10 +379,19 @@ static void webkitWebContextSetProperty(GObject* object, guint propID, const GVa
      }
  }
  
@@ -7979,7 +7589,7 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..265a84c7e6f0dc494182d859d2db4b91
      GUniquePtr<char> bundleFilename(g_build_filename(injectedBundleDirectory(), INJECTED_BUNDLE_FILENAME, nullptr));
  
      WebKitWebContext* webContext = WEBKIT_WEB_CONTEXT(object);
-@@ -391,8 +398,8 @@ static void webkitWebContextConstructed(GObject* object)
+@@ -392,8 +399,8 @@ static void webkitWebContextConstructed(GObject* object)
  
      API::ProcessPoolConfiguration configuration;
      configuration.setInjectedBundlePath(FileSystem::stringFromFileSystemRepresentation(bundleFilename.get()));
@@ -7989,7 +7599,7 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..265a84c7e6f0dc494182d859d2db4b91
  #if !USE(GTK4)
      configuration.setUseSystemAppearanceForScrollbars(priv->useSystemAppearanceForScrollbars);
  #endif
-@@ -404,6 +411,11 @@ static void webkitWebContextConstructed(GObject* object)
+@@ -405,6 +412,11 @@ static void webkitWebContextConstructed(GObject* object)
      if (!webkit_website_data_manager_is_ephemeral(priv->websiteDataManager.get()))
          configuration.setHSTSStorageDirectory(FileSystem::stringFromFileSystemRepresentation(webkit_website_data_manager_get_hsts_cache_directory(priv->websiteDataManager.get())));
  
@@ -8001,7 +7611,7 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..265a84c7e6f0dc494182d859d2db4b91
      priv->processPool = WebProcessPool::create(configuration);
      priv->processPool->setPrimaryDataStore(webkitWebsiteDataManagerGetDataStore(priv->websiteDataManager.get()));
      priv->processPool->setUserMessageHandler([webContext](UserMessage&& message, CompletionHandler<void(UserMessage&&)>&& completionHandler) {
-@@ -438,6 +450,8 @@ static void webkitWebContextConstructed(GObject* object)
+@@ -439,6 +451,8 @@ static void webkitWebContextConstructed(GObject* object)
  
  static void webkitWebContextDispose(GObject* object)
  {
@@ -8010,7 +7620,7 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..265a84c7e6f0dc494182d859d2db4b91
      WebKitWebContextPrivate* priv = WEBKIT_WEB_CONTEXT(object)->priv;
      if (!priv->clientsDetached) {
          priv->clientsDetached = true;
-@@ -515,7 +529,6 @@ static void webkit_web_context_class_init(WebKitWebContextClass* webContextClass
+@@ -516,7 +530,6 @@ static void webkit_web_context_class_init(WebKitWebContextClass* webContextClass
              WEBKIT_TYPE_WEBSITE_DATA_MANAGER,
              static_cast<GParamFlags>(WEBKIT_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY)));
  
@@ -8018,7 +7628,7 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..265a84c7e6f0dc494182d859d2db4b91
      /**
       * WebKitWebContext:process-swap-on-cross-site-navigation-enabled:
       *
-@@ -539,6 +552,7 @@ static void webkit_web_context_class_init(WebKitWebContextClass* webContextClass
+@@ -540,6 +553,7 @@ static void webkit_web_context_class_init(WebKitWebContextClass* webContextClass
              FALSE,
              static_cast<GParamFlags>(WEBKIT_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY)));
  
@@ -8027,16 +7637,16 @@ index 041bfb545c6af6220a8266d356ac19d90791cb83..265a84c7e6f0dc494182d859d2db4b91
      /**
       * WebKitWebContext:use-system-appearance-for-scrollbars:
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebContextPrivate.h b/Source/WebKit/UIProcess/API/glib/WebKitWebContextPrivate.h
-index d8569c859babfe1169c682eb686366e3d069b9ad..779802f0fe22e151783d9277d7ee5af02d5ec952 100644
+index 78d1578f94793e9e59a3d4d2b33e79ea8530fa04..493cdadac3873508b3efa3048638e73a13f4c976 100644
 --- a/Source/WebKit/UIProcess/API/glib/WebKitWebContextPrivate.h
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitWebContextPrivate.h
-@@ -44,3 +44,4 @@ void webkitWebContextInitializeNotificationPermissions(WebKitWebContext*);
+@@ -45,3 +45,4 @@ void webkitWebContextInitializeNotificationPermissions(WebKitWebContext*);
  #if ENABLE(REMOTE_INSPECTOR)
  void webkitWebContextWillCloseAutomationSession(WebKitWebContext*);
  #endif
 +int webkitWebContextExistingCount();
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp b/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
-index 50df3f448a7d38e3282e66282490f170feebaaed..c7161970015b26eac248c01b77f977a871d4a491 100644
+index 7b87c43647592c2136ceb8f21ab5152b2cef9f09..d69ba599135333abfa9d72340139dab3d2db4203 100644
 --- a/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
 @@ -31,6 +31,7 @@
@@ -8047,7 +7657,7 @@ index 50df3f448a7d38e3282e66282490f170feebaaed..c7161970015b26eac248c01b77f977a8
  #include "WebKitAuthenticationRequestPrivate.h"
  #include "WebKitBackForwardListPrivate.h"
  #include "WebKitContextMenuClient.h"
-@@ -131,6 +132,7 @@ enum {
+@@ -132,6 +133,7 @@ enum {
      CLOSE,
  
      SCRIPT_DIALOG,
@@ -8055,7 +7665,7 @@ index 50df3f448a7d38e3282e66282490f170feebaaed..c7161970015b26eac248c01b77f977a8
  
      DECIDE_POLICY,
      PERMISSION_REQUEST,
-@@ -432,6 +434,9 @@ void WebKitWebViewClient::handleDownloadRequest(WKWPE::View&, DownloadProxy& dow
+@@ -435,6 +437,9 @@ void WebKitWebViewClient::handleDownloadRequest(WKWPE::View&, DownloadProxy& dow
  
  void WebKitWebViewClient::frameDisplayed(WKWPE::View&)
  {
@@ -8065,7 +7675,7 @@ index 50df3f448a7d38e3282e66282490f170feebaaed..c7161970015b26eac248c01b77f977a8
      {
          SetForScope<bool> inFrameDisplayedGuard(m_webView->priv->inFrameDisplayed, true);
          for (const auto& callback : m_webView->priv->frameDisplayedCallbacks) {
-@@ -462,6 +467,7 @@ void WebKitWebViewClient::didReceiveUserMessage(WKWPE::View&, UserMessage&& mess
+@@ -465,6 +470,7 @@ void WebKitWebViewClient::didReceiveUserMessage(WKWPE::View&, UserMessage&& mess
  {
      webkitWebViewDidReceiveUserMessage(m_webView, WTFMove(message), WTFMove(completionHandler));
  }
@@ -8073,7 +7683,7 @@ index 50df3f448a7d38e3282e66282490f170feebaaed..c7161970015b26eac248c01b77f977a8
  #endif
  
  static gboolean webkitWebViewLoadFail(WebKitWebView* webView, WebKitLoadEvent, const char* failingURI, GError* error)
-@@ -1561,6 +1567,15 @@ static void webkit_web_view_class_init(WebKitWebViewClass* webViewClass)
+@@ -1590,6 +1596,15 @@ static void webkit_web_view_class_init(WebKitWebViewClass* webViewClass)
          G_TYPE_BOOLEAN, 1,
          WEBKIT_TYPE_SCRIPT_DIALOG);
  
@@ -8089,7 +7699,7 @@ index 50df3f448a7d38e3282e66282490f170feebaaed..c7161970015b26eac248c01b77f977a8
      /**
       * WebKitWebView::decide-policy:
       * @web_view: the #WebKitWebView on which the signal is emitted
-@@ -2441,6 +2456,23 @@ void webkitWebViewRunJavaScriptBeforeUnloadConfirm(WebKitWebView* webView, const
+@@ -2470,6 +2485,23 @@ void webkitWebViewRunJavaScriptBeforeUnloadConfirm(WebKitWebView* webView, const
      webkit_script_dialog_unref(webView->priv->currentScriptDialog);
  }
  
@@ -8405,10 +8015,10 @@ index e4b92ace1531090ae38a7aec3d3d4febf19aee84..43690f9ef4969a39084501613bfc00a7
 +
 +cairo_surface_t* webkitWebViewBackendTakeScreenshot(WebKitWebViewBackend*);
 diff --git a/Source/WebKit/UIProcess/API/wpe/docs/wpe-1.0-sections.txt b/Source/WebKit/UIProcess/API/wpe/docs/wpe-1.0-sections.txt
-index b9429bb65d00f9ee60a112b57f1a15b987cae31f..99d30744a7fad37dfa48f56cdd4f1eb0e5884b85 100644
+index cd29f69d4082b249570ad90e5daa6ee442646179..99a94c8153dba7bb3b2f20a57881cb289a6b36bc 100644
 --- a/Source/WebKit/UIProcess/API/wpe/docs/wpe-1.0-sections.txt
 +++ b/Source/WebKit/UIProcess/API/wpe/docs/wpe-1.0-sections.txt
-@@ -315,6 +315,8 @@ WEBKIT_TYPE_WEB_VIEW_BACKEND
+@@ -317,6 +317,8 @@ WEBKIT_TYPE_WEB_VIEW_BACKEND
  WebKitWebViewBackend
  webkit_web_view_backend_get_wpe_backend
  webkit_web_view_backend_new
@@ -12949,18 +12559,18 @@ index 83508e89e45608f2a4ff1119bc91e2e2550d4059..2633b9958022d179ee34c846480e9689
      PluginZoomFactorDidChange(double zoomFactor)
  
 diff --git a/Source/WebKit/UIProcess/WebProcessPool.cpp b/Source/WebKit/UIProcess/WebProcessPool.cpp
-index 358b420c9fa612aec82aa93a25940a4bbe96e275..97fcdf79397c05909584f297854912f9183f4379 100644
+index 34376f90b1037a50dc8240508ada979f29367331..5ec1c3414ac5c6c06367ef8e748a3b0e923c454f 100644
 --- a/Source/WebKit/UIProcess/WebProcessPool.cpp
 +++ b/Source/WebKit/UIProcess/WebProcessPool.cpp
 @@ -1029,7 +1029,10 @@ void WebProcessPool::initializeNewWebProcess(WebProcessProxy& process, WebsiteDa
  #endif
  
      parameters.cacheModel = LegacyGlobalSettings::singleton().cacheModel();
--    parameters.languages = configuration().overrideLanguages().isEmpty() ? userPreferredLanguages() : configuration().overrideLanguages();
+-    parameters.overrideLanguages = configuration().overrideLanguages();
 +    if (websiteDataStore && websiteDataStore->languagesForAutomation().size())
-+        parameters.languages = websiteDataStore->languagesForAutomation();
++        parameters.overrideLanguages = websiteDataStore->languagesForAutomation();
 +    else
-+        parameters.languages = configuration().overrideLanguages().isEmpty() ? userPreferredLanguages() : configuration().overrideLanguages();
++        parameters.overrideLanguages = configuration().overrideLanguages();
  
      parameters.urlSchemesRegisteredAsEmptyDocument = copyToVector(m_schemesToRegisterAsEmptyDocument);
      parameters.urlSchemesRegisteredAsSecure = copyToVector(LegacyGlobalSettings::singleton().schemesToRegisterAsSecure());
@@ -14847,18 +14457,10 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..f0f692ca80c92b6eeec388cf6b130686
  				BCBD3914125BB1A800D2C29F /* WebPageProxyMessageReceiver.cpp in Sources */,
  				7CE9CE101FA0767A000177DE /* WebPageUpdatePreferences.cpp in Sources */,
 diff --git a/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp b/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp
-index 0ddb35334438784fb216fdf7108429726f2c6667..bd2cb327223291543272b0636f834a24e08412d3 100644
+index 6a7eca6018f62c1b8a2a42b33d565f896a613fea..e3d9f2a32de767f22b332204e48409a6605a387a 100644
 --- a/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp
 +++ b/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp
-@@ -58,6 +58,7 @@
- #include <WebCore/Frame.h>
- #include <WebCore/FrameLoader.h>
- #include <WebCore/HTMLFrameOwnerElement.h>
-+#include <WebCore/InspectorInstrumentationWebKit.h>
- #include <WebCore/NetscapePlugInStreamLoader.h>
- #include <WebCore/NetworkLoadInformation.h>
- #include <WebCore/PlatformStrategies.h>
-@@ -226,8 +227,24 @@ void WebLoaderStrategy::scheduleLoad(ResourceLoader& resourceLoader, CachedResou
+@@ -227,6 +227,11 @@ void WebLoaderStrategy::scheduleLoad(ResourceLoader& resourceLoader, CachedResou
      }
  #endif
  
@@ -14869,21 +14471,8 @@ index 0ddb35334438784fb216fdf7108429726f2c6667..bd2cb327223291543272b0636f834a24
 +
      if (!tryLoadingUsingURLSchemeHandler(resourceLoader, trackingParameters)) {
          WEBLOADERSTRATEGY_RELEASE_LOG_IF_ALLOWED("scheduleLoad: URL will be scheduled with the NetworkProcess");
-+
-+        RefPtr<ResourceLoader> coreLoader = &resourceLoader;
-+        if (!resourceLoader.options().serviceWorkerRegistrationIdentifier) {
-+            if (InspectorInstrumentationWebKit::interceptRequest(resourceLoader, [this, coreLoader, trackingParameters, shouldClearReferrerOnHTTPSToHTTPRedirect, resource](bool handled) mutable {
-+                    if (!handled)
-+                        scheduleLoadFromNetworkProcess(*coreLoader, coreLoader->request(), trackingParameters, shouldClearReferrerOnHTTPSToHTTPRedirect, maximumBufferingTime(resource));
-+                    })) {
-+                return;
-+            }
-+        }
-+
-         scheduleLoadFromNetworkProcess(resourceLoader, resourceLoader.request(), trackingParameters, shouldClearReferrerOnHTTPSToHTTPRedirect, maximumBufferingTime(resource));
-         return;
-     }
-@@ -758,7 +775,7 @@ void WebLoaderStrategy::didFinishPreconnection(uint64_t preconnectionIdentifier,
+ 
+@@ -766,7 +771,7 @@ void WebLoaderStrategy::didFinishPreconnection(uint64_t preconnectionIdentifier,
  
  bool WebLoaderStrategy::isOnLine() const
  {
@@ -14892,7 +14481,7 @@ index 0ddb35334438784fb216fdf7108429726f2c6667..bd2cb327223291543272b0636f834a24
  }
  
  void WebLoaderStrategy::addOnlineStateChangeListener(Function<void(bool)>&& listener)
-@@ -769,6 +786,11 @@ void WebLoaderStrategy::addOnlineStateChangeListener(Function<void(bool)>&& list
+@@ -777,6 +782,11 @@ void WebLoaderStrategy::addOnlineStateChangeListener(Function<void(bool)>&& list
  
  void WebLoaderStrategy::setOnLineState(bool isOnLine)
  {
@@ -14904,7 +14493,7 @@ index 0ddb35334438784fb216fdf7108429726f2c6667..bd2cb327223291543272b0636f834a24
      if (m_isOnLine == isOnLine)
          return;
  
-@@ -777,6 +799,12 @@ void WebLoaderStrategy::setOnLineState(bool isOnLine)
+@@ -785,6 +795,12 @@ void WebLoaderStrategy::setOnLineState(bool isOnLine)
          listener(isOnLine);
  }
  
@@ -15294,7 +14883,7 @@ index 16af317e8846f5f3f96c080b4caa875a6a4000d4..989727ac97daf431a620c295b4ce2301
      LoadData(struct WebKit::LoadParameters loadParameters)
      LoadAlternateHTML(struct WebKit::LoadParameters loadParameters)
 diff --git a/Source/WebKit/WebProcess/WebProcess.cpp b/Source/WebKit/WebProcess/WebProcess.cpp
-index ab9cbad18e02f5da3e03ce0c58e46ee7a22739ed..4cfb84a209c855efe6c229e67178d178a732682d 100644
+index 692e231e6e6d607bbb9cfc14132a97a79de18197..760eae48b53c6569d0e3caeb2352b5686ccba17c 100644
 --- a/Source/WebKit/WebProcess/WebProcess.cpp
 +++ b/Source/WebKit/WebProcess/WebProcess.cpp
 @@ -81,6 +81,7 @@
@@ -15507,10 +15096,10 @@ index 3845eabba3e964f9e11bb0ffcb8726fd4ea96fc4..630a6e395298bd9c03c1b131f984b0a8
      g_signal_connect(tab->webView, "permission-request", G_CALLBACK(decidePermissionRequest), tab);
      g_signal_connect(tab->webView, "run-color-chooser", G_CALLBACK(runColorChooserCallback), tab);
 diff --git a/Tools/MiniBrowser/gtk/BrowserWindow.c b/Tools/MiniBrowser/gtk/BrowserWindow.c
-index 15d805bd0c7cdeceefcd3f77f6e363fc1643ac18..304f43c2220324403f5f4f0f4896106593242564 100644
+index 5cd84dac3d349cc61199cb22bce3a816706c2250..71f02a0453e85162529748caa03aa1f3e561c777 100644
 --- a/Tools/MiniBrowser/gtk/BrowserWindow.c
 +++ b/Tools/MiniBrowser/gtk/BrowserWindow.c
-@@ -1309,6 +1309,12 @@ static gboolean browserWindowDeleteEvent(GtkWidget *widget, GdkEventAny* event)
+@@ -1312,6 +1312,12 @@ static gboolean browserWindowDeleteEvent(GtkWidget *widget, GdkEventAny* event)
  }
  #endif
  
@@ -15523,7 +15112,7 @@ index 15d805bd0c7cdeceefcd3f77f6e363fc1643ac18..304f43c2220324403f5f4f0f48961065
  static void browser_window_class_init(BrowserWindowClass *klass)
  {
      GObjectClass *gobjectClass = G_OBJECT_CLASS(klass);
-@@ -1322,6 +1328,14 @@ static void browser_window_class_init(BrowserWindowClass *klass)
+@@ -1325,6 +1331,14 @@ static void browser_window_class_init(BrowserWindowClass *klass)
      GtkWidgetClass *widgetClass = GTK_WIDGET_CLASS(klass);
      widgetClass->delete_event = browserWindowDeleteEvent;
  #endif
@@ -15552,13 +15141,13 @@ index 62629b4c1c25ae82bd797b39bbf9de0331f8eed2..5de7900a29b0e629f1ac404bbb0dc5b4
  
  typedef struct _BrowserWindow        BrowserWindow;
 diff --git a/Tools/MiniBrowser/gtk/main.c b/Tools/MiniBrowser/gtk/main.c
-index 0b236620d9c70b4b94e280ca508113c857d75832..c3e8edd93cb7af98f1d44d3f74516f949bfc43f0 100644
+index 1cea60b87e1e9445d309e720d00632becd016fac..28b23907f86dd214bd5bd21c78258cd3e14be375 100644
 --- a/Tools/MiniBrowser/gtk/main.c
 +++ b/Tools/MiniBrowser/gtk/main.c
-@@ -53,7 +53,12 @@ static const char *cookiesFile;
- static const char *cookiesPolicy;
+@@ -55,7 +55,12 @@ static const char *cookiesPolicy;
  static const char *proxy;
  static gboolean darkMode;
+ static gboolean enableITP;
 +static gboolean inspectorPipe;
 +static gboolean headless;
 +static gboolean noStartupWindow;
@@ -15568,9 +15157,9 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..c3e8edd93cb7af98f1d44d3f74516f94
  
  typedef enum {
      MINI_BROWSER_ERROR_INVALID_ABOUT_PATH
-@@ -121,6 +126,10 @@ static const GOptionEntry commandLineOptions[] =
-     { "ignore-tls-errors", 0, 0, G_OPTION_ARG_NONE, &ignoreTLSErrors, "Ignore TLS errors", NULL },
+@@ -147,6 +152,10 @@ static const GOptionEntry commandLineOptions[] =
      { "content-filter", 0, 0, G_OPTION_ARG_FILENAME, &contentFilter, "JSON with content filtering rules", "FILE" },
+     { "enable-itp", 0, 0, G_OPTION_ARG_NONE, &enableITP, "Enable Intelligent Tracking Prevention (ITP)", NULL },
      { "version", 'v', 0, G_OPTION_ARG_NONE, &printVersion, "Print the WebKitGTK version", NULL },
 +    { "inspector-pipe", 0, 0, G_OPTION_ARG_NONE, &inspectorPipe, "Open pipe connection to the remote inspector", NULL },
 +    { "user-data-dir", 0, 0, G_OPTION_ARG_STRING, &userDataDir, "Default profile persistence folder location", NULL },
@@ -15579,7 +15168,7 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..c3e8edd93cb7af98f1d44d3f74516f94
      { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &uriArguments, 0, "[URL…]" },
      { 0, 0, 0, 0, 0, 0, 0 }
  };
-@@ -500,6 +509,41 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
+@@ -527,6 +536,41 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
      g_main_loop_quit(data->mainLoop);
  }
  
@@ -15614,14 +15203,14 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..c3e8edd93cb7af98f1d44d3f74516f94
 +    WebKitBrowserInspector* browserInspector = webkit_browser_inspector_get_default();
 +    g_signal_connect(browserInspector, "create-new-page", G_CALLBACK(createNewPage), NULL);
 +    g_signal_connect(browserInspector, "quit-application", G_CALLBACK(quitBroserApplication), NULL);
-+
++ 
 +    webkit_browser_inspector_initialize_pipe(proxy, ignoreHosts);
 +}
 +
  static void startup(GApplication *application)
  {
      const char *actionAccels[] = {
-@@ -530,12 +574,32 @@ static void startup(GApplication *application)
+@@ -557,13 +601,33 @@ static void startup(GApplication *application)
  
  static void activate(GApplication *application, WebKitSettings *webkitSettings)
  {
@@ -15645,6 +15234,7 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..c3e8edd93cb7af98f1d44d3f74516f94
 +    } else {
 +        manager = webkit_website_data_manager_new(NULL);
 +    }
+     webkit_website_data_manager_set_itp_enabled(manager, enableITP);
 +
      WebKitWebContext *webContext = g_object_new(WEBKIT_TYPE_WEB_CONTEXT, "website-data-manager", manager, "process-swap-on-cross-site-navigation-enabled", TRUE,
  #if !GTK_CHECK_VERSION(3, 98, 0)
@@ -15655,7 +15245,7 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..c3e8edd93cb7af98f1d44d3f74516f94
      g_object_unref(manager);
  
      if (cookiesPolicy) {
-@@ -554,7 +618,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
+@@ -582,7 +646,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
      }
  
      if (proxy) {
@@ -15664,8 +15254,8 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..c3e8edd93cb7af98f1d44d3f74516f94
          webkit_web_context_set_network_proxy_settings(webContext, WEBKIT_NETWORK_PROXY_MODE_CUSTOM, webkitProxySettings);
          webkit_network_proxy_settings_free(webkitProxySettings);
      }
-@@ -616,9 +680,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
-             WebKitWebView *webView = createBrowserTab(mainWindow, webkitSettings, userContentManager);
+@@ -648,9 +712,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
+             WebKitWebView *webView = createBrowserTab(mainWindow, webkitSettings, userContentManager, defaultWebsitePolicies);
              if (!i)
                  firstTab = GTK_WIDGET(webView);
 -            gchar *url = argumentToURL(uriArguments[i]);
@@ -15674,8 +15264,8 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..c3e8edd93cb7af98f1d44d3f74516f94
 +            webkit_web_view_load_uri(webView, uriArguments[i]);
          }
      } else {
-         WebKitWebView *webView = createBrowserTab(mainWindow, webkitSettings, userContentManager);
-@@ -692,9 +754,11 @@ int main(int argc, char *argv[])
+         WebKitWebView *webView = createBrowserTab(mainWindow, webkitSettings, userContentManager, defaultWebsitePolicies);
+@@ -726,9 +788,11 @@ int main(int argc, char *argv[])
      }
  
      GtkApplication *application = gtk_application_new(NULL, G_APPLICATION_FLAGS_NONE);
@@ -15688,7 +15278,7 @@ index 0b236620d9c70b4b94e280ca508113c857d75832..c3e8edd93cb7af98f1d44d3f74516f94
  
      return 0;
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..58546429c49437cef2632544c9bc8ad7296aaebd 100644
+index d6c164fba8deef343b22d598030479e160841d68..71e269134f264d3e703405ab9755d984643ac95f 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
 @@ -43,6 +43,9 @@ static gboolean headlessMode;
@@ -15701,9 +15291,9 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..58546429c49437cef2632544c9bc8ad7
  static const char* contentFilter;
  static const char* cookiesFile;
  static const char* cookiesPolicy;
-@@ -64,6 +67,9 @@ static const GOptionEntry commandLineOptions[] =
-     { "content-filter", 0, 0, G_OPTION_ARG_FILENAME, &contentFilter, "JSON with content filtering rules", "FILE" },
+@@ -66,6 +69,9 @@ static const GOptionEntry commandLineOptions[] =
      { "bg-color", 0, 0, G_OPTION_ARG_STRING, &bgColor, "Window background color. Default: white", "COLOR" },
+     { "enable-itp", 0, 0, G_OPTION_ARG_NONE, &enableITP, "Enable Intelligent Tracking Prevention (ITP)", nullptr },
      { "version", 'v', 0, G_OPTION_ARG_NONE, &printVersion, "Print the WPE version", nullptr },
 +    { "inspector-pipe", 'v', 0, G_OPTION_ARG_NONE, &inspectorPipe, "Expose remote debugging protocol over pipe", nullptr },
 +    { "user-data-dir", 0, 0, G_OPTION_ARG_STRING, &userDataDir, "Default profile persistence folder location", "FILE" },
@@ -15711,7 +15301,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..58546429c49437cef2632544c9bc8ad7
      { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &uriArguments, nullptr, "[URL]" },
      { nullptr, 0, 0, G_OPTION_ARG_NONE, nullptr, nullptr, nullptr }
  };
-@@ -148,13 +154,34 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
+@@ -150,13 +156,34 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
      g_main_loop_quit(data->mainLoop);
  }
  
@@ -15747,7 +15337,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..58546429c49437cef2632544c9bc8ad7
  {
      auto backend = createViewBackend(1280, 720);
      struct wpe_view_backend* wpeBackend = backend->backend();
-@@ -166,17 +193,66 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
+@@ -168,17 +195,66 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
              delete static_cast<WPEToolingBackends::ViewBackend*>(data);
          }, backend.release());
  
@@ -15816,7 +15406,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..58546429c49437cef2632544c9bc8ad7
  int main(int argc, char *argv[])
  {
  #if ENABLE_DEVELOPER_MODE
-@@ -211,6 +287,16 @@ int main(int argc, char *argv[])
+@@ -213,6 +289,16 @@ int main(int argc, char *argv[])
      }
  
      auto* loop = g_main_loop_new(nullptr, FALSE);
@@ -15833,11 +15423,11 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..58546429c49437cef2632544c9bc8ad7
  
      auto backend = createViewBackend(1280, 720);
      struct wpe_view_backend* wpeBackend = backend->backend();
-@@ -220,7 +306,19 @@ int main(int argc, char *argv[])
+@@ -222,9 +308,19 @@ int main(int argc, char *argv[])
          return 1;
      }
  
--    auto* webContext = (privateMode || automationMode) ? webkit_web_context_new_ephemeral() : webkit_web_context_get_default();
+-    auto* manager = (privateMode || automationMode) ? webkit_website_data_manager_new_ephemeral() : webkit_website_data_manager_new(nullptr);
 +    WebKitWebsiteDataManager *manager;
 +    if (userDataDir) {
 +        manager = webkit_website_data_manager_new("base-data-directory", userDataDir, "base-cache-directory", userDataDir, NULL);
@@ -15847,14 +15437,15 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..58546429c49437cef2632544c9bc8ad7
 +    } else {
 +        manager = webkit_website_data_manager_new(NULL);
 +    }
+     webkit_website_data_manager_set_itp_enabled(manager, enableITP);
+-    auto* webContext = webkit_web_context_new_with_website_data_manager(manager);
 +
 +    WebKitWebContext *webContext = WEBKIT_WEB_CONTEXT(g_object_new(WEBKIT_TYPE_WEB_CONTEXT, "website-data-manager", manager, "process-swap-on-cross-site-navigation-enabled", TRUE, NULL));
 +    persistentWebContext = webContext;
-+    g_object_unref(manager);
+     g_object_unref(manager);
  
      if (cookiesPolicy) {
-         auto* cookieManager = webkit_web_context_get_cookie_manager(webContext);
-@@ -238,7 +336,7 @@ int main(int argc, char *argv[])
+@@ -243,7 +339,7 @@ int main(int argc, char *argv[])
      }
  
      if (proxy) {
@@ -15863,7 +15454,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..58546429c49437cef2632544c9bc8ad7
          webkit_web_context_set_network_proxy_settings(webContext, WEBKIT_NETWORK_PROXY_MODE_CUSTOM, webkitProxySettings);
          webkit_network_proxy_settings_free(webkitProxySettings);
      }
-@@ -284,7 +382,14 @@ int main(int argc, char *argv[])
+@@ -289,7 +385,14 @@ int main(int argc, char *argv[])
      auto* viewBackend = webkit_web_view_backend_new(wpeBackend, [](gpointer data) {
          delete static_cast<WPEToolingBackends::ViewBackend*>(data);
      }, backend.release());
@@ -15879,7 +15470,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..58546429c49437cef2632544c9bc8ad7
      auto* webView = WEBKIT_WEB_VIEW(g_object_new(WEBKIT_TYPE_WEB_VIEW,
          "backend", viewBackend,
          "web-context", webContext,
-@@ -301,8 +406,6 @@ int main(int argc, char *argv[])
+@@ -306,8 +409,6 @@ int main(int argc, char *argv[])
          backendPtr->setAccessibleChild(ATK_OBJECT(accessible));
  #endif
  
@@ -15888,7 +15479,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..58546429c49437cef2632544c9bc8ad7
      webkit_web_context_set_automation_allowed(webContext, automationMode);
      g_signal_connect(webContext, "automation-started", G_CALLBACK(automationStartedCallback), webView);
      g_signal_connect(webView, "permission-request", G_CALLBACK(decidePermissionRequest), nullptr);
-@@ -318,16 +421,9 @@ int main(int argc, char *argv[])
+@@ -323,16 +424,9 @@ int main(int argc, char *argv[])
          webkit_web_view_set_background_color(webView, &color);
  
      if (uriArguments) {
@@ -15908,7 +15499,7 @@ index fde24a7cc8ceb8cc6d7810e3548a5129d1c0a187..58546429c49437cef2632544c9bc8ad7
          webkit_web_view_load_uri(webView, "about:blank");
      else
          webkit_web_view_load_uri(webView, "https://wpewebkit.org");
-@@ -337,8 +433,7 @@ int main(int argc, char *argv[])
+@@ -342,8 +436,7 @@ int main(int argc, char *argv[])
      g_hash_table_destroy(openViews);
  
  
