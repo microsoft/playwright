@@ -154,8 +154,10 @@ export class WKPage implements PageDelegate {
       session.send('Network.enable'),
       this._workers.initializeSession(session)
     ];
-    if (this._page._needsRequestInterception())
-      promises.push(session.send('Network.setInterceptionEnabled', { enabled: true, interceptRequests: true }));
+    if (this._page._needsRequestInterception()) {
+      promises.push(session.send('Network.setInterceptionEnabled', { enabled: true }));
+      promises.push(session.send('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }));
+    }
 
     const contextOptions = this._browserContext._options;
     if (contextOptions.userAgent)
@@ -597,7 +599,10 @@ export class WKPage implements PageDelegate {
 
   async updateRequestInterception(): Promise<void> {
     const enabled = this._page._needsRequestInterception();
-    await this._updateState('Network.setInterceptionEnabled', { enabled, interceptRequests: enabled });
+    await Promise.all([
+      this._updateState('Network.setInterceptionEnabled', { enabled }),
+      this._updateState('Network.addInterception', { url: '.*', stage: 'request', isRegex: true })
+    ]);
   }
 
   async updateOffline() {
