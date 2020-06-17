@@ -12590,27 +12590,16 @@ index 5c60a32f978017fc5ae2d84e31273cea15a4d24c..a856ada5dd9ee83b136a0745c90bdf42
  
      bool m_memoryCacheDisabled { false };
 diff --git a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
-index 52c9f9402c3aebc366eb9c3da820ba30d772b4f7..1d6541cb7190699277ff4fc59ba29337a7a0968d 100644
+index 52c9f9402c3aebc366eb9c3da820ba30d772b4f7..40ecb72ec756c903fba170876cafb1dabf652c17 100644
 --- a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
 +++ b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
-@@ -185,6 +185,8 @@ void WebsiteDataStore::registerProcess(WebProcessProxy& process)
- {
-     ASSERT(process.pageCount() || process.provisionalPageCount());
-     m_processes.add(process);
-+    if (m_languagesForAutomation.size())
-+        process.send(Messages::WebProcess::UserPreferredLanguagesChanged(m_languagesForAutomation), 0);
- }
- 
- void WebsiteDataStore::unregisterProcess(WebProcessProxy& process)
-@@ -2453,6 +2455,19 @@ void WebsiteDataStore::renameOriginInWebsiteData(URL&& oldName, URL&& newName, O
+@@ -2453,6 +2453,17 @@ void WebsiteDataStore::renameOriginInWebsiteData(URL&& oldName, URL&& newName, O
      }
  }
  
 +void WebsiteDataStore::setLanguagesForAutomation(Vector<String>&& languages)
 +{
 +    m_languagesForAutomation = WTFMove(languages);
-+    for (auto& process : processes())
-+        process.send(Messages::WebProcess::UserPreferredLanguagesChanged(languages), 0);
 +}
 +
 +void WebsiteDataStore::setDownloadForAutomation(Optional<bool> allow, const String& downloadPath)
