@@ -22,7 +22,7 @@ import { kBrowserCloseMessageId } from '../webkit/wkConnection';
 import { LaunchOptionsBase, BrowserTypeBase } from './browserType';
 import { ConnectionTransport, ProtocolResponse, ProtocolRequest } from '../transport';
 import * as ws from 'ws';
-import { InnerLogger } from '../logger';
+import { Logger } from '../logger';
 import { BrowserOptions } from '../browser';
 import { BrowserDescriptor } from '../install/browserPaths';
 import { WebSocketServer } from './webSocketServer';
@@ -45,7 +45,7 @@ export class WebKit extends BrowserTypeBase {
     transport.send({method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId});
   }
 
-  _startWebSocketServer(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketServer {
+  _startWebSocketServer(transport: ConnectionTransport, logger: Logger, port: number): WebSocketServer {
     return startWebSocketServer(transport, logger, port);
   }
 
@@ -87,7 +87,7 @@ export class WebKit extends BrowserTypeBase {
   }
 }
 
-function startWebSocketServer(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketServer {
+function startWebSocketServer(transport: ConnectionTransport, logger: Logger, port: number): WebSocketServer {
   const pendingBrowserContextCreations = new Set<number>();
   const pendingBrowserContextDeletions = new Map<number, string>();
   const browserContextIds = new Map<string, ws>();

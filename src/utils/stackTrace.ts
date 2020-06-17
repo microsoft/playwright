@@ -18,7 +18,6 @@ import * as path from 'path';
 
 // NOTE: update this to point to playwright/lib when moving this file.
 const PLAYWRIGHT_LIB_PATH = path.normalize(path.join(__dirname, '..'));
-const APICOVERAGE = path.normalize(path.join(__dirname, '..', '..', 'test', 'apicoverage'));
 
 type ParsedStackFrame = { filePath: string, functionName: string };
 
@@ -59,26 +58,6 @@ export function getCallerFilePath(ignorePrefix = PLAYWRIGHT_LIB_PATH): string | 
     return parsed.filePath;
   }
   return null;
-}
-
-export function getCurrentApiCall(prefix = PLAYWRIGHT_LIB_PATH): string {
-  const error = new Error();
-  const stackFrames = (error.stack || '').split('\n').slice(1);
-  // Find last stackframe that points to prefix - that should be the api call.
-  let apiName: string = '';
-  for (const frame of stackFrames) {
-    const parsed = parseStackFrame(frame);
-    if (!parsed || (!parsed.filePath.startsWith(prefix) && !parsed.filePath.startsWith(APICOVERAGE) && parsed.filePath !== __filename))
-      break;
-    apiName = parsed.functionName;
-  }
-  const parts = apiName.split('.');
-  if (parts.length && parts[0].length) {
-    parts[0] = parts[0][0].toLowerCase() + parts[0].substring(1);
-    if (parts[0] === 'webKit')
-      parts[0] = 'webkit';
-  }
-  return parts.join('.');
 }
 
 export function rewriteErrorMessage(e: Error, newMessage: string): Error {

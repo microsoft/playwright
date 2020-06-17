@@ -23,7 +23,7 @@ import { Env } from './processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
 import { LaunchOptionsBase, BrowserTypeBase } from './browserType';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
-import { InnerLogger } from '../logger';
+import { Logger } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
 import { CRDevTools } from '../chromium/crDevTools';
 import { BrowserOptions } from '../browser';
@@ -72,7 +72,7 @@ export class Chromium extends BrowserTypeBase {
     transport.send(message);
   }
 
-  _startWebSocketServer(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketServer {
+  _startWebSocketServer(transport: ConnectionTransport, logger: Logger, port: number): WebSocketServer {
     return startWebSocketServer(transport, logger, port);
   }
 
@@ -130,7 +130,7 @@ type SessionData = {
   parent?: string,
 };
 
-function startWebSocketServer(transport: ConnectionTransport, logger: InnerLogger, port: number): WebSocketServer {
+function startWebSocketServer(transport: ConnectionTransport, logger: Logger, port: number): WebSocketServer {
   const awaitingBrowserTarget = new Map<number, ws>();
   const sessionToData = new Map<string, SessionData>();
   const socketToBrowserSession = new Map<ws, { sessionId?: string, queue?: ProtocolRequest[] }>();

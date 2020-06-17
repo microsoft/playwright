@@ -22,7 +22,7 @@ export { Dialog } from './dialog';
 export { Download } from './download';
 export { ElementHandle } from './dom';
 export { FileChooser } from './fileChooser';
-export { Logger } from './logger';
+export { Logger } from './types';
 export { TimeoutError } from './errors';
 export { Frame } from './frames';
 export { Keyboard, Mouse } from './input';

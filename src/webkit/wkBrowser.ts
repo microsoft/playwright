@@ -51,7 +51,7 @@ export class WKBrowser extends BrowserBase {
 
   constructor(transport: ConnectionTransport, options: BrowserOptions) {
     super(options);
-    this._connection = new WKConnection(transport, options.logger, this._onDisconnect.bind(this));
+    this._connection = new WKConnection(transport, options.loggers, this._onDisconnect.bind(this));
     this._browserSession = this._connection.browserSession;
     this._eventListeners = [
       helper.addEventListener(this._browserSession, 'Playwright.pageProxyCreated', this._onPageProxyCreated.bind(this)),
