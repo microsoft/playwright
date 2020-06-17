@@ -346,6 +346,11 @@ describe('Page.goto', function() {
     }
     expect(error.message).toContain(url);
   });
+  it('should be able to navigate to a page controlled by service worker', async({page, server}) => {
+    await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
+    await page.evaluate(() => window.activationPromise);
+    await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
+  });
   it('should send referer', async({page, server}) => {
     const [request1, request2] = await Promise.all([
       server.waitForRequest('/grid.html'),
