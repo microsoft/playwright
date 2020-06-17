@@ -216,7 +216,6 @@ export class CRPage implements PageDelegate {
         })
       };
     }
-    await this._mainFrameSession._client.send('Page.bringToFront', {});
     // When taking screenshots with documentRect (based on the page content, not viewport),
     // ignore current page scale.
     const clip = { ...documentRect, scale: viewportRect ? visualViewport.scale : 1 };
