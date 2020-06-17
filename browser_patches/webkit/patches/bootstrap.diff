@@ -6290,13 +6290,14 @@ index 3b153f122f13040707eea8b0bda91f15185bc1e4..2d24930d725787b9b27c105c78636c6d
      Cairo::Cairo
      Freetype::Freetype
 diff --git a/Source/WebKit/PlatformWin.cmake b/Source/WebKit/PlatformWin.cmake
-index 3b94f4dba2c3b9659a1269bfe030d5d010b5b1bd..43dde2ab5a5b925ac6916656d8528b0e172fc564 100644
+index 3b94f4dba2c3b9659a1269bfe030d5d010b5b1bd..1d3438aa6e627cd691d48aa9e218ac5b9f68f983 100644
 --- a/Source/WebKit/PlatformWin.cmake
 +++ b/Source/WebKit/PlatformWin.cmake
-@@ -59,8 +59,12 @@ list(APPEND WebKit_SOURCES
+@@ -59,8 +59,13 @@ list(APPEND WebKit_SOURCES
  
      UIProcess/WebsiteData/win/WebsiteDataStoreWin.cpp
  
++    UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 +    UIProcess/win/InspectorTargetProxyWin.cpp
 +    UIProcess/win/InspectorPlaywrightAgentClientWin.cpp
      UIProcess/win/PageClientImpl.cpp
@@ -6306,6 +6307,71 @@ index 3b94f4dba2c3b9659a1269bfe030d5d010b5b1bd..43dde2ab5a5b925ac6916656d8528b0e
      UIProcess/win/WebPageProxyWin.cpp
      UIProcess/win/WebPopupMenuProxyWin.cpp
      UIProcess/win/WebProcessPoolWin.cpp
+@@ -117,6 +122,56 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
+     "${WEBKIT_DIR}/win"
+ )
+ 
++# Playwright begin
++list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/include"
++    "${LIBVPX_CUSTOM_INCLUDE_DIR}"
++)
++
++list(APPEND WebKit_SOURCES
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_common.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_gcc.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_win.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_argb.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_from.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_from_argb.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_jpeg.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_to_argb.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_to_i420.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/cpu_id.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/mjpeg_decoder.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/mjpeg_validate.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/planar_functions.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_neon.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_neon64.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_any.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_argb.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_common.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_gcc.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_neon.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_neon64.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_win.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_any.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_common.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_gcc.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_neon.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_neon64.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_win.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_any.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_argb.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_common.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_gcc.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_neon.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_neon64.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_win.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/video_common.cc"
++)
++# Playwright end
++
+ set(WebKitCommonIncludeDirectories ${WebKit_INCLUDE_DIRECTORIES})
+ set(WebKitCommonSystemIncludeDirectories ${WebKit_SYSTEM_INCLUDE_DIRECTORIES})
+ 
+@@ -169,6 +224,7 @@ if (${WTF_PLATFORM_WIN_CAIRO})
+         OpenSSL::SSL
+         mfuuid.lib
+         strmiids.lib
++        ${LIBVPX_CUSTOM_LIBRARY}
+     )
+ endif ()
+ 
 diff --git a/Source/WebKit/Shared/API/c/wpe/WebKit.h b/Source/WebKit/Shared/API/c/wpe/WebKit.h
 index 898e30b370db8176e886fbbde0cd960e38a64818..74945e06fac0eb14936578de6a599a123364a63a 100644
 --- a/Source/WebKit/Shared/API/c/wpe/WebKit.h
@@ -8495,10 +8561,10 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
      // The timeout we use when waiting for a DidUpdateGeometry message.
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..d9f9c4b81174f9f0a8ae77cf5163a259ccd58fad
+index 0000000000000000000000000000000000000000..b2e0e299f80ecb7f8bddfa0ace6785b3b21579b2
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,271 @@
+@@ -0,0 +1,267 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8541,7 +8607,7 @@ index 0000000000000000000000000000000000000000..d9f9c4b81174f9f0a8ae77cf5163a259
 +#include <gtk/gtk.h>
 +#include <wtf/text/Base64.h>
 +#endif
-+#if PLATFORM(WPE)
++#if USE(CAIRO)
 +#include "DrawingAreaProxy.h"
 +#include "ScreencastEncoder.h"
 +#endif
@@ -8572,15 +8638,11 @@ index 0000000000000000000000000000000000000000..d9f9c4b81174f9f0a8ae77cf5163a259
 +    stop(errorString);
 +}
 +
-+#if USE(COORDINATED_GRAPHICS)
++#if USE(CAIRO)
 +void InspectorScreencastAgent::didPaint(cairo_surface_t* surface)
 +{
-+#if PLATFORM(GTK) || PLATFORM(WPE)
 +    if (m_encoder)
 +        m_encoder->encodeFrame(surface, m_page.drawingArea()->size());
-+#else
-+    UNUSED_PARAM(surface);
-+#endif
 +}
 +#endif
 +
@@ -8643,7 +8705,7 @@ index 0000000000000000000000000000000000000000..d9f9c4b81174f9f0a8ae77cf5163a259
 +
 +void InspectorScreencastAgent::startVideoRecording(Inspector::ErrorString& errorString, const String& file, int width, int height, const double* scale)
 +{
-+#if PLATFORM(GTK) || PLATFORM(WPE)
++#if USE(CAIRO)
 +    if (m_encoder) {
 +        errorString = "Already recording"_s;
 +        return;
@@ -8662,7 +8724,7 @@ index 0000000000000000000000000000000000000000..d9f9c4b81174f9f0a8ae77cf5163a259
 +
 +        optionalScale = *scale;
 +    }
-+    m_encoder = ScreencastEncoder::create(errorString, file, IntSize(width, height), optionalScale);
++    m_encoder = ScreencastEncoder::create(errorString, file, WebCore::IntSize(width, height), optionalScale);
 +    if (!m_encoder)
 +        return;
 +
@@ -8673,7 +8735,7 @@ index 0000000000000000000000000000000000000000..d9f9c4b81174f9f0a8ae77cf5163a259
 +
 +void InspectorScreencastAgent::stopVideoRecording(Ref<StopVideoRecordingCallback>&& callback)
 +{
-+#if PLATFORM(GTK) || PLATFORM(WPE)
++#if USE(CAIRO)
 +    if (!m_encoder) {
 +        callback->sendFailure("Not recording"_s);
 +        return;
@@ -8772,7 +8834,7 @@ index 0000000000000000000000000000000000000000..d9f9c4b81174f9f0a8ae77cf5163a259
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..9b18c5ff9e18cd1c40df8ccd2daefeb7974e4d74
+index 0000000000000000000000000000000000000000..5001127c8eb2e7097332af3b2bd02d7ebb732497
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 @@ -0,0 +1,89 @@
@@ -8832,7 +8894,7 @@ index 0000000000000000000000000000000000000000..9b18c5ff9e18cd1c40df8ccd2daefeb7
 +    void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) override;
 +    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
 +
-+#if USE(COORDINATED_GRAPHICS)
++#if USE(CAIRO)
 +    void didPaint(cairo_surface_t*);
 +#endif
 +
@@ -8859,7 +8921,7 @@ index 0000000000000000000000000000000000000000..9b18c5ff9e18cd1c40df8ccd2daefeb7
 +    enum class ImageFormat { Jpeg, Png };
 +    ImageFormat m_format { ImageFormat::Jpeg };
 +    Optional<int> m_quality;
-+#if PLATFORM(GTK) || PLATFORM(WPE)
++#if USE(CAIRO)
 +    RefPtr<ScreencastEncoder> m_encoder;
 +#endif
 +};
@@ -8867,10 +8929,10 @@ index 0000000000000000000000000000000000000000..9b18c5ff9e18cd1c40df8ccd2daefeb7
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..3fe6f5d5b0bf43f79e452addb8ac21bf3c3bf904
+index 0000000000000000000000000000000000000000..257423b0318787709859c000c23f1992ca463ec1
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,410 @@
+@@ -0,0 +1,415 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -8901,14 +8963,17 @@ index 0000000000000000000000000000000000000000..3fe6f5d5b0bf43f79e452addb8ac21bf
 +#include "config.h"
 +#include "ScreencastEncoder.h"
 +
-+#include <cairo.h>
 +#include <libyuv.h>
 +#include <vpx/vp8.h>
 +#include <vpx/vp8cx.h>
 +#include <vpx/vpx_encoder.h>
-+#include <wtf/MonotonicTime.h>
 +#include <wtf/RunLoop.h>
 +#include <wtf/WorkQueue.h>
++#include <wtf/text/StringConcatenateNumbers.h>
++
++#if USE(CAIRO)
++#include <WebCore/RefPtrCairo.h>
++#endif
 +
 +using namespace WebCore;
 +
@@ -9123,7 +9188,7 @@ index 0000000000000000000000000000000000000000..3fe6f5d5b0bf43f79e452addb8ac21bf
 +                }
 +                bool keyframe = (pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0;
 +                ++m_frameCount;
-+                fprintf(stderr, "  #%03d %spts=%ld sz=%ld\n", m_frameCount, keyframe ? "[K] " : "", pkt->data.frame.pts, pkt->data.frame.sz);
++                fprintf(stderr, "  #%03d %spts=%lld sz=%zd\n", m_frameCount, keyframe ? "[K] " : "", pkt->data.frame.pts, pkt->data.frame.sz);
 +                m_pts += pkt->data.frame.duration;
 +            }
 +        }
@@ -9232,6 +9297,7 @@ index 0000000000000000000000000000000000000000..3fe6f5d5b0bf43f79e452addb8ac21bf
 +    m_lastFrameTimestamp = now;
 +}
 +
++#if USE(CAIRO)
 +void ScreencastEncoder::encodeFrame(cairo_surface_t* drawingAreaSurface, IntSize size)
 +{
 +    fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
@@ -9263,6 +9329,7 @@ index 0000000000000000000000000000000000000000..3fe6f5d5b0bf43f79e452addb8ac21bf
 +
 +    m_lastFrame = makeUnique<VPXFrame>(WTFMove(surface));
 +}
++#endif
 +
 +void ScreencastEncoder::finish(Function<void()>&& callback)
 +{
@@ -9283,10 +9350,10 @@ index 0000000000000000000000000000000000000000..3fe6f5d5b0bf43f79e452addb8ac21bf
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..0f1209d8e96391d050261dcef4225b30fecc90cd
+index 0000000000000000000000000000000000000000..d477f7db1a859d261dd4573ccbf966707098abb0
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
-@@ -0,0 +1,62 @@
+@@ -0,0 +1,69 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -9316,9 +9383,14 @@ index 0000000000000000000000000000000000000000..0f1209d8e96391d050261dcef4225b30
 +
 +#include <WebCore/IntSize.h>
 +#include <wtf/Forward.h>
++#include <wtf/MonotonicTime.h>
 +#include <wtf/Noncopyable.h>
 +#include <wtf/ThreadSafeRefCounted.h>
 +#include <wtf/WeakPtr.h>
++
++#if USE(CAIRO)
++#include <cairo.h>
++#endif
 +
 +namespace WebKit {
 +
@@ -9334,7 +9406,9 @@ index 0000000000000000000000000000000000000000..0f1209d8e96391d050261dcef4225b30
 +    ScreencastEncoder(std::unique_ptr<VPXCodec>&&, WebCore::IntSize, Optional<double> scale);
 +    ~ScreencastEncoder();
 +
++#if USE(CAIRO)
 +    void encodeFrame(cairo_surface_t*, WebCore::IntSize);
++#endif
 +    void finish(Function<void()>&& callback);
 +
 +private:
@@ -9463,7 +9537,7 @@ index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..79f3ff84327dc075ec96983e04db4b10
  
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
-index 1861cff806131196ea49b4f8aca6665beebbf6e8..2d910fb6867a257e7bd9f1741c192f1e51f02071 100644
+index 1861cff806131196ea49b4f8aca6665beebbf6e8..6017f0336eae1717a2a595e735cace19301f1b35 100644
 --- a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
 @@ -26,12 +26,20 @@
@@ -9487,7 +9561,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..2d910fb6867a257e7bd9f1741c192f1e
  #include <JavaScriptCore/InspectorAgentBase.h>
  #include <JavaScriptCore/InspectorBackendDispatcher.h>
  #include <JavaScriptCore/InspectorBackendDispatchers.h>
-@@ -48,27 +56,106 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
+@@ -48,27 +56,104 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
      return WebPageInspectorTarget::toTargetID(provisionalPage.webPageID());
  }
  
@@ -9520,11 +9594,9 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..2d910fb6867a257e7bd9f1741c192f1e
 +    m_inputAgent = inputAgent.get();
 +    m_agents.append(WTFMove(inputAgent));
 +    m_agents.append(makeUnique<InspectorDialogAgent>(m_backendDispatcher.get(), m_frontendRouter.get(), m_page));
-+#if !PLATFORM(WIN)
 +    auto screencastAgent = makeUnique<InspectorScreencastAgent>(m_backendDispatcher.get(), m_frontendRouter.get(), m_page);
 +    m_screecastAgent = screencastAgent.get();
 +    m_agents.append(WTFMove(screencastAgent));
-+#endif
 +    if (s_observer)
 +        s_observer->didCreateInspectorController(m_page);
 +
@@ -9597,7 +9669,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..2d910fb6867a257e7bd9f1741c192f1e
  }
  
  bool WebPageInspectorController::hasLocalFrontend() const
-@@ -82,6 +169,17 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
+@@ -82,6 +167,17 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
  
      bool connectingFirstFrontend = !m_frontendRouter->hasFrontends();
  
@@ -9615,7 +9687,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..2d910fb6867a257e7bd9f1741c192f1e
      m_frontendRouter->connectFrontend(frontendChannel);
  
      if (connectingFirstFrontend)
-@@ -100,8 +198,10 @@ void WebPageInspectorController::disconnectFrontend(FrontendChannel& frontendCha
+@@ -100,8 +196,10 @@ void WebPageInspectorController::disconnectFrontend(FrontendChannel& frontendCha
      m_frontendRouter->disconnectFrontend(frontendChannel);
  
      bool disconnectingLastFrontend = !m_frontendRouter->hasFrontends();
@@ -9627,7 +9699,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..2d910fb6867a257e7bd9f1741c192f1e
  
      m_page.didChangeInspectorFrontendCount(m_frontendRouter->frontendCount());
  
-@@ -124,6 +224,8 @@ void WebPageInspectorController::disconnectAllFrontends()
+@@ -124,6 +222,8 @@ void WebPageInspectorController::disconnectAllFrontends()
      // Disconnect any remaining remote frontends.
      m_frontendRouter->disconnectAllFrontends();
  
@@ -9636,11 +9708,11 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..2d910fb6867a257e7bd9f1741c192f1e
      m_page.didChangeInspectorFrontendCount(m_frontendRouter->frontendCount());
  
  #if ENABLE(REMOTE_INSPECTOR)
-@@ -150,6 +252,66 @@ void WebPageInspectorController::setIndicating(bool indicating)
+@@ -150,6 +250,66 @@ void WebPageInspectorController::setIndicating(bool indicating)
  }
  #endif
  
-+#if USE(COORDINATED_GRAPHICS)
++#if USE(CAIRO)
 +void WebPageInspectorController::didPaint(cairo_surface_t* surface)
 +{
 +    if (!m_frontendRouter->hasFrontends())
@@ -9703,7 +9775,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..2d910fb6867a257e7bd9f1741c192f1e
  void WebPageInspectorController::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
      addTarget(InspectorTargetProxy::create(m_page, targetId, type));
-@@ -169,6 +331,33 @@ void WebPageInspectorController::sendMessageToInspectorFrontend(const String& ta
+@@ -169,6 +329,33 @@ void WebPageInspectorController::sendMessageToInspectorFrontend(const String& ta
      m_targetAgent->sendMessageFromTargetToFrontend(targetId, message);
  }
  
@@ -9737,7 +9809,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..2d910fb6867a257e7bd9f1741c192f1e
  bool WebPageInspectorController::shouldPauseLoading(const ProvisionalPageProxy& provisionalPage) const
  {
      if (!m_frontendRouter->hasFrontends())
-@@ -188,7 +377,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
+@@ -188,7 +375,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
  
  void WebPageInspectorController::didCreateProvisionalPage(ProvisionalPageProxy& provisionalPage)
  {
@@ -9746,7 +9818,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..2d910fb6867a257e7bd9f1741c192f1e
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -241,4 +430,20 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
+@@ -241,4 +428,20 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
      m_targets.set(target->identifier(), WTFMove(target));
  }
  
@@ -9768,10 +9840,10 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..2d910fb6867a257e7bd9f1741c192f1e
 +
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.h b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.h
-index c2df3ceb4b69f32060dcbd90d04dc6cb5900de0d..429f37267632b18077e25d7547ad48cac5a55de9 100644
+index c2df3ceb4b69f32060dcbd90d04dc6cb5900de0d..af9c472a1b9137424081b3f1f9fd9448f00be17d 100644
 --- a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.h
 +++ b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.h
-@@ -26,17 +26,27 @@
+@@ -26,17 +26,31 @@
  #pragma once
  
  #include "InspectorTargetProxy.h"
@@ -9783,6 +9855,10 @@ index c2df3ceb4b69f32060dcbd90d04dc6cb5900de0d..429f37267632b18077e25d7547ad48ca
  #include <wtf/Noncopyable.h>
  #include <wtf/text/WTFString.h>
 +#include <wtf/URL.h>
++
++#if USE(CAIRO)
++#include <cairo.h>
++#endif
  
  namespace Inspector {
  class BackendDispatcher;
@@ -9799,7 +9875,7 @@ index c2df3ceb4b69f32060dcbd90d04dc6cb5900de0d..429f37267632b18077e25d7547ad48ca
  }
  
  namespace WebKit {
-@@ -44,6 +54,22 @@ namespace WebKit {
+@@ -44,6 +58,22 @@ namespace WebKit {
  class InspectorBrowserAgent;
  struct WebPageAgentContext;
  
@@ -9822,7 +9898,7 @@ index c2df3ceb4b69f32060dcbd90d04dc6cb5900de0d..429f37267632b18077e25d7547ad48ca
  class WebPageInspectorController {
      WTF_MAKE_NONCOPYABLE(WebPageInspectorController);
      WTF_MAKE_FAST_ALLOCATED;
-@@ -51,7 +77,19 @@ public:
+@@ -51,7 +81,19 @@ public:
      WebPageInspectorController(WebPageProxy&);
  
      void init();
@@ -9842,11 +9918,11 @@ index c2df3ceb4b69f32060dcbd90d04dc6cb5900de0d..429f37267632b18077e25d7547ad48ca
  
      bool hasLocalFrontend() const;
  
-@@ -64,11 +102,25 @@ public:
+@@ -64,11 +106,25 @@ public:
  #if ENABLE(REMOTE_INSPECTOR)
      void setIndicating(bool);
  #endif
-+#if USE(COORDINATED_GRAPHICS)
++#if USE(CAIRO)
 +    void didPaint(cairo_surface_t*);
 +#endif
 +    using NavigationHandler = Function<void(const String&, uint64_t)>;
@@ -9868,7 +9944,7 @@ index c2df3ceb4b69f32060dcbd90d04dc6cb5900de0d..429f37267632b18077e25d7547ad48ca
      bool shouldPauseLoading(const ProvisionalPageProxy&) const;
      void setContinueLoadingCallback(const ProvisionalPageProxy&, WTF::Function<void()>&&);
  
-@@ -84,6 +136,7 @@ private:
+@@ -84,6 +140,7 @@ private:
      void createLazyAgents();
  
      void addTarget(std::unique_ptr<InspectorTargetProxy>&&);
@@ -9876,7 +9952,7 @@ index c2df3ceb4b69f32060dcbd90d04dc6cb5900de0d..429f37267632b18077e25d7547ad48ca
  
      Ref<Inspector::FrontendRouter> m_frontendRouter;
      Ref<Inspector::BackendDispatcher> m_backendDispatcher;
-@@ -92,11 +145,17 @@ private:
+@@ -92,11 +149,17 @@ private:
      WebPageProxy& m_page;
  
      Inspector::InspectorTargetAgent* m_targetAgent;
@@ -12668,7 +12744,7 @@ index 964c6315e38f5e0a0303febce45b1e975054f0b4..6b6c4f18b617d0a87d05a17db7398089
      UniqueRef<SOAuthorizationCoordinator> m_soAuthorizationCoordinator;
  #endif
 diff --git a/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp b/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
-index dc0a70b8824afdc7ec3dd1f69f4d9b51942924f6..4da6649c86b46dea36c2750802494ddb9b70cc24 100644
+index dc0a70b8824afdc7ec3dd1f69f4d9b51942924f6..9642cf27c33ec4b707bd588e0d2670770f9718bf 100644
 --- a/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
 +++ b/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
 @@ -27,9 +27,11 @@
@@ -12683,13 +12759,11 @@ index dc0a70b8824afdc7ec3dd1f69f4d9b51942924f6..4da6649c86b46dea36c2750802494ddb
  #include <WebCore/BackingStoreBackendCairoImpl.h>
  #include <WebCore/CairoUtilities.h>
  #include <WebCore/GraphicsContextImplCairo.h>
-@@ -72,6 +74,9 @@ void BackingStore::paint(cairo_t* context, const IntRect& rect)
+@@ -72,6 +74,7 @@ void BackingStore::paint(cairo_t* context, const IntRect& rect)
      cairo_rectangle(context, rect.x(), rect.y(), rect.width(), rect.height());
      cairo_fill(context);
      cairo_restore(context);
-+#if PLATFORM(GTK)
 +    m_webPageProxy.inspectorController().didPaint(m_backend->surface());
-+#endif
  }
  
  void BackingStore::incorporateUpdate(ShareableBitmap* bitmap, const UpdateInfo& updateInfo)
@@ -15060,6 +15134,40 @@ index 4047a1d6df94f3c57337875c390eae447bcfc3ea..7fb9b0927ce187fc060ae84408b51303
      # FIXME: Implement plugin process on Modern WebKit. https://bugs.webkit.org/show_bug.cgi?id=185313
      WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_NETSCAPE_PLUGIN_API PRIVATE OFF)
  else ()
+diff --git a/Source/cmake/OptionsWinCairo.cmake b/Source/cmake/OptionsWinCairo.cmake
+index 113170ce21145fc53a3c804822ef20fa9d89de8b..855ff101965bf1dd652d58903db0c143c3f389e6 100644
+--- a/Source/cmake/OptionsWinCairo.cmake
++++ b/Source/cmake/OptionsWinCairo.cmake
+@@ -31,6 +31,29 @@ if (WebP_FOUND)
+     SET_AND_EXPOSE_TO_BUILD(USE_WEBP ON)
+ endif ()
+ 
++# Playwright begin
++if (NOT LIBVPX_PACKAGE_PATH)
++    set(LIBVPX_PACKAGE_PATH "C:\\vcpkg\\packages\\libvpx_x64-windows")
++endif()
++file(TO_CMAKE_PATH "${LIBVPX_PACKAGE_PATH}" LIBVPX_PACKAGE_PATH)
++message(STATUS "Using LIBVPX_PACKAGE_PATH = ${LIBVPX_PACKAGE_PATH}")
++
++find_library(LIBVPX_CUSTOM_LIBRARY vpxmd.lib
++    HINTS ${LIBVPX_PACKAGE_PATH}/lib
++    REQIRED
++    NO_DEFAULT_PATH
++)
++message(STATUS "Found LIBVPX_CUSTOM_LIBRARY = ${LIBVPX_CUSTOM_LIBRARY}")
++
++find_path(LIBVPX_CUSTOM_INCLUDE_DIR
++    NAMES vpx/vp8.h
++    HINTS ${LIBVPX_PACKAGE_PATH}/include
++    REQUIRED
++    NO_DEFAULT_PATH
++)
++message(STATUS "Found LIBVPX_CUSTOM_INCLUDE_DIR = ${LIBVPX_CUSTOM_INCLUDE_DIR}")
++# Playwright end
++
+ # TODO: Add a check for HAVE_RSA_PSS for support of CryptoAlgorithmRSA_PSS
+ # https://bugs.webkit.org/show_bug.cgi?id=206635
+ 
 diff --git a/Tools/MiniBrowser/gtk/BrowserTab.c b/Tools/MiniBrowser/gtk/BrowserTab.c
 index 3845eabba3e964f9e11bb0ffcb8726fd4ea96fc4..630a6e395298bd9c03c1b131f984b0a8444d2051 100644
 --- a/Tools/MiniBrowser/gtk/BrowserTab.c
