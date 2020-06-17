@@ -28,13 +28,17 @@ class NetworkMonitor {
     const loadContext = helper.getLoadContext(httpChannel);
     if (!loadContext)
       return;
-    const window = loadContext.associatedWindow;
-    const frame = this._frameTree.frameForDocShell(window.docShell);
-    if (!frame)
-      return;
-    this._requestDetails.set(httpChannel.channelId, {
-      frameId: frame.id(),
-    });
+    try {
+      const window = loadContext.associatedWindow;
+      const frame = this._frameTree.frameForDocShell(window.docShell);
+      if (!frame)
+        return;
+      this._requestDetails.set(httpChannel.channelId, {
+        frameId: frame.id(),
+      });
+    } catch (e) {
+      // Accessing loadContext.associatedWindow sometimes throws.
+    }
   }
 
   requestDetails(channelId) {
