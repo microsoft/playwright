@@ -108,6 +108,12 @@ describe('Electron', function() {
     const window = await application.firstWindow();
     expect(await window.title()).toBe('Hello World!');
   });
+  it('should have a clipboard instance', async ({ application }) => {
+    const clipboardContentToWrite = 'Hello from Playwright';
+    await application.evaluate(async ({clipboard}, text) => clipboard.writeText(text), clipboardContentToWrite);
+    const clipboardContentRead = await application.evaluate(async ({clipboard}) => clipboard.readText());
+    await expect(clipboardContentRead).toEqual(clipboardContentToWrite);
+  });
 });
 
 describe('Electron per window', function() {
