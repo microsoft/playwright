@@ -30,13 +30,7 @@ export class Screenshotter {
 
   constructor(page: Page) {
     this._page = page;
-
-    const browserContext = page.context();
-    this._queue = (browserContext as any)[taskQueueSymbol];
-    if (!this._queue) {
-      this._queue = new TaskQueue();
-      (browserContext as any)[taskQueueSymbol] = this._queue;
-    }
+    this._queue = new TaskQueue();
   }
 
   private async _originalViewportSize(): Promise<{ viewportSize: types.Size, originalViewportSize: types.Size | null }> {
@@ -151,8 +145,6 @@ export class Screenshotter {
     return buffer;
   }
 }
-
-const taskQueueSymbol = Symbol('TaskQueue');
 
 class TaskQueue {
   private _chain: Promise<any>;

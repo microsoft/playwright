@@ -116,7 +116,7 @@ describe.skip(ffheadful)('Page.screenshot', function() {
     expect(page.viewportSize().height).toBe(500);
   });
   it('should run in parallel in multiple pages', async({page, server, context, golden}) => {
-    const N = 2;
+    const N = 5;
     const pages = await Promise.all(Array(N).fill(0).map(async() => {
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/grid.html');
@@ -124,10 +124,10 @@ describe.skip(ffheadful)('Page.screenshot', function() {
     }));
     const promises = [];
     for (let i = 0; i < N; ++i)
-      promises.push(pages[i].screenshot({ clip: { x: 50 * i, y: 0, width: 50, height: 50 } }));
+      promises.push(pages[i].screenshot({ clip: { x: 50 * (i % 2), y: 0, width: 50, height: 50 } }));
     const screenshots = await Promise.all(promises);
     for (let i = 0; i < N; ++i)
-      expect(screenshots[i]).toBeGolden(golden(`grid-cell-${i}.png`));
+      expect(screenshots[i]).toBeGolden(golden(`grid-cell-${i % 2}.png`));
     await Promise.all(pages.map(page => page.close()));
   });
   it.fail(FFOX)('should allow transparency', async({page, golden}) => {
