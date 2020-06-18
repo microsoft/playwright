@@ -1226,37 +1226,14 @@ index 0000000000000000000000000000000000000000..dd4c318ec4b9b49ce937266ba899e54f
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Screencast.json b/Source/JavaScriptCore/inspector/protocol/Screencast.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..5da42efd27406d66ad6a2f23e27d79f1512a7a3a
+index 0000000000000000000000000000000000000000..d0759ea0a9803c13e4f161b87179ba4890ac5c7b
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Screencast.json
-@@ -0,0 +1,53 @@
+@@ -0,0 +1,21 @@
 +{
 +    "domain": "Screencast",
 +    "availability": ["web"],
-+    "types": [
-+        {
-+            "id": "ImageFormat",
-+            "type": "string",
-+            "enum": ["jpeg", "png"]
-+        }
-+    ],
 +    "commands": [
-+        {
-+            "name": "start",
-+            "description": "Starts screencast.",
-+            "parameters": [
-+                { "name": "format", "$ref": "ImageFormat", "description": "Frame data format." },
-+                { "name": "quality", "type": "integer", "optional": true, "description": "For JPEG quality from range [0..100]. Ignored for PNG." }
-+            ]
-+        },
-+        {
-+            "name": "stop",
-+            "description": "Stops screencast."
-+        },
-+        {
-+            "name": "frameAck",
-+            "description": "Sent by the client when a frame has been received."
-+        },
 +        {
 +            "name": "startVideoRecording",
 +            "description": "Starts recoring video to speified file.",
@@ -1271,15 +1248,6 @@ index 0000000000000000000000000000000000000000..5da42efd27406d66ad6a2f23e27d79f1
 +            "name": "stopVideoRecording",
 +            "async": true,
 +            "description": "Stops recoding video. Returns after the file has been closed."
-+        }
-+    ],
-+    "events": [
-+        {
-+            "name": "frame",
-+            "description": "Event describing captured frame. The client is expcted to send frameAck in response.",
-+            "parameters": [
-+                { "name": "data", "type": "string", "description": "Base64-encoded image." }
-+            ]
 +        }
 +    ]
 +}
@@ -1617,18 +1585,6 @@ index 6d5be9a591a272cd67d6e9d097b30505bdf8ae5e..8f67ba28c380e844c8e4191ee7044665
              return false;
      }
      
-diff --git a/Source/WebCore/Sources.txt b/Source/WebCore/Sources.txt
-index 24db8fd2c31d9149d62b969a95a3648ed65570ef..d59a58d2475880d8312610c66e265bfb6027a634 100644
---- a/Source/WebCore/Sources.txt
-+++ b/Source/WebCore/Sources.txt
-@@ -1451,6 +1451,7 @@ inspector/agents/InspectorLayerTreeAgent.cpp
- inspector/agents/InspectorMemoryAgent.cpp
- inspector/agents/InspectorNetworkAgent.cpp
- inspector/agents/InspectorPageAgent.cpp
-+inspector/agents/InspectorScreencastAgent.cpp
- inspector/agents/InspectorTimelineAgent.cpp
- inspector/agents/InspectorWorkerAgent.cpp
- inspector/agents/WebConsoleAgent.cpp
 diff --git a/Source/WebCore/SourcesCocoa.txt b/Source/WebCore/SourcesCocoa.txt
 index a25286e0a68316e017c9140b90482bde0859102b..81bc29f2b83e739a561cb3e4742df4a64ec64da2 100644
 --- a/Source/WebCore/SourcesCocoa.txt
@@ -1883,30 +1839,10 @@ index 8f71781a258167280f2ae9a8fcd2b79a7e888f12..c8f4bf45765345fd4abd777e2c497537
          return;
  
 diff --git a/Source/WebCore/inspector/InspectorController.cpp b/Source/WebCore/inspector/InspectorController.cpp
-index a595c13494442c6a69c4f24b1347f057b770211b..27ff50024dec6bfcd43d96a215777696c23e74e9 100644
+index a595c13494442c6a69c4f24b1347f057b770211b..0db75363bd708b371e1db1ea81c1b025744bc9e1 100644
 --- a/Source/WebCore/inspector/InspectorController.cpp
 +++ b/Source/WebCore/inspector/InspectorController.cpp
-@@ -84,6 +84,9 @@
- #include <JavaScriptCore/JSLock.h>
- #include <wtf/Stopwatch.h>
- 
-+#if PLATFORM(WPE) || PLATFORM(WIN)
-+#include "InspectorScreencastAgent.h"
-+#endif
- #if ENABLE(REMOTE_INSPECTOR)
- #include "PageDebuggable.h"
- #endif
-@@ -185,6 +188,9 @@ void InspectorController::createLazyAgents()
-     m_agents.append(makeUnique<PageHeapAgent>(pageContext));
-     m_agents.append(makeUnique<PageAuditAgent>(pageContext));
-     m_agents.append(makeUnique<InspectorCanvasAgent>(pageContext));
-+#if PLATFORM(WPE) || PLATFORM(WIN)
-+    m_agents.append(makeUnique<InspectorScreencastAgent>(pageContext));
-+#endif
-     m_agents.append(makeUnique<InspectorTimelineAgent>(pageContext));
-     m_agents.append(makeUnique<InspectorAnimationAgent>(pageContext));
- 
-@@ -371,8 +377,8 @@ void InspectorController::inspect(Node* node)
+@@ -371,8 +371,8 @@ void InspectorController::inspect(Node* node)
      if (!enabled())
          return;
  
@@ -1917,21 +1853,7 @@ index a595c13494442c6a69c4f24b1347f057b770211b..27ff50024dec6bfcd43d96a215777696
  
      ensureDOMAgent().inspect(node);
  }
-@@ -505,6 +511,13 @@ JSC::VM& InspectorController::vm()
-     return commonVM();
- }
- 
-+// Playwright begin
-+void InspectorController::willDisplay()
-+{
-+    InspectorInstrumentation::willDisplay(m_page);
-+}
-+// Playwright end
-+
- void InspectorController::willComposite(Frame& frame)
- {
-     InspectorInstrumentation::willComposite(frame);
-@@ -515,4 +528,24 @@ void InspectorController::didComposite(Frame& frame)
+@@ -515,4 +515,24 @@ void InspectorController::didComposite(Frame& frame)
      InspectorInstrumentation::didComposite(frame);
  }
  
@@ -1957,16 +1879,10 @@ index a595c13494442c6a69c4f24b1347f057b770211b..27ff50024dec6bfcd43d96a215777696
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/InspectorController.h b/Source/WebCore/inspector/InspectorController.h
-index bca5ead33d04e3b1f4d67cd335242334e93892ca..b04d073a4bacc021c3269b1efd12d683969fcbc4 100644
+index bca5ead33d04e3b1f4d67cd335242334e93892ca..bbac092e2c1377d6e1a687e2ea820286b68ec68b 100644
 --- a/Source/WebCore/inspector/InspectorController.h
 +++ b/Source/WebCore/inspector/InspectorController.h
-@@ -98,9 +98,16 @@ public:
- 
-     WEBCORE_EXPORT void setIndicating(bool);
- 
-+// Playwright begin
-+    WEBCORE_EXPORT void willDisplay();
-+// Playwright end
+@@ -101,6 +101,10 @@ public:
      WEBCORE_EXPORT void willComposite(Frame&);
      WEBCORE_EXPORT void didComposite(Frame&);
  
@@ -1977,7 +1893,7 @@ index bca5ead33d04e3b1f4d67cd335242334e93892ca..b04d073a4bacc021c3269b1efd12d683
      bool isUnderTest() const { return m_isUnderTest; }
      void setIsUnderTest(bool isUnderTest) { m_isUnderTest = isUnderTest; }
      WEBCORE_EXPORT void evaluateForTestInFrontend(const String& script);
-@@ -150,6 +157,7 @@ private:
+@@ -150,6 +154,7 @@ private:
      bool m_isAutomaticInspection { false };
      bool m_pauseAfterInitialization = { false };
      bool m_didCreateLazyAgents { false };
@@ -1986,43 +1902,10 @@ index bca5ead33d04e3b1f4d67cd335242334e93892ca..b04d073a4bacc021c3269b1efd12d683
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index 191cf8d0e2562c41d03c5830c8ee06b239a8fe89..1d55aac0720950c23385e6ea9f4c1712eefd8fb1 100644
+index 191cf8d0e2562c41d03c5830c8ee06b239a8fe89..0417261c688f9e032cba8de38142eafc386725b8 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-@@ -80,6 +80,12 @@
- #include <JavaScriptCore/ScriptCallStack.h>
- #include <wtf/StdLibExtras.h>
- 
-+// Playwright begin
-+#if PLATFORM(WPE) || PLATFORM(WIN)
-+#include "InspectorScreencastAgent.h"
-+#endif
-+// Playwright end
-+
- #if ENABLE(WEBGPU)
- #include "WebGPUSwapChain.h"
- #endif
-@@ -501,6 +507,19 @@ void InspectorInstrumentation::didLayoutImpl(InstrumentingAgents& instrumentingA
-         pageAgent->didLayout();
- }
- 
-+// Playwright begin
-+void InspectorInstrumentation::willDisplayImpl(InstrumentingAgents& instrumentingAgents)
-+{
-+#if PLATFORM(WPE) || PLATFORM(WIN)
-+
-+    if (auto* screencastAgent = instrumentingAgents.enabledInspectorScreencastAgent())
-+        screencastAgent->willDisplay();
-+#else
-+    UNUSED_PARAM(instrumentingAgents);
-+#endif
-+}
-+// Playwright end
-+
- void InspectorInstrumentation::willCompositeImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
- {
-     if (auto* timelineAgent = instrumentingAgents.trackingTimelineAgent())
-@@ -627,6 +646,12 @@ void InspectorInstrumentation::didFailLoadingImpl(InstrumentingAgents& instrumen
+@@ -627,6 +627,12 @@ void InspectorInstrumentation::didFailLoadingImpl(InstrumentingAgents& instrumen
          consoleAgent->didFailLoading(identifier, error); // This should come AFTER resource notification, front-end relies on this.
  }
  
@@ -2035,7 +1918,7 @@ index 191cf8d0e2562c41d03c5830c8ee06b239a8fe89..1d55aac0720950c23385e6ea9f4c1712
  void InspectorInstrumentation::willLoadXHRSynchronouslyImpl(InstrumentingAgents& instrumentingAgents)
  {
      if (auto* networkAgent = instrumentingAgents.enabledNetworkAgent())
-@@ -659,20 +684,17 @@ void InspectorInstrumentation::didReceiveScriptResponseImpl(InstrumentingAgents&
+@@ -659,20 +665,17 @@ void InspectorInstrumentation::didReceiveScriptResponseImpl(InstrumentingAgents&
  
  void InspectorInstrumentation::domContentLoadedEventFiredImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
  {
@@ -2059,7 +1942,7 @@ index 191cf8d0e2562c41d03c5830c8ee06b239a8fe89..1d55aac0720950c23385e6ea9f4c1712
  }
  
  void InspectorInstrumentation::frameDetachedFromParentImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
-@@ -750,12 +772,6 @@ void InspectorInstrumentation::frameDocumentUpdatedImpl(InstrumentingAgents& ins
+@@ -750,12 +753,6 @@ void InspectorInstrumentation::frameDocumentUpdatedImpl(InstrumentingAgents& ins
          pageDOMDebuggerAgent->frameDocumentUpdated(frame);
  }
  
@@ -2072,7 +1955,7 @@ index 191cf8d0e2562c41d03c5830c8ee06b239a8fe89..1d55aac0720950c23385e6ea9f4c1712
  void InspectorInstrumentation::frameStartedLoadingImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
  {
      if (frame.isMainFrame()) {
-@@ -792,6 +808,12 @@ void InspectorInstrumentation::frameClearedScheduledNavigationImpl(Instrumenting
+@@ -792,6 +789,12 @@ void InspectorInstrumentation::frameClearedScheduledNavigationImpl(Instrumenting
          inspectorPageAgent->frameClearedScheduledNavigation(frame);
  }
  
@@ -2085,7 +1968,7 @@ index 191cf8d0e2562c41d03c5830c8ee06b239a8fe89..1d55aac0720950c23385e6ea9f4c1712
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
  void InspectorInstrumentation::defaultAppearanceDidChangeImpl(InstrumentingAgents& instrumentingAgents, bool useDarkAppearance)
  {
-@@ -1315,6 +1337,36 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
+@@ -1315,6 +1318,36 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
          layerTreeAgent->renderLayerDestroyed(renderLayer);
  }
  
@@ -2122,7 +2005,7 @@ index 191cf8d0e2562c41d03c5830c8ee06b239a8fe89..1d55aac0720950c23385e6ea9f4c1712
  InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope& workerGlobalScope)
  {
      return workerGlobalScope.inspectorController().m_instrumentingAgents;
-@@ -1326,6 +1378,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForPage(Page&
+@@ -1326,6 +1359,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForPage(Page&
      return page.inspectorController().m_instrumentingAgents.get();
  }
  
@@ -2137,7 +2020,7 @@ index 191cf8d0e2562c41d03c5830c8ee06b239a8fe89..1d55aac0720950c23385e6ea9f4c1712
  {
      if (is<Document>(context))
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.h b/Source/WebCore/inspector/InspectorInstrumentation.h
-index 730f33251dd0274404adef8f6f3fb6e09cd6fe29..2cfd834eb2538111e3b078c4b40c5182f8e71358 100644
+index 730f33251dd0274404adef8f6f3fb6e09cd6fe29..c193eb96be720f1a055b242948f8b388f32c4d41 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.h
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.h
 @@ -31,6 +31,7 @@
@@ -2156,17 +2039,7 @@ index 730f33251dd0274404adef8f6f3fb6e09cd6fe29..2cfd834eb2538111e3b078c4b40c5182
  class HTTPHeaderMap;
  class InspectorTimelineAgent;
  class InstrumentingAgents;
-@@ -183,6 +185,9 @@ public:
-     static void willLayout(Frame&);
-     static void didLayout(Frame&, RenderObject&);
-     static void didScroll(Page&);
-+// Playwright begin
-+    static void willDisplay(Page&);
-+// Playwright end
-     static void willComposite(Frame&);
-     static void didComposite(Frame&);
-     static void willPaint(RenderObject&);
-@@ -200,6 +205,7 @@ public:
+@@ -200,6 +202,7 @@ public:
      static void didReceiveData(Frame*, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoading(Frame*, DocumentLoader*, unsigned long identifier, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoading(Frame*, DocumentLoader*, unsigned long identifier, const ResourceError&);
@@ -2174,7 +2047,7 @@ index 730f33251dd0274404adef8f6f3fb6e09cd6fe29..2cfd834eb2538111e3b078c4b40c5182
  
      static void willSendRequest(WorkerGlobalScope&, unsigned long identifier, ResourceRequest&);
      static void didReceiveResourceResponse(WorkerGlobalScope&, unsigned long identifier, const ResourceResponse&);
-@@ -226,11 +232,11 @@ public:
+@@ -226,11 +229,11 @@ public:
      static void frameDetachedFromParent(Frame&);
      static void didCommitLoad(Frame&, DocumentLoader*);
      static void frameDocumentUpdated(Frame&);
@@ -2187,7 +2060,7 @@ index 730f33251dd0274404adef8f6f3fb6e09cd6fe29..2cfd834eb2538111e3b078c4b40c5182
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      static void defaultAppearanceDidChange(Page&, bool useDarkAppearance);
  #endif
-@@ -325,6 +331,12 @@ public:
+@@ -325,6 +328,12 @@ public:
      static void layerTreeDidChange(Page*);
      static void renderLayerDestroyed(Page*, const RenderLayer&);
  
@@ -2200,7 +2073,7 @@ index 730f33251dd0274404adef8f6f3fb6e09cd6fe29..2cfd834eb2538111e3b078c4b40c5182
      static void frontendCreated();
      static void frontendDeleted();
      static bool hasFrontends() { return InspectorInstrumentationPublic::hasFrontends(); }
-@@ -340,6 +352,8 @@ public:
+@@ -340,6 +349,8 @@ public:
      static void registerInstrumentingAgents(InstrumentingAgents&);
      static void unregisterInstrumentingAgents(InstrumentingAgents&);
  
@@ -2209,17 +2082,7 @@ index 730f33251dd0274404adef8f6f3fb6e09cd6fe29..2cfd834eb2538111e3b078c4b40c5182
  private:
      static void didClearWindowObjectInWorldImpl(InstrumentingAgents&, Frame&, DOMWrapperWorld&);
      static bool isDebuggerPausedImpl(InstrumentingAgents&);
-@@ -407,6 +421,9 @@ private:
-     static void willLayoutImpl(InstrumentingAgents&, Frame&);
-     static void didLayoutImpl(InstrumentingAgents&, RenderObject&);
-     static void didScrollImpl(InstrumentingAgents&);
-+// Playwright begin
-+    static void willDisplayImpl(InstrumentingAgents&);
-+// Playwright end
-     static void willCompositeImpl(InstrumentingAgents&, Frame&);
-     static void didCompositeImpl(InstrumentingAgents&);
-     static void willPaintImpl(InstrumentingAgents&, RenderObject&);
-@@ -426,6 +443,7 @@ private:
+@@ -426,6 +437,7 @@ private:
      static void didReceiveDataImpl(InstrumentingAgents&, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const ResourceError&);
@@ -2227,7 +2090,7 @@ index 730f33251dd0274404adef8f6f3fb6e09cd6fe29..2cfd834eb2538111e3b078c4b40c5182
      static void willLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void didLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void scriptImportedImpl(InstrumentingAgents&, unsigned long identifier, const String& sourceString);
-@@ -436,11 +454,11 @@ private:
+@@ -436,11 +448,11 @@ private:
      static void frameDetachedFromParentImpl(InstrumentingAgents&, Frame&);
      static void didCommitLoadImpl(InstrumentingAgents&, Frame&, DocumentLoader*);
      static void frameDocumentUpdatedImpl(InstrumentingAgents&, Frame&);
@@ -2240,7 +2103,7 @@ index 730f33251dd0274404adef8f6f3fb6e09cd6fe29..2cfd834eb2538111e3b078c4b40c5182
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      static void defaultAppearanceDidChangeImpl(InstrumentingAgents&, bool useDarkAppearance);
  #endif
-@@ -531,6 +549,12 @@ private:
+@@ -531,6 +543,12 @@ private:
      static void layerTreeDidChangeImpl(InstrumentingAgents&);
      static void renderLayerDestroyedImpl(InstrumentingAgents&, const RenderLayer&);
  
@@ -2253,22 +2116,7 @@ index 730f33251dd0274404adef8f6f3fb6e09cd6fe29..2cfd834eb2538111e3b078c4b40c5182
      static InstrumentingAgents& instrumentingAgentsForPage(Page&);
      static InstrumentingAgents& instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope&);
  
-@@ -980,6 +1004,14 @@ inline void InspectorInstrumentation::didScroll(Page& page)
-     didScrollImpl(instrumentingAgentsForPage(page));
- }
- 
-+// Playwright begin
-+inline void InspectorInstrumentation::willDisplay(Page& page)
-+{
-+    FAST_RETURN_IF_NO_FRONTENDS(void());
-+    willDisplayImpl(instrumentingAgentsForPage(page));
-+}
-+// Playwright end
-+
- inline void InspectorInstrumentation::willComposite(Frame& frame)
- {
-     FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1119,6 +1151,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
+@@ -1119,6 +1137,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
          didFailLoadingImpl(*instrumentingAgents, identifier, loader, error);
  }
  
@@ -2282,7 +2130,7 @@ index 730f33251dd0274404adef8f6f3fb6e09cd6fe29..2cfd834eb2538111e3b078c4b40c5182
  inline void InspectorInstrumentation::didFailLoading(WorkerGlobalScope& workerGlobalScope, unsigned long identifier, const ResourceError& error)
  {
      didFailLoadingImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), identifier, nullptr, error);
-@@ -1214,13 +1253,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
+@@ -1214,13 +1239,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
          frameDocumentUpdatedImpl(*instrumentingAgents, frame);
  }
  
@@ -2296,7 +2144,7 @@ index 730f33251dd0274404adef8f6f3fb6e09cd6fe29..2cfd834eb2538111e3b078c4b40c5182
  inline void InspectorInstrumentation::frameStartedLoading(Frame& frame)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1249,6 +1281,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
+@@ -1249,6 +1267,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
          frameClearedScheduledNavigationImpl(*instrumentingAgents, frame);
  }
  
@@ -2310,7 +2158,7 @@ index 730f33251dd0274404adef8f6f3fb6e09cd6fe29..2cfd834eb2538111e3b078c4b40c5182
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
  inline void InspectorInstrumentation::defaultAppearanceDidChange(Page& page, bool useDarkAppearance)
  {
-@@ -1723,6 +1762,42 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
+@@ -1723,6 +1748,42 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
          renderLayerDestroyedImpl(*instrumentingAgents, renderLayer);
  }
  
@@ -2353,34 +2201,6 @@ index 730f33251dd0274404adef8f6f3fb6e09cd6fe29..2cfd834eb2538111e3b078c4b40c5182
  inline InstrumentingAgents* InspectorInstrumentation::instrumentingAgentsForContext(ScriptExecutionContext* context)
  {
      return context ? instrumentingAgentsForContext(*context) : nullptr;
-diff --git a/Source/WebCore/inspector/InstrumentingAgents.h b/Source/WebCore/inspector/InstrumentingAgents.h
-index 829dc952b8ce80e15ec9f4f343587008b5a41d2e..b94fef468607453d0c87337678d1b68046d3b963 100644
---- a/Source/WebCore/inspector/InstrumentingAgents.h
-+++ b/Source/WebCore/inspector/InstrumentingAgents.h
-@@ -56,6 +56,7 @@ class InspectorLayerTreeAgent;
- class InspectorMemoryAgent;
- class InspectorNetworkAgent;
- class InspectorPageAgent;
-+class InspectorScreencastAgent;
- class InspectorTimelineAgent;
- class InspectorWorkerAgent;
- class PageDOMDebuggerAgent;
-@@ -84,6 +85,7 @@ class WebDebuggerAgent;
- #define DEFINE_INSPECTOR_AGENT_Network(macro, Getter, Setter) DEFINE_INSPECTOR_AGENT(macro, InspectorNetworkAgent, NetworkAgent, Getter, Setter)
- #define DEFINE_INSPECTOR_AGENT_Page(macro, Getter, Setter) DEFINE_INSPECTOR_AGENT(macro, InspectorPageAgent, PageAgent, Getter, Setter)
- #define DEFINE_INSPECTOR_AGENT_Runtime_Page(macro, Getter, Setter) DEFINE_INSPECTOR_AGENT(macro, PageRuntimeAgent, PageRuntimeAgent, Getter, Setter)
-+#define DEFINE_INSPECTOR_AGENT_Screencast(macro, Getter, Setter) DEFINE_INSPECTOR_AGENT(macro, InspectorScreencastAgent, InspectorScreencastAgent, Getter, Setter)
- #define DEFINE_INSPECTOR_AGENT_ScriptProfiler(macro, Getter, Setter) DEFINE_INSPECTOR_AGENT(macro, Inspector::InspectorScriptProfilerAgent, ScriptProfilerAgent, Getter, Setter)
- #define DEFINE_INSPECTOR_AGENT_Timeline(macro, Getter, Setter) DEFINE_INSPECTOR_AGENT(macro, InspectorTimelineAgent, TimelineAgent, Getter, Setter)
- #define DEFINE_INSPECTOR_AGENT_Worker(macro, Getter, Setter) DEFINE_INSPECTOR_AGENT(macro, InspectorWorkerAgent, WorkerAgent, Getter, Setter)
-@@ -125,6 +127,7 @@ class WebDebuggerAgent;
-     DEFINE_ENABLED_INSPECTOR_AGENT(macro, DOMDebugger_Page) \
-     DEFINE_ENABLED_INSPECTOR_AGENT(macro, DOMStorage) \
-     DEFINE_ENABLED_INSPECTOR_AGENT(macro, Heap_Page) \
-+    DEFINE_ENABLED_INSPECTOR_AGENT(macro, Screencast) \
-     DEFINE_ENABLED_INSPECTOR_AGENT(macro, LayerTree) \
-     DEFINE_ENABLED_INSPECTOR_AGENT(macro, Memory) \
-     DEFINE_ENABLED_INSPECTOR_AGENT(macro, Network) \
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 index 8acc1f6dba71a7d3421f135112bcf8bbc70c4128..5645f2a7a61e26f3534aeb6dd281260f50db677b 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
@@ -3915,259 +3735,6 @@ index 3bcd0487cfc8766baa01c7804173a15747b47b2d..3b5c230d7e00b9d7e248be8730ab22ab
  };
  
  } // namespace WebCore
-diff --git a/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp b/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp
-new file mode 100644
-index 0000000000000000000000000000000000000000..da7187ccf379eef1346aae10a0f34361dffb1499
---- /dev/null
-+++ b/Source/WebCore/inspector/agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,160 @@
-+/*
-+ * Copyright (C) 2020 Microsoft Corporation.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
-+#include "config.h"
-+#include "InspectorScreencastAgent.h"
-+
-+#if PLATFORM(WPE) || PLATFORM(WIN)
-+
-+#include "Page.h"
-+#include "FrameSnapshotting.h"
-+#include "ImageBuffer.h"
-+#include <JavaScriptCore/InspectorFrontendDispatchers.h>
-+#include <JavaScriptCore/InspectorFrontendRouter.h>
-+
-+namespace WebCore {
-+
-+using namespace Inspector;
-+
-+InspectorScreencastAgent::InspectorScreencastAgent(PageAgentContext& context)
-+    : InspectorAgentBase("Screencast"_s, context)
-+    , m_frontendDispatcher(makeUnique<ScreencastFrontendDispatcher>(context.frontendRouter))
-+    , m_backendDispatcher(ScreencastBackendDispatcher::create(context.backendDispatcher, this))
-+    , m_inspectedPage(context.inspectedPage)
-+{
-+}
-+
-+InspectorScreencastAgent::~InspectorScreencastAgent()
-+{
-+}
-+
-+void InspectorScreencastAgent::didCreateFrontendAndBackend(FrontendRouter*, BackendDispatcher*)
-+{
-+}
-+
-+void InspectorScreencastAgent::willDestroyFrontendAndBackend(DisconnectReason)
-+{
-+    ErrorString errorString;
-+    stop(errorString);
-+}
-+
-+void InspectorScreencastAgent::start(Inspector::ErrorString& errorString, const String& format, const int* quality)
-+{
-+    if (isEnabled())
-+      return;
-+
-+    if (format == "jpeg") {
-+        m_format = "image/jpeg";
-+    } else if (format == "png") {
-+        m_format = "image/png";
-+    } else {
-+        errorString = "Unsupported format."_s;
-+        return;
-+    }
-+
-+    if (quality && (*quality < 0 || *quality >100)) {
-+        errorString = "Unsupported quality."_s;
-+        return;
-+    }
-+
-+    if (quality)
-+        m_quality = *quality;
-+    m_instrumentingAgents.setEnabledInspectorScreencastAgent(this);
-+}
-+
-+void InspectorScreencastAgent::stop(Inspector::ErrorString&)
-+{
-+    if (!isEnabled())
-+      return;
-+
-+    m_instrumentingAgents.setEnabledInspectorScreencastAgent(nullptr);
-+    m_inflightFrames = 0;
-+    m_quality = WTF::nullopt;
-+}
-+
-+void InspectorScreencastAgent::frameAck(Inspector::ErrorString& errorString)
-+{
-+    if (!m_inflightFrames) {
-+        errorString = "No inflight frames to ack"_s;
-+        return;
-+    }
-+
-+    --m_inflightFrames;
-+}
-+
-+void InspectorScreencastAgent::startVideoRecording(Inspector::ErrorString& errorString, const String&, int, int, const double*)
-+{
-+    errorString = "Not implemented."_s;
-+}
-+
-+void InspectorScreencastAgent::stopVideoRecording(Ref<StopVideoRecordingCallback>&& callback)
-+{
-+    callback->sendFailure("Not implemented."_s);
-+}
-+
-+bool InspectorScreencastAgent::isEnabled() const
-+{
-+    return m_instrumentingAgents.enabledInspectorScreencastAgent();
-+}
-+
-+void InspectorScreencastAgent::willDisplay()
-+{
-+    if (!isEnabled())
-+        return;
-+
-+    if (m_inflightFrames > 2)
-+        return;
-+
-+    String snapshot = takeSnapshot();
-+    if (snapshot.isEmpty())
-+        return;
-+
-+    ++m_inflightFrames;
-+    m_frontendDispatcher->frame(snapshot);
-+}
-+
-+String InspectorScreencastAgent::takeSnapshot()
-+{
-+    SnapshotOptions options = SnapshotOptionsNone;
-+    options |= SnapshotOptionsInViewCoordinates;
-+    IntSize size = m_inspectedPage.mainFrame().view()->visibleSize();
-+    fprintf(stderr, "view().visibleSize() = %s\n", size.toJSONString().ascii().data());
-+    IntRect rectangle({0, 0}, size);
-+    std::unique_ptr<ImageBuffer> snapshot = snapshotFrameRect(m_inspectedPage.mainFrame(), rectangle, options);
-+
-+    if (!snapshot)
-+        return String();
-+
-+    Optional<double> quality;
-+    if (m_quality)
-+        quality = *m_quality / 100.0;
-+
-+    Vector<uint8_t> data = snapshot->toData(m_format, quality);
-+    return base64Encode(data);
-+}
-+
-+} // namespace WebCore
-+
-+#endif  // PLATFORM(WPE) || PLATFORM(WIN)
-diff --git a/Source/WebCore/inspector/agents/InspectorScreencastAgent.h b/Source/WebCore/inspector/agents/InspectorScreencastAgent.h
-new file mode 100644
-index 0000000000000000000000000000000000000000..f725430dd38ec528396b8edae12a9a941bb0b835
---- /dev/null
-+++ b/Source/WebCore/inspector/agents/InspectorScreencastAgent.h
-@@ -0,0 +1,81 @@
-+/*
-+ * Copyright (C) 2020 Microsoft Corporation.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
-+#pragma once
-+
-+#if PLATFORM(WPE) || PLATFORM(WIN)
-+
-+#include "InspectorWebAgentBase.h"
-+#include <JavaScriptCore/InspectorBackendDispatchers.h>
-+#include <JavaScriptCore/InspectorFrontendDispatchers.h>
-+
-+#include <wtf/Forward.h>
-+#include <wtf/Noncopyable.h>
-+#include <wtf/WeakPtr.h>
-+
-+namespace Inspector {
-+class BackendDispatcher;
-+class FrontendChannel;
-+class FrontendRouter;
-+class ScreencastFrontendDispatcher;
-+}
-+
-+namespace WebCore {
-+
-+class Page;
-+
-+class InspectorScreencastAgent : public InspectorAgentBase, public Inspector::ScreencastBackendDispatcherHandler, public CanMakeWeakPtr<InspectorScreencastAgent> {
-+    WTF_MAKE_NONCOPYABLE(InspectorScreencastAgent);
-+    WTF_MAKE_FAST_ALLOCATED;
-+public:
-+    InspectorScreencastAgent(PageAgentContext&);
-+    ~InspectorScreencastAgent() override;
-+
-+    void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) override;
-+    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
-+
-+    void start(Inspector::ErrorString&, const String& format, const int* quality) override;
-+    void stop(Inspector::ErrorString&) override;
-+    void frameAck(Inspector::ErrorString&) override;
-+    void startVideoRecording(Inspector::ErrorString&, const String& file, int width, int height, const double* scale) override;
-+    void stopVideoRecording(Ref<StopVideoRecordingCallback>&&) override;
-+
-+    void willDisplay();
-+
-+private:
-+    bool isEnabled() const;
-+    String takeSnapshot();
-+
-+    std::unique_ptr<Inspector::ScreencastFrontendDispatcher> m_frontendDispatcher;
-+    Ref<Inspector::ScreencastBackendDispatcher> m_backendDispatcher;
-+    Page& m_inspectedPage;
-+    int m_inflightFrames { 0 };
-+    String m_format;
-+    Optional<int> m_quality;
-+};
-+
-+} // namespace WebCore
-+
-+#endif // PLATFORM(WPE) || PLATFORM(WIN)
 diff --git a/Source/WebCore/inspector/agents/InspectorWorkerAgent.cpp b/Source/WebCore/inspector/agents/InspectorWorkerAgent.cpp
 index 909c466f87e9bfa8c4c1728c46ad6e7e5907b46e..b4c53ba9dee0e7bb070fe03150339b2abe5efc2c 100644
 --- a/Source/WebCore/inspector/agents/InspectorWorkerAgent.cpp
@@ -6814,7 +6381,7 @@ index 5d620b1ad03924b3ffd81d95105d4bf14341d9d4..143bc2905c68665c74991f5add9bb199
  UIProcess/Media/AudioSessionRoutingArbitratorProxy.cpp
  UIProcess/Media/MediaUsageManager.cpp
 diff --git a/Source/WebKit/SourcesCocoa.txt b/Source/WebKit/SourcesCocoa.txt
-index 2519b7ee283a4015acc2a434011d859c4a2c687e..1232b089d102615be1f93846d81402d3c9b51056 100644
+index 2519b7ee283a4015acc2a434011d859c4a2c687e..bc88b8e5cd275afa0a9acd20d242c12e4acbcd9d 100644
 --- a/Source/WebKit/SourcesCocoa.txt
 +++ b/Source/WebKit/SourcesCocoa.txt
 @@ -251,6 +251,7 @@ UIProcess/API/Cocoa/_WKApplicationManifest.mm
@@ -6825,11 +6392,9 @@ index 2519b7ee283a4015acc2a434011d859c4a2c687e..1232b089d102615be1f93846d81402d3
  UIProcess/API/Cocoa/_WKContentRuleListAction.mm
  UIProcess/API/Cocoa/_WKContextMenuElementInfo.mm
  UIProcess/API/Cocoa/_WKCustomHeaderFields.mm @no-unify
-@@ -411,7 +412,9 @@ UIProcess/Inspector/Cocoa/InspectorDelegate.mm
- UIProcess/Inspector/ios/WKInspectorHighlightView.mm
+@@ -412,6 +413,7 @@ UIProcess/Inspector/ios/WKInspectorHighlightView.mm
  UIProcess/Inspector/ios/WKInspectorNodeSearchGestureRecognizer.mm
  
-+UIProcess/Inspector/mac/InspectorScreencastAgentMac.mm
  UIProcess/Inspector/mac/RemoteWebInspectorProxyMac.mm
 +UIProcess/Inspector/mac/ScreencastEncoderMac.mm
  UIProcess/Inspector/mac/WebInspectorProxyMac.mm
@@ -8585,10 +8150,10 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
      // The timeout we use when waiting for a DidUpdateGeometry message.
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..6ceba89870b4487b20e1c86bfd08a96262e8ece3
+index 0000000000000000000000000000000000000000..0f4badcf6b1e03680031ae6b45c28783a8f44519
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,291 @@
+@@ -0,0 +1,144 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8618,25 +8183,14 @@ index 0000000000000000000000000000000000000000..6ceba89870b4487b20e1c86bfd08a962
 +#include "InspectorScreencastAgent.h"
 +
 +#include "PageClient.h"
-+#include "WebAutomationSession.h"
++#include "ScreencastEncoder.h"
 +#include "WebPageProxy.h"
 +#include <JavaScriptCore/InspectorFrontendDispatchers.h>
 +#include <JavaScriptCore/InspectorFrontendRouter.h>
 +#include <WebCore/NotImplemented.h>
 +
-+#if PLATFORM(GTK)
-+#include "DrawingAreaProxy.h"
-+#include "ScreencastEncoder.h"
-+#include <WebCore/ImageBufferUtilitiesCairo.h>
-+#include <gtk/gtk.h>
-+#include <wtf/text/Base64.h>
-+#endif
 +#if USE(CAIRO)
 +#include "DrawingAreaProxy.h"
-+#include "ScreencastEncoder.h"
-+#endif
-+#if PLATFORM(MAC)
-+#include "ScreencastEncoder.h"
 +#endif
 +
 +namespace WebKit {
@@ -8645,7 +8199,6 @@ index 0000000000000000000000000000000000000000..6ceba89870b4487b20e1c86bfd08a962
 +
 +InspectorScreencastAgent::InspectorScreencastAgent(BackendDispatcher& backendDispatcher, Inspector::FrontendRouter& frontendRouter, WebPageProxy& page)
 +    : InspectorAgentBase("Screencast"_s)
-+    , m_frontendDispatcher(makeUnique<ScreencastFrontendDispatcher>(frontendRouter))
 +    , m_backendDispatcher(ScreencastBackendDispatcher::create(backendDispatcher, this))
 +    , m_page(page)
 +{
@@ -8661,8 +8214,11 @@ index 0000000000000000000000000000000000000000..6ceba89870b4487b20e1c86bfd08a962
 +
 +void InspectorScreencastAgent::willDestroyFrontendAndBackend(DisconnectReason)
 +{
-+    ErrorString errorString;
-+    stop(errorString);
++    if (!m_encoder)
++        return;
++
++    m_encoder->finish([] { });
++    m_encoder = nullptr;
 +}
 +
 +#if USE(CAIRO)
@@ -8672,63 +8228,6 @@ index 0000000000000000000000000000000000000000..6ceba89870b4487b20e1c86bfd08a962
 +        m_encoder->encodeFrame(surface, m_page.drawingArea()->size());
 +}
 +#endif
-+
-+void InspectorScreencastAgent::start(Inspector::ErrorString& errorString, const String& format, const int* quality)
-+{
-+    if (m_enabled)
-+        return;
-+
-+    if (format == "jpeg") {
-+        m_format = ImageFormat::Jpeg;
-+    } else if (format == "png") {
-+        m_format = ImageFormat::Png;
-+    } else {
-+        errorString = "Unsupported format"_s;
-+        return;
-+    }
-+
-+    if (quality && (*quality < 0 || *quality >100)) {
-+        errorString = "Unsupported quality"_s;
-+        return;
-+    }
-+
-+    m_enabled = true;
-+    if (quality)
-+        m_quality = *quality;
-+    fprintf(stderr, "InspectorScreencastAgent::start %p\n", this);
-+#if PLATFORM(GTK)
-+    g_signal_connect_swapped(m_page.viewWidget(), "draw", reinterpret_cast<GCallback>(InspectorScreencastAgent::webViewDrawCallback), this);
-+#else
-+    scheduleSnapshot();
-+#endif
-+}
-+
-+void InspectorScreencastAgent::stop(Inspector::ErrorString&)
-+{
-+    if (!m_enabled)
-+        return;
-+
-+    m_enabled = false;
-+    m_inflightFrames = 0;
-+    m_quality = WTF::nullopt;
-+#if PLATFORM(GTK)
-+    g_signal_handlers_disconnect_by_func(m_page.viewWidget(), reinterpret_cast<gpointer>(InspectorScreencastAgent::webViewDrawCallback), this);
-+#endif
-+}
-+
-+void InspectorScreencastAgent::frameAck(Inspector::ErrorString& errorString)
-+{
-+    fprintf(stderr, "InspectorScreencastAgent::frameAck m_inflightFrames=%d\n", m_inflightFrames);
-+    if (!m_inflightFrames) {
-+        errorString = "No inflight frames to ack"_s;
-+        return;
-+    }
-+
-+    --m_inflightFrames;
-+#if !PLATFORM(GTK)
-+    scheduleSnapshot();
-+#endif
-+}
 +
 +void InspectorScreencastAgent::startVideoRecording(Inspector::ErrorString& errorString, const String& file, int width, int height, const double* scale)
 +{
@@ -8772,29 +8271,6 @@ index 0000000000000000000000000000000000000000..6ceba89870b4487b20e1c86bfd08a962
 +    m_encoder = nullptr;
 +}
 +
-+void InspectorScreencastAgent::scheduleSnapshot()
-+{
-+    if (!m_enabled)
-+        return;
-+
-+    fprintf(stderr, "InspectorScreencastAgent::scheduleSnapshot m_inflightFrames=%d\n", m_inflightFrames);
-+
-+    m_page.callAfterNextPresentationUpdate([agent = makeWeakPtr(this)](CallbackBase::Error error) mutable {
-+        fprintf(stderr, "callAfterNextPresentationUpdate 1 error= %d\n", error);
-+        if (!agent)
-+            return;
-+
-+        fprintf(stderr, "callAfterNextPresentationUpdate 2 error= %d\n", error);
-+        if (error == CallbackBase::Error::None) {
-+            agent->takeSnapshot();
-+        } else {
-+            fprintf(stderr, "callAfterNextPresentationUpdate error= %d\n", error);
-+        }
-+        agent->scheduleSnapshot();
-+        fprintf(stderr, "callAfterNextPresentationUpdate 3 error= %d\n", error);
-+    });
-+}
-+
 +#if PLATFORM(MAC)
 +void InspectorScreencastAgent::scheduleFrameEncoding()
 +{
@@ -8821,71 +8297,13 @@ index 0000000000000000000000000000000000000000..6ceba89870b4487b20e1c86bfd08a962
 +}
 +#endif
 +
-+void InspectorScreencastAgent::takeSnapshot()
-+{
-+    if (!m_enabled)
-+        return;
-+
-+    if (m_inflightFrames > 2)
-+        return;
-+
-+    String snapshot = platformTakeSnapshot();
-+    ++m_inflightFrames;
-+    m_frontendDispatcher->frame(snapshot);
-+}
-+
-+#if PLATFORM(GTK)
-+gboolean InspectorScreencastAgent::webViewDrawCallback(InspectorScreencastAgent* agent)
-+{
-+    agent->takeSnapshot();
-+    // Let default handler draw on the screen.
-+    return FALSE;
-+}
-+
-+String InspectorScreencastAgent::platformTakeSnapshot()
-+{
-+    auto viewSnapshot = m_page.takeViewSnapshot(WTF::nullopt);
-+    if (!viewSnapshot) {
-+        fprintf(stderr, "   takeViewSnapshot failed\n");
-+        return String();
-+    }
-+
-+    String format;
-+    switch (m_format) {
-+    case ImageFormat::Jpeg:
-+        format = "image/jpeg";
-+        break;
-+    case ImageFormat::Png:
-+        format = "image/png";
-+        break;
-+    };
-+
-+    Optional<double> quality;
-+    if (m_quality)
-+        quality = *m_quality / 100.0;
-+
-+    Vector<uint8_t> data = WebCore::data(viewSnapshot->surface(), format, quality);
-+    return base64Encode(data);
-+}
-+
-+#elif PLATFORM(COCOA)
-+// in its own file
-+#else
-+String InspectorScreencastAgent::platformTakeSnapshot()
-+{
-+    // WPE and Windows implementation lives in the Web Process.
-+    notImplemented();
-+    return String();
-+}
-+#endif
-+
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..c8264c4626bc2e7895767f1d765c01a83acbba1f
+index 0000000000000000000000000000000000000000..a669ef6711138110c1111aef76f32934c151cc67
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
-@@ -0,0 +1,91 @@
+@@ -0,0 +1,76 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8946,40 +8364,25 @@ index 0000000000000000000000000000000000000000..c8264c4626bc2e7895767f1d765c01a8
 +    void didPaint(cairo_surface_t*);
 +#endif
 +
-+    void start(Inspector::ErrorString&, const String& format, const int* quality) override;
-+    void stop(Inspector::ErrorString&) override;
-+    void frameAck(Inspector::ErrorString&) override;
 +    void startVideoRecording(Inspector::ErrorString&, const String& file, int width, int height, const double* scale) override;
 +    void stopVideoRecording(Ref<StopVideoRecordingCallback>&&) override;
 +
 +
 +private:
-+#if PLATFORM(GTK)
-+    static gboolean webViewDrawCallback(InspectorScreencastAgent*);
-+#endif
 +#if PLATFORM(MAC)
 +    void scheduleFrameEncoding();
 +    void encodeFrame();
 +#endif
-+    void scheduleSnapshot();
-+    void takeSnapshot();
-+    String platformTakeSnapshot();
 +
-+    std::unique_ptr<Inspector::ScreencastFrontendDispatcher> m_frontendDispatcher;
 +    Ref<Inspector::ScreencastBackendDispatcher> m_backendDispatcher;
 +    WebPageProxy& m_page;
-+    bool m_enabled { false };
-+    int m_inflightFrames { 0 };
-+    enum class ImageFormat { Jpeg, Png };
-+    ImageFormat m_format { ImageFormat::Jpeg };
-+    Optional<int> m_quality;
 +    RefPtr<ScreencastEncoder> m_encoder;
 +};
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..ec2f174e49f8b552922f5494ad2e4b1927470da3
+index 0000000000000000000000000000000000000000..f95ca1a9a9faecdc83de8289d0d5be46c135d907
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 @@ -0,0 +1,440 @@
@@ -9255,7 +8658,7 @@ index 0000000000000000000000000000000000000000..ec2f174e49f8b552922f5494ad2e4b19
 +                }
 +                bool keyframe = (pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0;
 +                ++m_frameCount;
-+                fprintf(stderr, "  #%03d %spts=%lld sz=%zd\n", m_frameCount, keyframe ? "[K] " : "", pkt->data.frame.pts, pkt->data.frame.sz);
++                fprintf(stderr, "  #%03d %spts=%" PRId64 " sz=%zd\n", m_frameCount, keyframe ? "[K] " : "", pkt->data.frame.pts, pkt->data.frame.sz);
 +                m_pts += pkt->data.frame.duration;
 +            }
 +        }
@@ -10051,83 +9454,6 @@ index c2df3ceb4b69f32060dcbd90d04dc6cb5900de0d..af9c472a1b9137424081b3f1f9fd9448
  };
  
  } // namespace WebKit
-diff --git a/Source/WebKit/UIProcess/Inspector/mac/InspectorScreencastAgentMac.mm b/Source/WebKit/UIProcess/Inspector/mac/InspectorScreencastAgentMac.mm
-new file mode 100644
-index 0000000000000000000000000000000000000000..5c9b3aaecd4d0358b865887041fdfaac40f3295e
---- /dev/null
-+++ b/Source/WebKit/UIProcess/Inspector/mac/InspectorScreencastAgentMac.mm
-@@ -0,0 +1,71 @@
-+/*
-+ * Copyright (C) 2020 Microsoft Corporation.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
-+#include "config.h"
-+#include "InspectorScreencastAgent.h"
-+
-+#if PLATFORM(MAC)
-+
-+#include "PageClient.h"
-+#include <CoreGraphics/CoreGraphics.h>
-+#include <WebCore/ImageBufferUtilitiesCG.h>
-+#include <wtf/RetainPtr.h>
-+#include <wtf/text/WTFString.h>
-+
-+namespace WebKit {
-+
-+using namespace Inspector;
-+
-+String InspectorScreencastAgent::platformTakeSnapshot()
-+{
-+    RetainPtr<CGImageRef> windowSnapshotImage = m_page.pageClient().takeSnapshotForAutomation();
-+    if (!windowSnapshotImage)
-+        return String();
-+
-+    CFStringRef type;
-+    switch (m_format) {
-+    case ImageFormat::Jpeg:
-+        type = kUTTypeJPEG;
-+        break;
-+    case ImageFormat::Png:
-+        type = kUTTypePNG;
-+        break;
-+    };
-+
-+    Optional<double> quality;
-+    if (m_quality)
-+        quality = *m_quality / 100.0;
-+
-+    RetainPtr<NSMutableData> imageData = adoptNS([[NSMutableData alloc] init]);
-+    if (!WebCore::encodeImage(windowSnapshotImage.get(), type, quality, (CFMutableDataRef)imageData.get())) {
-+        return String();
-+    }
-+
-+    return String([imageData base64EncodedStringWithOptions:0]);
-+}
-+
-+} // namespace WebKit
-+
-+#endif // PLATFORM(MAC)
 diff --git a/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm b/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm
 new file mode 100644
 index 0000000000000000000000000000000000000000..678757082a087f039e21da1456c3a28f553c1a13
@@ -14435,7 +13761,7 @@ index 0000000000000000000000000000000000000000..c3d7cacea987ba2b094d5022c670705e
 + 
 +} // namespace WebKit
 diff --git a/Source/WebKit/WebKit.xcodeproj/project.pbxproj b/Source/WebKit/WebKit.xcodeproj/project.pbxproj
-index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce67e24c07e 100644
+index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..79f73cc00f100d477243e601831d8470b760027e 100644
 --- a/Source/WebKit/WebKit.xcodeproj/project.pbxproj
 +++ b/Source/WebKit/WebKit.xcodeproj/project.pbxproj
 @@ -1779,6 +1779,18 @@
@@ -14487,7 +13813,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  		DF462E0E23F22F5300EFF35F /* WKHTTPCookieStorePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKHTTPCookieStorePrivate.h; sourceTree = "<group>"; };
  		DF462E1123F338AD00EFF35F /* WKContentWorldPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKContentWorldPrivate.h; sourceTree = "<group>"; };
  		DF58C6311371AC5800F9A37C /* NativeWebWheelEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NativeWebWheelEvent.h; sourceTree = "<group>"; };
-@@ -5357,6 +5385,13 @@
+@@ -5357,6 +5385,12 @@
  		ECA680D71E690DF800731D20 /* WebProcessCocoa.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WebProcessCocoa.h; sourceTree = "<group>"; };
  		ECBFC1DB1E6A4D66000300C7 /* ExtraPublicSymbolsForTAPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ExtraPublicSymbolsForTAPI.h; sourceTree = "<group>"; };
  		F036978715F4BF0500C3A80E /* WebColorPicker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WebColorPicker.cpp; sourceTree = "<group>"; };
@@ -14497,11 +13823,10 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
 +		F3867F0324607D2B008F0F31 /* InspectorScreencastAgent.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InspectorScreencastAgent.cpp; sourceTree = "<group>"; };
 +		F3867F0424607D2B008F0F31 /* InspectorScreencastAgent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorScreencastAgent.h; sourceTree = "<group>"; };
 +		F3970344249BD4CE003E1A22 /* ScreencastEncoderMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ScreencastEncoderMac.mm; sourceTree = "<group>"; };
-+		F3A1D2F72460E68400AA3AB8 /* InspectorScreencastAgentMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = InspectorScreencastAgentMac.mm; sourceTree = "<group>"; };
  		F409BA171E6E64B3009DA28E /* WKDragDestinationAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKDragDestinationAction.h; sourceTree = "<group>"; };
  		F40D1B68220BDC0F00B49A01 /* WebAutocorrectionContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WebAutocorrectionContext.h; path = ios/WebAutocorrectionContext.h; sourceTree = "<group>"; };
  		F41056612130699A0092281D /* APIAttachmentCocoa.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = APIAttachmentCocoa.mm; sourceTree = "<group>"; };
-@@ -5447,6 +5482,7 @@
+@@ -5447,6 +5481,7 @@
  				3766F9EF189A1244003CF19B /* QuartzCore.framework in Frameworks */,
  				37694525184FC6B600CDE21F /* Security.framework in Frameworks */,
  				37BEC4DD1948FC6A008B4286 /* WebCore.framework in Frameworks */,
@@ -14509,7 +13834,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  			);
  			runOnlyForDeploymentPostprocessing = 0;
  		};
-@@ -7186,6 +7222,7 @@
+@@ -7186,6 +7221,7 @@
  		37C4C08318149C2A003688B9 /* Cocoa */ = {
  			isa = PBXGroup;
  			children = (
@@ -14517,7 +13842,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  				1A43E826188F38E2009E4D30 /* Deprecated */,
  				37A5E01218BBF937000A081E /* _WKActivatedElementInfo.h */,
  				37A5E01118BBF937000A081E /* _WKActivatedElementInfo.mm */,
-@@ -8087,6 +8124,7 @@
+@@ -8087,6 +8123,7 @@
  		5750F3292032D4E300389347 /* Frameworks */ = {
  			isa = PBXGroup;
  			children = (
@@ -14525,7 +13850,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  				5750F32A2032D4E500389347 /* LocalAuthentication.framework */,
  				570DAAB0230273D200E8FC04 /* NearField.framework */,
  			);
-@@ -8483,6 +8521,10 @@
+@@ -8483,6 +8520,10 @@
  			children = (
  				9197940423DBC4BB00257892 /* InspectorBrowserAgent.cpp */,
  				9197940323DBC4BB00257892 /* InspectorBrowserAgent.h */,
@@ -14536,17 +13861,15 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  			);
  			path = Agents;
  			sourceTree = "<group>";
-@@ -8490,7 +8532,9 @@
- 		91D970D623DA6D550057DBC3 /* mac */ = {
+@@ -8491,6 +8532,7 @@
  			isa = PBXGroup;
  			children = (
-+				F3A1D2F72460E68400AA3AB8 /* InspectorScreencastAgentMac.mm */,
  				A5D3504D1D78F0D2005124A9 /* RemoteWebInspectorProxyMac.mm */,
 +				F3970344249BD4CE003E1A22 /* ScreencastEncoderMac.mm */,
  				1CA8B935127C774E00576C2B /* WebInspectorProxyMac.mm */,
  				994BADF11F7D77EA00B571E7 /* WKInspectorViewController.h */,
  				994BADF21F7D77EB00B571E7 /* WKInspectorViewController.mm */,
-@@ -8916,6 +8960,12 @@
+@@ -8916,6 +8958,12 @@
  		BC032DC310F438260058C15A /* UIProcess */ = {
  			isa = PBXGroup;
  			children = (
@@ -14559,7 +13882,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  				BC032DC410F4387C0058C15A /* API */,
  				512F588D12A8836F00629530 /* Authentication */,
  				9955A6E81C79809000EB6A93 /* Automation */,
-@@ -9196,6 +9246,7 @@
+@@ -9196,6 +9244,7 @@
  		BC0C376610F807660076D7CB /* C */ = {
  			isa = PBXGroup;
  			children = (
@@ -14567,7 +13890,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  				5123CF18133D25E60056F800 /* cg */,
  				6EE849C41368D9040038D481 /* mac */,
  				BCB63477116BF10600603215 /* WebKit2_C.h */,
-@@ -9796,6 +9847,11 @@
+@@ -9796,6 +9845,11 @@
  		BCCF085C113F3B7500C650C5 /* mac */ = {
  			isa = PBXGroup;
  			children = (
@@ -14579,7 +13902,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  				B878B613133428DC006888E9 /* CorrectionPanel.h */,
  				B878B614133428DC006888E9 /* CorrectionPanel.mm */,
  				C1817362205844A900DFDA65 /* DisplayLink.cpp */,
-@@ -10578,6 +10634,7 @@
+@@ -10578,6 +10632,7 @@
  				991F492F23A812C60054642B /* _WKInspectorDebuggableInfo.h in Headers */,
  				99036AE223A949CF0000B06A /* _WKInspectorDebuggableInfoInternal.h in Headers */,
  				9197940C23DBC50300257892 /* _WKInspectorDelegate.h in Headers */,
@@ -14587,7 +13910,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  				5CAFDE472130846A00B1F7E1 /* _WKInspectorInternal.h in Headers */,
  				9979CA58237F49F10039EC05 /* _WKInspectorPrivate.h in Headers */,
  				A5C0F0AB2000658200536536 /* _WKInspectorWindow.h in Headers */,
-@@ -10818,6 +10875,7 @@
+@@ -10818,6 +10873,7 @@
  				1A14F8E21D74C834006CBEC6 /* FrameInfoData.h in Headers */,
  				1AE00D611831792100087DD7 /* FrameLoadState.h in Headers */,
  				5C121E842410208D00486F9B /* FrameTreeNodeData.h in Headers */,
@@ -14595,7 +13918,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  				2D4AF0892044C3C4006C8817 /* FrontBoardServicesSPI.h in Headers */,
  				CD78E1151DB7D7ED0014A2DE /* FullscreenClient.h in Headers */,
  				CD19D2EA2046406F0017074A /* FullscreenTouchSecheuristic.h in Headers */,
-@@ -10830,6 +10888,7 @@
+@@ -10830,6 +10886,7 @@
  				BC06F43A12DBCCFB002D78DE /* GeolocationPermissionRequestProxy.h in Headers */,
  				2DA944A41884E4F000ED86DB /* GestureTypes.h in Headers */,
  				2DA049B8180CCD0A00AAFA9E /* GraphicsLayerCARemote.h in Headers */,
@@ -14603,7 +13926,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  				C0CE72AD1247E78D00BC0EC4 /* HandleMessage.h in Headers */,
  				1AC75A1B1B3368270056745B /* HangDetectionDisabler.h in Headers */,
  				57AC8F50217FEED90055438C /* HidConnection.h in Headers */,
-@@ -10958,8 +11017,10 @@
+@@ -10958,8 +11015,10 @@
  				41DC45961E3D6E2200B11F51 /* NetworkRTCProvider.h in Headers */,
  				413075AB1DE85F330039EC69 /* NetworkRTCSocket.h in Headers */,
  				5C20CBA01BB1ECD800895BB1 /* NetworkSession.h in Headers */,
@@ -14614,7 +13937,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  				570DAAC22303730300E8FC04 /* NfcConnection.h in Headers */,
  				570DAAAE23026F5C00E8FC04 /* NfcService.h in Headers */,
  				31A2EC5614899C0900810D71 /* NotificationPermissionRequest.h in Headers */,
-@@ -11043,6 +11104,7 @@
+@@ -11043,6 +11102,7 @@
  				CD2865EE2255562000606AC7 /* ProcessTaskStateObserver.h in Headers */,
  				463FD4821EB94EC000A2982C /* ProcessTerminationReason.h in Headers */,
  				86E67A251910B9D100004AB7 /* ProcessThrottler.h in Headers */,
@@ -14622,7 +13945,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  				83048AE61ACA45DC0082C832 /* ProcessThrottlerClient.h in Headers */,
  				A1E688701F6E2BAB007006A6 /* QuarantineSPI.h in Headers */,
  				1A0C227E2451130A00ED614D /* QuickLookThumbnailingSoftLink.h in Headers */,
-@@ -11339,6 +11401,7 @@
+@@ -11339,6 +11399,7 @@
  				A543E30D215C8A9000279CD9 /* WebPageInspectorTargetController.h in Headers */,
  				A543E307215AD13700279CD9 /* WebPageInspectorTargetFrontendChannel.h in Headers */,
  				C0CE72A11247E71D00BC0EC4 /* WebPageMessages.h in Headers */,
@@ -14630,7 +13953,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  				2D5C9D0619C81D8F00B3C5C1 /* WebPageOverlay.h in Headers */,
  				46C392292316EC4D008EED9B /* WebPageProxyIdentifier.h in Headers */,
  				BCBD3915125BB1A800D2C29F /* WebPageProxyMessages.h in Headers */,
-@@ -11470,6 +11533,7 @@
+@@ -11470,6 +11531,7 @@
  				BCD25F1711D6BDE100169B0E /* WKBundleFrame.h in Headers */,
  				BCF049E611FE20F600F86A58 /* WKBundleFramePrivate.h in Headers */,
  				BC49862F124D18C100D834E1 /* WKBundleHitTestResult.h in Headers */,
@@ -14638,7 +13961,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  				BC204EF211C83EC8008F3375 /* WKBundleInitialize.h in Headers */,
  				65B86F1E12F11DE300B7DD8A /* WKBundleInspector.h in Headers */,
  				1A8B66B41BC45B010082DF77 /* WKBundleMac.h in Headers */,
-@@ -11522,6 +11586,7 @@
+@@ -11522,6 +11584,7 @@
  				5C795D71229F3757003FF1C4 /* WKContextMenuElementInfoPrivate.h in Headers */,
  				51A555F6128C6C47009ABCEC /* WKContextMenuItem.h in Headers */,
  				51A55601128C6D92009ABCEC /* WKContextMenuItemTypes.h in Headers */,
@@ -14646,7 +13969,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  				A1EA02381DABFF7E0096021F /* WKContextMenuListener.h in Headers */,
  				BCC938E11180DE440085E5FE /* WKContextPrivate.h in Headers */,
  				9FB5F395169E6A80002C25BF /* WKContextPrivateMac.h in Headers */,
-@@ -11672,6 +11737,7 @@
+@@ -11672,6 +11735,7 @@
  				1AB8A1F818400BB800E9AE69 /* WKPageContextMenuClient.h in Headers */,
  				8372DB251A674C8F00C697C5 /* WKPageDiagnosticLoggingClient.h in Headers */,
  				1AB8A1F418400B8F00E9AE69 /* WKPageFindClient.h in Headers */,
@@ -14654,7 +13977,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  				1AB8A1F618400B9D00E9AE69 /* WKPageFindMatchesClient.h in Headers */,
  				1AB8A1F018400B0000E9AE69 /* WKPageFormClient.h in Headers */,
  				BC7B633712A45ABA00D174A4 /* WKPageGroup.h in Headers */,
-@@ -12731,6 +12797,7 @@
+@@ -12731,6 +12795,7 @@
  				CDA93DB122F8BCF400490A69 /* FullscreenTouchSecheuristicParameters.cpp in Sources */,
  				2749F6442146561B008380BF /* InjectedBundleNodeHandle.cpp in Sources */,
  				2749F6452146561E008380BF /* InjectedBundleRangeHandle.cpp in Sources */,
@@ -14662,7 +13985,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  				2D913441212CF9F000128AFD /* JSNPMethod.cpp in Sources */,
  				2D913442212CF9F000128AFD /* JSNPObject.cpp in Sources */,
  				2984F588164BA095004BC0C6 /* LegacyCustomProtocolManagerMessageReceiver.cpp in Sources */,
-@@ -12742,6 +12809,7 @@
+@@ -12742,6 +12807,7 @@
  				2D92A781212B6A7100F493FD /* MessageReceiverMap.cpp in Sources */,
  				2D92A782212B6A7100F493FD /* MessageSender.cpp in Sources */,
  				2D92A77A212B6A6100F493FD /* Module.cpp in Sources */,
@@ -14670,7 +13993,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  				57B826452304F14000B72EB0 /* NearFieldSoftLink.mm in Sources */,
  				2D913443212CF9F000128AFD /* NetscapeBrowserFuncs.cpp in Sources */,
  				2D913444212CF9F000128AFD /* NetscapePlugin.cpp in Sources */,
-@@ -12766,6 +12834,7 @@
+@@ -12766,6 +12832,7 @@
  				1A2D8439127F65D5001EB962 /* NPObjectMessageReceiverMessageReceiver.cpp in Sources */,
  				2D92A792212B6AD400F493FD /* NPObjectProxy.cpp in Sources */,
  				2D92A793212B6AD400F493FD /* NPRemoteObjectMap.cpp in Sources */,
@@ -14678,7 +14001,7 @@ index e94fe6ecc22840e9f11a03ef12c247dfaa82c299..9c43f000a69f35a656c06d7fc30a9ce6
  				2D913447212CF9F000128AFD /* NPRuntimeObjectMap.cpp in Sources */,
  				2D913448212CF9F000128AFD /* NPRuntimeUtilities.cpp in Sources */,
  				2D92A794212B6AD400F493FD /* NPVariantData.cpp in Sources */,
-@@ -13049,6 +13118,7 @@
+@@ -13049,6 +13116,7 @@
  				2D92A78C212B6AB100F493FD /* WebMouseEvent.cpp in Sources */,
  				31BA924D148831260062EDB5 /* WebNotificationManagerMessageReceiver.cpp in Sources */,
  				2DF6FE52212E110900469030 /* WebPage.cpp in Sources */,
@@ -14802,7 +14125,7 @@ index 0587c38861b0b77beaa9dcc911895305e4fa155e..3b89b5dd5fedc50d108a0fb539ea4a41
  
  void WebFrameLoaderClient::didRestoreFromBackForwardCache()
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
-index 564126e14e22882e7896fcff3e6d32f722eec47b..fabaad5041e55ab49e7a3bc4a746406caf5759ad 100644
+index 564126e14e22882e7896fcff3e6d32f722eec47b..430a64b83ad0e99772d8708ef37ff87671f99ec6 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 @@ -37,6 +37,7 @@
@@ -14838,18 +14161,6 @@ index 564126e14e22882e7896fcff3e6d32f722eec47b..fabaad5041e55ab49e7a3bc4a746406c
      settings.setForceCompositingMode(store.getBoolValueForKey(WebPreferencesKey::forceCompositingModeKey()));
      // Fixed position elements need to be composited and create stacking contexts
      // in order to be scrolled by the ScrollingCoordinator.
-@@ -716,6 +728,11 @@ void DrawingAreaCoordinatedGraphics::display()
-         return;
-     }
- 
-+// Playwright begin
-+#if PLATFORM(WPE) || PLATFORM(WIN)
-+    m_webPage.corePage()->inspectorController().willDisplay();
-+#endif
-+// Playwright end
-     send(Messages::DrawingAreaProxy::Update(m_backingStoreStateID, updateInfo));
-     m_isWaitingForDidUpdate = true;
- }
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
 index 8685e23d0d468601c459954775fe6f565b0ce7ac..f9d49292837bf390b81eadeaebe2d4d599bc236c 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
