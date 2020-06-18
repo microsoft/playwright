@@ -334,22 +334,9 @@ class NetworkObserver {
     const requestId = this._requestId(httpChannel);
     const isRedirect = this._redirectMap.has(requestId);
     const interceptionEnabled = this._isInterceptionEnabledForPage(pageNetwork);
-    if (!interceptionEnabled) {
+    if (!interceptionEnabled || isRedirect) {
       new NotificationCallbacks(this, pageNetwork, httpChannel, false);
       this._sendOnRequest(httpChannel, false);
-      new ResponseBodyListener(this, pageNetwork, httpChannel);
-    } else if (isRedirect) {
-      // We pretend that redirect is interceptable in the protocol, although it's actually not
-      // and therefore we do not instantiate the interceptor.
-      // TODO: look into REDIRECT_MODE_MANUAL.
-      const interceptors = pageNetwork._ensureInterceptors();
-      interceptors.set(requestId, {
-        _resume: () => {},
-        _abort: () => {},
-        _fulfill: () => {},
-      });
-      new NotificationCallbacks(this, pageNetwork, httpChannel, false);
-      this._sendOnRequest(httpChannel, true);
       new ResponseBodyListener(this, pageNetwork, httpChannel);
     } else {
       const previousCallbacks = httpChannel.notificationCallbacks;
