@@ -17,13 +17,13 @@ Some actions like `page.click()` support `{force: true}` option that disable non
 
 † [Attached] check is only performed during selector-based actions.
 
-### Visibile
+### Visible
 
 Element is considered visible when it has non-empty bounding box and does not have `visibility:hidden` computed style. Note that elements of zero size or with `display:none` are not considered visible.
 
 ### Stable
 
-Element is considered stable when it has maintanined the same bounding box for at least two consecutive animation frames.
+Element is considered stable when it has maintained the same bounding box for at least two consecutive animation frames.
 
 ### Enabled
 

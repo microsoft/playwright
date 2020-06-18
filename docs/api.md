@@ -593,7 +593,7 @@ The extra HTTP headers will be sent with every request initiated by any page in 
   - `accuracy` <[number]> Non-negative accuracy value. Defaults to `0`.
 - returns: <[Promise]>
 
-Sets the contexts's geolocation. Passing `null` or `undefined` emulates position unavailable.
+Sets the context's geolocation. Passing `null` or `undefined` emulates position unavailable.
 
 ```js
 await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
@@ -4216,7 +4216,7 @@ Coverage gathers information about parts of JavaScript and CSS that were used by
 An example of using JavaScript coverage to produce Istambul report for page load:
 
 ```js
-const { chromium } = require('.');
+const { chromium } = require('playwright');
 const v8toIstanbul = require('v8-to-istanbul');
 
 (async() => {
