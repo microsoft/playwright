@@ -174,7 +174,7 @@ describe('window.open', function() {
     expect(intercepted).toBe(true);
     await context.close();
   });
-  it('should apply addInitScript from browser context', async function({browser, server}) {
+  it('BrowserContext.addInitScript should apply to an in-process popup', async function({browser, server}) {
     const context = await browser.newContext();
     await context.addInitScript(() => window.injected = 123);
     const page = await context.newPage();
@@ -186,6 +186,21 @@ describe('window.open', function() {
     await context.close();
     expect(injected).toBe(123);
   });
+  it('BrowserContext.addInitScript should apply to a cross-process popup', async function({browser, server}) {
+    const context = await browser.newContext();
+    await context.addInitScript(() => window.injected = 123);
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.evaluate(url => window.open(url), server.CROSS_PROCESS_PREFIX + '/title.html'),
+    ]);
+    expect(await popup.evaluate('injected')).toBe(123);
+    await popup.reload();
+    expect(await popup.evaluate('injected')).toBe(123);
+    await context.close();
+  });
+
   it('should expose function from browser context', async function({browser, server}) {
     const context = await browser.newContext();
     await context.exposeFunction('add', (a, b) => a + b);
