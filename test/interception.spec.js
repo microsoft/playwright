@@ -216,21 +216,26 @@ describe('Page.route', function() {
     else
       expect(error.message).toContain('net::ERR_FAILED');
   });
-  it('should work with redirects', async({page, server}) => {
-    const requests = [];
+  it('should not work with redirects', async({page, server}) => {
+    const intercepted = [];
     await page.route('**/*', route => {
       route.continue();
-      requests.push(route.request());
+      intercepted.push(route.request());
     });
     server.setRedirect('/non-existing-page.html', '/non-existing-page-2.html');
     server.setRedirect('/non-existing-page-2.html', '/non-existing-page-3.html');
     server.setRedirect('/non-existing-page-3.html', '/non-existing-page-4.html');
     server.setRedirect('/non-existing-page-4.html', '/empty.html');
+
     const response = await page.goto(server.PREFIX + '/non-existing-page.html');
     expect(response.status()).toBe(200);
     expect(response.url()).toContain('empty.html');
-    expect(requests.length).toBe(5);
-    expect(requests[2].resourceType()).toBe('document');
+
+    expect(intercepted.length).toBe(1);
+    expect(intercepted[0].resourceType()).toBe('document');
+    expect(intercepted[0].isNavigationRequest()).toBe(true);
+    expect(intercepted[0].url()).toContain('/non-existing-page.html');
+
     const chain = [];
     for (let r = response.request(); r; r = r.redirectedFrom()) {
       chain.push(r);
@@ -246,10 +251,10 @@ describe('Page.route', function() {
       expect(chain[i].redirectedTo()).toBe(i ? chain[i - 1] : null);
   });
   it('should work with redirects for subresources', async({page, server}) => {
-    const requests = [];
+    const intercepted = [];
     await page.route('**/*', route => {
       route.continue();
-      requests.push(route.request());
+      intercepted.push(route.request());
     });
     server.setRedirect('/one-style.css', '/two-style.css');
     server.setRedirect('/two-style.css', '/three-style.css');
@@ -259,14 +264,16 @@ describe('Page.route', function() {
     const response = await page.goto(server.PREFIX + '/one-style.html');
     expect(response.status()).toBe(200);
     expect(response.url()).toContain('one-style.html');
-    expect(requests.length).toBe(5);
-    expect(requests[0].resourceType()).toBe('document');
 
-    let r = requests.find(r => r.url().includes('/four-style.css'));
-    for (const url of ['/four-style.css', '/three-style.css', '/two-style.css', '/one-style.css']) {
+    expect(intercepted.length).toBe(2);
+    expect(intercepted[0].resourceType()).toBe('document');
+    expect(intercepted[0].url()).toContain('one-style.html');
+
+    let r = intercepted[1];
+    for (const url of ['/one-style.css', '/two-style.css', '/three-style.css', '/four-style.css']) {
       expect(r.resourceType()).toBe('stylesheet');
       expect(r.url()).toContain(url);
-      r = r.redirectedFrom();
+      r = r.redirectedTo();
     }
     expect(r).toBe(null);
   });
@@ -602,7 +609,6 @@ describe('Interception vs isNavigationRequest', () => {
     server.setRedirect('/rrredirect', '/frames/one-frame.html');
     await page.goto(server.PREFIX + '/rrredirect');
     expect(requests.get('rrredirect').isNavigationRequest()).toBe(true);
-    expect(requests.get('one-frame.html').isNavigationRequest()).toBe(true);
     expect(requests.get('frame.html').isNavigationRequest()).toBe(true);
     expect(requests.get('script.js').isNavigationRequest()).toBe(false);
     expect(requests.get('style.css').isNavigationRequest()).toBe(false);
