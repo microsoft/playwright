@@ -2627,9 +2627,9 @@ ElementHandle instances can be used as an argument in [`page.$eval()`](#pageeval
 - [elementHandle.ownerFrame()](#elementhandleownerframe)
 - [elementHandle.press(key[, options])](#elementhandlepresskey-options)
 - [elementHandle.screenshot([options])](#elementhandlescreenshotoptions)
-- [elementHandle.scrollIntoViewIfNeeded()](#elementhandlescrollintoviewifneeded)
+- [elementHandle.scrollIntoViewIfNeeded([options])](#elementhandlescrollintoviewifneededoptions)
 - [elementHandle.selectOption(values[, options])](#elementhandleselectoptionvalues-options)
-- [elementHandle.selectText()](#elementhandleselecttext)
+- [elementHandle.selectText([options])](#elementhandleselecttextoptions)
 - [elementHandle.setInputFiles(files[, options])](#elementhandlesetinputfilesfiles-options)
 - [elementHandle.textContent()](#elementhandletextcontent)
 - [elementHandle.toString()](#elementhandletostring)
@@ -2860,14 +2860,14 @@ Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported a
 
 This method scrolls element into view if needed before taking a screenshot. If the element is detached from DOM, the method throws an error.
 
-#### elementHandle.scrollIntoViewIfNeeded()
-- returns: <[Promise]> Resolves after the element has been scrolled into view.
+#### elementHandle.scrollIntoViewIfNeeded([options])
+- `options` <[Object]>
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]>
 
-This method tries to scroll element into view, unless it is completely visible as defined by [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s ```ratio```.
+This method waits for [actionability](./actionability.md) checks, then tries to scroll element into view, unless it is completely visible as defined by [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s ```ratio```.
 
 Throws when ```elementHandle``` does not point to an element [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
-
-> **NOTE** If javascript is disabled, element is scrolled into view even when already completely visible.
 
 #### elementHandle.selectOption(values[, options])
 - `values` <null|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
@@ -2896,10 +2896,12 @@ handle.selectOption('red', 'green', 'blue');
 handle.selectOption({ value: 'blue' }, { index: 2 }, 'red');
 ```
 
-#### elementHandle.selectText()
-- returns: <[Promise]> Promise which resolves when the element is successfully selected.
+#### elementHandle.selectText([options])
+- `options` <[Object]>
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]>
 
-This method focuses the element and selects all its text content.
+This method waits for [actionability](./actionability.md) checks, then focuses the element and selects all its text content.
 
 #### elementHandle.setInputFiles(files[, options])
 - `files` <[string]|[Array]<[string]>|[Object]|[Array]<[Object]>>

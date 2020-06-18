@@ -330,33 +330,43 @@ describe('ElementHandle.scrollIntoViewIfNeeded', function() {
     const error = await div.scrollIntoViewIfNeeded().catch(e => e);
     expect(error.message).toContain('Element is not attached to the DOM');
   });
-  it('should throw for display:none element', async({page, server}) => {
+
+  async function testWaiting(page, after) {
+    const div = await page.$('div');
+    let done = false;
+    const promise = div.scrollIntoViewIfNeeded().then(() => done = true);
+    await page.evaluate(() => new Promise(f => setTimeout(f, 1000)));
+    expect(done).toBe(false);
+    await div.evaluate(after);
+    await promise;
+    expect(done).toBe(true);
+  }
+  it('should wait for display:none to become visible', async({page, server}) => {
+    await page.setContent('<div style="display:none">Hello</div>');
+    await testWaiting(page, div => div.style.display = 'block');
+  });
+  it('should wait for display:contents to become visible', async({page, server}) => {
+    await page.setContent('<div style="display:contents">Hello</div>');
+    await testWaiting(page, div => div.style.display = 'block');
+  });
+  it('should wait for visibility:hidden to become visible', async({page, server}) => {
+    await page.setContent('<div style="visibility:hidden">Hello</div>');
+    await testWaiting(page, div => div.style.visibility = 'visible');
+  });
+  it('should wait for zero-sized element to become visible', async({page, server}) => {
+    await page.setContent('<div style="height:0">Hello</div>');
+    await testWaiting(page, div => div.style.height = '100px');
+  });
+  it('should wait for nested display:none to become visible', async({page, server}) => {
+    await page.setContent('<span style="display:none"><div>Hello</div></span>');
+    await testWaiting(page, div => div.parentElement.style.display = 'block');
+  });
+
+  it('should timeout waiting for visible', async({page, server}) => {
     await page.setContent('<div style="display:none">Hello</div>');
     const div = await page.$('div');
-    const error = await div.scrollIntoViewIfNeeded().catch(e => e);
-    expect(error.message).toContain('Element is not visible');
-  });
-  it('should throw for nested display:none element', async({page, server}) => {
-    await page.setContent('<span style="display:none"><div>Hello</div></span>');
-    const div = await page.$('div');
-    const error = await div.scrollIntoViewIfNeeded().catch(e => e);
-    expect(error.message).toContain('Element is not visible');
-  });
-  it('should throw for display:contents element', async({page, server}) => {
-    await page.setContent('<div style="display:contents">Hello</div>');
-    const div = await page.$('div');
-    const error = await div.scrollIntoViewIfNeeded().catch(e => e);
-    expect(error.message).toContain('Element is not visible');
-  });
-  it('should scroll a zero-sized element', async({page, server}) => {
-    await page.setContent('<br>');
-    const br = await page.$('br');
-    await br.scrollIntoViewIfNeeded();
-  });
-  it('should scroll a visibility:hidden element', async({page, server}) => {
-    await page.setContent('<div style="visibility:hidden">Hello</div>');
-    const div = await page.$('div');
-    await div.scrollIntoViewIfNeeded();
+    const error = await div.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(e => e);
+    expect(error.message).toContain('element is not visible');
   });
 });
 
@@ -406,6 +416,25 @@ describe('ElementHandle.selectText', function() {
     const div = await page.$('div.plain');
     await div.selectText();
     expect(await page.evaluate(() => window.getSelection().toString())).toBe('Plain div');
+  });
+  it('should timeout waiting for invisible element', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/textarea.html');
+    const textarea = await page.$('textarea');
+    await textarea.evaluate(e => e.style.display = 'none');
+    const error = await textarea.selectText({ timeout: 3000 }).catch(e => e);
+    expect(error.message).toContain('element is not visible');
+  });
+  it('should wait for visible', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/textarea.html');
+    const textarea = await page.$('textarea');
+    await textarea.evaluate(textarea => textarea.value = 'some value');
+    await textarea.evaluate(e => e.style.display = 'none');
+    let done = false;
+    const promise = textarea.selectText({ timeout: 3000 }).then(() => done = true);
+    await page.evaluate(() => new Promise(f => setTimeout(f, 1000)));
+    expect(done).toBe(false);
+    await textarea.evaluate(e => e.style.display = 'block');
+    await promise;
   });
 });
 

@@ -95,7 +95,10 @@ export class Screenshotter {
     return this._queue.postTask(async () => {
       const { viewportSize, originalViewportSize } = await this._originalViewportSize();
 
-      await handle.scrollIntoViewIfNeeded();
+      // TODO: make screenshot wait visible, migrate to progress.
+      const scrolled = await handle._scrollRectIntoViewIfNeeded();
+      if (scrolled === 'notconnected')
+        throw new Error('Element is not attached to the DOM');
       let boundingBox = await handle.boundingBox();
       assert(boundingBox, 'Node is either not visible or not an HTMLElement');
       assert(boundingBox.width !== 0, 'Node has 0 width.');
@@ -110,7 +113,9 @@ export class Screenshotter {
         });
         await this._page.setViewportSize(overridenViewportSize);
 
-        await handle.scrollIntoViewIfNeeded();
+        const scrolled = await handle._scrollRectIntoViewIfNeeded();
+        if (scrolled === 'notconnected')
+          throw new Error('Element is not attached to the DOM');
         boundingBox = await handle.boundingBox();
         assert(boundingBox, 'Node is either not visible or not an HTMLElement');
         assert(boundingBox.width !== 0, 'Node has 0 width.');

@@ -235,7 +235,7 @@ export default class InjectedScript {
     return this.poll('raf', progress => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         return { error: 'Node is not of type HTMLElement' };
-      const element = node as HTMLElement;
+      const element = node as Element;
       if (!element.isConnected)
         return { value: 'notconnected' };
       if (!this.isVisible(element)) {
@@ -282,48 +282,74 @@ export default class InjectedScript {
           progress.logRepeating('    element is readonly - waiting...');
           return false;
         }
-      } else if (!element.isContentEditable) {
+      } else if (!(element as HTMLElement).isContentEditable) {
         return { error: 'Element is not an <input>, <textarea> or [contenteditable] element.' };
       }
-      const result = this.selectText(node);
-      if (result.error)
-        return { error: result.error };
-      if (result.value === 'notconnected')
-        return { value: 'notconnected' };
+      const result = this._selectText(element);
+      if (result === 'notvisible') {
+        progress.logRepeating('    element is not visible - waiting...');
+        return false;
+      }
       return { value: 'needsinput' };  // Still need to input the value.
     });
   }
 
-  selectText(node: Node): types.InjectedScriptResult<'notconnected' | 'done'> {
-    if (node.nodeType !== Node.ELEMENT_NODE)
-      return { error: 'Node is not of type HTMLElement' };
-    if (!node.isConnected)
-      return { value: 'notconnected' };
-    const element = node as HTMLElement;
-    if (!this.isVisible(element))
-      return { error: 'Element is not visible' };
+  waitForVisibleAndSelectText(node: Node): types.InjectedScriptPoll<types.InjectedScriptResult<'notconnected' | 'done'>> {
+    return this.poll('raf', progress => {
+      if (node.nodeType !== Node.ELEMENT_NODE)
+        return { error: 'Node is not of type HTMLElement' };
+      if (!node.isConnected)
+        return { value: 'notconnected' };
+      const element = node as Element;
+      if (!this.isVisible(element)) {
+        progress.logRepeating('    element is not visible - waiting...');
+        return false;
+      }
+      const result = this._selectText(element);
+      if (result === 'notvisible') {
+        progress.logRepeating('    element is not visible - waiting...');
+        return false;
+      }
+      return { value: result };
+    });
+  }
+
+  private _selectText(element: Element): 'notvisible' | 'done' {
     if (element.nodeName.toLowerCase() === 'input') {
       const input = element as HTMLInputElement;
       input.select();
       input.focus();
-      return { value: 'done' };
+      return 'done';
     }
     if (element.nodeName.toLowerCase() === 'textarea') {
       const textarea = element as HTMLTextAreaElement;
       textarea.selectionStart = 0;
       textarea.selectionEnd = textarea.value.length;
       textarea.focus();
-      return { value: 'done' };
+      return 'done';
     }
     const range = element.ownerDocument.createRange();
     range.selectNodeContents(element);
     const selection = element.ownerDocument.defaultView!.getSelection();
     if (!selection)
-      return { error: 'Element belongs to invisible iframe.' };
+      return 'notvisible';
     selection.removeAllRanges();
     selection.addRange(range);
-    element.focus();
-    return { value: 'done' };
+    (element as HTMLElement | SVGElement).focus();
+    return 'done';
+  }
+
+  waitForNodeVisible(node: Node): types.InjectedScriptPoll<types.InjectedScriptResult<'notconnected' | 'done'>> {
+    return this.poll('raf', progress => {
+      const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
+      if (!node.isConnected || !element)
+        return { value: 'notconnected' };
+      if (!this.isVisible(element)) {
+        progress.logRepeating('    element is not visible - waiting...');
+        return false;
+      }
+      return { value: 'done' };
+    });
   }
 
   focusNode(node: Node): types.InjectedScriptResult<'notconnected' | 'done'> {
