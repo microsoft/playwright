@@ -31,28 +31,34 @@ RUN apt-get install -y libwoff1 \
                        libgles2 \
                        libvpx5
 
-# 3. Install Chromium dependencies
+# 3. Install gstreamer and plugins to support video playback in WebKit.
+RUN apt-get install -y gstreamer1.0-gl \
+                       gstreamer1.0-plugins-base \
+                       gstreamer1.0-plugins-good \
+                       gstreamer1.0-plugins-bad
+
+# 4. Install Chromium dependencies
 
 RUN apt-get install -y libnss3 \
                        libxss1 \
                        libasound2 \
                        fonts-noto-color-emoji
 
-# 4. Install Firefox dependencies
+# 5. Install Firefox dependencies
 
 RUN apt-get install -y libdbus-glib-1-2 \
                        libxt6
 
-# 5. Install ffmpeg to bring in audio and video codecs necessary for playing videos in Firefox.
+# 6. Install ffmpeg to bring in audio and video codecs necessary for playing videos in Firefox.
 
 RUN apt-get install -y ffmpeg
 
-# 6. Add user so we don't need --no-sandbox in Chromium
+# 7. Add user so we don't need --no-sandbox in Chromium
 RUN groupadd -r pwuser && useradd -r -g pwuser -G audio,video pwuser \
     && mkdir -p /home/pwuser/Downloads \
     && chown -R pwuser:pwuser /home/pwuser
 
-# 7. (Optional) Install XVFB if there's a need to run browsers in headful mode
+# 8. (Optional) Install XVFB if there's a need to run browsers in headful mode
 RUN apt-get install -y xvfb
 
 # Run everything after as non-privileged user.
