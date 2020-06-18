@@ -1,10 +1,10 @@
 ### WebKit patches under review
 
-- [207446](https://bugs.webkit.org/show_bug.cgi?id=207446) Web Inspector: request interception
 - [203870](https://bugs.webkit.org/show_bug.cgi?id=203870) Web Inspector: introduce browser inspector
 
 ### WebKit patches landed
 
+- [207446](https://bugs.webkit.org/show_bug.cgi?id=207446) Web Inspector: request interception
 - [212528](https://bugs.webkit.org/show_bug.cgi?id=212528) [Win] Allow compiling with the TOUCH_EVENTS enabled
 - [208964](https://bugs.webkit.org/show_bug.cgi?id=208964) [Curl] sort out MS vs Seconds confusion in Cookies 
 - [207529](https://bugs.webkit.org/show_bug.cgi?id=207529) [WPE][WebDriver] MiniBrowser should react to close session commands
