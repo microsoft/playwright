@@ -27,34 +27,40 @@ const cpAsync = util.promisify(ncp);
 const SCRIPT_NAME = path.basename(__filename);
 const ROOT_PATH = path.join(__dirname, '..');
 
-const PACKAGE_FILES = ['lib', 'types', 'NOTICE', 'LICENSE', '.npmignore'];
+const PLAYWRIGHT_CORE_FILES = ['lib', 'types', 'NOTICE', 'LICENSE', '.npmignore'];
 
 const PACKAGES = {
   'playwright': {
     description: 'A high-level API to automate web browsers',
     whitelistedBrowsers: ['chromium', 'firefox', 'webkit'],
     // We copy README.md additionally for Playwright so that it looks nice on NPM.
-    files: [...PACKAGE_FILES, 'README.md'],
+    files: [...PLAYWRIGHT_CORE_FILES, 'README.md'],
   },
   'playwright-core': {
     description: 'A high-level API to automate web browsers',
     whitelistedBrowsers: [],
-    files: PACKAGE_FILES,
+    files: PLAYWRIGHT_CORE_FILES,
   },
   'playwright-webkit': {
     description: 'A high-level API to automate WebKit',
     whitelistedBrowsers: ['webkit'],
-    files: PACKAGE_FILES,
+    files: PLAYWRIGHT_CORE_FILES,
   },
   'playwright-firefox': {
     description: 'A high-level API to automate Firefox',
     whitelistedBrowsers: ['firefox'],
-    files: PACKAGE_FILES,
+    files: PLAYWRIGHT_CORE_FILES,
   },
   'playwright-chromium': {
     description: 'A high-level API to automate Chromium',
     whitelistedBrowsers: ['chromium'],
-    files: PACKAGE_FILES,
+    files: PLAYWRIGHT_CORE_FILES,
+  },
+  'playwright-electron': {
+    version: '0.4.0', // Manually manage playwright-electron version.
+    description: 'A high-level API to automate Electron',
+    whitelistedBrowsers: [],
+    files: PLAYWRIGHT_CORE_FILES,
   },
 };
 
@@ -108,21 +114,21 @@ if (!package) {
     await copyToPackage(file);
 
   // 4. Generate package.json
-  const packageJSON = require(path.join(ROOT_PATH, 'package.json'));
+  const pwInternalJSON = require(path.join(ROOT_PATH, 'package.json'));
   await writeToPackage('package.json', JSON.stringify({
     name: packageName,
-    version: packageJSON.version,
+    version: package.version || pwInternalJSON.version,
     description: package.description,
-    repository: packageJSON.repository,
-    engines: packageJSON.engines,
-    homepage: packageJSON.homepage,
+    repository: pwInternalJSON.repository,
+    engines: pwInternalJSON.engines,
+    homepage: pwInternalJSON.homepage,
     main: 'index.js',
     scripts: {
       install: 'node install.js',
     },
-    author: packageJSON.author,
-    license: packageJSON.license,
-    dependencies: packageJSON.dependencies
+    author: pwInternalJSON.author,
+    license: pwInternalJSON.license,
+    dependencies: pwInternalJSON.dependencies
   }, null, 2));
 
   // 5. Generate browsers.json
