@@ -88,6 +88,14 @@ $ set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
 $ npm i -D playwright
 ```
 
+It is also possible to use a per-browser download hosts using `PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST`, `PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST` and `PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST` env variables that
+take precedence over `PLAYWRIGHT_DOWNLOAD_HOST`.
+
+```sh
+# Linux/macOS
+$ PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=192.168.1.1 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i -D playwright
+```
+
 <br>
 
 ## Skip browser downloads
