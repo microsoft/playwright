@@ -32,34 +32,34 @@ const PLAYWRIGHT_CORE_FILES = ['lib', 'types', 'NOTICE', 'LICENSE', '.npmignore'
 const PACKAGES = {
   'playwright': {
     description: 'A high-level API to automate web browsers',
-    whitelistedBrowsers: ['chromium', 'firefox', 'webkit'],
+    browsers: ['chromium', 'firefox', 'webkit'],
     // We copy README.md additionally for Playwright so that it looks nice on NPM.
     files: [...PLAYWRIGHT_CORE_FILES, 'README.md'],
   },
   'playwright-core': {
     description: 'A high-level API to automate web browsers',
-    whitelistedBrowsers: [],
+    browsers: [],
     files: PLAYWRIGHT_CORE_FILES,
   },
   'playwright-webkit': {
     description: 'A high-level API to automate WebKit',
-    whitelistedBrowsers: ['webkit'],
+    browsers: ['webkit'],
     files: PLAYWRIGHT_CORE_FILES,
   },
   'playwright-firefox': {
     description: 'A high-level API to automate Firefox',
-    whitelistedBrowsers: ['firefox'],
+    browsers: ['firefox'],
     files: PLAYWRIGHT_CORE_FILES,
   },
   'playwright-chromium': {
     description: 'A high-level API to automate Chromium',
-    whitelistedBrowsers: ['chromium'],
+    browsers: ['chromium'],
     files: PLAYWRIGHT_CORE_FILES,
   },
   'playwright-electron': {
     version: '0.4.0', // Manually manage playwright-electron version.
     description: 'A high-level API to automate Electron',
-    whitelistedBrowsers: [],
+    browsers: [],
     files: PLAYWRIGHT_CORE_FILES,
   },
 };
@@ -133,7 +133,7 @@ if (!package) {
 
   // 5. Generate browsers.json
   const browsersJSON = require(path.join(ROOT_PATH, 'browsers.json'));
-  browsersJSON.browsers = browsersJSON.browsers.filter(browser => package.whitelistedBrowsers.includes(browser.name));
+  browsersJSON.browsers = browsersJSON.browsers.filter(browser => package.browsers.includes(browser.name));
   await writeToPackage('browsers.json', JSON.stringify(browsersJSON, null, 2));
 
   // 6. Run npm pack
