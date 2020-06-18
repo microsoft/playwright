@@ -412,7 +412,7 @@ function generateDevicesTypes() {
     Object.keys(devices)
       .map(name => `  ${JSON.stringify(name)}: DeviceDescriptor;`)
       .join('\n');
-  return `export type Devices = {
+  return `type Devices = {
 ${namedDevices}
   [key: string]: DeviceDescriptor;
 }`;
