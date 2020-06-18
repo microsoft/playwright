@@ -40,6 +40,13 @@ const DEFAULT_DOWNLOAD_HOSTS: { [key: string]: string } = {
   webkit: 'https://playwright.azureedge.net',
 };
 
+const ENV_DOWNLOAD_HOSTS: { [key: string]: string } = {
+  default: 'PLAYWRIGHT_DOWNLOAD_HOST',
+  chromium: 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST',
+  firefox: 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
+  webkit: 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST',
+};
+
 function getDownloadUrl(browserName: BrowserName, platform: BrowserPlatform): string | undefined {
   if (browserName === 'chromium') {
     return new Map<BrowserPlatform, string>([
@@ -76,7 +83,7 @@ function getDownloadUrl(browserName: BrowserName, platform: BrowserPlatform): st
 }
 
 function revisionURL(browser: BrowserDescriptor, platform = browserPaths.hostPlatform): string {
-  const serverHost = getFromENV('PLAYWRIGHT_DOWNLOAD_HOST') || DEFAULT_DOWNLOAD_HOSTS[browser.name];
+  const serverHost = getFromENV(ENV_DOWNLOAD_HOSTS[browser.name]) || getFromENV(ENV_DOWNLOAD_HOSTS.default) || DEFAULT_DOWNLOAD_HOSTS[browser.name];
   const urlTemplate = getDownloadUrl(browser.name, platform);
   assert(urlTemplate, `ERROR: Playwright does not support ${browser.name} on ${platform}`);
   return util.format(urlTemplate, serverHost, browser.revision);
