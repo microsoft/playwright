@@ -20,12 +20,12 @@ function runLinux() {
   # if script is run as-is
   DEPENDENCIES_FOLDER="DependenciesGTK";
   MINIBROWSER_FOLDER="minibrowser-gtk";
-  BUILD_FOLDER="WebKitBuild/GTK";
+  BUILD_FOLDER="WebKitBuild/jhGTK";
   GIO_DIR="";
   if [[ "$*" == *--headless* ]]; then
     DEPENDENCIES_FOLDER="DependenciesWPE";
     MINIBROWSER_FOLDER="minibrowser-wpe";
-    BUILD_FOLDER="WebKitBuild/WPE";
+    BUILD_FOLDER="WebKitBuild/jhWPE";
   fi
   if [[ -d $SCRIPT_PATH/$MINIBROWSER_FOLDER ]]; then
     LD_PATH="$SCRIPT_PATH/$MINIBROWSER_FOLDER"

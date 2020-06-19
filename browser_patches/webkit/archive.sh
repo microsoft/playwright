@@ -57,51 +57,51 @@ createZipForLinux() {
 
   if [[ "$LINUX_FLAVOR" == "--wpe" ]]; then
     # copy all relevant binaries
-    cp -t $tmpdir ./WebKitBuild/WPE/Release/bin/MiniBrowser ./WebKitBuild/WPE/Release/bin/WPE*Process
+    cp -t $tmpdir ./WebKitBuild/jhWPE/Release/bin/MiniBrowser ./WebKitBuild/jhWPE/Release/bin/WPE*Process
     # copy all relevant shared objects
     # - exclude gstreamer plugins
-    LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/MiniBrowser \
-        | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' \
+    LD_LIBRARY_PATH="$PWD/WebKitBuild/jhWPE/DependenciesWPE/Root/lib" ldd WebKitBuild/jhWPE/Release/bin/MiniBrowser \
+        | grep -o '[^ ]*WebKitBuild/jhWPE/[^ ]*' \
         | grep -v '/libgst.*so' \
         | xargs cp -t $tmpdir
-    LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/WPENetworkProcess \
-        | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' \
+    LD_LIBRARY_PATH="$PWD/WebKitBuild/jhWPE/DependenciesWPE/Root/lib" ldd WebKitBuild/jhWPE/Release/bin/WPENetworkProcess \
+        | grep -o '[^ ]*WebKitBuild/jhWPE/[^ ]*' \
         | grep -v '/libgst.*so' \
         | xargs cp -t $tmpdir
-    LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/WPEWebProcess \
-        | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' \
+    LD_LIBRARY_PATH="$PWD/WebKitBuild/jhWPE/DependenciesWPE/Root/lib" ldd WebKitBuild/jhWPE/Release/bin/WPEWebProcess \
+        | grep -o '[^ ]*WebKitBuild/jhWPE/[^ ]*' \
         | grep -v '/libgst.*so' \
         | xargs cp -t $tmpdir
     # Copy libvpx.so.5 as Ubuntu 20.04 comes with libvpx.so.6
-    ldd WebKitBuild/WPE/Release/bin/MiniBrowser | grep -o '[^ ]*\/libvpx.so.5[^ ]*' | xargs cp -t $tmpdir
+    ldd WebKitBuild/jhWPE/Release/bin/MiniBrowser | grep -o '[^ ]*\/libvpx.so.5[^ ]*' | xargs cp -t $tmpdir
     # Copy some wayland libraries required for Web Process t
-    cp -d -t $tmpdir WebKitBuild/WPE/DependenciesWPE/Root/lib/libva\-*
+    cp -d -t $tmpdir WebKitBuild/jhWPE/DependenciesWPE/Root/lib/libva\-*
     # Injected bundle is loaded dynamicly via dlopen => not bt listed by ldd.
-    cp -t $tmpdir WebKitBuild/WPE/Release/lib/libWPEInjectedBundle.so
+    cp -t $tmpdir WebKitBuild/jhWPE/Release/lib/libWPEInjectedBundle.so
     mkdir -p $tmpdir/gio/modules
-    cp -t $tmpdir/gio/modules $PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib/gio/modules/*
+    cp -t $tmpdir/gio/modules $PWD/WebKitBuild/jhWPE/DependenciesWPE/Root/lib/gio/modules/*
 
     cd $tmpdir
     ln -s libWPEBackend-fdo-1.0.so.1 libWPEBackend-fdo-1.0.so
     cd -
   elif [[ "$LINUX_FLAVOR" == "--gtk" ]]; then
     # copy all relevant binaries
-    cp -t $tmpdir ./WebKitBuild/GTK/Release/bin/MiniBrowser ./WebKitBuild/GTK/Release/bin/WebKit*Process
+    cp -t $tmpdir ./WebKitBuild/jhGTK/Release/bin/MiniBrowser ./WebKitBuild/jhGTK/Release/bin/WebKit*Process
     # copy all relevant shared objects
     # - exclude gstreamer plugins
     # - exclude libdrm
-    LD_LIBRARY_PATH="$PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib" ldd WebKitBuild/GTK/Release/bin/MiniBrowser \
-        | grep -o '[^ ]*WebKitBuild/GTK/[^ ]*' \
+    LD_LIBRARY_PATH="$PWD/WebKitBuild/jhGTK/DependenciesGTK/Root/lib" ldd WebKitBuild/jhGTK/Release/bin/MiniBrowser \
+        | grep -o '[^ ]*WebKitBuild/jhGTK/[^ ]*' \
         | grep -v '/libgst.*so' \
         | grep -v '/libdrm.so' \
         | xargs cp -t $tmpdir
 
     # Injected bundle is loaded dynamicly via dlopen => not bt listed by ldd.
-    cp -t $tmpdir WebKitBuild/GTK/Release/lib/libwebkit2gtkinjectedbundle.so
+    cp -t $tmpdir WebKitBuild/jhGTK/Release/lib/libwebkit2gtkinjectedbundle.so
     # Copy libvpx.so.5 as Ubuntu 20.04 comes with libvpx.so.6
-    ldd WebKitBuild/GTK/Release/bin/MiniBrowser | grep -o '[^ ]*\/libvpx.so.5[^ ]*' | xargs cp -t $tmpdir
+    ldd WebKitBuild/jhGTK/Release/bin/MiniBrowser | grep -o '[^ ]*\/libvpx.so.5[^ ]*' | xargs cp -t $tmpdir
     mkdir -p $tmpdir/gio/modules
-    cp -t $tmpdir/gio/modules $PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib/gio/modules/*
+    cp -t $tmpdir/gio/modules $PWD/WebKitBuild/jhGTK/DependenciesGTK/Root/lib/gio/modules/*
 
     # we failed to nicely build libgdk_pixbuf - expect it in the env
     rm $tmpdir/libgdk_pixbuf*

@@ -6,17 +6,17 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 
 build_gtk() {
-  if ! [[ -d ./WebKitBuild/GTK/DependenciesGTK ]]; then
-    yes | WEBKIT_JHBUILD=1 WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK DEBIAN_FRONTEND=noninteractive ./Tools/Scripts/update-webkitgtk-libs
+  if ! [[ -d ./WebKitBuild/jhGTK/DependenciesGTK ]]; then
+    yes | WEBKIT_JHBUILD=1 WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/jhGTK DEBIAN_FRONTEND=noninteractive ./Tools/Scripts/update-webkitgtk-libs
   fi
-  WEBKIT_JHBUILD=1 WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK ./Tools/Scripts/build-webkit --gtk --release --touch-events --orientation-events MiniBrowser
+  WEBKIT_JHBUILD=1 WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/jhGTK ./Tools/Scripts/build-webkit --gtk --release --touch-events --orientation-events MiniBrowser
 }
 
 build_wpe() {
-  if ! [[ -d ./WebKitBuild/WPE/DependenciesWPE ]]; then
-    yes | WEBKIT_JHBUILD=1 WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE DEBIAN_FRONTEND=noninteractive ./Tools/Scripts/update-webkitwpe-libs
+  if ! [[ -d ./WebKitBuild/jhWPE/DependenciesWPE ]]; then
+    yes | WEBKIT_JHBUILD=1 WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/jhWPE DEBIAN_FRONTEND=noninteractive ./Tools/Scripts/update-webkitwpe-libs
   fi
-  WEBKIT_JHBUILD=1 WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE ./Tools/Scripts/build-webkit --wpe --release --touch-events --orientation-events MiniBrowser
+  WEBKIT_JHBUILD=1 WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/jhWPE ./Tools/Scripts/build-webkit --wpe --release --touch-events --orientation-events MiniBrowser
 }
 
 if [[ "$(uname)" == "Darwin" ]]; then
