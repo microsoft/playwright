@@ -126,6 +126,10 @@ export class JSHandle<T = any> {
     await this._context._delegate.releaseHandle(this);
   }
 
+  isNull(): boolean {
+    return !this._objectId && this._value === null;
+  }
+
   toString(): string {
     return this._preview;
   }

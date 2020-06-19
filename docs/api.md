@@ -2643,6 +2643,7 @@ ElementHandle instances can be used as an argument in [`page.$eval()`](#pageeval
 - [jsHandle.evaluateHandle(pageFunction[, arg])](#jshandleevaluatehandlepagefunction-arg)
 - [jsHandle.getProperties()](#jshandlegetproperties)
 - [jsHandle.getProperty(propertyName)](#jshandlegetpropertypropertyname)
+- [jsHandle.isNull()](#jshandleisnull)
 - [jsHandle.jsonValue()](#jshandlejsonvalue)
 <!-- GEN:stop -->
 
@@ -2974,6 +2975,7 @@ JSHandle instances can be used as an argument in [`page.$eval()`](#pageevalselec
 - [jsHandle.evaluateHandle(pageFunction[, arg])](#jshandleevaluatehandlepagefunction-arg)
 - [jsHandle.getProperties()](#jshandlegetproperties)
 - [jsHandle.getProperty(propertyName)](#jshandlegetpropertypropertyname)
+- [jsHandle.isNull()](#jshandleisnull)
 - [jsHandle.jsonValue()](#jshandlejsonvalue)
 <!-- GEN:stop -->
 
@@ -3033,6 +3035,11 @@ await handle.dispose();
 - returns: <[Promise]<[JSHandle]>>
 
 Fetches a single property from the referenced object.
+
+#### jsHandle.isNull()
+- returns: <boolean>
+
+A quick way of figuring out if jsHandle points to `null`.
 
 #### jsHandle.jsonValue()
 - returns: <[Promise]<[Object]>>

@@ -420,6 +420,12 @@ describe('Page.evaluate', function() {
     const resultHandle = await page.evaluateHandle(() => ({ toJSON: () => 'string', data: 'data' }));
     expect(await resultHandle.jsonValue()).toEqual({ data: 'data', toJSON: {} });
   });
+  it('should support isNull()', async({page}) => {
+    const result = await page.evaluateHandle(() => ({ date: new Date('2020-05-27T01:31:38.506Z') }));
+    expect(result.isNull()).toBeFalsy();
+    const result2 = await page.evaluateHandle(() => null);
+    expect(result2.isNull()).toBeTruthy();
+  });
 });
 
 describe('Page.addInitScript', function() {

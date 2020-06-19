@@ -114,6 +114,44 @@ describe('Electron', function() {
     const clipboardContentRead = await application.evaluate(async ({clipboard}) => clipboard.readText());
     await expect(clipboardContentRead).toEqual(clipboardContentToWrite);
   });
+  it('should emit console events', async ({ application }) => {
+    const messages = [];
+    application.on('console', message => messages.push(message));
+    await application.evaluate(async () => {
+      console.log('One');
+      console.log('Two');
+    });
+    expect(messages.length).toBe(2);
+    expect(messages.map(message => message.text())).toEqual(['One', 'Two']);
+  });
+  it('should click menus', async ({ application }) => {
+    await application.evaluate(async ({Menu}) => {
+      const menu = Menu.buildFromTemplate([{
+        label: 'Menu',
+        submenu: [
+          { label: 'One', click: () => console.log('Clicked One') },
+          { label: 'Two', click: () => console.log('Clicked Two') },
+          { label: 'Three', click: () => console.log('Clicked Three') },
+        ]
+      }]);
+      Menu.setApplicationMenu(menu);
+    });
+
+    // Obtain a handle on the menu item.
+    const menuHandle = await application.findMenuItem({ label: 'Two' });
+
+    // Check its label value.
+    expect(await menuHandle.label()).toBe('Two');
+
+    // Click menu item and await for console message to be generated.
+    const [message] = await Promise.all([
+      application.waitForEvent('console'),
+      menuHandle.click()
+    ]);
+
+    // Assert message text.
+    expect(message.text()).toEqual('Clicked Two');
+  });
 });
 
 describe('Electron per window', function() {

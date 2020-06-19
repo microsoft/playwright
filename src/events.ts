@@ -29,6 +29,10 @@ export const Events = {
     Close: 'close',
   },
 
+  ElectronApplication: {
+    Console: 'console',
+  },
+
   Page: {
     Close: 'close',
     Crash: 'crash',

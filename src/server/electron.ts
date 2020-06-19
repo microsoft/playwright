@@ -28,10 +28,13 @@ import * as types from '../types';
 import { BrowserServer } from './browserServer';
 import { launchProcess, waitForLine } from './processLauncher';
 import { BrowserContext } from '../browserContext';
-import type {BrowserWindow} from 'electron';
+import type { BrowserWindow, MenuItem } from 'electron';
 import { runAbortableTask, ProgressController } from '../progress';
 import { EventEmitter } from 'events';
 import { helper } from '../helper';
+import { Protocol } from '../chromium/protocol';
+import { toConsoleMessageLocation } from '../chromium/crProtocolHelper';
+import { ConsoleMessage } from '../console';
 
 type ElectronLaunchOptions = {
   args?: string[],
@@ -54,6 +57,32 @@ export const ElectronEvents = {
 interface ElectronPage extends Page {
   browserWindow: js.JSHandle<BrowserWindow>;
   _browserWindowId: number;
+}
+
+export class ElectronMenuItem {
+  private _handle: js.JSHandle<MenuItem>;
+
+  constructor(handle: js.JSHandle<MenuItem>) {
+    this._handle = handle;
+  }
+
+  async click() {
+    await this._handle.evaluate(menu => menu.click());
+  }
+
+  async label() {
+    return this._handle.evaluate(menu => menu.label);
+  }
+
+  async evaluate<R, Arg>(pageFunction: types.FuncOn<MenuItem, Arg, R>, arg: Arg): Promise<R>;
+  async evaluate<R>(pageFunction: types.FuncOn<MenuItem, void, R>, arg?: any): Promise<R>;
+  async evaluate<R, Arg>(pageFunction: types.FuncOn<MenuItem, Arg, R>, arg: Arg): Promise<R> {
+    return this._handle.evaluate(pageFunction, arg);
+  }
+
+  dispose() {
+    this._handle.dispose();
+  }
 }
 
 export class ElectronApplication extends EventEmitter {
@@ -141,6 +170,7 @@ export class ElectronApplication extends EventEmitter {
     this._nodeSession.once('Runtime.executionContextCreated', event => {
       this._nodeExecutionContext = new js.ExecutionContext(new CRExecutionContext(this._nodeSession, event.context));
     });
+    this._nodeSession.on('Runtime.consoleAPICalled', event => this._onConsoleAPI(event));
     await this._nodeSession.send('Runtime.enable', {}).catch(e => {});
     this._nodeElectronHandle = await js.evaluate(this._nodeExecutionContext!, false /* returnByValue */, () => {
       // Resolving the race between the debugger and the boot-time script.
@@ -160,6 +190,33 @@ export class ElectronApplication extends EventEmitter {
   async evaluateHandle<R>(pageFunction: types.FuncOn<any, void, R>, arg?: any): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: types.FuncOn<any, Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
     return this._nodeElectronHandle!.evaluateHandle(pageFunction, arg);
+  }
+
+  async _onConsoleAPI(event: Protocol.Runtime.consoleAPICalledPayload) {
+    const args = event.args.map(arg => this._nodeExecutionContext!.createHandle(arg));
+    const message = new ConsoleMessage(event.type, undefined, args, toConsoleMessageLocation(event.stackTrace));
+    if (!this.listenerCount(Events.ElectronApplication.Console))
+      args.forEach(arg => arg.dispose());
+    else
+      this.emit(Events.ElectronApplication.Console, message);
+  }
+
+  async findMenuItem(options: { id?: string, label?: string }): Promise<ElectronMenuItem | null> {
+    const handle = await this.evaluateHandle<MenuItem | null, { id?: string, label?: string }>(({ Menu }, options) => {
+      const findItem = (menuItems: MenuItem[]): MenuItem | null => {
+        for (const item of menuItems) {
+          if (options.id && item.id === options.id)
+            return item;
+          if (options.label && item.label === options.label)
+            return item;
+          if (item.submenu)
+            return findItem(item.submenu.items);
+        }
+        return null;
+      };
+      return findItem(Menu.getApplicationMenu().items);
+    }, options);
+    return !handle.isNull() ? new ElectronMenuItem(handle as js.JSHandle<MenuItem>) : null;
   }
 }
 
