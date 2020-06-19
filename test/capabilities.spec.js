@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, WIN} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX} = require('./utils').testOptions(browserType);
 
 describe('Capabilities', function() {
   it.fail(WEBKIT && WIN)('Web Assembly should work', async function({page, server}) {
@@ -47,7 +47,7 @@ describe('Capabilities', function() {
     await page.goto(server.EMPTY_PAGE);
     expect(await page.evaluate(() => window.testStatus)).toBe('SUCCESS');
   });
-  it.fail(WEBKIT)('should play video', async({page, server}) => {
+  it.fail(WEBKIT && !LINUX)('should play video', async({page, server}) => {
     await page.goto(server.PREFIX + '/video.html');
     await page.$eval('video', v => v.play());
     await page.$eval('video', v => v.pause());
