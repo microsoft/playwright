@@ -191,6 +191,13 @@ export class CRNetworkManager {
         this._client._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId });
       return;
     }
+    let allowInterception = this._userRequestInterceptionEnabled;
+    if (redirectedFrom) {
+      allowInterception = false;
+      // We do not support intercepting redirects.
+      if (requestPausedEvent)
+        this._client._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId });
+    }
     const isNavigationRequest = requestWillBeSentEvent.requestId === requestWillBeSentEvent.loaderId && requestWillBeSentEvent.type === 'Document';
     const documentId = isNavigationRequest ? requestWillBeSentEvent.loaderId : undefined;
     if (isNavigationRequest)
@@ -199,7 +206,7 @@ export class CRNetworkManager {
       client: this._client,
       frame,
       documentId,
-      allowInterception: this._userRequestInterceptionEnabled,
+      allowInterception,
       requestWillBeSentEvent,
       requestPausedEvent,
       redirectedFrom
