@@ -114,13 +114,13 @@ class NetworkHandler {
       this._httpActivity.delete(activity._id);
   }
 
-  async _onRequest(httpChannel, eventDetails) {
+  async _onRequest(eventDetails, channelId) {
     let pendingRequestCallback;
     let pendingRequestPromise = new Promise(x => pendingRequestCallback = x);
     this._pendingRequstWillBeSentEvents.add(pendingRequestPromise);
     let details = null;
     try {
-      details = await this._contentPage.send('requestDetails', {channelId: httpChannel.channelId});
+      details = await this._contentPage.send('requestDetails', {channelId});
     } catch (e) {
       pendingRequestCallback();
       this._pendingRequstWillBeSentEvents.delete(pendingRequestPromise);
@@ -139,19 +139,19 @@ class NetworkHandler {
     this._pendingRequstWillBeSentEvents.delete(pendingRequestPromise);
   }
 
-  async _onResponse(httpChannel, eventDetails) {
+  async _onResponse(eventDetails) {
     const activity = this._ensureHTTPActivity(eventDetails.requestId);
     activity.response = eventDetails;
     this._reportHTTPAcitivityEvents(activity);
   }
 
-  async _onRequestFinished(httpChannel, eventDetails) {
+  async _onRequestFinished(eventDetails) {
     const activity = this._ensureHTTPActivity(eventDetails.requestId);
     activity.complete = eventDetails;
     this._reportHTTPAcitivityEvents(activity);
   }
 
-  async _onRequestFailed(httpChannel, eventDetails) {
+  async _onRequestFailed(eventDetails) {
     const activity = this._ensureHTTPActivity(eventDetails.requestId);
     activity.failed = eventDetails;
     this._reportHTTPAcitivityEvents(activity);
