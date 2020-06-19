@@ -2614,7 +2614,7 @@ index ddbb5d5347f3beabe3cfab201d6838c896d21e39..25f1798cad5a4ef135a27d3bd5146798
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index 1ccc5f5de274bd263c8bec5c72fe417ea99534fd..bbb831ec7a714a476baaa5069117c873a7033693 100644
+index 1ccc5f5de274bd263c8bec5c72fe417ea99534fd..5dac8d209b4d2f19eee3471ba4a3cd530a691b65 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -44,6 +44,7 @@
@@ -2660,7 +2660,16 @@ index 1ccc5f5de274bd263c8bec5c72fe417ea99534fd..bbb831ec7a714a476baaa5069117c873
  }
  
  bool InspectorNetworkAgent::shouldInterceptRequest(const ResourceRequest& request)
-@@ -1335,6 +1342,11 @@ void InspectorNetworkAgent::interceptRequestWithError(ErrorString& errorString,
+@@ -1291,6 +1298,8 @@ void InspectorNetworkAgent::interceptRequestWithResponse(ErrorString& errorStrin
+     response.setHTTPHeaderFields(WTFMove(explicitHeaders));
+     response.setHTTPHeaderField(HTTPHeaderName::ContentType, response.mimeType());
+     loader->didReceiveResponse(response, [loader, buffer = data.releaseNonNull()]() mutable {
++        if (loader->reachedTerminalState())
++            return;
+         if (buffer->size())
+             loader->didReceiveBuffer(WTFMove(buffer), buffer->size(), DataPayloadWholeResource);
+         loader->didFinishLoading(NetworkLoadMetrics());
+@@ -1335,6 +1344,11 @@ void InspectorNetworkAgent::interceptRequestWithError(ErrorString& errorString,
      loader.didFail(error);
  }
  
@@ -2672,7 +2681,7 @@ index 1ccc5f5de274bd263c8bec5c72fe417ea99534fd..bbb831ec7a714a476baaa5069117c873
  bool InspectorNetworkAgent::shouldTreatAsText(const String& mimeType)
  {
      return startsWithLettersIgnoringASCIICase(mimeType, "text/")
-@@ -1376,6 +1388,12 @@ Optional<String> InspectorNetworkAgent::textContentForCachedResource(CachedResou
+@@ -1376,6 +1390,12 @@ Optional<String> InspectorNetworkAgent::textContentForCachedResource(CachedResou
      return WTF::nullopt;
  }
  
