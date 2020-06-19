@@ -425,6 +425,18 @@ export class Page extends EventEmitter {
     route.continue();
   }
 
+  _isRouted(requestURL: string): boolean {
+    for (const { url } of this._routes) {
+      if (helper.urlMatches(requestURL, url))
+        return true;
+    }
+    for (const { url } of this._browserContext._routes) {
+      if (helper.urlMatches(requestURL, url))
+        return true;
+    }
+    return false;
+  }
+
   async screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {
     return this._screenshotter.screenshotPage(options);
   }
