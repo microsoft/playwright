@@ -397,6 +397,95 @@ describe('Page.route', function() {
     }, server.PREFIX + '/redirect_this');
     expect(text).toBe('');
   });
+
+  it('should support cors with GET', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.route('**/cars*', async (route, request) => {
+      const headers = request.url().endsWith('allow') ? { 'access-control-allow-origin': '*' } : {};
+      await route.fulfill({
+        contentType: 'application/json',
+        headers,
+        status: 200,
+        body: JSON.stringify(['electric', 'gas']),
+      });
+    });
+    {
+      // Should succeed
+      const resp = await page.evaluate(async () => {
+        const response = await fetch('https://example.com/cars?allow', { mode: 'cors' });
+        return response.json();
+      });
+      expect(resp).toEqual(['electric', 'gas']);
+    }
+    {
+      // Should be rejected
+      const error = await page.evaluate(async () => {
+        const response = await fetch('https://example.com/cars?reject', { mode: 'cors' });
+        return response.json();
+      }).catch(e => e);
+      expect(error.message).toContain('failed');
+    }
+  });
+
+  it('should support cors with POST', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.route('**/cars', async (route) => {
+      await route.fulfill({
+        contentType: 'application/json',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        status: 200,
+        body: JSON.stringify(['electric', 'gas']),
+      });
+    });
+    const resp = await page.evaluate(async () => {
+      const response = await fetch('https://example.com/cars', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        mode: 'cors',
+        body: JSON.stringify({ 'number': 1 }) 
+      });
+      return response.json();
+    });
+    expect(resp).toEqual(['electric', 'gas']);
+  });
+
+  it('should support cors for different methods', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.route('**/cars', async (route, request) => {
+      await route.fulfill({
+        contentType: 'application/json',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        status: 200,
+        body: JSON.stringify([request.method(), 'electric', 'gas']),
+      });
+    });
+    // First POST
+    {
+      const resp = await page.evaluate(async () => {
+        const response = await fetch('https://example.com/cars', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'cors',
+          body: JSON.stringify({ 'number': 1 }) 
+        });
+        return response.json();
+      });
+      expect(resp).toEqual(['POST', 'electric', 'gas']);        
+    }
+    // Then DELETE
+    {
+      const resp = await page.evaluate(async () => {
+        const response = await fetch('https://example.com/cars', {
+          method: 'DELETE',
+          headers: {},
+          mode: 'cors',
+          body: '' 
+        });
+        return response.json();
+      });
+      expect(resp).toEqual(['DELETE', 'electric', 'gas']);        
+    }
+  });
 });
 
 describe('Request.continue', function() {
