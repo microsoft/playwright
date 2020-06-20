@@ -4534,6 +4534,20 @@ index 892d8de6d345d91fda80cfa5334c4aa68b757da3..a22497d801a349487be10b15139e9c76
  #endif
  
  #if PLATFORM(IOS_FAMILY)
+diff --git a/Source/WebCore/platform/graphics/FontCascade.h b/Source/WebCore/platform/graphics/FontCascade.h
+index 7d7c5d1f1e06734249f2efce0ecec764e248719a..7cf0a5e8822f9846ee638985b6256c8ec0032d25 100644
+--- a/Source/WebCore/platform/graphics/FontCascade.h
++++ b/Source/WebCore/platform/graphics/FontCascade.h
+@@ -280,7 +280,8 @@ private:
+             return true;
+         if (textRenderingMode == TextRenderingMode::OptimizeSpeed)
+             return false;
+-#if PLATFORM(COCOA) || USE(FREETYPE)
++        // WIN: quick fix for https://bugs.webkit.org/show_bug.cgi?id=201213
++#if PLATFORM(COCOA) || USE(FREETYPE) || PLATFORM(WIN)
+         return true;
+ #else
+         return false;
 diff --git a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp b/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
 index d79728555b7db9b59cb615c55a7a7a6851cb57c8..61d3cc4b488e35ef9e1afa1ce3ac5f5d60ebe9a7 100644
 --- a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
@@ -4655,6 +4669,53 @@ index 445c7d78a4a1a8cdb0e08a859d3912e5cc62b6c6..93a8006dd5237018b573b976d0bbe28f
  
  #if PLATFORM(IOS_FAMILY)
  #include "GraphicsContextGLOpenGLESIOS.h"
+diff --git a/Source/WebCore/platform/graphics/win/ComplexTextControllerUniscribe.cpp b/Source/WebCore/platform/graphics/win/ComplexTextControllerUniscribe.cpp
+index 8121b92a98932789e7ea18ef616462f46e569134..d04569f28c2d35cd756f01d1e637c9e59ca3f5fe 100644
+--- a/Source/WebCore/platform/graphics/win/ComplexTextControllerUniscribe.cpp
++++ b/Source/WebCore/platform/graphics/win/ComplexTextControllerUniscribe.cpp
+@@ -172,6 +172,33 @@ static Vector<unsigned> stringIndicesFromClusters(const Vector<WORD>& clusters,
+     return stringIndices;
+ }
+ 
++static int compactScriptItemsIfNeeded(const UChar* cp, unsigned stringLength, Vector<SCRIPT_ITEM>& items, int numItems, const Font* font)
++{
++    // https://bugs.webkit.org/show_bug.cgi?id=201214
++    // Uniscribe is overly aggressive in separating the runs. It'll split "3d_rotation" into "3", "d", "_" and "rotation" and we
++    // will ScriptShape them separately. As a result, a ligature for "3d_rotation" in the Material icon set
++    // (https://www.materialui.co/icon/3d-rotation) will not be used. A quick and dirty hack is to glue them back here, only making
++    // this apply to the readable characters, digits and _.
++
++    if (!numItems)
++        return numItems;
++
++    if (font->platformData().isSystemFont() || font->platformData().hasVariations())
++        return numItems;
++
++    bool allGoodCharacters = true;
++    for (unsigned i = 0; allGoodCharacters && i < stringLength; ++i) {
++        const UChar c = cp[i];
++        allGoodCharacters = (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_';
++    }
++    if (!allGoodCharacters)
++        return numItems;
++
++    // Consume entire string into a single run. |items| is at least numItems + 1 long.
++    items[1] = items[numItems];
++    return 1;
++}
++
+ void ComplexTextController::collectComplexTextRunsForCharacters(const UChar* cp, unsigned stringLength, unsigned stringLocation, const Font* font)
+ {
+     if (!font) {
+@@ -200,6 +227,8 @@ void ComplexTextController::collectComplexTextRunsForCharacters(const UChar* cp,
+     }
+     items.resize(numItems + 1);
+ 
++    numItems = compactScriptItemsIfNeeded(cp, stringLength, items, numItems, font);
++
+     for (int i = 0; i < numItems; i++) {
+         // Determine the string for this item.
+         const UChar* str = cp + items[i].iCharPos;
 diff --git a/Source/WebCore/platform/gtk/PlatformKeyboardEventGtk.cpp b/Source/WebCore/platform/gtk/PlatformKeyboardEventGtk.cpp
 index 0516e70973e0078de6ad0216375d34dd9ef51a8d..ffd9a02deb5518e0c8c77b156815c11eb4b16829 100644
 --- a/Source/WebCore/platform/gtk/PlatformKeyboardEventGtk.cpp
