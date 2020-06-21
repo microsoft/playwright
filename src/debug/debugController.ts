@@ -14,33 +14,30 @@
  * limitations under the License.
  */
 
+import { Writable } from 'stream';
 import { BrowserContextBase } from '../browserContext';
 import { Events } from '../events';
 import * as frames from '../frames';
 import { Page } from '../page';
 import { RecorderController } from './recorderController';
 
-let isRecorderMode = false;
-
-export function setRecorderMode(): void {
-  isRecorderMode = true;
-}
-
 export class DebugController {
-  constructor(context: BrowserContextBase) {
+  constructor(context: BrowserContextBase, options: { recorderOutput?: Writable | undefined }) {
     const installInFrame = async (frame: frames.Frame) => {
       try {
         const mainContext = await frame._mainContext();
-        await mainContext.createDebugScript({ console: true, record: isRecorderMode });
+        await mainContext.createDebugScript({ console: true, record: !!options.recorderOutput });
       } catch (e) {
       }
     };
+
+    if (options.recorderOutput)
+      new RecorderController(context, options.recorderOutput);
 
     context.on(Events.BrowserContext.Page, (page: Page) => {
       for (const frame of page.frames())
         installInFrame(frame);
       page.on(Events.Page.FrameNavigated, installInFrame);
-      new RecorderController(page);
     });
   }
 }

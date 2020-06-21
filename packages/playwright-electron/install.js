@@ -14,20 +14,4 @@
  * limitations under the License.
  */
 
-import { Page } from './page';
-import { Log } from './logger';
-
-const hintsLog: Log = {
-  name: 'hint',
-  severity: 'warning'
-};
-
-let waitForTimeoutWasUsedReported = false;
-export function waitForTimeoutWasUsed(page: Page) {
-  if (waitForTimeoutWasUsedReported)
-    return;
-  waitForTimeoutWasUsedReported = true;
-  page._logger.log(hintsLog, `WARNING: page.waitForTimeout(timeout) should only be used for debugging.
-Tests using the timer in production are going to be flaky.
-Use signals such as network events, selectors becoming visible, etc. instead.`);
-}
+/* NOTE: playwright-electron does not install browsers by design. */

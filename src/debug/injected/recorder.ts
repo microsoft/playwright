@@ -40,6 +40,11 @@ export class Recorder {
   private async _onClick(event: MouseEvent) {
     if ((event.target as Element).nodeName === 'SELECT')
       return;
+    if ((event.target as Element).nodeName === 'INPUT') {
+      // Check/uncheck are handled in input.
+      if (((event.target as HTMLInputElement).type || '').toLowerCase() === 'checkbox')
+        return;
+    }
 
     // Perform action consumes this event and asks Playwright to perform it.
     this._performAction(event, {
@@ -76,8 +81,7 @@ export class Recorder {
     }
     if ((event.target as Element).nodeName === 'SELECT') {
       const selectElement = event.target as HTMLSelectElement;
-      // TODO: move this to this._performAction
-      window.recordPlaywrightAction({
+      this._performAction(event, {
         name: 'select',
         selector,
         options: [...selectElement.selectedOptions].map(option => option.value),

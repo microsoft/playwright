@@ -292,7 +292,7 @@ Playwright's [`ElementHandle`](./api.md#class-elementhandle) extends
 [`JSHandle`](./api.md#class-jshandle).
 
 ### Handles Lifecycle
-- Handles can be acquired using the page methods [`page.evaluteHandle`](./api.md#pageevaluatehandlepagefunction-arg), [`page.$`](./api.md#pageselector) or [`page.$$`](./api.md#pageselector-1) or
+- Handles can be acquired using the page methods [`page.evaluateHandle`](./api.md#pageevaluatehandlepagefunction-arg), [`page.$`](./api.md#pageselector) or [`page.$$`](./api.md#pageselector-1) or
   their frame counterparts [`frame.evaluateHandle`](./api.md#frameevaluatehandlepagefunction-arg), [`frame.$`](./api.md#frameselector) or [`frame.$$`](./api.md#frameselector-1).
 - Once created, handles will retain object from [garbage collection](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_Management).
 - Handles will be **automatically disposed** once the page or frame they belong to navigates or closes.
@@ -346,7 +346,7 @@ await myArrayHandle.dispose();
 #### API reference
 - [class `JSHandle`](./api.md#class-jshandle)
 - [class `ElementHandle`](./api.md#class-elementhandle)
-- [`page.evaluteHandle`](./api.md#pageevaluatehandlepagefunction-arg)
+- [`page.evaluateHandle`](./api.md#pageevaluatehandlepagefunction-arg)
 - [`page.$`](./api.md#pageselector)
 - [`page.$$`](./api.md#pageselector-1)
 - [`jsHandle.evaluate`](./api.md#jshandleevaluatepagefunction-arg)

@@ -177,4 +177,11 @@ export type ProxySettings = {
   password?: string
 };
 
+export type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
+
+export interface Logger {
+  isEnabled(name: string, severity: LoggerSeverity): boolean;
+  log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }): void;
+}
+
 export type WaitForEventOptions = Function | { predicate?: Function, timeout?: number };

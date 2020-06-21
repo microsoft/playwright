@@ -30,8 +30,8 @@ import { ConsoleMessage, ConsoleMessageLocation } from './console';
 import * as accessibility from './accessibility';
 import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
-import { logError, InnerLogger } from './logger';
-import { ProgressController } from './progress';
+import { logError, Logger } from './logger';
+import { ProgressController, Progress } from './progress';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -100,7 +100,7 @@ export class Page extends EventEmitter {
   readonly mouse: input.Mouse;
   readonly _timeoutSettings: TimeoutSettings;
   readonly _delegate: PageDelegate;
-  readonly _logger: InnerLogger;
+  readonly _logger: Logger;
   readonly _state: PageState;
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _evaluateOnNewDocumentSources: string[] = [];
@@ -112,11 +112,12 @@ export class Page extends EventEmitter {
   readonly coverage: any;
   _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
   _ownedContext: BrowserContext | undefined;
+  _callingPageAPI = false;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContextBase) {
     super();
     this._delegate = delegate;
-    this._logger = browserContext._logger;
+    this._logger = browserContext._apiLogger;
     this._closedCallback = () => {};
     this._closedPromise = new Promise(f => this._closedCallback = f);
     this._disconnectedCallback = () => {};
@@ -137,6 +138,11 @@ export class Page extends EventEmitter {
     if (delegate.pdf)
       this.pdf = delegate.pdf.bind(delegate);
     this.coverage = delegate.coverage ? delegate.coverage() : null;
+  }
+
+  private _runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number, apiName: string): Promise<T> {
+    const controller = new ProgressController(this._logger, timeout, `page.${apiName}`);
+    return controller.run(task);
   }
 
   _didClose() {
@@ -202,48 +208,48 @@ export class Page extends EventEmitter {
   }
 
   async $(selector: string): Promise<dom.ElementHandle<Element> | null> {
-    return this.mainFrame().$(selector);
+    return this._attributeToPage(() => this.mainFrame().$(selector));
   }
 
   async waitForSelector(selector: string, options?: types.WaitForElementOptions): Promise<dom.ElementHandle<Element> | null> {
-    return this.mainFrame().waitForSelector(selector, options);
+    return this._attributeToPage(() => this.mainFrame().waitForSelector(selector, options));
   }
 
   async dispatchEvent(selector: string, type: string, eventInit?: Object, options?: types.TimeoutOptions): Promise<void> {
-    return this.mainFrame().dispatchEvent(selector, type, eventInit, options);
+    return this._attributeToPage(() => this.mainFrame().dispatchEvent(selector, type, eventInit, options));
   }
 
   async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<types.SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
-    return this.mainFrame().evaluateHandle(pageFunction, arg);
+    return this._attributeToPage(() => this.mainFrame().evaluateHandle(pageFunction, arg));
   }
 
   async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
   async $eval<R>(selector: string, pageFunction: types.FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
-    return this.mainFrame().$eval(selector, pageFunction, arg);
+    return this._attributeToPage(() => this.mainFrame().$eval(selector, pageFunction, arg));
   }
 
   async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
   async $$eval<R>(selector: string, pageFunction: types.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
   async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
-    return this.mainFrame().$$eval(selector, pageFunction, arg);
+    return this._attributeToPage(() => this.mainFrame().$$eval(selector, pageFunction, arg));
   }
 
   async $$(selector: string): Promise<dom.ElementHandle<Element>[]> {
-    return this.mainFrame().$$(selector);
+    return this._attributeToPage(() => this.mainFrame().$$(selector));
   }
 
   async addScriptTag(options: { url?: string; path?: string; content?: string; type?: string; }): Promise<dom.ElementHandle> {
-    return this.mainFrame().addScriptTag(options);
+    return this._attributeToPage(() => this.mainFrame().addScriptTag(options));
   }
 
   async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<dom.ElementHandle> {
-    return this.mainFrame().addStyleTag(options);
+    return this._attributeToPage(() => this.mainFrame().addStyleTag(options));
   }
 
   async exposeFunction(name: string, playwrightFunction: Function) {
@@ -279,19 +285,19 @@ export class Page extends EventEmitter {
   }
 
   url(): string {
-    return this.mainFrame().url();
+    return this._attributeToPage(() => this.mainFrame().url());
   }
 
   async content(): Promise<string> {
-    return this.mainFrame().content();
+    return this._attributeToPage(() => this.mainFrame().content());
   }
 
   async setContent(html: string, options?: types.NavigateOptions): Promise<void> {
-    return this.mainFrame().setContent(html, options);
+    return this._attributeToPage(() => this.mainFrame().setContent(html, options));
   }
 
   async goto(url: string, options?: frames.GotoOptions): Promise<network.Response | null> {
-    return this.mainFrame().goto(url, options);
+    return this._attributeToPage(() => this.mainFrame().goto(url, options));
   }
 
   async reload(options?: types.NavigateOptions): Promise<network.Response | null> {
@@ -301,11 +307,11 @@ export class Page extends EventEmitter {
   }
 
   async waitForLoadState(state?: types.LifecycleEvent, options?: types.TimeoutOptions): Promise<void> {
-    return this.mainFrame().waitForLoadState(state, options);
+    return this._attributeToPage(() => this.mainFrame().waitForLoadState(state, options));
   }
 
   async waitForNavigation(options?: types.WaitForNavigationOptions): Promise<network.Response | null> {
-    return this.mainFrame().waitForNavigation(options);
+    return this._attributeToPage(() => this.mainFrame().waitForNavigation(options));
   }
 
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: network.Request) => boolean), options: types.TimeoutOptions = {}): Promise<network.Request> {
@@ -328,7 +334,7 @@ export class Page extends EventEmitter {
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
     const options = typeof optionsOrPredicate === 'function' ? { predicate: optionsOrPredicate } : optionsOrPredicate;
-    const progressController = new ProgressController(this._logger, this._timeoutSettings.timeout(options));
+    const progressController = new ProgressController(this._logger, this._timeoutSettings.timeout(options), 'page.waitForEvent');
     this._disconnectedPromise.then(error => progressController.abort(error));
     return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate));
   }
@@ -376,7 +382,7 @@ export class Page extends EventEmitter {
   async evaluate<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<R>;
   async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
-    return this.mainFrame().evaluate(pageFunction, arg);
+    return this._attributeToPage(() => this.mainFrame().evaluate(pageFunction, arg));
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
@@ -419,12 +425,24 @@ export class Page extends EventEmitter {
     route.continue();
   }
 
+  _isRouted(requestURL: string): boolean {
+    for (const { url } of this._routes) {
+      if (helper.urlMatches(requestURL, url))
+        return true;
+    }
+    for (const { url } of this._browserContext._routes) {
+      if (helper.urlMatches(requestURL, url))
+        return true;
+    }
+    return false;
+  }
+
   async screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {
     return this._screenshotter.screenshotPage(options);
   }
 
   async title(): Promise<string> {
-    return this.mainFrame().title();
+    return this._attributeToPage(() => this.mainFrame().title());
   }
 
   async close(options: { runBeforeUnload: (boolean | undefined); } = {runBeforeUnload: undefined}) {
@@ -443,64 +461,73 @@ export class Page extends EventEmitter {
     return this._closed;
   }
 
+  private _attributeToPage<T>(func: () => T): T {
+    try {
+      this._callingPageAPI = true;
+      return func();
+    } finally {
+      this._callingPageAPI = false;
+    }
+  }
+
   async click(selector: string, options?: dom.ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    return this.mainFrame().click(selector, options);
+    return this._attributeToPage(() => this.mainFrame().click(selector, options));
   }
 
   async dblclick(selector: string, options?: dom.MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    return this.mainFrame().dblclick(selector, options);
+    return this._attributeToPage(() => this.mainFrame().dblclick(selector, options));
   }
 
   async fill(selector: string, value: string, options?: types.NavigatingActionWaitOptions) {
-    return this.mainFrame().fill(selector, value, options);
+    return this._attributeToPage(() => this.mainFrame().fill(selector, value, options));
   }
 
   async focus(selector: string, options?: types.TimeoutOptions) {
-    return this.mainFrame().focus(selector, options);
+    return this._attributeToPage(() => this.mainFrame().focus(selector, options));
   }
 
   async textContent(selector: string, options?: types.TimeoutOptions): Promise<null|string> {
-    return this.mainFrame().textContent(selector, options);
+    return this._attributeToPage(() => this.mainFrame().textContent(selector, options));
   }
 
   async innerText(selector: string, options?: types.TimeoutOptions): Promise<string> {
-    return this.mainFrame().innerText(selector, options);
+    return this._attributeToPage(() => this.mainFrame().innerText(selector, options));
   }
 
   async innerHTML(selector: string, options?: types.TimeoutOptions): Promise<string> {
-    return this.mainFrame().innerHTML(selector, options);
+    return this._attributeToPage(() => this.mainFrame().innerHTML(selector, options));
   }
 
   async getAttribute(selector: string, name: string, options?: types.TimeoutOptions): Promise<string | null> {
-    return this.mainFrame().getAttribute(selector, name, options);
+    return this._attributeToPage(() => this.mainFrame().getAttribute(selector, name, options));
   }
 
   async hover(selector: string, options?: dom.PointerActionOptions & types.PointerActionWaitOptions) {
-    return this.mainFrame().hover(selector, options);
+    return this._attributeToPage(() => this.mainFrame().hover(selector, options));
   }
 
   async selectOption(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[] | null, options?: types.NavigatingActionWaitOptions): Promise<string[]> {
-    return this.mainFrame().selectOption(selector, values, options);
+    return this._attributeToPage(() => this.mainFrame().selectOption(selector, values, options));
   }
 
   async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options?: types.NavigatingActionWaitOptions): Promise<void> {
-    return this.mainFrame().setInputFiles(selector, files, options);
+    return this._attributeToPage(() => this.mainFrame().setInputFiles(selector, files, options));
   }
 
   async type(selector: string, text: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
-    return this.mainFrame().type(selector, text, options);
+    return this._attributeToPage(() => this.mainFrame().type(selector, text, options));
   }
 
   async press(selector: string, key: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
-    return this.mainFrame().press(selector, key, options);
+    return this._attributeToPage(() => this.mainFrame().press(selector, key, options));
   }
 
   async check(selector: string, options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    return this.mainFrame().check(selector, options);
+    return this._attributeToPage(() => this.mainFrame().check(selector, options));
   }
 
   async uncheck(selector: string, options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    return this.mainFrame().uncheck(selector, options);
+    return this._attributeToPage(() => this.mainFrame().uncheck(selector, options));
   }
 
   async waitForTimeout(timeout: number) {
@@ -510,7 +537,7 @@ export class Page extends EventEmitter {
   async waitForFunction<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>>;
   async waitForFunction<R>(pageFunction: types.Func1<void, R>, arg?: any, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>>;
   async waitForFunction<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>> {
-    return this.mainFrame().waitForFunction(pageFunction, arg, options);
+    return this._attributeToPage(() => this.mainFrame().waitForFunction(pageFunction, arg, options));
   }
 
   workers(): Worker[] {

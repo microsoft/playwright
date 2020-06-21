@@ -29,6 +29,11 @@ jobs:
           - libnotify4
           - libxslt1.1
           - libvpx5
+          # gstreamer and plugins to support video playback in WebKit.
+          - gstreamer1.0-gl
+          - gstreamer1.0-plugins-base
+          - gstreamer1.0-plugins-good
+          - gstreamer1.0-plugins-bad
           # This is required to run chromium
           - libgbm1
           # this is needed for running headful tests

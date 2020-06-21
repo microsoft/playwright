@@ -154,8 +154,10 @@ export class WKPage implements PageDelegate {
       session.send('Network.enable'),
       this._workers.initializeSession(session)
     ];
-    if (this._page._needsRequestInterception())
-      promises.push(session.send('Network.setInterceptionEnabled', { enabled: true, interceptRequests: true }));
+    if (this._page._needsRequestInterception()) {
+      promises.push(session.send('Network.setInterceptionEnabled', { enabled: true }));
+      promises.push(session.send('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }));
+    }
 
     const contextOptions = this._browserContext._options;
     if (contextOptions.userAgent)
@@ -597,7 +599,10 @@ export class WKPage implements PageDelegate {
 
   async updateRequestInterception(): Promise<void> {
     const enabled = this._page._needsRequestInterception();
-    await this._updateState('Network.setInterceptionEnabled', { enabled, interceptRequests: enabled });
+    await Promise.all([
+      this._updateState('Network.setInterceptionEnabled', { enabled }),
+      this._updateState('Network.addInterception', { url: '.*', stage: 'request', isRegex: true })
+    ]);
   }
 
   async updateOffline() {
@@ -836,7 +841,9 @@ export class WKPage implements PageDelegate {
     const documentId = isNavigationRequest ? event.loaderId : undefined;
     if (isNavigationRequest)
       this._page._frameManager.frameUpdatedDocumentIdForNavigation(event.frameId, documentId!);
-    const request = new WKInterceptableRequest(session, this._page._needsRequestInterception(), frame, event, redirectedFrom, documentId);
+    // We do not support intercepting redirects.
+    const allowInterception = this._page._needsRequestInterception() && !redirectedFrom;
+    const request = new WKInterceptableRequest(session, allowInterception, frame, event, redirectedFrom, documentId);
     this._requestIdToRequest.set(event.requestId, request);
     this._page._frameManager.requestStarted(request.request);
   }
@@ -851,8 +858,15 @@ export class WKPage implements PageDelegate {
 
   _onRequestIntercepted(event: Protocol.Network.requestInterceptedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
-    if (request)
+    if (!request)
+      return;
+    if (!request._allowInterception) {
+      // Intercepted, although we do not intend to allow interception.
+      // Just continue.
+      this._session.sendMayFail('Network.interceptWithRequest', { requestId: request._requestId });
+    } else {
       request._interceptedCallback();
+    }
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {

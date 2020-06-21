@@ -14,37 +14,46 @@
  * limitations under the License.
  */
 
-import * as actions from './recorderActions';
+import { Writable } from 'stream';
+import { BrowserContextBase } from '../browserContext';
+import * as dom from '../dom';
+import { Events } from '../events';
 import * as frames from '../frames';
 import { Page } from '../page';
-import { Events } from '../events';
+import * as actions from './recorderActions';
 import { TerminalOutput } from './terminalOutput';
-import * as dom from '../dom';
 
 export class RecorderController {
-  private _page: Page;
-  private _output = new TerminalOutput();
+  private _output: TerminalOutput;
   private _performingAction = false;
+  private _pageAliases = new Map<Page, string>();
+  private _lastPopupOrdinal = 0;
 
-  constructor(page: Page) {
-    this._page = page;
+  constructor(context: BrowserContextBase, output: Writable) {
+    this._output = new TerminalOutput(output || process.stdout);
+    context.on(Events.BrowserContext.Page, (page: Page) => {
+      // First page is called page, others are called popup1, popup2, etc.
+      const pageName = this._pageAliases.size ? 'popup' + ++this._lastPopupOrdinal : 'page';
+      this._pageAliases.set(page, pageName);
+      page.on(Events.Page.Close, () => this._pageAliases.delete(page));
 
-    // Input actions that potentially lead to navigation are intercepted on the page and are
-    // performed by the Playwright.
-    this._page.exposeBinding('performPlaywrightAction',
-        (source, action: actions.Action) => this._performAction(source.frame, action));
-    // Other non-essential actions are simply being recorded.
-    this._page.exposeBinding('recordPlaywrightAction',
-        (source, action: actions.Action) => this._recordAction(source.frame, action));
+      // Input actions that potentially lead to navigation are intercepted on the page and are
+      // performed by the Playwright.
+      page.exposeBinding('performPlaywrightAction',
+          (source, action: actions.Action) => this._performAction(source.frame, action)).catch(e => {});
 
-    this._page.on(Events.Page.FrameNavigated, (frame: frames.Frame) => this._onFrameNavigated(frame));
+      // Other non-essential actions are simply being recorded.
+      page.exposeBinding('recordPlaywrightAction',
+          (source, action: actions.Action) => this._recordAction(source.frame, action)).catch(e => {});
+
+      page.on(Events.Page.FrameNavigated, (frame: frames.Frame) => this._onFrameNavigated(frame));
+      page.on(Events.Page.Popup, (popup: Page) => this._onPopup(page, popup));
+    });
   }
 
   private async _performAction(frame: frames.Frame, action: actions.Action) {
-    if (frame !== this._page.mainFrame())
-      action.frameUrl = frame.url();
     this._performingAction = true;
-    this._output.addAction(action);
+    this._recordAction(frame, action);
     if (action.name === 'click') {
       const { options } = toClickOptions(action);
       await frame.click(action.selector, options);
@@ -58,35 +67,47 @@ export class RecorderController {
       await frame.check(action.selector);
     if (action.name === 'uncheck')
       await frame.uncheck(action.selector);
+    if (action.name === 'select')
+      await frame.selectOption(action.selector, action.options);
     this._performingAction = false;
-    setTimeout(() => action.committed = true, 2000);
+    setTimeout(() => action.committed = true, 5000);
   }
 
   private async _recordAction(frame: frames.Frame, action: actions.Action) {
-    if (frame !== this._page.mainFrame())
-      action.frameUrl = frame.url();
-    this._output.addAction(action);
+    this._output.addAction(this._pageAliases.get(frame._page)!, frame, action);
   }
 
   private _onFrameNavigated(frame: frames.Frame) {
     if (frame.parentFrame())
       return;
+    const pageAlias = this._pageAliases.get(frame._page);
+    const action = this._output.lastAction();
+    // We only augment actions that have not been committed.
+    if (action && !action.committed && action.name !== 'navigate') {
+      // If we hit a navigation while action is executed, we assert it. Otherwise, we await it.
+      this._output.signal(pageAlias!, frame, { name: 'navigation', url: frame.url(), type: this._performingAction ? 'assert' : 'await' });
+    } else if (!action || action.committed) {
+      // If navigation happens out of the blue, we just log it.
+      this._output.addAction(
+        pageAlias!, frame, {
+          name: 'navigate',
+          url: frame.url(),
+          signals: [],
+        });
+    }
+  }
+
+  private _onPopup(page: Page, popup: Page) {
+    const pageAlias = this._pageAliases.get(page)!;
+    const popupAlias = this._pageAliases.get(popup)!;
     const action = this._output.lastAction();
     // We only augment actions that have not been committed.
     if (action && !action.committed) {
       // If we hit a navigation while action is executed, we assert it. Otherwise, we await it.
-      this._output.signal({ name: 'navigation', url: frame.url(), type: this._performingAction ? 'assert' : 'await' });
-    } else {
-      // If navigation happens out of the blue, we just log it.
-      this._output.addAction({
-        name: 'navigate',
-        url: this._page.url(),
-        signals: [],
-      });
+      this._output.signal(pageAlias, page.mainFrame(), { name: 'popup', popupAlias });
     }
   }
 }
-
 
 export function toClickOptions(action: actions.ClickAction): { method: 'click' | 'dblclick', options: dom.ClickOptions } {
   let method: 'click' | 'dblclick' = 'click';

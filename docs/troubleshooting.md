@@ -33,7 +33,7 @@ const browser = await playwright.chromium.launch({
 });
 ```
 
-> Context: [Puppetteer#3681](https://github.com/puppeteer/puppeteer/issues/3681#issuecomment-447865342).
+> Context: [Puppeteer#3681](https://github.com/puppeteer/puppeteer/issues/3681#issuecomment-447865342).
 
 ### Chrome headless doesn't launch on Linux/WSL
 

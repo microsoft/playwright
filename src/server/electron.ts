@@ -20,7 +20,7 @@ import { CRConnection, CRSession } from '../chromium/crConnection';
 import { CRExecutionContext } from '../chromium/crExecutionContext';
 import { Events } from '../events';
 import * as js from '../javascript';
-import { InnerLogger, Logger } from '../logger';
+import { Loggers, Logger } from '../logger';
 import { Page } from '../page';
 import { TimeoutSettings } from '../timeoutSettings';
 import { WebSocketTransport } from '../transport';
@@ -41,7 +41,7 @@ type ElectronLaunchOptions = {
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
   timeout?: number,
-  logger?: Logger,
+  logger?: types.Logger,
 };
 
 export const ElectronEvents = {
@@ -57,7 +57,7 @@ interface ElectronPage extends Page {
 }
 
 export class ElectronApplication extends EventEmitter {
-  private _logger: InnerLogger;
+  private _apiLogger: Logger;
   private _browserContext: CRBrowserContext;
   private _nodeConnection: CRConnection;
   private _nodeSession: CRSession;
@@ -67,9 +67,9 @@ export class ElectronApplication extends EventEmitter {
   private _lastWindowId = 0;
   readonly _timeoutSettings = new TimeoutSettings();
 
-  constructor(logger: InnerLogger, browser: CRBrowser, nodeConnection: CRConnection) {
+  constructor(logger: Loggers, browser: CRBrowser, nodeConnection: CRConnection) {
     super();
-    this._logger = logger;
+    this._apiLogger = logger.api;
     this._browserContext = browser._defaultContext as CRBrowserContext;
     this._browserContext.on(Events.BrowserContext.Close, () => this.emit(ElectronEvents.ElectronApplication.Close));
     this._browserContext.on(Events.BrowserContext.Page, event => this._onPage(event));
@@ -131,7 +131,7 @@ export class ElectronApplication extends EventEmitter {
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
     const options = typeof optionsOrPredicate === 'function' ? { predicate: optionsOrPredicate } : optionsOrPredicate;
-    const progressController = new ProgressController(this._logger, this._timeoutSettings.timeout(options));
+    const progressController = new ProgressController(this._apiLogger, this._timeoutSettings.timeout(options), 'electron.waitForEvent');
     if (event !== ElectronEvents.ElectronApplication.Close)
       this._browserContext._closePromise.then(error => progressController.abort(error));
     return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate));
@@ -172,7 +172,7 @@ export class Electron  {
       handleSIGTERM = true,
       handleSIGHUP = true,
     } = options;
-    const logger = new InnerLogger(options.logger);
+    const loggers = new Loggers(options.logger);
     return runAbortableTask(async progress => {
       let app: ElectronApplication | undefined = undefined;
       const electronArguments = ['--inspect=0', '--remote-debugging-port=0', '--require', path.join(__dirname, 'electronLoader.js'), ...args];
@@ -196,15 +196,15 @@ export class Electron  {
 
       const nodeMatch = await waitForLine(progress, launchedProcess, launchedProcess.stderr, /^Debugger listening on (ws:\/\/.*)$/);
       const nodeTransport = await WebSocketTransport.connect(progress, nodeMatch[1]);
-      const nodeConnection = new CRConnection(nodeTransport, logger);
+      const nodeConnection = new CRConnection(nodeTransport, loggers);
 
       const chromeMatch = await waitForLine(progress, launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/);
       const chromeTransport = await WebSocketTransport.connect(progress, chromeMatch[1]);
       const browserServer = new BrowserServer(launchedProcess, gracefullyClose, kill);
-      const browser = await CRBrowser.connect(chromeTransport, { headful: true, logger, persistent: { viewport: null }, ownedServer: browserServer });
-      app = new ElectronApplication(logger, browser, nodeConnection);
+      const browser = await CRBrowser.connect(chromeTransport, { headful: true, loggers, persistent: { viewport: null }, ownedServer: browserServer });
+      app = new ElectronApplication(loggers, browser, nodeConnection);
       await app._init();
       return app;
-    }, logger, TimeoutSettings.timeout(options));
+    }, loggers.browser, TimeoutSettings.timeout(options), 'electron.launch');
   }
 }

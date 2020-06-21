@@ -20,11 +20,11 @@ import { EventEmitter } from 'events';
 import { Download } from './download';
 import type { BrowserServer } from './server/browserServer';
 import { Events } from './events';
-import { InnerLogger } from './logger';
+import { Loggers } from './logger';
 import { ProxySettings } from './types';
 
 export type BrowserOptions = {
-  logger: InnerLogger,
+  loggers: Loggers,
   downloadsPath?: string,
   headful?: boolean,
   persistent?: PersistentContextOptions,  // Undefined means no persistent context.

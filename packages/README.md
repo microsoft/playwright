@@ -2,7 +2,7 @@
 
 ## Overview
 
-- Playwright ships multiple packages to NPM. All packges that are published to NPM are listed as folders under [`//packages/`](../packages).
+- Playwright ships multiple packages to NPM. All packages that are published to NPM are listed as folders under [`//packages/`](../packages).
 - Playwright's [root package.json](../package.json) is **never published to NPM**. It is only used for devmode, e.g. when running `npm install` with no arguments or installing from github.
 - Playwright dependencies for all packages are the same and are managed with the [`root package.json`](../package.json).
 - Playwright browser versions for all packages are the same and are managed with the [`browsers.json`](../browsers.json).
@@ -45,3 +45,17 @@ To test packages, use [`//packages/installation-tests/installation-tests.sh`](./
 ## Publishing packages
 
  All package publishing happens **exclusively** over CI/CD using the [`//utils/publish_all_packages.sh`](../utils/publish_all_packages.sh) script.
+
+
+# Special handling for `playwright-electron`
+
+- `playwright-electron` version is pre-1.0.0 and thus managed separately. It's specified inside the [`//packages/build_package.js`]('./build_package.js') file.
+- `playwright-electron` is published manually.
+
+To publish a new version of `playwright-electron`:
+
+1. Bump `playwright-electron` version inside [`//packages/build_package.js`]('./build_package.js')
+2. Submit PR with the updated version
+3. Build package with `./build_package.js playwright-electron ./playwright-electron.tgz`
+4. Publish package with `npm publish playwright-electron.tgz`
+

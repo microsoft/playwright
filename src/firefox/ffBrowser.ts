@@ -35,7 +35,7 @@ export class FFBrowser extends BrowserBase {
   private _eventListeners: RegisteredListener[];
 
   static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
-    const connection = new FFConnection(SlowMoTransport.wrap(transport, options.slowMo), options.logger);
+    const connection = new FFConnection(SlowMoTransport.wrap(transport, options.slowMo), options.loggers);
     const browser = new FFBrowser(connection, options);
     const promises: Promise<any>[] = [
       connection.send('Browser.enable', { attachToDefaultContext: !!options.persistent }),
@@ -145,13 +145,11 @@ export class FFBrowser extends BrowserBase {
 export class FFBrowserContext extends BrowserContextBase {
   readonly _browser: FFBrowser;
   readonly _browserContextId: string | null;
-  private readonly _evaluateOnNewDocumentSources: string[];
 
   constructor(browser: FFBrowser, browserContextId: string | null, options: BrowserContextOptions) {
     super(browser, options);
     this._browser = browser;
     this._browserContextId = browserContextId;
-    this._evaluateOnNewDocumentSources = [];
     this._authenticateProxyViaHeader();
   }
 
@@ -304,7 +302,6 @@ export class FFBrowserContext extends BrowserContextBase {
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
     const source = await helper.evaluationScript(script, arg);
-    this._evaluateOnNewDocumentSources.push(source);
     await this._browser._connection.send('Browser.addScriptToEvaluateOnNewDocument', { browserContextId: this._browserContextId || undefined, script: source });
   }
 

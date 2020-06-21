@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { Writable } from 'stream';
 import { helper } from './helper';
 import * as network from './network';
 import { Page, PageBinding } from './page';
@@ -24,7 +25,7 @@ import * as types from './types';
 import { Events } from './events';
 import { Download } from './download';
 import { BrowserBase } from './browser';
-import { InnerLogger, Logger } from './logger';
+import { Loggers, Logger } from './logger';
 import { EventEmitter } from 'events';
 import { ProgressController } from './progress';
 import { DebugController } from './debug/debugController';
@@ -51,7 +52,7 @@ type CommonContextOptions = {
 
 export type PersistentContextOptions = CommonContextOptions;
 export type BrowserContextOptions = CommonContextOptions & {
-  logger?: Logger,
+  logger?: types.Logger,
 };
 
 export interface BrowserContext {
@@ -88,24 +89,34 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   readonly _permissions = new Map<string, string[]>();
   readonly _downloads = new Set<Download>();
   readonly _browserBase: BrowserBase;
-  readonly _logger: InnerLogger;
+  readonly _apiLogger: Logger;
+  private _debugController: DebugController | undefined;
 
   constructor(browserBase: BrowserBase, options: BrowserContextOptions) {
     super();
     this._browserBase = browserBase;
     this._options = options;
-    this._logger = options.logger ? new InnerLogger(options.logger) : browserBase._options.logger;
+    const loggers = options.logger ? new Loggers(options.logger) : browserBase._options.loggers;
+    this._apiLogger = loggers.api;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
   }
 
   async _initialize() {
-    if (helper.isDebugMode())
-      new DebugController(this);
+    if (helper.isDebugMode() || helper.isRecordMode()) {
+      this._debugController = new DebugController(this, {
+        recorderOutput: helper.isRecordMode() ? process.stdout : undefined
+      });
+    }
+  }
+
+  _initDebugModeForTest(options: { recorderOutput: Writable }): DebugController {
+    this._debugController = new DebugController(this, options);
+    return this._debugController;
   }
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
     const options = typeof optionsOrPredicate === 'function' ? { predicate: optionsOrPredicate } : optionsOrPredicate;
-    const progressController = new ProgressController(this._logger, this._timeoutSettings.timeout(options));
+    const progressController = new ProgressController(this._apiLogger, this._timeoutSettings.timeout(options), 'browserContext.waitForEvent');
     if (event !== Events.BrowserContext.Close)
       this._closePromise.then(error => progressController.abort(error));
     return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate));

@@ -17,7 +17,7 @@
 import { IncomingMessage } from 'http';
 import * as ws from 'ws';
 import { helper } from '../helper';
-import { InnerLogger, logError } from '../logger';
+import { logError, Logger } from '../logger';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 
 export interface WebSocketServerDelegate {
@@ -30,7 +30,7 @@ export interface WebSocketServerDelegate {
 
 export class WebSocketServer {
   private _transport: ConnectionTransport;
-  private _logger: InnerLogger;
+  private _logger: Logger;
   private _server: ws.Server;
   private _guid: string;
   readonly wsEndpoint: string;
@@ -40,7 +40,7 @@ export class WebSocketServer {
   private _sockets = new Set<ws>();
   private _pendingRequests = new Map<number, { message: ProtocolRequest, source: ws | null }>();
 
-  constructor(transport: ConnectionTransport, logger: InnerLogger, port: number, delegate: WebSocketServerDelegate) {
+  constructor(transport: ConnectionTransport, logger: Logger, port: number, delegate: WebSocketServerDelegate) {
     this._guid = helper.guid();
     this._transport = transport;
     this._logger = logger;

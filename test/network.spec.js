@@ -41,8 +41,7 @@ describe('Page.Events.Request', function() {
     await page.evaluate(() => fetch('/empty.html'));
     expect(requests.length).toBe(2);
   });
-  it.fail(FFOX)('should report requests and responses handled by service worker', async({page, server}) => {
-    // Firefox issues Network.requestWillBeSent and nothing else.
+  it('should report requests and responses handled by service worker', async({page, server}) => {
     await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
     await page.evaluate(() => window.activationPromise);
     const [swResponse, request] = await Promise.all([
@@ -409,6 +408,17 @@ describe('Page.setExtraHTTPHeaders', function() {
     const [request] = await Promise.all([
       server.waitForRequest('/empty.html'),
       page.goto(server.EMPTY_PAGE),
+    ]);
+    expect(request.headers['foo']).toBe('bar');
+  });
+  it('should work with redirects', async({page, server}) => {
+    server.setRedirect('/foo.html', '/empty.html');
+    await page.setExtraHTTPHeaders({
+      foo: 'bar'
+    });
+    const [request] = await Promise.all([
+      server.waitForRequest('/empty.html'),
+      page.goto(server.PREFIX + '/foo.html'),
     ]);
     expect(request.headers['foo']).toBe('bar');
   });

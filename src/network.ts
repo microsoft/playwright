@@ -115,6 +115,7 @@ export class Request {
   constructor(routeDelegate: RouteDelegate | null, frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: string | null, headers: Headers) {
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
+    assert(!(routeDelegate && redirectedFrom), 'Should not be able to intercept redirects');
     this._routeDelegate = routeDelegate;
     this._frame = frame;
     this._redirectedFrom = redirectedFrom;

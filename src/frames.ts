@@ -26,10 +26,8 @@ import * as network from './network';
 import { Page } from './page';
 import { selectors } from './selectors';
 import * as types from './types';
-import { waitForTimeoutWasUsed } from './hints';
 import { BrowserContext } from './browserContext';
-import { Progress, ProgressController, runAbortableTask } from './progress';
-import { apiLog } from './logger';
+import { Progress, ProgressController } from './progress';
 
 type ContextType = 'main' | 'utility';
 type ContextData = {
@@ -340,11 +338,21 @@ export class Frame {
       this._parentFrame._childFrames.add(this);
   }
 
+  private _runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number, apiName: string): Promise<T> {
+    const controller = new ProgressController(this._page._logger, timeout, this._apiName(apiName));
+    return controller.run(task);
+  }
+
+  private _apiName(method: string) {
+    const subject = this._page._callingPageAPI  ? 'page' : 'frame';
+    return `${subject}.${method}`;
+  }
+
   async goto(url: string, options: GotoOptions = {}): Promise<network.Response | null> {
-    const progressController = new ProgressController(this._page._logger, this._page._timeoutSettings.navigationTimeout(options));
+    const progressController = new ProgressController(this._page._logger, this._page._timeoutSettings.navigationTimeout(options), this._apiName('goto'));
     abortProgressOnFrameDetach(progressController, this);
     return progressController.run(async progress => {
-      progress.log(apiLog, `navigating to "${url}", waiting until "${options.waitUntil || 'load'}"`);
+      progress.logger.info(`navigating to "${url}", waiting until "${options.waitUntil || 'load'}"`);
       const headers = (this._page._state.extraHTTPHeaders || {});
       let referer = headers['referer'] || headers['Referer'];
       if (options.referer !== undefined) {
@@ -376,11 +384,11 @@ export class Frame {
   }
 
   async waitForNavigation(options: types.WaitForNavigationOptions = {}): Promise<network.Response | null> {
-    const progressController = new ProgressController(this._page._logger, this._page._timeoutSettings.navigationTimeout(options));
+    const progressController = new ProgressController(this._page._logger, this._page._timeoutSettings.navigationTimeout(options), this._apiName('waitForNavigation'));
     abortProgressOnFrameDetach(progressController, this);
     return progressController.run(async progress => {
       const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
-      progress.log(apiLog, `waiting for navigation${toUrl} until "${options.waitUntil || 'load'}"`);
+      progress.logger.info(`waiting for navigation${toUrl} until "${options.waitUntil || 'load'}"`);
       const frameTask = new FrameTask(this, progress);
       let documentId: string | undefined;
       await Promise.race([
@@ -395,7 +403,7 @@ export class Frame {
   }
 
   async waitForLoadState(state: types.LifecycleEvent = 'load', options: types.TimeoutOptions = {}): Promise<void> {
-    const progressController = new ProgressController(this._page._logger, this._page._timeoutSettings.navigationTimeout(options));
+    const progressController = new ProgressController(this._page._logger, this._page._timeoutSettings.navigationTimeout(options), this._apiName('waitForLoadState'));
     abortProgressOnFrameDetach(progressController, this);
     return progressController.run(progress => this._waitForLoadState(progress, state));
   }
@@ -453,8 +461,8 @@ export class Frame {
     if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
       throw new Error(`Unsupported state option "${state}"`);
     const { world, task } = selectors._waitForSelectorTask(selector, state);
-    return runAbortableTask(async progress => {
-      progress.log(apiLog, `waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
+    return this._runAbortableTask(async progress => {
+      progress.logger.info(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
       const result = await this._scheduleRerunnableTask(progress, world, task);
       if (!result.asElement()) {
         result.dispose();
@@ -468,16 +476,16 @@ export class Frame {
         return adopted;
       }
       return handle;
-    }, this._page._logger, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), 'waitForSelector');
   }
 
   async dispatchEvent(selector: string, type: string, eventInit?: Object, options: types.TimeoutOptions = {}): Promise<void> {
     const task = selectors._dispatchEventTask(selector, type, eventInit || {});
-    return runAbortableTask(async progress => {
-      progress.log(apiLog, `Dispatching "${type}" event on selector "${selector}"...`);
+    return this._runAbortableTask(async progress => {
+      progress.logger.info(`Dispatching "${type}" event on selector "${selector}"...`);
       const result = await this._scheduleRerunnableTask(progress, 'main', task);
       result.dispose();
-    }, this._page._logger, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), 'dispatchEvent');
   }
 
   async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
@@ -519,11 +527,11 @@ export class Frame {
   }
 
   async setContent(html: string, options: types.NavigateOptions = {}): Promise<void> {
-    const progressController = new ProgressController(this._page._logger, this._page._timeoutSettings.navigationTimeout(options));
+    const progressController = new ProgressController(this._page._logger, this._page._timeoutSettings.navigationTimeout(options), this._apiName('setContent'));
     abortProgressOnFrameDetach(progressController, this);
     return progressController.run(async progress => {
       const waitUntil = options.waitUntil === undefined ? 'load' : options.waitUntil;
-      progress.log(apiLog, `setting frame content, waiting until "${waitUntil}"`);
+      progress.logger.info(`setting frame content, waiting until "${waitUntil}"`);
       const tag = `--playwright--set--content--${this._id}--${++this._setContentCounter}--`;
       const context = await this._utilityContext();
       const lifecyclePromise = new Promise((resolve, reject) => {
@@ -706,10 +714,11 @@ export class Frame {
 
   private async _retryWithSelectorIfNotConnected<R>(
     selector: string, options: types.TimeoutOptions,
-    action: (progress: Progress, handle: dom.ElementHandle<Element>) => Promise<R | 'notconnected'>): Promise<R> {
-    return runAbortableTask(async progress => {
+    action: (progress: Progress, handle: dom.ElementHandle<Element>) => Promise<R | 'notconnected'>,
+    apiName: string): Promise<R> {
+    return this._runAbortableTask(async progress => {
       while (progress.isRunning()) {
-        progress.log(apiLog, `waiting for selector "${selector}"`);
+        progress.logger.info(`waiting for selector "${selector}"`);
         const { world, task } = selectors._waitForSelectorTask(selector, 'attached');
         const handle = await this._scheduleRerunnableTask(progress, world, task);
         const element = handle.asElement() as dom.ElementHandle<Element>;
@@ -717,77 +726,76 @@ export class Frame {
         const result = await action(progress, element);
         element.dispose();
         if (result === 'notconnected') {
-          progress.log(apiLog, 'element was detached from the DOM, retrying');
+          progress.logger.info('element was detached from the DOM, retrying');
           continue;
         }
         return result;
       }
       return undefined as any;
-    }, this._page._logger, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), apiName);
   }
 
   async click(selector: string, options: dom.ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._click(progress, options));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._click(progress, options), 'click');
   }
 
   async dblclick(selector: string, options: dom.MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._dblclick(progress, options));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._dblclick(progress, options), 'dblclick');
   }
 
   async fill(selector: string, value: string, options: types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._fill(progress, value, options));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._fill(progress, value, options), 'fill');
   }
 
   async focus(selector: string, options: types.TimeoutOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._focus(progress));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._focus(progress), 'focus');
   }
 
   async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<null|string> {
-    return await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.textContent());
+    return await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.textContent(), 'textContent');
   }
 
   async innerText(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
-    return await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.innerText());
+    return await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.innerText(), 'innerText');
   }
 
   async innerHTML(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
-    return await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.innerHTML());
+    return await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.innerHTML(), 'innerHTML');
   }
 
   async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
-    return await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.getAttribute(name));
+    return await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.getAttribute(name), 'getAttribute');
   }
 
   async hover(selector: string, options: dom.PointerActionOptions & types.PointerActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._hover(progress, options));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._hover(progress, options), 'hover');
   }
 
   async selectOption(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._selectOption(progress, values, options));
+    return this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._selectOption(progress, values, options), 'selectOption');
   }
 
   async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
-    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._setInputFiles(progress, files, options));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._setInputFiles(progress, files, options), 'setInputFiles');
   }
 
   async type(selector: string, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._type(progress, text, options));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._type(progress, text, options), 'type');
   }
 
   async press(selector: string, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._press(progress, key, options));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._press(progress, key, options), 'press');
   }
 
   async check(selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._setChecked(progress, true, options));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._setChecked(progress, true, options), 'check');
   }
 
   async uncheck(selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._setChecked(progress, false, options));
+    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._setChecked(progress, false, options), 'uncheck');
   }
 
   async waitForTimeout(timeout: number) {
-    waitForTimeoutWasUsed(this._page);
     await new Promise(fulfill => setTimeout(fulfill, timeout));
   }
 
@@ -809,9 +817,9 @@ export class Frame {
         return injectedScript.poll(polling, () => innerPredicate(arg));
       }, { injectedScript, predicateBody, polling, arg });
     };
-    return runAbortableTask(
+    return this._runAbortableTask(
         progress => this._scheduleRerunnableTask(progress, 'main', task),
-        this._page._logger, this._page._timeoutSettings.timeout(options));
+        this._page._timeoutSettings.timeout(options), 'waitForFunction');
   }
 
   async title(): Promise<string> {
@@ -999,14 +1007,14 @@ class FrameTask {
 
   onSameDocument() {
     if (this._progress)
-      this._progress.log(apiLog, `navigated to "${this._frame._url}"`);
+      this._progress.logger.info(`navigated to "${this._frame._url}"`);
     if (this._onSameDocument && helper.urlMatches(this._frame.url(), this._onSameDocument.url))
       this._onSameDocument.resolve();
   }
 
   onNewDocument(documentId: string, error?: Error) {
     if (this._progress && !error)
-      this._progress.log(apiLog, `navigated to "${this._frame._url}"`);
+      this._progress.logger.info(`navigated to "${this._frame._url}"`);
     if (this._onSpecificDocument) {
       if (documentId === this._onSpecificDocument.expectedDocumentId) {
         if (error)
@@ -1027,7 +1035,7 @@ class FrameTask {
 
   onLifecycle(frame: Frame, lifecycleEvent: types.LifecycleEvent) {
     if (this._progress && frame === this._frame && frame._url !== 'about:blank')
-      this._progress.log(apiLog, `"${lifecycleEvent}" event fired`);
+      this._progress.logger.info(`"${lifecycleEvent}" event fired`);
     if (this._onLifecycle && this._checkLifecycleRecursively(this._frame, this._onLifecycle.waitUntil))
       this._onLifecycle.resolve();
   }

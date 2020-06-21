@@ -671,7 +671,7 @@ index da9d56e843a2c762dc7d5527712cdd3d30418f7f..ea9d962513dfc02682d5dfd543dd72ba
  }
  
 diff --git a/dom/base/nsINode.cpp b/dom/base/nsINode.cpp
-index 7c0d4bd261bf053c7cab4091522dc1e52118eba1..9af7b44c443955dc6355197bb94f65c229d165a3 100644
+index 7c0d4bd261bf053c7cab4091522dc1e52118eba1..e320e6bfb0402eb07ae53272264278bad9638519 100644
 --- a/dom/base/nsINode.cpp
 +++ b/dom/base/nsINode.cpp
 @@ -1260,6 +1260,48 @@ void nsINode::GetBoxQuadsFromWindowOrigin(const BoxQuadOptions& aOptions,
@@ -684,19 +684,19 @@ index 7c0d4bd261bf053c7cab4091522dc1e52118eba1..9af7b44c443955dc6355197bb94f65c2
 +  aRv = NS_ERROR_UNEXPECTED;
 +  nsCOMPtr<Document> document = OwnerDoc();
 +  if (!document) {
-+    return;
++    return aRv.ThrowNotFoundError("Node is detached from document");
 +  }
 +  PresShell* presShell = document->GetPresShell();
 +  if (!presShell) {
-+    return;
++    return aRv.ThrowNotFoundError("Node is detached from document");
 +  }
 +  if (!IsContent()) {
-+    return;
++    return aRv.ThrowNotFoundError("Node does not have a layout object");
 +  }
 +  aRv = NS_OK;
 +  nsIFrame* primaryFrame = AsContent()->GetPrimaryFrame(FlushType::Frames);
-+  if (!primaryFrame){
-+    return;
++  if (!primaryFrame) {
++    return aRv.ThrowNotFoundError("Node does not have a layout object");
 +  }
 +  nsRect rect;
 +  if (x == -1 && y == -1 && w == -1 && h == -1) {
@@ -1121,41 +1121,6 @@ index 82d04ec3a72f3390a43c98eb2ae91f0d15a83631..b197bb0718ed712af2a7c08d2ef691de
    void UpdateLanguages(const nsTArray<nsString>& aLanguages);
  
    void UpdateJSWorkerMemoryParameter(JSGCParamKey key, Maybe<uint32_t> value);
-diff --git a/extensions/permissions/Permission.cpp b/extensions/permissions/Permission.cpp
-index 72ed1de82fd322ba2cafffbad5622e2fdb6aa677..0dd907ff05d1df313dd3b8f8561c4ab3296e2931 100644
---- a/extensions/permissions/Permission.cpp
-+++ b/extensions/permissions/Permission.cpp
-@@ -34,7 +34,7 @@ already_AddRefed<nsIPrincipal> Permission::ClonePrincipalForPermission(
- 
-   mozilla::OriginAttributes attrs = aPrincipal->OriginAttributesRef();
-   if (!StaticPrefs::permissions_isolateBy_userContext()) {
--    attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID);
-+    // attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID);
-   }
- 
-   nsAutoCString originNoSuffix;
-diff --git a/extensions/permissions/PermissionManager.cpp b/extensions/permissions/PermissionManager.cpp
-index 36665fad7de7c26c9f7ccce96448868524c5a330..2af744c0c6a7739c702ba6a770a04595292d8356 100644
---- a/extensions/permissions/PermissionManager.cpp
-+++ b/extensions/permissions/PermissionManager.cpp
-@@ -195,7 +195,7 @@ void MaybeStripOAs(bool aForceStrip, OriginAttributes& aOriginAttributes) {
-   }
- 
-   if (flags != 0) {
--    aOriginAttributes.StripAttributes(flags);
-+    // aOriginAttributes.StripAttributes(flags);
-   }
- }
- 
-@@ -228,6 +228,8 @@ nsresult GetOriginFromPrincipal(nsIPrincipal* aPrincipal, bool aForceStripOA,
- 
-   OriginAppendOASuffix(attrs, aForceStripOA, aOrigin);
- 
-+  // Disable userContext for permissions.
-+  // attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID);
-   return NS_OK;
- }
- 
 diff --git a/js/public/Date.h b/js/public/Date.h
 index e7a54d86c44499a3ec2adf1c156b9f9dfb0bc6b4..f56c1b419c4cb52bc371f6b8dbfffba464326fc4 100644
 --- a/js/public/Date.h

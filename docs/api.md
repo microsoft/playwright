@@ -593,7 +593,7 @@ The extra HTTP headers will be sent with every request initiated by any page in 
   - `accuracy` <[number]> Non-negative accuracy value. Defaults to `0`.
 - returns: <[Promise]>
 
-Sets the contexts's geolocation. Passing `null` or `undefined` emulates position unavailable.
+Sets the context's geolocation. Passing `null` or `undefined` emulates position unavailable.
 
 ```js
 await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
@@ -4216,7 +4216,7 @@ Coverage gathers information about parts of JavaScript and CSS that were used by
 An example of using JavaScript coverage to produce Istambul report for page load:
 
 ```js
-const { chromium } = require('.');
+const { chromium } = require('playwright');
 const v8toIstanbul = require('v8-to-istanbul');
 
 (async() => {
@@ -4355,7 +4355,10 @@ WebKit browser instance does not expose WebKit-specific features.
 Playwright looks for certain [environment variables](https://en.wikipedia.org/wiki/Environment_variable) to aid its operations.
 If Playwright doesn't find them in the environment, a lowercased variant of these variables will be used from the [npm config](https://docs.npmjs.com/cli/config).
 
-- `PLAYWRIGHT_DOWNLOAD_HOST` - overwrite URL prefix that is used to download browsers. Note: this includes protocol and might even include path prefix. By default, Playwright uses `https://storage.googleapis.com` to download Chromium and `https://playwright.azureedge.net` to download Webkit & Firefox.
+- `PLAYWRIGHT_DOWNLOAD_HOST` - overwrite URL prefix that is used to download browsers. Note: this includes protocol and might even include path prefix. By default, Playwright uses `https://storage.googleapis.com` to download Chromium and `https://playwright.azureedge.net` to download Webkit & Firefox. You can also use browser-specific download hosts that superceed the `PLAYWRIGHT_DOWNLOAD_HOST` variable:
+  - `PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST` - host to specify Chromium downloads
+  - `PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST` - host to specify Firefox downloads
+  - `PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST` - host to specify Webkit downloads
 - `PLAYWRIGHT_BROWSERS_PATH` - specify a shared folder that playwright will use to download browsers and to look for browsers when launching browser instances.
 - `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` - set to non-empty value to skip browser downloads altogether.
 

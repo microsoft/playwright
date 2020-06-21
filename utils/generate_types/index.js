@@ -17,7 +17,7 @@
 //@ts-check
 const path = require('path');
 const Source = require('../doclint/Source');
-const {chromium} = require('../..');
+const {chromium, devices} = require('../..');
 const Documentation = require('../doclint/check_public_api/Documentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
@@ -70,6 +70,7 @@ ${overrides}
 
 ${classes.map(classDesc => classToString(classDesc)).join('\n')}
 ${objectDefinitionsToString()}
+${generateDevicesTypes()}
 `;
   for (const [key, value] of Object.entries(exported))
     output = output.replace(new RegExp('\\b' + key + '\\b', 'g'), value);
@@ -77,7 +78,7 @@ ${objectDefinitionsToString()}
 })().catch(e => {
   console.error(e);
   process.exit(1);
-})
+});
 
 function objectDefinitionsToString() {
   let definition;
@@ -404,4 +405,15 @@ function mergeClasses(mdClass, jsClass) {
   for (const member of mdClass.membersArray)
     member.templates = jsClass.members.get(member.name).templates;
   return mdClass;
+}
+
+function generateDevicesTypes() {
+  const namedDevices = 
+    Object.keys(devices)
+      .map(name => `  ${JSON.stringify(name)}: DeviceDescriptor;`)
+      .join('\n');
+  return `type Devices = {
+${namedDevices}
+  [key: string]: DeviceDescriptor;
+}`;
 }

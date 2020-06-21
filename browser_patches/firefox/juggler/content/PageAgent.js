@@ -626,7 +626,7 @@ class PageAgent {
     if (unsafeObject.scrollRectIntoViewIfNeeded)
       unsafeObject.scrollRectIntoViewIfNeeded(rect.x, rect.y, rect.width, rect.height);
     else
-      throw new Error('Node type does not support scrollRectIntoViewIfNeeded');
+      throw new Error('Node does not have a layout object');
   }
 
   _getNodeBoundingBox(unsafeObject) {
