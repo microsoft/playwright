@@ -14,8 +14,8 @@ the following primitives.
 - [Pages and frames](#pages-and-frames)
 - [Selectors](#selectors)
 - [Auto-waiting](#auto-waiting)
-- [Node.js and browser execution contexts](#nodejs-and-browser-execution-contexts)
-- [Object & element handles](#object--element-handles)
+- [Execution contexts: Node.js and Browser](#execution-contexts-nodejs-and-browser)
+- [Object & Element handles](#object--element-handles)
 <!-- GEN:stop -->
 
 <br/>
@@ -227,15 +227,30 @@ await page.waitForSelector('#promo', { state: 'detached' });
 
 <br/>
 
-## Node.js and browser execution contexts
+## Execution contexts: Node.js and Browser
 
-Playwright scripts run in your Node.js environment. You page scripts run in the page environment. Those environments don't intersect, they are running in different virtual machines in different processes and potentially on different computers.
-
-IMAGE PLACEHOLDER
+Playwright scripts run in your Node.js environment. You page scripts run in the browser page environment. Those environments don't intersect, they are running in different virtual machines in different processes and even potentially on different computers.
 
 The [`page.evaluate`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatepagefunction-arg) API can run a JavaScript function in the context
-of the web page and bring results back to the Node.js environment. Globals like
-`window` and `document` along with the web page runtime can be used in `evaluate`.
+of the web page and bring results back to the Node.js environment. Browser globals like
+`window` and `document` can be used in `evaluate`.
+
+```js
+const href = await page.evaluate(() => document.location.href);
+```
+
+If the result is a Promise or if the function is asynchronous evaluate will automatically wait until it's resolved:
+```js
+const status = await page.evaluate(async () => {
+  const response = await fetch(location.href);
+  return response.status;
+});
+```
+
+### Evaluation
+
+Functions passed inside `page.evaluate` can accept parameters. These parameters are
+serialized and sent into your web page over the wire. You can pass primitive types, JSON-alike objects and remote object handles received from the page.
 
 Right:
 
@@ -257,34 +272,33 @@ const result = await page.evaluate(() => {
 });
 ```
 
-Evaluation parameters are serialized and sent into your web page over the wire.
-You can pass primitive types, JSON-alike objects and remote object handles received from the page.
+#### API reference
+
+- [`page.evaluate(pageFunction[, arg])`](api.md#pageevaluatepagefunction-arg)
+- [`frame.evaluate(pageFunction[, arg])`](api.md#frameevaluatepagefunction-arg)
 
 <br/>
 
-## Object & element handles
+## Object & Element handles
 
-Playwright has an API to create Node-side handles to the page DOM elements or any other objects inside the page.
-These handles live in the Node.js process, whereas the actual objects reside in browser.
-
-IMAGE PLACEHOLDER
+Playwright can create Node-side handles to the page DOM elements or any other objects inside the page. These handles live in the Node.js process, whereas the actual objects reside in browser.
 
 There are two types of handles:
-- [`JSHandle`](./api.md#class-jshandle) to reference any javascript objects in the page
+- [`JSHandle`](./api.md#class-jshandle) to reference any JavaScript objects in the page
 - [`ElementHandle`](./api.md#class-elementhandle) to reference DOM elements in the page
 
-Note that since any DOM element in the page is also a javascript object,
+Note that since any DOM element in the page is also a JavaScript object,
 Playwright's [`ElementHandle`](./api.md#class-elementhandle) extends
 [`JSHandle`](./api.md#class-jshandle).
 
-Handles Lifetime:
+### Handles Lifecycle
 - Handles can be acquired using the page methods [`page.evaluteHandle`](./api.md#pageevaluatehandlepagefunction-arg), [`page.$`](./api.md#pageselector) or [`page.$$`](./api.md#pageselector-1) or
   their frame counterparts [`frame.evaluateHandle`](./api.md#frameevaluatehandlepagefunction-arg), [`frame.$`](./api.md#frameselector) or [`frame.$$`](./api.md#frameselector-1).
-- Once created, handles will retain object from [garbage collection](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_Management)
+- Once created, handles will retain object from [garbage collection](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_Management).
 - Handles will be **automatically disposed** once the page or frame they belong to navigates or closes.
 - Handles can be **manually disposed** using [`jsHandle.dispose`](./api.md#jshandledispose) method.
 
-Here is how you can use these handles:
+### Example: ElementHandle
 
 ```js
 // The first parameter of the elementHandle.evaluate callback is the element handle points to.
@@ -292,12 +306,41 @@ const ulElementHandle = await page.$('ul');
 await ulElementHandle.evaluate(ulElement => getComputedStyle(ulElement).getPropertyValue('display'));
 ```
 
-Alternatively, handles can be passed as arguments to [`page.evaluate`](./api.md#pageevaluatepagefunction-arg) function:
+Handles can also be passed as arguments to [`page.evaluate`](./api.md#pageevaluatepagefunction-arg) function:
 
 ```js
 // In the page API, you can pass handle as a parameter.
 const ulElementHandle = await page.$('ul');
 await page.evaluate(uiElement => getComputedStyle(uiElement).getPropertyValue('display'), uiElement);
+```
+
+### Example: JSHandle
+
+```js
+// Create a new array in the page, write a reference to it in
+// window.myArray and get a handle to it.
+const myArrayHandle = await page.evaluateHandle(() => {
+  window.myArray = [1];
+  return myArray;
+});
+
+// Get current length of the array using the handle.
+const length = await page.evaluate(
+  (arg) => arg.myArray.length,
+  { myArray: myArrayHandle }
+);
+
+// Add one more element to the array using the handle
+await page.evaluate((arg) => arg.myArray.push(arg.newElement), {
+  myArray: myArrayHandle,
+  newElement: 2
+});
+
+// Get current length of the array using window.myArray reference.
+const newLength = await page.evaluate(() => window.myArray.length);
+
+// Release the object when it's no longer needed.
+await myArrayHandle.dispose();
 ```
 
 #### API reference
@@ -307,5 +350,3 @@ await page.evaluate(uiElement => getComputedStyle(uiElement).getPropertyValue('d
 - [`page.$`](./api.md#pageselector)
 - [`page.$$`](./api.md#pageselector-1)
 - [`jsHandle.evaluate`](./api.md#jshandleevaluatepagefunction-arg)
-
-<br/>
