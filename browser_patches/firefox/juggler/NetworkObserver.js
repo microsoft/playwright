@@ -8,7 +8,6 @@ const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.j
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
-const {CommonUtils} = ChromeUtils.import("resource://services-common/utils.js");
 
 
 const Cc = Components.classes;
@@ -794,10 +793,50 @@ class ResponseStorage {
     let result = response.body;
     if (response.encodings && response.encodings.length) {
       for (const encoding of response.encodings)
-        result = CommonUtils.convertString(result, encoding, 'uncompressed');
+        result = convertString(result, encoding, 'uncompressed');
     }
     return {base64body: btoa(result)};
   }
+}
+
+function convertString(s, source, dest) {
+  const is = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(
+    Ci.nsIStringInputStream
+  );
+  is.setData(s, s.length);
+  const listener = Cc["@mozilla.org/network/stream-loader;1"].createInstance(
+    Ci.nsIStreamLoader
+  );
+  let result = [];
+  listener.init({
+    onStreamComplete: function onStreamComplete(
+      loader,
+      context,
+      status,
+      length,
+      data
+    ) {
+      const array = Array.from(data);
+      const kChunk = 100000;
+      for (let i = 0; i < length; i += kChunk) {
+        const len = Math.min(kChunk, length - i);
+        const chunk = String.fromCharCode.apply(this, array.slice(i, i + len));
+        result.push(chunk);
+      }
+    },
+  });
+  const converter = Cc["@mozilla.org/streamConverters;1"].getService(
+    Ci.nsIStreamConverterService
+  ).asyncConvertData(
+    source,
+    dest,
+    listener,
+    null
+  );
+  converter.onStartRequest(null, null);
+  converter.onDataAvailable(null, is, 0, s.length);
+  converter.onStopRequest(null, null, null);
+  return result.join('');
 }
 
 const errorMap = {
