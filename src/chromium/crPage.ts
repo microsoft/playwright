@@ -255,11 +255,6 @@ export class CRPage implements PageDelegate {
     return this._sessionForHandle(handle)._getContentQuads(handle);
   }
 
-  async layoutViewport(): Promise<{ width: number, height: number }> {
-    const layoutMetrics = await this._mainFrameSession._client.send('Page.getLayoutMetrics');
-    return { width: layoutMetrics.layoutViewport.clientWidth, height: layoutMetrics.layoutViewport.clientHeight };
-  }
-
   async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
     await handle._evaluateInUtility(([injected, node, files]) =>
       injected.setInputFiles(node, files), dom.toFileTransferPayload(files));
