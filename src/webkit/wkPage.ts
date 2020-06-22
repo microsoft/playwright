@@ -781,10 +781,6 @@ export class WKPage implements PageDelegate {
     ]);
   }
 
-  async layoutViewport(): Promise<{ width: number, height: number }> {
-    return this._page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
-  }
-
   async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
     const objectId = handle._objectId;
     await this._session.send('DOM.setInputFiles', { objectId, files: dom.toFileTransferPayload(files) });

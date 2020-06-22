@@ -768,6 +768,12 @@ describe('Page.click', function() {
     expect(await page.evaluate(() => window.button1)).toBe(true);
     expect(await page.evaluate(() => window.button2)).toBe(undefined);
   });
+  it('should click the button when window.innerWidth is corrupted', async({page, server}) => {
+    await page.goto(server.PREFIX + '/input/button.html');
+    await page.evaluate(() => window.innerWidth = 0);
+    await page.click('button');
+    expect(await page.evaluate(() => result)).toBe('Clicked');
+  });
 });
 
 describe('Page.check', function() {

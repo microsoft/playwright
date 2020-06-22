@@ -438,10 +438,6 @@ export class FFPage implements PageDelegate {
     return result.quads.map(quad => [ quad.p1, quad.p2, quad.p3, quad.p4 ]);
   }
 
-  async layoutViewport(): Promise<{ width: number, height: number }> {
-    return this._page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
-  }
-
   async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
     await handle._evaluateInUtility(([injected, node, files]) =>
       injected.setInputFiles(node, files), dom.toFileTransferPayload(files));
