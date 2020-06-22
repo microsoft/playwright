@@ -320,6 +320,12 @@ class NetworkRequest {
       return false;
     }
 
+    // We do not want to intercept any redirects, because we are not able
+    // to intercept subresource redirects, and it's unreliable for main requests.
+    // We do not sendOnRequest here, because redirects do that in constructor.
+    if (this.redirectedFromId)
+      return false;
+
     const shouldIntercept = this._shouldIntercept();
     if (!shouldIntercept) {
       // We are not intercepting - ready to issue onRequest.
@@ -424,10 +430,6 @@ class NetworkRequest {
   }
 
   _shouldIntercept() {
-    // We do not want to intercept any redirects, because we are not able
-    // to intercept subresource redirects.
-    if (this.redirectedFromId)
-      return false;
     const pageNetwork = this._activePageNetwork();
     if (!pageNetwork)
       return false;
