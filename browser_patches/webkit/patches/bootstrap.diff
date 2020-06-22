@@ -8553,10 +8553,10 @@ index 0000000000000000000000000000000000000000..003ad364d76071ce30d11cce7d1b61a6
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..f95ca1a9a9faecdc83de8289d0d5be46c135d907
+index 0000000000000000000000000000000000000000..5b28d1ba9fe79d35af2e15f97aeb8df31a898a11
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,440 @@
+@@ -0,0 +1,442 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -8727,8 +8727,9 @@ index 0000000000000000000000000000000000000000..f95ca1a9a9faecdc83de8289d0d5be46
 +        : m_surface(WTFMove(surface))
 +    { }
 +#elif PLATFORM(MAC)
-+    explicit VPXFrame(RetainPtr<CGImageRef> windowImage)
++    VPXFrame(RetainPtr<CGImageRef> windowImage, Optional<double> scale)
 +        : m_windowImage(WTFMove(windowImage))
++        , m_scale(scale)
 +    { }
 +#endif
 +
@@ -8745,7 +8746,7 @@ index 0000000000000000000000000000000000000000..f95ca1a9a9faecdc83de8289d0d5be46
 +        int argb_stride = image->w * 4;
 +        UniqueArray<uint8_t> buffer = makeUniqueArray<uint8_t>(argb_stride * image->h);
 +        uint8_t* argb_data = buffer.get();
-+        ScreencastEncoder::imageToARGB(m_windowImage.get(), argb_data, image->w, image->h);
++        ScreencastEncoder::imageToARGB(m_windowImage.get(), argb_data, image->w, image->h, m_scale);
 +#endif
 +        const int y_stride = image->stride[0];
 +        ASSERT(image->stride[1] == image->stride[2]);
@@ -8767,6 +8768,7 @@ index 0000000000000000000000000000000000000000..f95ca1a9a9faecdc83de8289d0d5be46
 +    RefPtr<cairo_surface_t> m_surface;
 +#elif PLATFORM(MAC)
 +    RetainPtr<CGImageRef> m_windowImage;
++    Optional<double> m_scale;
 +#endif
 +    int m_duration = 0;
 +};
@@ -8976,7 +8978,7 @@ index 0000000000000000000000000000000000000000..f95ca1a9a9faecdc83de8289d0d5be46
 +    fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
 +    flushLastFrame();
 +
-+    m_lastFrame = makeUnique<VPXFrame>(WTFMove(windowImage));
++    m_lastFrame = makeUnique<VPXFrame>(WTFMove(windowImage), m_scale);
 +}
 +#endif
 +
@@ -8999,7 +9001,7 @@ index 0000000000000000000000000000000000000000..f95ca1a9a9faecdc83de8289d0d5be46
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..09dca3bb8d9e50810f54298b1cf643c1fa3c5965
+index 0000000000000000000000000000000000000000..df283ee565b1691c49e68b79f40a72aefca77bf6
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
 @@ -0,0 +1,75 @@
@@ -9066,7 +9068,7 @@ index 0000000000000000000000000000000000000000..09dca3bb8d9e50810f54298b1cf643c1
 +private:
 +    void flushLastFrame();
 +#if PLATFORM(MAC)
-+    static void imageToARGB(CGImageRef, uint8_t* rgba_data, int width, int height);
++    static void imageToARGB(CGImageRef, uint8_t* rgba_data, int width, int height, Optional<double> scale);
 +#endif
 +
 +    std::unique_ptr<VPXCodec> m_vpxCodec;
@@ -9639,10 +9641,10 @@ index c2df3ceb4b69f32060dcbd90d04dc6cb5900de0d..af9c472a1b9137424081b3f1f9fd9448
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm b/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..678757082a087f039e21da1456c3a28f553c1a13
+index 0000000000000000000000000000000000000000..aa06bdfb5170428ace1143ae52b413ac6b987040
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm
-@@ -0,0 +1,47 @@
+@@ -0,0 +1,51 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -9676,14 +9678,18 @@ index 0000000000000000000000000000000000000000..678757082a087f039e21da1456c3a28f
 +
 +namespace WebKit {
 +
-+void ScreencastEncoder::imageToARGB(CGImageRef image, uint8_t* argb_data, int width, int height)
++void ScreencastEncoder::imageToARGB(CGImageRef image, uint8_t* argb_data, int width, int height, Optional<double> scale)
 +{
 +    size_t bitsPerComponent = 8;
 +    size_t bytesPerPixel = 4;
 +    size_t bytesPerRow = bytesPerPixel * width;
 +    RetainPtr<CGColorSpaceRef> colorSpace = adoptCF(CGColorSpaceCreateDeviceRGB());
 +    RetainPtr<CGContextRef> context = adoptCF(CGBitmapContextCreate(argb_data, width, height, bitsPerComponent, bytesPerRow, colorSpace.get(), kCGImageAlphaNoneSkipFirst | kCGBitmapByteOrder32Little));
-+
++    if (scale) {
++        CGContextScaleCTM(context.get(), *scale, *scale);
++        // Ensure that top-left cornder stays in place.
++        CGContextTranslateCTM(context.get(), 0, ((1 - *scale) / *scale) * height);
++    }
 +    size_t imageWidth = CGImageGetWidth(image);
 +    size_t imageHeight = CGImageGetHeight(image);
 +    CGContextDrawImage(context.get(), CGRectMake(0, 0, imageWidth, imageHeight), image);
