@@ -54,6 +54,7 @@
     - [Loading a popup](./loading.md#loading-a-popup)
     - [Client-side redirects](./loading.md#unusual-client-side-redirects)
     - [Navigation after a timeout](./loading.md#click-triggers-navigation-after-a-timeout)
+1. [Multi-page scenarios](./multi-pages.md)
 1. [Actionability](./actionability.md)
 1. [Continuous Integration](./ci.md)
     - [Docker](./ci.md#docker)
