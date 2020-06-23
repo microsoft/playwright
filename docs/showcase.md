@@ -12,17 +12,18 @@
 
 ## Tools
 
-* [QA Wolf](https://github.com/qawolf/qawolf): Record and create Playwright tests and then run them in CI
 * [CodeceptJS](https://github.com/Codeception/CodeceptJS): Write scenario-driven Playwright tests with synchronous code
-* [Try Playwright](https://try.playwright.tech/): Interactive playground for Playwright to run examples directly from your browser
-* [Testim Playground](https://www.testim.io/playground/): Record Playwright UI tests as code
-* [Lumberjack](https://github.com/JakePartusch/lumberjack): Automated accessibility scanner to run checks on your entire website
-* [playwright-video](https://github.com/qawolf/playwright-video): Capture a video while executing a Playwright script
-* [test-real-styles](https://github.com/Xiphe/test-real-styles): Utility to test real styling of virtual DOM elements in a browser
 * [dom-to-playwright](https://github.com/Xiphe/dom-to-playwright) to copy a JSDOM snapshot into a Playwright page.
 * [Headless Testing](https://headlesstesting.com/support/start/playwright.html): Run Playwright tests on browsers in the cloud
-* [playwright-test](https://github.com/hugomrdias/playwright-test) Run unit tests and benchmarks in browsers with Node's seamless experience.
+* [Lumberjack](https://github.com/JakePartusch/lumberjack): Automated accessibility scanner to run checks on your entire website
 * [mockiavelli](https://github.com/HLTech/mockiavelli) Request mocking library for Playwright to test SPA in isolation from backend APIs.
+* [Moon](https://github.com/aerokube/moon): Run Playwright tests in parallel in Kubernetes cluster (free up to 4 parallel sessions)
+* [playwright-test](https://github.com/hugomrdias/playwright-test) Run unit tests and benchmarks in browsers with Node's seamless experience.
+* [playwright-video](https://github.com/qawolf/playwright-video): Capture a video while executing a Playwright script
+* [QA Wolf](https://github.com/qawolf/qawolf): Record and create Playwright tests and then run them in CI
+* [test-real-styles](https://github.com/Xiphe/test-real-styles): Utility to test real styling of virtual DOM elements in a browser
+* [Testim Playground](https://www.testim.io/playground/): Record Playwright UI tests as code
+* [Try Playwright](https://try.playwright.tech/): Interactive playground for Playwright to run examples directly from your browser
 
 ## Frameworks
 
