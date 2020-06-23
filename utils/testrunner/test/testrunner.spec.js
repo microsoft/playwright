@@ -39,6 +39,10 @@ class Runner {
     return this._collector.tests();
   }
 
+  parallel() {
+    return this._options.parallel || 1;
+  }
+
   focusedTests() {
     return this._filter.focusedTests(this._collector.tests());
   }
@@ -492,6 +496,158 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
     });
   });
 
+  describe('globalSetup & globalTeardwon', () => {
+    it('should run globalSetup and globalTeardown in proper order', async() => {
+      const t = new Runner({timeout: 10000});
+      const tracer = new TestTracer(t);
+      tracer.traceAllHooks();
+      tracer.addTest('', 'test1');
+      await t.run();
+
+      expect(tracer.trace()).toEqual([
+        'globalSetup',
+        'beforeAll',
+        'beforeEach',
+        'test1',
+        'afterEach',
+        'afterAll',
+        'globalTeardown',
+      ]);
+    });
+    it('should run globalSetup and globalTeardown in proper order if parallel', async() => {
+      const t = new Runner({timeout: 10000, parallel: 2});
+      const tracer = new TestTracer(t);
+      tracer.traceAllHooks('', async (hookName) => {
+        // slowdown globalsetup to see the rest hooks awaiting this one
+        if (hookName === 'globalSetup')
+          await new Promise(x => setTimeout(x, 50));
+      });
+      tracer.addTest('', 'test1');
+      tracer.addTest('', 'test2');
+      await t.run();
+
+      expect(tracer.trace()).toEqual([
+        '<_global_> globalSetup',
+        '<worker 1> beforeAll',
+        '<worker 2> beforeAll',
+        '<worker 1> beforeEach',
+        '<worker 2> beforeEach',
+        '<worker 1> test1',
+        '<worker 2> test2',
+        '<worker 1> afterEach',
+        '<worker 2> afterEach',
+        '<worker 1> afterAll',
+        '<worker 2> afterAll',
+        '<_global_> globalTeardown',
+      ]);
+    });
+    it('should support globalSetup/globalTeardown in nested suites', async() => {
+      const t = new Runner({timeout: 10000, parallel: 2});
+      const tracer = new TestTracer(t);
+      tracer.traceAllHooks('');
+      t.describe('suite', () => {
+        tracer.traceAllHooks('    ');
+        tracer.addTest('    ', 'test1');
+        tracer.addTest('    ', 'test2');
+        tracer.addTest('    ', 'test3');
+      });
+      await t.run();
+
+      expect(tracer.trace()).toEqual([
+        '<_global_> globalSetup',
+        '<worker 1> beforeAll',
+        '<worker 2> beforeAll',
+        '    <_global_> globalSetup',
+        '    <worker 1> beforeAll',
+        '    <worker 2> beforeAll',
+        '<worker 1> beforeEach',
+        '<worker 2> beforeEach',
+        '    <worker 1> beforeEach',
+        '    <worker 2> beforeEach',
+        '    <worker 1> test1',
+        '    <worker 2> test2',
+        '    <worker 1> afterEach',
+        '    <worker 2> afterEach',
+        '<worker 1> afterEach',
+        '<worker 2> afterEach',
+        '    <worker 2> afterAll',
+        '<worker 1> beforeEach',
+        '<worker 2> afterAll',
+        '    <worker 1> beforeEach',
+        '    <worker 1> test3',
+        '    <worker 1> afterEach',
+        '<worker 1> afterEach',
+        '    <worker 1> afterAll',
+        '    <_global_> globalTeardown',
+        '<worker 1> afterAll',
+        '<_global_> globalTeardown',
+      ]);
+    });
+    it('should report as crashed when global hook crashes', async() => {
+      const t = new Runner({timeout: 10000});
+      t.globalSetup(() => { throw new Error('crash!'); });
+      t.it('uno', () => { });
+      const result = await t.run();
+      expect(result.result).toBe('crashed');
+    });
+    it('should terminate and unwind hooks if globalSetup fails', async() => {
+      const t = new Runner({timeout: 10000});
+      const tracer = new TestTracer(t);
+      tracer.traceAllHooks();
+      t.describe('suite', () => {
+        tracer.traceAllHooks('    ', (hookName) => {
+          if (hookName === 'globalSetup') {
+            tracer.log('    !! CRASH !!');
+            throw new Error('crash');
+          }
+        });
+        tracer.addTest('    ', 'test1');
+      });
+      await t.run();
+      expect(tracer.trace()).toEqual([
+        'globalSetup',
+        'beforeAll',
+        '    globalSetup',
+        '    !! CRASH !!',
+        '    afterAll',
+        '    globalTeardown',
+        'afterAll',
+        'globalTeardown',
+      ]);
+    });
+    it('should not run globalSetup / globalTeardown if all tests are skipped', async() => {
+      const t = new Runner({timeout: 10000});
+      const tracer = new TestTracer(t);
+      tracer.traceAllHooks();
+      t.describe('suite', () => {
+        tracer.addSkippedTest('    ', 'test1');
+      });
+      await t.run();
+      expect(tracer.trace()).toEqual([
+      ]);
+    });
+    it('should properly run globalTeardown if some tests are not run', async() => {
+      const t = new Runner({timeout: 10000});
+      const tracer = new TestTracer(t);
+      tracer.traceAllHooks();
+      t.describe('suite', () => {
+        tracer.addSkippedTest('    ', 'test1');
+        tracer.addFailingTest('    ', 'test2');
+        tracer.addTest('    ', 'test3');
+      });
+      await t.run();
+      expect(tracer.trace()).toEqual([
+        'globalSetup',
+        'beforeAll',
+        'beforeEach',
+        '    test3',
+        'afterEach',
+        'afterAll',
+        'globalTeardown',
+      ]);
+    });
+  });
+
   describe('TestRunner.run', () => {
     it('should run a test', async() => {
       const t = new Runner();
@@ -854,4 +1010,64 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
     });
   });
 };
+
+class TestTracer {
+  constructor(testRunner) {
+    this._testRunner = testRunner;
+    this._trace = [];
+  }
+
+  addSkippedTest(prefix, testName, callback) {
+    this._testRunner.it.skip(testName, async(...args) => {
+      if (callback)
+        await callback(...args);
+      this._trace.push(prefix + this._workerPrefix(args[0]) + testName);
+    });
+  }
+
+  addFailingTest(prefix, testName, callback) {
+    this._testRunner.it.fail(testName, async(...args) => {
+      if (callback)
+        await callback(...args);
+      this._trace.push(prefix + this._workerPrefix(args[0]) + testName);
+    });
+  }
+
+  addTest(prefix, testName, callback) {
+    this._testRunner.it(testName, async(...args) => {
+      if (callback)
+        await callback(...args);
+      this._trace.push(prefix + this._workerPrefix(args[0]) + testName);
+    });
+  }
+
+  traceHooks(hookNames, prefix = '', callback) {
+    for (const hookName of hookNames) {
+      this._testRunner[hookName].call(this._testRunner, async (state) => {
+        this._trace.push(prefix + this._workerPrefix(state) + hookName);
+        if (callback)
+          await callback(hookName);
+      });
+    }
+  }
+
+  _workerPrefix(state) {
+    if (this._testRunner.parallel() === 1)
+      return '';
+    return state && (typeof state.parallelIndex !== 'undefined') ? `<worker ${state.parallelIndex + 1}> ` : `<_global_> `;
+
+  }
+
+  traceAllHooks(prefix = '', callback) {
+    this.traceHooks(['globalSetup', 'globalTeardown', 'beforeAll', 'afterAll', 'beforeEach', 'afterEach'], prefix, callback);
+  }
+
+  log(text) {
+    this._trace.push(text);
+  }
+
+  trace() {
+    return this._trace;
+  }
+}
 

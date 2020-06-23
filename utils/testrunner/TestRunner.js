@@ -55,6 +55,11 @@ class TestRun {
     this._endTimestamp = 0;
     this._workerId = null;
     this._output = [];
+
+    this._environments = test._environments.filter(env => !env.isEmpty()).reverse();
+    for (let suite = test.suite(); suite; suite = suite.parentSuite())
+      this._environments.push(...suite._environments.filter(env => !env.isEmpty()).reverse());
+    this._environments.reverse();
   }
 
   finished() {
@@ -169,9 +174,9 @@ class TestWorker {
     for (let suite = test.suite(); suite; suite = suite.parentSuite())
       skipped = skipped || suite.skipped();
     if (skipped) {
-      await this._willStartTestRun(testRun);
+      await this._testRunner._willStartTestRun(this, testRun);
       testRun._result = TestResult.Skipped;
-      await this._didFinishTestRun(testRun);
+      await this._testRunner._didFinishTestRun(this, testRun);
       return;
     }
 
@@ -179,13 +184,13 @@ class TestWorker {
     for (let suite = test.suite(); suite; suite = suite.parentSuite())
       expectedToFail = expectedToFail || (suite.expectation() === TestExpectation.Fail);
     if (expectedToFail) {
-      await this._willStartTestRun(testRun);
+      await this._testRunner._willStartTestRun(this, testRun);
       testRun._result = TestResult.MarkedAsFailing;
-      await this._didFinishTestRun(testRun);
+      await this._testRunner._didFinishTestRun(this, testRun);
       return;
     }
 
-    const environmentStack = allTestEnvironments(test);
+    const environmentStack = testRun._environments;
     let common = 0;
     while (common < environmentStack.length && this._environmentStack[common] === environmentStack[common])
       common++;
@@ -198,12 +203,16 @@ class TestWorker {
         if (!await this._runHook(testRun, hook, environment.name(), [this._state]))
           return;
       }
+      if (!await this._testRunner._runGlobalTeardown(this, environment))
+        return;
     }
     while (this._environmentStack.length < environmentStack.length) {
       if (this._markTerminated(testRun))
         return;
       const environment = environmentStack[this._environmentStack.length];
       this._environmentStack.push(environment);
+      if (!await this._testRunner._runGlobalSetup(this, environment))
+        return;
       for (const hook of environment.hooks('beforeAll')) {
         if (!await this._runHook(testRun, hook, environment.name(), [this._state]))
           return;
@@ -216,7 +225,7 @@ class TestWorker {
     // From this point till the end, we have to run all hooks
     // no matter what happens.
 
-    await this._willStartTestRun(testRun);
+    await this._testRunner._willStartTestRun(this, testRun);
     for (const environment of this._environmentStack) {
       for (const hook of environment.hooks('beforeEach'))
         await this._runHook(testRun, hook, environment.name(), [this._state, testRun]);
@@ -245,7 +254,7 @@ class TestWorker {
       for (const hook of environment.hooks('afterEach'))
         await this._runHook(testRun, hook, environment.name(), [this._state, testRun]);
     }
-    await this._didFinishTestRun(testRun);
+    await this._testRunner._didFinishTestRun(this, testRun);
   }
 
   async _runHook(testRun, hook, fullName, hookArgs = []) {
@@ -284,18 +293,6 @@ class TestWorker {
     return true;
   }
 
-  async _willStartTestRun(testRun) {
-    testRun._startTimestamp = Date.now();
-    testRun._workerId = this._workerId;
-    await this._testRunner._runDelegateCallback(this._testRunner._delegate.onTestRunStarted, [testRun]);
-  }
-
-  async _didFinishTestRun(testRun) {
-    testRun._endTimestamp = Date.now();
-    testRun._workerId = this._workerId;
-    await this._testRunner._runDelegateCallback(this._testRunner._delegate.onTestRunFinished, [testRun]);
-  }
-
   async _willStartTestBody(testRun) {
     debug('testrunner:test')(`[${this._workerId}] starting "${testRun.test().fullName()}" (${testRun.test().location()})`);
   }
@@ -324,6 +321,8 @@ class TestWorker {
       const environment = this._environmentStack.pop();
       for (const hook of environment.hooks('afterAll'))
         await this._runHook(null, hook, environment.name(), [this._state]);
+
+      await this._testRunner._runGlobalTeardown(this, environment);
     }
   }
 }
@@ -335,6 +334,66 @@ class TestRunner {
     this._workers = [];
     this._terminating = false;
     this._result = null;
+    this._environmentToGlobalState = new Map();
+  }
+
+  async _willStartTestRun(worker, testRun) {
+    testRun._startTimestamp = Date.now();
+    testRun._workerId = worker._workerId;
+    await this._runDelegateCallback(this._delegate.onTestRunStarted, [testRun]);
+  }
+
+  async _didFinishTestRun(worker, testRun) {
+    testRun._endTimestamp = Date.now();
+    testRun._workerId = worker._workerId;
+    for (const environment of testRun._environments) {
+      const globalState = this._environmentToGlobalState.get(environment);
+      globalState.pendingTestRuns.delete(testRun);
+    }
+
+    await this._runDelegateCallback(this._delegate.onTestRunFinished, [testRun]);
+  }
+
+  async _runGlobalSetup(worker, environment) {
+    const globalState = this._environmentToGlobalState.get(environment);
+    if (!globalState.globalSetupPromise) {
+      globalState.globalSetupPromise = (async () => {
+        let result = true;
+        for (const hook of environment.hooks('globalSetup')) {
+          if (!await worker._runHook(null, hook, environment.name(), []))
+            result = false;
+        }
+        return result;
+      })();
+    }
+    if (!(await globalState.globalSetupPromise)) {
+      this._terminate(TestResult.Crashed, 'Global setup failed!', false, null);
+      return false;
+    }
+    return true;
+  }
+
+  async _runGlobalTeardown(worker, environment) {
+    const globalState = this._environmentToGlobalState.get(environment);
+    if (!globalState.globalTeardownPromise) {
+      if (!globalState.pendingTestRuns.size || (this._terminating && globalState.globalSetupPromise)) {
+        globalState.globalTeardownPromise = (async () => {
+          let result = true;
+          for (const hook of environment.hooks('globalTeardown')) {
+            if (!await worker._runHook(null, hook, environment.name(), []))
+              result = false;
+          }
+          return result;
+        })();
+      }
+    }
+    if (!globalState.globalTeardownPromise)
+      return true;
+    if (!await globalState.globalTeardownPromise) {
+      this._terminate(TestResult.Crashed, 'Global teardown failed!', false, null);
+      return false;
+    }
+    return true;
   }
 
   async _runDelegateCallback(callback, args) {
@@ -405,6 +464,21 @@ class TestRunner {
       }, totalTimeout);
     }
     await this._runDelegateCallback(this._delegate.onStarted, [testRuns]);
+
+    for (const testRun of testRuns) {
+      for (const env of testRun._environments) {
+        let globalState = this._environmentToGlobalState.get(env);
+        if (!globalState) {
+          globalState = {
+            pendingTestRuns: new Set(),
+            globalSetupPromise: null,
+            globalTeardownPromise: null,
+          };
+          this._environmentToGlobalState.set(env, globalState);
+        }
+        globalState.pendingTestRuns.add(testRun);
+      }
+    }
 
     const workerCount = Math.min(parallel, testRuns.length);
     const workerPromises = [];
@@ -482,22 +556,6 @@ class TestRunner {
       return;
     await this._terminate(TestResult.Terminated, 'Terminated with |TestRunner.terminate()| call', true /* force */, null /* error */);
   }
-}
-
-function allTestEnvironments(test) {
-  const environmentStack = [];
-  for (const environment of test._environments.slice().reverse()) {
-    if (!environment.isEmpty())
-      environmentStack.push(environment);
-  }
-  for (let suite = test.suite(); suite; suite = suite.parentSuite()) {
-    for (const environment of suite._environments.slice().reverse()) {
-      if (!environment.isEmpty())
-        environmentStack.push(environment);
-    }
-  }
-  environmentStack.reverse();
-  return environmentStack;
 }
 
 module.exports = { TestRunner, TestRun, TestResult, Result };

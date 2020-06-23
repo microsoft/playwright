@@ -57,6 +57,16 @@ class Environment {
     return this;
   }
 
+  globalSetup(callback) {
+    this._hooks.push(createHook(callback, 'globalSetup'));
+    return this;
+  }
+
+  globalTeardown(callback) {
+    this._hooks.push(createHook(callback, 'globalTeardown'));
+    return this;
+  }
+
   hooks(name) {
     return this._hooks.filter(hook => !name || hook.name === name);
   }
