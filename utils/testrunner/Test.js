@@ -28,14 +28,9 @@ function createHook(callback, name) {
 }
 
 class Environment {
-  constructor(name, parentEnvironment = null) {
-    this._parentEnvironment = parentEnvironment;
+  constructor(name) {
     this._name = name;
     this._hooks = [];
-  }
-
-  parentEnvironment() {
-    return this._parentEnvironment;
   }
 
   name() {

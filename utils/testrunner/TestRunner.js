@@ -185,22 +185,7 @@ class TestWorker {
       return;
     }
 
-    const environmentStack = [];
-    function appendEnvironment(e) {
-      while (e) {
-        if (!e.isEmpty())
-          environmentStack.push(e);
-        e = e.parentEnvironment();
-      }
-    }
-    for (const environment of test._environments.slice().reverse())
-      appendEnvironment(environment);
-    for (let suite = test.suite(); suite; suite = suite.parentSuite()) {
-      for (const environment of suite._environments.slice().reverse())
-        appendEnvironment(environment);
-    }
-    environmentStack.reverse();
-
+    const environmentStack = allTestEnvironments(test);
     let common = 0;
     while (common < environmentStack.length && this._environmentStack[common] === environmentStack[common])
       common++;
@@ -497,6 +482,22 @@ class TestRunner {
       return;
     await this._terminate(TestResult.Terminated, 'Terminated with |TestRunner.terminate()| call', true /* force */, null /* error */);
   }
+}
+
+function allTestEnvironments(test) {
+  const environmentStack = [];
+  for (const environment of test._environments.slice().reverse()) {
+    if (!environment.isEmpty())
+      environmentStack.push(environment);
+  }
+  for (let suite = test.suite(); suite; suite = suite.parentSuite()) {
+    for (const environment of suite._environments.slice().reverse()) {
+      if (!environment.isEmpty())
+        environmentStack.push(environment);
+    }
+  }
+  environmentStack.reverse();
+  return environmentStack;
 }
 
 module.exports = { TestRunner, TestRun, TestResult, Result };

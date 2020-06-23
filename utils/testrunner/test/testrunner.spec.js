@@ -282,7 +282,7 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
       e.afterAll(() => log.push('env:afterAll'));
       e.beforeEach(() => log.push('env:beforeEach'));
       e.afterEach(() => log.push('env:afterEach'));
-      const e2 = new Environment('env2', e);
+      const e2 = new Environment('env2');
       e2.beforeAll(() => log.push('env2:beforeAll'));
       e2.afterAll(() => log.push('env2:afterAll'));
       t.beforeAll(() => log.push('root:beforeAll'));
@@ -308,6 +308,7 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
         t.afterAll(() => log.push('suite:afterAll'));
       });
       t.it('cuatro', () => log.push('test #4'));
+      t.tests()[t.tests().length - 1].addEnvironment(e);
       t.tests()[t.tests().length - 1].addEnvironment(e2);
       t.describe('no hooks suite', () => {
         t.describe('suite2', () => {
@@ -318,6 +319,7 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
           });
         });
       });
+      t.suites()[t.suites().length - 1].addEnvironment(e);
       t.suites()[t.suites().length - 1].addEnvironment(e2);
       t.afterEach(() => log.push('root:afterEach'));
       t.afterAll(() => log.push('root:afterAll1'));
