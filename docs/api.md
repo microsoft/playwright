@@ -1610,6 +1610,7 @@ Page routes take precedence over browser context routes (set up with [browserCon
     - `width` <[number]> width of clipping area
     - `height` <[number]> height of clipping area
   - `omitBackground` <[boolean]> Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images. Defaults to `false`.
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[Buffer]>> Promise which resolves to buffer with the captured screenshot.
 
 > **NOTE** Screenshots take at least 1/6 second on Chromium OS X and Chromium Windows. See https://crbug.com/741689 for discussion.
@@ -2856,9 +2857,10 @@ Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported a
   - `type` <"png"|"jpeg"> Specify screenshot type, defaults to `png`.
   - `quality` <[number]> The quality of the image, between 0-100. Not applicable to `png` images.
   - `omitBackground` <[boolean]> Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images. Defaults to `false`.
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[Buffer]>> Promise which resolves to buffer with the captured screenshot.
 
-This method scrolls element into view if needed before taking a screenshot. If the element is detached from DOM, the method throws an error.
+This method waits for the [actionability](./actionability.md) checks, then scrolls element into view before taking a screenshot. If the element is detached from DOM, the method throws an error.
 
 #### elementHandle.scrollIntoViewIfNeeded([options])
 - `options` <[Object]>

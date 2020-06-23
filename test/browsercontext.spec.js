@@ -85,10 +85,7 @@ describe('BrowserContext', function() {
   it('should propagate default viewport to the page', async({ browser }) => {
     const context = await browser.newContext({ viewport: { width: 456, height: 789 } });
     const page = await context.newPage();
-    expect(page.viewportSize().width).toBe(456);
-    expect(page.viewportSize().height).toBe(789);
-    expect(await page.evaluate('window.innerWidth')).toBe(456);
-    expect(await page.evaluate('window.innerHeight')).toBe(789);
+    await utils.verifyViewport(page, 456, 789);
     await context.close();
   });
   it('should make a copy of default viewport', async({ browser }) => {
@@ -96,10 +93,7 @@ describe('BrowserContext', function() {
     const context = await browser.newContext({ viewport });
     viewport.width = 567;
     const page = await context.newPage();
-    expect(page.viewportSize().width).toBe(456);
-    expect(page.viewportSize().height).toBe(789);
-    expect(await page.evaluate('window.innerWidth')).toBe(456);
-    expect(await page.evaluate('window.innerHeight')).toBe(789);
+    await utils.verifyViewport(page, 456, 789);
     await context.close();
   });
   it('should respect deviceScaleFactor', async({ browser }) => {

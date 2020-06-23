@@ -65,7 +65,7 @@ export type WaitForNavigationOptions = TimeoutOptions & {
   url?: URLMatch
 };
 
-export type ElementScreenshotOptions = {
+export type ElementScreenshotOptions = TimeoutOptions & {
   type?: 'png' | 'jpeg',
   path?: string,
   quality?: number,

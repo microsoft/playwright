@@ -436,8 +436,9 @@ export class Page extends EventEmitter {
     return false;
   }
 
-  async screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {
-    return this._screenshotter.screenshotPage(options);
+  async screenshot(options: types.ScreenshotOptions = {}): Promise<Buffer> {
+    const controller = new ProgressController(this._logger, this._timeoutSettings.timeout(options), 'page.screenshot');
+    return controller.run(progress => this._screenshotter.screenshotPage(progress, options));
   }
 
   async title(): Promise<string> {

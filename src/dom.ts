@@ -212,21 +212,25 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return await this._page._delegate.scrollRectIntoViewIfNeeded(this, rect);
   }
 
-  async scrollIntoViewIfNeeded(options: types.TimeoutOptions = {}) {
-    return this._runAbortableTask(async progress => {
-      while (progress.isRunning()) {
-        const waited = await this._waitForVisible(progress);
-        throwIfNotConnected(waited);
+  async _waitAndScrollIntoViewIfNeeded(progress: Progress): Promise<void> {
+    while (progress.isRunning()) {
+      const waited = await this._waitForVisible(progress);
+      throwIfNotConnected(waited);
 
-        progress.throwIfAborted();  // Avoid action that has side-effects.
-        const result = await this._scrollRectIntoViewIfNeeded();
-        throwIfNotConnected(result);
-        if (result === 'notvisible')
-          continue;
-        assert(result === 'done');
-        return;
-      }
-    }, this._page._timeoutSettings.timeout(options), 'scrollIntoViewIfNeeded');
+      progress.throwIfAborted();  // Avoid action that has side-effects.
+      const result = await this._scrollRectIntoViewIfNeeded();
+      throwIfNotConnected(result);
+      if (result === 'notvisible')
+        continue;
+      assert(result === 'done');
+      return;
+    }
+  }
+
+  async scrollIntoViewIfNeeded(options: types.TimeoutOptions = {}) {
+    return this._runAbortableTask(
+        progress => this._waitAndScrollIntoViewIfNeeded(progress),
+        this._page._timeoutSettings.timeout(options), 'scrollIntoViewIfNeeded');
   }
 
   private async _waitForVisible(progress: Progress): Promise<'notconnected' | 'done'> {
@@ -595,8 +599,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._delegate.getBoundingBox(this);
   }
 
-  async screenshot(options?: types.ElementScreenshotOptions): Promise<Buffer> {
-    return this._page._screenshotter.screenshotElement(this, options);
+  async screenshot(options: types.ElementScreenshotOptions = {}): Promise<Buffer> {
+    return this._runAbortableTask(
+        progress => this._page._screenshotter.screenshotElement(progress, this, options),
+        this._page._timeoutSettings.timeout(options), 'screenshot');
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
