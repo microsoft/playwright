@@ -15,7 +15,7 @@
  */
 
 import { Writable } from 'stream';
-import * as dom from '../dom';
+import * as types from '../types';
 import { Frame } from '../frames';
 import { formatColors, Formatter } from '../utils/formatter';
 import { Action, actionTitle, NavigationSignal, PopupSignal, Signal } from './recorderActions';
@@ -145,7 +145,7 @@ export class TerminalOutput {
         if (action.clickCount === 2)
           method = 'dblclick';
         const modifiers = toModifiers(action.modifiers);
-        const options: dom.ClickOptions = {};
+        const options: types.MouseClickOptions = {};
         if (action.button !== 'left')
           options.button = action.button;
         if (modifiers.length)

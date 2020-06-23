@@ -432,17 +432,17 @@ export class Frame {
     return this._context('utility');
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
-  async evaluateHandle<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<types.SmartHandle<R>>;
-  async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>>;
+  async evaluateHandle<R>(pageFunction: js.Func1<void, R>, arg?: any): Promise<js.SmartHandle<R>>;
+  async evaluateHandle<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
     const context = await this._mainContext();
     return context.evaluateHandleInternal(pageFunction, arg);
   }
 
-  async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R>;
-  async evaluate<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<R>;
-  async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R> {
+  async evaluate<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<R>;
+  async evaluate<R>(pageFunction: js.Func1<void, R>, arg?: any): Promise<R>;
+  async evaluate<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
     const context = await this._mainContext();
     return context.evaluateInternal(pageFunction, arg);
@@ -488,9 +488,9 @@ export class Frame {
     }, this._page._timeoutSettings.timeout(options), 'dispatchEvent');
   }
 
-  async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
-  async $eval<R>(selector: string, pageFunction: types.FuncOn<Element, void, R>, arg?: any): Promise<R>;
-  async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
+  async $eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
+  async $eval<R>(selector: string, pageFunction: js.FuncOn<Element, void, R>, arg?: any): Promise<R>;
+  async $eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
     const handle = await this.$(selector);
     if (!handle)
@@ -500,9 +500,9 @@ export class Frame {
     return result;
   }
 
-  async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
-  async $$eval<R>(selector: string, pageFunction: types.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
-  async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
+  async $$eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
+  async $$eval<R>(selector: string, pageFunction: js.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
+  async $$eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
     const arrayHandle = await selectors._queryArray(this, selector);
     const result = await arrayHandle.evaluate(pageFunction, arg);
@@ -735,11 +735,11 @@ export class Frame {
     }, this._page._timeoutSettings.timeout(options), apiName);
   }
 
-  async click(selector: string, options: dom.ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+  async click(selector: string, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
     await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._click(progress, options), 'click');
   }
 
-  async dblclick(selector: string, options: dom.MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+  async dblclick(selector: string, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
     await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._dblclick(progress, options), 'dblclick');
   }
 
@@ -767,7 +767,7 @@ export class Frame {
     return await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.getAttribute(name), 'getAttribute');
   }
 
-  async hover(selector: string, options: dom.PointerActionOptions & types.PointerActionWaitOptions = {}) {
+  async hover(selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions = {}) {
     await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._hover(progress, options), 'hover');
   }
 
@@ -799,9 +799,9 @@ export class Frame {
     await new Promise(fulfill => setTimeout(fulfill, timeout));
   }
 
-  async waitForFunction<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>>;
-  async waitForFunction<R>(pageFunction: types.Func1<void, R>, arg?: any, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>>;
-  async waitForFunction<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg, options: types.WaitForFunctionOptions = {}): Promise<types.SmartHandle<R>> {
+  async waitForFunction<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<js.SmartHandle<R>>;
+  async waitForFunction<R>(pageFunction: js.Func1<void, R>, arg?: any, options?: types.WaitForFunctionOptions): Promise<js.SmartHandle<R>>;
+  async waitForFunction<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg, options: types.WaitForFunctionOptions = {}): Promise<js.SmartHandle<R>> {
     const { polling = 'raf' } = options;
     if (helper.isString(polling))
       assert(polling === 'raf', 'Unknown polling option: ' + polling);
@@ -839,7 +839,7 @@ export class Frame {
     this._parentFrame = null;
   }
 
-  private _scheduleRerunnableTask<T>(progress: Progress, contextType: ContextType, task: SchedulableTask<T>): Promise<types.SmartHandle<T>> {
+  private _scheduleRerunnableTask<T>(progress: Progress, contextType: ContextType, task: SchedulableTask<T>): Promise<js.SmartHandle<T>> {
     const data = this._contextData.get(contextType)!;
     const rerunnableTask = new RerunnableTask(data, progress, task);
     if (data.context)
@@ -895,9 +895,9 @@ export class Frame {
 export type SchedulableTask<T> = (context: dom.FrameExecutionContext) => Promise<js.JSHandle<types.InjectedScriptPoll<T>>>;
 
 class RerunnableTask<T> {
-  readonly promise: Promise<types.SmartHandle<T>>;
+  readonly promise: Promise<js.SmartHandle<T>>;
   private _task: SchedulableTask<T>;
-  private _resolve: (result: types.SmartHandle<T>) => void = () => {};
+  private _resolve: (result: js.SmartHandle<T>) => void = () => {};
   private _reject: (reason: Error) => void = () => {};
   private _progress: Progress;
 
@@ -905,7 +905,7 @@ class RerunnableTask<T> {
     this._task = task;
     this._progress = progress;
     data.rerunnableTasks.add(this);
-    this.promise = new Promise<types.SmartHandle<T>>((resolve, reject) => {
+    this.promise = new Promise<js.SmartHandle<T>>((resolve, reject) => {
       // The task is either resolved with a value, or rejected with a meaningful evaluation error.
       this._resolve = resolve;
       this._reject = reject;

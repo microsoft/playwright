@@ -32,6 +32,7 @@ import type {BrowserWindow} from 'electron';
 import { runAbortableTask, ProgressController } from '../progress';
 import { EventEmitter } from 'events';
 import { helper } from '../helper';
+import { LoggerSink } from '../loggerSink';
 
 type ElectronLaunchOptions = {
   args?: string[],
@@ -41,7 +42,7 @@ type ElectronLaunchOptions = {
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
   timeout?: number,
-  logger?: types.Logger,
+  logger?: LoggerSink,
 };
 
 export const ElectronEvents = {
@@ -150,15 +151,15 @@ export class ElectronApplication extends EventEmitter {
     });
   }
 
-  async evaluate<R, Arg>(pageFunction: types.FuncOn<any, Arg, R>, arg: Arg): Promise<R>;
-  async evaluate<R>(pageFunction: types.FuncOn<any, void, R>, arg?: any): Promise<R>;
-  async evaluate<R, Arg>(pageFunction: types.FuncOn<any, Arg, R>, arg: Arg): Promise<R> {
+  async evaluate<R, Arg>(pageFunction: js.FuncOn<any, Arg, R>, arg: Arg): Promise<R>;
+  async evaluate<R>(pageFunction: js.FuncOn<any, void, R>, arg?: any): Promise<R>;
+  async evaluate<R, Arg>(pageFunction: js.FuncOn<any, Arg, R>, arg: Arg): Promise<R> {
     return this._nodeElectronHandle!.evaluate(pageFunction, arg);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: types.FuncOn<any, Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
-  async evaluateHandle<R>(pageFunction: types.FuncOn<any, void, R>, arg?: any): Promise<types.SmartHandle<R>>;
-  async evaluateHandle<R, Arg>(pageFunction: types.FuncOn<any, Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: js.FuncOn<any, Arg, R>, arg: Arg): Promise<js.SmartHandle<R>>;
+  async evaluateHandle<R>(pageFunction: js.FuncOn<any, void, R>, arg?: any): Promise<js.SmartHandle<R>>;
+  async evaluateHandle<R, Arg>(pageFunction: js.FuncOn<any, Arg, R>, arg: Arg): Promise<js.SmartHandle<R>> {
     return this._nodeElectronHandle!.evaluateHandle(pageFunction, arg);
   }
 }
