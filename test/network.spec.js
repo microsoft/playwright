@@ -378,6 +378,50 @@ describe('Network Events', function() {
     expect(redirectedFrom.redirectedFrom()).toBe(null);
     expect(redirectedFrom.redirectedTo()).toBe(response.request());
   });
+  it('redirected fields should be available early', async({page, server}) => {
+    server.setRedirect('/foo.html', '/empty.html');
+    const expectFoo = request => {
+      expect(request.url()).toBe(server.PREFIX + '/foo.html');
+      expect(request.redirectedFrom()).toBe(null);
+      expect(request.redirectedTo()).not.toBe(null);
+      expect(request.redirectedTo().redirectedFrom()).toBe(request);
+    };
+    const expectEmpty = request => {
+      expect(request.url()).toBe(server.PREFIX + '/empty.html');
+      expect(request.redirectedFrom()).not.toBe(null);
+      expect(request.redirectedFrom().redirectedTo()).toBe(request);
+      expect(request.redirectedTo()).toBe(null);
+    };
+
+    const events = {};
+    for (const e of ['request', 'response', 'requestfinished']) {
+      events[e] = [];
+      page.on(e, data => events[e].push(data));
+    }
+    const waitForEvent = async event => {
+      if (!events[event].length)
+        await page.waitForEvent(event);
+      return Promise.resolve(events[event].shift());
+    };
+    const promise = page.goto(server.PREFIX + '/foo.html');
+
+    request = await waitForEvent('request');
+    expect(request.redirectedFrom()).toBe(null);
+    expect(request.redirectedTo()).toBe(null);
+    request = (await waitForEvent('response')).request();
+    expectFoo(request);
+    request = await waitForEvent('requestfinished');
+    expectFoo(request);
+
+    request = await waitForEvent('request');
+    expectEmpty(request);
+    request = (await waitForEvent('response')).request();
+    expectEmpty(request);
+    request = await waitForEvent('requestfinished');
+    expectEmpty(request);
+
+    await promise;
+  });
 });
 
 describe('Request.isNavigationRequest', () => {

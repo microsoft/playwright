@@ -22,9 +22,15 @@ import * as network from '../network';
 import * as frames from '../frames';
 import { Protocol } from './protocol';
 
+type RedirectData = {
+  request: InterceptableRequest,
+  response: Protocol.Network.responseReceivedPayload,
+};
+
 export class FFNetworkManager {
   private _session: FFSession;
   private _requests: Map<string, InterceptableRequest>;
+  private _redirects: Map<string, RedirectData>;
   private _page: Page;
   private _eventListeners: RegisteredListener[];
 
@@ -32,6 +38,7 @@ export class FFNetworkManager {
     this._session = session;
 
     this._requests = new Map();
+    this._redirects = new Map();
     this._page = page;
 
     this._eventListeners = [
@@ -51,21 +58,51 @@ export class FFNetworkManager {
   }
 
   _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
-    const redirectedFrom = event.redirectedFrom ? (this._requests.get(event.redirectedFrom) || null) : null;
-    const frame = redirectedFrom ? redirectedFrom.request.frame() : (event.frameId ? this._page._frameManager.frame(event.frameId) : null);
+    let redirect: RedirectData | undefined;
+    if (event.redirectedFrom) {
+      redirect = this._redirects.get(event.redirectedFrom);
+      this._redirects.delete(event.redirectedFrom);
+    }
+
+    const frame = redirect ? redirect.request.request.frame() : (event.frameId ? this._page._frameManager.frame(event.frameId) : null);
     if (!frame)
       return;
-    if (redirectedFrom)
-      this._requests.delete(redirectedFrom._id);
-    const request = new InterceptableRequest(this._session, frame, redirectedFrom, event);
+    const request = new InterceptableRequest(this._session, frame, redirect ? redirect.request : null, event);
+
+    if (redirect) {
+      // Handle redirected response now that redirect has arrived,
+      // so that redirectedFrom/redirectedTo are updated before we emit events.
+      this._handleRedirect(redirect);
+    }
+
     this._requests.set(request._id, request);
     this._page._frameManager.requestStarted(request.request);
+  }
+
+  _handleRedirect(redirect: RedirectData) {
+    const response = new network.Response(
+        redirect.request.request,
+        redirect.response.status,
+        redirect.response.statusText,
+        headersObject(redirect.response.headers),
+        () => Promise.resolve(Buffer.from('')));
+    this._page._frameManager.requestReceivedResponse(response);
+    this._requests.delete(redirect.request._id);
+    response._requestFinished(new Error('Response body is unavailable for redirect responses'));
+    this._page._frameManager.requestFinished(redirect.request.request);
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
     const request = this._requests.get(event.requestId);
     if (!request)
       return;
+    const isRedirected = (event.status >= 300 && event.status <= 399) || event.status === 401;
+    if (isRedirected) {
+      // We will issue events for redirects once the redirect arrives.
+      this._redirects.set(event.requestId, { request, response: event });
+      return;
+    }
+
     const getResponseBody = async () => {
       const response = await this._session.send('Network.getResponseBody', {
         requestId: request._id
@@ -74,26 +111,21 @@ export class FFNetworkManager {
         throw new Error(`Response body for ${request.request.method()} ${request.request.url()} was evicted!`);
       return Buffer.from(response.base64body, 'base64');
     };
-    const headers: network.Headers = {};
-    for (const {name, value} of event.headers)
-      headers[name.toLowerCase()] = value;
-    const response = new network.Response(request.request, event.status, event.statusText, headers, getResponseBody);
+    const response = new network.Response(request.request, event.status, event.statusText, headersObject(event.headers), getResponseBody);
     this._page._frameManager.requestReceivedResponse(response);
   }
 
   _onRequestFinished(event: Protocol.Network.requestFinishedPayload) {
+    if (this._redirects.has(event.requestId)) {
+      // We will issue events for redirects once the redirect arrives.
+      return;
+    }
     const request = this._requests.get(event.requestId);
     if (!request)
       return;
     const response = request.request._existingResponse()!;
-    // Keep redirected requests in the map for future reference as redirectedFrom.
-    const isRedirected = response.status() >= 300 && response.status() <= 399;
-    if (isRedirected) {
-      response._requestFinished(new Error('Response body is unavailable for redirect responses'));
-    } else {
-      this._requests.delete(request._id);
-      response._requestFinished();
-    }
+    this._requests.delete(request._id);
+    response._requestFinished();
     this._page._frameManager.requestFinished(request.request);
   }
 
@@ -207,5 +239,12 @@ export function headersArray(headers: network.Headers): Protocol.Network.HTTPHea
     if (!Object.is(headers[name], undefined))
       result.push({name, value: headers[name] + ''});
   }
+  return result;
+}
+
+function headersObject(headers: Protocol.Network.HTTPHeader[]): network.Headers {
+  const result: network.Headers = {};
+  for (const {name, value} of headers)
+    result[name.toLowerCase()] = value;
   return result;
 }

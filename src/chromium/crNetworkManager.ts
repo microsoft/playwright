@@ -167,14 +167,10 @@ export class CRNetworkManager {
   _onRequest(workerFrame: frames.Frame | undefined, requestWillBeSentEvent: Protocol.Network.requestWillBeSentPayload, requestPausedEvent: Protocol.Fetch.requestPausedPayload | null) {
     if (requestWillBeSentEvent.request.url.startsWith('data:'))
       return;
-    let redirectedFrom: network.Request | null = null;
+    let redirectedFrom: InterceptableRequest | null = null;
     if (requestWillBeSentEvent.redirectResponse) {
-      const request = this._requestIdToRequest.get(requestWillBeSentEvent.requestId);
       // If we connect late to the target, we could have missed the requestWillBeSent event.
-      if (request) {
-        this._handleRequestRedirect(request, requestWillBeSentEvent.redirectResponse);
-        redirectedFrom = request.request;
-      }
+      redirectedFrom = this._requestIdToRequest.get(requestWillBeSentEvent.requestId) || null;
     }
     let frame = requestWillBeSentEvent.frameId ? this._page._frameManager.frame(requestWillBeSentEvent.frameId) : workerFrame;
 
@@ -229,8 +225,12 @@ export class CRNetworkManager {
       allowInterception,
       requestWillBeSentEvent,
       requestPausedEvent,
-      redirectedFrom
+      redirectedFrom: redirectedFrom ? redirectedFrom.request : null,
     });
+    if (redirectedFrom) {
+      // Note: redirectedFrom/redirectedTo should be updated above before we emit.
+      this._handleRequestRedirect(redirectedFrom, requestWillBeSentEvent.redirectResponse!);
+    }
     this._requestIdToRequest.set(requestWillBeSentEvent.requestId, request);
     this._page._frameManager.requestStarted(request.request);
   }

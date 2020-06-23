@@ -822,14 +822,10 @@ export class WKPage implements PageDelegate {
   _onRequestWillBeSent(session: WKSession, event: Protocol.Network.requestWillBeSentPayload) {
     if (event.request.url.startsWith('data:'))
       return;
-    let redirectedFrom: network.Request | null = null;
+    let redirectedFrom: WKInterceptableRequest | null = null;
     if (event.redirectResponse) {
-      const request = this._requestIdToRequest.get(event.requestId);
       // If we connect late to the target, we could have missed the requestWillBeSent event.
-      if (request) {
-        this._handleRequestRedirect(request, event.redirectResponse);
-        redirectedFrom = request.request;
-      }
+      redirectedFrom = this._requestIdToRequest.get(event.requestId) || null;
     }
     const frame = this._page._frameManager.frame(event.frameId)!;
     // TODO(einbinder) this will fail if we are an XHR document request
@@ -839,7 +835,11 @@ export class WKPage implements PageDelegate {
       this._page._frameManager.frameUpdatedDocumentIdForNavigation(event.frameId, documentId!);
     // We do not support intercepting redirects.
     const allowInterception = this._page._needsRequestInterception() && !redirectedFrom;
-    const request = new WKInterceptableRequest(session, allowInterception, frame, event, redirectedFrom, documentId);
+    const request = new WKInterceptableRequest(session, allowInterception, frame, event, redirectedFrom ? redirectedFrom.request : null, documentId);
+    if (redirectedFrom) {
+      // Note: redirectedFrom/redirectedTo should be updated above before we emit.
+      this._handleRequestRedirect(redirectedFrom, event.redirectResponse!);
+    }
     this._requestIdToRequest.set(event.requestId, request);
     this._page._frameManager.requestStarted(request.request);
   }

@@ -171,7 +171,7 @@ export class Request {
     return JSON.parse(this._postData);
   }
 
-  headers(): {[key: string]: string} {
+  headers(): Headers {
     return { ...this._headers };
   }
 
