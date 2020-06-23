@@ -16,11 +16,12 @@
  */
 
 import * as input from '../input';
+import * as types from '../types';
 import { helper } from '../helper';
 import { macEditingCommands } from '../macEditingCommands';
 import { WKSession } from './wkConnection';
 
-function toModifiersMask(modifiers: Set<input.Modifier>): number {
+function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
   // From Source/WebKit/Shared/WebEvent.h
   let mask = 0;
   if (modifiers.has('Shift'))
@@ -46,9 +47,9 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     this._session = session;
   }
 
-  async keydown(modifiers: Set<input.Modifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
+  async keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
     const parts = [];
-    for (const modifier of (['Shift', 'Control', 'Alt', 'Meta']) as input.Modifier[]) {
+    for (const modifier of (['Shift', 'Control', 'Alt', 'Meta']) as types.KeyboardModifier[]) {
       if (modifiers.has(modifier))
         parts.push(modifier);
     }
@@ -71,7 +72,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     });
   }
 
-  async keyup(modifiers: Set<input.Modifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
+  async keyup(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
     await this._pageProxySession.send('Input.dispatchKeyEvent', {
       type: 'keyUp',
       modifiers: toModifiersMask(modifiers),
@@ -94,7 +95,7 @@ export class RawMouseImpl implements input.RawMouse {
     this._pageProxySession = session;
   }
 
-  async move(x: number, y: number, button: input.Button | 'none', buttons: Set<input.Button>, modifiers: Set<input.Modifier>): Promise<void> {
+  async move(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>): Promise<void> {
     await this._pageProxySession.send('Input.dispatchMouseEvent', {
       type: 'move',
       button,
@@ -104,7 +105,7 @@ export class RawMouseImpl implements input.RawMouse {
     });
   }
 
-  async down(x: number, y: number, button: input.Button, buttons: Set<input.Button>, modifiers: Set<input.Modifier>, clickCount: number): Promise<void> {
+  async down(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
     await this._pageProxySession.send('Input.dispatchMouseEvent', {
       type: 'down',
       button,
@@ -115,7 +116,7 @@ export class RawMouseImpl implements input.RawMouse {
     });
   }
 
-  async up(x: number, y: number, button: input.Button, buttons: Set<input.Button>, modifiers: Set<input.Modifier>, clickCount: number): Promise<void> {
+  async up(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
     await this._pageProxySession.send('Input.dispatchMouseEvent', {
       type: 'up',
       button,

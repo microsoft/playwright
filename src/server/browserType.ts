@@ -32,6 +32,7 @@ import { Progress, runAbortableTask } from '../progress';
 import * as types from '../types';
 import { TimeoutSettings } from '../timeoutSettings';
 import { WebSocketServer } from './webSocketServer';
+import { LoggerSink } from '../loggerSink';
 
 export type FirefoxUserPrefsOptions = {
   firefoxUserPrefs?: { [key: string]: string | number | boolean },
@@ -45,7 +46,7 @@ export type LaunchOptionsBase = {
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
   timeout?: number,
-  logger?: types.Logger,
+  logger?: LoggerSink,
   env?: Env,
   headless?: boolean,
   devtools?: boolean,
@@ -56,7 +57,7 @@ export type LaunchOptionsBase = {
 type ConnectOptions = {
   wsEndpoint: string,
   slowMo?: number,
-  logger?: types.Logger,
+  logger?: LoggerSink,
   timeout?: number,
 };
 export type LaunchOptions = LaunchOptionsBase & { slowMo?: number };

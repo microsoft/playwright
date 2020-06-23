@@ -29,6 +29,7 @@ import { Loggers, Logger } from './logger';
 import { EventEmitter } from 'events';
 import { ProgressController } from './progress';
 import { DebugController } from './debug/debugController';
+import { LoggerSink } from './loggerSink';
 
 type CommonContextOptions = {
   viewport?: types.Size | null,
@@ -52,7 +53,7 @@ type CommonContextOptions = {
 
 export type PersistentContextOptions = CommonContextOptions;
 export type BrowserContextOptions = CommonContextOptions & {
-  logger?: types.Logger,
+  logger?: LoggerSink,
 };
 
 export interface BrowserContext {

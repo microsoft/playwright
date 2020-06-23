@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-import { FFSession } from './ffConnection';
 import * as input from '../input';
+import * as types from '../types';
+import { FFSession } from './ffConnection';
 
-function toModifiersMask(modifiers: Set<input.Modifier>): number {
+function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
   let mask = 0;
   if (modifiers.has('Alt'))
     mask |= 1;
@@ -31,7 +32,7 @@ function toModifiersMask(modifiers: Set<input.Modifier>): number {
   return mask;
 }
 
-function toButtonNumber(button: input.Button): number {
+function toButtonNumber(button: types.MouseButton): number {
   if (button === 'left')
     return 0;
   if (button === 'middle')
@@ -41,7 +42,7 @@ function toButtonNumber(button: input.Button): number {
   return 0;
 }
 
-function toButtonsMask(buttons: Set<input.Button>): number {
+function toButtonsMask(buttons: Set<types.MouseButton>): number {
   let mask = 0;
   if (buttons.has('left'))
     mask |= 1;
@@ -59,7 +60,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     this._client = client;
   }
 
-  async keydown(modifiers: Set<input.Modifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
+  async keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
     if (code === 'MetaLeft')
       code = 'OSLeft';
     if (code === 'MetaRight')
@@ -78,7 +79,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     });
   }
 
-  async keyup(modifiers: Set<input.Modifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
+  async keyup(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
     if (code === 'MetaLeft')
       code = 'OSLeft';
     if (code === 'MetaRight')
@@ -105,7 +106,7 @@ export class RawMouseImpl implements input.RawMouse {
     this._client = client;
   }
 
-  async move(x: number, y: number, button: input.Button | 'none', buttons: Set<input.Button>, modifiers: Set<input.Modifier>): Promise<void> {
+  async move(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>): Promise<void> {
     await this._client.send('Page.dispatchMouseEvent', {
       type: 'mousemove',
       button: 0,
@@ -116,7 +117,7 @@ export class RawMouseImpl implements input.RawMouse {
     });
   }
 
-  async down(x: number, y: number, button: input.Button, buttons: Set<input.Button>, modifiers: Set<input.Modifier>, clickCount: number): Promise<void> {
+  async down(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
     await this._client.send('Page.dispatchMouseEvent', {
       type: 'mousedown',
       button: toButtonNumber(button),
@@ -128,7 +129,7 @@ export class RawMouseImpl implements input.RawMouse {
     });
   }
 
-  async up(x: number, y: number, button: input.Button, buttons: Set<input.Button>, modifiers: Set<input.Modifier>, clickCount: number): Promise<void> {
+  async up(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
     await this._client.send('Page.dispatchMouseEvent', {
       type: 'mouseup',
       button: toButtonNumber(button),

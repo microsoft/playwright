@@ -14,24 +14,7 @@
  * limitations under the License.
  */
 
-import * as js from './javascript';
-import * as dom from './dom';
-
-type NoHandles<Arg> = Arg extends js.JSHandle ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg);
-type Unboxed<Arg> =
-  Arg extends dom.ElementHandle<infer T> ? T :
-  Arg extends js.JSHandle<infer T> ? T :
-  Arg extends NoHandles<Arg> ? Arg :
-  Arg extends [infer A0] ? [Unboxed<A0>] :
-  Arg extends [infer A0, infer A1] ? [Unboxed<A0>, Unboxed<A1>] :
-  Arg extends [infer A0, infer A1, infer A2] ? [Unboxed<A0>, Unboxed<A1>, Unboxed<A2>] :
-  Arg extends Array<infer T> ? Array<Unboxed<T>> :
-  Arg extends object ? { [Key in keyof Arg]: Unboxed<Arg[Key]> } :
-  Arg;
-export type Func0<R> = string | (() => R | Promise<R>);
-export type Func1<Arg, R> = string | ((arg: Unboxed<Arg>) => R | Promise<R>);
-export type FuncOn<On, Arg2, R> = string | ((on: On, arg2: Unboxed<Arg2>) => R | Promise<R>);
-export type SmartHandle<T> = T extends Node ? dom.ElementHandle<T> : js.JSHandle<T>;
+// NOTE: No imports allowed - only primitive, self-contained types are allowed here.
 
 export type Size = { width: number, height: number };
 export type Point = { x: number, y: number };
@@ -177,11 +160,23 @@ export type ProxySettings = {
   password?: string
 };
 
-export type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
-
-export interface Logger {
-  isEnabled(name: string, severity: LoggerSeverity): boolean;
-  log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }): void;
-}
-
 export type WaitForEventOptions = Function | { predicate?: Function, timeout?: number };
+
+export type KeyboardModifier = 'Alt' | 'Control' | 'Meta' | 'Shift';
+export type MouseButton = 'left' | 'right' | 'middle';
+
+export type PointerActionOptions = {
+  modifiers?: KeyboardModifier[];
+  position?: Point;
+};
+
+export type MouseClickOptions = PointerActionOptions & {
+  delay?: number;
+  button?: MouseButton;
+  clickCount?: number;
+};
+
+export type MouseMultiClickOptions = PointerActionOptions & {
+  delay?: number;
+  button?: MouseButton;
+};
