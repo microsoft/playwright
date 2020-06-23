@@ -322,9 +322,13 @@ jobs:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
+    - run: mkdir -p coredumps
+    # Set core dump file name pattern
+    - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum -- bash -c "HEADLESS=false npm run test -- --line-break=100 2>./headful-linux-testrun.log"
+    # Enable core dumps in the subshell.
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && HEADLESS=false npm run test -- --line-break=100 2>./headful-linux-testrun.log"
       env:
         DEBUG: "*"
     - uses: actions/upload-artifact@v1
@@ -332,3 +336,8 @@ jobs:
       with:
         name: headful-linux-testrun.log
         path: headful-linux-testrun.log
+    - uses: actions/upload-artifact@v1
+      if: failure()
+      with:
+        name: headful-linux-coredumps
+        path: coredumps
