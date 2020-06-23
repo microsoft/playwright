@@ -212,11 +212,29 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return await this._page._delegate.scrollRectIntoViewIfNeeded(this, rect);
   }
 
-  async scrollIntoViewIfNeeded() {
-    const result = await this._scrollRectIntoViewIfNeeded();
-    if (result === 'notvisible')
-      throw new Error('Element is not visible');
-    throwIfNotConnected(result);
+  async scrollIntoViewIfNeeded(options: types.TimeoutOptions = {}) {
+    return this._runAbortableTask(async progress => {
+      while (progress.isRunning()) {
+        const waited = await this._waitForVisible(progress);
+        throwIfNotConnected(waited);
+
+        progress.throwIfAborted();  // Avoid action that has side-effects.
+        const result = await this._scrollRectIntoViewIfNeeded();
+        throwIfNotConnected(result);
+        if (result === 'notvisible')
+          continue;
+        assert(result === 'done');
+        return;
+      }
+    }, this._page._timeoutSettings.timeout(options), 'scrollIntoViewIfNeeded');
+  }
+
+  private async _waitForVisible(progress: Progress): Promise<'notconnected' | 'done'> {
+    const poll = await this._evaluateHandleInUtility(([injected, node]) => {
+      return injected.waitForNodeVisible(node);
+    }, {});
+    const pollHandler = new InjectedScriptPollHandler(progress, poll);
+    return throwIfError(await pollHandler.finish());
   }
 
   private async _clickablePoint(): Promise<types.Point | 'notvisible' | 'notinviewport'> {
@@ -455,12 +473,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, 'input');
   }
 
-  async selectText(): Promise<void> {
+  async selectText(options: types.TimeoutOptions = {}): Promise<void> {
     return this._runAbortableTask(async progress => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      const selected = throwIfError(await this._evaluateInUtility(([injected, node]) => injected.selectText(node), {}));
-      throwIfNotConnected(selected);
-    }, 0, 'selectText');
+      const poll = await this._evaluateHandleInUtility(([injected, node]) => {
+        return injected.waitForVisibleAndSelectText(node);
+      }, {});
+      const pollHandler = new InjectedScriptPollHandler(progress, poll);
+      const result = throwIfError(await pollHandler.finish());
+      throwIfNotConnected(result);
+    }, this._page._timeoutSettings.timeout(options), 'selectText');
   }
 
   async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}) {
