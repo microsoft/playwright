@@ -36,17 +36,30 @@ await elementHandle.screenshot({ path: 'screenshot.png' });
 
 ## Console logs
 
-You can listen for various events on the `page` object. Following are just some of the examples of the events you can assert and handle:
-
-#### `"console"` - get all console messages from the page
+Console messages logged in the page can be brought into the Node.js context.
 
 ```js
+// Listen for all console logs
+page.on('console', msg => console.log(msg.text()))
+
+// Listen for all console events and handle errors
 page.on('console', msg => {
-  // Handle only errors.
-  if (msg.type() !== 'error')
-    return;
-  console.log(`text: "${msg.text()}"`);
+  if (msg.type() === 'error')
+    console.log(`Error text: "${msg.text()}"`);
 });
+
+// Get the next console log
+const [msg] = await Promise.all([
+  page.waitForEvent('console'),
+  // Issue console.log inside the page
+  page.evaluate(() => {
+    console.log('hello', 42, {foo: 'bar'});
+  }),
+]);
+
+// Deconstruct console log arguments
+await msg.args[0].jsonValue() // hello
+await msg.args[1].jsonValue() // 42
 ```
 
 #### API reference
