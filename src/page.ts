@@ -94,6 +94,8 @@ export class Page extends EventEmitter {
   private _disconnected = false;
   private _disconnectedCallback: (e: Error) => void;
   readonly _disconnectedPromise: Promise<Error>;
+  private _crashedCallback: (e: Error) => void;
+  readonly _crashedPromise: Promise<Error>;
   readonly _browserContext: BrowserContextBase;
   readonly keyboard: input.Keyboard;
   readonly mouse: input.Mouse;
@@ -121,6 +123,8 @@ export class Page extends EventEmitter {
     this._closedPromise = new Promise(f => this._closedCallback = f);
     this._disconnectedCallback = () => {};
     this._disconnectedPromise = new Promise(f => this._disconnectedCallback = f);
+    this._crashedCallback = () => {};
+    this._crashedPromise = new Promise(f => this._crashedCallback = f);
     this._browserContext = browserContext;
     this._state = {
       viewportSize: browserContext._options.viewport ? { ...browserContext._options.viewport } : null,
@@ -153,12 +157,13 @@ export class Page extends EventEmitter {
 
   _didCrash() {
     this.emit(Events.Page.Crash);
+    this._crashedCallback(new Error('Page crashed'));
   }
 
   _didDisconnect() {
     assert(!this._disconnected, 'Page disconnected twice');
     this._disconnected = true;
-    this._disconnectedCallback(new Error('Target closed'));
+    this._disconnectedCallback(new Error('Page closed'));
   }
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {
@@ -335,6 +340,8 @@ export class Page extends EventEmitter {
     const options = typeof optionsOrPredicate === 'function' ? { predicate: optionsOrPredicate } : optionsOrPredicate;
     const progressController = new ProgressController(this._logger, this._timeoutSettings.timeout(options), 'page.waitForEvent');
     this._disconnectedPromise.then(error => progressController.abort(error));
+    if (event !== Events.Page.Crash)
+      this._crashedPromise.then(error => progressController.abort(error));
     return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate));
   }
 

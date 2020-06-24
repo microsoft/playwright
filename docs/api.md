@@ -783,7 +783,31 @@ page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
 
 #### event: 'crash'
 
-Emitted when the page crashes. Browser pages might crash if they try to allocate too much memory.
+Emitted when the page crashes. Browser pages might crash if they try to allocate too much memory. When the page crashes, ongoing and subsequent operations will throw.
+
+The most common way to deal with crashes is to catch an exception:
+```js
+try {
+  // Crash might happen during a click.
+  await page.click('button');
+  // Or while waiting for an event.
+  await page.waitForEvent('popup');
+} catch (e) {
+  // When the page crashes, exception message contains 'crash'.
+}
+```
+
+However, when manually listening to events, it might be useful to avoid stalling when the page crashes. In this case, handling `crash` event helps:
+
+```js
+await new Promise((resolve, reject) => {
+  page.on('requestfinished', async request => {
+    if (await someProcessing(request))
+      resolve(request);
+  });
+  page.on('crash', error => reject(error));
+});
+```
 
 #### event: 'dialog'
 - <[Dialog]>
