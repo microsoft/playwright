@@ -178,3 +178,5 @@ export type MouseMultiClickOptions = PointerActionOptions & {
   delay?: number;
   button?: MouseButton;
 };
+
+export type World = 'main' | 'utility';
