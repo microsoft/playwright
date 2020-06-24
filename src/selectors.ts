@@ -18,7 +18,6 @@ import * as dom from './dom';
 import * as frames from './frames';
 import { helper, assert } from './helper';
 import * as js from './javascript';
-import * as types from './types';
 import { ParsedSelector, parseSelector } from './common/selectorParser';
 
 export class Selectors {
@@ -110,14 +109,14 @@ export class Selectors {
     return result;
   }
 
-  _waitForSelectorTask(selector: string, state: 'attached' | 'detached' | 'visible' | 'hidden'): { world: 'main' | 'utility', task: frames.SchedulableTask<Element | boolean> } {
+  _waitForSelectorTask(selector: string, state: 'attached' | 'detached' | 'visible' | 'hidden'): { world: 'main' | 'utility', task: frames.SchedulableTask<Element | undefined> } {
     const parsed = this._parseSelector(selector);
     const task = async (context: dom.FrameExecutionContext) => {
       const injectedScript = await context.injectedScript();
       return injectedScript.evaluateHandle((injected, { parsed, state }) => {
         let lastElement: Element | undefined;
 
-        return injected.poll('raf', (progress: types.InjectedScriptProgress) => {
+        return injected.pollRaf((progress, continuePolling) => {
           const element = injected.querySelector(parsed, document);
           const visible = element ? injected.isVisible(element) : false;
 
@@ -131,13 +130,13 @@ export class Selectors {
 
           switch (state) {
             case 'attached':
-              return element || false;
+              return element ? element : continuePolling;
             case 'detached':
-              return !element;
+              return !element ? undefined : continuePolling;
             case 'visible':
-              return visible ? element : false;
+              return visible ? element : continuePolling;
             case 'hidden':
-              return !visible;
+              return !visible ? undefined : continuePolling;
           }
         });
       }, { parsed, state });
@@ -145,16 +144,16 @@ export class Selectors {
     return { world: this._needsMainContext(parsed) ? 'main' : 'utility', task };
   }
 
-  _dispatchEventTask(selector: string, type: string, eventInit: Object): frames.SchedulableTask<Element> {
+  _dispatchEventTask(selector: string, type: string, eventInit: Object): frames.SchedulableTask<undefined> {
     const parsed = this._parseSelector(selector);
     const task = async (context: dom.FrameExecutionContext) => {
       const injectedScript = await context.injectedScript();
       return injectedScript.evaluateHandle((injected, { parsed, type, eventInit }) => {
-        return injected.poll('raf', () => {
+        return injected.pollRaf((progress, continuePolling) => {
           const element = injected.querySelector(parsed, document);
           if (element)
             injected.dispatchEvent(element, type, eventInit);
-          return element || false;
+          return element ? undefined : continuePolling;
         });
       }, { parsed, type, eventInit });
     };

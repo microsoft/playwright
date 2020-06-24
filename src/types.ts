@@ -137,10 +137,8 @@ export type JSCoverageOptions = {
   reportAnonymousScripts?: boolean,
 };
 
-export type InjectedScriptResult<T> = { error?: string, value?: T };
-
 export type InjectedScriptProgress = {
-  canceled: boolean,
+  aborted: boolean,
   log: (message: string) => void,
   logRepeating: (message: string) => void,
 };

@@ -410,16 +410,16 @@ export class FFPage implements PageDelegate {
     return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
   }
 
-  async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'notvisible' | 'notconnected' | 'done'> {
+  async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
     return await this._session.send('Page.scrollIntoViewIfNeeded', {
       frameId: handle._context.frame._id,
       objectId: handle._objectId,
       rect,
     }).then(() => 'done' as const).catch(e => {
       if (e instanceof Error && e.message.includes('Node is detached from document'))
-        return 'notconnected';
+        return 'error:notconnected';
       if (e instanceof Error && e.message.includes('Node does not have a layout object'))
-        return 'notvisible';
+        return 'error:notvisible';
       throw e;
     });
   }
