@@ -195,7 +195,7 @@ class TestWorker {
         return;
       const environment = this._environmentStack.pop();
       for (const hook of environment.hooks('afterAll')) {
-        if (!await this._runHook(testRun, hook, environment.name()))
+        if (!await this._runHook(testRun, hook, environment.name(), [this._state]))
           return;
       }
     }
@@ -205,7 +205,7 @@ class TestWorker {
       const environment = environmentStack[this._environmentStack.length];
       this._environmentStack.push(environment);
       for (const hook of environment.hooks('beforeAll')) {
-        if (!await this._runHook(testRun, hook, environment.name()))
+        if (!await this._runHook(testRun, hook, environment.name(), [this._state]))
           return;
       }
     }
@@ -219,7 +219,7 @@ class TestWorker {
     await this._willStartTestRun(testRun);
     for (const environment of this._environmentStack) {
       for (const hook of environment.hooks('beforeEach'))
-        await this._runHook(testRun, hook, environment.name(), true);
+        await this._runHook(testRun, hook, environment.name(), [this._state, testRun]);
     }
 
     if (!testRun._error && !this._markTerminated(testRun)) {
@@ -243,15 +243,15 @@ class TestWorker {
 
     for (const environment of this._environmentStack.slice().reverse()) {
       for (const hook of environment.hooks('afterEach'))
-        await this._runHook(testRun, hook, environment.name(), true);
+        await this._runHook(testRun, hook, environment.name(), [this._state, testRun]);
     }
     await this._didFinishTestRun(testRun);
   }
 
-  async _runHook(testRun, hook, fullName, passTestRun = false) {
+  async _runHook(testRun, hook, fullName, hookArgs = []) {
     await this._willStartHook(testRun, hook, fullName);
     const timeout = this._testRunner._hookTimeout;
-    const { promise, terminate } = runUserCallback(hook.body, timeout, passTestRun ? [this._state, testRun] : [this._state]);
+    const { promise, terminate } = runUserCallback(hook.body, timeout, hookArgs);
     this._runningHookTerminate = terminate;
     let error = await promise;
     this._runningHookTerminate = null;
@@ -323,7 +323,7 @@ class TestWorker {
     while (this._environmentStack.length > 0) {
       const environment = this._environmentStack.pop();
       for (const hook of environment.hooks('afterAll'))
-        await this._runHook(null, hook, environment.name());
+        await this._runHook(null, hook, environment.name(), [this._state]);
     }
   }
 }
