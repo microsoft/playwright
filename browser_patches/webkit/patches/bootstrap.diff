@@ -8049,7 +8049,7 @@ index 1145bd4400770377a68759664ef3db9102048c15..f7f66bdbff9e0656e12d97bfe76f8979
  {
      NSWindow *window = [m_view window];
 diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
-index 6bbd1cabd27ae2847648a8c2edcf9acfcd556ff5..38d101b9a96986e40f6e9f0261fa429a3d516e2e 100644
+index 6bbd1cabd27ae2847648a8c2edcf9acfcd556ff5..0c2f1d08becd69a95c13c21d63a57cb5f3facf7b 100644
 --- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 +++ b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 @@ -37,6 +37,7 @@
@@ -8060,7 +8060,22 @@ index 6bbd1cabd27ae2847648a8c2edcf9acfcd556ff5..38d101b9a96986e40f6e9f0261fa429a
  
  #if PLATFORM(GTK)
  #include <gtk/gtk.h>
-@@ -119,6 +120,10 @@ void DrawingAreaProxyCoordinatedGraphics::paint(BackingStore::PlatformGraphicsCo
+@@ -51,6 +52,14 @@
+ #include <d3d11_1.h>
+ #endif
+ 
++#if PLATFORM(WIN)
++#include "WebPageInspectorController.h"
++#include <cairo-win32.h>
++#include <windows.h>
++#include <WebCore/HWndDC.h>
++#include <WebCore/RefPtrCairo.h>
++#endif
++
+ namespace WebKit {
+ using namespace WebCore;
+ 
+@@ -119,6 +128,10 @@ void DrawingAreaProxyCoordinatedGraphics::paint(BackingStore::PlatformGraphicsCo
  
  void DrawingAreaProxyCoordinatedGraphics::sizeDidChange()
  {
@@ -8071,7 +8086,7 @@ index 6bbd1cabd27ae2847648a8c2edcf9acfcd556ff5..38d101b9a96986e40f6e9f0261fa429a
  #if USE(DIRECT2D)
      m_backingStore = nullptr;
  #endif
-@@ -133,6 +138,11 @@ void DrawingAreaProxyCoordinatedGraphics::deviceScaleFactorDidChange()
+@@ -133,6 +146,11 @@ void DrawingAreaProxyCoordinatedGraphics::deviceScaleFactorDidChange()
      backingStoreStateDidChange(RespondImmediately);
  }
  
@@ -8083,8 +8098,34 @@ index 6bbd1cabd27ae2847648a8c2edcf9acfcd556ff5..38d101b9a96986e40f6e9f0261fa429a
  void DrawingAreaProxyCoordinatedGraphics::waitForBackingStoreUpdateOnNextPaint()
  {
      m_hasReceivedFirstUpdate = true;
+@@ -238,6 +256,25 @@ void DrawingAreaProxyCoordinatedGraphics::updateAcceleratedCompositingMode(uint6
+     updateAcceleratedCompositingMode(layerTreeContext);
+ }
+ 
++#if PLATFORM(WIN)
++void DrawingAreaProxyCoordinatedGraphics::didCompositeLayersToContext()
++{
++    HWndDC dc(m_webPageProxy.viewWidget());
++    RefPtr<cairo_surface_t> surface = adoptRef(cairo_win32_surface_create(dc));
++    if (!surface) {
++        fprintf(stderr, "didCompositeLayersToContext() failed to create surface\n");
++        return;
++    }
++
++    m_webPageProxy.inspectorController().didPaint(surface.get());
++}
++
++void DrawingAreaProxyCoordinatedGraphics::setReportAcceleratedCompositingEnabled(bool enabled)
++{
++    send(Messages::DrawingArea::SetReportAcceleratedCompositing(enabled));
++}
++#endif
++
+ #if !PLATFORM(WPE)
+ void DrawingAreaProxyCoordinatedGraphics::incorporateUpdate(const UpdateInfo& updateInfo)
+ {
 diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
-index d7695088e7cfc4f638f157338754f9f157489749..d7ed4f58f033ebfc13142f2d6e8814d6dd13dd8e 100644
+index d7695088e7cfc4f638f157338754f9f157489749..9778271c520667e955bc510c6deb591accfbbe47 100644
 --- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
 +++ b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
 @@ -30,6 +30,7 @@
@@ -8095,15 +8136,28 @@ index d7695088e7cfc4f638f157338754f9f157489749..d7ed4f58f033ebfc13142f2d6e8814d6
  #include <wtf/RunLoop.h>
  
  namespace WebCore {
-@@ -49,6 +50,7 @@ public:
+@@ -49,6 +50,10 @@ public:
  
      bool isInAcceleratedCompositingMode() const { return !m_layerTreeContext.isEmpty(); }
      const LayerTreeContext& layerTreeContext() const { return m_layerTreeContext; }
 +    void waitForSizeUpdate(Function<void ()>&&);
++#if PLATFORM(WIN)
++    void setReportAcceleratedCompositingEnabled(bool enabled);
++#endif
  
  private:
      // DrawingAreaProxy
-@@ -126,6 +128,8 @@ private:
+@@ -63,6 +68,9 @@ private:
+     void enterAcceleratedCompositingMode(uint64_t backingStoreStateID, const LayerTreeContext&) override;
+     void exitAcceleratedCompositingMode(uint64_t backingStoreStateID, const UpdateInfo&) override;
+     void updateAcceleratedCompositingMode(uint64_t backingStoreStateID, const LayerTreeContext&) override;
++#if PLATFORM(WIN)
++    void didCompositeLayersToContext() override;
++#endif
+ 
+ #if !PLATFORM(WPE)
+     void incorporateUpdate(const UpdateInfo&);
+@@ -126,6 +134,8 @@ private:
      // For a new Drawing Area don't draw anything until the WebProcess has sent over the first content.
      bool m_hasReceivedFirstUpdate { false };
  
@@ -8207,7 +8261,7 @@ index b19499a662b48e10e876b403c168dbde9bf9f3ec..2a0384a1936471f27727a6c06905704a
  
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/DrawingAreaProxy.h b/Source/WebKit/UIProcess/DrawingAreaProxy.h
-index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2875eefe9 100644
+index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..37592791af8d1e567ca332423eee00c8567c125f 100644
 --- a/Source/WebKit/UIProcess/DrawingAreaProxy.h
 +++ b/Source/WebKit/UIProcess/DrawingAreaProxy.h
 @@ -75,6 +75,7 @@ public:
@@ -8218,12 +8272,34 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
  
  #if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
      // The timeout we use when waiting for a DidUpdateGeometry message.
+@@ -160,6 +161,9 @@ private:
+     virtual void update(uint64_t /* backingStoreStateID */, const UpdateInfo&) { }
+     virtual void didUpdateBackingStoreState(uint64_t /* backingStoreStateID */, const UpdateInfo&, const LayerTreeContext&) { }
+     virtual void exitAcceleratedCompositingMode(uint64_t /* backingStoreStateID */, const UpdateInfo&) { }
++#endif
++#if PLATFORM(WIN)
++    virtual void didCompositeLayersToContext() { }
+ #endif
+     bool m_startedReceivingMessages { false };
+ };
+diff --git a/Source/WebKit/UIProcess/DrawingAreaProxy.messages.in b/Source/WebKit/UIProcess/DrawingAreaProxy.messages.in
+index b0722e7da81e56530deb570b82ed7cfece970362..1d1463231269363939e4c746a6dada5e29f3fd18 100644
+--- a/Source/WebKit/UIProcess/DrawingAreaProxy.messages.in
++++ b/Source/WebKit/UIProcess/DrawingAreaProxy.messages.in
+@@ -36,4 +36,7 @@ messages -> DrawingAreaProxy NotRefCounted {
+     DidUpdateBackingStoreState(uint64_t backingStoreStateID, WebKit::UpdateInfo updateInfo, WebKit::LayerTreeContext context)
+     ExitAcceleratedCompositingMode(uint64_t backingStoreStateID, WebKit::UpdateInfo updateInfo)
+ #endif
++#if PLATFORM(WIN)
++    DidCompositeLayersToContext()
++#endif
+ }
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..0f4badcf6b1e03680031ae6b45c28783a8f44519
+index 0000000000000000000000000000000000000000..3f091aa8ea5e44980f2ea62e26ab860697c6a066
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,144 @@
+@@ -0,0 +1,166 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8263,6 +8339,10 @@ index 0000000000000000000000000000000000000000..0f4badcf6b1e03680031ae6b45c28783
 +#include "DrawingAreaProxy.h"
 +#endif
 +
++#if PLATFORM(WIN)
++#include "DrawingAreaProxyCoordinatedGraphics.h"
++#endif
++
 +namespace WebKit {
 +
 +using namespace Inspector;
@@ -8299,6 +8379,17 @@ index 0000000000000000000000000000000000000000..0f4badcf6b1e03680031ae6b45c28783
 +}
 +#endif
 +
++#if PLATFORM(WIN)
++void InspectorScreencastAgent::didCommitProvisionalPage()
++{
++    if (!m_encoder)
++        return;
++
++    if (auto* drawingArea = m_page.drawingArea())
++        static_cast<DrawingAreaProxyCoordinatedGraphics*>(drawingArea)->setReportAcceleratedCompositingEnabled(true);
++}
++#endif
++
 +void InspectorScreencastAgent::startVideoRecording(Inspector::ErrorString& errorString, const String& file, int width, int height, const double* scale)
 +{
 +    if (m_encoder) {
@@ -8326,6 +8417,10 @@ index 0000000000000000000000000000000000000000..0f4badcf6b1e03680031ae6b45c28783
 +#if PLATFORM(MAC)
 +    scheduleFrameEncoding();
 +#endif
++#if PLATFORM(WIN)
++    if (auto* drawingArea = m_page.drawingArea())
++        static_cast<DrawingAreaProxyCoordinatedGraphics*>(drawingArea)->setReportAcceleratedCompositingEnabled(true);
++#endif
 +}
 +
 +void InspectorScreencastAgent::stopVideoRecording(Ref<StopVideoRecordingCallback>&& callback)
@@ -8334,7 +8429,10 @@ index 0000000000000000000000000000000000000000..0f4badcf6b1e03680031ae6b45c28783
 +        callback->sendFailure("Not recording"_s);
 +        return;
 +    }
-+
++#if PLATFORM(WIN)
++    if (auto* drawingArea = m_page.drawingArea())
++        static_cast<DrawingAreaProxyCoordinatedGraphics*>(drawingArea)->setReportAcceleratedCompositingEnabled(false);
++#endif
 +    m_encoder->finish([protectRef = m_encoder.copyRef(), callback = WTFMove(callback)] {
 +        callback->sendSuccess();
 +    });
@@ -8370,10 +8468,10 @@ index 0000000000000000000000000000000000000000..0f4badcf6b1e03680031ae6b45c28783
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..a669ef6711138110c1111aef76f32934c151cc67
+index 0000000000000000000000000000000000000000..003ad364d76071ce30d11cce7d1b61a66e2c4d77
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
-@@ -0,0 +1,76 @@
+@@ -0,0 +1,79 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8433,6 +8531,9 @@ index 0000000000000000000000000000000000000000..a669ef6711138110c1111aef76f32934
 +#if USE(CAIRO)
 +    void didPaint(cairo_surface_t*);
 +#endif
++#if PLATFORM(WIN)
++    void didCommitProvisionalPage();
++#endif
 +
 +    void startVideoRecording(Inspector::ErrorString&, const String& file, int width, int height, const double* scale) override;
 +    void stopVideoRecording(Ref<StopVideoRecordingCallback>&&) override;
@@ -8452,10 +8553,10 @@ index 0000000000000000000000000000000000000000..a669ef6711138110c1111aef76f32934
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..f95ca1a9a9faecdc83de8289d0d5be46c135d907
+index 0000000000000000000000000000000000000000..5b28d1ba9fe79d35af2e15f97aeb8df31a898a11
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,440 @@
+@@ -0,0 +1,442 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -8626,8 +8727,9 @@ index 0000000000000000000000000000000000000000..f95ca1a9a9faecdc83de8289d0d5be46
 +        : m_surface(WTFMove(surface))
 +    { }
 +#elif PLATFORM(MAC)
-+    explicit VPXFrame(RetainPtr<CGImageRef> windowImage)
++    VPXFrame(RetainPtr<CGImageRef> windowImage, Optional<double> scale)
 +        : m_windowImage(WTFMove(windowImage))
++        , m_scale(scale)
 +    { }
 +#endif
 +
@@ -8644,7 +8746,7 @@ index 0000000000000000000000000000000000000000..f95ca1a9a9faecdc83de8289d0d5be46
 +        int argb_stride = image->w * 4;
 +        UniqueArray<uint8_t> buffer = makeUniqueArray<uint8_t>(argb_stride * image->h);
 +        uint8_t* argb_data = buffer.get();
-+        ScreencastEncoder::imageToARGB(m_windowImage.get(), argb_data, image->w, image->h);
++        ScreencastEncoder::imageToARGB(m_windowImage.get(), argb_data, image->w, image->h, m_scale);
 +#endif
 +        const int y_stride = image->stride[0];
 +        ASSERT(image->stride[1] == image->stride[2]);
@@ -8666,6 +8768,7 @@ index 0000000000000000000000000000000000000000..f95ca1a9a9faecdc83de8289d0d5be46
 +    RefPtr<cairo_surface_t> m_surface;
 +#elif PLATFORM(MAC)
 +    RetainPtr<CGImageRef> m_windowImage;
++    Optional<double> m_scale;
 +#endif
 +    int m_duration = 0;
 +};
@@ -8875,7 +8978,7 @@ index 0000000000000000000000000000000000000000..f95ca1a9a9faecdc83de8289d0d5be46
 +    fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
 +    flushLastFrame();
 +
-+    m_lastFrame = makeUnique<VPXFrame>(WTFMove(windowImage));
++    m_lastFrame = makeUnique<VPXFrame>(WTFMove(windowImage), m_scale);
 +}
 +#endif
 +
@@ -8898,7 +9001,7 @@ index 0000000000000000000000000000000000000000..f95ca1a9a9faecdc83de8289d0d5be46
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..09dca3bb8d9e50810f54298b1cf643c1fa3c5965
+index 0000000000000000000000000000000000000000..df283ee565b1691c49e68b79f40a72aefca77bf6
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
 @@ -0,0 +1,75 @@
@@ -8965,7 +9068,7 @@ index 0000000000000000000000000000000000000000..09dca3bb8d9e50810f54298b1cf643c1
 +private:
 +    void flushLastFrame();
 +#if PLATFORM(MAC)
-+    static void imageToARGB(CGImageRef, uint8_t* rgba_data, int width, int height);
++    static void imageToARGB(CGImageRef, uint8_t* rgba_data, int width, int height, Optional<double> scale);
 +#endif
 +
 +    std::unique_ptr<VPXCodec> m_vpxCodec;
@@ -9091,7 +9194,7 @@ index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..79f3ff84327dc075ec96983e04db4b10
  
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
-index 1861cff806131196ea49b4f8aca6665beebbf6e8..6017f0336eae1717a2a595e735cace19301f1b35 100644
+index 1861cff806131196ea49b4f8aca6665beebbf6e8..da16f176bb7273727cea3046d2ec66a81fc53bb9 100644
 --- a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
 @@ -26,12 +26,20 @@
@@ -9372,7 +9475,19 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..6017f0336eae1717a2a595e735cace19
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -241,4 +428,20 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
+@@ -212,6 +399,11 @@ void WebPageInspectorController::didCommitProvisionalPage(WebCore::PageIdentifie
+         m_targetAgent->targetDestroyed(*target);
+     m_targets.clear();
+     m_targets.set(newTarget->identifier(), WTFMove(newTarget));
++
++#if PLATFORM(WIN)
++    if (m_frontendRouter->hasFrontends() && m_screecastAgent)
++        m_screecastAgent->didCommitProvisionalPage();
++#endif
+ }
+ 
+ WebPageAgentContext WebPageInspectorController::webPageAgentContext()
+@@ -241,4 +433,20 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
      m_targets.set(target->identifier(), WTFMove(target));
  }
  
@@ -9526,10 +9641,10 @@ index c2df3ceb4b69f32060dcbd90d04dc6cb5900de0d..af9c472a1b9137424081b3f1f9fd9448
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm b/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..678757082a087f039e21da1456c3a28f553c1a13
+index 0000000000000000000000000000000000000000..aa06bdfb5170428ace1143ae52b413ac6b987040
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm
-@@ -0,0 +1,47 @@
+@@ -0,0 +1,51 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -9563,14 +9678,18 @@ index 0000000000000000000000000000000000000000..678757082a087f039e21da1456c3a28f
 +
 +namespace WebKit {
 +
-+void ScreencastEncoder::imageToARGB(CGImageRef image, uint8_t* argb_data, int width, int height)
++void ScreencastEncoder::imageToARGB(CGImageRef image, uint8_t* argb_data, int width, int height, Optional<double> scale)
 +{
 +    size_t bitsPerComponent = 8;
 +    size_t bytesPerPixel = 4;
 +    size_t bytesPerRow = bytesPerPixel * width;
 +    RetainPtr<CGColorSpaceRef> colorSpace = adoptCF(CGColorSpaceCreateDeviceRGB());
 +    RetainPtr<CGContextRef> context = adoptCF(CGBitmapContextCreate(argb_data, width, height, bitsPerComponent, bytesPerRow, colorSpace.get(), kCGImageAlphaNoneSkipFirst | kCGBitmapByteOrder32Little));
-+
++    if (scale) {
++        CGContextScaleCTM(context.get(), *scale, *scale);
++        // Ensure that top-left cornder stays in place.
++        CGContextTranslateCTM(context.get(), 0, ((1 - *scale) / *scale) * height);
++    }
 +    size_t imageWidth = CGImageGetWidth(image);
 +    size_t imageHeight = CGImageGetHeight(image);
 +    CGContextDrawImage(context.get(), CGRectMake(0, 0, imageWidth, imageHeight), image);
@@ -14252,6 +14371,102 @@ index 8685e23d0d468601c459954775fe6f565b0ce7ac..f9d49292837bf390b81eadeaebe2d4d5
  
      m_viewportController.didScroll(rect.location());
      if (m_isDiscardable)
+diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHostTextureMapper.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHostTextureMapper.cpp
+index 87b864636e3b863425a6259f0e52864bbc9f5148..0ae141af6a821e4aea3f257c825b90c94e3883c7 100644
+--- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHostTextureMapper.cpp
++++ b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHostTextureMapper.cpp
+@@ -29,6 +29,7 @@
+ 
+ #if USE(GRAPHICS_LAYER_TEXTURE_MAPPER)
+ 
++#include "DrawingArea.h"
+ #include "WebPage.h"
+ #include <GLES2/gl2.h>
+ #include <WebCore/Document.h>
+@@ -72,6 +73,8 @@ void LayerTreeHost::compositeLayersToContext()
+     m_textureMapper->endPainting();
+ 
+     m_context->swapBuffers();
++    if (auto* drawingArea = m_webPage.drawingArea())
++        drawingArea->didCompositeLayersToContext();
+ }
+ 
+ bool LayerTreeHost::flushPendingLayerChanges()
+diff --git a/Source/WebKit/WebProcess/WebPage/DrawingArea.cpp b/Source/WebKit/WebProcess/WebPage/DrawingArea.cpp
+index 97429e9769d2accf3d99949e2f6ca8a4e8acece9..ae2fc8308acf53931e00c2ed9a1563f464fb4975 100644
+--- a/Source/WebKit/WebProcess/WebPage/DrawingArea.cpp
++++ b/Source/WebKit/WebProcess/WebPage/DrawingArea.cpp
+@@ -27,6 +27,7 @@
+ #include "DrawingArea.h"
+ 
+ #include "DrawingAreaMessages.h"
++#include "DrawingAreaProxyMessages.h"
+ #include "WebPage.h"
+ #include "WebPageCreationParameters.h"
+ #include "WebProcess.h"
+@@ -89,6 +90,14 @@ RefPtr<WebCore::DisplayRefreshMonitor> DrawingArea::createDisplayRefreshMonitor(
+ }
+ #endif
+ 
++#if PLATFORM(WIN)
++void DrawingArea::didCompositeLayersToContext()
++{
++    if (m_isReportingAcceleratedCompositing)
++        send(Messages::DrawingAreaProxy::DidCompositeLayersToContext());
++}
++#endif
++
+ void DrawingArea::removeMessageReceiverIfNeeded()
+ {
+     if (m_hasRemovedMessageReceiver)
+diff --git a/Source/WebKit/WebProcess/WebPage/DrawingArea.h b/Source/WebKit/WebProcess/WebPage/DrawingArea.h
+index ce7758d0b9468d9b7f6f845b4deaf5671274fecd..59a40482dad05dad593997c23a0b5125a961c164 100644
+--- a/Source/WebKit/WebProcess/WebPage/DrawingArea.h
++++ b/Source/WebKit/WebProcess/WebPage/DrawingArea.h
+@@ -144,6 +144,9 @@ public:
+     virtual void didChangeViewportAttributes(WebCore::ViewportAttributes&&) = 0;
+     virtual void deviceOrPageScaleFactorChanged() = 0;
+ #endif
++#if PLATFORM(WIN)
++    void didCompositeLayersToContext();
++#endif
+ 
+     virtual void adoptLayersFromDrawingArea(DrawingArea&) { }
+     virtual void adoptDisplayRefreshMonitorsFromDrawingArea(DrawingArea&) { }
+@@ -171,6 +174,9 @@ private:
+ #if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
+     virtual void updateBackingStoreState(uint64_t /*backingStoreStateID*/, bool /*respondImmediately*/, float /*deviceScaleFactor*/, const WebCore::IntSize& /*size*/,
+                                          const WebCore::IntSize& /*scrollOffset*/) { }
++#endif
++#if PLATFORM(WIN)
++    void setReportAcceleratedCompositing(bool enabled) { m_isReportingAcceleratedCompositing = enabled; }
+ #endif
+     virtual void didUpdate() { }
+ 
+@@ -186,6 +192,9 @@ private:
+ #endif
+ 
+     bool m_hasRemovedMessageReceiver { false };
++#if PLATFORM(WIN)
++    bool m_isReportingAcceleratedCompositing { false };
++#endif
+ };
+ 
+ } // namespace WebKit
+diff --git a/Source/WebKit/WebProcess/WebPage/DrawingArea.messages.in b/Source/WebKit/WebProcess/WebPage/DrawingArea.messages.in
+index f207e107e95270a7f9189cba9ab677534aa22792..cb7d776279c97db54eae7748019c47846193923f 100644
+--- a/Source/WebKit/WebProcess/WebPage/DrawingArea.messages.in
++++ b/Source/WebKit/WebProcess/WebPage/DrawingArea.messages.in
+@@ -24,6 +24,9 @@ messages -> DrawingArea NotRefCounted {
+ #if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
+     UpdateBackingStoreState(uint64_t backingStoreStateID, bool respondImmediately, float deviceScaleFactor, WebCore::IntSize size, WebCore::IntSize scrollOffset)
+ #endif
++#if PLATFORM(WIN)
++    SetReportAcceleratedCompositing(bool enabled)
++#endif
+ 
+     DidUpdate()
+ 
 diff --git a/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp b/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp
 index b2d54a627b94583bda3518c4e7c3364481b605a4..d407e32b6a7b8b27925c49391e86d42c9b3dfa8b 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp

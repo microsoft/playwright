@@ -42,6 +42,15 @@ We currently use MINGW environment that comes with Firefox to run our buildbot i
 Browser toolchains:
 - Firefox: Follow instructions on [Building Firefox for Windows](https://developer.mozilla.org/en-US/docs/Mozilla/Developer_guide/Build_Instructions/Windows_Prerequisites). Get the checkout with mercurial and run "./mach bootstrap" from mercurial root.
 - WebKit: mostly follow instructions on [Building WebKit For Windows](https://trac.webkit.org/wiki/BuildingCairoOnWindows). Use chocolatey to install dependencies; we don't use clang to compile webkit on windows. (**NOTE**: we didn't need to install pywin32 with pip and just skipped that step).
+- Our WebKit port requires libvpx. Install [vcpkg](https://github.com/Microsoft/vcpkg) and build libvpx from source. Run the following commands in Windows Terminal as Administrator(required for bootstrap-vcpkg.bat).
+```bash
+cd c:\
+git clone https://github.com/microsoft/vcpkg.git
+cd vcpkg
+.\bootstrap-vcpkg.bat
+.\vcpkg.exe install libvpx --triplet x64-windows
+```
+ If you install vcpkg in a different location, cmake files should be pointed to the new location (see `-DLIBVPX_PACKAGE_PATH` parameter in [`buildwin.bat`](https://github.com/microsoft/playwright/blob/master/browser_patches/webkit/buildwin.bat)).
 
 After this step, you should:
 - have `c:\mozilla-build` folder and `c:\mozilla-source` folder with firefox checkout.
