@@ -21,17 +21,13 @@ const iPhone = playwright.devices['iPhone 6'];
 const iPhoneLandscape = playwright.devices['iPhone 6 landscape'];
 
 describe('BrowserContext({viewport})', function() {
-  it('should get the proper viewport size', async({page, server}) => {
-    expect(page.viewportSize()).toEqual({width: 1280, height: 720});
-    expect(await page.evaluate(() => window.innerWidth)).toBe(1280);
-    expect(await page.evaluate(() => window.innerHeight)).toBe(720);
+  it('should get the proper default viewport size', async({page, server}) => {
+    await utils.verifyViewport(page, 1280, 720);
   });
   it('should set the proper viewport size', async({page, server}) => {
-    expect(page.viewportSize()).toEqual({width: 1280, height: 720});
+    await utils.verifyViewport(page, 1280, 720);
     await page.setViewportSize({width: 123, height: 456});
-    expect(page.viewportSize()).toEqual({width: 123, height: 456});
-    expect(await page.evaluate(() => window.innerWidth)).toBe(123);
-    expect(await page.evaluate(() => window.innerHeight)).toBe(456);
+    await utils.verifyViewport(page, 123, 456);
   });
   it('should emulate device width', async({page, server}) => {
     expect(page.viewportSize()).toEqual({width: 1280, height: 720});

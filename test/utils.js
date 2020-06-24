@@ -87,6 +87,13 @@ const utils = module.exports = {
     return result;
   },
 
+  verifyViewport: async (page, width, height) => {
+    expect(page.viewportSize().width).toBe(width);
+    expect(page.viewportSize().height).toBe(height);
+    expect(await page.evaluate('window.innerWidth')).toBe(width);
+    expect(await page.evaluate('window.innerHeight')).toBe(height);
+  },
+
   initializeFlakinessDashboardIfNeeded: async function(testRunner) {
     // Generate testIDs for all tests and verify they don't clash.
     // This will add |test.testId| for every test.
