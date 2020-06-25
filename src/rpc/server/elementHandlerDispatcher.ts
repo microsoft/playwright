@@ -1,0 +1,164 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { ElementHandle } from '../../dom';
+import * as js from '../../javascript';
+import * as types from '../../types';
+import { ElementHandleChannel, FrameChannel } from '../channels';
+import { DispatcherScope } from '../dispatcher';
+import { convertArg, FrameDispatcher } from './frameDispatcher';
+import { JSHandleDispatcher } from './jsHandleDispatcher';
+
+export class ElementHandleDispatcher extends JSHandleDispatcher implements ElementHandleChannel {
+  private _elementHandle: ElementHandle;
+
+  static from(scope: DispatcherScope, handle: js.JSHandle): JSHandleDispatcher {
+    if ((handle as any)[scope.dispatcherSymbol])
+      return (handle as any)[scope.dispatcherSymbol];
+    return handle.asElement() ? new ElementHandleDispatcher(scope, handle.asElement()!) : new JSHandleDispatcher(scope, handle);
+  }
+
+  static fromNullable(scope: DispatcherScope, handle: js.JSHandle | null): JSHandleDispatcher | null {
+    if (!handle)
+      return null;
+    return ElementHandleDispatcher.from(scope, handle);
+  }
+
+  static fromElement(scope: DispatcherScope, handle: ElementHandle): ElementHandleDispatcher {
+    if ((handle as any)[scope.dispatcherSymbol])
+      return (handle as any)[scope.dispatcherSymbol];
+    return new ElementHandleDispatcher(scope, handle);
+  }
+
+  static fromNullableElement(scope: DispatcherScope, handle: ElementHandle | null): ElementHandleDispatcher | null {
+    if (!handle)
+      return null;
+    return ElementHandleDispatcher.fromElement(scope, handle);
+  }
+
+
+  constructor(scope: DispatcherScope, elementHandle: ElementHandle) {
+    super(scope, elementHandle, true);
+    this._elementHandle = elementHandle;
+    this._initialize({ preview: elementHandle.toString(), frame: FrameDispatcher.from(scope, elementHandle._context.frame) });
+    this._elementHandle = elementHandle;
+  }
+
+  async ownerFrame(): Promise<FrameChannel | null> {
+    return FrameDispatcher.fromNullable(this._scope, await this._elementHandle.ownerFrame());
+  }
+
+  async contentFrame(): Promise<FrameChannel | null> {
+    return FrameDispatcher.fromNullable(this._scope, await this._elementHandle.contentFrame());
+  }
+
+  async getAttribute(params: { name: string }): Promise<string | null> {
+    return this._elementHandle.getAttribute(params.name);
+  }
+
+  async textContent(): Promise<string | null> {
+    return this._elementHandle.textContent();
+  }
+
+  async innerText(): Promise<string> {
+    return this._elementHandle.innerText();
+  }
+
+  async innerHTML(): Promise<string> {
+    return this._elementHandle.innerHTML();
+  }
+
+  async dispatchEvent(params: { type: string, eventInit: Object }) {
+    await this._elementHandle.dispatchEvent(params.type, params.eventInit);
+  }
+
+  async scrollIntoViewIfNeeded(params: { options?: types.TimeoutOptions }) {
+    await this._elementHandle.scrollIntoViewIfNeeded(params.options);
+  }
+
+  async hover(params: { options?: types.PointerActionOptions & types.PointerActionWaitOptions }) {
+    await this._elementHandle.hover(params.options);
+  }
+
+  async click(params: { options?: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions }) {
+    await this._elementHandle.click(params.options);
+  }
+
+  async dblclick(params: { options?: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions }) {
+    await this._elementHandle.dblclick(params.options);
+  }
+
+  async selectOption(params: { values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions }): Promise<string[]> {
+    return this._elementHandle.selectOption(params.values as any, params.options);
+  }
+
+  async fill(params: { value: string, options: types.NavigatingActionWaitOptions }) {
+    await this._elementHandle.fill(params.value, params.options);
+  }
+
+  async selectText(params: { options?: types.TimeoutOptions }) {
+    await this._elementHandle.selectText(params.options);
+  }
+
+  async setInputFiles(params: { files: string | types.FilePayload | string[] | types.FilePayload[], options?: types.NavigatingActionWaitOptions }) {
+    await this._elementHandle.setInputFiles(params.files, params.options);
+  }
+
+  async focus() {
+    await this._elementHandle.focus();
+  }
+
+  async type(params: { text: string, options: { delay?: number } & types.NavigatingActionWaitOptions }) {
+    await this._elementHandle.type(params.text, params.options);
+  }
+
+  async press(params: { key: string, options: { delay?: number } & types.NavigatingActionWaitOptions }) {
+    await this._elementHandle.type(params.key, params.options);
+  }
+
+  async check(params: { options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions }) {
+    await this._elementHandle.check(params.options);
+  }
+
+  async uncheck(params: { options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions }) {
+    await this._elementHandle.uncheck(params.options);
+  }
+
+  async boundingBox(): Promise<types.Rect | null> {
+    return await this._elementHandle.boundingBox();
+  }
+
+  async screenshot(params: { options?: types.ElementScreenshotOptions }): Promise<Buffer> {
+    return await this._elementHandle.screenshot(params.options);
+  }
+
+  async querySelector(params: { selector: string }): Promise<ElementHandleChannel | null> {
+    return ElementHandleDispatcher.fromNullableElement(this._scope, await this._elementHandle.$(params.selector));
+  }
+
+  async querySelectorAll(params: { selector: string }): Promise<ElementHandleChannel[]> {
+    const elements = await this._elementHandle.$$(params.selector);
+    return elements.map(e => ElementHandleDispatcher.fromElement(this._scope, e));
+  }
+
+  async $eval(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<any> {
+    return this._elementHandle._$evalExpression(params.selector, params.expression, params.isFunction, convertArg(this._scope, params.arg));
+  }
+
+  async $$eval(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<any> {
+    return this._elementHandle._$$evalExpression(params.selector, params.expression, params.isFunction, convertArg(this._scope, params.arg));
+  }
+}

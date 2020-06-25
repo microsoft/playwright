@@ -213,7 +213,7 @@ export async function evaluateExpression(context: ExecutionContext, returnByValu
 
   const script = `(utilityScript, ...args) => utilityScript.callFunction(...args)` + sourceMap.generateSourceUrl();
   try {
-    return context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, utilityScriptValues, utilityScriptObjectIds);
+    return await context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, utilityScriptValues, utilityScriptObjectIds);
   } finally {
     toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
   }
