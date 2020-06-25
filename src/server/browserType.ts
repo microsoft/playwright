@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
-import { BrowserContext, PersistentContextOptions, verifyProxySettings, validateBrowserContextOptions } from '../browserContext';
+import { BrowserContext, verifyProxySettings, validateBrowserContextOptions } from '../browserContext';
 import { BrowserServer } from './browserServer';
 import * as browserPaths from '../install/browserPaths';
 import { Loggers, Logger } from '../logger';
@@ -34,41 +34,21 @@ import { TimeoutSettings } from '../timeoutSettings';
 import { WebSocketServer } from './webSocketServer';
 import { LoggerSink } from '../loggerSink';
 
-export type FirefoxUserPrefsOptions = {
-  firefoxUserPrefs?: { [key: string]: string | number | boolean },
-};
+type FirefoxPrefsOptions = { firefoxUserPrefs?: { [key: string]: string | number | boolean } };
+type LaunchOptions = types.LaunchOptions & { logger?: LoggerSink };
+type ConnectOptions = types.ConnectOptions & { logger?: LoggerSink };
 
-export type LaunchOptionsBase = {
-  executablePath?: string,
-  args?: string[],
-  ignoreDefaultArgs?: boolean | string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
-  timeout?: number,
-  logger?: LoggerSink,
-  env?: Env,
-  headless?: boolean,
-  devtools?: boolean,
-  proxy?: types.ProxySettings,
-  downloadsPath?: string,
-};
 
-type ConnectOptions = {
-  wsEndpoint: string,
-  slowMo?: number,
-  logger?: LoggerSink,
-  timeout?: number,
-};
-export type LaunchOptions = LaunchOptionsBase & { slowMo?: number };
-type LaunchServerOptions = LaunchOptionsBase & { port?: number };
+export type LaunchNonPersistentOptions = LaunchOptions & FirefoxPrefsOptions;
+type LaunchPersistentOptions = LaunchOptions & types.BrowserContextOptions;
+type LaunchServerOptions = types.LaunchServerOptions & { logger?: LoggerSink } & FirefoxPrefsOptions;
 
 export interface BrowserType {
   executablePath(): string;
   name(): string;
-  launch(options?: LaunchOptions & FirefoxUserPrefsOptions): Promise<Browser>;
-  launchServer(options?: LaunchServerOptions & FirefoxUserPrefsOptions): Promise<BrowserServer>;
-  launchPersistentContext(userDataDir: string, options?: LaunchOptions & PersistentContextOptions): Promise<BrowserContext>;
+  launch(options?: LaunchNonPersistentOptions): Promise<Browser>;
+  launchServer(options?: LaunchServerOptions): Promise<BrowserServer>;
+  launchPersistentContext(userDataDir: string, options?: LaunchPersistentOptions): Promise<BrowserContext>;
   connect(options: ConnectOptions): Promise<Browser>;
 }
 
@@ -102,7 +82,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     return this._name;
   }
 
-  async launch(options: LaunchOptions = {}): Promise<Browser> {
+  async launch(options: LaunchNonPersistentOptions = {}): Promise<Browser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     options = validateLaunchOptions(options);
@@ -111,7 +91,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     return browser;
   }
 
-  async launchPersistentContext(userDataDir: string, options: LaunchOptions & PersistentContextOptions = {}): Promise<BrowserContext> {
+  async launchPersistentContext(userDataDir: string, options: LaunchPersistentOptions = {}): Promise<BrowserContext> {
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     options = validateLaunchOptions(options);
     const persistent = validateBrowserContextOptions(options);
@@ -120,7 +100,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     return browser._defaultContext!;
   }
 
-  async _innerLaunch(progress: Progress, options: LaunchOptions, logger: Loggers, persistent: PersistentContextOptions | undefined, userDataDir?: string): Promise<BrowserBase> {
+  async _innerLaunch(progress: Progress, options: LaunchOptions, logger: Loggers, persistent: types.BrowserContextOptions | undefined, userDataDir?: string): Promise<BrowserBase> {
     options.proxy = options.proxy ? verifyProxySettings(options.proxy) : undefined;
     const { browserServer, downloadsPath, transport } = await this._launchServer(progress, options, !!persistent, logger, userDataDir);
     if ((options as any).__testHookBeforeCreateBrowser)
@@ -246,7 +226,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     return { browserServer, downloadsPath, transport };
   }
 
-  abstract _defaultArgs(options: LaunchOptionsBase, isPersistent: boolean, userDataDir: string): string[];
+  abstract _defaultArgs(options: types.LaunchOptionsBase, isPersistent: boolean, userDataDir: string): string[];
   abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BrowserBase>;
   abstract _startWebSocketServer(transport: ConnectionTransport, logger: Logger, port: number): WebSocketServer;
   abstract _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;
@@ -260,7 +240,7 @@ function copyTestHooks(from: object, to: object) {
   }
 }
 
-function validateLaunchOptions<Options extends LaunchOptionsBase>(options: Options): Options {
+function validateLaunchOptions<Options extends types.LaunchOptionsBase>(options: Options): Options {
   const { devtools = false, headless = !helper.isDebugMode() && !devtools } = options;
   return { ...options, devtools, headless };
 }

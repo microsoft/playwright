@@ -20,6 +20,7 @@ import { FFSession } from './ffConnection';
 import { Page } from '../page';
 import * as network from '../network';
 import * as frames from '../frames';
+import * as types from '../types';
 import { Protocol } from './protocol';
 
 export class FFNetworkManager {
@@ -74,7 +75,7 @@ export class FFNetworkManager {
         throw new Error(`Response body for ${request.request.method()} ${request.request.url()} was evicted!`);
       return Buffer.from(response.base64body, 'base64');
     };
-    const headers: network.Headers = {};
+    const headers: types.Headers = {};
     for (const {name, value} of event.headers)
       headers[name.toLowerCase()] = value;
     const response = new network.Response(request.request, event.status, event.statusText, headers, getResponseBody);
@@ -149,7 +150,7 @@ class InterceptableRequest implements network.RouteDelegate {
     this._id = payload.requestId;
     this._session = session;
 
-    const headers: network.Headers = {};
+    const headers: types.Headers = {};
     for (const {name, value} of payload.headers)
       headers[name.toLowerCase()] = value;
 
@@ -157,7 +158,7 @@ class InterceptableRequest implements network.RouteDelegate {
         payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, payload.postData || null, headers);
   }
 
-  async continue(overrides: { method?: string; headers?: network.Headers; postData?: string }) {
+  async continue(overrides: { method?: string; headers?: types.Headers; postData?: string }) {
     const {
       method,
       headers,
@@ -171,7 +172,7 @@ class InterceptableRequest implements network.RouteDelegate {
     });
   }
 
-  async fulfill(response: network.FulfillResponse) {
+  async fulfill(response: types.FulfillResponse) {
     const responseBody = response.body && helper.isString(response.body) ? Buffer.from(response.body) : (response.body || null);
 
     const responseHeaders: { [s: string]: string; } = {};
@@ -201,7 +202,7 @@ class InterceptableRequest implements network.RouteDelegate {
   }
 }
 
-export function headersArray(headers: network.Headers): Protocol.Network.HTTPHeader[] {
+export function headersArray(headers: types.Headers): Protocol.Network.HTTPHeader[] {
   const result: Protocol.Network.HTTPHeader[] = [];
   for (const name in headers) {
     if (!Object.is(headers[name], undefined))

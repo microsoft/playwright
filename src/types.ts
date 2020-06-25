@@ -180,3 +180,85 @@ export type MouseMultiClickOptions = PointerActionOptions & {
 };
 
 export type World = 'main' | 'utility';
+
+export type Headers = { [key: string]: string };
+
+export type GotoOptions = NavigateOptions & {
+  referer?: string,
+};
+
+export type FulfillResponse = {
+  status?: number,
+  headers?: Headers,
+  contentType?: string,
+  body?: string | Buffer,
+};
+
+export type NetworkCookie = {
+  name: string,
+  value: string,
+  domain: string,
+  path: string,
+  expires: number,
+  httpOnly: boolean,
+  secure: boolean,
+  sameSite: 'Strict' | 'Lax' | 'None'
+};
+
+export type SetNetworkCookieParam = {
+  name: string,
+  value: string,
+  url?: string,
+  domain?: string,
+  path?: string,
+  expires?: number,
+  httpOnly?: boolean,
+  secure?: boolean,
+  sameSite?: 'Strict' | 'Lax' | 'None'
+};
+
+export type BrowserContextOptions = {
+  viewport?: Size | null,
+  ignoreHTTPSErrors?: boolean,
+  javaScriptEnabled?: boolean,
+  bypassCSP?: boolean,
+  userAgent?: string,
+  locale?: string,
+  timezoneId?: string,
+  geolocation?: Geolocation,
+  permissions?: string[],
+  extraHTTPHeaders?: Headers,
+  offline?: boolean,
+  httpCredentials?: Credentials,
+  deviceScaleFactor?: number,
+  isMobile?: boolean,
+  hasTouch?: boolean,
+  colorScheme?: ColorScheme,
+  acceptDownloads?: boolean,
+};
+
+export type Env = {[key: string]: string | number | boolean | undefined};
+
+export type LaunchOptionsBase = {
+  executablePath?: string,
+  args?: string[],
+  ignoreDefaultArgs?: boolean | string[],
+  handleSIGINT?: boolean,
+  handleSIGTERM?: boolean,
+  handleSIGHUP?: boolean,
+  timeout?: number,
+  env?: Env,
+  headless?: boolean,
+  devtools?: boolean,
+  proxy?: ProxySettings,
+  downloadsPath?: string,
+};
+
+export type LaunchOptions = LaunchOptionsBase & { slowMo?: number };
+export type LaunchServerOptions = LaunchOptionsBase & { port?: number };
+
+export type ConnectOptions = {
+  wsEndpoint: string,
+  slowMo?: number,
+  timeout?: number,
+};

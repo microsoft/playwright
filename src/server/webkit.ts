@@ -19,7 +19,7 @@ import { WKBrowser } from '../webkit/wkBrowser';
 import { Env } from './processLauncher';
 import * as path from 'path';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
-import { LaunchOptionsBase, BrowserTypeBase } from './browserType';
+import { BrowserTypeBase } from './browserType';
 import { ConnectionTransport, ProtocolResponse, ProtocolRequest } from '../transport';
 import * as ws from 'ws';
 import { Logger } from '../logger';
@@ -27,6 +27,7 @@ import { BrowserOptions } from '../browser';
 import { BrowserDescriptor } from '../install/browserPaths';
 import { WebSocketServer } from './webSocketServer';
 import { assert } from '../helper';
+import { LaunchOptionsBase } from '../types';
 
 export class WebKit extends BrowserTypeBase {
   constructor(packagePath: string, browser: BrowserDescriptor) {

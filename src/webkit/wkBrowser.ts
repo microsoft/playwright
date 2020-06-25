@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { BrowserBase, BrowserOptions } from '../browser';
-import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, BrowserContextOptions, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
+import { BrowserBase, BrowserOptions, BrowserContextOptions } from '../browser';
+import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { Events } from '../events';
 import { helper, RegisteredListener, assert } from '../helper';
 import * as network from '../network';
@@ -202,7 +202,7 @@ export class WKBrowserContext extends BrowserContextBase {
   readonly _browserContextId: string | undefined;
   readonly _evaluateOnNewDocumentSources: string[];
 
-  constructor(browser: WKBrowser, browserContextId: string | undefined, options: BrowserContextOptions) {
+  constructor(browser: WKBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options);
     this._browser = browser;
     this._browserContextId = browserContextId;
@@ -257,17 +257,17 @@ export class WKBrowserContext extends BrowserContextBase {
     throw result;
   }
 
-  async cookies(urls?: string | string[]): Promise<network.NetworkCookie[]> {
+  async _doCookies(urls: string[]): Promise<types.NetworkCookie[]> {
     const { cookies } = await this._browser._browserSession.send('Playwright.getAllCookies', { browserContextId: this._browserContextId });
-    return network.filterCookies(cookies.map((c: network.NetworkCookie) => {
+    return network.filterCookies(cookies.map((c: types.NetworkCookie) => {
       const copy: any = { ... c };
       copy.expires = c.expires === -1 ? -1 : c.expires / 1000;
       delete copy.session;
-      return copy as network.NetworkCookie;
+      return copy as types.NetworkCookie;
     }), urls);
   }
 
-  async addCookies(cookies: network.SetNetworkCookieParam[]) {
+  async addCookies(cookies: types.SetNetworkCookieParam[]) {
     const cc = network.rewriteCookies(cookies).map(c => ({
       ...c,
       session: c.expires === -1 || c.expires === undefined,
@@ -296,7 +296,7 @@ export class WKBrowserContext extends BrowserContextBase {
     await this._browser._browserSession.send('Playwright.setGeolocationOverride', { browserContextId: this._browserContextId, geolocation: payload });
   }
 
-  async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
+  async setExtraHTTPHeaders(headers: types.Headers): Promise<void> {
     this._options.extraHTTPHeaders = network.verifyHeaders(headers);
     for (const page of this.pages())
       await (page._delegate as WKPage).updateExtraHTTPHeaders();
@@ -314,8 +314,7 @@ export class WKBrowserContext extends BrowserContextBase {
       await (page._delegate as WKPage).updateHttpCredentials();
   }
 
-  async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
-    const source = await helper.evaluationScript(script, arg);
+  async _doAddInitScript(source: string) {
     this._evaluateOnNewDocumentSources.push(source);
     for (const page of this.pages())
       await (page._delegate as WKPage)._updateBootstrapScript();

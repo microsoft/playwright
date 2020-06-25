@@ -19,7 +19,7 @@ import * as mime from 'mime';
 import * as path from 'path';
 import * as util from 'util';
 import * as frames from './frames';
-import { assert, helper } from './helper';
+import { assert, helper, assertMaxArguments } from './helper';
 import InjectedScript from './injected/injectedScript';
 import * as injectedScriptSource from './generated/injectedScriptSource';
 import * as debugScriptSource from './generated/debugScriptSource';
@@ -55,11 +55,23 @@ export class FrameExecutionContext extends js.ExecutionContext {
     });
   }
 
+  async evaluateExpressionInternal(expression: string, isFunction: boolean, ...args: any[]): Promise<any> {
+    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
+      return js.evaluateExpression(this, true /* returnByValue */, expression, isFunction, ...args);
+    });
+  }
+
   async evaluateHandleInternal<R>(pageFunction: js.Func0<R>): Promise<js.SmartHandle<R>>;
   async evaluateHandleInternal<Arg, R>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>>;
   async evaluateHandleInternal(pageFunction: never, ...args: never[]): Promise<any> {
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
       return js.evaluate(this, false /* returnByValue */, pageFunction, ...args);
+    });
+  }
+
+  async evaluateExpressionHandleInternal(expression: string, isFunction: boolean, ...args: any[]): Promise<any> {
+    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
+      return js.evaluateExpression(this, false /* returnByValue */, expression, isFunction, ...args);
     });
   }
 
@@ -618,10 +630,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async $eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
   async $eval<R>(selector: string, pageFunction: js.FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
+    assertMaxArguments(arguments.length, 3);
+    return this._$evalExpression(selector, String(pageFunction), typeof pageFunction === 'function', arg);
+  }
+
+  async _$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
     const handle = await selectors._query(this._context.frame, selector, this);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await handle.evaluate(pageFunction, arg);
+    const result = await handle._evaluateExpression(expression, isFunction, true, arg);
     handle.dispose();
     return result;
   }
@@ -629,8 +646,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async $$eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
   async $$eval<R>(selector: string, pageFunction: js.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
   async $$eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
+    assertMaxArguments(arguments.length, 3);
+    return this._$$evalExpression(selector, String(pageFunction), typeof pageFunction === 'function', arg);
+  }
+
+  async _$$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
     const arrayHandle = await selectors._queryArray(this._context.frame, selector, this);
-    const result = await arrayHandle.evaluate(pageFunction, arg);
+    const result = await arrayHandle._evaluateExpression(expression, isFunction, true, arg);
     arrayHandle.dispose();
     return result;
   }
