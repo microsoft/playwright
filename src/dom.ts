@@ -25,7 +25,7 @@ import * as injectedScriptSource from './generated/injectedScriptSource';
 import * as debugScriptSource from './generated/debugScriptSource';
 import * as js from './javascript';
 import { Page } from './page';
-import { selectors } from './selectors';
+import { selectors, SelectorInfo } from './selectors';
 import * as types from './types';
 import { Progress } from './progress';
 import DebugScript from './debug/injected/debugScript';
@@ -787,4 +787,56 @@ function roundPoint(point: types.Point): types.Point {
     x: (point.x * 100 | 0) / 100,
     y: (point.y * 100 | 0) / 100,
   };
+}
+
+export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<types.InjectedScriptPoll<T>>>;
+
+export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 'detached' | 'visible' | 'hidden'): SchedulableTask<Element | undefined> {
+  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, state }) => {
+    let lastElement: Element | undefined;
+
+    return injected.pollRaf((progress, continuePolling) => {
+      const element = injected.querySelector(parsed, document);
+      const visible = element ? injected.isVisible(element) : false;
+
+      if (lastElement !== element) {
+        lastElement = element;
+        if (!element)
+          progress.log(`  selector did not resolve to any element`);
+        else
+          progress.log(`  selector resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewNode(element)}`);
+      }
+
+      switch (state) {
+        case 'attached':
+          return element ? element : continuePolling;
+        case 'detached':
+          return !element ? undefined : continuePolling;
+        case 'visible':
+          return visible ? element : continuePolling;
+        case 'hidden':
+          return !visible ? undefined : continuePolling;
+      }
+    });
+  }, { parsed: selector.parsed, state });
+}
+
+export function dispatchEventTask(selector: SelectorInfo, type: string, eventInit: Object): SchedulableTask<undefined> {
+  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, type, eventInit }) => {
+    return injected.pollRaf((progress, continuePolling) => {
+      const element = injected.querySelector(parsed, document);
+      if (element)
+        injected.dispatchEvent(element, type, eventInit);
+      return element ? undefined : continuePolling;
+    });
+  }, { parsed: selector.parsed, type, eventInit });
+}
+
+export function textContentTask(selector: SelectorInfo): SchedulableTask<string | null> {
+  return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
+    return injected.pollRaf((progress, continuePolling) => {
+      const element = injected.querySelector(parsed, document);
+      return element ? element.textContent : continuePolling;
+    });
+  }, selector.parsed);
 }

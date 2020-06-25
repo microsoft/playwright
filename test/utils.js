@@ -94,6 +94,15 @@ const utils = module.exports = {
     expect(await page.evaluate('window.innerHeight')).toBe(height);
   },
 
+  registerEngine: async (name, script, options) => {
+    try {
+      await playwright.selectors.register(name, script, options);
+    } catch (e) {
+      if (!e.message.includes('has been already registered'))
+        throw e;
+    }
+  },
+
   initializeFlakinessDashboardIfNeeded: async function(testRunner) {
     // Generate testIDs for all tests and verify they don't clash.
     // This will add |test.testId| for every test.

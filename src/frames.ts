@@ -33,7 +33,7 @@ type ContextData = {
   contextPromise: Promise<dom.FrameExecutionContext>;
   contextResolveCallback: (c: dom.FrameExecutionContext) => void;
   context: dom.FrameExecutionContext | null;
-  rerunnableTasks: Set<RerunnableTask<any>>;
+  rerunnableTasks: Set<RerunnableTask>;
 };
 
 export type GotoResult = {
@@ -456,10 +456,10 @@ export class Frame {
     if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
       throw new Error(`Unsupported state option "${state}"`);
     const info = selectors._parseSelector(selector);
-    const task = selectors._waitForSelectorTask(info, state);
+    const task = dom.waitForSelectorTask(info, state);
     return this._page._runAbortableTask(async progress => {
       progress.logger.info(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
-      const result = await this._scheduleRerunnableTask(progress, info.world, task);
+      const result = await this._scheduleRerunnableHandleTask(progress, info.world, task);
       if (!result.asElement()) {
         result.dispose();
         return null;
@@ -477,11 +477,11 @@ export class Frame {
 
   async dispatchEvent(selector: string, type: string, eventInit?: Object, options: types.TimeoutOptions = {}): Promise<void> {
     const info = selectors._parseSelector(selector);
-    const task = selectors._dispatchEventTask(info, type, eventInit || {});
+    const task = dom.dispatchEventTask(info, type, eventInit || {});
     return this._page._runAbortableTask(async progress => {
       progress.logger.info(`Dispatching "${type}" event on selector "${selector}"...`);
-      const result = await this._scheduleRerunnableTask(progress, 'main', task);
-      result.dispose();
+      // Note: we always dispatch events in the main world.
+      await this._scheduleRerunnableTask(progress, 'main', task);
     }, this._page._timeoutSettings.timeout(options), this._apiName('dispatchEvent'));
   }
 
@@ -723,8 +723,8 @@ export class Frame {
     return this._page._runAbortableTask(async progress => {
       while (progress.isRunning()) {
         progress.logger.info(`waiting for selector "${selector}"`);
-        const task = selectors._waitForSelectorTask(info, 'attached');
-        const handle = await this._scheduleRerunnableTask(progress, info.world, task);
+        const task = dom.waitForSelectorTask(info, 'attached');
+        const handle = await this._scheduleRerunnableHandleTask(progress, info.world, task);
         const element = handle.asElement() as dom.ElementHandle<Element>;
         progress.cleanupWhenAborted(() => element.dispose());
         const result = await action(progress, element);
@@ -755,8 +755,13 @@ export class Frame {
     await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._focus(progress), this._apiName('focus'));
   }
 
-  async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<null|string> {
-    return await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.textContent(), this._apiName('textContent'));
+  async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<string | null> {
+    const info = selectors._parseSelector(selector);
+    const task = dom.textContentTask(info);
+    return this._page._runAbortableTask(async progress => {
+      progress.logger.info(`Retrieving text context from "${selector}"...`);
+      return this._scheduleRerunnableTask(progress, info.world, task);
+    }, this._page._timeoutSettings.timeout(options), this._apiName('textContent'));
   }
 
   async innerText(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
@@ -809,7 +814,6 @@ export class Frame {
     return this._waitForFunctionExpression(String(pageFunction), typeof pageFunction === 'function', arg, options);
   }
 
-
   async _waitForFunctionExpression<R>(expression: string, isFunction: boolean, arg: any, options: types.WaitForFunctionOptions = {}): Promise<js.SmartHandle<R>> {
     const { polling = 'raf' } = options;
     if (helper.isString(polling))
@@ -819,17 +823,14 @@ export class Frame {
     else
       throw new Error('Unknown polling option: ' + polling);
     const predicateBody = isFunction ? 'return (' + expression + ')(arg)' :  'return (' + expression + ')';
-    const task = async (context: dom.FrameExecutionContext) => {
-      const injectedScript = await context.injectedScript();
-      return context.evaluateHandleInternal(({ injectedScript, predicateBody, polling, arg }) => {
-        const innerPredicate = new Function('arg', predicateBody) as (arg: any) => R;
-        if (polling === 'raf')
-          return injectedScript.pollRaf((progress, continuePolling) => innerPredicate(arg) || continuePolling);
-        return injectedScript.pollInterval(polling, (progress, continuePolling) => innerPredicate(arg) || continuePolling);
-      }, { injectedScript, predicateBody, polling, arg });
-    };
+    const task: dom.SchedulableTask<R> = injectedScript => injectedScript.evaluateHandle((injectedScript, { predicateBody, polling, arg }) => {
+      const innerPredicate = new Function('arg', predicateBody) as (arg: any) => R;
+      if (polling === 'raf')
+        return injectedScript.pollRaf((progress, continuePolling) => innerPredicate(arg) || continuePolling);
+      return injectedScript.pollInterval(polling, (progress, continuePolling) => innerPredicate(arg) || continuePolling);
+    }, { predicateBody, polling, arg });
     return this._page._runAbortableTask(
-        progress => this._scheduleRerunnableTask(progress, 'main', task),
+        progress => this._scheduleRerunnableHandleTask(progress, 'main', task),
         this._page._timeoutSettings.timeout(options), this._apiName('waitForFunction'));
   }
 
@@ -850,9 +851,19 @@ export class Frame {
     this._parentFrame = null;
   }
 
-  private _scheduleRerunnableTask<T>(progress: Progress, world: types.World, task: SchedulableTask<T>): Promise<js.SmartHandle<T>> {
+  private _scheduleRerunnableTask<T>(progress: Progress, world: types.World, task: dom.SchedulableTask<T>): Promise<T> {
     const data = this._contextData.get(world)!;
-    const rerunnableTask = new RerunnableTask(data, progress, task);
+    const rerunnableTask = new RerunnableTask(data, progress, task, true /* returnByValue */);
+    if (this._detached)
+      rerunnableTask.terminate(new Error('waitForFunction failed: frame got detached.'));
+    if (data.context)
+      rerunnableTask.rerun(data.context);
+    return rerunnableTask.promise;
+  }
+
+  private _scheduleRerunnableHandleTask<T>(progress: Progress, world: types.World, task: dom.SchedulableTask<T>): Promise<js.SmartHandle<T>> {
+    const data = this._contextData.get(world)!;
+    const rerunnableTask = new RerunnableTask(data, progress, task, false /* returnByValue */);
     if (this._detached)
       rerunnableTask.terminate(new Error('waitForFunction failed: frame got detached.'));
     if (data.context)
@@ -905,20 +916,20 @@ export class Frame {
   }
 }
 
-export type SchedulableTask<T> = (context: dom.FrameExecutionContext) => Promise<js.JSHandle<types.InjectedScriptPoll<T>>>;
-
-class RerunnableTask<T> {
-  readonly promise: Promise<js.SmartHandle<T>>;
-  private _task: SchedulableTask<T>;
-  private _resolve: (result: js.SmartHandle<T>) => void = () => {};
+class RerunnableTask {
+  readonly promise: Promise<any>;
+  private _task: dom.SchedulableTask<any>;
+  private _resolve: (result: any) => void = () => {};
   private _reject: (reason: Error) => void = () => {};
   private _progress: Progress;
+  private _returnByValue: boolean;
 
-  constructor(data: ContextData, progress: Progress, task: SchedulableTask<T>) {
+  constructor(data: ContextData, progress: Progress, task: dom.SchedulableTask<any>, returnByValue: boolean) {
     this._task = task;
     this._progress = progress;
+    this._returnByValue = returnByValue;
     data.rerunnableTasks.add(this);
-    this.promise = new Promise<js.SmartHandle<T>>((resolve, reject) => {
+    this.promise = new Promise<any>((resolve, reject) => {
       // The task is either resolved with a value, or rejected with a meaningful evaluation error.
       this._resolve = resolve;
       this._reject = reject;
@@ -931,8 +942,9 @@ class RerunnableTask<T> {
 
   async rerun(context: dom.FrameExecutionContext) {
     try {
-      const pollHandler = new dom.InjectedScriptPollHandler(this._progress, await this._task(context));
-      const result = await pollHandler.finishHandle();
+      const injectedScript = await context.injectedScript();
+      const pollHandler = new dom.InjectedScriptPollHandler(this._progress, await this._task(injectedScript));
+      const result = this._returnByValue ? await pollHandler.finish() : await pollHandler.finishHandle();
       this._resolve(result);
     } catch (e) {
       // When the page is navigated, the promise is rejected.

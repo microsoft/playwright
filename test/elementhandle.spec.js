@@ -476,6 +476,28 @@ describe('ElementHandle convenience API', function() {
     expect(await handle.textContent()).toBe('Text,\nmore text');
     expect(await page.textContent('#inner')).toBe('Text,\nmore text');
   });
+  it('textContent should be atomic', async({page}) => {
+    const createDummySelector = () => ({
+      create(root, target) {},
+      query(root, selector) {
+        const result = root.querySelector(selector);
+        if (result)
+          Promise.resolve().then(() => result.textContent = 'modified');
+        return result;
+      },
+      queryAll(root, selector) {
+        const result = Array.from(root.querySelectorAll(selector));
+        for (const e of result)
+          Promise.resolve().then(() => result.textContent = 'modified');
+        return result;
+      }
+    });
+    await utils.registerEngine('textContent', createDummySelector);
+    await page.setContent(`<div>Hello</div>`);
+    const tc = await page.textContent('textContent=div');
+    expect(tc).toBe('Hello');
+    expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('modified');
+  });
 });
 
 describe('ElementHandle.check', () => {
