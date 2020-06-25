@@ -143,10 +143,11 @@ export type InjectedScriptProgress = {
   logRepeating: (message: string) => void,
 };
 
-export type InjectedScriptLogs = { current: string[], next: Promise<InjectedScriptLogs> };
 export type InjectedScriptPoll<T> = {
   result: Promise<T>,
-  logs: Promise<InjectedScriptLogs>,
+  // Takes more logs, waiting until at least one message is available.
+  takeNextLogs: () => Promise<string[]>,
+  // Takes all current logs without waiting.
   takeLastLogs: () => string[],
   cancel: () => void,
 };

@@ -158,14 +158,20 @@ export default class InjectedScript {
   }
 
   private _runAbortableTask<T>(task: (progess: types.InjectedScriptProgress) => Promise<T>): types.InjectedScriptPoll<T> {
-    let currentLogs: string[] = [];
-    let logReady = () => {};
-    const createLogsPromise = () => new Promise<types.InjectedScriptLogs>(fulfill => {
-      logReady = () => {
-        const current = currentLogs;
-        currentLogs = [];
-        fulfill({ current, next: createLogsPromise() });
-      };
+    let unsentLogs: string[] = [];
+    let takeNextLogsCallback: ((logs: string[]) => void) | undefined;
+    const logReady = () => {
+      if (!takeNextLogsCallback)
+        return;
+      takeNextLogsCallback(unsentLogs);
+      unsentLogs = [];
+      takeNextLogsCallback = undefined;
+    };
+
+    const takeNextLogs = () => new Promise<string[]>(fulfill => {
+      takeNextLogsCallback = fulfill;
+      if (unsentLogs.length)
+        logReady();
     });
 
     let lastLog = '';
@@ -173,7 +179,7 @@ export default class InjectedScript {
       aborted: false,
       log: (message: string) => {
         lastLog = message;
-        currentLogs.push(message);
+        unsentLogs.push(message);
         logReady();
       },
       logRepeating: (message: string) => {
@@ -182,14 +188,11 @@ export default class InjectedScript {
       },
     };
 
-    // It is important to create logs promise before running the poll to capture logs from the first run.
-    const logs = createLogsPromise();
-
     return {
-      logs,
+      takeNextLogs,
       result: task(progress),
       cancel: () => { progress.aborted = true; },
-      takeLastLogs: () => currentLogs,
+      takeLastLogs: () => unsentLogs,
     };
   }
 

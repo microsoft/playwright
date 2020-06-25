@@ -697,20 +697,17 @@ export class InjectedScriptPollHandler<T> {
     //   - no unnecessary work in the page;
     //   - no possible side effects after progress promsie rejects.
     this._progress.cleanupWhenAborted(() => this.cancel());
-    this._streamLogs(poll.evaluateHandle(poll => poll.logs));
+    this._streamLogs();
   }
 
-  private _streamLogs(logsPromise: Promise<js.JSHandle<types.InjectedScriptLogs>>) {
-    // We continuously get a chunk of logs, stream them to the progress and wait for the next chunk.
-    logsPromise.catch(e => null).then(logs => {
-      if (!logs || !this._poll || !this._progress.isRunning())
+  private async _streamLogs() {
+    while (this._poll && this._progress.isRunning()) {
+      const messages = await this._poll.evaluate(poll => poll.takeNextLogs()).catch(e => [] as string[]);
+      if (!this._poll || !this._progress.isRunning())
         return;
-      logs.evaluate(logs => logs.current).catch(e => [] as string[]).then(messages => {
-        for (const message of messages)
-          this._progress.logger.info(message);
-      });
-      this._streamLogs(logs.evaluateHandle(logs => logs.next));
-    });
+      for (const message of messages)
+        this._progress.logger.info(message);
+    }
   }
 
   async finishHandle(): Promise<js.SmartHandle<T>> {
