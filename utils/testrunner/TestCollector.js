@@ -199,6 +199,8 @@ class TestCollector {
     this._api.beforeEach = callback => this._currentSuite.environment().beforeEach(callback);
     this._api.afterAll = callback => this._currentSuite.environment().afterAll(callback);
     this._api.afterEach = callback => this._currentSuite.environment().afterEach(callback);
+    this._api.globalSetup = callback => this._currentSuite.environment().globalSetup(callback);
+    this._api.globalTeardown = callback => this._currentSuite.environment().globalTeardown(callback);
   }
 
   useEnvironment(environment) {

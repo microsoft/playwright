@@ -55,6 +55,11 @@ class TestRun {
     this._endTimestamp = 0;
     this._workerId = null;
     this._output = [];
+
+    this._environments = test._environments.filter(env => !env.isEmpty()).reverse();
+    for (let suite = test.suite(); suite; suite = suite.parentSuite())
+      this._environments.push(...suite._environments.filter(env => !env.isEmpty()).reverse());
+    this._environments.reverse();
   }
 
   finished() {
@@ -135,14 +140,14 @@ class Result {
 }
 
 class TestWorker {
-  constructor(testRunner, workerId, parallelIndex) {
+  constructor(testRunner, hookRunner, workerId, parallelIndex) {
     this._testRunner = testRunner;
+    this._hookRunner = hookRunner;
     this._state = { parallelIndex };
     this._environmentStack = [];
     this._terminating = false;
     this._workerId = workerId;
     this._runningTestTerminate = null;
-    this._runningHookTerminate = null;
     this._runs = [];
   }
 
@@ -150,8 +155,7 @@ class TestWorker {
     this._terminating = true;
     if (this._runningTestTerminate)
       this._runningTestTerminate();
-    if (terminateHooks && this._runningHookTerminate)
-      this._runningHookTerminate();
+    this._hookRunner.terminateWorker(this);
   }
 
   _markTerminated(testRun) {
@@ -185,7 +189,7 @@ class TestWorker {
       return;
     }
 
-    const environmentStack = allTestEnvironments(test);
+    const environmentStack = testRun._environments;
     let common = 0;
     while (common < environmentStack.length && this._environmentStack[common] === environmentStack[common])
       common++;
@@ -194,20 +198,20 @@ class TestWorker {
       if (this._markTerminated(testRun))
         return;
       const environment = this._environmentStack.pop();
-      for (const hook of environment.hooks('afterAll')) {
-        if (!await this._runHook(testRun, hook, environment.name(), [this._state]))
-          return;
-      }
+      if (!await this._hookRunner.runAfterAll(environment, this, testRun, [this._state]))
+        return;
+      if (!await this._hookRunner.ensureGlobalTeardown(environment))
+        return;
     }
     while (this._environmentStack.length < environmentStack.length) {
       if (this._markTerminated(testRun))
         return;
       const environment = environmentStack[this._environmentStack.length];
       this._environmentStack.push(environment);
-      for (const hook of environment.hooks('beforeAll')) {
-        if (!await this._runHook(testRun, hook, environment.name(), [this._state]))
-          return;
-      }
+      if (!await this._hookRunner.ensureGlobalSetup(environment))
+        return;
+      if (!await this._hookRunner.runBeforeAll(environment, this, testRun, [this._state]))
+        return;
     }
 
     if (this._markTerminated(testRun))
@@ -218,8 +222,7 @@ class TestWorker {
 
     await this._willStartTestRun(testRun);
     for (const environment of this._environmentStack) {
-      for (const hook of environment.hooks('beforeEach'))
-        await this._runHook(testRun, hook, environment.name(), [this._state, testRun]);
+      await this._hookRunner.runBeforeEach(environment, this, testRun, [this._state, testRun]);
     }
 
     if (!testRun._error && !this._markTerminated(testRun)) {
@@ -241,20 +244,91 @@ class TestWorker {
       await this._didFinishTestBody(testRun);
     }
 
-    for (const environment of this._environmentStack.slice().reverse()) {
-      for (const hook of environment.hooks('afterEach'))
-        await this._runHook(testRun, hook, environment.name(), [this._state, testRun]);
-    }
+    for (const environment of this._environmentStack.slice().reverse())
+      await this._hookRunner.runAfterEach(environment, this, testRun, [this._state, testRun]);
     await this._didFinishTestRun(testRun);
   }
 
-  async _runHook(testRun, hook, fullName, hookArgs = []) {
-    await this._willStartHook(testRun, hook, fullName);
+  async _willStartTestRun(testRun) {
+    testRun._startTimestamp = Date.now();
+    testRun._workerId = this._workerId;
+    await this._testRunner._runDelegateCallback(this._testRunner._delegate.onTestRunStarted, [testRun]);
+  }
+
+  async _didFinishTestRun(testRun) {
+    testRun._endTimestamp = Date.now();
+    testRun._workerId = this._workerId;
+
+    this._hookRunner.markFinishedTestRun(testRun);
+    await this._testRunner._runDelegateCallback(this._testRunner._delegate.onTestRunFinished, [testRun]);
+  }
+
+  async _willStartTestBody(testRun) {
+    debug('testrunner:test')(`[${this._workerId}] starting "${testRun.test().fullName()}" (${testRun.test().location()})`);
+  }
+
+  async _didFinishTestBody(testRun) {
+    debug('testrunner:test')(`[${this._workerId}] ${testRun._result.toUpperCase()} "${testRun.test().fullName()}" (${testRun.test().location()})`);
+  }
+
+  async shutdown() {
+    while (this._environmentStack.length > 0) {
+      const environment = this._environmentStack.pop();
+      await this._hookRunner.runAfterAll(environment, this, null, [this._state]);
+      await this._hookRunner.ensureGlobalTeardown(environment);
+    }
+  }
+}
+
+class HookRunner {
+  constructor(testRunner, testRuns) {
+    this._testRunner = testRunner;
+    this._runningHookTerminations = new Map();
+
+    this._environmentToGlobalState = new Map();
+    for (const testRun of testRuns) {
+      for (const env of testRun._environments) {
+        let globalState = this._environmentToGlobalState.get(env);
+        if (!globalState) {
+          globalState = {
+            pendingTestRuns: new Set(),
+            globalSetupPromise: null,
+            globalTeardownPromise: null,
+          };
+          this._environmentToGlobalState.set(env, globalState);
+        }
+        globalState.pendingTestRuns.add(testRun);
+      }
+    }
+  }
+
+  terminateWorker(worker) {
+    let termination = this._runningHookTerminations.get(worker);
+    this._runningHookTerminations.delete(worker);
+    if (termination)
+      termination();
+  }
+
+  terminateAll() {
+    for (const termination of this._runningHookTerminations.values())
+      termination();
+    this._runningHookTerminations.clear();
+  }
+
+  markFinishedTestRun(testRun) {
+    for (const environment of testRun._environments) {
+      const globalState = this._environmentToGlobalState.get(environment);
+      globalState.pendingTestRuns.delete(testRun);
+    }
+  }
+
+  async _runHook(worker, testRun, hook, fullName, hookArgs = []) {
+    await this._willStartHook(worker, testRun, hook, fullName);
     const timeout = this._testRunner._hookTimeout;
     const { promise, terminate } = runUserCallback(hook.body, timeout, hookArgs);
-    this._runningHookTerminate = terminate;
+    this._runningHookTerminations.set(worker, terminate);
     let error = await promise;
-    this._runningHookTerminate = null;
+    this._runningHookTerminations.delete(worker);
 
     if (error) {
       if (testRun && testRun._result !== TestResult.Terminated) {
@@ -274,58 +348,108 @@ class TestWorker {
           await this._testRunner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
         message = `${hook.location.toDetailedString()} - FAILED while running "${hook.name}" in suite "${fullName}": `;
       }
-      await this._didFailHook(testRun, hook, fullName, message, error);
+      await this._didFailHook(worker, testRun, hook, fullName, message, error);
       if (testRun)
         testRun._error = error;
       return false;
     }
 
-    await this._didCompleteHook(testRun, hook, fullName);
+    await this._didCompleteHook(worker, testRun, hook, fullName);
     return true;
   }
 
-  async _willStartTestRun(testRun) {
-    testRun._startTimestamp = Date.now();
-    testRun._workerId = this._workerId;
-    await this._testRunner._runDelegateCallback(this._testRunner._delegate.onTestRunStarted, [testRun]);
+  async runAfterAll(environment, worker, testRun, hookArgs) {
+    for (const hook of environment.hooks('afterAll')) {
+      if (!await this._runHook(worker, testRun, hook, environment.name(), hookArgs))
+        return false;
+    }
+    return true;
   }
 
-  async _didFinishTestRun(testRun) {
-    testRun._endTimestamp = Date.now();
-    testRun._workerId = this._workerId;
-    await this._testRunner._runDelegateCallback(this._testRunner._delegate.onTestRunFinished, [testRun]);
+  async runBeforeAll(environment, worker, testRun, hookArgs) {
+    for (const hook of environment.hooks('beforeAll')) {
+      if (!await this._runHook(worker, testRun, hook, environment.name(), hookArgs))
+        return false;
+    }
+    return true;
   }
 
-  async _willStartTestBody(testRun) {
-    debug('testrunner:test')(`[${this._workerId}] starting "${testRun.test().fullName()}" (${testRun.test().location()})`);
+  async runAfterEach(environment, worker, testRun, hookArgs) {
+    for (const hook of environment.hooks('afterEach')) {
+      if (!await this._runHook(worker, testRun, hook, environment.name(), hookArgs))
+        return false;
+    }
+    return true;
   }
 
-  async _didFinishTestBody(testRun) {
-    debug('testrunner:test')(`[${this._workerId}] ${testRun._result.toUpperCase()} "${testRun.test().fullName()}" (${testRun.test().location()})`);
+  async runBeforeEach(environment, worker, testRun, hookArgs) {
+    for (const hook of environment.hooks('beforeEach')) {
+      if (!await this._runHook(worker, testRun, hook, environment.name(), hookArgs))
+        return false;
+    }
+    return true;
   }
 
-  async _willStartHook(testRun, hook, fullName) {
-    debug('testrunner:hook')(`[${this._workerId}] "${fullName}.${hook.name}" started for "${testRun ? testRun.test().fullName() : ''}" (${hook.location})`);
+  async ensureGlobalSetup(environment) {
+    const globalState = this._environmentToGlobalState.get(environment);
+    if (!globalState.globalSetupPromise) {
+      globalState.globalSetupPromise = (async () => {
+        let result = true;
+        for (const hook of environment.hooks('globalSetup')) {
+          if (!await this._runHook(null /* worker */, null /* testRun */, hook, environment.name(), []))
+            result = false;
+        }
+        return result;
+      })();
+    }
+    if (!await globalState.globalSetupPromise) {
+      await this._testRunner._terminate(TestResult.Crashed, 'Global setup failed!', false, null);
+      return false;
+    }
+    return true;
   }
 
-  async _didFailHook(testRun, hook, fullName, message, error) {
-    debug('testrunner:hook')(`[${this._workerId}] "${fullName}.${hook.name}" FAILED for "${testRun ? testRun.test().fullName() : ''}" (${hook.location})`);
+  async ensureGlobalTeardown(environment) {
+    const globalState = this._environmentToGlobalState.get(environment);
+    if (!globalState.globalTeardownPromise) {
+      if (!globalState.pendingTestRuns.size || (this._testRunner._terminating && globalState.globalSetupPromise)) {
+        globalState.globalTeardownPromise = (async () => {
+          let result = true;
+          for (const hook of environment.hooks('globalTeardown')) {
+            if (!await this._runHook(null /* worker */, null /* testRun */, hook, environment.name(), []))
+              result = false;
+          }
+          return result;
+        })();
+      }
+    }
+    if (!globalState.globalTeardownPromise)
+      return true;
+    if (!await globalState.globalTeardownPromise) {
+      await this._testRunner._terminate(TestResult.Crashed, 'Global teardown failed!', false, null);
+      return false;
+    }
+    return true;
+  }
+
+  async _willStartHook(worker, testRun, hook, fullName) {
+    debug('testrunner:hook')(`${workerName(worker)} "${fullName}.${hook.name}" started for "${testRun ? testRun.test().fullName() : ''}" (${hook.location})`);
+  }
+
+  async _didFailHook(worker, testRun, hook, fullName, message, error) {
+    debug('testrunner:hook')(`${workerName(worker)} "${fullName}.${hook.name}" FAILED for "${testRun ? testRun.test().fullName() : ''}" (${hook.location})`);
     if (message)
-      this._testRunner._result.addError(message, error, this);
+      this._testRunner._result.addError(message, error, worker);
     this._testRunner._result.setResult(TestResult.Crashed, message);
   }
 
-  async _didCompleteHook(testRun, hook, fullName) {
-    debug('testrunner:hook')(`[${this._workerId}] "${fullName}.${hook.name}" OK for "${testRun ? testRun.test().fullName() : ''}" (${hook.location})`);
+  async _didCompleteHook(worker, testRun, hook, fullName) {
+    debug('testrunner:hook')(`${workerName(worker)} "${fullName}.${hook.name}" OK for "${testRun ? testRun.test().fullName() : ''}" (${hook.location})`);
   }
+}
 
-  async shutdown() {
-    while (this._environmentStack.length > 0) {
-      const environment = this._environmentStack.pop();
-      for (const hook of environment.hooks('afterAll'))
-        await this._runHook(null, hook, environment.name(), [this._state]);
-    }
-  }
+function workerName(worker) {
+  return worker ? `<worker ${worker._workerId}>` : `<_global_>`;
 }
 
 class TestRunner {
@@ -335,6 +459,7 @@ class TestRunner {
     this._workers = [];
     this._terminating = false;
     this._result = null;
+    this._hookRunner = null;
   }
 
   async _runDelegateCallback(callback, args) {
@@ -406,6 +531,8 @@ class TestRunner {
     }
     await this._runDelegateCallback(this._delegate.onStarted, [testRuns]);
 
+    this._hookRunner = new HookRunner(this, testRuns);
+
     const workerCount = Math.min(parallel, testRuns.length);
     const workerPromises = [];
     for (let i = 0; i < workerCount; ++i) {
@@ -430,7 +557,7 @@ class TestRunner {
   }
 
   async _runWorker(testRunIndex, testRuns, parallelIndex) {
-    let worker = new TestWorker(this, this._nextWorkerId++, parallelIndex);
+    let worker = new TestWorker(this, this._hookRunner, this._nextWorkerId++, parallelIndex);
     this._workers[parallelIndex] = worker;
     while (!this._terminating) {
       let skipped = 0;
@@ -455,7 +582,7 @@ class TestRunner {
           await this._terminate(TestResult.Terminated, message, false /* force */, null /* error */);
           return;
         }
-        worker = new TestWorker(this, this._nextWorkerId++, parallelIndex);
+        worker = new TestWorker(this, this._hookRunner, this._nextWorkerId++, parallelIndex);
         this._workers[parallelIndex] = worker;
       }
     }
@@ -467,6 +594,8 @@ class TestRunner {
     this._terminating = true;
     for (const worker of this._workers)
       worker.terminate(force /* terminateHooks */);
+    if (this._hookRunner)
+      this._hookRunner.terminateAll();
     this._result.setResult(result, message);
     if (this._result.message === 'SIGINT received' && message === 'SIGTERM received')
       this._result.message = message;
@@ -482,22 +611,6 @@ class TestRunner {
       return;
     await this._terminate(TestResult.Terminated, 'Terminated with |TestRunner.terminate()| call', true /* force */, null /* error */);
   }
-}
-
-function allTestEnvironments(test) {
-  const environmentStack = [];
-  for (const environment of test._environments.slice().reverse()) {
-    if (!environment.isEmpty())
-      environmentStack.push(environment);
-  }
-  for (let suite = test.suite(); suite; suite = suite.parentSuite()) {
-    for (const environment of suite._environments.slice().reverse()) {
-      if (!environment.isEmpty())
-        environmentStack.push(environment);
-    }
-  }
-  environmentStack.reverse();
-  return environmentStack;
 }
 
 module.exports = { TestRunner, TestRun, TestResult, Result };
