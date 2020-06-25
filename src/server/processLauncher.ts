@@ -163,7 +163,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   return { launchedProcess: spawnedProcess, gracefullyClose, kill: killAndWait };
 }
 
-export function waitForLine(progress: Progress, process: childProcess.ChildProcess, inputStream: stream.Readable, regex: RegExp): Promise<RegExpMatchArray> {
+export function waitForLine(progress: Progress, process: childProcess.ChildProcess, inputStream: stream.Readable, regex: RegExp): Promise<string> {
   return new Promise((resolve, reject) => {
     const rl = readline.createInterface({ input: inputStream });
     const listeners = [
@@ -180,7 +180,7 @@ export function waitForLine(progress: Progress, process: childProcess.ChildProce
       if (!match)
         return;
       cleanup();
-      resolve(match);
+      resolve(match[1]);
     }
 
     function cleanup() {

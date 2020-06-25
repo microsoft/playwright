@@ -235,8 +235,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     progress.cleanupWhenAborted(() => browserServer && browserServer._closeOrKill(progress.timeUntilDeadline()));
 
     if (this._webSocketNotPipe) {
-      const match = await waitForLine(progress, launchedProcess, this._webSocketNotPipe.stream === 'stdout' ? launchedProcess.stdout : launchedProcess.stderr, this._webSocketNotPipe.webSocketRegex);
-      const innerEndpoint = match[1];
+      const innerEndpoint = await waitForLine(progress, launchedProcess, this._webSocketNotPipe.stream === 'stdout' ? launchedProcess.stdout : launchedProcess.stderr, this._webSocketNotPipe.webSocketRegex);
       transport = await WebSocketTransport.connect(progress, innerEndpoint);
     } else {
       const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
