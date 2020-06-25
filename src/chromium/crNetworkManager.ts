@@ -21,7 +21,7 @@ import { assert, helper, RegisteredListener } from '../helper';
 import { Protocol } from './protocol';
 import * as network from '../network';
 import * as frames from '../frames';
-import { Credentials } from '../types';
+import * as types from '../types';
 import { CRPage } from './crPage';
 
 export class CRNetworkManager {
@@ -63,7 +63,7 @@ export class CRNetworkManager {
     helper.removeEventListeners(this._eventListeners);
   }
 
-  async authenticate(credentials: Credentials | null) {
+  async authenticate(credentials: types.Credentials | null) {
     this._credentials = credentials;
     await this._updateProtocolRequestInterception();
   }
@@ -350,7 +350,7 @@ class InterceptableRequest implements network.RouteDelegate {
     this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId, url, type, method, postData, headersObject(headers));
   }
 
-  async continue(overrides: { method?: string; headers?: network.Headers; postData?: string } = {}) {
+  async continue(overrides: { method?: string; headers?: types.Headers; postData?: string } = {}) {
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
     await this._client._sendMayFail('Fetch.continueRequest', {
@@ -361,7 +361,7 @@ class InterceptableRequest implements network.RouteDelegate {
     });
   }
 
-  async fulfill(response: network.FulfillResponse) {
+  async fulfill(response: types.FulfillResponse) {
     const responseBody = response.body && helper.isString(response.body) ? Buffer.from(response.body) : (response.body || null);
 
     const responseHeaders: { [s: string]: string; } = {};
@@ -423,8 +423,8 @@ function headersArray(headers: { [s: string]: string; }): { name: string; value:
   return result;
 }
 
-function headersObject(headers: Protocol.Network.Headers): network.Headers {
-  const result: network.Headers = {};
+function headersObject(headers: Protocol.Network.Headers): types.Headers {
+  const result: types.Headers = {};
   for (const key of Object.keys(headers))
     result[key.toLowerCase()] = headers[key];
   return result;

@@ -20,10 +20,10 @@
 
 import * as program from 'commander';
 import { Playwright } from '../server/playwright';
-import { BrowserType, LaunchOptions } from '../server/browserType';
+import { BrowserType } from '../server/browserType';
 import { DeviceDescriptors } from '../deviceDescriptors';
-import { BrowserContextOptions } from '../browserContext';
 import { helper } from '../helper';
+import { LaunchOptions, BrowserContextOptions } from '../types';
 
 const playwright = new Playwright(__dirname, require('../../browsers.json')['browsers']);
 

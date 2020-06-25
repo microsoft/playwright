@@ -552,7 +552,7 @@ export class WKPage implements PageDelegate {
     await this._updateState('Network.setExtraHTTPHeaders', { headers: this._calculateExtraHTTPHeaders() });
   }
 
-  _calculateExtraHTTPHeaders(): network.Headers {
+  _calculateExtraHTTPHeaders(): types.Headers {
     const headers = network.mergeHeaders([
       this._browserContext._options.extraHTTPHeaders,
       this._page._state.extraHTTPHeaders

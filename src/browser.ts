@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { BrowserContext, BrowserContextOptions, BrowserContextBase, PersistentContextOptions } from './browserContext';
+import * as types from './types';
+import { BrowserContext, BrowserContextBase } from './browserContext';
 import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Download } from './download';
@@ -22,16 +23,19 @@ import type { BrowserServer } from './server/browserServer';
 import { Events } from './events';
 import { Loggers } from './logger';
 import { ProxySettings } from './types';
+import { LoggerSink } from './loggerSink';
 
 export type BrowserOptions = {
   loggers: Loggers,
   downloadsPath?: string,
   headful?: boolean,
-  persistent?: PersistentContextOptions,  // Undefined means no persistent context.
+  persistent?: types.BrowserContextOptions,  // Undefined means no persistent context.
   slowMo?: number,
   ownedServer?: BrowserServer,
   proxy?: ProxySettings,
 };
+
+export type BrowserContextOptions = types.BrowserContextOptions & { logger?: LoggerSink };
 
 export interface Browser extends EventEmitter {
   newContext(options?: BrowserContextOptions): Promise<BrowserContext>;

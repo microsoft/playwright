@@ -84,7 +84,7 @@ type PageState = {
   viewportSize: types.Size | null;
   mediaType: types.MediaType | null;
   colorScheme: types.ColorScheme | null;
-  extraHTTPHeaders: network.Headers | null;
+  extraHTTPHeaders: types.Headers | null;
 };
 
 export class Page extends EventEmitter {
@@ -265,7 +265,7 @@ export class Page extends EventEmitter {
     await this._delegate.exposeBinding(binding);
   }
 
-  setExtraHTTPHeaders(headers: network.Headers) {
+  setExtraHTTPHeaders(headers: types.Headers) {
     this._state.extraHTTPHeaders = network.verifyHeaders(headers);
     return this._delegate.updateExtraHTTPHeaders();
   }
@@ -295,7 +295,7 @@ export class Page extends EventEmitter {
     return this._attributeToPage(() => this.mainFrame().setContent(html, options));
   }
 
-  async goto(url: string, options?: frames.GotoOptions): Promise<network.Response | null> {
+  async goto(url: string, options?: types.GotoOptions): Promise<network.Response | null> {
     return this._attributeToPage(() => this.mainFrame().goto(url, options));
   }
 
@@ -386,6 +386,10 @@ export class Page extends EventEmitter {
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
     const source = await helper.evaluationScript(script, arg);
+    await this._addInitScriptExpression(source);
+  }
+
+  async _addInitScriptExpression(source: string) {
     this._evaluateOnNewDocumentSources.push(source);
     await this._delegate.evaluateOnNewDocument(source);
   }
@@ -445,11 +449,11 @@ export class Page extends EventEmitter {
     return this._attributeToPage(() => this.mainFrame().title());
   }
 
-  async close(options: { runBeforeUnload: (boolean | undefined); } = {runBeforeUnload: undefined}) {
+  async close(options?: { runBeforeUnload?: boolean }) {
     if (this._closed)
       return;
     assert(!this._disconnected, 'Protocol error: Connection closed. Most likely the page has been closed.');
-    const runBeforeUnload = !!options.runBeforeUnload;
+    const runBeforeUnload = !!options && !!options.runBeforeUnload;
     await this._delegate.closePage(runBeforeUnload);
     if (!runBeforeUnload)
       await this._closedPromise;

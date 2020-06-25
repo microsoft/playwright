@@ -18,7 +18,6 @@ import * as dom from './dom';
 import * as utilityScriptSource from './generated/utilityScriptSource';
 import * as sourceMap from './utils/sourceMap';
 import { serializeAsCallArgument } from './common/utilityScriptSerializers';
-import { helper } from './helper';
 import UtilityScript from './injected/utilityScript';
 
 type ObjectId = string;
@@ -106,6 +105,10 @@ export class JSHandle<T = any> {
     return evaluate(this._context, false /* returnByValue */, pageFunction, this, arg);
   }
 
+  _evaluateExpression(expression: string, isFunction: boolean, returnByValue: boolean, arg: any) {
+    return evaluateExpression(this._context, returnByValue, expression, isFunction, this, arg);
+  }
+
   async getProperty(propertyName: string): Promise<JSHandle> {
     const objectHandle = await this.evaluateHandle((object: any, propertyName) => {
       const result: any = {__proto__: null};
@@ -147,16 +150,17 @@ export class JSHandle<T = any> {
 }
 
 export async function evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
-  const utilityScript = await context.utilityScript();
-  if (helper.isString(pageFunction)) {
-    const script = `(utilityScript, ...args) => utilityScript.evaluate(...args)` + sourceMap.generateSourceUrl();
-    return context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, [returnByValue, sourceMap.ensureSourceUrl(pageFunction)], []);
-  }
-  if (typeof pageFunction !== 'function')
-    throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
+  return evaluateExpression(context, returnByValue, String(pageFunction), typeof pageFunction === 'function', ...args);
+}
 
-  const originalText = pageFunction.toString();
-  let functionText = originalText;
+export async function evaluateExpression(context: ExecutionContext, returnByValue: boolean, expression: string, isFunction: boolean, ...args: any[]): Promise<any> {
+  const utilityScript = await context.utilityScript();
+  if (!isFunction) {
+    const script = `(utilityScript, ...args) => utilityScript.evaluate(...args)` + sourceMap.generateSourceUrl();
+    return context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, [returnByValue, sourceMap.ensureSourceUrl(expression)], []);
+  }
+
+  let functionText = expression;
   try {
     new Function('(' + functionText + ')');
   } catch (e1) {
@@ -203,7 +207,7 @@ export async function evaluate(context: ExecutionContext, returnByValue: boolean
     utilityScriptObjectIds.push(handle._objectId!);
   }
 
-  functionText += await sourceMap.generateSourceMapUrl(originalText, functionText);
+  functionText += await sourceMap.generateSourceMapUrl(expression, functionText);
   // See UtilityScript for arguments.
   const utilityScriptValues = [returnByValue, functionText, args.length, ...args];
 

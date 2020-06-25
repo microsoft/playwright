@@ -21,13 +21,14 @@ import { CRBrowser } from '../chromium/crBrowser';
 import * as ws from 'ws';
 import { Env } from './processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
-import { LaunchOptionsBase, BrowserTypeBase } from './browserType';
+import { BrowserTypeBase } from './browserType';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { Logger } from '../logger';
 import { BrowserDescriptor } from '../install/browserPaths';
 import { CRDevTools } from '../chromium/crDevTools';
 import { BrowserOptions } from '../browser';
 import { WebSocketServer } from './webSocketServer';
+import { LaunchOptionsBase } from '../types';
 
 export class Chromium extends BrowserTypeBase {
   private _devtools: CRDevTools | undefined;

@@ -36,9 +36,6 @@ type ContextData = {
   rerunnableTasks: Set<RerunnableTask<any>>;
 };
 
-export type GotoOptions = types.NavigateOptions & {
-  referer?: string,
-};
 export type GotoResult = {
   newDocumentId?: string,
 };
@@ -347,7 +344,7 @@ export class Frame {
     return `${subject}.${method}`;
   }
 
-  async goto(url: string, options: GotoOptions = {}): Promise<network.Response | null> {
+  async goto(url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
     const progressController = new ProgressController(this._page._logger, this._page._timeoutSettings.navigationTimeout(options), this._apiName('goto'));
     abortProgressOnFrameDetach(progressController, this);
     return progressController.run(async progress => {
@@ -439,12 +436,22 @@ export class Frame {
     return context.evaluateHandleInternal(pageFunction, arg);
   }
 
+  async _evaluateExpressionHandle(expression: string, isFunction: boolean, arg: any): Promise<any> {
+    const context = await this._mainContext();
+    return context.evaluateExpressionHandleInternal(expression, isFunction, arg);
+  }
+
   async evaluate<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<R>;
   async evaluate<R>(pageFunction: js.Func1<void, R>, arg?: any): Promise<R>;
   async evaluate<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
     const context = await this._mainContext();
     return context.evaluateInternal(pageFunction, arg);
+  }
+
+  async _evaluateExpression(expression: string, isFunction: boolean, arg: any): Promise<any> {
+    const context = await this._mainContext();
+    return context.evaluateExpressionHandleInternal(expression, isFunction, arg);
   }
 
   async $(selector: string): Promise<dom.ElementHandle<Element> | null> {
@@ -493,10 +500,14 @@ export class Frame {
   async $eval<R>(selector: string, pageFunction: js.FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
+    return this._$evalExpression(selector, String(pageFunction), typeof pageFunction === 'function', arg);
+  }
+
+  async _$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
     const handle = await this.$(selector);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await handle.evaluate(pageFunction, arg);
+    const result = await handle._evaluateExpression(expression, isFunction, true, arg);
     handle.dispose();
     return result;
   }
@@ -505,8 +516,12 @@ export class Frame {
   async $$eval<R>(selector: string, pageFunction: js.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
   async $$eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
+    return this._$$evalExpression(selector, String(pageFunction), typeof pageFunction === 'function', arg);
+  }
+
+  async _$$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
     const arrayHandle = await selectors._queryArray(this, selector);
-    const result = await arrayHandle.evaluate(pageFunction, arg);
+    const result = await arrayHandle._evaluateExpression(expression, isFunction, true, arg);
     arrayHandle.dispose();
     return result;
   }
@@ -804,6 +819,11 @@ export class Frame {
   async waitForFunction<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<js.SmartHandle<R>>;
   async waitForFunction<R>(pageFunction: js.Func1<void, R>, arg?: any, options?: types.WaitForFunctionOptions): Promise<js.SmartHandle<R>>;
   async waitForFunction<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg, options: types.WaitForFunctionOptions = {}): Promise<js.SmartHandle<R>> {
+    return this._waitForFunctionExpression(String(pageFunction), typeof pageFunction === 'function', arg, options);
+  }
+
+
+  async _waitForFunctionExpression<R>(expression: string, isFunction: boolean, arg: any, options: types.WaitForFunctionOptions = {}): Promise<js.SmartHandle<R>> {
     const { polling = 'raf' } = options;
     if (helper.isString(polling))
       assert(polling === 'raf', 'Unknown polling option: ' + polling);
@@ -811,7 +831,7 @@ export class Frame {
       assert(polling > 0, 'Cannot poll with non-positive interval: ' + polling);
     else
       throw new Error('Unknown polling option: ' + polling);
-    const predicateBody = helper.isString(pageFunction) ? 'return (' + pageFunction + ')' : 'return (' + pageFunction + ')(arg)';
+    const predicateBody = isFunction ? 'return (' + expression + ')(arg)' :  'return (' + expression + ')';
     const task = async (context: dom.FrameExecutionContext) => {
       const injectedScript = await context.injectedScript();
       return context.evaluateHandleInternal(({ injectedScript, predicateBody, polling, arg }) => {
