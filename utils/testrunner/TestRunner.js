@@ -173,9 +173,9 @@ class TestWorker {
     for (let suite = test.suite(); suite; suite = suite.parentSuite())
       skipped = skipped || suite.skipped();
     if (skipped) {
-      await this._testRunner._willStartTestRun(this, testRun);
+      await this._willStartTestRun(testRun);
       testRun._result = TestResult.Skipped;
-      await this._testRunner._didFinishTestRun(this, testRun);
+      await this._didFinishTestRun(testRun);
       return;
     }
 
@@ -183,9 +183,9 @@ class TestWorker {
     for (let suite = test.suite(); suite; suite = suite.parentSuite())
       expectedToFail = expectedToFail || (suite.expectation() === TestExpectation.Fail);
     if (expectedToFail) {
-      await this._testRunner._willStartTestRun(this, testRun);
+      await this._willStartTestRun(testRun);
       testRun._result = TestResult.MarkedAsFailing;
-      await this._testRunner._didFinishTestRun(this, testRun);
+      await this._didFinishTestRun(testRun);
       return;
     }
 
@@ -220,7 +220,7 @@ class TestWorker {
     // From this point till the end, we have to run all hooks
     // no matter what happens.
 
-    await this._testRunner._willStartTestRun(this, testRun);
+    await this._willStartTestRun(testRun);
     for (const environment of this._environmentStack) {
       await this._hookRunner.runBeforeEach(environment, this, testRun, [this._state, testRun]);
     }
@@ -246,7 +246,21 @@ class TestWorker {
 
     for (const environment of this._environmentStack.slice().reverse())
       await this._hookRunner.runAfterEach(environment, this, testRun, [this._state, testRun]);
-    await this._testRunner._didFinishTestRun(this, testRun);
+    await this._didFinishTestRun(testRun);
+  }
+
+  async _willStartTestRun(testRun) {
+    testRun._startTimestamp = Date.now();
+    testRun._workerId = this._workerId;
+    await this._testRunner._runDelegateCallback(this._testRunner._delegate.onTestRunStarted, [testRun]);
+  }
+
+  async _didFinishTestRun(testRun) {
+    testRun._endTimestamp = Date.now();
+    testRun._workerId = this._workerId;
+
+    this._hookRunner.markFinishedTestRun(testRun);
+    await this._testRunner._runDelegateCallback(this._testRunner._delegate.onTestRunFinished, [testRun]);
   }
 
   async _willStartTestBody(testRun) {
@@ -448,20 +462,6 @@ class TestRunner {
     this._hookRunner = null;
   }
 
-  async _willStartTestRun(worker, testRun) {
-    testRun._startTimestamp = Date.now();
-    testRun._workerId = worker._workerId;
-    await this._runDelegateCallback(this._delegate.onTestRunStarted, [testRun]);
-  }
-
-  async _didFinishTestRun(worker, testRun) {
-    testRun._endTimestamp = Date.now();
-    testRun._workerId = worker._workerId;
-
-    this._hookRunner.markFinishedTestRun(testRun);
-    await this._runDelegateCallback(this._delegate.onTestRunFinished, [testRun]);
-  }
-
   async _runDelegateCallback(callback, args) {
     let { promise, terminate } = runUserCallback(callback, this._hookTimeout, args);
     // Note: we do not terminate the delegate to keep reporting even when terminating.
@@ -575,7 +575,6 @@ class TestRunner {
       testRun._result = 'running';
       await worker.run(testRun);
       if (testRun.isFailure()) {
-        // TODO(aslushnikov): we should respawn worker only in case of a crash
         // Something went wrong during test run, let's use a fresh worker.
         await worker.shutdown();
         if (this._breakOnFailure) {
