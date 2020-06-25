@@ -451,7 +451,7 @@ export class Frame {
 
   async _evaluateExpression(expression: string, isFunction: boolean, arg: any): Promise<any> {
     const context = await this._mainContext();
-    return context.evaluateExpressionHandleInternal(expression, isFunction, arg);
+    return context.evaluateExpressionInternal(expression, isFunction, arg);
   }
 
   async $(selector: string): Promise<dom.ElementHandle<Element> | null> {

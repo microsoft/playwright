@@ -19,6 +19,10 @@ const fs = require('fs');
 const utils = require('./utils');
 const TestRunner = require('../utils/testrunner/');
 const {Environment} = require('../utils/testrunner/Test');
+const { DispatcherScope } = require('../lib/rpc/dispatcher');
+const { Connection } = require('../lib/rpc/connection');
+const { helper } = require('../lib/helper');
+const { BrowserTypeDispatcher } = require('../lib/rpc/server/browserTypeDispatcher');
 
 function getCLIArgument(argName) {
   for (let i = 0; i < process.argv.length; ++i) {
@@ -90,11 +94,36 @@ function collect(browserNames) {
     testRunner.collector().useEnvironment(e);
 
   global.playwright = playwright;
+
+  // Channel substitute
+  let connection;
+  let dispatcherScope;
+  if (process.env.PWCHANNEL) {
+    dispatcherScope = new DispatcherScope();
+    connection = new Connection();
+    dispatcherScope.sendMessageToClientTransport = async message => {
+      setImmediate(() => connection.dispatchMessageFromServer(message));
+    };
+    connection.sendMessageToServerTransport = async message => {
+      const result = await dispatcherScope.dispatchMessageFromClient(message);
+      await new Promise(f => setImmediate(f));
+      return result;
+    };  
+  }
+
   for (const browserName of browserNames) {
     const browserType = playwright[browserName];
+    let overridenBrowserType = browserType;
+
+  // Channel substitute
+  if (process.env.PWCHANNEL) {
+      BrowserTypeDispatcher.from(dispatcherScope, browserType);
+      overridenBrowserType = connection.createRemoteObject('browserType', browserType.name());
+    }
+
     const browserTypeEnvironment = new Environment('BrowserType');
     browserTypeEnvironment.beforeAll(async state => {
-      state.browserType = browserType;
+      state.browserType = overridenBrowserType;
     });
     browserTypeEnvironment.afterAll(async state => {
       delete state.browserType;
