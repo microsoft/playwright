@@ -19,6 +19,7 @@ jobs:
         registry-url: 'https://registry.npmjs.org'
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
+    - run: npm run build
     - run: utils/publish_all_packages.sh --release
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

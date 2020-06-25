@@ -7,6 +7,5 @@ build: off
 install:
   - ps: Install-Product node $env:nodejs_version
   - npm ci
-  - npm run ctest
-  - npm run wtest
-  - npm run ftest
+  - npm run build
+  - npm run test
