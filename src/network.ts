@@ -285,7 +285,7 @@ export class Response {
     return this._statusText;
   }
 
-  headers(): object {
+  headers(): types.Headers {
     return { ...this._headers };
   }
 

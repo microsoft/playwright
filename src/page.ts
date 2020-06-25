@@ -31,7 +31,7 @@ import * as accessibility from './accessibility';
 import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
 import { logError, Logger } from './logger';
-import { ProgressController, Progress } from './progress';
+import { ProgressController, Progress, runAbortableTask } from './progress';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -68,12 +68,13 @@ export interface PageDelegate {
   getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null>;
   getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle>;
   scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'>;
-  rafCountForStablePosition(): number;
 
   getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}>;
   pdf?: (options?: types.PDFOptions) => Promise<Buffer>;
   coverage?: () => any;
 
+  // Work around WebKit's raf issues on Windows.
+  rafCountForStablePosition(): number;
   // Work around Chrome's non-associated input and protocol.
   inputActionEpilogue(): Promise<void>;
   // Work around for asynchronously dispatched CSP errors in Firefox.
@@ -143,11 +144,6 @@ export class Page extends EventEmitter {
     this.coverage = delegate.coverage ? delegate.coverage() : null;
   }
 
-  private _runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number, apiName: string): Promise<T> {
-    const controller = new ProgressController(this._logger, timeout, `page.${apiName}`);
-    return controller.run(task);
-  }
-
   _didClose() {
     assert(!this._closed, 'Page closed twice');
     this._closed = true;
@@ -164,6 +160,12 @@ export class Page extends EventEmitter {
     assert(!this._disconnected, 'Page disconnected twice');
     this._disconnected = true;
     this._disconnectedCallback(new Error('Page closed'));
+  }
+
+  async _runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number, apiName: string): Promise<T> {
+    return runAbortableTask(async progress => {
+      return task(progress);
+    }, this._logger, timeout, apiName);
   }
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {
@@ -448,8 +450,9 @@ export class Page extends EventEmitter {
   }
 
   async screenshot(options: types.ScreenshotOptions = {}): Promise<Buffer> {
-    const controller = new ProgressController(this._logger, this._timeoutSettings.timeout(options), 'page.screenshot');
-    return controller.run(progress => this._screenshotter.screenshotPage(progress, options));
+    return this._runAbortableTask(
+        progress => this._screenshotter.screenshotPage(progress, options),
+        this._timeoutSettings.timeout(options), 'page.screenshot');
   }
 
   async title(): Promise<string> {

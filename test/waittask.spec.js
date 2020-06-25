@@ -431,9 +431,9 @@ describe('Frame.waitForSelector', function() {
   });
   it('should respect timeout', async({page, server}) => {
     let error = null;
-    await page.waitForSelector('div', { timeout: 10, state: 'attached' }).catch(e => error = e);
+    await page.waitForSelector('div', { timeout: 3000, state: 'attached' }).catch(e => error = e);
     expect(error).toBeTruthy();
-    expect(error.message).toContain('Timeout 10ms exceeded during page.waitForSelector');
+    expect(error.message).toContain('Timeout 3000ms exceeded during page.waitForSelector');
     expect(error.message).toContain('waiting for selector "div"');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
@@ -521,9 +521,9 @@ describe('Frame.waitForSelector xpath', function() {
   });
   it('should respect timeout', async({page}) => {
     let error = null;
-    await page.waitForSelector('//div', { state: 'attached', timeout: 10 }).catch(e => error = e);
+    await page.waitForSelector('//div', { state: 'attached', timeout: 3000 }).catch(e => error = e);
     expect(error).toBeTruthy();
-    expect(error.message).toContain('Timeout 10ms exceeded during page.waitForSelector');
+    expect(error.message).toContain('Timeout 3000ms exceeded during page.waitForSelector');
     expect(error.message).toContain('waiting for selector "//div"');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });

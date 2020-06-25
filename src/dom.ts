@@ -27,7 +27,7 @@ import * as js from './javascript';
 import { Page } from './page';
 import { selectors } from './selectors';
 import * as types from './types';
-import { Progress, ProgressController } from './progress';
+import { Progress } from './progress';
 import DebugScript from './debug/injected/debugScript';
 import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
 
@@ -120,11 +120,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     this._context = context;
     this._page = context.frame._page;
     this._initializePreview().catch(e => {});
-  }
-
-  private _runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number, apiName: string): Promise<T> {
-    const controller = new ProgressController(this._page._logger, timeout, `elementHandle.${apiName}`);
-    return controller.run(task);
   }
 
   async _initializePreview() {
@@ -229,9 +224,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async scrollIntoViewIfNeeded(options: types.TimeoutOptions = {}) {
-    return this._runAbortableTask(
+    return this._page._runAbortableTask(
         progress => this._waitAndScrollIntoViewIfNeeded(progress),
-        this._page._timeoutSettings.timeout(options), 'scrollIntoViewIfNeeded');
+        this._page._timeoutSettings.timeout(options), 'elementHandle.scrollIntoViewIfNeeded');
   }
 
   private async _waitForVisible(progress: Progress): Promise<'error:notconnected' | 'done'> {
@@ -378,10 +373,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   hover(options: types.PointerActionOptions & types.PointerActionWaitOptions = {}): Promise<void> {
-    return this._runAbortableTask(async progress => {
+    return this._page._runAbortableTask(async progress => {
       const result = await this._hover(progress, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'hover');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.hover');
   }
 
   _hover(progress: Progress, options: types.PointerActionOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -389,10 +384,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   click(options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return this._runAbortableTask(async progress => {
+    return this._page._runAbortableTask(async progress => {
       const result = await this._click(progress, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'click');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.click');
   }
 
   _click(progress: Progress, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -400,10 +395,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   dblclick(options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return this._runAbortableTask(async progress => {
+    return this._page._runAbortableTask(async progress => {
       const result = await this._dblclick(progress, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'dblclick');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.dblclick');
   }
 
   _dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -411,10 +406,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return this._runAbortableTask(async progress => {
+    return this._page._runAbortableTask(async progress => {
       const result = await this._selectOption(progress, values, options);
       return throwRetargetableDOMError(result);
-    }, this._page._timeoutSettings.timeout(options), 'selectOption');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.selectOption');
   }
 
   async _selectOption(progress: Progress, values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions): Promise<string[] | 'error:notconnected'> {
@@ -444,10 +439,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async fill(value: string, options: types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return this._runAbortableTask(async progress => {
+    return this._page._runAbortableTask(async progress => {
       const result = await this._fill(progress, value, options);
       assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'fill');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.fill');
   }
 
   async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -478,7 +473,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async selectText(options: types.TimeoutOptions = {}): Promise<void> {
-    return this._runAbortableTask(async progress => {
+    return this._page._runAbortableTask(async progress => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       const poll = await this._evaluateHandleInUtility(([injected, node]) => {
         return injected.waitForVisibleAndSelectText(node);
@@ -486,14 +481,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const pollHandler = new InjectedScriptPollHandler(progress, poll);
       const result = throwFatalDOMError(await pollHandler.finish());
       assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'selectText');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.selectText');
   }
 
   async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}) {
-    return this._runAbortableTask(async progress => {
+    return this._page._runAbortableTask(async progress => {
       const result = await this._setInputFiles(progress, files, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'setInputFiles');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.setInputFiles');
   }
 
   async _setInputFiles(progress: Progress, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -534,10 +529,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async focus(): Promise<void> {
-    return this._runAbortableTask(async progress => {
+    return this._page._runAbortableTask(async progress => {
       const result = await this._focus(progress);
       return assertDone(throwRetargetableDOMError(result));
-    }, 0, 'focus');
+    }, 0, 'elementHandle.focus');
   }
 
   async _focus(progress: Progress): Promise<'error:notconnected' | 'done'> {
@@ -547,10 +542,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async type(text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return this._runAbortableTask(async progress => {
+    return this._page._runAbortableTask(async progress => {
       const result = await this._type(progress, text, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'type');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.type');
   }
 
   async _type(progress: Progress, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -566,10 +561,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async press(key: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return this._runAbortableTask(async progress => {
+    return this._page._runAbortableTask(async progress => {
       const result = await this._press(progress, key, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'press');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.press');
   }
 
   async _press(progress: Progress, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -585,17 +580,17 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async check(options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    return this._runAbortableTask(async progress => {
+    return this._page._runAbortableTask(async progress => {
       const result = await this._setChecked(progress, true, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'check');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.check');
   }
 
   async uncheck(options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    return this._runAbortableTask(async progress => {
+    return this._page._runAbortableTask(async progress => {
       const result = await this._setChecked(progress, false, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'uncheck');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.uncheck');
   }
 
   async _setChecked(progress: Progress, state: boolean, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -614,9 +609,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async screenshot(options: types.ElementScreenshotOptions = {}): Promise<Buffer> {
-    return this._runAbortableTask(
+    return this._page._runAbortableTask(
         progress => this._page._screenshotter.screenshotElement(progress, this, options),
-        this._page._timeoutSettings.timeout(options), 'screenshot');
+        this._page._timeoutSettings.timeout(options), 'elementHandle.screenshot');
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
