@@ -154,7 +154,7 @@ describe('Browser.disconnect', function() {
     await server.waitForRequest('/one-style.css');
     await remote.close();
     const error = await navigationPromise;
-    expect(error.message).toContain('Navigation failed because browser has disconnected!');
+    expect(error.message).toContain('Navigation failed because page was closed!');
     await browserServer._checkLeaks();
     await browserServer.close();
   });
@@ -211,7 +211,7 @@ describe('Browser.close', function() {
     ]);
     for (let i = 0; i < 2; i++) {
       const message = results[i].message;
-      expect(message).toContain('Target closed');
+      expect(message).toContain('Page closed');
       expect(message).not.toContain('Timeout');
     }
   });

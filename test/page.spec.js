@@ -78,7 +78,7 @@ describe('Page.close', function() {
     ]);
     for (let i = 0; i < 2; i++) {
       const message = results[i].message;
-      expect(message).toContain('Target closed');
+      expect(message).toContain('Page closed');
       expect(message).not.toContain('Timeout');
     }
   });
@@ -129,6 +129,28 @@ describe.fail(FFOX && WIN)('Page.Events.Crash', function() {
     const err = await page.evaluate(() => {}).then(() => null, e => e);
     expect(err).toBeTruthy();
     expect(err.message).toContain('crash');
+  });
+  it('should cancel waitForEvent when page crashes', async({page}) => {
+    await page.setContent(`<div>This page should crash</div>`);
+    const promise = page.waitForEvent('response').catch(e => e);
+    crash(page);
+    const error = await promise;
+    expect(error.message).toContain('Page crashed');
+  });
+  it('should cancel navigation when page crashes', async({page, server}) => {
+    await page.setContent(`<div>This page should crash</div>`);
+    server.setRoute('/one-style.css', () => {});
+    const promise = page.goto(server.PREFIX + '/one-style.html').catch(e => e);
+    await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
+    crash(page);
+    const error = await promise;
+    expect(error.message).toContain('Navigation failed because page crashed');
+  });
+  it('should be able to close context when page crashes', async({page}) => {
+    await page.setContent(`<div>This page should crash</div>`);
+    crash(page);
+    await page.waitForEvent('crash');
+    await page.context().close();
   });
 });
 
@@ -353,7 +375,7 @@ describe('Page.waitForEvent', function() {
     const waitForPromise = page.waitForEvent('download').catch(e => error = e);
     await page.close();
     await waitForPromise;
-    expect(error.message).toContain('Target closed');
+    expect(error.message).toContain('Page closed');
   });
 });
 

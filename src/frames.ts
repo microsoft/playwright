@@ -983,6 +983,7 @@ class SignalBarrier {
     const frameTask = new FrameTask(frame, this._progress);
     await Promise.race([
       frame._page._disconnectedPromise,
+      frame._page._crashedPromise,
       frame._detachedPromise,
       frameTask.waitForNewDocument(),
       frameTask.waitForSameDocumentNavigation(),
@@ -1114,6 +1115,7 @@ class FrameTask {
 }
 
 function abortProgressOnFrameDetach(controller: ProgressController, frame: Frame) {
-  frame._page._disconnectedPromise.then(() => controller.abort(new Error('Navigation failed because browser has disconnected!')));
+  frame._page._disconnectedPromise.then(() => controller.abort(new Error('Navigation failed because page was closed!')));
+  frame._page._crashedPromise.then(() => controller.abort(new Error('Navigation failed because page crashed!')));
   frame._detachedPromise.then(() => controller.abort(new Error('Navigating frame was detached!')));
 }
