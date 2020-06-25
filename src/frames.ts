@@ -29,7 +29,6 @@ import * as types from './types';
 import { BrowserContext } from './browserContext';
 import { Progress, ProgressController } from './progress';
 
-type ContextType = 'main' | 'utility';
 type ContextData = {
   contextPromise: Promise<dom.FrameExecutionContext>;
   contextResolveCallback: (c: dom.FrameExecutionContext) => void;
@@ -312,7 +311,7 @@ export class Frame {
   private _parentFrame: Frame | null;
   _url = '';
   private _detached = false;
-  private _contextData = new Map<ContextType, ContextData>();
+  private _contextData = new Map<types.World, ContextData>();
   private _childFrames = new Set<Frame>();
   _name = '';
   _inflightRequests = new Set<network.Request>();
@@ -418,10 +417,10 @@ export class Frame {
     return this._page._delegate.getFrameElement(this);
   }
 
-  _context(contextType: ContextType): Promise<dom.FrameExecutionContext> {
+  _context(world: types.World): Promise<dom.FrameExecutionContext> {
     if (this._detached)
       throw new Error(`Execution Context is not available in detached frame "${this.url()}" (are you trying to evaluate?)`);
-    return this._contextData.get(contextType)!.contextPromise;
+    return this._contextData.get(world)!.contextPromise;
   }
 
   _mainContext(): Promise<dom.FrameExecutionContext> {
@@ -460,10 +459,11 @@ export class Frame {
     const { state = 'visible' } = options;
     if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
       throw new Error(`Unsupported state option "${state}"`);
-    const { world, task } = selectors._waitForSelectorTask(selector, state);
+    const info = selectors._parseSelector(selector);
+    const task = selectors._waitForSelectorTask(info, state);
     return this._runAbortableTask(async progress => {
       progress.logger.info(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
-      const result = await this._scheduleRerunnableTask(progress, world, task);
+      const result = await this._scheduleRerunnableTask(progress, info.world, task);
       if (!result.asElement()) {
         result.dispose();
         return null;
@@ -480,7 +480,8 @@ export class Frame {
   }
 
   async dispatchEvent(selector: string, type: string, eventInit?: Object, options: types.TimeoutOptions = {}): Promise<void> {
-    const task = selectors._dispatchEventTask(selector, type, eventInit || {});
+    const info = selectors._parseSelector(selector);
+    const task = selectors._dispatchEventTask(info, type, eventInit || {});
     return this._runAbortableTask(async progress => {
       progress.logger.info(`Dispatching "${type}" event on selector "${selector}"...`);
       const result = await this._scheduleRerunnableTask(progress, 'main', task);
@@ -716,11 +717,12 @@ export class Frame {
     selector: string, options: types.TimeoutOptions,
     action: (progress: Progress, handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>,
     apiName: string): Promise<R> {
+    const info = selectors._parseSelector(selector);
     return this._runAbortableTask(async progress => {
       while (progress.isRunning()) {
         progress.logger.info(`waiting for selector "${selector}"`);
-        const { world, task } = selectors._waitForSelectorTask(selector, 'attached');
-        const handle = await this._scheduleRerunnableTask(progress, world, task);
+        const task = selectors._waitForSelectorTask(info, 'attached');
+        const handle = await this._scheduleRerunnableTask(progress, info.world, task);
         const element = handle.asElement() as dom.ElementHandle<Element>;
         progress.cleanupWhenAborted(() => element.dispose());
         const result = await action(progress, element);
@@ -841,16 +843,16 @@ export class Frame {
     this._parentFrame = null;
   }
 
-  private _scheduleRerunnableTask<T>(progress: Progress, contextType: ContextType, task: SchedulableTask<T>): Promise<js.SmartHandle<T>> {
-    const data = this._contextData.get(contextType)!;
+  private _scheduleRerunnableTask<T>(progress: Progress, world: types.World, task: SchedulableTask<T>): Promise<js.SmartHandle<T>> {
+    const data = this._contextData.get(world)!;
     const rerunnableTask = new RerunnableTask(data, progress, task);
     if (data.context)
       rerunnableTask.rerun(data.context);
     return rerunnableTask.promise;
   }
 
-  private _setContext(contextType: ContextType, context: dom.FrameExecutionContext | null) {
-    const data = this._contextData.get(contextType)!;
+  private _setContext(world: types.World, context: dom.FrameExecutionContext | null) {
+    const data = this._contextData.get(world)!;
     data.context = context;
     if (context) {
       data.contextResolveCallback.call(null, context);
@@ -863,20 +865,20 @@ export class Frame {
     }
   }
 
-  _contextCreated(contextType: ContextType, context: dom.FrameExecutionContext) {
-    const data = this._contextData.get(contextType)!;
+  _contextCreated(world: types.World, context: dom.FrameExecutionContext) {
+    const data = this._contextData.get(world)!;
     // In case of multiple sessions to the same target, there's a race between
     // connections so we might end up creating multiple isolated worlds.
     // We can use either.
     if (data.context)
-      this._setContext(contextType, null);
-    this._setContext(contextType, context);
+      this._setContext(world, null);
+    this._setContext(world, context);
   }
 
   _contextDestroyed(context: dom.FrameExecutionContext) {
-    for (const [contextType, data] of this._contextData) {
+    for (const [world, data] of this._contextData) {
       if (data.context === context)
-        this._setContext(contextType, null);
+        this._setContext(world, null);
     }
   }
 

@@ -18,7 +18,14 @@ import * as dom from './dom';
 import * as frames from './frames';
 import { helper, assert } from './helper';
 import * as js from './javascript';
+import * as types from './types';
 import { ParsedSelector, parseSelector } from './common/selectorParser';
+
+export type SelectorInfo = {
+  parsed: ParsedSelector,
+  world: types.World,
+  selector: string,
+};
 
 export class Selectors {
   readonly _builtinEngines: Set<string>;
@@ -51,20 +58,13 @@ export class Selectors {
     this._engines.set(name, { source, contentScript });
   }
 
-  private _needsMainContext(parsed: ParsedSelector): boolean {
-    return parsed.parts.some(({name}) => {
-      const custom = this._engines.get(name);
-      return custom ? !custom.contentScript : false;
-    });
-  }
-
   async _query(frame: frames.Frame, selector: string, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
-    const parsed = this._parseSelector(selector);
-    const context = this._needsMainContext(parsed) ? await frame._mainContext() : await frame._utilityContext();
+    const info = this._parseSelector(selector);
+    const context = await frame._context(info.world);
     const injectedScript = await context.injectedScript();
     const handle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
       return injected.querySelector(parsed, scope || document);
-    }, { parsed, scope });
+    }, { parsed: info.parsed, scope });
     const elementHandle = handle.asElement() as dom.ElementHandle<Element> | null;
     if (!elementHandle) {
       handle.dispose();
@@ -79,22 +79,22 @@ export class Selectors {
   }
 
   async _queryArray(frame: frames.Frame, selector: string, scope?: dom.ElementHandle): Promise<js.JSHandle<Element[]>> {
-    const parsed = this._parseSelector(selector);
+    const info = this._parseSelector(selector);
     const context = await frame._mainContext();
     const injectedScript = await context.injectedScript();
     const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
       return injected.querySelectorAll(parsed, scope || document);
-    }, { parsed, scope });
+    }, { parsed: info.parsed, scope });
     return arrayHandle;
   }
 
   async _queryAll(frame: frames.Frame, selector: string, scope?: dom.ElementHandle, allowUtilityContext?: boolean): Promise<dom.ElementHandle<Element>[]> {
-    const parsed = this._parseSelector(selector);
-    const context = !allowUtilityContext || this._needsMainContext(parsed) ? await frame._mainContext() : await frame._utilityContext();
+    const info = this._parseSelector(selector);
+    const context = await frame._context(allowUtilityContext ? info.world : 'main');
     const injectedScript = await context.injectedScript();
     const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
       return injected.querySelectorAll(parsed, scope || document);
-    }, { parsed, scope });
+    }, { parsed: info.parsed, scope });
 
     const properties = await arrayHandle.getProperties();
     arrayHandle.dispose();
@@ -109,9 +109,8 @@ export class Selectors {
     return result;
   }
 
-  _waitForSelectorTask(selector: string, state: 'attached' | 'detached' | 'visible' | 'hidden'): { world: 'main' | 'utility', task: frames.SchedulableTask<Element | undefined> } {
-    const parsed = this._parseSelector(selector);
-    const task = async (context: dom.FrameExecutionContext) => {
+  _waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 'detached' | 'visible' | 'hidden'): frames.SchedulableTask<Element | undefined> {
+    return async (context: dom.FrameExecutionContext) => {
       const injectedScript = await context.injectedScript();
       return injectedScript.evaluateHandle((injected, { parsed, state }) => {
         let lastElement: Element | undefined;
@@ -139,13 +138,11 @@ export class Selectors {
               return !visible ? undefined : continuePolling;
           }
         });
-      }, { parsed, state });
+      }, { parsed: selector.parsed, state });
     };
-    return { world: this._needsMainContext(parsed) ? 'main' : 'utility', task };
   }
 
-  _dispatchEventTask(selector: string, type: string, eventInit: Object): frames.SchedulableTask<undefined> {
-    const parsed = this._parseSelector(selector);
+  _dispatchEventTask(selector: SelectorInfo, type: string, eventInit: Object): frames.SchedulableTask<undefined> {
     const task = async (context: dom.FrameExecutionContext) => {
       const injectedScript = await context.injectedScript();
       return injectedScript.evaluateHandle((injected, { parsed, type, eventInit }) => {
@@ -155,7 +152,7 @@ export class Selectors {
             injected.dispatchEvent(element, type, eventInit);
           return element ? undefined : continuePolling;
         });
-      }, { parsed, type, eventInit });
+      }, { parsed: selector.parsed, type, eventInit });
     };
     return task;
   }
@@ -168,14 +165,22 @@ export class Selectors {
     }, { target: handle, name });
   }
 
-  private _parseSelector(selector: string): ParsedSelector {
+  _parseSelector(selector: string): SelectorInfo {
     assert(helper.isString(selector), `selector must be a string`);
     const parsed = parseSelector(selector);
     for (const {name} of parsed.parts) {
       if (!this._builtinEngines.has(name) && !this._engines.has(name))
         throw new Error(`Unknown engine "${name}" while parsing selector ${selector}`);
     }
-    return parsed;
+    const needsMainWorld = parsed.parts.some(({name}) => {
+      const custom = this._engines.get(name);
+      return custom ? !custom.contentScript : false;
+    });
+    return {
+      parsed,
+      selector,
+      world: needsMainWorld ? 'main' : 'utility',
+    };
   }
 }
 
