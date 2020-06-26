@@ -16,16 +16,8 @@
  */
 
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
-
-async function registerEngine(name, script, options) {
-  try {
-    await playwright.selectors.register(name, script, options);
-  } catch (e) {
-    if (!e.message.includes('has been already registered'))
-      throw e;
-  }
-}
+const utils = require('./utils');
+const {FFOX, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
 
 describe('Page.$eval', function() {
   it('should work with css selector', async({page, server}) => {
@@ -764,15 +756,19 @@ describe('selectors.register', () => {
         return Array.from(root.querySelectorAll(selector));
       }
     });
-    await registerEngine('tag', `(${createTagSelector.toString()})()`);
+    await utils.registerEngine('tag', `(${createTagSelector.toString()})()`);
     await page.setContent('<div><span></span></div><div></div>');
     expect(await playwright.selectors._createSelector('tag', await page.$('div'))).toBe('DIV');
     expect(await page.$eval('tag=DIV', e => e.nodeName)).toBe('DIV');
     expect(await page.$eval('tag=SPAN', e => e.nodeName)).toBe('SPAN');
     expect(await page.$$eval('tag=DIV', es => es.length)).toBe(2);
+
+    // Selector names are case-sensitive.
+    const error = await page.$('tAG=DIV').catch(e => e);
+    expect(error.message).toBe('Unknown engine "tAG" while parsing selector tAG=DIV');
   });
   it('should work with path', async ({page}) => {
-    await registerEngine('foo', { path: path.join(__dirname, 'assets/sectionselectorengine.js') });
+    await utils.registerEngine('foo', { path: path.join(__dirname, 'assets/sectionselectorengine.js') });
     await page.setContent('<section></section>');
     expect(await page.$eval('foo=whatever', e => e.nodeName)).toBe('SECTION');
   });
@@ -786,8 +782,8 @@ describe('selectors.register', () => {
         return [document.body, document.documentElement, window.__answer];
       }
     });
-    await registerEngine('main', createDummySelector);
-    await registerEngine('isolated', createDummySelector, { contentScript: true });
+    await utils.registerEngine('main', createDummySelector);
+    await utils.registerEngine('isolated', createDummySelector, { contentScript: true });
     await page.setContent('<div><span><section></section></span></div>');
     await page.evaluate(() => window.__answer = document.querySelector('span'));
     // Works in main if asked.
@@ -826,7 +822,9 @@ describe('selectors.register', () => {
     error = await playwright.selectors.register('$', createDummySelector).catch(e => e);
     expect(error.message).toBe('Selector engine name may only contain [a-zA-Z0-9_] characters');
 
-    await registerEngine('dummy', createDummySelector);
+    // Selector names are case-sensitive.
+    await utils.registerEngine('dummy', createDummySelector);
+    await utils.registerEngine('duMMy', createDummySelector);
 
     error = await playwright.selectors.register('dummy', createDummySelector).catch(e => e);
     expect(error.message).toBe('"dummy" selector engine has been already registered');

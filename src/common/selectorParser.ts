@@ -52,7 +52,6 @@ export function parseSelector(selector: string): ParsedSelector {
       name = 'css';
       body = part;
     }
-    name = name.toLowerCase();
     let capture = false;
     if (name[0] === '*') {
       capture = true;

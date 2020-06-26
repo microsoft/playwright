@@ -109,54 +109,6 @@ export class Selectors {
     return result;
   }
 
-  _waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 'detached' | 'visible' | 'hidden'): frames.SchedulableTask<Element | undefined> {
-    return async (context: dom.FrameExecutionContext) => {
-      const injectedScript = await context.injectedScript();
-      return injectedScript.evaluateHandle((injected, { parsed, state }) => {
-        let lastElement: Element | undefined;
-
-        return injected.pollRaf((progress, continuePolling) => {
-          const element = injected.querySelector(parsed, document);
-          const visible = element ? injected.isVisible(element) : false;
-
-          if (lastElement !== element) {
-            lastElement = element;
-            if (!element)
-              progress.log(`  selector did not resolve to any element`);
-            else
-              progress.log(`  selector resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewNode(element)}`);
-          }
-
-          switch (state) {
-            case 'attached':
-              return element ? element : continuePolling;
-            case 'detached':
-              return !element ? undefined : continuePolling;
-            case 'visible':
-              return visible ? element : continuePolling;
-            case 'hidden':
-              return !visible ? undefined : continuePolling;
-          }
-        });
-      }, { parsed: selector.parsed, state });
-    };
-  }
-
-  _dispatchEventTask(selector: SelectorInfo, type: string, eventInit: Object): frames.SchedulableTask<undefined> {
-    const task = async (context: dom.FrameExecutionContext) => {
-      const injectedScript = await context.injectedScript();
-      return injectedScript.evaluateHandle((injected, { parsed, type, eventInit }) => {
-        return injected.pollRaf((progress, continuePolling) => {
-          const element = injected.querySelector(parsed, document);
-          if (element)
-            injected.dispatchEvent(element, type, eventInit);
-          return element ? undefined : continuePolling;
-        });
-      }, { parsed: selector.parsed, type, eventInit });
-    };
-    return task;
-  }
-
   async _createSelector(name: string, handle: dom.ElementHandle<Element>): Promise<string | undefined> {
     const mainContext = await handle._page.mainFrame()._mainContext();
     const injectedScript = await mainContext.injectedScript();

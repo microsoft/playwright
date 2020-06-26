@@ -97,6 +97,27 @@ describe('Page.dispatchEvent(click)', function() {
     await watchdog;
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
+  it('should be atomic', async({page}) => {
+    const createDummySelector = () => ({
+      create(root, target) {},
+      query(root, selector) {
+        const result = root.querySelector(selector);
+        if (result)
+          Promise.resolve().then(() => result.onclick = "");
+        return result;
+      },
+      queryAll(root, selector) {
+        const result = Array.from(root.querySelectorAll(selector));
+        for (const e of result)
+          Promise.resolve().then(() => result.onclick = "");
+        return result;
+      }
+    });
+    await utils.registerEngine('dispatchEvent', createDummySelector);
+    await page.setContent(`<div onclick="window._clicked=true">Hello</div>`);
+    await page.dispatchEvent('dispatchEvent=div', 'click');
+    expect(await page.evaluate(() => window._clicked)).toBe(true);
+  });
 });
 
 describe('Page.dispatchEvent(drag)', function() {
