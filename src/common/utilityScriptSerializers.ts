@@ -15,8 +15,7 @@
  */
 
 export function parseEvaluationResultValue(value: any, handles: any[] = []): any {
-  // { type: 'undefined' } does not even have value.
-  if (value === 'undefined')
+  if (value === undefined)
     return undefined;
   if (typeof value === 'object') {
     if (value.v === 'undefined')
