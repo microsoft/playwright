@@ -80,8 +80,13 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
         throw new Error('Evaluation failed: ' + response.result.description);
       if (!returnByValue)
         return utilityScript._context.createHandle(response.result);
-      if (response.result.objectId)
+      if (response.result.objectId) {
+        // Avoid protocol round trip for evaluates that do not return anything.
+        // Otherwise, we can fail with 'execution context destroyed' without any reason.
+        if (response.result.type === 'undefined')
+          return undefined;
         return await this._returnObjectByValue(utilityScript, response.result.objectId);
+      }
       return parseEvaluationResultValue(response.result.value);
     } catch (error) {
       throw rewriteError(error);
@@ -89,7 +94,6 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   }
 
   private async _returnObjectByValue(utilityScript: js.JSHandle<any>, objectId: Protocol.Runtime.RemoteObjectId): Promise<any> {
-    // This is different from handleJSONValue in that it does not throw.
     try {
       const serializeResponse = await this._session.send('Runtime.callFunctionOn', {
         functionDeclaration: 'object => object' + sourceMap.generateSourceUrl(),
@@ -98,13 +102,10 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
         returnByValue: true
       });
       if (serializeResponse.wasThrown)
-        return undefined;
+        throw new Error('Evaluation failed: ' + serializeResponse.result.description);
       return parseEvaluationResultValue(serializeResponse.result.value);
     } catch (error) {
-      return undefined;
-      // TODO: we should actually throw an error, but that breaks the common case of undefined
-      // that is for some reason reported as an object and cannot be accessed after navigation.
-      // throw rewriteError(error);
+      throw rewriteError(error);
     }
   }
 

@@ -32,6 +32,9 @@ export default class UtilityScript {
   }
 
   jsonValue(returnByValue: true, value: any) {
+    // Special handling of undefined to work-around multi-step returnByValue handling in WebKit.
+    if (Object.is(value, undefined))
+      return undefined;
     return serializeAsCallArgument(value, (value: any) => ({ fallThrough: value }));
   }
 
