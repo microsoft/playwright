@@ -15,17 +15,17 @@
  */
 
 import * as js from '../../javascript';
-import { JSHandleChannel } from '../channels';
+import { JSHandleChannel, JSHandleInitializer } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
 import { convertArg } from './frameDispatcher';
 
-export class JSHandleDispatcher extends Dispatcher implements JSHandleChannel {
+export class JSHandleDispatcher extends Dispatcher<JSHandleInitializer> implements JSHandleChannel {
   readonly _jsHandle: js.JSHandle<any>;
 
-  constructor(scope: DispatcherScope, jsHandle: js.JSHandle, omitInit?: boolean) {
-    super(scope, jsHandle, jsHandle.asElement() ? 'elementHandle' : 'jsHandle');
-    if (!omitInit)
-      this._initialize({ preview: jsHandle.toString() });
+  constructor(scope: DispatcherScope, jsHandle: js.JSHandle) {
+    super(scope, jsHandle, jsHandle.asElement() ? 'elementHandle' : 'jsHandle', {
+      preview: jsHandle.toString(),
+    });
     this._jsHandle = jsHandle;
   }
 

@@ -19,13 +19,14 @@ import * as frames from './frame';
 import { Page, BindingCall, waitForEvent } from './page';
 import * as types from '../../types';
 import * as network from './network';
-import { BrowserContextChannel } from '../channels';
+import { BrowserContextChannel, BrowserContextInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
 import { helper } from '../../helper';
 import { Browser } from './browser';
 import { Connection } from '../connection';
+import { Events } from '../../events';
 
-export class BrowserContext extends ChannelOwner<BrowserContextChannel> {
+export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserContextInitializer> {
   _pages = new Set<Page>();
   private _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
   _browser: Browser | undefined;
@@ -39,11 +40,16 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel> {
     return context ? BrowserContext.from(context) : null;
   }
 
-  constructor(connection: Connection, channel: BrowserContextChannel) {
-    super(connection, channel);
+  constructor(connection: Connection, channel: BrowserContextChannel, initializer: BrowserContextInitializer) {
+    super(connection, channel, initializer);
+    channel.on('page', page => this._onPage(Page.from(page)));
   }
 
-  _initialize() {}
+  private _onPage(page: Page): void {
+    page._browserContext = this;
+    this._pages.add(page);
+    this.emit(Events.BrowserContext.Page, page);
+  }
 
   _onRoute(route: network.Route, request: network.Request) {
     for (const {url, handler} of this._routes) {
@@ -56,7 +62,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel> {
   }
 
   async _onBinding(bindingCall: BindingCall) {
-    const func = this._bindings.get(bindingCall.name);
+    const func = this._bindings.get(bindingCall._initializer.name);
     if (!func)
       return;
     bindingCall.call(func);
@@ -157,5 +163,6 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel> {
   async close(): Promise<void> {
     await this._channel.close();
     this._browser!._contexts.delete(this);
+    this.emit(Events.BrowserContext.Close);
   }
 }

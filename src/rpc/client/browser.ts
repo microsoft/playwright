@@ -15,13 +15,13 @@
  */
 
 import * as types from '../../types';
-import { BrowserChannel } from '../channels';
+import { BrowserChannel, BrowserInitializer } from '../channels';
 import { BrowserContext } from './browserContext';
 import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Connection } from '../connection';
 
-export class Browser extends ChannelOwner<BrowserChannel> {
+export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   readonly _contexts = new Set<BrowserContext>();
   private _isConnected = true;
 
@@ -34,11 +34,9 @@ export class Browser extends ChannelOwner<BrowserChannel> {
     return browser ? Browser.from(browser) : null;
   }
 
-  constructor(connection: Connection, channel: BrowserChannel) {
-    super(connection, channel);
+  constructor(connection: Connection, channel: BrowserChannel, initializer: BrowserInitializer) {
+    super(connection, channel, initializer);
   }
-
-  _initialize() {}
 
   async newContext(options?: types.BrowserContextOptions): Promise<BrowserContext> {
     const context = BrowserContext.from(await this._channel.newContext({ options }));

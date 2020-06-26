@@ -17,7 +17,7 @@
 
 import { assertMaxArguments } from '../../helper';
 import * as types from '../../types';
-import { FrameChannel } from '../channels';
+import { FrameChannel, FrameInitializer } from '../channels';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle, convertSelectOptionValues } from './elementHandle';
@@ -33,12 +33,13 @@ export type GotoOptions = types.NavigateOptions & {
 
 export type FunctionWithSource = (source: { context: BrowserContext, page: Page, frame: Frame }, ...args: any) => any;
 
-export class Frame extends ChannelOwner<FrameChannel> {
+export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   _parentFrame: Frame | null = null;
   _url = '';
   _name = '';
   private _detached = false;
   _childFrames = new Set<Frame>();
+  _page: Page | undefined;
 
   static from(frame: FrameChannel): Frame {
     return frame._object;
@@ -48,16 +49,13 @@ export class Frame extends ChannelOwner<FrameChannel> {
     return frame ? Frame.from(frame) : null;
   }
 
-  constructor(connection: Connection, channel: FrameChannel) {
-    super(connection, channel);
-  }
-
-  _initialize(params: { name: string, url: string, parentFrame: FrameChannel | null }) {
-    this._parentFrame = params.parentFrame ? params.parentFrame._object : null;
+  constructor(connection: Connection, channel: FrameChannel, initializer: FrameInitializer) {
+    super(connection, channel, initializer);
+    this._parentFrame = Frame.fromNullable(initializer.parentFrame);
     if (this._parentFrame)
       this._parentFrame._childFrames.add(this);
-    this._name = params.name;
-    this._url = params.url;
+    this._name = initializer.name;
+    this._url = initializer.url;
   }
 
   async goto(url: string, options: GotoOptions = {}): Promise<network.Response | null> {

@@ -16,13 +16,13 @@
 
 import { Frame } from '../../frames';
 import * as types from '../../types';
-import { ElementHandleChannel, FrameChannel, JSHandleChannel, ResponseChannel } from '../channels';
+import { ElementHandleChannel, FrameChannel, JSHandleChannel, ResponseChannel, FrameInitializer } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
 import { ElementHandleDispatcher, convertSelectOptionValues } from './elementHandlerDispatcher';
 import { JSHandleDispatcher } from './jsHandleDispatcher';
 import { ResponseDispatcher } from './networkDispatchers';
 
-export class FrameDispatcher extends Dispatcher implements FrameChannel {
+export class FrameDispatcher extends Dispatcher<FrameInitializer> implements FrameChannel {
   private _frame: Frame;
 
   static from(scope: DispatcherScope, frame: Frame): FrameDispatcher {
@@ -38,14 +38,12 @@ export class FrameDispatcher extends Dispatcher implements FrameChannel {
   }
 
   constructor(scope: DispatcherScope, frame: Frame) {
-    super(scope, frame, 'frame');
-    this._frame = frame;
-    const parentFrame = frame.parentFrame();
-    this._initialize({
+    super(scope, frame, 'frame', {
       url: frame.url(),
       name: frame.name(),
-      parentFrame: FrameDispatcher.fromNullable(this._scope, parentFrame)
+      parentFrame: FrameDispatcher.fromNullable(scope, frame.parentFrame())
     });
+    this._frame = frame;
   }
 
   async goto(params: { url: string, options: types.GotoOptions }): Promise<ResponseChannel | null> {

@@ -18,11 +18,11 @@ import { BrowserBase } from '../../browser';
 import { BrowserContextBase } from '../../browserContext';
 import * as types from '../../types';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
-import { BrowserChannel, BrowserContextChannel, PageChannel } from '../channels';
+import { BrowserChannel, BrowserContextChannel, PageChannel, BrowserInitializer } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
 import { PageDispatcher } from './pageDispatcher';
 
-export class BrowserDispatcher extends Dispatcher implements BrowserChannel {
+export class BrowserDispatcher extends Dispatcher<BrowserInitializer> implements BrowserChannel {
   private _browser: BrowserBase;
 
   static from(scope: DispatcherScope, browser: BrowserBase): BrowserDispatcher {
@@ -38,8 +38,7 @@ export class BrowserDispatcher extends Dispatcher implements BrowserChannel {
   }
 
   constructor(scope: DispatcherScope, browser: BrowserBase) {
-    super(scope, browser, 'browser');
-    this._initialize({});
+    super(scope, browser, 'browser', {});
     this._browser = browser;
   }
 

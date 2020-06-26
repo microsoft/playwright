@@ -19,16 +19,15 @@ import { Request } from '../../network';
 import { Frame } from '../../frames';
 import { Page } from '../../page';
 import * as types from '../../types';
-import { ElementHandleChannel, PageChannel, ResponseChannel, BindingCallChannel } from '../channels';
+import { ElementHandleChannel, PageChannel, ResponseChannel, BindingCallChannel, PageInitializer, BindingCallInitializer } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
-import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
 import { BrowserContext } from '../../browserContext';
 import { serializeError, parseError } from '../../helper';
 
-export class PageDispatcher extends Dispatcher implements PageChannel {
+export class PageDispatcher extends Dispatcher<PageInitializer> implements PageChannel {
   private _page: Page;
 
   static from(scope: DispatcherScope, page: Page): PageDispatcher {
@@ -44,11 +43,9 @@ export class PageDispatcher extends Dispatcher implements PageChannel {
   }
 
   constructor(scope: DispatcherScope, page: Page) {
-    super(scope, page, 'page');
-    this._initialize({
-      browserContext: BrowserContextDispatcher.from(scope, page._browserContext),
+    super(scope, page, 'page', {
       mainFrame: FrameDispatcher.from(scope, page.mainFrame()),
-      frames: page.frames().map(f => FrameDispatcher.from(this._scope, f)),
+      viewportSize: page.viewportSize()
     });
     this._page = page;
     page.on(Events.Page.Close, () => this._dispatchEvent('close'));
@@ -196,18 +193,15 @@ export class PageDispatcher extends Dispatcher implements PageChannel {
 }
 
 
-export class BindingCallDispatcher extends Dispatcher implements BindingCallChannel {
+export class BindingCallDispatcher extends Dispatcher<BindingCallInitializer> implements BindingCallChannel {
   private _resolve: ((arg: any) => void) | undefined;
   private _reject: ((error: any) => void) | undefined;
   private _promise: Promise<any>;
 
   constructor(scope: DispatcherScope, name: string, source: { context: BrowserContext, page: Page, frame: Frame }, args: any[]) {
-    super(scope, {}, 'bindingCall');
-    this._initialize({
-      name,
-      context: BrowserContextDispatcher.from(scope, source.context),
-      page: PageDispatcher.from(scope, source.page),
+    super(scope, {}, 'bindingCall', {
       frame: FrameDispatcher.from(scope, source.frame),
+      name,
       args
     });
     this._promise = new Promise((resolve, reject) => {

@@ -19,7 +19,7 @@ import { EventEmitter } from 'events';
 import { Events } from '../../events';
 import { assert, assertMaxArguments, helper, Listener, serializeError, parseError } from '../../helper';
 import * as types from '../../types';
-import { BrowserContextChannel, FrameChannel, PageChannel, BindingCallChannel, Channel } from '../channels';
+import { PageChannel, BindingCallChannel, Channel, PageInitializer, BindingCallInitializer } from '../channels';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle } from './elementHandle';
@@ -29,17 +29,17 @@ import { Request, Response, RouteHandler, Route } from './network';
 import { Connection } from '../connection';
 import { Keyboard, Mouse } from './input';
 import { Accessibility } from './accessibility';
-import { ConsoleMessage } from './console';
+import { ConsoleMessage } from './consoleMessage';
 
-export class Page extends ChannelOwner<PageChannel> {
+export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   readonly pdf: ((options?: types.PDFOptions) => Promise<Buffer>) | undefined;
 
-  private _browserContext: BrowserContext | undefined;
-  private _mainFrame: Frame | undefined;
+  _browserContext: BrowserContext | undefined;
+  private _mainFrame: Frame;
   private _frames = new Set<Frame>();
   private _workers: Worker[] = [];
   private _closed = false;
-  private _viewportSize: types.Size | null = null;
+  private _viewportSize: types.Size | null;
   private _routes: { url: types.URLMatch, handler: RouteHandler }[] = [];
 
   readonly accessibility: Accessibility;
@@ -55,18 +55,16 @@ export class Page extends ChannelOwner<PageChannel> {
     return page ? Page.from(page) : null;
   }
 
-  constructor(connection: Connection, channel: PageChannel) {
-    super(connection, channel);
+  constructor(connection: Connection, channel: PageChannel, initializer: PageInitializer) {
+    super(connection, channel, initializer);
     this.accessibility = new Accessibility(channel);
     this.keyboard = new Keyboard(channel);
     this.mouse = new Mouse(channel);
-  }
 
-  _initialize(payload: { browserContext: BrowserContextChannel, mainFrame: FrameChannel, viewportSize: types.Size }) {
-    this._browserContext = BrowserContext.from(payload.browserContext);
-    this._mainFrame = Frame.from(payload.mainFrame);
+    this._mainFrame = Frame.from(initializer.mainFrame);
+    this._mainFrame._page = this;
     this._frames.add(this._mainFrame);
-    this._viewportSize = payload.viewportSize;
+    this._viewportSize = initializer.viewportSize;
 
     this._channel.on('bindingCall', bindingCall => this._onBinding(BindingCall.from(bindingCall)));
     this._channel.on('close', () => this._onClose());
@@ -88,6 +86,7 @@ export class Page extends ChannelOwner<PageChannel> {
   }
 
   private _onFrameAttached(frame: Frame) {
+    frame._page = this;
     this._frames.add(frame);
     if (frame._parentFrame)
       frame._parentFrame._childFrames.add(frame);
@@ -118,7 +117,7 @@ export class Page extends ChannelOwner<PageChannel> {
   }
 
   async _onBinding(bindingCall: BindingCall) {
-    const func = this._bindings.get(bindingCall.name);
+    const func = this._bindings.get(bindingCall._initializer.name);
     if (func)
       bindingCall.call(func);
     this._browserContext!._onBinding(bindingCall);
@@ -138,7 +137,7 @@ export class Page extends ChannelOwner<PageChannel> {
   }
 
   mainFrame(): Frame {
-    return this._mainFrame!;
+    return this._mainFrame;
   }
 
   frame(options: string | { name?: string, url?: types.URLMatch }): Frame | null {
@@ -165,48 +164,48 @@ export class Page extends ChannelOwner<PageChannel> {
   }
 
   async $(selector: string): Promise<ElementHandle<Element> | null> {
-    return await this._mainFrame!.$(selector);
+    return await this._mainFrame.$(selector);
   }
 
   async waitForSelector(selector: string, options?: types.WaitForElementOptions): Promise<ElementHandle<Element> | null> {
-    return await this._mainFrame!.waitForSelector(selector, options);
+    return await this._mainFrame.waitForSelector(selector, options);
   }
 
   async dispatchEvent(selector: string, type: string, eventInit?: Object, options?: types.TimeoutOptions): Promise<void> {
-    return await this._mainFrame!.dispatchEvent(selector, type, eventInit, options);
+    return await this._mainFrame.dispatchEvent(selector, type, eventInit, options);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: Func1<void, R>, arg?: any): Promise<SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
-    return await this._mainFrame!.evaluateHandle(pageFunction, arg);
+    return await this._mainFrame.evaluateHandle(pageFunction, arg);
   }
 
   async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
   async $eval<R>(selector: string, pageFunction: FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
-    return await this._mainFrame!.$eval(selector, pageFunction, arg);
+    return await this._mainFrame.$eval(selector, pageFunction, arg);
   }
 
   async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
   async $$eval<R>(selector: string, pageFunction: FuncOn<Element[], void, R>, arg?: any): Promise<R>;
   async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
-    return await this._mainFrame!.$$eval(selector, pageFunction, arg);
+    return await this._mainFrame.$$eval(selector, pageFunction, arg);
   }
 
   async $$(selector: string): Promise<ElementHandle<Element>[]> {
-    return await this._mainFrame!.$$(selector);
+    return await this._mainFrame.$$(selector);
   }
 
   async addScriptTag(options: { url?: string; path?: string; content?: string; type?: string; }): Promise<ElementHandle> {
-    return await this._mainFrame!.addScriptTag(options);
+    return await this._mainFrame.addScriptTag(options);
   }
 
   async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
-    return  await this._mainFrame!.addStyleTag(options);
+    return  await this._mainFrame.addStyleTag(options);
   }
 
   async exposeFunction(name: string, playwrightFunction: Function) {
@@ -247,11 +246,11 @@ export class Page extends ChannelOwner<PageChannel> {
   }
 
   async waitForLoadState(state?: types.LifecycleEvent, options?: types.TimeoutOptions): Promise<void> {
-    return this._mainFrame!.waitForLoadState(state, options);
+    return this._mainFrame.waitForLoadState(state, options);
   }
 
   async waitForNavigation(options?: types.WaitForNavigationOptions): Promise<Response | null> {
-    return this._mainFrame!.waitForNavigation(options);
+    return this._mainFrame.waitForNavigation(options);
   }
 
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean), options: types.TimeoutOptions = {}): Promise<Request> {
@@ -455,31 +454,24 @@ export class Worker extends EventEmitter {
   }
 }
 
-export class BindingCall extends ChannelOwner<BindingCallChannel> {
-  name: string = '';
-  source: { context: BrowserContext, page: Page, frame: Frame } | undefined;
-  args: any[] = [];
+export class BindingCall extends ChannelOwner<BindingCallChannel, BindingCallInitializer> {
   static from(channel: BindingCallChannel): BindingCall {
     return channel._object;
   }
 
-  constructor(connection: Connection, channel: BindingCallChannel) {
-    super(connection, channel);
-  }
-
-  _initialize(params: { name: string, context: BrowserContextChannel, page: PageChannel, frame: FrameChannel, args: any[] }) {
-    this.name = params.name;
-    this.source = {
-      context: BrowserContext.from(params.context),
-      page: Page.from(params.page),
-      frame: Frame.from(params.frame)
-    };
-    this.args = params.args;
+  constructor(connection: Connection, channel: BindingCallChannel, initializer: BindingCallInitializer) {
+    super(connection, channel, initializer);
   }
 
   async call(func: FunctionWithSource) {
     try {
-      this._channel.resolve({ result: await func(this.source!, ...this.args) });
+      const frame = Frame.from(this._initializer.frame);
+      const source = {
+        context: frame._page!._browserContext!,
+        page: frame._page!,
+        frame
+      };
+      this._channel.resolve({ result: await func(source, ...this._initializer.args) });
     } catch (e) {
       this._channel.reject({ error: serializeError(e) });
     }

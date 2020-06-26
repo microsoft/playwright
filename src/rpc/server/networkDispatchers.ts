@@ -16,11 +16,11 @@
 
 import { Request, Response, Route } from '../../network';
 import * as types from '../../types';
-import { RequestChannel, ResponseChannel, RouteChannel } from '../channels';
+import { RequestChannel, ResponseChannel, RouteChannel, ResponseInitializer, RequestInitializer, RouteInitializer } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 
-export class RequestDispatcher extends Dispatcher implements RequestChannel {
+export class RequestDispatcher extends Dispatcher<RequestInitializer> implements RequestChannel {
   private _request: Request;
 
   static from(scope: DispatcherScope, request: Request): RequestDispatcher {
@@ -34,18 +34,15 @@ export class RequestDispatcher extends Dispatcher implements RequestChannel {
   }
 
   constructor(scope: DispatcherScope, request: Request) {
-    super(scope, request, 'request');
-    this._initialize({
+    super(scope, request, 'request', {
+      frame: FrameDispatcher.from(scope, request.frame()),
       url: request.url(),
       resourceType: request.resourceType(),
       method: request.method(),
       postData: request.postData(),
       headers: request.headers(),
       isNavigationRequest: request.isNavigationRequest(),
-      failure: request.failure(),
-      frame: FrameDispatcher.from(this._scope, request.frame()),
-      redirectedFrom: RequestDispatcher.fromNullable(this._scope, request.redirectedFrom()),
-      redirectedTo: RequestDispatcher.fromNullable(this._scope, request.redirectedTo()),
+      redirectedFrom: RequestDispatcher.fromNullable(scope, request.redirectedFrom()),
     });
     this._request = request;
   }
@@ -55,7 +52,7 @@ export class RequestDispatcher extends Dispatcher implements RequestChannel {
   }
 }
 
-export class ResponseDispatcher extends Dispatcher implements ResponseChannel {
+export class ResponseDispatcher extends Dispatcher<ResponseInitializer> implements ResponseChannel {
   private _response: Response;
 
   static from(scope: DispatcherScope, response: Response): ResponseDispatcher {
@@ -69,12 +66,9 @@ export class ResponseDispatcher extends Dispatcher implements ResponseChannel {
   }
 
   constructor(scope: DispatcherScope, response: Response) {
-    super(scope, response, 'response');
-    this._initialize({
-      frame: FrameDispatcher.from(this._scope, response.frame()),
-      request: RequestDispatcher.from(this._scope, response.request())!,
+    super(scope, response, 'response', {
+      request: RequestDispatcher.from(scope, response.request())!,
       url: response.url(),
-      ok: response.ok(),
       status: response.status(),
       statusText: response.statusText(),
       headers: response.headers(),
@@ -91,7 +85,7 @@ export class ResponseDispatcher extends Dispatcher implements ResponseChannel {
   }
 }
 
-export class RouteDispatcher extends Dispatcher implements RouteChannel {
+export class RouteDispatcher extends Dispatcher<RouteInitializer> implements RouteChannel {
   private _route: Route;
 
   static from(scope: DispatcherScope, route: Route): RouteDispatcher {
@@ -105,8 +99,9 @@ export class RouteDispatcher extends Dispatcher implements RouteChannel {
   }
 
   constructor(scope: DispatcherScope, route: Route) {
-    super(scope, route, 'route');
-    this._initialize({ request: RequestDispatcher.from(this._scope, route.request()) });
+    super(scope, route, 'route', {
+      request: RequestDispatcher.from(scope, route.request())
+    });
     this._route = route;
   }
 

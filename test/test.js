@@ -113,16 +113,15 @@ function collect(browserNames) {
 
   for (const browserName of browserNames) {
     const browserType = playwright[browserName];
-    let overridenBrowserType = browserType;
-
-    // Channel substitute
-    if (process.env.PWCHANNEL) {
-      BrowserTypeDispatcher.from(dispatcherScope, browserType);
-      overridenBrowserType = connection.createRemoteObject('browserType', browserType.name());
-    }
 
     const browserTypeEnvironment = new Environment('BrowserType');
     browserTypeEnvironment.beforeAll(async state => {
+      // Channel substitute
+      let overridenBrowserType = browserType;
+      if (process.env.PWCHANNEL) {
+        BrowserTypeDispatcher.from(dispatcherScope, browserType);
+        overridenBrowserType = await connection.waitForObjectWithKnownName(browserType.name());
+      }
       state.browserType = overridenBrowserType;
     });
     browserTypeEnvironment.afterAll(async state => {

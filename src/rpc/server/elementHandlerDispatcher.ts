@@ -51,9 +51,8 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
 
 
   constructor(scope: DispatcherScope, elementHandle: ElementHandle) {
-    super(scope, elementHandle, true);
+    super(scope, elementHandle);
     this._elementHandle = elementHandle;
-    this._initialize({ preview: elementHandle.toString(), frame: FrameDispatcher.from(scope, elementHandle._context.frame) });
     this._elementHandle = elementHandle;
   }
 

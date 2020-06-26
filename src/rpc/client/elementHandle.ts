@@ -15,7 +15,7 @@
  */
 
 import * as types from '../../types';
-import { ElementHandleChannel } from '../channels';
+import { ElementHandleChannel, JSHandleInitializer } from '../channels';
 import { Frame } from './frame';
 import { FuncOn, JSHandle, convertArg } from './jsHandle';
 import { Connection } from '../connection';
@@ -31,8 +31,8 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     return handle ? ElementHandle.from(handle) : null;
   }
 
-  constructor(connection: Connection, channel: ElementHandleChannel) {
-    super(connection, channel);
+  constructor(connection: Connection, channel: ElementHandleChannel, initializer: JSHandleInitializer) {
+    super(connection, channel, initializer);
     this._elementChannel = channel;
   }
 

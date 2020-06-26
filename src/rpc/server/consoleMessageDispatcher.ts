@@ -15,11 +15,11 @@
  */
 
 import { ConsoleMessage } from '../../console';
-import { ConsoleMessageChannel } from '../channels';
+import { ConsoleMessageChannel, ConsoleMessageInitializer } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 
-export class ConsoleMessageDispatcher extends Dispatcher implements ConsoleMessageChannel {
+export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessageInitializer> implements ConsoleMessageChannel {
   static from(scope: DispatcherScope, message: ConsoleMessage): ConsoleMessageDispatcher {
     if ((message as any)[scope.dispatcherSymbol])
       return (message as any)[scope.dispatcherSymbol];
@@ -27,11 +27,10 @@ export class ConsoleMessageDispatcher extends Dispatcher implements ConsoleMessa
   }
 
   constructor(scope: DispatcherScope, message: ConsoleMessage) {
-    super(scope, message, 'consoleMessage');
-    this._initialize({
+    super(scope, message, 'consoleMessage', {
       type: message.type(),
       text: message.text(),
-      args: message.args().map(a => ElementHandleDispatcher.from(this._scope, a)),
+      args: message.args().map(a => ElementHandleDispatcher.from(scope, a)),
       location: message.location(),
     });
   }

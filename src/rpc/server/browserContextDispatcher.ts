@@ -17,14 +17,13 @@
 import * as types from '../../types';
 import { BrowserContextBase, BrowserContext } from '../../browserContext';
 import { Events } from '../../events';
-import { BrowserDispatcher } from './browserDispatcher';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
 import { PageDispatcher, BindingCallDispatcher } from './pageDispatcher';
-import { PageChannel, BrowserContextChannel } from '../channels';
+import { PageChannel, BrowserContextChannel, BrowserContextInitializer } from '../channels';
 import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { Page } from '../../page';
 
-export class BrowserContextDispatcher extends Dispatcher implements BrowserContextChannel {
+export class BrowserContextDispatcher extends Dispatcher<BrowserContextInitializer> implements BrowserContextChannel {
   private _context: BrowserContextBase;
 
   static from(scope: DispatcherScope, browserContext: BrowserContext): BrowserContextDispatcher {
@@ -34,10 +33,7 @@ export class BrowserContextDispatcher extends Dispatcher implements BrowserConte
   }
 
   constructor(scope: DispatcherScope, context: BrowserContextBase) {
-    super(scope, context, 'context');
-    this._initialize({
-      browser: BrowserDispatcher.from(scope, context._browserBase)
-    });
+    super(scope, context, 'context', {});
     this._context = context;
     context.on(Events.BrowserContext.Page, page => this._dispatchEvent('page', PageDispatcher.from(this._scope, page)));
     context.on(Events.BrowserContext.Close, () => {

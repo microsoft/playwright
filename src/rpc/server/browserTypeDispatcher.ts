@@ -18,12 +18,12 @@ import { BrowserBase } from '../../browser';
 import { BrowserTypeBase } from '../../server/browserType';
 import * as types from '../../types';
 import { BrowserDispatcher } from './browserDispatcher';
-import { BrowserChannel, BrowserTypeChannel, BrowserContextChannel } from '../channels';
+import { BrowserChannel, BrowserTypeChannel, BrowserContextChannel, BrowserTypeInitializer } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
 import { BrowserContextBase } from '../../browserContext';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 
-export class BrowserTypeDispatcher extends Dispatcher implements BrowserTypeChannel {
+export class BrowserTypeDispatcher extends Dispatcher<BrowserTypeInitializer> implements BrowserTypeChannel {
   private _browserType: BrowserTypeBase;
 
   static from(scope: DispatcherScope, browserType: BrowserTypeBase): BrowserTypeDispatcher {
@@ -33,8 +33,10 @@ export class BrowserTypeDispatcher extends Dispatcher implements BrowserTypeChan
   }
 
   constructor(scope: DispatcherScope, browserType: BrowserTypeBase) {
-    super(scope, browserType, 'browserType', browserType.name());
-    this._initialize({ executablePath: browserType.executablePath(), name: browserType.name() });
+    super(scope, browserType, 'browserType', {
+      executablePath: browserType.executablePath(),
+      name: browserType.name()
+    }, browserType.name());
     this._browserType = browserType;
   }
 

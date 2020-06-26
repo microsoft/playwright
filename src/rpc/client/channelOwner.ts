@@ -18,17 +18,17 @@ import { EventEmitter } from 'events';
 import { Channel } from '../channels';
 import { Connection } from '../connection';
 
-export abstract class ChannelOwner<T extends Channel> extends EventEmitter {
+export abstract class ChannelOwner<T extends Channel, Initializer> extends EventEmitter {
   readonly _channel: T;
+  readonly _initializer: Initializer;
   readonly _connection: Connection;
   static clientSymbol = Symbol('client');
 
-  constructor(connection: Connection, channel: T) {
+  constructor(connection: Connection, channel: T, initializer: Initializer) {
     super();
     this._connection = connection;
     this._channel = channel;
+    this._initializer = initializer;
     (channel as any)[ChannelOwner.clientSymbol] = this;
   }
-
-  abstract _initialize(payload: any): void;
 }

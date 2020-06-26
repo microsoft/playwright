@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { JSHandleChannel } from '../channels';
+import { JSHandleChannel, JSHandleInitializer } from '../channels';
 import { ElementHandle } from './elementHandle';
 import { ChannelOwner } from './channelOwner';
 import { Connection } from '../connection';
@@ -35,10 +35,7 @@ export type Func1<Arg, R> = string | ((arg: Unboxed<Arg>) => R | Promise<R>);
 export type FuncOn<On, Arg2, R> = string | ((on: On, arg2: Unboxed<Arg2>) => R | Promise<R>);
 export type SmartHandle<T> = T extends Node ? ElementHandle<T> : JSHandle<T>;
 
-export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel> {
-  protected _jsChannel: JSHandleChannel;
-  private _preview: string | undefined;
-
+export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel, JSHandleInitializer> {
   static from(handle: JSHandleChannel): JSHandle {
     return handle._object;
   }
@@ -47,25 +44,20 @@ export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel> {
     return handle ? JSHandle.from(handle) : null;
   }
 
-  constructor(conection: Connection, channel: JSHandleChannel) {
-    super(conection, channel);
-    this._jsChannel = channel;
-  }
-
-  _initialize(params: { preview: string }) {
-    this._preview = params.preview;
+  constructor(conection: Connection, channel: JSHandleChannel, initializer: JSHandleInitializer) {
+    super(conection, channel, initializer);
   }
 
   async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<R>;
   async evaluate<R>(pageFunction: FuncOn<T, void, R>, arg?: any): Promise<R>;
   async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<R> {
-    return await this._jsChannel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: convertArg(arg) });
+    return await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: convertArg(arg) });
   }
 
   async evaluateHandle<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: FuncOn<T, void, R>, arg?: any): Promise<SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
-    const handleChannel = await this._jsChannel.evaluateExpressionHandle({  expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: convertArg(arg) });
+    const handleChannel = await this._channel.evaluateExpressionHandle({  expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: convertArg(arg) });
     return JSHandle.from(handleChannel) as SmartHandle<R>;
   }
 
@@ -83,13 +75,13 @@ export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel> {
 
   async getProperties(): Promise<Map<string, JSHandle>> {
     const map = new Map<string, JSHandle>();
-    for (const { name, value } of await this._jsChannel.getPropertyList())
+    for (const { name, value } of await this._channel.getPropertyList())
       map.set(name, JSHandle.from(value));
     return map;
   }
 
   async jsonValue(): Promise<T> {
-    return await this._jsChannel.jsonValue();
+    return await this._channel.jsonValue();
   }
 
   asElement(): ElementHandle | null {
@@ -97,11 +89,11 @@ export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel> {
   }
 
   async dispose() {
-    return await this._jsChannel.dispose();
+    return await this._channel.dispose();
   }
 
   toString(): string {
-    return this._preview!;
+    return this._initializer.preview;
   }
 }
 
