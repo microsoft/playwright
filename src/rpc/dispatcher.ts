@@ -18,13 +18,13 @@ import { EventEmitter } from 'events';
 import { helper } from '../helper';
 import { Channel } from './channels';
 
-export class Dispatcher extends EventEmitter implements Channel {
+export class Dispatcher<Initializer> extends EventEmitter implements Channel {
   readonly _guid: string;
   readonly _type: string;
   protected _scope: DispatcherScope;
   _object: any;
 
-  constructor(scope: DispatcherScope, object: any, type: string, guid = type + '@' + helper.guid()) {
+  constructor(scope: DispatcherScope, object: any, type: string, initializer: Initializer, guid = type + '@' + helper.guid()) {
     super();
     this._type = type;
     this._guid = guid;
@@ -32,20 +32,16 @@ export class Dispatcher extends EventEmitter implements Channel {
     this._scope = scope;
     scope.dispatchers.set(this._guid, this);
     object[scope.dispatcherSymbol] = this;
-    this._scope.sendMessageToClient(this._guid, '__create__', { type });
+    this._scope.sendMessageToClient(this._guid, '__create__', { type, initializer });
   }
 
-  _initialize(payload: any) {
-    this._scope.sendMessageToClient(this._guid, '__init__', payload);
-  }
-
-  _dispatchEvent(method: string, params: Dispatcher | any = {}) {
+  _dispatchEvent(method: string, params: Dispatcher<any> | any = {}) {
     this._scope.sendMessageToClient(this._guid, method, params);
   }
 }
 
 export class DispatcherScope {
-  readonly dispatchers = new Map<string, Dispatcher>();
+  readonly dispatchers = new Map<string, Dispatcher<any>>();
   readonly dispatcherSymbol = Symbol('dispatcher');
   sendMessageToClientTransport = (message: any) => {};
 

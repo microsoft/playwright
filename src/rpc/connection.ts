@@ -26,60 +26,73 @@ import { Request, Response, Route } from './client/network';
 import { Page, BindingCall } from './client/page';
 import debug = require('debug');
 import { Channel } from './channels';
-import { ConsoleMessage } from './client/console';
+import { ConsoleMessage } from './client/consoleMessage';
 
 export class Connection {
   private _channels = new Map<string, Channel>();
+  private _waitingForObject = new Map<string, any>();
   sendMessageToServerTransport = (message: any): Promise<any> => Promise.resolve();
 
   constructor() {}
 
-  createRemoteObject(type: string, guid: string): any {
+  private _createRemoteObject(type: string, guid: string, initializer: any): any {
     const channel = this._createChannel(guid) as any;
     this._channels.set(guid, channel);
-    let result: ChannelOwner<any>;
+    let result: ChannelOwner<any, any>;
+    initializer = this._replaceGuidsWithChannels(initializer);
     switch (type) {
       case 'browserType':
-        result = new BrowserType(this, channel);
+        result = new BrowserType(this, channel, initializer);
         break;
       case 'browser':
-        result = new Browser(this, channel);
+        result = new Browser(this, channel, initializer);
         break;
       case 'context':
-        result = new BrowserContext(this, channel);
+        result = new BrowserContext(this, channel, initializer);
         break;
       case 'page':
-        result = new Page(this, channel);
+        result = new Page(this, channel, initializer);
         break;
       case 'frame':
-        result = new Frame(this, channel);
+        result = new Frame(this, channel, initializer);
         break;
       case 'request':
-        result = new Request(this, channel);
+        result = new Request(this, channel, initializer);
         break;
       case 'response':
-        result = new Response(this, channel);
+        result = new Response(this, channel, initializer);
         break;
       case 'route':
-        result = new Route(this, channel);
+        result = new Route(this, channel, initializer);
         break;
       case 'bindingCall':
-        result = new BindingCall(this, channel);
+        result = new BindingCall(this, channel, initializer);
         break;
       case 'jsHandle':
-        result = new JSHandle(this, channel);
+        result = new JSHandle(this, channel, initializer);
         break;
       case 'elementHandle':
-        result = new ElementHandle(this, channel);
+        result = new ElementHandle(this, channel, initializer);
         break;
       case 'consoleMessage':
-        result = new ConsoleMessage(this, channel);
+        result = new ConsoleMessage(this, channel, initializer);
         break;
       default:
         throw new Error('Missing type ' + type);
     }
     channel._object = result;
+    const callback = this._waitingForObject.get(guid);
+    if (callback) {
+      callback(result);
+      this._waitingForObject.delete(guid);
+    }
     return result;
+  }
+
+  waitForObjectWithKnownName(guid: string): Promise<any> {
+    if (this._channels.has(guid))
+      return this._channels.get(guid)!._object;
+    return new Promise(f => this._waitingForObject.set(guid, f));
   }
 
   async sendMessageToServer(message: { guid: string, method: string, params: any }) {
@@ -95,15 +108,11 @@ export class Connection {
     const { guid, method, params } = message;
 
     if (method === '__create__') {
-      this.createRemoteObject(params.type,  guid);
+      this._createRemoteObject(params.type,  guid, params.initializer);
       return;
     }
 
     const channel = this._channels.get(guid)!;
-    if (message.method === '__init__') {
-      channel._object._initialize(this._replaceGuidsWithChannels(params));
-      return;
-    }
     channel.emit(method, this._replaceGuidsWithChannels(params));
   }
 

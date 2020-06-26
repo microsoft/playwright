@@ -17,45 +17,33 @@
 import * as util from 'util';
 import { ConsoleMessageLocation } from '../../types';
 import { JSHandle } from './jsHandle';
-import { ConsoleMessageChannel, JSHandleChannel } from '../channels';
+import { ConsoleMessageChannel, ConsoleMessageInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
 import { Connection } from '../connection';
 
-export class ConsoleMessage extends ChannelOwner<ConsoleMessageChannel> {
-  private _type: string = '';
-  private _text: string = '';
-  private _args: JSHandle[] = [];
-  private _location: ConsoleMessageLocation = {};
-
+export class ConsoleMessage extends ChannelOwner<ConsoleMessageChannel, ConsoleMessageInitializer> {
   static from(request: ConsoleMessageChannel): ConsoleMessage {
     return request._object;
   }
 
-  constructor(connection: Connection, channel: ConsoleMessageChannel) {
-    super(connection, channel);
-  }
-
-  _initialize(params: { type: string, text: string, args: JSHandleChannel[], location: ConsoleMessageLocation }) {
-    this._type = params.type;
-    this._text = params.text;
-    this._args = params.args.map(JSHandle.from);
-    this._location = params.location;
+  constructor(connection: Connection, channel: ConsoleMessageChannel, initializer: ConsoleMessageInitializer) {
+    super(connection, channel, initializer);
   }
 
   type(): string {
-    return this._type;
+    return this._initializer.type;
   }
 
   text(): string {
-    return this._text;
+    return this._initializer.text;
   }
 
   args(): JSHandle[] {
-    return this._args;
+    return this._initializer.args.map(JSHandle.from);
   }
 
   location(): ConsoleMessageLocation {
-    return this._location;
+    return this._initializer.location;
   }
 
   [util.inspect.custom]() {

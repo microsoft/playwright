@@ -15,31 +15,23 @@
  */
 
 import * as types from '../../types';
-import { BrowserTypeChannel } from '../channels';
+import { BrowserTypeChannel, BrowserTypeInitializer } from '../channels';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { Connection } from '../connection';
 
-export class BrowserType extends ChannelOwner<BrowserTypeChannel> {
-  private _executablePath: string = '';
-  private _name: string = '';
-
-  constructor(connection: Connection, channel: BrowserTypeChannel) {
-    super(connection, channel);
-  }
-
-  _initialize(payload: { executablePath: string, name: string }) {
-    this._executablePath = payload.executablePath;
-    this._name = payload.name;
+export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {
+  constructor(connection: Connection, channel: BrowserTypeChannel, initializer: BrowserTypeInitializer) {
+    super(connection, channel, initializer);
   }
 
   executablePath(): string {
-    return this._executablePath;
+    return this._initializer.executablePath;
   }
 
   name(): string {
-    return this._name;
+    return this._initializer.name;
   }
 
   async launch(options?: types.LaunchOptions): Promise<Browser> {

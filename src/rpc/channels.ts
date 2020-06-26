@@ -28,12 +28,17 @@ export interface BrowserTypeChannel extends Channel {
   launch(params: { options?: types.LaunchOptions }): Promise<BrowserChannel>;
   launchPersistentContext(params: { userDataDir: string, options?: types.LaunchOptions & types.BrowserContextOptions }): Promise<BrowserContextChannel>;
 }
+export type BrowserTypeInitializer = {
+  executablePath: string,
+  name: string
+};
 
 export interface BrowserChannel extends Channel {
   close(): Promise<void>;
   newContext(params: { options?: types.BrowserContextOptions }): Promise<BrowserContextChannel>;
   newPage(params: { options?: types.BrowserContextOptions }): Promise<PageChannel>;
 }
+export type BrowserInitializer = {};
 
 export interface BrowserContextChannel extends Channel {
   addCookies(params: { cookies: types.SetNetworkCookieParam[] }): Promise<void>;
@@ -54,6 +59,7 @@ export interface BrowserContextChannel extends Channel {
   setOffline(params: { offline: boolean }): Promise<void>;
   waitForEvent(params: { event: string }): Promise<any>;
 }
+export type BrowserContextInitializer = {};
 
 export interface PageChannel extends Channel {
   on(event: 'bindingCall', callback: (params: BindingCallChannel) => void): this;
@@ -101,6 +107,10 @@ export interface PageChannel extends Channel {
   // A11Y
   accessibilitySnapshot(params: { options: { interestingOnly?: boolean, root?: ElementHandleChannel } }): Promise<types.SerializedAXNode | null>;
 }
+export type PageInitializer = {
+  mainFrame: FrameChannel,
+  viewportSize: types.Size | null
+};
 
 export interface FrameChannel extends Channel {
   $$eval(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<any>;
@@ -137,6 +147,11 @@ export interface FrameChannel extends Channel {
   waitForNavigation(params: { options: types.WaitForNavigationOptions }): Promise<ResponseChannel | null>;
   waitForSelector(params: { selector: string, options: types.WaitForElementOptions }): Promise<ElementHandleChannel | null>;
 }
+export type FrameInitializer = {
+  url: string,
+  name: string,
+  parentFrame: FrameChannel | null
+};
 
 export interface JSHandleChannel extends Channel {
   dispose(): Promise<void>;
@@ -145,6 +160,9 @@ export interface JSHandleChannel extends Channel {
   getPropertyList(): Promise<{ name: string, value: JSHandleChannel}[]>;
   jsonValue(): Promise<any>;
 }
+export type JSHandleInitializer = {
+  preview: string,
+};
 
 export interface ElementHandleChannel extends JSHandleChannel {
   $$eval(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<any>;
@@ -178,22 +196,53 @@ export interface ElementHandleChannel extends JSHandleChannel {
 export interface RequestChannel extends Channel {
   response(): Promise<ResponseChannel | null>;
 }
+export type RequestInitializer = {
+  frame: FrameChannel,
+  url: string,
+  resourceType: string,
+  method: string,
+  postData: string | null,
+  headers: types.Headers,
+  isNavigationRequest: boolean,
+  redirectedFrom: RequestChannel | null,
+};
 
 export interface RouteChannel extends Channel {
   abort(params: { errorCode: string }): Promise<void>;
   continue(params: { overrides: { method?: string, headers?: types.Headers, postData?: string } }): Promise<void>;
   fulfill(params: { response: types.FulfillResponse & { path?: string } }): Promise<void>;
 }
+export type RouteInitializer = {
+  request: RequestChannel,
+};
 
 export interface ResponseChannel extends Channel {
   body(): Promise<Buffer>;
   finished(): Promise<Error | null>;
 }
+export type ResponseInitializer = {
+  request: RequestChannel,
+  url: string,
+  status: number,
+  statusText: string,
+  headers: types.Headers,
+};
 
 export interface ConsoleMessageChannel extends Channel {
 }
+export type ConsoleMessageInitializer = {
+  type: string,
+  text: string,
+  args: JSHandleChannel[],
+  location: types.ConsoleMessageLocation,
+};
 
 export interface BindingCallChannel extends Channel {
   reject(params: { error: types.Error }): void;
   resolve(params: { result: any }): void;
 }
+export type BindingCallInitializer = {
+  frame: FrameChannel,
+  name: string,
+  args: any[]
+};

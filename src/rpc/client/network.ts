@@ -16,7 +16,7 @@
 
 import { URLSearchParams } from 'url';
 import * as types from '../../types';
-import { RequestChannel, ResponseChannel, FrameChannel, RouteChannel } from '../channels';
+import { RequestChannel, ResponseChannel, RouteChannel, RequestInitializer, ResponseInitializer, RouteInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
 import { Connection } from '../connection';
@@ -44,17 +44,10 @@ export type SetNetworkCookieParam = {
   sameSite?: 'Strict' | 'Lax' | 'None'
 };
 
-export class Request extends ChannelOwner<RequestChannel> {
+export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
   private _redirectedFrom: Request | null = null;
   private _redirectedTo: Request | null = null;
-  private _isNavigationRequest = false;
   _failureText: string | null = null;
-  private _url: string = '';
-  private _resourceType = '';
-  private _method = '';
-  private _postData: string | null = null;
-  private _headers: types.Headers = {};
-  private _frame: Frame | undefined;
 
   static from(request: RequestChannel): Request {
     return request._object;
@@ -64,42 +57,31 @@ export class Request extends ChannelOwner<RequestChannel> {
     return request ? Request.from(request) : null;
   }
 
-  constructor(connection: Connection, channel: RequestChannel) {
-    super(connection, channel);
-  }
-
-  _initialize(payload: { frame: FrameChannel, redirectedFrom: RequestChannel | null, isNavigationRequest: boolean,
-      url: string, resourceType: string, method: string, postData: string | null, headers: types.Headers }) {
-    this._frame = payload.frame._object as Frame;
-    this._isNavigationRequest = payload.isNavigationRequest;
-    this._redirectedFrom = Request.fromNullable(payload.redirectedFrom);
+  constructor(connection: Connection, channel: RequestChannel, initializer: RequestInitializer) {
+    super(connection, channel, initializer);
+    this._redirectedFrom = Request.fromNullable(initializer.redirectedFrom);
     if (this._redirectedFrom)
       this._redirectedFrom._redirectedTo = this;
-    this._url = payload.url;
-    this._resourceType = payload.resourceType;
-    this._method = payload.method;
-    this._postData = payload.postData;
-    this._headers = payload.headers;
   }
 
   url(): string {
-    return this._url;
+    return this._initializer.url;
   }
 
   resourceType(): string {
-    return this._resourceType;
+    return this._initializer.resourceType;
   }
 
   method(): string {
-    return this._method;
+    return this._initializer.method;
   }
 
   postData(): string | null {
-    return this._postData;
+    return this._initializer.postData;
   }
 
   postDataJSON(): Object | null {
-    if (!this._postData)
+    if (!this._initializer.postData)
       return null;
 
     const contentType = this.headers()['content-type'];
@@ -108,17 +90,17 @@ export class Request extends ChannelOwner<RequestChannel> {
 
     if (contentType === 'application/x-www-form-urlencoded') {
       const entries: Record<string, string> = {};
-      const parsed = new URLSearchParams(this._postData);
+      const parsed = new URLSearchParams(this._initializer.postData);
       for (const [k, v] of parsed.entries())
         entries[k] = v;
       return entries;
     }
 
-    return JSON.parse(this._postData);
+    return JSON.parse(this._initializer.postData);
   }
 
   headers(): {[key: string]: string} {
-    return { ...this._headers };
+    return { ...this._initializer.headers };
   }
 
   async response(): Promise<Response | null> {
@@ -126,11 +108,11 @@ export class Request extends ChannelOwner<RequestChannel> {
   }
 
   frame(): Frame {
-    return this._frame!;
+    return Frame.from(this._initializer.frame);
   }
 
   isNavigationRequest(): boolean {
-    return this._isNavigationRequest;
+    return this._initializer.isNavigationRequest;
   }
 
   redirectedFrom(): Request | null {
@@ -150,23 +132,17 @@ export class Request extends ChannelOwner<RequestChannel> {
   }
 }
 
-export class Route extends ChannelOwner<RouteChannel> {
-  private _request: Request | undefined;
-
+export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
   static from(route: RouteChannel): Route {
     return route._object;
   }
 
-  constructor(connection: Connection, channel: RouteChannel) {
-    super(connection, channel);
-  }
-
-  _initialize(params: { request: RequestChannel }) {
-    this._request = Request.from(params.request);
+  constructor(connection: Connection, channel: RouteChannel, initializer: RouteInitializer) {
+    super(connection, channel, initializer);
   }
 
   request(): Request {
-    return this._request!;
+    return Request.from(this._initializer.request);
   }
 
   async abort(errorCode: string = 'failed') {
@@ -184,13 +160,7 @@ export class Route extends ChannelOwner<RouteChannel> {
 
 export type RouteHandler = (route: Route, request: Request) => void;
 
-export class Response extends ChannelOwner<ResponseChannel> {
-  private _request: Request | undefined;
-  private _status: number = 0;
-  private _statusText: string = '';
-  private _url: string = '';
-  private _headers: types.Headers = {};
-
+export class Response extends ChannelOwner<ResponseChannel, ResponseInitializer> {
   static from(response: ResponseChannel): Response {
     return response._object;
   }
@@ -199,36 +169,28 @@ export class Response extends ChannelOwner<ResponseChannel> {
     return response ? Response.from(response) : null;
   }
 
-  constructor(connection: Connection, channel: ResponseChannel) {
-    super(connection, channel);
-  }
-
-  _initialize(payload: { request: RequestChannel, url: string, status: number, statusText: string, headers: types.Headers }) {
-    this._request = Request.from(payload.request);
-    this._status = payload.status;
-    this._statusText = payload.statusText;
-    this._url = payload.url;
-    this._headers = payload.headers;
+  constructor(connection: Connection, channel: ResponseChannel, initializer: ResponseInitializer) {
+    super(connection, channel, initializer);
   }
 
   url(): string {
-    return this._url;
+    return this._initializer.url;
   }
 
   ok(): boolean {
-    return this._status === 0 || (this._status >= 200 && this._status <= 299);
+    return this._initializer.status === 0 || (this._initializer.status >= 200 && this._initializer.status <= 299);
   }
 
   status(): number {
-    return this._status;
+    return this._initializer.status;
   }
 
   statusText(): string {
-    return this._statusText;
+    return this._initializer.statusText;
   }
 
   headers(): object {
-    return { ...this._headers };
+    return { ...this._initializer.headers };
   }
 
   async finished(): Promise<Error | null> {
@@ -250,10 +212,10 @@ export class Response extends ChannelOwner<ResponseChannel> {
   }
 
   request(): Request {
-    return this._request!;
+    return Request.from(this._initializer.request);
   }
 
   frame(): Frame {
-    return this._request!.frame();
+    return Request.from(this._initializer.request).frame();
   }
 }
