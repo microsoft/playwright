@@ -26,7 +26,7 @@ import { TimeoutSettings } from './timeoutSettings';
 import * as types from './types';
 import { Events } from './events';
 import { BrowserContext, BrowserContextBase } from './browserContext';
-import { ConsoleMessage, ConsoleMessageLocation } from './console';
+import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
 import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
@@ -279,7 +279,7 @@ export class Page extends EventEmitter {
     await PageBinding.dispatch(this, payload, context);
   }
 
-  _addConsoleMessage(type: string, args: js.JSHandle[], location: ConsoleMessageLocation, text?: string) {
+  _addConsoleMessage(type: string, args: js.JSHandle[], location: types.ConsoleMessageLocation, text?: string) {
     const message = new ConsoleMessage(type, text, args, location);
     const intercepted = this._frameManager.interceptConsoleMessage(message);
     if (intercepted || !this.listenerCount(Events.Page.Console))

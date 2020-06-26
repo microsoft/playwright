@@ -36,7 +36,6 @@ import { WKBrowserContext } from './wkBrowser';
 import { selectors } from '../selectors';
 import * as jpeg from 'jpeg-js';
 import * as png from 'pngjs';
-import { ConsoleMessageLocation } from '../console';
 import { JSHandle } from '../javascript';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -63,7 +62,7 @@ export class WKPage implements PageDelegate {
   private _firstNonInitialNavigationCommittedPromise: Promise<void>;
   private _firstNonInitialNavigationCommittedFulfill = () => {};
   _firstNonInitialNavigationCommittedReject = (e: Error) => {};
-  private _lastConsoleMessage: { derivedType: string, text: string, handles: JSHandle[]; count: number, location: ConsoleMessageLocation; } | null = null;
+  private _lastConsoleMessage: { derivedType: string, text: string, handles: JSHandle[]; count: number, location: types.ConsoleMessageLocation; } | null = null;
 
   // Holds window features for the next popup being opened via window.open,
   // until the popup page proxy arrives.

@@ -16,12 +16,7 @@
 
 import * as js from './javascript';
 import * as util from 'util';
-
-export type ConsoleMessageLocation = {
-  url?: string,
-  lineNumber?: number,
-  columnNumber?: number,
-};
+import { ConsoleMessageLocation } from './types';
 
 export class ConsoleMessage {
   private _type: string;

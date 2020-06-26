@@ -21,7 +21,7 @@ import { FuncOn, JSHandle, convertArg } from './jsHandle';
 import { Connection } from '../connection';
 
 export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
-  private _elementChannel: ElementHandleChannel;
+  readonly _elementChannel: ElementHandleChannel;
 
   static from(handle: ElementHandleChannel): ElementHandle {
     return handle._object;

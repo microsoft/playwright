@@ -26,6 +26,7 @@ import { Request, Response } from './client/network';
 import { Page } from './client/page';
 import debug = require('debug');
 import { Channel } from './channels';
+import { ConsoleMessage } from './client/console';
 
 export class Connection {
   private _channels = new Map<string, Channel>();
@@ -64,6 +65,9 @@ export class Connection {
         break;
       case 'elementHandle':
         result = new ElementHandle(this, channel);
+        break;
+      case 'consoleMessage':
+        result = new ConsoleMessage(this, channel);
         break;
       default:
         throw new Error('Missing type ' + type);
@@ -110,6 +114,8 @@ export class Connection {
           return obj.emit;
         if (prop === 'on')
           return obj.on;
+        if (prop === 'once')
+          return obj.once;
         if (prop === 'addEventListener')
           return obj.addListener;
         if (prop === 'removeEventListener')
