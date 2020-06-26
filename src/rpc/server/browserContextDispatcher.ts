@@ -23,9 +23,8 @@ import { PageChannel, BrowserContextChannel, BrowserContextInitializer } from '.
 import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { Page } from '../../page';
 
-export class BrowserContextDispatcher extends Dispatcher<BrowserContextInitializer> implements BrowserContextChannel {
+export class BrowserContextDispatcher extends Dispatcher<BrowserContext, BrowserContextInitializer> implements BrowserContextChannel {
   private _context: BrowserContextBase;
-
   static from(scope: DispatcherScope, browserContext: BrowserContext): BrowserContextDispatcher {
     if ((browserContext as any)[scope.dispatcherSymbol])
       return (browserContext as any)[scope.dispatcherSymbol];
@@ -33,7 +32,9 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContextInitializ
   }
 
   constructor(scope: DispatcherScope, context: BrowserContextBase) {
-    super(scope, context, 'context', {});
+    super(scope, context, 'context', {
+      pages: context.pages().map(p => PageDispatcher.from(scope, p))
+    });
     this._context = context;
     context.on(Events.BrowserContext.Page, page => this._dispatchEvent('page', PageDispatcher.from(this._scope, page)));
     context.on(Events.BrowserContext.Close, () => {

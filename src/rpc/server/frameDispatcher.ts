@@ -22,7 +22,7 @@ import { ElementHandleDispatcher, convertSelectOptionValues } from './elementHan
 import { JSHandleDispatcher } from './jsHandleDispatcher';
 import { ResponseDispatcher } from './networkDispatchers';
 
-export class FrameDispatcher extends Dispatcher<FrameInitializer> implements FrameChannel {
+export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> implements FrameChannel {
   private _frame: Frame;
 
   static from(scope: DispatcherScope, frame: Frame): FrameDispatcher {

@@ -15,7 +15,7 @@
  */
 
 import { BrowserBase } from '../../browser';
-import { BrowserTypeBase } from '../../server/browserType';
+import { BrowserTypeBase, BrowserType } from '../../server/browserType';
 import * as types from '../../types';
 import { BrowserDispatcher } from './browserDispatcher';
 import { BrowserChannel, BrowserTypeChannel, BrowserContextChannel, BrowserTypeInitializer } from '../channels';
@@ -23,9 +23,7 @@ import { Dispatcher, DispatcherScope } from '../dispatcher';
 import { BrowserContextBase } from '../../browserContext';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 
-export class BrowserTypeDispatcher extends Dispatcher<BrowserTypeInitializer> implements BrowserTypeChannel {
-  private _browserType: BrowserTypeBase;
-
+export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeInitializer> implements BrowserTypeChannel {
   static from(scope: DispatcherScope, browserType: BrowserTypeBase): BrowserTypeDispatcher {
     if ((browserType as any)[scope.dispatcherSymbol])
       return (browserType as any)[scope.dispatcherSymbol];
@@ -37,21 +35,20 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserTypeInitializer> im
       executablePath: browserType.executablePath(),
       name: browserType.name()
     }, browserType.name());
-    this._browserType = browserType;
   }
 
   async launch(params: { options?: types.LaunchOptions }): Promise<BrowserChannel> {
-    const browser = await this._browserType.launch(params.options || undefined);
+    const browser = await this._object.launch(params.options || undefined);
     return BrowserDispatcher.from(this._scope, browser as BrowserBase);
   }
 
   async launchPersistentContext(params: { userDataDir: string, options?: types.LaunchOptions & types.BrowserContextOptions }): Promise<BrowserContextChannel> {
-    const browserContext = await this._browserType.launchPersistentContext(params.userDataDir, params.options);
+    const browserContext = await this._object.launchPersistentContext(params.userDataDir, params.options);
     return BrowserContextDispatcher.from(this._scope, browserContext as BrowserContextBase);
   }
 
   async connect(params: { options: types.ConnectOptions }): Promise<BrowserChannel> {
-    const browser = await this._browserType.connect(params.options);
+    const browser = await this._object.connect(params.options);
     return BrowserDispatcher.from(this._scope, browser as BrowserBase);
   }
 }

@@ -27,6 +27,8 @@ import { Page, BindingCall } from './client/page';
 import debug = require('debug');
 import { Channel } from './channels';
 import { ConsoleMessage } from './client/consoleMessage';
+import { Dialog } from './client/dialog';
+import { Download } from './client/download';
 
 export class Connection {
   private _channels = new Map<string, Channel>();
@@ -41,20 +43,38 @@ export class Connection {
     let result: ChannelOwner<any, any>;
     initializer = this._replaceGuidsWithChannels(initializer);
     switch (type) {
-      case 'browserType':
-        result = new BrowserType(this, channel, initializer);
+      case 'bindingCall':
+        result = new BindingCall(this, channel, initializer);
         break;
       case 'browser':
         result = new Browser(this, channel, initializer);
         break;
+      case 'browserType':
+        result = new BrowserType(this, channel, initializer);
+        break;
       case 'context':
         result = new BrowserContext(this, channel, initializer);
         break;
-      case 'page':
-        result = new Page(this, channel, initializer);
+      case 'consoleMessage':
+        result = new ConsoleMessage(this, channel, initializer);
+        break;
+      case 'dialog':
+        result = new Dialog(this, channel, initializer);
+        break;
+      case 'download':
+        result = new Download(this, channel, initializer);
+        break;
+      case 'elementHandle':
+        result = new ElementHandle(this, channel, initializer);
         break;
       case 'frame':
         result = new Frame(this, channel, initializer);
+        break;
+      case 'jsHandle':
+        result = new JSHandle(this, channel, initializer);
+        break;
+      case 'page':
+        result = new Page(this, channel, initializer);
         break;
       case 'request':
         result = new Request(this, channel, initializer);
@@ -64,18 +84,6 @@ export class Connection {
         break;
       case 'route':
         result = new Route(this, channel, initializer);
-        break;
-      case 'bindingCall':
-        result = new BindingCall(this, channel, initializer);
-        break;
-      case 'jsHandle':
-        result = new JSHandle(this, channel, initializer);
-        break;
-      case 'elementHandle':
-        result = new ElementHandle(this, channel, initializer);
-        break;
-      case 'consoleMessage':
-        result = new ConsoleMessage(this, channel, initializer);
         break;
       default:
         throw new Error('Missing type ' + type);
@@ -150,8 +158,12 @@ export class Connection {
     // TODO: send base64
     if (payload instanceof Buffer)
       return payload;
-    if (typeof payload === 'object')
-      return Object.fromEntries([...Object.entries(payload)].map(([n,v]) => [n, this._replaceChannelsWithGuids(v)]));
+    if (typeof payload === 'object') {
+      const result: any = {};
+      for (const key of Object.keys(payload))
+        result[key] = this._replaceChannelsWithGuids(payload[key]);
+      return result;
+    }
     return payload;
   }
 
@@ -165,8 +177,12 @@ export class Connection {
     // TODO: send base64
     if (payload instanceof Buffer)
       return payload;
-    if (typeof payload === 'object')
-      return Object.fromEntries([...Object.entries(payload)].map(([n,v]) => [n, this._replaceGuidsWithChannels(v)]));
+    if (typeof payload === 'object') {
+      const result: any = {};
+      for (const key of Object.keys(payload))
+        result[key] = this._replaceGuidsWithChannels(payload[key]);
+      return result;
+    }
     return payload;
   }
 }

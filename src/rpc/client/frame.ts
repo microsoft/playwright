@@ -37,7 +37,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   _parentFrame: Frame | null = null;
   _url = '';
   _name = '';
-  private _detached = false;
+  _detached = false;
   _childFrames = new Set<Frame>();
   _page: Page | undefined;
 

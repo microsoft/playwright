@@ -50,7 +50,10 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   }
 
   async newPage(options?: types.BrowserContextOptions): Promise<Page> {
-    return Page.from(await this._channel.newPage({ options }));
+    const context = await this.newContext(options);
+    const page = await context.newPage();
+    page._ownedContext = context;
+    return page;
   }
 
   isConnected(): boolean {

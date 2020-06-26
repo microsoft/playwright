@@ -20,9 +20,7 @@ import { RequestChannel, ResponseChannel, RouteChannel, ResponseInitializer, Req
 import { Dispatcher, DispatcherScope } from '../dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 
-export class RequestDispatcher extends Dispatcher<RequestInitializer> implements RequestChannel {
-  private _request: Request;
-
+export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> implements RequestChannel {
   static from(scope: DispatcherScope, request: Request): RequestDispatcher {
     if ((request as any)[scope.dispatcherSymbol])
       return (request as any)[scope.dispatcherSymbol];
@@ -44,16 +42,14 @@ export class RequestDispatcher extends Dispatcher<RequestInitializer> implements
       isNavigationRequest: request.isNavigationRequest(),
       redirectedFrom: RequestDispatcher.fromNullable(scope, request.redirectedFrom()),
     });
-    this._request = request;
   }
 
   async response(): Promise<ResponseChannel | null> {
-    return ResponseDispatcher.fromNullable(this._scope, await this._request.response());
+    return ResponseDispatcher.fromNullable(this._scope, await this._object.response());
   }
 }
 
-export class ResponseDispatcher extends Dispatcher<ResponseInitializer> implements ResponseChannel {
-  private _response: Response;
+export class ResponseDispatcher extends Dispatcher<Response, ResponseInitializer> implements ResponseChannel {
 
   static from(scope: DispatcherScope, response: Response): ResponseDispatcher {
     if ((response as any)[scope.dispatcherSymbol])
@@ -73,20 +69,18 @@ export class ResponseDispatcher extends Dispatcher<ResponseInitializer> implemen
       statusText: response.statusText(),
       headers: response.headers(),
     });
-    this._response = response;
   }
 
   async finished(): Promise<Error | null> {
-    return await this._response.finished();
+    return await this._object.finished();
   }
 
   async body(): Promise<Buffer> {
-    return await this._response.body();
+    return await this._object.body();
   }
 }
 
-export class RouteDispatcher extends Dispatcher<RouteInitializer> implements RouteChannel {
-  private _route: Route;
+export class RouteDispatcher extends Dispatcher<Route, RouteInitializer> implements RouteChannel {
 
   static from(scope: DispatcherScope, route: Route): RouteDispatcher {
     if ((route as any)[scope.dispatcherSymbol])
@@ -102,18 +96,17 @@ export class RouteDispatcher extends Dispatcher<RouteInitializer> implements Rou
     super(scope, route, 'route', {
       request: RequestDispatcher.from(scope, route.request())
     });
-    this._route = route;
   }
 
   async continue(params: { overrides: { method?: string, headers?: types.Headers, postData?: string } }): Promise<void> {
-    await this._route.continue(params.overrides);
+    await this._object.continue(params.overrides);
   }
 
   async fulfill(params: { response: types.FulfillResponse & { path?: string } }): Promise<void> {
-    await this._route.fulfill(params.response);
+    await this._object.fulfill(params.response);
   }
 
   async abort(params: { errorCode: string }): Promise<void> {
-    await this._route.abort(params.errorCode);
+    await this._object.abort(params.errorCode);
   }
 }
