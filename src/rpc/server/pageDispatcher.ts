@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
+import { ConsoleMessage } from '../../console';
 import { Events } from '../../events';
 import { Frame } from '../../frames';
 import { Page } from '../../page';
 import * as types from '../../types';
-import { PageChannel, ResponseChannel } from '../channels';
+import { ElementHandleChannel, PageChannel, ResponseChannel } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { RequestDispatcher, ResponseDispatcher } from './networkDispatchers';
+import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
 
 export class PageDispatcher extends Dispatcher implements PageChannel {
   private _page: Page;
@@ -57,6 +59,7 @@ export class PageDispatcher extends Dispatcher implements PageChannel {
     page.on(Events.Page.Response, response => this._dispatchEvent('response', ResponseDispatcher.from(this._scope, response)));
     page.on(Events.Page.RequestFinished, request => this._dispatchEvent('requestFinished', ResponseDispatcher.from(this._scope, request)));
     page.on(Events.Page.RequestFailed, request => this._dispatchEvent('requestFailed', ResponseDispatcher.from(this._scope, request)));
+    page.on(Events.Page.Console, message => this._dispatchEvent('console', ConsoleMessageDispatcher.from(this._scope, message)));
   }
 
   async setDefaultNavigationTimeoutNoReply(params: { timeout: number }) {
@@ -83,6 +86,9 @@ export class PageDispatcher extends Dispatcher implements PageChannel {
   }
 
   async waitForEvent(params: { event: string }): Promise<any> {
+    const result = await this._page.waitForEvent(params.event);
+    if (result instanceof ConsoleMessage)
+      return ConsoleMessageDispatcher.from(this._scope, result);
   }
 
   async goBack(params: { options?: types.NavigateOptions }): Promise<ResponseChannel | null> {
@@ -121,6 +127,49 @@ export class PageDispatcher extends Dispatcher implements PageChannel {
 
   async title() {
     return await this._page.title();
+  }
+
+  async keyboardDown(params: { key: string }): Promise<void> {
+    await this._page.keyboard.down(params.key);
+  }
+
+  async keyboardUp(params: { key: string }): Promise<void> {
+    await this._page.keyboard.up(params.key);
+  }
+
+  async keyboardInsertText(params: { text: string }): Promise<void> {
+    await this._page.keyboard.insertText(params.text);
+  }
+
+  async keyboardType(params: { text: string, options?: { delay?: number } }): Promise<void> {
+    await this._page.keyboard.type(params.text, params.options);
+  }
+
+  async keyboardPress(params: { key: string, options?: { delay?: number } }): Promise<void> {
+    await this._page.keyboard.press(params.key, params.options);
+  }
+
+  async mouseMove(params: { x: number, y: number, options?: { steps?: number } }): Promise<void> {
+    await this._page.mouse.move(params.x, params.y, params.options);
+  }
+
+  async mouseDown(params: { options?: { button?: types.MouseButton, clickCount?: number } }): Promise<void> {
+    await this._page.mouse.down(params.options);
+  }
+
+  async mouseUp(params: { options?: { button?: types.MouseButton, clickCount?: number } }): Promise<void> {
+    await this._page.mouse.up(params.options);
+  }
+
+  async mouseClick(params: { x: number, y: number, options?: { delay?: number, button?: types.MouseButton, clickCount?: number } }): Promise<void> {
+    await this._page.mouse.click(params.x, params.y, params.options);
+  }
+
+  async accessibilitySnapshot(params: { options: { interestingOnly?: boolean, root?: ElementHandleChannel } }): Promise<types.SerializedAXNode | null> {
+    return await this._page.accessibility.snapshot({
+      interestingOnly: params.options.interestingOnly,
+      root: params.options.root ? params.options.root._object : undefined
+    });
   }
 
   _onFrameAttached(frame: Frame) {

@@ -64,6 +64,7 @@ export interface PageChannel extends Channel {
   on(event: 'requestFinished', callback: (params: RequestChannel) => void): this;
   on(event: 'requestFailed', callback: (params: RequestChannel) => void): this;
   on(event: 'close', callback: () => void): this;
+  on(event: 'console', callback: (params: ConsoleMessageChannel) => void): this;
 
   setDefaultNavigationTimeoutNoReply(params: { timeout: number }): void;
   setDefaultTimeoutNoReply(params: { timeout: number }): Promise<void>;
@@ -82,6 +83,20 @@ export interface PageChannel extends Channel {
   setNetworkInterceptionEnabled(params: { enabled: boolean }): Promise<void>;
   screenshot(params: { options?: types.ScreenshotOptions }): Promise<Buffer>;
   close(params: { options?: { runBeforeUnload?: boolean } }): Promise<void>;
+
+  // Input
+  keyboardDown(params: { key: string }): Promise<void>;
+  keyboardUp(params: { key: string }): Promise<void>;
+  keyboardInsertText(params: { text: string }): Promise<void>;
+  keyboardType(params: { text: string, options?: { delay?: number } }): Promise<void>;
+  keyboardPress(params: { key: string, options?: { delay?: number } }): Promise<void>;
+  mouseMove(params: { x: number, y: number, options?: { steps?: number } }): Promise<void>;
+  mouseDown(params: { options?: { button?: types.MouseButton, clickCount?: number } }): Promise<void>;
+  mouseUp(params: { options?: { button?: types.MouseButton, clickCount?: number } }): Promise<void>;
+  mouseClick(params: { x: number, y: number, options?: { delay?: number, button?: types.MouseButton, clickCount?: number } }): Promise<void>;
+
+  // A11Y
+  accessibilitySnapshot(params: { options: { interestingOnly?: boolean, root?: ElementHandleChannel } }): Promise<types.SerializedAXNode | null>;
 }
 
 export interface FrameChannel extends Channel {
@@ -173,3 +188,5 @@ export interface ResponseChannel extends Channel {
   finished(): Promise<Error | null>;
 }
 
+export interface ConsoleMessageChannel extends Channel {
+}

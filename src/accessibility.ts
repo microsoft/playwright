@@ -14,48 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import * as dom from './dom';
-
-export type SerializedAXNode = {
-  role: string,
-  name: string,
-  value?: string|number,
-  description?: string,
-
-  keyshortcuts?: string,
-  roledescription?: string,
-  valuetext?: string,
-
-  disabled?: boolean,
-  expanded?: boolean,
-  focused?: boolean,
-  modal?: boolean,
-  multiline?: boolean,
-  multiselectable?: boolean,
-  readonly?: boolean,
-  required?: boolean,
-  selected?: boolean,
-
-  checked?: boolean|'mixed',
-  pressed?: boolean|'mixed',
-
-  level?: number,
-  valuemin?: number,
-  valuemax?: number,
-
-  autocomplete?: string,
-  haspopup?: string,
-  invalid?: string,
-  orientation?: string,
-
-  children?: SerializedAXNode[]
-};
+import * as types from './types';
 
 export interface AXNode {
     isInteresting(insideControl: boolean): boolean;
     isLeafNode(): boolean;
     isControl(): boolean;
-    serialize(): SerializedAXNode;
+    serialize(): types.SerializedAXNode;
     children(): Iterable<AXNode>;
 }
 
@@ -68,7 +35,7 @@ export class Accessibility {
   async snapshot(options: {
       interestingOnly?: boolean;
       root?: dom.ElementHandle;
-    } = {}): Promise<SerializedAXNode | null> {
+    } = {}): Promise<types.SerializedAXNode | null> {
     const {
       interestingOnly = true,
       root = null,
@@ -98,8 +65,8 @@ function collectInterestingNodes(collection: Set<AXNode>, node: AXNode, insideCo
     collectInterestingNodes(collection, child, insideControl);
 }
 
-function serializeTree(node: AXNode, whitelistedNodes?: Set<AXNode>): SerializedAXNode[] {
-  const children: SerializedAXNode[] = [];
+function serializeTree(node: AXNode, whitelistedNodes?: Set<AXNode>): types.SerializedAXNode[] {
+  const children: types.SerializedAXNode[] = [];
   for (const child of node.children())
     children.push(...serializeTree(child, whitelistedNodes));
 

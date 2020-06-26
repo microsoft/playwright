@@ -1,5 +1,6 @@
 /**
- * Copyright (c) Microsoft Corporation.
+ * Copyright 2018 Google Inc. All rights reserved.
+ * Modifications copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -262,4 +263,45 @@ export type ConnectOptions = {
   wsEndpoint: string,
   slowMo?: number,
   timeout?: number,
+};
+
+export type SerializedAXNode = {
+  role: string,
+  name: string,
+  value?: string|number,
+  description?: string,
+
+  keyshortcuts?: string,
+  roledescription?: string,
+  valuetext?: string,
+
+  disabled?: boolean,
+  expanded?: boolean,
+  focused?: boolean,
+  modal?: boolean,
+  multiline?: boolean,
+  multiselectable?: boolean,
+  readonly?: boolean,
+  required?: boolean,
+  selected?: boolean,
+
+  checked?: boolean | 'mixed',
+  pressed?: boolean | 'mixed',
+
+  level?: number,
+  valuemin?: number,
+  valuemax?: number,
+
+  autocomplete?: string,
+  haspopup?: string,
+  invalid?: string,
+  orientation?: string,
+
+  children?: SerializedAXNode[]
+};
+
+export type ConsoleMessageLocation = {
+  url?: string,
+  lineNumber?: number,
+  columnNumber?: number,
 };

@@ -27,6 +27,9 @@ import { Frame, FunctionWithSource, GotoOptions } from './frame';
 import { Func1, FuncOn, SmartHandle } from './jsHandle';
 import { Request, Response, RouteHandler } from './network';
 import { Connection } from '../connection';
+import { Keyboard, Mouse } from './input';
+import { Accessibility } from './accessibility';
+import { ConsoleMessage } from './console';
 
 export class Page extends ChannelOwner<PageChannel> {
   readonly pdf: ((options?: types.PDFOptions) => Promise<Buffer>) | undefined;
@@ -39,6 +42,10 @@ export class Page extends ChannelOwner<PageChannel> {
   private _viewportSize: types.Size | null = null;
   private _routes: { url: types.URLMatch, handler: RouteHandler }[] = [];
 
+  readonly accessibility: Accessibility;
+  readonly keyboard: Keyboard;
+  readonly mouse: Mouse;
+
   static from(page: PageChannel): Page {
     return page._object;
   }
@@ -49,6 +56,9 @@ export class Page extends ChannelOwner<PageChannel> {
 
   constructor(connection: Connection, channel: PageChannel) {
     super(connection, channel);
+    this.accessibility = new Accessibility(channel);
+    this.keyboard = new Keyboard(channel);
+    this.mouse = new Mouse(channel);
   }
 
   _initialize(payload: { browserContext: BrowserContextChannel, mainFrame: FrameChannel, viewportSize: types.Size }) {
@@ -64,6 +74,7 @@ export class Page extends ChannelOwner<PageChannel> {
     this._channel.on('response', response => this.emit(Events.Page.Response, Response.from(response)));
     this._channel.on('requestFinished', request => this.emit(Events.Page.Request, Request.from(request)));
     this._channel.on('requestFailed', request => this.emit(Events.Page.Request, Request.from(request)));
+    this._channel.on('console', message => this.emit(Events.Page.Console, ConsoleMessage.from(message)));
     this._channel.on('close', () => this._onClose());
   }
 
@@ -230,7 +241,9 @@ export class Page extends ChannelOwner<PageChannel> {
   }
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
-    return await this._channel.waitForEvent({ event });
+    const result = await this._channel.waitForEvent({ event });
+    if (result._object)
+      return result._object;
   }
 
   async goBack(options?: types.NavigateOptions): Promise<Response | null> {
