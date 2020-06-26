@@ -748,25 +748,86 @@ describe('Page.click', function() {
   it.fail(true)('should retarget when element is recycled during hit testing', async ({page, server}) => {
     await page.goto(server.PREFIX + '/react.html');
     await page.evaluate(() => {
-      class MyButton extends React.Component {
-        render() {
-          return e('button', { onClick: () => window[this.props.name] = true }, this.props.name);
-        }
-      }
-      window.TwoButtons = class TwoButtons extends React.Component {
-        render() {
-          const buttons = this.props.names.map(name => e(MyButton, { name }));
-          return e('div', {}, buttons);
-        }
-      }
-      renderComponent(e(TwoButtons, { names: ['button1', 'button2'] }));
+      renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2' })] ));
     });
     const __testHookAfterStable = () => page.evaluate(() => {
-      renderComponent(e(TwoButtons, { names: ['button2', 'button1'] }));
+      window.counter = (window.counter || 0) + 1;
+      if (window.counter === 1)
+        renderComponent(e('div', {}, [e(MyButton, { name: 'button2' }), e(MyButton, { name: 'button1' })] ));
     });
     await page.click('text=button1', { __testHookAfterStable });
     expect(await page.evaluate(() => window.button1)).toBe(true);
     expect(await page.evaluate(() => window.button2)).toBe(undefined);
+  });
+  it.fail(true)('should report that selector does not match anymore', async ({page, server}) => {
+    await page.goto(server.PREFIX + '/react.html');
+    await page.evaluate(() => {
+      renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2' })] ));
+    });
+    const __testHookAfterStable = () => page.evaluate(() => {
+      window.counter = (window.counter || 0) + 1;
+      if (window.counter === 1)
+        renderComponent(e('div', {}, [e(MyButton, { name: 'button2' }), e(MyButton, { name: 'button1' })] ));
+      else
+        renderComponent(e('div', {}, []));
+    });
+    const error = await page.dblclick('text=button1', { __testHookAfterStable, timeout: 3000 }).catch(e => e);
+    expect(await page.evaluate(() => window.button1)).toBe(undefined);
+    expect(await page.evaluate(() => window.button2)).toBe(undefined);
+    expect(error.message).toContain('Timeout 3000ms exceeded during page.dblclick.');
+    expect(error.message).toContain('element does not match the selector anymore');
+  });
+  it.fail(true)('should retarget when element is recycled before enabled check', async ({page, server}) => {
+    await page.goto(server.PREFIX + '/react.html');
+    await page.evaluate(() => {
+      renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2', disabled: true })] ));
+    });
+    const __testHookBeforeStable = () => page.evaluate(() => {
+      window.counter = (window.counter || 0) + 1;
+      if (window.counter === 1)
+        renderComponent(e('div', {}, [e(MyButton, { name: 'button2', disabled: true }), e(MyButton, { name: 'button1' })] ));
+    });
+    await page.click('text=button1', { __testHookBeforeStable });
+    expect(await page.evaluate(() => window.button1)).toBe(true);
+    expect(await page.evaluate(() => window.button2)).toBe(undefined);
+  });
+  it.fail(true)('should not retarget the handle when element is recycled', async ({page, server}) => {
+    await page.goto(server.PREFIX + '/react.html');
+    await page.evaluate(() => {
+      renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2', disabled: true })] ));
+    });
+    const __testHookBeforeStable = () => page.evaluate(() => {
+      window.counter = (window.counter || 0) + 1;
+      if (window.counter === 1)
+        renderComponent(e('div', {}, [e(MyButton, { name: 'button2', disabled: true }), e(MyButton, { name: 'button1' })] ));
+    });
+    const handle = await page.$('text=button1');
+    const error = await handle.click({ __testHookBeforeStable, timeout: 3000 }).catch(e => e);
+    expect(await page.evaluate(() => window.button1)).toBe(undefined);
+    expect(await page.evaluate(() => window.button2)).toBe(undefined);
+    expect(error.message).toContain('Timeout 3000ms exceeded during elementHandle.click.');
+    expect(error.message).toContain('element is disabled - waiting');
+  });
+  it('should not retarget when element changes on hover', async ({page, server}) => {
+    await page.goto(server.PREFIX + '/react.html');
+    await page.evaluate(() => {
+      renderComponent(e('div', {}, [e(MyButton, { name: 'button1', renameOnHover: true }), e(MyButton, { name: 'button2' })] ));
+    });
+    await page.click('text=button1');
+    expect(await page.evaluate(() => window.button1)).toBe(true);
+    expect(await page.evaluate(() => window.button2)).toBe(undefined);
+  });
+  it('should not retarget when element is recycled on hover', async ({page, server}) => {
+    await page.goto(server.PREFIX + '/react.html');
+    await page.evaluate(() => {
+      function shuffle() {
+        renderComponent(e('div', {}, [e(MyButton, { name: 'button2' }), e(MyButton, { name: 'button1' })] ));
+      }
+      renderComponent(e('div', {}, [e(MyButton, { name: 'button1', onHover: shuffle }), e(MyButton, { name: 'button2' })] ));
+    });
+    await page.click('text=button1');
+    expect(await page.evaluate(() => window.button1)).toBe(undefined);
+    expect(await page.evaluate(() => window.button2)).toBe(true);
   });
   it('should click the button when window.innerWidth is corrupted', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');

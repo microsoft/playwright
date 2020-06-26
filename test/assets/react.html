@@ -8,5 +8,26 @@
     window.e = React.createElement;
     window.reactRoot = document.querySelector('.react-root');
     window.renderComponent = c => ReactDOM.render(c, window.reactRoot);
+
+    window.MyButton = class MyButton extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { hovered: false };
+      }
+      render() {
+        return e('button', {
+          disabled: !!this.props.disabled,
+          onClick: () => {
+            window[this.props.name] = true;
+          },
+          onMouseEnter: () => {
+            if (this.props.renameOnHover)
+              this.setState({ hovered: true });
+            if (this.props.onHover)
+              this.props.onHover();
+          },
+        }, this.state.hovered ? 'Hovered' : this.props.name);
+      }
+    };
   </script>
 </body>

@@ -321,6 +321,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _performPointerAction(progress: Progress, action: (point: types.Point) => Promise<void>, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | 'error:nothittarget' | 'done'> {
     const { force = false, position } = options;
+    if ((options as any).__testHookBeforeStable)
+      await (options as any).__testHookBeforeStable();
     if (!force) {
       const result = await this._waitForDisplayedAtStablePositionAndEnabled(progress);
       if (result !== 'done')
