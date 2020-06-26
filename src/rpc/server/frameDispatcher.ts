@@ -18,10 +18,9 @@ import { Frame } from '../../frames';
 import * as types from '../../types';
 import { ElementHandleChannel, FrameChannel, JSHandleChannel, ResponseChannel } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
-import { ElementHandleDispatcher } from './elementHandlerDispatcher';
+import { ElementHandleDispatcher, convertSelectOptionValues } from './elementHandlerDispatcher';
 import { JSHandleDispatcher } from './jsHandleDispatcher';
 import { ResponseDispatcher } from './networkDispatchers';
-import { PageDispatcher } from './pageDispatcher';
 
 export class FrameDispatcher extends Dispatcher implements FrameChannel {
   private _frame: Frame;
@@ -43,12 +42,9 @@ export class FrameDispatcher extends Dispatcher implements FrameChannel {
     this._frame = frame;
     const parentFrame = frame.parentFrame();
     this._initialize({
-      page: PageDispatcher.from(this._scope, frame._page),
       url: frame.url(),
       name: frame.name(),
-      parentFrame: FrameDispatcher.fromNullable(this._scope, parentFrame),
-      childFrame: frame.childFrames().map(f => FrameDispatcher.from(this._scope, f)),
-      isDetached: frame.isDetached()
+      parentFrame: FrameDispatcher.fromNullable(this._scope, parentFrame)
     });
   }
 
@@ -154,7 +150,7 @@ export class FrameDispatcher extends Dispatcher implements FrameChannel {
   }
 
   async selectOption(params: { selector: string, values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions }): Promise<string[]> {
-    return this._frame.selectOption(params.selector, params.values as any, params.options);
+    return this._frame.selectOption(params.selector, convertSelectOptionValues(params.values), params.options);
   }
 
   async setInputFiles(params: { selector: string, files: string | string[] | types.FilePayload | types.FilePayload[], options: types.NavigatingActionWaitOptions }): Promise<void> {

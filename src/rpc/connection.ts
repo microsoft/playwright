@@ -22,8 +22,8 @@ import { ChannelOwner } from './client/channelOwner';
 import { ElementHandle } from './client/elementHandle';
 import { Frame } from './client/frame';
 import { JSHandle } from './client/jsHandle';
-import { Request, Response } from './client/network';
-import { Page } from './client/page';
+import { Request, Response, Route } from './client/network';
+import { Page, BindingCall } from './client/page';
 import debug = require('debug');
 import { Channel } from './channels';
 import { ConsoleMessage } from './client/console';
@@ -59,6 +59,12 @@ export class Connection {
         break;
       case 'response':
         result = new Response(this, channel);
+        break;
+      case 'route':
+        result = new Route(this, channel);
+        break;
+      case 'bindingCall':
+        result = new BindingCall(this, channel);
         break;
       case 'jsHandle':
         result = new JSHandle(this, channel);
@@ -132,6 +138,9 @@ export class Connection {
       return payload.map(p => this._replaceChannelsWithGuids(p));
     if (payload._guid)
       return { guid: payload._guid };
+    // TODO: send base64
+    if (payload instanceof Buffer)
+      return payload;
     if (typeof payload === 'object')
       return Object.fromEntries([...Object.entries(payload)].map(([n,v]) => [n, this._replaceChannelsWithGuids(v)]));
     return payload;
@@ -144,6 +153,9 @@ export class Connection {
       return payload.map(p => this._replaceGuidsWithChannels(p));
     if (payload.guid && this._channels.has(payload.guid))
       return this._channels.get(payload.guid);
+    // TODO: send base64
+    if (payload instanceof Buffer)
+      return payload;
     if (typeof payload === 'object')
       return Object.fromEntries([...Object.entries(payload)].map(([n,v]) => [n, this._replaceGuidsWithChannels(v)]));
     return payload;

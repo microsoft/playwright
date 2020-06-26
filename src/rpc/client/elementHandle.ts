@@ -85,7 +85,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   }
 
   async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return await this._elementChannel.selectOption({ values: values as any, options });
+    return await this._elementChannel.selectOption({ values: convertSelectOptionValues(values), options });
   }
 
   async fill(value: string, options: types.NavigatingActionWaitOptions = {}): Promise<void> {
@@ -147,4 +147,12 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
     return await this._elementChannel.$$eval({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: convertArg(arg) });
   }
+}
+
+export function convertSelectOptionValues(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null): string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null {
+  if (values instanceof ElementHandle)
+    return values._elementChannel;
+  if (Array.isArray(values) && values.length && values[0] instanceof ElementHandle)
+    return (values as ElementHandle[]).map((v: ElementHandle) => v._elementChannel);
+  return values as any;
 }

@@ -115,8 +115,8 @@ function collect(browserNames) {
     const browserType = playwright[browserName];
     let overridenBrowserType = browserType;
 
-  // Channel substitute
-  if (process.env.PWCHANNEL) {
+    // Channel substitute
+    if (process.env.PWCHANNEL) {
       BrowserTypeDispatcher.from(dispatcherScope, browserType);
       overridenBrowserType = connection.createRemoteObject('browserType', browserType.name());
     }

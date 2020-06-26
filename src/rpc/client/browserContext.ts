@@ -16,7 +16,7 @@
  */
 
 import * as frames from './frame';
-import { Page } from './page';
+import { Page, BindingCall, waitForEvent } from './page';
 import * as types from '../../types';
 import * as network from './network';
 import { BrowserContextChannel } from '../channels';
@@ -29,6 +29,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel> {
   _pages = new Set<Page>();
   private _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
   _browser: Browser | undefined;
+  readonly _bindings = new Map<string, frames.FunctionWithSource>();
 
   static from(context: BrowserContextChannel): BrowserContext {
     return context._object;
@@ -42,7 +43,23 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel> {
     super(connection, channel);
   }
 
-  _initialize() {
+  _initialize() {}
+
+  _onRoute(route: network.Route, request: network.Request) {
+    for (const {url, handler} of this._routes) {
+      if (helper.urlMatches(request.url(), url)) {
+        handler(route, request);
+        return;
+      }
+    }
+    route.continue();
+  }
+
+  async _onBinding(bindingCall: BindingCall) {
+    const func = this._bindings.get(bindingCall.name);
+    if (!func)
+      return;
+    bindingCall.call(func);
   }
 
   setDefaultNavigationTimeout(timeout: number) {
@@ -106,7 +123,15 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel> {
     await this._channel.addInitScript({ source });
   }
 
-  async exposeBinding(name: string, playwrightBinding: frames.FunctionWithSource): Promise<void> {
+  async exposeBinding(name: string, binding: frames.FunctionWithSource): Promise<void> {
+    for (const page of this.pages()) {
+      if (page._bindings.has(name))
+        throw new Error(`Function "${name}" has been already registered in one of the pages`);
+    }
+    if (this._bindings.has(name))
+      throw new Error(`Function "${name}" has been already registered`);
+    this._bindings.set(name, binding);
+    await this._channel.exposeBinding({ name });
   }
 
   async exposeFunction(name: string, playwrightFunction: Function): Promise<void> {
@@ -126,7 +151,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel> {
   }
 
   async waitForEvent(event: string, optionsOrPredicate?: Function | (types.TimeoutOptions & { predicate?: Function })): Promise<any> {
-    return await this._channel.waitForEvent({ event });
+    return waitForEvent(this, event, optionsOrPredicate);
   }
 
   async close(): Promise<void> {

@@ -305,3 +305,9 @@ export type ConsoleMessageLocation = {
   lineNumber?: number,
   columnNumber?: number,
 };
+
+export type Error = {
+  message?: string,
+  stack?: string,
+  value?: any
+};
