@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { Request, Response } from '../../network';
+import { Request, Response, Route } from '../../network';
 import * as types from '../../types';
-import { RequestChannel, ResponseChannel } from '../channels';
+import { RequestChannel, ResponseChannel, RouteChannel } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 
@@ -48,15 +48,6 @@ export class RequestDispatcher extends Dispatcher implements RequestChannel {
       redirectedTo: RequestDispatcher.fromNullable(this._scope, request.redirectedTo()),
     });
     this._request = request;
-  }
-
-  async continue(params: { overrides: { method?: string, headers?: types.Headers, postData?: string } }): Promise<void> {
-  }
-
-  async fulfill(params: { response: types.FulfillResponse & { path?: string } }): Promise<void> {
-  }
-
-  async abort(params: { errorCode: string }): Promise<void> {
   }
 
   async response(): Promise<ResponseChannel | null> {
@@ -97,5 +88,37 @@ export class ResponseDispatcher extends Dispatcher implements ResponseChannel {
 
   async body(): Promise<Buffer> {
     return await this._response.body();
+  }
+}
+
+export class RouteDispatcher extends Dispatcher implements RouteChannel {
+  private _route: Route;
+
+  static from(scope: DispatcherScope, route: Route): RouteDispatcher {
+    if ((route as any)[scope.dispatcherSymbol])
+      return (route as any)[scope.dispatcherSymbol];
+    return new RouteDispatcher(scope, route);
+  }
+
+  static fromNullable(scope: DispatcherScope, route: Route | null): RouteDispatcher | null {
+    return route ? RouteDispatcher.from(scope, route) : null;
+  }
+
+  constructor(scope: DispatcherScope, route: Route) {
+    super(scope, route, 'route');
+    this._initialize({ request: RequestDispatcher.from(this._scope, route.request()) });
+    this._route = route;
+  }
+
+  async continue(params: { overrides: { method?: string, headers?: types.Headers, postData?: string } }): Promise<void> {
+    await this._route.continue(params.overrides);
+  }
+
+  async fulfill(params: { response: types.FulfillResponse & { path?: string } }): Promise<void> {
+    await this._route.fulfill(params.response);
+  }
+
+  async abort(params: { errorCode: string }): Promise<void> {
+    await this._route.abort(params.errorCode);
   }
 }

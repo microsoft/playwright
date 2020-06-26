@@ -76,7 +76,7 @@ export class Request {
   private _redirectedTo: Request | null = null;
   readonly _documentId?: string;
   readonly _isFavicon: boolean;
-  private _failureText: string | null = null;
+  _failureText: string | null = null;
   private _url: string;
   private _resourceType: string;
   private _method: string;
@@ -182,7 +182,7 @@ export class Request {
     return this._redirectedTo;
   }
 
-  failure(): { errorText: string; } | null {
+  failure(): { errorText: string } | null {
     if (this._failureText === null)
       return null;
     return {

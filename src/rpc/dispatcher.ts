@@ -56,8 +56,7 @@ export class DispatcherScope {
   async dispatchMessageFromClient(message: any): Promise<any> {
     const dispatcher = this.dispatchers.get(message.guid)!;
     const value = await (dispatcher as any)[message.method](this._replaceGuidsWithDispatchers(message.params));
-    const result = this._replaceDispatchersWithGuids(value);
-    return result;
+    return this._replaceDispatchersWithGuids(value);
   }
 
   private _replaceDispatchersWithGuids(payload: any): any {
@@ -67,6 +66,9 @@ export class DispatcherScope {
       return { guid: payload._guid };
     if (Array.isArray(payload))
       return payload.map(p => this._replaceDispatchersWithGuids(p));
+    // TODO: send base64
+    if (payload instanceof Buffer)
+      return payload;
     if (typeof payload === 'object')
       return Object.fromEntries([...Object.entries(payload)].map(([n,v]) => [n, this._replaceDispatchersWithGuids(v)]));
     return payload;
@@ -79,6 +81,9 @@ export class DispatcherScope {
       return payload.map(p => this._replaceGuidsWithDispatchers(p));
     if (payload.guid && this.dispatchers.has(payload.guid))
       return this.dispatchers.get(payload.guid);
+    // TODO: send base64
+    if (payload instanceof Buffer)
+      return payload;
     if (typeof payload === 'object')
       return Object.fromEntries([...Object.entries(payload)].map(([n,v]) => [n, this._replaceGuidsWithDispatchers(v)]));
     return payload;

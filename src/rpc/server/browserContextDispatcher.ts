@@ -15,20 +15,22 @@
  */
 
 import * as types from '../../types';
-import { BrowserContextBase } from '../../browserContext';
+import { BrowserContextBase, BrowserContext } from '../../browserContext';
 import { Events } from '../../events';
 import { BrowserDispatcher } from './browserDispatcher';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
-import { PageDispatcher } from './pageDispatcher';
+import { PageDispatcher, BindingCallDispatcher } from './pageDispatcher';
 import { PageChannel, BrowserContextChannel } from '../channels';
+import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
+import { Page } from '../../page';
 
 export class BrowserContextDispatcher extends Dispatcher implements BrowserContextChannel {
   private _context: BrowserContextBase;
 
-  static from(scope: DispatcherScope, browserContext: BrowserContextBase): BrowserContextDispatcher {
+  static from(scope: DispatcherScope, browserContext: BrowserContext): BrowserContextDispatcher {
     if ((browserContext as any)[scope.dispatcherSymbol])
       return (browserContext as any)[scope.dispatcherSymbol];
-    return new BrowserContextDispatcher(scope, browserContext);
+    return new BrowserContextDispatcher(scope, browserContext as BrowserContextBase);
   }
 
   constructor(scope: DispatcherScope, context: BrowserContextBase) {
@@ -52,6 +54,11 @@ export class BrowserContextDispatcher extends Dispatcher implements BrowserConte
   }
 
   async exposeBinding(params: { name: string }): Promise<void> {
+    this._context.exposeBinding(params.name, (source, ...args) => {
+      const bindingCall = new BindingCallDispatcher(this._scope, params.name, source, args);
+      this._dispatchEvent('bindingCall', bindingCall);
+      return bindingCall.promise();
+    });
   }
 
   async newPage(): Promise<PageChannel> {
@@ -99,9 +106,20 @@ export class BrowserContextDispatcher extends Dispatcher implements BrowserConte
   }
 
   async setNetworkInterceptionEnabled(params: { enabled: boolean }): Promise<void> {
+    if (!params.enabled) {
+      await this._context.unroute('**/*');
+      return;
+    }
+    this._context.route('**/*', (route, request) => {
+      this._dispatchEvent('route', { route: RouteDispatcher.from(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
+    });
   }
 
   async waitForEvent(params: { event: string }): Promise<any> {
+    const result = await this._context.waitForEvent(params.event);
+    if (result instanceof Page)
+      return PageDispatcher.from(this._scope, result);
+    return result;
   }
 
   async close(): Promise<void> {

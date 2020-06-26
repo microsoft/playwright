@@ -23,7 +23,7 @@ import { convertArg, FrameDispatcher } from './frameDispatcher';
 import { JSHandleDispatcher } from './jsHandleDispatcher';
 
 export class ElementHandleDispatcher extends JSHandleDispatcher implements ElementHandleChannel {
-  private _elementHandle: ElementHandle;
+  readonly _elementHandle: ElementHandle;
 
   static from(scope: DispatcherScope, handle: js.JSHandle): JSHandleDispatcher {
     if ((handle as any)[scope.dispatcherSymbol])
@@ -102,7 +102,7 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
   }
 
   async selectOption(params: { values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions }): Promise<string[]> {
-    return this._elementHandle.selectOption(params.values as any, params.options);
+    return this._elementHandle.selectOption(convertSelectOptionValues(params.values), params.options);
   }
 
   async fill(params: { value: string, options: types.NavigatingActionWaitOptions }) {
@@ -161,4 +161,12 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
   async $$eval(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<any> {
     return this._elementHandle._$$evalExpression(params.selector, params.expression, params.isFunction, convertArg(this._scope, params.arg));
   }
+}
+
+export function convertSelectOptionValues(values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null): string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null {
+  if (values instanceof ElementHandleDispatcher)
+    return values._elementHandle;
+  if (Array.isArray(values) && values.length && values[0] instanceof ElementHandle)
+    return (values as ElementHandleDispatcher[]).map((v: ElementHandleDispatcher) => v._elementHandle);
+  return values as any;
 }

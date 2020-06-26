@@ -20,7 +20,7 @@ import * as types from '../../types';
 import { FrameChannel } from '../channels';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { ElementHandle } from './elementHandle';
+import { ElementHandle, convertSelectOptionValues } from './elementHandle';
 import { JSHandle, Func1, FuncOn, SmartHandle, convertArg } from './jsHandle';
 import * as network from './network';
 import { Response } from './network';
@@ -36,9 +36,9 @@ export type FunctionWithSource = (source: { context: BrowserContext, page: Page,
 export class Frame extends ChannelOwner<FrameChannel> {
   _parentFrame: Frame | null = null;
   _url = '';
+  _name = '';
   private _detached = false;
   _childFrames = new Set<Frame>();
-  private _name = '';
 
   static from(frame: FrameChannel): Frame {
     return frame._object;
@@ -52,10 +52,12 @@ export class Frame extends ChannelOwner<FrameChannel> {
     super(connection, channel);
   }
 
-  _initialize(payload: { parentFrame: FrameChannel | null }) {
-    this._parentFrame = payload.parentFrame ? payload.parentFrame._object : null;
+  _initialize(params: { name: string, url: string, parentFrame: FrameChannel | null }) {
+    this._parentFrame = params.parentFrame ? params.parentFrame._object : null;
     if (this._parentFrame)
       this._parentFrame._childFrames.add(this);
+    this._name = params.name;
+    this._url = params.url;
   }
 
   async goto(url: string, options: GotoOptions = {}): Promise<network.Response | null> {
@@ -192,7 +194,7 @@ export class Frame extends ChannelOwner<FrameChannel> {
   }
 
   async selectOption(selector: string, values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return await this._channel.selectOption({ selector, values: values as any, options });
+    return await this._channel.selectOption({ selector, values: convertSelectOptionValues(values), options });
   }
 
   async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {

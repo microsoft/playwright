@@ -16,7 +16,7 @@
 
 import { URLSearchParams } from 'url';
 import * as types from '../../types';
-import { RequestChannel, ResponseChannel, FrameChannel } from '../channels';
+import { RequestChannel, ResponseChannel, FrameChannel, RouteChannel } from '../channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
 import { Connection } from '../connection';
@@ -48,7 +48,7 @@ export class Request extends ChannelOwner<RequestChannel> {
   private _redirectedFrom: Request | null = null;
   private _redirectedTo: Request | null = null;
   private _isNavigationRequest = false;
-  private _failureText: string | null = null;
+  _failureText: string | null = null;
   private _url: string = '';
   private _resourceType = '';
   private _method = '';
@@ -150,27 +150,35 @@ export class Request extends ChannelOwner<RequestChannel> {
   }
 }
 
-export class Route {
-  private _request: Request;
+export class Route extends ChannelOwner<RouteChannel> {
+  private _request: Request | undefined;
 
-  constructor(request: Request) {
-    this._request = request;
+  static from(route: RouteChannel): Route {
+    return route._object;
+  }
+
+  constructor(connection: Connection, channel: RouteChannel) {
+    super(connection, channel);
+  }
+
+  _initialize(params: { request: RequestChannel }) {
+    this._request = Request.from(params.request);
   }
 
   request(): Request {
-    return this._request;
+    return this._request!;
   }
 
   async abort(errorCode: string = 'failed') {
-    await this._request._channel.abort({ errorCode });
+    await this._channel.abort({ errorCode });
   }
 
   async fulfill(response: types.FulfillResponse & { path?: string }) {
-    await this._request._channel.fulfill({ response });
+    await this._channel.fulfill({ response });
   }
 
   async continue(overrides: { method?: string; headers?: types.Headers; postData?: string } = {}) {
-    await this._request._channel.continue({ overrides });
+    await this._channel.continue({ overrides });
   }
 }
 

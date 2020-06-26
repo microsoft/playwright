@@ -362,6 +362,21 @@ export function logPolitely(toBeLogged: string) {
     console.log(toBeLogged);  // eslint-disable-line no-console
 }
 
+export function serializeError(e: any): types.Error {
+  if (e instanceof Error)
+    return { message: e.message, stack: e.stack };
+  return { value: e };
+}
+
+export function parseError(error: types.Error): any {
+  if (error.message !== undefined) {
+    const e = new Error(error.message);
+    e.stack = error.stack;
+    return e;
+  }
+  return error.value;
+}
+
 const escapeGlobChars = new Set(['/', '$', '^', '+', '.', '(', ')', '=', '!', '|']);
 
 export const helper = Helper;
