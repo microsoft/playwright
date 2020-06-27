@@ -70,12 +70,15 @@ export interface PageChannel extends Channel {
   on(event: 'bindingCall', callback: (params: BindingCallChannel) => void): this;
   on(event: 'close', callback: () => void): this;
   on(event: 'console', callback: (params: ConsoleMessageChannel) => void): this;
+  on(event: 'crash', callback: () => void): this;
   on(event: 'dialog', callback: (params: DialogChannel) => void): this;
   on(event: 'download', callback: (params: DownloadChannel) => void): this;
+  on(event: 'domcontentloaded', callback: () => void): this;
   on(event: 'frameAttached', callback: (params: FrameChannel) => void): this;
   on(event: 'frameDetached', callback: (params: FrameChannel) => void): this;
   on(event: 'frameNavigated', callback: (params: { frame: FrameChannel, url: string, name: string }) => void): this;
   on(event: 'frameNavigated', callback: (params: { frame: FrameChannel, url: string, name: string }) => void): this;
+  on(event: 'load', callback: () => void): this;
   on(event: 'pageError', callback: (params: { error: types.Error }) => void): this;
   on(event: 'popup', callback: (params: PageChannel) => void): this;
   on(event: 'request', callback: (params: RequestChannel) => void): this;

@@ -32,11 +32,13 @@ import { Accessibility } from './accessibility';
 import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
 import { Download } from './download';
+import { TimeoutError } from '../../errors';
+import { TimeoutSettings } from '../../timeoutSettings';
 
 export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   readonly pdf: ((options?: types.PDFOptions) => Promise<Buffer>) | undefined;
 
-  _browserContext: BrowserContext | undefined;
+  private _browserContext: BrowserContext | undefined;
   _ownedContext: BrowserContext | undefined;
 
   private _mainFrame: Frame;
@@ -50,6 +52,8 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   readonly keyboard: Keyboard;
   readonly mouse: Mouse;
   readonly _bindings = new Map<string, FunctionWithSource>();
+  private _pendingWaitForEvents = new Map<(error: Error) => void, string>();
+  private _timeoutSettings = new TimeoutSettings();
 
   static from(page: PageChannel): Page {
     return page._object;
@@ -73,11 +77,14 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     this._channel.on('bindingCall', bindingCall => this._onBinding(BindingCall.from(bindingCall)));
     this._channel.on('close', () => this._onClose());
     this._channel.on('console', message => this.emit(Events.Page.Console, ConsoleMessage.from(message)));
+    this._channel.on('crash', () => this._onCrash());
     this._channel.on('dialog', dialog => this.emit(Events.Page.Dialog, Dialog.from(dialog)));
+    this._channel.on('domcontentloaded', () => this.emit(Events.Page.DOMContentLoaded));
     this._channel.on('download', download => this.emit(Events.Page.Download, Download.from(download)));
     this._channel.on('frameAttached', frame => this._onFrameAttached(Frame.from(frame)));
     this._channel.on('frameDetached', frame => this._onFrameDetached(Frame.from(frame)));
     this._channel.on('frameNavigated', ({ frame, url, name }) => this._onFrameNavigated(Frame.from(frame), url, name));
+    this._channel.on('load', () => this.emit(Events.Page.Load));
     this._channel.on('pageError', ({ error }) => this.emit(Events.Page.PageError, parseError(error)));
     this._channel.on('popup', popup => this.emit(Events.Page.Popup, Page.from(popup)));
     this._channel.on('request', request => this.emit(Events.Page.Request, Request.from(request)));
@@ -85,6 +92,11 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     this._channel.on('requestFinished', request => this.emit(Events.Page.RequestFinished, Request.from(request)));
     this._channel.on('response', response => this.emit(Events.Page.Response, Response.from(response)));
     this._channel.on('route', ({ route, request }) => this._onRoute(Route.from(route), Request.from(request)));
+  }
+
+  _setBrowserContext(context: BrowserContext) {
+    this._browserContext = context;
+    this._timeoutSettings = new TimeoutSettings(context._timeoutSettings);
   }
 
   private _onRequestFailed(request: Request, failureText: string | null) {
@@ -132,8 +144,26 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   private _onClose() {
+    this._closed = true;
     this._browserContext!._pages.delete(this);
+    this._rejectPendingOperations(false);
     this.emit(Events.Page.Close);
+  }
+
+  private _onCrash() {
+    this._rejectPendingOperations(true);
+    this.emit(Events.Page.Crash);
+  }
+
+  private _rejectPendingOperations(isCrash: boolean) {
+    for (const [listener, event] of this._pendingWaitForEvents) {
+      if (event === Events.Page.Close && !isCrash)
+        continue;
+      if (event === Events.Page.Crash && isCrash)
+        continue;
+      listener(new Error(isCrash ? 'Page crashed' : 'Page closed'));
+    }
+    this._pendingWaitForEvents.clear();
   }
 
   context(): BrowserContext {
@@ -168,6 +198,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   setDefaultTimeout(timeout: number) {
+    this._timeoutSettings.setDefaultTimeout(timeout);
     this._channel.setDefaultTimeoutNoReply({ timeout });
   }
 
@@ -280,7 +311,13 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
-    return waitForEvent(this, event, optionsOrPredicate);
+    let reject: () => void;
+    const result = await Promise.race([
+      waitForEvent(this, event, optionsOrPredicate, this._timeoutSettings.timeout(optionsOrPredicate instanceof Function ? {} : optionsOrPredicate)),
+      new Promise((f, r) => { reject = r; this._pendingWaitForEvents.set(reject, event); })
+    ]);
+    this._pendingWaitForEvents.delete(reject!);
+    return result;
   }
 
   async goBack(options?: types.NavigateOptions): Promise<Response | null> {
@@ -477,7 +514,7 @@ export class BindingCall extends ChannelOwner<BindingCallChannel, BindingCallIni
     try {
       const frame = Frame.from(this._initializer.frame);
       const source = {
-        context: frame._page!._browserContext!,
+        context: frame._page!.context(),
         page: frame._page!,
         frame
       };
@@ -488,22 +525,30 @@ export class BindingCall extends ChannelOwner<BindingCallChannel, BindingCallIni
   }
 }
 
-export async function waitForEvent(emitter: EventEmitter, event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
-  // TODO: support timeout
+export async function waitForEvent(emitter: EventEmitter, event: string, optionsOrPredicate: types.WaitForEventOptions = {}, defaultTimeout: number): Promise<any> {
   let predicate: Function | undefined;
-  if (typeof optionsOrPredicate === 'function')
+  let timeout = defaultTimeout;
+  if (typeof optionsOrPredicate === 'function') {
     predicate = optionsOrPredicate;
-  else if (optionsOrPredicate.predicate)
+  } else if (optionsOrPredicate.predicate) {
+    if (optionsOrPredicate.timeout !== undefined)
+      timeout = optionsOrPredicate.timeout;
     predicate = optionsOrPredicate.predicate;
+  }
   let callback: (a: any) => void;
   const result = new Promise(f => callback = f);
   const listener = helper.addEventListener(emitter, event, param => {
     // TODO: do not detect channel by guid.
-    const object = param._guid ? (param as Channel)._object : param;
+    const object = param && param._guid ? (param as Channel)._object : param;
     if (predicate && !predicate(object))
       return;
     callback(object);
     helper.removeEventListeners([listener]);
   });
-  return result;
+  if (timeout === 0)
+    return result;
+  return Promise.race([
+    result,
+    new Promise((f, r) => setTimeout(() => r(new TimeoutError('Timeout while waiting for event')), timeout))
+  ]);
 }
