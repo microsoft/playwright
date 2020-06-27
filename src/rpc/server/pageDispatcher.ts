@@ -84,7 +84,7 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
   }
 
   async exposeBinding(params: { name: string }): Promise<void> {
-    this._page.exposeBinding(params.name, (source, ...args) => {
+    await this._page.exposeBinding(params.name, (source, ...args) => {
       const bindingCall = new BindingCallDispatcher(this._scope, params.name, source, args);
       this._dispatchEvent('bindingCall', bindingCall);
       return bindingCall.promise();

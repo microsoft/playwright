@@ -153,11 +153,11 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
     return elements.map(e => ElementHandleDispatcher.fromElement(this._scope, e));
   }
 
-  async $eval(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<any> {
+  async $evalExpression(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<any> {
     return this._elementHandle._$evalExpression(params.selector, params.expression, params.isFunction, convertArg(this._scope, params.arg));
   }
 
-  async $$eval(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<any> {
+  async $$evalExpression(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<any> {
     return this._elementHandle._$$evalExpression(params.selector, params.expression, params.isFunction, convertArg(this._scope, params.arg));
   }
 }

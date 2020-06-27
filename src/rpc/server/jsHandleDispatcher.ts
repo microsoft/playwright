@@ -18,6 +18,7 @@ import * as js from '../../javascript';
 import { JSHandleChannel, JSHandleInitializer } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
 import { convertArg } from './frameDispatcher';
+import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 
 export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitializer> implements JSHandleChannel {
 
@@ -33,7 +34,7 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitiali
 
   async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any}): Promise<JSHandleChannel> {
     const jsHandle = await this._object._evaluateExpression(params.expression, params.isFunction, false /* returnByValue */, convertArg(this._scope, params.arg));
-    return new JSHandleDispatcher(this._scope, jsHandle);
+    return ElementHandleDispatcher.from(this._scope, jsHandle);
   }
 
   async getPropertyList(): Promise<{ name: string, value: JSHandleChannel }[]> {
