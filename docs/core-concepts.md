@@ -84,26 +84,22 @@ refers to a single tab or a popup window within a browser context. It should be 
 ```js
 // Create a page.
 const page = await context.newPage();
-```
 
-```js
 // Navigate explicitly, similar to entering a URL in the browser.
 await page.goto('http://example.com');
 // Fill an input.
 await page.fill('#search', 'query');
-```
 
-```js
 // Navigate implicitly by clicking a link.
 await page.click('#submit');
 // Expect a new url.
 console.log(page.url());
-```
 
-```js
 // Page can navigate from the script - this will be picked up by Playwright.
 window.location.href = 'https://example.com';
 ```
+
+> Read more on [page navigation and loading](loading.md).
 
 A page can have one or more [Frame](api.md#class-frame) objects attached to
 it. Each page has a main frame and page-level interactions (like `click`) are
@@ -113,8 +109,17 @@ A page can have additional frames attached with the `iframe` HTML tag. These
 frames can be accessed for interactions inside the frame.
 
 ```js
-// To interact with elements in an iframe
+// Get frame using the frame's name attribute
 const frame = page.frame('frame-login');
+
+// Get frame using frame's URL
+const frame = page.frame({ url: /.*domain.*/ });
+
+// Get frame using any other selector
+const frameElementHandle = await page.$('.frame-class');
+const frame = await frameElementHandle.contentFrame();
+
+// Interact with the frame
 await frame.fill('#username-input', 'John');
 ```
 
@@ -122,8 +127,7 @@ await frame.fill('#username-input', 'John');
 
 - [class `Page`](./api.md#class-page)
 - [class `Frame`](./api.md#class-frame)
-
-To learn more about navigation and loading, read [this document](loading.md).
+- [page.frame(options)](./api.md#pageframeoptions)
 
 <br/>
 
