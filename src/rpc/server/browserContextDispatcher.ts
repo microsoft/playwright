@@ -51,7 +51,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
   }
 
   async exposeBinding(params: { name: string }): Promise<void> {
-    this._context.exposeBinding(params.name, (source, ...args) => {
+    await this._context.exposeBinding(params.name, (source, ...args) => {
       const bindingCall = new BindingCallDispatcher(this._scope, params.name, source, args);
       this._dispatchEvent('bindingCall', bindingCall);
       return bindingCall.promise();

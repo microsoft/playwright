@@ -43,6 +43,8 @@ export type BrowserInitializer = {};
 
 
 export interface BrowserContextChannel extends Channel {
+  on(event: 'bindingCall', callback: (params: BindingCallChannel) => void): this;
+  on(event: 'page', callback: (params: PageChannel) => void): this;
   addCookies(params: { cookies: types.SetNetworkCookieParam[] }): Promise<void>;
   addInitScript(params: { source: string }): Promise<void>;
   clearCookies(): Promise<void>;
@@ -179,8 +181,8 @@ export type JSHandleInitializer = {
 
 
 export interface ElementHandleChannel extends JSHandleChannel {
-  $$eval(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<any>;
-  $eval(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<any>;
+  $$evalExpression(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<any>;
+  $evalExpression(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<any>;
   boundingBox(): Promise<types.Rect | null>;
   check(params: { options?: types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean } }): Promise<void>;
   click(params: { options?: types.PointerActionOptions & types.MouseClickOptions & types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean } }): Promise<void>;

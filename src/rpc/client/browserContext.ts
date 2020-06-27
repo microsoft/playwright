@@ -50,7 +50,8 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
       this._pages.add(page);
       page._setBrowserContext(this);
     });
-    channel.on('page', page => this._onPage(Page.from(page)));
+    this._channel.on('bindingCall', bindingCall => this._onBinding(BindingCall.from(bindingCall)));
+    this._channel.on('page', page => this._onPage(Page.from(page)));
   }
 
   private _onPage(page: Page): void {

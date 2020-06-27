@@ -139,13 +139,13 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
   async $eval<R>(selector: string, pageFunction: FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
-    return await this._elementChannel.$eval({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: convertArg(arg) });
+    return await this._elementChannel.$evalExpression({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: convertArg(arg) });
   }
 
   async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
   async $$eval<R>(selector: string, pageFunction: FuncOn<Element[], void, R>, arg?: any): Promise<R>;
   async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
-    return await this._elementChannel.$$eval({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: convertArg(arg) });
+    return await this._elementChannel.$$evalExpression({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: convertArg(arg) });
   }
 }
 
