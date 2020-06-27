@@ -25,12 +25,15 @@ import { helper } from '../../helper';
 import { Browser } from './browser';
 import { Connection } from '../connection';
 import { Events } from '../../events';
+import { TimeoutSettings } from '../../timeoutSettings';
 
 export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserContextInitializer> {
   _pages = new Set<Page>();
   private _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
   _browser: Browser | undefined;
   readonly _bindings = new Map<string, frames.FunctionWithSource>();
+  private _pendingWaitForEvents = new Map<(error: Error) => void, string>();
+  _timeoutSettings = new TimeoutSettings();
 
   static from(context: BrowserContextChannel): BrowserContext {
     return context._object;
@@ -45,13 +48,13 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     initializer.pages.map(p => {
       const page = Page.from(p);
       this._pages.add(page);
-      page._browserContext = this;
+      page._setBrowserContext(this);
     });
     channel.on('page', page => this._onPage(Page.from(page)));
   }
 
   private _onPage(page: Page): void {
-    page._browserContext = this;
+    page._setBrowserContext(this);
     this._pages.add(page);
     this.emit(Events.BrowserContext.Page, page);
   }
@@ -78,6 +81,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   }
 
   setDefaultTimeout(timeout: number) {
+    this._timeoutSettings.setDefaultTimeout(timeout);
     this._channel.setDefaultTimeoutNoReply({ timeout });
   }
 
@@ -162,13 +166,27 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   }
 
   async waitForEvent(event: string, optionsOrPredicate?: Function | (types.TimeoutOptions & { predicate?: Function })): Promise<any> {
-    return waitForEvent(this, event, optionsOrPredicate);
+    const hasTimeout = optionsOrPredicate && !(optionsOrPredicate instanceof Function);
+    let reject: () => void;
+    const result = await Promise.race([
+      waitForEvent(this, event, optionsOrPredicate, this._timeoutSettings.timeout(hasTimeout ? optionsOrPredicate as any : {})),
+      new Promise((f, r) => { reject = r; this._pendingWaitForEvents.set(reject, event); })
+    ]);
+    this._pendingWaitForEvents.delete(reject!);
+    return result;
   }
 
   async close(): Promise<void> {
     await this._channel.close();
     if (this._browser)
       this._browser._contexts.delete(this);
+
+    for (const [listener, event] of this._pendingWaitForEvents) {
+      if (event === Events.Page.Close)
+        continue;
+      listener(new Error('Context closed'));
+    }
+    this._pendingWaitForEvents.clear();
     this.emit(Events.BrowserContext.Close);
   }
 }

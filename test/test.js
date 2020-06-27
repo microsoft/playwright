@@ -95,22 +95,6 @@ function collect(browserNames) {
 
   global.playwright = playwright;
 
-  // Channel substitute
-  let connection;
-  let dispatcherScope;
-  if (process.env.PWCHANNEL) {
-    dispatcherScope = new DispatcherScope();
-    connection = new Connection();
-    dispatcherScope.sendMessageToClientTransport = async message => {
-      setImmediate(() => connection.dispatchMessageFromServer(message));
-    };
-    connection.sendMessageToServerTransport = async message => {
-      const result = await dispatcherScope.dispatchMessageFromClient(message);
-      await new Promise(f => setImmediate(f));
-      return result;
-    };  
-  }
-
   for (const browserName of browserNames) {
     const browserType = playwright[browserName];
 
@@ -119,6 +103,16 @@ function collect(browserNames) {
       // Channel substitute
       let overridenBrowserType = browserType;
       if (process.env.PWCHANNEL) {
+        const dispatcherScope = new DispatcherScope();
+        const connection = new Connection();
+        dispatcherScope.sendMessageToClientTransport = async message => {
+          setImmediate(() => connection.dispatchMessageFromServer(message));
+        };
+        connection.sendMessageToServerTransport = async message => {
+          const result = await dispatcherScope.dispatchMessageFromClient(message);
+          await new Promise(f => setImmediate(f));
+          return result;
+        };
         BrowserTypeDispatcher.from(dispatcherScope, browserType);
         overridenBrowserType = await connection.waitForObjectWithKnownName(browserType.name());
       }

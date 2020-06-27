@@ -120,6 +120,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
   }
 
   async close(): Promise<void> {
-    this._context.close();
+    await this._context.close();
   }
 }

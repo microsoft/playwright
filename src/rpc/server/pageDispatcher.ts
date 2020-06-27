@@ -52,11 +52,14 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     this._page = page;
     page.on(Events.Page.Close, () => this._dispatchEvent('close'));
     page.on(Events.Page.Console, message => this._dispatchEvent('console', ConsoleMessageDispatcher.from(this._scope, message)));
+    page.on(Events.Page.Crash, () => this._dispatchEvent('crash'));
+    page.on(Events.Page.DOMContentLoaded, () => this._dispatchEvent('domcontentloaded'));
     page.on(Events.Page.Dialog, dialog => this._dispatchEvent('dialog', DialogDispatcher.from(this._scope, dialog)));
     page.on(Events.Page.Download, dialog => this._dispatchEvent('download', DownloadDispatcher.from(this._scope, dialog)));
     page.on(Events.Page.FrameAttached, frame => this._onFrameAttached(frame));
     page.on(Events.Page.FrameDetached, frame => this._onFrameDetached(frame));
     page.on(Events.Page.FrameNavigated, frame => this._onFrameNavigated(frame));
+    page.on(Events.Page.Load, () => this._dispatchEvent('load'));
     page.on(Events.Page.PageError, error => this._dispatchEvent('pageError', { error: serializeError(error) }));
     page.on(Events.Page.Popup, page => this._dispatchEvent('popup', PageDispatcher.from(this._scope, page)));
     page.on(Events.Page.Request, request => this._dispatchEvent('request', RequestDispatcher.from(this._scope, request)));
