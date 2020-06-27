@@ -73,6 +73,7 @@ const context = await browser.newContext({
 #### API reference
 
 - [class `BrowserContext`](./api.md#class-browsercontext)
+- [browser.newContext([options])](./api.md#browsernewcontextoptions)
 
 <br/>
 
