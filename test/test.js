@@ -105,11 +105,11 @@ function collect(browserNames) {
       if (process.env.PWCHANNEL) {
         const dispatcherScope = new DispatcherScope();
         const connection = new Connection();
-        dispatcherScope.sendMessageToClientTransport = async message => {
-          setImmediate(() => connection.dispatchMessageFromServer(message));
+        dispatcherScope.onmessage = async message => {
+          setImmediate(() => connection.send(message));
         };
-        connection.sendMessageToServerTransport = async message => {
-          const result = await dispatcherScope.dispatchMessageFromClient(message);
+        connection.onmessage = async message => {
+          const result = await dispatcherScope.send(message);
           await new Promise(f => setImmediate(f));
           return result;
         };

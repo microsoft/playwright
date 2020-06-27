@@ -34,7 +34,7 @@ import { parseError } from './serializers';
 export class Connection {
   private _channels = new Map<string, Channel>();
   private _waitingForObject = new Map<string, any>();
-  sendMessageToServerTransport = (message: string): void => {};
+  onmessage = (message: string): void => {};
   private _lastId = 0;
   private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void }>();
 
@@ -110,11 +110,11 @@ export class Connection {
     const id = ++this._lastId;
     const converted = { id, ...message, params: this._replaceChannelsWithGuids(message.params) };
     debug('pw:channel:command')(converted);
-    this.sendMessageToServerTransport(JSON.stringify(converted));
+    this.onmessage(JSON.stringify(converted));
     return new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject }));
   }
 
-  dispatchMessageFromServer(message: string) {
+  send(message: string) {
     const parsedMessage = JSON.parse(message);
     const { id, guid, method, params, result, error } = parsedMessage;
     if (id) {
