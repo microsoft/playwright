@@ -29,11 +29,14 @@ import { Channel } from './channels';
 import { ConsoleMessage } from './client/consoleMessage';
 import { Dialog } from './client/dialog';
 import { Download } from './client/download';
+import { parseError } from './serializers';
 
 export class Connection {
   private _channels = new Map<string, Channel>();
   private _waitingForObject = new Map<string, any>();
-  sendMessageToServerTransport = (message: any): Promise<any> => Promise.resolve();
+  sendMessageToServerTransport = (message: string): void => {};
+  private _lastId = 0;
+  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void }>();
 
   constructor() {}
 
@@ -103,23 +106,33 @@ export class Connection {
     return new Promise(f => this._waitingForObject.set(guid, f));
   }
 
-  async sendMessageToServer(message: { guid: string, method: string, params: any }) {
-    const converted = {...message, params: this._replaceChannelsWithGuids(message.params)};
+  async sendMessageToServer(message: { guid: string, method: string, params: any }): Promise<any> {
+    const id = ++this._lastId;
+    const converted = { id, ...message, params: this._replaceChannelsWithGuids(message.params) };
     debug('pw:channel:command')(converted);
-    const response = await this.sendMessageToServerTransport(converted);
-    debug('pw:channel:response')(response);
-    return this._replaceGuidsWithChannels(response);
+    this.sendMessageToServerTransport(JSON.stringify(converted));
+    return new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject }));
   }
 
-  dispatchMessageFromServer(message: { guid: string, method: string, params: any }) {
-    debug('pw:channel:event')(message);
-    const { guid, method, params } = message;
+  dispatchMessageFromServer(message: string) {
+    const parsedMessage = JSON.parse(message);
+    const { id, guid, method, params, result, error } = parsedMessage;
+    if (id) {
+      debug('pw:channel:response')(parsedMessage);
+      const callback = this._callbacks.get(id)!;
+      this._callbacks.delete(id);
+      if (error)
+        callback.reject(parseError(error));
+      else
+        callback.resolve(this._replaceGuidsWithChannels(result));
+      return;
+    }
 
+    debug('pw:channel:event')(parsedMessage);
     if (method === '__create__') {
       this._createRemoteObject(params.type,  guid, params.initializer);
       return;
     }
-
     const channel = this._channels.get(guid)!;
     channel.emit(method, this._replaceGuidsWithChannels(params));
   }

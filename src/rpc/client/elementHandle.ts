@@ -17,7 +17,7 @@
 import * as types from '../../types';
 import { ElementHandleChannel, JSHandleInitializer } from '../channels';
 import { Frame } from './frame';
-import { FuncOn, JSHandle, convertArg } from './jsHandle';
+import { FuncOn, JSHandle, serializeArgument, parseResult } from './jsHandle';
 import { Connection } from '../connection';
 
 export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
@@ -125,7 +125,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   }
 
   async screenshot(options?: types.ElementScreenshotOptions): Promise<Buffer> {
-    return await this._elementChannel.screenshot({ options });
+    return Buffer.from(await this._elementChannel.screenshot({ options }), 'base64');
   }
 
   async $(selector: string): Promise<ElementHandle<Element> | null> {
@@ -139,13 +139,13 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
   async $eval<R>(selector: string, pageFunction: FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
-    return await this._elementChannel.$evalExpression({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: convertArg(arg) });
+    return parseResult(await this._elementChannel.$evalExpression({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }));
   }
 
   async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
   async $$eval<R>(selector: string, pageFunction: FuncOn<Element[], void, R>, arg?: any): Promise<R>;
   async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
-    return await this._elementChannel.$$evalExpression({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: convertArg(arg) });
+    return parseResult(await this._elementChannel.$$evalExpression({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }));
   }
 }
 

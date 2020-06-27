@@ -17,8 +17,8 @@
 import * as js from '../../javascript';
 import { JSHandleChannel, JSHandleInitializer } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
-import { convertArg } from './frameDispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
+import { parseEvaluationResultValue, serializeAsCallArgument } from '../../common/utilityScriptSerializers';
 
 export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitializer> implements JSHandleChannel {
 
@@ -29,11 +29,11 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitiali
   }
 
   async evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<any> {
-    return this._object._evaluateExpression(params.expression, params.isFunction, true /* returnByValue */, convertArg(this._scope, params.arg));
+    return this._object._evaluateExpression(params.expression, params.isFunction, true /* returnByValue */, parseArgument(params.arg));
   }
 
   async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any}): Promise<JSHandleChannel> {
-    const jsHandle = await this._object._evaluateExpression(params.expression, params.isFunction, false /* returnByValue */, convertArg(this._scope, params.arg));
+    const jsHandle = await this._object._evaluateExpression(params.expression, params.isFunction, false /* returnByValue */, parseArgument(params.arg));
     return ElementHandleDispatcher.from(this._scope, jsHandle);
   }
 
@@ -52,4 +52,28 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitiali
   async dispose() {
     await this._object.dispose();
   }
+}
+
+export function parseArgument(arg: { value: any, guids: JSHandleDispatcher[] }): any {
+  return convertDispatchersToObjects(parseEvaluationResultValue(arg.value, arg.guids));
+}
+
+export function serializeResult(arg: any): any {
+  return serializeAsCallArgument(arg, value => ({ fallThrough: value }));
+}
+
+function convertDispatchersToObjects(arg: any): any {
+  if (arg === null)
+    return null;
+  if (Array.isArray(arg))
+    return arg.map(item => convertDispatchersToObjects(item));
+  if (arg instanceof JSHandleDispatcher)
+    return arg._object;
+  if (typeof arg === 'object') {
+    const result: any = {};
+    for (const key of Object.keys(arg))
+      result[key] = convertDispatchersToObjects(arg[key]);
+    return result;
+  }
+  return arg;
 }

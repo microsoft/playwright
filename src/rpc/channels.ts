@@ -101,7 +101,7 @@ export interface PageChannel extends Channel {
   goForward(params: { options?: types.NavigateOptions }): Promise<ResponseChannel | null>;
   opener(): Promise<PageChannel | null>;
   reload(params: { options?: types.NavigateOptions }): Promise<ResponseChannel | null>;
-  screenshot(params: { options?: types.ScreenshotOptions }): Promise<Buffer>;
+  screenshot(params: { options?: types.ScreenshotOptions }): Promise<string>;
   setExtraHTTPHeaders(params: { headers: types.Headers }): Promise<void>;
   setNetworkInterceptionEnabled(params: { enabled: boolean }): Promise<void>;
   setViewportSize(params: { viewportSize: types.Size }): Promise<void>;
@@ -151,7 +151,7 @@ export interface FrameChannel extends Channel {
   querySelectorAll(params: { selector: string }): Promise<ElementHandleChannel[]>;
   selectOption(params: { selector: string, values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions }): Promise<string[]>;
   setContent(params: { html: string, options: types.NavigateOptions }): Promise<void>;
-  setInputFiles(params: { selector: string, files: string | string[] | types.FilePayload | types.FilePayload[], options: types.NavigatingActionWaitOptions }): Promise<void>;
+  setInputFiles(params: { selector: string, files: { name: string, mimeType: string, buffer: string }[], options: types.NavigatingActionWaitOptions }): Promise<void>;
   textContent(params: { selector: string, options: types.TimeoutOptions }): Promise<string | null>;
   title(): Promise<string>;
   type(params: { selector: string, text: string, options: { delay?: number | undefined } & types.TimeoutOptions & { noWaitAfter?: boolean } }): Promise<void>;
@@ -199,7 +199,7 @@ export interface ElementHandleChannel extends JSHandleChannel {
   press(params: { key: string; options?: { delay?: number } & types.TimeoutOptions & { noWaitAfter?: boolean } }): Promise<void>;
   querySelector(params: { selector: string }): Promise<ElementHandleChannel | null>;
   querySelectorAll(params: { selector: string }): Promise<ElementHandleChannel[]>;
-  screenshot(params: { options?: types.ElementScreenshotOptions }): Promise<Buffer>;
+  screenshot(params: { options?: types.ElementScreenshotOptions }): Promise<string>;
   scrollIntoViewIfNeeded(params: { options?: types.TimeoutOptions }): Promise<void>;
   selectOption(params: { values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null; options?: types.NavigatingActionWaitOptions }): string[] | Promise<string[]>;
   selectText(params: { options?: types.TimeoutOptions }): Promise<void>;

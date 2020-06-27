@@ -18,6 +18,7 @@ import { JSHandleChannel, JSHandleInitializer } from '../channels';
 import { ElementHandle } from './elementHandle';
 import { ChannelOwner } from './channelOwner';
 import { Connection } from '../connection';
+import { serializeAsCallArgument, parseEvaluationResultValue } from '../../common/utilityScriptSerializers';
 
 type NoHandles<Arg> = Arg extends JSHandle ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg);
 type Unboxed<Arg> =
@@ -51,13 +52,13 @@ export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel, JSHandleIni
   async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<R>;
   async evaluate<R>(pageFunction: FuncOn<T, void, R>, arg?: any): Promise<R>;
   async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<R> {
-    return await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: convertArg(arg) });
+    return parseResult(await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }));
   }
 
   async evaluateHandle<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: FuncOn<T, void, R>, arg?: any): Promise<SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
-    const handleChannel = await this._channel.evaluateExpressionHandle({  expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: convertArg(arg) });
+    const handleChannel = await this._channel.evaluateExpressionHandle({  expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
     return JSHandle.from(handleChannel) as SmartHandle<R>;
   }
 
@@ -97,18 +98,20 @@ export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel, JSHandleIni
   }
 }
 
-export function convertArg(arg: any): any {
-  if (arg === null)
-    return null;
-  if (Array.isArray(arg))
-    return arg.map(item => convertArg(item));
-  if (arg instanceof ChannelOwner)
-    return arg._channel;
-  if (typeof arg === 'object') {
-    const result: any = {};
-    for (const key of Object.keys(arg))
-      result[key] = convertArg(arg[key]);
-    return result;
-  }
-  return arg;
+export function serializeArgument(arg: any): any {
+  const guids: { guid: string }[] = [];
+  const pushHandle = (guid: string): number => {
+    guids.push({ guid });
+    return guids.length - 1;
+  };
+  const value = serializeAsCallArgument(arg, value => {
+    if (value instanceof ChannelOwner)
+      return { h: pushHandle(value._channel._guid) };
+    return { fallThrough: value };
+  });
+  return { value, guids };
+}
+
+export function parseResult(arg: any): any {
+  return parseEvaluationResultValue(arg, []);
 }

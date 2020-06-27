@@ -19,8 +19,8 @@ import * as js from '../../javascript';
 import * as types from '../../types';
 import { ElementHandleChannel, FrameChannel } from '../channels';
 import { DispatcherScope } from '../dispatcher';
-import { convertArg, FrameDispatcher } from './frameDispatcher';
-import { JSHandleDispatcher } from './jsHandleDispatcher';
+import { JSHandleDispatcher, serializeResult, parseArgument } from './jsHandleDispatcher';
+import { FrameDispatcher } from './frameDispatcher';
 
 export class ElementHandleDispatcher extends JSHandleDispatcher implements ElementHandleChannel {
   readonly _elementHandle: ElementHandle;
@@ -140,8 +140,8 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
     return await this._elementHandle.boundingBox();
   }
 
-  async screenshot(params: { options?: types.ElementScreenshotOptions }): Promise<Buffer> {
-    return await this._elementHandle.screenshot(params.options);
+  async screenshot(params: { options?: types.ElementScreenshotOptions }): Promise<string> {
+    return (await this._elementHandle.screenshot(params.options)).toString('base64');
   }
 
   async querySelector(params: { selector: string }): Promise<ElementHandleChannel | null> {
@@ -154,11 +154,11 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
   }
 
   async $evalExpression(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<any> {
-    return this._elementHandle._$evalExpression(params.selector, params.expression, params.isFunction, convertArg(this._scope, params.arg));
+    return serializeResult(await this._elementHandle._$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg)));
   }
 
   async $$evalExpression(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<any> {
-    return this._elementHandle._$$evalExpression(params.selector, params.expression, params.isFunction, convertArg(this._scope, params.arg));
+    return serializeResult(await this._elementHandle._$$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg)));
   }
 }
 

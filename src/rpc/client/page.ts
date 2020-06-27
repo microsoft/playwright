@@ -17,7 +17,7 @@
 
 import { EventEmitter } from 'events';
 import { Events } from '../../events';
-import { assert, assertMaxArguments, helper, Listener, serializeError, parseError } from '../../helper';
+import { assert, assertMaxArguments, helper, Listener } from '../../helper';
 import * as types from '../../types';
 import { PageChannel, BindingCallChannel, Channel, PageInitializer, BindingCallInitializer } from '../channels';
 import { BrowserContext } from './browserContext';
@@ -34,6 +34,7 @@ import { Dialog } from './dialog';
 import { Download } from './download';
 import { TimeoutError } from '../../errors';
 import { TimeoutSettings } from '../../timeoutSettings';
+import { parseError, serializeError } from '../serializers';
 
 export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   readonly pdf: ((options?: types.PDFOptions) => Promise<Buffer>) | undefined;
@@ -365,7 +366,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {
-    return await this._channel.screenshot({ options });
+    return Buffer.from(await this._channel.screenshot({ options }), 'base64');
   }
 
   async title(): Promise<string> {
