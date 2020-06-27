@@ -38,7 +38,8 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
     super(connection, channel, initializer);
   }
 
-  async newContext(options?: types.BrowserContextOptions): Promise<BrowserContext> {
+  async newContext(options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
+    delete (options as any).logger;
     const context = BrowserContext.from(await this._channel.newContext({ options }));
     this._contexts.add(context);
     context._browser = this;
@@ -49,7 +50,8 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
     return [...this._contexts];
   }
 
-  async newPage(options?: types.BrowserContextOptions): Promise<Page> {
+  async newPage(options: types.BrowserContextOptions = {}): Promise<Page> {
+    delete (options as any).logger;
     const context = await this.newContext(options);
     const page = await context.newPage();
     page._ownedContext = context;

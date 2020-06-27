@@ -34,15 +34,18 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     return this._initializer.name;
   }
 
-  async launch(options?: types.LaunchOptions): Promise<Browser> {
+  async launch(options: types.LaunchOptions = {}): Promise<Browser> {
+    delete (options as any).logger;
     return Browser.from(await this._channel.launch({ options }));
   }
 
-  async launchPersistentContext(userDataDir: string, options?: types.LaunchOptions & types.BrowserContextOptions): Promise<BrowserContext> {
+  async launchPersistentContext(userDataDir: string, options: types.LaunchOptions & types.BrowserContextOptions = {}): Promise<BrowserContext> {
+    delete (options as any).logger;
     return BrowserContext.from(await this._channel.launchPersistentContext({ userDataDir, options }));
   }
 
   async connect(options: types.ConnectOptions): Promise<Browser> {
+    delete (options as any).logger;
     return Browser.from(await this._channel.connect({ options }));
   }
 }

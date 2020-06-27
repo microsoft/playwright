@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as mime from 'mime';
-import * as path from 'path';
-import * as util from 'util';
 import * as frames from './frames';
 import { assert, helper, assertMaxArguments } from './helper';
 import InjectedScript from './injected/injectedScript';
@@ -30,6 +26,7 @@ import * as types from './types';
 import { Progress } from './progress';
 import DebugScript from './debug/injected/debugScript';
 import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
+import { normalizeFilePayloads } from './rpc/serializers';
 
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
@@ -504,25 +501,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, {}));
     if (typeof multiple === 'string')
       return multiple;
-    let ff: string[] | types.FilePayload[];
-    if (!Array.isArray(files))
-      ff = [ files ] as string[] | types.FilePayload[];
-    else
-      ff = files;
-    assert(multiple || ff.length <= 1, 'Non-multiple file input can only accept single file!');
-    const filePayloads: types.FilePayload[] = [];
-    for (const item of ff) {
-      if (typeof item === 'string') {
-        const file: types.FilePayload = {
-          name: path.basename(item),
-          mimeType: mime.getType(item) || 'application/octet-stream',
-          buffer: await util.promisify(fs.readFile)(item)
-        };
-        filePayloads.push(file);
-      } else {
-        filePayloads.push(item);
-      }
-    }
+    const filePayloads = await normalizeFilePayloads(files);
+    assert(multiple || filePayloads.length <= 1, 'Non-multiple file input can only accept single file!');
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, filePayloads);

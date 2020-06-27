@@ -17,6 +17,7 @@
 import { EventEmitter } from 'events';
 import { helper } from '../helper';
 import { Channel } from './channels';
+import { serializeError } from './serializers';
 
 export class Dispatcher<Type, Initializer> extends EventEmitter implements Channel {
   readonly _guid: string;
@@ -43,16 +44,22 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements Chann
 export class DispatcherScope {
   readonly dispatchers = new Map<string, Dispatcher<any, any>>();
   readonly dispatcherSymbol = Symbol('dispatcher');
-  sendMessageToClientTransport = (message: any) => {};
+  sendMessageToClientTransport = (message: string) => {};
 
   async sendMessageToClient(guid: string, method: string, params: any): Promise<any> {
-    this.sendMessageToClientTransport({ guid, method, params: this._replaceDispatchersWithGuids(params) });
+    this.sendMessageToClientTransport(JSON.stringify({ guid, method, params: this._replaceDispatchersWithGuids(params) }));
   }
 
-  async dispatchMessageFromClient(message: any): Promise<any> {
-    const dispatcher = this.dispatchers.get(message.guid)!;
-    const value = await (dispatcher as any)[message.method](this._replaceGuidsWithDispatchers(message.params));
-    return this._replaceDispatchersWithGuids(value);
+  async dispatchMessageFromClient(message: string) {
+    const parsedMessage = JSON.parse(message);
+    const { id, guid, method, params } = parsedMessage;
+    const dispatcher = this.dispatchers.get(guid)!;
+    try {
+      const result = await (dispatcher as any)[method](this._replaceGuidsWithDispatchers(params));
+      this.sendMessageToClientTransport(JSON.stringify({ id, result: this._replaceDispatchersWithGuids(result) }));
+    } catch (e) {
+      this.sendMessageToClientTransport(JSON.stringify({ id, error: serializeError(e) }));
+    }
   }
 
   private _replaceDispatchersWithGuids(payload: any): any {

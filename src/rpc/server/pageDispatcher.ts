@@ -17,12 +17,12 @@
 import { BrowserContext } from '../../browserContext';
 import { Events } from '../../events';
 import { Frame } from '../../frames';
-import { parseError, serializeError } from '../../helper';
 import { Request } from '../../network';
 import { Page } from '../../page';
 import * as types from '../../types';
 import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
+import { parseError, serializeError } from '../serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
 import { DownloadDispatcher } from './downloadDispatcher';
@@ -129,8 +129,8 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     });
   }
 
-  async screenshot(params: { options?: types.ScreenshotOptions }): Promise<Buffer> {
-    return await this._page.screenshot(params.options);
+  async screenshot(params: { options?: types.ScreenshotOptions }): Promise<string> {
+    return (await this._page.screenshot(params.options)).toString('base64');
   }
 
   async close(params: { options?: { runBeforeUnload?: boolean } }): Promise<void> {

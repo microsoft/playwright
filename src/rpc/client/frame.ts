@@ -21,11 +21,12 @@ import { FrameChannel, FrameInitializer } from '../channels';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle, convertSelectOptionValues } from './elementHandle';
-import { JSHandle, Func1, FuncOn, SmartHandle, convertArg } from './jsHandle';
+import { JSHandle, Func1, FuncOn, SmartHandle, serializeArgument, parseResult } from './jsHandle';
 import * as network from './network';
 import { Response } from './network';
 import { Page } from './page';
 import { Connection } from '../connection';
+import { normalizeFilePayloads } from '../serializers';
 
 export type GotoOptions = types.NavigateOptions & {
   referer?: string,
@@ -78,14 +79,14 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   async evaluateHandle<R>(pageFunction: Func1<void, R>, arg?: any): Promise<SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
-    return JSHandle.from(await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: convertArg(arg) })) as SmartHandle<R>;
+    return JSHandle.from(await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) })) as SmartHandle<R>;
   }
 
   async evaluate<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<R>;
   async evaluate<R>(pageFunction: Func1<void, R>, arg?: any): Promise<R>;
   async evaluate<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
-    return await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: convertArg(arg) });
+    return parseResult(await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }));
   }
 
   async $(selector: string): Promise<ElementHandle<Element> | null> {
@@ -104,14 +105,14 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   async $eval<R>(selector: string, pageFunction: FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
-    return await this._channel.$eval({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: convertArg(arg) });
+    return await this._channel.$eval({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
   }
 
   async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
   async $$eval<R>(selector: string, pageFunction: FuncOn<Element[], void, R>, arg?: any): Promise<R>;
   async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
-    return await this._channel.$$eval({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: convertArg(arg) });
+    return await this._channel.$$eval({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
   }
 
   async $$(selector: string): Promise<ElementHandle<Element>[]> {
@@ -196,7 +197,8 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   }
 
   async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
-    await this._channel.setInputFiles({ selector, files, options });
+    const filePayloads = await normalizeFilePayloads(files);
+    await this._channel.setInputFiles({ selector, files: filePayloads.map(f => ({ name: f.name, mimeType: f.mimeType, buffer: f.buffer.toString('base64') })), options });
   }
 
   async type(selector: string, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
@@ -222,7 +224,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   async waitForFunction<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<SmartHandle<R>>;
   async waitForFunction<R>(pageFunction: Func1<void, R>, arg?: any, options?: types.WaitForFunctionOptions): Promise<SmartHandle<R>>;
   async waitForFunction<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg, options: types.WaitForFunctionOptions = {}): Promise<SmartHandle<R>> {
-    return JSHandle.from(await this._channel.waitForFunction({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg, options })) as SmartHandle<R>;
+    return JSHandle.from(await this._channel.waitForFunction({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), options })) as SmartHandle<R>;
   }
 
   async title(): Promise<string> {

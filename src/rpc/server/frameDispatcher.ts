@@ -16,10 +16,10 @@
 
 import { Frame } from '../../frames';
 import * as types from '../../types';
-import { ElementHandleChannel, FrameChannel, JSHandleChannel, ResponseChannel, FrameInitializer } from '../channels';
+import { ElementHandleChannel, FrameChannel, FrameInitializer, JSHandleChannel, ResponseChannel } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
-import { ElementHandleDispatcher, convertSelectOptionValues } from './elementHandlerDispatcher';
-import { JSHandleDispatcher } from './jsHandleDispatcher';
+import { convertSelectOptionValues, ElementHandleDispatcher } from './elementHandlerDispatcher';
+import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher } from './networkDispatchers';
 
 export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> implements FrameChannel {
@@ -63,15 +63,15 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
   }
 
   async evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<any> {
-    return this._frame._evaluateExpression(params.expression, params.isFunction, convertArg(this._scope, params.arg));
+    return serializeResult(await this._frame._evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg)));
   }
 
   async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any}): Promise<JSHandleChannel> {
-    return ElementHandleDispatcher.fromElement(this._scope, await this._frame._evaluateExpressionHandle(params.expression, params.isFunction, convertArg(this._scope, params.arg)));
+    return ElementHandleDispatcher.fromElement(this._scope, await this._frame._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg)));
   }
 
   async waitForSelector(params: { selector: string, options: types.WaitForElementOptions }): Promise<ElementHandleChannel | null> {
-    return ElementHandleDispatcher.fromNullableElement(this._scope, await this._frame.waitForSelector(params.selector));
+    return ElementHandleDispatcher.fromNullableElement(this._scope, await this._frame.waitForSelector(params.selector, params.options));
   }
 
   async dispatchEvent(params: { selector: string, type: string, eventInit: Object | undefined, options: types.TimeoutOptions }): Promise<void> {
@@ -79,11 +79,11 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
   }
 
   async $eval(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<any> {
-    return this._frame._$evalExpression(params.selector, params.expression, params.isFunction, convertArg(this._scope, params.arg));
+    return serializeResult(await this._frame._$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg)));
   }
 
   async $$eval(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<any> {
-    return this._frame._$$evalExpression(params.selector, params.expression, params.isFunction, convertArg(this._scope, params.arg));
+    return serializeResult(await this._frame._$$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg)));
   }
 
   async querySelector(params: { selector: string }): Promise<ElementHandleChannel | null> {
@@ -151,8 +151,8 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     return this._frame.selectOption(params.selector, convertSelectOptionValues(params.values), params.options);
   }
 
-  async setInputFiles(params: { selector: string, files: string | string[] | types.FilePayload | types.FilePayload[], options: types.NavigatingActionWaitOptions }): Promise<void> {
-    await this._frame.setInputFiles(params.selector, params.files, params.options);
+  async setInputFiles(params: { selector: string, files: { name: string, mimeType: string, buffer: string }[], options: types.NavigatingActionWaitOptions }): Promise<void> {
+    await this._frame.setInputFiles(params.selector, params.files.map(f => ({ name: f.name, mimeType: f.mimeType, buffer: Buffer.from(f.buffer, 'base64') })), params.options);
   }
 
   async type(params: { selector: string, text: string, options: { delay?: number | undefined } & types.TimeoutOptions & { noWaitAfter?: boolean } }): Promise<void> {
@@ -172,26 +172,10 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
   }
 
   async waitForFunction(params: { expression: string, isFunction: boolean, arg: any; options: types.WaitForFunctionOptions }): Promise<JSHandleChannel> {
-    return ElementHandleDispatcher.from(this._scope, await this._frame._waitForFunctionExpression(params.expression, params.isFunction, convertArg(this._scope, params.arg), params.options));
+    return ElementHandleDispatcher.from(this._scope, await this._frame._waitForFunctionExpression(params.expression, params.isFunction, parseArgument(params.arg), params.options));
   }
 
   async title(): Promise<string> {
     return await this._frame.title();
   }
-}
-
-export function convertArg(scope: DispatcherScope, arg: any): any {
-  if (arg === null)
-    return null;
-  if (Array.isArray(arg))
-    return arg.map(item => convertArg(scope, item));
-  if (arg instanceof JSHandleDispatcher)
-    return arg._object;
-  if (typeof arg === 'object') {
-    const result: any = {};
-    for (const key of Object.keys(arg))
-      result[key] = convertArg(scope, arg[key]);
-    return result;
-  }
-  return arg;
 }

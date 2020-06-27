@@ -308,6 +308,7 @@ export type ConsoleMessageLocation = {
 
 export type Error = {
   message?: string,
+  name?: string,
   stack?: string,
   value?: any
 };
