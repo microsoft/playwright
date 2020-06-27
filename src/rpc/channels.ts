@@ -33,12 +33,14 @@ export type BrowserTypeInitializer = {
   name: string
 };
 
+
 export interface BrowserChannel extends Channel {
   close(): Promise<void>;
   newContext(params: { options?: types.BrowserContextOptions }): Promise<BrowserContextChannel>;
   newPage(params: { options?: types.BrowserContextOptions }): Promise<PageChannel>;
 }
 export type BrowserInitializer = {};
+
 
 export interface BrowserContextChannel extends Channel {
   addCookies(params: { cookies: types.SetNetworkCookieParam[] }): Promise<void>;
@@ -59,17 +61,23 @@ export interface BrowserContextChannel extends Channel {
   setOffline(params: { offline: boolean }): Promise<void>;
   waitForEvent(params: { event: string }): Promise<any>;
 }
-export type BrowserContextInitializer = {};
+export type BrowserContextInitializer = {
+  pages: PageChannel[]
+};
+
 
 export interface PageChannel extends Channel {
   on(event: 'bindingCall', callback: (params: BindingCallChannel) => void): this;
   on(event: 'close', callback: () => void): this;
   on(event: 'console', callback: (params: ConsoleMessageChannel) => void): this;
+  on(event: 'dialog', callback: (params: DialogChannel) => void): this;
+  on(event: 'download', callback: (params: DownloadChannel) => void): this;
   on(event: 'frameAttached', callback: (params: FrameChannel) => void): this;
   on(event: 'frameDetached', callback: (params: FrameChannel) => void): this;
   on(event: 'frameNavigated', callback: (params: { frame: FrameChannel, url: string, name: string }) => void): this;
   on(event: 'frameNavigated', callback: (params: { frame: FrameChannel, url: string, name: string }) => void): this;
   on(event: 'pageError', callback: (params: { error: types.Error }) => void): this;
+  on(event: 'popup', callback: (params: PageChannel) => void): this;
   on(event: 'request', callback: (params: RequestChannel) => void): this;
   on(event: 'requestFailed', callback: (params: { request: RequestChannel, failureText: string | null }) => void): this;
   on(event: 'requestFinished', callback: (params: RequestChannel) => void): this;
@@ -112,6 +120,7 @@ export type PageInitializer = {
   viewportSize: types.Size | null
 };
 
+
 export interface FrameChannel extends Channel {
   $$eval(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<any>;
   $eval(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<any>;
@@ -153,6 +162,7 @@ export type FrameInitializer = {
   parentFrame: FrameChannel | null
 };
 
+
 export interface JSHandleChannel extends Channel {
   dispose(): Promise<void>;
   evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<any>;
@@ -163,6 +173,7 @@ export interface JSHandleChannel extends Channel {
 export type JSHandleInitializer = {
   preview: string,
 };
+
 
 export interface ElementHandleChannel extends JSHandleChannel {
   $$eval(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<any>;
@@ -193,6 +204,7 @@ export interface ElementHandleChannel extends JSHandleChannel {
   uncheck(params: { options?: types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean } }): Promise<void>;
 }
 
+
 export interface RequestChannel extends Channel {
   response(): Promise<ResponseChannel | null>;
 }
@@ -207,6 +219,7 @@ export type RequestInitializer = {
   redirectedFrom: RequestChannel | null,
 };
 
+
 export interface RouteChannel extends Channel {
   abort(params: { errorCode: string }): Promise<void>;
   continue(params: { overrides: { method?: string, headers?: types.Headers, postData?: string } }): Promise<void>;
@@ -215,6 +228,7 @@ export interface RouteChannel extends Channel {
 export type RouteInitializer = {
   request: RequestChannel,
 };
+
 
 export interface ResponseChannel extends Channel {
   body(): Promise<Buffer>;
@@ -228,6 +242,7 @@ export type ResponseInitializer = {
   headers: types.Headers,
 };
 
+
 export interface ConsoleMessageChannel extends Channel {
 }
 export type ConsoleMessageInitializer = {
@@ -237,6 +252,7 @@ export type ConsoleMessageInitializer = {
   location: types.ConsoleMessageLocation,
 };
 
+
 export interface BindingCallChannel extends Channel {
   reject(params: { error: types.Error }): void;
   resolve(params: { result: any }): void;
@@ -245,4 +261,26 @@ export type BindingCallInitializer = {
   frame: FrameChannel,
   name: string,
   args: any[]
+};
+
+
+export interface DialogChannel extends Channel {
+  accept(params: { promptText?: string }): Promise<void>;
+  dismiss(): Promise<void>;
+}
+export type DialogInitializer = {
+	type: string,
+  message: string,
+  defaultValue: string,
+};
+
+
+export interface DownloadChannel extends Channel {
+  path(): Promise<string>;
+  failure(): Promise<string | null>;
+  delete(): Promise<void>;
+}
+export type DownloadInitializer = {
+	url: string,
+  suggestedFilename: string,
 };

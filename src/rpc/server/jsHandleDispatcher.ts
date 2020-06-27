@@ -19,27 +19,25 @@ import { JSHandleChannel, JSHandleInitializer } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
 import { convertArg } from './frameDispatcher';
 
-export class JSHandleDispatcher extends Dispatcher<JSHandleInitializer> implements JSHandleChannel {
-  readonly _jsHandle: js.JSHandle<any>;
+export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitializer> implements JSHandleChannel {
 
   constructor(scope: DispatcherScope, jsHandle: js.JSHandle) {
     super(scope, jsHandle, jsHandle.asElement() ? 'elementHandle' : 'jsHandle', {
       preview: jsHandle.toString(),
     });
-    this._jsHandle = jsHandle;
   }
 
   async evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<any> {
-    return this._jsHandle._evaluateExpression(params.expression, params.isFunction, true /* returnByValue */, convertArg(this._scope, params.arg));
+    return this._object._evaluateExpression(params.expression, params.isFunction, true /* returnByValue */, convertArg(this._scope, params.arg));
   }
 
   async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any}): Promise<JSHandleChannel> {
-    const jsHandle = await this._jsHandle._evaluateExpression(params.expression, params.isFunction, false /* returnByValue */, convertArg(this._scope, params.arg));
+    const jsHandle = await this._object._evaluateExpression(params.expression, params.isFunction, false /* returnByValue */, convertArg(this._scope, params.arg));
     return new JSHandleDispatcher(this._scope, jsHandle);
   }
 
   async getPropertyList(): Promise<{ name: string, value: JSHandleChannel }[]> {
-    const map = await this._jsHandle.getProperties();
+    const map = await this._object.getProperties();
     const result = [];
     for (const [name, value] of map)
       result.push({ name, value: new JSHandleDispatcher(this._scope, value) });
@@ -47,10 +45,10 @@ export class JSHandleDispatcher extends Dispatcher<JSHandleInitializer> implemen
   }
 
   async jsonValue(): Promise<any> {
-    return this._jsHandle.jsonValue();
+    return this._object.jsonValue();
   }
 
   async dispose() {
-    await this._jsHandle.dispose();
+    await this._object.dispose();
   }
 }

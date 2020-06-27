@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
+import { BrowserContext } from '../../browserContext';
 import { Events } from '../../events';
-import { Request } from '../../network';
 import { Frame } from '../../frames';
+import { parseError, serializeError } from '../../helper';
+import { Request } from '../../network';
 import { Page } from '../../page';
 import * as types from '../../types';
-import { ElementHandleChannel, PageChannel, ResponseChannel, BindingCallChannel, PageInitializer, BindingCallInitializer } from '../channels';
+import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
+import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
+import { DialogDispatcher } from './dialogDispatcher';
+import { DownloadDispatcher } from './downloadDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
-import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
-import { BrowserContext } from '../../browserContext';
-import { serializeError, parseError } from '../../helper';
 
-export class PageDispatcher extends Dispatcher<PageInitializer> implements PageChannel {
+export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements PageChannel {
   private _page: Page;
 
   static from(scope: DispatcherScope, page: Page): PageDispatcher {
@@ -50,10 +52,13 @@ export class PageDispatcher extends Dispatcher<PageInitializer> implements PageC
     this._page = page;
     page.on(Events.Page.Close, () => this._dispatchEvent('close'));
     page.on(Events.Page.Console, message => this._dispatchEvent('console', ConsoleMessageDispatcher.from(this._scope, message)));
+    page.on(Events.Page.Dialog, dialog => this._dispatchEvent('dialog', DialogDispatcher.from(this._scope, dialog)));
+    page.on(Events.Page.Download, dialog => this._dispatchEvent('download', DownloadDispatcher.from(this._scope, dialog)));
     page.on(Events.Page.FrameAttached, frame => this._onFrameAttached(frame));
     page.on(Events.Page.FrameDetached, frame => this._onFrameDetached(frame));
     page.on(Events.Page.FrameNavigated, frame => this._onFrameNavigated(frame));
     page.on(Events.Page.PageError, error => this._dispatchEvent('pageError', { error: serializeError(error) }));
+    page.on(Events.Page.Popup, page => this._dispatchEvent('popup', PageDispatcher.from(this._scope, page)));
     page.on(Events.Page.Request, request => this._dispatchEvent('request', RequestDispatcher.from(this._scope, request)));
     page.on(Events.Page.RequestFailed, (request: Request) => this._dispatchEvent('requestFailed', {
       request: RequestDispatcher.from(this._scope, request),
@@ -193,7 +198,7 @@ export class PageDispatcher extends Dispatcher<PageInitializer> implements PageC
 }
 
 
-export class BindingCallDispatcher extends Dispatcher<BindingCallInitializer> implements BindingCallChannel {
+export class BindingCallDispatcher extends Dispatcher<{}, BindingCallInitializer> implements BindingCallChannel {
   private _resolve: ((arg: any) => void) | undefined;
   private _reject: ((error: any) => void) | undefined;
   private _promise: Promise<any>;

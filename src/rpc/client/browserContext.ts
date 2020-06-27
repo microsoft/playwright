@@ -42,6 +42,11 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
 
   constructor(connection: Connection, channel: BrowserContextChannel, initializer: BrowserContextInitializer) {
     super(connection, channel, initializer);
+    initializer.pages.map(p => {
+      const page = Page.from(p);
+      this._pages.add(page);
+      page._browserContext = this;
+    });
     channel.on('page', page => this._onPage(Page.from(page)));
   }
 
@@ -162,7 +167,8 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
 
   async close(): Promise<void> {
     await this._channel.close();
-    this._browser!._contexts.delete(this);
+    if (this._browser)
+      this._browser._contexts.delete(this);
     this.emit(Events.BrowserContext.Close);
   }
 }

@@ -30,11 +30,15 @@ import { Connection } from '../connection';
 import { Keyboard, Mouse } from './input';
 import { Accessibility } from './accessibility';
 import { ConsoleMessage } from './consoleMessage';
+import { Dialog } from './dialog';
+import { Download } from './download';
 
 export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   readonly pdf: ((options?: types.PDFOptions) => Promise<Buffer>) | undefined;
 
   _browserContext: BrowserContext | undefined;
+  _ownedContext: BrowserContext | undefined;
+
   private _mainFrame: Frame;
   private _frames = new Set<Frame>();
   private _workers: Worker[] = [];
@@ -69,10 +73,13 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     this._channel.on('bindingCall', bindingCall => this._onBinding(BindingCall.from(bindingCall)));
     this._channel.on('close', () => this._onClose());
     this._channel.on('console', message => this.emit(Events.Page.Console, ConsoleMessage.from(message)));
+    this._channel.on('dialog', dialog => this.emit(Events.Page.Dialog, Dialog.from(dialog)));
+    this._channel.on('download', download => this.emit(Events.Page.Download, Download.from(download)));
     this._channel.on('frameAttached', frame => this._onFrameAttached(Frame.from(frame)));
     this._channel.on('frameDetached', frame => this._onFrameDetached(Frame.from(frame)));
     this._channel.on('frameNavigated', ({ frame, url, name }) => this._onFrameNavigated(Frame.from(frame), url, name));
     this._channel.on('pageError', ({ error }) => this.emit(Events.Page.PageError, parseError(error)));
+    this._channel.on('popup', popup => this.emit(Events.Page.Popup, Page.from(popup)));
     this._channel.on('request', request => this.emit(Events.Page.Request, Request.from(request)));
     this._channel.on('requestFailed', ({ request, failureText }) => this._onRequestFailed(Request.from(request), failureText));
     this._channel.on('requestFinished', request => this.emit(Events.Page.RequestFinished, Request.from(request)));
@@ -95,6 +102,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
 
   private _onFrameDetached(frame: Frame) {
     this._frames.delete(frame);
+    frame._detached = true;
     if (frame._parentFrame)
       frame._parentFrame._childFrames.delete(frame);
     this.emit(Events.Page.FrameDetached, frame);
@@ -329,6 +337,8 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
 
   async close(options: { runBeforeUnload?: boolean } = {runBeforeUnload: undefined}) {
     await this._channel.close({ options });
+    if (this._ownedContext)
+      await this._ownedContext.close();
   }
 
   isClosed(): boolean {
