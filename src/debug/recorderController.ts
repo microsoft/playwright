@@ -16,7 +16,7 @@
 
 import { Writable } from 'stream';
 import { BrowserContextBase } from '../browserContext';
-import * as dom from '../dom';
+import * as types from '../types';
 import { Events } from '../events';
 import * as frames from '../frames';
 import { Page } from '../page';
@@ -109,12 +109,12 @@ export class RecorderController {
   }
 }
 
-export function toClickOptions(action: actions.ClickAction): { method: 'click' | 'dblclick', options: dom.ClickOptions } {
+export function toClickOptions(action: actions.ClickAction): { method: 'click' | 'dblclick', options: types.MouseClickOptions } {
   let method: 'click' | 'dblclick' = 'click';
   if (action.clickCount === 2)
     method = 'dblclick';
   const modifiers = toModifiers(action.modifiers);
-  const options: dom.ClickOptions = {};
+  const options: types.MouseClickOptions = {};
   if (action.button !== 'left')
     options.button = action.button;
   if (modifiers.length)

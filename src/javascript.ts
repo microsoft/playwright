@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import * as types from './types';
 import * as dom from './dom';
 import * as utilityScriptSource from './generated/utilityScriptSource';
 import * as sourceMap from './utils/sourceMap';
 import { serializeAsCallArgument } from './common/utilityScriptSerializers';
-import { helper } from './helper';
 import UtilityScript from './injected/utilityScript';
 
 type ObjectId = string;
@@ -27,6 +25,22 @@ export type RemoteObject = {
   objectId?: ObjectId,
   value?: any
 };
+
+type NoHandles<Arg> = Arg extends JSHandle ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg);
+type Unboxed<Arg> =
+  Arg extends dom.ElementHandle<infer T> ? T :
+  Arg extends JSHandle<infer T> ? T :
+  Arg extends NoHandles<Arg> ? Arg :
+  Arg extends [infer A0] ? [Unboxed<A0>] :
+  Arg extends [infer A0, infer A1] ? [Unboxed<A0>, Unboxed<A1>] :
+  Arg extends [infer A0, infer A1, infer A2] ? [Unboxed<A0>, Unboxed<A1>, Unboxed<A2>] :
+  Arg extends Array<infer T> ? Array<Unboxed<T>> :
+  Arg extends object ? { [Key in keyof Arg]: Unboxed<Arg[Key]> } :
+  Arg;
+export type Func0<R> = string | (() => R | Promise<R>);
+export type Func1<Arg, R> = string | ((arg: Unboxed<Arg>) => R | Promise<R>);
+export type FuncOn<On, Arg2, R> = string | ((on: On, arg2: Unboxed<Arg2>) => R | Promise<R>);
+export type SmartHandle<T> = T extends Node ? dom.ElementHandle<T> : JSHandle<T>;
 
 export interface ExecutionContextDelegate {
   rawEvaluate(expression: string): Promise<ObjectId>;
@@ -79,16 +93,20 @@ export class JSHandle<T = any> {
     this._preview = 'JSHandle@' + String(this._objectId ? this._objectType : this._value);
   }
 
-  async evaluate<R, Arg>(pageFunction: types.FuncOn<T, Arg, R>, arg: Arg): Promise<R>;
-  async evaluate<R>(pageFunction: types.FuncOn<T, void, R>, arg?: any): Promise<R>;
-  async evaluate<R, Arg>(pageFunction: types.FuncOn<T, Arg, R>, arg: Arg): Promise<R> {
+  async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<R>;
+  async evaluate<R>(pageFunction: FuncOn<T, void, R>, arg?: any): Promise<R>;
+  async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<R> {
     return evaluate(this._context, true /* returnByValue */, pageFunction, this, arg);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: types.FuncOn<T, Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
-  async evaluateHandle<R>(pageFunction: types.FuncOn<T, void, R>, arg?: any): Promise<types.SmartHandle<R>>;
-  async evaluateHandle<R, Arg>(pageFunction: types.FuncOn<T, Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
+  async evaluateHandle<R>(pageFunction: FuncOn<T, void, R>, arg?: any): Promise<SmartHandle<R>>;
+  async evaluateHandle<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
     return evaluate(this._context, false /* returnByValue */, pageFunction, this, arg);
+  }
+
+  _evaluateExpression(expression: string, isFunction: boolean, returnByValue: boolean, arg: any) {
+    return evaluateExpression(this._context, returnByValue, expression, isFunction, this, arg);
   }
 
   async getProperty(propertyName: string): Promise<JSHandle> {
@@ -132,16 +150,17 @@ export class JSHandle<T = any> {
 }
 
 export async function evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
-  const utilityScript = await context.utilityScript();
-  if (helper.isString(pageFunction)) {
-    const script = `(utilityScript, ...args) => utilityScript.evaluate(...args)` + sourceMap.generateSourceUrl();
-    return context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, [returnByValue, sourceMap.ensureSourceUrl(pageFunction)], []);
-  }
-  if (typeof pageFunction !== 'function')
-    throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
+  return evaluateExpression(context, returnByValue, String(pageFunction), typeof pageFunction === 'function', ...args);
+}
 
-  const originalText = pageFunction.toString();
-  let functionText = originalText;
+export async function evaluateExpression(context: ExecutionContext, returnByValue: boolean, expression: string, isFunction: boolean, ...args: any[]): Promise<any> {
+  const utilityScript = await context.utilityScript();
+  if (!isFunction) {
+    const script = `(utilityScript, ...args) => utilityScript.evaluate(...args)` + sourceMap.generateSourceUrl();
+    return context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, [returnByValue, sourceMap.ensureSourceUrl(expression)], []);
+  }
+
+  let functionText = expression;
   try {
     new Function('(' + functionText + ')');
   } catch (e1) {
@@ -188,13 +207,13 @@ export async function evaluate(context: ExecutionContext, returnByValue: boolean
     utilityScriptObjectIds.push(handle._objectId!);
   }
 
-  functionText += await sourceMap.generateSourceMapUrl(originalText, functionText);
+  functionText += await sourceMap.generateSourceMapUrl(expression, functionText);
   // See UtilityScript for arguments.
   const utilityScriptValues = [returnByValue, functionText, args.length, ...args];
 
   const script = `(utilityScript, ...args) => utilityScript.callFunction(...args)` + sourceMap.generateSourceUrl();
   try {
-    return context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, utilityScriptValues, utilityScriptObjectIds);
+    return await context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, utilityScriptValues, utilityScriptObjectIds);
   } finally {
     toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
   }

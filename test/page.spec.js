@@ -78,7 +78,7 @@ describe('Page.close', function() {
     ]);
     for (let i = 0; i < 2; i++) {
       const message = results[i].message;
-      expect(message).toContain('Target closed');
+      expect(message).toContain('Page closed');
       expect(message).not.toContain('Timeout');
     }
   });
@@ -129,6 +129,28 @@ describe.fail(FFOX && WIN)('Page.Events.Crash', function() {
     const err = await page.evaluate(() => {}).then(() => null, e => e);
     expect(err).toBeTruthy();
     expect(err.message).toContain('crash');
+  });
+  it('should cancel waitForEvent when page crashes', async({page}) => {
+    await page.setContent(`<div>This page should crash</div>`);
+    const promise = page.waitForEvent('response').catch(e => e);
+    crash(page);
+    const error = await promise;
+    expect(error.message).toContain('Page crashed');
+  });
+  it('should cancel navigation when page crashes', async({page, server}) => {
+    await page.setContent(`<div>This page should crash</div>`);
+    server.setRoute('/one-style.css', () => {});
+    const promise = page.goto(server.PREFIX + '/one-style.html').catch(e => e);
+    await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
+    crash(page);
+    const error = await promise;
+    expect(error.message).toContain('Navigation failed because page crashed');
+  });
+  it('should be able to close context when page crashes', async({page}) => {
+    await page.setContent(`<div>This page should crash</div>`);
+    crash(page);
+    await page.waitForEvent('crash');
+    await page.context().close();
   });
 });
 
@@ -353,7 +375,7 @@ describe('Page.waitForEvent', function() {
     const waitForPromise = page.waitForEvent('download').catch(e => error = e);
     await page.close();
     await waitForPromise;
-    expect(error.message).toContain('Target closed');
+    expect(error.message).toContain('Page closed');
   });
 });
 
@@ -1049,7 +1071,7 @@ describe('Page.fill', function() {
       await page.$eval('input', (input, type) => input.setAttribute('type', type), type);
       let error = null;
       await page.fill('input', '').catch(e => error = e);
-      expect(error.message).toContain('Cannot fill input of type');
+      expect(error.message).toContain(`input of type "${type}" cannot be filled`);
     }
   });
   it('should fill different input types', async({page, server}) => {
@@ -1069,7 +1091,7 @@ describe('Page.fill', function() {
   it.skip(WEBKIT)('should throw on incorrect date', async({page, server}) => {
     await page.setContent('<input type=date>');
     const error = await page.fill('input', '2020-13-05').catch(e => e);
-    expect(error.message).toContain('Malformed date "2020-13-05"');
+    expect(error.message).toContain('Malformed value');
   });
   it('should fill time input', async({page, server}) => {
     await page.setContent('<input type=time>');
@@ -1079,7 +1101,7 @@ describe('Page.fill', function() {
   it.skip(WEBKIT)('should throw on incorrect time', async({page, server}) => {
     await page.setContent('<input type=time>');
     const error = await page.fill('input', '25:05').catch(e => e);
-    expect(error.message).toContain('Malformed time "25:05"');
+    expect(error.message).toContain('Malformed value');
   });
   it('should fill datetime-local input', async({page, server}) => {
     await page.setContent('<input type=datetime-local>');
@@ -1089,7 +1111,7 @@ describe('Page.fill', function() {
   it.skip(WEBKIT || FFOX)('should throw on incorrect datetime-local', async({page, server}) => {
     await page.setContent('<input type=datetime-local>');
     const error = await page.fill('input', 'abc').catch(e => e);
-    expect(error.message).toContain('Malformed datetime-local "abc"');
+    expect(error.message).toContain('Malformed value');
   });
   it('should fill contenteditable', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
@@ -1213,7 +1235,7 @@ describe('Page.fill', function() {
     await page.setContent(`<input id="input" type="number"></input>`);
     let error = null;
     await page.fill('input', 'abc').catch(e => error = e);
-    expect(error.message).toContain('Cannot type text into input[type=number].');
+    expect(error.message).toContain('Cannot type text into input[type=number]');
   });
   it('should be able to clear', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');

@@ -16,7 +16,7 @@
 
 import * as debug from 'debug';
 import { helper } from './helper';
-import { Logger as LoggerSink, LoggerSeverity } from './types';
+import { LoggerSink, LoggerSeverity } from './loggerSink';
 
 export function logError(logger: Logger): (error: Error) => void {
   return error => logger.error(error);

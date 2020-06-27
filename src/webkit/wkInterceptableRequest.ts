@@ -18,6 +18,7 @@
 import * as frames from '../frames';
 import { assert, helper } from '../helper';
 import * as network from '../network';
+import * as types from '../types';
 import { Protocol } from './protocol';
 import { WKSession } from './wkConnection';
 
@@ -65,7 +66,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     await this._session.sendMayFail('Network.interceptRequestWithError', { requestId: this._requestId, errorType });
   }
 
-  async fulfill(response: network.FulfillResponse) {
+  async fulfill(response: types.FulfillResponse) {
     await this._interceptedPromise;
 
     const base64Encoded = !!response.body && !helper.isString(response.body);
@@ -101,7 +102,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     });
   }
 
-  async continue(overrides: { method?: string; headers?: network.Headers; postData?: string }) {
+  async continue(overrides: { method?: string; headers?: types.Headers; postData?: string }) {
     await this._interceptedPromise;
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
@@ -122,8 +123,8 @@ export class WKInterceptableRequest implements network.RouteDelegate {
   }
 }
 
-function headersObject(headers: Protocol.Network.Headers): network.Headers {
-  const result: network.Headers = {};
+function headersObject(headers: Protocol.Network.Headers): types.Headers {
+  const result: types.Headers = {};
   for (const key of Object.keys(headers))
     result[key.toLowerCase()] = headers[key];
   return result;

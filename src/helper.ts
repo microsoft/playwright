@@ -42,8 +42,11 @@ class Helper {
       assert(args.length === 0 || (args.length === 1 && args[0] === undefined), 'Cannot evaluate a string with arguments');
       return fun;
     }
-    return `(${fun})(${args.map(serializeArgument).join(',')})`;
+    return Helper.evaluationStringForFunctionBody(String(fun), ...args);
+  }
 
+  static evaluationStringForFunctionBody(functionBody: string, ...args: any[]): string {
+    return `(${functionBody})(${args.map(serializeArgument).join(',')})`;
     function serializeArgument(arg: any): string {
       if (Object.is(arg, undefined))
         return 'undefined';
@@ -357,6 +360,21 @@ export function logPolitely(toBeLogged: string) {
 
   if (!logLevelDisplay)
     console.log(toBeLogged);  // eslint-disable-line no-console
+}
+
+export function serializeError(e: any): types.Error {
+  if (e instanceof Error)
+    return { message: e.message, stack: e.stack };
+  return { value: e };
+}
+
+export function parseError(error: types.Error): any {
+  if (error.message !== undefined) {
+    const e = new Error(error.message);
+    e.stack = error.stack;
+    return e;
+  }
+  return error.value;
 }
 
 const escapeGlobChars = new Set(['/', '$', '^', '+', '.', '(', ')', '=', '!', '|']);

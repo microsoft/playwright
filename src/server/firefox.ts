@@ -21,7 +21,7 @@ import * as path from 'path';
 import * as ws from 'ws';
 import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
-import { LaunchOptionsBase, BrowserTypeBase, FirefoxUserPrefsOptions } from './browserType';
+import { BrowserTypeBase, LaunchNonPersistentOptions } from './browserType';
 import { Env } from './processLauncher';
 import { ConnectionTransport, ProtocolResponse, ProtocolRequest } from '../transport';
 import { Logger } from '../logger';
@@ -56,7 +56,7 @@ export class Firefox extends BrowserTypeBase {
     return startWebSocketServer(transport, logger, port);
   }
 
-  _defaultArgs(options: LaunchOptionsBase & FirefoxUserPrefsOptions, isPersistent: boolean, userDataDir: string): string[] {
+  _defaultArgs(options: LaunchNonPersistentOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { args = [], proxy, devtools, headless } = options;
     if (devtools)
       console.warn('devtools parameter is not supported as a launch argument in Firefox. You can launch the devtools window manually.');

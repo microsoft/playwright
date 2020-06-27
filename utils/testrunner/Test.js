@@ -28,14 +28,9 @@ function createHook(callback, name) {
 }
 
 class Environment {
-  constructor(name, parentEnvironment = null) {
-    this._parentEnvironment = parentEnvironment;
+  constructor(name) {
     this._name = name;
     this._hooks = [];
-  }
-
-  parentEnvironment() {
-    return this._parentEnvironment;
   }
 
   name() {
@@ -59,6 +54,16 @@ class Environment {
 
   afterAll(callback) {
     this._hooks.push(createHook(callback, 'afterAll'));
+    return this;
+  }
+
+  globalSetup(callback) {
+    this._hooks.push(createHook(callback, 'globalSetup'));
+    return this;
+  }
+
+  globalTeardown(callback) {
+    this._hooks.push(createHook(callback, 'globalTeardown'));
     return this;
   }
 

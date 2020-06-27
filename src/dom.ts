@@ -19,26 +19,17 @@ import * as mime from 'mime';
 import * as path from 'path';
 import * as util from 'util';
 import * as frames from './frames';
-import { assert, helper } from './helper';
+import { assert, helper, assertMaxArguments } from './helper';
 import InjectedScript from './injected/injectedScript';
 import * as injectedScriptSource from './generated/injectedScriptSource';
 import * as debugScriptSource from './generated/debugScriptSource';
-import * as input from './input';
 import * as js from './javascript';
 import { Page } from './page';
 import { selectors } from './selectors';
 import * as types from './types';
-import { Progress, ProgressController } from './progress';
+import { Progress } from './progress';
 import DebugScript from './debug/injected/debugScript';
-
-export type PointerActionOptions = {
-  modifiers?: input.Modifier[];
-  position?: types.Point;
-};
-
-export type ClickOptions = PointerActionOptions & input.MouseClickOptions;
-
-export type MultiClickOptions = PointerActionOptions & input.MouseMultiClickOptions;
+import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
 
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
@@ -56,19 +47,31 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return null;
   }
 
-  async evaluateInternal<R>(pageFunction: types.Func0<R>): Promise<R>;
-  async evaluateInternal<Arg, R>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R>;
+  async evaluateInternal<R>(pageFunction: js.Func0<R>): Promise<R>;
+  async evaluateInternal<Arg, R>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<R>;
   async evaluateInternal(pageFunction: never, ...args: never[]): Promise<any> {
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
       return js.evaluate(this, true /* returnByValue */, pageFunction, ...args);
     });
   }
 
-  async evaluateHandleInternal<R>(pageFunction: types.Func0<R>): Promise<types.SmartHandle<R>>;
-  async evaluateHandleInternal<Arg, R>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
+  async evaluateExpressionInternal(expression: string, isFunction: boolean, ...args: any[]): Promise<any> {
+    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
+      return js.evaluateExpression(this, true /* returnByValue */, expression, isFunction, ...args);
+    });
+  }
+
+  async evaluateHandleInternal<R>(pageFunction: js.Func0<R>): Promise<js.SmartHandle<R>>;
+  async evaluateHandleInternal<Arg, R>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>>;
   async evaluateHandleInternal(pageFunction: never, ...args: never[]): Promise<any> {
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
       return js.evaluate(this, false /* returnByValue */, pageFunction, ...args);
+    });
+  }
+
+  async evaluateExpressionHandleInternal(expression: string, isFunction: boolean, ...args: any[]): Promise<any> {
+    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
+      return js.evaluateExpression(this, false /* returnByValue */, expression, isFunction, ...args);
     });
   }
 
@@ -119,11 +122,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     this._initializePreview().catch(e => {});
   }
 
-  private _runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number, apiName: string): Promise<T> {
-    const controller = new ProgressController(this._page._logger, timeout, `elementHandle.${apiName}`);
-    return controller.run(task);
-  }
-
   async _initializePreview() {
     const utility = await this._context.injectedScript();
     this._preview = await utility.evaluate((injected, e) => 'JSHandle@' + injected.previewNode(e), this);
@@ -133,17 +131,17 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this;
   }
 
-  async _evaluateInMain<R, Arg>(pageFunction: types.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {
+  async _evaluateInMain<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {
     const main = await this._context.frame._mainContext();
     return main.evaluateInternal(pageFunction, [await main.injectedScript(), this, arg]);
   }
 
-  async _evaluateInUtility<R, Arg>(pageFunction: types.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {
+  async _evaluateInUtility<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {
     const utility = await this._context.frame._utilityContext();
     return utility.evaluateInternal(pageFunction, [await utility.injectedScript(), this, arg]);
   }
 
-  async _evaluateHandleInUtility<R, Arg>(pageFunction: types.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<js.JSHandle<R>> {
+  async _evaluateHandleInUtility<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<js.JSHandle<R>> {
     const utility = await this._context.frame._utilityContext();
     return utility.evaluateHandleInternal(pageFunction, [await utility.injectedScript(), this, arg]);
   }
@@ -171,12 +169,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async getAttribute(name: string): Promise<string | null> {
-    return this._evaluateInUtility(([injeced, node, name]) => {
+    return throwFatalDOMError(await this._evaluateInUtility(([injeced, node, name]) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
-        throw new Error('Not an element');
+        return 'error:notelement';
       const element = node as unknown as Element;
-      return element.getAttribute(name);
-    }, name);
+      return { value: element.getAttribute(name) };
+    }, name)).value;
   }
 
   async textContent(): Promise<string | null> {
@@ -184,23 +182,23 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async innerText(): Promise<string> {
-    return this._evaluateInUtility(([injected, node]) => {
+    return throwFatalDOMError(await this._evaluateInUtility(([injected, node]) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
-        throw new Error('Not an element');
+        return 'error:notelement';
       if (node.namespaceURI !== 'http://www.w3.org/1999/xhtml')
-        throw new Error('Not an HTMLElement');
+        return 'error:nothtmlelement';
       const element = node as unknown as HTMLElement;
-      return element.innerText;
-    }, {});
+      return { value: element.innerText };
+    }, {})).value;
   }
 
   async innerHTML(): Promise<string> {
-    return this._evaluateInUtility(([injected, node]) => {
+    return throwFatalDOMError(await this._evaluateInUtility(([injected, node]) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
-        throw new Error('Not an element');
+        return 'error:notelement';
       const element = node as unknown as Element;
-      return element.innerHTML;
-    }, {});
+      return { value: element.innerHTML };
+    }, {})).value;
   }
 
   async dispatchEvent(type: string, eventInit: Object = {}) {
@@ -208,18 +206,38 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       injected.dispatchEvent(node, type, eventInit), { type, eventInit });
   }
 
-  async _scrollRectIntoViewIfNeeded(rect?: types.Rect): Promise<'notvisible' | 'notconnected' | 'done'> {
+  async _scrollRectIntoViewIfNeeded(rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
     return await this._page._delegate.scrollRectIntoViewIfNeeded(this, rect);
   }
 
-  async scrollIntoViewIfNeeded() {
-    const result = await this._scrollRectIntoViewIfNeeded();
-    if (result === 'notvisible')
-      throw new Error('Element is not visible');
-    throwIfNotConnected(result);
+  async _waitAndScrollIntoViewIfNeeded(progress: Progress): Promise<void> {
+    while (progress.isRunning()) {
+      assertDone(throwRetargetableDOMError(await this._waitForVisible(progress)));
+
+      progress.throwIfAborted();  // Avoid action that has side-effects.
+      const result = throwRetargetableDOMError(await this._scrollRectIntoViewIfNeeded());
+      if (result === 'error:notvisible')
+        continue;
+      assertDone(result);
+      return;
+    }
   }
 
-  private async _clickablePoint(): Promise<types.Point | 'notvisible' | 'notinviewport'> {
+  async scrollIntoViewIfNeeded(options: types.TimeoutOptions = {}) {
+    return this._page._runAbortableTask(
+        progress => this._waitAndScrollIntoViewIfNeeded(progress),
+        this._page._timeoutSettings.timeout(options), 'elementHandle.scrollIntoViewIfNeeded');
+  }
+
+  private async _waitForVisible(progress: Progress): Promise<'error:notconnected' | 'done'> {
+    const poll = await this._evaluateHandleInUtility(([injected, node]) => {
+      return injected.waitForNodeVisible(node);
+    }, {});
+    const pollHandler = new InjectedScriptPollHandler(progress, poll);
+    return throwFatalDOMError(await pollHandler.finish());
+  }
+
+  private async _clickablePoint(): Promise<types.Point | 'error:notvisible' | 'error:notinviewport'> {
     const intersectQuadWithViewport = (quad: types.Quad): types.Quad => {
       return quad.map(point => ({
         x: Math.min(Math.max(point.x, 0), metrics.width),
@@ -244,11 +262,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       this._page.mainFrame()._utilityContext().then(utility => utility.evaluateInternal(() => ({width: innerWidth, height: innerHeight}))),
     ] as const);
     if (!quads || !quads.length)
-      return 'notvisible';
+      return 'error:notvisible';
 
     const filtered = quads.map(quad => intersectQuadWithViewport(quad)).filter(quad => computeQuadArea(quad) > 1);
     if (!filtered.length)
-      return 'notinviewport';
+      return 'error:notinviewport';
     // Return the middle point of the first quad.
     const result = { x: 0, y: 0 };
     for (const point of filtered[0]) {
@@ -258,13 +276,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  private async _offsetPoint(offset: types.Point): Promise<types.Point | 'notvisible'> {
+  private async _offsetPoint(offset: types.Point): Promise<types.Point | 'error:notvisible'> {
     const [box, border] = await Promise.all([
       this.boundingBox(),
       this._evaluateInUtility(([injected, node]) => injected.getElementBorderWidth(node), {}).catch(e => {}),
     ]);
     if (!box || !border)
-      return 'notvisible';
+      return 'error:notvisible';
     // Make point relative to the padding box to align with offsetX/offsetY.
     return {
       x: box.x + border.left + offset.x,
@@ -272,43 +290,41 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     };
   }
 
-  async _retryPointerAction(progress: Progress, action: (point: types.Point) => Promise<void>, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'notconnected' | 'done'> {
+  async _retryPointerAction(progress: Progress, action: (point: types.Point) => Promise<void>, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     let first = true;
     while (progress.isRunning()) {
       progress.logger.info(`${first ? 'attempting' : 'retrying'} ${progress.apiName} action`);
       const result = await this._performPointerAction(progress, action, options);
       first = false;
-      if (result === 'notvisible') {
+      if (result === 'error:notvisible') {
         if (options.force)
           throw new Error('Element is not visible');
         progress.logger.info('  element is not visible');
         continue;
       }
-      if (result === 'notinviewport') {
+      if (result === 'error:notinviewport') {
         if (options.force)
           throw new Error('Element is outside of the viewport');
         progress.logger.info('  element is outside of the viewport');
         continue;
       }
-      if (result === 'nothittarget') {
+      if (result === 'error:nothittarget') {
         if (options.force)
           throw new Error('Element does not receive pointer events');
         progress.logger.info('  element does not receive pointer events');
         continue;
       }
-      if (result === 'notconnected')
-        return result;
-      break;
+      return result;
     }
     return 'done';
   }
 
-  async _performPointerAction(progress: Progress, action: (point: types.Point) => Promise<void>, options: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'notvisible' | 'notconnected' | 'notinviewport' | 'nothittarget' | 'done'> {
+  async _performPointerAction(progress: Progress, action: (point: types.Point) => Promise<void>, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | 'error:nothittarget' | 'done'> {
     const { force = false, position } = options;
     if (!force) {
       const result = await this._waitForDisplayedAtStablePositionAndEnabled(progress);
-      if (result === 'notconnected')
-        return 'notconnected';
+      if (result !== 'done')
+        return result;
     }
     if ((options as any).__testHookAfterStable)
       await (options as any).__testHookAfterStable();
@@ -316,17 +332,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     progress.logger.info('  scrolling into view if needed');
     progress.throwIfAborted();  // Avoid action that has side-effects.
     const scrolled = await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
-    if (scrolled === 'notvisible')
-      return 'notvisible';
-    if (scrolled === 'notconnected')
-      return 'notconnected';
+    if (scrolled !== 'done')
+      return scrolled;
     progress.logger.info('  done scrolling');
 
     const maybePoint = position ? await this._offsetPoint(position) : await this._clickablePoint();
-    if (maybePoint === 'notvisible')
-      return 'notvisible';
-    if (maybePoint === 'notinviewport')
-      return 'notinviewport';
+    if (typeof maybePoint === 'string')
+      return maybePoint;
     const point = roundPoint(maybePoint);
 
     if (!force) {
@@ -334,10 +346,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         await (options as any).__testHookBeforeHitTarget();
       progress.logger.info(`  checking that element receives pointer events at (${point.x},${point.y})`);
       const hitTargetResult = await this._checkHitTargetAt(point);
-      if (hitTargetResult === 'notconnected')
-        return 'notconnected';
-      if (hitTargetResult === 'nothittarget')
-        return 'nothittarget';
+      if (hitTargetResult !== 'done')
+        return hitTargetResult;
       progress.logger.info(`  element does receive pointer events`);
     }
 
@@ -345,7 +355,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if ((options as any).__testHookBeforePointerAction)
         await (options as any).__testHookBeforePointerAction();
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      let restoreModifiers: input.Modifier[] | undefined;
+      let restoreModifiers: types.KeyboardModifier[] | undefined;
       if (options && options.modifiers)
         restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
       progress.logger.info(`  performing ${progress.apiName} action`);
@@ -362,43 +372,47 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return 'done';
   }
 
-  hover(options: PointerActionOptions & types.PointerActionWaitOptions = {}): Promise<void> {
-    return this._runAbortableTask(async progress => {
-      throwIfNotConnected(await this._hover(progress, options));
-    }, this._page._timeoutSettings.timeout(options), 'hover');
+  hover(options: types.PointerActionOptions & types.PointerActionWaitOptions = {}): Promise<void> {
+    return this._page._runAbortableTask(async progress => {
+      const result = await this._hover(progress, options);
+      return assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.hover');
   }
 
-  _hover(progress: Progress, options: PointerActionOptions & types.PointerActionWaitOptions): Promise<'notconnected' | 'done'> {
+  _hover(progress: Progress, options: types.PointerActionOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     return this._retryPointerAction(progress, point => this._page.mouse.move(point.x, point.y), options);
   }
 
-  click(options: ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return this._runAbortableTask(async progress => {
-      throwIfNotConnected(await this._click(progress, options));
-    }, this._page._timeoutSettings.timeout(options), 'click');
+  click(options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
+    return this._page._runAbortableTask(async progress => {
+      const result = await this._click(progress, options);
+      return assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.click');
   }
 
-  _click(progress: Progress, options: ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'notconnected' | 'done'> {
+  _click(progress: Progress, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     return this._retryPointerAction(progress, point => this._page.mouse.click(point.x, point.y, options), options);
   }
 
-  dblclick(options: MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return this._runAbortableTask(async progress => {
-      throwIfNotConnected(await this._dblclick(progress, options));
-    }, this._page._timeoutSettings.timeout(options), 'dblclick');
+  dblclick(options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
+    return this._page._runAbortableTask(async progress => {
+      const result = await this._dblclick(progress, options);
+      return assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.dblclick');
   }
 
-  _dblclick(progress: Progress, options: MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'notconnected' | 'done'> {
+  _dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     return this._retryPointerAction(progress, point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
   async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return this._runAbortableTask(async progress => {
-      return throwIfNotConnected(await this._selectOption(progress, values, options));
-    }, this._page._timeoutSettings.timeout(options), 'selectOption');
+    return this._page._runAbortableTask(async progress => {
+      const result = await this._selectOption(progress, values, options);
+      return throwRetargetableDOMError(result);
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.selectOption');
   }
 
-  async _selectOption(progress: Progress, values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions): Promise<string[] | 'notconnected'> {
+  async _selectOption(progress: Progress, values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions): Promise<string[] | 'error:notconnected'> {
     let vals: string[] | ElementHandle[] | types.SelectOption[];
     if (values === null)
       vals = [];
@@ -420,18 +434,18 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      const injectedResult = await this._evaluateInUtility(([injected, node, selectOptions]) => injected.selectOptions(node, selectOptions), selectOptions);
-      return throwIfError(injectedResult);
+      return throwFatalDOMError(await this._evaluateInUtility(([injected, node, selectOptions]) => injected.selectOptions(node, selectOptions), selectOptions));
     });
   }
 
   async fill(value: string, options: types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return this._runAbortableTask(async progress => {
-      throwIfNotConnected(await this._fill(progress, value, options));
-    }, this._page._timeoutSettings.timeout(options), 'fill');
+    return this._page._runAbortableTask(async progress => {
+      const result = await this._fill(progress, value, options);
+      assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.fill');
   }
 
-  async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions): Promise<'notconnected' | 'done'> {
+  async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     progress.logger.info(`elementHandle.fill("${value}")`);
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
@@ -440,46 +454,54 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         return injected.waitForEnabledAndFill(node, value);
       }, value);
       const pollHandler = new InjectedScriptPollHandler(progress, poll);
-      const filled = throwIfError(await pollHandler.finish());
+      const filled = throwFatalDOMError(await pollHandler.finish());
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      if (filled === 'notconnected')
-        return 'notconnected';
+      if (filled === 'error:notconnected')
+        return filled;
       progress.logger.info('  element is visible, enabled and editable');
       if (filled === 'needsinput') {
+        progress.throwIfAborted();  // Avoid action that has side-effects.
         if (value)
           await this._page.keyboard.insertText(value);
         else
           await this._page.keyboard.press('Delete');
+      } else {
+        assertDone(filled);
       }
       return 'done';
     }, 'input');
   }
 
-  async selectText(): Promise<void> {
-    return this._runAbortableTask(async progress => {
+  async selectText(options: types.TimeoutOptions = {}): Promise<void> {
+    return this._page._runAbortableTask(async progress => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      const selected = throwIfError(await this._evaluateInUtility(([injected, node]) => injected.selectText(node), {}));
-      throwIfNotConnected(selected);
-    }, 0, 'selectText');
+      const poll = await this._evaluateHandleInUtility(([injected, node]) => {
+        return injected.waitForVisibleAndSelectText(node);
+      }, {});
+      const pollHandler = new InjectedScriptPollHandler(progress, poll);
+      const result = throwFatalDOMError(await pollHandler.finish());
+      assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.selectText');
   }
 
   async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}) {
-    return this._runAbortableTask(async progress => {
-      throwIfNotConnected(await this._setInputFiles(progress, files, options));
-    }, this._page._timeoutSettings.timeout(options), 'setInputFiles');
+    return this._page._runAbortableTask(async progress => {
+      const result = await this._setInputFiles(progress, files, options);
+      return assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.setInputFiles');
   }
 
-  async _setInputFiles(progress: Progress, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions): Promise<'notconnected' | 'done'> {
-    const multiple = throwIfError(await this._evaluateInUtility(([injected, node]): types.InjectedScriptResult<'notconnected' | boolean> => {
+  async _setInputFiles(progress: Progress, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
+    const multiple = throwFatalDOMError(await this._evaluateInUtility(([injected, node]): 'error:notinput' | 'error:notconnected' | boolean => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node as Node as Element).tagName !== 'INPUT')
-        return { error: 'Node is not an HTMLInputElement', value: false };
+        return 'error:notinput';
       if (!node.isConnected)
-        return { value: 'notconnected' };
+        return 'error:notconnected';
       const input = node as Node as HTMLInputElement;
-      return { value: input.multiple };
+      return input.multiple;
     }, {}));
-    if (multiple === 'notconnected')
-      return 'notconnected';
+    if (typeof multiple === 'string')
+      return multiple;
     let ff: string[] | types.FilePayload[];
     if (!Array.isArray(files))
       ff = [ files ] as string[] | types.FilePayload[];
@@ -507,28 +529,31 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async focus(): Promise<void> {
-    return this._runAbortableTask(async progress => {
-      throwIfNotConnected(await this._focus(progress));
-    }, 0, 'focus');
+    return this._page._runAbortableTask(async progress => {
+      const result = await this._focus(progress);
+      return assertDone(throwRetargetableDOMError(result));
+    }, 0, 'elementHandle.focus');
   }
 
-  async _focus(progress: Progress): Promise<'notconnected' | 'done'> {
+  async _focus(progress: Progress): Promise<'error:notconnected' | 'done'> {
     progress.throwIfAborted();  // Avoid action that has side-effects.
-    return throwIfError(await this._evaluateInUtility(([injected, node]) => injected.focusNode(node), {}));
+    const result = await this._evaluateInUtility(([injected, node]) => injected.focusNode(node), {});
+    return throwFatalDOMError(result);
   }
 
   async type(text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return this._runAbortableTask(async progress => {
-      throwIfNotConnected(await this._type(progress, text, options));
-    }, this._page._timeoutSettings.timeout(options), 'type');
+    return this._page._runAbortableTask(async progress => {
+      const result = await this._type(progress, text, options);
+      return assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.type');
   }
 
-  async _type(progress: Progress, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'notconnected' | 'done'> {
+  async _type(progress: Progress, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     progress.logger.info(`elementHandle.type("${text}")`);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
-      const focused = await this._focus(progress);
-      if (focused === 'notconnected')
-        return 'notconnected';
+      const result = await this._focus(progress);
+      if (result !== 'done')
+        return result;
       progress.throwIfAborted();  // Avoid action that has side-effects.
       await this._page.keyboard.type(text, options);
       return 'done';
@@ -536,17 +561,18 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async press(key: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return this._runAbortableTask(async progress => {
-      throwIfNotConnected(await this._press(progress, key, options));
-    }, this._page._timeoutSettings.timeout(options), 'press');
+    return this._page._runAbortableTask(async progress => {
+      const result = await this._press(progress, key, options);
+      return assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.press');
   }
 
-  async _press(progress: Progress, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'notconnected' | 'done'> {
+  async _press(progress: Progress, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     progress.logger.info(`elementHandle.press("${key}")`);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
-      const focused = await this._focus(progress);
-      if (focused === 'notconnected')
-        return 'notconnected';
+      const result = await this._focus(progress);
+      if (result !== 'done')
+        return result;
       progress.throwIfAborted();  // Avoid action that has side-effects.
       await this._page.keyboard.press(key, options);
       return 'done';
@@ -554,27 +580,38 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async check(options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    return this._runAbortableTask(progress => this._setChecked(progress, true, options), this._page._timeoutSettings.timeout(options), 'check');
+    return this._page._runAbortableTask(async progress => {
+      const result = await this._setChecked(progress, true, options);
+      return assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.check');
   }
 
   async uncheck(options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    return this._runAbortableTask(progress => this._setChecked(progress, false, options), this._page._timeoutSettings.timeout(options), 'uncheck');
+    return this._page._runAbortableTask(async progress => {
+      const result = await this._setChecked(progress, false, options);
+      return assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.uncheck');
   }
 
-  async _setChecked(progress: Progress, state: boolean, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+  async _setChecked(progress: Progress, state: boolean, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     if (await this._evaluateInUtility(([injected, node]) => injected.isCheckboxChecked(node), {}) === state)
-      return;
-    await this._click(progress, options);
+      return 'done';
+    const result = await this._click(progress, options);
+    if (result !== 'done')
+      return result;
     if (await this._evaluateInUtility(([injected, node]) => injected.isCheckboxChecked(node), {}) !== state)
       throw new Error('Unable to click checkbox');
+    return 'done';
   }
 
   async boundingBox(): Promise<types.Rect | null> {
     return this._page._delegate.getBoundingBox(this);
   }
 
-  async screenshot(options?: types.ElementScreenshotOptions): Promise<Buffer> {
-    return this._page._screenshotter.screenshotElement(this, options);
+  async screenshot(options: types.ElementScreenshotOptions = {}): Promise<Buffer> {
+    return this._page._runAbortableTask(
+        progress => this._page._screenshotter.screenshotElement(progress, this, options),
+        this._page._timeoutSettings.timeout(options), 'elementHandle.screenshot');
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
@@ -585,52 +622,59 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return selectors._queryAll(this._context.frame, selector, this);
   }
 
-  async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
-  async $eval<R>(selector: string, pageFunction: types.FuncOn<Element, void, R>, arg?: any): Promise<R>;
-  async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
+  async $eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
+  async $eval<R>(selector: string, pageFunction: js.FuncOn<Element, void, R>, arg?: any): Promise<R>;
+  async $eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
+    assertMaxArguments(arguments.length, 3);
+    return this._$evalExpression(selector, String(pageFunction), typeof pageFunction === 'function', arg);
+  }
+
+  async _$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
     const handle = await selectors._query(this._context.frame, selector, this);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await handle.evaluate(pageFunction, arg);
+    const result = await handle._evaluateExpression(expression, isFunction, true, arg);
     handle.dispose();
     return result;
   }
 
-  async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
-  async $$eval<R>(selector: string, pageFunction: types.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
-  async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
+  async $$eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
+  async $$eval<R>(selector: string, pageFunction: js.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
+  async $$eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
+    assertMaxArguments(arguments.length, 3);
+    return this._$$evalExpression(selector, String(pageFunction), typeof pageFunction === 'function', arg);
+  }
+
+  async _$$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
     const arrayHandle = await selectors._queryArray(this._context.frame, selector, this);
-    const result = await arrayHandle.evaluate(pageFunction, arg);
+    const result = await arrayHandle._evaluateExpression(expression, isFunction, true, arg);
     arrayHandle.dispose();
     return result;
   }
 
-  async _waitForDisplayedAtStablePositionAndEnabled(progress: Progress): Promise<'notconnected' | 'done'> {
+  async _waitForDisplayedAtStablePositionAndEnabled(progress: Progress): Promise<'error:notconnected' | 'done'> {
     progress.logger.info('  waiting for element to be visible, enabled and not moving');
     const rafCount =  this._page._delegate.rafCountForStablePosition();
     const poll = this._evaluateHandleInUtility(([injected, node, rafCount]) => {
       return injected.waitForDisplayedAtStablePositionAndEnabled(node, rafCount);
     }, rafCount);
     const pollHandler = new InjectedScriptPollHandler(progress, await poll);
-    const result = throwIfError(await pollHandler.finish());
+    const result = await pollHandler.finish();
     progress.logger.info('  element is visible, enabled and does not move');
     return result;
   }
 
-  async _checkHitTargetAt(point: types.Point): Promise<'notconnected' | 'nothittarget' | 'done'> {
+  async _checkHitTargetAt(point: types.Point): Promise<'error:notconnected' | 'error:nothittarget' | 'done'> {
     const frame = await this.ownerFrame();
     if (frame && frame.parentFrame()) {
       const element = await frame.frameElement();
       const box = await element.boundingBox();
       if (!box)
-        return 'notconnected';
+        return 'error:notconnected';
       // Translate from viewport coordinates to frame coordinates.
       point = { x: point.x - box.x, y: point.y - box.y };
     }
-    const injectedResult = await this._evaluateInUtility(([injected, node, point]) => {
-      return injected.checkHitTargetAt(node, point);
-    }, point);
-    return throwIfError(injectedResult);
+    return this._evaluateInUtility(([injected, node, point]) => injected.checkHitTargetAt(node, point), point);
   }
 }
 
@@ -648,23 +692,20 @@ export class InjectedScriptPollHandler<T> {
     //   - no unnecessary work in the page;
     //   - no possible side effects after progress promsie rejects.
     this._progress.cleanupWhenAborted(() => this.cancel());
-    this._streamLogs(poll.evaluateHandle(poll => poll.logs));
+    this._streamLogs();
   }
 
-  private _streamLogs(logsPromise: Promise<js.JSHandle<types.InjectedScriptLogs>>) {
-    // We continuously get a chunk of logs, stream them to the progress and wait for the next chunk.
-    logsPromise.catch(e => null).then(logs => {
-      if (!logs || !this._poll || !this._progress.isRunning())
+  private async _streamLogs() {
+    while (this._poll && this._progress.isRunning()) {
+      const messages = await this._poll.evaluate(poll => poll.takeNextLogs()).catch(e => [] as string[]);
+      if (!this._poll || !this._progress.isRunning())
         return;
-      logs.evaluate(logs => logs.current).catch(e => [] as string[]).then(messages => {
-        for (const message of messages)
-          this._progress.logger.info(message);
-      });
-      this._streamLogs(logs.evaluateHandle(logs => logs.next));
-    });
+      for (const message of messages)
+        this._progress.logger.info(message);
+    }
   }
 
-  async finishHandle(): Promise<types.SmartHandle<T>> {
+  async finishHandle(): Promise<js.SmartHandle<T>> {
     try {
       const result = await this._poll!.evaluateHandle(poll => poll.result);
       await this._finishInternal();
@@ -711,16 +752,34 @@ export function toFileTransferPayload(files: types.FilePayload[]): types.FileTra
   }));
 }
 
-function throwIfError<T>(injectedResult: types.InjectedScriptResult<T>): T {
-  if (injectedResult.error)
-    throw new Error(injectedResult.error);
-  return injectedResult.value!;
+function throwFatalDOMError<T>(result: T | FatalDOMError): T {
+  if (result === 'error:notelement')
+    throw new Error('Node is not an element');
+  if (result === 'error:nothtmlelement')
+    throw new Error('Not an HTMLElement');
+  if (result === 'error:notfillableelement')
+    throw new Error('Element is not an <input>, <textarea> or [contenteditable] element');
+  if (result === 'error:notfillableinputtype')
+    throw new Error('Input of this type cannot be filled');
+  if (result === 'error:notfillablenumberinput')
+    throw new Error('Cannot type text into input[type=number]');
+  if (result === 'error:notvaliddate')
+    throw new Error(`Malformed value`);
+  if (result === 'error:notinput')
+    throw new Error('Node is not an HTMLInputElement');
+  if (result === 'error:notselect')
+    throw new Error('Element is not a <select> element.');
+  return result;
 }
 
-function throwIfNotConnected<T>(result: 'notconnected' | T): T {
-  if (result === 'notconnected')
+function throwRetargetableDOMError<T>(result: T | RetargetableDOMError): T {
+  if (result === 'error:notconnected')
     throw new Error('Element is not attached to the DOM');
   return result;
+}
+
+function assertDone(result: 'done'): void {
+  // This function converts 'done' to void and ensures typescript catches unhandled errors.
 }
 
 function roundPoint(point: types.Point): types.Point {

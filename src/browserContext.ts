@@ -29,44 +29,20 @@ import { Loggers, Logger } from './logger';
 import { EventEmitter } from 'events';
 import { ProgressController } from './progress';
 import { DebugController } from './debug/debugController';
-
-type CommonContextOptions = {
-  viewport?: types.Size | null,
-  ignoreHTTPSErrors?: boolean,
-  javaScriptEnabled?: boolean,
-  bypassCSP?: boolean,
-  userAgent?: string,
-  locale?: string,
-  timezoneId?: string,
-  geolocation?: types.Geolocation,
-  permissions?: string[],
-  extraHTTPHeaders?: network.Headers,
-  offline?: boolean,
-  httpCredentials?: types.Credentials,
-  deviceScaleFactor?: number,
-  isMobile?: boolean,
-  hasTouch?: boolean,
-  colorScheme?: types.ColorScheme,
-  acceptDownloads?: boolean,
-};
-
-export type PersistentContextOptions = CommonContextOptions;
-export type BrowserContextOptions = CommonContextOptions & {
-  logger?: types.Logger,
-};
+import { LoggerSink } from './loggerSink';
 
 export interface BrowserContext {
   setDefaultNavigationTimeout(timeout: number): void;
   setDefaultTimeout(timeout: number): void;
   pages(): Page[];
   newPage(): Promise<Page>;
-  cookies(urls?: string | string[]): Promise<network.NetworkCookie[]>;
-  addCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
+  cookies(urls?: string | string[]): Promise<types.NetworkCookie[]>;
+  addCookies(cookies: types.SetNetworkCookieParam[]): Promise<void>;
   clearCookies(): Promise<void>;
   grantPermissions(permissions: string[], options?: { origin?: string }): Promise<void>;
   clearPermissions(): Promise<void>;
   setGeolocation(geolocation: types.Geolocation | null): Promise<void>;
-  setExtraHTTPHeaders(headers: network.Headers): Promise<void>;
+  setExtraHTTPHeaders(headers: types.Headers): Promise<void>;
   setOffline(offline: boolean): Promise<void>;
   setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void>;
   addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any): Promise<void>;
@@ -77,6 +53,8 @@ export interface BrowserContext {
   waitForEvent(event: string, optionsOrPredicate?: Function | (types.TimeoutOptions & { predicate?: Function })): Promise<any>;
   close(): Promise<void>;
 }
+
+type BrowserContextOptions = types.BrowserContextOptions & { logger?: LoggerSink };
 
 export abstract class BrowserContextBase extends EventEmitter implements BrowserContext {
   readonly _timeoutSettings = new TimeoutSettings();
@@ -140,20 +118,26 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   // BrowserContext methods.
   abstract pages(): Page[];
   abstract newPage(): Promise<Page>;
-  abstract cookies(...urls: string[]): Promise<network.NetworkCookie[]>;
-  abstract addCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
+  abstract _doCookies(urls: string[]): Promise<types.NetworkCookie[]>;
+  abstract addCookies(cookies: types.SetNetworkCookieParam[]): Promise<void>;
   abstract clearCookies(): Promise<void>;
   abstract _doGrantPermissions(origin: string, permissions: string[]): Promise<void>;
   abstract _doClearPermissions(): Promise<void>;
   abstract setGeolocation(geolocation: types.Geolocation | null): Promise<void>;
   abstract setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void>;
-  abstract setExtraHTTPHeaders(headers: network.Headers): Promise<void>;
+  abstract setExtraHTTPHeaders(headers: types.Headers): Promise<void>;
   abstract setOffline(offline: boolean): Promise<void>;
-  abstract addInitScript(script: string | Function | { path?: string | undefined; content?: string | undefined; }, arg?: any): Promise<void>;
+  abstract _doAddInitScript(expression: string): Promise<void>;
   abstract _doExposeBinding(binding: PageBinding): Promise<void>;
   abstract route(url: types.URLMatch, handler: network.RouteHandler): Promise<void>;
   abstract unroute(url: types.URLMatch, handler?: network.RouteHandler): Promise<void>;
   abstract close(): Promise<void>;
+
+  async cookies(urls: string | string[] | undefined = []): Promise<types.NetworkCookie[]> {
+    if (urls && !Array.isArray(urls))
+      urls = [ urls ];
+    return await this._doCookies(urls as string[]);
+  }
 
   async exposeFunction(name: string, playwrightFunction: Function): Promise<void> {
     await this.exposeBinding(name, (options, ...args: any) => playwrightFunction(...args));
@@ -169,6 +153,11 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
     const binding = new PageBinding(name, playwrightBinding);
     this._pageBindings.set(name, binding);
     this._doExposeBinding(binding);
+  }
+
+  async addInitScript(script: string | Function | { path?: string | undefined; content?: string | undefined; }, arg?: any): Promise<void> {
+    const source = await helper.evaluationScript(script, arg);
+    await this._doAddInitScript(source);
   }
 
   async grantPermissions(permissions: string[], options?: { origin?: string }) {

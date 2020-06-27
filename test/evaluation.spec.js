@@ -228,6 +228,10 @@ describe('Page.evaluate', function() {
   it('should properly serialize undefined fields', async({page}) => {
     expect(await page.evaluate(() => ({a: undefined}))).toEqual({});
   });
+  it('should return undefined properties', async({page}) => {
+    const value = await page.evaluate(() => ({a: undefined}));
+    expect('a' in value).toBe(true);
+  });
   it('should properly serialize null arguments', async({page}) => {
     expect(await page.evaluate(x => x, null)).toEqual(null);
   });

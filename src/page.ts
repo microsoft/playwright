@@ -26,12 +26,12 @@ import { TimeoutSettings } from './timeoutSettings';
 import * as types from './types';
 import { Events } from './events';
 import { BrowserContext, BrowserContextBase } from './browserContext';
-import { ConsoleMessage, ConsoleMessageLocation } from './console';
+import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
 import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
 import { logError, Logger } from './logger';
-import { ProgressController, Progress } from './progress';
+import { ProgressController, Progress, runAbortableTask } from './progress';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -67,13 +67,14 @@ export interface PageDelegate {
   setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void>;
   getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null>;
   getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle>;
-  scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'notvisible' | 'notconnected' | 'done'>;
-  rafCountForStablePosition(): number;
+  scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'>;
 
   getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}>;
   pdf?: (options?: types.PDFOptions) => Promise<Buffer>;
   coverage?: () => any;
 
+  // Work around WebKit's raf issues on Windows.
+  rafCountForStablePosition(): number;
   // Work around Chrome's non-associated input and protocol.
   inputActionEpilogue(): Promise<void>;
   // Work around for asynchronously dispatched CSP errors in Firefox.
@@ -84,7 +85,7 @@ type PageState = {
   viewportSize: types.Size | null;
   mediaType: types.MediaType | null;
   colorScheme: types.ColorScheme | null;
-  extraHTTPHeaders: network.Headers | null;
+  extraHTTPHeaders: types.Headers | null;
 };
 
 export class Page extends EventEmitter {
@@ -94,6 +95,8 @@ export class Page extends EventEmitter {
   private _disconnected = false;
   private _disconnectedCallback: (e: Error) => void;
   readonly _disconnectedPromise: Promise<Error>;
+  private _crashedCallback: (e: Error) => void;
+  readonly _crashedPromise: Promise<Error>;
   readonly _browserContext: BrowserContextBase;
   readonly keyboard: input.Keyboard;
   readonly mouse: input.Mouse;
@@ -121,6 +124,8 @@ export class Page extends EventEmitter {
     this._closedPromise = new Promise(f => this._closedCallback = f);
     this._disconnectedCallback = () => {};
     this._disconnectedPromise = new Promise(f => this._disconnectedCallback = f);
+    this._crashedCallback = () => {};
+    this._crashedPromise = new Promise(f => this._crashedCallback = f);
     this._browserContext = browserContext;
     this._state = {
       viewportSize: browserContext._options.viewport ? { ...browserContext._options.viewport } : null,
@@ -139,11 +144,6 @@ export class Page extends EventEmitter {
     this.coverage = delegate.coverage ? delegate.coverage() : null;
   }
 
-  private _runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number, apiName: string): Promise<T> {
-    const controller = new ProgressController(this._logger, timeout, `page.${apiName}`);
-    return controller.run(task);
-  }
-
   _didClose() {
     assert(!this._closed, 'Page closed twice');
     this._closed = true;
@@ -153,12 +153,19 @@ export class Page extends EventEmitter {
 
   _didCrash() {
     this.emit(Events.Page.Crash);
+    this._crashedCallback(new Error('Page crashed'));
   }
 
   _didDisconnect() {
     assert(!this._disconnected, 'Page disconnected twice');
     this._disconnected = true;
-    this._disconnectedCallback(new Error('Target closed'));
+    this._disconnectedCallback(new Error('Page closed'));
+  }
+
+  async _runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number, apiName: string): Promise<T> {
+    return runAbortableTask(async progress => {
+      return task(progress);
+    }, this._logger, timeout, apiName);
   }
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {
@@ -218,23 +225,23 @@ export class Page extends EventEmitter {
     return this._attributeToPage(() => this.mainFrame().dispatchEvent(selector, type, eventInit, options));
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
-  async evaluateHandle<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<types.SmartHandle<R>>;
-  async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>>;
+  async evaluateHandle<R>(pageFunction: js.Func1<void, R>, arg?: any): Promise<js.SmartHandle<R>>;
+  async evaluateHandle<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
     return this._attributeToPage(() => this.mainFrame().evaluateHandle(pageFunction, arg));
   }
 
-  async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
-  async $eval<R>(selector: string, pageFunction: types.FuncOn<Element, void, R>, arg?: any): Promise<R>;
-  async $eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
+  async $eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
+  async $eval<R>(selector: string, pageFunction: js.FuncOn<Element, void, R>, arg?: any): Promise<R>;
+  async $eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
     return this._attributeToPage(() => this.mainFrame().$eval(selector, pageFunction, arg));
   }
 
-  async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
-  async $$eval<R>(selector: string, pageFunction: types.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
-  async $$eval<R, Arg>(selector: string, pageFunction: types.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
+  async $$eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
+  async $$eval<R>(selector: string, pageFunction: js.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
+  async $$eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
     return this._attributeToPage(() => this.mainFrame().$$eval(selector, pageFunction, arg));
   }
@@ -265,7 +272,7 @@ export class Page extends EventEmitter {
     await this._delegate.exposeBinding(binding);
   }
 
-  setExtraHTTPHeaders(headers: network.Headers) {
+  setExtraHTTPHeaders(headers: types.Headers) {
     this._state.extraHTTPHeaders = network.verifyHeaders(headers);
     return this._delegate.updateExtraHTTPHeaders();
   }
@@ -274,7 +281,7 @@ export class Page extends EventEmitter {
     await PageBinding.dispatch(this, payload, context);
   }
 
-  _addConsoleMessage(type: string, args: js.JSHandle[], location: ConsoleMessageLocation, text?: string) {
+  _addConsoleMessage(type: string, args: js.JSHandle[], location: types.ConsoleMessageLocation, text?: string) {
     const message = new ConsoleMessage(type, text, args, location);
     const intercepted = this._frameManager.interceptConsoleMessage(message);
     if (intercepted || !this.listenerCount(Events.Page.Console))
@@ -295,7 +302,7 @@ export class Page extends EventEmitter {
     return this._attributeToPage(() => this.mainFrame().setContent(html, options));
   }
 
-  async goto(url: string, options?: frames.GotoOptions): Promise<network.Response | null> {
+  async goto(url: string, options?: types.GotoOptions): Promise<network.Response | null> {
     return this._attributeToPage(() => this.mainFrame().goto(url, options));
   }
 
@@ -335,6 +342,8 @@ export class Page extends EventEmitter {
     const options = typeof optionsOrPredicate === 'function' ? { predicate: optionsOrPredicate } : optionsOrPredicate;
     const progressController = new ProgressController(this._logger, this._timeoutSettings.timeout(options), 'page.waitForEvent');
     this._disconnectedPromise.then(error => progressController.abort(error));
+    if (event !== Events.Page.Crash)
+      this._crashedPromise.then(error => progressController.abort(error));
     return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate));
   }
 
@@ -377,15 +386,19 @@ export class Page extends EventEmitter {
     return this._state.viewportSize;
   }
 
-  async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R>;
-  async evaluate<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<R>;
-  async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R> {
+  async evaluate<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<R>;
+  async evaluate<R>(pageFunction: js.Func1<void, R>, arg?: any): Promise<R>;
+  async evaluate<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
     return this._attributeToPage(() => this.mainFrame().evaluate(pageFunction, arg));
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
     const source = await helper.evaluationScript(script, arg);
+    await this._addInitScriptExpression(source);
+  }
+
+  async _addInitScriptExpression(source: string) {
     this._evaluateOnNewDocumentSources.push(source);
     await this._delegate.evaluateOnNewDocument(source);
   }
@@ -436,19 +449,21 @@ export class Page extends EventEmitter {
     return false;
   }
 
-  async screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {
-    return this._screenshotter.screenshotPage(options);
+  async screenshot(options: types.ScreenshotOptions = {}): Promise<Buffer> {
+    return this._runAbortableTask(
+        progress => this._screenshotter.screenshotPage(progress, options),
+        this._timeoutSettings.timeout(options), 'page.screenshot');
   }
 
   async title(): Promise<string> {
     return this._attributeToPage(() => this.mainFrame().title());
   }
 
-  async close(options: { runBeforeUnload: (boolean | undefined); } = {runBeforeUnload: undefined}) {
+  async close(options?: { runBeforeUnload?: boolean }) {
     if (this._closed)
       return;
     assert(!this._disconnected, 'Protocol error: Connection closed. Most likely the page has been closed.');
-    const runBeforeUnload = !!options.runBeforeUnload;
+    const runBeforeUnload = !!options && !!options.runBeforeUnload;
     await this._delegate.closePage(runBeforeUnload);
     if (!runBeforeUnload)
       await this._closedPromise;
@@ -469,11 +484,11 @@ export class Page extends EventEmitter {
     }
   }
 
-  async click(selector: string, options?: dom.ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+  async click(selector: string, options?: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     return this._attributeToPage(() => this.mainFrame().click(selector, options));
   }
 
-  async dblclick(selector: string, options?: dom.MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+  async dblclick(selector: string, options?: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     return this._attributeToPage(() => this.mainFrame().dblclick(selector, options));
   }
 
@@ -501,7 +516,7 @@ export class Page extends EventEmitter {
     return this._attributeToPage(() => this.mainFrame().getAttribute(selector, name, options));
   }
 
-  async hover(selector: string, options?: dom.PointerActionOptions & types.PointerActionWaitOptions) {
+  async hover(selector: string, options?: types.PointerActionOptions & types.PointerActionWaitOptions) {
     return this._attributeToPage(() => this.mainFrame().hover(selector, options));
   }
 
@@ -533,9 +548,9 @@ export class Page extends EventEmitter {
     await this.mainFrame().waitForTimeout(timeout);
   }
 
-  async waitForFunction<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>>;
-  async waitForFunction<R>(pageFunction: types.Func1<void, R>, arg?: any, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>>;
-  async waitForFunction<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<types.SmartHandle<R>> {
+  async waitForFunction<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<js.SmartHandle<R>>;
+  async waitForFunction<R>(pageFunction: js.Func1<void, R>, arg?: any, options?: types.WaitForFunctionOptions): Promise<js.SmartHandle<R>>;
+  async waitForFunction<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<js.SmartHandle<R>> {
     return this._attributeToPage(() => this.mainFrame().waitForFunction(pageFunction, arg, options));
   }
 
@@ -602,16 +617,16 @@ export class Worker extends EventEmitter {
     return this._url;
   }
 
-  async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R>;
-  async evaluate<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<R>;
-  async evaluate<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<R> {
+  async evaluate<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<R>;
+  async evaluate<R>(pageFunction: js.Func1<void, R>, arg?: any): Promise<R>;
+  async evaluate<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
     return js.evaluate(await this._executionContextPromise, true /* returnByValue */, pageFunction, arg);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>>;
-  async evaluateHandle<R>(pageFunction: types.Func1<void, R>, arg?: any): Promise<types.SmartHandle<R>>;
-  async evaluateHandle<R, Arg>(pageFunction: types.Func1<Arg, R>, arg: Arg): Promise<types.SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>>;
+  async evaluateHandle<R>(pageFunction: js.Func1<void, R>, arg?: any): Promise<js.SmartHandle<R>>;
+  async evaluateHandle<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
     return js.evaluate(await this._executionContextPromise, false /* returnByValue */, pageFunction, arg);
   }

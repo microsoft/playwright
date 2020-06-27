@@ -8,14 +8,11 @@ Some actions like `page.click()` support `{force: true}` option that disable non
 
 | Actions | Performed checks |
 | ------ | ------- |
-| `check()`<br>`click()`<br>`dblclick()`<br>`hover()`<br>`uncheck()` | [Visible]<br>[Stable]<br>[Enabled]<br>[Receiving Events]<br>[Attached]† |
-| `fill()` | [Visible]<br>[Enabled]<br>[Editable]<br>[Attached]† |
-| `focus()`<br>`press()`<br>`setInputFiles()`<br>`selectOption()`<br>`type()` | [Attached]† |
-| `selectText()` | [Visible] |
-| `dispatchEvent()`<br>`scrollIntoViewIfNeeded()` | -- |
-| `getAttribute()`<br>`innerText()`<br>`innerHTML()`<br>`textContent()` | [Attached]† |
-
-† [Attached] check is only performed during selector-based actions.
+| `check()`<br>`click()`<br>`dblclick()`<br>`hover()`<br>`uncheck()` | [Visible]<br>[Stable]<br>[Enabled]<br>[Receiving Events]<br>[Attached] |
+| `fill()` | [Visible]<br>[Enabled]<br>[Editable]<br>[Attached] |
+| `dispatchEvent()`<br>`focus()`<br>`press()`<br>`setInputFiles()`<br>`selectOption()`<br>`type()` | [Attached] |
+| `selectText()`<br>`scrollIntoViewIfNeeded()`<br>`screenshot()` | [Visible]<br>[Attached] |
+| `getAttribute()`<br>`innerText()`<br>`innerHTML()`<br>`textContent()` | [Attached] |
 
 ### Visible
 
@@ -41,7 +38,9 @@ Element is considered receiving pointer events when it is the hit target of the 
 
 Element is considered attached when it is [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
 
-Attached check is performed during a selector-based action, like `page.click(selector, options)` as opposite to `elementHandle.click(options)`.
+Attached check differs between selector-based and handle-based actions, like `page.click(selector, options)` as opposite to `elementHandle.click(options)`:
+- For selector-based actions, Playwright first waits for an element matching `selector` to be attached to the DOM, and then checks that element is still attached before performing the action. If element was detached, the action is retried from the start.
+- For handle-based actions, Playwright throws if the element is not attached.
 
 For example, consider a scenario where Playwright will click `Sign Up` button regardless of when the `page.click()` call was made:
 - page is checking that user name is unique and `Sign Up` button is disabled;
