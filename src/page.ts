@@ -89,7 +89,7 @@ type PageState = {
 };
 
 export class Page extends EventEmitter {
-  private _closed = false;
+  private _closedState: 'open' | 'closing' | 'closed' = 'open';
   private _closedCallback: () => void;
   private _closedPromise: Promise<void>;
   private _disconnected = false;
@@ -145,8 +145,8 @@ export class Page extends EventEmitter {
   }
 
   _didClose() {
-    assert(!this._closed, 'Page closed twice');
-    this._closed = true;
+    assert(this._closedState !== 'closed', 'Page closed twice');
+    this._closedState = 'closed';
     this.emit(Events.Page.Close);
     this._closedCallback();
   }
@@ -460,11 +460,13 @@ export class Page extends EventEmitter {
   }
 
   async close(options?: { runBeforeUnload?: boolean }) {
-    if (this._closed)
+    if (this._closedState === 'closed')
       return;
-    assert(!this._disconnected, 'Protocol error: Connection closed. Most likely the page has been closed.');
     const runBeforeUnload = !!options && !!options.runBeforeUnload;
-    await this._delegate.closePage(runBeforeUnload);
+    if (this._closedState !== 'closing') {
+      assert(!this._disconnected, 'Protocol error: Connection closed. Most likely the page has been closed.');
+      await this._delegate.closePage(runBeforeUnload);
+    }
     if (!runBeforeUnload)
       await this._closedPromise;
     if (this._ownedContext)
@@ -472,7 +474,7 @@ export class Page extends EventEmitter {
   }
 
   isClosed(): boolean {
-    return this._closed;
+    return this._closedState === 'closed';
   }
 
   private _attributeToPage<T>(func: () => T): T {

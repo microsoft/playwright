@@ -68,11 +68,7 @@ export class WKBrowser extends BrowserBase {
   _onDisconnect() {
     for (const wkPage of this._wkPages.values())
       wkPage.dispose();
-    for (const context of this._contexts.values())
-      context._browserClosed();
-    // Note: previous method uses pages to issue 'close' event on them, so we clear them after.
-    this._wkPages.clear();
-    this.emit(Events.Browser.Disconnected);
+    this._didClose();
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
@@ -203,7 +199,7 @@ export class WKBrowserContext extends BrowserContextBase {
   readonly _evaluateOnNewDocumentSources: string[];
 
   constructor(browser: WKBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
-    super(browser, options);
+    super(browser, options, !browserContextId);
     this._browser = browser;
     this._browserContextId = browserContextId;
     this._evaluateOnNewDocumentSources = [];
@@ -337,17 +333,9 @@ export class WKBrowserContext extends BrowserContextBase {
       await (page._delegate as WKPage).updateRequestInterception();
   }
 
-  async close() {
-    if (this._closed)
-      return;
-    if (!this._browserContextId) {
-      // Default context is only created in 'persistent' mode and closing it should close
-      // the browser.
-      await this._browser.close();
-      return;
-    }
+  async _doClose() {
+    assert(this._browserContextId);
     await this._browser._browserSession.send('Playwright.deleteContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
-    await this._didCloseInternal();
   }
 }

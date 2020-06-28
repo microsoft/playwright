@@ -223,6 +223,14 @@ describe('Browser.close', function() {
     await browser.close();
     expect(closed).toBe(true);
   });
+  it('should be callable twice', async({browserType, defaultBrowserOptions}) => {
+    const browser = await browserType.launch(defaultBrowserOptions);
+    await Promise.all([
+      browser.close(),
+      browser.close(),
+    ]);
+    await browser.close();
+  });
 });
 
 describe('browserType.launchServer', function() {
