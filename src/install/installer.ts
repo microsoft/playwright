@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import * as crypto from 'crypto';
+import crypto from 'crypto';
 import { getFromENV, logPolitely } from '../helper';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as util from 'util';
-import * as removeFolder from 'rimraf';
+import fs from 'fs';
+import path from 'path';
+import util from 'util';
+import removeFolder from 'rimraf';
 import * as browserPaths from '../install/browserPaths';
 import * as browserFetcher from '../install/browserFetcher';
 

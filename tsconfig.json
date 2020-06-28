@@ -7,7 +7,8 @@
     "rootDir": "./src",
     "outDir": "./lib",
     "strict": true,
-    "declaration": false
+    "declaration": false,
+    "esModuleInterop": true
   },
   "compileOnSave": true,
   "include": ["src/**/*.ts"],

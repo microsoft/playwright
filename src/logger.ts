@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as debug from 'debug';
+import debug from 'debug';
 import { helper } from './helper';
 import { LoggerSink, LoggerSeverity } from './loggerSink';
 

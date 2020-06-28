@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-import * as crypto from 'crypto';
+import crypto from 'crypto';
 import { EventEmitter } from 'events';
-import * as fs from 'fs';
-import * as removeFolder from 'rimraf';
-import * as util from 'util';
+import fs from 'fs';
+import removeFolder from 'rimraf';
+import util from 'util';
 import * as types from './types';
 import { Progress } from './progress';
 
