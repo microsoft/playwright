@@ -83,6 +83,42 @@ describe('Frame.evaluate', function() {
     expect(a1).toBe(1);
     expect(a2).toBe(2);
   });
+  it.fail(CHROMIUM || FFOX)('should work in iframes that failed initial navigation', async({page, server}) => {
+    // - Firefox does not report domcontentloaded for the iframe.
+    // - Chromium and Firefox report empty url.
+    // - Chromium does not report main/utility worlds for the iframe.
+    await page.setContent(`
+      <meta http-equiv="Content-Security-Policy" content="script-src 'none';">
+      <iframe src='javascript:""'></iframe>
+    `, { waitUntil: 'domcontentloaded' });
+    // Note: Chromium/Firefox never report 'load' event for the iframe.
+    await page.evaluate(() => {
+      const iframe = document.querySelector('iframe');
+      const div = iframe.contentDocument.createElement('div');
+      iframe.contentDocument.body.appendChild(div);
+    });
+    expect(page.frames()[1].url()).toBe('about:blank');
+    // Main world should work.
+    expect(await page.frames()[1].evaluate(() => window.location.href)).toBe('about:blank');
+    // Utility world should work.
+    expect(await page.frames()[1].$('div')).toBeTruthy(null);
+  });
+  it.fail(CHROMIUM)('should work in iframes that interrupted initial javascript url navigation', async({page, server}) => {
+    // Chromium does not report isolated world for the iframe.
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(() => {
+      const iframe = document.createElement('iframe');
+      iframe.src = 'javascript:""';
+      document.body.appendChild(iframe);
+      iframe.contentDocument.open();
+      iframe.contentDocument.write('<div>hello</div>');
+      iframe.contentDocument.close();
+    });
+    // Main world should work.
+    expect(await page.frames()[1].evaluate(() => window.top.location.href)).toBe('http://localhost:8907/empty.html');
+    // Utility world should work.
+    expect(await page.frames()[1].$('div')).toBeTruthy(null);
+  });
 });
 
 describe('Frame Management', function() {
