@@ -220,8 +220,6 @@ export class CRNetworkManager {
     }
     const isNavigationRequest = requestWillBeSentEvent.requestId === requestWillBeSentEvent.loaderId && requestWillBeSentEvent.type === 'Document';
     const documentId = isNavigationRequest ? requestWillBeSentEvent.loaderId : undefined;
-    if (isNavigationRequest)
-      this._page._frameManager.frameUpdatedDocumentIdForNavigation(requestWillBeSentEvent.frameId!, documentId!);
     const request = new InterceptableRequest({
       client: this._client,
       frame,

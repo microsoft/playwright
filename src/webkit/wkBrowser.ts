@@ -89,14 +89,14 @@ export class WKBrowser extends BrowserBase {
     const page = this._wkPages.get(payload.pageProxyId);
     if (!page)
       return;
-    const frameManager = page._page._frameManager;
-    const frame = frameManager.frame(payload.frameId);
-    if (frame) {
-      // In some cases, e.g. blob url download, we receive only frameScheduledNavigation
-      // but no signals that the navigation was canceled and replaced by download. Fix it
-      // here by simulating cancelled provisional load which matches downloads from network.
-      frameManager.provisionalLoadFailed(frame, '', 'Download is starting');
-    }
+    // In some cases, e.g. blob url download, we receive only frameScheduledNavigation
+    // but no signals that the navigation was canceled and replaced by download. Fix it
+    // here by simulating cancelled provisional load which matches downloads from network.
+    //
+    // TODO: this is racy, because download might be unrelated any navigation, and we will
+    // abort navgitation that is still running. We should be able to fix this by
+    // instrumenting policy decision start/proceed/cancel.
+    page._page._frameManager.frameAbortedNavigation(payload.frameId, 'Download is starting');
     let originPage = page._initializedPage;
     // If it's a new window download, report it on the opener page.
     if (!originPage) {

@@ -36,6 +36,13 @@ type ContextData = {
   rerunnableTasks: Set<RerunnableTask>;
 };
 
+type DocumentInfo = {
+  // Unfortunately, we don't have documentId when we find out about
+  // a pending navigation from things like frameScheduledNavigaiton.
+  documentId: string | undefined,
+  request: network.Request | undefined,
+};
+
 export type GotoResult = {
   newDocumentId?: string,
 };
@@ -125,20 +132,17 @@ export class FrameManager {
       barrier.release();
   }
 
-  frameRequestedNavigation(frameId: string, documentId: string) {
+  frameRequestedNavigation(frameId: string, documentId?: string) {
     const frame = this._frames.get(frameId);
     if (!frame)
       return;
     for (const barrier of this._signalBarriers)
       barrier.addFrameNavigation(frame);
-    frame._pendingDocumentId = documentId;
-  }
-
-  frameUpdatedDocumentIdForNavigation(frameId: string, documentId: string) {
-    const frame = this._frames.get(frameId);
-    if (!frame)
+    if (frame._pendingDocument && frame._pendingDocument.documentId === documentId) {
+      // Do not override request with undefined.
       return;
-    frame._pendingDocumentId = documentId;
+    }
+    frame._pendingDocument = { documentId, request: undefined };
   }
 
   frameCommittedNewDocumentNavigation(frameId: string, url: string, name: string, documentId: string, initial: boolean) {
@@ -146,11 +150,16 @@ export class FrameManager {
     this.removeChildFramesRecursively(frame);
     frame._url = url;
     frame._name = name;
-    debugAssert(!frame._pendingDocumentId || frame._pendingDocumentId === documentId);
-    frame._lastDocumentId = documentId;
-    frame._pendingDocumentId = '';
+    if (frame._pendingDocument && frame._pendingDocument.documentId === undefined)
+      frame._pendingDocument.documentId = documentId;
+    debugAssert(!frame._pendingDocument || frame._pendingDocument.documentId === documentId);
+    if (frame._pendingDocument && frame._pendingDocument.documentId === documentId)
+      frame._currentDocument = frame._pendingDocument;
+    else
+      frame._currentDocument = { documentId, request: undefined };
+    frame._pendingDocument = undefined;
     for (const task of frame._frameTasks)
-      task.onNewDocument(documentId);
+      task.onNewDocument(frame._currentDocument);
     this.clearFrameLifecycle(frame);
     if (!initial)
       this._page.emit(Events.Page.FrameNavigated, frame);
@@ -164,6 +173,18 @@ export class FrameManager {
     for (const task of frame._frameTasks)
       task.onSameDocument();
     this._page.emit(Events.Page.FrameNavigated, frame);
+  }
+
+  frameAbortedNavigation(frameId: string, errorText: string, documentId?: string) {
+    const frame = this._frames.get(frameId);
+    if (!frame || !frame._pendingDocument)
+      return;
+    if (documentId !== undefined && frame._pendingDocument.documentId !== documentId)
+      return;
+    const pending = frame._pendingDocument;
+    frame._pendingDocument = undefined;
+    for (const task of frame._frameTasks)
+      task.onNewDocument(pending, new Error(errorText));
   }
 
   frameDetached(frameId: string) {
@@ -194,16 +215,17 @@ export class FrameManager {
   clearFrameLifecycle(frame: Frame) {
     frame._firedLifecycleEvents.clear();
     // Keep the current navigation request if any.
-    frame._inflightRequests = new Set(Array.from(frame._inflightRequests).filter(request => request._documentId === frame._lastDocumentId));
+    frame._inflightRequests = new Set(Array.from(frame._inflightRequests).filter(request => request === frame._currentDocument.request));
     frame._stopNetworkIdleTimer();
     if (frame._inflightRequests.size === 0)
       frame._startNetworkIdleTimer();
   }
 
   requestStarted(request: network.Request) {
+    const frame = request.frame();
     this._inflightRequestStarted(request);
-    for (const task of request.frame()._frameTasks)
-      task.onRequest(request);
+    if (request._documentId)
+      frame._pendingDocument = { documentId: request._documentId, request };
     if (request._isFavicon) {
       const route = request._route();
       if (route)
@@ -225,25 +247,16 @@ export class FrameManager {
   }
 
   requestFailed(request: network.Request, canceled: boolean) {
+    const frame = request.frame();
     this._inflightRequestFinished(request);
-    if (request._documentId) {
-      const isPendingDocument = request.frame()._pendingDocumentId === request._documentId;
-      if (isPendingDocument) {
-        request.frame()._pendingDocumentId = '';
-        let errorText = request.failure()!.errorText;
-        if (canceled)
-          errorText += '; maybe frame was detached?';
-        for (const task of request.frame()._frameTasks)
-          task.onNewDocument(request._documentId, new Error(errorText));
-      }
+    if (frame._pendingDocument && frame._pendingDocument.request === request) {
+      let errorText = request.failure()!.errorText;
+      if (canceled)
+        errorText += '; maybe frame was detached?';
+      this.frameAbortedNavigation(frame._id, errorText, frame._pendingDocument.documentId);
     }
     if (!request._isFavicon)
       this._page.emit(Events.Page.RequestFailed, request);
-  }
-
-  provisionalLoadFailed(frame: Frame, documentId: string, error: string) {
-    for (const task of frame._frameTasks)
-      task.onNewDocument(documentId, new Error(error));
   }
 
   private _notifyLifecycle(frame: Frame, lifecycleEvent: types.LifecycleEvent) {
@@ -301,8 +314,8 @@ export class FrameManager {
 export class Frame {
   _id: string;
   readonly _firedLifecycleEvents: Set<types.LifecycleEvent>;
-  _lastDocumentId = '';
-  _pendingDocumentId = '';
+  _currentDocument: DocumentInfo;
+  _pendingDocument?: DocumentInfo;
   _frameTasks = new Set<FrameTask>();
   readonly _page: Page;
   private _parentFrame: Frame | null;
@@ -322,6 +335,7 @@ export class Frame {
     this._firedLifecycleEvents = new Set();
     this._page = page;
     this._parentFrame = parentFrame;
+    this._currentDocument = { documentId: undefined, request: undefined };
 
     this._detachedPromise = new Promise<void>(x => this._detachedCallback = x);
 
@@ -358,14 +372,14 @@ export class Frame {
         sameDocumentPromise.catch(e => {});
         throw e;
       });
+      let request: network.Request | undefined;
       if (navigateResult.newDocumentId) {
         // Do not leave sameDocumentPromise unhandled.
         sameDocumentPromise.catch(e => {});
-        await frameTask.waitForSpecificDocument(navigateResult.newDocumentId);
+        request = await frameTask.waitForSpecificDocument(navigateResult.newDocumentId);
       } else {
         await sameDocumentPromise;
       }
-      const request = (navigateResult && navigateResult.newDocumentId) ? frameTask.request(navigateResult.newDocumentId) : null;
       await frameTask.waitForLifecycle(options.waitUntil === undefined ? 'load' : options.waitUntil);
       frameTask.done();
       return request ? request._finalRequest().response() : null;
@@ -377,12 +391,11 @@ export class Frame {
       const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
       progress.logger.info(`waiting for navigation${toUrl} until "${options.waitUntil || 'load'}"`);
       const frameTask = new FrameTask(this, progress);
-      let documentId: string | undefined;
+      let request: network.Request | undefined;
       await Promise.race([
-        frameTask.waitForNewDocument(options.url).then(id => documentId = id),
+        frameTask.waitForNewDocument(options.url).then(r => request = r),
         frameTask.waitForSameDocumentNavigation(options.url),
       ]);
-      const request = documentId ? frameTask.request(documentId) : null;
       await frameTask.waitForLifecycle(options.waitUntil === undefined ? 'load' : options.waitUntil);
       frameTask.done();
       return request ? request._finalRequest().response() : null;
@@ -1026,11 +1039,10 @@ class SignalBarrier {
 
 class FrameTask {
   private readonly _frame: Frame;
-  private readonly _requestMap = new Map<string, network.Request>();
   private readonly _progress: Progress | null = null;
   private _onSameDocument?: { url?: types.URLMatch, resolve: () => void };
-  private _onSpecificDocument?: { expectedDocumentId: string, resolve: () => void, reject: (error: Error) => void };
-  private _onNewDocument?: { url?: types.URLMatch, resolve: (documentId: string) => void, reject: (error: Error) => void };
+  private _onSpecificDocument?: { expectedDocumentId: string, resolve: (request: network.Request | undefined) => void, reject: (error: Error) => void };
+  private _onNewDocument?: { url?: types.URLMatch, resolve: (request: network.Request | undefined) => void, reject: (error: Error) => void };
   private _onLifecycle?: { waitUntil: types.LifecycleEvent, resolve: () => void };
 
   constructor(frame: Frame, progress: Progress | null) {
@@ -1041,16 +1053,6 @@ class FrameTask {
       progress.cleanupWhenAborted(() => this.done());
   }
 
-  onRequest(request: network.Request) {
-    if (!request._documentId || request.redirectedFrom())
-      return;
-    this._requestMap.set(request._documentId, request);
-  }
-
-  request(documentId: string): network.Request | undefined {
-    return this._requestMap.get(documentId);
-  }
-
   onSameDocument() {
     if (this._progress)
       this._progress.logger.info(`navigated to "${this._frame._url}"`);
@@ -1058,15 +1060,15 @@ class FrameTask {
       this._onSameDocument.resolve();
   }
 
-  onNewDocument(documentId: string, error?: Error) {
+  onNewDocument(documentInfo: DocumentInfo, error?: Error) {
     if (this._progress && !error)
       this._progress.logger.info(`navigated to "${this._frame._url}"`);
     if (this._onSpecificDocument) {
-      if (documentId === this._onSpecificDocument.expectedDocumentId) {
+      if (documentInfo.documentId === this._onSpecificDocument.expectedDocumentId) {
         if (error)
           this._onSpecificDocument.reject(error);
         else
-          this._onSpecificDocument.resolve();
+          this._onSpecificDocument.resolve(documentInfo.request);
       } else if (!error) {
         this._onSpecificDocument.reject(new Error('Navigation interrupted by another one'));
       }
@@ -1075,7 +1077,7 @@ class FrameTask {
       if (error)
         this._onNewDocument.reject(error);
       else if (helper.urlMatches(this._frame.url(), this._onNewDocument.url))
-        this._onNewDocument.resolve(documentId);
+        this._onNewDocument.resolve(documentInfo.request);
     }
   }
 
@@ -1093,14 +1095,14 @@ class FrameTask {
     });
   }
 
-  waitForSpecificDocument(expectedDocumentId: string): Promise<void> {
+  waitForSpecificDocument(expectedDocumentId: string): Promise<network.Request | undefined> {
     return new Promise((resolve, reject) => {
       assert(!this._onSpecificDocument);
       this._onSpecificDocument = { expectedDocumentId, resolve, reject };
     });
   }
 
-  waitForNewDocument(url?: types.URLMatch): Promise<string> {
+  waitForNewDocument(url?: types.URLMatch): Promise<network.Request | undefined> {
     return new Promise((resolve, reject) => {
       assert(!this._onNewDocument);
       this._onNewDocument = { url, resolve, reject };
