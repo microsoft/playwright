@@ -195,7 +195,7 @@ stages:
 
 tests:
   stage: test
-  image: aslushnikov/playwright:bionic
+  image: mcr.microsoft.com/playwright:bionic
   script:
     - npm install # This should install playwright
     - npm run test
