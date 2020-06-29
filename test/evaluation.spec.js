@@ -200,6 +200,50 @@ describe('Page.evaluate', function() {
     const result = await page.evaluate(() => -Infinity);
     expect(Object.is(result, -Infinity)).toBe(true);
   });
+  it('should work with overwritten Promise', async({page, server}) => {
+    await page.evaluate(() => {
+      const originalPromise = window.Promise;
+      class Promise2 {
+        static all(...arg) {
+          return wrap(originalPromise.all(...arg));
+        }
+        static race(...arg) {
+          return wrap(originalPromise.race(...arg));
+        }
+        static resolve(...arg) {
+          return wrap(originalPromise.resolve(...arg));
+        }
+        constructor(f, r) {
+          this._promise = new originalPromise(f, r);
+        }
+        then(f, r) {
+          return wrap(this._promise.then(f, r));
+        }
+        catch(f) {
+          return wrap(this._promise.catch(f));
+        }
+        finally(f) {
+          return wrap(this._promise.finally(f));
+        }
+      };
+      const wrap = p => {
+        const result = new Promise2(() => {}, () => {});
+        result._promise = p;
+        return result;
+      };
+      window.Promise = Promise2;
+      window.__Promise2 = Promise2;
+    });
+
+    // Sanity check.
+    expect(await page.evaluate(() => {
+      const p = Promise.all([Promise.race([]), new Promise(() => {}).then(() => {})]);
+      return p instanceof window.__Promise2;
+    })).toBe(true);
+
+    // Now, the new promise should be awaitable.
+    expect(await page.evaluate(() => Promise.resolve(42))).toBe(42);
+  });
   it('should throw when passed more than one parameter', async({page, server}) => {
     const expectThrow = async f => {
       let error;

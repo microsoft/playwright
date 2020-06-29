@@ -115,7 +115,7 @@ describe('Frame.evaluate', function() {
       iframe.contentDocument.close();
     });
     // Main world should work.
-    expect(await page.frames()[1].evaluate(() => window.top.location.href)).toBe('http://localhost:8907/empty.html');
+    expect(await page.frames()[1].evaluate(() => window.top.location.href)).toBe(server.EMPTY_PAGE);
     // Utility world should work.
     expect(await page.frames()[1].$('div')).toBeTruthy(null);
   });

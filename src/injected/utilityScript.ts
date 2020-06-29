@@ -47,8 +47,16 @@ export default class UtilityScript {
       }
     };
 
-    if (value && typeof value === 'object' && typeof value.then === 'function')
-      return value.then(safeJson);
+    if (value && typeof value === 'object' && typeof value.then === 'function') {
+      return (async () => {
+        // By using async function we ensure that return value is a native Promise,
+        // and not some overriden Promise in the page.
+        // This makes Firefox and WebKit debugging protocols recognize it as a Promise,
+        // properly await and return the value.
+        const promiseValue = await value;
+        return safeJson(promiseValue);
+      })();
+    }
     return safeJson(value);
   }
 }

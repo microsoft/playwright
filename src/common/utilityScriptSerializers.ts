@@ -52,9 +52,6 @@ export function serializeAsCallArgument(value: any, jsHandleSerializer: (value: 
 }
 
 function serialize(value: any, jsHandleSerializer: (value: any) => { fallThrough?: any }, visited: Set<any>): any {
-  if (value && typeof value === 'object' && typeof value.then === 'function')
-    return value;
-
   const result = jsHandleSerializer(value);
   if ('fallThrough' in result)
     value = result.fallThrough;
