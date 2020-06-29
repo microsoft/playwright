@@ -172,14 +172,12 @@ class InterceptableRequest implements network.RouteDelegate {
     });
   }
 
-  async fulfill(response: types.FulfillResponse) {
+  async fulfill(response: types.NormalizedFulfillResponse) {
     const responseBody = response.body && helper.isString(response.body) ? Buffer.from(response.body) : (response.body || null);
 
     const responseHeaders: { [s: string]: string; } = {};
-    if (response.headers) {
-      for (const header of Object.keys(response.headers))
-        responseHeaders[header.toLowerCase()] = response.headers[header];
-    }
+    for (const header of Object.keys(response.headers))
+      responseHeaders[header.toLowerCase()] = response.headers[header];
     if (response.contentType)
       responseHeaders['content-type'] = response.contentType;
     if (responseBody && !('content-length' in responseHeaders))
@@ -187,8 +185,8 @@ class InterceptableRequest implements network.RouteDelegate {
 
     await this._session.sendMayFail('Network.fulfillInterceptedRequest', {
       requestId: this._id,
-      status: response.status || 200,
-      statusText: network.STATUS_TEXTS[String(response.status || 200)] || '',
+      status: response.status,
+      statusText: network.STATUS_TEXTS[String(response.status)] || '',
       headers: headersArray(responseHeaders),
       base64body: responseBody ? responseBody.toString('base64') : undefined,
     });

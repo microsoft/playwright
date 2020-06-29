@@ -46,7 +46,7 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitiali
   }
 
   async jsonValue(): Promise<any> {
-    return this._object.jsonValue();
+    return serializeResult(await this._object.jsonValue());
   }
 
   async dispose() {
@@ -55,7 +55,7 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitiali
 }
 
 export function parseArgument(arg: { value: any, guids: JSHandleDispatcher[] }): any {
-  return convertDispatchersToObjects(parseEvaluationResultValue(arg.value, arg.guids));
+  return parseEvaluationResultValue(arg.value, convertDispatchersToObjects(arg.guids));
 }
 
 export function serializeResult(arg: any): any {

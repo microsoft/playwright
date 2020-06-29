@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as mime from 'mime';
-import * as util from 'util';
 import * as frames from './frames';
 import * as types from './types';
 import { assert, helper } from './helper';
 import { URLSearchParams } from 'url';
+import { normalizeFulfillParameters } from './rpc/serializers';
 
 export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): types.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));
@@ -220,15 +218,7 @@ export class Route {
   async fulfill(response: types.FulfillResponse & { path?: string }) {
     assert(!this._handled, 'Route is already handled!');
     this._handled = true;
-    if (response.path) {
-      response = {
-        status: response.status,
-        headers: response.headers,
-        contentType: mime.getType(response.path) || 'application/octet-stream',
-        body: await util.promisify(fs.readFile)(response.path)
-      };
-    }
-    await this._delegate.fulfill(response);
+    await this._delegate.fulfill(await normalizeFulfillParameters(response));
   }
 
   async continue(overrides: { method?: string; headers?: types.Headers; postData?: string } = {}) {
@@ -325,7 +315,7 @@ export class Response {
 
 export interface RouteDelegate {
   abort(errorCode: string): Promise<void>;
-  fulfill(response: types.FulfillResponse): Promise<void>;
+  fulfill(response: types.NormalizedFulfillResponse): Promise<void>;
   continue(overrides: { method?: string; headers?: types.Headers; postData?: string; }): Promise<void>;
 }
 

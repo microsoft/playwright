@@ -334,6 +334,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async setViewportSize(viewportSize: types.Size) {
+    this._viewportSize = viewportSize;
     await this._channel.setViewportSize({ viewportSize });
   }
 

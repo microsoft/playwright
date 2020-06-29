@@ -55,6 +55,7 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
     const context = await this.newContext(options);
     const page = await context.newPage();
     page._ownedContext = context;
+    context._ownerPage = page;
     return page;
   }
 

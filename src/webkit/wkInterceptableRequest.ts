@@ -66,17 +66,15 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     await this._session.sendMayFail('Network.interceptRequestWithError', { requestId: this._requestId, errorType });
   }
 
-  async fulfill(response: types.FulfillResponse) {
+  async fulfill(response: types.NormalizedFulfillResponse) {
     await this._interceptedPromise;
 
     const base64Encoded = !!response.body && !helper.isString(response.body);
     const responseBody = response.body ? (base64Encoded ? response.body.toString('base64') : response.body as string) : '';
 
     const responseHeaders: { [s: string]: string; } = {};
-    if (response.headers) {
-      for (const header of Object.keys(response.headers))
-        responseHeaders[header.toLowerCase()] = String(response.headers[header]);
-    }
+    for (const header of Object.keys(response.headers))
+      responseHeaders[header.toLowerCase()] = String(response.headers[header]);
     let mimeType = base64Encoded ? 'application/octet-stream' : 'text/plain';
     if (response.contentType) {
       responseHeaders['content-type'] = response.contentType;
@@ -93,8 +91,8 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     // or the page was closed. We should tolerate these errors.
     await this._session.sendMayFail('Network.interceptRequestWithResponse', {
       requestId: this._requestId,
-      status: response.status || 200,
-      statusText: network.STATUS_TEXTS[String(response.status || 200)],
+      status: response.status,
+      statusText: network.STATUS_TEXTS[String(response.status)],
       mimeType,
       headers: responseHeaders,
       base64Encoded,

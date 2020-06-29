@@ -62,3 +62,20 @@ export async function normalizeFilePayloads(files: string | types.FilePayload | 
   }
   return filePayloads;
 }
+
+export async function normalizeFulfillParameters(params: types.FulfillResponse & { path?: string }): Promise<types.NormalizedFulfillResponse> {
+  if (params.path) {
+    return {
+      status: params.status || 200,
+      headers: params.headers || {},
+      contentType: mime.getType(params.path) || 'application/octet-stream',
+      body: await util.promisify(fs.readFile)(params.path)
+    };
+  }
+  return {
+    status: params.status || 200,
+    headers: params.headers || {},
+    contentType: params.contentType,
+    body: params.body || ''
+  };
+}
