@@ -85,7 +85,7 @@ For Linux agents, you can use [our Docker container](docker/README.md) with Azur
 pool:
   vmImage: 'ubuntu-18.04'
 
-container: aslushnikov/playwright:bionic
+container: mcr.microsoft.com/playwright:bionic
 
 steps:
 - script: npm install
@@ -151,7 +151,7 @@ We run our tests on CircleCI, with our [pre-built Docker image](docker/README.md
 
    ```yaml
    docker:
-     - image: aslushnikov/playwright:bionic
+     - image: mcr.microsoft.com/playwright:bionic
        environment:
          NODE_ENV: development # Needed if playwright is in `devDependencies`
    ```
@@ -175,7 +175,7 @@ We run our tests on Windows agents in AppVeyor. Use our [AppVeyor configuration]
 Bitbucket Pipelines can use public [Docker images as build environments](https://confluence.atlassian.com/bitbucket/use-docker-images-as-build-environments-792298897.html). To run Playwright tests on Bitbucket, use our public Docker image ([see Dockerfile](docker/README.md)).
 
 ```yml
-image: aslushnikov/playwright:bionic
+image: mcr.microsoft.com/playwright:bionic
 ```
 
 While the Docker image supports sandboxing for Chromium, it does not work in the Bitbucket Pipelines environment. To launch Chromium on Bitbucket Pipelines, use the `--no-sandbox` launch argument.
