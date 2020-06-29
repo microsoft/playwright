@@ -13670,6 +13670,19 @@ index 0000000000000000000000000000000000000000..135a60361fa8fbf907382625e7c8dd4e
 +}
 +
 +} // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/win/WebContextMenuProxyWin.cpp b/Source/WebKit/UIProcess/win/WebContextMenuProxyWin.cpp
+index aa171f48bc40a96a86d951451b578f609c573fce..8cdc2ff1e3a2ce3d05aacc46a83521c02442dd44 100644
+--- a/Source/WebKit/UIProcess/win/WebContextMenuProxyWin.cpp
++++ b/Source/WebKit/UIProcess/win/WebContextMenuProxyWin.cpp
+@@ -105,6 +105,8 @@ void WebContextMenuProxyWin::showContextMenuWithItems(Vector<Ref<WebContextMenuI
+     UINT flags = TPM_RIGHTBUTTON | TPM_TOPALIGN | TPM_VERPOSANIMATION | TPM_HORIZONTAL | TPM_LEFTALIGN | TPM_HORPOSANIMATION;
+     POINT pt { m_context.menuLocation().x(), m_context.menuLocation().y() };
+     HWND wnd = m_page.viewWidget();
++    if (!::IsWindowVisibile(wnd))
++        return;
+     ::ClientToScreen(wnd, &pt);
+     ::TrackPopupMenuEx(m_menu, flags, pt.x, pt.y, m_page.viewWidget(), nullptr);
+ }
 diff --git a/Source/WebKit/UIProcess/win/WebPageInspectorEmulationAgentWin.cpp b/Source/WebKit/UIProcess/win/WebPageInspectorEmulationAgentWin.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..62b841fe1d0de2296e1c61e328cff564f5aa1c0f
