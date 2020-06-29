@@ -20,6 +20,7 @@ import { RequestChannel, ResponseChannel, RouteChannel, RequestInitializer, Resp
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
 import { Connection } from '../connection';
+import { normalizeFulfillParameters } from '../serializers';
 
 export type NetworkCookie = {
   name: string,
@@ -150,7 +151,13 @@ export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
   }
 
   async fulfill(response: types.FulfillResponse & { path?: string }) {
-    await this._channel.fulfill({ response });
+    const normalized = await normalizeFulfillParameters(response);
+    await this._channel.fulfill({ response: {
+      status: normalized.status,
+      headers: normalized.headers,
+      contentType: normalized.contentType,
+      body: (typeof normalized.body === 'string' ? Buffer.from(normalized.body) : normalized.body).toString('base64')
+    }});
   }
 
   async continue(overrides: { method?: string; headers?: types.Headers; postData?: string } = {}) {

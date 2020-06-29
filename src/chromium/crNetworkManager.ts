@@ -361,14 +361,12 @@ class InterceptableRequest implements network.RouteDelegate {
     });
   }
 
-  async fulfill(response: types.FulfillResponse) {
+  async fulfill(response: types.NormalizedFulfillResponse) {
     const responseBody = response.body && helper.isString(response.body) ? Buffer.from(response.body) : (response.body || null);
 
     const responseHeaders: { [s: string]: string; } = {};
-    if (response.headers) {
-      for (const header of Object.keys(response.headers))
-        responseHeaders[header.toLowerCase()] = response.headers[header];
-    }
+    for (const header of Object.keys(response.headers))
+      responseHeaders[header.toLowerCase()] = response.headers[header];
     if (response.contentType)
       responseHeaders['content-type'] = response.contentType;
     if (responseBody && !('content-length' in responseHeaders))
@@ -378,8 +376,8 @@ class InterceptableRequest implements network.RouteDelegate {
     // or the page was closed. We should tolerate these errors.
     await this._client._sendMayFail('Fetch.fulfillRequest', {
       requestId: this._interceptionId!,
-      responseCode: response.status || 200,
-      responsePhrase: network.STATUS_TEXTS[String(response.status || 200)],
+      responseCode: response.status,
+      responsePhrase: network.STATUS_TEXTS[String(response.status)],
       responseHeaders: headersArray(responseHeaders),
       body: responseBody ? responseBody.toString('base64') : undefined,
     });

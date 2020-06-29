@@ -16,7 +16,7 @@
 
 import { Request, Response, Route } from '../../network';
 import * as types from '../../types';
-import { RequestChannel, ResponseChannel, RouteChannel, ResponseInitializer, RequestInitializer, RouteInitializer } from '../channels';
+import { RequestChannel, ResponseChannel, RouteChannel, ResponseInitializer, RequestInitializer, RouteInitializer, Binary } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 
@@ -102,8 +102,14 @@ export class RouteDispatcher extends Dispatcher<Route, RouteInitializer> impleme
     await this._object.continue(params.overrides);
   }
 
-  async fulfill(params: { response: types.FulfillResponse & { path?: string } }): Promise<void> {
-    await this._object.fulfill(params.response);
+  async fulfill(params: { response: { status?: number, headers?: types.Headers, contentType?: string, body: Binary } }): Promise<void> {
+    const { response } = params;
+    await this._object.fulfill({
+      status: response.status,
+      headers: response.headers,
+      contentType: response.contentType,
+      body: Buffer.from(response.body, 'base64'),
+    });
   }
 
   async abort(params: { errorCode: string }): Promise<void> {

@@ -17,6 +17,8 @@
 import { EventEmitter } from 'events';
 import * as types from '../types';
 
+export type Binary = string;
+
 export interface Channel extends EventEmitter {
   _type: string;
   _guid: string;
@@ -101,7 +103,7 @@ export interface PageChannel extends Channel {
   goForward(params: { options?: types.NavigateOptions }): Promise<ResponseChannel | null>;
   opener(): Promise<PageChannel | null>;
   reload(params: { options?: types.NavigateOptions }): Promise<ResponseChannel | null>;
-  screenshot(params: { options?: types.ScreenshotOptions }): Promise<string>;
+  screenshot(params: { options?: types.ScreenshotOptions }): Promise<Binary>;
   setExtraHTTPHeaders(params: { headers: types.Headers }): Promise<void>;
   setNetworkInterceptionEnabled(params: { enabled: boolean }): Promise<void>;
   setViewportSize(params: { viewportSize: types.Size }): Promise<void>;
@@ -199,7 +201,7 @@ export interface ElementHandleChannel extends JSHandleChannel {
   press(params: { key: string; options?: { delay?: number } & types.TimeoutOptions & { noWaitAfter?: boolean } }): Promise<void>;
   querySelector(params: { selector: string }): Promise<ElementHandleChannel | null>;
   querySelectorAll(params: { selector: string }): Promise<ElementHandleChannel[]>;
-  screenshot(params: { options?: types.ElementScreenshotOptions }): Promise<string>;
+  screenshot(params: { options?: types.ElementScreenshotOptions }): Promise<Binary>;
   scrollIntoViewIfNeeded(params: { options?: types.TimeoutOptions }): Promise<void>;
   selectOption(params: { values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null; options?: types.NavigatingActionWaitOptions }): string[] | Promise<string[]>;
   selectText(params: { options?: types.TimeoutOptions }): Promise<void>;
@@ -228,7 +230,14 @@ export type RequestInitializer = {
 export interface RouteChannel extends Channel {
   abort(params: { errorCode: string }): Promise<void>;
   continue(params: { overrides: { method?: string, headers?: types.Headers, postData?: string } }): Promise<void>;
-  fulfill(params: { response: types.FulfillResponse & { path?: string } }): Promise<void>;
+  fulfill(params: {
+    response: {
+      status?: number,
+      headers?: types.Headers,
+      contentType?: string,
+      body: Binary,
+    }
+  }): Promise<void>;
 }
 export type RouteInitializer = {
   request: RequestChannel,

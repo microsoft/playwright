@@ -82,7 +82,7 @@ export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel, JSHandleIni
   }
 
   async jsonValue(): Promise<T> {
-    return await this._channel.jsonValue();
+    return parseResult(await this._channel.jsonValue());
   }
 
   asElement(): ElementHandle | null {

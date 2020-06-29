@@ -34,6 +34,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   readonly _bindings = new Map<string, frames.FunctionWithSource>();
   private _pendingWaitForEvents = new Map<(error: Error) => void, string>();
   _timeoutSettings = new TimeoutSettings();
+  _ownerPage: Page | undefined;
 
   static from(context: BrowserContextChannel): BrowserContext {
     return context._object;
@@ -91,6 +92,8 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   }
 
   async newPage(): Promise<Page> {
+    if (this._ownerPage)
+      throw new Error('Please use browser.newContext()');
     return Page.from(await this._channel.newPage());
   }
 

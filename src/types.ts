@@ -196,6 +196,13 @@ export type FulfillResponse = {
   body?: string | Buffer,
 };
 
+export type NormalizedFulfillResponse = {
+  status: number,
+  headers: Headers,
+  contentType?: string,
+  body: string | Buffer,
+};
+
 export type NetworkCookie = {
   name: string,
   value: string,
