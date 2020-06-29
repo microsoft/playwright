@@ -36,7 +36,16 @@ export type Listener = (...args: any[]) => void;
 let isInDebugMode = !!getFromENV('PWDEBUG');
 let isInRecordMode = false;
 
+const deprecatedHits = new Set();
+export function deprecate(methodName: string, message: string) {
+  if (deprecatedHits.has(methodName))
+    return;
+  deprecatedHits.add(methodName);
+  console.warn(message);
+}
+
 class Helper {
+
   static evaluationString(fun: Function | string, ...args: any[]): string {
     if (Helper.isString(fun)) {
       assert(args.length === 0 || (args.length === 1 && args[0] === undefined), 'Cannot evaluate a string with arguments');
