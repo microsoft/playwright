@@ -1,18 +1,13 @@
 ################################################
 # Compile with:
-#     docker build -t mcr.microsoft.com/playwright:bionic -f Dockerfile.bionic .
+#     docker build -t mcr.microsoft.com/playwright:buster -f Dockerfile.buster .
 #
 # Run with:
-#     docker run -d -p --rm --name playwright mcr.microsoft.com/playwright:bionic
+#     docker run -d -p --rm --name playwright mcr.microsoft.com/playwright:buster
 #
 #################################################
 
-FROM ubuntu:bionic
-
-# Install Node.js (LTS)
-RUN apt-get update && apt-get install -y curl && \
-    curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
-    apt-get install -y nodejs
+FROM node:12-buster-slim
 
 # Install dependencies
 RUN apt-get update && \
@@ -28,11 +23,8 @@ RUN apt-get update && \
     libhyphen0 \
     libgdk-pixbuf2.0-0 \
     libegl1 \
-    libnotify4 \
     libxslt1.1 \
-    libevent-2.1-6 \
     libgles2 \
-    libvpx5 \
     # gstreamer and plugins to support video playback in WebKit
     gstreamer1.0-gl \
     gstreamer1.0-plugins-base \
@@ -43,13 +35,33 @@ RUN apt-get update && \
     libxss1 \
     libasound2 \
     fonts-noto-color-emoji \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libxcomposite1 \
+    libcups2 \
+    libgtk-3-0 \
     # Firefox dependencies
     libdbus-glib-1-2 \
     libxt6 \
     # FFmpeg to bring in audio and video codecs necessary for playing videos in Firefox
     ffmpeg \
     # (Optional) XVFB if there's a need to run browsers in headful mode
-    xvfb
+    xvfb \
+    # For compiling libjpeg for WebKit
+    curl \
+    gcc \
+    make
+
+# Compiling libjpeg for WebKit
+RUN cd /tmp && \
+    curl -s http://www.ijg.org/files/jpegsrc.v8d.tar.gz | tar zx && \
+    cd jpeg-8d && \
+    ./configure && \
+    make && \
+    make install
+
+# Add directory in which libjpeg was built to the search path
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 # Add user so we don't need --no-sandbox in Chromium
 RUN groupadd -r pwuser && useradd -r -g pwuser -G audio,video pwuser \

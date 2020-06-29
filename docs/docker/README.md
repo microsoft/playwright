@@ -1,25 +1,41 @@
 # Running Playwright in Docker
 
-[Dockerfile.bionic](Dockerfile.bionic) is a playwright-ready image of playwright.
-This image includes all the dependencies needed to run browsers in a Docker
-container.
+## General
 
-Building image:
+We provide official Docker images which include all the need dependencies for the recent **Ubuntu** and **Debian** versions to run browsers in a Docker container.
 
+### Building image
+
+```bash
+docker build -t mcr.microsoft.com/playwright:focal -f Dockerfile.focal .
 ```
-$ sudo docker build -t microsoft/playwright:bionic -f Dockerfile.bionic .
-```
 
-Running image:
+### Running image
 
-```
-$ sudo docker container run -it --rm --ipc=host --security-opt seccomp=chrome.json microsoft/playwright:bionic /bin/bash
+```bash
+docker container run -it --rm --ipc=host --security-opt seccomp=chrome.json mcr.microsoft.com/playwright:focal /bin/bash
 ```
 
 > **NOTE**: The seccomp profile is coming from Jessie Frazelle. It's needed
-> to run Chrome without sandbox.  
-> Using `--ipc=host` is also recommended when using Chrome. Without it Chrome can run out of memory and crash.  
+> to run Chrome without sandbox.
+> Using `--ipc=host` is also recommended when using Chrome. Without it Chrome can run out of memory and crash.
 > [See the docker documentation for this option here.](https://docs.docker.com/engine/reference/run/#ipc-settings---ipc)
+
+## Playwright on Ubuntu
+
+### Ubuntu 20 - Focal
+
+[Dockerfile.focal](Dockerfile.focal) is based on [Ubuntu 20](https://hub.docker.com/_/ubuntu).
+
+### Ubuntu 18 - Bionic
+
+[Dockerfile.bionic](Dockerfile.bionic) is based on [Ubuntu 18](https://hub.docker.com/_/ubuntu).
+
+## Playwright on Debian
+
+### Debian 10 - Buster
+
+[Dockerfile.buster](Dockerfile.buster) is based on a [slim version](https://hub.docker.com/_/node/) of Debian buster.
 
 ## Playwright on Alpine
 

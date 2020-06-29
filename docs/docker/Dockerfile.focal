@@ -1,13 +1,13 @@
 ################################################
 # Compile with:
-#     docker build -t mcr.microsoft.com/playwright:bionic -f Dockerfile.bionic .
+#     docker build -t mcr.microsoft.com/playwright:focal -f Dockerfile.focal .
 #
 # Run with:
-#     docker run -d -p --rm --name playwright mcr.microsoft.com/playwright:bionic
+#     docker run -d -p --rm --name playwright mcr.microsoft.com/playwright:focal
 #
 #################################################
 
-FROM ubuntu:bionic
+FROM ubuntu:focal
 
 # Install Node.js (LTS)
 RUN apt-get update && apt-get install -y curl && \
@@ -28,11 +28,11 @@ RUN apt-get update && \
     libhyphen0 \
     libgdk-pixbuf2.0-0 \
     libegl1 \
-    libnotify4 \
+    #libnotify4 \ will install whole xserver
     libxslt1.1 \
-    libevent-2.1-6 \
+    libevent-2.1-7 \
     libgles2 \
-    libvpx5 \
+    libvpx6 \
     # gstreamer and plugins to support video playback in WebKit
     gstreamer1.0-gl \
     gstreamer1.0-plugins-base \
