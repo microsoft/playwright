@@ -9,10 +9,13 @@ We provide official Docker images which include all the need dependencies for th
   * [Using on CI](#using-on-ci)
 - [Development](#development)
   * [Build the image](#build-the-image)
-  * [Push](#push-the-image)
+  * [Push the image](#push-the-image)
 - [Available images](#available-images)
   * [Ubuntu](#ubuntu)
+    - [Ubuntu 20 - Focal](#ubuntu-20---focal)
+    - [Ubuntu 18 - Bionic](#ubuntu-18---bionic)
   * [Debian](#debian)
+    - [Debian 10 - Buster](#debian-10---buster)
   * [Alpine](#alpine)
 <!-- GEN:stop -->
 
