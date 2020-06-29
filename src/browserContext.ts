@@ -61,7 +61,8 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: BrowserContextOptions;
   _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
-  _closed = false;
+  private _isPersistentContext: boolean;
+  private _startedClosing = false;
   readonly _closePromise: Promise<Error>;
   private _closePromiseFulfill: ((error: Error) => void) | undefined;
   readonly _permissions = new Map<string, string[]>();
@@ -70,12 +71,13 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   readonly _apiLogger: Logger;
   private _debugController: DebugController | undefined;
 
-  constructor(browserBase: BrowserBase, options: BrowserContextOptions) {
+  constructor(browserBase: BrowserBase, options: BrowserContextOptions, isPersistentContext: boolean) {
     super();
     this._browserBase = browserBase;
     this._options = options;
     const loggers = options.logger ? new Loggers(options.logger) : browserBase._options.loggers;
     this._apiLogger = loggers.api;
+    this._isPersistentContext = isPersistentContext;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
   }
 
@@ -103,16 +105,13 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   _browserClosed() {
     for (const page of this.pages())
       page._didClose();
-    this._didCloseInternal(true);
+    this._didCloseInternal();
   }
 
-  async _didCloseInternal(omitDeleteDownloads = false) {
-    this._closed = true;
-    this.emit(Events.BrowserContext.Close);
-    this._closePromiseFulfill!(new Error('Context closed'));
-    if (!omitDeleteDownloads)
-      await Promise.all([...this._downloads].map(d => d.delete()));
+  private _didCloseInternal() {
     this._downloads.clear();
+    this._closePromiseFulfill!(new Error('Context closed'));
+    this.emit(Events.BrowserContext.Close);
   }
 
   // BrowserContext methods.
@@ -131,7 +130,7 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   abstract _doExposeBinding(binding: PageBinding): Promise<void>;
   abstract route(url: types.URLMatch, handler: network.RouteHandler): Promise<void>;
   abstract unroute(url: types.URLMatch, handler?: network.RouteHandler): Promise<void>;
-  abstract close(): Promise<void>;
+  abstract _doClose(): Promise<void>;
 
   async cookies(urls: string | string[] | undefined = []): Promise<types.NetworkCookie[]> {
     if (urls && !Array.isArray(urls))
@@ -221,6 +220,22 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
     const { username, password } = proxy;
     if (username && password)
       this._options.httpCredentials = { username, password };
+  }
+
+  async close() {
+    if (this._isPersistentContext) {
+      // Default context is only created in 'persistent' mode and closing it should close
+      // the browser.
+      await this._browserBase.close();
+      return;
+    }
+    if (!this._startedClosing) {
+      this._startedClosing = true;
+      await this._doClose();
+      await Promise.all([...this._downloads].map(d => d.delete()));
+      this._didCloseInternal();
+    }
+    await this._closePromise;
   }
 }
 

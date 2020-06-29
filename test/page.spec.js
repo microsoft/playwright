@@ -82,6 +82,14 @@ describe('Page.close', function() {
       expect(message).not.toContain('Timeout');
     }
   });
+  it('should be callable twice', async({context}) => {
+    const newPage = await context.newPage();
+    await Promise.all([
+      newPage.close(),
+      newPage.close(),
+    ]);
+    await newPage.close();
+  });
 });
 
 describe('Page.Events.Load', function() {

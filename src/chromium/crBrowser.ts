@@ -89,11 +89,7 @@ export class CRBrowser extends BrowserBase {
     super(options);
     this._connection = connection;
     this._session = this._connection.rootSession;
-    this._connection.on(ConnectionEvents.Disconnected, () => {
-      for (const context of this._contexts.values())
-        context._browserClosed();
-      this.emit(CommonEvents.Browser.Disconnected);
-    });
+    this._connection.on(ConnectionEvents.Disconnected, () => this._didClose());
     this._session.on('Target.attachedToTarget', this._onAttachedToTarget.bind(this));
     this._session.on('Target.detachedFromTarget', this._onDetachedFromTarget.bind(this));
   }
@@ -281,7 +277,7 @@ export class CRBrowserContext extends BrowserContextBase {
   readonly _evaluateOnNewDocumentSources: string[];
 
   constructor(browser: CRBrowser, browserContextId: string | null, options: types.BrowserContextOptions) {
-    super(browser, options);
+    super(browser, options, !browserContextId);
     this._browser = browser;
     this._browserContextId = browserContextId;
     this._evaluateOnNewDocumentSources = [];
@@ -425,18 +421,10 @@ export class CRBrowserContext extends BrowserContextBase {
       await (page._delegate as CRPage).updateRequestInterception();
   }
 
-  async close() {
-    if (this._closed)
-      return;
-    if (!this._browserContextId) {
-      // Default context is only created in 'persistent' mode and closing it should close
-      // the browser.
-      await this._browser.close();
-      return;
-    }
+  async _doClose() {
+    assert(this._browserContextId);
     await this._browser._session.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
-    await this._didCloseInternal();
   }
 
   backgroundPages(): Page[] {

@@ -49,6 +49,7 @@ export abstract class BrowserBase extends EventEmitter implements Browser {
   readonly _options: BrowserOptions;
   private _downloads = new Map<string, Download>();
   _defaultContext: BrowserContextBase | null = null;
+  private _startedClosing = false;
 
   constructor(options: BrowserOptions) {
     super();
@@ -87,12 +88,21 @@ export abstract class BrowserBase extends EventEmitter implements Browser {
     this._downloads.delete(uuid);
   }
 
+  _didClose() {
+    for (const context of this.contexts())
+      (context as BrowserContextBase)._browserClosed();
+    this.emit(Events.Browser.Disconnected);
+  }
+
   async close() {
-    if (this._options.ownedServer) {
-      await this._options.ownedServer.close();
-    } else {
-      await Promise.all(this.contexts().map(context => context.close()));
-      this._disconnect();
+    if (!this._startedClosing) {
+      this._startedClosing = true;
+      if (this._options.ownedServer) {
+        await this._options.ownedServer.close();
+      } else {
+        await Promise.all(this.contexts().map(context => context.close()));
+        this._disconnect();
+      }
     }
     if (this.isConnected())
       await new Promise(x => this.once(Events.Browser.Disconnected, x));
