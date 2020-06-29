@@ -1,7 +1,7 @@
 type ServerResponse = import('http').ServerResponse;
 type IncomingMessage = import('http').IncomingMessage;
 
-type Falsy = false|""|0|null|undefined;
+type Falsy = false|''|0|null|undefined;
 interface Expect<T> {
     toBe(other: T, message?: string): void;
     toBeFalsy(message?: string): void;
@@ -24,7 +24,12 @@ interface Expect<T> {
 
 type DescribeFunction = ((name: string, inner: () => void) => void) & {fail(condition: boolean): DescribeFunction};
 
-type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>) => void) & {fail(condition: boolean): ItFunction<STATE>; repeat(n: number): ItFunction<STATE>};
+type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>) => void) & {
+    fail(condition: boolean): ItFunction<STATE>;
+    skip(condition: boolean): ItFunction<STATE>;
+    slow(): ItFunction<STATE>;
+    repeat(n: number): ItFunction<STATE>;
+};
 
 type TestRunner<STATE> = {
     describe: DescribeFunction;
@@ -50,9 +55,9 @@ interface TestSetup<STATE> {
     WIN: boolean;
     playwright: typeof import('../index');
     browserType: import('../index').BrowserType<import('../index').Browser>;
-    selectors: import('../src/selectors').Selectors;
+    selectors: import('../index').Selectors;
     expect<T>(value: T): Expect<T>;
-    defaultBrowserOptions: import('../src/server/browserType').LaunchOptions;
+    defaultBrowserOptions: import('../index').LaunchOptions;
     playwrightPath;
     headless: boolean;
     ASSETS_DIR: string;
@@ -100,3 +105,14 @@ interface TestServer {
     EMPTY_PAGE: string;
 
 }
+
+declare const describe: DescribeFunction;
+declare const fdescribe: DescribeFunction;
+declare const xdescribe: DescribeFunction;
+declare function expect<T>(value: T): Expect<T>;
+declare const it: ItFunction<PageState>;
+declare const fit: ItFunction<PageState>;
+declare const dit: ItFunction<PageState>;
+declare const xit: ItFunction<PageState>;
+
+declare const browserType: import('../index').BrowserType<import('../index').Browser>;

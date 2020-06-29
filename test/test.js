@@ -17,6 +17,9 @@
 
 const fs = require('fs');
 const utils = require('./utils');
+const path = require('path');
+const pirates = require('pirates');
+const babel = require('@babel/core');
 const TestRunner = require('../utils/testrunner/');
 const { Environment } = require('../utils/testrunner/Test');
 const { DispatcherConnection } = require('../lib/rpc/server/dispatcher');
@@ -191,7 +194,18 @@ function collect(browserNames) {
             }
           }
           for (const file of spec.files || []) {
+            const revert = pirates.addHook((code, filename) => {
+              const result = babel.transformFileSync(filename, {
+                presets: [
+                  ['@babel/preset-env', {targets: {node: 'current'}}],
+                  '@babel/preset-typescript']
+              });
+              return result.code;
+            }, {
+              exts: ['.ts']
+            });
             require(file);
+            revert();
             delete require.cache[require.resolve(file)];
           }
         });

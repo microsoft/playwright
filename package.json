@@ -35,8 +35,9 @@
     "prepare": "node install-from-github.js",
     "build": "node utils/runWebpack.js --mode='development' && tsc -p . && npm run generate-types",
     "watch": "node utils/runWebpack.js --mode='development' --watch --silent | tsc -w -p .",
-    "test-types": "npm run generate-types && npx -p typescript@3.7.5 tsc -p utils/generate_types/test/tsconfig.json",
-    "generate-types": "node utils/generate_types/"
+    "test-types": "npm run generate-types && npx -p typescript@3.7.5 tsc -p utils/generate_types/test/tsconfig.json && typecheck-tests",
+    "generate-types": "node utils/generate_types/",
+    "typecheck-tests": "tsc -p ./tests/"
   },
   "author": {
     "name": "Microsoft Corporation"
@@ -56,6 +57,9 @@
     "ws": "^6.1.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.10.3",
+    "@babel/preset-env": "^7.10.3",
+    "@babel/preset-typescript": "^7.10.1",
     "@types/debug": "0.0.31",
     "@types/extract-zip": "^1.6.2",
     "@types/mime": "^2.0.1",
@@ -76,6 +80,7 @@
     "formidable": "^1.2.1",
     "ncp": "^2.0.0",
     "node-stream-zip": "^1.8.2",
+    "pirates": "^4.0.1",
     "pixelmatch": "^4.0.2",
     "socksv5": "0.0.6",
     "text-diff": "^1.0.1",
