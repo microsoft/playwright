@@ -32,7 +32,7 @@ export class DownloadDispatcher extends Dispatcher<Download, DownloadInitializer
     });
   }
 
-  async path(): Promise<string> {
+  async path(): Promise<string | null> {
     return this._object.path();
   }
 

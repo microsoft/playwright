@@ -23,7 +23,7 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements Chann
   readonly _guid: string;
   readonly _type: string;
   protected _scope: DispatcherScope;
-  _object: any;
+  _object: Type;
 
   constructor(scope: DispatcherScope, object: Type, type: string, initializer: Initializer, guid = type + '@' + helper.guid()) {
     super();

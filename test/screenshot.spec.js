@@ -16,7 +16,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = utils.testOptions(browserType);
 const {PNG} = require('pngjs');
 
 // Firefox headful produces a different image.
@@ -474,7 +474,7 @@ describe.skip(ffheadful)('ElementHandle.screenshot', function() {
     await utils.verifyViewport(page, 456, 789);
     await context.close();
   });
-  it('should restore viewport after page screenshot and exception', async({ browser, server }) => {
+  it.skip(USES_HOOKS)('should restore viewport after page screenshot and exception', async({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/grid.html');
@@ -484,7 +484,7 @@ describe.skip(ffheadful)('ElementHandle.screenshot', function() {
     await utils.verifyViewport(page, 350, 360);
     await context.close();
   });
-  it('should restore viewport after page screenshot and timeout', async({ browser, server }) => {
+  it.skip(USES_HOOKS)('should restore viewport after page screenshot and timeout', async({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/grid.html');
@@ -526,7 +526,7 @@ describe.skip(ffheadful)('ElementHandle.screenshot', function() {
     expect(sizeBefore.height).toBe(sizeAfter.height);
     await context.close();
   });
-  it('should restore viewport after element screenshot and exception', async({server, browser}) => {
+  it.skip(USES_HOOKS)('should restore viewport after element screenshot and exception', async({server, browser}) => {
     const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
     const page = await context.newPage();
     await page.setContent(`<div style="width:600px;height:600px;"></div>`);

@@ -205,7 +205,7 @@ export class Response extends ChannelOwner<ResponseChannel, ResponseInitializer>
   }
 
   async body(): Promise<Buffer> {
-    return await this._channel.body();
+    return Buffer.from(await this._channel.body(), 'base64');
   }
 
   async text(): Promise<string> {
