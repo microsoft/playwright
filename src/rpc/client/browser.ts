@@ -20,6 +20,7 @@ import { BrowserContext } from './browserContext';
 import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Connection } from '../connection';
+import { Events } from '../../events';
 
 export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   readonly _contexts = new Set<BrowserContext>();
@@ -36,6 +37,10 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
 
   constructor(connection: Connection, channel: BrowserChannel, initializer: BrowserInitializer) {
     super(connection, channel, initializer);
+    channel.on('close', () => {
+      this._isConnected = false;
+      this.emit(Events.Browser.Disconnected);
+    });
   }
 
   async newContext(options: types.BrowserContextOptions = {}): Promise<BrowserContext> {

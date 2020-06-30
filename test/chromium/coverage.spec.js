@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT} = require('../utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('../utils').testOptions(browserType);
 
-describe('JSCoverage', function() {
+describe.skip(CHANNEL)('JSCoverage', function() {
   it('should work', async function({page, server}) {
     await page.coverage.startJSCoverage();
     await page.goto(server.PREFIX + '/jscoverage/simple.html', { waitUntil: 'load' });
@@ -88,7 +88,7 @@ describe('JSCoverage', function() {
   });
 });
 
-describe('CSSCoverage', function() {
+describe.skip(CHANNEL)('CSSCoverage', function() {
   it('should work', async function({page, server}) {
     await page.coverage.startCSSCoverage();
     await page.goto(server.PREFIX + '/csscoverage/simple.html');

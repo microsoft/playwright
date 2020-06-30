@@ -18,7 +18,7 @@
 const utils = require('./utils');
 const path = require('path');
 const url = require('url');
-const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, MAC, WIN, CHANNEL} = utils.testOptions(browserType);
 
 describe('Page.goto', function() {
   it('should work', async({page, server}) => {
@@ -541,7 +541,7 @@ describe('Page.goto', function() {
   });
 });
 
-describe('Page.waitForNavigation', function() {
+describe.skip(CHANNEL)('Page.waitForNavigation', function() {
   it('should work', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [response] = await Promise.all([

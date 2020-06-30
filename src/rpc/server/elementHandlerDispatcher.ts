@@ -22,20 +22,20 @@ import { DispatcherScope } from '../dispatcher';
 import { JSHandleDispatcher, serializeResult, parseArgument } from './jsHandleDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 
+export function fromHandle(scope: DispatcherScope, handle: js.JSHandle): JSHandleDispatcher {
+  if ((handle as any)[scope.dispatcherSymbol])
+    return (handle as any)[scope.dispatcherSymbol];
+  return handle.asElement() ? new ElementHandleDispatcher(scope, handle.asElement()!) : new JSHandleDispatcher(scope, handle);
+}
+
+export function fromNullableHandle(scope: DispatcherScope, handle: js.JSHandle | null): JSHandleDispatcher | null {
+  if (!handle)
+    return null;
+  return fromHandle(scope, handle);
+}
+
 export class ElementHandleDispatcher extends JSHandleDispatcher implements ElementHandleChannel {
   readonly _elementHandle: ElementHandle;
-
-  static from(scope: DispatcherScope, handle: js.JSHandle): JSHandleDispatcher {
-    if ((handle as any)[scope.dispatcherSymbol])
-      return (handle as any)[scope.dispatcherSymbol];
-    return handle.asElement() ? new ElementHandleDispatcher(scope, handle.asElement()!) : new JSHandleDispatcher(scope, handle);
-  }
-
-  static fromNullable(scope: DispatcherScope, handle: js.JSHandle | null): JSHandleDispatcher | null {
-    if (!handle)
-      return null;
-    return ElementHandleDispatcher.from(scope, handle);
-  }
 
   static fromElement(scope: DispatcherScope, handle: ElementHandle): ElementHandleDispatcher {
     if ((handle as any)[scope.dispatcherSymbol])
@@ -125,7 +125,7 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
   }
 
   async press(params: { key: string, options: { delay?: number } & types.NavigatingActionWaitOptions }) {
-    await this._elementHandle.type(params.key, params.options);
+    await this._elementHandle.press(params.key, params.options);
   }
 
   async check(params: { options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions }) {

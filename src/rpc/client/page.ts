@@ -16,35 +16,37 @@
  */
 
 import { EventEmitter } from 'events';
+import { TimeoutError } from '../../errors';
 import { Events } from '../../events';
 import { assert, assertMaxArguments, helper, Listener } from '../../helper';
+import { TimeoutSettings } from '../../timeoutSettings';
 import * as types from '../../types';
-import { PageChannel, BindingCallChannel, Channel, PageInitializer, BindingCallInitializer } from '../channels';
+import { BindingCallChannel, BindingCallInitializer, Channel, PageChannel, PageInitializer } from '../channels';
+import { Connection } from '../connection';
+import { parseError, serializeError } from '../serializers';
+import { Accessibility } from './accessibility';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { ElementHandle } from './elementHandle';
-import { Frame, FunctionWithSource, GotoOptions } from './frame';
-import { Func1, FuncOn, SmartHandle } from './jsHandle';
-import { Request, Response, RouteHandler, Route } from './network';
-import { Connection } from '../connection';
-import { Keyboard, Mouse } from './input';
-import { Accessibility } from './accessibility';
 import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
 import { Download } from './download';
-import { TimeoutError } from '../../errors';
-import { TimeoutSettings } from '../../timeoutSettings';
-import { parseError, serializeError } from '../serializers';
+import { ElementHandle } from './elementHandle';
+import { Worker } from './worker';
+import { Frame, FunctionWithSource, GotoOptions } from './frame';
+import { Keyboard, Mouse } from './input';
+import { Func1, FuncOn, SmartHandle } from './jsHandle';
+import { Request, Response, Route, RouteHandler } from './network';
+import { FileChooser } from './fileChooser';
+import { Buffer } from 'buffer';
 
 export class Page extends ChannelOwner<PageChannel, PageInitializer> {
-  readonly pdf: ((options?: types.PDFOptions) => Promise<Buffer>) | undefined;
 
   private _browserContext: BrowserContext | undefined;
   _ownedContext: BrowserContext | undefined;
 
   private _mainFrame: Frame;
   private _frames = new Set<Frame>();
-  private _workers: Worker[] = [];
+  _workers = new Set<Worker>();
   private _closed = false;
   private _viewportSize: types.Size | null;
   private _routes: { url: types.URLMatch, handler: RouteHandler }[] = [];
@@ -83,6 +85,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     this._channel.on('dialog', dialog => this.emit(Events.Page.Dialog, Dialog.from(dialog)));
     this._channel.on('domcontentloaded', () => this.emit(Events.Page.DOMContentLoaded));
     this._channel.on('download', download => this.emit(Events.Page.Download, Download.from(download)));
+    this._channel.on('fileChooser', ({ element, isMultiple }) => this.emit(Events.Page.FileChooser, new FileChooser(this, ElementHandle.from(element), isMultiple)));
     this._channel.on('frameAttached', frame => this._onFrameAttached(Frame.from(frame)));
     this._channel.on('frameDetached', frame => this._onFrameDetached(Frame.from(frame)));
     this._channel.on('frameNavigated', ({ frame, url, name }) => this._onFrameNavigated(Frame.from(frame), url, name));
@@ -94,6 +97,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     this._channel.on('requestFinished', request => this.emit(Events.Page.RequestFinished, Request.from(request)));
     this._channel.on('response', response => this.emit(Events.Page.Response, Response.from(response)));
     this._channel.on('route', ({ route, request }) => this._onRoute(Route.from(route), Request.from(request)));
+    this._channel.on('worker', worker => this._onWorker(Worker.from(worker)));
   }
 
   _setBrowserContext(context: BrowserContext) {
@@ -143,6 +147,12 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     if (func)
       bindingCall.call(func);
     this._browserContext!._onBinding(bindingCall);
+  }
+
+  _onWorker(worker: Worker): void {
+    this._workers.add(worker);
+    worker._page = this;
+    this.emit(Events.Page.Worker, worker);
   }
 
   private _onClose() {
@@ -221,7 +231,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     return this._attributeToPage(() => this._mainFrame.waitForSelector(selector, options));
   }
 
-  async dispatchEvent(selector: string, type: string, eventInit?: Object, options?: types.TimeoutOptions): Promise<void> {
+  async dispatchEvent(selector: string, type: string, eventInit?: any, options?: types.TimeoutOptions): Promise<void> {
     return this._attributeToPage(() => this._mainFrame.dispatchEvent(selector, type, eventInit, options));
   }
 
@@ -465,7 +475,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   workers(): Worker[] {
-    return this._workers;
+    return [...this._workers];
   }
 
   on(event: string | symbol, listener: Listener): this {
@@ -483,33 +493,10 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
       this._channel.setFileChooserInterceptedNoReply({ intercepted: false });
     return this;
   }
-}
 
-export class Worker extends EventEmitter {
-  private _url: string;
-  private _channel: any;
-
-  constructor(url: string) {
-    super();
-    this._url = url;
-  }
-
-  url(): string {
-    return this._url;
-  }
-
-  async evaluate<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<R>;
-  async evaluate<R>(pageFunction: Func1<void, R>, arg?: any): Promise<R>;
-  async evaluate<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<R> {
-    assertMaxArguments(arguments.length, 2);
-    return await this._channel.evaluate({ pageFunction, arg });
-  }
-
-  async evaluateHandle<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
-  async evaluateHandle<R>(pageFunction: Func1<void, R>, arg?: any): Promise<SmartHandle<R>>;
-  async evaluateHandle<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
-    assertMaxArguments(arguments.length, 2);
-    return await this._channel.evaluateHandle({ pageFunction, arg });
+  async pdf(options?: types.PDFOptions): Promise<Buffer> {
+    const binary = await this._channel.pdf({ options });
+    return Buffer.from(binary, 'base64');
   }
 }
 

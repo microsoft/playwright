@@ -17,7 +17,7 @@
 import { ConsoleMessage } from '../../console';
 import { ConsoleMessageChannel, ConsoleMessageInitializer } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
-import { ElementHandleDispatcher } from './elementHandlerDispatcher';
+import { fromHandle } from './elementHandlerDispatcher';
 
 export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, ConsoleMessageInitializer> implements ConsoleMessageChannel {
   static from(scope: DispatcherScope, message: ConsoleMessage): ConsoleMessageDispatcher {
@@ -30,7 +30,7 @@ export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, Console
     super(scope, message, 'consoleMessage', {
       type: message.type(),
       text: message.text(),
-      args: message.args().map(a => ElementHandleDispatcher.from(scope, a)),
+      args: message.args().map(a => fromHandle(scope, a)),
       location: message.location(),
     });
   }

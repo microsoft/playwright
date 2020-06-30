@@ -52,7 +52,9 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
       page._setBrowserContext(this);
     });
     this._channel.on('bindingCall', bindingCall => this._onBinding(BindingCall.from(bindingCall)));
+    this._channel.on('close', () => this._onClose());
     this._channel.on('page', page => this._onPage(Page.from(page)));
+    this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
   }
 
   private _onPage(page: Page): void {
@@ -180,8 +182,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     return result;
   }
 
-  async close(): Promise<void> {
-    await this._channel.close();
+  private async _onClose() {
     if (this._browser)
       this._browser._contexts.delete(this);
 
@@ -192,5 +193,9 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     }
     this._pendingWaitForEvents.clear();
     this.emit(Events.BrowserContext.Close);
+  }
+
+  async close(): Promise<void> {
+    await this._channel.close();
   }
 }

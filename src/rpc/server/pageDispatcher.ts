@@ -18,9 +18,9 @@ import { BrowserContext } from '../../browserContext';
 import { Events } from '../../events';
 import { Frame } from '../../frames';
 import { Request } from '../../network';
-import { Page } from '../../page';
+import { Page, Worker } from '../../page';
 import * as types from '../../types';
-import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel } from '../channels';
+import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
 import { parseError, serializeError } from '../serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
@@ -28,6 +28,9 @@ import { DialogDispatcher } from './dialogDispatcher';
 import { DownloadDispatcher } from './downloadDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
+import { serializeResult, parseArgument } from './jsHandleDispatcher';
+import { fromHandle, ElementHandleDispatcher } from './elementHandlerDispatcher';
+import { FileChooser } from '../../fileChooser';
 
 export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements PageChannel {
   private _page: Page;
@@ -56,6 +59,10 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     page.on(Events.Page.DOMContentLoaded, () => this._dispatchEvent('domcontentloaded'));
     page.on(Events.Page.Dialog, dialog => this._dispatchEvent('dialog', DialogDispatcher.from(this._scope, dialog)));
     page.on(Events.Page.Download, dialog => this._dispatchEvent('download', DownloadDispatcher.from(this._scope, dialog)));
+    page.on(Events.Page.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
+      element: ElementHandleDispatcher.fromElement(this._scope, fileChooser.element()),
+      isMultiple: fileChooser.isMultiple()
+    }));
     page.on(Events.Page.FrameAttached, frame => this._onFrameAttached(frame));
     page.on(Events.Page.FrameDetached, frame => this._onFrameDetached(frame));
     page.on(Events.Page.FrameNavigated, frame => this._onFrameNavigated(frame));
@@ -69,6 +76,7 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     }));
     page.on(Events.Page.RequestFinished, request => this._dispatchEvent('requestFinished', RequestDispatcher.from(this._scope, request)));
     page.on(Events.Page.Response, response => this._dispatchEvent('response', ResponseDispatcher.from(this._scope, response)));
+    page.on(Events.Page.Worker, worker => this._dispatchEvent('worker', WorkerDispatcher.from(this._scope, worker)));
   }
 
   async setDefaultNavigationTimeoutNoReply(params: { timeout: number }) {
@@ -187,6 +195,13 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     });
   }
 
+  async pdf(params: { options?: types.PDFOptions }): Promise<Binary> {
+    if (!this._page.pdf)
+      throw new Error('PDF generation is only supported for Headless Chromium');
+    const binary = await this._page.pdf(params.options);
+    return binary.toString('base64');
+  }
+
   _onFrameAttached(frame: Frame) {
     this._dispatchEvent('frameAttached', FrameDispatcher.from(this._scope, frame));
   }
@@ -200,6 +215,29 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
   }
 }
 
+
+export class WorkerDispatcher extends Dispatcher<Worker, WorkerInitializer> implements WorkerChannel {
+  static from(scope: DispatcherScope, worker: Worker): WorkerDispatcher {
+    if ((worker as any)[scope.dispatcherSymbol])
+      return (worker as any)[scope.dispatcherSymbol];
+    return new WorkerDispatcher(scope, worker);
+  }
+
+  constructor(scope: DispatcherScope, worker: Worker) {
+    super(scope, worker, 'worker', {
+      url: worker.url()
+    });
+    worker.on(Events.Worker.Close, () => this._dispatchEvent('close'));
+  }
+
+  async evaluateExpression(params: { expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<any> {
+    return serializeResult(await this._object._evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg)));
+  }
+
+  async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<JSHandleChannel> {
+    return fromHandle(this._scope, await this._object._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg)));
+  }
+}
 
 export class BindingCallDispatcher extends Dispatcher<{}, BindingCallInitializer> implements BindingCallChannel {
   private _resolve: ((arg: any) => void) | undefined;

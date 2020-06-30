@@ -21,6 +21,7 @@ import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { BrowserChannel, BrowserContextChannel, PageChannel, BrowserInitializer } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
 import { PageDispatcher } from './pageDispatcher';
+import { Events } from '../../events';
 
 export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> implements BrowserChannel {
   static from(scope: DispatcherScope, browser: BrowserBase): BrowserDispatcher {
@@ -37,6 +38,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> i
 
   constructor(scope: DispatcherScope, browser: BrowserBase) {
     super(scope, browser, 'browser', {});
+    browser.on(Events.Browser.Disconnected, () => this._dispatchEvent('close'));
   }
 
   async newContext(params: { options?: types.BrowserContextOptions }): Promise<BrowserContextChannel> {

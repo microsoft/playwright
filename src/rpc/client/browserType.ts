@@ -20,6 +20,7 @@ import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { Connection } from '../connection';
+import { BrowserServer } from './browserServer';
 
 export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {
   constructor(connection: Connection, channel: BrowserTypeChannel, initializer: BrowserTypeInitializer) {
@@ -37,6 +38,11 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
   async launch(options: types.LaunchOptions = {}): Promise<Browser> {
     delete (options as any).logger;
     return Browser.from(await this._channel.launch({ options }));
+  }
+
+  async launchServer(options?: types.LaunchServerOptions): Promise<BrowserServer> {
+    delete (options as any).logger;
+    return BrowserServer.from(await this._channel.launchServer({ options }));
   }
 
   async launchPersistentContext(userDataDir: string, options: types.LaunchOptions & types.BrowserContextOptions = {}): Promise<BrowserContext> {
