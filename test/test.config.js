@@ -24,76 +24,90 @@ const {Environment} = require('../utils/testrunner/Test');
 
 const playwrightPath = path.join(__dirname, '..');
 
-const serverEnvironment = new Environment('TestServer');
-serverEnvironment.beforeAll(async state => {
-  const assetsPath = path.join(__dirname, 'assets');
-  const cachedPath = path.join(__dirname, 'assets', 'cached');
+class ServerEnvironment {
+  name() { return 'TestServer'; }
 
-  const port = 8907 + state.parallelIndex * 2;
-  state.server = await TestServer.create(assetsPath, port);
-  state.server.enableHTTPCache(cachedPath);
-  state.server.PORT = port;
-  state.server.PREFIX = `http://localhost:${port}`;
-  state.server.CROSS_PROCESS_PREFIX = `http://127.0.0.1:${port}`;
-  state.server.EMPTY_PAGE = `http://localhost:${port}/empty.html`;
+  async beforeAll(state) {
+    const assetsPath = path.join(__dirname, 'assets');
+    const cachedPath = path.join(__dirname, 'assets', 'cached');
 
-  const httpsPort = port + 1;
-  state.httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
-  state.httpsServer.enableHTTPCache(cachedPath);
-  state.httpsServer.PORT = httpsPort;
-  state.httpsServer.PREFIX = `https://localhost:${httpsPort}`;
-  state.httpsServer.CROSS_PROCESS_PREFIX = `https://127.0.0.1:${httpsPort}`;
-  state.httpsServer.EMPTY_PAGE = `https://localhost:${httpsPort}/empty.html`;
+    const port = 8907 + state.parallelIndex * 2;
+    state.server = await TestServer.create(assetsPath, port);
+    state.server.enableHTTPCache(cachedPath);
+    state.server.PORT = port;
+    state.server.PREFIX = `http://localhost:${port}`;
+    state.server.CROSS_PROCESS_PREFIX = `http://127.0.0.1:${port}`;
+    state.server.EMPTY_PAGE = `http://localhost:${port}/empty.html`;
 
-  state._extraLogger = utils.createTestLogger(valueFromEnv('DEBUGP', false), null, 'extra');
-  state.defaultBrowserOptions = {
-    handleSIGINT: false,
-    slowMo: valueFromEnv('SLOW_MO', 0),
-    headless: !!valueFromEnv('HEADLESS', true),
-    logger: state._extraLogger,
-  };
-  state.playwrightPath = playwrightPath;
-});
-serverEnvironment.afterAll(async({server, httpsServer}) => {
-  await Promise.all([
-    server.stop(),
-    httpsServer.stop(),
-  ]);
-});
-serverEnvironment.beforeEach(async(state, testRun) => {
-  state.server.reset();
-  state.httpsServer.reset();
-  state._extraLogger.setTestRun(testRun);
-});
-serverEnvironment.afterEach(async(state) => {
-  state._extraLogger.setTestRun(null);
-});
+    const httpsPort = port + 1;
+    state.httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
+    state.httpsServer.enableHTTPCache(cachedPath);
+    state.httpsServer.PORT = httpsPort;
+    state.httpsServer.PREFIX = `https://localhost:${httpsPort}`;
+    state.httpsServer.CROSS_PROCESS_PREFIX = `https://127.0.0.1:${httpsPort}`;
+    state.httpsServer.EMPTY_PAGE = `https://localhost:${httpsPort}/empty.html`;
 
-const customEnvironment = new Environment('Golden+CheckContexts');
+    state._extraLogger = utils.createTestLogger(valueFromEnv('DEBUGP', false), null, 'extra');
+    state.defaultBrowserOptions = {
+      handleSIGINT: false,
+      slowMo: valueFromEnv('SLOW_MO', 0),
+      headless: !!valueFromEnv('HEADLESS', true),
+      logger: state._extraLogger,
+    };
+    state.playwrightPath = playwrightPath;
+  }
+
+  async afterAll({server, httpsServer}) {
+    await Promise.all([
+      server.stop(),
+      httpsServer.stop(),
+    ]);
+  }
+
+  async beforeEach(state, testRun) {
+    state.server.reset();
+    state.httpsServer.reset();
+    state._extraLogger.setTestRun(testRun);
+  }
+
+  async afterEach(state) {
+    state._extraLogger.setTestRun(null);
+  }
+}
+
+const serverEnvironment = new ServerEnvironment();
 
 // simulate globalSetup per browserType that happens only once regardless of TestWorker.
 const hasBeenCleaned = new Set();
 
-customEnvironment.beforeAll(async state => {
-  const { OUTPUT_DIR, GOLDEN_DIR } = require('./utils').testOptions(state.browserType);
-  if (!hasBeenCleaned.has(state.browserType)) {
-    hasBeenCleaned.add(state.browserType);
-    if (fs.existsSync(OUTPUT_DIR))
-      rm(OUTPUT_DIR);
-    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+class GoldenEnvironment {
+  name() { return 'Golden+CheckContexts'; }
+
+  async beforeAll(state) {
+    const { OUTPUT_DIR, GOLDEN_DIR } = require('./utils').testOptions(state.browserType);
+    if (!hasBeenCleaned.has(state.browserType)) {
+      hasBeenCleaned.add(state.browserType);
+      if (fs.existsSync(OUTPUT_DIR))
+        rm(OUTPUT_DIR);
+      fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+    }
+    state.golden = goldenName => ({ goldenPath: GOLDEN_DIR, outputPath: OUTPUT_DIR, goldenName });
   }
-  state.golden = goldenName => ({ goldenPath: GOLDEN_DIR, outputPath: OUTPUT_DIR, goldenName });
-});
-customEnvironment.afterAll(async state => {
-  delete state.golden;
-});
-customEnvironment.afterEach(async (state, testRun) => {
-  if (state.browser && state.browser.contexts().length !== 0) {
-    if (testRun.ok())
-      console.warn(`\nWARNING: test "${testRun.test().fullName()}" (${testRun.test().location()}) did not close all created contexts!\n`);
-    await Promise.all(state.browser.contexts().map(context => context.close()));
+
+  async afterAll(state) {
+    delete state.golden;
   }
-});
+
+  async afterEach(state, testRun) {
+    if (state.browser && state.browser.contexts().length !== 0) {
+      if (testRun.ok())
+        console.warn(`\nWARNING: test "${testRun.test().fullName()}" (${testRun.test().location()}) did not close all created contexts!\n`);
+      await Promise.all(state.browser.contexts().map(context => context.close()));
+    }
+  }
+}
+
+const customEnvironment = new GoldenEnvironment();
 
 function valueFromEnv(name, defaultValue) {
   if (!(name in process.env))
