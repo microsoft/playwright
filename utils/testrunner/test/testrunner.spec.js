@@ -281,14 +281,18 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
     it('should run all hooks in proper order', async() => {
       const log = [];
       const t = new Runner();
-      const e = new Environment('env');
-      e.beforeAll(() => log.push('env:beforeAll'));
-      e.afterAll(() => log.push('env:afterAll'));
-      e.beforeEach(() => log.push('env:beforeEach'));
-      e.afterEach(() => log.push('env:afterEach'));
-      const e2 = new Environment('env2');
-      e2.beforeAll(() => log.push('env2:beforeAll'));
-      e2.afterAll(() => log.push('env2:afterAll'));
+      const e = {
+        name() { return 'env'; },
+        beforeAll() { log.push('env:beforeAll'); },
+        afterAll() { log.push('env:afterAll'); },
+        beforeEach() { log.push('env:beforeEach'); },
+        afterEach() { log.push('env:afterEach'); },
+      };
+      const e2 = {
+        name() { return 'env2'; },
+        beforeAll() { log.push('env2:beforeAll'); },
+        afterAll() { log.push('env2:afterAll'); },
+      };
       t.beforeAll(() => log.push('root:beforeAll'));
       t.beforeEach(() => log.push('root:beforeEach'));
       t.it('uno', () => log.push('test #1'));
@@ -296,11 +300,7 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
         t.beforeAll(() => log.push('suite:beforeAll'));
         t.beforeEach(() => log.push('suite:beforeEach'));
         t.it('dos', () => log.push('test #2'));
-        t.tests()[t.tests().length - 1].environment().beforeEach(() => log.push('test:before'));
-        t.tests()[t.tests().length - 1].environment().afterEach(() => log.push('test:after'));
         t.it('tres', () => log.push('test #3'));
-        t.tests()[t.tests().length - 1].environment().beforeEach(() => log.push('test:before'));
-        t.tests()[t.tests().length - 1].environment().afterEach(() => log.push('test:after'));
         t.afterEach(() => log.push('suite:afterEach'));
         t.afterAll(() => log.push('suite:afterAll'));
       });
@@ -331,17 +331,13 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
 
         'root:beforeEach',
         'suite:beforeEach',
-        'test:before',
         'test #2',
-        'test:after',
         'suite:afterEach',
         'root:afterEach',
 
         'root:beforeEach',
         'suite:beforeEach',
-        'test:before',
         'test #3',
-        'test:after',
         'suite:afterEach',
         'root:afterEach',
 
@@ -373,16 +369,20 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
     it('should remove environment', async() => {
       const log = [];
       const t = new Runner();
-      const e = new Environment('env');
-      e.beforeAll(() => log.push('env:beforeAll'));
-      e.afterAll(() => log.push('env:afterAll'));
-      e.beforeEach(() => log.push('env:beforeEach'));
-      e.afterEach(() => log.push('env:afterEach'));
-      const e2 = new Environment('env2');
-      e2.beforeAll(() => log.push('env2:beforeAll'));
-      e2.afterAll(() => log.push('env2:afterAll'));
-      e2.beforeEach(() => log.push('env2:beforeEach'));
-      e2.afterEach(() => log.push('env2:afterEach'));
+      const e = {
+        name() { return 'env'; },
+        beforeAll() { log.push('env:beforeAll'); },
+        afterAll() { log.push('env:afterAll'); },
+        beforeEach() { log.push('env:beforeEach'); },
+        afterEach() { log.push('env:afterEach'); },
+      };
+      const e2 = {
+        name() { return 'env2'; },
+        beforeAll() { log.push('env2:beforeAll'); },
+        afterAll() { log.push('env2:afterAll'); },
+        beforeEach() { log.push('env2:beforeEach'); },
+        afterEach() { log.push('env2:afterEach'); },
+      };
       t.it('uno', () => log.push('test #1'));
       t.tests()[0].addEnvironment(e).addEnvironment(e2).removeEnvironment(e);
       await t.run();
