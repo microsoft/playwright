@@ -123,37 +123,45 @@ function setupTestRunner(testRunner) {
   collector.addSuiteModifier('fail', (s, condition) => condition && s.setExpectation(s.Expectations.Fail));
   collector.addTestModifier('slow', t => t.setTimeout(t.timeout() * 3));
   collector.addTestAttribute('debug', t => {
-    t.setTimeout(100000000);
-
-    let session;
-    t.environment().beforeEach(async () => {
-      const inspector = require('inspector');
-      const fs = require('fs');
-      const util = require('util');
-      const url = require('url');
-      const readFileAsync = util.promisify(fs.readFile.bind(fs));
-      session = new inspector.Session();
-      session.connect();
-      const postAsync = util.promisify(session.post.bind(session));
-      await postAsync('Debugger.enable');
-      const setBreakpointCommands = [];
-      const N = t.body().toString().split('\n').length;
-      const location = t.location();
-      const lines = (await readFileAsync(location.filePath(), 'utf8')).split('\n');
-      for (let line = 0; line < N; ++line) {
-        const lineNumber = line + location.lineNumber();
-        setBreakpointCommands.push(postAsync('Debugger.setBreakpointByUrl', {
-          url: url.pathToFileURL(location.filePath()),
-          lineNumber,
-          condition: `console.log('${String(lineNumber + 1).padStart(6, ' ')} | ' + ${JSON.stringify(lines[lineNumber])})`,
-        }).catch(e => {}));
+    class DebugEnvironment {
+      constructor() {
+        this._session = null;
       }
-      await Promise.all(setBreakpointCommands);
-    });
 
-    t.environment().afterEach(async () => {
-      session.disconnect();
-    });
+      name() { return 'DebugEnvironment'; }
+
+      async beforeEach() {
+        const inspector = require('inspector');
+        const fs = require('fs');
+        const util = require('util');
+        const url = require('url');
+        const readFileAsync = util.promisify(fs.readFile.bind(fs));
+        this._session = new inspector.Session();
+        this._session.connect();
+        const postAsync = util.promisify(this._session.post.bind(this._session));
+        await postAsync('Debugger.enable');
+        const setBreakpointCommands = [];
+        const N = t.body().toString().split('\n').length;
+        const location = t.location();
+        const lines = (await readFileAsync(location.filePath(), 'utf8')).split('\n');
+        for (let line = 0; line < N; ++line) {
+          const lineNumber = line + location.lineNumber();
+          setBreakpointCommands.push(postAsync('Debugger.setBreakpointByUrl', {
+            url: url.pathToFileURL(location.filePath()),
+            lineNumber,
+            condition: `console.log('${String(lineNumber + 1).padStart(6, ' ')} | ' + ${JSON.stringify(lines[lineNumber])})`,
+          }).catch(e => {}));
+        }
+        await Promise.all(setBreakpointCommands);
+      }
+
+      async afterEach() {
+        this._session.disconnect();
+      }
+    }
+
+    t.setTimeout(100000000);
+    t.addEnvironment(new DebugEnvironment());
   });
   testRunner.api().fdescribe = testRunner.api().describe.only;
   testRunner.api().xdescribe = testRunner.api().describe.skip(true);
