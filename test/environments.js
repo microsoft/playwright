@@ -5,8 +5,6 @@ const rm = require('rimraf').sync;
 const {TestServer} = require('../utils/testserver/');
 
 class ServerEnvironment {
-  name() { return 'TestServer'; }
-
   async beforeAll(state) {
     const assetsPath = path.join(__dirname, 'assets');
     const cachedPath = path.join(__dirname, 'assets', 'cached');
@@ -69,8 +67,6 @@ class DefaultBrowserOptionsEnvironment {
 const hasBeenCleaned = new Set();
 
 class GoldenEnvironment {
-  name() { return 'Golden+CheckContexts'; }
-
   async beforeAll(state) {
     const { OUTPUT_DIR, GOLDEN_DIR } = utils.testOptions(state.browserType);
     if (!hasBeenCleaned.has(state.browserType)) {
@@ -104,8 +100,6 @@ class TraceTestEnvironment {
   constructor() {
     this._session = null;
   }
-
-  name() { return 'TraceTestEnvironment'; }
 
   async beforeEach() {
     const inspector = require('inspector');
@@ -151,8 +145,6 @@ class BrowserTypeEnvironment {
   constructor(browserType) {
     this._browserType = browserType;
   }
-
-  name() { return 'BrowserType'; }
 
   async beforeAll(state) {
     // Channel substitute
@@ -207,8 +199,6 @@ class BrowserEnvironment {
 }
 
 class PageEnvironment {
-  name() { return 'Page'; }
-
   async beforeEach(state) {
     state.context = await state.browser.newContext();
     state.page = await state.context.newPage();
