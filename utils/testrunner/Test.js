@@ -22,11 +22,6 @@ const TestExpectation = {
   Fail: 'fail',
 };
 
-function createHook(callback, name) {
-  const location = Location.getCallerLocation();
-  return { name, body: callback, location };
-}
-
 class Test {
   constructor(suite, name, callback, location) {
     this._suite = suite;
@@ -102,8 +97,6 @@ class Test {
   }
 }
 
-const hookLocationSymbol = Symbol('hookLocationSymbol');
-
 class Suite {
   constructor(parentSuite, name, location) {
     this._parentSuite = parentSuite;
@@ -125,7 +118,6 @@ class Suite {
     if (this._defaultEnvironment[name])
       throw new Error(`ERROR: cannot re-assign hook "${name}" for suite "${this._fullName}"`);
     this._defaultEnvironment[name] = callback;
-    callback[hookLocationSymbol] = Location.getCallerLocation();
   }
 
   beforeEach(callback) { this._addHook('beforeEach', callback); }
