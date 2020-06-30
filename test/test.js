@@ -18,11 +18,11 @@
 const fs = require('fs');
 const utils = require('./utils');
 const TestRunner = require('../utils/testrunner/');
-const {Environment} = require('../utils/testrunner/Test');
 const { DispatcherScope } = require('../lib/rpc/dispatcher');
 const { Connection } = require('../lib/rpc/connection');
 const { helper } = require('../lib/helper');
 const { BrowserTypeDispatcher } = require('../lib/rpc/server/browserTypeDispatcher');
+const { PlaywrightEnvironment, BrowserTypeEnvironment, BrowserEnvironment, PageEnvironment} = require('./environments.js');
 
 function getCLIArgument(argName) {
   for (let i = 0; i < process.argv.length; ++i) {
@@ -81,13 +81,7 @@ function collect(browserNames) {
   const { setUnderTest } = require(require('path').join(playwrightPath, 'lib/helper.js'));
   setUnderTest();
 
-  const playwrightEnvironment = {
-    name() { return 'Playwright'; },
-    beforeAll(state) { state.playwright = playwright; },
-    afterAll(state) { delete state.playwright; },
-  };
-
-  testRunner.collector().useEnvironment(playwrightEnvironment);
+  testRunner.collector().useEnvironment(new PlaywrightEnvironment(playwright));
   for (const e of config.globalEnvironments || [])
     testRunner.collector().useEnvironment(e);
 
@@ -95,34 +89,7 @@ function collect(browserNames) {
 
   for (const browserName of browserNames) {
     const browserType = playwright[browserName];
-
-    const browserTypeEnvironment = {
-      name() { return 'BrowserType'; },
-
-      async beforeAll(state) {
-        // Channel substitute
-        let overridenBrowserType = browserType;
-        if (process.env.PWCHANNEL) {
-          const dispatcherScope = new DispatcherScope();
-          const connection = new Connection();
-          dispatcherScope.onmessage = async message => {
-            setImmediate(() => connection.send(message));
-          };
-          connection.onmessage = async message => {
-            const result = await dispatcherScope.send(message);
-            await new Promise(f => setImmediate(f));
-            return result;
-          };
-          BrowserTypeDispatcher.from(dispatcherScope, browserType);
-          overridenBrowserType = await connection.waitForObjectWithKnownName(browserType.name());
-        }
-        state.browserType = overridenBrowserType;
-      },
-
-      async afterAll(state) {
-        delete state.browserType;
-      },
-    };
+    const browserTypeEnvironment = new BrowserTypeEnvironment(browserType);
 
     // TODO: maybe launch options per browser?
     const launchOptions = {
@@ -142,42 +109,9 @@ function collect(browserNames) {
         throw new Error(`Browser is not downloaded. Run 'npm install' and try to re-run tests`);
     }
 
-    const browserEnvironment = {
-      name() { return browserName; },
-
-      async beforeAll(state) {
-        state._logger = utils.createTestLogger(config.dumpLogOnFailure);
-        state.browser = await state.browserType.launch({...launchOptions, logger: state._logger});
-      },
-
-      async afterAll(state) {
-        await state.browser.close();
-        delete state.browser;
-        delete state._logger;
-      },
-
-      async beforeEach(state, testRun) {
-        state._logger.setTestRun(testRun);
-      },
-
-      async afterEach(state, testRun) {
-        state._logger.setTestRun(null);
-      },
-    };
-
-    const pageEnvironment = {
-      name() { return 'Page'; },
-      async beforeEach(state) {
-        state.context = await state.browser.newContext();
-        state.page = await state.context.newPage();
-      },
-
-      async afterEach(state) {
-        await state.context.close();
-        state.context = null;
-        state.page = null;
-      },
-    };
+    const logger = utils.createTestLogger(config.dumpLogOnFailure);
+    const browserEnvironment = new BrowserEnvironment(browserType, launchOptions, logger);
+    const pageEnvironment = new PageEnvironment();
 
     const suiteName = { 'chromium': 'Chromium', 'firefox': 'Firefox', 'webkit': 'WebKit' }[browserName];
     describe(suiteName, () => {

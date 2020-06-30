@@ -367,7 +367,8 @@ class HookRunner {
     const hookBody = environment[hookName];
     if (!hookBody)
       return true;
-    return await this._runHookInternal(worker, testRun, {name: hookName, body: hookBody.bind(environment)}, environment.name(), hookArgs);
+    const envName = environment.name ? environment.name() : environment.constructor.name;
+    return await this._runHookInternal(worker, testRun, {name: hookName, body: hookBody.bind(environment)}, envName, hookArgs);
   }
 
   async maybeRunGlobalSetup(environment) {
