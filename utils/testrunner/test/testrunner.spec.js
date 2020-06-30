@@ -290,25 +290,18 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
       e2.beforeAll(() => log.push('env2:beforeAll'));
       e2.afterAll(() => log.push('env2:afterAll'));
       t.beforeAll(() => log.push('root:beforeAll'));
-      t.beforeEach(() => log.push('root:beforeEach1'));
-      t.beforeEach(() => log.push('root:beforeEach2'));
+      t.beforeEach(() => log.push('root:beforeEach'));
       t.it('uno', () => log.push('test #1'));
       t.describe('suite1', () => {
-        t.beforeAll(() => log.push('suite:beforeAll1'));
-        t.beforeAll(() => log.push('suite:beforeAll2'));
+        t.beforeAll(() => log.push('suite:beforeAll'));
         t.beforeEach(() => log.push('suite:beforeEach'));
         t.it('dos', () => log.push('test #2'));
-        t.tests()[t.tests().length - 1].environment().beforeEach(() => log.push('test:before1'));
-        t.tests()[t.tests().length - 1].environment().beforeEach(() => log.push('test:before2'));
-        t.tests()[t.tests().length - 1].environment().afterEach(() => log.push('test:after1'));
-        t.tests()[t.tests().length - 1].environment().afterEach(() => log.push('test:after2'));
+        t.tests()[t.tests().length - 1].environment().beforeEach(() => log.push('test:before'));
+        t.tests()[t.tests().length - 1].environment().afterEach(() => log.push('test:after'));
         t.it('tres', () => log.push('test #3'));
-        t.tests()[t.tests().length - 1].environment().beforeEach(() => log.push('test:before1'));
-        t.tests()[t.tests().length - 1].environment().beforeEach(() => log.push('test:before2'));
-        t.tests()[t.tests().length - 1].environment().afterEach(() => log.push('test:after1'));
-        t.tests()[t.tests().length - 1].environment().afterEach(() => log.push('test:after2'));
-        t.afterEach(() => log.push('suite:afterEach1'));
-        t.afterEach(() => log.push('suite:afterEach2'));
+        t.tests()[t.tests().length - 1].environment().beforeEach(() => log.push('test:before'));
+        t.tests()[t.tests().length - 1].environment().afterEach(() => log.push('test:after'));
+        t.afterEach(() => log.push('suite:afterEach'));
         t.afterAll(() => log.push('suite:afterAll'));
       });
       t.it('cuatro', () => log.push('test #4'));
@@ -326,41 +319,30 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
       t.suites()[t.suites().length - 1].addEnvironment(e);
       t.suites()[t.suites().length - 1].addEnvironment(e2);
       t.afterEach(() => log.push('root:afterEach'));
-      t.afterAll(() => log.push('root:afterAll1'));
-      t.afterAll(() => log.push('root:afterAll2'));
+      t.afterAll(() => log.push('root:afterAll'));
       await t.run();
       expect(log).toEqual([
         'root:beforeAll',
-        'root:beforeEach1',
-        'root:beforeEach2',
+        'root:beforeEach',
         'test #1',
         'root:afterEach',
 
-        'suite:beforeAll1',
-        'suite:beforeAll2',
+        'suite:beforeAll',
 
-        'root:beforeEach1',
-        'root:beforeEach2',
+        'root:beforeEach',
         'suite:beforeEach',
-        'test:before1',
-        'test:before2',
+        'test:before',
         'test #2',
-        'test:after1',
-        'test:after2',
-        'suite:afterEach1',
-        'suite:afterEach2',
+        'test:after',
+        'suite:afterEach',
         'root:afterEach',
 
-        'root:beforeEach1',
-        'root:beforeEach2',
+        'root:beforeEach',
         'suite:beforeEach',
-        'test:before1',
-        'test:before2',
+        'test:before',
         'test #3',
-        'test:after1',
-        'test:after2',
-        'suite:afterEach1',
-        'suite:afterEach2',
+        'test:after',
+        'suite:afterEach',
         'root:afterEach',
 
         'suite:afterAll',
@@ -368,16 +350,14 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
         'env:beforeAll',
         'env2:beforeAll',
 
-        'root:beforeEach1',
-        'root:beforeEach2',
+        'root:beforeEach',
         'env:beforeEach',
         'test #4',
         'env:afterEach',
         'root:afterEach',
 
         'suite2:beforeAll',
-        'root:beforeEach1',
-        'root:beforeEach2',
+        'root:beforeEach',
         'env:beforeEach',
         'test #5',
         'env:afterEach',
@@ -387,8 +367,7 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
         'env2:afterAll',
         'env:afterAll',
 
-        'root:afterAll1',
-        'root:afterAll2',
+        'root:afterAll',
       ]);
     });
     it('should remove environment', async() => {

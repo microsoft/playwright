@@ -30,7 +30,7 @@ function createHook(callback, name) {
 class Environment {
   constructor(name) {
     this._name = name;
-    this._hooks = [];
+    this._hooks = new Map();
   }
 
   name() {
@@ -38,41 +38,41 @@ class Environment {
   }
 
   beforeEach(callback) {
-    this._hooks.push(createHook(callback, 'beforeEach'));
+    this._hooks.set('beforeEach', createHook(callback, 'beforeEach'));
     return this;
   }
 
   afterEach(callback) {
-    this._hooks.push(createHook(callback, 'afterEach'));
+    this._hooks.set('afterEach', createHook(callback, 'afterEach'));
     return this;
   }
 
   beforeAll(callback) {
-    this._hooks.push(createHook(callback, 'beforeAll'));
+    this._hooks.set('beforeAll', createHook(callback, 'beforeAll'));
     return this;
   }
 
   afterAll(callback) {
-    this._hooks.push(createHook(callback, 'afterAll'));
+    this._hooks.set('afterAll', createHook(callback, 'afterAll'));
     return this;
   }
 
   globalSetup(callback) {
-    this._hooks.push(createHook(callback, 'globalSetup'));
+    this._hooks.set('globalSetup', createHook(callback, 'globalSetup'));
     return this;
   }
 
   globalTeardown(callback) {
-    this._hooks.push(createHook(callback, 'globalTeardown'));
+    this._hooks.set('globalTeardown', createHook(callback, 'globalTeardown'));
     return this;
   }
 
-  hooks(name) {
-    return this._hooks.filter(hook => !name || hook.name === name);
+  hook(name) {
+    return this._hooks.get(name) || null;
   }
 
   isEmpty() {
-    return !this._hooks.length;
+    return !this._hooks.size;
   }
 }
 

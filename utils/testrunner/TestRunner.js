@@ -359,34 +359,38 @@ class HookRunner {
   }
 
   async runAfterAll(environment, worker, testRun, hookArgs) {
-    for (const hook of environment.hooks('afterAll')) {
-      if (!await this._runHook(worker, testRun, hook, environment.name(), hookArgs))
-        return false;
-    }
+    const hook = environment.hook('afterAll');
+    if (!hook)
+      return true;
+    if (!await this._runHook(worker, testRun, hook, environment.name(), hookArgs))
+      return false;
     return true;
   }
 
   async runBeforeAll(environment, worker, testRun, hookArgs) {
-    for (const hook of environment.hooks('beforeAll')) {
-      if (!await this._runHook(worker, testRun, hook, environment.name(), hookArgs))
-        return false;
-    }
+    const hook = environment.hook('beforeAll');
+    if (!hook)
+      return true;
+    if (!await this._runHook(worker, testRun, hook, environment.name(), hookArgs))
+      return false;
     return true;
   }
 
   async runAfterEach(environment, worker, testRun, hookArgs) {
-    for (const hook of environment.hooks('afterEach')) {
-      if (!await this._runHook(worker, testRun, hook, environment.name(), hookArgs))
-        return false;
-    }
+    const hook = environment.hook('afterEach');
+    if (!hook)
+      return true;
+    if (!await this._runHook(worker, testRun, hook, environment.name(), hookArgs))
+      return false;
     return true;
   }
 
   async runBeforeEach(environment, worker, testRun, hookArgs) {
-    for (const hook of environment.hooks('beforeEach')) {
-      if (!await this._runHook(worker, testRun, hook, environment.name(), hookArgs))
-        return false;
-    }
+    const hook = environment.hook('beforeEach');
+    if (!hook)
+      return true;
+    if (!await this._runHook(worker, testRun, hook, environment.name(), hookArgs))
+      return false;
     return true;
   }
 
@@ -394,12 +398,12 @@ class HookRunner {
     const globalState = this._environmentToGlobalState.get(environment);
     if (!globalState.globalSetupPromise) {
       globalState.globalSetupPromise = (async () => {
-        let result = true;
-        for (const hook of environment.hooks('globalSetup')) {
-          if (!await this._runHook(null /* worker */, null /* testRun */, hook, environment.name(), []))
-            result = false;
-        }
-        return result;
+        const hook = environment.hook('globalSetup');
+        if (!hook)
+          return true;
+        if (!await this._runHook(null /* worker */, null /* testRun */, hook, environment.name(), []))
+          return false;
+        return true;
       })();
     }
     if (!await globalState.globalSetupPromise) {
@@ -414,12 +418,12 @@ class HookRunner {
     if (!globalState.globalTeardownPromise) {
       if (!globalState.pendingTestRuns.size || (this._testRunner._terminating && globalState.globalSetupPromise)) {
         globalState.globalTeardownPromise = (async () => {
-          let result = true;
-          for (const hook of environment.hooks('globalTeardown')) {
-            if (!await this._runHook(null /* worker */, null /* testRun */, hook, environment.name(), []))
-              result = false;
-          }
-          return result;
+          const hook = environment.hook('globalTeardown');
+          if (!hook)
+            return true;
+          if (!await this._runHook(null /* worker */, null /* testRun */, hook, environment.name(), []))
+            return false;
+          return true;
         })();
       }
     }
