@@ -28,7 +28,7 @@ import * as browserPaths from './browserPaths';
 import { BrowserName, BrowserPlatform, BrowserDescriptor } from './browserPaths';
 
 // `https-proxy-agent` v5 is written in Typescript and exposes generated types.
-// However, as of June 2020, it's types are generated with tsconfig that enables
+// However, as of June 2020, its types are generated with tsconfig that enables
 // `esModuleInterop` option.
 //
 // As a result, we can't depend on the package unless we enable the option
