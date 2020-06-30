@@ -18,7 +18,7 @@
 import { BrowserBase, BrowserOptions, BrowserContextOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { Events } from '../events';
-import { helper, deprecate, RegisteredListener, assert } from '../helper';
+import { helper, RegisteredListener, assert } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding } from '../page';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
@@ -304,8 +304,7 @@ export class WKBrowserContext extends BrowserContextBase {
       await (page._delegate as WKPage).updateOffline();
   }
 
-  async setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
-    deprecate(`context.setHTTPCredentials`, `warning: method |context.setHTTPCredentials()| is deprecated. Instead of changing credentials, create another browser context with new credentials.`);
+  async _doSetHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
     this._options.httpCredentials = httpCredentials || undefined;
     for (const page of this.pages())
       await (page._delegate as WKPage).updateHttpCredentials();

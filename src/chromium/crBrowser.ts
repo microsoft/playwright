@@ -18,7 +18,7 @@
 import { BrowserBase, BrowserOptions, BrowserContextOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { Events as CommonEvents } from '../events';
-import { assert, deprecate } from '../helper';
+import { assert } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding, Worker } from '../page';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
@@ -392,8 +392,7 @@ export class CRBrowserContext extends BrowserContextBase {
       await (page._delegate as CRPage).updateOffline();
   }
 
-  async setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
-    deprecate(`context.setHTTPCredentials`, `warning: method |context.setHTTPCredentials()| is deprecated. Instead of changing credentials, create another browser context with new credentials.`);
+  async _doSetHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
     this._options.httpCredentials = httpCredentials || undefined;
     for (const page of this.pages())
       await (page._delegate as CRPage).updateHttpCredentials();

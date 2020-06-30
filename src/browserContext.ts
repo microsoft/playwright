@@ -16,7 +16,7 @@
  */
 
 import { Writable } from 'stream';
-import { helper } from './helper';
+import { isUnderTest, helper, deprecate} from './helper';
 import * as network from './network';
 import { Page, PageBinding } from './page';
 import { TimeoutSettings } from './timeoutSettings';
@@ -123,7 +123,7 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   abstract _doGrantPermissions(origin: string, permissions: string[]): Promise<void>;
   abstract _doClearPermissions(): Promise<void>;
   abstract setGeolocation(geolocation: types.Geolocation | null): Promise<void>;
-  abstract setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void>;
+  abstract _doSetHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void>;
   abstract setExtraHTTPHeaders(headers: types.Headers): Promise<void>;
   abstract setOffline(offline: boolean): Promise<void>;
   abstract _doAddInitScript(expression: string): Promise<void>;
@@ -140,6 +140,12 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
 
   async exposeFunction(name: string, playwrightFunction: Function): Promise<void> {
     await this.exposeBinding(name, (options, ...args: any) => playwrightFunction(...args));
+  }
+
+  setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
+    if (!isUnderTest())
+      deprecate(`context.setHTTPCredentials`, `warning: method |context.setHTTPCredentials()| is deprecated. Instead of changing credentials, create another browser context with new credentials.`);
+    return this._doSetHTTPCredentials(httpCredentials);
   }
 
   async exposeBinding(name: string, playwrightBinding: frames.FunctionWithSource): Promise<void> {
