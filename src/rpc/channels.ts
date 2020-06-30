@@ -129,39 +129,39 @@ export type PageInitializer = {
 
 
 export interface FrameChannel extends Channel {
-  $$eval(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<any>;
-  $eval(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<any>;
-  addScriptTag(params: { options: { url?: string | undefined, path?: string | undefined, content?: string | undefined, type?: string | undefined } }): Promise<ElementHandleChannel>;
-  addStyleTag(params: { options: { url?: string | undefined, path?: string | undefined, content?: string | undefined } }): Promise<ElementHandleChannel>;
-  check(params: { selector: string, options: types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean } }): Promise<void>;
-  click(params: { selector: string, options: types.PointerActionOptions & types.MouseClickOptions & types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean } }): Promise<void>;
+  $$eval(params: { selector: string; expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<any>;
+  $eval(params: { selector: string; expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<any>;
+  addScriptTag(params: { options: { url?: string | undefined, path?: string | undefined, content?: string | undefined, type?: string | undefined }, isPage?: boolean }): Promise<ElementHandleChannel>;
+  addStyleTag(params: { options: { url?: string | undefined, path?: string | undefined, content?: string | undefined }, isPage?: boolean }): Promise<ElementHandleChannel>;
+  check(params: { selector: string, options: types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean }, isPage?: boolean }): Promise<void>;
+  click(params: { selector: string, options: types.PointerActionOptions & types.MouseClickOptions & types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean }, isPage?: boolean }): Promise<void>;
   content(): Promise<string>;
-  dblclick(params: { selector: string, options: types.PointerActionOptions & types.MouseMultiClickOptions & types.TimeoutOptions & { force?: boolean }}): Promise<void>;
-  dispatchEvent(params: { selector: string, type: string, eventInit: Object | undefined, options: types.TimeoutOptions }): Promise<void>;
-  evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<any>;
-  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any}): Promise<JSHandleChannel>;
-  fill(params: { selector: string, value: string, options: types.NavigatingActionWaitOptions }): Promise<void>;
-  focus(params: { selector: string, options: types.TimeoutOptions }): Promise<void>;
+  dblclick(params: { selector: string, options: types.PointerActionOptions & types.MouseMultiClickOptions & types.TimeoutOptions & { force?: boolean }, isPage?: boolean}): Promise<void>;
+  dispatchEvent(params: { selector: string, type: string, eventInit: Object | undefined, options: types.TimeoutOptions, isPage?: boolean }): Promise<void>;
+  evaluateExpression(params: { expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<any>;
+  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<JSHandleChannel>;
+  fill(params: { selector: string, value: string, options: types.NavigatingActionWaitOptions, isPage?: boolean }): Promise<void>;
+  focus(params: { selector: string, options: types.TimeoutOptions, isPage?: boolean }): Promise<void>;
   frameElement(): Promise<ElementHandleChannel>;
-  getAttribute(params: { selector: string, name: string, options: types.TimeoutOptions }): Promise<string | null>;
-  goto(params: { url: string, options: types.GotoOptions }): Promise<ResponseChannel | null>;
-  hover(params: { selector: string, options: types.PointerActionOptions & types.TimeoutOptions & { force?: boolean } }): Promise<void>;
-  innerHTML(params: { selector: string, options: types.TimeoutOptions }): Promise<string>;
-  innerText(params: { selector: string, options: types.TimeoutOptions }): Promise<string>;
-  press(params: { selector: string, key: string, options: { delay?: number | undefined } & types.TimeoutOptions & { noWaitAfter?: boolean } }): Promise<void>;
-  querySelector(params: { selector: string }): Promise<ElementHandleChannel | null>;
-  querySelectorAll(params: { selector: string }): Promise<ElementHandleChannel[]>;
-  selectOption(params: { selector: string, values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions }): Promise<string[]>;
-  setContent(params: { html: string, options: types.NavigateOptions }): Promise<void>;
-  setInputFiles(params: { selector: string, files: { name: string, mimeType: string, buffer: string }[], options: types.NavigatingActionWaitOptions }): Promise<void>;
-  textContent(params: { selector: string, options: types.TimeoutOptions }): Promise<string | null>;
+  getAttribute(params: { selector: string, name: string, options: types.TimeoutOptions, isPage?: boolean }): Promise<string | null>;
+  goto(params: { url: string, options: types.GotoOptions, isPage?: boolean }): Promise<ResponseChannel | null>;
+  hover(params: { selector: string, options: types.PointerActionOptions & types.TimeoutOptions & { force?: boolean }, isPage?: boolean }): Promise<void>;
+  innerHTML(params: { selector: string, options: types.TimeoutOptions, isPage?: boolean }): Promise<string>;
+  innerText(params: { selector: string, options: types.TimeoutOptions, isPage?: boolean }): Promise<string>;
+  press(params: { selector: string, key: string, options: { delay?: number | undefined } & types.TimeoutOptions & { noWaitAfter?: boolean }, isPage?: boolean }): Promise<void>;
+  querySelector(params: { selector: string, isPage?: boolean }): Promise<ElementHandleChannel | null>;
+  querySelectorAll(params: { selector: string, isPage?: boolean }): Promise<ElementHandleChannel[]>;
+  selectOption(params: { selector: string, values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions, isPage?: boolean }): Promise<string[]>;
+  setContent(params: { html: string, options: types.NavigateOptions, isPage?: boolean }): Promise<void>;
+  setInputFiles(params: { selector: string, files: { name: string, mimeType: string, buffer: string }[], options: types.NavigatingActionWaitOptions, isPage?: boolean }): Promise<void>;
+  textContent(params: { selector: string, options: types.TimeoutOptions, isPage?: boolean }): Promise<string | null>;
   title(): Promise<string>;
-  type(params: { selector: string, text: string, options: { delay?: number | undefined } & types.TimeoutOptions & { noWaitAfter?: boolean } }): Promise<void>;
-  uncheck(params: { selector: string, options: types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean } }): Promise<void>;
-  waitForFunction(params: { expression: string, isFunction: boolean, arg: any; options: types.WaitForFunctionOptions }): Promise<JSHandleChannel>;
-  waitForLoadState(params: { state: types.LifecycleEvent, options: types.TimeoutOptions }): Promise<void>;
-  waitForNavigation(params: { options: types.WaitForNavigationOptions }): Promise<ResponseChannel | null>;
-  waitForSelector(params: { selector: string, options: types.WaitForElementOptions }): Promise<ElementHandleChannel | null>;
+  type(params: { selector: string, text: string, options: { delay?: number | undefined } & types.TimeoutOptions & { noWaitAfter?: boolean }, isPage?: boolean }): Promise<void>;
+  uncheck(params: { selector: string, options: types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean }, isPage?: boolean }): Promise<void>;
+  waitForFunction(params: { expression: string, isFunction: boolean, arg: any; options: types.WaitForFunctionOptions, isPage?: boolean }): Promise<JSHandleChannel>;
+  waitForLoadState(params: { state: types.LifecycleEvent, options: types.TimeoutOptions, isPage?: boolean }): Promise<void>;
+  waitForNavigation(params: { options: types.WaitForNavigationOptions, isPage?: boolean }): Promise<ResponseChannel | null>;
+  waitForSelector(params: { selector: string, options: types.WaitForElementOptions, isPage?: boolean }): Promise<ElementHandleChannel | null>;
 }
 export type FrameInitializer = {
   url: string,
@@ -245,7 +245,7 @@ export type RouteInitializer = {
 
 
 export interface ResponseChannel extends Channel {
-  body(): Promise<Buffer>;
+  body(): Promise<Binary>;
   finished(): Promise<Error | null>;
 }
 export type ResponseInitializer = {
@@ -290,7 +290,7 @@ export type DialogInitializer = {
 
 
 export interface DownloadChannel extends Channel {
-  path(): Promise<string>;
+  path(): Promise<string | null>;
   failure(): Promise<string | null>;
   delete(): Promise<void>;
 }

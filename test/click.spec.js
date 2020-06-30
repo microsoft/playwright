@@ -16,7 +16,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, WIN} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = utils.testOptions(browserType);
 
 async function giveItAChanceToClick(page) {
   for (let i = 0; i < 5; i++)
@@ -66,7 +66,7 @@ describe('Page.click', function() {
     ]).catch(e => {});
     await context.close();
   });
-  it('should avoid side effects after timeout', async({page, server}) => {
+  it.skip(USES_HOOKS)('should avoid side effects after timeout', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     const error = await page.click('button', { timeout: 2000, __testHookBeforePointerAction: () => new Promise(f => setTimeout(f, 2500))}).catch(e => e);
     await page.waitForTimeout(5000);  // Give it some time to click after the test hook is done waiting.
@@ -707,7 +707,7 @@ describe('Page.click', function() {
     expect(await page.evaluate(() => window.clicked)).toBe(undefined);
     expect(error.message).toContain('Element is outside of the viewport');
   });
-  it('should fail when element jumps during hit testing', async({page, server}) => {
+  it.skip(USES_HOOKS)('should fail when element jumps during hit testing', async({page, server}) => {
     await page.setContent('<button>Click me</button>');
     let clicked = false;
     const handle = await page.$('button');
@@ -745,7 +745,7 @@ describe('Page.click', function() {
     await page.click('button');
     expect(await page.evaluate(() => window.result)).toBe(1);
   });
-  it.fail(true)('should retarget when element is recycled during hit testing', async ({page, server}) => {
+  it.skip(USES_HOOKS).fail(true)('should retarget when element is recycled during hit testing', async ({page, server}) => {
     await page.goto(server.PREFIX + '/react.html');
     await page.evaluate(() => {
       renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2' })] ));
@@ -759,7 +759,7 @@ describe('Page.click', function() {
     expect(await page.evaluate(() => window.button1)).toBe(true);
     expect(await page.evaluate(() => window.button2)).toBe(undefined);
   });
-  it.fail(true)('should report that selector does not match anymore', async ({page, server}) => {
+  it.skip(USES_HOOKS).fail(true)('should report that selector does not match anymore', async ({page, server}) => {
     await page.goto(server.PREFIX + '/react.html');
     await page.evaluate(() => {
       renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2' })] ));
@@ -777,7 +777,7 @@ describe('Page.click', function() {
     expect(error.message).toContain('Timeout 3000ms exceeded during page.dblclick.');
     expect(error.message).toContain('element does not match the selector anymore');
   });
-  it.fail(true)('should retarget when element is recycled before enabled check', async ({page, server}) => {
+  it.skip(USES_HOOKS).fail(true)('should retarget when element is recycled before enabled check', async ({page, server}) => {
     await page.goto(server.PREFIX + '/react.html');
     await page.evaluate(() => {
       renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2', disabled: true })] ));
@@ -791,7 +791,7 @@ describe('Page.click', function() {
     expect(await page.evaluate(() => window.button1)).toBe(true);
     expect(await page.evaluate(() => window.button2)).toBe(undefined);
   });
-  it.fail(true)('should not retarget the handle when element is recycled', async ({page, server}) => {
+  it.skip(USES_HOOKS).fail(true)('should not retarget the handle when element is recycled', async ({page, server}) => {
     await page.goto(server.PREFIX + '/react.html');
     await page.evaluate(() => {
       renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2', disabled: true })] ));

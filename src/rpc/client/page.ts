@@ -55,6 +55,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   readonly _bindings = new Map<string, FunctionWithSource>();
   private _pendingWaitForEvents = new Map<(error: Error) => void, string>();
   private _timeoutSettings = new TimeoutSettings();
+  _isPageCall = false;
 
   static from(page: PageChannel): Page {
     return page._object;
@@ -203,45 +204,54 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     this._channel.setDefaultTimeoutNoReply({ timeout });
   }
 
+  private _attributeToPage<T>(func: () => T): T {
+    try {
+      this._isPageCall = true;
+      return func();
+    } finally {
+      this._isPageCall = false;
+    }
+  }
+
   async $(selector: string): Promise<ElementHandle<Element> | null> {
-    return await this._mainFrame.$(selector);
+    return this._attributeToPage(() => this._mainFrame.$(selector));
   }
 
   async waitForSelector(selector: string, options?: types.WaitForElementOptions): Promise<ElementHandle<Element> | null> {
-    return await this._mainFrame.waitForSelector(selector, options);
+    return this._attributeToPage(() => this._mainFrame.waitForSelector(selector, options));
   }
 
   async dispatchEvent(selector: string, type: string, eventInit?: Object, options?: types.TimeoutOptions): Promise<void> {
-    return await this._mainFrame.dispatchEvent(selector, type, eventInit, options);
+    return this._attributeToPage(() => this._mainFrame.dispatchEvent(selector, type, eventInit, options));
   }
 
   async evaluateHandle<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: Func1<void, R>, arg?: any): Promise<SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
-    return await this._mainFrame.evaluateHandle(pageFunction, arg);
+    return this._attributeToPage(() => this._mainFrame.evaluateHandle(pageFunction, arg));
   }
 
   async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
   async $eval<R>(selector: string, pageFunction: FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
-    return await this._mainFrame.$eval(selector, pageFunction, arg);
+    return this._attributeToPage(() => this._mainFrame.$eval(selector, pageFunction, arg));
   }
 
   async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
   async $$eval<R>(selector: string, pageFunction: FuncOn<Element[], void, R>, arg?: any): Promise<R>;
   async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
-    return await this._mainFrame.$$eval(selector, pageFunction, arg);
+    return this._attributeToPage(() => this._mainFrame.$$eval(selector, pageFunction, arg));
   }
 
   async $$(selector: string): Promise<ElementHandle<Element>[]> {
-    return await this._mainFrame.$$(selector);
+    return this._attributeToPage(() => this._mainFrame.$$(selector));
   }
 
   async addScriptTag(options: { url?: string; path?: string; content?: string; type?: string; }): Promise<ElementHandle> {
-    return await this._mainFrame.addScriptTag(options);
+    return this._attributeToPage(() => this._mainFrame.addScriptTag(options));
   }
 
   async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
@@ -266,19 +276,19 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   url(): string {
-    return this.mainFrame().url();
+    return this._attributeToPage(() => this._mainFrame.url());
   }
 
   async content(): Promise<string> {
-    return this.mainFrame().content();
+    return this._attributeToPage(() => this._mainFrame.content());
   }
 
   async setContent(html: string, options?: types.NavigateOptions): Promise<void> {
-    return this.mainFrame().setContent(html, options);
+    return this._attributeToPage(() => this._mainFrame.setContent(html, options));
   }
 
   async goto(url: string, options?: GotoOptions): Promise<Response | null> {
-    return this.mainFrame().goto(url, options);
+    return this._attributeToPage(() => this._mainFrame.goto(url, options));
   }
 
   async reload(options?: types.NavigateOptions): Promise<Response | null> {
@@ -286,11 +296,11 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async waitForLoadState(state?: types.LifecycleEvent, options?: types.TimeoutOptions): Promise<void> {
-    return this._mainFrame.waitForLoadState(state, options);
+    return this._attributeToPage(() => this._mainFrame.waitForLoadState(state, options));
   }
 
   async waitForNavigation(options?: types.WaitForNavigationOptions): Promise<Response | null> {
-    return this._mainFrame.waitForNavigation(options);
+    return this._attributeToPage(() => this._mainFrame.waitForNavigation(options));
   }
 
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean), options: types.TimeoutOptions = {}): Promise<Request> {
@@ -346,7 +356,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   async evaluate<R>(pageFunction: Func1<void, R>, arg?: any): Promise<R>;
   async evaluate<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
-    return this.mainFrame().evaluate(pageFunction, arg);
+    return this._attributeToPage(() => this._mainFrame.evaluate(pageFunction, arg));
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
@@ -371,7 +381,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async title(): Promise<string> {
-    return this.mainFrame().title();
+    return this._attributeToPage(() => this._mainFrame.title());
   }
 
   async close(options: { runBeforeUnload?: boolean } = {runBeforeUnload: undefined}) {
@@ -385,73 +395,73 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async click(selector: string, options?: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    return this.mainFrame().click(selector, options);
+    return this._attributeToPage(() => this._mainFrame.click(selector, options));
   }
 
   async dblclick(selector: string, options?: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    return this.mainFrame().dblclick(selector, options);
+    return this._attributeToPage(() => this._mainFrame.dblclick(selector, options));
   }
 
   async fill(selector: string, value: string, options?: types.NavigatingActionWaitOptions) {
-    return this.mainFrame().fill(selector, value, options);
+    return this._attributeToPage(() => this._mainFrame.fill(selector, value, options));
   }
 
   async focus(selector: string, options?: types.TimeoutOptions) {
-    return this.mainFrame().focus(selector, options);
+    return this._attributeToPage(() => this._mainFrame.focus(selector, options));
   }
 
   async textContent(selector: string, options?: types.TimeoutOptions): Promise<null|string> {
-    return this.mainFrame().textContent(selector, options);
+    return this._attributeToPage(() => this._mainFrame.textContent(selector, options));
   }
 
   async innerText(selector: string, options?: types.TimeoutOptions): Promise<string> {
-    return this.mainFrame().innerText(selector, options);
+    return this._attributeToPage(() => this._mainFrame.innerText(selector, options));
   }
 
   async innerHTML(selector: string, options?: types.TimeoutOptions): Promise<string> {
-    return this.mainFrame().innerHTML(selector, options);
+    return this._attributeToPage(() => this._mainFrame.innerHTML(selector, options));
   }
 
   async getAttribute(selector: string, name: string, options?: types.TimeoutOptions): Promise<string | null> {
-    return this.mainFrame().getAttribute(selector, name, options);
+    return this._attributeToPage(() => this._mainFrame.getAttribute(selector, name, options));
   }
 
   async hover(selector: string, options?: types.PointerActionOptions & types.PointerActionWaitOptions) {
-    return this.mainFrame().hover(selector, options);
+    return this._attributeToPage(() => this._mainFrame.hover(selector, options));
   }
 
   async selectOption(selector: string, values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options?: types.NavigatingActionWaitOptions): Promise<string[]> {
-    return this.mainFrame().selectOption(selector, values, options);
+    return this._attributeToPage(() => this._mainFrame.selectOption(selector, values, options));
   }
 
   async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options?: types.NavigatingActionWaitOptions): Promise<void> {
-    return this.mainFrame().setInputFiles(selector, files, options);
+    return this._attributeToPage(() => this._mainFrame.setInputFiles(selector, files, options));
   }
 
   async type(selector: string, text: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
-    return this.mainFrame().type(selector, text, options);
+    return this._attributeToPage(() => this._mainFrame.type(selector, text, options));
   }
 
   async press(selector: string, key: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
-    return this.mainFrame().press(selector, key, options);
+    return this._attributeToPage(() => this._mainFrame.press(selector, key, options));
   }
 
   async check(selector: string, options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    return this.mainFrame().check(selector, options);
+    return this._attributeToPage(() => this._mainFrame.check(selector, options));
   }
 
   async uncheck(selector: string, options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    return this.mainFrame().uncheck(selector, options);
+    return this._attributeToPage(() => this._mainFrame.uncheck(selector, options));
   }
 
   async waitForTimeout(timeout: number) {
-    await this.mainFrame().waitForTimeout(timeout);
+    await this._mainFrame.waitForTimeout(timeout);
   }
 
   async waitForFunction<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<SmartHandle<R>>;
   async waitForFunction<R>(pageFunction: Func1<void, R>, arg?: any, options?: types.WaitForFunctionOptions): Promise<SmartHandle<R>>;
   async waitForFunction<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<SmartHandle<R>> {
-    return this.mainFrame().waitForFunction(pageFunction, arg, options);
+    return this._attributeToPage(() => this._mainFrame.waitForFunction(pageFunction, arg, options));
   }
 
   workers(): Worker[] {

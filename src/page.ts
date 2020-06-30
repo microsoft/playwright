@@ -232,6 +232,10 @@ export class Page extends EventEmitter {
     return this._attributeToPage(() => this.mainFrame().evaluateHandle(pageFunction, arg));
   }
 
+  async _evaluateExpressionHandle(expression: string, isFunction: boolean, arg: any): Promise<any> {
+    return this._attributeToPage(() => this.mainFrame()._evaluateExpressionHandle(expression, isFunction, arg));
+  }
+
   async $eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
   async $eval<R>(selector: string, pageFunction: js.FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
@@ -239,11 +243,19 @@ export class Page extends EventEmitter {
     return this._attributeToPage(() => this.mainFrame().$eval(selector, pageFunction, arg));
   }
 
+  async _$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
+    return this._attributeToPage(() => this.mainFrame()._$evalExpression(selector, expression, isFunction, arg));
+  }
+
   async $$eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
   async $$eval<R>(selector: string, pageFunction: js.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
   async $$eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
     return this._attributeToPage(() => this.mainFrame().$$eval(selector, pageFunction, arg));
+  }
+
+  async _$$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
+    return this._attributeToPage(() => this.mainFrame()._$$evalExpression(selector, expression, isFunction, arg));
   }
 
   async $$(selector: string): Promise<dom.ElementHandle<Element>[]> {
@@ -391,6 +403,10 @@ export class Page extends EventEmitter {
   async evaluate<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
     return this._attributeToPage(() => this.mainFrame().evaluate(pageFunction, arg));
+  }
+
+  async _evaluateExpression(expression: string, isFunction: boolean, arg: any): Promise<any> {
+    return this._attributeToPage(() => this.mainFrame()._evaluateExpression(expression, isFunction, arg));
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
@@ -554,6 +570,10 @@ export class Page extends EventEmitter {
   async waitForFunction<R>(pageFunction: js.Func1<void, R>, arg?: any, options?: types.WaitForFunctionOptions): Promise<js.SmartHandle<R>>;
   async waitForFunction<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<js.SmartHandle<R>> {
     return this._attributeToPage(() => this.mainFrame().waitForFunction(pageFunction, arg, options));
+  }
+
+  async _waitForFunctionExpression<R>(expression: string, isFunction: boolean, arg: any, options: types.WaitForFunctionOptions = {}): Promise<js.SmartHandle<R>> {
+    return this._attributeToPage(() => this.mainFrame()._waitForFunctionExpression(expression, isFunction, arg, options));
   }
 
   workers(): Worker[] {

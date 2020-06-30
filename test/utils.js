@@ -200,6 +200,7 @@ const utils = module.exports = {
       browserType,
       GOLDEN_DIR,
       OUTPUT_DIR,
+      USES_HOOKS: !!process.env.PWCHANNEL
     };
   },
 

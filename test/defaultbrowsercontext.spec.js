@@ -18,7 +18,7 @@
 const fs = require('fs');
 const utils = require('./utils');
 const {makeUserDataDir, removeUserDataDir} = utils;
-const {FFOX, MAC, CHROMIUM, WEBKIT, WIN} = utils.testOptions(browserType);
+const {FFOX, MAC, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = utils.testOptions(browserType);
 
 describe('launchPersistentContext()', function() {
   async function launch(state, options = {}) {
@@ -353,14 +353,14 @@ describe('launchPersistentContext()', function() {
     await browserContext.close();
     await removeUserDataDir(userDataDir);
   });
-  it('should handle timeout', async({browserType, defaultBrowserOptions}) => {
+  it.skip(USES_HOOKS)('should handle timeout', async({browserType, defaultBrowserOptions}) => {
     const userDataDir = await makeUserDataDir();
     const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
     const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
     expect(error.message).toContain(`Timeout 5000ms exceeded during browserType.launchPersistentContext.`);
     await removeUserDataDir(userDataDir);
   });
-  it('should handle exception', async({browserType, defaultBrowserOptions}) => {
+  it.skip(USES_HOOKS)('should handle exception', async({browserType, defaultBrowserOptions}) => {
     const userDataDir = await makeUserDataDir();
     const e = new Error('Dummy');
     const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; } };

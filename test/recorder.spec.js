@@ -15,7 +15,7 @@
  */
 
 const { Writable } = require('stream');
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = require('./utils').testOptions(browserType);
 
 const pattern = [
   '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
@@ -56,7 +56,7 @@ class WritableBuffer {
   }
 }
 
-describe('Recorder', function() {
+describe.skip(USES_HOOKS)('Recorder', function() {
   beforeEach(async state => {
     state.context = await state.browser.newContext();
     state.output = new WritableBuffer();

@@ -18,7 +18,7 @@
 const path = require('path');
 const fs = require('fs');
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = utils.testOptions(browserType);
 
 describe('Playwright', function() {
   describe('browserType.launch', function() {
@@ -50,20 +50,20 @@ describe('Playwright', function() {
       await browserType.launch(options).catch(e => waitError = e);
       expect(waitError.message).toContain('Failed to launch');
     });
-    it('should handle timeout', async({browserType, defaultBrowserOptions}) => {
+    it.skip(USES_HOOKS)('should handle timeout', async({browserType, defaultBrowserOptions}) => {
       const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
       const error = await browserType.launch(options).catch(e => e);
       expect(error.message).toContain(`Timeout 5000ms exceeded during browserType.launch.`);
       expect(error.message).toContain(`[browser] <launching>`);
       expect(error.message).toContain(`[browser] <launched> pid=`);
     });
-    it('should handle exception', async({browserType, defaultBrowserOptions}) => {
+    it.skip(USES_HOOKS)('should handle exception', async({browserType, defaultBrowserOptions}) => {
       const e = new Error('Dummy');
       const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
       const error = await browserType.launch(options).catch(e => e);
       expect(error).toBe(e);
     });
-    it('should report launch log', async({browserType, defaultBrowserOptions}) => {
+    it.skip(USES_HOOKS)('should report launch log', async({browserType, defaultBrowserOptions}) => {
       const e = new Error('Dummy');
       const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
       const error = await browserType.launch(options).catch(e => e);
@@ -293,7 +293,7 @@ describe('browserType.connect', function() {
     await browserServer._checkLeaks();
     await browserServer.close();
   });
-  it.slow()('should handle exceptions during connect', async({browserType, defaultBrowserOptions, server}) => {
+  it.skip(USES_HOOKS).slow()('should handle exceptions during connect', async({browserType, defaultBrowserOptions, server}) => {
     const browserServer = await browserType.launchServer(defaultBrowserOptions);
     const __testHookBeforeCreateBrowser = () => { throw new Error('Dummy') };
     const error = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint(), __testHookBeforeCreateBrowser }).catch(e => e);
