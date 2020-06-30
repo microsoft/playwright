@@ -109,8 +109,7 @@ function collect(browserNames) {
         throw new Error(`Browser is not downloaded. Run 'npm install' and try to re-run tests`);
     }
 
-    const logger = utils.createTestLogger(config.dumpLogOnFailure);
-    const browserEnvironment = new BrowserEnvironment(browserType, launchOptions, logger);
+    const browserEnvironment = new BrowserEnvironment(browserType, launchOptions, config.dumpLogOnFailure);
     const pageEnvironment = new PageEnvironment();
 
     const suiteName = { 'chromium': 'Chromium', 'firefox': 'Firefox', 'webkit': 'WebKit' }[browserName];

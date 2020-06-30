@@ -1,3 +1,20 @@
+/**
+ * Copyright 2019 Google Inc. All rights reserved.
+ * Modifications copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 const utils = require('./utils');
 const fs = require('fs');
 const path = require('path');
@@ -40,26 +57,28 @@ class ServerEnvironment {
 }
 
 class DefaultBrowserOptionsEnvironment {
-  constructor(defaultBrowserOptions, logger, playwrightPath) {
+  constructor(defaultBrowserOptions, dumpLogOnFailure, playwrightPath) {
     this._defaultBrowserOptions = defaultBrowserOptions;
-    this._logger = logger;
+    this._dumpLogOnFailure = dumpLogOnFailure;
     this._playwrightPath = playwrightPath;
+    this._loggerSymbol = Symbol('DefaultBrowserOptionsEnvironment.logger');
   }
 
   async beforeAll(state) {
+    state[this._loggerSymbol] = utils.createTestLogger(this._dumpLogOnFailure, null, 'extra');
     state.defaultBrowserOptions = {
       ...this._defaultBrowserOptions,
-      logger: this._logger,
+      logger: state[this._loggerSymbol],
     };
     state.playwrightPath = this._playwrightPath;
   }
 
   async beforeEach(state, testRun) {
-    this._logger.setTestRun(testRun);
+    state[this._loggerSymbol].setTestRun(testRun);
   }
 
   async afterEach(state) {
-    this._logger.setTestRun(null);
+    state[this._loggerSymbol].setTestRun(null);
   }
 }
 
@@ -172,16 +191,21 @@ class BrowserTypeEnvironment {
 }
 
 class BrowserEnvironment {
-  constructor(browserType, launchOptions, logger) {
+  constructor(browserType, launchOptions, dumpLogOnFailure) {
     this._browserType = browserType;
     this._launchOptions = launchOptions;
-    this._logger = logger;
+    this._dumpLogOnFailure = dumpLogOnFailure;
+    this._loggerSymbol = Symbol('BrowserEnvironment.logger');
   }
 
   name() { return this._browserType.name(); }
 
   async beforeAll(state) {
-    state.browser = await this._browserType.launch({...this._launchOptions, logger: this._logger});
+    state[this._loggerSymbol] = utils.createTestLogger(this._dumpLogOnFailure);
+    state.browser = await this._browserType.launch({
+      ...this._launchOptions,
+      logger: state[this._loggerSymbol],
+    });
   }
 
   async afterAll(state) {
@@ -190,11 +214,11 @@ class BrowserEnvironment {
   }
 
   async beforeEach(state, testRun) {
-    this._logger.setTestRun(testRun);
+    state[this._loggerSymbol].setTestRun(testRun);
   }
 
   async afterEach(state, testRun) {
-    this._logger.setTestRun(null);
+    state[this._loggerSymbol].setTestRun(null);
   }
 }
 

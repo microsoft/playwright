@@ -21,12 +21,12 @@ const {DefaultBrowserOptionsEnvironment, ServerEnvironment, GoldenEnvironment, T
 
 const playwrightPath = path.join(__dirname, '..');
 
-const extraLogger = utils.createTestLogger(valueFromEnv('DEBUGP', false), null, 'extra');
+const dumpLogOnFailure = valueFromEnv('DEBUGP', false);
 const defaultBrowserOptionsEnvironment = new DefaultBrowserOptionsEnvironment({
   handleSIGINT: false,
   slowMo: valueFromEnv('SLOW_MO', 0),
   headless: !!valueFromEnv('HEADLESS', true),
-}, extraLogger, playwrightPath);
+}, dumpLogOnFailure, playwrightPath);
 
 const serverEnvironment = new ServerEnvironment();
 const customEnvironment = new GoldenEnvironment();
