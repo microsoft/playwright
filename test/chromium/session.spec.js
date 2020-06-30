@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT} = require('../utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('../utils').testOptions(browserType);
 
-describe('ChromiumBrowserContext.createSession', function() {
+describe.skip(CHANNEL)('ChromiumBrowserContext.createSession', function() {
   it('should work', async function({page, browser, server}) {
     const client = await page.context().newCDPSession(page);
 
@@ -95,7 +95,7 @@ describe('ChromiumBrowserContext.createSession', function() {
     await context.close();
   });
 });
-describe('ChromiumBrowser.newBrowserCDPSession', function() {
+describe.skip(CHANNEL)('ChromiumBrowser.newBrowserCDPSession', function() {
   it('should work', async function({page, browser, server}) {
     const session = await browser.newBrowserCDPSession();
     const version = await session.send('Browser.getVersion');

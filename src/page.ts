@@ -646,11 +646,19 @@ export class Worker extends EventEmitter {
     return js.evaluate(await this._executionContextPromise, true /* returnByValue */, pageFunction, arg);
   }
 
+  async _evaluateExpression(expression: string, isFunction: boolean, arg: any): Promise<any> {
+    return js.evaluateExpression(await this._executionContextPromise, true /* returnByValue */, expression, isFunction, arg);
+  }
+
   async evaluateHandle<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: js.Func1<void, R>, arg?: any): Promise<js.SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
     return js.evaluate(await this._executionContextPromise, false /* returnByValue */, pageFunction, arg);
+  }
+
+  async _evaluateExpressionHandle(expression: string, isFunction: boolean, arg: any): Promise<any> {
+    return js.evaluateExpression(await this._executionContextPromise, false /* returnByValue */, expression, isFunction, arg);
   }
 }
 

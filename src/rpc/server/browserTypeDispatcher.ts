@@ -18,10 +18,11 @@ import { BrowserBase } from '../../browser';
 import { BrowserTypeBase, BrowserType } from '../../server/browserType';
 import * as types from '../../types';
 import { BrowserDispatcher } from './browserDispatcher';
-import { BrowserChannel, BrowserTypeChannel, BrowserContextChannel, BrowserTypeInitializer } from '../channels';
+import { BrowserChannel, BrowserTypeChannel, BrowserContextChannel, BrowserTypeInitializer, BrowserServerChannel } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
 import { BrowserContextBase } from '../../browserContext';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
+import { BrowserServerDispatcher } from './browserServerDispatcher';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeInitializer> implements BrowserTypeChannel {
   static from(scope: DispatcherScope, browserType: BrowserTypeBase): BrowserTypeDispatcher {
@@ -45,6 +46,10 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
   async launchPersistentContext(params: { userDataDir: string, options?: types.LaunchOptions & types.BrowserContextOptions }): Promise<BrowserContextChannel> {
     const browserContext = await this._object.launchPersistentContext(params.userDataDir, params.options);
     return BrowserContextDispatcher.from(this._scope, browserContext as BrowserContextBase);
+  }
+
+  async launchServer(params: { options?: types.LaunchServerOptions }): Promise<BrowserServerChannel> {
+    return BrowserServerDispatcher.from(this._scope, await this._object.launchServer(params.options));
   }
 
   async connect(params: { options: types.ConnectOptions }): Promise<BrowserChannel> {

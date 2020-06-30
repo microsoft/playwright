@@ -25,9 +25,11 @@ export interface Channel extends EventEmitter {
   _object: any;
 }
 
+
 export interface BrowserTypeChannel extends Channel {
   connect(params: { options: types.ConnectOptions }): Promise<BrowserChannel>;
   launch(params: { options?: types.LaunchOptions }): Promise<BrowserChannel>;
+  launchServer(params: { options?: types.LaunchServerOptions }): Promise<BrowserServerChannel>;
   launchPersistentContext(params: { userDataDir: string, options?: types.LaunchOptions & types.BrowserContextOptions }): Promise<BrowserContextChannel>;
 }
 export type BrowserTypeInitializer = {
@@ -36,7 +38,21 @@ export type BrowserTypeInitializer = {
 };
 
 
+export interface BrowserServerChannel extends Channel {
+  on(event: 'close', callback: () => void): this;
+
+  close(): Promise<void>;
+  kill(): Promise<void>;
+}
+export type BrowserServerInitializer = {
+  wsEndpoint: string,
+  pid: number
+};
+
+
 export interface BrowserChannel extends Channel {
+  on(event: 'close', callback: () => void): this;
+
   close(): Promise<void>;
   newContext(params: { options?: types.BrowserContextOptions }): Promise<BrowserContextChannel>;
   newPage(params: { options?: types.BrowserContextOptions }): Promise<PageChannel>;
@@ -46,7 +62,10 @@ export type BrowserInitializer = {};
 
 export interface BrowserContextChannel extends Channel {
   on(event: 'bindingCall', callback: (params: BindingCallChannel) => void): this;
+  on(event: 'close', callback: () => void): this;
   on(event: 'page', callback: (params: PageChannel) => void): this;
+  on(event: 'route', callback: (params: { route: RouteChannel, request: RequestChannel }) => void): this;
+
   addCookies(params: { cookies: types.SetNetworkCookieParam[] }): Promise<void>;
   addInitScript(params: { source: string }): Promise<void>;
   clearCookies(): Promise<void>;
@@ -78,6 +97,7 @@ export interface PageChannel extends Channel {
   on(event: 'dialog', callback: (params: DialogChannel) => void): this;
   on(event: 'download', callback: (params: DownloadChannel) => void): this;
   on(event: 'domcontentloaded', callback: () => void): this;
+  on(event: 'fileChooser', callback: (params: { element: ElementHandleChannel, isMultiple: boolean }) => void): this;
   on(event: 'frameAttached', callback: (params: FrameChannel) => void): this;
   on(event: 'frameDetached', callback: (params: FrameChannel) => void): this;
   on(event: 'frameNavigated', callback: (params: { frame: FrameChannel, url: string, name: string }) => void): this;
@@ -90,6 +110,7 @@ export interface PageChannel extends Channel {
   on(event: 'requestFinished', callback: (params: RequestChannel) => void): this;
   on(event: 'response', callback: (params: ResponseChannel) => void): this;
   on(event: 'route', callback: (params: { route: RouteChannel, request: RequestChannel }) => void): this;
+  on(event: 'worker', callback: (params: WorkerChannel) => void): this;
 
   setDefaultNavigationTimeoutNoReply(params: { timeout: number }): void;
   setDefaultTimeoutNoReply(params: { timeout: number }): Promise<void>;
@@ -121,7 +142,9 @@ export interface PageChannel extends Channel {
 
   // A11Y
   accessibilitySnapshot(params: { options: { interestingOnly?: boolean, root?: ElementHandleChannel } }): Promise<types.SerializedAXNode | null>;
+  pdf: (params: { options?: types.PDFOptions }) => Promise<Binary>;
 }
+
 export type PageInitializer = {
   mainFrame: FrameChannel,
   viewportSize: types.Size | null
@@ -137,7 +160,7 @@ export interface FrameChannel extends Channel {
   click(params: { selector: string, options: types.PointerActionOptions & types.MouseClickOptions & types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean }, isPage?: boolean }): Promise<void>;
   content(): Promise<string>;
   dblclick(params: { selector: string, options: types.PointerActionOptions & types.MouseMultiClickOptions & types.TimeoutOptions & { force?: boolean }, isPage?: boolean}): Promise<void>;
-  dispatchEvent(params: { selector: string, type: string, eventInit: Object | undefined, options: types.TimeoutOptions, isPage?: boolean }): Promise<void>;
+  dispatchEvent(params: { selector: string, type: string, eventInit: any, options: types.TimeoutOptions, isPage?: boolean }): Promise<void>;
   evaluateExpression(params: { expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<any>;
   evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<JSHandleChannel>;
   fill(params: { selector: string, value: string, options: types.NavigatingActionWaitOptions, isPage?: boolean }): Promise<void>;
@@ -170,7 +193,18 @@ export type FrameInitializer = {
 };
 
 
+export interface WorkerChannel extends Channel {
+  evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<any>;
+  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any }): Promise<JSHandleChannel>;
+}
+export type WorkerInitializer = {
+  url: string,
+};
+
+
 export interface JSHandleChannel extends Channel {
+  on(event: 'previewUpdated', callback: (preview: string) => void): this;
+
   dispose(): Promise<void>;
   evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<any>;
   evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any}): Promise<JSHandleChannel>;

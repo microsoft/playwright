@@ -82,6 +82,7 @@ export class JSHandle<T = any> {
   readonly _value: any;
   private _objectType: string;
   protected _preview: string;
+  private _previewCallback: ((preview: string) => void) | undefined;
 
   constructor(context: ExecutionContext, type: string, objectId?: ObjectId, value?: any) {
     this._context = context;
@@ -146,6 +147,16 @@ export class JSHandle<T = any> {
 
   toString(): string {
     return this._preview;
+  }
+
+  _setPreviewCallback(callback: (preview: string) => void) {
+    this._previewCallback = callback;
+  }
+
+  _setPreview(preview: string) {
+    this._preview = preview;
+    if (this._previewCallback)
+      this._previewCallback(preview);
   }
 }
 

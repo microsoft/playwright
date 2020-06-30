@@ -37,6 +37,8 @@ export type FuncOn<On, Arg2, R> = string | ((on: On, arg2: Unboxed<Arg2>) => R |
 export type SmartHandle<T> = T extends Node ? ElementHandle<T> : JSHandle<T>;
 
 export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel, JSHandleInitializer> {
+  private _preview: string;
+
   static from(handle: JSHandleChannel): JSHandle {
     return handle._object;
   }
@@ -47,6 +49,8 @@ export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel, JSHandleIni
 
   constructor(conection: Connection, channel: JSHandleChannel, initializer: JSHandleInitializer) {
     super(conection, channel, initializer);
+    this._preview = this._initializer.preview;
+    channel.on('previewUpdated', preview => this._preview = preview);
   }
 
   async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<R>;
@@ -94,7 +98,7 @@ export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel, JSHandleIni
   }
 
   toString(): string {
-    return this._initializer.preview;
+    return this._preview;
   }
 }
 

@@ -17,9 +17,9 @@
 const path = require('path');
 const utils = require('../utils');
 const {makeUserDataDir, removeUserDataDir} = utils;
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, CHANNEL} = utils.testOptions(browserType);
 
-describe('launcher', function() {
+describe.skip(CHANNEL)('launcher', function() {
   it('should throw with remote-debugging-pipe argument', async({browserType, defaultBrowserOptions}) => {
     const options = Object.assign({}, defaultBrowserOptions);
     options.args = ['--remote-debugging-pipe'].concat(options.args || []);
@@ -32,7 +32,7 @@ describe('launcher', function() {
     const browser = await browserType.launchServer(options);
     await browser.close();
   });
-  it.skip(USES_HOOKS)('should open devtools when "devtools: true" option is given', async({browserType, defaultBrowserOptions}) => {
+  it('should open devtools when "devtools: true" option is given', async({browserType, defaultBrowserOptions}) => {
     let devtoolsCallback;
     const devtoolsPromise = new Promise(f => devtoolsCallback = f);
     const __testHookForDevTools = devtools => devtools.__testHookOnBinding = parsed => {
@@ -49,7 +49,7 @@ describe('launcher', function() {
   });
 });
 
-describe('extensions', () => {
+describe.skip(CHANNEL)('extensions', () => {
   it('should return background pages', async({browserType, defaultBrowserOptions}) => {
     const userDataDir = await makeUserDataDir();
     const extensionPath = path.join(__dirname, '..', 'assets', 'simple-extension');
@@ -73,7 +73,7 @@ describe('extensions', () => {
   });
 });
 
-describe('BrowserContext', function() {
+describe.skip(CHANNEL)('BrowserContext', function() {
   it('should not create pages automatically', async ({browserType, defaultBrowserOptions}) => {
     const browser = await browserType.launch(defaultBrowserOptions);
     const browserSession = await browser.newBrowserCDPSession();

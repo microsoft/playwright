@@ -24,6 +24,8 @@ const { Connection } = require('../lib/rpc/connection');
 const { helper } = require('../lib/helper');
 const { BrowserTypeDispatcher } = require('../lib/rpc/server/browserTypeDispatcher');
 
+Error.stackTraceLimit = 15;
+
 function getCLIArgument(argName) {
   for (let i = 0; i < process.argv.length; ++i) {
     // Support `./test.js --foo bar

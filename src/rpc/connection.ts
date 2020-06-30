@@ -24,12 +24,14 @@ import { Frame } from './client/frame';
 import { JSHandle } from './client/jsHandle';
 import { Request, Response, Route } from './client/network';
 import { Page, BindingCall } from './client/page';
+import { Worker } from './client/worker';
 import debug = require('debug');
 import { Channel } from './channels';
 import { ConsoleMessage } from './client/consoleMessage';
 import { Dialog } from './client/dialog';
 import { Download } from './client/download';
 import { parseError } from './serializers';
+import { BrowserServer } from './client/browserServer';
 
 export class Connection {
   private _channels = new Map<string, Channel>();
@@ -51,6 +53,9 @@ export class Connection {
         break;
       case 'browser':
         result = new Browser(this, channel, initializer);
+        break;
+      case 'browserServer':
+        result = new BrowserServer(this, channel, initializer);
         break;
       case 'browserType':
         result = new BrowserType(this, channel, initializer);
@@ -87,6 +92,9 @@ export class Connection {
         break;
       case 'route':
         result = new Route(this, channel, initializer);
+        break;
+      case 'worker':
+        result = new Worker(this, channel, initializer);
         break;
       default:
         throw new Error('Missing type ' + type);

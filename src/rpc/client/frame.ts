@@ -97,8 +97,8 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
     return ElementHandle.fromNullable(await this._channel.waitForSelector({ selector, options, isPage: this._page!._isPageCall })) as ElementHandle<Element> | null;
   }
 
-  async dispatchEvent(selector: string, type: string, eventInit?: Object, options: types.TimeoutOptions = {}): Promise<void> {
-    await this._channel.dispatchEvent({ selector, type, eventInit, options, isPage: this._page!._isPageCall });
+  async dispatchEvent(selector: string, type: string, eventInit?: any, options: types.TimeoutOptions = {}): Promise<void> {
+    await this._channel.dispatchEvent({ selector, type, eventInit: serializeArgument(eventInit), options, isPage: this._page!._isPageCall });
   }
 
   async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;

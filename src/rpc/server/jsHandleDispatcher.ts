@@ -17,8 +17,8 @@
 import * as js from '../../javascript';
 import { JSHandleChannel, JSHandleInitializer } from '../channels';
 import { Dispatcher, DispatcherScope } from '../dispatcher';
-import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { parseEvaluationResultValue, serializeAsCallArgument } from '../../common/utilityScriptSerializers';
+import { fromHandle } from './elementHandlerDispatcher';
 
 export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitializer> implements JSHandleChannel {
 
@@ -26,6 +26,7 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitiali
     super(scope, jsHandle, jsHandle.asElement() ? 'elementHandle' : 'jsHandle', {
       preview: jsHandle.toString(),
     });
+    jsHandle._setPreviewCallback(preview => this._dispatchEvent('previewUpdated', preview));
   }
 
   async evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<any> {
@@ -34,7 +35,7 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitiali
 
   async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any}): Promise<JSHandleChannel> {
     const jsHandle = await this._object._evaluateExpression(params.expression, params.isFunction, false /* returnByValue */, parseArgument(params.arg));
-    return ElementHandleDispatcher.from(this._scope, jsHandle);
+    return fromHandle(this._scope, jsHandle);
   }
 
   async getPropertyList(): Promise<{ name: string, value: JSHandleChannel }[]> {
