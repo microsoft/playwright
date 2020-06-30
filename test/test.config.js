@@ -15,85 +15,21 @@
  * limitations under the License.
  */
 
-const fs = require('fs');
 const path = require('path');
-const rm = require('rimraf').sync;
 const utils = require('./utils');
-const {TestServer} = require('../utils/testserver/');
-const {Environment} = require('../utils/testrunner/Test');
+const {DefaultBrowserOptionsEnvironment, ServerEnvironment, GoldenEnvironment, TraceTestEnvironment} = require('./environments.js');
 
 const playwrightPath = path.join(__dirname, '..');
 
-const serverEnvironment = new Environment('TestServer');
-serverEnvironment.beforeAll(async state => {
-  const assetsPath = path.join(__dirname, 'assets');
-  const cachedPath = path.join(__dirname, 'assets', 'cached');
+const dumpLogOnFailure = valueFromEnv('DEBUGP', false);
+const defaultBrowserOptionsEnvironment = new DefaultBrowserOptionsEnvironment({
+  handleSIGINT: false,
+  slowMo: valueFromEnv('SLOW_MO', 0),
+  headless: !!valueFromEnv('HEADLESS', true),
+}, dumpLogOnFailure, playwrightPath);
 
-  const port = 8907 + state.parallelIndex * 2;
-  state.server = await TestServer.create(assetsPath, port);
-  state.server.enableHTTPCache(cachedPath);
-  state.server.PORT = port;
-  state.server.PREFIX = `http://localhost:${port}`;
-  state.server.CROSS_PROCESS_PREFIX = `http://127.0.0.1:${port}`;
-  state.server.EMPTY_PAGE = `http://localhost:${port}/empty.html`;
-
-  const httpsPort = port + 1;
-  state.httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
-  state.httpsServer.enableHTTPCache(cachedPath);
-  state.httpsServer.PORT = httpsPort;
-  state.httpsServer.PREFIX = `https://localhost:${httpsPort}`;
-  state.httpsServer.CROSS_PROCESS_PREFIX = `https://127.0.0.1:${httpsPort}`;
-  state.httpsServer.EMPTY_PAGE = `https://localhost:${httpsPort}/empty.html`;
-
-  state._extraLogger = utils.createTestLogger(valueFromEnv('DEBUGP', false), null, 'extra');
-  state.defaultBrowserOptions = {
-    handleSIGINT: false,
-    slowMo: valueFromEnv('SLOW_MO', 0),
-    headless: !!valueFromEnv('HEADLESS', true),
-    logger: state._extraLogger,
-  };
-  state.playwrightPath = playwrightPath;
-});
-serverEnvironment.afterAll(async({server, httpsServer}) => {
-  await Promise.all([
-    server.stop(),
-    httpsServer.stop(),
-  ]);
-});
-serverEnvironment.beforeEach(async(state, testRun) => {
-  state.server.reset();
-  state.httpsServer.reset();
-  state._extraLogger.setTestRun(testRun);
-});
-serverEnvironment.afterEach(async(state) => {
-  state._extraLogger.setTestRun(null);
-});
-
-const customEnvironment = new Environment('Golden+CheckContexts');
-
-// simulate globalSetup per browserType that happens only once regardless of TestWorker.
-const hasBeenCleaned = new Set();
-
-customEnvironment.beforeAll(async state => {
-  const { OUTPUT_DIR, GOLDEN_DIR } = require('./utils').testOptions(state.browserType);
-  if (!hasBeenCleaned.has(state.browserType)) {
-    hasBeenCleaned.add(state.browserType);
-    if (fs.existsSync(OUTPUT_DIR))
-      rm(OUTPUT_DIR);
-    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-  }
-  state.golden = goldenName => ({ goldenPath: GOLDEN_DIR, outputPath: OUTPUT_DIR, goldenName });
-});
-customEnvironment.afterAll(async state => {
-  delete state.golden;
-});
-customEnvironment.afterEach(async (state, testRun) => {
-  if (state.browser && state.browser.contexts().length !== 0) {
-    if (testRun.ok())
-      console.warn(`\nWARNING: test "${testRun.test().fullName()}" (${testRun.test().location()}) did not close all created contexts!\n`);
-    await Promise.all(state.browser.contexts().map(context => context.close()));
-  }
-});
+const serverEnvironment = new ServerEnvironment();
+const customEnvironment = new GoldenEnvironment();
 
 function valueFromEnv(name, defaultValue) {
   if (!(name in process.env))
@@ -108,39 +44,7 @@ function setupTestRunner(testRunner) {
   collector.addTestModifier('fail', (t, condition) => condition && t.setExpectation(t.Expectations.Fail));
   collector.addSuiteModifier('fail', (s, condition) => condition && s.setExpectation(s.Expectations.Fail));
   collector.addTestModifier('slow', t => t.setTimeout(t.timeout() * 3));
-  collector.addTestAttribute('debug', t => {
-    t.setTimeout(100000000);
-
-    let session;
-    t.environment().beforeEach(async () => {
-      const inspector = require('inspector');
-      const fs = require('fs');
-      const util = require('util');
-      const url = require('url');
-      const readFileAsync = util.promisify(fs.readFile.bind(fs));
-      session = new inspector.Session();
-      session.connect();
-      const postAsync = util.promisify(session.post.bind(session));
-      await postAsync('Debugger.enable');
-      const setBreakpointCommands = [];
-      const N = t.body().toString().split('\n').length;
-      const location = t.location();
-      const lines = (await readFileAsync(location.filePath(), 'utf8')).split('\n');
-      for (let line = 0; line < N; ++line) {
-        const lineNumber = line + location.lineNumber();
-        setBreakpointCommands.push(postAsync('Debugger.setBreakpointByUrl', {
-          url: url.pathToFileURL(location.filePath()),
-          lineNumber,
-          condition: `console.log('${String(lineNumber + 1).padStart(6, ' ')} | ' + ${JSON.stringify(lines[lineNumber])})`,
-        }).catch(e => {}));
-      }
-      await Promise.all(setBreakpointCommands);
-    });
-
-    t.environment().afterEach(async () => {
-      session.disconnect();
-    });
-  });
+  collector.addTestAttribute('debug', t => TraceTestEnvironment.enableForTest(t));
   testRunner.api().fdescribe = testRunner.api().describe.only;
   testRunner.api().xdescribe = testRunner.api().describe.skip(true);
   testRunner.api().fit = testRunner.api().it.only;
@@ -161,7 +65,7 @@ module.exports = {
     headless: !!valueFromEnv('HEADLESS', true),
   },
 
-  globalEnvironments: [serverEnvironment],
+  globalEnvironments: [defaultBrowserOptionsEnvironment, serverEnvironment],
   setupTestRunner,
 
   specs: [

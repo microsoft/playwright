@@ -281,34 +281,27 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
     it('should run all hooks in proper order', async() => {
       const log = [];
       const t = new Runner();
-      const e = new Environment('env');
-      e.beforeAll(() => log.push('env:beforeAll'));
-      e.afterAll(() => log.push('env:afterAll'));
-      e.beforeEach(() => log.push('env:beforeEach'));
-      e.afterEach(() => log.push('env:afterEach'));
-      const e2 = new Environment('env2');
-      e2.beforeAll(() => log.push('env2:beforeAll'));
-      e2.afterAll(() => log.push('env2:afterAll'));
+      const e = {
+        name() { return 'env'; },
+        beforeAll() { log.push('env:beforeAll'); },
+        afterAll() { log.push('env:afterAll'); },
+        beforeEach() { log.push('env:beforeEach'); },
+        afterEach() { log.push('env:afterEach'); },
+      };
+      const e2 = {
+        name() { return 'env2'; },
+        beforeAll() { log.push('env2:beforeAll'); },
+        afterAll() { log.push('env2:afterAll'); },
+      };
       t.beforeAll(() => log.push('root:beforeAll'));
-      t.beforeEach(() => log.push('root:beforeEach1'));
-      t.beforeEach(() => log.push('root:beforeEach2'));
+      t.beforeEach(() => log.push('root:beforeEach'));
       t.it('uno', () => log.push('test #1'));
       t.describe('suite1', () => {
-        t.beforeAll(() => log.push('suite:beforeAll1'));
-        t.beforeAll(() => log.push('suite:beforeAll2'));
+        t.beforeAll(() => log.push('suite:beforeAll'));
         t.beforeEach(() => log.push('suite:beforeEach'));
         t.it('dos', () => log.push('test #2'));
-        t.tests()[t.tests().length - 1].environment().beforeEach(() => log.push('test:before1'));
-        t.tests()[t.tests().length - 1].environment().beforeEach(() => log.push('test:before2'));
-        t.tests()[t.tests().length - 1].environment().afterEach(() => log.push('test:after1'));
-        t.tests()[t.tests().length - 1].environment().afterEach(() => log.push('test:after2'));
         t.it('tres', () => log.push('test #3'));
-        t.tests()[t.tests().length - 1].environment().beforeEach(() => log.push('test:before1'));
-        t.tests()[t.tests().length - 1].environment().beforeEach(() => log.push('test:before2'));
-        t.tests()[t.tests().length - 1].environment().afterEach(() => log.push('test:after1'));
-        t.tests()[t.tests().length - 1].environment().afterEach(() => log.push('test:after2'));
-        t.afterEach(() => log.push('suite:afterEach1'));
-        t.afterEach(() => log.push('suite:afterEach2'));
+        t.afterEach(() => log.push('suite:afterEach'));
         t.afterAll(() => log.push('suite:afterAll'));
       });
       t.it('cuatro', () => log.push('test #4'));
@@ -326,41 +319,26 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
       t.suites()[t.suites().length - 1].addEnvironment(e);
       t.suites()[t.suites().length - 1].addEnvironment(e2);
       t.afterEach(() => log.push('root:afterEach'));
-      t.afterAll(() => log.push('root:afterAll1'));
-      t.afterAll(() => log.push('root:afterAll2'));
+      t.afterAll(() => log.push('root:afterAll'));
       await t.run();
       expect(log).toEqual([
         'root:beforeAll',
-        'root:beforeEach1',
-        'root:beforeEach2',
+        'root:beforeEach',
         'test #1',
         'root:afterEach',
 
-        'suite:beforeAll1',
-        'suite:beforeAll2',
+        'suite:beforeAll',
 
-        'root:beforeEach1',
-        'root:beforeEach2',
+        'root:beforeEach',
         'suite:beforeEach',
-        'test:before1',
-        'test:before2',
         'test #2',
-        'test:after1',
-        'test:after2',
-        'suite:afterEach1',
-        'suite:afterEach2',
+        'suite:afterEach',
         'root:afterEach',
 
-        'root:beforeEach1',
-        'root:beforeEach2',
+        'root:beforeEach',
         'suite:beforeEach',
-        'test:before1',
-        'test:before2',
         'test #3',
-        'test:after1',
-        'test:after2',
-        'suite:afterEach1',
-        'suite:afterEach2',
+        'suite:afterEach',
         'root:afterEach',
 
         'suite:afterAll',
@@ -368,16 +346,14 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
         'env:beforeAll',
         'env2:beforeAll',
 
-        'root:beforeEach1',
-        'root:beforeEach2',
+        'root:beforeEach',
         'env:beforeEach',
         'test #4',
         'env:afterEach',
         'root:afterEach',
 
         'suite2:beforeAll',
-        'root:beforeEach1',
-        'root:beforeEach2',
+        'root:beforeEach',
         'env:beforeEach',
         'test #5',
         'env:afterEach',
@@ -387,23 +363,26 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
         'env2:afterAll',
         'env:afterAll',
 
-        'root:afterAll1',
-        'root:afterAll2',
+        'root:afterAll',
       ]);
     });
     it('should remove environment', async() => {
       const log = [];
       const t = new Runner();
-      const e = new Environment('env');
-      e.beforeAll(() => log.push('env:beforeAll'));
-      e.afterAll(() => log.push('env:afterAll'));
-      e.beforeEach(() => log.push('env:beforeEach'));
-      e.afterEach(() => log.push('env:afterEach'));
-      const e2 = new Environment('env2');
-      e2.beforeAll(() => log.push('env2:beforeAll'));
-      e2.afterAll(() => log.push('env2:afterAll'));
-      e2.beforeEach(() => log.push('env2:beforeEach'));
-      e2.afterEach(() => log.push('env2:afterEach'));
+      const e = {
+        name() { return 'env'; },
+        beforeAll() { log.push('env:beforeAll'); },
+        afterAll() { log.push('env:afterAll'); },
+        beforeEach() { log.push('env:beforeEach'); },
+        afterEach() { log.push('env:afterEach'); },
+      };
+      const e2 = {
+        name() { return 'env2'; },
+        beforeAll() { log.push('env2:beforeAll'); },
+        afterAll() { log.push('env2:afterAll'); },
+        beforeEach() { log.push('env2:beforeEach'); },
+        afterEach() { log.push('env2:afterEach'); },
+      };
       t.it('uno', () => log.push('test #1'));
       t.tests()[0].addEnvironment(e).addEnvironment(e2).removeEnvironment(e);
       await t.run();
