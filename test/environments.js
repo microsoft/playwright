@@ -20,6 +20,9 @@ const fs = require('fs');
 const path = require('path');
 const rm = require('rimraf').sync;
 const {TestServer} = require('../utils/testserver/');
+const { DispatcherScope } = require('../lib/rpc/dispatcher');
+const { Connection } = require('../lib/rpc/connection');
+const { BrowserTypeDispatcher } = require('../lib/rpc/server/browserTypeDispatcher');
 
 class ServerEnvironment {
   async beforeAll(state) {
@@ -179,7 +182,7 @@ class BrowserTypeEnvironment {
         await new Promise(f => setImmediate(f));
         return result;
       };
-      BrowserTypeDispatcher.from(dispatcherScope, this._browserType);
+      new BrowserTypeDispatcher(dispatcherScope, this._browserType);
       overridenBrowserType = await connection.waitForObjectWithKnownName(this._browserType.name());
     }
     state.browserType = overridenBrowserType;

@@ -21,7 +21,7 @@ import { Request } from '../../network';
 import { Page, Worker } from '../../page';
 import * as types from '../../types';
 import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary } from '../channels';
-import { Dispatcher, DispatcherScope } from '../dispatcher';
+import { Dispatcher, DispatcherScope, lookupDispatcher, lookupNullableDispatcher, existingDispatcher } from '../dispatcher';
 import { parseError, serializeError } from '../serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
@@ -29,38 +29,35 @@ import { DownloadDispatcher } from './downloadDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
 import { serializeResult, parseArgument } from './jsHandleDispatcher';
-import { fromHandle, ElementHandleDispatcher } from './elementHandlerDispatcher';
+import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
 import { FileChooser } from '../../fileChooser';
 
 export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements PageChannel {
   private _page: Page;
 
   static from(scope: DispatcherScope, page: Page): PageDispatcher {
-    if ((page as any)[scope.dispatcherSymbol])
-      return (page as any)[scope.dispatcherSymbol];
-    return new PageDispatcher(scope, page);
+    const result = existingDispatcher<PageDispatcher>(page);
+    return result || new PageDispatcher(scope, page);
   }
 
-  static fromNullable(scope: DispatcherScope, page: Page | null): PageDispatcher | null {
-    if (!page)
-      return null;
-    return PageDispatcher.from(scope, page);
+  static fromNullable(scope: DispatcherScope, request: Page | null): PageDispatcher | null {
+    return request ? PageDispatcher.from(scope, request) : null;
   }
 
-  constructor(scope: DispatcherScope, page: Page) {
+  private constructor(scope: DispatcherScope, page: Page) {
     super(scope, page, 'page', {
       mainFrame: FrameDispatcher.from(scope, page.mainFrame()),
       viewportSize: page.viewportSize()
     });
     this._page = page;
     page.on(Events.Page.Close, () => this._dispatchEvent('close'));
-    page.on(Events.Page.Console, message => this._dispatchEvent('console', ConsoleMessageDispatcher.from(this._scope, message)));
+    page.on(Events.Page.Console, message => this._dispatchEvent('console', new ConsoleMessageDispatcher(this._scope, message)));
     page.on(Events.Page.Crash, () => this._dispatchEvent('crash'));
     page.on(Events.Page.DOMContentLoaded, () => this._dispatchEvent('domcontentloaded'));
-    page.on(Events.Page.Dialog, dialog => this._dispatchEvent('dialog', DialogDispatcher.from(this._scope, dialog)));
-    page.on(Events.Page.Download, dialog => this._dispatchEvent('download', DownloadDispatcher.from(this._scope, dialog)));
+    page.on(Events.Page.Dialog, dialog => this._dispatchEvent('dialog', new DialogDispatcher(this._scope, dialog)));
+    page.on(Events.Page.Download, dialog => this._dispatchEvent('download', new DownloadDispatcher(this._scope, dialog)));
     page.on(Events.Page.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
-      element: ElementHandleDispatcher.fromElement(this._scope, fileChooser.element()),
+      element: new ElementHandleDispatcher(this._scope, fileChooser.element()),
       isMultiple: fileChooser.isMultiple()
     }));
     page.on(Events.Page.FrameAttached, frame => this._onFrameAttached(frame));
@@ -74,9 +71,9 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
       request: RequestDispatcher.from(this._scope, request),
       failureText: request._failureText
     }));
-    page.on(Events.Page.RequestFinished, request => this._dispatchEvent('requestFinished', RequestDispatcher.from(this._scope, request)));
-    page.on(Events.Page.Response, response => this._dispatchEvent('response', ResponseDispatcher.from(this._scope, response)));
-    page.on(Events.Page.Worker, worker => this._dispatchEvent('worker', WorkerDispatcher.from(this._scope, worker)));
+    page.on(Events.Page.RequestFinished, request => this._dispatchEvent('requestFinished', RequestDispatcher.from(scope, request)));
+    page.on(Events.Page.Response, response => this._dispatchEvent('response', new ResponseDispatcher(this._scope, response)));
+    page.on(Events.Page.Worker, worker => this._dispatchEvent('worker', new WorkerDispatcher(this._scope, worker)));
   }
 
   async setDefaultNavigationTimeoutNoReply(params: { timeout: number }) {
@@ -88,7 +85,7 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
   }
 
   async opener(): Promise<PageChannel | null> {
-    return PageDispatcher.fromNullable(this._scope, await this._page.opener());
+    return lookupNullableDispatcher<PageDispatcher>(await this._page.opener());
   }
 
   async exposeBinding(params: { name: string }): Promise<void> {
@@ -104,15 +101,15 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
   }
 
   async reload(params: { options?: types.NavigateOptions }): Promise<ResponseChannel | null> {
-    return ResponseDispatcher.fromNullable(this._scope, await this._page.reload(params.options));
+    return lookupNullableDispatcher<ResponseDispatcher>(await this._page.reload(params.options));
   }
 
   async goBack(params: { options?: types.NavigateOptions }): Promise<ResponseChannel | null> {
-    return ResponseDispatcher.fromNullable(this._scope, await this._page.goBack(params.options));
+    return lookupNullableDispatcher<ResponseDispatcher>(await this._page.goBack(params.options));
   }
 
   async goForward(params: { options?: types.NavigateOptions }): Promise<ResponseChannel | null> {
-    return ResponseDispatcher.fromNullable(this._scope, await this._page.goForward(params.options));
+    return lookupNullableDispatcher<ResponseDispatcher>(await this._page.goForward(params.options));
   }
 
   async emulateMedia(params: { options: { media?: 'screen' | 'print', colorScheme?: 'dark' | 'light' | 'no-preference' } }): Promise<void> {
@@ -133,7 +130,7 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
       return;
     }
     this._page.route('**/*', (route, request) => {
-      this._dispatchEvent('route', { route: RouteDispatcher.from(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
+      this._dispatchEvent('route', { route: new RouteDispatcher(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
     });
   }
 
@@ -207,22 +204,16 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
   }
 
   _onFrameNavigated(frame: Frame) {
-    this._dispatchEvent('frameNavigated', { frame: FrameDispatcher.from(this._scope, frame), url: frame.url(), name: frame.name() });
+    this._dispatchEvent('frameNavigated', { frame: lookupDispatcher<FrameDispatcher>(frame), url: frame.url(), name: frame.name() });
   }
 
   _onFrameDetached(frame: Frame) {
-    this._dispatchEvent('frameDetached', FrameDispatcher.from(this._scope, frame));
+    this._dispatchEvent('frameDetached', lookupDispatcher<FrameDispatcher>(frame));
   }
 }
 
 
 export class WorkerDispatcher extends Dispatcher<Worker, WorkerInitializer> implements WorkerChannel {
-  static from(scope: DispatcherScope, worker: Worker): WorkerDispatcher {
-    if ((worker as any)[scope.dispatcherSymbol])
-      return (worker as any)[scope.dispatcherSymbol];
-    return new WorkerDispatcher(scope, worker);
-  }
-
   constructor(scope: DispatcherScope, worker: Worker) {
     super(scope, worker, 'worker', {
       url: worker.url()
@@ -235,7 +226,7 @@ export class WorkerDispatcher extends Dispatcher<Worker, WorkerInitializer> impl
   }
 
   async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<JSHandleChannel> {
-    return fromHandle(this._scope, await this._object._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg)));
+    return createHandle(this._scope, await this._object._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg)));
   }
 }
 
@@ -246,7 +237,7 @@ export class BindingCallDispatcher extends Dispatcher<{}, BindingCallInitializer
 
   constructor(scope: DispatcherScope, name: string, source: { context: BrowserContext, page: Page, frame: Frame }, args: any[]) {
     super(scope, {}, 'bindingCall', {
-      frame: FrameDispatcher.from(scope, source.frame),
+      frame: lookupDispatcher<FrameDispatcher>(source.frame),
       name,
       args
     });

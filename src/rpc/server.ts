@@ -25,6 +25,6 @@ transport.onmessage = message => dispatcherScope.send(message);
 dispatcherScope.onmessage = message => transport.send(message);
 
 const playwright = new Playwright(__dirname, require('../../browsers.json')['browsers']);
-BrowserTypeDispatcher.from(dispatcherScope, playwright.chromium!);
-BrowserTypeDispatcher.from(dispatcherScope, playwright.firefox!);
-BrowserTypeDispatcher.from(dispatcherScope, playwright.webkit!);
+new BrowserTypeDispatcher(dispatcherScope, playwright.chromium!);
+new BrowserTypeDispatcher(dispatcherScope, playwright.firefox!);
+new BrowserTypeDispatcher(dispatcherScope, playwright.webkit!);

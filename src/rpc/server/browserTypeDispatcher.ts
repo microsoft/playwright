@@ -25,12 +25,6 @@ import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { BrowserServerDispatcher } from './browserServerDispatcher';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeInitializer> implements BrowserTypeChannel {
-  static from(scope: DispatcherScope, browserType: BrowserTypeBase): BrowserTypeDispatcher {
-    if ((browserType as any)[scope.dispatcherSymbol])
-      return (browserType as any)[scope.dispatcherSymbol];
-    return new BrowserTypeDispatcher(scope, browserType);
-  }
-
   constructor(scope: DispatcherScope, browserType: BrowserTypeBase) {
     super(scope, browserType, 'browserType', {
       executablePath: browserType.executablePath(),
@@ -40,20 +34,20 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
 
   async launch(params: { options?: types.LaunchOptions }): Promise<BrowserChannel> {
     const browser = await this._object.launch(params.options || undefined);
-    return BrowserDispatcher.from(this._scope, browser as BrowserBase);
+    return new BrowserDispatcher(this._scope, browser as BrowserBase);
   }
 
   async launchPersistentContext(params: { userDataDir: string, options?: types.LaunchOptions & types.BrowserContextOptions }): Promise<BrowserContextChannel> {
     const browserContext = await this._object.launchPersistentContext(params.userDataDir, params.options);
-    return BrowserContextDispatcher.from(this._scope, browserContext as BrowserContextBase);
+    return new BrowserContextDispatcher(this._scope, browserContext as BrowserContextBase);
   }
 
   async launchServer(params: { options?: types.LaunchServerOptions }): Promise<BrowserServerChannel> {
-    return BrowserServerDispatcher.from(this._scope, await this._object.launchServer(params.options));
+    return new BrowserServerDispatcher(this._scope, await this._object.launchServer(params.options));
   }
 
   async connect(params: { options: types.ConnectOptions }): Promise<BrowserChannel> {
     const browser = await this._object.connect(params.options);
-    return BrowserDispatcher.from(this._scope, browser as BrowserBase);
+    return new BrowserDispatcher(this._scope, browser as BrowserBase);
   }
 }

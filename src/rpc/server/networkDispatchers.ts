@@ -17,21 +17,21 @@
 import { Request, Response, Route } from '../../network';
 import * as types from '../../types';
 import { RequestChannel, ResponseChannel, RouteChannel, ResponseInitializer, RequestInitializer, RouteInitializer, Binary } from '../channels';
-import { Dispatcher, DispatcherScope } from '../dispatcher';
+import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from '../dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 
 export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> implements RequestChannel {
+
   static from(scope: DispatcherScope, request: Request): RequestDispatcher {
-    if ((request as any)[scope.dispatcherSymbol])
-      return (request as any)[scope.dispatcherSymbol];
-    return new RequestDispatcher(scope, request);
+    const result = existingDispatcher<RequestDispatcher>(request);
+    return result || new RequestDispatcher(scope, request);
   }
 
   static fromNullable(scope: DispatcherScope, request: Request | null): RequestDispatcher | null {
     return request ? RequestDispatcher.from(scope, request) : null;
   }
 
-  constructor(scope: DispatcherScope, request: Request) {
+  private constructor(scope: DispatcherScope, request: Request) {
     super(scope, request, 'request', {
       frame: FrameDispatcher.from(scope, request.frame()),
       url: request.url(),
@@ -45,25 +45,16 @@ export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> i
   }
 
   async response(): Promise<ResponseChannel | null> {
-    return ResponseDispatcher.fromNullable(this._scope, await this._object.response());
+    return lookupNullableDispatcher<ResponseDispatcher>(await this._object.response());
   }
 }
 
 export class ResponseDispatcher extends Dispatcher<Response, ResponseInitializer> implements ResponseChannel {
 
-  static from(scope: DispatcherScope, response: Response): ResponseDispatcher {
-    if ((response as any)[scope.dispatcherSymbol])
-      return (response as any)[scope.dispatcherSymbol];
-    return new ResponseDispatcher(scope, response);
-  }
-
-  static fromNullable(scope: DispatcherScope, response: Response | null): ResponseDispatcher | null {
-    return response ? ResponseDispatcher.from(scope, response) : null;
-  }
-
   constructor(scope: DispatcherScope, response: Response) {
     super(scope, response, 'response', {
-      request: RequestDispatcher.from(scope, response.request())!,
+      // TODO: responses in popups can point to non-reported requests.
+      request: RequestDispatcher.from(scope, response.request()),
       url: response.url(),
       status: response.status(),
       statusText: response.statusText(),
@@ -82,18 +73,9 @@ export class ResponseDispatcher extends Dispatcher<Response, ResponseInitializer
 
 export class RouteDispatcher extends Dispatcher<Route, RouteInitializer> implements RouteChannel {
 
-  static from(scope: DispatcherScope, route: Route): RouteDispatcher {
-    if ((route as any)[scope.dispatcherSymbol])
-      return (route as any)[scope.dispatcherSymbol];
-    return new RouteDispatcher(scope, route);
-  }
-
-  static fromNullable(scope: DispatcherScope, route: Route | null): RouteDispatcher | null {
-    return route ? RouteDispatcher.from(scope, route) : null;
-  }
-
   constructor(scope: DispatcherScope, route: Route) {
     super(scope, route, 'route', {
+      // Context route can point to a non-reported request.
       request: RequestDispatcher.from(scope, route.request())
     });
   }
