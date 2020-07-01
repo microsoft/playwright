@@ -17,7 +17,6 @@
 
 import * as extract from 'extract-zip';
 import * as fs from 'fs';
-import * as ProxyAgent from 'https-proxy-agent';
 import * as os from 'os';
 import * as path from 'path';
 import * as ProgressBar from 'progress';
@@ -27,6 +26,15 @@ import * as util from 'util';
 import { assert, logPolitely, getFromENV } from '../helper';
 import * as browserPaths from './browserPaths';
 import { BrowserName, BrowserPlatform, BrowserDescriptor } from './browserPaths';
+
+// `https-proxy-agent` v5 is written in Typescript and exposes generated types.
+// However, as of June 2020, its types are generated with tsconfig that enables
+// `esModuleInterop` option.
+//
+// As a result, we can't depend on the package unless we enable the option
+// for our codebase. Instead of doing this, we abuse "require" to import module
+// without types.
+const ProxyAgent = require('https-proxy-agent');
 
 const unlinkAsync = util.promisify(fs.unlink.bind(fs));
 const chmodAsync = util.promisify(fs.chmod.bind(fs));
