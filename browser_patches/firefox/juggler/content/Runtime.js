@@ -132,7 +132,7 @@ class Runtime {
           return;
         }
         const errorWindow = Services.wm.getOuterWindowWithId(message.outerWindowID);
-        if (message.category === 'Web Worker' && (message.flags & Ci.nsIScriptError.exceptionFlag)) {
+        if (message.category === 'Web Worker' && message.logLevel === Ci.nsIConsoleMessage.error) {
           emitEvent(this.events.onErrorFromWorker, errorWindow, message.message, '' + message.stack);
           return;
         }
