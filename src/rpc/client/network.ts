@@ -17,9 +17,9 @@
 import { URLSearchParams } from 'url';
 import * as types from '../../types';
 import { RequestChannel, ResponseChannel, RouteChannel, RequestInitializer, ResponseInitializer, RouteInitializer } from '../channels';
-import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
-import { Connection } from '../connection';
+import { Connection, ChannelGuid } from './connection';
+import { ChannelOwner } from './channelOwner';
 import { normalizeFulfillParameters } from '../serializers';
 
 export type NetworkCookie = {
@@ -58,8 +58,8 @@ export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
     return request ? Request.from(request) : null;
   }
 
-  constructor(connection: Connection, channel: RequestChannel, initializer: RequestInitializer) {
-    super(connection, channel, initializer);
+  constructor(connection: Connection, guid: ChannelGuid, initializer: RequestInitializer) {
+    super(connection, guid, initializer);
     this._redirectedFrom = Request.fromNullable(initializer.redirectedFrom);
     if (this._redirectedFrom)
       this._redirectedFrom._redirectedTo = this;
@@ -138,8 +138,8 @@ export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
     return route._object;
   }
 
-  constructor(connection: Connection, channel: RouteChannel, initializer: RouteInitializer) {
-    super(connection, channel, initializer);
+  constructor(connection: Connection, guid: ChannelGuid, initializer: RouteInitializer) {
+    super(connection, guid, initializer);
   }
 
   request(): Request {
@@ -176,8 +176,8 @@ export class Response extends ChannelOwner<ResponseChannel, ResponseInitializer>
     return response ? Response.from(response) : null;
   }
 
-  constructor(connection: Connection, channel: ResponseChannel, initializer: ResponseInitializer) {
-    super(connection, channel, initializer);
+  constructor(connection: Connection, guid: ChannelGuid, initializer: ResponseInitializer) {
+    super(connection, guid, initializer);
   }
 
   url(): string {

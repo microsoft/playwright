@@ -18,16 +18,16 @@ import * as util from 'util';
 import { ConsoleMessageLocation } from '../../types';
 import { JSHandle } from './jsHandle';
 import { ConsoleMessageChannel, ConsoleMessageInitializer } from '../channels';
+import { Connection, ChannelGuid } from './connection';
 import { ChannelOwner } from './channelOwner';
-import { Connection } from '../connection';
 
 export class ConsoleMessage extends ChannelOwner<ConsoleMessageChannel, ConsoleMessageInitializer> {
   static from(request: ConsoleMessageChannel): ConsoleMessage {
     return request._object;
   }
 
-  constructor(connection: Connection, channel: ConsoleMessageChannel, initializer: ConsoleMessageInitializer) {
-    super(connection, channel, initializer);
+  constructor(connection: Connection, guid: ChannelGuid, initializer: ConsoleMessageInitializer) {
+    super(connection, guid, initializer);
   }
 
   type(): string {

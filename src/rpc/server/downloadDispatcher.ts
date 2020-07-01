@@ -16,15 +16,9 @@
 
 import { Download } from '../../download';
 import { DownloadChannel, DownloadInitializer } from '../channels';
-import { Dispatcher, DispatcherScope } from '../dispatcher';
+import { Dispatcher, DispatcherScope } from './dispatcher';
 
 export class DownloadDispatcher extends Dispatcher<Download, DownloadInitializer> implements DownloadChannel {
-  static from(scope: DispatcherScope, Download: Download): DownloadDispatcher {
-    if ((Download as any)[scope.dispatcherSymbol])
-      return (Download as any)[scope.dispatcherSymbol];
-    return new DownloadDispatcher(scope, Download);
-  }
-
   constructor(scope: DispatcherScope, download: Download) {
     super(scope, download, 'download', {
       url: download.url(),

@@ -14,21 +14,39 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
+import { Connection, ChannelGuid } from './connection';
 import { Channel } from '../channels';
-import { Connection } from '../connection';
+import { EventEmitter } from 'events';
 
 export abstract class ChannelOwner<T extends Channel, Initializer> extends EventEmitter {
   readonly _channel: T;
   readonly _initializer: Initializer;
   readonly _connection: Connection;
-  static clientSymbol = Symbol('client');
 
-  constructor(connection: Connection, channel: T, initializer: Initializer) {
+  constructor(connection: Connection, guid: ChannelGuid, initializer: Initializer) {
     super();
     this._connection = connection;
-    this._channel = channel;
+    const base = new EventEmitter();
+    (base as any)._object = this;
+    this._channel = new Proxy(base, {
+      get: (obj: any, prop) => {
+        if (String(prop).startsWith('_'))
+          return obj[prop];
+        if (prop === 'then')
+          return obj.then;
+        if (prop === 'emit')
+          return obj.emit;
+        if (prop === 'on')
+          return obj.on;
+        if (prop === 'once')
+          return obj.once;
+        if (prop === 'addEventListener')
+          return obj.addListener;
+        if (prop === 'removeEventListener')
+          return obj.removeListener;
+        return (params: any) => connection.sendMessageToServer({ ...guid, method: String(prop), params });
+      },
+    });
     this._initializer = initializer;
-    (channel as any)[ChannelOwner.clientSymbol] = this;
   }
 }

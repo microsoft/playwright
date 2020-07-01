@@ -19,7 +19,7 @@ const utils = require('./utils');
 const path = require('path');
 const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = utils.testOptions(browserType);
 
-describe('Page.evaluate', function() {
+fdescribe('Page.evaluate', function() {
   it('should work', async({page, server}) => {
     const result = await page.evaluate(() => 7 * 3);
     expect(result).toBe(21);

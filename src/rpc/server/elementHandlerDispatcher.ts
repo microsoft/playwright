@@ -18,37 +18,22 @@ import { ElementHandle } from '../../dom';
 import * as js from '../../javascript';
 import * as types from '../../types';
 import { ElementHandleChannel, FrameChannel } from '../channels';
-import { DispatcherScope } from '../dispatcher';
+import { DispatcherScope, lookupNullableDispatcher } from './dispatcher';
 import { JSHandleDispatcher, serializeResult, parseArgument } from './jsHandleDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 
-export function fromHandle(scope: DispatcherScope, handle: js.JSHandle): JSHandleDispatcher {
-  if ((handle as any)[scope.dispatcherSymbol])
-    return (handle as any)[scope.dispatcherSymbol];
+export function createHandle(scope: DispatcherScope, handle: js.JSHandle): JSHandleDispatcher {
   return handle.asElement() ? new ElementHandleDispatcher(scope, handle.asElement()!) : new JSHandleDispatcher(scope, handle);
-}
-
-export function fromNullableHandle(scope: DispatcherScope, handle: js.JSHandle | null): JSHandleDispatcher | null {
-  if (!handle)
-    return null;
-  return fromHandle(scope, handle);
 }
 
 export class ElementHandleDispatcher extends JSHandleDispatcher implements ElementHandleChannel {
   readonly _elementHandle: ElementHandle;
 
-  static fromElement(scope: DispatcherScope, handle: ElementHandle): ElementHandleDispatcher {
-    if ((handle as any)[scope.dispatcherSymbol])
-      return (handle as any)[scope.dispatcherSymbol];
-    return new ElementHandleDispatcher(scope, handle);
-  }
-
-  static fromNullableElement(scope: DispatcherScope, handle: ElementHandle | null): ElementHandleDispatcher | null {
+  static createNullable(scope: DispatcherScope, handle: ElementHandle | null): ElementHandleDispatcher | null {
     if (!handle)
       return null;
-    return ElementHandleDispatcher.fromElement(scope, handle);
+    return new ElementHandleDispatcher(scope, handle);
   }
-
 
   constructor(scope: DispatcherScope, elementHandle: ElementHandle) {
     super(scope, elementHandle);
@@ -57,11 +42,11 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
   }
 
   async ownerFrame(): Promise<FrameChannel | null> {
-    return FrameDispatcher.fromNullable(this._scope, await this._elementHandle.ownerFrame());
+    return lookupNullableDispatcher<FrameDispatcher>(await this._elementHandle.ownerFrame());
   }
 
   async contentFrame(): Promise<FrameChannel | null> {
-    return FrameDispatcher.fromNullable(this._scope, await this._elementHandle.contentFrame());
+    return lookupNullableDispatcher<FrameDispatcher>(await this._elementHandle.contentFrame());
   }
 
   async getAttribute(params: { name: string }): Promise<string | null> {
@@ -145,12 +130,13 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
   }
 
   async querySelector(params: { selector: string }): Promise<ElementHandleChannel | null> {
-    return ElementHandleDispatcher.fromNullableElement(this._scope, await this._elementHandle.$(params.selector));
+    const handle = await this._elementHandle.$(params.selector);
+    return handle ? new ElementHandleDispatcher(this._scope, handle) : null;
   }
 
   async querySelectorAll(params: { selector: string }): Promise<ElementHandleChannel[]> {
     const elements = await this._elementHandle.$$(params.selector);
-    return elements.map(e => ElementHandleDispatcher.fromElement(this._scope, e));
+    return elements.map(e => new ElementHandleDispatcher(this._scope, e));
   }
 
   async $evalExpression(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<any> {

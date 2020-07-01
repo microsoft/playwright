@@ -179,8 +179,8 @@ class BrowserTypeEnvironment {
         await new Promise(f => setImmediate(f));
         return result;
       };
-      BrowserTypeDispatcher.from(dispatcherScope, this._browserType);
-      overridenBrowserType = await connection.waitForObjectWithKnownName(this._browserType.name());
+      new BrowserTypeDispatcher(dispatcherConnection.createScope(), browserType);
+      overridenBrowserType = await clientConnection.waitForObjectWithKnownName(browserType.name());
     }
     state.browserType = overridenBrowserType;
   }

@@ -17,7 +17,7 @@
 import * as types from '../../types';
 import { BrowserContextBase, BrowserContext } from '../../browserContext';
 import { Events } from '../../events';
-import { Dispatcher, DispatcherScope } from '../dispatcher';
+import { Dispatcher, DispatcherScope, lookupNullableDispatcher, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher } from './pageDispatcher';
 import { PageChannel, BrowserContextChannel, BrowserContextInitializer } from '../channels';
 import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
@@ -25,16 +25,11 @@ import { Page } from '../../page';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, BrowserContextInitializer> implements BrowserContextChannel {
   private _context: BrowserContextBase;
-  static from(scope: DispatcherScope, browserContext: BrowserContext): BrowserContextDispatcher {
-    if ((browserContext as any)[scope.dispatcherSymbol])
-      return (browserContext as any)[scope.dispatcherSymbol];
-    return new BrowserContextDispatcher(scope, browserContext as BrowserContextBase);
-  }
 
   constructor(scope: DispatcherScope, context: BrowserContextBase) {
     super(scope, context, 'context', {
       pages: context.pages().map(p => PageDispatcher.from(scope, p))
-    });
+    }, true);
     this._context = context;
     context.on(Events.BrowserContext.Page, page => this._dispatchEvent('page', PageDispatcher.from(this._scope, page)));
     context.on(Events.BrowserContext.Close, () => {
@@ -59,7 +54,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
   }
 
   async newPage(): Promise<PageChannel> {
-    return PageDispatcher.from(this._scope, await this._context.newPage());
+    return lookupDispatcher<PageDispatcher>(await this._context.newPage());
   }
 
   async cookies(params: { urls: string[] }): Promise<types.NetworkCookie[]> {
@@ -108,14 +103,14 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
       return;
     }
     this._context.route('**/*', (route, request) => {
-      this._dispatchEvent('route', { route: RouteDispatcher.from(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
+      this._dispatchEvent('route', { route: new RouteDispatcher(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
     });
   }
 
   async waitForEvent(params: { event: string }): Promise<any> {
     const result = await this._context.waitForEvent(params.event);
     if (result instanceof Page)
-      return PageDispatcher.from(this._scope, result);
+      return lookupNullableDispatcher<PageDispatcher>(result);
     return result;
   }
 

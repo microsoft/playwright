@@ -20,10 +20,10 @@ import { Page, BindingCall, waitForEvent } from './page';
 import * as types from '../../types';
 import * as network from './network';
 import { BrowserContextChannel, BrowserContextInitializer } from '../channels';
-import { ChannelOwner } from './channelOwner';
 import { helper } from '../../helper';
 import { Browser } from './browser';
-import { Connection } from '../connection';
+import { Connection, ChannelGuid } from './connection';
+import { ChannelOwner } from './channelOwner';
 import { Events } from '../../events';
 import { TimeoutSettings } from '../../timeoutSettings';
 
@@ -44,8 +44,8 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     return context ? BrowserContext.from(context) : null;
   }
 
-  constructor(connection: Connection, channel: BrowserContextChannel, initializer: BrowserContextInitializer) {
-    super(connection, channel, initializer);
+  constructor(connection: Connection, guid: ChannelGuid, initializer: BrowserContextInitializer) {
+    super(connection, guid, initializer);
     initializer.pages.map(p => {
       const page = Page.from(p);
       this._pages.add(page);

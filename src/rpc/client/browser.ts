@@ -18,8 +18,8 @@ import * as types from '../../types';
 import { BrowserChannel, BrowserInitializer } from '../channels';
 import { BrowserContext } from './browserContext';
 import { Page } from './page';
+import { Connection, ChannelGuid } from './connection';
 import { ChannelOwner } from './channelOwner';
-import { Connection } from '../connection';
 import { Events } from '../../events';
 
 export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
@@ -35,9 +35,9 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
     return browser ? Browser.from(browser) : null;
   }
 
-  constructor(connection: Connection, channel: BrowserChannel, initializer: BrowserInitializer) {
-    super(connection, channel, initializer);
-    channel.on('close', () => {
+  constructor(connection: Connection, guid: ChannelGuid, initializer: BrowserInitializer) {
+    super(connection, guid, initializer);
+    this._channel.on('close', () => {
       this._isConnected = false;
       this.emit(Events.Browser.Disconnected);
     });
@@ -45,7 +45,8 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
 
   async newContext(options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
     delete (options as any).logger;
-    const context = BrowserContext.from(await this._channel.newContext({ options }));
+    const contextChannel = await this._channel.newContext({ options });
+    const context = BrowserContext.from(contextChannel);
     this._contexts.add(context);
     context._browser = this;
     return context;

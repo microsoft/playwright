@@ -18,10 +18,6 @@
 const fs = require('fs');
 const utils = require('./utils');
 const TestRunner = require('../utils/testrunner/');
-const { DispatcherScope } = require('../lib/rpc/dispatcher');
-const { Connection } = require('../lib/rpc/connection');
-const { helper } = require('../lib/helper');
-const { BrowserTypeDispatcher } = require('../lib/rpc/server/browserTypeDispatcher');
 const { PlaywrightEnvironment, BrowserTypeEnvironment, BrowserEnvironment, PageEnvironment} = require('./environments.js');
 
 Error.stackTraceLimit = 15;

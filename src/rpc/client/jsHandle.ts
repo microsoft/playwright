@@ -16,8 +16,8 @@
 
 import { JSHandleChannel, JSHandleInitializer } from '../channels';
 import { ElementHandle } from './elementHandle';
+import { Connection, ChannelGuid } from './connection';
 import { ChannelOwner } from './channelOwner';
-import { Connection } from '../connection';
 import { serializeAsCallArgument, parseEvaluationResultValue } from '../../common/utilityScriptSerializers';
 
 type NoHandles<Arg> = Arg extends JSHandle ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg);
@@ -47,10 +47,10 @@ export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel, JSHandleIni
     return handle ? JSHandle.from(handle) : null;
   }
 
-  constructor(conection: Connection, channel: JSHandleChannel, initializer: JSHandleInitializer) {
-    super(conection, channel, initializer);
+  constructor(conection: Connection, guid: ChannelGuid, initializer: JSHandleInitializer) {
+    super(conection, guid, initializer);
     this._preview = this._initializer.preview;
-    channel.on('previewUpdated', preview => this._preview = preview);
+    this._channel.on('previewUpdated', preview => this._preview = preview);
   }
 
   async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<R>;

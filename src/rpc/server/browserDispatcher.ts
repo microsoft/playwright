@@ -19,34 +19,22 @@ import { BrowserContextBase } from '../../browserContext';
 import * as types from '../../types';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { BrowserChannel, BrowserContextChannel, PageChannel, BrowserInitializer } from '../channels';
-import { Dispatcher, DispatcherScope } from '../dispatcher';
+import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher } from './pageDispatcher';
 import { Events } from '../../events';
 
 export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> implements BrowserChannel {
-  static from(scope: DispatcherScope, browser: BrowserBase): BrowserDispatcher {
-    if ((browser as any)[scope.dispatcherSymbol])
-      return (browser as any)[scope.dispatcherSymbol];
-    return new BrowserDispatcher(scope, browser);
-  }
-
-  static fromNullable(scope: DispatcherScope, browser: BrowserBase | null): BrowserDispatcher | null {
-    if (!browser)
-      return null;
-    return BrowserDispatcher.from(scope, browser);
-  }
-
   constructor(scope: DispatcherScope, browser: BrowserBase) {
-    super(scope, browser, 'browser', {});
+    super(scope, browser, 'browser', {}, true);
     browser.on(Events.Browser.Disconnected, () => this._dispatchEvent('close'));
   }
 
   async newContext(params: { options?: types.BrowserContextOptions }): Promise<BrowserContextChannel> {
-    return BrowserContextDispatcher.from(this._scope, await this._object.newContext(params.options) as BrowserContextBase);
+    return new BrowserContextDispatcher(this._scope, await this._object.newContext(params.options) as BrowserContextBase);
   }
 
   async newPage(params: { options?: types.BrowserContextOptions }): Promise<PageChannel> {
-    return PageDispatcher.from(this._scope, await this._object.newPage(params.options));
+    return lookupDispatcher<PageDispatcher>(await this._object.newPage(params.options))!;
   }
 
   async close(): Promise<void> {

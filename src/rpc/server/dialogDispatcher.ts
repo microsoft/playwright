@@ -16,15 +16,9 @@
 
 import { Dialog } from '../../dialog';
 import { DialogChannel, DialogInitializer } from '../channels';
-import { Dispatcher, DispatcherScope } from '../dispatcher';
+import { Dispatcher, DispatcherScope } from './dispatcher';
 
 export class DialogDispatcher extends Dispatcher<Dialog, DialogInitializer> implements DialogChannel {
-  static from(scope: DispatcherScope, dialog: Dialog): DialogDispatcher {
-    if ((dialog as any)[scope.dispatcherSymbol])
-      return (dialog as any)[scope.dispatcherSymbol];
-    return new DialogDispatcher(scope, dialog);
-  }
-
   constructor(scope: DispatcherScope, dialog: Dialog) {
     super(scope, dialog, 'dialog', {
       type: dialog.type(),

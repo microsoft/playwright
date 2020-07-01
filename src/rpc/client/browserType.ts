@@ -18,13 +18,13 @@ import * as types from '../../types';
 import { BrowserTypeChannel, BrowserTypeInitializer } from '../channels';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
+import { Connection, ChannelGuid } from './connection';
 import { ChannelOwner } from './channelOwner';
-import { Connection } from '../connection';
 import { BrowserServer } from './browserServer';
 
 export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {
-  constructor(connection: Connection, channel: BrowserTypeChannel, initializer: BrowserTypeInitializer) {
-    super(connection, channel, initializer);
+  constructor(connection: Connection, guid: ChannelGuid, initializer: BrowserTypeInitializer) {
+    super(connection, guid, initializer);
   }
 
   executablePath(): string {

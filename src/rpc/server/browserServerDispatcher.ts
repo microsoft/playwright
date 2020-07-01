@@ -16,21 +16,15 @@
 
 import { BrowserServer } from '../../server/browserServer';
 import { BrowserServerChannel, BrowserServerInitializer } from '../channels';
-import { Dispatcher, DispatcherScope } from '../dispatcher';
+import { Dispatcher, DispatcherScope } from './dispatcher';
 import { Events } from '../../events';
 
 export class BrowserServerDispatcher extends Dispatcher<BrowserServer, BrowserServerInitializer> implements BrowserServerChannel {
-  static from(scope: DispatcherScope, browserServer: BrowserServer): BrowserServerDispatcher {
-    if ((browserServer as any)[scope.dispatcherSymbol])
-      return (browserServer as any)[scope.dispatcherSymbol];
-    return new BrowserServerDispatcher(scope, browserServer);
-  }
-
   constructor(scope: DispatcherScope, browserServer: BrowserServer) {
     super(scope, browserServer, 'browserServer', {
       wsEndpoint: browserServer.wsEndpoint(),
       pid: browserServer.process().pid
-    });
+    }, true);
     browserServer.on(Events.BrowserServer.Close, () => this._dispatchEvent('close'));
   }
 
