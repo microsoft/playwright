@@ -17,8 +17,8 @@
 import { Frame } from '../../frames';
 import * as types from '../../types';
 import { ElementHandleChannel, FrameChannel, FrameInitializer, JSHandleChannel, ResponseChannel } from '../channels';
-import { Dispatcher, DispatcherScope } from '../dispatcher';
-import { convertSelectOptionValues, ElementHandleDispatcher, fromHandle } from './elementHandlerDispatcher';
+import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from '../dispatcher';
+import { convertSelectOptionValues, ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher } from './networkDispatchers';
 
@@ -26,29 +26,22 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
   private _frame: Frame;
 
   static from(scope: DispatcherScope, frame: Frame): FrameDispatcher {
-    if ((frame as any)[scope.dispatcherSymbol])
-      return (frame as any)[scope.dispatcherSymbol];
-    return new FrameDispatcher(scope, frame);
+    const result = existingDispatcher<FrameDispatcher>(frame);
+    return result || new FrameDispatcher(scope, frame);
   }
 
-  static fromNullable(scope: DispatcherScope, frame: Frame | null): FrameDispatcher | null {
-    if (!frame)
-      return null;
-    return FrameDispatcher.from(scope, frame);
-  }
-
-  constructor(scope: DispatcherScope, frame: Frame) {
+  private constructor(scope: DispatcherScope, frame: Frame) {
     super(scope, frame, 'frame', {
       url: frame.url(),
       name: frame.name(),
-      parentFrame: FrameDispatcher.fromNullable(scope, frame.parentFrame())
+      parentFrame: lookupNullableDispatcher<FrameDispatcher>(frame.parentFrame())
     });
     this._frame = frame;
   }
 
   async goto(params: { url: string, options: types.GotoOptions, isPage?: boolean }): Promise<ResponseChannel | null> {
     const target = params.isPage ? this._frame._page : this._frame;
-    return ResponseDispatcher.fromNullable(this._scope, await target.goto(params.url, params.options));
+    return lookupNullableDispatcher<ResponseDispatcher>(await target.goto(params.url, params.options));
   }
 
   async waitForLoadState(params: { state?: 'load' | 'domcontentloaded' | 'networkidle', options?: types.TimeoutOptions, isPage?: boolean }): Promise<void> {
@@ -58,11 +51,11 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
 
   async waitForNavigation(params: { options?: types.WaitForNavigationOptions, isPage?: boolean }): Promise<ResponseChannel | null> {
     const target = params.isPage ? this._frame._page : this._frame;
-    return ResponseDispatcher.fromNullable(this._scope, await target.waitForNavigation(params.options));
+    return lookupNullableDispatcher<ResponseDispatcher>(await target.waitForNavigation(params.options));
   }
 
   async frameElement(): Promise<ElementHandleChannel> {
-    return ElementHandleDispatcher.fromElement(this._scope, await this._frame.frameElement());
+    return new ElementHandleDispatcher(this._scope, await this._frame.frameElement());
   }
 
   async evaluateExpression(params: { expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<any> {
@@ -72,12 +65,12 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
 
   async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<JSHandleChannel> {
     const target = params.isPage ? this._frame._page : this._frame;
-    return fromHandle(this._scope, await target._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg)));
+    return createHandle(this._scope, await target._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg)));
   }
 
   async waitForSelector(params: { selector: string, options: types.WaitForElementOptions, isPage?: boolean }): Promise<ElementHandleChannel | null> {
     const target = params.isPage ? this._frame._page : this._frame;
-    return ElementHandleDispatcher.fromNullableElement(this._scope, await target.waitForSelector(params.selector, params.options));
+    return ElementHandleDispatcher.createNullable(this._scope, await target.waitForSelector(params.selector, params.options));
   }
 
   async dispatchEvent(params: { selector: string, type: string, eventInit: any, options: types.TimeoutOptions, isPage?: boolean }): Promise<void> {
@@ -97,13 +90,13 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
 
   async querySelector(params: { selector: string, isPage?: boolean }): Promise<ElementHandleChannel | null> {
     const target = params.isPage ? this._frame._page : this._frame;
-    return ElementHandleDispatcher.fromNullableElement(this._scope, await target.$(params.selector));
+    return ElementHandleDispatcher.createNullable(this._scope, await target.$(params.selector));
   }
 
   async querySelectorAll(params: { selector: string, isPage?: boolean }): Promise<ElementHandleChannel[]> {
     const target = params.isPage ? this._frame._page : this._frame;
     const elements = await target.$$(params.selector);
-    return elements.map(e => ElementHandleDispatcher.fromElement(this._scope, e));
+    return elements.map(e => new ElementHandleDispatcher(this._scope, e));
   }
 
   async content(): Promise<string> {
@@ -117,12 +110,12 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
 
   async addScriptTag(params: { options: { url?: string | undefined, path?: string | undefined, content?: string | undefined, type?: string | undefined }, isPage?: boolean }): Promise<ElementHandleChannel> {
     const target = params.isPage ? this._frame._page : this._frame;
-    return ElementHandleDispatcher.fromElement(this._scope, await target.addScriptTag(params.options));
+    return new ElementHandleDispatcher(this._scope, await target.addScriptTag(params.options));
   }
 
   async addStyleTag(params: { options: { url?: string | undefined, path?: string | undefined, content?: string | undefined }, isPage?: boolean }): Promise<ElementHandleChannel> {
     const target = params.isPage ? this._frame._page : this._frame;
-    return ElementHandleDispatcher.fromElement(this._scope, await target.addStyleTag(params.options));
+    return new ElementHandleDispatcher(this._scope, await target.addStyleTag(params.options));
   }
 
   async click(params: { selector: string, options: types.PointerActionOptions & types.MouseClickOptions & types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean }, isPage?: boolean }): Promise<void> {
@@ -202,7 +195,7 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
 
   async waitForFunction(params: { expression: string, isFunction: boolean, arg: any; options: types.WaitForFunctionOptions, isPage?: boolean }): Promise<JSHandleChannel> {
     const target = params.isPage ? this._frame._page : this._frame;
-    return fromHandle(this._scope, await target._waitForFunctionExpression(params.expression, params.isFunction, parseArgument(params.arg), params.options));
+    return createHandle(this._scope, await target._waitForFunctionExpression(params.expression, params.isFunction, parseArgument(params.arg), params.options));
   }
 
   async title(): Promise<string> {

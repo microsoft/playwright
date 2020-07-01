@@ -15,9 +15,25 @@
  */
 
 import { EventEmitter } from 'events';
-import { helper } from '../helper';
+import { helper, debugAssert } from '../helper';
 import { Channel } from './channels';
 import { serializeError } from './serializers';
+
+export const dispatcherSymbol = Symbol('dispatcher');
+
+export function lookupDispatcher<DispatcherType>(object: any): DispatcherType {
+  const result = object[dispatcherSymbol];
+  debugAssert(result);
+  return result;
+}
+
+export function existingDispatcher<DispatcherType>(object: any): DispatcherType {
+  return object[dispatcherSymbol];
+}
+
+export function lookupNullableDispatcher<DispatcherType>(object: any | null): DispatcherType | null {
+  return object ? lookupDispatcher(object) : null;
+}
 
 export class Dispatcher<Type, Initializer> extends EventEmitter implements Channel {
   readonly _guid: string;
@@ -32,7 +48,7 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements Chann
     this._object = object;
     this._scope = scope;
     scope.dispatchers.set(this._guid, this);
-    (object as any)[scope.dispatcherSymbol] = this;
+    (object as any)[dispatcherSymbol] = this;
     this._scope.sendMessageToClient(this._guid, '__create__', { type, initializer });
   }
 
@@ -43,7 +59,6 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements Chann
 
 export class DispatcherScope {
   readonly dispatchers = new Map<string, Dispatcher<any, any>>();
-  readonly dispatcherSymbol = Symbol('dispatcher');
   onmessage = (message: string) => {};
 
   async sendMessageToClient(guid: string, method: string, params: any): Promise<any> {
