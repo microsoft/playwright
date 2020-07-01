@@ -712,27 +712,21 @@ const Page = {
         frameId: t.String,
       },
       returns: {
-        navigationId: t.Nullable(t.String),
-        navigationURL: t.Nullable(t.String),
-      }
+        success: t.Boolean,
+      },
     },
     'goForward': {
       params: {
         frameId: t.String,
       },
       returns: {
-        navigationId: t.Nullable(t.String),
-        navigationURL: t.Nullable(t.String),
-      }
+        success: t.Boolean,
+      },
     },
     'reload': {
       params: {
         frameId: t.String,
       },
-      returns: {
-        navigationId: t.String,
-        navigationURL: t.String,
-      }
     },
     'getBoundingBox': {
       params: {
