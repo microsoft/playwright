@@ -759,21 +759,37 @@ export class Frame {
     const info = selectors._parseSelector(selector);
     const task = dom.textContentTask(info);
     return this._page._runAbortableTask(async progress => {
-      progress.logger.info(`Retrieving text context from "${selector}"...`);
+      progress.logger.info(`  retrieving textContent from "${selector}"`);
       return this._scheduleRerunnableTask(progress, info.world, task);
     }, this._page._timeoutSettings.timeout(options), this._apiName('textContent'));
   }
 
   async innerText(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
-    return await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.innerText(), this._apiName('innerText'));
+    const info = selectors._parseSelector(selector);
+    const task = dom.innerTextTask(info);
+    return this._page._runAbortableTask(async progress => {
+      progress.logger.info(`  retrieving innerText from "${selector}"`);
+      const result = dom.throwFatalDOMError(await this._scheduleRerunnableTask(progress, info.world, task));
+      return result.innerText;
+    }, this._page._timeoutSettings.timeout(options), this._apiName('innerText'));
   }
 
   async innerHTML(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
-    return await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.innerHTML(), this._apiName('innerHTML'));
+    const info = selectors._parseSelector(selector);
+    const task = dom.innerHTMLTask(info);
+    return this._page._runAbortableTask(async progress => {
+      progress.logger.info(`  retrieving innerHTML from "${selector}"`);
+      return this._scheduleRerunnableTask(progress, info.world, task);
+    }, this._page._timeoutSettings.timeout(options), this._apiName('innerHTML'));
   }
 
   async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
-    return await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle.getAttribute(name), this._apiName('getAttribute'));
+    const info = selectors._parseSelector(selector);
+    const task = dom.getAttributeTask(info, name);
+    return this._page._runAbortableTask(async progress => {
+      progress.logger.info(`  retrieving attribute "${name}" from "${selector}"`);
+      return this._scheduleRerunnableTask(progress, info.world, task);
+    }, this._page._timeoutSettings.timeout(options), this._apiName('getAttribute'));
   }
 
   async hover(selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions = {}) {
