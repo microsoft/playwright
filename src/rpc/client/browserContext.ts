@@ -23,7 +23,7 @@ import { BrowserContextChannel, BrowserContextInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
 import { helper } from '../../helper';
 import { Browser } from './browser';
-import { Connection } from './connection';
+import { ConnectionScope } from './connection';
 import { Events } from '../../events';
 import { TimeoutSettings } from '../../timeoutSettings';
 
@@ -44,8 +44,8 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     return context ? BrowserContext.from(context) : null;
   }
 
-  constructor(connection: Connection, channel: BrowserContextChannel, initializer: BrowserContextInitializer) {
-    super(connection, channel, initializer);
+  constructor(scope: ConnectionScope, guid: string, initializer: BrowserContextInitializer) {
+    super(scope, guid, initializer, true);
     initializer.pages.map(p => {
       const page = Page.from(p);
       this._pages.add(page);
@@ -193,6 +193,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     }
     this._pendingWaitForEvents.clear();
     this.emit(Events.BrowserContext.Close);
+    this._scope.dispose();
   }
 
   async close(): Promise<void> {

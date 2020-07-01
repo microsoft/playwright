@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'ws';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { BrowserType } from './browserType';
@@ -26,7 +25,6 @@ import { Request, Response, Route } from './network';
 import { Page, BindingCall } from './page';
 import { Worker } from './worker';
 import debug = require('debug');
-import { Channel } from '../channels';
 import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
 import { Download } from './download';
@@ -34,83 +32,21 @@ import { parseError } from '../serializers';
 import { BrowserServer } from './browserServer';
 
 export class Connection {
-  private _channels = new Map<string, Channel>();
-  private _waitingForObject = new Map<string, any>();
+  readonly _objects = new Map<string, ChannelOwner<any, any>>();
+  readonly _waitingForObject = new Map<string, any>();
   onmessage = (message: string): void => {};
   private _lastId = 0;
   private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void }>();
+  readonly _scopes = new Map<string, ConnectionScope>();
+  private _rootScript: ConnectionScope;
 
-  constructor() {}
-
-  private _createRemoteObject(type: string, guid: string, initializer: any): any {
-    const channel = this._createChannel(guid) as any;
-    this._channels.set(guid, channel);
-    let result: ChannelOwner<any, any>;
-    initializer = this._replaceGuidsWithChannels(initializer);
-    switch (type) {
-      case 'bindingCall':
-        result = new BindingCall(this, channel, initializer);
-        break;
-      case 'browser':
-        result = new Browser(this, channel, initializer);
-        break;
-      case 'browserServer':
-        result = new BrowserServer(this, channel, initializer);
-        break;
-      case 'browserType':
-        result = new BrowserType(this, channel, initializer);
-        break;
-      case 'context':
-        result = new BrowserContext(this, channel, initializer);
-        break;
-      case 'consoleMessage':
-        result = new ConsoleMessage(this, channel, initializer);
-        break;
-      case 'dialog':
-        result = new Dialog(this, channel, initializer);
-        break;
-      case 'download':
-        result = new Download(this, channel, initializer);
-        break;
-      case 'elementHandle':
-        result = new ElementHandle(this, channel, initializer);
-        break;
-      case 'frame':
-        result = new Frame(this, channel, initializer);
-        break;
-      case 'jsHandle':
-        result = new JSHandle(this, channel, initializer);
-        break;
-      case 'page':
-        result = new Page(this, channel, initializer);
-        break;
-      case 'request':
-        result = new Request(this, channel, initializer);
-        break;
-      case 'response':
-        result = new Response(this, channel, initializer);
-        break;
-      case 'route':
-        result = new Route(this, channel, initializer);
-        break;
-      case 'worker':
-        result = new Worker(this, channel, initializer);
-        break;
-      default:
-        throw new Error('Missing type ' + type);
-    }
-    channel._object = result;
-    const callback = this._waitingForObject.get(guid);
-    if (callback) {
-      callback(result);
-      this._waitingForObject.delete(guid);
-    }
-    return result;
+  constructor() {
+    this._rootScript = this.createScope('');
   }
 
-  waitForObjectWithKnownName(guid: string): Promise<any> {
-    if (this._channels.has(guid))
-      return this._channels.get(guid)!._object;
+  async waitForObjectWithKnownName(guid: string): Promise<any> {
+    if (this._objects.has(guid))
+      return this._objects.get(guid)!;
     return new Promise(f => this._waitingForObject.set(guid, f));
   }
 
@@ -120,6 +56,16 @@ export class Connection {
     debug('pw:channel:command')(converted);
     this.onmessage(JSON.stringify(converted));
     return new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject }));
+  }
+
+  _debugScopeState(): any {
+    const scopeState: any = {};
+    scopeState.objects = [...this._objects.keys()];
+    scopeState.scopes = [...this._scopes.values()].map(scope => ({
+      _guid: scope._guid,
+      objects: [...scope._objects.keys()]
+    }));
+    return scopeState;
   }
 
   dispatch(message: string) {
@@ -138,36 +84,15 @@ export class Connection {
 
     debug('pw:channel:event')(parsedMessage);
     if (method === '__create__') {
-      this._createRemoteObject(params.type,  guid, params.initializer);
+      const scopeObject = this._objects.get(guid);
+      const scope = scopeObject ? scopeObject._scope : this._rootScript;
+      scope.createRemoteObject(params.type, params.guid, params.initializer);
       return;
     }
-    const channel = this._channels.get(guid)!;
-    channel.emit(method, this._replaceGuidsWithChannels(params));
+    const object = this._objects.get(guid)!;
+    object._channel.emit(method, this._replaceGuidsWithChannels(params));
   }
 
-  private _createChannel(guid: string): Channel {
-    const base = new EventEmitter();
-    (base as any)._guid = guid;
-    return new Proxy(base, {
-      get: (obj: any, prop) => {
-        if (String(prop).startsWith('_'))
-          return obj[prop];
-        if (prop === 'then')
-          return obj.then;
-        if (prop === 'emit')
-          return obj.emit;
-        if (prop === 'on')
-          return obj.on;
-        if (prop === 'once')
-          return obj.once;
-        if (prop === 'addEventListener')
-          return obj.addListener;
-        if (prop === 'removeEventListener')
-          return obj.removeListener;
-        return (params: any) => this.sendMessageToServer({ guid, method: String(prop), params });
-      },
-    });
-  }
 
   private _replaceChannelsWithGuids(payload: any): any {
     if (!payload)
@@ -188,13 +113,13 @@ export class Connection {
     return payload;
   }
 
-  private _replaceGuidsWithChannels(payload: any): any {
+  _replaceGuidsWithChannels(payload: any): any {
     if (!payload)
       return payload;
     if (Array.isArray(payload))
       return payload.map(p => this._replaceGuidsWithChannels(p));
-    if (payload.guid && this._channels.has(payload.guid))
-      return this._channels.get(payload.guid);
+    if (payload.guid && this._objects.has(payload.guid))
+      return this._objects.get(payload.guid)!._channel;
     // TODO: send base64
     if (payload instanceof Buffer)
       return payload;
@@ -205,5 +130,121 @@ export class Connection {
       return result;
     }
     return payload;
+  }
+
+  createScope(guid: string): ConnectionScope {
+    const scope = new ConnectionScope(this, guid);
+    this._scopes.set(guid, scope);
+    return scope;
+  }
+}
+
+export class ConnectionScope {
+  private _connection: Connection;
+  readonly _objects = new Map<string, ChannelOwner<any, any>>();
+  private _children = new Set<ConnectionScope>();
+  private _parent: ConnectionScope | undefined;
+  readonly _guid: string;
+
+  constructor(connection: Connection, guid: string) {
+    this._connection = connection;
+    this._guid = guid;
+  }
+
+  createChild(guid: string): ConnectionScope {
+    const scope = this._connection.createScope(guid);
+    this._children.add(scope);
+    scope._parent = this;
+    return scope;
+  }
+
+  dispose() {
+    // Take care of hierarchy.
+    for (const child of [...this._children])
+      child.dispose();
+    this._children.clear();
+
+    // Delete self from scopes and objects.
+    this._connection._scopes.delete(this._guid);
+    this._connection._objects.delete(this._guid);
+
+    // Delete all of the objects from connection.
+    for (const guid of this._objects.keys())
+      this._connection._objects.delete(guid);
+
+    // Clean up from parent.
+    if (this._parent) {
+      this._parent._objects.delete(this._guid);
+      this._parent._children.delete(this);
+    }
+  }
+
+  async sendMessageToServer(message: { guid: string, method: string, params: any }): Promise<any> {
+    return this._connection.sendMessageToServer(message);
+  }
+
+  createRemoteObject(type: string, guid: string, initializer: any): any {
+    let result: ChannelOwner<any, any>;
+    initializer = this._connection._replaceGuidsWithChannels(initializer);
+    switch (type) {
+      case 'bindingCall':
+        result = new BindingCall(this, guid, initializer);
+        break;
+      case 'browser':
+        result = new Browser(this, guid, initializer);
+        break;
+      case 'browserServer':
+        result = new BrowserServer(this, guid, initializer);
+        break;
+      case 'browserType':
+        result = new BrowserType(this, guid, initializer);
+        break;
+      case 'context':
+        result = new BrowserContext(this, guid, initializer);
+        break;
+      case 'consoleMessage':
+        result = new ConsoleMessage(this, guid, initializer);
+        break;
+      case 'dialog':
+        result = new Dialog(this, guid, initializer);
+        break;
+      case 'download':
+        result = new Download(this, guid, initializer);
+        break;
+      case 'elementHandle':
+        result = new ElementHandle(this, guid, initializer);
+        break;
+      case 'frame':
+        result = new Frame(this, guid, initializer);
+        break;
+      case 'jsHandle':
+        result = new JSHandle(this, guid, initializer);
+        break;
+      case 'page':
+        result = new Page(this, guid, initializer);
+        break;
+      case 'request':
+        result = new Request(this, guid, initializer);
+        break;
+      case 'response':
+        result = new Response(this, guid, initializer);
+        break;
+      case 'route':
+        result = new Route(this, guid, initializer);
+        break;
+      case 'worker':
+        result = new Worker(this, guid, initializer);
+        break;
+      default:
+        throw new Error('Missing type ' + type);
+    }
+    this._connection._objects.set(guid, result);
+    this._objects.set(guid, result);
+    const callback = this._connection._waitingForObject.get(guid);
+    if (callback) {
+      callback(result);
+      this._connection._waitingForObject.delete(guid);
+    }
+    return result;
   }
 }

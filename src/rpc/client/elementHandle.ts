@@ -18,7 +18,7 @@ import * as types from '../../types';
 import { ElementHandleChannel, JSHandleInitializer } from '../channels';
 import { Frame } from './frame';
 import { FuncOn, JSHandle, serializeArgument, parseResult } from './jsHandle';
-import { Connection } from './connection';
+import { ConnectionScope } from './connection';
 
 export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   readonly _elementChannel: ElementHandleChannel;
@@ -31,9 +31,9 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     return handle ? ElementHandle.from(handle) : null;
   }
 
-  constructor(connection: Connection, channel: ElementHandleChannel, initializer: JSHandleInitializer) {
-    super(connection, channel, initializer);
-    this._elementChannel = channel;
+  constructor(scope: ConnectionScope, guid: string, initializer: JSHandleInitializer) {
+    super(scope, guid, initializer);
+    this._elementChannel = this._channel as ElementHandleChannel;
   }
 
   asElement(): ElementHandle<T> | null {

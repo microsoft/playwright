@@ -16,7 +16,7 @@
 
 import { ChildProcess } from 'child_process';
 import { BrowserServerChannel, BrowserServerInitializer } from '../channels';
-import { Connection } from './connection';
+import { ConnectionScope } from './connection';
 import { ChannelOwner } from './channelOwner';
 import { Events } from '../../events';
 
@@ -25,9 +25,9 @@ export class BrowserServer extends ChannelOwner<BrowserServerChannel, BrowserSer
     return request._object;
   }
 
-  constructor(connection: Connection, channel: BrowserServerChannel, initializer: BrowserServerInitializer) {
-    super(connection, channel, initializer);
-    channel.on('close', () => this.emit(Events.BrowserServer.Close));
+  constructor(scope: ConnectionScope, guid: string, initializer: BrowserServerInitializer) {
+    super(scope, guid, initializer);
+    this._channel.on('close', () => this.emit(Events.BrowserServer.Close));
   }
 
   process(): ChildProcess {
