@@ -13,7 +13,15 @@ mkdir -p /tmp/coredumps
 sudo bash -c 'echo "/tmp/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
 ulimit -c unlimited
 ```
+
 Then to read stack traces run the following command:
 ```bash
-Tools/jhbuild/jhbuild-wrapper --wpe run gdb --batch -ex "thread apply all bt" WebKitBuild/WPE/Release/bin/MiniBrowser /tmp/coredumps/core-pid_29652.dump &> trace.txt
+# To find out crashing process name
+file core-pid_29652.dump
+# Point gdb to the local binary of the crashed process and the core file
+gdb $HOME/.cache/ms-playwright/webkit-1292/minibrowser-gtk/WebKitWebProcess core-pid_29652
+# Inside gdb update .so library search path to the local one
+set solib-search-path /home/yurys/.cache/ms-playwright/webkit-1292/minibrowser-gtk
+# Finally print backtrace
+bt
 ```
