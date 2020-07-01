@@ -734,7 +734,7 @@ export function toFileTransferPayload(files: types.FilePayload[]): types.FileTra
   }));
 }
 
-function throwFatalDOMError<T>(result: T | FatalDOMError): T {
+export function throwFatalDOMError<T>(result: T | FatalDOMError): T {
   if (result === 'error:notelement')
     throw new Error('Node is not an element');
   if (result === 'error:nothtmlelement')
@@ -807,9 +807,10 @@ export function dispatchEventTask(selector: SelectorInfo, type: string, eventIni
   return injectedScript => injectedScript.evaluateHandle((injected, { parsed, type, eventInit }) => {
     return injected.pollRaf((progress, continuePolling) => {
       const element = injected.querySelector(parsed, document);
-      if (element)
-        injected.dispatchEvent(element, type, eventInit);
-      return element ? undefined : continuePolling;
+      if (!element)
+        return continuePolling;
+      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
+      injected.dispatchEvent(element, type, eventInit);
     });
   }, { parsed: selector.parsed, type, eventInit });
 }
@@ -818,7 +819,48 @@ export function textContentTask(selector: SelectorInfo): SchedulableTask<string 
   return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
     return injected.pollRaf((progress, continuePolling) => {
       const element = injected.querySelector(parsed, document);
-      return element ? element.textContent : continuePolling;
+      if (!element)
+        return continuePolling;
+      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
+      return element.textContent;
     });
   }, selector.parsed);
+}
+
+export function innerTextTask(selector: SelectorInfo): SchedulableTask<'error:nothtmlelement' | { innerText: string }> {
+  return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
+    return injected.pollRaf((progress, continuePolling) => {
+      const element = injected.querySelector(parsed, document);
+      if (!element)
+        return continuePolling;
+      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
+      if (element.namespaceURI !== 'http://www.w3.org/1999/xhtml')
+        return 'error:nothtmlelement';
+      return { innerText: (element as HTMLElement).innerText };
+    });
+  }, selector.parsed);
+}
+
+export function innerHTMLTask(selector: SelectorInfo): SchedulableTask<string> {
+  return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
+    return injected.pollRaf((progress, continuePolling) => {
+      const element = injected.querySelector(parsed, document);
+      if (!element)
+        return continuePolling;
+      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
+      return element.innerHTML;
+    });
+  }, selector.parsed);
+}
+
+export function getAttributeTask(selector: SelectorInfo, name: string): SchedulableTask<string | null> {
+  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, name }) => {
+    return injected.pollRaf((progress, continuePolling) => {
+      const element = injected.querySelector(parsed, document);
+      if (!element)
+        return continuePolling;
+      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
+      return element.getAttribute(name);
+    });
+  }, { parsed: selector.parsed, name });
 }
