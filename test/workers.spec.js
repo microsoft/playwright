@@ -62,10 +62,15 @@ describe('Workers', function() {
     const worker = await workerCreatedPromise;
     expect(await worker.evaluate('1+1')).toBe(2);
   });
-  it.fail(FFOX)('should report errors', async function({page}) {
-    // Times out after the 4/15/2020 roll.
+  it('should report errors', async function({page}) {
     const errorPromise = new Promise(x => page.on('pageerror', x));
-    page.evaluate(() => new Worker(URL.createObjectURL(new Blob([`setTimeout(() => { throw new Error('this is my error'); })`], {type: 'application/javascript'}))));
+    page.evaluate(() => new Worker(URL.createObjectURL(new Blob([`
+      setTimeout(() => {
+        // Do a console.log just to check that we do not confuse it with an error.
+        console.log('hey');
+        throw new Error('this is my error');
+      })
+    `], {type: 'application/javascript'}))));
     const errorLog = await errorPromise;
     expect(errorLog.message).toContain('this is my error');
   });
