@@ -4,7 +4,6 @@ const fs = require('fs');
 const StreamZip = require('node-stream-zip');
 const vm = require('vm');
 const os = require('os');
-const util = require('util');
 
 async function generateProtocol(name, executablePath) {
   if (name === 'chromium')

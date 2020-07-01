@@ -39,16 +39,12 @@ jobs:
           # this is needed for running headful tests
           - xvfb
       script:
-        - npm run lint
-        - xvfb-run --auto-servernum npm run ctest
-        - xvfb-run --auto-servernum npm run ftest
-        - xvfb-run --auto-servernum npm run wtest
+        - npm run build
+        - xvfb-run --auto-servernum npm run test
     - os: osx
       osx_image: xcode11.3
       node_js: '12'
       script:
-        - npm run lint
-        - npm run ctest
-        - npm run ftest
-        - npm run wtest
+        - npm run build
+        - npm run test
 

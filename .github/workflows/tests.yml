@@ -26,6 +26,7 @@ jobs:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
+    - run: npm run build
     - run: mkdir -p coredumps
     # Set core dump file name pattern
     - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
@@ -61,6 +62,7 @@ jobs:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
+    - run: npm run build
     - run: npm run ctest 2>./chromium-mac-testrun.log
       env:
         DEBUG: "*"
@@ -85,6 +87,7 @@ jobs:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
+    - run: npm run build
     - run: npm run ctest 2>./chromium-win-testrun.log
       shell: bash
       env:
@@ -110,6 +113,7 @@ jobs:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
+    - run: npm run build
     - run: mkdir -p coredumps
     # Set core dump file name pattern
     - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
@@ -145,6 +149,7 @@ jobs:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
+    - run: npm run build
     - run: npm run wtest 2>./webkit-mac-testrun.log
       env:
         DEBUG: "*,-pw:wrapped*"
@@ -169,6 +174,7 @@ jobs:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
+    - run: npm run build
     - run: npm run wtest 2>./webkit-win-testrun.log
       shell: bash
       env:
@@ -194,6 +200,7 @@ jobs:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
+    - run: npm run build
     - run: mkdir -p coredumps
     # Set core dump file name pattern
     - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
@@ -229,6 +236,7 @@ jobs:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
+    - run: npm run build
     - run: npm run ftest 2>./firefox-mac-testrun.log
       env:
         DEBUG: "*"
@@ -253,6 +261,7 @@ jobs:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
+    - run: npm run build
     - run: npm run ftest 2>./firefox-win-testrun.log
       shell: bash
       env:
@@ -283,6 +292,7 @@ jobs:
         node-version: ${{ matrix.node_version }}
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
+    - run: npm run build
     - run: bash packages/installation-tests/installation-tests.sh
 
   headful_linux:
@@ -295,6 +305,7 @@ jobs:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
+    - run: npm run build
     - run: mkdir -p coredumps
     # Set core dump file name pattern
     - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
@@ -326,6 +337,7 @@ jobs:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
+    - run: npm run build
     - run: mkdir -p coredumps
     # Set core dump file name pattern
     - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'

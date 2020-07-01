@@ -58,12 +58,8 @@ Send a PR to the Playwright repo to be reviewed.
 
 ## 4. Rolling Playwright to the new browser build
 
-Once the patch has been committed, the build bots will kick in, compile and upload a new browser version to all the platforms.
-
-You can check the CDN status:
+Once the patch has been committed, the build bots will kick in, compile and upload a new browser version to all the platforms. Then you can roll the browser:
 
 ```sh
-$ ./browser_patches/tools/check_cdn.sh
+$ node utils/roll_browser.js chromium 123456
 ```
-
-As the builds appear, you can roll to a new browser version in the `./browsers.json` file.

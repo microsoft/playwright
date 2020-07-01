@@ -7,18 +7,19 @@ jobs:
       - checkout
 
       - restore_cache:
-          key: dependency-cache-{{ checksum "package.json" }}
+          key: dependency-cache-{{ checksum "browsers.json" }}
 
       - run:
           command: npm ci
 
+      - run:
+          command: npm run build
+
       - save_cache:
-          key: dependency-cache-{{ checksum "package.json" }}
+          key: dependency-cache-{{ checksum "browsers.json" }}
           paths:
-            - ./.local-browsers
+            - $HOME/.cache/ms-playwright
 
       - run:
           command: |
-            xvfb-run --auto-servernum npm run ctest
-            xvfb-run --auto-servernum npm run wtest
-            xvfb-run --auto-servernum npm run ftest
+            xvfb-run --auto-servernum npm run test

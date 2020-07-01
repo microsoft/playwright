@@ -20,8 +20,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as util from 'util';
 import * as removeFolder from 'rimraf';
-import * as browserPaths from '../install/browserPaths';
-import * as browserFetcher from '../install/browserFetcher';
+import * as browserPaths from './browserPaths';
+import * as browserFetcher from './browserFetcher';
 
 const fsMkdirAsync = util.promisify(fs.mkdir.bind(fs));
 const fsReaddirAsync = util.promisify(fs.readdir.bind(fs));
