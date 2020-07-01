@@ -17,7 +17,7 @@
 import * as types from '../../types';
 import { BrowserContextBase, BrowserContext } from '../../browserContext';
 import { Events } from '../../events';
-import { Dispatcher, DispatcherScope, lookupNullableDispatcher, lookupDispatcher } from '../dispatcher';
+import { Dispatcher, DispatcherScope, lookupNullableDispatcher, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher } from './pageDispatcher';
 import { PageChannel, BrowserContextChannel, BrowserContextInitializer } from '../channels';
 import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
@@ -34,6 +34,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
     context.on(Events.BrowserContext.Page, page => this._dispatchEvent('page', PageDispatcher.from(this._scope, page)));
     context.on(Events.BrowserContext.Close, () => {
       this._dispatchEvent('close');
+      scope.dispose();
     });
   }
 

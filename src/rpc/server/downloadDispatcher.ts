@@ -16,7 +16,7 @@
 
 import { Download } from '../../download';
 import { DownloadChannel, DownloadInitializer } from '../channels';
-import { Dispatcher, DispatcherScope } from '../dispatcher';
+import { Dispatcher, DispatcherScope } from './dispatcher';
 
 export class DownloadDispatcher extends Dispatcher<Download, DownloadInitializer> implements DownloadChannel {
   constructor(scope: DispatcherScope, download: Download) {

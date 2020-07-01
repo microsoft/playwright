@@ -16,7 +16,7 @@
 
 import { EventEmitter } from 'events';
 import { Channel } from '../channels';
-import { Connection } from '../connection';
+import { Connection } from './connection';
 
 export abstract class ChannelOwner<T extends Channel, Initializer> extends EventEmitter {
   readonly _channel: T;

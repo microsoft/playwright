@@ -15,9 +15,9 @@
  */
 
 import { EventEmitter } from 'events';
-import { helper, debugAssert } from '../helper';
-import { Channel } from './channels';
-import { serializeError } from './serializers';
+import { helper, debugAssert } from '../../helper';
+import { Channel } from '../channels';
+import { serializeError } from '../serializers';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 
@@ -47,7 +47,7 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements Chann
     this._guid = guid;
     this._object = object;
     this._scope = scope;
-    scope.dispatchers.set(this._guid, this);
+    scope.bind(this._guid, this);
     (object as any)[dispatcherSymbol] = this;
     this._scope.sendMessageToClient(this._guid, '__create__', { type, initializer });
   }
@@ -58,17 +58,62 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements Chann
 }
 
 export class DispatcherScope {
-  readonly dispatchers = new Map<string, Dispatcher<any, any>>();
-  onmessage = (message: string) => {};
+  private _connection: DispatcherConnection;
+  private _dispatchers = new Map<string, Dispatcher<any, any>>();
+  private _parent: DispatcherScope | undefined;
+  private _childScopes = new Set<DispatcherScope>();
+
+  constructor(connection: DispatcherConnection, parent?: DispatcherScope) {
+    this._connection = connection;
+    this._parent = parent;
+    if (parent)
+      parent._childScopes.add(this);
+  }
+
+  createChild(): DispatcherScope {
+    return new DispatcherScope(this._connection, this);
+  }
+
+  bind(guid: string, arg: Dispatcher<any, any>) {
+    this._dispatchers.set(guid, arg);
+    this._connection._dispatchers.set(guid, arg);
+  }
+
+  dispose() {
+    for (const child of [...this._childScopes])
+      child.dispose();
+    this._childScopes.clear();
+    for (const guid of this._dispatchers.keys())
+      this._connection._dispatchers.delete(guid);
+    if (this._parent)
+      this._parent._childScopes.delete(this);
+  }
 
   async sendMessageToClient(guid: string, method: string, params: any): Promise<any> {
+    this._connection._sendMessageToClient(guid, method, params);
+  }
+}
+
+export class DispatcherConnection {
+  readonly _dispatchers = new Map<string, Dispatcher<any, any>>();
+  onmessage = (message: string) => {};
+
+  async _sendMessageToClient(guid: string, method: string, params: any): Promise<any> {
     this.onmessage(JSON.stringify({ guid, method, params: this._replaceDispatchersWithGuids(params) }));
   }
 
-  async send(message: string) {
+  createScope(): DispatcherScope {
+    return new DispatcherScope(this);
+  }
+
+  async dispatch(message: string) {
     const parsedMessage = JSON.parse(message);
     const { id, guid, method, params } = parsedMessage;
-    const dispatcher = this.dispatchers.get(guid)!;
+    const dispatcher = this._dispatchers.get(guid);
+    if (!dispatcher) {
+      this.onmessage(JSON.stringify({ id, error: serializeError(new Error('Target browser or context has been closed')) }));
+      return;
+    }
     try {
       const result = await (dispatcher as any)[method](this._replaceGuidsWithDispatchers(params));
       this.onmessage(JSON.stringify({ id, result: this._replaceDispatchersWithGuids(result) }));
@@ -101,8 +146,8 @@ export class DispatcherScope {
       return payload;
     if (Array.isArray(payload))
       return payload.map(p => this._replaceGuidsWithDispatchers(p));
-    if (payload.guid && this.dispatchers.has(payload.guid))
-      return this.dispatchers.get(payload.guid);
+    if (payload.guid && this._dispatchers.has(payload.guid))
+      return this._dispatchers.get(payload.guid);
     // TODO: send base64
     if (payload instanceof Buffer)
       return payload;

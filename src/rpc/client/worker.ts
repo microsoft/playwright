@@ -17,7 +17,7 @@
 import { Events } from '../../events';
 import { assertMaxArguments } from '../../helper';
 import { WorkerChannel, WorkerInitializer } from '../channels';
-import { Connection } from '../connection';
+import { Connection } from './connection';
 import { ChannelOwner } from './channelOwner';
 import { Func1, JSHandle, parseResult, serializeArgument, SmartHandle } from './jsHandle';
 import { Page } from './page';

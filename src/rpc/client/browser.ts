@@ -19,12 +19,13 @@ import { BrowserChannel, BrowserInitializer } from '../channels';
 import { BrowserContext } from './browserContext';
 import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
-import { Connection } from '../connection';
+import { Connection } from './connection';
 import { Events } from '../../events';
 
 export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   readonly _contexts = new Set<BrowserContext>();
   private _isConnected = true;
+  private _isClosedOrClosing = false;
 
 
   static from(browser: BrowserChannel): Browser {
@@ -40,6 +41,7 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
     channel.on('close', () => {
       this._isConnected = false;
       this.emit(Events.Browser.Disconnected);
+      this._isClosedOrClosing = true;
     });
   }
 
@@ -69,6 +71,9 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   }
 
   async close(): Promise<void> {
+    if (this._isClosedOrClosing)
+      return;
+    this._isClosedOrClosing = true;
     await this._channel.close();
   }
 }

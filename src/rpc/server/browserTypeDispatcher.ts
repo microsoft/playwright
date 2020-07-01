@@ -19,7 +19,7 @@ import { BrowserTypeBase, BrowserType } from '../../server/browserType';
 import * as types from '../../types';
 import { BrowserDispatcher } from './browserDispatcher';
 import { BrowserChannel, BrowserTypeChannel, BrowserContextChannel, BrowserTypeInitializer, BrowserServerChannel } from '../channels';
-import { Dispatcher, DispatcherScope } from '../dispatcher';
+import { Dispatcher, DispatcherScope } from './dispatcher';
 import { BrowserContextBase } from '../../browserContext';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { BrowserServerDispatcher } from './browserServerDispatcher';
@@ -34,12 +34,12 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
 
   async launch(params: { options?: types.LaunchOptions }): Promise<BrowserChannel> {
     const browser = await this._object.launch(params.options || undefined);
-    return new BrowserDispatcher(this._scope, browser as BrowserBase);
+    return new BrowserDispatcher(this._scope.createChild(), browser as BrowserBase);
   }
 
   async launchPersistentContext(params: { userDataDir: string, options?: types.LaunchOptions & types.BrowserContextOptions }): Promise<BrowserContextChannel> {
     const browserContext = await this._object.launchPersistentContext(params.userDataDir, params.options);
-    return new BrowserContextDispatcher(this._scope, browserContext as BrowserContextBase);
+    return new BrowserContextDispatcher(this._scope.createChild(), browserContext as BrowserContextBase);
   }
 
   async launchServer(params: { options?: types.LaunchServerOptions }): Promise<BrowserServerChannel> {
@@ -48,6 +48,6 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
 
   async connect(params: { options: types.ConnectOptions }): Promise<BrowserChannel> {
     const browser = await this._object.connect(params.options);
-    return new BrowserDispatcher(this._scope, browser as BrowserBase);
+    return new BrowserDispatcher(this._scope.createChild(), browser as BrowserBase);
   }
 }

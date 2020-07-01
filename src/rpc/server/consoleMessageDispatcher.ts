@@ -16,7 +16,7 @@
 
 import { ConsoleMessage } from '../../console';
 import { ConsoleMessageChannel, ConsoleMessageInitializer } from '../channels';
-import { Dispatcher, DispatcherScope } from '../dispatcher';
+import { Dispatcher, DispatcherScope } from './dispatcher';
 import { createHandle } from './elementHandlerDispatcher';
 
 export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, ConsoleMessageInitializer> implements ConsoleMessageChannel {

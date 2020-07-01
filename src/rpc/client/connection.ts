@@ -15,23 +15,23 @@
  */
 
 import { EventEmitter } from 'ws';
-import { Browser } from './client/browser';
-import { BrowserContext } from './client/browserContext';
-import { BrowserType } from './client/browserType';
-import { ChannelOwner } from './client/channelOwner';
-import { ElementHandle } from './client/elementHandle';
-import { Frame } from './client/frame';
-import { JSHandle } from './client/jsHandle';
-import { Request, Response, Route } from './client/network';
-import { Page, BindingCall } from './client/page';
-import { Worker } from './client/worker';
+import { Browser } from './browser';
+import { BrowserContext } from './browserContext';
+import { BrowserType } from './browserType';
+import { ChannelOwner } from './channelOwner';
+import { ElementHandle } from './elementHandle';
+import { Frame } from './frame';
+import { JSHandle } from './jsHandle';
+import { Request, Response, Route } from './network';
+import { Page, BindingCall } from './page';
+import { Worker } from './worker';
 import debug = require('debug');
-import { Channel } from './channels';
-import { ConsoleMessage } from './client/consoleMessage';
-import { Dialog } from './client/dialog';
-import { Download } from './client/download';
-import { parseError } from './serializers';
-import { BrowserServer } from './client/browserServer';
+import { Channel } from '../channels';
+import { ConsoleMessage } from './consoleMessage';
+import { Dialog } from './dialog';
+import { Download } from './download';
+import { parseError } from '../serializers';
+import { BrowserServer } from './browserServer';
 
 export class Connection {
   private _channels = new Map<string, Channel>();
@@ -122,7 +122,7 @@ export class Connection {
     return new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject }));
   }
 
-  send(message: string) {
+  dispatch(message: string) {
     const parsedMessage = JSON.parse(message);
     const { id, guid, method, params, result, error } = parsedMessage;
     if (id) {

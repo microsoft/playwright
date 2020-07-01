@@ -16,7 +16,7 @@
 
 import { Dialog } from '../../dialog';
 import { DialogChannel, DialogInitializer } from '../channels';
-import { Dispatcher, DispatcherScope } from '../dispatcher';
+import { Dispatcher, DispatcherScope } from './dispatcher';
 
 export class DialogDispatcher extends Dispatcher<Dialog, DialogInitializer> implements DialogChannel {
   constructor(scope: DispatcherScope, dialog: Dialog) {

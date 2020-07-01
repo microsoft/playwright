@@ -23,7 +23,7 @@ import { BrowserContextChannel, BrowserContextInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
 import { helper } from '../../helper';
 import { Browser } from './browser';
-import { Connection } from '../connection';
+import { Connection } from './connection';
 import { Events } from '../../events';
 import { TimeoutSettings } from '../../timeoutSettings';
 

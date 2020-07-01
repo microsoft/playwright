@@ -16,7 +16,7 @@
 
 import * as childProcess from 'child_process';
 import * as path from 'path';
-import { Connection } from './connection';
+import { Connection } from './client/connection';
 import { Transport } from './transport';
 
 (async () => {
@@ -24,7 +24,7 @@ import { Transport } from './transport';
   const transport = new Transport(spawnedProcess.stdin, spawnedProcess.stdout);
   const connection = new Connection();
   connection.onmessage = message => transport.send(message);
-  transport.onmessage = message => connection.send(message);
+  transport.onmessage = message => connection.dispatch(message);
 
   const chromium = await connection.waitForObjectWithKnownName('chromium');
   const browser = await chromium.launch({ headless: false });
