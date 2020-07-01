@@ -519,12 +519,13 @@ export class WKPage implements PageDelegate {
 
   _onDialog(event: Protocol.Dialog.javascriptDialogOpeningPayload) {
     this._page.emit(Events.Page.Dialog, new dialog.Dialog(
-      event.type as dialog.DialogType,
-      event.message,
-      async (accept: boolean, promptText?: string) => {
-        await this._pageProxySession.send('Dialog.handleJavaScriptDialog', { accept, promptText });
-      },
-      event.defaultPrompt));
+        this._page._logger,
+        event.type as dialog.DialogType,
+        event.message,
+        async (accept: boolean, promptText?: string) => {
+          await this._pageProxySession.send('Dialog.handleJavaScriptDialog', { accept, promptText });
+        },
+        event.defaultPrompt));
   }
 
   private async _onFileChooserOpened(event: {frameId: Protocol.Network.FrameId, element: Protocol.Runtime.RemoteObject}) {

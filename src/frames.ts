@@ -726,7 +726,11 @@ export class Frame {
         const task = dom.waitForSelectorTask(info, 'attached');
         const handle = await this._scheduleRerunnableHandleTask(progress, info.world, task);
         const element = handle.asElement() as dom.ElementHandle<Element>;
-        progress.cleanupWhenAborted(() => element.dispose());
+        progress.cleanupWhenAborted(() => {
+          // Do not await here to avoid being blocked, either by stalled
+          // page (e.g. alert) or unresolved navigation in Chromium.
+          element.dispose();
+        });
         const result = await action(progress, element);
         element.dispose();
         if (result === 'error:notconnected') {
