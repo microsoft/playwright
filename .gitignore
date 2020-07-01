@@ -17,3 +17,4 @@ yarn.lock
 /src/webkit/protocol.ts
 lib/
 /types/*
+.idea
