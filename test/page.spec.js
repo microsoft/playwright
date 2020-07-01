@@ -18,7 +18,7 @@
 const path = require('path');
 const util = require('util');
 const vm = require('vm');
-const {FFOX, CHROMIUM, WEBKIT, WIN} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, CHANNEL} = require('./utils').testOptions(browserType);
 
 describe('Page.close', function() {
   it('should reject all promises when page is closed', async({context}) => {
@@ -154,7 +154,7 @@ describe.fail(FFOX && WIN)('Page.Events.Crash', function() {
     const error = await promise;
     expect(error.message).toContain('Navigation failed because page crashed');
   });
-  it('should be able to close context when page crashes', async({page}) => {
+  it.fail(CHANNEL)('should be able to close context when page crashes', async({page}) => {
     await page.setContent(`<div>This page should crash</div>`);
     crash(page);
     await page.waitForEvent('crash');
@@ -1306,3 +1306,8 @@ describe('Page api coverage', function() {
   });
 });
 
+describe.skip(!CHANNEL)('Page channel', function() {
+  it('page should be client stub', async({page, server}) => {
+    expect(!!page._channel).toBeTruthy();
+  });
+});
