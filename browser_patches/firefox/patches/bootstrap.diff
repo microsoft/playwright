@@ -652,10 +652,60 @@ index e268e2bbe8add1b43f6e4d6507cc7810d707a344..a34a7a292a02ea8d94042475a43ae3a0
    dom::MediaCapabilities* MediaCapabilities();
    dom::MediaSession* MediaSession();
 diff --git a/dom/base/nsGlobalWindowOuter.cpp b/dom/base/nsGlobalWindowOuter.cpp
-index da9d56e843a2c762dc7d5527712cdd3d30418f7f..ea9d962513dfc02682d5dfd543dd72ba78ab1745 100644
+index da9d56e843a2c762dc7d5527712cdd3d30418f7f..aa3d2d6022b60ac3a263c2d1df4eb12714d8e728 100644
 --- a/dom/base/nsGlobalWindowOuter.cpp
 +++ b/dom/base/nsGlobalWindowOuter.cpp
-@@ -3861,6 +3861,14 @@ Maybe<CSSIntSize> nsGlobalWindowOuter::GetRDMDeviceSize(
+@@ -2430,7 +2430,7 @@ nsresult nsGlobalWindowOuter::SetNewDocument(Document* aDocument,
+         &nsGlobalWindowInner::FireOnNewGlobalObject));
+   }
+ 
+-  if (newInnerWindow && !newInnerWindow->mHasNotifiedGlobalCreated && mDoc) {
++  if (newInnerWindow && mDoc) {
+     // We should probably notify. However if this is the, arguably bad,
+     // situation when we're creating a temporary non-chrome-about-blank
+     // document in a chrome docshell, don't notify just yet. Instead wait
+@@ -2449,10 +2449,16 @@ nsresult nsGlobalWindowOuter::SetNewDocument(Document* aDocument,
+     }();
+ 
+     if (!isContentAboutBlankInChromeDocshell) {
+-      newInnerWindow->mHasNotifiedGlobalCreated = true;
+-      nsContentUtils::AddScriptRunner(NewRunnableMethod(
+-          "nsGlobalWindowOuter::DispatchDOMWindowCreated", this,
+-          &nsGlobalWindowOuter::DispatchDOMWindowCreated));
++      if (!newInnerWindow->mHasNotifiedGlobalCreated) {
++        newInnerWindow->mHasNotifiedGlobalCreated = true;
++        nsContentUtils::AddScriptRunner(NewRunnableMethod(
++            "nsGlobalWindowOuter::DispatchDOMWindowCreated", this,
++            &nsGlobalWindowOuter::DispatchDOMWindowCreated));
++      } else if (!reUseInnerWindow) {
++        nsContentUtils::AddScriptRunner(NewRunnableMethod(
++            "nsGlobalWindowOuter::JugglerDispatchDOMWindowReused", this,
++            &nsGlobalWindowOuter::JugglerDispatchDOMWindowReused));
++      }
+     }
+   }
+ 
+@@ -2609,6 +2615,19 @@ void nsGlobalWindowOuter::DispatchDOMWindowCreated() {
+   }
+ }
+ 
++void nsGlobalWindowOuter::JugglerDispatchDOMWindowReused() {
++  nsCOMPtr<nsIObserverService> observerService =
++      mozilla::services::GetObserverService();
++  if (observerService && mDoc) {
++    nsIPrincipal* principal = mDoc->NodePrincipal();
++    if (!principal->IsSystemPrincipal()) {
++      observerService->NotifyObservers(static_cast<nsIDOMWindow*>(this),
++                                      "juggler-dom-window-reused",
++                                      nullptr);
++    }
++  }
++}
++
+ void nsGlobalWindowOuter::ClearStatus() { SetStatusOuter(EmptyString()); }
+ 
+ void nsGlobalWindowOuter::SetDocShell(nsDocShell* aDocShell) {
+@@ -3861,6 +3880,14 @@ Maybe<CSSIntSize> nsGlobalWindowOuter::GetRDMDeviceSize(
        }
      }
    }
@@ -670,6 +720,18 @@ index da9d56e843a2c762dc7d5527712cdd3d30418f7f..ea9d962513dfc02682d5dfd543dd72ba
    return Nothing();
  }
  
+diff --git a/dom/base/nsGlobalWindowOuter.h b/dom/base/nsGlobalWindowOuter.h
+index d2a8f0219f21800ef7800ed637c1f61d454a99a6..7e88989437613cec54d6bbf551afd572e28c4221 100644
+--- a/dom/base/nsGlobalWindowOuter.h
++++ b/dom/base/nsGlobalWindowOuter.h
+@@ -319,6 +319,7 @@ class nsGlobalWindowOuter final : public mozilla::dom::EventTarget,
+ 
+   // Outer windows only.
+   void DispatchDOMWindowCreated();
++  void JugglerDispatchDOMWindowReused();
+ 
+   // Outer windows only.
+   virtual void EnsureSizeAndPositionUpToDate() override;
 diff --git a/dom/base/nsINode.cpp b/dom/base/nsINode.cpp
 index 7c0d4bd261bf053c7cab4091522dc1e52118eba1..e320e6bfb0402eb07ae53272264278bad9638519 100644
 --- a/dom/base/nsINode.cpp

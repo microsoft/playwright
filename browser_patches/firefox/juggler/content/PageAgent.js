@@ -378,6 +378,8 @@ class PageAgent {
   }
 
   _onDOMContentLoaded(event) {
+    if (!event.target.ownerGlobal)
+      return;
     const docShell = event.target.ownerGlobal.docShell;
     const frame = this._frameTree.frameForDocShell(docShell);
     if (!frame)
@@ -528,25 +530,24 @@ class PageAgent {
     const frame = this._frameTree.frame(frameId);
     const docShell = frame.docShell().QueryInterface(Ci.nsIWebNavigation);
     docShell.reload(Ci.nsIWebNavigation.LOAD_FLAGS_NONE);
-    return {navigationId: frame.pendingNavigationId(), navigationURL: frame.pendingNavigationURL()};
   }
 
   async _goBack({frameId, url}) {
     const frame = this._frameTree.frame(frameId);
     const docShell = frame.docShell();
     if (!docShell.canGoBack)
-      return {navigationId: null, navigationURL: null};
+      return {success: false};
     docShell.goBack();
-    return {navigationId: frame.pendingNavigationId(), navigationURL: frame.pendingNavigationURL()};
+    return {success: true};
   }
 
   async _goForward({frameId, url}) {
     const frame = this._frameTree.frame(frameId);
     const docShell = frame.docShell();
     if (!docShell.canGoForward)
-      return {navigationId: null, navigationURL: null};
+      return {success: false};
     docShell.goForward();
-    return {navigationId: frame.pendingNavigationId(), navigationURL: frame.pendingNavigationURL()};
+    return {success: true};
   }
 
   async _adoptNode({frameId, objectId, executionContextId}) {
