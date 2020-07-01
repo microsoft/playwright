@@ -16,7 +16,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, MAC} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, MAC, CHANNEL} = utils.testOptions(browserType);
 
 describe('BrowserContext', function() {
   it('should create new context', async function({browser}) {
@@ -121,7 +121,7 @@ describe('BrowserContext', function() {
     let error = await promise;
     expect(error.message).toContain('Context closed');
   });
-  it('close() should be callable twice', async({browser}) => {
+  it.fail(CHANNEL)('close() should be callable twice', async({browser}) => {
     const context = await browser.newContext();
     await Promise.all([
       context.close(),

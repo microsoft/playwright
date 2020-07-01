@@ -195,12 +195,12 @@ class TestCollector {
         callback(test, ...args);
       this._tests.push(test);
     });
-    this._api.beforeAll = callback => this._currentSuite.beforeAll(callback);
-    this._api.beforeEach = callback => this._currentSuite.beforeEach(callback);
-    this._api.afterAll = callback => this._currentSuite.afterAll(callback);
-    this._api.afterEach = callback => this._currentSuite.afterEach(callback);
-    this._api.globalSetup = callback => this._currentSuite.globalSetup(callback);
-    this._api.globalTeardown = callback => this._currentSuite.globalTeardown(callback);
+    this._api.beforeAll = callback => this._currentSuite.environment().beforeAll(callback);
+    this._api.beforeEach = callback => this._currentSuite.environment().beforeEach(callback);
+    this._api.afterAll = callback => this._currentSuite.environment().afterAll(callback);
+    this._api.afterEach = callback => this._currentSuite.environment().afterEach(callback);
+    this._api.globalSetup = callback => this._currentSuite.environment().globalSetup(callback);
+    this._api.globalTeardown = callback => this._currentSuite.environment().globalTeardown(callback);
   }
 
   useEnvironment(environment) {
