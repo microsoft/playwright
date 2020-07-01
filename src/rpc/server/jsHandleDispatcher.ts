@@ -16,7 +16,7 @@
 
 import * as js from '../../javascript';
 import { JSHandleChannel, JSHandleInitializer } from '../channels';
-import { Dispatcher, DispatcherScope } from '../dispatcher';
+import { Dispatcher, DispatcherScope } from './dispatcher';
 import { parseEvaluationResultValue, serializeAsCallArgument } from '../../common/utilityScriptSerializers';
 import { createHandle } from './elementHandlerDispatcher';
 

@@ -16,7 +16,7 @@
 
 import { ChildProcess } from 'child_process';
 import { BrowserServerChannel, BrowserServerInitializer } from '../channels';
-import { Connection } from '../connection';
+import { Connection } from './connection';
 import { ChannelOwner } from './channelOwner';
 import { Events } from '../../events';
 

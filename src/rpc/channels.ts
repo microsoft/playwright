@@ -55,7 +55,6 @@ export interface BrowserChannel extends Channel {
 
   close(): Promise<void>;
   newContext(params: { options?: types.BrowserContextOptions }): Promise<BrowserContextChannel>;
-  newPage(params: { options?: types.BrowserContextOptions }): Promise<PageChannel>;
 }
 export type BrowserInitializer = {};
 

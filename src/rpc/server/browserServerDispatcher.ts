@@ -16,7 +16,7 @@
 
 import { BrowserServer } from '../../server/browserServer';
 import { BrowserServerChannel, BrowserServerInitializer } from '../channels';
-import { Dispatcher, DispatcherScope } from '../dispatcher';
+import { Dispatcher, DispatcherScope } from './dispatcher';
 import { Events } from '../../events';
 
 export class BrowserServerDispatcher extends Dispatcher<BrowserServer, BrowserServerInitializer> implements BrowserServerChannel {

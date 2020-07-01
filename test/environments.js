@@ -20,8 +20,8 @@ const fs = require('fs');
 const path = require('path');
 const rm = require('rimraf').sync;
 const {TestServer} = require('../utils/testserver/');
-const { DispatcherScope } = require('../lib/rpc/dispatcher');
-const { Connection } = require('../lib/rpc/connection');
+const { DispatcherConnection } = require('../lib/rpc/server/dispatcher');
+const { Connection } = require('../lib/rpc/client/connection');
 const { BrowserTypeDispatcher } = require('../lib/rpc/server/browserTypeDispatcher');
 
 class ServerEnvironment {
@@ -172,17 +172,17 @@ class BrowserTypeEnvironment {
     // Channel substitute
     let overridenBrowserType = this._browserType;
     if (process.env.PWCHANNEL) {
-      const dispatcherScope = new DispatcherScope();
+      const dispatcherConnection = new DispatcherConnection();
       const connection = new Connection();
-      dispatcherScope.onmessage = async message => {
-        setImmediate(() => connection.send(message));
+      dispatcherConnection.onmessage = async message => {
+        setImmediate(() => connection.dispatch(message));
       };
       connection.onmessage = async message => {
-        const result = await dispatcherScope.send(message);
+        const result = await dispatcherConnection.dispatch(message);
         await new Promise(f => setImmediate(f));
         return result;
       };
-      new BrowserTypeDispatcher(dispatcherScope, this._browserType);
+      new BrowserTypeDispatcher(dispatcherConnection.createScope(), this._browserType);
       overridenBrowserType = await connection.waitForObjectWithKnownName(this._browserType.name());
     }
     state.browserType = overridenBrowserType;

@@ -19,7 +19,7 @@ import { BrowserTypeChannel, BrowserTypeInitializer } from '../channels';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { Connection } from '../connection';
+import { Connection } from './connection';
 import { BrowserServer } from './browserServer';
 
 export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {

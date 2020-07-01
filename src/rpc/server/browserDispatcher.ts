@@ -14,27 +14,25 @@
  * limitations under the License.
  */
 
-import { BrowserBase, Browser } from '../../browser';
+import { Browser, BrowserBase } from '../../browser';
 import { BrowserContextBase } from '../../browserContext';
-import * as types from '../../types';
-import { BrowserContextDispatcher } from './browserContextDispatcher';
-import { BrowserChannel, BrowserContextChannel, PageChannel, BrowserInitializer } from '../channels';
-import { Dispatcher, DispatcherScope, lookupDispatcher } from '../dispatcher';
-import { PageDispatcher } from './pageDispatcher';
 import { Events } from '../../events';
+import * as types from '../../types';
+import { BrowserChannel, BrowserContextChannel, BrowserInitializer } from '../channels';
+import { BrowserContextDispatcher } from './browserContextDispatcher';
+import { Dispatcher, DispatcherScope } from './dispatcher';
 
 export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> implements BrowserChannel {
   constructor(scope: DispatcherScope, browser: BrowserBase) {
     super(scope, browser, 'browser', {});
-    browser.on(Events.Browser.Disconnected, () => this._dispatchEvent('close'));
+    browser.on(Events.Browser.Disconnected, () => {
+      this._dispatchEvent('close');
+      scope.dispose();
+    });
   }
 
   async newContext(params: { options?: types.BrowserContextOptions }): Promise<BrowserContextChannel> {
-    return new BrowserContextDispatcher(this._scope, await this._object.newContext(params.options) as BrowserContextBase);
-  }
-
-  async newPage(params: { options?: types.BrowserContextOptions }): Promise<PageChannel> {
-    return lookupDispatcher<PageDispatcher>(await this._object.newPage(params.options))!;
+    return new BrowserContextDispatcher(this._scope.createChild(), await this._object.newContext(params.options) as BrowserContextBase);
   }
 
   async close(): Promise<void> {

@@ -15,7 +15,7 @@
  */
 
 import { DialogChannel, DialogInitializer } from '../channels';
-import { Connection } from '../connection';
+import { Connection } from './connection';
 import { ChannelOwner } from './channelOwner';
 
 export class Dialog extends ChannelOwner<DialogChannel, DialogInitializer> {

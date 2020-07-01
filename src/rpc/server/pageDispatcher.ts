@@ -21,7 +21,7 @@ import { Request } from '../../network';
 import { Page, Worker } from '../../page';
 import * as types from '../../types';
 import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary } from '../channels';
-import { Dispatcher, DispatcherScope, lookupDispatcher, lookupNullableDispatcher, existingDispatcher } from '../dispatcher';
+import { Dispatcher, DispatcherScope, lookupDispatcher, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { parseError, serializeError } from '../serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';

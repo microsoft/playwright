@@ -22,7 +22,7 @@ import { assert, assertMaxArguments, helper, Listener } from '../../helper';
 import { TimeoutSettings } from '../../timeoutSettings';
 import * as types from '../../types';
 import { BindingCallChannel, BindingCallInitializer, Channel, PageChannel, PageInitializer } from '../channels';
-import { Connection } from '../connection';
+import { Connection } from './connection';
 import { parseError, serializeError } from '../serializers';
 import { Accessibility } from './accessibility';
 import { BrowserContext } from './browserContext';

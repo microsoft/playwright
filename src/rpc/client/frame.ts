@@ -25,7 +25,7 @@ import { JSHandle, Func1, FuncOn, SmartHandle, serializeArgument, parseResult } 
 import * as network from './network';
 import { Response } from './network';
 import { Page } from './page';
-import { Connection } from '../connection';
+import { Connection } from './connection';
 import { normalizeFilePayloads } from '../serializers';
 
 export type GotoOptions = types.NavigateOptions & {

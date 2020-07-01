@@ -17,7 +17,7 @@
 import { Request, Response, Route } from '../../network';
 import * as types from '../../types';
 import { RequestChannel, ResponseChannel, RouteChannel, ResponseInitializer, RequestInitializer, RouteInitializer, Binary } from '../channels';
-import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from '../dispatcher';
+import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 
 export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> implements RequestChannel {

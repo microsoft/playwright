@@ -18,7 +18,7 @@ import * as types from '../../types';
 import { ElementHandleChannel, JSHandleInitializer } from '../channels';
 import { Frame } from './frame';
 import { FuncOn, JSHandle, serializeArgument, parseResult } from './jsHandle';
-import { Connection } from '../connection';
+import { Connection } from './connection';
 
 export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   readonly _elementChannel: ElementHandleChannel;

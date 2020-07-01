@@ -17,7 +17,7 @@
 import { Frame } from '../../frames';
 import * as types from '../../types';
 import { ElementHandleChannel, FrameChannel, FrameInitializer, JSHandleChannel, ResponseChannel } from '../channels';
-import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from '../dispatcher';
+import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { convertSelectOptionValues, ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher } from './networkDispatchers';

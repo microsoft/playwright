@@ -19,7 +19,7 @@ import * as types from '../../types';
 import { RequestChannel, ResponseChannel, RouteChannel, RequestInitializer, ResponseInitializer, RouteInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
-import { Connection } from '../connection';
+import { Connection } from './connection';
 import { normalizeFulfillParameters } from '../serializers';
 
 export type NetworkCookie = {
