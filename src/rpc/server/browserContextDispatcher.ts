@@ -28,10 +28,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
 
   constructor(scope: DispatcherScope, context: BrowserContextBase) {
     super(scope, context, 'context', {
-      pages: context.pages().map(p => PageDispatcher.from(scope, p))
+      pages: context.pages().map(p => new PageDispatcher(scope, p))
     }, true);
     this._context = context;
-    context.on(Events.BrowserContext.Page, page => this._dispatchEvent('page', PageDispatcher.from(this._scope, page)));
+    context.on(Events.BrowserContext.Page, page => this._dispatchEvent('page', new PageDispatcher(this._scope, page)));
     context.on(Events.BrowserContext.Close, () => {
       this._dispatchEvent('close');
       this._scope.dispose();

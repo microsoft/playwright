@@ -20,9 +20,6 @@ import * as types from '../types';
 export type Binary = string;
 
 export interface Channel extends EventEmitter {
-  _type: string;
-  _guid: string;
-  _object: any;
 }
 
 

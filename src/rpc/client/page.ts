@@ -21,7 +21,7 @@ import { Events } from '../../events';
 import { assert, assertMaxArguments, helper, Listener } from '../../helper';
 import { TimeoutSettings } from '../../timeoutSettings';
 import * as types from '../../types';
-import { BindingCallChannel, BindingCallInitializer, Channel, PageChannel, PageInitializer } from '../channels';
+import { BindingCallChannel, BindingCallInitializer, PageChannel, PageInitializer } from '../channels';
 import { ConnectionScope } from './connection';
 import { parseError, serializeError } from '../serializers';
 import { Accessibility } from './accessibility';
@@ -60,7 +60,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   _isPageCall = false;
 
   static from(page: PageChannel): Page {
-    return page._object;
+    return (page as any)._object;
   }
 
   static fromNullable(page: PageChannel | null): Page | null {
@@ -502,7 +502,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
 
 export class BindingCall extends ChannelOwner<BindingCallChannel, BindingCallInitializer> {
   static from(channel: BindingCallChannel): BindingCall {
-    return channel._object;
+    return (channel as any)._object;
   }
 
   constructor(scope: ConnectionScope, guid: string, initializer: BindingCallInitializer) {
@@ -537,11 +537,9 @@ export async function waitForEvent(emitter: EventEmitter, event: string, options
   let callback: (a: any) => void;
   const result = new Promise(f => callback = f);
   const listener = helper.addEventListener(emitter, event, param => {
-    // TODO: do not detect channel by guid.
-    const object = param && param._guid ? (param as Channel)._object : param;
-    if (predicate && !predicate(object))
+    if (predicate && !predicate(param))
       return;
-    callback(object);
+    callback(param);
     helper.removeEventListeners([listener]);
   });
   if (timeout === 0)

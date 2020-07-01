@@ -19,8 +19,8 @@ import { ConnectionScope } from './connection';
 import { ChannelOwner } from './channelOwner';
 
 export class Dialog extends ChannelOwner<DialogChannel, DialogInitializer> {
-  static from(request: DialogChannel): Dialog {
-    return request._object;
+  static from(dialog: DialogChannel): Dialog {
+    return (dialog as any)._object;
   }
 
   constructor(scope: ConnectionScope, guid: string, initializer: DialogInitializer) {

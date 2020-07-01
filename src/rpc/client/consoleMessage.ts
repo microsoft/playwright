@@ -22,8 +22,8 @@ import { ChannelOwner } from './channelOwner';
 import { ConnectionScope } from './connection';
 
 export class ConsoleMessage extends ChannelOwner<ConsoleMessageChannel, ConsoleMessageInitializer> {
-  static from(request: ConsoleMessageChannel): ConsoleMessage {
-    return request._object;
+  static from(message: ConsoleMessageChannel): ConsoleMessage {
+    return (message as any)._object;
   }
 
   constructor(scope: ConnectionScope, guid: string, initializer: ConsoleMessageInitializer) {

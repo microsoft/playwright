@@ -40,7 +40,7 @@ export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel, JSHandleIni
   private _preview: string;
 
   static from(handle: JSHandleChannel): JSHandle {
-    return handle._object;
+    return (handle as any)._object;
   }
 
   static fromNullable(handle: JSHandleChannel | null): JSHandle | null {
@@ -110,7 +110,7 @@ export function serializeArgument(arg: any): any {
   };
   const value = serializeAsCallArgument(arg, value => {
     if (value instanceof ChannelOwner)
-      return { h: pushHandle(value._channel._guid) };
+      return { h: pushHandle(value.guid) };
     return { fallThrough: value };
   });
   return { value, guids };

@@ -15,7 +15,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { helper, debugAssert } from '../../helper';
+import { helper, debugAssert, assert } from '../../helper';
 import { Channel } from '../channels';
 import { serializeError } from '../serializers';
 
@@ -77,6 +77,7 @@ export class DispatcherScope {
   }
 
   bind(guid: string, arg: Dispatcher<any, any>) {
+    assert(!this._dispatchers.has(guid));
     this._dispatchers.set(guid, arg);
     this._connection._dispatchers.set(guid, arg);
   }
@@ -161,9 +162,6 @@ export class DispatcherConnection {
       return { guid: payload._guid };
     if (Array.isArray(payload))
       return payload.map(p => this._replaceDispatchersWithGuids(p));
-    // TODO: send base64
-    if (payload instanceof Buffer)
-      return payload;
     if (typeof payload === 'object') {
       const result: any = {};
       for (const key of Object.keys(payload))
@@ -180,9 +178,6 @@ export class DispatcherConnection {
       return payload.map(p => this._replaceGuidsWithDispatchers(p));
     if (payload.guid && this._dispatchers.has(payload.guid))
       return this._dispatchers.get(payload.guid);
-    // TODO: send base64
-    if (payload instanceof Buffer)
-      return payload;
     if (typeof payload === 'object') {
       const result: any = {};
       for (const key of Object.keys(payload))

@@ -21,7 +21,7 @@ import { Request } from '../../network';
 import { Page, Worker } from '../../page';
 import * as types from '../../types';
 import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary } from '../channels';
-import { Dispatcher, DispatcherScope, lookupDispatcher, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
+import { Dispatcher, DispatcherScope, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { parseError, serializeError } from '../serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
@@ -35,16 +35,7 @@ import { FileChooser } from '../../fileChooser';
 export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements PageChannel {
   private _page: Page;
 
-  static from(scope: DispatcherScope, page: Page): PageDispatcher {
-    const result = existingDispatcher<PageDispatcher>(page);
-    return result || new PageDispatcher(scope, page);
-  }
-
-  static fromNullable(scope: DispatcherScope, request: Page | null): PageDispatcher | null {
-    return request ? PageDispatcher.from(scope, request) : null;
-  }
-
-  private constructor(scope: DispatcherScope, page: Page) {
+  constructor(scope: DispatcherScope, page: Page) {
     super(scope, page, 'page', {
       mainFrame: FrameDispatcher.from(scope, page.mainFrame()),
       viewportSize: page.viewportSize()
@@ -65,7 +56,7 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     page.on(Events.Page.FrameNavigated, frame => this._onFrameNavigated(frame));
     page.on(Events.Page.Load, () => this._dispatchEvent('load'));
     page.on(Events.Page.PageError, error => this._dispatchEvent('pageError', { error: serializeError(error) }));
-    page.on(Events.Page.Popup, page => this._dispatchEvent('popup', PageDispatcher.from(this._scope, page)));
+    page.on(Events.Page.Popup, page => this._dispatchEvent('popup', lookupDispatcher<PageDispatcher>(page)));
     page.on(Events.Page.Request, request => this._dispatchEvent('request', RequestDispatcher.from(this._scope, request)));
     page.on(Events.Page.RequestFailed, (request: Request) => this._dispatchEvent('requestFailed', {
       request: RequestDispatcher.from(this._scope, request),
@@ -188,7 +179,7 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
   async accessibilitySnapshot(params: { options: { interestingOnly?: boolean, root?: ElementHandleChannel } }): Promise<types.SerializedAXNode | null> {
     return await this._page.accessibility.snapshot({
       interestingOnly: params.options.interestingOnly,
-      root: params.options.root ? params.options.root._object : undefined
+      root: params.options.root ? (params.options.root as ElementHandleDispatcher)._elementHandle : undefined
     });
   }
 

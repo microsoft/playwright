@@ -21,8 +21,8 @@ import { ChannelOwner } from './channelOwner';
 import { Readable } from 'stream';
 
 export class Download extends ChannelOwner<DownloadChannel, DownloadInitializer> {
-  static from(request: DownloadChannel): Download {
-    return request._object;
+  static from(download: DownloadChannel): Download {
+    return (download as any)._object;
   }
 
   constructor(scope: ConnectionScope, guid: string, initializer: DownloadInitializer) {
