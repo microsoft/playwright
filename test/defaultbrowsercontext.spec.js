@@ -221,7 +221,6 @@ describe('launchPersistentContext()', function() {
     const { page } = await launch(state, {colorScheme: 'dark'});
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
-    expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches)).toBe(false);
     await close(state);
   });
   it('should support timezoneId option', async state => {

@@ -246,33 +246,21 @@ describe('Page.emulateMedia colorScheme', function() {
     await page.emulateMedia({ colorScheme: 'light' });
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
-    expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches)).toBe(false);
     await page.emulateMedia({ colorScheme: 'dark' });
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
-    expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches)).toBe(false);
-    if (!WEBKIT) {
-      // WebKit will always provide the value.
-      await page.emulateMedia({ colorScheme: 'no-preference' });
-      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
-      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
-      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches)).toBe(true);
-    }
   });
   it('should default to light', async({page, server}) => {
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
-    expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches)).toBe(false);
 
     await page.emulateMedia({ colorScheme: 'dark' });
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
-    expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches)).toBe(false);
 
     await page.emulateMedia({ colorScheme: null });
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
-    expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches)).toBe(false);
   });
   it('should throw in case of bad argument', async({page, server}) => {
     let error = null;
