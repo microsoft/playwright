@@ -16,19 +16,38 @@
 
 import { EventEmitter } from 'events';
 import { Channel } from '../channels';
-import { Connection } from './connection';
+import { ConnectionScope } from './connection';
 
 export abstract class ChannelOwner<T extends Channel, Initializer> extends EventEmitter {
   readonly _channel: T;
   readonly _initializer: Initializer;
-  readonly _connection: Connection;
-  static clientSymbol = Symbol('client');
+  readonly _scope: ConnectionScope;
 
-  constructor(connection: Connection, channel: T, initializer: Initializer) {
+  constructor(scope: ConnectionScope, guid: string, initializer: Initializer, isScope?: boolean) {
     super();
-    this._connection = connection;
-    this._channel = channel;
+    this._scope = isScope ? scope.createChild(guid) : scope;
+    const base = new EventEmitter();
+    this._channel = new Proxy(base, {
+      get: (obj: any, prop) => {
+        if (String(prop).startsWith('_'))
+          return obj[prop];
+        if (prop === 'then')
+          return obj.then;
+        if (prop === 'emit')
+          return obj.emit;
+        if (prop === 'on')
+          return obj.on;
+        if (prop === 'once')
+          return obj.once;
+        if (prop === 'addEventListener')
+          return obj.addListener;
+        if (prop === 'removeEventListener')
+          return obj.removeListener;
+        return (params: any) => scope.sendMessageToServer({ guid, method: String(prop), params });
+      },
+    });
+    this._channel._object = this;
+    this._channel._guid = guid;
     this._initializer = initializer;
-    (channel as any)[ChannelOwner.clientSymbol] = this;
   }
 }

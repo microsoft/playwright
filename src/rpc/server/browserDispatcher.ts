@@ -24,15 +24,15 @@ import { Dispatcher, DispatcherScope } from './dispatcher';
 
 export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> implements BrowserChannel {
   constructor(scope: DispatcherScope, browser: BrowserBase) {
-    super(scope, browser, 'browser', {});
+    super(scope, browser, 'browser', {}, true);
     browser.on(Events.Browser.Disconnected, () => {
       this._dispatchEvent('close');
-      scope.dispose();
+      this._scope.dispose();
     });
   }
 
   async newContext(params: { options?: types.BrowserContextOptions }): Promise<BrowserContextChannel> {
-    return new BrowserContextDispatcher(this._scope.createChild(), await this._object.newContext(params.options) as BrowserContextBase);
+    return new BrowserContextDispatcher(this._scope, await this._object.newContext(params.options) as BrowserContextBase);
   }
 
   async close(): Promise<void> {

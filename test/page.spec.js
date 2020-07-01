@@ -1305,9 +1305,3 @@ describe('Page api coverage', function() {
     expect(await frame.evaluate(() => document.querySelector('textarea').value)).toBe('a');
   });
 });
-
-describe.skip(!CHANNEL)('Page channel', function() {
-  it('page should be client stub', async({page, server}) => {
-    expect(!!page._channel).toBeTruthy();
-  });
-});

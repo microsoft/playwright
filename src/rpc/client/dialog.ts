@@ -15,7 +15,7 @@
  */
 
 import { DialogChannel, DialogInitializer } from '../channels';
-import { Connection } from './connection';
+import { ConnectionScope } from './connection';
 import { ChannelOwner } from './channelOwner';
 
 export class Dialog extends ChannelOwner<DialogChannel, DialogInitializer> {
@@ -23,8 +23,8 @@ export class Dialog extends ChannelOwner<DialogChannel, DialogInitializer> {
     return request._object;
   }
 
-  constructor(connection: Connection, channel: DialogChannel, initializer: DialogInitializer) {
-    super(connection, channel, initializer);
+  constructor(scope: ConnectionScope, guid: string, initializer: DialogInitializer) {
+    super(scope, guid, initializer);
   }
 
   type(): string {

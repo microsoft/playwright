@@ -19,7 +19,7 @@ import { BrowserChannel, BrowserInitializer } from '../channels';
 import { BrowserContext } from './browserContext';
 import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
-import { Connection } from './connection';
+import { ConnectionScope } from './connection';
 import { Events } from '../../events';
 
 export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
@@ -36,12 +36,13 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
     return browser ? Browser.from(browser) : null;
   }
 
-  constructor(connection: Connection, channel: BrowserChannel, initializer: BrowserInitializer) {
-    super(connection, channel, initializer);
-    channel.on('close', () => {
+  constructor(scope: ConnectionScope, guid: string, initializer: BrowserInitializer) {
+    super(scope, guid, initializer, true);
+    this._channel.on('close', () => {
       this._isConnected = false;
       this.emit(Events.Browser.Disconnected);
       this._isClosedOrClosing = true;
+      this._scope.dispose();
     });
   }
 

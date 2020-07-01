@@ -29,17 +29,17 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
     super(scope, browserType, 'browserType', {
       executablePath: browserType.executablePath(),
       name: browserType.name()
-    }, browserType.name());
+    }, false, browserType.name());
   }
 
   async launch(params: { options?: types.LaunchOptions }): Promise<BrowserChannel> {
     const browser = await this._object.launch(params.options || undefined);
-    return new BrowserDispatcher(this._scope.createChild(), browser as BrowserBase);
+    return new BrowserDispatcher(this._scope, browser as BrowserBase);
   }
 
   async launchPersistentContext(params: { userDataDir: string, options?: types.LaunchOptions & types.BrowserContextOptions }): Promise<BrowserContextChannel> {
     const browserContext = await this._object.launchPersistentContext(params.userDataDir, params.options);
-    return new BrowserContextDispatcher(this._scope.createChild(), browserContext as BrowserContextBase);
+    return new BrowserContextDispatcher(this._scope, browserContext as BrowserContextBase);
   }
 
   async launchServer(params: { options?: types.LaunchServerOptions }): Promise<BrowserServerChannel> {
@@ -48,6 +48,6 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
 
   async connect(params: { options: types.ConnectOptions }): Promise<BrowserChannel> {
     const browser = await this._object.connect(params.options);
-    return new BrowserDispatcher(this._scope.createChild(), browser as BrowserBase);
+    return new BrowserDispatcher(this._scope, browser as BrowserBase);
   }
 }

@@ -114,7 +114,7 @@ function collect(browserNames) {
           await new Promise(f => setImmediate(f));
           return result;
         };
-        new BrowserTypeDispatcher(dispatcherConnection.createScope(), browserType);
+        new BrowserTypeDispatcher(dispatcherConnection.rootScope(), browserType);
         overridenBrowserType = await connection.waitForObjectWithKnownName(browserType.name());
       }
       state.browserType = overridenBrowserType;
