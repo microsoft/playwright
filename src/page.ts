@@ -480,6 +480,7 @@ export class Page extends EventEmitter {
       return;
     const runBeforeUnload = !!options && !!options.runBeforeUnload;
     if (this._closedState !== 'closing') {
+      this._closedState = 'closing';
       assert(!this._disconnected, 'Protocol error: Connection closed. Most likely the page has been closed.');
       await this._delegate.closePage(runBeforeUnload);
     }
