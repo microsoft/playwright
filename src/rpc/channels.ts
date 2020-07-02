@@ -126,7 +126,7 @@ export interface PageChannel extends Channel {
   screenshot(params: { options?: types.ScreenshotOptions }): Promise<Binary>;
   setExtraHTTPHeaders(params: { headers: types.Headers }): Promise<void>;
   setNetworkInterceptionEnabled(params: { enabled: boolean }): Promise<void>;
-  setViewportSize(params: { viewportSize: types.Size }): Promise<void>;
+  setViewportSize(params: { viewportSize: types.Size, independentWindow?: boolean }): Promise<void>;
 
   // Input
   keyboardDown(params: { key: string }): Promise<void>;

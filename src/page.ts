@@ -49,7 +49,7 @@ export interface PageDelegate {
   navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult>;
 
   updateExtraHTTPHeaders(): Promise<void>;
-  setViewportSize(viewportSize: types.Size): Promise<void>;
+  setViewportSize(viewportSize: types.Size, independentWindow?: boolean): Promise<void>;
   updateEmulateMedia(): Promise<void>;
   updateRequestInterception(): Promise<void>;
   setFileChooserIntercepted(enabled: boolean): Promise<void>;
@@ -389,9 +389,9 @@ export class Page extends EventEmitter {
     await this._delegate.updateEmulateMedia();
   }
 
-  async setViewportSize(viewportSize: types.Size) {
+  async setViewportSize(viewportSize: types.Size, independentWindow = false) {
     this._state.viewportSize = { ...viewportSize };
-    await this._delegate.setViewportSize(this._state.viewportSize);
+    await this._delegate.setViewportSize(this._state.viewportSize, independentWindow);
   }
 
   viewportSize(): types.Size | null {

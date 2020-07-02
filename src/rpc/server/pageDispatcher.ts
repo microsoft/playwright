@@ -116,8 +116,8 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     await this._page.emulateMedia(params.options);
   }
 
-  async setViewportSize(params: { viewportSize: types.Size }): Promise<void> {
-    await this._page.setViewportSize(params.viewportSize);
+  async setViewportSize(params: { viewportSize: types.Size, independentWindow?: boolean }): Promise<void> {
+    await this._page.setViewportSize(params.viewportSize, params.independentWindow);
   }
 
   async addInitScript(params: { source: string }): Promise<void> {

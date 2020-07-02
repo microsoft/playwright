@@ -138,9 +138,9 @@ export class CRPage implements PageDelegate {
     await this._forAllFrameSessions(frame => frame._updateHttpCredentials());
   }
 
-  async setViewportSize(viewportSize: types.Size): Promise<void> {
+  async setViewportSize(viewportSize: types.Size, independentWindow = false): Promise<void> {
     assert(this._page._state.viewportSize === viewportSize);
-    await this._mainFrameSession._updateViewport();
+    await this._mainFrameSession._updateViewport(independentWindow);
   }
 
   async updateEmulateMedia(): Promise<void> {
@@ -727,7 +727,7 @@ class FrameSession {
     await this._networkManager.authenticate(credentials);
   }
 
-  async _updateViewport(): Promise<void> {
+  async _updateViewport(independentWindow = false): Promise<void> {
     assert(this._isMainFrame());
     const options = this._crPage._browserContext._options;
     const viewportSize = this._page._state.viewportSize;
@@ -745,7 +745,7 @@ class FrameSession {
         screenOrientation: isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' },
       }),
     ];
-    if (this._windowId) {
+    if (this._windowId && independentWindow === false) {
       // TODO: popup windows have their own insets.
       let insets = { width: 24, height: 88 };
       if (process.platform === 'win32')

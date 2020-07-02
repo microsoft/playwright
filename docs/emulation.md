@@ -68,7 +68,7 @@ await page.emulateMedia({ colorScheme: 'dark' });
 
 - [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
 - [`page.emulateMedia([options])`](./api.md#pageemulatemediaoptions)
-- [`page.setViewportSize(viewportSize)`](./api.md#pagesetviewportsizeviewportsize)
+- [`page.setViewportSize(viewportSize[, independentWindow])`](./api.md#pageviewportsize)
 
 <br/>
 

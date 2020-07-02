@@ -742,7 +742,7 @@ page.removeListener('request', logRequest);
 - [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout)
 - [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
 - [page.setInputFiles(selector, files[, options])](#pagesetinputfilesselector-files-options)
-- [page.setViewportSize(viewportSize)](#pagesetviewportsizeviewportsize)
+- [page.setViewportSize(viewportSize[, independentWindow])](#pagesetviewportsizeviewportsize-independentwindow)
 - [page.textContent(selector[, options])](#pagetextcontentselector-options)
 - [page.title()](#pagetitle)
 - [page.type(selector, text[, options])](#pagetypeselector-text-options)
@@ -1723,10 +1723,11 @@ This method expects `selector` to point to an [input element](https://developer.
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). For empty array, clears the selected files.
 
 
-#### page.setViewportSize(viewportSize)
+#### page.setViewportSize(viewportSize[, independentWindow])
 - `viewportSize` <[Object]>
   - `width` <[number]> page width in pixels. **required**
   - `height` <[number]> page height in pixels. **required**
+- `independentWindow` <[boolean]> Optional flag to keep window size separated from viewport size
 - returns: <[Promise]>
 
 In the case of multiple pages in a single browser, each page can have its own viewport size. However, [browser.newContext([options])](#browsernewcontextoptions) allows to set viewport size (and more) for all pages in the context at once.
@@ -1741,6 +1742,11 @@ await page.setViewportSize({
 });
 await page.goto('https://example.com');
 ```
+
+> Notice about the window size behvior when running `headless: false`:
+> - Chromium - window frame fit the new viewport size (can be independent when using the `independentWindow` flag)
+> - Firefox - window frame is independent of the viewport size
+> - WebKit - window frame always fit the viewport size
 
 #### page.textContent(selector[, options])
 - `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be picked. See [working with selectors](#working-with-selectors) for more details.

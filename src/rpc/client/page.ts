@@ -353,9 +353,9 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     await this._channel.emulateMedia({ options });
   }
 
-  async setViewportSize(viewportSize: types.Size) {
+  async setViewportSize(viewportSize: types.Size, independentWindow?: boolean) {
     this._viewportSize = viewportSize;
-    await this._channel.setViewportSize({ viewportSize });
+    await this._channel.setViewportSize({ viewportSize, independentWindow });
   }
 
   viewportSize(): types.Size | null {
