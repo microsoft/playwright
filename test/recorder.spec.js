@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const {USES_HOOKS} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = require('./utils').testOptions(browserType);
 
 class WritableBuffer {
   constructor() {
@@ -56,16 +56,20 @@ describe.skip(USES_HOOKS)('Recorder', function() {
     state.context = await state.browser.newContext();
     state.output = new WritableBuffer();
     const debugController = state.context._initDebugModeForTest({ recorderOutput: state.output });
+    state.page = await state.context.newPage();
+    state.setContent = async (content) => {
+      await state.page.setContent(content);
+      await debugController.ensureInstalledInFrameForTest(state.page.mainFrame());
+    };
   });
- 
+
   afterEach(async state => {
     await state.context.close();
   });
- 
-  it('should click', async function({context, output, server}) {
-    const page = await context.newPage();
+
+  it('should click', async function({page, output, setContent, server}) {
     await page.goto(server.EMPTY_PAGE);
-    await page.setContent(`<button onclick="console.log('click')">Submit</button>`);
+    await setContent(`<button onclick="console.log('click')">Submit</button>`);
     const [message] = await Promise.all([
       page.waitForEvent('console'),
       output.waitFor('click'),
@@ -77,10 +81,30 @@ describe.skip(USES_HOOKS)('Recorder', function() {
     expect(message.text()).toBe('click');
   });
 
-  it('should fill', async function({context, output, server}) {
-    const page = await context.newPage();
+  it('should click after document.open', async function({page, output, setContent, server}) {
     await page.goto(server.EMPTY_PAGE);
-    await page.setContent(`<input id="input" name="name" oninput="console.log(input.value)"></input>`);
+    await setContent(``);
+    await page.evaluate(() => {
+      document.open();
+      document.write(`<button onclick="console.log('click')">Submit</button>`);
+      document.close();
+      // Give it time to refresh. See Recorder for details.
+      return new Promise(f => setTimeout(f, 1000));
+    });
+    const [message] = await Promise.all([
+      page.waitForEvent('console'),
+      output.waitFor('click'),
+      page.dispatchEvent('button', 'click', { detail: 1 })
+    ]);
+    expect(output.text()).toContain(`
+  // Click text="Submit"
+  await page.click('text="Submit"');`);
+    expect(message.text()).toBe('click');
+  });
+
+  it('should fill', async function({page, output, setContent, server}) {
+    await page.goto(server.EMPTY_PAGE);
+    await setContent(`<input id="input" name="name" oninput="console.log(input.value)"></input>`);
     const [message] = await Promise.all([
       page.waitForEvent('console'),
       output.waitFor('fill'),
@@ -92,10 +116,9 @@ describe.skip(USES_HOOKS)('Recorder', function() {
     expect(message.text()).toBe('John');
   });
 
-  it('should press', async function({context, output, server}) {
-    const page = await context.newPage();
+  it('should press', async function({page, output, setContent, server}) {
     await page.goto(server.EMPTY_PAGE);
-    await page.setContent(`<input name="name" onkeypress="console.log('press')"></input>`);
+    await setContent(`<input name="name" onkeypress="console.log('press')"></input>`);
     const [message] = await Promise.all([
       page.waitForEvent('console'),
       output.waitFor('press'),
@@ -107,10 +130,9 @@ describe.skip(USES_HOOKS)('Recorder', function() {
     expect(message.text()).toBe('press');
   });
 
-  it('should check', async function({context, output, server}) {
-    const page = await context.newPage();
+  it('should check', async function({page, output, setContent, server}) {
     await page.goto(server.EMPTY_PAGE);
-    await page.setContent(`<input id="checkbox" type="checkbox" name="accept" onchange="console.log(checkbox.checked)"></input>`);
+    await setContent(`<input id="checkbox" type="checkbox" name="accept" onchange="console.log(checkbox.checked)"></input>`);
     const [message] = await Promise.all([
       page.waitForEvent('console'),
       output.waitFor('check'),
@@ -123,10 +145,9 @@ describe.skip(USES_HOOKS)('Recorder', function() {
     expect(message.text()).toBe("true");
   });
 
-  it('should uncheck', async function({context, output, server}) {
-    const page = await context.newPage();
+  it('should uncheck', async function({page, output, setContent, server}) {
     await page.goto(server.EMPTY_PAGE);
-    await page.setContent(`<input id="checkbox" type="checkbox" checked name="accept" onchange="console.log(checkbox.checked)"></input>`);
+    await setContent(`<input id="checkbox" type="checkbox" checked name="accept" onchange="console.log(checkbox.checked)"></input>`);
     const [message] = await Promise.all([
       page.waitForEvent('console'),
       output.waitFor('uncheck'),
@@ -138,10 +159,9 @@ describe.skip(USES_HOOKS)('Recorder', function() {
     expect(message.text()).toBe("false");
   });
 
-  it('should select', async function({context, output, server}) {
-    const page = await context.newPage();
+  it('should select', async function({page, output, setContent, server}) {
     await page.goto(server.EMPTY_PAGE);
-    await page.setContent('<select id="age" onchange="console.log(age.selectedOptions[0].value)"><option value="1"><option value="2"></select>');
+    await setContent('<select id="age" onchange="console.log(age.selectedOptions[0].value)"><option value="1"><option value="2"></select>');
     const [message] = await Promise.all([
       page.waitForEvent('console'),
       output.waitFor('select'),
@@ -153,10 +173,9 @@ describe.skip(USES_HOOKS)('Recorder', function() {
     expect(message.text()).toBe("2");
   });
 
-  it('should await popup', async function({context, output, server}) {
-    const page = await context.newPage();
+  it('should await popup', async function({context, page, output, setContent, server}) {
     await page.goto(server.EMPTY_PAGE);
-    await page.setContent('<a target=_blank rel=noopener href="/popup/popup.html">link</a>');
+    await setContent('<a target=_blank rel=noopener href="/popup/popup.html">link</a>');
     const [popup] = await Promise.all([
       context.waitForEvent('page'),
       output.waitFor('waitForEvent'),
@@ -171,10 +190,9 @@ describe.skip(USES_HOOKS)('Recorder', function() {
     expect(popup.url()).toBe(`${server.PREFIX}/popup/popup.html`);
   });
 
-  it('should await navigation', async function({context, output, server}) {
-    const page = await context.newPage();
+  it('should await navigation', async function({page, output, setContent, server}) {
     await page.goto(server.EMPTY_PAGE);
-    await page.setContent(`<a onclick="setTimeout(() => window.location.href='${server.PREFIX}/popup/popup.html', 1000)">link</a>`);
+    await setContent(`<a onclick="setTimeout(() => window.location.href='${server.PREFIX}/popup/popup.html', 1000)">link</a>`);
     await Promise.all([
       page.waitForNavigation(),
       output.waitFor('waitForNavigation'),

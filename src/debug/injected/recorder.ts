@@ -28,13 +28,27 @@ declare global {
 export class Recorder {
   private _injectedScript: InjectedScript;
   private _performingAction = false;
+  readonly refreshListeners: () => void;
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
 
-    document.addEventListener('click', event => this._onClick(event), true);
-    document.addEventListener('input', event => this._onInput(event), true);
-    document.addEventListener('keydown', event => this._onKeyDown(event), true);
+    const onClick = this._onClick.bind(this);
+    const onInput = this._onInput.bind(this);
+    const onKeyDown = this._onKeyDown.bind(this);
+    this.refreshListeners = () => {
+      document.removeEventListener('click', onClick, true);
+      document.removeEventListener('input', onInput, true);
+      document.removeEventListener('keydown', onKeyDown, true);
+      document.addEventListener('click', onClick, true);
+      document.addEventListener('input', onInput, true);
+      document.addEventListener('keydown', onKeyDown, true);
+    };
+    this.refreshListeners();
+    // Document listeners are cleared upon document.open,
+    // so we refresh them periodically in a best-effort manner.
+    // Note: keep in sync with the same constant in the test.
+    setInterval(this.refreshListeners, 1000);
   }
 
   private async _onClick(event: MouseEvent) {

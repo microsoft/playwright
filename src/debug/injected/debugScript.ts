@@ -22,9 +22,6 @@ export default class DebugScript {
   consoleAPI: ConsoleAPI | undefined;
   recorder: Recorder | undefined;
 
-  constructor() {
-  }
-
   initialize(injectedScript: InjectedScript, options: { console?: boolean, record?: boolean }) {
     if (options.console)
       this.consoleAPI = new ConsoleAPI(injectedScript);
