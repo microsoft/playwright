@@ -79,7 +79,7 @@ describe('Headful', function() {
     await page.click('button');
     await browser.close();
   });
-  it.fail(WEBKIT || CHROMIUM)('should close browser after context menu was triggered', async({browserType, defaultBrowserOptions, server}) => {
+  it.fail(CHROMIUM || (WEBKIT && WIN))('should close browser after context menu was triggered', async({browserType, defaultBrowserOptions, server}) => {
     const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
     const page = await browser.newPage();
     await page.goto(server.PREFIX + '/grid.html');
