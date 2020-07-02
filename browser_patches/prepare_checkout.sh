@@ -38,14 +38,14 @@ if [[ ("$1" == "firefox") || ("$1" == "firefox/") || ("$1" == "ff") ]]; then
   CHECKOUT_PATH="$PWD/firefox/checkout"
   PATCHES_PATH="$PWD/firefox/patches"
   FIREFOX_EXTRA_FOLDER_PATH="$PWD/firefox/juggler"
-  BUILD_NUMBER=$(cat "$PWD/firefox/BUILD_NUMBER")
+  BUILD_NUMBER=$(head -1 "$PWD/firefox/BUILD_NUMBER")
   source "./firefox/UPSTREAM_CONFIG.sh"
 elif [[ ("$1" == "webkit") || ("$1" == "webkit/") || ("$1" == "wk") ]]; then
   FRIENDLY_CHECKOUT_PATH="//browser_patches/webkit/checkout";
   CHECKOUT_PATH="$PWD/webkit/checkout"
   PATCHES_PATH="$PWD/webkit/patches"
   WEBKIT_EXTRA_FOLDER_PATH="$PWD/webkit/embedder/Playwright"
-  BUILD_NUMBER=$(cat "$PWD/webkit/BUILD_NUMBER")
+  BUILD_NUMBER=$(head -1 "$PWD/webkit/BUILD_NUMBER")
   source "./webkit/UPSTREAM_CONFIG.sh"
 else
   echo ERROR: unknown browser - "$1"

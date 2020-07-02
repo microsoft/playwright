@@ -21,7 +21,7 @@ cd "$(dirname "$0")"
 
 HOST="https://playwright2.blob.core.windows.net/builds"
 
-FFOX_REVISION=$(cat ../firefox/BUILD_NUMBER)
+FFOX_REVISION=$(head -1 ../firefox/BUILD_NUMBER)
 FFOX_ARCHIVES=(
   "$HOST/firefox/%s/firefox-mac.zip"
   "$HOST/firefox/%s/firefox-linux.zip"
@@ -35,7 +35,7 @@ FFOX_ALIASES=(
   "FF-WIN64"
 )
 
-WK_REVISION=$(cat ../webkit/BUILD_NUMBER)
+WK_REVISION=$(head -1 ../webkit/BUILD_NUMBER)
 WK_ARCHIVES=(
   "$HOST/webkit/%s/minibrowser-gtk.zip"
   "$HOST/webkit/%s/minibrowser-wpe.zip"
