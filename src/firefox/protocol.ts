@@ -461,23 +461,18 @@ export module Protocol {
       frameId: string;
     };
     export type goBackReturnValue = {
-      navigationId: string|null;
-      navigationURL: string|null;
+      success: boolean;
     };
     export type goForwardParameters = {
       frameId: string;
     };
     export type goForwardReturnValue = {
-      navigationId: string|null;
-      navigationURL: string|null;
+      success: boolean;
     };
     export type reloadParameters = {
       frameId: string;
     };
-    export type reloadReturnValue = {
-      navigationId: string;
-      navigationURL: string;
-    };
+    export type reloadReturnValue = void;
     export type getBoundingBoxParameters = {
       frameId: string;
       objectId: string;

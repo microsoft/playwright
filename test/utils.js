@@ -190,6 +190,7 @@ const utils = module.exports = {
   testOptions(browserType) {
     const GOLDEN_DIR = path.join(__dirname, 'golden-' + browserType.name());
     const OUTPUT_DIR = path.join(__dirname, 'output-' + browserType.name());
+    const ASSETS_DIR = path.join(__dirname, 'assets');
     return {
       FFOX: browserType.name() === 'firefox',
       WEBKIT: browserType.name() === 'webkit',
@@ -200,6 +201,7 @@ const utils = module.exports = {
       browserType,
       GOLDEN_DIR,
       OUTPUT_DIR,
+      ASSETS_DIR,
       USES_HOOKS: !!process.env.PWCHANNEL,
       CHANNEL: !!process.env.PWCHANNEL,
     };
