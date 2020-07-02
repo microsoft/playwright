@@ -112,14 +112,13 @@ nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const 
   mozilla::widget::CompositorWidgetInitData initData;
   widget->GetCompositorWidgetInitData(&initData);
   const mozilla::widget::GtkCompositorWidgetInitData& gtkInitData = initData.get_GtkCompositorWidgetInitData();
-# ifdef MOZ_X11
   nsCString windowId;
+# ifdef MOZ_X11
   windowId.AppendPrintf("%lu", gtkInitData.XWindow());
 # else
   // TODO: support in wayland
   return NS_ERROR_NOT_IMPLEMENTED;
 # endif
-#endif
   *sessionId = ++mLastSessionId;
   nsCString error;
   RefPtr<ScreencastEncoder> encoder = ScreencastEncoder::create(error, PromiseFlatCString(aFileName), 1280, 960, Nothing());
@@ -134,6 +133,10 @@ nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const 
 
   mIdToSession.emplace(*sessionId, std::move(session));
   return NS_OK;
+#else
+  // TODO: support Windows and Mac.
+  return NS_ERROR_NOT_IMPLEMENTED;
+#endif
 }
 
 nsresult nsScreencastService::StopVideoRecording(int32_t sessionId) {
