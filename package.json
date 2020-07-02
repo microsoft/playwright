@@ -35,9 +35,9 @@
     "prepare": "node install-from-github.js",
     "build": "node utils/runWebpack.js --mode='development' && tsc -p . && npm run generate-types",
     "watch": "node utils/runWebpack.js --mode='development' --watch --silent | tsc -w -p .",
-    "test-types": "npm run generate-types && npx -p typescript@3.7.5 tsc -p utils/generate_types/test/tsconfig.json && typecheck-tests",
+    "test-types": "npm run generate-types && npx -p typescript@3.7.5 tsc -p utils/generate_types/test/tsconfig.json && npm run typecheck-tests",
     "generate-types": "node utils/generate_types/",
-    "typecheck-tests": "tsc -p ./tests/"
+    "typecheck-tests": "tsc -p ./test/"
   },
   "author": {
     "name": "Microsoft Corporation"
