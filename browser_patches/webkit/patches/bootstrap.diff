@@ -13187,7 +13187,7 @@ index 53203c0bab7e8fc2f1b75d340c055c938590050e..207c96011155c51a398c3cb46b7beb32
      void navigationGestureWillEnd(bool willNavigate, WebBackForwardListItem&) override;
      void navigationGestureDidEnd(bool willNavigate, WebBackForwardListItem&) override;
 diff --git a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
-index 7b7e66c79edaf84a8a14756524e16c26e57896c6..868c8bc1e3b74e3318c56e568a18d768bc8ccd27 100644
+index 7b7e66c79edaf84a8a14756524e16c26e57896c6..2d6224b2bad15eaf808101dec24026b3955cad88 100644
 --- a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
 +++ b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
 @@ -78,6 +78,7 @@
@@ -13252,7 +13252,7 @@ index 7b7e66c79edaf84a8a14756524e16c26e57896c6..868c8bc1e3b74e3318c56e568a18d768
  }
  
  void PageClientImpl::toolTipChanged(const String& oldToolTip, const String& newToolTip)
-@@ -445,6 +463,8 @@ IntRect PageClientImpl::rootViewToAccessibilityScreen(const IntRect& rect)
+@@ -445,11 +463,15 @@ IntRect PageClientImpl::rootViewToAccessibilityScreen(const IntRect& rect)
  
  void PageClientImpl::doneWithKeyEvent(const NativeWebKeyboardEvent& event, bool eventWasHandled)
  {
@@ -13261,7 +13261,14 @@ index 7b7e66c79edaf84a8a14756524e16c26e57896c6..868c8bc1e3b74e3318c56e568a18d768
      m_impl->doneWithKeyEvent(event.nativeEvent(), eventWasHandled);
  }
  
-@@ -562,6 +582,12 @@ CALayer *PageClientImpl::acceleratedCompositingRootLayer() const
+ RefPtr<WebPopupMenuProxy> PageClientImpl::createPopupMenuProxy(WebPageProxy& page)
+ {
++    if (_headless)
++        return nullptr;
+     return WebPopupMenuProxyMac::create(m_view, page);
+ }
+ 
+@@ -562,6 +584,12 @@ CALayer *PageClientImpl::acceleratedCompositingRootLayer() const
      return m_impl->acceleratedCompositingRootLayer();
  }
  
@@ -13274,7 +13281,7 @@ index 7b7e66c79edaf84a8a14756524e16c26e57896c6..868c8bc1e3b74e3318c56e568a18d768
  RefPtr<ViewSnapshot> PageClientImpl::takeViewSnapshot(Optional<WebCore::IntRect>&&)
  {
      return m_impl->takeViewSnapshot();
-@@ -740,6 +766,13 @@ void PageClientImpl::beganExitFullScreen(const IntRect& initialFrame, const IntR
+@@ -740,6 +768,13 @@ void PageClientImpl::beganExitFullScreen(const IntRect& initialFrame, const IntR
  
  #endif // ENABLE(FULLSCREEN_API)
  
@@ -13288,7 +13295,7 @@ index 7b7e66c79edaf84a8a14756524e16c26e57896c6..868c8bc1e3b74e3318c56e568a18d768
  void PageClientImpl::navigationGestureDidBegin()
  {
      m_impl->dismissContentRelativeChildWindowsWithAnimation(true);
-@@ -906,6 +939,9 @@ void PageClientImpl::didRestoreScrollPosition()
+@@ -906,6 +941,9 @@ void PageClientImpl::didRestoreScrollPosition()
  
  bool PageClientImpl::windowIsFrontWindowUnderMouse(const NativeWebMouseEvent& event)
  {
