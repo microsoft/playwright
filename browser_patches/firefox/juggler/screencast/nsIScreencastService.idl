@@ -1,0 +1,17 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIDocShell;
+
+/**
+ * Service for recording window video.
+ */
+[scriptable, uuid(d8c4d9e0-9462-445e-9e43-68d3872ad1de)]
+interface nsIScreencastService : nsISupports
+{
+  long startVideoRecording(in nsIDocShell docShell, in ACString fileName);
+  void stopVideoRecording(in long sessionId);
+};

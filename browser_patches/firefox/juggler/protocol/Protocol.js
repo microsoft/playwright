@@ -825,6 +825,16 @@ const Page = {
         message: t.String,
       },
     },
+    'startVideoRecording': {
+      params: {
+        file: t.String,
+        width: t.Number,
+        height: t.Number,
+        scale: t.Optional(t.Number),
+      },
+    },
+    'stopVideoRecording': {
+    },
   },
 };
 

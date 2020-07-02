@@ -90,6 +90,7 @@ class PageHandler {
     this._dialogs = new Map();
 
     this._enabled = false;
+    this._videoSessionId = -1;
   }
 
   _onWorkerCreated({workerId, frameId, url}) {
@@ -283,6 +284,21 @@ class PageHandler {
     if (!worker)
       throw new Error('ERROR: cannot find worker with id ' + workerId);
     return await worker.sendMessage(JSON.parse(message));
+  }
+
+  startVideoRecording({file, width, height, scale}) {
+    const screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
+    const docShell = this._pageTarget._gBrowser.ownerGlobal.docShell;
+    this._videoSessionId = screencast.startVideoRecording(docShell, file);
+  }
+
+  stopVideoRecording() {
+    if (this._videoSessionId === -1)
+      throw new Error('No video recording in progress');
+    const videoSessionId = this._videoSessionId;
+    this._videoSessionId = -1;
+    const screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
+    screencast.stopVideoRecording(videoSessionId);
   }
 }
 
