@@ -257,38 +257,55 @@ class TargetRegistry {
   }
 
   async newPage({browserContextId}) {
-    let window;
-    let created = false;
-    const windowsIt = Services.wm.getEnumerator('navigator:browser');
-    if (windowsIt.hasMoreElements()) {
-      window = windowsIt.getNext();
-    } else {
-      const features = "chrome,dialog=no,all";
-      const args = Cc["@mozilla.org/supports-string;1"].createInstance(Ci.nsISupportsString);
-      args.data = 'about:blank';
-      window = Services.ww.openWindow(null, AppConstants.BROWSER_CHROME_URL, '_blank', features, args);
-      created = true;
-    }
-    await waitForWindowReady(window);
     const browserContext = this.browserContextForId(browserContextId);
-    const tab = window.gBrowser.addTab('about:blank', {
-      userContextId: browserContext.userContextId,
-      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
-    });
-    const target = await new Promise(fulfill => {
+    const features = "chrome,dialog=no,all";
+    // See _callWithURIToLoad in browser.js for the structure of window.arguments
+    // window.arguments[1]: unused (bug 871161)
+    //                 [2]: referrerInfo (nsIReferrerInfo)
+    //                 [3]: postData (nsIInputStream)
+    //                 [4]: allowThirdPartyFixup (bool)
+    //                 [5]: userContextId (int)
+    //                 [6]: originPrincipal (nsIPrincipal)
+    //                 [7]: originStoragePrincipal (nsIPrincipal)
+    //                 [8]: triggeringPrincipal (nsIPrincipal)
+    //                 [9]: allowInheritPrincipal (bool)
+    //                 [10]: csp (nsIContentSecurityPolicy)
+    //                 [11]: nsOpenWindowInfo
+    const args = Cc["@mozilla.org/array;1"].createInstance(Ci.nsIMutableArray);
+    const urlSupports = Cc["@mozilla.org/supports-string;1"].createInstance(
+      Ci.nsISupportsString
+    );
+    urlSupports.data = 'about:blank';
+    args.appendElement(urlSupports); // 0
+    args.appendElement(undefined); // 1
+    args.appendElement(undefined); // 2
+    args.appendElement(undefined); // 3
+    args.appendElement(undefined); // 4
+    const userContextIdSupports = Cc[
+      "@mozilla.org/supports-PRUint32;1"
+    ].createInstance(Ci.nsISupportsPRUint32);
+    userContextIdSupports.data = browserContext.userContextId;
+    args.appendElement(userContextIdSupports); // 5
+    args.appendElement(undefined); // 6
+    args.appendElement(undefined); // 7
+    args.appendElement(Services.scriptSecurityManager.getSystemPrincipal()); // 8
+
+    const window = Services.ww.openWindow(null, AppConstants.BROWSER_CHROME_URL, '_blank', features, args);
+    await waitForWindowReady(window);
+    if (window.gBrowser.browsers.length !== 1)
+      throw new Error(`Unexpcted number of tabs in the new window: ${window.gBrowser.browsers.length}`);
+    const browser = window.gBrowser.browsers[0];
+    const target = this._browserToTarget.get(browser) || await new Promise(fulfill => {
       const listener = helper.on(this, TargetRegistry.Events.TargetCreated, ({target}) => {
-        if (target._tab === tab) {
+        if (target._linkedBrowser === browser) {
           helper.removeListeners([listener]);
           fulfill(target);
         }
       });
     });
-    if (created) {
-      window.gBrowser.removeTab(window.gBrowser.getTabForBrowser(window.gBrowser.getBrowserAtIndex(0)), {
-        skipPermitUnload: true,
-      });
-    }
-    window.gBrowser.selectedTab = tab;
+    if (browserContext && browserContext.defaultViewportSize)
+      setViewportSizeForBrowser(browserContext.defaultViewportSize, browser);
+    browser.focus();
     if (browserContext.settings.timezoneId) {
       if (await target.hasFailedToOverrideTimezone())
         throw new Error('Failed to override timezone');
