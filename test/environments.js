@@ -194,18 +194,15 @@ class BrowserTypeEnvironment {
 }
 
 class BrowserEnvironment {
-  constructor(browserType, launchOptions, dumpLogOnFailure) {
-    this._browserType = browserType;
+  constructor(launchOptions, dumpLogOnFailure) {
     this._launchOptions = launchOptions;
     this._dumpLogOnFailure = dumpLogOnFailure;
     this._loggerSymbol = Symbol('BrowserEnvironment.logger');
   }
 
-  name() { return this._browserType.name(); }
-
   async beforeAll(state) {
     state[this._loggerSymbol] = utils.createTestLogger(this._dumpLogOnFailure);
-    state.browser = await this._browserType.launch({
+    state.browser = await state.browserType.launch({
       ...this._launchOptions,
       logger: state[this._loggerSymbol],
     });
