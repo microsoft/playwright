@@ -1619,7 +1619,7 @@ index 87701f8d2cfee8bd84acd28c62b3be4989c9474c..ae1aa85c019cb21d4f7e79c35e8afe72
 +                             [optional] in unsigned long aFlags);
  };
 diff --git a/uriloader/exthandler/nsExternalHelperAppService.cpp b/uriloader/exthandler/nsExternalHelperAppService.cpp
-index 0808085752eab5ad43bc54d2fac8771fc6d2a1d1..cea94060a58b6c58848d6c6beb54d1108eba168e 100644
+index 0808085752eab5ad43bc54d2fac8771fc6d2a1d1..cb0e45b34e5242e0375abd4e707b9c3da55cd7f3 100644
 --- a/uriloader/exthandler/nsExternalHelperAppService.cpp
 +++ b/uriloader/exthandler/nsExternalHelperAppService.cpp
 @@ -99,6 +99,7 @@
@@ -1706,7 +1706,7 @@ index 0808085752eab5ad43bc54d2fac8771fc6d2a1d1..cea94060a58b6c58848d6c6beb54d110
    if (alwaysAsk) {
      // But we *don't* ask if this mimeInfo didn't come from
      // our user configuration datastore and the user has said
-@@ -2043,6 +2089,15 @@ nsExternalAppHandler::OnSaveComplete(nsIBackgroundFileSaver* aSaver,
+@@ -2043,6 +2089,16 @@ nsExternalAppHandler::OnSaveComplete(nsIBackgroundFileSaver* aSaver,
      NotifyTransfer(aStatus);
    }
  
@@ -1716,13 +1716,14 @@ index 0808085752eab5ad43bc54d2fac8771fc6d2a1d1..cea94060a58b6c58848d6c6beb54d110
 +      nsCString noError;
 +      nsresult rv = interceptor->OnDownloadComplete(this, noError);
 +      MOZ_ASSERT(NS_SUCCEEDED(rv), "Failed to call nsIDowloadInterceptor.OnDownloadComplete");
++      Unused << rv;
 +    }
 +  }
 +
    return NS_OK;
  }
  
-@@ -2422,6 +2477,14 @@ NS_IMETHODIMP nsExternalAppHandler::Cancel(nsresult aReason) {
+@@ -2422,6 +2478,15 @@ NS_IMETHODIMP nsExternalAppHandler::Cancel(nsresult aReason) {
      }
    }
  
@@ -1732,6 +1733,7 @@ index 0808085752eab5ad43bc54d2fac8771fc6d2a1d1..cea94060a58b6c58848d6c6beb54d110
 +    GetErrorName(aReason, errorName);
 +    nsresult rv = interceptor->OnDownloadComplete(this, errorName);
 +    MOZ_ASSERT(NS_SUCCEEDED(rv), "Failed notify nsIDowloadInterceptor about cancel");
++    Unused << rv;
 +  }
 +
    // Break our reference cycle with the helper app dialog (set up in
