@@ -37,7 +37,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   _ownerPage: Page | undefined;
 
   static from(context: BrowserContextChannel): BrowserContext {
-    return context._object;
+    return (context as any)._object;
   }
 
   static fromNullable(context: BrowserContextChannel | null): BrowserContext | null {

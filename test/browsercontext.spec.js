@@ -471,6 +471,20 @@ describe('BrowserContext.route', () => {
     expect(await response.text()).toBe('page');
     await context.close();
   });
+  it('should fall back to context.route', async({browser, server}) => {
+    const context = await browser.newContext();
+    await context.route('**/empty.html', route => {
+      route.fulfill({ status: 200, body: 'context' });
+    });
+    const page = await context.newPage();
+    await page.route('**/non-empty.html', route => {
+      route.fulfill({ status: 200, body: 'page' });
+    });
+    const response = await page.goto(server.EMPTY_PAGE);
+    expect(response.ok()).toBe(true);
+    expect(await response.text()).toBe('context');
+    await context.close();
+  });
 });
 
 describe('BrowserContext.setHTTPCredentials', function() {

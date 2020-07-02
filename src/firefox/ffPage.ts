@@ -188,6 +188,7 @@ export class FFPage implements PageDelegate {
 
   _onDialogOpened(params: Protocol.Page.dialogOpenedPayload) {
     this._page.emit(Events.Page.Dialog, new dialog.Dialog(
+        this._page._logger,
         params.type,
         params.message,
         async (accept: boolean, promptText?: string) => {
@@ -315,13 +316,13 @@ export class FFPage implements PageDelegate {
   }
 
   async goBack(): Promise<boolean> {
-    const { navigationId } = await this._session.send('Page.goBack', { frameId: this._page.mainFrame()._id });
-    return navigationId !== null;
+    const { success } = await this._session.send('Page.goBack', { frameId: this._page.mainFrame()._id });
+    return success;
   }
 
   async goForward(): Promise<boolean> {
-    const { navigationId } = await this._session.send('Page.goForward', { frameId: this._page.mainFrame()._id });
-    return navigationId !== null;
+    const { success } = await this._session.send('Page.goForward', { frameId: this._page.mainFrame()._id });
+    return success;
   }
 
   async evaluateOnNewDocument(source: string): Promise<void> {

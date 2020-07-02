@@ -18,7 +18,7 @@
 const utils = require('./utils');
 const path = require('path');
 const url = require('url');
-const {FFOX, CHROMIUM, WEBKIT, MAC, WIN, CHANNEL} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, ASSETS_DIR, MAC, WIN, CHANNEL} = utils.testOptions(browserType);
 
 describe('Page.goto', function() {
   it('should work', async({page, server}) => {
@@ -895,6 +895,32 @@ describe('Page.goBack', function() {
     expect(page.url()).toBe(server.EMPTY_PAGE);
     await page.goForward();
     expect(page.url()).toBe(server.PREFIX + '/first.html');
+  });
+  it.fail(WEBKIT && MAC)('should work for file urls', async ({page, server}) => {
+    // WebKit embedder fails to go back/forward to the file url.
+    const url1 = WIN
+        ? 'file:///' + path.join(ASSETS_DIR, 'empty.html').replace(/\\/g, '/')
+        : 'file://' + path.join(ASSETS_DIR, 'empty.html');
+    const url2 = server.EMPTY_PAGE;
+    await page.goto(url1);
+    await page.setContent(`<a href='${url2}'>url2</a>`);
+    expect(page.url().toLowerCase()).toBe(url1.toLowerCase());
+
+    await page.click('a');
+    expect(page.url()).toBe(url2);
+
+    await page.goBack();
+    expect(page.url().toLowerCase()).toBe(url1.toLowerCase());
+    // Should be able to evaluate in the new context, and
+    // not reach for the old cross-process one.
+    expect(await page.evaluate(() => window.scrollX)).toBe(0);
+    // Should be able to screenshot.
+    await page.screenshot();
+
+    await page.goForward();
+    expect(page.url()).toBe(url2);
+    expect(await page.evaluate(() => window.scrollX)).toBe(0);
+    await page.screenshot();
   });
 });
 

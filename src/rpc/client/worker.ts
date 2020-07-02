@@ -26,7 +26,7 @@ export class Worker extends ChannelOwner<WorkerChannel, WorkerInitializer> {
   _page: Page | undefined;
 
   static from(worker: WorkerChannel): Worker {
-    return worker._object;
+    return (worker as any)._object;
   }
 
   constructor(scope: ConnectionScope, guid: string, initializer: WorkerInitializer) {

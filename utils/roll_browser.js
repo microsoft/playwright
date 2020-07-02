@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Copyright 2017 Google Inc. All rights reserved.
  * Modifications copyright (c) Microsoft Corporation.

@@ -290,7 +290,7 @@ describe('Keyboard', function() {
     await textarea.type('👹 Tokyo street Japan 🇯🇵');
     expect(await frame.$eval('textarea', textarea => textarea.value)).toBe('👹 Tokyo street Japan 🇯🇵');
   });
-  it.fail(CHROMIUM && MAC)('should handle selectAll', async({page, server}) => {
+  it('should handle selectAll', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     const textarea = await page.$('textarea');
     await textarea.type('some text');
@@ -301,7 +301,7 @@ describe('Keyboard', function() {
     await page.keyboard.press('Backspace');
     expect(await page.$eval('textarea', textarea => textarea.value)).toBe('');
   });
-  it.fail(CHROMIUM && MAC)('should be able to prevent selectAll', async({page, server}) => {
+  it('should be able to prevent selectAll', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     const textarea = await page.$('textarea');
     await textarea.type('some text');

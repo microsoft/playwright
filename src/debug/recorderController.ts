@@ -28,6 +28,7 @@ export class RecorderController {
   private _performingAction = false;
   private _pageAliases = new Map<Page, string>();
   private _lastPopupOrdinal = 0;
+  private _timers = new Set<NodeJS.Timeout>();
 
   constructor(context: BrowserContextBase, output: Writable) {
     this._output = new TerminalOutput(output || process.stdout);
@@ -48,6 +49,12 @@ export class RecorderController {
 
       page.on(Events.Page.FrameNavigated, (frame: frames.Frame) => this._onFrameNavigated(frame));
       page.on(Events.Page.Popup, (popup: Page) => this._onPopup(page, popup));
+    });
+
+    context.once(Events.BrowserContext.Close, () => {
+      for (const timer of this._timers)
+        clearTimeout(timer);
+      this._timers.clear();
     });
   }
 
@@ -70,7 +77,11 @@ export class RecorderController {
     if (action.name === 'select')
       await frame.selectOption(action.selector, action.options);
     this._performingAction = false;
-    setTimeout(() => action.committed = true, 5000);
+    const timer = setTimeout(() => {
+      action.committed = true;
+      this._timers.delete(timer);
+    }, 5000);
+    this._timers.add(timer);
   }
 
   private async _recordAction(frame: frames.Frame, action: actions.Action) {
