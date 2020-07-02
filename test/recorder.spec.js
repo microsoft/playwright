@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 
-const { Writable } = require('stream');
-const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = require('./utils').testOptions(browserType);
+const {USES_HOOKS} = require('./utils').testOptions(browserType);
 
-const pattern = [
-  '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
-  '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))'
-].join('|')
 class WritableBuffer {
   constructor() {
     this.lines = [];
