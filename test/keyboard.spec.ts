@@ -252,7 +252,7 @@ describe('Keyboard', function() {
     await textarea.press('NumpadSubtract');
     expect(await page.evaluate('keyLocation')).toBe(3);
   });
-  fit('should press Enter', async ({page, server}) => {
+  it('should press Enter', async ({page, server}) => {
     await page.setContent('<textarea></textarea>');
     await page.focus('textarea');
     await page.evaluate(() => window.addEventListener('keydown', e => window['lastEvent'] = {code: e.code, key: e.key}));
