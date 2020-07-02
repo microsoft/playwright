@@ -11258,6 +11258,18 @@ index ff90d3de4349c9a3385c20c059729b8e22ebe2e5..d5c4f2cd715551ddef6f5af93ada65cb
  #include <WebCore/MockWebAuthenticationConfiguration.h>
  
  namespace WebKit {
+diff --git a/Source/WebKit/UIProcess/WebContextMenuProxy.h b/Source/WebKit/UIProcess/WebContextMenuProxy.h
+index 3f05f4395c08656ee60c1a467c6fe809115a0210..c29320a1b9bbde5cc372d4728ad0614beceed988 100644
+--- a/Source/WebKit/UIProcess/WebContextMenuProxy.h
++++ b/Source/WebKit/UIProcess/WebContextMenuProxy.h
+@@ -40,6 +40,7 @@ public:
+     virtual ~WebContextMenuProxy();
+ 
+     virtual void show() = 0;
++    virtual void hide() {}
+ 
+     virtual void showContextMenuWithItems(Vector<Ref<WebContextMenuItem>>&&) = 0;
+ 
 diff --git a/Source/WebKit/UIProcess/WebGeolocationManagerProxy.cpp b/Source/WebKit/UIProcess/WebGeolocationManagerProxy.cpp
 index 04f3227cd55c992a42cd96a3f25d697aed7965a2..f0d36935f47bab03ea2ec50b705092068ecd3efa 100644
 --- a/Source/WebKit/UIProcess/WebGeolocationManagerProxy.cpp
@@ -11883,7 +11895,7 @@ index 0000000000000000000000000000000000000000..20311d530090b0229010957a96fc60f4
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
-index 4037ceef8668619ae52f1aa1a4b2783818d9c091..df126d71a13b80595fccfa586b23b78c6a6feeeb 100644
+index 4037ceef8668619ae52f1aa1a4b2783818d9c091..6f1b3494f7603e79d82164a07de831ca4767522f 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
 +++ b/Source/WebKit/UIProcess/WebPageProxy.cpp
 @@ -953,6 +953,7 @@ void WebPageProxy::finishAttachingToWebProcess(ProcessLaunchReason reason)
@@ -12061,7 +12073,18 @@ index 4037ceef8668619ae52f1aa1a4b2783818d9c091..df126d71a13b80595fccfa586b23b78c
  }
  
  void WebPageProxy::exitFullscreenImmediately()
-@@ -5678,6 +5756,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, FrameInfoData&& f
+@@ -5659,6 +5737,10 @@ void WebPageProxy::closePage()
+     if (isClosed())
+         return;
+ 
++#if ENABLE(CONTEXT_MENUS)
++    if (m_activeContextMenu)
++        m_activeContextMenu->hide();
++#endif
+     RELEASE_LOG_IF_ALLOWED(Process, "closePage:");
+     pageClient().clearAllEditCommands();
+     m_uiClient->close(this);
+@@ -5678,6 +5760,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, FrameInfoData&& f
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -12070,7 +12093,7 @@ index 4037ceef8668619ae52f1aa1a4b2783818d9c091..df126d71a13b80595fccfa586b23b78c
      m_uiClient->runJavaScriptAlert(*this, message, frame, WTFMove(frameInfo), WTFMove(reply));
  }
  
-@@ -5695,6 +5775,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, FrameInfoData&&
+@@ -5695,6 +5779,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, FrameInfoData&&
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -12079,7 +12102,7 @@ index 4037ceef8668619ae52f1aa1a4b2783818d9c091..df126d71a13b80595fccfa586b23b78c
  
      m_uiClient->runJavaScriptConfirm(*this, message, frame, WTFMove(frameInfo), WTFMove(reply));
  }
-@@ -5713,6 +5795,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, FrameInfoData&&
+@@ -5713,6 +5799,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, FrameInfoData&&
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -12088,7 +12111,7 @@ index 4037ceef8668619ae52f1aa1a4b2783818d9c091..df126d71a13b80595fccfa586b23b78c
  
      m_uiClient->runJavaScriptPrompt(*this, message, defaultValue, frame, WTFMove(frameInfo), WTFMove(reply));
  }
-@@ -5868,6 +5952,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, FrameInf
+@@ -5868,6 +5956,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, FrameInf
              return;
          }
      }
@@ -12097,7 +12120,7 @@ index 4037ceef8668619ae52f1aa1a4b2783818d9c091..df126d71a13b80595fccfa586b23b78c
  
      // Since runBeforeUnloadConfirmPanel() can spin a nested run loop we need to turn off the responsiveness timer and the tryClose timer.
      m_process->stopResponsivenessTimer();
-@@ -6925,6 +7011,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6925,6 +7015,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->mouseEventsFlushedForPage(*this);
              didFinishProcessingAllPendingMouseEvents();
@@ -12105,7 +12128,7 @@ index 4037ceef8668619ae52f1aa1a4b2783818d9c091..df126d71a13b80595fccfa586b23b78c
          }
  
          break;
-@@ -6951,7 +7038,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6951,7 +7042,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
      case WebEvent::RawKeyDown:
      case WebEvent::Char: {
          LOG(KeyHandling, "WebPageProxy::didReceiveEvent: %s (queue empty %d)", webKeyboardEventTypeString(type), m_keyEventQueue.isEmpty());
@@ -12113,7 +12136,7 @@ index 4037ceef8668619ae52f1aa1a4b2783818d9c091..df126d71a13b80595fccfa586b23b78c
          MESSAGE_CHECK(m_process, !m_keyEventQueue.isEmpty());
          NativeWebKeyboardEvent event = m_keyEventQueue.takeFirst();
  
-@@ -6971,7 +7057,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6971,7 +7061,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          // The call to doneWithKeyEvent may close this WebPage.
          // Protect against this being destroyed.
          Ref<WebPageProxy> protect(*this);
@@ -12121,7 +12144,7 @@ index 4037ceef8668619ae52f1aa1a4b2783818d9c091..df126d71a13b80595fccfa586b23b78c
          pageClient().doneWithKeyEvent(event, handled);
          if (!handled)
              m_uiClient->didNotHandleKeyEvent(this, event);
-@@ -6980,6 +7065,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6980,6 +7069,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          if (!canProcessMoreKeyEvents) {
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->keyboardEventsFlushedForPage(*this);
@@ -12129,7 +12152,7 @@ index 4037ceef8668619ae52f1aa1a4b2783818d9c091..df126d71a13b80595fccfa586b23b78c
          }
          break;
      }
-@@ -7425,8 +7511,10 @@ static bool shouldReloadAfterProcessTermination(ProcessTerminationReason reason)
+@@ -7425,8 +7515,10 @@ static bool shouldReloadAfterProcessTermination(ProcessTerminationReason reason)
  void WebPageProxy::dispatchProcessDidTerminate(ProcessTerminationReason reason)
  {
      RELEASE_LOG_ERROR_IF_ALLOWED(Loading, "dispatchProcessDidTerminate: reason = %d", reason);
@@ -12141,7 +12164,7 @@ index 4037ceef8668619ae52f1aa1a4b2783818d9c091..df126d71a13b80595fccfa586b23b78c
      if (m_loaderClient)
          handledByClient = reason != ProcessTerminationReason::RequestedByClient && m_loaderClient->processDidCrash(*this);
      else
-@@ -7693,6 +7781,7 @@ void WebPageProxy::resetStateAfterProcessExited(ProcessTerminationReason termina
+@@ -7693,6 +7785,7 @@ void WebPageProxy::resetStateAfterProcessExited(ProcessTerminationReason termina
  
  WebPageCreationParameters WebPageProxy::creationParameters(WebProcessProxy& process, DrawingAreaProxy& drawingArea, RefPtr<API::WebsitePolicies>&& websitePolicies)
  {
@@ -12149,7 +12172,7 @@ index 4037ceef8668619ae52f1aa1a4b2783818d9c091..df126d71a13b80595fccfa586b23b78c
      WebPageCreationParameters parameters;
  
      parameters.processDisplayName = configuration().processDisplayName();
-@@ -7845,6 +7934,8 @@ WebPageCreationParameters WebPageProxy::creationParameters(WebProcessProxy& proc
+@@ -7845,6 +7938,8 @@ WebPageCreationParameters WebPageProxy::creationParameters(WebProcessProxy& proc
      parameters.limitsNavigationsToAppBoundDomains = m_limitsNavigationsToAppBoundDomains;
      parameters.shouldRelaxThirdPartyCookieBlocking = m_configuration->shouldRelaxThirdPartyCookieBlocking();
  
@@ -12158,7 +12181,7 @@ index 4037ceef8668619ae52f1aa1a4b2783818d9c091..df126d71a13b80595fccfa586b23b78c
  #if PLATFORM(GTK)
      parameters.themeName = pageClient().themeName();
  #endif
-@@ -7916,6 +8007,14 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, bool
+@@ -7916,6 +8011,14 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, bool
  
  void WebPageProxy::didReceiveAuthenticationChallengeProxy(Ref<AuthenticationChallengeProxy>&& authenticationChallenge, NegotiatedLegacyTLS negotiatedLegacyTLS)
  {
@@ -12173,7 +12196,7 @@ index 4037ceef8668619ae52f1aa1a4b2783818d9c091..df126d71a13b80595fccfa586b23b78c
      if (negotiatedLegacyTLS == NegotiatedLegacyTLS::Yes) {
          m_navigationClient->shouldAllowLegacyTLS(*this, authenticationChallenge.get(), [this, protectedThis = makeRef(*this), authenticationChallenge = authenticationChallenge.copyRef()] (bool shouldAllowLegacyTLS) {
              if (shouldAllowLegacyTLS)
-@@ -8001,7 +8100,8 @@ void WebPageProxy::requestGeolocationPermissionForFrame(GeolocationIdentifier ge
+@@ -8001,7 +8104,8 @@ void WebPageProxy::requestGeolocationPermissionForFrame(GeolocationIdentifier ge
      MESSAGE_CHECK(m_process, frame);
  
      // FIXME: Geolocation should probably be using toString() as its string representation instead of databaseIdentifier().
@@ -12183,7 +12206,7 @@ index 4037ceef8668619ae52f1aa1a4b2783818d9c091..df126d71a13b80595fccfa586b23b78c
      auto request = m_geolocationPermissionRequestManager.createRequest(geolocationID);
      Function<void(bool)> completionHandler = [request = WTFMove(request)](bool allowed) {
          if (allowed)
-@@ -8010,6 +8110,14 @@ void WebPageProxy::requestGeolocationPermissionForFrame(GeolocationIdentifier ge
+@@ -8010,6 +8114,14 @@ void WebPageProxy::requestGeolocationPermissionForFrame(GeolocationIdentifier ge
              request->deny();
      };
  
@@ -13305,6 +13328,35 @@ index 7b7e66c79edaf84a8a14756524e16c26e57896c6..2d6224b2bad15eaf808101dec24026b3
      return m_impl->windowIsFrontWindowUnderMouse(event.nativeEvent());
  }
  
+diff --git a/Source/WebKit/UIProcess/mac/WebContextMenuProxyMac.h b/Source/WebKit/UIProcess/mac/WebContextMenuProxyMac.h
+index 900ef0f178a926daacd53e645e5730aabf1eaf71..eb8321928a18a14817d2f4b583e7ee5518826e25 100644
+--- a/Source/WebKit/UIProcess/mac/WebContextMenuProxyMac.h
++++ b/Source/WebKit/UIProcess/mac/WebContextMenuProxyMac.h
+@@ -66,6 +66,7 @@ public:
+ private:
+     WebContextMenuProxyMac(NSView*, WebPageProxy&, ContextMenuContextData&&, const UserData&);
+     void show() override;
++    void hide() override;
+ 
+     RefPtr<WebContextMenuListenerProxy> m_contextMenuListener;
+     void getContextMenuItem(const WebContextMenuItemData&, CompletionHandler<void(NSMenuItem *)>&&);
+diff --git a/Source/WebKit/UIProcess/mac/WebContextMenuProxyMac.mm b/Source/WebKit/UIProcess/mac/WebContextMenuProxyMac.mm
+index 3daaa25d4ffebbbb1682efc00dc50262cd3886ec..680153dd2802f33e05f70b8fa91c9272ca963840 100644
+--- a/Source/WebKit/UIProcess/mac/WebContextMenuProxyMac.mm
++++ b/Source/WebKit/UIProcess/mac/WebContextMenuProxyMac.mm
+@@ -335,6 +335,12 @@ void WebContextMenuProxyMac::getShareMenuItem(CompletionHandler<void(NSMenuItem
+ }
+ #endif
+ 
++void WebContextMenuProxyMac::hide()
++{
++    if (m_menu)
++        [m_menu cancelTracking];
++}
++
+ void WebContextMenuProxyMac::show()
+ {
+     Ref<WebPageProxy> protect(m_page);
 diff --git a/Source/WebKit/UIProcess/mac/WebPageInspectorEmulationAgentMac.mm b/Source/WebKit/UIProcess/mac/WebPageInspectorEmulationAgentMac.mm
 new file mode 100644
 index 0000000000000000000000000000000000000000..6113f4cd60a5d72b8ead61176cb43200803478ed
@@ -13690,7 +13742,7 @@ index 0000000000000000000000000000000000000000..135a60361fa8fbf907382625e7c8dd4e
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/win/WebContextMenuProxyWin.cpp b/Source/WebKit/UIProcess/win/WebContextMenuProxyWin.cpp
-index aa171f48bc40a96a86d951451b578f609c573fce..8cdc2ff1e3a2ce3d05aacc46a83521c02442dd44 100644
+index aa171f48bc40a96a86d951451b578f609c573fce..e948342089abdf57c80be77e25416743b63179a2 100644
 --- a/Source/WebKit/UIProcess/win/WebContextMenuProxyWin.cpp
 +++ b/Source/WebKit/UIProcess/win/WebContextMenuProxyWin.cpp
 @@ -105,6 +105,8 @@ void WebContextMenuProxyWin::showContextMenuWithItems(Vector<Ref<WebContextMenuI
@@ -13702,6 +13754,30 @@ index aa171f48bc40a96a86d951451b578f609c573fce..8cdc2ff1e3a2ce3d05aacc46a83521c0
      ::ClientToScreen(wnd, &pt);
      ::TrackPopupMenuEx(m_menu, flags, pt.x, pt.y, m_page.viewWidget(), nullptr);
  }
+@@ -122,5 +124,11 @@ WebContextMenuProxyWin::~WebContextMenuProxyWin()
+         ::DestroyMenu(m_menu);
+ }
+ 
++void WebContextMenuProxyWin::hide()
++{
++    if (m_menu)
++        ::DestroyMenu(m_menu);
++}
++
+ } // namespace WebKit
+ #endif // ENABLE(CONTEXT_MENUS)
+diff --git a/Source/WebKit/UIProcess/win/WebContextMenuProxyWin.h b/Source/WebKit/UIProcess/win/WebContextMenuProxyWin.h
+index 8eda673849da2d1a38c37bb384ddef5e76095a9a..f6197e5a5da7a5527101e8447091e79f5c7a53fe 100644
+--- a/Source/WebKit/UIProcess/win/WebContextMenuProxyWin.h
++++ b/Source/WebKit/UIProcess/win/WebContextMenuProxyWin.h
+@@ -48,6 +48,7 @@ private:
+     WebContextMenuProxyWin(WebPageProxy&, ContextMenuContextData&&, const UserData&);
+     void showContextMenuWithItems(Vector<Ref<WebContextMenuItem>>&&) override;
+     void show() override;
++    void hide() override;
+ 
+     WebPageProxy& m_page;
+     RefPtr<WebContextMenuListenerProxy> m_contextMenuListener;
 diff --git a/Source/WebKit/UIProcess/win/WebPageInspectorEmulationAgentWin.cpp b/Source/WebKit/UIProcess/win/WebPageInspectorEmulationAgentWin.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..62b841fe1d0de2296e1c61e328cff564f5aa1c0f
