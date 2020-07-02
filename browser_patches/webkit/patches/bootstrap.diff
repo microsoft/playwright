@@ -13742,7 +13742,7 @@ index 0000000000000000000000000000000000000000..135a60361fa8fbf907382625e7c8dd4e
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/win/WebContextMenuProxyWin.cpp b/Source/WebKit/UIProcess/win/WebContextMenuProxyWin.cpp
-index aa171f48bc40a96a86d951451b578f609c573fce..2a335dd6d0a8e2ce416acc940d66f177f6771f19 100644
+index aa171f48bc40a96a86d951451b578f609c573fce..c275d25f142ea265ef6b1805c7cfdc04aba758c0 100644
 --- a/Source/WebKit/UIProcess/win/WebContextMenuProxyWin.cpp
 +++ b/Source/WebKit/UIProcess/win/WebContextMenuProxyWin.cpp
 @@ -122,5 +122,11 @@ WebContextMenuProxyWin::~WebContextMenuProxyWin()
@@ -13752,7 +13752,7 @@ index aa171f48bc40a96a86d951451b578f609c573fce..2a335dd6d0a8e2ce416acc940d66f177
 +void WebContextMenuProxyWin::hide()
 +{
 +    if (m_menu)
-+        ::DestroyMenu(m_menu);
++        ::EndMenu();
 +}
 +
  } // namespace WebKit
