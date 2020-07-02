@@ -55,7 +55,7 @@ describe.skip(!process.env.COVERAGE)('**API COVERAGE**', () => {
     {
       name: 'Firefox',
       events: require('../lib/events').Events,
-      missingCoverage: ['browserContext.setGeolocation', 'browserContext.setOffline', 'cDPSession.send', 'cDPSession.detach'],
+      missingCoverage: ['cDPSession.send', 'cDPSession.detach'],
     },
     {
       name: 'WebKit',
@@ -73,7 +73,12 @@ describe.skip(!process.env.COVERAGE)('**API COVERAGE**', () => {
   ];
   const browserConfig = BROWSER_CONFIGS.find(config => config.name.toLowerCase() === browserType.name());
   const events = browserConfig.events;
-  const api = require('../lib/api');
+  // TODO: we should rethink our api.ts approach to ensure coverage and async stacks.
+  const api = {
+    ...require('../lib/api'),
+    Browser: require('../lib/browser').BrowserBase,
+    BrowserContext: require('../lib/browserContext').BrowserContextBase,
+  };
 
   const coverage = new Map();
   Object.keys(api).forEach(apiName => {
