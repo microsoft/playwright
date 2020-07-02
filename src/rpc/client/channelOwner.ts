@@ -22,9 +22,11 @@ export abstract class ChannelOwner<T extends Channel, Initializer> extends Event
   readonly _channel: T;
   readonly _initializer: Initializer;
   readonly _scope: ConnectionScope;
+  readonly guid: string;
 
   constructor(scope: ConnectionScope, guid: string, initializer: Initializer, isScope?: boolean) {
     super();
+    this.guid = guid;
     this._scope = isScope ? scope.createChild(guid) : scope;
     const base = new EventEmitter();
     this._channel = new Proxy(base, {
@@ -46,8 +48,7 @@ export abstract class ChannelOwner<T extends Channel, Initializer> extends Event
         return (params: any) => scope.sendMessageToServer({ guid, method: String(prop), params });
       },
     });
-    this._channel._object = this;
-    this._channel._guid = guid;
+    (this._channel as any)._object = this;
     this._initializer = initializer;
   }
 }

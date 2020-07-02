@@ -24,7 +24,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   readonly _elementChannel: ElementHandleChannel;
 
   static from(handle: ElementHandleChannel): ElementHandle {
-    return handle._object;
+    return (handle as any)._object;
   }
 
   static fromNullable(handle: ElementHandleChannel | null): ElementHandle | null {

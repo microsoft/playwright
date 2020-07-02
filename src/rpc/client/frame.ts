@@ -43,7 +43,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   _page: Page | undefined;
 
   static from(frame: FrameChannel): Frame {
-    return frame._object;
+    return (frame as any)._object;
   }
 
   static fromNullable(frame: FrameChannel | null): Frame | null {

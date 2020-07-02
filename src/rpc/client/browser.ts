@@ -29,7 +29,7 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
 
 
   static from(browser: BrowserChannel): Browser {
-    return browser._object;
+    return (browser as any)._object;
   }
 
   static fromNullable(browser: BrowserChannel | null): Browser | null {

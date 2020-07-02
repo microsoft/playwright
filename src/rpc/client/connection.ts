@@ -99,11 +99,8 @@ export class Connection {
       return payload;
     if (Array.isArray(payload))
       return payload.map(p => this._replaceChannelsWithGuids(p));
-    if (payload._guid)
-      return { guid: payload._guid };
-    // TODO: send base64
-    if (payload instanceof Buffer)
-      return payload;
+    if (payload._object instanceof ChannelOwner)
+      return { guid: payload._object.guid };
     if (typeof payload === 'object') {
       const result: any = {};
       for (const key of Object.keys(payload))
@@ -120,9 +117,6 @@ export class Connection {
       return payload.map(p => this._replaceGuidsWithChannels(p));
     if (payload.guid && this._objects.has(payload.guid))
       return this._objects.get(payload.guid)!._channel;
-    // TODO: send base64
-    if (payload instanceof Buffer)
-      return payload;
     if (typeof payload === 'object') {
       const result: any = {};
       for (const key of Object.keys(payload))

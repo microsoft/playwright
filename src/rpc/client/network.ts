@@ -51,7 +51,7 @@ export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
   _failureText: string | null = null;
 
   static from(request: RequestChannel): Request {
-    return request._object;
+    return (request as any)._object;
   }
 
   static fromNullable(request: RequestChannel | null): Request | null {
@@ -135,7 +135,7 @@ export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
 
 export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
   static from(route: RouteChannel): Route {
-    return route._object;
+    return (route as any)._object;
   }
 
   constructor(scope: ConnectionScope, guid: string, initializer: RouteInitializer) {
@@ -169,7 +169,7 @@ export type RouteHandler = (route: Route, request: Request) => void;
 
 export class Response extends ChannelOwner<ResponseChannel, ResponseInitializer> {
   static from(response: ResponseChannel): Response {
-    return response._object;
+    return (response as any)._object;
   }
 
   static fromNullable(response: ResponseChannel | null): Response | null {

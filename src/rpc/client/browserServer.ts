@@ -21,8 +21,8 @@ import { ChannelOwner } from './channelOwner';
 import { Events } from '../../events';
 
 export class BrowserServer extends ChannelOwner<BrowserServerChannel, BrowserServerInitializer> {
-  static from(request: BrowserServerChannel): BrowserServer {
-    return request._object;
+  static from(server: BrowserServerChannel): BrowserServer {
+    return (server as any)._object;
   }
 
   constructor(scope: ConnectionScope, guid: string, initializer: BrowserServerInitializer) {
