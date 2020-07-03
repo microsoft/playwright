@@ -16,7 +16,7 @@
 
 const utils = require('./utils');
 const { makeUserDataDir, removeUserDataDir } = utils;
-const {FFOX, CHROMIUM, WEBKIT, WIN} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, MAC} = utils.testOptions(browserType);
 
 describe('Headful', function() {
   it('should have default url when launching browser', async ({browserType, defaultBrowserOptions}) => {
@@ -79,7 +79,7 @@ describe('Headful', function() {
     await page.click('button');
     await browser.close();
   });
-  it.fail(CHROMIUM || (WEBKIT && WIN))('should close browser after context menu was triggered', async({browserType, defaultBrowserOptions, server}) => {
+  it.fail(CHROMIUM && MAC)('should close browser after context menu was triggered', async({browserType, defaultBrowserOptions, server}) => {
     const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
     const page = await browser.newPage();
     await page.goto(server.PREFIX + '/grid.html');
