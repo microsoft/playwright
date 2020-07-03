@@ -54,7 +54,7 @@ export class Transport {
 
       const terminatorIndex = this._data.indexOf('\n');
       const message = this._data.slice(0, terminatorIndex);
-      this._data = this._data.slice(terminatorIndex +1);
+      this._data = this._data.slice(terminatorIndex + 1);
 
       this._waitForNextTask(() => {
         if (this.onmessage)
