@@ -16,7 +16,7 @@
 
 const utils = require('./utils');
 const { makeUserDataDir, removeUserDataDir } = utils;
-const {FFOX, CHROMIUM, WEBKIT, WIN} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, MAC} = utils.testOptions(browserType);
 
 describe('Headful', function() {
   it('should have default url when launching browser', async ({browserType, defaultBrowserOptions}) => {
