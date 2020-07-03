@@ -33,10 +33,10 @@ export class Transport {
     this.onclose = undefined;
   }
 
-  send(message: any) {
+  send(message: string) {
     if (this._closed)
       throw new Error('Pipe has been closed');
-    const data = Buffer.from(JSON.stringify(message), 'utf-8');
+    const data = Buffer.from(message, 'utf-8');
     const dataLength = Buffer.alloc(4);
     dataLength.writeUInt32LE(data.length, 0);
     this._pipeWrite.write(dataLength);
@@ -70,7 +70,7 @@ export class Transport {
       this._bytesLeft = 0;
       this._waitForNextTask(() => {
         if (this.onmessage)
-          this.onmessage.call(null, JSON.parse(message.toString('utf-8')));
+          this.onmessage(message.toString('utf-8'));
       });
     }
   }

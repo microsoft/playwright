@@ -38,6 +38,11 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitiali
     return createHandle(this._scope, jsHandle);
   }
 
+  async getProperty(params: { name: string }): Promise<JSHandleChannel> {
+    const jsHandle = await this._object.getProperty(params.name);
+    return createHandle(this._scope, jsHandle);
+  }
+
   async getPropertyList(): Promise<{ name: string, value: JSHandleChannel }[]> {
     const map = await this._object.getProperties();
     const result = [];

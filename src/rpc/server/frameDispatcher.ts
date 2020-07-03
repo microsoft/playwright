@@ -78,12 +78,12 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     return target.dispatchEvent(params.selector, params.type, parseArgument(params.eventInit), params.options);
   }
 
-  async $eval(params: { selector: string, expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<any> {
+  async evalOnSelector(params: { selector: string, expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<any> {
     const target = params.isPage ? this._frame._page : this._frame;
     return serializeResult(await target._$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg)));
   }
 
-  async $$eval(params: { selector: string, expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<any> {
+  async evalOnSelectorAll(params: { selector: string, expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<any> {
     const target = params.isPage ? this._frame._page : this._frame;
     return serializeResult(await target._$$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg)));
   }

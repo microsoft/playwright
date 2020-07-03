@@ -144,8 +144,10 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
 
   async _onBinding(bindingCall: BindingCall) {
     const func = this._bindings.get(bindingCall._initializer.name);
-    if (func)
+    if (func) {
       bindingCall.call(func);
+      return;
+    }
     this._browserContext!._onBinding(bindingCall);
   }
 

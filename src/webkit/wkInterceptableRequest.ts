@@ -16,7 +16,7 @@
  */
 
 import * as frames from '../frames';
-import { assert, helper } from '../helper';
+import { assert } from '../helper';
 import * as network from '../network';
 import * as types from '../types';
 import { Protocol } from './protocol';
@@ -69,34 +69,17 @@ export class WKInterceptableRequest implements network.RouteDelegate {
   async fulfill(response: types.NormalizedFulfillResponse) {
     await this._interceptedPromise;
 
-    const base64Encoded = !!response.body && !helper.isString(response.body);
-    const responseBody = response.body ? (base64Encoded ? response.body.toString('base64') : response.body as string) : '';
-
-    const responseHeaders: { [s: string]: string; } = {};
-    for (const header of Object.keys(response.headers))
-      responseHeaders[header.toLowerCase()] = String(response.headers[header]);
-    let mimeType = base64Encoded ? 'application/octet-stream' : 'text/plain';
-    if (response.contentType) {
-      responseHeaders['content-type'] = response.contentType;
-      const index = response.contentType.indexOf(';');
-      if (index !== -1)
-        mimeType = response.contentType.substring(0, index).trimEnd();
-      else
-        mimeType = response.contentType.trim();
-    }
-    if (responseBody && !('content-length' in responseHeaders))
-      responseHeaders['content-length'] = String(Buffer.byteLength(responseBody));
-
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
+    const mimeType = (response.headers['content-type'] || 'application/octet-stream').split(';')[0].trim();
     await this._session.sendMayFail('Network.interceptRequestWithResponse', {
       requestId: this._requestId,
       status: response.status,
       statusText: network.STATUS_TEXTS[String(response.status)],
       mimeType,
-      headers: responseHeaders,
-      base64Encoded,
-      content: responseBody
+      headers: response.headers,
+      base64Encoded: true,
+      content: response.base64
     });
   }
 

@@ -89,7 +89,6 @@ export class RouteDispatcher extends Dispatcher<Route, RouteInitializer> impleme
     await this._object.fulfill({
       status: response.status,
       headers: response.headers,
-      contentType: response.contentType,
       body: Buffer.from(response.body, 'base64'),
     });
   }

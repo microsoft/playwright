@@ -148,8 +148,8 @@ export type PageInitializer = {
 
 
 export interface FrameChannel extends Channel {
-  $$eval(params: { selector: string; expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<any>;
-  $eval(params: { selector: string; expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<any>;
+  evalOnSelector(params: { selector: string; expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<any>;
+  evalOnSelectorAll(params: { selector: string; expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<any>;
   addScriptTag(params: { options: { url?: string | undefined, path?: string | undefined, content?: string | undefined, type?: string | undefined }, isPage?: boolean }): Promise<ElementHandleChannel>;
   addStyleTag(params: { options: { url?: string | undefined, path?: string | undefined, content?: string | undefined }, isPage?: boolean }): Promise<ElementHandleChannel>;
   check(params: { selector: string, options: types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean }, isPage?: boolean }): Promise<void>;
@@ -205,6 +205,7 @@ export interface JSHandleChannel extends Channel {
   evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<any>;
   evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any}): Promise<JSHandleChannel>;
   getPropertyList(): Promise<{ name: string, value: JSHandleChannel}[]>;
+  getProperty(params: { name: string }): Promise<JSHandleChannel>;
   jsonValue(): Promise<any>;
 }
 export type JSHandleInitializer = {
@@ -213,8 +214,8 @@ export type JSHandleInitializer = {
 
 
 export interface ElementHandleChannel extends JSHandleChannel {
-  $$evalExpression(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<any>;
-  $evalExpression(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<any>;
+  evalOnSelector(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<any>;
+  evalOnSelectorAll(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<any>;
   boundingBox(): Promise<types.Rect | null>;
   check(params: { options?: types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean } }): Promise<void>;
   click(params: { options?: types.PointerActionOptions & types.MouseClickOptions & types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean } }): Promise<void>;
@@ -264,7 +265,6 @@ export interface RouteChannel extends Channel {
     response: {
       status?: number,
       headers?: types.Headers,
-      contentType?: string,
       body: Binary,
     }
   }): Promise<void>;

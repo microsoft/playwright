@@ -362,24 +362,14 @@ class InterceptableRequest implements network.RouteDelegate {
   }
 
   async fulfill(response: types.NormalizedFulfillResponse) {
-    const responseBody = response.body && helper.isString(response.body) ? Buffer.from(response.body) : (response.body || null);
-
-    const responseHeaders: { [s: string]: string; } = {};
-    for (const header of Object.keys(response.headers))
-      responseHeaders[header.toLowerCase()] = response.headers[header];
-    if (response.contentType)
-      responseHeaders['content-type'] = response.contentType;
-    if (responseBody && !('content-length' in responseHeaders))
-      responseHeaders['content-length'] = String(Buffer.byteLength(responseBody));
-
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
     await this._client._sendMayFail('Fetch.fulfillRequest', {
       requestId: this._interceptionId!,
       responseCode: response.status,
       responsePhrase: network.STATUS_TEXTS[String(response.status)],
-      responseHeaders: headersArray(responseHeaders),
-      body: responseBody ? responseBody.toString('base64') : undefined,
+      responseHeaders: headersArray(response.headers),
+      body: response.base64,
     });
   }
 

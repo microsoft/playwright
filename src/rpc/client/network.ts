@@ -155,8 +155,7 @@ export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
     await this._channel.fulfill({ response: {
       status: normalized.status,
       headers: normalized.headers,
-      contentType: normalized.contentType,
-      body: (typeof normalized.body === 'string' ? Buffer.from(normalized.body) : normalized.body).toString('base64')
+      body: normalized.base64
     }});
   }
 

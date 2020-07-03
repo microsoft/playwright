@@ -173,22 +173,12 @@ class InterceptableRequest implements network.RouteDelegate {
   }
 
   async fulfill(response: types.NormalizedFulfillResponse) {
-    const responseBody = response.body && helper.isString(response.body) ? Buffer.from(response.body) : (response.body || null);
-
-    const responseHeaders: { [s: string]: string; } = {};
-    for (const header of Object.keys(response.headers))
-      responseHeaders[header.toLowerCase()] = response.headers[header];
-    if (response.contentType)
-      responseHeaders['content-type'] = response.contentType;
-    if (responseBody && !('content-length' in responseHeaders))
-      responseHeaders['content-length'] = String(Buffer.byteLength(responseBody));
-
     await this._session.sendMayFail('Network.fulfillInterceptedRequest', {
       requestId: this._id,
       status: response.status,
       statusText: network.STATUS_TEXTS[String(response.status)] || '',
-      headers: headersArray(responseHeaders),
-      base64body: responseBody ? responseBody.toString('base64') : undefined,
+      headers: headersArray(response.headers),
+      base64body: response.base64,
     });
   }
 

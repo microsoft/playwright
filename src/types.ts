@@ -199,8 +199,7 @@ export type FulfillResponse = {
 export type NormalizedFulfillResponse = {
   status: number,
   headers: Headers,
-  contentType?: string,
-  body: string | Buffer,
+  base64: string,
 };
 
 export type NetworkCookie = {
