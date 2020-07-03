@@ -21,7 +21,6 @@ export class Transport {
   private _data = Buffer.from([]);
   private _waitForNextTask = helper.makeWaitForNextTask();
   private _closed = false;
-  private _bytesLeft = 0;
 
   onmessage?: (message: any) => void;
   onclose?: () => void;
@@ -33,13 +32,10 @@ export class Transport {
     this.onclose = undefined;
   }
 
-  send(message: any) {
+  send(message: string) {
     if (this._closed)
       throw new Error('Pipe has been closed');
-    const data = Buffer.from(JSON.stringify(message), 'utf-8');
-    const dataLength = Buffer.alloc(4);
-    dataLength.writeUInt32LE(data.length, 0);
-    this._pipeWrite.write(dataLength);
+    const data = Buffer.from(message + '\n', 'utf-8');
     this._pipeWrite.write(data);
   }
 
@@ -50,27 +46,19 @@ export class Transport {
   _dispatch(buffer: Buffer) {
     this._data = Buffer.concat([this._data, buffer]);
     while (true) {
-      if (!this._bytesLeft && this._data.length < 4) {
+
+      if (this._data.indexOf('\n') === -1) {
         // Need more data.
         break;
       }
 
-      if (!this._bytesLeft) {
-        this._bytesLeft = this._data.readUInt32LE(0);
-        this._data = this._data.slice(4);
-      }
+      const terminatorIndex = this._data.indexOf('\n');
+      const message = this._data.slice(0, terminatorIndex);
+      this._data = this._data.slice(terminatorIndex +1);
 
-      if (!this._bytesLeft || this._data.length < this._bytesLeft) {
-        // Need more data.
-        break;
-      }
-
-      const message = this._data.slice(0, this._bytesLeft);
-      this._data = this._data.slice(this._bytesLeft);
-      this._bytesLeft = 0;
       this._waitForNextTask(() => {
         if (this.onmessage)
-          this.onmessage.call(null, JSON.parse(message.toString('utf-8')));
+          this.onmessage.call(null, message.toString('utf-8'));
       });
     }
   }
