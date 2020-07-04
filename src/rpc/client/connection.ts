@@ -84,8 +84,7 @@ export class Connection {
 
     debug('pw:channel:event')(parsedMessage);
     if (method === '__create__') {
-      const scopeObject = this._objects.get(guid);
-      const scope = scopeObject ? scopeObject._scope : this._rootScript;
+      const scope = this._scopes.get(guid)!;
       scope.createRemoteObject(params.type, params.guid, params.initializer);
       return;
     }

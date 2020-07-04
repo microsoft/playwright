@@ -187,7 +187,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
       this._browser._contexts.delete(this);
 
     for (const [listener, event] of this._pendingWaitForEvents) {
-      if (event === Events.Page.Close)
+      if (event === Events.BrowserContext.Close)
         continue;
       listener(new Error('Context closed'));
     }

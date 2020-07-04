@@ -62,20 +62,13 @@ export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel, JSHandleIni
   async evaluateHandle<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: FuncOn<T, void, R>, arg?: any): Promise<SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
-    const handleChannel = await this._channel.evaluateExpressionHandle({  expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+    const handleChannel = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
     return JSHandle.from(handleChannel) as SmartHandle<R>;
   }
 
-  async getProperty(propertyName: string): Promise<JSHandle> {
-    const objectHandle = await this.evaluateHandle((object: any, propertyName: string) => {
-      const result: any = {__proto__: null};
-      result[propertyName] = object[propertyName];
-      return result;
-    }, propertyName);
-    const properties = await objectHandle.getProperties();
-    const result = properties.get(propertyName)!;
-    objectHandle.dispose();
-    return result;
+  async getProperty(name: string): Promise<JSHandle> {
+    const handleChannel = await this._channel.getProperty({ name });
+    return JSHandle.from(handleChannel);
   }
 
   async getProperties(): Promise<Map<string, JSHandle>> {
