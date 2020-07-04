@@ -196,7 +196,7 @@ This method focuses the selected element and produces a single keystroke. It acc
 
 ```
 Backquote, Minus, Equal, Backslash, Backspace, Tab, Delete, Escape,
-ArrowDown, End, Enter, Home, Insert, PageDown, PageUp, ArrayRight,
+ArrowDown, End, Enter, Home, Insert, PageDown, PageUp, ArrowRight,
 ArrowUp, F1 - F12, Digit0 - Digit9, KeyA - KeyZ, etc.
 ```
 
