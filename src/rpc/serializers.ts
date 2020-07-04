@@ -20,6 +20,7 @@ import * as path from 'path';
 import * as util from 'util';
 import { TimeoutError } from '../errors';
 import * as types from '../types';
+import { helper } from '../helper';
 
 
 export function serializeError(e: any): types.Error {
@@ -64,18 +65,37 @@ export async function normalizeFilePayloads(files: string | types.FilePayload | 
 }
 
 export async function normalizeFulfillParameters(params: types.FulfillResponse & { path?: string }): Promise<types.NormalizedFulfillResponse> {
+  let body = '';
+  let isBase64 = false;
+  let length = 0;
   if (params.path) {
-    return {
-      status: params.status || 200,
-      headers: params.headers || {},
-      contentType: mime.getType(params.path) || 'application/octet-stream',
-      body: await util.promisify(fs.readFile)(params.path)
-    };
+    const buffer = await util.promisify(fs.readFile)(params.path);
+    body = buffer.toString('base64');
+    isBase64 = true;
+    length = buffer.length;
+  } else if (helper.isString(params.body)) {
+    body = params.body;
+    isBase64 = false;
+    length = Buffer.byteLength(body);
+  } else if (params.body) {
+    body = params.body.toString('base64');
+    isBase64 = true;
+    length = params.body.length;
   }
+  const headers: { [s: string]: string; } = {};
+  for (const header of Object.keys(params.headers || {}))
+    headers[header.toLowerCase()] = String(params.headers![header]);
+  if (params.contentType)
+    headers['content-type'] = String(params.contentType);
+  else if (params.path)
+    headers['content-type'] = mime.getType(params.path) || 'application/octet-stream';
+  if (length && !('content-length' in headers))
+    headers['content-length'] = String(length);
+
   return {
     status: params.status || 200,
-    headers: params.headers || {},
-    contentType: params.contentType,
-    body: params.body || ''
+    headers,
+    body,
+    isBase64
   };
 }

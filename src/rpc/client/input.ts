@@ -37,7 +37,7 @@ export class Keyboard {
     await this._channel.keyboardInsertText({ text });
   }
 
-  async type(text: string, options?: { delay?: number }) {
+  async type(text: string, options: { delay?: number } = {}) {
     await this._channel.keyboardType({ text, options });
   }
 
