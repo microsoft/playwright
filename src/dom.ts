@@ -27,6 +27,7 @@ import { Progress } from './progress';
 import DebugScript from './debug/injected/debugScript';
 import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
 import { normalizeFilePayloads } from './rpc/serializers';
+import * as actions from './actions';
 
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
@@ -166,41 +167,33 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async getAttribute(name: string): Promise<string | null> {
-    return throwFatalDOMError(await this._evaluateInUtility(([injeced, node, name]) => {
-      if (node.nodeType !== Node.ELEMENT_NODE)
-        return 'error:notelement';
-      const element = node as unknown as Element;
-      return { value: element.getAttribute(name) };
-    }, name)).value;
+    return this._page._runAbortableTask(async progress => {
+      return await actions.getAttribute(progress, this, name);
+    }, 0, 'elementHandle.getAttribute');
   }
 
   async textContent(): Promise<string | null> {
-    return this._evaluateInUtility(([injected, node]) => node.textContent, {});
+    return this._page._runAbortableTask(async progress => {
+      return await actions.textContent(progress, this);
+    }, 0, 'elementHandle.textContent');
   }
 
   async innerText(): Promise<string> {
-    return throwFatalDOMError(await this._evaluateInUtility(([injected, node]) => {
-      if (node.nodeType !== Node.ELEMENT_NODE)
-        return 'error:notelement';
-      if (node.namespaceURI !== 'http://www.w3.org/1999/xhtml')
-        return 'error:nothtmlelement';
-      const element = node as unknown as HTMLElement;
-      return { value: element.innerText };
-    }, {})).value;
+    return this._page._runAbortableTask(async progress => {
+      return await actions.innerText(progress, this);
+    }, 0, 'elementHandle.innerText');
   }
 
   async innerHTML(): Promise<string> {
-    return throwFatalDOMError(await this._evaluateInUtility(([injected, node]) => {
-      if (node.nodeType !== Node.ELEMENT_NODE)
-        return 'error:notelement';
-      const element = node as unknown as Element;
-      return { value: element.innerHTML };
-    }, {})).value;
+    return this._page._runAbortableTask(async progress => {
+      return await actions.innerHTML(progress, this);
+    }, 0, 'elementHandle.innerHTML');
   }
 
   async dispatchEvent(type: string, eventInit: Object = {}) {
-    await this._evaluateInMain(([injected, node, { type, eventInit }]) =>
-      injected.dispatchEvent(node, type, eventInit), { type, eventInit });
+    return this._page._runAbortableTask(async progress => {
+      return await actions.dispatchEvent(progress, this, type, eventInit);
+    }, 0, 'elementHandle.dispatchEvent');
   }
 
   async _scrollRectIntoViewIfNeeded(rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
@@ -439,36 +432,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async fill(value: string, options: types.NavigatingActionWaitOptions = {}): Promise<void> {
     return this._page._runAbortableTask(async progress => {
-      const result = await this._fill(progress, value, options);
-      assertDone(throwRetargetableDOMError(result));
+      return await actions.fill(progress, this, value, options);
     }, this._page._timeoutSettings.timeout(options), 'elementHandle.fill');
-  }
-
-  async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    progress.logger.info(`elementHandle.fill("${value}")`);
-    assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
-    return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
-      progress.logger.info('  waiting for element to be visible, enabled and editable');
-      const poll = await this._evaluateHandleInUtility(([injected, node, value]) => {
-        return injected.waitForEnabledAndFill(node, value);
-      }, value);
-      const pollHandler = new InjectedScriptPollHandler(progress, poll);
-      const filled = throwFatalDOMError(await pollHandler.finish());
-      progress.throwIfAborted();  // Avoid action that has side-effects.
-      if (filled === 'error:notconnected')
-        return filled;
-      progress.logger.info('  element is visible, enabled and editable');
-      if (filled === 'needsinput') {
-        progress.throwIfAborted();  // Avoid action that has side-effects.
-        if (value)
-          await this._page.keyboard.insertText(value);
-        else
-          await this._page.keyboard.press('Delete');
-      } else {
-        assertDone(filled);
-      }
-      return 'done';
-    }, 'input');
   }
 
   async selectText(options: types.TimeoutOptions = {}): Promise<void> {
@@ -716,7 +681,7 @@ export class InjectedScriptPollHandler<T> {
       this._progress.logger.info(message);
   }
 
-  async cancel() {
+  private async cancel() {
     if (!this._poll)
       return;
     const copy = this._poll;
@@ -754,13 +719,13 @@ export function throwFatalDOMError<T>(result: T | FatalDOMError): T {
   return result;
 }
 
-function throwRetargetableDOMError<T>(result: T | RetargetableDOMError): T {
+export function throwRetargetableDOMError<T>(result: T | RetargetableDOMError): T {
   if (result === 'error:notconnected')
     throw new Error('Element is not attached to the DOM');
   return result;
 }
 
-function assertDone(result: 'done'): void {
+export function assertDone(result: 'done'): void {
   // This function converts 'done' to void and ensures typescript catches unhandled errors.
 }
 
@@ -801,66 +766,4 @@ export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 
       }
     });
   }, { parsed: selector.parsed, state });
-}
-
-export function dispatchEventTask(selector: SelectorInfo, type: string, eventInit: Object): SchedulableTask<undefined> {
-  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, type, eventInit }) => {
-    return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document);
-      if (!element)
-        return continuePolling;
-      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
-      injected.dispatchEvent(element, type, eventInit);
-    });
-  }, { parsed: selector.parsed, type, eventInit });
-}
-
-export function textContentTask(selector: SelectorInfo): SchedulableTask<string | null> {
-  return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
-    return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document);
-      if (!element)
-        return continuePolling;
-      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
-      return element.textContent;
-    });
-  }, selector.parsed);
-}
-
-export function innerTextTask(selector: SelectorInfo): SchedulableTask<'error:nothtmlelement' | { innerText: string }> {
-  return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
-    return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document);
-      if (!element)
-        return continuePolling;
-      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
-      if (element.namespaceURI !== 'http://www.w3.org/1999/xhtml')
-        return 'error:nothtmlelement';
-      return { innerText: (element as HTMLElement).innerText };
-    });
-  }, selector.parsed);
-}
-
-export function innerHTMLTask(selector: SelectorInfo): SchedulableTask<string> {
-  return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
-    return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document);
-      if (!element)
-        return continuePolling;
-      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
-      return element.innerHTML;
-    });
-  }, selector.parsed);
-}
-
-export function getAttributeTask(selector: SelectorInfo, name: string): SchedulableTask<string | null> {
-  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, name }) => {
-    return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document);
-      if (!element)
-        return continuePolling;
-      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
-      return element.getAttribute(name);
-    });
-  }, { parsed: selector.parsed, name });
 }

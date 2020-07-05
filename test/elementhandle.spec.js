@@ -485,91 +485,35 @@ describe('ElementHandle convenience API', function() {
     expect(await page.textContent('#inner')).toBe('Text,\nmore text');
   });
   it('textContent should be atomic', async({page}) => {
-    const createDummySelector = () => ({
-      create(root, target) {},
-      query(root, selector) {
-        const result = root.querySelector(selector);
-        if (result)
-          Promise.resolve().then(() => result.textContent = 'modified');
-        return result;
-      },
-      queryAll(root, selector) {
-        const result = Array.from(root.querySelectorAll(selector));
-        for (const e of result)
-          Promise.resolve().then(() => result.textContent = 'modified');
-        return result;
-      }
-    });
-    await utils.registerEngine('textContent', createDummySelector);
+    await utils.registerAtomicEngine('textContent');
+    await page.evaluate(() => window.__modify = e => e.textContent = 'modified');
     await page.setContent(`<div>Hello</div>`);
-    const tc = await page.textContent('textContent=div');
-    expect(tc).toBe('Hello');
+    const result = await page.textContent('textContent=div');
+    expect(result).toBe('Hello');
     expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('modified');
   });
   it('innerText should be atomic', async({page}) => {
-    const createDummySelector = () => ({
-      create(root, target) {},
-      query(root, selector) {
-        const result = root.querySelector(selector);
-        if (result)
-          Promise.resolve().then(() => result.textContent = 'modified');
-        return result;
-      },
-      queryAll(root, selector) {
-        const result = Array.from(root.querySelectorAll(selector));
-        for (const e of result)
-          Promise.resolve().then(() => result.textContent = 'modified');
-        return result;
-      }
-    });
-    await utils.registerEngine('innerText', createDummySelector);
+    await utils.registerAtomicEngine('innerText');
+    await page.evaluate(() => window.__modify = e => e.textContent = 'modified');
     await page.setContent(`<div>Hello</div>`);
-    const tc = await page.innerText('innerText=div');
-    expect(tc).toBe('Hello');
+    const result = await page.innerText('innerText=div');
+    expect(result).toBe('Hello');
     expect(await page.evaluate(() => document.querySelector('div').innerText)).toBe('modified');
   });
   it('innerHTML should be atomic', async({page}) => {
-    const createDummySelector = () => ({
-      create(root, target) {},
-      query(root, selector) {
-        const result = root.querySelector(selector);
-        if (result)
-          Promise.resolve().then(() => result.textContent = 'modified');
-        return result;
-      },
-      queryAll(root, selector) {
-        const result = Array.from(root.querySelectorAll(selector));
-        for (const e of result)
-          Promise.resolve().then(() => result.textContent = 'modified');
-        return result;
-      }
-    });
-    await utils.registerEngine('innerHTML', createDummySelector);
+    await utils.registerAtomicEngine('innerHTML');
+    await page.evaluate(() => window.__modify = e => e.textContent = 'modified');
     await page.setContent(`<div>Hello<span>world</span></div>`);
-    const tc = await page.innerHTML('innerHTML=div');
-    expect(tc).toBe('Hello<span>world</span>');
+    const result = await page.innerHTML('innerHTML=div');
+    expect(result).toBe('Hello<span>world</span>');
     expect(await page.evaluate(() => document.querySelector('div').innerHTML)).toBe('modified');
   });
   it('getAttribute should be atomic', async({page}) => {
-    const createDummySelector = () => ({
-      create(root, target) {},
-      query(root, selector) {
-        const result = root.querySelector(selector);
-        if (result)
-          Promise.resolve().then(() => result.setAttribute('foo', 'modified'));
-        return result;
-      },
-      queryAll(root, selector) {
-        const result = Array.from(root.querySelectorAll(selector));
-        for (const e of result)
-          Promise.resolve().then(() => result.setAttribute('foo', 'modified'));
-        return result;
-      }
-    });
-    await utils.registerEngine('getAttribute', createDummySelector);
+    await utils.registerAtomicEngine('getAttribute');
+    await page.evaluate(() => window.__modify = e => e.setAttribute('foo', 'modified'));
     await page.setContent(`<div foo=hello></div>`);
-    const tc = await page.getAttribute('getAttribute=div', 'foo');
-    expect(tc).toBe('hello');
+    const result = await page.getAttribute('getAttribute=div', 'foo');
+    expect(result).toBe('hello');
     expect(await page.evaluate(() => document.querySelector('div').getAttribute('foo'))).toBe('modified');
   });
 });

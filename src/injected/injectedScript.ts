@@ -157,6 +157,17 @@ export default class InjectedScript {
     });
   }
 
+  pollNode<T>(target: Node | ParsedSelector, predicate: (node: Node, progress: types.InjectedScriptProgress, continuePolling: symbol) => T | symbol): types.InjectedScriptPoll<T> {
+    return this.pollRaf((progress, continuePolling) => {
+      const node = target instanceof Node ? target : this.querySelector(target, document);
+      if (!node) {
+        progress.logRepeating(`  selector did not resolve to any element - waiting...`);
+        return continuePolling;
+      }
+      return predicate(node, progress, continuePolling);
+    });
+  }
+
   private _runAbortableTask<T>(task: (progess: types.InjectedScriptProgress) => Promise<T>): types.InjectedScriptPoll<T> {
     let unsentLogs: string[] = [];
     let takeNextLogsCallback: ((logs: string[]) => void) | undefined;
@@ -234,15 +245,16 @@ export default class InjectedScript {
     return options.filter(option => option.selected).map(option => option.value);
   }
 
-  waitForEnabledAndFill(node: Node, value: string): types.InjectedScriptPoll<FatalDOMError | 'error:notconnected' | 'needsinput' | 'done'> {
-    return this.pollRaf((progress, continuePolling) => {
+  waitForEnabledAndFill(target: Node | ParsedSelector, value: string): types.InjectedScriptPoll<FatalDOMError | 'error:notconnected' | 'needsinput' | 'done'> {
+    return this.pollNode(target, (node, progress, continuePolling) => {
+      const logPrefix = target === node ? `  element` : `  element ${this.previewNode(node)}`;
       if (node.nodeType !== Node.ELEMENT_NODE)
         return 'error:notelement';
       const element = node as Element;
       if (!element.isConnected)
         return 'error:notconnected';
       if (!this.isVisible(element)) {
-        progress.logRepeating('    element is not visible - waiting...');
+        progress.logRepeating(logPrefix + ` is not visible - waiting...`);
         return continuePolling;
       }
       if (element.nodeName.toLowerCase() === 'input') {
@@ -251,7 +263,7 @@ export default class InjectedScript {
         const kDateTypes = new Set(['date', 'time', 'datetime', 'datetime-local']);
         const kTextInputTypes = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
         if (!kTextInputTypes.has(type) && !kDateTypes.has(type)) {
-          progress.log(`    input of type "${type}" cannot be filled`);
+          progress.logRepeating(logPrefix + ` has input type "${type}" and cannot be filled`);
           return 'error:notfillableinputtype';
         }
         if (type === 'number') {
@@ -260,11 +272,11 @@ export default class InjectedScript {
             return 'error:notfillablenumberinput';
         }
         if (input.disabled) {
-          progress.logRepeating('    element is disabled - waiting...');
+          progress.logRepeating(logPrefix + ` is disabled - waiting...`);
           return continuePolling;
         }
         if (input.readOnly) {
-          progress.logRepeating('    element is readonly - waiting...');
+          progress.logRepeating(logPrefix + ` is readonly - waiting...`);
           return continuePolling;
         }
         if (kDateTypes.has(type)) {
@@ -273,6 +285,8 @@ export default class InjectedScript {
           input.value = value;
           if (input.value !== value)
             return 'error:notvaliddate';
+          if (target !== node)
+            progress.logRepeating(`  resolved to ${this.previewNode(node)}`);
           element.dispatchEvent(new Event('input', { 'bubbles': true }));
           element.dispatchEvent(new Event('change', { 'bubbles': true }));
           return 'done';  // We have already changed the value, no need to input it.
@@ -280,11 +294,11 @@ export default class InjectedScript {
       } else if (element.nodeName.toLowerCase() === 'textarea') {
         const textarea = element as HTMLTextAreaElement;
         if (textarea.disabled) {
-          progress.logRepeating('    element is disabled - waiting...');
+          progress.logRepeating(logPrefix + ` is disabled - waiting...`);
           return continuePolling;
         }
         if (textarea.readOnly) {
-          progress.logRepeating('    element is readonly - waiting...');
+          progress.logRepeating(logPrefix + ` is readonly - waiting...`);
           return continuePolling;
         }
       } else if (!(element as HTMLElement).isContentEditable) {
@@ -292,10 +306,74 @@ export default class InjectedScript {
       }
       const result = this._selectText(element);
       if (result === 'error:notvisible') {
-        progress.logRepeating('    element is not visible - waiting...');
+        progress.logRepeating(logPrefix + ` is not visible - waiting...`);
         return continuePolling;
       }
+      if (target !== node)
+        progress.logRepeating(`  resolved to ${this.previewNode(node)}`);
       return 'needsinput';  // Still need to input the value.
+    });
+  }
+
+  waitForNodeAndReturnTextContent(target: Node | ParsedSelector): types.InjectedScriptPoll<string | null> {
+    return this.pollNode(target, (node, progress) => {
+      if (target !== node)
+        progress.logRepeating(`  resolved to ${this.previewNode(node)}`);
+      return node.textContent;
+    });
+  }
+
+  waitForNodeAndReturnInnerText(target: Node | ParsedSelector): types.InjectedScriptPoll<FatalDOMError | { innerText: string }> {
+    return this.pollNode(target, (node, progress) => {
+      if (target !== node)
+        progress.logRepeating(`  resolved to ${this.previewNode(node)}`);
+      if (node.nodeType !== Node.ELEMENT_NODE)
+        return 'error:notelement';
+      if (node.namespaceURI !== 'http://www.w3.org/1999/xhtml')
+        return 'error:nothtmlelement';
+      const element = node as HTMLElement;
+      return { innerText: element.innerText };
+    });
+  }
+
+  waitForNodeAndReturnInnerHTML(target: Node | ParsedSelector): types.InjectedScriptPoll<FatalDOMError | { innerHTML: string }> {
+    return this.pollNode(target,  (node, progress) => {
+      if (target !== node)
+        progress.logRepeating(`  resolved to ${this.previewNode(node)}`);
+      if (node.nodeType !== Node.ELEMENT_NODE)
+        return 'error:notelement';
+      const element = node as Element;
+      return { innerHTML: element.innerHTML };
+    });
+  }
+
+  waitForNodeAndReturnAttribute(target: Node | ParsedSelector, name: string): types.InjectedScriptPoll<FatalDOMError | { value: string | null }> {
+    return this.pollNode(target, (node, progress) => {
+      if (target !== node)
+        progress.logRepeating(`  resolved to ${this.previewNode(node)}`);
+      if (node.nodeType !== Node.ELEMENT_NODE)
+        return 'error:notelement';
+      const element = node as Element;
+      return { value: element.getAttribute(name) };
+    });
+  }
+
+  waitForNodeAndDispatchEvent(target: Node | ParsedSelector, type: string, eventInit: object): types.InjectedScriptPoll<void> {
+    return this.pollNode(target, (node, progress) => {
+      if (target !== node)
+        progress.logRepeating(`  resolved to ${this.previewNode(node)}`);
+      let event;
+      eventInit = { bubbles: true, cancelable: true, composed: true, ...eventInit };
+      switch (eventType.get(type)) {
+        case 'mouse': event = new MouseEvent(type, eventInit); break;
+        case 'keyboard': event = new KeyboardEvent(type, eventInit); break;
+        case 'touch': event = new TouchEvent(type, eventInit); break;
+        case 'pointer': event = new PointerEvent(type, eventInit); break;
+        case 'focus': event = new FocusEvent(type, eventInit); break;
+        case 'drag': event = new DragEvent(type, eventInit); break;
+        default: event = new Event(type, eventInit); break;
+      }
+      node.dispatchEvent(event);
     });
   }
 
@@ -478,21 +556,6 @@ export default class InjectedScript {
     while (hitElement && hitElement !== element)
       hitElement = this._parentElementOrShadowHost(hitElement);
     return hitElement === element ? 'done' : 'error:nothittarget';
-  }
-
-  dispatchEvent(node: Node, type: string, eventInit: Object) {
-    let event;
-    eventInit = { bubbles: true, cancelable: true, composed: true, ...eventInit };
-    switch (eventType.get(type)) {
-      case 'mouse': event = new MouseEvent(type, eventInit); break;
-      case 'keyboard': event = new KeyboardEvent(type, eventInit); break;
-      case 'touch': event = new TouchEvent(type, eventInit); break;
-      case 'pointer': event = new PointerEvent(type, eventInit); break;
-      case 'focus': event = new FocusEvent(type, eventInit); break;
-      case 'drag': event = new DragEvent(type, eventInit); break;
-      default: event = new Event(type, eventInit); break;
-    }
-    node.dispatchEvent(event);
   }
 
   private _parentElementOrShadowHost(element: Element): Element | undefined {

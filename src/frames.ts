@@ -28,6 +28,7 @@ import { selectors } from './selectors';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
 import { Progress, ProgressController } from './progress';
+import * as actions from './actions';
 
 type ContextData = {
   contextPromise: Promise<dom.FrameExecutionContext>;
@@ -475,13 +476,9 @@ export class Frame {
     }, this._page._timeoutSettings.timeout(options), this._apiName('waitForSelector'));
   }
 
-  async dispatchEvent(selector: string, type: string, eventInit?: Object, options: types.TimeoutOptions = {}): Promise<void> {
-    const info = selectors._parseSelector(selector);
-    const task = dom.dispatchEventTask(info, type, eventInit || {});
+  async dispatchEvent(selector: string, type: string, eventInit: Object = {}, options: types.TimeoutOptions = {}): Promise<void> {
     return this._page._runAbortableTask(async progress => {
-      progress.logger.info(`Dispatching "${type}" event on selector "${selector}"...`);
-      // Note: we always dispatch events in the main world.
-      await this._scheduleRerunnableTask(progress, 'main', task);
+      return await actions.dispatchEvent(progress, { frame: this, selector }, type, eventInit);
     }, this._page._timeoutSettings.timeout(options), this._apiName('dispatchEvent'));
   }
 
@@ -752,7 +749,9 @@ export class Frame {
   }
 
   async fill(selector: string, value: string, options: types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._fill(progress, value, options), this._apiName('fill'));
+    return this._page._runAbortableTask(async progress => {
+      return await actions.fill(progress, { frame: this, selector }, value, options);
+    }, this._page._timeoutSettings.timeout(options), this._apiName('fill'));
   }
 
   async focus(selector: string, options: types.TimeoutOptions = {}) {
@@ -760,39 +759,26 @@ export class Frame {
   }
 
   async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<string | null> {
-    const info = selectors._parseSelector(selector);
-    const task = dom.textContentTask(info);
     return this._page._runAbortableTask(async progress => {
-      progress.logger.info(`  retrieving textContent from "${selector}"`);
-      return this._scheduleRerunnableTask(progress, info.world, task);
+      return await actions.textContent(progress, { frame: this, selector });
     }, this._page._timeoutSettings.timeout(options), this._apiName('textContent'));
   }
 
   async innerText(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
-    const info = selectors._parseSelector(selector);
-    const task = dom.innerTextTask(info);
     return this._page._runAbortableTask(async progress => {
-      progress.logger.info(`  retrieving innerText from "${selector}"`);
-      const result = dom.throwFatalDOMError(await this._scheduleRerunnableTask(progress, info.world, task));
-      return result.innerText;
+      return await actions.innerText(progress, { frame: this, selector });
     }, this._page._timeoutSettings.timeout(options), this._apiName('innerText'));
   }
 
   async innerHTML(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
-    const info = selectors._parseSelector(selector);
-    const task = dom.innerHTMLTask(info);
     return this._page._runAbortableTask(async progress => {
-      progress.logger.info(`  retrieving innerHTML from "${selector}"`);
-      return this._scheduleRerunnableTask(progress, info.world, task);
+      return await actions.innerHTML(progress, { frame: this, selector });
     }, this._page._timeoutSettings.timeout(options), this._apiName('innerHTML'));
   }
 
   async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
-    const info = selectors._parseSelector(selector);
-    const task = dom.getAttributeTask(info, name);
     return this._page._runAbortableTask(async progress => {
-      progress.logger.info(`  retrieving attribute "${name}" from "${selector}"`);
-      return this._scheduleRerunnableTask(progress, info.world, task);
+      return await actions.getAttribute(progress, { frame: this, selector }, name);
     }, this._page._timeoutSettings.timeout(options), this._apiName('getAttribute'));
   }
 
@@ -871,7 +857,7 @@ export class Frame {
     this._parentFrame = null;
   }
 
-  private _scheduleRerunnableTask<T>(progress: Progress, world: types.World, task: dom.SchedulableTask<T>): Promise<T> {
+  _scheduleRerunnableTask<T>(progress: Progress, world: types.World, task: dom.SchedulableTask<T>): Promise<T> {
     const data = this._contextData.get(world)!;
     const rerunnableTask = new RerunnableTask(data, progress, task, true /* returnByValue */);
     if (this._detached)

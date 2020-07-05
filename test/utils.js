@@ -103,6 +103,25 @@ const utils = module.exports = {
     }
   },
 
+  registerAtomicEngine: async (name) => {
+    const createAtomicEngine = () => ({
+      create(root, target) {},
+      query(root, selector) {
+        const result = root.querySelector(selector);
+        if (result)
+          Promise.resolve().then(() => window.__modify && window.__modify(result));
+        return result;
+      },
+      queryAll(root, selector) {
+        const result = Array.from(root.querySelectorAll(selector));
+        for (const e of result)
+          Promise.resolve().then(() => window.__modify && window.__modify(result));
+        return result;
+      }
+    });
+    await utils.registerEngine(name, createAtomicEngine, { contentScript: false });
+  },
+
   initializeFlakinessDashboardIfNeeded: async function(testRunner) {
     // Generate testIDs for all tests and verify they don't clash.
     // This will add |test.testId| for every test.

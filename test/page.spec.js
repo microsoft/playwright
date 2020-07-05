@@ -18,7 +18,8 @@
 const path = require('path');
 const util = require('util');
 const vm = require('vm');
-const {FFOX, CHROMIUM, WEBKIT, WIN, CHANNEL} = require('./utils').testOptions(browserType);
+const utils = require('./utils');
+const {FFOX, CHROMIUM, WEBKIT, WIN, CHANNEL} = utils.testOptions(browserType);
 
 describe('Page.close', function() {
   it('should reject all promises when page is closed', async({context}) => {
@@ -1079,7 +1080,7 @@ describe('Page.fill', function() {
       await page.$eval('input', (input, type) => input.setAttribute('type', type), type);
       let error = null;
       await page.fill('input', '').catch(e => error = e);
-      expect(error.message).toContain(`input of type "${type}" cannot be filled`);
+      expect(error.message).toContain(`has input type "${type}" and cannot be filled`);
     }
   });
   it('should fill different input types', async({page, server}) => {
