@@ -71,6 +71,7 @@ const iPhone11 = devices['iPhone 11 Pro'];
   const browser = await webkit.launch();
   const context = await browser.newContext({
     ...iPhone11,
+    locale: 'en-US',
     geolocation: { longitude: 12.492507, latitude: 41.889938 },
     permissions: ['geolocation']
   });
