@@ -32,22 +32,22 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
     }, false, browserType.name());
   }
 
-  async launch(params: { options?: types.LaunchOptions }): Promise<BrowserChannel> {
-    const browser = await this._object.launch(params.options || undefined);
+  async launch(params: types.LaunchOptions): Promise<BrowserChannel> {
+    const browser = await this._object.launch(params);
     return new BrowserDispatcher(this._scope, browser as BrowserBase);
   }
 
-  async launchPersistentContext(params: { userDataDir: string, options?: types.LaunchOptions & types.BrowserContextOptions }): Promise<BrowserContextChannel> {
-    const browserContext = await this._object.launchPersistentContext(params.userDataDir, params.options);
+  async launchPersistentContext(params: { userDataDir: string } & types.LaunchOptions & types.BrowserContextOptions): Promise<BrowserContextChannel> {
+    const browserContext = await this._object.launchPersistentContext(params.userDataDir, params);
     return new BrowserContextDispatcher(this._scope, browserContext as BrowserContextBase);
   }
 
-  async launchServer(params: { options?: types.LaunchServerOptions }): Promise<BrowserServerChannel> {
-    return new BrowserServerDispatcher(this._scope, await this._object.launchServer(params.options));
+  async launchServer(params: types.LaunchServerOptions): Promise<BrowserServerChannel> {
+    return new BrowserServerDispatcher(this._scope, await this._object.launchServer(params));
   }
 
-  async connect(params: { options: types.ConnectOptions }): Promise<BrowserChannel> {
-    const browser = await this._object.connect(params.options);
+  async connect(params: types.ConnectOptions): Promise<BrowserChannel> {
+    const browser = await this._object.connect(params);
     return new BrowserDispatcher(this._scope, browser as BrowserBase);
   }
 }

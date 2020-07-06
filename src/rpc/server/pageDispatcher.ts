@@ -91,20 +91,20 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     await this._page.setExtraHTTPHeaders(params.headers);
   }
 
-  async reload(params: { options?: types.NavigateOptions }): Promise<ResponseChannel | null> {
-    return lookupNullableDispatcher<ResponseDispatcher>(await this._page.reload(params.options));
+  async reload(params: types.NavigateOptions): Promise<ResponseChannel | null> {
+    return lookupNullableDispatcher<ResponseDispatcher>(await this._page.reload(params));
   }
 
-  async goBack(params: { options?: types.NavigateOptions }): Promise<ResponseChannel | null> {
-    return lookupNullableDispatcher<ResponseDispatcher>(await this._page.goBack(params.options));
+  async goBack(params: types.NavigateOptions): Promise<ResponseChannel | null> {
+    return lookupNullableDispatcher<ResponseDispatcher>(await this._page.goBack(params));
   }
 
-  async goForward(params: { options?: types.NavigateOptions }): Promise<ResponseChannel | null> {
-    return lookupNullableDispatcher<ResponseDispatcher>(await this._page.goForward(params.options));
+  async goForward(params: types.NavigateOptions): Promise<ResponseChannel | null> {
+    return lookupNullableDispatcher<ResponseDispatcher>(await this._page.goForward(params));
   }
 
-  async emulateMedia(params: { options: { media?: 'screen' | 'print', colorScheme?: 'dark' | 'light' | 'no-preference' } }): Promise<void> {
-    await this._page.emulateMedia(params.options);
+  async emulateMedia(params: { media?: 'screen' | 'print', colorScheme?: 'dark' | 'light' | 'no-preference' }): Promise<void> {
+    await this._page.emulateMedia(params);
   }
 
   async setViewportSize(params: { viewportSize: types.Size }): Promise<void> {
@@ -125,12 +125,12 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     });
   }
 
-  async screenshot(params: { options?: types.ScreenshotOptions }): Promise<string> {
-    return (await this._page.screenshot(params.options)).toString('base64');
+  async screenshot(params: types.ScreenshotOptions): Promise<string> {
+    return (await this._page.screenshot(params)).toString('base64');
   }
 
-  async close(params: { options?: { runBeforeUnload?: boolean } }): Promise<void> {
-    await this._page.close(params.options);
+  async close(params: { runBeforeUnload?: boolean }): Promise<void> {
+    await this._page.close(params);
   }
 
   async setFileChooserInterceptedNoReply(params: { intercepted: boolean }) {
@@ -152,41 +152,41 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     await this._page.keyboard.insertText(params.text);
   }
 
-  async keyboardType(params: { text: string, options?: { delay?: number } }): Promise<void> {
-    await this._page.keyboard.type(params.text, params.options);
+  async keyboardType(params: { text: string, delay?: number }): Promise<void> {
+    await this._page.keyboard.type(params.text, params);
   }
 
-  async keyboardPress(params: { key: string, options?: { delay?: number } }): Promise<void> {
-    await this._page.keyboard.press(params.key, params.options);
+  async keyboardPress(params: { key: string, delay?: number }): Promise<void> {
+    await this._page.keyboard.press(params.key, params);
   }
 
-  async mouseMove(params: { x: number, y: number, options?: { steps?: number } }): Promise<void> {
-    await this._page.mouse.move(params.x, params.y, params.options);
+  async mouseMove(params: { x: number, y: number, steps?: number }): Promise<void> {
+    await this._page.mouse.move(params.x, params.y, params);
   }
 
-  async mouseDown(params: { options?: { button?: types.MouseButton, clickCount?: number } }): Promise<void> {
-    await this._page.mouse.down(params.options);
+  async mouseDown(params: { button?: types.MouseButton, clickCount?: number }): Promise<void> {
+    await this._page.mouse.down(params);
   }
 
-  async mouseUp(params: { options?: { button?: types.MouseButton, clickCount?: number } }): Promise<void> {
-    await this._page.mouse.up(params.options);
+  async mouseUp(params: { button?: types.MouseButton, clickCount?: number }): Promise<void> {
+    await this._page.mouse.up(params);
   }
 
-  async mouseClick(params: { x: number, y: number, options?: { delay?: number, button?: types.MouseButton, clickCount?: number } }): Promise<void> {
-    await this._page.mouse.click(params.x, params.y, params.options);
+  async mouseClick(params: { x: number, y: number, delay?: number, button?: types.MouseButton, clickCount?: number }): Promise<void> {
+    await this._page.mouse.click(params.x, params.y, params);
   }
 
-  async accessibilitySnapshot(params: { options: { interestingOnly?: boolean, root?: ElementHandleChannel } }): Promise<types.SerializedAXNode | null> {
+  async accessibilitySnapshot(params: { interestingOnly?: boolean, root?: ElementHandleChannel }): Promise<types.SerializedAXNode | null> {
     return await this._page.accessibility.snapshot({
-      interestingOnly: params.options.interestingOnly,
-      root: params.options.root ? (params.options.root as ElementHandleDispatcher)._elementHandle : undefined
+      interestingOnly: params.interestingOnly,
+      root: params.root ? (params.root as ElementHandleDispatcher)._elementHandle : undefined
     });
   }
 
-  async pdf(params: { options?: types.PDFOptions }): Promise<Binary> {
+  async pdf(params: types.PDFOptions): Promise<Binary> {
     if (!this._page.pdf)
       throw new Error('PDF generation is only supported for Headless Chromium');
-    const binary = await this._page.pdf(params.options);
+    const binary = await this._page.pdf(params);
     return binary.toString('base64');
   }
 

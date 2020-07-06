@@ -38,11 +38,11 @@ export class Keyboard {
   }
 
   async type(text: string, options: { delay?: number } = {}) {
-    await this._channel.keyboardType({ text, options });
+    await this._channel.keyboardType({ text, ...options });
   }
 
   async press(key: string, options: { delay?: number } = {}) {
-    await this._channel.keyboardPress({ key, options });
+    await this._channel.keyboardPress({ key, ...options });
   }
 }
 
@@ -54,19 +54,19 @@ export class Mouse {
   }
 
   async move(x: number, y: number, options: { steps?: number } = {}) {
-    await this._channel.mouseMove({ x, y, options });
+    await this._channel.mouseMove({ x, y, ...options });
   }
 
   async down(options: { button?: types.MouseButton, clickCount?: number } = {}) {
-    await this._channel.mouseDown({ options });
+    await this._channel.mouseDown({ ...options });
   }
 
   async up(options: { button?: types.MouseButton, clickCount?: number } = {}) {
-    await this._channel.mouseUp({ options });
+    await this._channel.mouseUp(options);
   }
 
   async click(x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number } = {}) {
-    await this._channel.mouseClick({ x, y, options });
+    await this._channel.mouseClick({ x, y, ...options });
   }
 
   async dblclick(x: number, y: number, options: { delay?: number, button?: types.MouseButton } = {}) {
