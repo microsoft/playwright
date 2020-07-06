@@ -12,6 +12,6 @@ interface nsIDocShell;
 [scriptable, uuid(d8c4d9e0-9462-445e-9e43-68d3872ad1de)]
 interface nsIScreencastService : nsISupports
 {
-  long startVideoRecording(in nsIDocShell docShell, in ACString fileName);
+  long startVideoRecording(in nsIDocShell docShell, in ACString fileName, in uint32_t width, in uint32_t height, in double scale);
   void stopVideoRecording(in long sessionId);
 };

@@ -287,9 +287,14 @@ class PageHandler {
   }
 
   startVideoRecording({file, width, height, scale}) {
+    if (width < 10 || width > 10000 || height < 10 || height > 10000)
+      throw new Error("Invalid size");
+    if (scale && (scale <= 0 || scale > 1))
+      throw new Error("Unsupported scale");
+
     const screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
     const docShell = this._pageTarget._gBrowser.ownerGlobal.docShell;
-    this._videoSessionId = screencast.startVideoRecording(docShell, file);
+    this._videoSessionId = screencast.startVideoRecording(docShell, file, width, height, scale || 0);
   }
 
   stopVideoRecording() {

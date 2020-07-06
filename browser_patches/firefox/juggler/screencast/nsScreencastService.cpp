@@ -93,7 +93,7 @@ nsScreencastService::nsScreencastService() = default;
 nsScreencastService::~nsScreencastService() {
 }
 
-nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const nsACString& aFileName, int32_t* sessionId) {
+nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const nsACString& aFileName, uint32_t width, uint32_t height, double scale, int32_t* sessionId) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread(), "Screencast service must be started on the Main thread.");
   *sessionId = -1;
 
@@ -121,7 +121,10 @@ nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const 
 # endif
   *sessionId = ++mLastSessionId;
   nsCString error;
-  RefPtr<ScreencastEncoder> encoder = ScreencastEncoder::create(error, PromiseFlatCString(aFileName), 1280, 960, Nothing());
+  Maybe<double> maybeScale;
+  if (scale)
+    maybeScale = Some(scale);
+  RefPtr<ScreencastEncoder> encoder = ScreencastEncoder::create(error, PromiseFlatCString(aFileName), width, height, maybeScale);
   if (!encoder) {
     fprintf(stderr, "Failed to create ScreencastEncoder: %s\n", error.get());
     return NS_ERROR_FAILURE;
