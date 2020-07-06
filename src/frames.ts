@@ -160,7 +160,7 @@ export class FrameManager {
     frame._pendingDocument = undefined;
     for (const task of frame._frameTasks)
       task.onNewDocument(frame._currentDocument);
-    this.clearFrameLifecycle(frame);
+    frame._onClearLifecycle();
     if (!initial)
       this._page.emit(Events.Page.FrameNavigated, frame);
   }
@@ -200,25 +200,8 @@ export class FrameManager {
 
   frameLifecycleEvent(frameId: string, event: types.LifecycleEvent) {
     const frame = this._frames.get(frameId);
-    if (!frame)
-      return;
-    if (frame._firedLifecycleEvents.has(event))
-      return;
-    frame._firedLifecycleEvents.add(event);
-    this._notifyLifecycle(frame, event);
-    if (frame === this._mainFrame && event === 'load')
-      this._page.emit(Events.Page.Load);
-    if (frame === this._mainFrame && event === 'domcontentloaded')
-      this._page.emit(Events.Page.DOMContentLoaded);
-  }
-
-  clearFrameLifecycle(frame: Frame) {
-    frame._firedLifecycleEvents.clear();
-    // Keep the current navigation request if any.
-    frame._inflightRequests = new Set(Array.from(frame._inflightRequests).filter(request => request === frame._currentDocument.request));
-    frame._stopNetworkIdleTimer();
-    if (frame._inflightRequests.size === 0)
-      frame._startNetworkIdleTimer();
+    if (frame)
+      frame._onLifecycleEvent(event);
   }
 
   requestStarted(request: network.Request) {
@@ -257,13 +240,6 @@ export class FrameManager {
     }
     if (!request._isFavicon)
       this._page.emit(Events.Page.RequestFailed, request);
-  }
-
-  private _notifyLifecycle(frame: Frame, lifecycleEvent: types.LifecycleEvent) {
-    for (let parent: Frame | null = frame; parent; parent = parent.parentFrame()) {
-      for (const frameTask of parent._frameTasks)
-        frameTask.onLifecycle(frame, lifecycleEvent);
-    }
   }
 
   removeChildFramesRecursively(frame: Frame) {
@@ -313,7 +289,8 @@ export class FrameManager {
 
 export class Frame {
   _id: string;
-  readonly _firedLifecycleEvents: Set<types.LifecycleEvent>;
+  private _firedLifecycleEvents = new Set<types.LifecycleEvent>();
+  _subtreeLifecycleEvents = new Set<types.LifecycleEvent>();
   _currentDocument: DocumentInfo;
   _pendingDocument?: DocumentInfo;
   _frameTasks = new Set<FrameTask>();
@@ -332,7 +309,6 @@ export class Frame {
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
     this._id = id;
-    this._firedLifecycleEvents = new Set();
     this._page = page;
     this._parentFrame = parentFrame;
     this._currentDocument = { documentId: undefined, request: undefined };
@@ -351,6 +327,51 @@ export class Frame {
   private _apiName(method: string) {
     const subject = this._page._callingPageAPI  ? 'page' : 'frame';
     return `${subject}.${method}`;
+  }
+
+  _onLifecycleEvent(event: types.LifecycleEvent) {
+    if (this._firedLifecycleEvents.has(event))
+      return;
+    this._firedLifecycleEvents.add(event);
+    // Recalculate subtree lifecycle for the whole tree - it should not be that big.
+    this._page.mainFrame()._recalculateLifecycle();
+  }
+
+  _onClearLifecycle() {
+    this._firedLifecycleEvents.clear();
+    // Recalculate subtree lifecycle for the whole tree - it should not be that big.
+    this._page.mainFrame()._recalculateLifecycle();
+    // Keep the current navigation request if any.
+    this._inflightRequests = new Set(Array.from(this._inflightRequests).filter(request => request === this._currentDocument.request));
+    this._stopNetworkIdleTimer();
+    if (this._inflightRequests.size === 0)
+      this._startNetworkIdleTimer();
+  }
+
+  private _recalculateLifecycle() {
+    const events = new Set<types.LifecycleEvent>(this._firedLifecycleEvents);
+    for (const child of this._childFrames) {
+      child._recalculateLifecycle();
+      // We require a particular lifecycle event to be fired in the whole
+      // frame subtree, and then consider it done.
+      for (const event of events) {
+        if (!child._subtreeLifecycleEvents.has(event))
+          events.delete(event);
+      }
+    }
+    const mainFrame = this._page.mainFrame();
+    for (const event of events) {
+      // Checking whether we have already notified about this event.
+      if (!this._subtreeLifecycleEvents.has(event)) {
+        for (const frameTask of this._frameTasks)
+          frameTask.onLifecycle(event);
+        if (this === mainFrame && event === 'load')
+          this._page.emit(Events.Page.Load);
+        if (this === mainFrame && event === 'domcontentloaded')
+          this._page.emit(Events.Page.DOMContentLoaded);
+      }
+    }
+    this._subtreeLifecycleEvents = events;
   }
 
   async goto(url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
@@ -553,7 +574,7 @@ export class Frame {
       const lifecyclePromise = new Promise((resolve, reject) => {
         this._page._frameManager._consoleMessageTags.set(tag, () => {
           // Clear lifecycle right after document.open() - see 'tag' below.
-          this._page._frameManager.clearFrameLifecycle(this);
+          this._onClearLifecycle();
           this._waitForLoadState(progress, waitUntil).then(resolve).catch(reject);
         });
       });
@@ -939,7 +960,7 @@ export class Frame {
     assert(!this._networkIdleTimer);
     if (this._firedLifecycleEvents.has('networkidle'))
       return;
-    this._networkIdleTimer = setTimeout(() => { this._page._frameManager.frameLifecycleEvent(this._id, 'networkidle'); }, 500);
+    this._networkIdleTimer = setTimeout(() => this._onLifecycleEvent('networkidle'), 500);
   }
 
   _stopNetworkIdleTimer() {
@@ -1081,10 +1102,10 @@ class FrameTask {
     }
   }
 
-  onLifecycle(frame: Frame, lifecycleEvent: types.LifecycleEvent) {
-    if (this._progress && frame === this._frame && frame._url !== 'about:blank')
+  onLifecycle(lifecycleEvent: types.LifecycleEvent) {
+    if (this._progress && this._frame._url !== 'about:blank')
       this._progress.logger.info(`"${lifecycleEvent}" event fired`);
-    if (this._onLifecycle && this._checkLifecycleRecursively(this._frame, this._onLifecycle.waitUntil))
+    if (this._onLifecycle && this._onLifecycle.waitUntil === lifecycleEvent)
       this._onLifecycle.resolve();
   }
 
@@ -1114,22 +1135,12 @@ class FrameTask {
       waitUntil = 'networkidle';
     if (!types.kLifecycleEvents.has(waitUntil))
       throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
-    if (this._checkLifecycleRecursively(this._frame, waitUntil))
+    if (this._frame._subtreeLifecycleEvents.has(waitUntil))
       return Promise.resolve();
     return new Promise(resolve => {
       assert(!this._onLifecycle);
       this._onLifecycle = { waitUntil, resolve };
     });
-  }
-
-  private _checkLifecycleRecursively(frame: Frame, waitUntil: types.LifecycleEvent): boolean {
-    if (!frame._firedLifecycleEvents.has(waitUntil))
-      return false;
-    for (const child of frame.childFrames()) {
-      if (!this._checkLifecycleRecursively(child, waitUntil))
-        return false;
-    }
-    return true;
   }
 
   done() {
