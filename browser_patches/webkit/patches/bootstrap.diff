@@ -15030,6 +15030,18 @@ index 113170ce21145fc53a3c804822ef20fa9d89de8b..855ff101965bf1dd652d58903db0c143
  # TODO: Add a check for HAVE_RSA_PSS for support of CryptoAlgorithmRSA_PSS
  # https://bugs.webkit.org/show_bug.cgi?id=206635
  
+diff --git a/Tools/MiniBrowser/gtk/BrowserDownloadsBar.c b/Tools/MiniBrowser/gtk/BrowserDownloadsBar.c
+index b9feb8e7d97716ff505c3ce0d3bea830ff0a9d62..91d83beeb8b6350f1a03551f638df65af838c2aa 100644
+--- a/Tools/MiniBrowser/gtk/BrowserDownloadsBar.c
++++ b/Tools/MiniBrowser/gtk/BrowserDownloadsBar.c
+@@ -127,6 +127,7 @@ static void browserDownloadFinalize(GObject *object)
+     BrowserDownload *browserDownload = BROWSER_DOWNLOAD(object);
+ 
+     if (browserDownload->download) {
++        g_signal_handlers_disconnect_by_data(browserDownload->download, browserDownload);
+         g_object_unref(browserDownload->download);
+         browserDownload->download = NULL;
+     }
 diff --git a/Tools/MiniBrowser/gtk/BrowserTab.c b/Tools/MiniBrowser/gtk/BrowserTab.c
 index 3845eabba3e964f9e11bb0ffcb8726fd4ea96fc4..630a6e395298bd9c03c1b131f984b0a8444d2051 100644
 --- a/Tools/MiniBrowser/gtk/BrowserTab.c
