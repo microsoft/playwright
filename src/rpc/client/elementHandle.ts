@@ -68,36 +68,36 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     await this._elementChannel.dispatchEvent({ type, eventInit });
   }
 
-  async scrollIntoViewIfNeeded(options?: types.TimeoutOptions) {
-    await this._elementChannel.scrollIntoViewIfNeeded({ options });
+  async scrollIntoViewIfNeeded(options: types.TimeoutOptions = {}) {
+    await this._elementChannel.scrollIntoViewIfNeeded(options);
   }
 
   async hover(options: types.PointerActionOptions & types.PointerActionWaitOptions = {}): Promise<void> {
-    await this._elementChannel.hover({ options });
+    await this._elementChannel.hover(options);
   }
 
   async click(options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return await this._elementChannel.click({ options });
+    return await this._elementChannel.click(options);
   }
 
   async dblclick(options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return await this._elementChannel.dblclick({ options });
+    return await this._elementChannel.dblclick(options);
   }
 
   async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return await this._elementChannel.selectOption({ values: convertSelectOptionValues(values), options });
+    return await this._elementChannel.selectOption({ values: convertSelectOptionValues(values), ...options });
   }
 
   async fill(value: string, options: types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return await this._elementChannel.fill({ value, options });
+    return await this._elementChannel.fill({ value, ...options });
   }
 
   async selectText(options: types.TimeoutOptions): Promise<void> {
-    await this._elementChannel.selectText({ options });
+    await this._elementChannel.selectText(options);
   }
 
   async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}) {
-    await this._elementChannel.setInputFiles({ files, options });
+    await this._elementChannel.setInputFiles({ files, ...options });
   }
 
   async focus(): Promise<void> {
@@ -105,27 +105,27 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   }
 
   async type(text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}): Promise<void> {
-    await this._elementChannel.type({ text, options });
+    await this._elementChannel.type({ text, ...options });
   }
 
   async press(key: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}): Promise<void> {
-    await this._elementChannel.press({ key, options });
+    await this._elementChannel.press({ key, ...options });
   }
 
   async check(options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    return await this._elementChannel.check({ options });
+    return await this._elementChannel.check(options);
   }
 
   async uncheck(options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    return await this._elementChannel.uncheck({ options });
+    return await this._elementChannel.uncheck(options);
   }
 
   async boundingBox(): Promise<types.Rect | null> {
     return await this._elementChannel.boundingBox();
   }
 
-  async screenshot(options?: types.ElementScreenshotOptions): Promise<Buffer> {
-    return Buffer.from(await this._elementChannel.screenshot({ options }), 'base64');
+  async screenshot(options: types.ElementScreenshotOptions = {}): Promise<Buffer> {
+    return Buffer.from(await this._elementChannel.screenshot(options), 'base64');
   }
 
   async $(selector: string): Promise<ElementHandle<Element> | null> {

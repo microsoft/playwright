@@ -69,64 +69,64 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
     await this._elementHandle.dispatchEvent(params.type, params.eventInit);
   }
 
-  async scrollIntoViewIfNeeded(params: { options?: types.TimeoutOptions }) {
-    await this._elementHandle.scrollIntoViewIfNeeded(params.options);
+  async scrollIntoViewIfNeeded(params: types.TimeoutOptions) {
+    await this._elementHandle.scrollIntoViewIfNeeded(params);
   }
 
-  async hover(params: { options?: types.PointerActionOptions & types.PointerActionWaitOptions }) {
-    await this._elementHandle.hover(params.options);
+  async hover(params: types.PointerActionOptions & types.PointerActionWaitOptions) {
+    await this._elementHandle.hover(params);
   }
 
-  async click(params: { options?: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions }) {
-    await this._elementHandle.click(params.options);
+  async click(params: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+    await this._elementHandle.click(params);
   }
 
-  async dblclick(params: { options?: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions }) {
-    await this._elementHandle.dblclick(params.options);
+  async dblclick(params: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+    await this._elementHandle.dblclick(params);
   }
 
-  async selectOption(params: { values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions }): Promise<string[]> {
-    return this._elementHandle.selectOption(convertSelectOptionValues(params.values), params.options);
+  async selectOption(params: { values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null } & types.NavigatingActionWaitOptions): Promise<string[]> {
+    return this._elementHandle.selectOption(convertSelectOptionValues(params.values), params);
   }
 
-  async fill(params: { value: string, options: types.NavigatingActionWaitOptions }) {
-    await this._elementHandle.fill(params.value, params.options);
+  async fill(params: { value: string } & types.NavigatingActionWaitOptions) {
+    await this._elementHandle.fill(params.value, params);
   }
 
-  async selectText(params: { options?: types.TimeoutOptions }) {
-    await this._elementHandle.selectText(params.options);
+  async selectText(params: types.TimeoutOptions) {
+    await this._elementHandle.selectText(params);
   }
 
-  async setInputFiles(params: { files: string | types.FilePayload | string[] | types.FilePayload[], options?: types.NavigatingActionWaitOptions }) {
-    await this._elementHandle.setInputFiles(params.files, params.options);
+  async setInputFiles(params: { files: string | types.FilePayload | string[] | types.FilePayload[] } & types.NavigatingActionWaitOptions) {
+    await this._elementHandle.setInputFiles(params.files, params);
   }
 
   async focus() {
     await this._elementHandle.focus();
   }
 
-  async type(params: { text: string, options: { delay?: number } & types.NavigatingActionWaitOptions }) {
-    await this._elementHandle.type(params.text, params.options);
+  async type(params: { text: string } & { delay?: number } & types.NavigatingActionWaitOptions) {
+    await this._elementHandle.type(params.text, params);
   }
 
-  async press(params: { key: string, options: { delay?: number } & types.NavigatingActionWaitOptions }) {
-    await this._elementHandle.press(params.key, params.options);
+  async press(params: { key: string } & { delay?: number } & types.NavigatingActionWaitOptions) {
+    await this._elementHandle.press(params.key, params);
   }
 
-  async check(params: { options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions }) {
-    await this._elementHandle.check(params.options);
+  async check(params: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+    await this._elementHandle.check(params);
   }
 
-  async uncheck(params: { options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions }) {
-    await this._elementHandle.uncheck(params.options);
+  async uncheck(params: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+    await this._elementHandle.uncheck(params);
   }
 
   async boundingBox(): Promise<types.Rect | null> {
     return await this._elementHandle.boundingBox();
   }
 
-  async screenshot(params: { options?: types.ElementScreenshotOptions }): Promise<string> {
-    return (await this._elementHandle.screenshot(params.options)).toString('base64');
+  async screenshot(params: types.ElementScreenshotOptions): Promise<string> {
+    return (await this._elementHandle.screenshot(params)).toString('base64');
   }
 
   async querySelector(params: { selector: string }): Promise<ElementHandleChannel | null> {

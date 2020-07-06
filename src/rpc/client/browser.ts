@@ -48,7 +48,7 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
 
   async newContext(options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
     delete (options as any).logger;
-    const context = BrowserContext.from(await this._channel.newContext({ options }));
+    const context = BrowserContext.from(await this._channel.newContext(options));
     this._contexts.add(context);
     context._browser = this;
     return context;

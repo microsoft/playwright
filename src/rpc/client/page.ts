@@ -303,8 +303,8 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     return this._attributeToPage(() => this._mainFrame.goto(url, options));
   }
 
-  async reload(options?: types.NavigateOptions): Promise<Response | null> {
-    return Response.fromNullable(await this._channel.reload({ options }));
+  async reload(options: types.NavigateOptions = {}): Promise<Response | null> {
+    return Response.fromNullable(await this._channel.reload(options));
   }
 
   async waitForLoadState(state?: types.LifecycleEvent, options?: types.TimeoutOptions): Promise<void> {
@@ -343,16 +343,16 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     return result;
   }
 
-  async goBack(options?: types.NavigateOptions): Promise<Response | null> {
-    return Response.fromNullable(await this._channel.goBack({ options }));
+  async goBack(options: types.NavigateOptions = {}): Promise<Response | null> {
+    return Response.fromNullable(await this._channel.goBack(options));
   }
 
-  async goForward(options?: types.NavigateOptions): Promise<Response | null> {
-    return Response.fromNullable(await this._channel.goForward({ options }));
+  async goForward(options: types.NavigateOptions = {}): Promise<Response | null> {
+    return Response.fromNullable(await this._channel.goForward(options));
   }
 
   async emulateMedia(options: { media?: types.MediaType, colorScheme?: types.ColorScheme }) {
-    await this._channel.emulateMedia({ options });
+    await this._channel.emulateMedia(options);
   }
 
   async setViewportSize(viewportSize: types.Size) {
@@ -388,8 +388,8 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
       await this._channel.setNetworkInterceptionEnabled({ enabled: false });
   }
 
-  async screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {
-    return Buffer.from(await this._channel.screenshot({ options }), 'base64');
+  async screenshot(options: types.ScreenshotOptions = {}): Promise<Buffer> {
+    return Buffer.from(await this._channel.screenshot(options), 'base64');
   }
 
   async title(): Promise<string> {
@@ -397,7 +397,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async close(options: { runBeforeUnload?: boolean } = {runBeforeUnload: undefined}) {
-    await this._channel.close({ options });
+    await this._channel.close(options);
     if (this._ownedContext)
       await this._ownedContext.close();
   }
@@ -496,8 +496,8 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     return this;
   }
 
-  async pdf(options?: types.PDFOptions): Promise<Buffer> {
-    const binary = await this._channel.pdf({ options });
+  async pdf(options: types.PDFOptions = {}): Promise<Buffer> {
+    const binary = await this._channel.pdf(options);
     return Buffer.from(binary, 'base64');
   }
 }

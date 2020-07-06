@@ -28,6 +28,6 @@ export class Accessibility {
 
   snapshot(options: { interestingOnly?: boolean; root?: ElementHandle } = {}): Promise<types.SerializedAXNode | null> {
     const root = options.root ? options.root._elementChannel : undefined;
-    return this._channel.accessibilitySnapshot({ options: { interestingOnly: options.interestingOnly, root } });
+    return this._channel.accessibilitySnapshot({ interestingOnly: options.interestingOnly, root });
   }
 }

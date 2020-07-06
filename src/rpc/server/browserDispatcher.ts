@@ -31,8 +31,8 @@ export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> i
     });
   }
 
-  async newContext(params: { options?: types.BrowserContextOptions }): Promise<BrowserContextChannel> {
-    return new BrowserContextDispatcher(this._scope, await this._object.newContext(params.options) as BrowserContextBase);
+  async newContext(params: types.BrowserContextOptions): Promise<BrowserContextChannel> {
+    return new BrowserContextDispatcher(this._scope, await this._object.newContext(params) as BrowserContextBase);
   }
 
   async close(): Promise<void> {

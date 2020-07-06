@@ -116,7 +116,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   }
 
   async grantPermissions(permissions: string[], options?: { origin?: string }): Promise<void> {
-    await this._channel.grantPermissions({ permissions, options });
+    await this._channel.grantPermissions({ permissions, ...options });
   }
 
   async clearPermissions(): Promise<void> {
