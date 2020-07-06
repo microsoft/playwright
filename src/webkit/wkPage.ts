@@ -248,7 +248,7 @@ export class WKPage implements PageDelegate {
     let errorText = event.error;
     if (errorText.includes('cancelled'))
       errorText += '; maybe frame was detached?';
-    this._page._frameManager.provisionalLoadFailed(this._page.mainFrame(), event.loaderId, errorText);
+    this._page._frameManager.frameAbortedNavigation(this._page.mainFrame()._id, errorText, event.loaderId);
   }
 
   handleWindowOpen(event: Protocol.Playwright.windowOpenPayload) {
@@ -366,7 +366,7 @@ export class WKPage implements PageDelegate {
   }
 
   private _onFrameScheduledNavigation(frameId: string) {
-    this._page._frameManager.frameRequestedNavigation(frameId, '');
+    this._page._frameManager.frameRequestedNavigation(frameId);
   }
 
   private _onFrameStoppedLoading(frameId: string) {
@@ -835,8 +835,6 @@ export class WKPage implements PageDelegate {
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
-    if (isNavigationRequest)
-      this._page._frameManager.frameUpdatedDocumentIdForNavigation(event.frameId, documentId!);
     // We do not support intercepting redirects.
     const allowInterception = this._page._needsRequestInterception() && !redirectedFrom;
     const request = new WKInterceptableRequest(session, allowInterception, frame, event, redirectedFrom, documentId);
