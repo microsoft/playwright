@@ -31,6 +31,7 @@
 
 #include "ScreencastEncoder.h"
 
+#include <algorithm>
 #include <libyuv.h>
 #include <vpx/vp8.h>
 #include <vpx/vp8cx.h>
@@ -47,7 +48,8 @@ const int kMacroBlockSize = 16;
 
 void createImage(unsigned int width, unsigned int height,
                  std::unique_ptr<vpx_image_t>& out_image,
-                 std::unique_ptr<uint8_t[]>& out_image_buffer) {
+                 std::unique_ptr<uint8_t[]>& out_image_buffer,
+                 int& out_buffer_size) {
   std::unique_ptr<vpx_image_t> image(new vpx_image_t());
   memset(image.get(), 0, sizeof(vpx_image_t));
 
@@ -78,11 +80,11 @@ void createImage(unsigned int width, unsigned int height,
   const int uv_rows = y_rows >> image->y_chroma_shift;
 
   // Allocate a YUV buffer large enough for the aligned data & padding.
-  const int buffer_size = y_stride * y_rows + 2*uv_stride * uv_rows;
-  std::unique_ptr<uint8_t[]> image_buffer(new uint8_t[buffer_size]);
+  out_buffer_size = y_stride * y_rows + 2*uv_stride * uv_rows;
+  std::unique_ptr<uint8_t[]> image_buffer(new uint8_t[out_buffer_size]);
 
   // Reset image value to 128 so we just need to fill in the y plane.
-  memset(image_buffer.get(), 128, buffer_size);
+  memset(image_buffer.get(), 128, out_buffer_size);
 
   // Fill in the information for |image_|.
   unsigned char* uchar_buffer =
@@ -180,13 +182,39 @@ public:
         uint8_t* u_data = image->planes[1];
         uint8_t* v_data = image->planes[2];
 
-        libyuv::I420Copy(src->DataY(), src->StrideY(),
-                         src->DataU(), src->StrideU(),
-                         src->DataV(), src->StrideV(),
-                         y_data, y_stride,
-                         u_data, uv_stride,
-                         v_data, uv_stride,
-                         image->w, image->h);
+        if (m_scale) {
+          int src_width = src->width();
+          double dst_width = src_width * m_scale.value();
+          if (dst_width > image->w) {
+            src_width *= image->w / dst_width;
+            dst_width = image->w;
+          }
+          int src_height = src->height();
+          double dst_height = src_height * m_scale.value();
+          if (dst_height > image->h) {
+            src_height *= image->h / dst_height;
+            dst_height = image->h;
+          }
+          libyuv::I420Scale(src->DataY(), src->StrideY(),
+                          src->DataU(), src->StrideU(),
+                          src->DataV(), src->StrideV(),
+                          src_width, src_height,
+                          y_data, y_stride,
+                          u_data, uv_stride,
+                          v_data, uv_stride,
+                          dst_width, dst_height,
+                          libyuv::kFilterBilinear);
+        } else {
+          int width = std::min<int>(image->w, src->width());
+          int height = std::min<int>(image->h, src->height());
+          libyuv::I420Copy(src->DataY(), src->StrideY(),
+                          src->DataU(), src->StrideU(),
+                          src->DataV(), src->StrideV(),
+                          y_data, y_stride,
+                          u_data, uv_stride,
+                          v_data, uv_stride,
+                          width, height);
+        }
     }
 
 private:
@@ -212,7 +240,7 @@ public:
 
         ivf_write_file_header(m_file, &m_cfg, m_fourcc, 0);
 
-        createImage(cfg.g_w, cfg.g_h, m_image, m_imageBuffer);
+        createImage(cfg.g_w, cfg.g_h, m_image, m_imageBuffer, m_imageBufferSize);
     }
 
     ~VPXCodec() {
@@ -223,6 +251,7 @@ public:
     void encodeFrameAsync(std::unique_ptr<VPXFrame>&& frame)
     {
         m_encoderQueue->Dispatch(NS_NewRunnableFunction("VPXCodec::encodeFrameAsync", [this, frame = std::move(frame)] {
+            memset(m_imageBuffer.get(), 128, m_imageBufferSize);
             frame->convertToVpxImage(m_image.get());
             // TODO: figure out why passing duration to the codec results in much
             // worse visual quality and makes video stutter.
@@ -292,6 +321,7 @@ private:
     int m_frameCount { 0 };
     int64_t m_pts { 0 };
     std::unique_ptr<uint8_t[]> m_imageBuffer;
+    int m_imageBufferSize { 0 };
     std::unique_ptr<vpx_image_t> m_image;
 };
 
