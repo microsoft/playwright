@@ -1,6 +1,6 @@
 module.exports = {
     parser: '@typescript-eslint/parser',
-    plugins: ['@typescript-eslint'],
+    plugins: ['@typescript-eslint', 'notice'],
     parserOptions: {
       project: './tsconfig.json',
       ecmaVersion: 9,
@@ -106,6 +106,12 @@ module.exports = {
         "indent": [2, 2, { "SwitchCase": 1, "CallExpression": {"arguments": 2}, "MemberExpression": 2 }],
         "key-spacing": [2, {
             "beforeColon": false
+        }],
+
+        // copyright
+        "notice/notice": [2, {
+            "mustMatch": "Copyright",
+            "templateFile": "./utils/copyright.js",
         }],
 
         // type-aware rules
