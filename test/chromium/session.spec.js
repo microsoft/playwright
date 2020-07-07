@@ -95,11 +95,18 @@ describe.skip(CHANNEL)('ChromiumBrowserContext.createSession', function() {
     await context.close();
   });
 });
-describe.skip(CHANNEL)('ChromiumBrowser.newBrowserCDPSession', function() {
+describe('ChromiumBrowser.newBrowserCDPSession', function() {
   it('should work', async function({page, browser, server}) {
     const session = await browser.newBrowserCDPSession();
+
     const version = await session.send('Browser.getVersion');
     expect(version.userAgent).toBeTruthy();
+
+    let gotEvent = false;
+    session.on('Target.targetCreated', () => gotEvent = true);
+    await session.send('Target.setDiscoverTargets', { discover: true });
+    expect(gotEvent).toBe(true);
+
     await session.detach();
   });
 });

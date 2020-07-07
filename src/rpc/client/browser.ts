@@ -21,6 +21,7 @@ import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { ConnectionScope } from './connection';
 import { Events } from '../../events';
+import { CDPSession } from './cdpSession';
 
 export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   readonly _contexts = new Set<BrowserContext>();
@@ -76,5 +77,10 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
       return;
     this._isClosedOrClosing = true;
     await this._channel.close();
+  }
+
+  // Chromium-specific.
+  async newBrowserCDPSession(): Promise<CDPSession> {
+    return CDPSession.from(await this._channel.newBrowserCDPSession());
   }
 }

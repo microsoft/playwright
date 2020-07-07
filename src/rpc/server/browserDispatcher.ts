@@ -18,9 +18,11 @@ import { Browser, BrowserBase } from '../../browser';
 import { BrowserContextBase } from '../../browserContext';
 import { Events } from '../../events';
 import * as types from '../../types';
-import { BrowserChannel, BrowserContextChannel, BrowserInitializer } from '../channels';
+import { BrowserChannel, BrowserContextChannel, BrowserInitializer, CDPSessionChannel } from '../channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
+import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
+import { CRBrowser } from '../../chromium/crBrowser';
 
 export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> implements BrowserChannel {
   constructor(scope: DispatcherScope, browser: BrowserBase) {
@@ -37,5 +39,11 @@ export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> i
 
   async close(): Promise<void> {
     await this._object.close();
+  }
+
+  // Chromium-specific.
+  async newBrowserCDPSession(): Promise<CDPSessionChannel> {
+    const crBrowser = this._object as CRBrowser;
+    return new CDPSessionDispatcher(this._scope, await crBrowser.newBrowserCDPSession());
   }
 }

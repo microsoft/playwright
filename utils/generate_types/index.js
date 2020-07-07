@@ -37,7 +37,8 @@ let documentation;
   const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
   const {documentation: mdDocumentation} = await require('../doclint/check_public_api/MDBuilder')(page, [api]);
   await browser.close();
-  const sources = await Source.readdir(path.join(PROJECT_DIR, 'src'));
+  const rpcDir = path.join(PROJECT_DIR, 'src', 'rpc');
+  const sources = await Source.readdir(path.join(PROJECT_DIR, 'src'), '', [rpcDir]);
   const {documentation: jsDocumentation} = await require('../doclint/check_public_api/JSBuilder').checkSources(sources);
   documentation = mergeDocumentation(mdDocumentation, jsDocumentation);
   const handledClasses = new Set();
@@ -408,7 +409,7 @@ function mergeClasses(mdClass, jsClass) {
 }
 
 function generateDevicesTypes() {
-  const namedDevices = 
+  const namedDevices =
     Object.keys(devices)
       .map(name => `  ${JSON.stringify(name)}: DeviceDescriptor;`)
       .join('\n');
