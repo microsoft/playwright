@@ -33,8 +33,7 @@ StaticRefPtr<nsScreencastService> gScreencastService;
 class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::VideoFrame> {
  public:
   Session(int sessionId, const nsCString& windowId, RefPtr<ScreencastEncoder>&& encoder)
-      : mSessionId(sessionId)
-      , mCaptureModule(webrtc::DesktopCaptureImpl::Create(
+      : mCaptureModule(webrtc::DesktopCaptureImpl::Create(
             sessionId, windowId.get(), webrtc::CaptureDeviceType::Window))
       , mEncoder(std::move(encoder)) {
   }
@@ -71,7 +70,6 @@ class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::Vide
   }
 
  private:
-  int mSessionId;
   rtc::scoped_refptr<webrtc::VideoCaptureModule> mCaptureModule;
   RefPtr<ScreencastEncoder> mEncoder;
 };
@@ -93,7 +91,7 @@ nsScreencastService::nsScreencastService() = default;
 nsScreencastService::~nsScreencastService() {
 }
 
-nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const nsACString& aFileName, uint32_t width, uint32_t height, double scale, int32_t* sessionId) {
+nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const nsACString& aFileName, uint32_t width, uint32_t height, double scale, int32_t offsetTop, int32_t* sessionId) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread(), "Screencast service must be started on the Main thread.");
   *sessionId = -1;
 
@@ -124,7 +122,7 @@ nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const 
   Maybe<double> maybeScale;
   if (scale)
     maybeScale = Some(scale);
-  RefPtr<ScreencastEncoder> encoder = ScreencastEncoder::create(error, PromiseFlatCString(aFileName), width, height, maybeScale);
+  RefPtr<ScreencastEncoder> encoder = ScreencastEncoder::create(error, PromiseFlatCString(aFileName), width, height, maybeScale, offsetTop);
   if (!encoder) {
     fprintf(stderr, "Failed to create ScreencastEncoder: %s\n", error.get());
     return NS_ERROR_FAILURE;

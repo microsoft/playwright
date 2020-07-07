@@ -294,7 +294,9 @@ class PageHandler {
 
     const screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
     const docShell = this._pageTarget._gBrowser.ownerGlobal.docShell;
-    this._videoSessionId = screencast.startVideoRecording(docShell, file, width, height, scale || 0);
+    // Exclude address bar and navigation control from the video.
+    const rect = this._pageTarget.linkedBrowser().getBoundingClientRect();
+    this._videoSessionId = screencast.startVideoRecording(docShell, file, width, height, scale || 0, rect.top);
   }
 
   stopVideoRecording() {

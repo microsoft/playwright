@@ -158,9 +158,10 @@ void ivf_write_frame_header(FILE *outfile, int64_t pts, size_t frame_size) {
 
 class ScreencastEncoder::VPXFrame {
 public:
-    VPXFrame(rtc::scoped_refptr<webrtc::VideoFrameBuffer>&& buffer, Maybe<double> scale)
+    VPXFrame(rtc::scoped_refptr<webrtc::VideoFrameBuffer>&& buffer, Maybe<double> scale, int offsetTop)
         : m_frameBuffer(std::move(buffer))
         , m_scale(scale)
+        , m_offsetTop(offsetTop)
     { }
 
     void setDuration(int duration) { m_duration = duration; }
@@ -189,15 +190,15 @@ public:
             src_width *= image->w / dst_width;
             dst_width = image->w;
           }
-          int src_height = src->height();
+          int src_height = src->height() - m_offsetTop;
           double dst_height = src_height * m_scale.value();
           if (dst_height > image->h) {
             src_height *= image->h / dst_height;
             dst_height = image->h;
           }
-          libyuv::I420Scale(src->DataY(), src->StrideY(),
-                          src->DataU(), src->StrideU(),
-                          src->DataV(), src->StrideV(),
+          libyuv::I420Scale(src->DataY() + m_offsetTop * src->StrideY(), src->StrideY(),
+                          src->DataU() + (m_offsetTop + 1) / 2 * src->StrideU(), src->StrideU(),
+                          src->DataV() + (m_offsetTop + 1) / 2 * src->StrideV(), src->StrideV(),
                           src_width, src_height,
                           y_data, y_stride,
                           u_data, uv_stride,
@@ -206,10 +207,11 @@ public:
                           libyuv::kFilterBilinear);
         } else {
           int width = std::min<int>(image->w, src->width());
-          int height = std::min<int>(image->h, src->height());
-          libyuv::I420Copy(src->DataY(), src->StrideY(),
-                          src->DataU(), src->StrideU(),
-                          src->DataV(), src->StrideV(),
+          int height = std::min<int>(image->h, src->height() - m_offsetTop);
+
+          libyuv::I420Copy(src->DataY() + m_offsetTop * src->StrideY(), src->StrideY(),
+                          src->DataU() + (m_offsetTop + 1) / 2 * src->StrideU(), src->StrideU(),
+                          src->DataV() + (m_offsetTop + 1) / 2 * src->StrideV(), src->StrideV(),
                           y_data, y_stride,
                           u_data, uv_stride,
                           v_data, uv_stride,
@@ -220,6 +222,7 @@ public:
 private:
     rtc::scoped_refptr<webrtc::VideoFrameBuffer> m_frameBuffer;
     Maybe<double> m_scale;
+    int m_offsetTop = 0;
     int m_duration = 0;
 };
 
@@ -325,11 +328,10 @@ private:
     std::unique_ptr<vpx_image_t> m_image;
 };
 
-ScreencastEncoder::ScreencastEncoder(std::unique_ptr<VPXCodec>&& vpxCodec, int width, int height, Maybe<double> scale)
+ScreencastEncoder::ScreencastEncoder(std::unique_ptr<VPXCodec>&& vpxCodec, Maybe<double> scale, int offsetTop)
     : m_vpxCodec(std::move(vpxCodec))
-    , m_width(width)
-    , m_height(height)
     , m_scale(scale)
+    , m_offsetTop(offsetTop)
 {
 }
 
@@ -338,10 +340,9 @@ ScreencastEncoder::~ScreencastEncoder()
 }
 
 static constexpr uint32_t vp8fourcc = 0x30385056;
-static constexpr uint32_t vp9fourcc = 0x30395056;
-static constexpr int fps = 30;
+static constexpr int fps = 24;
 
-RefPtr<ScreencastEncoder> ScreencastEncoder::create(nsCString& errorString, const nsCString& filePath, int width, int height, Maybe<double> scale)
+RefPtr<ScreencastEncoder> ScreencastEncoder::create(nsCString& errorString, const nsCString& filePath, int width, int height, Maybe<double> scale, int offsetTop)
 {
     const uint32_t fourcc = vp8fourcc;
     vpx_codec_iface_t* codec_interface = vpx_codec_vp8_cx();
@@ -383,7 +384,7 @@ RefPtr<ScreencastEncoder> ScreencastEncoder::create(nsCString& errorString, cons
 
     std::unique_ptr<VPXCodec> vpxCodec(new VPXCodec(fourcc, codec, cfg, file));
     fprintf(stderr, "ScreencastEncoder initialized with: %s\n", vpx_codec_iface_name(codec_interface));
-    return new ScreencastEncoder(std::move(vpxCodec), width, height, scale);
+    return new ScreencastEncoder(std::move(vpxCodec), scale, offsetTop);
 }
 
 void ScreencastEncoder::flushLastFrame()
@@ -407,7 +408,7 @@ void ScreencastEncoder::encodeFrame(const webrtc::VideoFrame& videoFrame)
     fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
     flushLastFrame();
 
-    m_lastFrame = std::make_unique<VPXFrame>(videoFrame.video_frame_buffer(), m_scale);
+    m_lastFrame = std::make_unique<VPXFrame>(videoFrame.video_frame_buffer(), m_scale, m_offsetTop);
 }
 
 void ScreencastEncoder::finish(std::function<void()>&& callback)
