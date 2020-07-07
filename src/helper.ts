@@ -296,23 +296,25 @@ class Helper {
     }));
   }
 
-  static async waitForEvent(progress: Progress, emitter: EventEmitter, event: string, predicate?: Function): Promise<any> {
+  static waitForEvent(progress: Progress | null, emitter: EventEmitter, event: string | symbol, predicate?: Function): { promise: Promise<any>, dispose: () => void } {
     const listeners: RegisteredListener[] = [];
     const promise = new Promise((resolve, reject) => {
       listeners.push(helper.addEventListener(emitter, event, eventArg => {
         try {
           if (predicate && !predicate(eventArg))
             return;
+          helper.removeEventListeners(listeners);
           resolve(eventArg);
         } catch (e) {
+          helper.removeEventListeners(listeners);
           reject(e);
         }
       }));
     });
-    progress.cleanupWhenAborted(() => helper.removeEventListeners(listeners));
-    const result = await promise;
-    helper.removeEventListeners(listeners);
-    return result;
+    const dispose = () => helper.removeEventListeners(listeners);
+    if (progress)
+      progress.cleanupWhenAborted(dispose);
+    return { promise, dispose };
   }
 
   static isDebugMode(): boolean {

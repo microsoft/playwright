@@ -99,7 +99,7 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
     const progressController = new ProgressController(this._apiLogger, this._timeoutSettings.timeout(options), 'browserContext.waitForEvent');
     if (event !== Events.BrowserContext.Close)
       this._closePromise.then(error => progressController.abort(error));
-    return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate));
+    return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate).promise);
   }
 
   _browserClosed() {

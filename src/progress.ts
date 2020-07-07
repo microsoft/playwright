@@ -29,12 +29,6 @@ export interface Progress {
   throwIfAborted(): void;
 }
 
-let runningTaskCount = 0;
-
-export function isRunningTask(): boolean {
-  return !!runningTaskCount;
-}
-
 export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, logger: Logger, timeout: number, apiName: string): Promise<T> {
   const controller = new ProgressController(logger, timeout, apiName);
   return controller.run(task);
@@ -75,7 +69,6 @@ export class ProgressController {
   async run<T>(task: (progress: Progress) => Promise<T>): Promise<T> {
     assert(this._state === 'before');
     this._state = 'running';
-    ++runningTaskCount;
 
     const loggerScope = this._logger.createScope(this._apiName, true);
 
@@ -114,8 +107,6 @@ export class ProgressController {
       loggerScope.endScope(`failed`);
       await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));
       throw e;
-    } finally {
-      --runningTaskCount;
     }
   }
 
