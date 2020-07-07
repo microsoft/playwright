@@ -21,10 +21,10 @@ class ScreencastEncoder {
     NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ScreencastEncoder)
 public:
 
-    static RefPtr<ScreencastEncoder> create(nsCString& errorString, const nsCString& filePath, int width, int height, Maybe<double> scale);
+    static RefPtr<ScreencastEncoder> create(nsCString& errorString, const nsCString& filePath, int width, int height, Maybe<double> scale, int offsetTop);
 
     class VPXCodec;
-    ScreencastEncoder(std::unique_ptr<VPXCodec>&&, int width, int height, Maybe<double> scale);
+    ScreencastEncoder(std::unique_ptr<VPXCodec>&&, Maybe<double> scale, int offsetTop);
 
     void encodeFrame(const webrtc::VideoFrame& videoFrame);
 
@@ -36,9 +36,8 @@ private:
     void flushLastFrame();
 
     std::unique_ptr<VPXCodec> m_vpxCodec;
-    int m_width;
-    int m_height;
     Maybe<double> m_scale;
+    int m_offsetTop;
     TimeStamp m_lastFrameTimestamp;
     class VPXFrame;
     std::unique_ptr<VPXFrame> m_lastFrame;
