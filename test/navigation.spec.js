@@ -263,6 +263,21 @@ describe('Page.goto', function() {
     expect(error).toBe(null);
     expect(loaded).toBe(true);
   });
+  it('should fail when replaced by another navigation', async({page, server}) => {
+    let anotherPromise;
+    server.setRoute('/empty.html', (req, res) => {
+      anotherPromise = page.goto(server.PREFIX + '/one-style.html');
+      // Hang request to empty.html.
+    });
+    const error = await page.goto(server.PREFIX + '/empty.html').catch(e => e);
+    await anotherPromise;
+    if (CHROMIUM)
+      expect(error.message).toContain('net::ERR_ABORTED');
+    else if (WEBKIT)
+      expect(error.message).toContain('cancelled');
+    else
+      expect(error.message).toContain('NS_BINDING_ABORTED');
+  });
   it('should work when navigating to valid url', async({page, server}) => {
     const response = await page.goto(server.EMPTY_PAGE);
     expect(response.ok()).toBe(true);
@@ -302,15 +317,23 @@ describe('Page.goto', function() {
     process.removeListener('warning', warningHandler);
     expect(warning).toBe(null);
   });
-  it('should not leak listeners during navigation of 11 pages', async({page, context, server}) => {
+  it('should not leak listeners during navigation of 20 pages', async({page, context, server}) => {
     let warning = null;
     const warningHandler = w => warning = w;
     process.on('warning', warningHandler);
-    await Promise.all([...Array(20)].map(async() => {
-      const page = await context.newPage();
-      await page.goto(server.EMPTY_PAGE);
-      await page.close();
-    }));
+    const pages = await Promise.all([...Array(20)].map(() => context.newPage()));
+    await Promise.all(pages.map(page => page.goto(server.EMPTY_PAGE)));
+    await Promise.all(pages.map(page => page.close()));
+    process.removeListener('warning', warningHandler);
+    expect(warning).toBe(null);
+  });
+  it('should not leak listeners during 20 waitForNavigation', async({page, context, server}) => {
+    let warning = null;
+    const warningHandler = w => warning = w;
+    process.on('warning', warningHandler);
+    const promises = [...Array(20)].map(() => page.waitForNavigation());
+    await page.goto(server.EMPTY_PAGE);
+    await Promise.all(promises);
     process.removeListener('warning', warningHandler);
     expect(warning).toBe(null);
   });
@@ -558,7 +581,6 @@ describe.skip(CHANNEL)('Page.waitForNavigation', function() {
     expect(error.message).toContain('Timeout 5000ms exceeded during page.waitForNavigation.');
     expect(error.message).toContain('waiting for navigation to "**/frame.html" until "load"');
     expect(error.message).toContain(`navigated to "${server.EMPTY_PAGE}"`);
-    expect(error.message).toContain(`"load" event fired`);
   });
   it('should work with both domcontentloaded and load', async({page, server}) => {
     let response = null;
@@ -951,9 +973,6 @@ describe('Frame.goto', function() {
     const error = await page.goto(url, { timeout: 5000, waitUntil: 'networkidle' }).catch(e => e);
     expect(error.message).toContain('Timeout 5000ms exceeded during page.goto.');
     expect(error.message).toContain(`navigating to "${url}", waiting until "networkidle"`);
-    expect(error.message).toContain(`navigated to "${url}"`);
-    expect(error.message).toContain(`navigated to "${server.PREFIX + '/frames/one-frame.html'}"`);
-    expect(error.message).toContain(`"domcontentloaded" event fired`);
   });
   it('should return matching responses', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);

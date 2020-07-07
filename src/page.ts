@@ -356,7 +356,7 @@ export class Page extends EventEmitter {
     this._disconnectedPromise.then(error => progressController.abort(error));
     if (event !== Events.Page.Crash)
       this._crashedPromise.then(error => progressController.abort(error));
-    return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate));
+    return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate).promise);
   }
 
   async goBack(options?: types.NavigateOptions): Promise<network.Response | null> {

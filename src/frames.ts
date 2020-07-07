@@ -28,6 +28,7 @@ import { selectors } from './selectors';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
 import { Progress, ProgressController } from './progress';
+import { EventEmitter } from 'events';
 
 type ContextData = {
   contextPromise: Promise<dom.FrameExecutionContext>;
@@ -50,6 +51,13 @@ export type GotoResult = {
 type ConsoleTagHandler = () => void;
 
 export type FunctionWithSource = (source: { context: BrowserContext, page: Page, frame: Frame}, ...args: any) => any;
+
+export const kNavigationEvent = Symbol('navigation');
+type NavigationEvent = {
+  documentInfo?: DocumentInfo,  // Undefined for same-document navigations.
+  error?: Error,
+};
+export const kLifecycleEvent = Symbol('lifecycle');
 
 export class FrameManager {
   private _page: Page;
@@ -158,11 +166,13 @@ export class FrameManager {
     else
       frame._currentDocument = { documentId, request: undefined };
     frame._pendingDocument = undefined;
-    for (const task of frame._frameTasks)
-      task.onNewDocument(frame._currentDocument);
+    const navigationEvent: NavigationEvent = { documentInfo: frame._currentDocument };
+    frame._eventEmitter.emit(kNavigationEvent, navigationEvent);
     frame._onClearLifecycle();
-    if (!initial)
+    if (!initial) {
+      this._page._logger.info(`  navigated to "${url}"`);
       this._page.emit(Events.Page.FrameNavigated, frame);
+    }
   }
 
   frameCommittedSameDocumentNavigation(frameId: string, url: string) {
@@ -170,8 +180,9 @@ export class FrameManager {
     if (!frame)
       return;
     frame._url = url;
-    for (const task of frame._frameTasks)
-      task.onSameDocument();
+    const navigationEvent: NavigationEvent = {};
+    frame._eventEmitter.emit(kNavigationEvent, navigationEvent);
+    this._page._logger.info(`  navigated to "${url}"`);
     this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
@@ -181,10 +192,9 @@ export class FrameManager {
       return;
     if (documentId !== undefined && frame._pendingDocument.documentId !== documentId)
       return;
-    const pending = frame._pendingDocument;
+    const navigationEvent: NavigationEvent = { documentInfo: frame._pendingDocument, error: new Error(errorText) };
     frame._pendingDocument = undefined;
-    for (const task of frame._frameTasks)
-      task.onNewDocument(pending, new Error(errorText));
+    frame._eventEmitter.emit(kNavigationEvent, navigationEvent);
   }
 
   frameDetached(frameId: string) {
@@ -288,12 +298,12 @@ export class FrameManager {
 }
 
 export class Frame {
+  readonly _eventEmitter: EventEmitter;
   _id: string;
   private _firedLifecycleEvents = new Set<types.LifecycleEvent>();
   _subtreeLifecycleEvents = new Set<types.LifecycleEvent>();
   _currentDocument: DocumentInfo;
   _pendingDocument?: DocumentInfo;
-  _frameTasks = new Set<FrameTask>();
   readonly _page: Page;
   private _parentFrame: Frame | null;
   _url = '';
@@ -308,6 +318,8 @@ export class Frame {
   private _detachedCallback = () => {};
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
+    this._eventEmitter = new EventEmitter();
+    this._eventEmitter.setMaxListeners(0);
     this._id = id;
     this._page = page;
     this._parentFrame = parentFrame;
@@ -363,8 +375,9 @@ export class Frame {
     for (const event of events) {
       // Checking whether we have already notified about this event.
       if (!this._subtreeLifecycleEvents.has(event)) {
-        for (const frameTask of this._frameTasks)
-          frameTask.onLifecycle(event);
+        this._eventEmitter.emit(kLifecycleEvent, event);
+        if (this === mainFrame && this._url !== 'about:blank')
+          this._page._logger.info(`  "${event}" event fired`);
         if (this === mainFrame && event === 'load')
           this._page.emit(Events.Page.Load);
         if (this === mainFrame && event === 'domcontentloaded')
@@ -376,7 +389,8 @@ export class Frame {
 
   async goto(url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
     return runNavigationTask(this, options, this._apiName('goto'), async progress => {
-      progress.logger.info(`navigating to "${url}", waiting until "${options.waitUntil || 'load'}"`);
+      const waitUntil = verifyLifecycle(options.waitUntil === undefined ? 'load' : options.waitUntil);
+      progress.logger.info(`navigating to "${url}", waiting until "${waitUntil}"`);
       const headers = (this._page._state.extraHTTPHeaders || {});
       let referer = headers['referer'] || headers['Referer'];
       if (options.referer !== undefined) {
@@ -386,23 +400,33 @@ export class Frame {
       }
       url = helper.completeUserURL(url);
 
-      const frameTask = new FrameTask(this, progress);
-      const sameDocumentPromise = frameTask.waitForSameDocumentNavigation();
-      const navigateResult = await this._page._delegate.navigateFrame(this, url, referer).catch(e => {
-        // Do not leave sameDocumentPromise unhandled.
-        sameDocumentPromise.catch(e => {});
-        throw e;
-      });
-      let request: network.Request | undefined;
+      const sameDocument = helper.waitForEvent(progress, this._eventEmitter, kNavigationEvent, (e: NavigationEvent) => !e.documentInfo);
+      const navigateResult = await this._page._delegate.navigateFrame(this, url, referer);
+
+      let event: NavigationEvent;
       if (navigateResult.newDocumentId) {
-        // Do not leave sameDocumentPromise unhandled.
-        sameDocumentPromise.catch(e => {});
-        request = await frameTask.waitForSpecificDocument(navigateResult.newDocumentId);
+        sameDocument.dispose();
+        event = await helper.waitForEvent(progress, this._eventEmitter, kNavigationEvent, (event: NavigationEvent) => {
+          // We are interested either in this specific document, or any other document that
+          // did commit and replaced the expected document.
+          return event.documentInfo && (event.documentInfo.documentId === navigateResult.newDocumentId || !event.error);
+        }).promise;
+
+        if (event.documentInfo!.documentId !== navigateResult.newDocumentId) {
+          // This is just a sanity check. In practice, new navigation should
+          // cancel the previous one and report "request cancelled"-like error.
+          throw new Error('Navigation interrupted by another one');
+        }
+        if (event.error)
+          throw event.error;
       } else {
-        await sameDocumentPromise;
+        event = await sameDocument.promise;
       }
-      await frameTask.waitForLifecycle(options.waitUntil === undefined ? 'load' : options.waitUntil);
-      frameTask.done();
+
+      if (!this._subtreeLifecycleEvents.has(waitUntil))
+        await helper.waitForEvent(progress, this._eventEmitter, kLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
+
+      const request = event.documentInfo ? event.documentInfo.request : undefined;
       return request ? request._finalRequest().response() : null;
     });
   }
@@ -410,15 +434,23 @@ export class Frame {
   async waitForNavigation(options: types.WaitForNavigationOptions = {}): Promise<network.Response | null> {
     return runNavigationTask(this, options, this._apiName('waitForNavigation'), async progress => {
       const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
-      progress.logger.info(`waiting for navigation${toUrl} until "${options.waitUntil || 'load'}"`);
-      const frameTask = new FrameTask(this, progress);
-      let request: network.Request | undefined;
-      await Promise.race([
-        frameTask.waitForNewDocument(options.url).then(r => request = r),
-        frameTask.waitForSameDocumentNavigation(options.url),
-      ]);
-      await frameTask.waitForLifecycle(options.waitUntil === undefined ? 'load' : options.waitUntil);
-      frameTask.done();
+      const waitUntil = verifyLifecycle(options.waitUntil === undefined ? 'load' : options.waitUntil);
+      progress.logger.info(`waiting for navigation${toUrl} until "${waitUntil}"`);
+
+      const navigationEvent: NavigationEvent = await helper.waitForEvent(progress, this._eventEmitter, kNavigationEvent, (event: NavigationEvent) => {
+        // Any failed navigation results in a rejection.
+        if (event.error)
+          return true;
+        progress.logger.info(`  navigated to "${this._url}"`);
+        return helper.urlMatches(this._url, options.url);
+      }).promise;
+      if (navigationEvent.error)
+        throw navigationEvent.error;
+
+      if (!this._subtreeLifecycleEvents.has(waitUntil))
+        await helper.waitForEvent(progress, this._eventEmitter, kLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
+
+      const request = navigationEvent.documentInfo ? navigationEvent.documentInfo.request : undefined;
       return request ? request._finalRequest().response() : null;
     });
   }
@@ -428,9 +460,9 @@ export class Frame {
   }
 
   async _waitForLoadState(progress: Progress, state: types.LifecycleEvent): Promise<void> {
-    const frameTask = new FrameTask(this, progress);
-    await frameTask.waitForLifecycle(state);
-    frameTask.done();
+    const waitUntil = verifyLifecycle(state);
+    if (!this._subtreeLifecycleEvents.has(waitUntil))
+      await helper.waitForEvent(progress, this._eventEmitter, kLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
   }
 
   async frameElement(): Promise<dom.ElementHandle> {
@@ -1035,15 +1067,18 @@ class SignalBarrier {
 
   async addFrameNavigation(frame: Frame) {
     this.retain();
-    const frameTask = new FrameTask(frame, this._progress);
+    const waiter = helper.waitForEvent(null, frame._eventEmitter, kNavigationEvent, (e: NavigationEvent) => {
+      if (!e.error && this._progress)
+        this._progress.logger.info(`  navigated to "${frame._url}"`);
+      return true;
+    });
     await Promise.race([
       frame._page._disconnectedPromise,
       frame._page._crashedPromise,
       frame._detachedPromise,
-      frameTask.waitForNewDocument(),
-      frameTask.waitForSameDocumentNavigation(),
+      waiter.promise,
     ]).catch(e => {});
-    frameTask.done();
+    waiter.dispose();
     this.release();
   }
 
@@ -1058,96 +1093,6 @@ class SignalBarrier {
   }
 }
 
-class FrameTask {
-  private readonly _frame: Frame;
-  private readonly _progress: Progress | null = null;
-  private _onSameDocument?: { url?: types.URLMatch, resolve: () => void };
-  private _onSpecificDocument?: { expectedDocumentId: string, resolve: (request: network.Request | undefined) => void, reject: (error: Error) => void };
-  private _onNewDocument?: { url?: types.URLMatch, resolve: (request: network.Request | undefined) => void, reject: (error: Error) => void };
-  private _onLifecycle?: { waitUntil: types.LifecycleEvent, resolve: () => void };
-
-  constructor(frame: Frame, progress: Progress | null) {
-    this._frame = frame;
-    frame._frameTasks.add(this);
-    this._progress = progress;
-    if (progress)
-      progress.cleanupWhenAborted(() => this.done());
-  }
-
-  onSameDocument() {
-    if (this._progress)
-      this._progress.logger.info(`navigated to "${this._frame._url}"`);
-    if (this._onSameDocument && helper.urlMatches(this._frame.url(), this._onSameDocument.url))
-      this._onSameDocument.resolve();
-  }
-
-  onNewDocument(documentInfo: DocumentInfo, error?: Error) {
-    if (this._progress && !error)
-      this._progress.logger.info(`navigated to "${this._frame._url}"`);
-    if (this._onSpecificDocument) {
-      if (documentInfo.documentId === this._onSpecificDocument.expectedDocumentId) {
-        if (error)
-          this._onSpecificDocument.reject(error);
-        else
-          this._onSpecificDocument.resolve(documentInfo.request);
-      } else if (!error) {
-        this._onSpecificDocument.reject(new Error('Navigation interrupted by another one'));
-      }
-    }
-    if (this._onNewDocument) {
-      if (error)
-        this._onNewDocument.reject(error);
-      else if (helper.urlMatches(this._frame.url(), this._onNewDocument.url))
-        this._onNewDocument.resolve(documentInfo.request);
-    }
-  }
-
-  onLifecycle(lifecycleEvent: types.LifecycleEvent) {
-    if (this._progress && this._frame._url !== 'about:blank')
-      this._progress.logger.info(`"${lifecycleEvent}" event fired`);
-    if (this._onLifecycle && this._onLifecycle.waitUntil === lifecycleEvent)
-      this._onLifecycle.resolve();
-  }
-
-  waitForSameDocumentNavigation(url?: types.URLMatch): Promise<void> {
-    return new Promise(resolve => {
-      assert(!this._onSameDocument);
-      this._onSameDocument = { url, resolve };
-    });
-  }
-
-  waitForSpecificDocument(expectedDocumentId: string): Promise<network.Request | undefined> {
-    return new Promise((resolve, reject) => {
-      assert(!this._onSpecificDocument);
-      this._onSpecificDocument = { expectedDocumentId, resolve, reject };
-    });
-  }
-
-  waitForNewDocument(url?: types.URLMatch): Promise<network.Request | undefined> {
-    return new Promise((resolve, reject) => {
-      assert(!this._onNewDocument);
-      this._onNewDocument = { url, resolve, reject };
-    });
-  }
-
-  waitForLifecycle(waitUntil: types.LifecycleEvent): Promise<void> {
-    if (waitUntil as unknown === 'networkidle0')
-      waitUntil = 'networkidle';
-    if (!types.kLifecycleEvents.has(waitUntil))
-      throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
-    if (this._frame._subtreeLifecycleEvents.has(waitUntil))
-      return Promise.resolve();
-    return new Promise(resolve => {
-      assert(!this._onLifecycle);
-      this._onLifecycle = { waitUntil, resolve };
-    });
-  }
-
-  done() {
-    this._frame._frameTasks.delete(this);
-  }
-}
-
 async function runNavigationTask<T>(frame: Frame, options: types.TimeoutOptions, apiName: string, task: (progress: Progress) => Promise<T>): Promise<T> {
   const page = frame._page;
   const controller = new ProgressController(page._logger, page._timeoutSettings.navigationTimeout(options), apiName);
@@ -1155,4 +1100,12 @@ async function runNavigationTask<T>(frame: Frame, options: types.TimeoutOptions,
   page._crashedPromise.then(() => controller.abort(new Error('Navigation failed because page crashed!')));
   frame._detachedPromise.then(() => controller.abort(new Error('Navigating frame was detached!')));
   return controller.run(task);
+}
+
+function verifyLifecycle(waitUntil: types.LifecycleEvent): types.LifecycleEvent {
+  if (waitUntil as unknown === 'networkidle0')
+    waitUntil = 'networkidle';
+  if (!types.kLifecycleEvents.has(waitUntil))
+    throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
+  return waitUntil;
 }

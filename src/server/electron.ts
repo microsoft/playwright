@@ -135,7 +135,7 @@ export class ElectronApplication extends EventEmitter {
     const progressController = new ProgressController(this._apiLogger, this._timeoutSettings.timeout(options), 'electron.waitForEvent');
     if (event !== ElectronEvents.ElectronApplication.Close)
       this._browserContext._closePromise.then(error => progressController.abort(error));
-    return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate));
+    return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate).promise);
   }
 
   async _init()  {
