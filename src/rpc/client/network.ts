@@ -152,11 +152,11 @@ export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
 
   async fulfill(response: types.FulfillResponse & { path?: string }) {
     const normalized = await normalizeFulfillParameters(response);
-    await this._channel.fulfill({ response: normalized });
+    await this._channel.fulfill(normalized);
   }
 
   async continue(overrides: { method?: string; headers?: types.Headers; postData?: string } = {}) {
-    await this._channel.continue({ overrides });
+    await this._channel.continue(overrides);
   }
 }
 

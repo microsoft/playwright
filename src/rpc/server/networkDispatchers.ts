@@ -80,16 +80,15 @@ export class RouteDispatcher extends Dispatcher<Route, RouteInitializer> impleme
     });
   }
 
-  async continue(params: { overrides: { method?: string, headers?: types.Headers, postData?: string } }): Promise<void> {
-    await this._object.continue(params.overrides);
+  async continue(params: { method?: string, headers?: types.Headers, postData?: string }): Promise<void> {
+    await this._object.continue(params);
   }
 
-  async fulfill(params: { response: { status?: number, headers?: types.Headers, contentType?: string, body: string, isBase64: boolean } }): Promise<void> {
-    const { response } = params;
+  async fulfill(params: { status?: number, headers?: types.Headers, contentType?: string, body: string, isBase64: boolean }): Promise<void> {
     await this._object.fulfill({
-      status: response.status,
-      headers: response.headers,
-      body: response.isBase64 ? Buffer.from(response.body, 'base64') : response.body,
+      status: params.status,
+      headers: params.headers,
+      body: params.isBase64 ? Buffer.from(params.body, 'base64') : params.body,
     });
   }
 
