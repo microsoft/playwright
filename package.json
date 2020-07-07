@@ -72,6 +72,7 @@
     "cross-env": "^5.0.5",
     "electron": "^9.0.0-beta.24",
     "eslint": "^6.6.0",
+    "eslint-plugin-notice": "^0.9.10",
     "esprima": "^4.0.0",
     "formidable": "^1.2.1",
     "ncp": "^2.0.0",
