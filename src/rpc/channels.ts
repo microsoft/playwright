@@ -63,8 +63,7 @@ export interface BrowserChannel extends Channel {
   close(): Promise<void>;
   newContext(params: types.BrowserContextOptions): Promise<BrowserContextChannel>;
 
-  // Chromium-specific.
-  newBrowserCDPSession(): Promise<CDPSessionChannel>;
+  crNewBrowserCDPSession(): Promise<CDPSessionChannel>;
 }
 export type BrowserInitializer = {};
 
@@ -92,9 +91,15 @@ export interface BrowserContextChannel extends Channel {
   setNetworkInterceptionEnabled(params: { enabled: boolean }): Promise<void>;
   setOffline(params: { offline: boolean }): Promise<void>;
   waitForEvent(params: { event: string }): Promise<any>;
+
+  on(event: 'crBackgroundPage', callback: (params: PageChannel) => void): this;
+  on(event: 'crServiceWorker', callback: (params: WorkerChannel) => void): this;
+  crNewCDPSession(params: { page: PageChannel }): Promise<CDPSessionChannel>;
 }
 export type BrowserContextInitializer = {
-  pages: PageChannel[]
+  pages: PageChannel[],
+  crBackgroundPages: PageChannel[],
+  crServiceWorkers: WorkerChannel[],
 };
 
 

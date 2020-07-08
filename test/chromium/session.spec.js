@@ -16,7 +16,7 @@
 
 const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('../utils').testOptions(browserType);
 
-describe.skip(CHANNEL)('ChromiumBrowserContext.createSession', function() {
+describe('ChromiumBrowserContext.createSession', function() {
   it('should work', async function({page, browser, server}) {
     const client = await page.context().newCDPSession(page);
 
@@ -35,7 +35,7 @@ describe.skip(CHANNEL)('ChromiumBrowserContext.createSession', function() {
     await page.goto(server.EMPTY_PAGE);
     expect(events.length).toBe(1);
   });
-  it('should enable and disable domains independently', async function({page, browser, server}) {
+  it.skip(CHANNEL)('should enable and disable domains independently', async function({page, browser, server}) {
     const client = await page.context().newCDPSession(page);
     await client.send('Runtime.enable');
     await client.send('Debugger.enable');
@@ -64,7 +64,7 @@ describe.skip(CHANNEL)('ChromiumBrowserContext.createSession', function() {
     } catch (e) {
       error = e;
     }
-    expect(error.message).toContain('Session closed.');
+    expect(error.message).toContain(CHANNEL ? 'Target browser or context has been closed' : 'Session closed.');
   });
   it('should throw nice errors', async function({page, browser}) {
     const client = await page.context().newCDPSession(page);

@@ -16,7 +16,7 @@
 
 const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('../utils').testOptions(browserType);
 
-describe.skip(CHANNEL)('OOPIF', function() {
+describe('OOPIF', function() {
   beforeAll(async function(state) {
     state.browser = await state.browserType.launch(Object.assign({}, state.defaultBrowserOptions, {
       args: (state.defaultBrowserOptions.args || []).concat(['--site-per-process']),

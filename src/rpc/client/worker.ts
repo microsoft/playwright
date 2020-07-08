@@ -21,9 +21,11 @@ import { ConnectionScope } from './connection';
 import { ChannelOwner } from './channelOwner';
 import { Func1, JSHandle, parseResult, serializeArgument, SmartHandle } from './jsHandle';
 import { Page } from './page';
+import { BrowserContext } from './browserContext';
 
 export class Worker extends ChannelOwner<WorkerChannel, WorkerInitializer> {
-  _page: Page | undefined;
+  _page: Page | undefined;  // Set for web workers.
+  _context: BrowserContext | undefined;  // Set for service workers.
 
   static from(worker: WorkerChannel): Worker {
     return (worker as any)._object;
@@ -32,7 +34,10 @@ export class Worker extends ChannelOwner<WorkerChannel, WorkerInitializer> {
   constructor(scope: ConnectionScope, guid: string, initializer: WorkerInitializer) {
     super(scope, guid, initializer);
     this._channel.on('close', () => {
-      this._page!._workers.delete(this);
+      if (this._page)
+        this._page._workers.delete(this);
+      if (this._context)
+        this._context._crServiceWorkers.delete(this);
       this.emit(Events.Worker.Close, this);
     });
   }

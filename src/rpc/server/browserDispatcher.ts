@@ -41,8 +41,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> i
     await this._object.close();
   }
 
-  // Chromium-specific.
-  async newBrowserCDPSession(): Promise<CDPSessionChannel> {
+  async crNewBrowserCDPSession(): Promise<CDPSessionChannel> {
     const crBrowser = this._object as CRBrowser;
     return new CDPSessionDispatcher(this._scope, await crBrowser.newBrowserCDPSession());
   }

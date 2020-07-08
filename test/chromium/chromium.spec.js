@@ -16,7 +16,7 @@
 
 const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('../utils').testOptions(browserType);
 
-describe.skip(CHANNEL)('ChromiumBrowserContext', function() {
+describe('ChromiumBrowserContext', function() {
   it('should create a worker from a service worker', async({browser, page, server, context}) => {
     const [worker] = await Promise.all([
       context.waitForEvent('serviceworker'),
@@ -49,6 +49,19 @@ describe.skip(CHANNEL)('ChromiumBrowserContext', function() {
       new SharedWorker('data:text/javascript,console.log("hi")');
     });
     expect(serviceWorkerCreated).not.toBeTruthy();
+  });
+  it('should close service worker together with the context', async({browser, server}) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    const [worker] = await Promise.all([
+      context.waitForEvent('serviceworker'),
+      page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
+    ]);
+    const messages = [];
+    context.on('close', () => messages.push('context'));
+    worker.on('close', () => messages.push('worker'));
+    await context.close();
+    expect(messages.join('|')).toBe('worker|context');
   });
 });
 

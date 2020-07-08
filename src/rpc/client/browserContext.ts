@@ -26,9 +26,14 @@ import { Browser } from './browser';
 import { ConnectionScope } from './connection';
 import { Events } from '../../events';
 import { TimeoutSettings } from '../../timeoutSettings';
+import { CDPSession } from './cdpSession';
+import { Events as ChromiumEvents } from '../../chromium/events';
+import { Worker } from './worker';
 
 export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserContextInitializer> {
   _pages = new Set<Page>();
+  _crBackgroundPages = new Set<Page>();
+  _crServiceWorkers = new Set<Worker>();
   private _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
   _browser: Browser | undefined;
   readonly _bindings = new Map<string, frames.FunctionWithSource>();
@@ -46,7 +51,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
 
   constructor(scope: ConnectionScope, guid: string, initializer: BrowserContextInitializer) {
     super(scope, guid, initializer, true);
-    initializer.pages.map(p => {
+    initializer.pages.forEach(p => {
       const page = Page.from(p);
       this._pages.add(page);
       page._setBrowserContext(this);
@@ -55,6 +60,29 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     this._channel.on('close', () => this._onClose());
     this._channel.on('page', page => this._onPage(Page.from(page)));
     this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
+
+    initializer.crBackgroundPages.forEach(p => {
+      const page = Page.from(p);
+      this._crBackgroundPages.add(page);
+      page._setBrowserContext(this);
+    });
+    this._channel.on('crBackgroundPage', pageChannel => {
+      const page = Page.from(pageChannel);
+      page._setBrowserContext(this);
+      this._crBackgroundPages.add(page);
+      this.emit(ChromiumEvents.CRBrowserContext.BackgroundPage, page);
+    });
+    initializer.crServiceWorkers.forEach(w => {
+      const worker = Worker.from(w);
+      worker._context = this;
+      this._crServiceWorkers.add(worker);
+    });
+    this._channel.on('crServiceWorker', serviceWorkerChannel => {
+      const worker = Worker.from(serviceWorkerChannel);
+      worker._context = this;
+      this._crServiceWorkers.add(worker);
+      this.emit(ChromiumEvents.CRBrowserContext.ServiceWorker, worker);
+    });
   }
 
   private _onPage(page: Page): void {
@@ -198,5 +226,17 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
 
   async close(): Promise<void> {
     await this._channel.close();
+  }
+
+  async newCDPSession(page: Page): Promise<CDPSession> {
+    return CDPSession.from(await this._channel.crNewCDPSession({ page: page._channel }));
+  }
+
+  backgroundPages(): Page[] {
+    return [...this._crBackgroundPages];
+  }
+
+  serviceWorkers(): Worker[] {
+    return [...this._crServiceWorkers];
   }
 }

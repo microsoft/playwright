@@ -26,6 +26,7 @@ import { ProxySettings } from './types';
 import { LoggerSink } from './loggerSink';
 
 export type BrowserOptions = {
+  name: string,
   loggers: Loggers,
   downloadsPath?: string,
   headful?: boolean,

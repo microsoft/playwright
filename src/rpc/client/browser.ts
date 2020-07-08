@@ -79,8 +79,7 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
     await this._channel.close();
   }
 
-  // Chromium-specific.
   async newBrowserCDPSession(): Promise<CDPSession> {
-    return CDPSession.from(await this._channel.newBrowserCDPSession());
+    return CDPSession.from(await this._channel.crNewBrowserCDPSession());
   }
 }
