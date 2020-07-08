@@ -15,89 +15,91 @@
  * limitations under the License.
  */
 
-const { FFOX, CHROMIUM, WEBKIT, WIN, CHANNEL } = require('./utils').testOptions(browserType);
+module.exports.addTests = function({browserType, HEADLESS}) {
+  const { FFOX, CHROMIUM, WEBKIT, WIN, CHANNEL } = require('./utils').testOptions(browserType);
 
-describe.skip(!CHANNEL)('Channels', function() {
-  it('should work', async({browser}) => {
-    expect(!!browser._channel).toBeTruthy();
-  });
-
-  it('should scope context handles', async({browser, server}) => {
-    const GOLDEN_PRECONDITION = {
-      objects: [ 'chromium', 'browser' ],
-      scopes: [
-        { _guid: '', objects: [ 'chromium', 'browser' ] },
-        { _guid: 'browser', objects: [] }
-      ]
-    };
-    await expectScopeState(browser, GOLDEN_PRECONDITION);
-
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    await page.goto(server.EMPTY_PAGE);
-    await expectScopeState(browser, {
-      objects: [ 'chromium', 'browser', 'context', 'frame', 'page', 'request', 'response' ],
-      scopes: [
-        { _guid: '', objects: [ 'chromium', 'browser' ] },
-        { _guid: 'browser', objects: ['context'] },
-        { _guid: 'context', objects: ['frame', 'page', 'request', 'response'] }
-      ]
+  describe.skip(!CHANNEL)('Channels', function() {
+    it('should work', async({browser}) => {
+      expect(!!browser._channel).toBeTruthy();
     });
 
-    await context.close();
-    await expectScopeState(browser, GOLDEN_PRECONDITION);
-  });
+    it('should scope context handles', async({browser, server}) => {
+      const GOLDEN_PRECONDITION = {
+        objects: [ 'chromium', 'browser' ],
+        scopes: [
+          { _guid: '', objects: [ 'chromium', 'browser' ] },
+          { _guid: 'browser', objects: [] }
+        ]
+      };
+      await expectScopeState(browser, GOLDEN_PRECONDITION);
 
-  it('should scope CDPSession handles', async({browserType, browser, server}) => {
-    const GOLDEN_PRECONDITION = {
-      objects: [ 'chromium', 'browser' ],
-      scopes: [
-        { _guid: '', objects: [ 'chromium', 'browser' ] },
-        { _guid: 'browser', objects: [] }
-      ]
-    };
-    await expectScopeState(browserType, GOLDEN_PRECONDITION);
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      await expectScopeState(browser, {
+        objects: [ 'chromium', 'browser', 'context', 'frame', 'page', 'request', 'response' ],
+        scopes: [
+          { _guid: '', objects: [ 'chromium', 'browser' ] },
+          { _guid: 'browser', objects: ['context'] },
+          { _guid: 'context', objects: ['frame', 'page', 'request', 'response'] }
+        ]
+      });
 
-    const session = await browser.newBrowserCDPSession();
-    await expectScopeState(browserType, {
-      objects: [ 'chromium', 'browser', 'cdpSession' ],
-      scopes: [
-        { _guid: '', objects: [ 'chromium', 'browser' ] },
-        { _guid: 'browser', objects: ['cdpSession'] },
-        { _guid: 'cdpSession', objects: [] },
-      ]
+      await context.close();
+      await expectScopeState(browser, GOLDEN_PRECONDITION);
     });
 
-    await session.detach();
-    await expectScopeState(browserType, GOLDEN_PRECONDITION);
-  });
+    it('should scope CDPSession handles', async({browserType, browser, server}) => {
+      const GOLDEN_PRECONDITION = {
+        objects: [ 'chromium', 'browser' ],
+        scopes: [
+          { _guid: '', objects: [ 'chromium', 'browser' ] },
+          { _guid: 'browser', objects: [] }
+        ]
+      };
+      await expectScopeState(browserType, GOLDEN_PRECONDITION);
 
-  it('should scope browser handles', async({browserType, defaultBrowserOptions}) => {
-    const GOLDEN_PRECONDITION = {
-      objects: [ 'chromium', 'browser' ],
-      scopes: [
-        { _guid: '', objects: [ 'chromium', 'browser' ] },
-        { _guid: 'browser', objects: [] }
-      ]
-    };
-    await expectScopeState(browserType, GOLDEN_PRECONDITION);
+      const session = await browser.newBrowserCDPSession();
+      await expectScopeState(browserType, {
+        objects: [ 'chromium', 'browser', 'cdpSession' ],
+        scopes: [
+          { _guid: '', objects: [ 'chromium', 'browser' ] },
+          { _guid: 'browser', objects: ['cdpSession'] },
+          { _guid: 'cdpSession', objects: [] },
+        ]
+      });
 
-    const browser = await browserType.launch(defaultBrowserOptions);
-    await browser.newContext();
-    await expectScopeState(browserType, {
-      objects: [ 'chromium', 'browser', 'browser', 'context' ],
-      scopes: [
-        { _guid: '', objects: [ 'chromium', 'browser', 'browser' ] },
-        { _guid: 'browser', objects: [] },
-        { _guid: 'browser', objects: ['context'] },
-        { _guid: 'context', objects: [] },
-      ]
+      await session.detach();
+      await expectScopeState(browserType, GOLDEN_PRECONDITION);
     });
 
-    await browser.close();
-    await expectScopeState(browserType, GOLDEN_PRECONDITION);
+    it('should scope browser handles', async({browserType, defaultBrowserOptions}) => {
+      const GOLDEN_PRECONDITION = {
+        objects: [ 'chromium', 'browser' ],
+        scopes: [
+          { _guid: '', objects: [ 'chromium', 'browser' ] },
+          { _guid: 'browser', objects: [] }
+        ]
+      };
+      await expectScopeState(browserType, GOLDEN_PRECONDITION);
+
+      const browser = await browserType.launch(defaultBrowserOptions);
+      await browser.newContext();
+      await expectScopeState(browserType, {
+        objects: [ 'chromium', 'browser', 'browser', 'context' ],
+        scopes: [
+          { _guid: '', objects: [ 'chromium', 'browser', 'browser' ] },
+          { _guid: 'browser', objects: [] },
+          { _guid: 'browser', objects: ['context'] },
+          { _guid: 'context', objects: [] },
+        ]
+      });
+
+      await browser.close();
+      await expectScopeState(browserType, GOLDEN_PRECONDITION);
+    });
   });
-});
+}
 
 async function expectScopeState(object, golden) {
   const remoteState = trimGuids(await object._channel.debugScopeState());

@@ -86,9 +86,7 @@ function collect(browserNames) {
   for (const e of config.globalEnvironments || [])
     testRunner.collector().useEnvironment(e);
 
-  global.playwright = playwright;
-
-  for (const browserName of browserNames) {
+    for (const browserName of browserNames) {
     const browserType = playwright[browserName];
     const browserTypeEnvironment = new BrowserTypeEnvironment(browserType);
 
@@ -116,8 +114,7 @@ function collect(browserNames) {
     const suiteName = { 'chromium': 'Chromium', 'firefox': 'Firefox', 'webkit': 'WebKit' }[browserName];
     describe(suiteName, () => {
       // In addition to state, expose these two on global so that describes can access them.
-      global.browserType = browserType;
-      global.HEADLESS = !!launchOptions.headless;
+      const HEADLESS = !!launchOptions.headless;
 
       testRunner.collector().useEnvironment(browserTypeEnvironment);
 
@@ -145,15 +142,11 @@ function collect(browserNames) {
             }, {
               exts: ['.ts']
             });
-            require(file);
+            require(file).addTests({browserType, HEADLESS, playwright});
             revert();
-            delete require.cache[require.resolve(file)];
           }
         });
       }
-
-      delete global.HEADLESS;
-      delete global.browserType;
     });
   }
   for (const [key, value] of Object.entries(testRunner.api())) {

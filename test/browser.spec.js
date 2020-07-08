@@ -14,27 +14,29 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+module.exports.addTests = function({browserType, HEADLESS}) {
+  const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
 
-describe('Browser.newPage', function() {
-  it('should create new page', async function({browser}) {
-    const page1 = await browser.newPage();
-    expect(browser.contexts().length).toBe(1);
+  describe('Browser.newPage', function() {
+    it('should create new page', async function({browser}) {
+      const page1 = await browser.newPage();
+      expect(browser.contexts().length).toBe(1);
 
-    const page2 = await browser.newPage();
-    expect(browser.contexts().length).toBe(2);
+      const page2 = await browser.newPage();
+      expect(browser.contexts().length).toBe(2);
 
-    await page1.close();
-    expect(browser.contexts().length).toBe(1);
+      await page1.close();
+      expect(browser.contexts().length).toBe(1);
 
-    await page2.close();
-    expect(browser.contexts().length).toBe(0);
+      await page2.close();
+      expect(browser.contexts().length).toBe(0);
+    });
+    it('should throw upon second create new page', async function({browser}) {
+      const page = await browser.newPage();
+      let error;
+      await page.context().newPage().catch(e => error = e);
+      await page.close();
+      expect(error.message).toContain('Please use browser.newContext()');
+    });
   });
-  it('should throw upon second create new page', async function({browser}) {
-    const page = await browser.newPage();
-    let error;
-    await page.context().newPage().catch(e => error = e);
-    await page.close();
-    expect(error.message).toContain('Please use browser.newContext()');
-  });
-});
+}

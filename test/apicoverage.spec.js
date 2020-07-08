@@ -50,59 +50,62 @@ function traceAPICoverage(apiCoverage, events, className, classType) {
   }
 }
 
-describe.skip(!process.env.COVERAGE)('**API COVERAGE**', () => {
-  const BROWSER_CONFIGS = [
-    {
-      name: 'Firefox',
-      events: require('../lib/events').Events,
-      missingCoverage: ['cDPSession.send', 'cDPSession.detach'],
-    },
-    {
-      name: 'WebKit',
-      events: require('../lib/events').Events,
-      missingCoverage: ['browserContext.clearPermissions', 'cDPSession.send', 'cDPSession.detach'],
-    },
-    {
-      name: 'Chromium',
-      events: {
-        ...require('../lib/events').Events,
-        ...require('../lib/chromium/events').Events,
+module.exports.addTests = function({browserType, HEADLESS}) {
+
+  describe.skip(!process.env.COVERAGE)('**API COVERAGE**', () => {
+    const BROWSER_CONFIGS = [
+      {
+        name: 'Firefox',
+        events: require('../lib/events').Events,
+        missingCoverage: ['cDPSession.send', 'cDPSession.detach'],
       },
-      missingCoverage: [],
-    },
-  ];
-  const browserConfig = BROWSER_CONFIGS.find(config => config.name.toLowerCase() === browserType.name());
-  const events = browserConfig.events;
-  // TODO: we should rethink our api.ts approach to ensure coverage and async stacks.
-  const api = {
-    ...require('../lib/api'),
-    Browser: require('../lib/browser').BrowserBase,
-    BrowserContext: require('../lib/browserContext').BrowserContextBase,
-  };
+      {
+        name: 'WebKit',
+        events: require('../lib/events').Events,
+        missingCoverage: ['browserContext.clearPermissions', 'cDPSession.send', 'cDPSession.detach'],
+      },
+      {
+        name: 'Chromium',
+        events: {
+          ...require('../lib/events').Events,
+          ...require('../lib/chromium/events').Events,
+        },
+        missingCoverage: [],
+      },
+    ];
+    const browserConfig = BROWSER_CONFIGS.find(config => config.name.toLowerCase() === browserType.name());
+    const events = browserConfig.events;
+    // TODO: we should rethink our api.ts approach to ensure coverage and async stacks.
+    const api = {
+      ...require('../lib/api'),
+      Browser: require('../lib/browser').BrowserBase,
+      BrowserContext: require('../lib/browserContext').BrowserContextBase,
+    };
 
-  const coverage = new Map();
-  Object.keys(api).forEach(apiName => {
-    if (BROWSER_CONFIGS.some(config => apiName.startsWith(config.name)) && !apiName.startsWith(browserConfig.name))
-      return;
-    traceAPICoverage(coverage, events, apiName, api[apiName]);
-  });
+    const coverage = new Map();
+    Object.keys(api).forEach(apiName => {
+      if (BROWSER_CONFIGS.some(config => apiName.startsWith(config.name)) && !apiName.startsWith(browserConfig.name))
+        return;
+      traceAPICoverage(coverage, events, apiName, api[apiName]);
+    });
 
-  it('should call all API methods', () => {
-    const ignoredMethods = new Set(browserConfig.missingCoverage);
-    const missingMethods = [];
-    const extraIgnoredMethods = [];
-    for (const method of coverage.keys()) {
-      // Sometimes we already have a background page while launching, before adding a listener.
-      if (method === 'chromiumBrowserContext.emit("backgroundpage")')
-        continue;
-      if (!coverage.get(method) && !ignoredMethods.has(method))
-        missingMethods.push(method);
-      else if (coverage.get(method) && ignoredMethods.has(method))
-        extraIgnoredMethods.push(method);
-    }
-    if (extraIgnoredMethods.length)
-      throw new Error('Certain API Methods are called and should not be ignored: ' + extraIgnoredMethods.join(', '));
-    if (missingMethods.length)
-      throw new Error('Certain API Methods are not called: ' + missingMethods.join(', '));
+    it('should call all API methods', () => {
+      const ignoredMethods = new Set(browserConfig.missingCoverage);
+      const missingMethods = [];
+      const extraIgnoredMethods = [];
+      for (const method of coverage.keys()) {
+        // Sometimes we already have a background page while launching, before adding a listener.
+        if (method === 'chromiumBrowserContext.emit("backgroundpage")')
+          continue;
+        if (!coverage.get(method) && !ignoredMethods.has(method))
+          missingMethods.push(method);
+        else if (coverage.get(method) && ignoredMethods.has(method))
+          extraIgnoredMethods.push(method);
+      }
+      if (extraIgnoredMethods.length)
+        throw new Error('Certain API Methods are called and should not be ignored: ' + extraIgnoredMethods.join(', '));
+      if (missingMethods.length)
+        throw new Error('Certain API Methods are not called: ' + missingMethods.join(', '));
+    });
   });
-});
+}

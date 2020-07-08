@@ -94,7 +94,7 @@ const utils = module.exports = {
     expect(await page.evaluate('window.innerHeight')).toBe(height);
   },
 
-  registerEngine: async (name, script, options) => {
+  registerEngine: async (playwright, name, script, options) => {
     try {
       await playwright.selectors.register(name, script, options);
     } catch (e) {

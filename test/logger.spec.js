@@ -16,35 +16,38 @@
 
 const fs = require('fs');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('./utils').testOptions(browserType);
 
-describe.skip(CHANNEL)('Logger', function() {
-  it('should log', async({browserType, defaultBrowserOptions}) => {
-    const log = [];
-    const browser = await browserType.launch({...defaultBrowserOptions, logger: {
-      log: (name, severity, message) => log.push({name, severity, message}),
-      isEnabled: (name, severity) => severity !== 'verbose'
-    }});
-    await browser.close();
-    expect(log.length > 0).toBeTruthy();
-    expect(log.filter(item => item.name.includes('browser')).length > 0).toBeTruthy();
-    expect(log.filter(item => item.severity === 'info').length > 0).toBeTruthy();
-    expect(log.filter(item => item.message.includes('<launching>')).length > 0).toBeTruthy();
-  });
-  it('should log context-level', async({browserType, defaultBrowserOptions}) => {
-    const log = [];
-    const browser = await browserType.launch(defaultBrowserOptions);
-    const page = await browser.newPage({
-      logger: {
+module.exports.addTests = function({browserType, HEADLESS}) {
+  const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('./utils').testOptions(browserType);
+
+  describe.skip(CHANNEL)('Logger', function() {
+    it('should log', async({browserType, defaultBrowserOptions}) => {
+      const log = [];
+      const browser = await browserType.launch({...defaultBrowserOptions, logger: {
         log: (name, severity, message) => log.push({name, severity, message}),
         isEnabled: (name, severity) => severity !== 'verbose'
-      }
+      }});
+      await browser.close();
+      expect(log.length > 0).toBeTruthy();
+      expect(log.filter(item => item.name.includes('browser')).length > 0).toBeTruthy();
+      expect(log.filter(item => item.severity === 'info').length > 0).toBeTruthy();
+      expect(log.filter(item => item.message.includes('<launching>')).length > 0).toBeTruthy();
     });
-    await page.setContent('<button>Button</button>');
-    await page.click('button');
-    await browser.close();
+    it('should log context-level', async({browserType, defaultBrowserOptions}) => {
+      const log = [];
+      const browser = await browserType.launch(defaultBrowserOptions);
+      const page = await browser.newPage({
+        logger: {
+          log: (name, severity, message) => log.push({name, severity, message}),
+          isEnabled: (name, severity) => severity !== 'verbose'
+        }
+      });
+      await page.setContent('<button>Button</button>');
+      await page.click('button');
+      await browser.close();
 
-    expect(log.length > 0).toBeTruthy();
-    expect(log.filter(item => item.message.includes('waiting for element')).length > 0).toBeTruthy();
+      expect(log.length > 0).toBeTruthy();
+      expect(log.filter(item => item.message.includes('waiting for element')).length > 0).toBeTruthy();
+    });
   });
-});
+}

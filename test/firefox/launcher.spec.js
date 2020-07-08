@@ -17,21 +17,24 @@
 const path = require('path');
 const utils = require('../utils');
 const {makeUserDataDir, removeUserDataDir} = utils;
-const {FFOX, CHROMIUM, WEBKIT, WIN} = utils.testOptions(browserType);
 
-describe('launcher', function() {
-  it('should pass firefox user preferences', async({browserType, defaultBrowserOptions}) => {
-    const browser = await browserType.launch({
-      ...defaultBrowserOptions,
-      firefoxUserPrefs: {
-        'network.proxy.type': 1,
-        'network.proxy.http': '127.0.0.1',
-        'network.proxy.http_port': 3333,
-      }
+module.exports.addTests = function({browserType, HEADLESS}) {
+  const {FFOX, CHROMIUM, WEBKIT, WIN} = utils.testOptions(browserType);
+
+  describe('launcher', function() {
+    it('should pass firefox user preferences', async({browserType, defaultBrowserOptions}) => {
+      const browser = await browserType.launch({
+        ...defaultBrowserOptions,
+        firefoxUserPrefs: {
+          'network.proxy.type': 1,
+          'network.proxy.http': '127.0.0.1',
+          'network.proxy.http_port': 3333,
+        }
+      });
+      const page = await browser.newPage();
+      const error = await page.goto('http://example.com').catch(e => e);
+      expect(error.message).toContain('NS_ERROR_PROXY_CONNECTION_REFUSED');
+      await browser.close();
     });
-    const page = await browser.newPage();
-    const error = await page.goto('http://example.com').catch(e => e);
-    expect(error.message).toContain('NS_ERROR_PROXY_CONNECTION_REFUSED');
-    await browser.close();
   });
-});
+}
