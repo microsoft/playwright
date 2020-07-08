@@ -1538,7 +1538,7 @@ index 246ba67c764b629042a7927d24fe89b049d82a0b..68d536878d1f0ba832d1c1d3e36e10b8
  WTF_EXPORT_PRIVATE LocalTimeOffset calculateLocalTimeOffset(double utcInMilliseconds, TimeType = UTCTime);
  
 diff --git a/Source/WTF/wtf/PlatformEnable.h b/Source/WTF/wtf/PlatformEnable.h
-index 2b8b545668647ecad2e03c0fe4f1f760faea7a3f..48581d44490facdd8944a6fb1a04a4353f2d05ae 100644
+index 2b8b545668647ecad2e03c0fe4f1f760faea7a3f..2508e6bfa906effaeb4b05f5bc763d9996842894 100644
 --- a/Source/WTF/wtf/PlatformEnable.h
 +++ b/Source/WTF/wtf/PlatformEnable.h
 @@ -398,7 +398,7 @@
@@ -1550,6 +1550,15 @@ index 2b8b545668647ecad2e03c0fe4f1f760faea7a3f..48581d44490facdd8944a6fb1a04a435
  #endif
  
  #if OS(WINDOWS)
+@@ -471,7 +471,7 @@
+ #endif
+ 
+ #if !defined(ENABLE_TOUCH_EVENTS)
+-#define ENABLE_TOUCH_EVENTS 0
++#define ENABLE_TOUCH_EVENTS 1
+ #endif
+ 
+ #if !defined(ENABLE_TOUCH_ACTION_REGIONS)
 diff --git a/Source/WTF/wtf/PlatformHave.h b/Source/WTF/wtf/PlatformHave.h
 index 5b43aa934e7f03e39af312dbd44cb9dc8b89507d..3e0972873a14c45072af30bafcdb3fc8c7d26e80 100644
 --- a/Source/WTF/wtf/PlatformHave.h
@@ -1578,6 +1587,20 @@ index 6d5be9a591a272cd67d6e9d097b30505bdf8ae5e..8f67ba28c380e844c8e4191ee7044665
              return false;
      }
      
+diff --git a/Source/WebCore/SourcesCocoa.txt b/Source/WebCore/SourcesCocoa.txt
+index 52204749dbb521cdd0970d27351f0160af5a9f4e..1030fd6d68e11f053ccc1d810d4edd2efae4fb4b 100644
+--- a/Source/WebCore/SourcesCocoa.txt
++++ b/Source/WebCore/SourcesCocoa.txt
+@@ -584,3 +584,9 @@ platform/graphics/angle/TemporaryANGLESetting.cpp @no-unify
+ // Derived Sources
+ 
+ WHLSLStandardLibraryFunctionMap.cpp
++
++// Playwright begin
++JSTouch.cpp
++JSTouchEvent.cpp
++JSTouchList.cpp
++// Playwright end
 diff --git a/Source/WebCore/WebCore.order b/Source/WebCore/WebCore.order
 index d643d5bbfbed5b4e3bb1358e36096dcaf66d5d8a..5a0a8ffa1ab74ccf0858e69e35127d49c21c326d 100644
 --- a/Source/WebCore/WebCore.order
@@ -15425,6 +15448,62 @@ index 6804c992656a24696cc57cd0fd94c6423ad0b06e..23a7e509a089a3ae1278a3620878e322
      };
      WKPageSetPageUIClient(m_mainWebView->page(), &pageUIClient.base);
  
+diff --git a/Tools/WebKitTestRunner/mac/EventSenderProxy.mm b/Tools/WebKitTestRunner/mac/EventSenderProxy.mm
+index f83bf7dd57dc481fe365dfe03bf7bd2b6a745fd6..aa646dcf816838da9482405dee380ce4da6d84c9 100644
+--- a/Tools/WebKitTestRunner/mac/EventSenderProxy.mm
++++ b/Tools/WebKitTestRunner/mac/EventSenderProxy.mm
+@@ -878,4 +878,51 @@ void EventSenderProxy::mouseScrollByWithWheelAndMomentumPhases(int x, int y, int
+     }
+ }
+ 
++#if ENABLE(TOUCH_EVENTS)
++void EventSenderProxy::addTouchPoint(int, int)
++{
++}
++
++void EventSenderProxy::updateTouchPoint(int, int, int)
++{
++}
++
++void EventSenderProxy::touchStart()
++{
++}
++
++void EventSenderProxy::touchMove()
++{
++}
++
++void EventSenderProxy::touchEnd()
++{
++}
++
++void EventSenderProxy::touchCancel()
++{
++}
++
++void EventSenderProxy::clearTouchPoints()
++{
++}
++
++void EventSenderProxy::releaseTouchPoint(int)
++{
++}
++
++void EventSenderProxy::cancelTouchPoint(int)
++{
++}
++
++void EventSenderProxy::setTouchPointRadius(int, int)
++{
++}
++
++void EventSenderProxy::setTouchModifier(WKEventModifiers, bool)
++{
++}
++#endif // ENABLE(TOUCH_EVENTS)
++
++
+ } // namespace WTR
 diff --git a/Tools/wpe/backends/HeadlessViewBackend.cpp b/Tools/wpe/backends/HeadlessViewBackend.cpp
 index d0af19a9aba9aeab8aa3acb2f8c1129f83e07cd7..b32f3eb1495f5f21f059a9eca236bbbf9584b682 100644
 --- a/Tools/wpe/backends/HeadlessViewBackend.cpp
