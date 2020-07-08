@@ -154,6 +154,8 @@ class TestWorker {
     this._workerId = workerId;
     this._runningTestTerminate = null;
     this._runs = [];
+
+    this._lastRunningTestRun = null;
   }
 
   terminate(terminateHooks) {
@@ -200,14 +202,15 @@ class TestWorker {
       common++;
 
     while (this._environmentStack.length > common) {
-      if (this._markTerminated(testRun))
+      if (this._markTerminated(this._lastRunningTestRun))
         return;
       const environment = this._environmentStack.pop();
-      if (!await this._hookRunner.runHook(environment, 'afterAll', [this._state], this, testRun))
+      if (!await this._hookRunner.runHook(environment, 'afterAll', [this._state], this, this._lastRunningTestRun))
         return;
       if (!await this._hookRunner.maybeRunGlobalTeardown(environment))
         return;
     }
+    this._lastRunningTestRun = testRun;
     while (this._environmentStack.length < environmentStack.length) {
       if (this._markTerminated(testRun))
         return;
@@ -279,7 +282,7 @@ class TestWorker {
   async shutdown() {
     while (this._environmentStack.length > 0) {
       const environment = this._environmentStack.pop();
-      await this._hookRunner.runHook(environment, 'afterAll', [this._state], this, null);
+      await this._hookRunner.runHook(environment, 'afterAll', [this._state], this, this._lastRunningTestRun);
       await this._hookRunner.maybeRunGlobalTeardown(environment);
     }
   }

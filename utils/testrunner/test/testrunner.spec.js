@@ -473,6 +473,19 @@ module.exports.addTests = function({describe, fdescribe, xdescribe, it, xit, fit
         'root afterAll'
       ]);
     });
+
+    it('should mark proper testrun as crashed when afterall crashed', async() => {
+      const t = new Runner({timeout: 10000});
+      t.describe('suite', () => {
+        t.it('test1', () => { });
+
+        t.afterAll(() => { throw new Error('FAILED'); });
+      });
+      t.it('test2', () => {});
+      const result = await t.run();
+      expect(result.runs[0].result()).toBe('crashed');
+      expect(result.runs[1].result()).toBe('running');
+    });
   });
 
   describe('globalSetup & globalTeardwon', () => {
