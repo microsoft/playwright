@@ -36,6 +36,12 @@ class Test {
     this.Expectations = { ...TestExpectation };
   }
 
+  titles() {
+    if (!this._name)
+      return this._suite.titles();
+    return [...this._suite.titles(), this._name];
+  }
+
   suite() {
     return this._suite;
   }
@@ -127,6 +133,12 @@ class Suite {
   afterAll(callback) { this._addHook('afterAll', callback); }
   globalSetup(callback) { this._addHook('globalSetup', callback); }
   globalTeardown(callback) { this._addHook('globalTeardown', callback); }
+
+  titles() {
+    if (!this._parentSuite)
+      return this._name ? [this._name] : [];
+    return this._name ? [...this._parentSuite.titles(), this._name] : this._parentSuite.titles();
+  }
 
   parentSuite() { return this._parentSuite; }
 
