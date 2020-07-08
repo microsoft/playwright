@@ -15,13 +15,9 @@
  * limitations under the License.
  */
 import utils from './utils';
+import type { Page } from '..';
 
-declare let events: string[];
-declare function getResult(): string;
-declare let textarea: HTMLTextAreaElement;
-declare let lastEvent: KeyboardEvent;
-
-const {FFOX, CHROMIUM, WEBKIT, MAC} = utils.testOptions(browserType);
+const {FFOX, WEBKIT, MAC} = utils.testOptions(browserType);
 describe('Keyboard', function() {
   it('should type into a textarea', async ({page, server}) => {
     await page.evaluate(() => {
@@ -72,15 +68,16 @@ describe('Keyboard', function() {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.focus('textarea');
     page.on('console', m => console.log(m.text()));
-    await page.evaluate(() => {
-      events = [];
+    const events = await page.evaluateHandle(() => {
+      const events: string[] = [];
       document.addEventListener('keydown', e => events.push(e.type));
       document.addEventListener('keyup', e => events.push(e.type));
       document.addEventListener('keypress', e => events.push(e.type));
       document.addEventListener('input', e => events.push(e.type));
+      return events;
     });
     await page.keyboard.insertText('hello world');
-    expect(await page.evaluate('window.events')).toEqual(['input']);
+    expect(await events.jsonValue()).toEqual(['input']);
   });
   it.fail(FFOX && MAC)('should report shiftKey', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/keyboard.html');
@@ -157,7 +154,7 @@ describe('Keyboard', function() {
       }, false);
     });
     await page.keyboard.type('Hello World!');
-    expect(await page.evaluate(() => textarea.value)).toBe('He Wrd!');
+    expect(await page.$eval('textarea', textarea => textarea.value)).toBe('He Wrd!');
   });
   it('should press plus', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/keyboard.html');
@@ -211,51 +208,49 @@ describe('Keyboard', function() {
   it('should specify repeat property', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.focus('textarea');
-    await page.evaluate(() => document.querySelector('textarea').addEventListener('keydown', e => lastEvent = e, true));
+    const lastEvent = await captureLastKeydown(page);
     await page.keyboard.down('a');
-    expect(await page.evaluate(() => lastEvent.repeat)).toBe(false);
+    expect(await lastEvent.evaluate(e => e.repeat)).toBe(false);
     await page.keyboard.press('a');
-    expect(await page.evaluate(() => lastEvent.repeat)).toBe(true);
+    expect(await lastEvent.evaluate(e => e.repeat)).toBe(true);
 
     await page.keyboard.down('b');
-    expect(await page.evaluate(() => lastEvent.repeat)).toBe(false);
+    expect(await lastEvent.evaluate(e => e.repeat)).toBe(false);
     await page.keyboard.down('b');
-    expect(await page.evaluate(() => lastEvent.repeat)).toBe(true);
+    expect(await lastEvent.evaluate(e => e.repeat)).toBe(true);
 
     await page.keyboard.up('a');
     await page.keyboard.down('a');
-    expect(await page.evaluate(() => lastEvent.repeat)).toBe(false);
+    expect(await lastEvent.evaluate(e => e.repeat)).toBe(false);
   });
   it('should type all kinds of characters', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.focus('textarea');
     const text = 'This text goes onto two lines.\nThis character is 嗨.';
     await page.keyboard.type(text);
-    expect(await page.evaluate('result')).toBe(text);
+    expect(await page.$eval('textarea', t => t.value)).toBe(text);
   });
   it('should specify location', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
-    await page.evaluate(() => {
-      window.addEventListener('keydown', event => window['keyLocation'] = event.location, true);
-    });
+    const lastEvent = await captureLastKeydown(page);
     const textarea = await page.$('textarea');
 
     await textarea.press('Digit5');
-    expect(await page.evaluate('keyLocation')).toBe(0);
+    expect(await lastEvent.evaluate(e => e.location)).toBe(0);
 
     await textarea.press('ControlLeft');
-    expect(await page.evaluate('keyLocation')).toBe(1);
+    expect(await lastEvent.evaluate(e => e.location)).toBe(1);
 
     await textarea.press('ControlRight');
-    expect(await page.evaluate('keyLocation')).toBe(2);
+    expect(await lastEvent.evaluate(e => e.location)).toBe(2);
 
     await textarea.press('NumpadSubtract');
-    expect(await page.evaluate('keyLocation')).toBe(3);
+    expect(await lastEvent.evaluate(e => e.location)).toBe(3);
   });
   it('should press Enter', async ({page, server}) => {
     await page.setContent('<textarea></textarea>');
     await page.focus('textarea');
-    await page.evaluate(() => window.addEventListener('keydown', e => window['lastEvent'] = {code: e.code, key: e.key}));
+    const lastEventHandle = await captureLastKeydown(page);
     await testEnterKey('Enter', 'Enter', 'Enter');
     await testEnterKey('NumpadEnter', 'Enter', 'NumpadEnter');
     await testEnterKey('\n', 'Enter', 'Enter');
@@ -263,7 +258,7 @@ describe('Keyboard', function() {
 
     async function testEnterKey(key, expectedKey, expectedCode) {
       await page.keyboard.press(key);
-      const lastEvent: {key: string, code: string} = await page.evaluate('lastEvent');
+      const lastEvent = await lastEventHandle.jsonValue();
       expect(lastEvent.key).toBe(expectedKey, `${JSON.stringify(key)} had the wrong key: ${lastEvent.key}`);
       expect(lastEvent.code).toBe(expectedCode, `${JSON.stringify(key)} had the wrong code: ${lastEvent.code}`);
       const value = await page.$eval('textarea', t => t.value);
@@ -323,14 +318,9 @@ describe('Keyboard', function() {
     expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some tex');
   });
   it('should press the meta key', async ({page}) => {
-    await page.evaluate(() => {
-      window['result'] = null;
-      document.addEventListener('keydown', event => {
-        window['result'] = [event.key, event.code, event.metaKey];
-      });
-    });
+    const lastEvent = await captureLastKeydown(page);
     await page.keyboard.press('Meta');
-    const [key, code, metaKey] = await page.evaluate('result');
+    const {key, code, metaKey} = await lastEvent.jsonValue();
     if (FFOX && !MAC)
       expect(key).toBe('OS');
     else
@@ -350,20 +340,14 @@ describe('Keyboard', function() {
   it('should work after a cross origin navigation', async ({page, server}) => {
     await page.goto(server.PREFIX + '/empty.html');
     await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
-    await page.evaluate(() => {
-      document.addEventListener('keydown', event => window['lastKey'] = event);
-    });
+    const lastEvent = await captureLastKeydown(page);
     await page.keyboard.press('a');
-    expect(await page.evaluate('lastKey.key')).toBe('a');
+    expect(await lastEvent.evaluate(l => l.key)).toBe('a');
   });
 
   // event.keyIdentifier has been removed from all browsers except WebKit
   it.skip(!WEBKIT)('should expose keyIdentifier in webkit', async ({page, server}) => {
-    await page.evaluate(() => {
-      document.addEventListener('keydown', event => {
-        window['lastKeyIdentifier'] = event['keyIdentifier'];
-      });
-    });
+    const lastEvent = await captureLastKeydown(page);
     const keyMap = {
       'ArrowUp': 'Up',
       'ArrowDown': 'Down',
@@ -378,7 +362,7 @@ describe('Keyboard', function() {
     };
     for (const [key, keyIdentifier] of Object.entries(keyMap)) {
       await page.keyboard.press(key);
-      expect(await page.evaluate('lastKeyIdentifier')).toBe(keyIdentifier);
+      expect(await lastEvent.evaluate(e => e.keyIdentifier)).toBe(keyIdentifier);
     }
   });
   it('should scroll with PageDown', async ({page, server}) => {
@@ -390,3 +374,27 @@ describe('Keyboard', function() {
     await page.waitForFunction(() => scrollY > 0);
   });
 });
+
+async function captureLastKeydown(page: Page) {
+  const lastEvent = await page.evaluateHandle(() => {
+    const lastEvent = {
+      repeat: false,
+      location: -1,
+      code: '',
+      key: '',
+      metaKey: false,
+      keyIdentifier: 'unsupported'
+    };
+    document.addEventListener('keydown', e => {
+      lastEvent.repeat = e.repeat;
+      lastEvent.location = e.location;
+      lastEvent.key = e.key;
+      lastEvent.code = e.code;
+      lastEvent.metaKey = e.metaKey;
+      // keyIdentifier only exists in WebKit, and isn't in TypeScript's lib.
+      lastEvent.keyIdentifier = 'keyIdentifier' in e && (e as any).keyIdentifier;
+    }, true);
+    return lastEvent;
+  });
+  return lastEvent;
+}

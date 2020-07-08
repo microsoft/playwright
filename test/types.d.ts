@@ -116,3 +116,9 @@ declare const dit: ItFunction<PageState>;
 declare const xit: ItFunction<PageState>;
 
 declare const browserType: import('../index').BrowserType<import('../index').Browser>;
+
+
+// global variables in assets
+
+// keyboard.html
+declare function getResult(): string;
