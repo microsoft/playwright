@@ -1,12 +1,27 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 const path = require('path');
 const wrapper = require('@playwright/jest-wrapper');
 const DefaultTestRunner = require('../utils/testrunner');
 const {TestRunner, TestRun} = require('../utils/testrunner/TestRunner');
-const {Environment} = require('../utils/testrunner/Test');
-const utils = require('./utils');
+const { PlaywrightEnvironment, BrowserTypeEnvironment, BrowserEnvironment, PageEnvironment} = require('./environments.js');
 const fs = require('fs');
 const pirates = require('pirates');
-const babel =require('@babel/core');
+const babel = require('@babel/core');
 const testRunnerInfo = makeTestRunnerInfo();
 
 
@@ -57,25 +72,23 @@ module.exports = wrapper.createJestRunner(async ({path: filePath}) => {
         revert();
         delete require.cache[require.resolve(filePath)];
       });
-    
+
       delete global.HEADLESS;
       delete global.browserType;
     });
   }
-  for (const [key, value] of Object.entries(testRunner.api())) {
+  for (const key of Object.keys(testRunner.api())) {
     // expect is used when running tests, while the rest of api is not.
     if (key !== 'expect')
       delete global[key];
   }
 
-  // console.log(testRunner.collector().tests());
-  
   return testRunner._filter.filter(testRunner.collector().tests()).map(test => {
     return {
       titles: test.titles(),
       test
-    }
-  })
+    };
+  });
 }, async (tests, options, onStart, onResult) => {
   const parallel = Math.min(options.workers, 30);
   require('events').defaultMaxListeners *= parallel;
@@ -92,10 +105,10 @@ module.exports = wrapper.createJestRunner(async ({path: filePath}) => {
     totalTimeout: options.timeout,
     // onStarted = async (testRuns) => {},
     // onFinished = async (result) => {},
-    onTestRunStarted: async (testRun) => {
+    onTestRunStarted: async testRun => {
       onStart(testRun.__test__);
     },
-    onTestRunFinished: async(testRun) => {
+    onTestRunFinished: async testRun => {
       let status = 'skip';
       if (testRun.isFailure())
         status = 'fail';
@@ -106,14 +119,14 @@ module.exports = wrapper.createJestRunner(async ({path: filePath}) => {
       onResult(testRun.__test__, {
         status,
         error: testRun.error(),
-      });  
+      });
     }
   });
 });
 
 function makeTestRunnerInfo() {
-  let parallel = 1;
-  let timeout = process.env.CI ? 30 * 1000 : 10 * 1000;
+  const parallel = 1;
+  const timeout = process.env.CI ? 30 * 1000 : 10 * 1000;
   const config = require('./test.config');
   const testRunner = new DefaultTestRunner({
     timeout,
@@ -134,13 +147,7 @@ function makeTestRunnerInfo() {
   const { setUnderTest } = require(require('path').join(playwrightPath, 'lib/helper.js'));
   setUnderTest();
 
-  const playwrightEnvironment = new Environment('Playwright');
-  playwrightEnvironment.beforeAll(async state => {
-    state.playwright = playwright;
-  });
-  playwrightEnvironment.afterAll(async state => {
-    delete state.playwright;
-  });
+  const playwrightEnvironment = new PlaywrightEnvironment(playwright);
 
   testRunner.collector().useEnvironment(playwrightEnvironment);
   for (const e of config.globalEnvironments || [])
@@ -151,13 +158,7 @@ function makeTestRunnerInfo() {
   const browserInfo = browserNames.map(browserName => {
     const browserType = playwright[browserName];
 
-    const browserTypeEnvironment = new Environment('BrowserType');
-    browserTypeEnvironment.beforeAll(async state => {
-      state.browserType = browserType;
-    });
-    browserTypeEnvironment.afterAll(async state => {
-      delete state.browserType;
-    });
+    const browserTypeEnvironment = new BrowserTypeEnvironment(browserType);
 
     // TODO: maybe launch options per browser?
     const launchOptions = {
@@ -177,33 +178,9 @@ function makeTestRunnerInfo() {
         throw new Error(`Browser is not downloaded. Run 'npm install' and try to re-run tests`);
     }
 
-    const browserEnvironment = new Environment(browserName);
-    browserEnvironment.beforeAll(async state => {
-      state._logger = utils.createTestLogger(config.dumpLogOnFailure);
-      state.browser = await state.browserType.launch({...launchOptions, logger: state._logger});
-    });
-    browserEnvironment.afterAll(async state => {
-      await state.browser.close();
-      delete state.browser;
-      delete state._logger;
-    });
-    browserEnvironment.beforeEach(async(state, testRun) => {
-      state._logger.setTestRun(testRun);
-    });
-    browserEnvironment.afterEach(async (state, testRun) => {
-      state._logger.setTestRun(null);
-    });
+    const browserEnvironment = new BrowserEnvironment(launchOptions, config.dumpLogOnFailure);
 
-    const pageEnvironment = new Environment('Page');
-    pageEnvironment.beforeEach(async state => {
-      state.context = await state.browser.newContext();
-      state.page = await state.context.newPage();
-    });
-    pageEnvironment.afterEach(async state => {
-      await state.context.close();
-      state.context = null;
-      state.page = null;
-    });
+    const pageEnvironment = new PageEnvironment();
     return {browserName, browserType, browserEnvironment, browserTypeEnvironment, pageEnvironment, launchOptions};
   });
   return {testRunner, browserInfo};
