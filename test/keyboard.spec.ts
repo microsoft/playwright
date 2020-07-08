@@ -17,7 +17,7 @@
 import utils from './utils';
 import type { Page } from '..';
 
-const {FFOX, WEBKIT, MAC} = utils.testOptions(browserType);
+const {FFOX, WEBKIT, CHROMIUM, MAC} = utils.testOptions(browserType);
 describe('Keyboard', function() {
   it('should type into a textarea', async ({page, server}) => {
     await page.evaluate(() => {
@@ -289,7 +289,7 @@ describe('Keyboard', function() {
     await textarea.type('👹 Tokyo street Japan 🇯🇵');
     expect(await frame.$eval('textarea', textarea => textarea.value)).toBe('👹 Tokyo street Japan 🇯🇵');
   });
-  it('should handle selectAll', async ({page, server}) => {
+  it.skip(CHROMIUM && MAC)('should handle selectAll', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     const textarea = await page.$('textarea');
     await textarea.type('some text');
