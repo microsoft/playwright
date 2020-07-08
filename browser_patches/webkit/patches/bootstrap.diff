@@ -15037,7 +15037,7 @@ index 62629b4c1c25ae82bd797b39bbf9de0331f8eed2..5de7900a29b0e629f1ac404bbb0dc5b4
  
  typedef struct _BrowserWindow        BrowserWindow;
 diff --git a/Tools/MiniBrowser/gtk/main.c b/Tools/MiniBrowser/gtk/main.c
-index 61cb729e9e8e24d85c0d678c64a3dbae1c085f63..0efc11a6565ce3e4ec8e5bea6e12216f9d04e4c1 100644
+index 61cb729e9e8e24d85c0d678c64a3dbae1c085f63..52f1f175cfd5c0e73cd74eca95a46b085ac98b37 100644
 --- a/Tools/MiniBrowser/gtk/main.c
 +++ b/Tools/MiniBrowser/gtk/main.c
 @@ -55,7 +55,12 @@ static const char *cookiesPolicy;
@@ -15064,7 +15064,7 @@ index 61cb729e9e8e24d85c0d678c64a3dbae1c085f63..0efc11a6565ce3e4ec8e5bea6e12216f
      { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &uriArguments, 0, "[URL…]" },
      { 0, 0, 0, 0, 0, 0, 0 }
  };
-@@ -530,6 +539,41 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
+@@ -530,6 +539,48 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
      g_main_loop_quit(data->mainLoop);
  }
  
@@ -15094,11 +15094,18 @@ index 61cb729e9e8e24d85c0d678c64a3dbae1c085f63..0efc11a6565ce3e4ec8e5bea6e12216f
 +    g_application_release(G_APPLICATION(browserApplication));
 +}
 +
++static void keepApplicationAliveUntilQuit(GApplication *application)
++{
++    // Reference the application, it will be released in quitBroserApplication.
++    g_application_hold(application);
++    WebKitBrowserInspector* browserInspector = webkit_browser_inspector_get_default();
++    g_signal_connect(browserInspector, "quit-application", G_CALLBACK(quitBroserApplication), NULL);
++}
++
 +static void configureBrowserInspectorPipe()
 +{
 +    WebKitBrowserInspector* browserInspector = webkit_browser_inspector_get_default();
 +    g_signal_connect(browserInspector, "create-new-page", G_CALLBACK(createNewPage), NULL);
-+    g_signal_connect(browserInspector, "quit-application", G_CALLBACK(quitBroserApplication), NULL);
 + 
 +    webkit_browser_inspector_initialize_pipe(proxy, ignoreHosts);
 +}
@@ -15106,7 +15113,7 @@ index 61cb729e9e8e24d85c0d678c64a3dbae1c085f63..0efc11a6565ce3e4ec8e5bea6e12216f
  static void startup(GApplication *application)
  {
      const char *actionAccels[] = {
-@@ -560,23 +604,37 @@ static void startup(GApplication *application)
+@@ -560,23 +611,36 @@ static void startup(GApplication *application)
  
  static void activate(GApplication *application, WebKitSettings *webkitSettings)
  {
@@ -15114,8 +15121,7 @@ index 61cb729e9e8e24d85c0d678c64a3dbae1c085f63..0efc11a6565ce3e4ec8e5bea6e12216f
 +        configureBrowserInspectorPipe();
 +
 +    if (noStartupWindow) {
-+        // Reference the application, it will be released in quitBroserApplication.
-+        g_application_hold(application);
++        keepApplicationAliveUntilQuit(application);
 +        g_clear_object(&webkitSettings);
 +        return;
 +    }
@@ -15147,7 +15153,7 @@ index 61cb729e9e8e24d85c0d678c64a3dbae1c085f63..0efc11a6565ce3e4ec8e5bea6e12216f
      g_object_unref(manager);
  
      if (cookiesPolicy) {
-@@ -595,7 +653,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
+@@ -595,7 +659,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
      }
  
      if (proxy) {
@@ -15156,7 +15162,7 @@ index 61cb729e9e8e24d85c0d678c64a3dbae1c085f63..0efc11a6565ce3e4ec8e5bea6e12216f
          webkit_web_context_set_network_proxy_settings(webContext, WEBKIT_NETWORK_PROXY_MODE_CUSTOM, webkitProxySettings);
          webkit_network_proxy_settings_free(webkitProxySettings);
      }
-@@ -661,9 +719,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
+@@ -661,9 +725,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
              WebKitWebView *webView = createBrowserTab(mainWindow, webkitSettings, userContentManager, defaultWebsitePolicies);
              if (!i)
                  firstTab = GTK_WIDGET(webView);
@@ -15167,7 +15173,7 @@ index 61cb729e9e8e24d85c0d678c64a3dbae1c085f63..0efc11a6565ce3e4ec8e5bea6e12216f
          }
      } else {
          WebKitWebView *webView = createBrowserTab(mainWindow, webkitSettings, userContentManager, defaultWebsitePolicies);
-@@ -739,9 +795,11 @@ int main(int argc, char *argv[])
+@@ -739,9 +801,11 @@ int main(int argc, char *argv[])
      }
  
      GtkApplication *application = gtk_application_new(NULL, G_APPLICATION_FLAGS_NONE);
