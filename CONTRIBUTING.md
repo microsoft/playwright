@@ -32,7 +32,7 @@ cd playwright
 npm install
 ```
 
-3. Build via Webpack
+3. Build Playwright
 
 ```bash
 npm run build
