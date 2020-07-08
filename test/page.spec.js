@@ -1292,6 +1292,36 @@ describe('Page.frame', function() {
   });
 });
 
+describe('user-agent sanity', function() {
+  it('should be a sane user agent', async ({page}) => {
+    const userAgentParts = (await page.evaluate(() => navigator.userAgent)).split(/[()]/).map(part => part.trim());
+    // First part is always "Mozilla/5.0"
+    expect(userAgentParts.shift()).toBe('Mozilla/5.0');
+    // Second part in parenthesis is platform - ignore it.
+    userAgentParts.shift();
+
+    // Third part for Firefox is the last one and encodes engine and browser versions.
+    if (FFOX) {
+      const [engine, browser] = userAgentParts.shift().split(' ');
+      expect(engine.startsWith('Gecko')).toBe(true);
+      expect(browser.startsWith('Firefox')).toBe(true);
+      expect(userAgentParts.length).toBe(0);
+      return;
+    }
+    // For both CHROMIUM and WEBKIT, third part is the AppleWebKit version.
+    expect(userAgentParts.shift().startsWith('AppleWebKit/')).toBe(true);
+    // 4th part is fixed.
+    expect(userAgentParts.shift()).toBe('KHTML, like Gecko');
+    // 5th part encodes real browser name and engine version.
+    const [engine, browser] = userAgentParts.shift().split(' ');
+    expect(browser.startsWith('Safari/')).toBe(true);
+    if (CHROMIUM)
+      expect(engine.includes('Chrome/')).toBe(true);
+    else
+      expect(engine.startsWith('Version/')).toBe(true);
+  });
+});
+
 describe('Page api coverage', function() {
   it('Page.press should work', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
