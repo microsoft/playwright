@@ -145,6 +145,8 @@ export class Page extends EventEmitter {
   }
 
   _didClose() {
+    for (const frame of this._frameManager.frames())
+      frame._stopNetworkIdleTimer();
     assert(this._closedState !== 'closed', 'Page closed twice');
     this._closedState = 'closed';
     this.emit(Events.Page.Close);
@@ -152,6 +154,8 @@ export class Page extends EventEmitter {
   }
 
   _didCrash() {
+    for (const frame of this._frameManager.frames())
+      frame._stopNetworkIdleTimer();
     this.emit(Events.Page.Crash);
     this._crashedCallback(new Error('Page crashed'));
   }

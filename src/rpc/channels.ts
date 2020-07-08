@@ -96,8 +96,6 @@ export interface PageChannel extends Channel {
   on(event: 'fileChooser', callback: (params: { element: ElementHandleChannel, isMultiple: boolean }) => void): this;
   on(event: 'frameAttached', callback: (params: FrameChannel) => void): this;
   on(event: 'frameDetached', callback: (params: FrameChannel) => void): this;
-  on(event: 'frameNavigated', callback: (params: { frame: FrameChannel, url: string, name: string }) => void): this;
-  on(event: 'frameNavigated', callback: (params: { frame: FrameChannel, url: string, name: string }) => void): this;
   on(event: 'load', callback: () => void): this;
   on(event: 'pageError', callback: (params: { error: types.Error }) => void): this;
   on(event: 'popup', callback: (params: PageChannel) => void): this;
@@ -148,7 +146,12 @@ export type PageInitializer = {
 
 export type PageAttribution = { isPage?: boolean };
 
+export type FrameNavigatedEvent = { url: string, name: string, newDocument?: { request?: RequestChannel }, error?: string };
+
 export interface FrameChannel extends Channel {
+  on(event: 'navigated', callback: (params: FrameNavigatedEvent) => void): this;
+  on(event: 'lifecycle', callback: (params: { add?: types.LifecycleEvent, remove?: types.LifecycleEvent } ) => void): this;
+
   evalOnSelector(params: { selector: string; expression: string, isFunction: boolean, arg: any} & PageAttribution): Promise<any>;
   evalOnSelectorAll(params: { selector: string; expression: string, isFunction: boolean, arg: any} & PageAttribution): Promise<any>;
   addScriptTag(params: { url?: string | undefined, path?: string | undefined, content?: string | undefined, type?: string | undefined} & PageAttribution): Promise<ElementHandleChannel>;
@@ -180,7 +183,6 @@ export interface FrameChannel extends Channel {
   uncheck(params: { selector: string, force?: boolean, noWaitAfter?: boolean } & types.TimeoutOptions & PageAttribution): Promise<void>;
   waitForFunction(params: { expression: string, isFunction: boolean, arg: any } & types.WaitForFunctionOptions & PageAttribution): Promise<JSHandleChannel>;
   waitForLoadState(params: { state: types.LifecycleEvent } & types.TimeoutOptions & PageAttribution): Promise<void>;
-  waitForNavigation(params: types.WaitForNavigationOptions & PageAttribution): Promise<ResponseChannel | null>;
   waitForSelector(params: { selector: string } & types.WaitForElementOptions & PageAttribution): Promise<ElementHandleChannel | null>;
 }
 export type FrameInitializer = {

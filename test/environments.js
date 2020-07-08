@@ -123,7 +123,8 @@ class TraceTestEnvironment {
     this._session = null;
   }
 
-  async beforeEach() {
+  async beforeEach(state, testRun) {
+    const t = testRun.test();
     const inspector = require('inspector');
     const fs = require('fs');
     const util = require('util');

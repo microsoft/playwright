@@ -564,7 +564,7 @@ describe('Page.goto', function() {
   });
 });
 
-describe.skip(CHANNEL)('Page.waitForNavigation', function() {
+describe('Page.waitForNavigation', function() {
   it('should work', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [response] = await Promise.all([

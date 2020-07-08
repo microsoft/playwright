@@ -53,11 +53,20 @@ type ConsoleTagHandler = () => void;
 export type FunctionWithSource = (source: { context: BrowserContext, page: Page, frame: Frame}, ...args: any) => any;
 
 export const kNavigationEvent = Symbol('navigation');
-type NavigationEvent = {
-  documentInfo?: DocumentInfo,  // Undefined for same-document navigations.
+export type NavigationEvent = {
+  // New frame url after navigation.
+  url: string,
+  // New frame name after navigation.
+  name: string,
+  // Information about the new document for cross-document navigations.
+  // Undefined for same-document navigations.
+  newDocument?: DocumentInfo,
+  // Error for cross-document navigations if any. When error is present,
+  // the navigation did not commit.
   error?: Error,
 };
 export const kLifecycleEvent = Symbol('lifecycle');
+export const kRemoveLifecycleEvent = Symbol('removeLifecycle');
 
 export class FrameManager {
   private _page: Page;
@@ -166,7 +175,7 @@ export class FrameManager {
     else
       frame._currentDocument = { documentId, request: undefined };
     frame._pendingDocument = undefined;
-    const navigationEvent: NavigationEvent = { documentInfo: frame._currentDocument };
+    const navigationEvent: NavigationEvent = { url, name, newDocument: frame._currentDocument };
     frame._eventEmitter.emit(kNavigationEvent, navigationEvent);
     frame._onClearLifecycle();
     if (!initial) {
@@ -180,7 +189,7 @@ export class FrameManager {
     if (!frame)
       return;
     frame._url = url;
-    const navigationEvent: NavigationEvent = {};
+    const navigationEvent: NavigationEvent = { url, name: frame._name };
     frame._eventEmitter.emit(kNavigationEvent, navigationEvent);
     this._page._logger.info(`  navigated to "${url}"`);
     this._page.emit(Events.Page.FrameNavigated, frame);
@@ -192,7 +201,12 @@ export class FrameManager {
       return;
     if (documentId !== undefined && frame._pendingDocument.documentId !== documentId)
       return;
-    const navigationEvent: NavigationEvent = { documentInfo: frame._pendingDocument, error: new Error(errorText) };
+    const navigationEvent: NavigationEvent = {
+      url: frame._url,
+      name: frame._name,
+      newDocument: frame._pendingDocument,
+      error: new Error(errorText),
+    };
     frame._pendingDocument = undefined;
     frame._eventEmitter.emit(kNavigationEvent, navigationEvent);
   }
@@ -384,6 +398,10 @@ export class Frame {
           this._page.emit(Events.Page.DOMContentLoaded);
       }
     }
+    for (const event of this._subtreeLifecycleEvents) {
+      if (!events.has(event))
+        this._eventEmitter.emit(kRemoveLifecycleEvent, event);
+    }
     this._subtreeLifecycleEvents = events;
   }
 
@@ -400,7 +418,7 @@ export class Frame {
       }
       url = helper.completeUserURL(url);
 
-      const sameDocument = helper.waitForEvent(progress, this._eventEmitter, kNavigationEvent, (e: NavigationEvent) => !e.documentInfo);
+      const sameDocument = helper.waitForEvent(progress, this._eventEmitter, kNavigationEvent, (e: NavigationEvent) => !e.newDocument);
       const navigateResult = await this._page._delegate.navigateFrame(this, url, referer);
 
       let event: NavigationEvent;
@@ -409,10 +427,10 @@ export class Frame {
         event = await helper.waitForEvent(progress, this._eventEmitter, kNavigationEvent, (event: NavigationEvent) => {
           // We are interested either in this specific document, or any other document that
           // did commit and replaced the expected document.
-          return event.documentInfo && (event.documentInfo.documentId === navigateResult.newDocumentId || !event.error);
+          return event.newDocument && (event.newDocument.documentId === navigateResult.newDocumentId || !event.error);
         }).promise;
 
-        if (event.documentInfo!.documentId !== navigateResult.newDocumentId) {
+        if (event.newDocument!.documentId !== navigateResult.newDocumentId) {
           // This is just a sanity check. In practice, new navigation should
           // cancel the previous one and report "request cancelled"-like error.
           throw new Error('Navigation interrupted by another one');
@@ -426,7 +444,7 @@ export class Frame {
       if (!this._subtreeLifecycleEvents.has(waitUntil))
         await helper.waitForEvent(progress, this._eventEmitter, kLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
-      const request = event.documentInfo ? event.documentInfo.request : undefined;
+      const request = event.newDocument ? event.newDocument.request : undefined;
       return request ? request._finalRequest().response() : null;
     });
   }
@@ -450,7 +468,7 @@ export class Frame {
       if (!this._subtreeLifecycleEvents.has(waitUntil))
         await helper.waitForEvent(progress, this._eventEmitter, kLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
-      const request = navigationEvent.documentInfo ? navigationEvent.documentInfo.request : undefined;
+      const request = navigationEvent.newDocument ? navigationEvent.newDocument.request : undefined;
       return request ? request._finalRequest().response() : null;
     });
   }
@@ -926,6 +944,7 @@ export class Frame {
   }
 
   _onDetached() {
+    this._stopNetworkIdleTimer();
     this._detached = true;
     this._detachedCallback();
     for (const data of this._contextData.values()) {

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { Frame } from '../../frames';
+import { Frame, kNavigationEvent, kLifecycleEvent, NavigationEvent, kRemoveLifecycleEvent } from '../../frames';
 import * as types from '../../types';
 import { ElementHandleChannel, FrameChannel, FrameInitializer, JSHandleChannel, ResponseChannel, PageAttribution } from '../channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { convertSelectOptionValues, ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
-import { ResponseDispatcher } from './networkDispatchers';
+import { ResponseDispatcher, RequestDispatcher } from './networkDispatchers';
 
 export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> implements FrameChannel {
   private _frame: Frame;
@@ -37,6 +37,18 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
       parentFrame: lookupNullableDispatcher<FrameDispatcher>(frame.parentFrame())
     });
     this._frame = frame;
+    frame._eventEmitter.on(kNavigationEvent, (event: NavigationEvent) => {
+      const params = { url: event.url, name: event.name, error: event.error ? event.error.message : undefined };
+      if (event.newDocument)
+        (params as any).newDocument = { request: RequestDispatcher.fromNullable(this._scope, event.newDocument.request || null) };
+      this._dispatchEvent('navigated', params);
+    });
+    frame._eventEmitter.on(kLifecycleEvent, (event: types.LifecycleEvent) => {
+      this._dispatchEvent('lifecycle', { add: event });
+    });
+    frame._eventEmitter.on(kRemoveLifecycleEvent, (event: types.LifecycleEvent) => {
+      this._dispatchEvent('lifecycle', { remove: event });
+    });
   }
 
   async goto(params: { url: string } & types.GotoOptions & PageAttribution): Promise<ResponseChannel | null> {
@@ -47,11 +59,6 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
   async waitForLoadState(params: { state?: 'load' | 'domcontentloaded' | 'networkidle' } & types.TimeoutOptions & PageAttribution): Promise<void> {
     const target = params.isPage ? this._frame._page : this._frame;
     await target.waitForLoadState(params.state, params);
-  }
-
-  async waitForNavigation(params: types.WaitForNavigationOptions & PageAttribution): Promise<ResponseChannel | null> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return lookupNullableDispatcher<ResponseDispatcher>(await target.waitForNavigation(params));
   }
 
   async frameElement(): Promise<ElementHandleChannel> {

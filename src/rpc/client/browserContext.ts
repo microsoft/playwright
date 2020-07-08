@@ -81,6 +81,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   }
 
   setDefaultNavigationTimeout(timeout: number) {
+    this._timeoutSettings.setDefaultNavigationTimeout(timeout);
     this._channel.setDefaultNavigationTimeoutNoReply({ timeout });
   }
 

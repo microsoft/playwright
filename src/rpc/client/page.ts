@@ -56,7 +56,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   readonly mouse: Mouse;
   readonly _bindings = new Map<string, FunctionWithSource>();
   private _pendingWaitForEvents = new Map<(error: Error) => void, string>();
-  private _timeoutSettings = new TimeoutSettings();
+  _timeoutSettings = new TimeoutSettings();
   _isPageCall = false;
 
   static from(page: PageChannel): Page {
@@ -88,7 +88,6 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     this._channel.on('fileChooser', ({ element, isMultiple }) => this.emit(Events.Page.FileChooser, new FileChooser(this, ElementHandle.from(element), isMultiple)));
     this._channel.on('frameAttached', frame => this._onFrameAttached(Frame.from(frame)));
     this._channel.on('frameDetached', frame => this._onFrameDetached(Frame.from(frame)));
-    this._channel.on('frameNavigated', ({ frame, url, name }) => this._onFrameNavigated(Frame.from(frame), url, name));
     this._channel.on('load', () => this.emit(Events.Page.Load));
     this._channel.on('pageError', ({ error }) => this.emit(Events.Page.PageError, parseError(error)));
     this._channel.on('popup', popup => this.emit(Events.Page.Popup, Page.from(popup)));
@@ -124,12 +123,6 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     if (frame._parentFrame)
       frame._parentFrame._childFrames.delete(frame);
     this.emit(Events.Page.FrameDetached, frame);
-  }
-
-  private _onFrameNavigated(frame: Frame, url: string, name: string) {
-    frame._url = url;
-    frame._name = name;
-    this.emit(Events.Page.FrameNavigated, frame);
   }
 
   private _onRoute(route: Route, request: Request) {
@@ -208,6 +201,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   setDefaultNavigationTimeout(timeout: number) {
+    this._timeoutSettings.setDefaultNavigationTimeout(timeout);
     this._channel.setDefaultNavigationTimeoutNoReply({ timeout });
   }
 

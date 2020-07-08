@@ -38,7 +38,6 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
   constructor(scope: DispatcherScope, elementHandle: ElementHandle) {
     super(scope, elementHandle);
     this._elementHandle = elementHandle;
-    this._elementHandle = elementHandle;
   }
 
   async ownerFrame(): Promise<FrameChannel | null> {
