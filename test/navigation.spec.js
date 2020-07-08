@@ -446,7 +446,7 @@ describe('Page.goto', function() {
     });
 
     /**
-     * @param {import('../src/frames').Frame} frame
+     * @param {import('../index').Frame} frame
      * @param {TestServer} server
      * @param {() => Promise<void>} action
      * @param {boolean} isSetContent

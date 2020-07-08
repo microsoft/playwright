@@ -85,7 +85,7 @@ module.exports = {
         './focus.spec.js',
         './input.spec.js',
         './jshandle.spec.js',
-        './keyboard.spec.js',
+        './keyboard.spec.ts',
         './mouse.spec.js',
         './navigation.spec.js',
         './network.spec.js',
