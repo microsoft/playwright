@@ -594,6 +594,15 @@ export module Protocol {
       message: string;
     };
     export type sendMessageToWorkerReturnValue = void;
+    export type startVideoRecordingParameters = {
+      file: string;
+      width: number;
+      height: number;
+      scale?: number;
+    };
+    export type startVideoRecordingReturnValue = void;
+    export type stopVideoRecordingParameters = void;
+    export type stopVideoRecordingReturnValue = void;
   }
   export module Runtime {
     export type RemoteObject = {
@@ -976,6 +985,8 @@ export module Protocol {
     "Page.handleDialog": Page.handleDialogParameters;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogParameters;
     "Page.sendMessageToWorker": Page.sendMessageToWorkerParameters;
+    "Page.startVideoRecording": Page.startVideoRecordingParameters;
+    "Page.stopVideoRecording": Page.stopVideoRecordingParameters;
     "Runtime.evaluate": Runtime.evaluateParameters;
     "Runtime.callFunction": Runtime.callFunctionParameters;
     "Runtime.disposeObject": Runtime.disposeObjectParameters;
@@ -1044,6 +1055,8 @@ export module Protocol {
     "Page.handleDialog": Page.handleDialogReturnValue;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogReturnValue;
     "Page.sendMessageToWorker": Page.sendMessageToWorkerReturnValue;
+    "Page.startVideoRecording": Page.startVideoRecordingReturnValue;
+    "Page.stopVideoRecording": Page.stopVideoRecordingReturnValue;
     "Runtime.evaluate": Runtime.evaluateReturnValue;
     "Runtime.callFunction": Runtime.callFunctionReturnValue;
     "Runtime.disposeObject": Runtime.disposeObjectReturnValue;

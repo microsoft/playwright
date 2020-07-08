@@ -38,6 +38,7 @@
     "test-types": "npm run generate-types && npx -p typescript@3.7.5 tsc -p utils/generate_types/test/tsconfig.json && npm run typecheck-tests",
     "generate-types": "node utils/generate_types/",
     "typecheck-tests": "tsc -p ./test/",
+    "roll-browser": "node utils/roll_browser.js",
     "jest": "jest"
   },
   "author": {
