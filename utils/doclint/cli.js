@@ -62,7 +62,8 @@ async function run() {
     const browser = await playwright.chromium.launch();
     const page = await browser.newPage();
     const checkPublicAPI = require('./check_public_api');
-    const jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src'));
+    const rpcDir = path.join(PROJECT_DIR, 'src', 'rpc');
+    const jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src'), '', [rpcDir]);
     messages.push(...await checkPublicAPI(page, [api], jsSources));
     await browser.close();
 

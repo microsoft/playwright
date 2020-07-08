@@ -30,6 +30,7 @@ import { Dialog } from './dialog';
 import { Download } from './download';
 import { parseError } from '../serializers';
 import { BrowserServer } from './browserServer';
+import { CDPSession } from './cdpSession';
 
 export class Connection {
   readonly _objects = new Map<string, ChannelOwner<any, any>>();
@@ -191,6 +192,10 @@ export class ConnectionScope {
         break;
       case 'browserType':
         result = new BrowserType(this, guid, initializer);
+        break;
+      case 'cdpSession':
+        // Chromium-specific.
+        result = new CDPSession(this, guid, initializer);
         break;
       case 'context':
         result = new BrowserContext(this, guid, initializer);

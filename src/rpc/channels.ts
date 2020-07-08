@@ -52,6 +52,9 @@ export interface BrowserChannel extends Channel {
 
   close(): Promise<void>;
   newContext(params: types.BrowserContextOptions): Promise<BrowserContextChannel>;
+
+  // Chromium-specific.
+  newBrowserCDPSession(): Promise<CDPSessionChannel>;
 }
 export type BrowserInitializer = {};
 
@@ -330,3 +333,14 @@ export type DownloadInitializer = {
 	url: string,
   suggestedFilename: string,
 };
+
+
+// Chromium-specific.
+export interface CDPSessionChannel extends Channel {
+  on(event: 'event', callback: (params: { method: string, params?: Object }) => void): this;
+  on(event: 'disconnected', callback: () => void): this;
+
+  send(params: { method: string, params?: Object }): Promise<Object>;
+  detach(): Promise<void>;
+}
+export type CDPSessionInitializer = {};

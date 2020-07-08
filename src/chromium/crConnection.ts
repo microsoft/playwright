@@ -122,6 +122,7 @@ export const CRSessionEvents = {
 
 export class CRSession extends EventEmitter {
   _connection: CRConnection | null;
+  _eventListener?: (method: string, params?: Object) => void;
   private readonly _callbacks = new Map<number, {resolve: (o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
   private readonly _targetType: string;
   private readonly _sessionId: string;
@@ -182,7 +183,11 @@ export class CRSession extends EventEmitter {
         callback.resolve(object.result);
     } else {
       assert(!object.id);
-      Promise.resolve().then(() => this.emit(object.method!, object.params));
+      Promise.resolve().then(() => {
+        if (this._eventListener)
+          this._eventListener(object.method!, object.params);
+        this.emit(object.method!, object.params);
+      });
     }
   }
 

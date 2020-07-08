@@ -15,15 +15,13 @@
  * limitations under the License.
  */
 
-const path = require('path');
-const util = require('util');
-const vm = require('vm');
 const { FFOX, CHROMIUM, WEBKIT, WIN, CHANNEL } = require('./utils').testOptions(browserType);
 
 describe.skip(!CHANNEL)('Channels', function() {
   it('should work', async({browser}) => {
     expect(!!browser._channel).toBeTruthy();
   });
+
   it('should scope context handles', async({browser, server}) => {
     const GOLDEN_PRECONDITION = {
       objects: [ 'chromium', 'browser' ],
@@ -50,7 +48,31 @@ describe.skip(!CHANNEL)('Channels', function() {
     await expectScopeState(browser, GOLDEN_PRECONDITION);
   });
 
-  it('should browser handles', async({browserType, defaultBrowserOptions}) => {
+  it('should scope CDPSession handles', async({browserType, browser, server}) => {
+    const GOLDEN_PRECONDITION = {
+      objects: [ 'chromium', 'browser' ],
+      scopes: [
+        { _guid: '', objects: [ 'chromium', 'browser' ] },
+        { _guid: 'browser', objects: [] }
+      ]
+    };
+    await expectScopeState(browserType, GOLDEN_PRECONDITION);
+
+    const session = await browser.newBrowserCDPSession();
+    await expectScopeState(browserType, {
+      objects: [ 'chromium', 'browser', 'cdpSession' ],
+      scopes: [
+        { _guid: '', objects: [ 'chromium', 'browser' ] },
+        { _guid: 'browser', objects: ['cdpSession'] },
+        { _guid: 'cdpSession', objects: [] },
+      ]
+    });
+
+    await session.detach();
+    await expectScopeState(browserType, GOLDEN_PRECONDITION);
+  });
+
+  it('should scope browser handles', async({browserType, defaultBrowserOptions}) => {
     const GOLDEN_PRECONDITION = {
       objects: [ 'chromium', 'browser' ],
       scopes: [
