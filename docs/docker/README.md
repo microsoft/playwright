@@ -53,7 +53,7 @@ $ docker build -t mcr.microsoft.com/playwright:bionic -f Dockerfile.bionic .
 
 ### Push
 
-Playwright on Docker Hub relies on
+Playwright on Docker Hub is published via the [Microsoft Container Registry](https://github.com/microsoft/containerregistry).
 
 ```
 $ docker push playwright.azurecr.io/public/playwright:bionic
