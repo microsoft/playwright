@@ -367,4 +367,11 @@ describe('launchPersistentContext()', function() {
     expect(error).toBe(e);
     await removeUserDataDir(userDataDir);
   });
+  it('should fire close event for a persistent context', async(state) => {
+    const {context} = await launch(state);
+    let closed = false;
+    context.on('close', () => closed = true);
+    await close(state);
+    expect(closed).toBe(true);
+  });  
 });

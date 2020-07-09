@@ -92,6 +92,8 @@ export abstract class BrowserBase extends EventEmitter implements Browser {
   _didClose() {
     for (const context of this.contexts())
       (context as BrowserContextBase)._browserClosed();
+    if (this._defaultContext)
+      this._defaultContext._browserClosed();
     this.emit(Events.Browser.Disconnected);
   }
 
