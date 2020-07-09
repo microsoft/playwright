@@ -42,6 +42,10 @@ export function parseError(error: types.Error): any {
   return e;
 }
 
+export function parseErrorToString(error: types.Error): string {
+  return (error.message || '') + (error.stack || '');
+}
+
 export async function normalizeFilePayloads(files: string | types.FilePayload | string[] | types.FilePayload[]): Promise<types.FilePayload[]> {
   let ff: string[] | types.FilePayload[];
   if (!Array.isArray(files))

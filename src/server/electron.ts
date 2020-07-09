@@ -29,7 +29,7 @@ import { BrowserServer } from './browserServer';
 import { launchProcess, waitForLine } from './processLauncher';
 import { BrowserContext } from '../browserContext';
 import type {BrowserWindow} from 'electron';
-import { runAbortableTask, ProgressController } from '../progress';
+import { runAbortableTask, ProgressController, kProgressLoggerSink } from '../progress';
 import { EventEmitter } from 'events';
 import { helper } from '../helper';
 import { LoggerSink } from '../loggerSink';
@@ -206,6 +206,6 @@ export class Electron  {
       app = new ElectronApplication(loggers, browser, nodeConnection);
       await app._init();
       return app;
-    }, loggers.browser, TimeoutSettings.timeout(options), 'electron.launch');
+    }, loggers.browser, TimeoutSettings.timeout(options), 'electron.launch', (options as any)[kProgressLoggerSink]);
   }
 }

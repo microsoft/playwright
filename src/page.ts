@@ -31,7 +31,8 @@ import * as accessibility from './accessibility';
 import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
 import { logError, Logger } from './logger';
-import { ProgressController, Progress, runAbortableTask } from './progress';
+import { ProgressController, Progress, runAbortableTask, kProgressLoggerSink } from './progress';
+import { LoggerSink } from './loggerSink';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -162,10 +163,10 @@ export class Page extends EventEmitter {
     this._disconnectedCallback(new Error('Page closed'));
   }
 
-  async _runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number, apiName: string): Promise<T> {
+  async _runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number, apiName: string, progressLoggerSink?: LoggerSink): Promise<T> {
     return runAbortableTask(async progress => {
       return task(progress);
-    }, this._logger, timeout, apiName);
+    }, this._logger, timeout, apiName, progressLoggerSink);
   }
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {
@@ -468,7 +469,7 @@ export class Page extends EventEmitter {
   async screenshot(options: types.ScreenshotOptions = {}): Promise<Buffer> {
     return this._runAbortableTask(
         progress => this._screenshotter.screenshotPage(progress, options),
-        this._timeoutSettings.timeout(options), 'page.screenshot');
+        this._timeoutSettings.timeout(options), 'page.screenshot', (options as any)[kProgressLoggerSink]);
   }
 
   async title(): Promise<string> {

@@ -23,6 +23,16 @@ export interface Channel extends EventEmitter {
 }
 
 
+export type LogMessage = {
+  commandId: number,
+  name: string,
+  severity: string,
+  message: string | types.Error,
+  args: any[],
+  hints: { color?: string },
+};
+
+
 export interface PlaywrightChannel extends Channel {
 }
 export type PlaywrightInitializer = {

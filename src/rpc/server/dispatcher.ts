@@ -16,8 +16,10 @@
 
 import { EventEmitter } from 'events';
 import { helper, debugAssert, assert } from '../../helper';
-import { Channel } from '../channels';
+import { Channel, LogMessage } from '../channels';
 import { serializeError } from '../serializers';
+import { kProgressLoggerSink } from '../../progress';
+import { LoggerSink } from '../../loggerSink';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 
@@ -147,10 +149,36 @@ export class DispatcherConnection {
       this.onmessage(JSON.stringify({ id, result: dispatcherState }));
       return;
     }
+    let handled = false;
     try {
-      const result = await (dispatcher as any)[method](this._replaceGuidsWithDispatchers(params));
+      const args = this._replaceGuidsWithDispatchers(params);
+      if (args && (typeof args === 'object')) {
+        const sink: LoggerSink = {
+          isEnabled: (name, severity) => {
+            return true;
+          },
+          log: (name, severity, message, args, hints) => {
+            // TODO: fix all cases where we log after the command was handled.
+            if (handled)
+              return;
+            const logMessage: LogMessage = {
+              commandId: id,
+              name,
+              severity,
+              message: typeof message === 'string' ? message : serializeError(message),
+              args,
+              hints,
+            };
+            this.onmessage(JSON.stringify({ log: logMessage }));
+          },
+        };
+        args[kProgressLoggerSink] = sink;
+      }
+      const result = await (dispatcher as any)[method](args);
+      handled = true;
       this.onmessage(JSON.stringify({ id, result: this._replaceDispatchersWithGuids(result) }));
     } catch (e) {
+      handled = true;
       this.onmessage(JSON.stringify({ id, error: serializeError(e) }));
     }
   }

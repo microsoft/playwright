@@ -707,7 +707,7 @@ describe('Page.addScriptTag', function() {
     } catch (e) {
       error = e;
     }
-    expect(error.message).toBe('Provide an object with a `url`, `path` or `content` property');
+    expect(error.message).toContain('Provide an object with a `url`, `path` or `content` property');
   });
 
   it('should work with a url', async({page, server}) => {
@@ -799,7 +799,7 @@ describe('Page.addStyleTag', function() {
     } catch (e) {
       error = e;
     }
-    expect(error.message).toBe('Provide an object with a `url`, `path` or `content` property');
+    expect(error.message).toContain('Provide an object with a `url`, `path` or `content` property');
   });
 
   it('should work with a url', async({page, server}) => {

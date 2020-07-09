@@ -104,11 +104,11 @@ describe('BrowserContext', function() {
   });
   it('should not allow deviceScaleFactor with null viewport', async({ browser }) => {
     const error = await browser.newContext({ viewport: null, deviceScaleFactor: 1 }).catch(e => e);
-    expect(error.message).toBe('"deviceScaleFactor" option is not supported with null "viewport"');
+    expect(error.message).toContain('"deviceScaleFactor" option is not supported with null "viewport"');
   });
   it('should not allow isMobile with null viewport', async({ browser }) => {
     const error = await browser.newContext({ viewport: null, isMobile: true }).catch(e => e);
-    expect(error.message).toBe('"isMobile" option is not supported with null "viewport"');
+    expect(error.message).toContain('"isMobile" option is not supported with null "viewport"');
   });
   it('close() should work for empty context', async({ browser }) => {
     const context = await browser.newContext();

@@ -458,6 +458,6 @@ describe('Page.setExtraHTTPHeaders', function() {
     } catch (e) {
       error = e;
     }
-    expect(error.message).toBe('Expected value of header "foo" to be String, but "number" is found.');
+    expect(error.message).toContain('Expected value of header "foo" to be String, but "number" is found.');
   });
 });

@@ -74,7 +74,7 @@ describe('Frame.waitForFunction', function() {
   });
   it('should throw on polling:mutation', async({page, server}) => {
     const error = await page.waitForFunction(() => true, {}, {polling: 'mutation'}).catch(e => e);
-    expect(error.message).toBe('Unknown polling option: mutation');
+    expect(error.message).toContain('Unknown polling option: mutation');
   });
   it('should poll on raf', async({page, server}) => {
     const watchdog = page.waitForFunction(() => window.__FOO === 'hit', {}, {polling: 'raf'});
@@ -203,7 +203,7 @@ describe('Frame.waitForSelector', function() {
     await page.goto(server.EMPTY_PAGE);
     let error;
     await page.waitForSelector('*', { waitFor: 'attached' }).catch(e => error = e);
-    expect(error.message).toBe('options.waitFor is not supported, did you mean options.state?');
+    expect(error.message).toContain('options.waitFor is not supported, did you mean options.state?');
   });
   it('should tolerate waitFor=visible', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
@@ -471,7 +471,7 @@ describe('Frame.waitForSelector', function() {
   it('should throw for visibility option', async({page, server}) => {
     await page.setContent('<section>test</section>');
     const error = await page.waitForSelector('section', { visibility: 'hidden' }).catch(e => e);
-    expect(error.message).toBe('options.visibility is not supported, did you mean options.state?');
+    expect(error.message).toContain('options.visibility is not supported, did you mean options.state?');
   });
   it('should throw for true state option', async({page, server}) => {
     await page.setContent('<section>test</section>');

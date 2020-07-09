@@ -53,7 +53,7 @@ describe('Frame.frameElement', function() {
     const frame1 = await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
     await page.$eval('#frame1', e => e.remove());
     const error = await frame1.frameElement().catch(e => e);
-    expect(error.message).toBe('Frame has been detached.');
+    expect(error.message).toContain('Frame has been detached.');
   });
 });
 

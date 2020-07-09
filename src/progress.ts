@@ -18,6 +18,9 @@ import { Logger } from './logger';
 import { TimeoutError } from './errors';
 import { assert } from './helper';
 import { rewriteErrorMessage } from './utils/stackTrace';
+import { LoggerSink } from './loggerSink';
+
+export const kProgressLoggerSink = Symbol('progressLoggerSink');
 
 export interface Progress {
   readonly apiName: string;
@@ -29,8 +32,8 @@ export interface Progress {
   throwIfAborted(): void;
 }
 
-export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, logger: Logger, timeout: number, apiName: string): Promise<T> {
-  const controller = new ProgressController(logger, timeout, apiName);
+export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, logger: Logger, timeout: number, apiName: string, progressLoggerSink?: LoggerSink): Promise<T> {
+  const controller = new ProgressController(logger, timeout, apiName, progressLoggerSink);
   return controller.run(task);
 }
 
@@ -53,13 +56,15 @@ export class ProgressController {
   private _apiName: string;
   private _deadline: number;
   private _timeout: number;
+  private _progressLoggerSink?: LoggerSink;
 
-  constructor(logger: Logger, timeout: number, apiName: string) {
+  constructor(logger: Logger, timeout: number, apiName: string, progressLoggerSink?: LoggerSink) {
     this._apiName = apiName;
     this._logger = logger;
 
     this._timeout = timeout;
     this._deadline = timeout ? monotonicTime() + timeout : 0;
+    this._progressLoggerSink = progressLoggerSink;
 
     this._forceAbortPromise = new Promise((resolve, reject) => this._forceAbort = reject);
     this._forceAbortPromise.catch(e => null);  // Prevent unhandle promsie rejection.
@@ -70,7 +75,7 @@ export class ProgressController {
     assert(this._state === 'before');
     this._state = 'running';
 
-    const loggerScope = this._logger.createScope(this._apiName, true);
+    const loggerScope = this._logger.createScope(this._apiName, true, this._progressLoggerSink);
 
     const progress: Progress = {
       apiName: this._apiName,
@@ -101,7 +106,8 @@ export class ProgressController {
       return result;
     } catch (e) {
       this._aborted();
-      rewriteErrorMessage(e, e.message + formatLogRecording(loggerScope.recording(), this._apiName) + kLoggingNote);
+      if (!this._progressLoggerSink)
+        rewriteErrorMessage(e, e.message + formatLogRecording(loggerScope.recording(), this._apiName) + kLoggingNote);
       clearTimeout(timer);
       this._state = 'aborted';
       loggerScope.endScope(`failed`);

@@ -27,8 +27,9 @@ import { Page } from './page';
 import { selectors } from './selectors';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
-import { Progress, ProgressController } from './progress';
+import { Progress, ProgressController, kProgressLoggerSink } from './progress';
 import { EventEmitter } from 'events';
+import { LoggerSink } from './loggerSink';
 
 type ContextData = {
   contextPromise: Promise<dom.FrameExecutionContext>;
@@ -388,7 +389,7 @@ export class Frame {
   }
 
   async goto(url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
-    return runNavigationTask(this, options, this._apiName('goto'), async progress => {
+    return runNavigationTask(this, options, this._apiName('goto'), (options as any)[kProgressLoggerSink], async progress => {
       const waitUntil = verifyLifecycle(options.waitUntil === undefined ? 'load' : options.waitUntil);
       progress.logger.info(`navigating to "${url}", waiting until "${waitUntil}"`);
       const headers = (this._page._state.extraHTTPHeaders || {});
@@ -432,7 +433,7 @@ export class Frame {
   }
 
   async waitForNavigation(options: types.WaitForNavigationOptions = {}): Promise<network.Response | null> {
-    return runNavigationTask(this, options, this._apiName('waitForNavigation'), async progress => {
+    return runNavigationTask(this, options, this._apiName('waitForNavigation'), (options as any)[kProgressLoggerSink], async progress => {
       const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
       const waitUntil = verifyLifecycle(options.waitUntil === undefined ? 'load' : options.waitUntil);
       progress.logger.info(`waiting for navigation${toUrl} until "${waitUntil}"`);
@@ -456,7 +457,7 @@ export class Frame {
   }
 
   async waitForLoadState(state: types.LifecycleEvent = 'load', options: types.TimeoutOptions = {}): Promise<void> {
-    return runNavigationTask(this, options, this._apiName('waitForLoadState'), progress => this._waitForLoadState(progress, state));
+    return runNavigationTask(this, options, this._apiName('waitForLoadState'), (options as any)[kProgressLoggerSink], progress => this._waitForLoadState(progress, state));
   }
 
   async _waitForLoadState(progress: Progress, state: types.LifecycleEvent): Promise<void> {
@@ -538,7 +539,7 @@ export class Frame {
         return adopted;
       }
       return handle;
-    }, this._page._timeoutSettings.timeout(options), this._apiName('waitForSelector'));
+    }, this._page._timeoutSettings.timeout(options), this._apiName('waitForSelector'), (options as any)[kProgressLoggerSink]);
   }
 
   async dispatchEvent(selector: string, type: string, eventInit?: Object, options: types.TimeoutOptions = {}): Promise<void> {
@@ -548,7 +549,7 @@ export class Frame {
       progress.logger.info(`Dispatching "${type}" event on selector "${selector}"...`);
       // Note: we always dispatch events in the main world.
       await this._scheduleRerunnableTask(progress, 'main', task);
-    }, this._page._timeoutSettings.timeout(options), this._apiName('dispatchEvent'));
+    }, this._page._timeoutSettings.timeout(options), this._apiName('dispatchEvent'), (options as any)[kProgressLoggerSink]);
   }
 
   async $eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
@@ -598,7 +599,7 @@ export class Frame {
   }
 
   async setContent(html: string, options: types.NavigateOptions = {}): Promise<void> {
-    return runNavigationTask(this, options, this._apiName('setContent'), async progress => {
+    return runNavigationTask(this, options, this._apiName('setContent'), (options as any)[kProgressLoggerSink], async progress => {
       const waitUntil = options.waitUntil === undefined ? 'load' : options.waitUntil;
       progress.logger.info(`setting frame content, waiting until "${waitUntil}"`);
       const tag = `--playwright--set--content--${this._id}--${++this._setContentCounter}--`;
@@ -806,7 +807,7 @@ export class Frame {
         return result;
       }
       return undefined as any;
-    }, this._page._timeoutSettings.timeout(options), apiName);
+    }, this._page._timeoutSettings.timeout(options), apiName, (options as any)[kProgressLoggerSink]);
   }
 
   async click(selector: string, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
@@ -831,7 +832,7 @@ export class Frame {
     return this._page._runAbortableTask(async progress => {
       progress.logger.info(`  retrieving textContent from "${selector}"`);
       return this._scheduleRerunnableTask(progress, info.world, task);
-    }, this._page._timeoutSettings.timeout(options), this._apiName('textContent'));
+    }, this._page._timeoutSettings.timeout(options), this._apiName('textContent'), (options as any)[kProgressLoggerSink]);
   }
 
   async innerText(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
@@ -841,7 +842,7 @@ export class Frame {
       progress.logger.info(`  retrieving innerText from "${selector}"`);
       const result = dom.throwFatalDOMError(await this._scheduleRerunnableTask(progress, info.world, task));
       return result.innerText;
-    }, this._page._timeoutSettings.timeout(options), this._apiName('innerText'));
+    }, this._page._timeoutSettings.timeout(options), this._apiName('innerText'), (options as any)[kProgressLoggerSink]);
   }
 
   async innerHTML(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
@@ -850,7 +851,7 @@ export class Frame {
     return this._page._runAbortableTask(async progress => {
       progress.logger.info(`  retrieving innerHTML from "${selector}"`);
       return this._scheduleRerunnableTask(progress, info.world, task);
-    }, this._page._timeoutSettings.timeout(options), this._apiName('innerHTML'));
+    }, this._page._timeoutSettings.timeout(options), this._apiName('innerHTML'), (options as any)[kProgressLoggerSink]);
   }
 
   async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
@@ -859,7 +860,7 @@ export class Frame {
     return this._page._runAbortableTask(async progress => {
       progress.logger.info(`  retrieving attribute "${name}" from "${selector}"`);
       return this._scheduleRerunnableTask(progress, info.world, task);
-    }, this._page._timeoutSettings.timeout(options), this._apiName('getAttribute'));
+    }, this._page._timeoutSettings.timeout(options), this._apiName('getAttribute'), (options as any)[kProgressLoggerSink]);
   }
 
   async hover(selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions = {}) {
@@ -917,7 +918,7 @@ export class Frame {
     }, { predicateBody, polling, arg });
     return this._page._runAbortableTask(
         progress => this._scheduleRerunnableHandleTask(progress, 'main', task),
-        this._page._timeoutSettings.timeout(options), this._apiName('waitForFunction'));
+        this._page._timeoutSettings.timeout(options), this._apiName('waitForFunction'), (options as any)[kProgressLoggerSink]);
   }
 
   async title(): Promise<string> {
@@ -1093,9 +1094,9 @@ class SignalBarrier {
   }
 }
 
-async function runNavigationTask<T>(frame: Frame, options: types.TimeoutOptions, apiName: string, task: (progress: Progress) => Promise<T>): Promise<T> {
+async function runNavigationTask<T>(frame: Frame, options: types.TimeoutOptions, apiName: string, progressLoggerSink: LoggerSink | undefined, task: (progress: Progress) => Promise<T>): Promise<T> {
   const page = frame._page;
-  const controller = new ProgressController(page._logger, page._timeoutSettings.navigationTimeout(options), apiName);
+  const controller = new ProgressController(page._logger, page._timeoutSettings.navigationTimeout(options), apiName, progressLoggerSink);
   page._disconnectedPromise.then(() => controller.abort(new Error('Navigation failed because page was closed!')));
   page._crashedPromise.then(() => controller.abort(new Error('Navigation failed because page crashed!')));
   frame._detachedPromise.then(() => controller.abort(new Error('Navigating frame was detached!')));

@@ -120,11 +120,11 @@ describe('Page.$eval', function() {
   });
   it('should throw on multiple * captures', async({page, server}) => {
     const error = await page.$eval('*css=div >> *css=span', e => e.outerHTML).catch(e => e);
-    expect(error.message).toBe('Only one of the selectors can capture using * modifier');
+    expect(error.message).toContain('Only one of the selectors can capture using * modifier');
   });
   it('should throw on malformed * capture', async({page, server}) => {
     const error = await page.$eval('*=div', e => e.outerHTML).catch(e => e);
-    expect(error.message).toBe('Unknown engine "" while parsing selector *=div');
+    expect(error.message).toContain('Unknown engine "" while parsing selector *=div');
   });
   it('should work with spaces in css attributes', async({page, server}) => {
     await page.setContent('<div><input placeholder="Select date"></div>');
@@ -368,7 +368,7 @@ describe('ElementHandle.$eval', function() {
     await page.setContent(htmlContent);
     const elementHandle = await page.$('#myId');
     const errorMessage = await elementHandle.$eval('.a', node => node.innerText).catch(error => error.message);
-    expect(errorMessage).toBe(`Error: failed to find element matching selector ".a"`);
+    expect(errorMessage).toContain(`Error: failed to find element matching selector ".a"`);
   });
 });
 describe('ElementHandle.$$eval', function() {
@@ -805,7 +805,7 @@ describe('selectors.register', () => {
   });
   it('should handle errors', async ({page}) => {
     let error = await page.$('neverregister=ignored').catch(e => e);
-    expect(error.message).toBe('Unknown engine "neverregister" while parsing selector neverregister=ignored');
+    expect(error.message).toContain('Unknown engine "neverregister" while parsing selector neverregister=ignored');
 
     const createDummySelector = () => ({
       create(root, target) {
@@ -820,16 +820,16 @@ describe('selectors.register', () => {
     });
 
     error = await playwright.selectors.register('$', createDummySelector).catch(e => e);
-    expect(error.message).toBe('Selector engine name may only contain [a-zA-Z0-9_] characters');
+    expect(error.message).toContain('Selector engine name may only contain [a-zA-Z0-9_] characters');
 
     // Selector names are case-sensitive.
     await utils.registerEngine('dummy', createDummySelector);
     await utils.registerEngine('duMMy', createDummySelector);
 
     error = await playwright.selectors.register('dummy', createDummySelector).catch(e => e);
-    expect(error.message).toBe('"dummy" selector engine has been already registered');
+    expect(error.message).toContain('"dummy" selector engine has been already registered');
 
     error = await playwright.selectors.register('css', createDummySelector).catch(e => e);
-    expect(error.message).toBe('"css" is a predefined selector engine');
+    expect(error.message).toContain('"css" is a predefined selector engine');
   });
 });

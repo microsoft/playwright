@@ -23,7 +23,7 @@ import * as js from './javascript';
 import { Page } from './page';
 import { selectors, SelectorInfo } from './selectors';
 import * as types from './types';
-import { Progress } from './progress';
+import { Progress, kProgressLoggerSink } from './progress';
 import DebugScript from './debug/injected/debugScript';
 import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
 import { normalizeFilePayloads } from './rpc/serializers';
@@ -223,7 +223,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async scrollIntoViewIfNeeded(options: types.TimeoutOptions = {}) {
     return this._page._runAbortableTask(
         progress => this._waitAndScrollIntoViewIfNeeded(progress),
-        this._page._timeoutSettings.timeout(options), 'elementHandle.scrollIntoViewIfNeeded');
+        this._page._timeoutSettings.timeout(options), 'elementHandle.scrollIntoViewIfNeeded',
+        (options as any)[kProgressLoggerSink]);
   }
 
   private async _waitForVisible(progress: Progress): Promise<'error:notconnected' | 'done'> {
@@ -375,7 +376,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._runAbortableTask(async progress => {
       const result = await this._hover(progress, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'elementHandle.hover');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.hover', (options as any)[kProgressLoggerSink]);
   }
 
   _hover(progress: Progress, options: types.PointerActionOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -386,7 +387,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._runAbortableTask(async progress => {
       const result = await this._click(progress, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'elementHandle.click');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.click', (options as any)[kProgressLoggerSink]);
   }
 
   _click(progress: Progress, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -397,7 +398,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._runAbortableTask(async progress => {
       const result = await this._dblclick(progress, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'elementHandle.dblclick');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.dblclick', (options as any)[kProgressLoggerSink]);
   }
 
   _dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -408,7 +409,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._runAbortableTask(async progress => {
       const result = await this._selectOption(progress, values, options);
       return throwRetargetableDOMError(result);
-    }, this._page._timeoutSettings.timeout(options), 'elementHandle.selectOption');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.selectOption', (options as any)[kProgressLoggerSink]);
   }
 
   async _selectOption(progress: Progress, values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions): Promise<string[] | 'error:notconnected'> {
@@ -441,7 +442,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._runAbortableTask(async progress => {
       const result = await this._fill(progress, value, options);
       assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'elementHandle.fill');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.fill', (options as any)[kProgressLoggerSink]);
   }
 
   async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -480,14 +481,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const pollHandler = new InjectedScriptPollHandler(progress, poll);
       const result = throwFatalDOMError(await pollHandler.finish());
       assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'elementHandle.selectText');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.selectText', (options as any)[kProgressLoggerSink]);
   }
 
   async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}) {
     return this._page._runAbortableTask(async progress => {
       const result = await this._setInputFiles(progress, files, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'elementHandle.setInputFiles');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.setInputFiles', (options as any)[kProgressLoggerSink]);
   }
 
   async _setInputFiles(progress: Progress, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -527,7 +528,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._runAbortableTask(async progress => {
       const result = await this._type(progress, text, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'elementHandle.type');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.type', (options as any)[kProgressLoggerSink]);
   }
 
   async _type(progress: Progress, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -546,7 +547,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._runAbortableTask(async progress => {
       const result = await this._press(progress, key, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'elementHandle.press');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.press', (options as any)[kProgressLoggerSink]);
   }
 
   async _press(progress: Progress, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -565,14 +566,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._runAbortableTask(async progress => {
       const result = await this._setChecked(progress, true, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'elementHandle.check');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.check', (options as any)[kProgressLoggerSink]);
   }
 
   async uncheck(options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
     return this._page._runAbortableTask(async progress => {
       const result = await this._setChecked(progress, false, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options), 'elementHandle.uncheck');
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.uncheck', (options as any)[kProgressLoggerSink]);
   }
 
   async _setChecked(progress: Progress, state: boolean, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -593,7 +594,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async screenshot(options: types.ElementScreenshotOptions = {}): Promise<Buffer> {
     return this._page._runAbortableTask(
         progress => this._page._screenshotter.screenshotElement(progress, this, options),
-        this._page._timeoutSettings.timeout(options), 'elementHandle.screenshot');
+        this._page._timeoutSettings.timeout(options), 'elementHandle.screenshot', (options as any)[kProgressLoggerSink]);
   }
 
   async $(selector: string): Promise<ElementHandle | null> {

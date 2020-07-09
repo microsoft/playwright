@@ -36,7 +36,7 @@ describe.skip(WEBKIT)('Permissions', function() {
     await page.goto(server.EMPTY_PAGE);
     let error = {};
     await context.grantPermissions(['foo'], { origin: server.EMPTY_PAGE }).catch(e => error = e);
-    expect(error.message).toBe('Unknown permission: foo');
+    expect(error.message).toContain('Unknown permission: foo');
   });
   it('should grant geolocation permission when listed', async({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);

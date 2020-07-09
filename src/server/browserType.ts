@@ -28,7 +28,7 @@ import { assert, helper } from '../helper';
 import { launchProcess, Env, waitForLine } from './processLauncher';
 import { Events } from '../events';
 import { PipeTransport } from './pipeTransport';
-import { Progress, runAbortableTask } from '../progress';
+import { Progress, runAbortableTask, kProgressLoggerSink } from '../progress';
 import * as types from '../types';
 import { TimeoutSettings } from '../timeoutSettings';
 import { WebSocketServer } from './webSocketServer';
@@ -87,7 +87,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     options = validateLaunchOptions(options);
     const loggers = new Loggers(options.logger);
-    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, loggers, undefined), loggers.browser, TimeoutSettings.timeout(options), `browserType.launch`);
+    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, loggers, undefined), loggers.browser, TimeoutSettings.timeout(options), `browserType.launch`, (options as any)[kProgressLoggerSink]);
     return browser;
   }
 
@@ -96,7 +96,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     options = validateLaunchOptions(options);
     const persistent = validateBrowserContextOptions(options);
     const loggers = new Loggers(options.logger);
-    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, loggers, persistent, userDataDir), loggers.browser, TimeoutSettings.timeout(options), 'browserType.launchPersistentContext');
+    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, loggers, persistent, userDataDir), loggers.browser, TimeoutSettings.timeout(options), 'browserType.launchPersistentContext', (options as any)[kProgressLoggerSink]);
     return browser._defaultContext!;
   }
 
@@ -132,7 +132,7 @@ export abstract class BrowserTypeBase implements BrowserType {
       const { browserServer, transport } = await this._launchServer(progress, options, false, loggers);
       browserServer._webSocketServer = this._startWebSocketServer(transport, loggers.browser, port);
       return browserServer;
-    }, loggers.browser, TimeoutSettings.timeout(options), 'browserType.launchServer');
+    }, loggers.browser, TimeoutSettings.timeout(options), 'browserType.launchServer', (options as any)[kProgressLoggerSink]);
   }
 
   async connect(options: ConnectOptions): Promise<Browser> {
@@ -144,7 +144,7 @@ export abstract class BrowserTypeBase implements BrowserType {
         await (options as any).__testHookBeforeCreateBrowser();
       const browser = await this._connectToTransport(transport, { slowMo: options.slowMo, loggers });
       return browser;
-    }, loggers.browser, TimeoutSettings.timeout(options), 'browserType.connect');
+    }, loggers.browser, TimeoutSettings.timeout(options), 'browserType.connect', (options as any)[kProgressLoggerSink]);
   }
 
   private async _launchServer(progress: Progress, options: LaunchServerOptions, isPersistent: boolean, loggers: Loggers, userDataDir?: string): Promise<{ browserServer: BrowserServer, downloadsPath: string, transport: ConnectionTransport }> {

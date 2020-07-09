@@ -23,6 +23,7 @@ export function logError(logger: Logger): (error: Error) => void {
 }
 
 export class Logger {
+  private _parent?: Logger;
   private _loggerSink: LoggerSink;
   private _name: string;
   private _hints: { color?: string; };
@@ -58,13 +59,23 @@ export class Logger {
     return this._innerLog('error', message, args);
   }
 
-  createScope(scopeName: string, record?: boolean): Logger {
+  createScope(scopeName: string, record?: boolean, extraSink?: LoggerSink): Logger {
     this._loggerSink.log(this._name, 'info', `=> ${scopeName} started`, [], this._hints);
-    return new Logger(this._loggerSink, this._name, this._hints, scopeName, record);
+    let sink = this._loggerSink;
+    if (extraSink) {
+      const multiple = new MultiplexingLoggerSink();
+      multiple.add('base', this._loggerSink);
+      multiple.add('extra', extraSink);
+      sink = multiple;
+    }
+    const scope = new Logger(sink, this._name, this._hints, scopeName, record);
+    scope._parent = this;
+    return scope;
   }
 
   endScope(status: string) {
-    this._loggerSink.log(this._name, 'info', `<= ${this._scopeName} ${status}`, [], this._hints);
+    if (this._parent)
+      this._parent._loggerSink.log(this._name, 'info', `<= ${this._scopeName} ${status}`, [], this._hints);
   }
 
   private _innerLog(severity: LoggerSeverity, message: string | Error, ...args: any[]) {

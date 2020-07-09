@@ -28,17 +28,23 @@ import debug = require('debug');
 import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
 import { Download } from './download';
-import { parseError } from '../serializers';
+import { parseError, parseErrorToString } from '../serializers';
 import { BrowserServer } from './browserServer';
 import { CDPSession } from './cdpSession';
 import { Playwright } from './playwright';
+import { LogMessage } from '../channels';
+import { rewriteErrorMessage } from '../../utils/stackTrace';
 
 export class Connection {
   readonly _objects = new Map<string, ChannelOwner<any, any>>();
   readonly _waitingForObject = new Map<string, any>();
   onmessage = (message: string): void => {};
   private _lastId = 0;
-  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void }>();
+  private _callbacks = new Map<number, {
+    resolve: (a: any) => void,
+    reject: (a: Error) => void,
+    logs: string[],
+  }>();
   readonly _scopes = new Map<string, ConnectionScope>();
   private _rootScript: ConnectionScope;
 
@@ -57,7 +63,7 @@ export class Connection {
     const converted = { id, ...message, params: this._replaceChannelsWithGuids(message.params) };
     debug('pw:channel:command')(converted);
     this.onmessage(JSON.stringify(converted));
-    return new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject }));
+    return new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, logs: [] }));
   }
 
   _debugScopeState(): any {
@@ -72,15 +78,27 @@ export class Connection {
 
   dispatch(message: string) {
     const parsedMessage = JSON.parse(message);
-    const { id, guid, method, params, result, error } = parsedMessage;
+    const { id, guid, method, params, result, error, log } = parsedMessage;
+
+    if (log) {
+      debug('pw:channel:log')(parsedMessage);
+      const logMessage = log as LogMessage;
+      const callback = this._callbacks.get(logMessage.commandId)!;
+      callback.logs.push(typeof logMessage.message === 'string' ? logMessage.message : parseErrorToString(logMessage.message));
+      return;
+    }
+
     if (id) {
       debug('pw:channel:response')(parsedMessage);
       const callback = this._callbacks.get(id)!;
       this._callbacks.delete(id);
-      if (error)
-        callback.reject(parseError(error));
-      else
+      if (error) {
+        const e = parseError(error);
+        rewriteErrorMessage(e, e.message + formatLogRecording(callback.logs) + kLoggingNote);
+        callback.reject(e);
+      } else {
         callback.resolve(this._replaceGuidsWithChannels(result));
+      }
       return;
     }
 
@@ -249,4 +267,16 @@ export class ConnectionScope {
     }
     return result;
   }
+}
+
+const kLoggingNote = `\nNote: use DEBUG=pw:api environment variable and rerun to capture Playwright logs.`;
+
+function formatLogRecording(log: string[]): string {
+  if (!log.length)
+    return '';
+  const name = ` logs `;
+  const headerLength = 60;
+  const leftLength = (headerLength - name.length) / 2;
+  const rightLength = headerLength - name.length - leftLength;
+  return `\n${'='.repeat(leftLength)}${name}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
 }

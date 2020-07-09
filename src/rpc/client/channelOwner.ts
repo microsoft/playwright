@@ -41,9 +41,9 @@ export abstract class ChannelOwner<T extends Channel, Initializer> extends Event
           return obj.on;
         if (prop === 'once')
           return obj.once;
-        if (prop === 'addEventListener')
+        if (prop === 'addListener')
           return obj.addListener;
-        if (prop === 'removeEventListener')
+        if (prop === 'removeListener')
           return obj.removeListener;
         return (params: any) => scope.sendMessageToServer({ guid, method: String(prop), params });
       },

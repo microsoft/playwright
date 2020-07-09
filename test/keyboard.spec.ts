@@ -268,13 +268,13 @@ describe('Keyboard', function() {
   });
   it('should throw on unknown keys', async ({page, server}) => {
     let error = await page.keyboard.press('NotARealKey').catch(e => e);
-    expect(error.message).toBe('Unknown key: "NotARealKey"');
+    expect(error.message).toContain('Unknown key: "NotARealKey"');
 
     error = await page.keyboard.press('ё').catch(e => e);
-    expect(error && error.message).toBe('Unknown key: "ё"');
+    expect(error && error.message).toContain('Unknown key: "ё"');
 
     error = await page.keyboard.press('😊').catch(e => e);
-    expect(error && error.message).toBe('Unknown key: "😊"');
+    expect(error && error.message).toContain('Unknown key: "😊"');
   });
   it('should type emoji', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
