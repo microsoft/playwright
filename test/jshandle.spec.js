@@ -90,13 +90,6 @@ describe('Page.evaluateHandle', function() {
     }, { foo: 42 });
     expect(result).toEqual({});
   });
-  it('should use the same JS wrappers', async({page, server}) => {
-    const aHandle = await page.evaluateHandle(() => {
-      window.FOO = 123;
-      return window;
-    });
-    expect(await page.evaluate(e => e.FOO, aHandle)).toBe(123);
-  });
   it('should work with primitives', async({page, server}) => {
     const aHandle = await page.evaluateHandle(() => {
       window.FOO = 123;
@@ -152,21 +145,16 @@ describe('JSHandle.jsonValue', function() {
     const json = await aHandle.jsonValue();
     expect(json).toEqual({foo: 'bar'});
   });
-  it('should not work with dates', async({page, server}) => {
+  it('should work with dates', async({page, server}) => {
     const dateHandle = await page.evaluateHandle(() => new Date('2017-09-26T00:00:00.000Z'));
     const json = await dateHandle.jsonValue();
-    expect(json).toEqual({});
+    expect(json instanceof Date).toBeTruthy();
   });
   it('should throw for circular objects', async({page, server}) => {
     const windowHandle = await page.evaluateHandle('window');
     let error = null;
     await windowHandle.jsonValue().catch(e => error = e);
     expect(error.message).toContain('Argument is a circular structure');
-  });
-  it('should work with tricky values', async({page, server}) => {
-    const aHandle = await page.evaluateHandle(() => ({a: 1}));
-    const json = await aHandle.jsonValue();
-    expect(json).toEqual({a: 1});
   });
 });
 

@@ -274,14 +274,12 @@ export type RequestInitializer = {
 
 export interface RouteChannel extends Channel {
   abort(params: { errorCode: string }): Promise<void>;
-  continue(params: { overrides: { method?: string, headers?: types.Headers, postData?: string } }): Promise<void>;
+  continue(params: { method?: string, headers?: types.Headers, postData?: string }): Promise<void>;
   fulfill(params: {
-    response: {
-      status?: number,
-      headers?: types.Headers,
-      body: string,
-      isBase64: boolean,
-    }
+    status?: number,
+    headers?: types.Headers,
+    body: string,
+    isBase64: boolean,
   }): Promise<void>;
 }
 export type RouteInitializer = {

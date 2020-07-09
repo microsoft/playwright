@@ -34,13 +34,13 @@ describe('Keyboard', function() {
     await page.type('textarea', 'Hello World!');
     expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hello World!');
     for (let i = 0; i < 'World!'.length; i++)
-      page.keyboard.press('ArrowLeft');
+      await page.keyboard.press('ArrowLeft');
     await page.keyboard.type('inserted ');
     expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hello inserted World!');
-    page.keyboard.down('Shift');
+    await page.keyboard.down('Shift');
     for (let i = 0; i < 'inserted '.length; i++)
-      page.keyboard.press('ArrowLeft');
-    page.keyboard.up('Shift');
+      await page.keyboard.press('ArrowLeft');
+    await page.keyboard.up('Shift');
     await page.keyboard.press('Backspace');
     expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hello World!');
   });
