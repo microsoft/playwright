@@ -21,30 +21,6 @@ import { Protocol } from './protocol';
 import * as types from '../types';
 import * as sourceMap from '../utils/sourceMap';
 
-type JSRange = {
-  startOffset: number,
-  endOffset: number,
-  count: number
-}
-
-type CSSCoverageEntry = {
-  url: string,
-  text?: string,
-  ranges: {
-    start: number,
-    end: number
-  }[]
-};
-
-type JSCoverageEntry = {
-  url: string,
-  source?: string,
-  functions: {
-    functionName: string,
-    ranges: JSRange[]
-  }[]
-};
-
 export class CRCoverage {
   private _jsCoverage: JSCoverage;
   private _cssCoverage: CSSCoverage;
@@ -58,7 +34,7 @@ export class CRCoverage {
     return await this._jsCoverage.start(options);
   }
 
-  async stopJSCoverage(): Promise<JSCoverageEntry[]> {
+  async stopJSCoverage(): Promise<types.JSCoverageEntry[]> {
     return await this._jsCoverage.stop();
   }
 
@@ -66,7 +42,7 @@ export class CRCoverage {
     return await this._cssCoverage.start(options);
   }
 
-  async stopCSSCoverage(): Promise<CSSCoverageEntry[]> {
+  async stopCSSCoverage(): Promise<types.CSSCoverageEntry[]> {
     return await this._cssCoverage.stop();
   }
 }
@@ -134,7 +110,7 @@ class JSCoverage {
       this._scriptSources.set(event.scriptId, response.scriptSource);
   }
 
-  async stop(): Promise<JSCoverageEntry[]> {
+  async stop(): Promise<types.JSCoverageEntry[]> {
     assert(this._enabled, 'JSCoverage is not enabled');
     this._enabled = false;
     const [profileResponse] = await Promise.all([
@@ -145,7 +121,7 @@ class JSCoverage {
     ] as const);
     helper.removeEventListeners(this._eventListeners);
 
-    const coverage: JSCoverageEntry[] = [];
+    const coverage: types.JSCoverageEntry[] = [];
     for (const entry of profileResponse.result) {
       if (!this._scriptIds.has(entry.scriptId))
         continue;
@@ -216,7 +192,7 @@ class CSSCoverage {
     }
   }
 
-  async stop(): Promise<CSSCoverageEntry[]> {
+  async stop(): Promise<types.CSSCoverageEntry[]> {
     assert(this._enabled, 'CSSCoverage is not enabled');
     this._enabled = false;
     const ruleTrackingResponse = await this._client.send('CSS.stopRuleUsageTracking');
@@ -241,7 +217,7 @@ class CSSCoverage {
       });
     }
 
-    const coverage: CSSCoverageEntry[] = [];
+    const coverage: types.CSSCoverageEntry[] = [];
     for (const styleSheetId of this._stylesheetURLs.keys()) {
       const url = this._stylesheetURLs.get(styleSheetId)!;
       const text = this._stylesheetSources.get(styleSheetId)!;

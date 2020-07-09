@@ -123,12 +123,6 @@ export type PDFOptions = {
   path?: string,
 }
 
-export type CoverageEntry = {
-  url: string,
-  text: string,
-  ranges: {start: number, end: number}[]
-};
-
 export type CSSCoverageOptions = {
   resetOnNavigation?: boolean,
 };
@@ -136,6 +130,30 @@ export type CSSCoverageOptions = {
 export type JSCoverageOptions = {
   resetOnNavigation?: boolean,
   reportAnonymousScripts?: boolean,
+};
+
+export type JSRange = {
+  startOffset: number,
+  endOffset: number,
+  count: number
+};
+
+export type CSSCoverageEntry = {
+  url: string,
+  text?: string,
+  ranges: {
+    start: number,
+    end: number
+  }[]
+};
+
+export type JSCoverageEntry = {
+  url: string,
+  source?: string,
+  functions: {
+    functionName: string,
+    ranges: JSRange[]
+  }[]
 };
 
 export type InjectedScriptProgress = {

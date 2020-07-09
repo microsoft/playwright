@@ -23,7 +23,7 @@ const removeFolder = require('rimraf');
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 const removeFolderAsync = util.promisify(removeFolder);
 
-const {FFOX, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = utils.testOptions(browserType);
 
 describe('browserType.launch({downloadsPath})', function() {
   beforeEach(async(state) => {
@@ -116,7 +116,6 @@ describe('browserType.launchPersistent({acceptDownloads})', function() {
     expect(download.suggestedFilename()).toBe(`file.txt`);
     const path = await download.path();
     expect(path.startsWith(downloadsPath)).toBeTruthy();
-    await context.close();
   });
 
   it('should not delete downloads when the context closes', async({page, context}) => {

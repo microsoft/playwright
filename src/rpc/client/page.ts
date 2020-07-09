@@ -38,6 +38,7 @@ import { Func1, FuncOn, SmartHandle } from './jsHandle';
 import { Request, Response, Route, RouteHandler } from './network';
 import { FileChooser } from './fileChooser';
 import { Buffer } from 'buffer';
+import { Coverage } from './coverage';
 
 export class Page extends ChannelOwner<PageChannel, PageInitializer> {
 
@@ -54,6 +55,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   readonly accessibility: Accessibility;
   readonly keyboard: Keyboard;
   readonly mouse: Mouse;
+  readonly coverage: Coverage;
   readonly _bindings = new Map<string, FunctionWithSource>();
   private _pendingWaitForEvents = new Map<(error: Error) => void, string>();
   private _timeoutSettings = new TimeoutSettings();
@@ -72,6 +74,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     this.accessibility = new Accessibility(this._channel);
     this.keyboard = new Keyboard(this._channel);
     this.mouse = new Mouse(this._channel);
+    this.coverage = new Coverage(this._channel);
 
     this._mainFrame = Frame.from(initializer.mainFrame);
     this._mainFrame._page = this;

@@ -31,6 +31,7 @@ import { RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networ
 import { serializeResult, parseArgument } from './jsHandleDispatcher';
 import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
 import { FileChooser } from '../../fileChooser';
+import { CRCoverage } from '../../chromium/crCoverage';
 
 export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements PageChannel {
   private _page: Page;
@@ -125,7 +126,7 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     });
   }
 
-  async screenshot(params: types.ScreenshotOptions): Promise<string> {
+  async screenshot(params: types.ScreenshotOptions): Promise<Binary> {
     return (await this._page.screenshot(params)).toString('base64');
   }
 
@@ -188,6 +189,26 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
       throw new Error('PDF generation is only supported for Headless Chromium');
     const binary = await this._page.pdf(params);
     return binary.toString('base64');
+  }
+
+  async crStartJSCoverage(params: types.JSCoverageOptions): Promise<void> {
+    const coverage = this._page.coverage as CRCoverage;
+    await coverage.startJSCoverage(params);
+  }
+
+  async crStopJSCoverage(): Promise<types.JSCoverageEntry[]> {
+    const coverage = this._page.coverage as CRCoverage;
+    return await coverage.stopJSCoverage();
+  }
+
+  async crStartCSSCoverage(params: types.CSSCoverageOptions): Promise<void> {
+    const coverage = this._page.coverage as CRCoverage;
+    await coverage.startCSSCoverage(params);
+  }
+
+  async crStopCSSCoverage(): Promise<types.CSSCoverageEntry[]> {
+    const coverage = this._page.coverage as CRCoverage;
+    return await coverage.stopCSSCoverage();
   }
 
   _onFrameAttached(frame: Frame) {

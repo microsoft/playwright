@@ -64,6 +64,8 @@ export interface BrowserChannel extends Channel {
   newContext(params: types.BrowserContextOptions): Promise<BrowserContextChannel>;
 
   crNewBrowserCDPSession(): Promise<CDPSessionChannel>;
+  crStartTracing(params: { page?: PageChannel, path?: string, screenshots?: boolean, categories?: string[] }): Promise<void>;
+  crStopTracing(): Promise<Binary>;
 }
 export type BrowserInitializer = {};
 
@@ -154,9 +156,13 @@ export interface PageChannel extends Channel {
   mouseUp(params: { button?: types.MouseButton, clickCount?: number }): Promise<void>;
   mouseClick(params: { x: number, y: number, delay?: number, button?: types.MouseButton, clickCount?: number }): Promise<void>;
 
-  // A11Y
   accessibilitySnapshot(params: { interestingOnly?: boolean, root?: ElementHandleChannel }): Promise<types.SerializedAXNode | null>;
   pdf: (params: types.PDFOptions) => Promise<Binary>;
+
+  crStartJSCoverage(params: types.JSCoverageOptions): Promise<void>;
+  crStopJSCoverage(): Promise<types.JSCoverageEntry[]>;
+  crStartCSSCoverage(params: types.CSSCoverageOptions): Promise<void>;
+  crStopCSSCoverage(): Promise<types.CSSCoverageEntry[]>;
 }
 
 export type PageInitializer = {

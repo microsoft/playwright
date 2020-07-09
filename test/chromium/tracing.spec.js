@@ -18,7 +18,7 @@ const fs = require('fs');
 const path = require('path');
 const {FFOX, CHROMIUM, WEBKIT, OUTPUT_DIR, CHANNEL} = require('../utils').testOptions(browserType);
 
-describe.skip(CHANNEL)('Chromium.startTracing', function() {
+describe('Chromium.startTracing', function() {
   beforeEach(async function(state) {
     state.outputFile = path.join(OUTPUT_DIR, `trace-${state.parallelIndex}.json`);
     state.browser = await state.browserType.launch(state.defaultBrowserOptions);

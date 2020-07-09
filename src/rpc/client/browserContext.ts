@@ -40,6 +40,8 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   private _pendingWaitForEvents = new Map<(error: Error) => void, string>();
   _timeoutSettings = new TimeoutSettings();
   _ownerPage: Page | undefined;
+  private _isClosedOrClosing = false;
+  private _closedPromise: Promise<void>;
 
   static from(context: BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -60,6 +62,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     this._channel.on('close', () => this._onClose());
     this._channel.on('page', page => this._onPage(Page.from(page)));
     this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
+    this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
 
     initializer.crBackgroundPages.forEach(p => {
       const page = Page.from(p);
@@ -211,6 +214,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   }
 
   private async _onClose() {
+    this._isClosedOrClosing = true;
     if (this._browser)
       this._browser._contexts.delete(this);
 
@@ -225,7 +229,11 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   }
 
   async close(): Promise<void> {
-    await this._channel.close();
+    if (!this._isClosedOrClosing) {
+      this._isClosedOrClosing = true;
+      await this._channel.close();
+    }
+    await this._closedPromise;
   }
 
   async newCDPSession(page: Page): Promise<CDPSession> {
