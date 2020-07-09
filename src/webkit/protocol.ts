@@ -36,7 +36,7 @@ export module Protocol {
       startDelay?: number;
       endDelay?: number;
       /**
-       * Number of iterations in the animation.
+       * Number of iterations in the animation. <code>Infinity</code> is represented as <code>-1</code>.
        */
       iterationCount?: number;
       /**
@@ -6613,14 +6613,6 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     }
     export type setOrientationOverrideReturnValue = {
     }
-    /**
-     * Pauses page activity (active objects, animations).
-     */
-    export type setActivityPausedParameters = {
-      paused: boolean;
-    }
-    export type setActivityPausedReturnValue = {
-    }
   }
   
   export module Playwright {
@@ -8663,7 +8655,6 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     "Page.crash": Page.crashParameters;
     "Page.setScreenSizeOverride": Page.setScreenSizeOverrideParameters;
     "Page.setOrientationOverride": Page.setOrientationOverrideParameters;
-    "Page.setActivityPaused": Page.setActivityPausedParameters;
     "Playwright.enable": Playwright.enableParameters;
     "Playwright.disable": Playwright.disableParameters;
     "Playwright.close": Playwright.closeParameters;
@@ -8947,7 +8938,6 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     "Page.crash": Page.crashReturnValue;
     "Page.setScreenSizeOverride": Page.setScreenSizeOverrideReturnValue;
     "Page.setOrientationOverride": Page.setOrientationOverrideReturnValue;
-    "Page.setActivityPaused": Page.setActivityPausedReturnValue;
     "Playwright.enable": Playwright.enableReturnValue;
     "Playwright.disable": Playwright.disableReturnValue;
     "Playwright.close": Playwright.closeReturnValue;
