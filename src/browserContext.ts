@@ -62,7 +62,7 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   readonly _options: BrowserContextOptions;
   _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
   private _isPersistentContext: boolean;
-  private _startedClosing = false;
+  private _closedStatus: 'open' | 'closing' | 'closed' = 'open';
   readonly _closePromise: Promise<Error>;
   private _closePromiseFulfill: ((error: Error) => void) | undefined;
   readonly _permissions = new Map<string, string[]>();
@@ -109,6 +109,12 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   }
 
   private _didCloseInternal() {
+    if (this._closedStatus === 'closed') {
+      // We can come here twice if we close browser context and browser
+      // at the same time.
+      return;
+    }
+    this._closedStatus = 'closed';
     this._downloads.clear();
     this._closePromiseFulfill!(new Error('Context closed'));
     this.emit(Events.BrowserContext.Close);
@@ -235,8 +241,8 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
       await this._browserBase.close();
       return;
     }
-    if (!this._startedClosing) {
-      this._startedClosing = true;
+    if (this._closedStatus === 'open') {
+      this._closedStatus = 'closing';
       await this._doClose();
       await Promise.all([...this._downloads].map(d => d.delete()));
       this._didCloseInternal();

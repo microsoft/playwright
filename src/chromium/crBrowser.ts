@@ -425,6 +425,16 @@ export class CRBrowserContext extends BrowserContextBase {
     assert(this._browserContextId);
     await this._browser._session.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
+    for (const [targetId, serviceWorker] of this._browser._serviceWorkers) {
+      if (serviceWorker._browserContext !== this)
+        continue;
+      // When closing a browser context, service workers are shutdown
+      // asynchronously and we get detached from them later.
+      // To avoid the wrong order of notifications, we manually fire
+      // "close" event here and forget about the serivce worker.
+      serviceWorker.emit(CommonEvents.Worker.Close);
+      this._browser._serviceWorkers.delete(targetId);
+    }
   }
 
   backgroundPages(): Page[] {

@@ -19,7 +19,7 @@ const utils = require('../utils');
 const {makeUserDataDir, removeUserDataDir} = utils;
 const {FFOX, CHROMIUM, WEBKIT, WIN, CHANNEL} = utils.testOptions(browserType);
 
-describe.skip(CHANNEL)('launcher', function() {
+describe('launcher', function() {
   it('should throw with remote-debugging-pipe argument', async({browserType, defaultBrowserOptions}) => {
     const options = Object.assign({}, defaultBrowserOptions);
     options.args = ['--remote-debugging-pipe'].concat(options.args || []);
@@ -49,7 +49,7 @@ describe.skip(CHANNEL)('launcher', function() {
   });
 });
 
-describe.skip(CHANNEL)('extensions', () => {
+describe('extensions', () => {
   it('should return background pages', async({browserType, defaultBrowserOptions}) => {
     const userDataDir = await makeUserDataDir();
     const extensionPath = path.join(__dirname, '..', 'assets', 'simple-extension');
@@ -73,7 +73,7 @@ describe.skip(CHANNEL)('extensions', () => {
   });
 });
 
-describe.skip(CHANNEL)('BrowserContext', function() {
+describe('BrowserContext', function() {
   it('should not create pages automatically', async ({browserType, defaultBrowserOptions}) => {
     const browser = await browserType.launch(defaultBrowserOptions);
     const browserSession = await browser.newBrowserCDPSession();

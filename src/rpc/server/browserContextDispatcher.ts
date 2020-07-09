@@ -18,17 +18,31 @@ import * as types from '../../types';
 import { BrowserContextBase, BrowserContext } from '../../browserContext';
 import { Events } from '../../events';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, lookupDispatcher } from './dispatcher';
-import { PageDispatcher, BindingCallDispatcher } from './pageDispatcher';
-import { PageChannel, BrowserContextChannel, BrowserContextInitializer } from '../channels';
+import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
+import { PageChannel, BrowserContextChannel, BrowserContextInitializer, CDPSessionChannel } from '../channels';
 import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { Page } from '../../page';
+import { CRBrowserContext } from '../../chromium/crBrowser';
+import { CDPSessionDispatcher } from './cdpSessionDispatcher';
+import { Events as ChromiumEvents } from '../../chromium/events';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, BrowserContextInitializer> implements BrowserContextChannel {
   private _context: BrowserContextBase;
 
   constructor(scope: DispatcherScope, context: BrowserContextBase) {
+    let crBackgroundPages: PageDispatcher[] = [];
+    let crServiceWorkers: WorkerDispatcher[] = [];
+    if (context._browserBase._options.name === 'chromium') {
+      crBackgroundPages = (context as CRBrowserContext).backgroundPages().map(p => new PageDispatcher(scope, p));
+      context.on(ChromiumEvents.CRBrowserContext.BackgroundPage, page => this._dispatchEvent('crBackgroundPage', new PageDispatcher(this._scope, page)));
+      crServiceWorkers = (context as CRBrowserContext).serviceWorkers().map(w => new WorkerDispatcher(scope, w));
+      context.on(ChromiumEvents.CRBrowserContext.ServiceWorker, serviceWorker => this._dispatchEvent('crServiceWorker', new WorkerDispatcher(this._scope, serviceWorker)));
+    }
+
     super(scope, context, 'context', {
-      pages: context.pages().map(p => new PageDispatcher(scope, p))
+      pages: context.pages().map(p => new PageDispatcher(scope, p)),
+      crBackgroundPages,
+      crServiceWorkers,
     }, true);
     this._context = context;
     context.on(Events.BrowserContext.Page, page => this._dispatchEvent('page', new PageDispatcher(this._scope, page)));
@@ -117,5 +131,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
 
   async close(): Promise<void> {
     await this._context.close();
+  }
+
+  async crNewCDPSession(params: { page: PageDispatcher }): Promise<CDPSessionChannel> {
+    const crBrowserContext = this._object as CRBrowserContext;
+    return new CDPSessionDispatcher(this._scope, await crBrowserContext.newCDPSession(params.page._object));
   }
 }
