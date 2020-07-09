@@ -75,11 +75,15 @@ createZipForLinux() {
     # Copy libvpx.so.5 as Ubuntu 20.04 comes with libvpx.so.6
     ldd WebKitBuild/WPE/Release/bin/MiniBrowser | grep -o '[^ ]*\/libvpx.so.5[^ ]*' | xargs cp -t $tmpdir
     # Copy some wayland libraries required for Web Process t
-    cp -d -t $tmpdir WebKitBuild/WPE/DependenciesWPE/Root/lib/libva\-*
+    if ls WebKitBuild/WPE/DependenciesWPE/Root/lib/libva\-* 2>&1 >/dev/null; then
+      cp -d -t $tmpdir WebKitBuild/WPE/DependenciesWPE/Root/lib/libva\-*
+    fi
     # Injected bundle is loaded dynamicly via dlopen => not bt listed by ldd.
     cp -t $tmpdir WebKitBuild/WPE/Release/lib/libWPEInjectedBundle.so
-    mkdir -p $tmpdir/gio/modules
-    cp -t $tmpdir/gio/modules $PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib/gio/modules/*
+    if test -d $PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib/gio/modules/; then
+      mkdir -p $tmpdir/gio/modules
+      cp -t $tmpdir/gio/modules $PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib/gio/modules/*
+    fi
 
     cd $tmpdir
     ln -s libWPEBackend-fdo-1.0.so.1 libWPEBackend-fdo-1.0.so
@@ -100,11 +104,13 @@ createZipForLinux() {
     cp -t $tmpdir WebKitBuild/GTK/Release/lib/libwebkit2gtkinjectedbundle.so
     # Copy libvpx.so.5 as Ubuntu 20.04 comes with libvpx.so.6
     ldd WebKitBuild/GTK/Release/bin/MiniBrowser | grep -o '[^ ]*\/libvpx.so.5[^ ]*' | xargs cp -t $tmpdir
-    mkdir -p $tmpdir/gio/modules
-    cp -t $tmpdir/gio/modules $PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib/gio/modules/*
+    if test -d $PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib/gio/modules; then
+      mkdir -p $tmpdir/gio/modules
+      cp -t $tmpdir/gio/modules $PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib/gio/modules/*
+    fi
 
     # we failed to nicely build libgdk_pixbuf - expect it in the env
-    rm $tmpdir/libgdk_pixbuf*
+    rm -f $tmpdir/libgdk_pixbuf*
   else
     echo "ERROR: must specify --gtk or --wpe"
     exit 1
