@@ -734,12 +734,25 @@ some CSP errors in the future.
        */
       frame: AffectedFrame;
     }
+    export type ContentSecurityPolicyViolationType = "kInlineViolation"|"kEvalViolation"|"kURLViolation"|"kTrustedTypesSinkViolation"|"kTrustedTypesPolicyViolation";
+    export interface ContentSecurityPolicyIssueDetails {
+      /**
+       * The url not included in allowed sources.
+       */
+      blockedURL?: string;
+      /**
+       * Specific directive that is violated, causing the CSP issue.
+       */
+      violatedDirective: string;
+      contentSecurityPolicyViolationType: ContentSecurityPolicyViolationType;
+      frameAncestor?: AffectedFrame;
+    }
     /**
      * A unique identifier for the type of issue. Each type may use one of the
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue";
+    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -750,6 +763,7 @@ add a new optional field to this type.
       mixedContentIssueDetails?: MixedContentIssueDetails;
       blockedByResponseIssueDetails?: BlockedByResponseIssueDetails;
       heavyAdIssueDetails?: HeavyAdIssueDetails;
+      contentSecurityPolicyIssueDetails?: ContentSecurityPolicyIssueDetails;
     }
     /**
      * An inspector issue reported from the back-end.
@@ -2096,6 +2110,17 @@ instrumentation)
        * Monotonically increasing time, in seconds.
        */
       timestamp: number;
+    }
+    /**
+     * Enables/disables rendering of local CSS fonts (enabled by default).
+     */
+    export type setLocalFontsEnabledParameters = {
+      /**
+       * Whether rendering of local fonts is enabled.
+       */
+      enabled: boolean;
+    }
+    export type setLocalFontsEnabledReturnValue = {
     }
   }
   
@@ -8019,6 +8044,10 @@ continueInterceptedRequest call.
        */
       showNegativeLineNumbers?: boolean;
       /**
+       * Show area name labels (default: false).
+       */
+      showAreaNames?: boolean;
+      /**
        * The grid container border highlight color (default: transparent).
        */
       gridBorderColor?: DOM.RGBA;
@@ -8050,6 +8079,10 @@ continueInterceptedRequest call.
        * The column gap hatching fill color (default: transparent).
        */
       columnHatchColor?: DOM.RGBA;
+      /**
+       * The named grid areas border color (Default: transparent).
+       */
+      areaBorderColor?: DOM.RGBA;
     }
     /**
      * Configuration data for the highlighting of page elements.
@@ -12148,6 +12181,16 @@ The default is true.
     }
     export type setUserVerifiedReturnValue = {
     }
+    /**
+     * Sets whether tests of user presence will succeed immediately (if true) or fail to resolve (if false) for an authenticator.
+The default is true.
+     */
+    export type setAutomaticPresenceSimulationParameters = {
+      authenticatorId: AuthenticatorId;
+      enabled: boolean;
+    }
+    export type setAutomaticPresenceSimulationReturnValue = {
+    }
   }
   
   /**
@@ -14956,6 +14999,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "CSS.startRuleUsageTracking": CSS.startRuleUsageTrackingParameters;
     "CSS.stopRuleUsageTracking": CSS.stopRuleUsageTrackingParameters;
     "CSS.takeCoverageDelta": CSS.takeCoverageDeltaParameters;
+    "CSS.setLocalFontsEnabled": CSS.setLocalFontsEnabledParameters;
     "CacheStorage.deleteCache": CacheStorage.deleteCacheParameters;
     "CacheStorage.deleteEntry": CacheStorage.deleteEntryParameters;
     "CacheStorage.requestCacheNames": CacheStorage.requestCacheNamesParameters;
@@ -15287,6 +15331,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "WebAuthn.removeCredential": WebAuthn.removeCredentialParameters;
     "WebAuthn.clearCredentials": WebAuthn.clearCredentialsParameters;
     "WebAuthn.setUserVerified": WebAuthn.setUserVerifiedParameters;
+    "WebAuthn.setAutomaticPresenceSimulation": WebAuthn.setAutomaticPresenceSimulationParameters;
     "Media.enable": Media.enableParameters;
     "Media.disable": Media.disableParameters;
     "Console.clearMessages": Console.clearMessagesParameters;
@@ -15437,6 +15482,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "CSS.startRuleUsageTracking": CSS.startRuleUsageTrackingReturnValue;
     "CSS.stopRuleUsageTracking": CSS.stopRuleUsageTrackingReturnValue;
     "CSS.takeCoverageDelta": CSS.takeCoverageDeltaReturnValue;
+    "CSS.setLocalFontsEnabled": CSS.setLocalFontsEnabledReturnValue;
     "CacheStorage.deleteCache": CacheStorage.deleteCacheReturnValue;
     "CacheStorage.deleteEntry": CacheStorage.deleteEntryReturnValue;
     "CacheStorage.requestCacheNames": CacheStorage.requestCacheNamesReturnValue;
@@ -15768,6 +15814,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "WebAuthn.removeCredential": WebAuthn.removeCredentialReturnValue;
     "WebAuthn.clearCredentials": WebAuthn.clearCredentialsReturnValue;
     "WebAuthn.setUserVerified": WebAuthn.setUserVerifiedReturnValue;
+    "WebAuthn.setAutomaticPresenceSimulation": WebAuthn.setAutomaticPresenceSimulationReturnValue;
     "Media.enable": Media.enableReturnValue;
     "Media.disable": Media.disableReturnValue;
     "Console.clearMessages": Console.clearMessagesReturnValue;
