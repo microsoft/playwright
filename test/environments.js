@@ -22,7 +22,7 @@ const rm = require('rimraf').sync;
 const {TestServer} = require('../utils/testserver/');
 const { DispatcherConnection } = require('../lib/rpc/server/dispatcher');
 const { Connection } = require('../lib/rpc/client/connection');
-const { BrowserTypeDispatcher } = require('../lib/rpc/server/browserTypeDispatcher');
+const { PlaywrightDispatcher } = require('../lib/rpc/server/playwrightDispatcher');
 
 class ServerEnvironment {
   async beforeAll(state) {
@@ -159,18 +159,10 @@ class PlaywrightEnvironment {
   }
 
   name() { return 'Playwright'; };
-  beforeAll(state) { state.playwright = this._playwright; }
-  afterAll(state) { delete state.playwright; }
-}
-
-class BrowserTypeEnvironment {
-  constructor(browserType) {
-    this._browserType = browserType;
-  }
 
   async beforeAll(state) {
     // Channel substitute
-    let overridenBrowserType = this._browserType;
+    this.overriddenPlaywright = this._playwright;
     if (process.env.PWCHANNEL) {
       const dispatcherConnection = new DispatcherConnection();
       const connection = new Connection();
@@ -182,10 +174,24 @@ class BrowserTypeEnvironment {
         await new Promise(f => setImmediate(f));
         return result;
       };
-      new BrowserTypeDispatcher(dispatcherConnection.rootScope(), this._browserType);
-      overridenBrowserType = await connection.waitForObjectWithKnownName(this._browserType.name());
+      new PlaywrightDispatcher(dispatcherConnection.rootScope(), this._playwright);
+      this.overriddenPlaywright = await connection.waitForObjectWithKnownName('playwright');
     }
-    state.browserType = overridenBrowserType;
+    state.playwright = this.overriddenPlaywright;
+  }
+
+  async afterAll(state) {
+    delete state.playwright;
+  }
+}
+
+class BrowserTypeEnvironment {
+  constructor(browserName) {
+    this._browserName = browserName;
+  }
+
+  async beforeAll(state) {
+    state.browserType = state.playwright[this._browserName];
   }
 
   async afterAll(state) {

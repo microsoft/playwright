@@ -158,7 +158,7 @@ function makeTestRunnerInfo() {
   const browserInfo = browserNames.map(browserName => {
     const browserType = playwright[browserName];
 
-    const browserTypeEnvironment = new BrowserTypeEnvironment(browserType);
+    const browserTypeEnvironment = new BrowserTypeEnvironment(browserName);
 
     // TODO: maybe launch options per browser?
     const launchOptions = {

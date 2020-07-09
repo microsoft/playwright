@@ -82,7 +82,8 @@ function collect(browserNames) {
   const { setUnderTest } = require(require('path').join(playwrightPath, 'lib/helper.js'));
   setUnderTest();
 
-  testRunner.collector().useEnvironment(new PlaywrightEnvironment(playwright));
+  const playwrightEnvironment = new PlaywrightEnvironment(playwright);
+  testRunner.collector().useEnvironment(playwrightEnvironment);
   for (const e of config.globalEnvironments || [])
     testRunner.collector().useEnvironment(e);
 
@@ -90,7 +91,7 @@ function collect(browserNames) {
 
   for (const browserName of browserNames) {
     const browserType = playwright[browserName];
-    const browserTypeEnvironment = new BrowserTypeEnvironment(browserType);
+    const browserTypeEnvironment = new BrowserTypeEnvironment(browserName);
 
     // TODO: maybe launch options per browser?
     const launchOptions = {
