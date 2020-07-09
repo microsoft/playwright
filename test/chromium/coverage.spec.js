@@ -16,7 +16,7 @@
 
 const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('../utils').testOptions(browserType);
 
-describe.skip(CHANNEL)('JSCoverage', function() {
+describe('JSCoverage', function() {
   it('should work', async function({page, server}) {
     await page.coverage.startJSCoverage();
     await page.goto(server.PREFIX + '/jscoverage/simple.html', { waitUntil: 'load' });
@@ -88,7 +88,7 @@ describe.skip(CHANNEL)('JSCoverage', function() {
   });
 });
 
-describe.skip(CHANNEL)('CSSCoverage', function() {
+describe('CSSCoverage', function() {
   it('should work', async function({page, server}) {
     await page.coverage.startCSSCoverage();
     await page.goto(server.PREFIX + '/csscoverage/simple.html');

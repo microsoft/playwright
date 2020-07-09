@@ -35,7 +35,7 @@ describe('ChromiumBrowserContext.createSession', function() {
     await page.goto(server.EMPTY_PAGE);
     expect(events.length).toBe(1);
   });
-  it.skip(CHANNEL)('should enable and disable domains independently', async function({page, browser, server}) {
+  it('should enable and disable domains independently', async function({page, browser, server}) {
     const client = await page.context().newCDPSession(page);
     await client.send('Runtime.enable');
     await client.send('Debugger.enable');

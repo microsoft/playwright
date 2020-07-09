@@ -27,7 +27,7 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   readonly _contexts = new Set<BrowserContext>();
   private _isConnected = true;
   private _isClosedOrClosing = false;
-
+  private _closedPromise: Promise<void>;
 
   static from(browser: BrowserChannel): Browser {
     return (browser as any)._object;
@@ -45,6 +45,7 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
       this._isClosedOrClosing = true;
       this._scope.dispose();
     });
+    this._closedPromise = new Promise(f => this.once(Events.Browser.Disconnected, f));
   }
 
   async newContext(options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
@@ -73,13 +74,22 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   }
 
   async close(): Promise<void> {
-    if (this._isClosedOrClosing)
-      return;
-    this._isClosedOrClosing = true;
-    await this._channel.close();
+    if (!this._isClosedOrClosing) {
+      this._isClosedOrClosing = true;
+      await this._channel.close();
+    }
+    await this._closedPromise;
   }
 
   async newBrowserCDPSession(): Promise<CDPSession> {
     return CDPSession.from(await this._channel.crNewBrowserCDPSession());
+  }
+
+  async startTracing(page?: Page, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
+    await this._channel.crStartTracing({ ...options, page: page ? page._channel : undefined });
+  }
+
+  async stopTracing(): Promise<Buffer> {
+    return Buffer.from(await this._channel.crStopTracing(), 'base64');
   }
 }

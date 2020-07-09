@@ -154,7 +154,7 @@ describe.fail(FFOX && WIN)('Page.Events.Crash', function() {
     const error = await promise;
     expect(error.message).toContain('Navigation failed because page crashed');
   });
-  it.fail(CHANNEL)('should be able to close context when page crashes', async({page}) => {
+  it('should be able to close context when page crashes', async({page}) => {
     await page.setContent(`<div>This page should crash</div>`);
     crash(page);
     await page.waitForEvent('crash');

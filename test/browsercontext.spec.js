@@ -121,7 +121,7 @@ describe('BrowserContext', function() {
     let error = await promise;
     expect(error.message).toContain('Context closed');
   });
-  it.fail(CHANNEL)('close() should be callable twice', async({browser}) => {
+  it('close() should be callable twice', async({browser}) => {
     const context = await browser.newContext();
     await Promise.all([
       context.close(),
