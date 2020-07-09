@@ -23,6 +23,11 @@ import { ConnectionScope } from './connection';
 import { BrowserServer } from './browserServer';
 
 export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {
+
+  static from(browserTyep: BrowserTypeChannel): BrowserType {
+    return (browserTyep as any)._object;
+  }
+
   constructor(scope: ConnectionScope, guid: string, initializer: BrowserTypeInitializer) {
     super(scope, guid, initializer);
   }

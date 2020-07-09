@@ -23,6 +23,16 @@ export interface Channel extends EventEmitter {
 }
 
 
+export interface PlaywrightChannel extends Channel {
+}
+export type PlaywrightInitializer = {
+  chromium: BrowserTypeChannel,
+  firefox: BrowserTypeChannel,
+  webkit: BrowserTypeChannel,
+  deviceDescriptors: types.Devices,
+};
+
+
 export interface BrowserTypeChannel extends Channel {
   connect(params: types.ConnectOptions): Promise<BrowserChannel>;
   launch(params: types.LaunchOptions): Promise<BrowserChannel>;

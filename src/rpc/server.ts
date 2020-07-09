@@ -17,7 +17,7 @@
 import { Transport } from './transport';
 import { DispatcherConnection } from './server/dispatcher';
 import { Playwright } from '../server/playwright';
-import { BrowserTypeDispatcher } from './server/browserTypeDispatcher';
+import { PlaywrightDispatcher } from './server/playwrightDispatcher';
 
 const dispatcherConnection = new DispatcherConnection();
 const transport = new Transport(process.stdout, process.stdin);
@@ -25,6 +25,4 @@ transport.onmessage = message => dispatcherConnection.dispatch(message);
 dispatcherConnection.onmessage = message => transport.send(message);
 
 const playwright = new Playwright(__dirname, require('../../browsers.json')['browsers']);
-new BrowserTypeDispatcher(dispatcherConnection.rootScope(), playwright.chromium!);
-new BrowserTypeDispatcher(dispatcherConnection.rootScope(), playwright.firefox!);
-new BrowserTypeDispatcher(dispatcherConnection.rootScope(), playwright.webkit!);
+new PlaywrightDispatcher(dispatcherConnection.rootScope(), playwright);

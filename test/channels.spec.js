@@ -24,9 +24,9 @@ describe.skip(!CHANNEL)('Channels', function() {
 
   it('should scope context handles', async({browser, server}) => {
     const GOLDEN_PRECONDITION = {
-      objects: [ 'chromium', 'browser' ],
+      objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser' ],
       scopes: [
-        { _guid: '', objects: [ 'chromium', 'browser' ] },
+        { _guid: '', objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser' ] },
         { _guid: 'browser', objects: [] }
       ]
     };
@@ -36,9 +36,9 @@ describe.skip(!CHANNEL)('Channels', function() {
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
     await expectScopeState(browser, {
-      objects: [ 'chromium', 'browser', 'context', 'frame', 'page', 'request', 'response' ],
+      objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser', 'context', 'frame', 'page', 'request', 'response' ],
       scopes: [
-        { _guid: '', objects: [ 'chromium', 'browser' ] },
+        { _guid: '', objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser' ] },
         { _guid: 'browser', objects: ['context'] },
         { _guid: 'context', objects: ['frame', 'page', 'request', 'response'] }
       ]
@@ -50,9 +50,9 @@ describe.skip(!CHANNEL)('Channels', function() {
 
   it('should scope CDPSession handles', async({browserType, browser, server}) => {
     const GOLDEN_PRECONDITION = {
-      objects: [ 'chromium', 'browser' ],
+      objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser' ],
       scopes: [
-        { _guid: '', objects: [ 'chromium', 'browser' ] },
+        { _guid: '', objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser' ] },
         { _guid: 'browser', objects: [] }
       ]
     };
@@ -60,9 +60,9 @@ describe.skip(!CHANNEL)('Channels', function() {
 
     const session = await browser.newBrowserCDPSession();
     await expectScopeState(browserType, {
-      objects: [ 'chromium', 'browser', 'cdpSession' ],
+      objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser', 'cdpSession' ],
       scopes: [
-        { _guid: '', objects: [ 'chromium', 'browser' ] },
+        { _guid: '', objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser' ] },
         { _guid: 'browser', objects: ['cdpSession'] },
         { _guid: 'cdpSession', objects: [] },
       ]
@@ -74,9 +74,9 @@ describe.skip(!CHANNEL)('Channels', function() {
 
   it('should scope browser handles', async({browserType, defaultBrowserOptions}) => {
     const GOLDEN_PRECONDITION = {
-      objects: [ 'chromium', 'browser' ],
+      objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser' ],
       scopes: [
-        { _guid: '', objects: [ 'chromium', 'browser' ] },
+        { _guid: '', objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser' ] },
         { _guid: 'browser', objects: [] }
       ]
     };
@@ -85,9 +85,9 @@ describe.skip(!CHANNEL)('Channels', function() {
     const browser = await browserType.launch(defaultBrowserOptions);
     await browser.newContext();
     await expectScopeState(browserType, {
-      objects: [ 'chromium', 'browser', 'browser', 'context' ],
+      objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser', 'browser', 'context' ],
       scopes: [
-        { _guid: '', objects: [ 'chromium', 'browser', 'browser' ] },
+        { _guid: '', objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser', 'browser' ] },
         { _guid: 'browser', objects: [] },
         { _guid: 'browser', objects: ['context'] },
         { _guid: 'context', objects: [] },

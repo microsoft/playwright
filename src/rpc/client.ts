@@ -26,8 +26,8 @@ import { Transport } from './transport';
   connection.onmessage = message => transport.send(message);
   transport.onmessage = message => connection.dispatch(message);
 
-  const chromium = await connection.waitForObjectWithKnownName('chromium');
-  const browser = await chromium.launch({ headless: false });
+  const playwright = await connection.waitForObjectWithKnownName('playwright');
+  const browser = await playwright.chromium.launch({ headless: false });
   const page = await browser.newPage();
   await page.goto('https://example.com');
 })();

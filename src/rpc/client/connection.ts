@@ -31,6 +31,7 @@ import { Download } from './download';
 import { parseError } from '../serializers';
 import { BrowserServer } from './browserServer';
 import { CDPSession } from './cdpSession';
+import { Playwright } from './playwright';
 
 export class Connection {
   readonly _objects = new Map<string, ChannelOwner<any, any>>();
@@ -220,6 +221,9 @@ export class ConnectionScope {
         break;
       case 'page':
         result = new Page(this, guid, initializer);
+        break;
+      case 'playwright':
+        result = new Playwright(this, guid, initializer);
         break;
       case 'request':
         result = new Request(this, guid, initializer);
