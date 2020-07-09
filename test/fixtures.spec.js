@@ -92,8 +92,25 @@ class Wrapper {
 async function setup(state, options = {}) {
   const wrapper = new Wrapper(state, options);
   await wrapper.connect();
+  if (!state.wrappers)
+    state.wrappers = new Set();
+  state.wrappers.add(wrapper);
+  wrapper.child().once('exit', () => {
+    state.wrappers.delete(wrapper);
+  });
   return wrapper;
 }
+afterEach(async state => {
+  if (state.wrappers) {
+    for (const wrapper of /** @type {Set<Wrapper>} */ (state.wrappers)) {
+      if (WIN)
+        execSync(`taskkill /pid ${wrapper.child().pid} /T /F`);
+      else
+        process.kill(wrapper.child().pid);
+    }
+    delete state.wrappers;
+  }
+});
 
 describe('Fixtures', function() {
   it.slow()('should close the browser when the node process closes', async state => {

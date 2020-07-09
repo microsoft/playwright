@@ -185,16 +185,55 @@ class PlaywrightEnvironment {
   }
 }
 
+class BrowserTypeWrapper {
+  /**
+   * @param {import('..').BrowserType} browserType 
+   */
+  constructor(browserType) {
+    this._browserType = browserType;
+    
+    /** @type {(keyof typeof browserType)[]} */
+    const transparentKeys = ['connect', 'executablePath', 'name', '_defaultArgs'];
+    for (const name of transparentKeys)
+      this[name] = this._browserType[name].bind(this._browserType);
+    
+    /** @type {Set<import('..').Browser|import('..').BrowserServer>} */
+    this._activeBrowsers = new Set();
+
+    /** @type {(keyof typeof browserType)[]} */
+    const launchKeys = ['launch', 'launchPersistentContext', 'launchServer'];
+    for (const name of launchKeys) {
+      this[name] = async (...args) => {
+        const browserOrServer = await browserType[name](...args);
+        this._activeBrowsers.add(browserOrServer);
+        browserOrServer.on('disconnected', () => this._activeBrowsers.delete(browserOrServer));
+        browserOrServer.on('close', () => this._activeBrowsers.delete(browserOrServer));
+        return browserOrServer;
+      };
+    }
+  }
+
+  async _cleanup() {
+    const browsers = [...this._activeBrowsers];
+    this._activeBrowsers.clear();
+    await Promise.all(browsers.map(browser => {
+      return browser.close();
+    }));
+  }
+}
+
 class BrowserTypeEnvironment {
   constructor(browserName) {
     this._browserName = browserName;
   }
 
   async beforeAll(state) {
-    state.browserType = state.playwright[this._browserName];
+    const browserType = state.playwright[this._browserName];
+    state.browserType = new BrowserTypeWrapper(browserType);
   }
 
   async afterAll(state) {
+    await state.browserType._cleanup();
     delete state.browserType;
   }
 }
