@@ -29,7 +29,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
   }
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserTypeInitializer) {
-    super(parent, type, guid, initializer);
+    super(parent, type, guid, initializer, true);
   }
 
   executablePath(): string {

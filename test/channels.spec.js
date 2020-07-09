@@ -22,15 +22,16 @@ describe.skip(!CHANNEL)('Channels', function() {
     expect(!!browser._connection).toBeTruthy();
   });
 
-  it('should scope context handles', async({browser, server}) => {
+  it('should scope context handles', async({browserType, browser, server}) => {
     const GOLDEN_PRECONDITION = {
       _guid: '',
       objects: [
-        { _guid: 'chromium' },
-        { _guid: 'firefox' },
-        { _guid: 'webkit' },
+        { _guid: 'browserType', objects: [
+          { _guid: 'browser', objects: [] }
+        ] },
+        { _guid: 'browserType', objects: [] },
+        { _guid: 'browserType', objects: [] },
         { _guid: 'playwright' },
-        { _guid: 'browser', objects: [] },
       ]
     };
     await expectScopeState(browser, GOLDEN_PRECONDITION);
@@ -41,18 +42,19 @@ describe.skip(!CHANNEL)('Channels', function() {
     await expectScopeState(browser, {
       _guid: '',
       objects: [
-        { _guid: 'chromium' },
-        { _guid: 'firefox' },
-        { _guid: 'webkit' },
-        { _guid: 'playwright' },
-        { _guid: 'browser', objects: [
-          { _guid: 'context', objects: [
-            { _guid: 'frame' },
-            { _guid: 'page' },
-            { _guid: 'request' },
-            { _guid: 'response' },
-          ]},
+        { _guid: 'browserType', objects: [] },
+        { _guid: 'browserType', objects: [] },
+        { _guid: 'browserType', objects: [
+          { _guid: 'browser', objects: [
+            { _guid: 'context', objects: [
+              { _guid: 'frame' },
+              { _guid: 'page' },
+              { _guid: 'request' },
+              { _guid: 'response' },
+            ]},
+          ] },
         ] },
+        { _guid: 'playwright' },
       ]
     });
 
@@ -64,11 +66,12 @@ describe.skip(!CHANNEL)('Channels', function() {
     const GOLDEN_PRECONDITION = {
       _guid: '',
       objects: [
-        { _guid: 'chromium' },
-        { _guid: 'firefox' },
-        { _guid: 'webkit' },
+        { _guid: 'browserType', objects: [
+          { _guid: 'browser', objects: [] }
+        ] },
+        { _guid: 'browserType', objects: [] },
+        { _guid: 'browserType', objects: [] },
         { _guid: 'playwright' },
-        { _guid: 'browser', objects: [] },
       ]
     };
     await expectScopeState(browserType, GOLDEN_PRECONDITION);
@@ -77,13 +80,14 @@ describe.skip(!CHANNEL)('Channels', function() {
     await expectScopeState(browserType, {
       _guid: '',
       objects: [
-        { _guid: 'chromium' },
-        { _guid: 'firefox' },
-        { _guid: 'webkit' },
-        { _guid: 'playwright' },
-        { _guid: 'browser', objects: [
-          { _guid: 'cdpSession', objects: [] },
+        { _guid: 'browserType', objects: [
+          { _guid: 'browser', objects: [
+            { _guid: 'cdpSession', objects: [] },
+          ] },
         ] },
+        { _guid: 'browserType', objects: [] },
+        { _guid: 'browserType', objects: [] },
+        { _guid: 'playwright' },
       ]
     });
 
@@ -95,11 +99,12 @@ describe.skip(!CHANNEL)('Channels', function() {
     const GOLDEN_PRECONDITION = {
       _guid: '',
       objects: [
-        { _guid: 'chromium' },
-        { _guid: 'firefox' },
-        { _guid: 'webkit' },
+        { _guid: 'browserType', objects: [
+          { _guid: 'browser', objects: [] }
+        ] },
+        { _guid: 'browserType', objects: [] },
+        { _guid: 'browserType', objects: [] },
         { _guid: 'playwright' },
-        { _guid: 'browser', objects: [] },
       ]
     };
     await expectScopeState(browserType, GOLDEN_PRECONDITION);
@@ -109,14 +114,15 @@ describe.skip(!CHANNEL)('Channels', function() {
     await expectScopeState(browserType, {
       _guid: '',
       objects: [
-        { _guid: 'chromium' },
-        { _guid: 'firefox' },
-        { _guid: 'webkit' },
-        { _guid: 'playwright' },
-        { _guid: 'browser', objects: [
-          { _guid: 'context', objects: [] },
+        { _guid: 'browserType', objects: [
+          { _guid: 'browser', objects: [
+            { _guid: 'context', objects: [] }
+          ] },
+          { _guid: 'browser', objects: [] },
         ] },
-        { _guid: 'browser', objects: [] },
+        { _guid: 'browserType', objects: [] },
+        { _guid: 'browserType', objects: [] },
+        { _guid: 'playwright' },
       ]
     });
 
@@ -152,6 +158,8 @@ function trimGuids(object) {
     const result = {};
     for (const key in object)
       result[key] = trimGuids(object[key]);
+    if (result._guid === 'chromium' || result._guid === 'firefox' || result._guid === 'webkit')
+      result._guid = 'browserType';
     return result;
   }
   if (typeof object === 'string')

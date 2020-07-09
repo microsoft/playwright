@@ -29,7 +29,7 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
     super(scope, browserType, 'browserType', {
       executablePath: browserType.executablePath(),
       name: browserType.name()
-    }, false, browserType.name());
+    }, true, browserType.name());
   }
 
   async launch(params: types.LaunchOptions): Promise<BrowserChannel> {

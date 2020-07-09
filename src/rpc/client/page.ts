@@ -40,8 +40,7 @@ import { Buffer } from 'buffer';
 import { Coverage } from './coverage';
 
 export class Page extends ChannelOwner<PageChannel, PageInitializer> {
-
-  private _browserContext: BrowserContext | undefined;
+  private _browserContext: BrowserContext;
   _ownedContext: BrowserContext | undefined;
 
   private _mainFrame: Frame;
@@ -54,10 +53,12 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   readonly accessibility: Accessibility;
   readonly keyboard: Keyboard;
   readonly mouse: Mouse;
-  readonly coverage: Coverage;
+  coverage: Coverage | null = null;
+  pdf?: (options?: types.PDFOptions) => Promise<Buffer>;
+
   readonly _bindings = new Map<string, FunctionWithSource>();
   private _pendingWaitForEvents = new Map<(error: Error) => void, string>();
-  private _timeoutSettings = new TimeoutSettings();
+  private _timeoutSettings: TimeoutSettings;
   _isPageCall = false;
 
   static from(page: PageChannel): Page {
@@ -70,10 +71,12 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: PageInitializer) {
     super(parent, type, guid, initializer);
+    this._browserContext = parent as BrowserContext;
+    this._timeoutSettings = new TimeoutSettings(this._browserContext._timeoutSettings);
+
     this.accessibility = new Accessibility(this._channel);
     this.keyboard = new Keyboard(this._channel);
     this.mouse = new Mouse(this._channel);
-    this.coverage = new Coverage(this._channel);
 
     this._mainFrame = Frame.from(initializer.mainFrame);
     this._mainFrame._page = this;
@@ -101,11 +104,11 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     this._channel.on('response', response => this.emit(Events.Page.Response, Response.from(response)));
     this._channel.on('route', ({ route, request }) => this._onRoute(Route.from(route), Request.from(request)));
     this._channel.on('worker', worker => this._onWorker(Worker.from(worker)));
-  }
 
-  _setBrowserContext(context: BrowserContext) {
-    this._browserContext = context;
-    this._timeoutSettings = new TimeoutSettings(context._timeoutSettings);
+    if (this._browserContext._browserType.name() === 'chromium') {
+      this.coverage = new Coverage(this._channel);
+      this.pdf = options => this._pdf(options);
+    }
   }
 
   private _onRequestFailed(request: Request, failureText: string | null) {
@@ -142,7 +145,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
         return;
       }
     }
-    this._browserContext!._onRoute(route, request);
+    this._browserContext._onRoute(route, request);
   }
 
   async _onBinding(bindingCall: BindingCall) {
@@ -151,7 +154,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
       bindingCall.call(func);
       return;
     }
-    this._browserContext!._onBinding(bindingCall);
+    this._browserContext._onBinding(bindingCall);
   }
 
   _onWorker(worker: Worker): void {
@@ -162,7 +165,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
 
   private _onClose() {
     this._closed = true;
-    this._browserContext!._pages.delete(this);
+    this._browserContext._pages.delete(this);
     this._rejectPendingOperations(false);
     this.emit(Events.Page.Close);
   }
@@ -184,7 +187,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   context(): BrowserContext {
-    return this._browserContext!;
+    return this._browserContext;
   }
 
   async opener(): Promise<Page | null> {
@@ -280,7 +283,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   async exposeBinding(name: string, binding: FunctionWithSource) {
     if (this._bindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
-    if (this._browserContext!._bindings.has(name))
+    if (this._browserContext._bindings.has(name))
       throw new Error(`Function "${name}" has been already registered in the browser context`);
     this._bindings.set(name, binding);
     await this._channel.exposeBinding({ name });
@@ -499,7 +502,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     return this;
   }
 
-  async pdf(options: types.PDFOptions = {}): Promise<Buffer> {
+  async _pdf(options: types.PDFOptions = {}): Promise<Buffer> {
     const transportOptions: PDFOptions = { ...options } as PDFOptions;
     if (transportOptions.margin)
       transportOptions.margin = { ...transportOptions.margin };

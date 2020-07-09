@@ -14,10 +14,16 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('../utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
 
-describe('JSCoverage', function() {
+describe.skip(CHROMIUM)('Page.coverage missing', function() {
   it('should work', async function({page, server}) {
+    expect(page.coverage).toBe(null);
+  });
+});
+
+describe.skip(!CHROMIUM)('JSCoverage', function() {
+  it('should work', async function({browserType, page, server}) {
     await page.coverage.startJSCoverage();
     await page.goto(server.PREFIX + '/jscoverage/simple.html', { waitUntil: 'load' });
     const coverage = await page.coverage.stopJSCoverage();
@@ -88,8 +94,8 @@ describe('JSCoverage', function() {
   });
 });
 
-describe('CSSCoverage', function() {
-  it('should work', async function({page, server}) {
+describe.skip(!CHROMIUM)('CSSCoverage', function() {
+  it('should work', async function({browserType, page, server}) {
     await page.coverage.startCSSCoverage();
     await page.goto(server.PREFIX + '/csscoverage/simple.html');
     const coverage = await page.coverage.stopCSSCoverage();

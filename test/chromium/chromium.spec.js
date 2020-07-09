@@ -16,7 +16,7 @@
 
 const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('../utils').testOptions(browserType);
 
-describe('ChromiumBrowserContext', function() {
+describe('Service Worker', function() {
   it('should create a worker from a service worker', async({browser, page, server, context}) => {
     const [worker] = await Promise.all([
       context.waitForEvent('serviceworker'),

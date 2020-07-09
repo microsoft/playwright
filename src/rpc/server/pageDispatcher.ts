@@ -37,6 +37,8 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
   private _page: Page;
 
   constructor(scope: DispatcherScope, page: Page) {
+    // TODO: theoretically, there could be more than one frame already.
+    // If we split pageCreated and pageReady, there should be no main frame during pageCreated.
     super(scope, page, 'page', {
       mainFrame: FrameDispatcher.from(scope, page.mainFrame()),
       viewportSize: page.viewportSize(),

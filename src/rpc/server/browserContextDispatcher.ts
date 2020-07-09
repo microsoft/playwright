@@ -30,26 +30,25 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
   private _context: BrowserContextBase;
 
   constructor(scope: DispatcherScope, context: BrowserContextBase) {
-    let crBackgroundPages: PageDispatcher[] = [];
-    let crServiceWorkers: WorkerDispatcher[] = [];
-    if (context._browserBase._options.name === 'chromium') {
-      crBackgroundPages = (context as CRBrowserContext).backgroundPages().map(p => new PageDispatcher(scope, p));
-      context.on(ChromiumEvents.CRBrowserContext.BackgroundPage, page => this._dispatchEvent('crBackgroundPage', new PageDispatcher(this._scope, page)));
-      crServiceWorkers = (context as CRBrowserContext).serviceWorkers().map(w => new WorkerDispatcher(scope, w));
-      context.on(ChromiumEvents.CRBrowserContext.ServiceWorker, serviceWorker => this._dispatchEvent('crServiceWorker', new WorkerDispatcher(this._scope, serviceWorker)));
-    }
-
-    super(scope, context, 'context', {
-      pages: context.pages().map(p => new PageDispatcher(scope, p)),
-      crBackgroundPages,
-      crServiceWorkers,
-    }, true);
+    super(scope, context, 'context', {}, true);
     this._context = context;
+
+    for (const page of context.pages())
+      this._dispatchEvent('page', new PageDispatcher(this._scope, page));
     context.on(Events.BrowserContext.Page, page => this._dispatchEvent('page', new PageDispatcher(this._scope, page)));
     context.on(Events.BrowserContext.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
     });
+
+    if (context._browserBase._options.name === 'chromium') {
+      for (const page of (context as CRBrowserContext).backgroundPages())
+        this._dispatchEvent('crBackgroundPage', new PageDispatcher(this._scope, page));
+      context.on(ChromiumEvents.CRBrowserContext.BackgroundPage, page => this._dispatchEvent('crBackgroundPage', new PageDispatcher(this._scope, page)));
+      for (const serviceWorker of (context as CRBrowserContext).serviceWorkers())
+        this._dispatchEvent('crServiceWorker', new WorkerDispatcher(this._scope, serviceWorker));
+      context.on(ChromiumEvents.CRBrowserContext.ServiceWorker, serviceWorker => this._dispatchEvent('crServiceWorker', new WorkerDispatcher(this._scope, serviceWorker)));
+    }
   }
 
   async setDefaultNavigationTimeoutNoReply(params: { timeout: number }) {
