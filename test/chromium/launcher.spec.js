@@ -17,7 +17,7 @@
 const path = require('path');
 const utils = require('../utils');
 const {makeUserDataDir, removeUserDataDir} = utils;
-const {FFOX, CHROMIUM, WEBKIT, WIN, CHANNEL} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = utils.testOptions(browserType);
 
 describe('launcher', function() {
   it('should throw with remote-debugging-pipe argument', async({browserType, defaultBrowserOptions}) => {
@@ -32,7 +32,7 @@ describe('launcher', function() {
     const browser = await browserType.launchServer(options);
     await browser.close();
   });
-  it('should open devtools when "devtools: true" option is given', async({browserType, defaultBrowserOptions}) => {
+  it.skip(USES_HOOKS)('should open devtools when "devtools: true" option is given', async({browserType, defaultBrowserOptions}) => {
     let devtoolsCallback;
     const devtoolsPromise = new Promise(f => devtoolsCallback = f);
     const __testHookForDevTools = devtools => devtools.__testHookOnBinding = parsed => {
