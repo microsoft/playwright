@@ -490,6 +490,11 @@ export class Page extends EventEmitter {
       await this._ownedContext.close();
   }
 
+  _setIsError() {
+    if (!this._frameManager.mainFrame())
+      this._frameManager.frameAttached('<dummy>', null);
+  }
+
   isClosed(): boolean {
     return this._closedState === 'closed';
   }
