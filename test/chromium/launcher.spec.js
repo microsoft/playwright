@@ -32,7 +32,7 @@ describe('launcher', function() {
     const browser = await browserType.launchServer(options);
     await browser.close();
   });
-  it.skip(USES_HOOKS)('should open devtools when "devtools: true" option is given', async({browserType, defaultBrowserOptions}) => {
+  it.skip(USES_HOOKS).fail(CHROMIUM && WIN)('should open devtools when "devtools: true" option is given', async({browserType, defaultBrowserOptions}) => {
     let devtoolsCallback;
     const devtoolsPromise = new Promise(f => devtoolsCallback = f);
     const __testHookForDevTools = devtools => devtools.__testHookOnBinding = parsed => {

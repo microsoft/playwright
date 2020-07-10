@@ -293,7 +293,7 @@ describe('browserType.connect', function() {
     await browserServer._checkLeaks();
     await browserServer.close();
   });
-  it.skip(USES_HOOKS).slow()('should handle exceptions during connect', async({browserType, defaultBrowserOptions, server}) => {
+  it.skip(USES_HOOKS).slow().fail(CHROMIUM && WIN)('should handle exceptions during connect', async({browserType, defaultBrowserOptions, server}) => {
     const browserServer = await browserType.launchServer(defaultBrowserOptions);
     const __testHookBeforeCreateBrowser = () => { throw new Error('Dummy') };
     const error = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint(), __testHookBeforeCreateBrowser }).catch(e => e);
