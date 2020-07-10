@@ -92,7 +92,6 @@ export interface BrowserContextChannel extends Channel {
   setHTTPCredentials(params: { httpCredentials: types.Credentials | null }): Promise<void>;
   setNetworkInterceptionEnabled(params: { enabled: boolean }): Promise<void>;
   setOffline(params: { offline: boolean }): Promise<void>;
-  waitForEvent(params: { event: string }): Promise<any>;
 
   on(event: 'crBackgroundPage', callback: (params: PageChannel) => void): this;
   on(event: 'crServiceWorker', callback: (params: WorkerChannel) => void): this;
@@ -169,6 +168,8 @@ export type PageInitializer = {
 export type PageAttribution = { isPage?: boolean };
 
 export interface FrameChannel extends Channel {
+  on(event: 'loadstate', callback: (params: { add?: types.LifecycleEvent, remove?: types.LifecycleEvent }) => void): this;
+
   evalOnSelector(params: { selector: string; expression: string, isFunction: boolean, arg: any} & PageAttribution): Promise<any>;
   evalOnSelectorAll(params: { selector: string; expression: string, isFunction: boolean, arg: any} & PageAttribution): Promise<any>;
   addScriptTag(params: { url?: string | undefined, path?: string | undefined, content?: string | undefined, type?: string | undefined} & PageAttribution): Promise<ElementHandleChannel>;
@@ -199,14 +200,14 @@ export interface FrameChannel extends Channel {
   type(params: { selector: string, text: string, delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions & PageAttribution): Promise<void>;
   uncheck(params: { selector: string, force?: boolean, noWaitAfter?: boolean } & types.TimeoutOptions & PageAttribution): Promise<void>;
   waitForFunction(params: { expression: string, isFunction: boolean, arg: any } & types.WaitForFunctionOptions & PageAttribution): Promise<JSHandleChannel>;
-  waitForLoadState(params: { state: types.LifecycleEvent } & types.TimeoutOptions & PageAttribution): Promise<void>;
   waitForNavigation(params: types.WaitForNavigationOptions & PageAttribution): Promise<ResponseChannel | null>;
   waitForSelector(params: { selector: string } & types.WaitForElementOptions & PageAttribution): Promise<ElementHandleChannel | null>;
 }
 export type FrameInitializer = {
   url: string,
   name: string,
-  parentFrame: FrameChannel | null
+  parentFrame: FrameChannel | null,
+  loadStates: types.LifecycleEvent[],
 };
 
 

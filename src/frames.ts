@@ -57,7 +57,8 @@ type NavigationEvent = {
   documentInfo?: DocumentInfo,  // Undefined for same-document navigations.
   error?: Error,
 };
-export const kLifecycleEvent = Symbol('lifecycle');
+export const kAddLifecycleEvent = Symbol('addLifecycle');
+export const kRemoveLifecycleEvent = Symbol('removeLifecycle');
 
 export class FrameManager {
   private _page: Page;
@@ -380,7 +381,7 @@ export class Frame {
     for (const event of events) {
       // Checking whether we have already notified about this event.
       if (!this._subtreeLifecycleEvents.has(event)) {
-        this._eventEmitter.emit(kLifecycleEvent, event);
+        this._eventEmitter.emit(kAddLifecycleEvent, event);
         if (this === mainFrame && this._url !== 'about:blank')
           this._page._logger.info(`  "${event}" event fired`);
         if (this === mainFrame && event === 'load')
@@ -388,6 +389,10 @@ export class Frame {
         if (this === mainFrame && event === 'domcontentloaded')
           this._page.emit(Events.Page.DOMContentLoaded);
       }
+    }
+    for (const event of this._subtreeLifecycleEvents) {
+      if (!events.has(event))
+        this._eventEmitter.emit(kRemoveLifecycleEvent, event);
     }
     this._subtreeLifecycleEvents = events;
   }
@@ -429,7 +434,7 @@ export class Frame {
       }
 
       if (!this._subtreeLifecycleEvents.has(waitUntil))
-        await helper.waitForEvent(progress, this._eventEmitter, kLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
+        await helper.waitForEvent(progress, this._eventEmitter, kAddLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
       const request = event.documentInfo ? event.documentInfo.request : undefined;
       return request ? request._finalRequest().response() : null;
@@ -453,7 +458,7 @@ export class Frame {
         throw navigationEvent.error;
 
       if (!this._subtreeLifecycleEvents.has(waitUntil))
-        await helper.waitForEvent(progress, this._eventEmitter, kLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
+        await helper.waitForEvent(progress, this._eventEmitter, kAddLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
       const request = navigationEvent.documentInfo ? navigationEvent.documentInfo.request : undefined;
       return request ? request._finalRequest().response() : null;
@@ -467,7 +472,7 @@ export class Frame {
   async _waitForLoadState(progress: Progress, state: types.LifecycleEvent): Promise<void> {
     const waitUntil = verifyLifecycle(state);
     if (!this._subtreeLifecycleEvents.has(waitUntil))
-      await helper.waitForEvent(progress, this._eventEmitter, kLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
+      await helper.waitForEvent(progress, this._eventEmitter, kAddLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
   }
 
   async frameElement(): Promise<dom.ElementHandle> {
