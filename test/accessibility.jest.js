@@ -347,4 +347,13 @@ describe('Accessibility', function() {
       });
     });
   });
+  it('should work when there is a title ', async ({page}) => {
+    await page.setContent(`
+      <title>This is the title</title>
+      <div>This is the content</div>
+    `);
+    const snapshot = await page.accessibility.snapshot();
+    expect(snapshot.name).toBe('This is the title');
+    expect(snapshot.children[0].name).toBe('This is the content');
+  });
 });
