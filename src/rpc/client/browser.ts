@@ -19,7 +19,6 @@ import { BrowserChannel, BrowserInitializer } from '../channels';
 import { BrowserContext } from './browserContext';
 import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
-import { ConnectionScope } from './connection';
 import { Events } from '../../events';
 import { CDPSession } from './cdpSession';
 
@@ -37,13 +36,13 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
     return browser ? Browser.from(browser) : null;
   }
 
-  constructor(scope: ConnectionScope, guid: string, initializer: BrowserInitializer) {
-    super(scope, guid, initializer, true);
+  constructor(parent: ChannelOwner, guid: string, initializer: BrowserInitializer) {
+    super(parent, guid, initializer, true);
     this._channel.on('close', () => {
       this._isConnected = false;
       this.emit(Events.Browser.Disconnected);
       this._isClosedOrClosing = true;
-      this._scope.dispose();
+      this._dispose();
     });
     this._closedPromise = new Promise(f => this.once(Events.Browser.Disconnected, f));
   }

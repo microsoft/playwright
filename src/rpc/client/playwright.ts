@@ -18,7 +18,6 @@ import { PlaywrightChannel, PlaywrightInitializer } from '../channels';
 import * as types from '../../types';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
-import { ConnectionScope } from './connection';
 
 export class Playwright extends ChannelOwner<PlaywrightChannel, PlaywrightInitializer> {
   chromium: BrowserType;
@@ -26,8 +25,8 @@ export class Playwright extends ChannelOwner<PlaywrightChannel, PlaywrightInitia
   webkit: BrowserType;
   devices: types.Devices;
 
-  constructor(scope: ConnectionScope, guid: string, initializer: PlaywrightInitializer) {
-    super(scope, guid, initializer);
+  constructor(parent: ChannelOwner, guid: string, initializer: PlaywrightInitializer) {
+    super(parent, guid, initializer);
     this.chromium = BrowserType.from(initializer.chromium);
     this.firefox = BrowserType.from(initializer.firefox);
     this.webkit = BrowserType.from(initializer.webkit);

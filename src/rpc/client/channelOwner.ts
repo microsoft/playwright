@@ -16,18 +16,33 @@
 
 import { EventEmitter } from 'events';
 import { Channel } from '../channels';
-import { ConnectionScope } from './connection';
+import { Connection } from './connection';
+import { assert } from '../../helper';
 
-export abstract class ChannelOwner<T extends Channel, Initializer> extends EventEmitter {
+export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}> extends EventEmitter {
+  private _connection: Connection;
+  private _isScope: boolean;
+  // Parent is always "isScope".
+  private _parent: ChannelOwner | undefined;
+  // Only "isScope" channel owners have registered objects inside.
+  private _objects = new Map<string, ChannelOwner>();
+
+  readonly _guid: string;
   readonly _channel: T;
   readonly _initializer: Initializer;
-  readonly _scope: ConnectionScope;
-  readonly guid: string;
 
-  constructor(scope: ConnectionScope, guid: string, initializer: Initializer, isScope?: boolean) {
+  constructor(parent: ChannelOwner | Connection, guid: string, initializer: Initializer, isScope?: boolean) {
     super();
-    this.guid = guid;
-    this._scope = isScope ? scope.createChild(guid) : scope;
+
+    this._connection = parent instanceof Connection ? parent : parent._connection;
+    this._guid = guid;
+    this._isScope = !!isScope;
+    this._parent = parent instanceof Connection ? undefined : parent;
+
+    this._connection._objects.set(guid, this);
+    if (this._parent)
+      this._parent._objects.set(guid, this);
+
     const base = new EventEmitter();
     this._channel = new Proxy(base, {
       get: (obj: any, prop) => {
@@ -45,10 +60,35 @@ export abstract class ChannelOwner<T extends Channel, Initializer> extends Event
           return obj.addListener;
         if (prop === 'removeEventListener')
           return obj.removeListener;
-        return (params: any) => scope.sendMessageToServer({ guid, method: String(prop), params });
+        return (params: any) => this._connection.sendMessageToServer({ guid, method: String(prop), params });
       },
     });
     (this._channel as any)._object = this;
     this._initializer = initializer;
+  }
+
+  _dispose() {
+    assert(this._isScope);
+
+    // Clean up from parent and connection.
+    if (this._parent)
+      this._parent._objects.delete(this._guid);
+    this._connection._objects.delete(this._guid);
+
+    // Dispose all children.
+    for (const [guid, object] of [...this._objects]) {
+      if (object._isScope)
+        object._dispose();
+      else
+        this._connection._objects.delete(guid);
+    }
+    this._objects.clear();
+  }
+
+  _debugScopeState(): any {
+    return {
+      _guid: this._guid,
+      objects: this._isScope ? Array.from(this._objects.values()).map(o => o._debugScopeState()) : undefined,
+    };
   }
 }

@@ -15,7 +15,6 @@
  */
 
 import { CDPSessionChannel, CDPSessionInitializer } from '../channels';
-import { ConnectionScope } from './connection';
 import { ChannelOwner } from './channelOwner';
 import { Protocol } from '../../chromium/protocol';
 
@@ -30,11 +29,11 @@ export class CDPSession extends ChannelOwner<CDPSessionChannel, CDPSessionInitia
   removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
-  constructor(scope: ConnectionScope, guid: string, initializer: CDPSessionInitializer) {
-    super(scope, guid, initializer, true);
+  constructor(parent: ChannelOwner, guid: string, initializer: CDPSessionInitializer) {
+    super(parent, guid, initializer, true);
 
     this._channel.on('event', ({ method, params }) => this.emit(method, params));
-    this._channel.on('disconnected', () => this._scope.dispose());
+    this._channel.on('disconnected', () => this._dispose());
 
     this.on = super.on;
     this.addListener = super.addListener;

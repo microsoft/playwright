@@ -16,7 +16,6 @@
 
 import * as fs from 'fs';
 import { DownloadChannel, DownloadInitializer } from '../channels';
-import { ConnectionScope } from './connection';
 import { ChannelOwner } from './channelOwner';
 import { Readable } from 'stream';
 
@@ -25,8 +24,8 @@ export class Download extends ChannelOwner<DownloadChannel, DownloadInitializer>
     return (download as any)._object;
   }
 
-  constructor(scope: ConnectionScope, guid: string, initializer: DownloadInitializer) {
-    super(scope, guid, initializer);
+  constructor(parent: ChannelOwner, guid: string, initializer: DownloadInitializer) {
+    super(parent, guid, initializer);
   }
 
   url(): string {

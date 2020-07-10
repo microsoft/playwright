@@ -19,7 +19,7 @@ const { FFOX, CHROMIUM, WEBKIT, WIN, CHANNEL } = require('./utils').testOptions(
 
 describe.skip(!CHANNEL)('Channels', function() {
   it('should work', async({browser}) => {
-    expect(!!browser._channel).toBeTruthy();
+    expect(!!browser._connection).toBeTruthy();
   });
 
   it('should scope context handles', async({browser, server}) => {
@@ -101,8 +101,8 @@ describe.skip(!CHANNEL)('Channels', function() {
 
 async function expectScopeState(object, golden) {
   const remoteState = trimGuids(await object._channel.debugScopeState());
-  const localState = trimGuids(object._scope._connection._debugScopeState());
-  expect(localState).toEqual(golden);
+  const localState = trimGuids(object._connection._debugScopeState());
+  expect(processLocalState(localState)).toEqual(golden);
   expect(remoteState).toEqual(golden);
 }
 
@@ -118,4 +118,22 @@ function trimGuids(object) {
   if (typeof object === 'string')
     return object ? object.match(/[^@]+/)[0] : '';
   return object;
+}
+
+function processLocalState(root) {
+  const objects = [];
+  const scopes = [];
+  const visit = (object, scope) => {
+    if (object._guid !== '')
+      objects.push(object._guid);
+    scope.push(object._guid);
+    if (object.objects) {
+      scope = [];
+      scopes.push({ _guid: object._guid, objects: scope });
+      for (const child of object.objects)
+        visit(child, scope);
+    }
+  };
+  visit(root, []);
+  return { objects, scopes };
 }

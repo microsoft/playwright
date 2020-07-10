@@ -25,7 +25,6 @@ import { JSHandle, Func1, FuncOn, SmartHandle, serializeArgument, parseResult } 
 import * as network from './network';
 import { Response } from './network';
 import { Page } from './page';
-import { ConnectionScope } from './connection';
 import { normalizeFilePayloads } from '../serializers';
 
 export type GotoOptions = types.NavigateOptions & {
@@ -50,8 +49,8 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
     return frame ? Frame.from(frame) : null;
   }
 
-  constructor(scope: ConnectionScope, guid: string, initializer: FrameInitializer) {
-    super(scope, guid, initializer);
+  constructor(parent: ChannelOwner, guid: string, initializer: FrameInitializer) {
+    super(parent, guid, initializer);
     this._parentFrame = Frame.fromNullable(initializer.parentFrame);
     if (this._parentFrame)
       this._parentFrame._childFrames.add(this);

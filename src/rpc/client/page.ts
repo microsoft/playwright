@@ -22,7 +22,6 @@ import { assert, assertMaxArguments, helper, Listener } from '../../helper';
 import { TimeoutSettings } from '../../timeoutSettings';
 import * as types from '../../types';
 import { BindingCallChannel, BindingCallInitializer, PageChannel, PageInitializer } from '../channels';
-import { ConnectionScope } from './connection';
 import { parseError, serializeError } from '../serializers';
 import { Accessibility } from './accessibility';
 import { BrowserContext } from './browserContext';
@@ -69,8 +68,8 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     return page ? Page.from(page) : null;
   }
 
-  constructor(scope: ConnectionScope, guid: string, initializer: PageInitializer) {
-    super(scope, guid, initializer);
+  constructor(parent: ChannelOwner, guid: string, initializer: PageInitializer) {
+    super(parent, guid, initializer);
     this.accessibility = new Accessibility(this._channel);
     this.keyboard = new Keyboard(this._channel);
     this.mouse = new Mouse(this._channel);
@@ -511,8 +510,8 @@ export class BindingCall extends ChannelOwner<BindingCallChannel, BindingCallIni
     return (channel as any)._object;
   }
 
-  constructor(scope: ConnectionScope, guid: string, initializer: BindingCallInitializer) {
-    super(scope, guid, initializer);
+  constructor(parent: ChannelOwner, guid: string, initializer: BindingCallInitializer) {
+    super(parent, guid, initializer);
   }
 
   async call(func: FunctionWithSource) {

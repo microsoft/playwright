@@ -17,7 +17,6 @@
 import { JSHandleChannel, JSHandleInitializer } from '../channels';
 import { ElementHandle } from './elementHandle';
 import { ChannelOwner } from './channelOwner';
-import { ConnectionScope } from './connection';
 import { serializeAsCallArgument, parseEvaluationResultValue } from '../../common/utilityScriptSerializers';
 
 type NoHandles<Arg> = Arg extends JSHandle ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg);
@@ -47,8 +46,8 @@ export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel, JSHandleIni
     return handle ? JSHandle.from(handle) : null;
   }
 
-  constructor(scope: ConnectionScope, guid: string, initializer: JSHandleInitializer) {
-    super(scope, guid, initializer);
+  constructor(parent: ChannelOwner, guid: string, initializer: JSHandleInitializer) {
+    super(parent, guid, initializer);
     this._preview = this._initializer.preview;
     this._channel.on('previewUpdated', preview => this._preview = preview);
   }
@@ -103,7 +102,7 @@ export function serializeArgument(arg: any): any {
   };
   const value = serializeAsCallArgument(arg, value => {
     if (value instanceof ChannelOwner)
-      return { h: pushHandle(value.guid) };
+      return { h: pushHandle(value._guid) };
     return { fallThrough: value };
   });
   return { value, guids };

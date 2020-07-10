@@ -19,7 +19,6 @@ import { BrowserTypeChannel, BrowserTypeInitializer } from '../channels';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { ConnectionScope } from './connection';
 import { BrowserServer } from './browserServer';
 
 export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {
@@ -28,8 +27,8 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     return (browserTyep as any)._object;
   }
 
-  constructor(scope: ConnectionScope, guid: string, initializer: BrowserTypeInitializer) {
-    super(scope, guid, initializer);
+  constructor(parent: ChannelOwner, guid: string, initializer: BrowserTypeInitializer) {
+    super(parent, guid, initializer);
   }
 
   executablePath(): string {
