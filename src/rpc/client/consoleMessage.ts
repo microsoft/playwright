@@ -19,15 +19,14 @@ import { ConsoleMessageLocation } from '../../types';
 import { JSHandle } from './jsHandle';
 import { ConsoleMessageChannel, ConsoleMessageInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
-import { ConnectionScope } from './connection';
 
 export class ConsoleMessage extends ChannelOwner<ConsoleMessageChannel, ConsoleMessageInitializer> {
   static from(message: ConsoleMessageChannel): ConsoleMessage {
     return (message as any)._object;
   }
 
-  constructor(scope: ConnectionScope, guid: string, initializer: ConsoleMessageInitializer) {
-    super(scope, guid, initializer);
+  constructor(parent: ChannelOwner, guid: string, initializer: ConsoleMessageInitializer) {
+    super(parent, guid, initializer);
   }
 
   type(): string {

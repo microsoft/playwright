@@ -17,7 +17,6 @@
 import { Events } from '../../events';
 import { assertMaxArguments } from '../../helper';
 import { WorkerChannel, WorkerInitializer } from '../channels';
-import { ConnectionScope } from './connection';
 import { ChannelOwner } from './channelOwner';
 import { Func1, JSHandle, parseResult, serializeArgument, SmartHandle } from './jsHandle';
 import { Page } from './page';
@@ -31,8 +30,8 @@ export class Worker extends ChannelOwner<WorkerChannel, WorkerInitializer> {
     return (worker as any)._object;
   }
 
-  constructor(scope: ConnectionScope, guid: string, initializer: WorkerInitializer) {
-    super(scope, guid, initializer);
+  constructor(parent: ChannelOwner, guid: string, initializer: WorkerInitializer) {
+    super(parent, guid, initializer);
     this._channel.on('close', () => {
       if (this._page)
         this._page._workers.delete(this);
