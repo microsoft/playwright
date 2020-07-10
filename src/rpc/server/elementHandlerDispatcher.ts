@@ -85,8 +85,8 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
     await this._elementHandle.dblclick(params);
   }
 
-  async selectOption(params: { values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null } & types.NavigatingActionWaitOptions): Promise<string[]> {
-    return this._elementHandle.selectOption(convertSelectOptionValues(params.values), params);
+  async selectOption(params: { elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions): Promise<string[]> {
+    return this._elementHandle.selectOption(convertSelectOptionValues(params.elements, params.options), params);
   }
 
   async fill(params: { value: string } & types.NavigatingActionWaitOptions) {
@@ -97,8 +97,8 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
     await this._elementHandle.selectText(params);
   }
 
-  async setInputFiles(params: { files: string | types.FilePayload | string[] | types.FilePayload[] } & types.NavigatingActionWaitOptions) {
-    await this._elementHandle.setInputFiles(params.files, params);
+  async setInputFiles(params: { files: { name: string, mimeType: string, buffer: string }[] } & types.NavigatingActionWaitOptions) {
+    await this._elementHandle.setInputFiles(convertInputFiles(params.files), params);
   }
 
   async focus() {
@@ -148,10 +148,14 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
   }
 }
 
-export function convertSelectOptionValues(values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null): string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null {
-  if (values instanceof ElementHandleDispatcher)
-    return values._elementHandle;
-  if (Array.isArray(values) && values.length && values[0] instanceof ElementHandle)
-    return (values as ElementHandleDispatcher[]).map((v: ElementHandleDispatcher) => v._elementHandle);
-  return values as any;
+export function convertSelectOptionValues(elements?: ElementHandleChannel[], options?: types.SelectOption[]): string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null {
+  if (elements)
+    return elements.map(v => (v as ElementHandleDispatcher)._elementHandle);
+  if (options)
+    return options;
+  return null;
+}
+
+export function convertInputFiles(files: { name: string, mimeType: string, buffer: string }[]): types.FilePayload[] {
+  return files.map(f => ({ name: f.name, mimeType: f.mimeType, buffer: Buffer.from(f.buffer, 'base64') }));
 }

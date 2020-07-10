@@ -20,7 +20,7 @@ import { Frame } from '../../frames';
 import { Request } from '../../network';
 import { Page, Worker } from '../../page';
 import * as types from '../../types';
-import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary } from '../channels';
+import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary, PDFOptions } from '../channels';
 import { Dispatcher, DispatcherScope, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { parseError, serializeError } from '../serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
@@ -185,7 +185,7 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     });
   }
 
-  async pdf(params: types.PDFOptions): Promise<Binary> {
+  async pdf(params: PDFOptions): Promise<Binary> {
     if (!this._page.pdf)
       throw new Error('PDF generation is only supported for Headless Chromium');
     const binary = await this._page.pdf(params);

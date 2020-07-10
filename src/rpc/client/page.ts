@@ -21,7 +21,7 @@ import { Events } from '../../events';
 import { assert, assertMaxArguments, helper, Listener } from '../../helper';
 import { TimeoutSettings } from '../../timeoutSettings';
 import * as types from '../../types';
-import { BindingCallChannel, BindingCallInitializer, PageChannel, PageInitializer } from '../channels';
+import { BindingCallChannel, BindingCallInitializer, PageChannel, PageInitializer, PDFOptions } from '../channels';
 import { parseError, serializeError } from '../serializers';
 import { Accessibility } from './accessibility';
 import { BrowserContext } from './browserContext';
@@ -500,7 +500,19 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async pdf(options: types.PDFOptions = {}): Promise<Buffer> {
-    const binary = await this._channel.pdf(options);
+    const transportOptions: PDFOptions = { ...options } as PDFOptions;
+    if (transportOptions.margin)
+      transportOptions.margin = { ...transportOptions.margin };
+    if (typeof options.width === 'number')
+      transportOptions.width = options.width + 'px';
+    if (typeof options.height === 'number')
+      transportOptions.height  = options.height + 'px';
+    for (const margin of ['top', 'right', 'bottom', 'left']) {
+      const index = margin as 'top' | 'right' | 'bottom' | 'left';
+      if (options.margin && typeof options.margin[index] === 'number')
+        transportOptions.margin![index] = transportOptions.margin![index] + 'px';
+    }
+    const binary = await this._channel.pdf(transportOptions);
     return Buffer.from(binary, 'base64');
   }
 }

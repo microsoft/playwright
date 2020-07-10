@@ -946,7 +946,7 @@ describe('Page.selectOption', function() {
   it('should select multiple options with attributes', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.evaluate(() => makeMultiple());
-    await page.selectOption('select', ['blue', { label: 'Green' }, { index: 4 }]);
+    await page.selectOption('select', [{ value: 'blue' }, { label: 'Green' }, { index: 4 }]);
     expect(await page.evaluate(() => result.onInput)).toEqual(['blue', 'gray', 'green']);
     expect(await page.evaluate(() => result.onChange)).toEqual(['blue', 'gray', 'green']);
   });
