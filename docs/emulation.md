@@ -5,18 +5,41 @@ Playwright allows overriding various parameters of the device where the browser 
   - locale, timezone
   - color scheme
   - geolocation
-  - etc
 
 Most of these parameters are configured during the browser context construction, but some of them such as viewport size can be changed for individual pages.
 
 <!-- GEN:toc-top-level -->
-- [User agent](#user-agent)
-- [Viewport, color scheme](#viewport-color-scheme)
 - [Devices](#devices)
+- [User agent](#user-agent)
+- [Viewport](#viewport)
 - [Locale & timezone](#locale--timezone)
 - [Permissions](#permissions)
 - [Geolocation](#geolocation)
+- [Color scheme and media](#color-scheme-and-media)
 <!-- GEN:stop -->
+
+<br/>
+
+## Devices
+
+Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser behavior on a mobile device:
+
+```js
+const { chromium, devices } = require('playwright');
+const browser = await chromium.launch();
+
+const pixel2 = devices['Pixel 2'];
+const context = await browser.newContext({
+  ...pixel2,
+});
+```
+
+All pages created in the context above will share the same device parameters.
+
+#### API reference
+
+- [`playwright.devices`](./api.md#playwrightdevices)
+- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
 
 <br/>
 
@@ -36,7 +59,7 @@ const context = await browser.newContext({
 
 <br/>
 
-## Viewport, color scheme
+## Viewport
 
 Create a context with custom viewport size:
 
@@ -54,45 +77,12 @@ const context = await browser.newContext({
   viewport: { width: 2560, height: 1440 },
   deviceScaleFactor: 2,
 });
-
-// Create device with the dark color scheme:
-const context = await browser.newContext({
-  colorScheme: 'dark'
-});
-
-// Change color scheme for the page
-await page.emulateMedia({ colorScheme: 'dark' });
 ```
 
 #### API reference
 
 - [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
-- [`page.emulateMedia([options])`](./api.md#pageemulatemediaoptions)
 - [`page.setViewportSize(viewportSize)`](./api.md#pagesetviewportsizeviewportsize)
-
-<br/>
-
-## Devices
-
-Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser behavior on a mobile device:
-
-```js
-const { chromium, devices } =
-    require('playwright');
-const browser = await chromium.launch();
-
-const pixel2 = devices['Pixel 2'];
-const context = await browser.newContext({
-  ...pixel2,
-});
-```
-
-All pages created in the context above will share the same device parameters.
-
-#### API reference
-
-- [`playwright.devices`](./api.md#playwrightdevices)
-- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
 
 <br/>
 
@@ -166,3 +156,31 @@ await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
 - [`browserContext.setGeolocation(geolocation)`](./api.md#browsercontextsetgeolocationgeolocation)
 
 <br/>
+
+## Color scheme and media
+
+Create a context with dark or light mode. Pages created in this context will
+follow this color scheme preference.
+
+```js
+// Create context with dark mode
+const context = await browser.newContext({
+  colorScheme: 'dark' // or 'light'
+});
+
+// Create page with dark mode
+const page = await browser.newPage({
+  colorScheme: 'dark' // or 'light'
+});
+
+// Change color scheme for the page
+await page.emulateMedia({ colorScheme: 'dark' });
+
+// Change media for page
+await page.emulateMedia({ media: 'print' });
+```
+
+#### API reference
+
+- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
+- [`page.emulateMedia([options])`](./api.md#pageemulatemediaoptions)
