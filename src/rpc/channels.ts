@@ -157,7 +157,7 @@ export interface PageChannel extends Channel {
   mouseClick(params: { x: number, y: number, delay?: number, button?: types.MouseButton, clickCount?: number }): Promise<void>;
 
   accessibilitySnapshot(params: { interestingOnly?: boolean, root?: ElementHandleChannel }): Promise<types.SerializedAXNode | null>;
-  pdf: (params: types.PDFOptions) => Promise<Binary>;
+  pdf: (params: PDFOptions) => Promise<Binary>;
 
   crStartJSCoverage(params: types.JSCoverageOptions): Promise<void>;
   crStopJSCoverage(): Promise<types.JSCoverageEntry[]>;
@@ -196,9 +196,9 @@ export interface FrameChannel extends Channel {
   press(params: { selector: string, key: string, delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions & PageAttribution): Promise<void>;
   querySelector(params: { selector: string} & PageAttribution): Promise<ElementHandleChannel | null>;
   querySelectorAll(params: { selector: string} & PageAttribution): Promise<ElementHandleChannel[]>;
-  selectOption(params: { selector: string, values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null } & types.NavigatingActionWaitOptions & PageAttribution): Promise<string[]>;
+  selectOption(params: { selector: string, elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions & PageAttribution): Promise<string[]>;
   setContent(params: { html: string } & types.NavigateOptions & PageAttribution): Promise<void>;
-  setInputFiles(params: { selector: string, files: { name: string, mimeType: string, buffer: string }[] } & types.NavigatingActionWaitOptions & PageAttribution): Promise<void>;
+  setInputFiles(params: { selector: string, files: { name: string, mimeType: string, buffer: Binary }[] } & types.NavigatingActionWaitOptions & PageAttribution): Promise<void>;
   textContent(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<string | null>;
   title(): Promise<string>;
   type(params: { selector: string, text: string, delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions & PageAttribution): Promise<void>;
@@ -260,9 +260,9 @@ export interface ElementHandleChannel extends JSHandleChannel {
   querySelectorAll(params: { selector: string }): Promise<ElementHandleChannel[]>;
   screenshot(params: types.ElementScreenshotOptions): Promise<Binary>;
   scrollIntoViewIfNeeded(params: types.TimeoutOptions): Promise<void>;
-  selectOption(params: { values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null } & types.NavigatingActionWaitOptions): string[] | Promise<string[]>;
+  selectOption(params: { elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions): string[] | Promise<string[]>;
   selectText(params: types.TimeoutOptions): Promise<void>;
-  setInputFiles(params: { files: string | string[] | types.FilePayload | types.FilePayload[] } & types.NavigatingActionWaitOptions): Promise<void>;
+  setInputFiles(params: { files: { name: string, mimeType: string, buffer: Binary }[] } & types.NavigatingActionWaitOptions): Promise<void>;
   textContent(): Promise<string | null>;
   type(params: { text: string, delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions): Promise<void>;
   uncheck(params: { force?: boolean, noWaitAfter?: boolean } & types.TimeoutOptions): Promise<void>;
@@ -364,3 +364,20 @@ export interface CDPSessionChannel extends Channel {
   detach(): Promise<void>;
 }
 export type CDPSessionInitializer = {};
+
+
+export type PDFOptions = {
+  scale?: number,
+  displayHeaderFooter?: boolean,
+  headerTemplate?: string,
+  footerTemplate?: string,
+  printBackground?: boolean,
+  landscape?: boolean,
+  pageRanges?: string,
+  format?: string,
+  width?: string,
+  height?: string,
+  preferCSSPageSize?: boolean,
+  margin?: {top?: string, bottom?: string, left?: string, right?: string},
+  path?: string,
+}

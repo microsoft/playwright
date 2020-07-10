@@ -19,6 +19,8 @@ import { ElementHandleChannel, JSHandleInitializer } from '../channels';
 import { Frame } from './frame';
 import { FuncOn, JSHandle, serializeArgument, parseResult } from './jsHandle';
 import { ChannelOwner } from './channelOwner';
+import { helper, assert } from '../../helper';
+import { normalizeFilePayloads } from '../serializers';
 
 export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   readonly _elementChannel: ElementHandleChannel;
@@ -85,7 +87,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   }
 
   async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return await this._elementChannel.selectOption({ values: convertSelectOptionValues(values), ...options });
+    return await this._elementChannel.selectOption({ ...convertSelectOptionValues(values), ...options });
   }
 
   async fill(value: string, options: types.NavigatingActionWaitOptions = {}): Promise<void> {
@@ -97,7 +99,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   }
 
   async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}) {
-    await this._elementChannel.setInputFiles({ files, ...options });
+    await this._elementChannel.setInputFiles({ files: await convertInputFiles(files), ...options });
   }
 
   async focus(): Promise<void> {
@@ -149,10 +151,24 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   }
 }
 
-export function convertSelectOptionValues(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null): string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null {
-  if (values instanceof ElementHandle)
-    return values._elementChannel;
-  if (Array.isArray(values) && values.length && values[0] instanceof ElementHandle)
-    return (values as ElementHandle[]).map((v: ElementHandle) => v._elementChannel);
-  return values as any;
+export function convertSelectOptionValues(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null): { elements?: ElementHandleChannel[], options?: types.SelectOption[] } {
+  if (!values)
+    return {};
+  if (!Array.isArray(values))
+    values = [ values as any ];
+  if (!values.length)
+    return {};
+  if ((values as any[]).includes(null))
+    assert(false, 'Value items must not be null');
+
+  if (values[0] instanceof ElementHandle)
+    return { elements: (values as ElementHandle[]).map((v: ElementHandle) => v._elementChannel) };
+  if (helper.isString(values[0]))
+    return { options: (values as string[]).map(value => ({ value })) };
+  return { options: values as types.SelectOption[] };
+}
+
+export async function convertInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[]): Promise<{ name: string, mimeType: string, buffer: string }[]> {
+  const filePayloads = await normalizeFilePayloads(files);
+  return filePayloads.map(f => ({ name: f.name, mimeType: f.mimeType, buffer: f.buffer.toString('base64') }));
 }

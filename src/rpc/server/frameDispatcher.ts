@@ -18,7 +18,7 @@ import { Frame } from '../../frames';
 import * as types from '../../types';
 import { ElementHandleChannel, FrameChannel, FrameInitializer, JSHandleChannel, ResponseChannel, PageAttribution } from '../channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
-import { convertSelectOptionValues, ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
+import { convertSelectOptionValues, ElementHandleDispatcher, createHandle, convertInputFiles } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher } from './networkDispatchers';
 
@@ -163,14 +163,14 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     await target.hover(params.selector, params);
   }
 
-  async selectOption(params: { selector: string, values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null } & types.NavigatingActionWaitOptions & PageAttribution): Promise<string[]> {
+  async selectOption(params: { selector: string, elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions & PageAttribution): Promise<string[]> {
     const target = params.isPage ? this._frame._page : this._frame;
-    return target.selectOption(params.selector, convertSelectOptionValues(params.values), params);
+    return target.selectOption(params.selector, convertSelectOptionValues(params.elements, params.options), params);
   }
 
   async setInputFiles(params: { selector: string, files: { name: string, mimeType: string, buffer: string }[] } & types.NavigatingActionWaitOptions & PageAttribution): Promise<void> {
     const target = params.isPage ? this._frame._page : this._frame;
-    await target.setInputFiles(params.selector, params.files.map(f => ({ name: f.name, mimeType: f.mimeType, buffer: Buffer.from(f.buffer, 'base64') })), params);
+    await target.setInputFiles(params.selector, convertInputFiles(params.files), params);
   }
 
   async type(params: { selector: string, text: string } & { delay?: number | undefined } & types.TimeoutOptions & { noWaitAfter?: boolean } & PageAttribution): Promise<void> {

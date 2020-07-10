@@ -20,12 +20,11 @@ import * as types from '../../types';
 import { FrameChannel, FrameInitializer } from '../channels';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { ElementHandle, convertSelectOptionValues } from './elementHandle';
+import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
 import { JSHandle, Func1, FuncOn, SmartHandle, serializeArgument, parseResult } from './jsHandle';
 import * as network from './network';
 import { Response } from './network';
 import { Page } from './page';
-import { normalizeFilePayloads } from '../serializers';
 
 export type GotoOptions = types.NavigateOptions & {
   referer?: string,
@@ -192,12 +191,11 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   }
 
   async selectOption(selector: string, values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return await this._channel.selectOption({ selector, values: convertSelectOptionValues(values), ...options, isPage: this._page!._isPageCall });
+    return await this._channel.selectOption({ selector, ...convertSelectOptionValues(values), ...options, isPage: this._page!._isPageCall });
   }
 
   async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
-    const filePayloads = await normalizeFilePayloads(files);
-    await this._channel.setInputFiles({ selector, files: filePayloads.map(f => ({ name: f.name, mimeType: f.mimeType, buffer: f.buffer.toString('base64') })), ...options, isPage: this._page!._isPageCall });
+    await this._channel.setInputFiles({ selector, files: await convertInputFiles(files), ...options, isPage: this._page!._isPageCall });
   }
 
   async type(selector: string, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
