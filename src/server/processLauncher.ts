@@ -166,11 +166,12 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
 export function waitForLine(progress: Progress, process: childProcess.ChildProcess, inputStream: stream.Readable, regex: RegExp): Promise<RegExpMatchArray> {
   return new Promise((resolve, reject) => {
     const rl = readline.createInterface({ input: inputStream });
+    const failError = new Error('Process failed to launch!');
     const listeners = [
       helper.addEventListener(rl, 'line', onLine),
-      helper.addEventListener(rl, 'close', reject),
-      helper.addEventListener(process, 'exit', reject),
-      helper.addEventListener(process, 'error', reject)
+      helper.addEventListener(rl, 'close', reject.bind(null, failError)),
+      helper.addEventListener(process, 'exit', reject.bind(null, failError)),
+      helper.addEventListener(process, 'error', reject.bind(null, failError))
     ];
 
     progress.cleanupWhenAborted(cleanup);

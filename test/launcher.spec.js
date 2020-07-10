@@ -44,6 +44,12 @@ describe('Playwright', function() {
       await browserType.launch(options).catch(e => waitError = e);
       expect(waitError.message).toContain('can not specify page');
     });
+    it('should reject if launched browser fails immediately', async({browserType, defaultBrowserOptions}) => {
+      const options = Object.assign({}, defaultBrowserOptions, {executablePath: path.join(__dirname, 'assets', 'dummy_bad_browser_executable.js')});
+      let waitError = null;
+      await browserType.launch(options).catch(e => waitError = e);
+      expect(waitError.message).toContain('browserType.launch logs');
+    });
     it('should reject if executable path is invalid', async({browserType, defaultBrowserOptions}) => {
       let waitError = null;
       const options = Object.assign({}, defaultBrowserOptions, {executablePath: 'random-invalid-path'});
