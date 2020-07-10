@@ -18,33 +18,45 @@ const fs = require('fs');
 const path = require('path');
 const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('./utils').testOptions(browserType);
 
-describe.skip(CHANNEL)('Logger', function() {
+describe('Logger', function() {
   it('should log', async({browserType, defaultBrowserOptions}) => {
     const log = [];
     const browser = await browserType.launch({...defaultBrowserOptions, logger: {
       log: (name, severity, message) => log.push({name, severity, message}),
       isEnabled: (name, severity) => severity !== 'verbose'
     }});
+    await browser.newContext();
     await browser.close();
     expect(log.length > 0).toBeTruthy();
-    expect(log.filter(item => item.name.includes('browser')).length > 0).toBeTruthy();
     expect(log.filter(item => item.severity === 'info').length > 0).toBeTruthy();
-    expect(log.filter(item => item.message.includes('<launching>')).length > 0).toBeTruthy();
+    if (CHANNEL) {
+      expect(log.filter(item => item.message.includes('browser.newContext started')).length > 0).toBeTruthy();
+      expect(log.filter(item => item.message.includes('browser.newContext succeeded')).length > 0).toBeTruthy();
+    } else {
+      expect(log.filter(item => item.message.includes('browserType.launch started')).length > 0).toBeTruthy();
+      expect(log.filter(item => item.message.includes('browserType.launch succeeded')).length > 0).toBeTruthy();
+    }
   });
   it('should log context-level', async({browserType, defaultBrowserOptions}) => {
     const log = [];
     const browser = await browserType.launch(defaultBrowserOptions);
-    const page = await browser.newPage({
+    const context = await browser.newContext({
       logger: {
         log: (name, severity, message) => log.push({name, severity, message}),
         isEnabled: (name, severity) => severity !== 'verbose'
       }
     });
+    const page = await context.newPage();
     await page.setContent('<button>Button</button>');
     await page.click('button');
     await browser.close();
 
     expect(log.length > 0).toBeTruthy();
-    expect(log.filter(item => item.message.includes('waiting for element')).length > 0).toBeTruthy();
+    if (CHANNEL) {
+      expect(log.filter(item => item.message.includes('context.newPage')).length > 0).toBeTruthy();
+      expect(log.filter(item => item.message.includes('frame.click')).length > 0).toBeTruthy();
+    } else {
+      expect(log.filter(item => item.message.includes('page.click')).length > 0).toBeTruthy();
+    }
   });
 });

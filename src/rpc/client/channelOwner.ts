@@ -18,6 +18,7 @@ import { EventEmitter } from 'events';
 import { Channel } from '../channels';
 import { Connection } from './connection';
 import { assert } from '../../helper';
+import { LoggerSink } from '../../loggerSink';
 
 export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}> extends EventEmitter {
   private _connection: Connection;
@@ -27,21 +28,25 @@ export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}
   // Only "isScope" channel owners have registered objects inside.
   private _objects = new Map<string, ChannelOwner>();
 
+  readonly _type: string;
   readonly _guid: string;
   readonly _channel: T;
   readonly _initializer: Initializer;
+  _logger: LoggerSink | undefined;
 
-  constructor(parent: ChannelOwner | Connection, guid: string, initializer: Initializer, isScope?: boolean) {
+  constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: Initializer, isScope?: boolean) {
     super();
-
     this._connection = parent instanceof Connection ? parent : parent._connection;
+    this._type = type;
     this._guid = guid;
     this._isScope = !!isScope;
     this._parent = parent instanceof Connection ? undefined : parent;
 
     this._connection._objects.set(guid, this);
-    if (this._parent)
+    if (this._parent) {
       this._parent._objects.set(guid, this);
+      this._logger = this._parent._logger;
+    }
 
     const base = new EventEmitter();
     this._channel = new Proxy(base, {
@@ -60,7 +65,23 @@ export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}
           return obj.addListener;
         if (prop === 'removeEventListener')
           return obj.removeListener;
-        return (params: any) => this._connection.sendMessageToServer({ guid, method: String(prop), params });
+
+        return async (params: any) => {
+          const method = String(prop);
+          const apiName = this._type + '.' + method;
+          if (this._logger && this._logger.isEnabled('api', 'info'))
+            this._logger.log('api', 'info', `=> ${apiName} started`, [], { color: 'cyan' });
+          try {
+            const result = await this._connection.sendMessageToServer({ guid, method: String(prop), params });
+            if (this._logger && this._logger.isEnabled('api', 'info'))
+              this._logger.log('api', 'info', `=> ${apiName} succeeded`, [], { color: 'cyan' });
+            return result;
+          } catch (e) {
+            if (this._logger && this._logger.isEnabled('api', 'info'))
+              this._logger.log('api', 'info', `=> ${apiName} failed`, [], { color: 'cyan' });
+            throw e;
+          }
+        };
       },
     });
     (this._channel as any)._object = this;

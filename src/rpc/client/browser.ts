@@ -21,6 +21,7 @@ import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Events } from '../../events';
 import { CDPSession } from './cdpSession';
+import { LoggerSink } from '../../loggerSink';
 
 export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   readonly _contexts = new Set<BrowserContext>();
@@ -36,8 +37,8 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
     return browser ? Browser.from(browser) : null;
   }
 
-  constructor(parent: ChannelOwner, guid: string, initializer: BrowserInitializer) {
-    super(parent, guid, initializer, true);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserInitializer) {
+    super(parent, type, guid, initializer, true);
     this._channel.on('close', () => {
       this._isConnected = false;
       this.emit(Events.Browser.Disconnected);
@@ -47,10 +48,12 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
     this._closedPromise = new Promise(f => this.once(Events.Browser.Disconnected, f));
   }
 
-  async newContext(options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
-    delete (options as any).logger;
+  async newContext(options: types.BrowserContextOptions & { logger?: LoggerSink } = {}): Promise<BrowserContext> {
+    const logger = options.logger;
+    options = { ...options, logger: undefined };
     const context = BrowserContext.from(await this._channel.newContext(options));
     this._contexts.add(context);
+    context._logger = logger || this._logger;
     context._browser = this;
     return context;
   }
@@ -59,8 +62,7 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
     return [...this._contexts];
   }
 
-  async newPage(options: types.BrowserContextOptions = {}): Promise<Page> {
-    delete (options as any).logger;
+  async newPage(options: types.BrowserContextOptions & { logger?: LoggerSink } = {}): Promise<Page> {
     const context = await this.newContext(options);
     const page = await context.newPage();
     page._ownedContext = context;

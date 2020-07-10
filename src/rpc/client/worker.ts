@@ -30,8 +30,8 @@ export class Worker extends ChannelOwner<WorkerChannel, WorkerInitializer> {
     return (worker as any)._object;
   }
 
-  constructor(parent: ChannelOwner, guid: string, initializer: WorkerInitializer) {
-    super(parent, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: WorkerInitializer) {
+    super(parent, type, guid, initializer);
     this._channel.on('close', () => {
       if (this._page)
         this._page._workers.delete(this);

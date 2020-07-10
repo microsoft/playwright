@@ -18,7 +18,7 @@
 const path = require('path');
 const fs = require('fs');
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = utils.testOptions(browserType);
 
 describe('Playwright', function() {
   describe('browserType.launch', function() {

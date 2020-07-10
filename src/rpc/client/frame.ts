@@ -48,8 +48,8 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
     return frame ? Frame.from(frame) : null;
   }
 
-  constructor(parent: ChannelOwner, guid: string, initializer: FrameInitializer) {
-    super(parent, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: FrameInitializer) {
+    super(parent, type, guid, initializer);
     this._parentFrame = Frame.fromNullable(initializer.parentFrame);
     if (this._parentFrame)
       this._parentFrame._childFrames.add(this);

@@ -24,8 +24,8 @@ export class BrowserServer extends ChannelOwner<BrowserServerChannel, BrowserSer
     return (server as any)._object;
   }
 
-  constructor(parent: ChannelOwner, guid: string, initializer: BrowserServerInitializer) {
-    super(parent, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserServerInitializer) {
+    super(parent, type, guid, initializer);
     this._channel.on('close', () => this.emit(Events.BrowserServer.Close));
   }
 

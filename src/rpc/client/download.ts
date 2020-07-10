@@ -24,8 +24,8 @@ export class Download extends ChannelOwner<DownloadChannel, DownloadInitializer>
     return (download as any)._object;
   }
 
-  constructor(parent: ChannelOwner, guid: string, initializer: DownloadInitializer) {
-    super(parent, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: DownloadInitializer) {
+    super(parent, type, guid, initializer);
   }
 
   url(): string {

@@ -36,7 +36,7 @@ import { Channel } from '../channels';
 
 class Root extends ChannelOwner<Channel, {}> {
   constructor(connection: Connection) {
-    super(connection, '', {}, true);
+    super(connection, '', '', {}, true);
   }
 }
 
@@ -131,59 +131,58 @@ export class Connection {
     initializer = this._replaceGuidsWithChannels(initializer);
     switch (type) {
       case 'bindingCall':
-        result = new BindingCall(parent, guid, initializer);
+        result = new BindingCall(parent, type, guid, initializer);
         break;
       case 'browser':
-        result = new Browser(parent, guid, initializer);
+        result = new Browser(parent, type, guid, initializer);
         break;
       case 'browserServer':
-        result = new BrowserServer(parent, guid, initializer);
+        result = new BrowserServer(parent, type, guid, initializer);
         break;
       case 'browserType':
-        result = new BrowserType(parent, guid, initializer);
+        result = new BrowserType(parent, type, guid, initializer);
         break;
       case 'cdpSession':
-        // Chromium-specific.
-        result = new CDPSession(parent, guid, initializer);
+        result = new CDPSession(parent, type, guid, initializer);
         break;
       case 'context':
-        result = new BrowserContext(parent, guid, initializer);
+        result = new BrowserContext(parent, type, guid, initializer);
         break;
       case 'consoleMessage':
-        result = new ConsoleMessage(parent, guid, initializer);
+        result = new ConsoleMessage(parent, type, guid, initializer);
         break;
       case 'dialog':
-        result = new Dialog(parent, guid, initializer);
+        result = new Dialog(parent, type, guid, initializer);
         break;
       case 'download':
-        result = new Download(parent, guid, initializer);
+        result = new Download(parent, type, guid, initializer);
         break;
       case 'elementHandle':
-        result = new ElementHandle(parent, guid, initializer);
+        result = new ElementHandle(parent, type, guid, initializer);
         break;
       case 'frame':
-        result = new Frame(parent, guid, initializer);
+        result = new Frame(parent, type, guid, initializer);
         break;
       case 'jsHandle':
-        result = new JSHandle(parent, guid, initializer);
+        result = new JSHandle(parent, type, guid, initializer);
         break;
       case 'page':
-        result = new Page(parent, guid, initializer);
+        result = new Page(parent, type, guid, initializer);
         break;
       case 'playwright':
-        result = new Playwright(parent, guid, initializer);
+        result = new Playwright(parent, type, guid, initializer);
         break;
       case 'request':
-        result = new Request(parent, guid, initializer);
+        result = new Request(parent, type, guid, initializer);
         break;
       case 'response':
-        result = new Response(parent, guid, initializer);
+        result = new Response(parent, type, guid, initializer);
         break;
       case 'route':
-        result = new Route(parent, guid, initializer);
+        result = new Route(parent, type, guid, initializer);
         break;
       case 'worker':
-        result = new Worker(parent, guid, initializer);
+        result = new Worker(parent, type, guid, initializer);
         break;
       default:
         throw new Error('Missing type ' + type);

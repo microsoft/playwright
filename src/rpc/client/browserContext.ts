@@ -50,8 +50,8 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     return context ? BrowserContext.from(context) : null;
   }
 
-  constructor(parent: ChannelOwner, guid: string, initializer: BrowserContextInitializer) {
-    super(parent, guid, initializer, true);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserContextInitializer) {
+    super(parent, type, guid, initializer, true);
     initializer.pages.forEach(p => {
       const page = Page.from(p);
       this._pages.add(page);
