@@ -171,7 +171,7 @@ module.exports = collect;
 if (require.main === module) {
   console.log('Testing on Node', process.version);
   const browserNames = ['chromium', 'firefox', 'webkit'].filter(name => {
-    return process.env.BROWSER === name || process.env.BROWSER === 'all';
+    return process.env.BROWSER === name || !process.env.BROWSER;
   });
   const testRunner = collect(browserNames);
 
