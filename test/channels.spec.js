@@ -24,10 +24,13 @@ describe.skip(!CHANNEL)('Channels', function() {
 
   it('should scope context handles', async({browser, server}) => {
     const GOLDEN_PRECONDITION = {
-      objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser' ],
-      scopes: [
-        { _guid: '', objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser' ] },
-        { _guid: 'browser', objects: [] }
+      _guid: '',
+      objects: [
+        { _guid: 'chromium' },
+        { _guid: 'firefox' },
+        { _guid: 'webkit' },
+        { _guid: 'playwright' },
+        { _guid: 'browser', objects: [] },
       ]
     };
     await expectScopeState(browser, GOLDEN_PRECONDITION);
@@ -36,11 +39,20 @@ describe.skip(!CHANNEL)('Channels', function() {
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
     await expectScopeState(browser, {
-      objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser', 'context', 'frame', 'page', 'request', 'response' ],
-      scopes: [
-        { _guid: '', objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser' ] },
-        { _guid: 'browser', objects: ['context'] },
-        { _guid: 'context', objects: ['frame', 'page', 'request', 'response'] }
+      _guid: '',
+      objects: [
+        { _guid: 'chromium' },
+        { _guid: 'firefox' },
+        { _guid: 'webkit' },
+        { _guid: 'playwright' },
+        { _guid: 'browser', objects: [
+          { _guid: 'context', objects: [
+            { _guid: 'frame' },
+            { _guid: 'page' },
+            { _guid: 'request' },
+            { _guid: 'response' },
+          ]},
+        ] },
       ]
     });
 
@@ -50,21 +62,28 @@ describe.skip(!CHANNEL)('Channels', function() {
 
   it.skip(!CHROMIUM)('should scope CDPSession handles', async({browserType, browser, server}) => {
     const GOLDEN_PRECONDITION = {
-      objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser' ],
-      scopes: [
-        { _guid: '', objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser' ] },
-        { _guid: 'browser', objects: [] }
+      _guid: '',
+      objects: [
+        { _guid: 'chromium' },
+        { _guid: 'firefox' },
+        { _guid: 'webkit' },
+        { _guid: 'playwright' },
+        { _guid: 'browser', objects: [] },
       ]
     };
     await expectScopeState(browserType, GOLDEN_PRECONDITION);
 
     const session = await browser.newBrowserCDPSession();
     await expectScopeState(browserType, {
-      objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser', 'cdpSession' ],
-      scopes: [
-        { _guid: '', objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser' ] },
-        { _guid: 'browser', objects: ['cdpSession'] },
-        { _guid: 'cdpSession', objects: [] },
+      _guid: '',
+      objects: [
+        { _guid: 'chromium' },
+        { _guid: 'firefox' },
+        { _guid: 'webkit' },
+        { _guid: 'playwright' },
+        { _guid: 'browser', objects: [
+          { _guid: 'cdpSession', objects: [] },
+        ] },
       ]
     });
 
@@ -74,10 +93,13 @@ describe.skip(!CHANNEL)('Channels', function() {
 
   it('should scope browser handles', async({browserType, defaultBrowserOptions}) => {
     const GOLDEN_PRECONDITION = {
-      objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser' ],
-      scopes: [
-        { _guid: '', objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser' ] },
-        { _guid: 'browser', objects: [] }
+      _guid: '',
+      objects: [
+        { _guid: 'chromium' },
+        { _guid: 'firefox' },
+        { _guid: 'webkit' },
+        { _guid: 'playwright' },
+        { _guid: 'browser', objects: [] },
       ]
     };
     await expectScopeState(browserType, GOLDEN_PRECONDITION);
@@ -85,12 +107,16 @@ describe.skip(!CHANNEL)('Channels', function() {
     const browser = await browserType.launch(defaultBrowserOptions);
     await browser.newContext();
     await expectScopeState(browserType, {
-      objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser', 'browser', 'context' ],
-      scopes: [
-        { _guid: '', objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser', 'browser' ] },
+      _guid: '',
+      objects: [
+        { _guid: 'chromium' },
+        { _guid: 'firefox' },
+        { _guid: 'webkit' },
+        { _guid: 'playwright' },
+        { _guid: 'browser', objects: [
+          { _guid: 'context', objects: [] },
+        ] },
         { _guid: 'browser', objects: [] },
-        { _guid: 'browser', objects: ['context'] },
-        { _guid: 'context', objects: [] },
       ]
     });
 
@@ -100,15 +126,28 @@ describe.skip(!CHANNEL)('Channels', function() {
 });
 
 async function expectScopeState(object, golden) {
+  golden = trimGuids(golden);
   const remoteState = trimGuids(await object._channel.debugScopeState());
   const localState = trimGuids(object._connection._debugScopeState());
-  expect(processLocalState(localState)).toEqual(golden);
+  expect(localState).toEqual(golden);
   expect(remoteState).toEqual(golden);
+}
+
+function compareObjects(a, b) {
+  if (a._guid !== b._guid)
+    return a._guid.localeCompare(b._guid);
+  if (a.objects && !b.objects)
+    return -1;
+  if (!a.objects && b.objects)
+    return 1;
+  if (!a.objects && !b.objects)
+    return 0;
+  return a.objects.length - b.objects.length;
 }
 
 function trimGuids(object) {
   if (Array.isArray(object))
-    return object.map(trimGuids);
+    return object.map(trimGuids).sort(compareObjects);
   if (typeof object === 'object') {
     const result = {};
     for (const key in object)
@@ -118,22 +157,4 @@ function trimGuids(object) {
   if (typeof object === 'string')
     return object ? object.match(/[^@]+/)[0] : '';
   return object;
-}
-
-function processLocalState(root) {
-  const objects = [];
-  const scopes = [];
-  const visit = (object, scope) => {
-    if (object._guid !== '')
-      objects.push(object._guid);
-    scope.push(object._guid);
-    if (object.objects) {
-      scope = [];
-      scopes.push({ _guid: object._guid, objects: scope });
-      for (const child of object.objects)
-        visit(child, scope);
-    }
-  };
-  visit(root, []);
-  return { objects, scopes };
 }

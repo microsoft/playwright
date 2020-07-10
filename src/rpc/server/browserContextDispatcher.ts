@@ -48,7 +48,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
     context.on(Events.BrowserContext.Page, page => this._dispatchEvent('page', new PageDispatcher(this._scope, page)));
     context.on(Events.BrowserContext.Close, () => {
       this._dispatchEvent('close');
-      this._scope.dispose();
+      this._dispose();
     });
   }
 

@@ -25,4 +25,4 @@ transport.onmessage = message => dispatcherConnection.dispatch(message);
 dispatcherConnection.onmessage = message => transport.send(message);
 
 const playwright = new Playwright(__dirname, require('../../browsers.json')['browsers']);
-new PlaywrightDispatcher(dispatcherConnection.rootScope(), playwright);
+new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);

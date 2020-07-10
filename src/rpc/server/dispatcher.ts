@@ -36,99 +36,95 @@ export function lookupNullableDispatcher<DispatcherType>(object: any | null): Di
 }
 
 export class Dispatcher<Type, Initializer> extends EventEmitter implements Channel {
+  private _connection: DispatcherConnection;
+  private _isScope: boolean;
+  // Parent is always "isScope".
+  private _parent: Dispatcher<any, any> | undefined;
+  // Only "isScope" channel owners have registered dispatchers inside.
+  private _dispatchers = new Map<string, Dispatcher<any, any>>();
+
   readonly _guid: string;
   readonly _type: string;
-  protected _scope: DispatcherScope;
+  readonly _scope: Dispatcher<any, any>;
   _object: Type;
 
-  constructor(scope: DispatcherScope, object: Type, type: string, initializer: Initializer, isScope?: boolean, guid = type + '@' + helper.guid()) {
+  constructor(parent: Dispatcher<any, any> | DispatcherConnection, object: Type, type: string, initializer: Initializer, isScope?: boolean, guid = type + '@' + helper.guid()) {
     super();
+
+    this._connection = parent instanceof DispatcherConnection ? parent : parent._connection;
+    this._isScope = !!isScope;
+    this._parent = parent instanceof DispatcherConnection ? undefined : parent;
+    this._scope = isScope ? this : this._parent!;
+
+    assert(!this._connection._dispatchers.has(guid));
+    this._connection._dispatchers.set(guid, this);
+    if (this._parent) {
+      assert(!this._parent._dispatchers.has(guid));
+      this._parent._dispatchers.set(guid, this);
+    }
+
     this._type = type;
     this._guid = guid;
     this._object = object;
-    this._scope = isScope ? scope.createChild(guid) : scope;
-    scope.bind(this._guid, this);
+
     (object as any)[dispatcherSymbol] = this;
-    this._scope.sendMessageToClient(scope.guid, '__create__', { type, initializer, guid });
+    if (this._parent)
+      this._connection.sendMessageToClient(this._parent._guid, '__create__', { type, initializer, guid });
   }
 
   _dispatchEvent(method: string, params: Dispatcher<any, any> | any = {}) {
-    this._scope.sendMessageToClient(this._guid, method, params);
+    this._connection.sendMessageToClient(this._guid, method, params);
+  }
+
+  _dispose() {
+    assert(this._isScope);
+
+    // Clean up from parent and connection.
+    if (this._parent)
+      this._parent._dispatchers.delete(this._guid);
+    this._connection._dispatchers.delete(this._guid);
+
+    // Dispose all children.
+    for (const [guid, dispatcher] of [...this._dispatchers]) {
+      if (dispatcher._isScope)
+        dispatcher._dispose();
+      else
+        this._connection._dispatchers.delete(guid);
+    }
+    this._dispatchers.clear();
+  }
+
+  _debugScopeState(): any {
+    return {
+      _guid: this._guid,
+      objects: this._isScope ? Array.from(this._dispatchers.values()).map(o => o._debugScopeState()) : undefined,
+    };
   }
 }
 
-export class DispatcherScope {
-  private _connection: DispatcherConnection;
-  private _dispatchers = new Map<string, Dispatcher<any, any>>();
-  private _parent: DispatcherScope | undefined;
-  readonly _children = new Set<DispatcherScope>();
-  readonly guid: string;
+export type DispatcherScope = Dispatcher<any, any>;
 
-  constructor(connection: DispatcherConnection, guid: string, parent?: DispatcherScope) {
-    this._connection = connection;
-    this._parent = parent;
-    this.guid = guid;
-    if (parent)
-      parent._children.add(this);
-  }
-
-  createChild(guid: string): DispatcherScope {
-    return new DispatcherScope(this._connection, guid, this);
-  }
-
-  bind(guid: string, arg: Dispatcher<any, any>) {
-    assert(!this._dispatchers.has(guid));
-    this._dispatchers.set(guid, arg);
-    this._connection._dispatchers.set(guid, arg);
-  }
-
-  dispose() {
-    // Take care of hierarchy.
-    for (const child of [...this._children])
-      child.dispose();
-    this._children.clear();
-
-    // Delete self from scopes and objects.
-    this._connection._dispatchers.delete(this.guid);
-
-    // Delete all of the objects from connection.
-    for (const guid of this._dispatchers.keys())
-      this._connection._dispatchers.delete(guid);
-
-    if (this._parent) {
-      this._parent._children.delete(this);
-      this._parent._dispatchers.delete(this.guid);
-    }
-  }
-
-  async sendMessageToClient(guid: string, method: string, params: any): Promise<any> {
-    this._connection._sendMessageToClient(guid, method, params);
-  }
-
-  _dumpScopeState(scopes: any[]): any {
-    const scopeState: any = { _guid: this.guid };
-    scopeState.objects = [...this._dispatchers.keys()];
-    scopes.push(scopeState);
-    [...this._children].map(c => c._dumpScopeState(scopes));
-    return scopeState;
+class Root extends Dispatcher<{}, {}> {
+  constructor(connection: DispatcherConnection) {
+    super(connection, {}, '', {}, true, '');
   }
 }
 
 export class DispatcherConnection {
   readonly _dispatchers = new Map<string, Dispatcher<any, any>>();
-  private _rootScope: DispatcherScope;
+  private _rootDispatcher: Root;
   onmessage = (message: string) => {};
 
-  async _sendMessageToClient(guid: string, method: string, params: any): Promise<any> {
+  async sendMessageToClient(guid: string, method: string, params: any): Promise<any> {
     this.onmessage(JSON.stringify({ guid, method, params: this._replaceDispatchersWithGuids(params) }));
   }
 
   constructor() {
-    this._rootScope = new DispatcherScope(this, '');
+    this._rootDispatcher = new Root(this);
   }
 
-  rootScope(): DispatcherScope {
-    return this._rootScope;
+  rootDispatcher(): Dispatcher<any, any> {
+    return this._rootDispatcher;
   }
 
   async dispatch(message: string) {
@@ -140,11 +136,7 @@ export class DispatcherConnection {
       return;
     }
     if (method === 'debugScopeState') {
-      const dispatcherState: any = {};
-      dispatcherState.objects = [...this._dispatchers.keys()];
-      dispatcherState.scopes = [];
-      this._rootScope._dumpScopeState(dispatcherState.scopes);
-      this.onmessage(JSON.stringify({ id, result: dispatcherState }));
+      this.onmessage(JSON.stringify({ id, result: this._rootDispatcher._debugScopeState() }));
       return;
     }
     try {
@@ -155,7 +147,7 @@ export class DispatcherConnection {
     }
   }
 
-  _replaceDispatchersWithGuids(payload: any): any {
+  private _replaceDispatchersWithGuids(payload: any): any {
     if (!payload)
       return payload;
     if (payload instanceof Dispatcher)

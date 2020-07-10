@@ -174,7 +174,7 @@ class PlaywrightEnvironment {
         await new Promise(f => setImmediate(f));
         return result;
       };
-      new PlaywrightDispatcher(dispatcherConnection.rootScope(), this._playwright);
+      new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), this._playwright);
       this.overriddenPlaywright = await connection.waitForObjectWithKnownName('playwright');
     }
     state.playwright = this.overriddenPlaywright;

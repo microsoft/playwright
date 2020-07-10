@@ -24,7 +24,7 @@ export class CDPSessionDispatcher extends Dispatcher<CRSession, CDPSessionInitia
     crSession._eventListener = (method, params) => this._dispatchEvent('event', { method, params });
     crSession.on(CRSessionEvents.Disconnected, () => {
       this._dispatchEvent('disconnected');
-      this._scope.dispose();
+      this._dispose();
     });
   }
 

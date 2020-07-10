@@ -30,7 +30,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> i
     super(scope, browser, 'browser', {}, true);
     browser.on(Events.Browser.Disconnected, () => {
       this._dispatchEvent('close');
-      this._scope.dispose();
+      this._dispose();
     });
   }
 
