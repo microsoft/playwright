@@ -16,7 +16,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, HEADLESS, USES_HOOKS} = utils.testOptions(browserType);
 
 async function giveItAChanceToClick(page) {
   for (let i = 0; i < 5; i++)
@@ -400,16 +400,17 @@ describe('Page.click', function() {
     });
     await page.click('button', { position: { x: 20, y: 10 } });
     expect(await page.evaluate(() => result)).toBe('Clicked');
+    const round = x => Math.round(x + 0.01);
     let expected = { x: 28, y: 18 };  // 20;10 + 8px of border in each direction
     if (WEBKIT) {
       // WebKit rounds up during css -> dip -> css conversion.
       expected = { x: 29, y: 19 };
-    } else if (CHROMIUM) {
-      // Chromium rounds down during css -> dip -> css conversion.
+    } else if (CHROMIUM && HEADLESS) {
+      // Headless Chromium rounds down during css -> dip -> css conversion.
       expected = { x: 27, y: 18 };
     }
-    expect(await page.evaluate(() => pageX)).toBe(expected.x);
-    expect(await page.evaluate(() => pageY)).toBe(expected.y);
+    expect(round(await page.evaluate(() => pageX))).toBe(expected.x);
+    expect(round(await page.evaluate(() => pageY))).toBe(expected.y);
     await context.close();
   });
 

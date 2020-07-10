@@ -204,6 +204,7 @@ const utils = module.exports = {
       ASSETS_DIR,
       USES_HOOKS: !!process.env.PWCHANNEL,
       CHANNEL: !!process.env.PWCHANNEL,
+      HEADLESS: !!valueFromEnv('HEADLESS', true),
     };
   },
 
@@ -245,3 +246,9 @@ const utils = module.exports = {
     return logger;
   },
 };
+
+function valueFromEnv(name, defaultValue) {
+  if (!(name in process.env))
+    return defaultValue;
+  return JSON.parse(process.env[name]);
+}
