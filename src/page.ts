@@ -145,6 +145,7 @@ export class Page extends EventEmitter {
   }
 
   _didClose() {
+    this._frameManager.dispose();
     assert(this._closedState !== 'closed', 'Page closed twice');
     this._closedState = 'closed';
     this.emit(Events.Page.Close);
@@ -152,11 +153,13 @@ export class Page extends EventEmitter {
   }
 
   _didCrash() {
+    this._frameManager.dispose();
     this.emit(Events.Page.Crash);
     this._crashedCallback(new Error('Page crashed'));
   }
 
   _didDisconnect() {
+    this._frameManager.dispose();
     assert(!this._disconnected, 'Page disconnected twice');
     this._disconnected = true;
     this._disconnectedCallback(new Error('Page closed'));

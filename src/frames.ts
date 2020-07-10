@@ -71,6 +71,11 @@ export class FrameManager {
     this._mainFrame = undefined as any as Frame;
   }
 
+  dispose() {
+    for (const frame of this._frames.values())
+      frame._stopNetworkIdleTimer();
+  }
+
   mainFrame(): Frame {
     return this._mainFrame;
   }
@@ -926,6 +931,7 @@ export class Frame {
   }
 
   _onDetached() {
+    this._stopNetworkIdleTimer();
     this._detached = true;
     this._detachedCallback();
     for (const data of this._contextData.values()) {
