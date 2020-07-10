@@ -129,6 +129,23 @@ describe('BrowserContext', function() {
     ]);
     await context.close();
   });
+  it('should not report frameless pages on error', async({browser, server}) => {
+    const context = await browser.newContext();
+    page = await context.newPage();
+    server.setRoute('/empty.html', (req, res) => {
+      res.end(`<a href="${server.EMPTY_PAGE}" target="_blank">Click me</a>`);
+    });
+    let popup;
+    context.on('page', p => popup = p);
+    await page.goto(server.EMPTY_PAGE);
+    await page.click('"Click me"');
+    await context.close();
+    if (popup) {
+      // This races on Firefox :/
+      expect(popup.isClosed()).toBeTruthy();
+      expect(popup.mainFrame()).toBeTruthy();
+    }
+  })
 });
 
 describe('BrowserContext({userAgent})', function() {

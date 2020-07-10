@@ -48,7 +48,7 @@ describe.skip(!CHANNEL)('Channels', function() {
     await expectScopeState(browser, GOLDEN_PRECONDITION);
   });
 
-  it('should scope CDPSession handles', async({browserType, browser, server}) => {
+  it.skip(!CHROMIUM)('should scope CDPSession handles', async({browserType, browser, server}) => {
     const GOLDEN_PRECONDITION = {
       objects: [ 'chromium', 'firefox', 'webkit', 'playwright', 'browser' ],
       scopes: [

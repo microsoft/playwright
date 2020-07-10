@@ -113,7 +113,7 @@ describe('Async stacks', () => {
   });
 });
 
-describe.fail(FFOX && WIN)('Page.Events.Crash', function() {
+describe.fail(FFOX && WIN).skip(CHANNEL)('Page.Events.Crash', function() {
   // Firefox Win: it just doesn't crash sometimes.
 
   function crash(page) {

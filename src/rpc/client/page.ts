@@ -80,6 +80,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     this._mainFrame._page = this;
     this._frames.add(this._mainFrame);
     this._viewportSize = initializer.viewportSize;
+    this._closed = initializer.isClosed;
 
     this._channel.on('bindingCall', bindingCall => this._onBinding(BindingCall.from(bindingCall)));
     this._channel.on('close', () => this._onClose());

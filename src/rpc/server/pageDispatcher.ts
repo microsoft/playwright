@@ -39,7 +39,8 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
   constructor(scope: DispatcherScope, page: Page) {
     super(scope, page, 'page', {
       mainFrame: FrameDispatcher.from(scope, page.mainFrame()),
-      viewportSize: page.viewportSize()
+      viewportSize: page.viewportSize(),
+      isClosed: page.isClosed()
     });
     this._page = page;
     page.on(Events.Page.Close, () => this._dispatchEvent('close'));

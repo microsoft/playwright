@@ -167,7 +167,8 @@ export interface PageChannel extends Channel {
 
 export type PageInitializer = {
   mainFrame: FrameChannel,
-  viewportSize: types.Size | null
+  viewportSize: types.Size | null,
+  isClosed: boolean
 };
 
 export type PageAttribution = { isPage?: boolean };
