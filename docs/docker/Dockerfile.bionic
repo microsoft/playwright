@@ -32,10 +32,9 @@ RUN apt-get update && apt-get install -y libwoff1 \
                                          libvpx5
 
 # 3. Install gstreamer and plugins to support video playback in WebKit.
-RUN apt-get update && apt-get install -y gstreamer1.0-gl \
-                                         gstreamer1.0-plugins-base \
-                                         gstreamer1.0-plugins-good \
-                                         gstreamer1.0-plugins-bad
+RUN apt-get update && apt-get install -y libgstreamer-gl1.0-0 \
+                                         libgstreamer-plugins-bad1.0-0 \
+                                         gstreamer1.0-plugins-good
 
 # 4. Install Chromium dependencies
 
