@@ -20,15 +20,16 @@ import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { BrowserServer } from './browserServer';
+import { LoggerSink } from '../../loggerSink';
 
 export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {
 
-  static from(browserTyep: BrowserTypeChannel): BrowserType {
-    return (browserTyep as any)._object;
+  static from(browserType: BrowserTypeChannel): BrowserType {
+    return (browserType as any)._object;
   }
 
-  constructor(parent: ChannelOwner, guid: string, initializer: BrowserTypeInitializer) {
-    super(parent, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserTypeInitializer) {
+    super(parent, type, guid, initializer);
   }
 
   executablePath(): string {
@@ -39,23 +40,32 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     return this._initializer.name;
   }
 
-  async launch(options: types.LaunchOptions = {}): Promise<Browser> {
-    delete (options as any).logger;
-    return Browser.from(await this._channel.launch(options));
+  async launch(options: types.LaunchOptions & { logger?: LoggerSink } = {}): Promise<Browser> {
+    const logger = options.logger;
+    options = { ...options, logger: undefined };
+    const browser = Browser.from(await this._channel.launch(options));
+    browser._logger = logger;
+    return browser;
   }
 
-  async launchServer(options: types.LaunchServerOptions = {}): Promise<BrowserServer> {
-    delete (options as any).logger;
+  async launchServer(options: types.LaunchServerOptions & { logger?: LoggerSink } = {}): Promise<BrowserServer> {
+    options = { ...options, logger: undefined };
     return BrowserServer.from(await this._channel.launchServer(options));
   }
 
-  async launchPersistentContext(userDataDir: string, options: types.LaunchOptions & types.BrowserContextOptions = {}): Promise<BrowserContext> {
-    delete (options as any).logger;
-    return BrowserContext.from(await this._channel.launchPersistentContext({ userDataDir, ...options }));
+  async launchPersistentContext(userDataDir: string, options: types.LaunchOptions & types.BrowserContextOptions & { logger?: LoggerSink } = {}): Promise<BrowserContext> {
+    const logger = options.logger;
+    options = { ...options, logger: undefined };
+    const context = BrowserContext.from(await this._channel.launchPersistentContext({ userDataDir, ...options }));
+    context._logger = logger;
+    return context;
   }
 
-  async connect(options: types.ConnectOptions): Promise<Browser> {
-    delete (options as any).logger;
-    return Browser.from(await this._channel.connect(options));
+  async connect(options: types.ConnectOptions & { logger?: LoggerSink }): Promise<Browser> {
+    const logger = options.logger;
+    options = { ...options, logger: undefined };
+    const browser = Browser.from(await this._channel.connect(options));
+    browser._logger = logger;
+    return browser;
   }
 }

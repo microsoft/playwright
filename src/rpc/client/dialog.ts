@@ -22,8 +22,8 @@ export class Dialog extends ChannelOwner<DialogChannel, DialogInitializer> {
     return (dialog as any)._object;
   }
 
-  constructor(parent: ChannelOwner, guid: string, initializer: DialogInitializer) {
-    super(parent, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: DialogInitializer) {
+    super(parent, type, guid, initializer);
   }
 
   type(): string {

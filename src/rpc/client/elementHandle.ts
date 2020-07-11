@@ -33,8 +33,8 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     return handle ? ElementHandle.from(handle) : null;
   }
 
-  constructor(parent: ChannelOwner, guid: string, initializer: JSHandleInitializer) {
-    super(parent, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: JSHandleInitializer) {
+    super(parent, type, guid, initializer);
     this._elementChannel = this._channel as ElementHandleChannel;
   }
 

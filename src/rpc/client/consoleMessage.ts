@@ -25,8 +25,8 @@ export class ConsoleMessage extends ChannelOwner<ConsoleMessageChannel, ConsoleM
     return (message as any)._object;
   }
 
-  constructor(parent: ChannelOwner, guid: string, initializer: ConsoleMessageInitializer) {
-    super(parent, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: ConsoleMessageInitializer) {
+    super(parent, type, guid, initializer);
   }
 
   type(): string {

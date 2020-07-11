@@ -25,8 +25,8 @@ export class Playwright extends ChannelOwner<PlaywrightChannel, PlaywrightInitia
   webkit: BrowserType;
   devices: types.Devices;
 
-  constructor(parent: ChannelOwner, guid: string, initializer: PlaywrightInitializer) {
-    super(parent, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: PlaywrightInitializer) {
+    super(parent, type, guid, initializer);
     this.chromium = BrowserType.from(initializer.chromium);
     this.firefox = BrowserType.from(initializer.firefox);
     this.webkit = BrowserType.from(initializer.webkit);

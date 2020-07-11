@@ -46,8 +46,8 @@ export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel, JSHandleIni
     return handle ? JSHandle.from(handle) : null;
   }
 
-  constructor(parent: ChannelOwner, guid: string, initializer: JSHandleInitializer) {
-    super(parent, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: JSHandleInitializer) {
+    super(parent, type, guid, initializer);
     this._preview = this._initializer.preview;
     this._channel.on('previewUpdated', preview => this._preview = preview);
   }

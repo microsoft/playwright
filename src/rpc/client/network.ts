@@ -57,8 +57,8 @@ export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
     return request ? Request.from(request) : null;
   }
 
-  constructor(parent: ChannelOwner, guid: string, initializer: RequestInitializer) {
-    super(parent, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: RequestInitializer) {
+    super(parent, type, guid, initializer);
     this._redirectedFrom = Request.fromNullable(initializer.redirectedFrom);
     if (this._redirectedFrom)
       this._redirectedFrom._redirectedTo = this;
@@ -137,8 +137,8 @@ export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
     return (route as any)._object;
   }
 
-  constructor(parent: ChannelOwner, guid: string, initializer: RouteInitializer) {
-    super(parent, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: RouteInitializer) {
+    super(parent, type, guid, initializer);
   }
 
   request(): Request {
@@ -170,8 +170,8 @@ export class Response extends ChannelOwner<ResponseChannel, ResponseInitializer>
     return response ? Response.from(response) : null;
   }
 
-  constructor(parent: ChannelOwner, guid: string, initializer: ResponseInitializer) {
-    super(parent, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: ResponseInitializer) {
+    super(parent, type, guid, initializer);
   }
 
   url(): string {
