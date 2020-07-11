@@ -71,12 +71,12 @@ export class Firefox extends BrowserTypeBase {
       const proxyServer = new URL(proxy.server);
       // https://developer.mozilla.org/en-US/docs/Mozilla/Preferences/Mozilla_networking_preferences
       switch (proxyServer.protocol) {
-        case "socks4:":
+        case 'socks4:':
           options.firefoxUserPrefs['network.proxy.socks_version'] = 4;
-        case "socks5:":
+        case 'socks5:':
           options.firefoxUserPrefs['network.proxy.socks'] = proxyServer.hostname;
           options.firefoxUserPrefs['network.proxy.socks_port'] = parseInt(proxyServer.port, 10);
-          break
+          break;
         default:
           options.firefoxUserPrefs['network.proxy.http'] = proxyServer.hostname;
           options.firefoxUserPrefs['network.proxy.http_port'] = parseInt(proxyServer.port, 10);

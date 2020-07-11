@@ -96,9 +96,9 @@ export class Chromium extends BrowserTypeBase {
       chromeArguments.push('--auto-open-devtools-for-tabs');
     if (options.headless) {
       chromeArguments.push(
-        '--headless',
-        '--hide-scrollbars',
-        '--mute-audio'
+          '--headless',
+          '--hide-scrollbars',
+          '--mute-audio'
       );
     }
     if (proxy) {
