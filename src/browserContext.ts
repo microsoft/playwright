@@ -314,7 +314,7 @@ export function verifyProxySettings(proxy: types.ProxySettings): types.ProxySett
   if (!helper.isString(server))
     throw new Error(`Invalid proxy.server: ` + server);
   let url = new URL(server);
-  if (!['http:', 'https:', 'socks5:'].includes(url.protocol)) {
+  if (!['http:', 'https:', 'socks4:', 'socks5:'].includes(url.protocol)) {
     url = new URL('http://' + server);
     server = `${url.protocol}//${url.host}`;
   }

@@ -96,16 +96,16 @@ export class Chromium extends BrowserTypeBase {
       chromeArguments.push('--auto-open-devtools-for-tabs');
     if (options.headless) {
       chromeArguments.push(
-          '--headless',
-          '--hide-scrollbars',
-          '--mute-audio'
+        '--headless',
+        '--hide-scrollbars',
+        '--mute-audio'
       );
     }
     if (proxy) {
       const proxyURL = new URL(proxy.server);
-      const isSocks = proxyURL.protocol === 'socks5:';
+      const isSocks5 = proxyURL.protocol === 'socks5:';
       // https://www.chromium.org/developers/design-documents/network-settings
-      if (isSocks) {
+      if (isSocks5) {
         // https://www.chromium.org/developers/design-documents/network-stack/socks-proxy
         chromeArguments.push(`--host-resolver-rules="MAP * ~NOTFOUND , EXCLUDE ${proxyURL.hostname}"`);
       }

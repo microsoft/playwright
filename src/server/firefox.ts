@@ -69,15 +69,19 @@ export class Firefox extends BrowserTypeBase {
       options.firefoxUserPrefs = options.firefoxUserPrefs || {};
       options.firefoxUserPrefs['network.proxy.type'] = 1;
       const proxyServer = new URL(proxy.server);
-      const isSocks = proxyServer.protocol === 'socks5:';
-      if (isSocks) {
-        options.firefoxUserPrefs['network.proxy.socks'] = proxyServer.hostname;
-        options.firefoxUserPrefs['network.proxy.socks_port'] = parseInt(proxyServer.port, 10);
-      } else {
-        options.firefoxUserPrefs['network.proxy.http'] = proxyServer.hostname;
-        options.firefoxUserPrefs['network.proxy.http_port'] = parseInt(proxyServer.port, 10);
-        options.firefoxUserPrefs['network.proxy.ssl'] = proxyServer.hostname;
-        options.firefoxUserPrefs['network.proxy.ssl_port'] = parseInt(proxyServer.port, 10);
+      // https://developer.mozilla.org/en-US/docs/Mozilla/Preferences/Mozilla_networking_preferences
+      switch (proxyServer.protocol) {
+        case "socks4:":
+          options.firefoxUserPrefs['network.proxy.socks_version'] = 4;
+        case "socks5:":
+          options.firefoxUserPrefs['network.proxy.socks'] = proxyServer.hostname;
+          options.firefoxUserPrefs['network.proxy.socks_port'] = parseInt(proxyServer.port, 10);
+          break
+        default:
+          options.firefoxUserPrefs['network.proxy.http'] = proxyServer.hostname;
+          options.firefoxUserPrefs['network.proxy.http_port'] = parseInt(proxyServer.port, 10);
+          options.firefoxUserPrefs['network.proxy.ssl'] = proxyServer.hostname;
+          options.firefoxUserPrefs['network.proxy.ssl_port'] = parseInt(proxyServer.port, 10);
       }
       if (proxy.bypass)
         options.firefoxUserPrefs['network.proxy.no_proxies_on'] = proxy.bypass;
@@ -107,7 +111,7 @@ export class Firefox extends BrowserTypeBase {
 }
 
 type SessionData = {
- socket: ws,
+  socket: ws,
 };
 
 function startWebSocketServer(transport: ConnectionTransport, logger: Logger, port: number): WebSocketServer {
@@ -180,7 +184,7 @@ function startWebSocketServer(transport: ConnectionTransport, logger: Logger, po
       }
     },
 
-    onClientAttached() {},
+    onClientAttached() { },
 
     onClientRequest(socket: ws, message: ProtocolRequest) {
       const { method, params } = message;
