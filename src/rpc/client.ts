@@ -23,8 +23,8 @@ import { Transport } from './transport';
   const spawnedProcess = childProcess.fork(path.join(__dirname, 'server'), [], { stdio: 'pipe' });
   const transport = new Transport(spawnedProcess.stdin, spawnedProcess.stdout);
   const connection = new Connection();
-  connection.onmessage = message => transport.send(message);
-  transport.onmessage = message => connection.dispatch(message);
+  connection.onmessage = message => transport.send(JSON.stringify(message));
+  transport.onmessage = message => connection.dispatch(JSON.parse(message));
 
   const playwright = await connection.waitForObjectWithKnownName('playwright');
   const browser = await playwright.chromium.launch({ headless: false });

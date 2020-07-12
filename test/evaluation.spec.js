@@ -17,7 +17,7 @@
 
 const utils = require('./utils');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = utils.testOptions(browserType);
 
 describe('Page.evaluate', function() {
   it('should work', async({page, server}) => {
@@ -574,14 +574,14 @@ describe('Frame.evaluate', function() {
     else
       expect(page._delegate._contextIdToContext.size).toBe(count);
   }
-  it.skip(USES_HOOKS)('should dispose context on navigation', async({page, server}) => {
+  it.skip(CHANNEL)('should dispose context on navigation', async({page, server}) => {
     await page.goto(server.PREFIX + '/frames/one-frame.html');
     expect(page.frames().length).toBe(2);
     expectContexts(page, 4);
     await page.goto(server.EMPTY_PAGE);
     expectContexts(page, 2);
   });
-  it.skip(USES_HOOKS)('should dispose context on cross-origin navigation', async({page, server}) => {
+  it.skip(CHANNEL)('should dispose context on cross-origin navigation', async({page, server}) => {
     await page.goto(server.PREFIX + '/frames/one-frame.html');
     expect(page.frames().length).toBe(2);
     expectContexts(page, 4);

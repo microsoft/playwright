@@ -174,6 +174,7 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
+        transport: [json, object]
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
@@ -194,21 +195,19 @@ jobs:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "*,-pw:wrapped*"
         PWCHANNEL: "1"
-    # Ensure output folder exists just in case it was not created by the test run.
-    - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-${{ matrix.browser }}'), {recursive:true})"
-      if: failure()
+        PWCHANNELTRANSPORT: ${{ matrix.transport }}
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: rpc-${{ matrix.browser }}-linux-output
+        name: rpc-${{ matrix.transport }}-${{ matrix.browser }}-linux-output
         path: test/output-${{ matrix.browser }}
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: rpc-${{ matrix.browser }}-linux-testrun.log
+        name: rpc-${{ matrix.transport }}-${{ matrix.browser }}-linux-testrun.log
         path: testrun.log
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: rpc-${{ matrix.browser }}-linux-coredumps
+        name: rpc-${{ matrix.transport }}-${{ matrix.browser }}-linux-coredumps
         path: coredumps

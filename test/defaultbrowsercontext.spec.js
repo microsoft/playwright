@@ -335,9 +335,9 @@ describe('launchPersistentContext()', function() {
     expect(error.message).toContain('can not specify page');
     await removeUserDataDir(userDataDir);
   });
-  it.skip(USES_HOOKS)('should have passed URL when launching with ignoreDefaultArgs: true', async ({browserType, defaultBrowserOptions, server}) => {
+  it('should have passed URL when launching with ignoreDefaultArgs: true', async ({playwrightPath, browserType, defaultBrowserOptions, server}) => {
     const userDataDir = await makeUserDataDir();
-    const args = browserType._defaultArgs(defaultBrowserOptions, 'persistent', userDataDir, 0).filter(a => a !== 'about:blank');
+    const args = require(playwrightPath)[browserType.name()]._defaultArgs(defaultBrowserOptions, 'persistent', userDataDir, 0).filter(a => a !== 'about:blank');
     const options = {
       ...defaultBrowserOptions,
       args: [...args, server.EMPTY_PAGE],
@@ -364,7 +364,7 @@ describe('launchPersistentContext()', function() {
     const e = new Error('Dummy');
     const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; } };
     const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
-    expect(error).toBe(e);
+    expect(error.message).toContain('Dummy');
     await removeUserDataDir(userDataDir);
   });
   it('should fire close event for a persistent context', async(state) => {
@@ -373,5 +373,5 @@ describe('launchPersistentContext()', function() {
     context.on('close', () => closed = true);
     await close(state);
     expect(closed).toBe(true);
-  });  
+  });
 });

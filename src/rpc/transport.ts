@@ -23,7 +23,7 @@ export class Transport {
   private _closed = false;
   private _bytesLeft = 0;
 
-  onmessage?: (message: any) => void;
+  onmessage?: (message: string) => void;
   onclose?: () => void;
 
   constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream) {

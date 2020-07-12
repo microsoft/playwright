@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('./utils').testOptions(browserType);
 
 class WritableBuffer {
   constructor() {
@@ -51,7 +51,7 @@ class WritableBuffer {
   }
 }
 
-describe.skip(USES_HOOKS)('Recorder', function() {
+describe.skip(CHANNEL)('Recorder', function() {
   beforeEach(async state => {
     state.context = await state.browser.newContext();
     state.output = new WritableBuffer();

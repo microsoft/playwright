@@ -167,9 +167,13 @@ class PlaywrightEnvironment {
       const dispatcherConnection = new DispatcherConnection();
       const connection = new Connection();
       dispatcherConnection.onmessage = async message => {
+        if (process.env.PWCHANNELJSON)
+          message = JSON.parse(JSON.stringify(message));
         setImmediate(() => connection.dispatch(message));
       };
       connection.onmessage = async message => {
+        if (process.env.PWCHANNELJSON)
+          message = JSON.parse(JSON.stringify(message));
         const result = await dispatcherConnection.dispatch(message);
         await new Promise(f => setImmediate(f));
         return result;

@@ -17,7 +17,7 @@
 
 const path = require('path');
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = utils.testOptions(browserType);
 
 describe('Page.$eval', function() {
   it('should work with css selector', async({page, server}) => {
@@ -515,7 +515,7 @@ describe('text selector', () => {
     expect(await page.$$eval(`text=lowo`, els => els.map(e => e.outerHTML).join(''))).toBe('<div>helloworld</div><span>helloworld</span>');
   });
 
-  it.skip(USES_HOOKS)('create', async ({page}) => {
+  it.skip(CHANNEL)('create', async ({page}) => {
     await page.setContent(`<div>yo</div><div>"ya</div><div>ye ye</div>`);
     expect(await playwright.selectors._createSelector('text', await page.$('div'))).toBe('yo');
     expect(await playwright.selectors._createSelector('text', await page.$('div:nth-child(2)'))).toBe('"\\"ya"');
@@ -744,7 +744,7 @@ describe('attribute selector', () => {
 });
 
 describe('selectors.register', () => {
-  it.skip(USES_HOOKS)('should work', async ({page}) => {
+  it.skip(CHANNEL)('should work', async ({page}) => {
     const createTagSelector = () => ({
       create(root, target) {
         return target.nodeName;
