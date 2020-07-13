@@ -24,12 +24,16 @@ CLOSED_ISSUES=$(./list_closed_issues.sh "${LAST_RELEASE}")
 ISSUES_COUNT=$(echo "${CLOSED_ISSUES}" | wc -l | xargs)
 echo "<details>"
 echo "  <summary><b>Issues Closed (${ISSUES_COUNT})</b></summary>"
+echo
 echo "${CLOSED_ISSUES}"
+echo
 echo "</details>"
 
 COMMITS=$(git log --pretty="%h - %s" "${LAST_RELEASE}"..HEAD)
 COMMITS_COUNT=$(echo "${COMMITS}" | wc -l | xargs)
 echo "<details>"
 echo "  <summary><b>Commits (${COMMITS_COUNT})</b></summary>"
+echo
 echo "${COMMITS}"
+echo
 echo "</details>"
