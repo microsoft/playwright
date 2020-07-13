@@ -17,7 +17,7 @@
 
 const utils = require('./utils');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = utils.testOptions(browserType);
 
 describe('Page.evaluate', function() {
   it('should work', async({page, server}) => {
@@ -373,7 +373,7 @@ describe('Page.evaluate', function() {
     });
     expect(result).toBe(undefined);
   });
-  it.slow()('should transfer 100Mb of data from page to node.js', async({page, server}) => {
+  it.slow().skip(USES_HOOKS)('should transfer 100Mb of data from page to node.js', async({page, server}) => {
     const a = await page.evaluate(() => Array(100 * 1024 * 1024 + 1).join('a'));
     expect(a.length).toBe(100 * 1024 * 1024);
   });
@@ -568,25 +568,25 @@ describe('Frame.evaluate', function() {
     expect(await page.frames()[1].evaluate(() => document.body.textContent.trim())).toBe(`Hi, I'm frame`);
   });
 
-  function expectContexts(page, count) {
+  function expectContexts(pageImpl, count) {
     if (CHROMIUM)
-      expect(page._delegate._mainFrameSession._contextIdToContext.size).toBe(count);
+      expect(pageImpl._delegate._mainFrameSession._contextIdToContext.size).toBe(count);
     else
-      expect(page._delegate._contextIdToContext.size).toBe(count);
+      expect(pageImpl._delegate._contextIdToContext.size).toBe(count);
   }
-  it.skip(CHANNEL)('should dispose context on navigation', async({page, server}) => {
+  it.skip(USES_HOOKS)('should dispose context on navigation', async({page, server, toImpl}) => {
     await page.goto(server.PREFIX + '/frames/one-frame.html');
     expect(page.frames().length).toBe(2);
-    expectContexts(page, 4);
+    expectContexts(toImpl(page), 4);
     await page.goto(server.EMPTY_PAGE);
-    expectContexts(page, 2);
+    expectContexts(toImpl(page), 2);
   });
-  it.skip(CHANNEL)('should dispose context on cross-origin navigation', async({page, server}) => {
+  it.skip(USES_HOOKS)('should dispose context on cross-origin navigation', async({page, server, toImpl}) => {
     await page.goto(server.PREFIX + '/frames/one-frame.html');
     expect(page.frames().length).toBe(2);
-    expectContexts(page, 4);
+    expectContexts(toImpl(page), 4);
     await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
-    expectContexts(page, 2);
+    expectContexts(toImpl(page), 2);
   });
 
   it('should execute after cross-site navigation', async({page, server}) => {

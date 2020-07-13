@@ -18,7 +18,7 @@
 const path = require('path');
 const util = require('util');
 const vm = require('vm');
-const {FFOX, CHROMIUM, WEBKIT, WIN, CHANNEL} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = require('./utils').testOptions(browserType);
 
 describe('Page.close', function() {
   it('should reject all promises when page is closed', async({context}) => {
@@ -101,7 +101,7 @@ describe('Page.Events.Load', function() {
   });
 });
 
-describe('Async stacks', () => {
+describe.skip(USES_HOOKS)('Async stacks', () => {
   it('should work', async({page, server}) => {
     server.setRoute('/empty.html', (req, res) => {
       req.socket.end();
@@ -113,50 +113,50 @@ describe('Async stacks', () => {
   });
 });
 
-describe.fail(FFOX && WIN).skip(CHANNEL)('Page.Events.Crash', function() {
+describe.fail(FFOX && WIN).skip(USES_HOOKS)('Page.Events.Crash', function() {
   // Firefox Win: it just doesn't crash sometimes.
 
-  function crash(page) {
+  function crash(pageImpl) {
     if (CHROMIUM)
-      page.goto('chrome://crash').catch(e => {});
+      pageImpl.goto('chrome://crash').catch(e => {});
     else if (WEBKIT)
-      page._delegate._session.send('Page.crash', {}).catch(e => {});
+      pageImpl._delegate._session.send('Page.crash', {}).catch(e => {});
     else if (FFOX)
-      page._delegate._session.send('Page.crash', {}).catch(e => {});
+      pageImpl._delegate._session.send('Page.crash', {}).catch(e => {});
   }
 
-  it('should emit crash event when page crashes', async({page}) => {
+  it('should emit crash event when page crashes', async({page, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
-    crash(page);
+    crash(toImpl(page));
     await new Promise(f => page.on('crash', f));
   });
-  it('should throw on any action after page crashes', async({page}) => {
+  it('should throw on any action after page crashes', async({page, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
-    crash(page);
+    crash(toImpl(page));
     await page.waitForEvent('crash');
     const err = await page.evaluate(() => {}).then(() => null, e => e);
     expect(err).toBeTruthy();
     expect(err.message).toContain('crash');
   });
-  it('should cancel waitForEvent when page crashes', async({page}) => {
+  it('should cancel waitForEvent when page crashes', async({page, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
     const promise = page.waitForEvent('response').catch(e => e);
-    crash(page);
+    crash(toImpl(page));
     const error = await promise;
     expect(error.message).toContain('Page crashed');
   });
-  it('should cancel navigation when page crashes', async({page, server}) => {
+  it('should cancel navigation when page crashes', async({page, toImpl, server}) => {
     await page.setContent(`<div>This page should crash</div>`);
     server.setRoute('/one-style.css', () => {});
     const promise = page.goto(server.PREFIX + '/one-style.html').catch(e => e);
     await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
-    crash(page);
+    crash(toImpl(page));
     const error = await promise;
     expect(error.message).toContain('Navigation failed because page crashed');
   });
-  it('should be able to close context when page crashes', async({page}) => {
+  it('should be able to close context when page crashes', async({page, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
-    crash(page);
+    crash(toImpl(page));
     await page.waitForEvent('crash');
     await page.context().close();
   });
@@ -1339,11 +1339,5 @@ describe('Page api coverage', function() {
     const frame = page.frame('inner');
     await frame.press('textarea', 'a');
     expect(await frame.evaluate(() => document.querySelector('textarea').value)).toBe('a');
-  });
-});
-
-describe.skip(!CHANNEL)('Page channel', function() {
-  it('page should be client stub', async({page, server}) => {
-    expect(!!page._channel).toBeTruthy();
   });
 });

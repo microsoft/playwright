@@ -29,7 +29,7 @@ export class Transport {
   constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream) {
     this._pipeWrite = pipeWrite;
     pipeRead.on('data', buffer => this._dispatch(buffer));
-    pipeRead.on('close', () => process.exit(0));
+    pipeRead.on('close', () => this.onclose && this.onclose());
     this.onmessage = undefined;
     this.onclose = undefined;
   }

@@ -16,7 +16,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = require('./utils').testOptions(browserType);
 
 describe('ElementHandle.boundingBox', function() {
   it.fail(FFOX && !HEADLESS)('should work', async({page, server}) => {
@@ -484,7 +484,7 @@ describe('ElementHandle convenience API', function() {
     expect(await handle.textContent()).toBe('Text,\nmore text');
     expect(await page.textContent('#inner')).toBe('Text,\nmore text');
   });
-  it('textContent should be atomic', async({page}) => {
+  it.skip(USES_HOOKS)('textContent should be atomic', async({page}) => {
     const createDummySelector = () => ({
       create(root, target) {},
       query(root, selector) {
@@ -506,7 +506,7 @@ describe('ElementHandle convenience API', function() {
     expect(tc).toBe('Hello');
     expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('modified');
   });
-  it('innerText should be atomic', async({page}) => {
+  it.skip(USES_HOOKS)('innerText should be atomic', async({page}) => {
     const createDummySelector = () => ({
       create(root, target) {},
       query(root, selector) {
@@ -528,7 +528,7 @@ describe('ElementHandle convenience API', function() {
     expect(tc).toBe('Hello');
     expect(await page.evaluate(() => document.querySelector('div').innerText)).toBe('modified');
   });
-  it('innerHTML should be atomic', async({page}) => {
+  it.skip(USES_HOOKS)('innerHTML should be atomic', async({page}) => {
     const createDummySelector = () => ({
       create(root, target) {},
       query(root, selector) {
@@ -550,7 +550,7 @@ describe('ElementHandle convenience API', function() {
     expect(tc).toBe('Hello<span>world</span>');
     expect(await page.evaluate(() => document.querySelector('div').innerHTML)).toBe('modified');
   });
-  it('getAttribute should be atomic', async({page}) => {
+  it.skip(USES_HOOKS)('getAttribute should be atomic', async({page}) => {
     const createDummySelector = () => ({
       create(root, target) {},
       query(root, selector) {

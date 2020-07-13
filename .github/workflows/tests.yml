@@ -174,7 +174,7 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
-        transport: [json, object]
+        transport: [wire, object]
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
@@ -194,8 +194,7 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "*,-pw:wrapped*"
-        PWCHANNEL: "1"
-        PWCHANNELTRANSPORT: ${{ matrix.transport }}
+        PWCHANNEL: ${{ matrix.transport }}
     - uses: actions/upload-artifact@v1
       if: failure()
       with:

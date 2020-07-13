@@ -19,9 +19,11 @@ const utils = require('./utils');
 const fs = require('fs');
 const path = require('path');
 const rm = require('rimraf').sync;
+const childProcess = require('child_process');
 const {TestServer} = require('../utils/testserver/');
 const { DispatcherConnection } = require('../lib/rpc/server/dispatcher');
 const { Connection } = require('../lib/rpc/client/connection');
+const { Transport } = require('../lib/rpc/transport');
 const { PlaywrightDispatcher } = require('../lib/rpc/server/playwrightDispatcher');
 
 class ServerEnvironment {
@@ -156,36 +158,71 @@ class TraceTestEnvironment {
 class PlaywrightEnvironment {
   constructor(playwright) {
     this._playwright = playwright;
+    this.spawnedProcess = undefined;
+    this.expectExit = false;
   }
 
   name() { return 'Playwright'; };
 
   async beforeAll(state) {
-    // Channel substitute
-    this.overriddenPlaywright = this._playwright;
     if (process.env.PWCHANNEL) {
-      const dispatcherConnection = new DispatcherConnection();
       const connection = new Connection();
-      dispatcherConnection.onmessage = async message => {
-        if (process.env.PWCHANNELJSON)
-          message = JSON.parse(JSON.stringify(message));
-        setImmediate(() => connection.dispatch(message));
-      };
-      connection.onmessage = async message => {
-        if (process.env.PWCHANNELJSON)
-          message = JSON.parse(JSON.stringify(message));
-        const result = await dispatcherConnection.dispatch(message);
-        await new Promise(f => setImmediate(f));
-        return result;
-      };
-      new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), this._playwright);
-      this.overriddenPlaywright = await connection.waitForObjectWithKnownName('playwright');
+      if (process.env.PWCHANNEL === 'wire') {
+        this.spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'rpc', 'server'), [], {
+          stdio: 'pipe',
+          detached: process.platform !== 'win32',
+        });
+        this.spawnedProcess.once('exit', (exitCode, signal) => {
+          this.spawnedProcess = undefined;
+          if (!this.expectExit)
+            throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
+        });
+        process.on('exit', () => this._killProcess());
+        const transport = new Transport(this.spawnedProcess.stdin, this.spawnedProcess.stdout);
+        connection.onmessage = message => transport.send(JSON.stringify(message));
+        transport.onmessage = message => connection.dispatch(JSON.parse(message));
+      } else {
+        const dispatcherConnection = new DispatcherConnection();
+        dispatcherConnection.onmessage = async message => {
+          setImmediate(() => connection.dispatch(message));
+        };
+        connection.onmessage = async message => {
+          const result = await dispatcherConnection.dispatch(message);
+          await new Promise(f => setImmediate(f));
+          return result;
+        };
+        new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), this._playwright);
+        state.toImpl = x => dispatcherConnection._dispatchers.get(x._guid)._object;
+      }
+      state.playwright = await connection.waitForObjectWithKnownName('playwright');
+    } else {
+      state.toImpl = x => x;
+      state.playwright = this._playwright;
     }
-    state.playwright = this.overriddenPlaywright;
   }
 
   async afterAll(state) {
+    if (this.spawnedProcess) {
+      const exited = new Promise(f => this.spawnedProcess.once('exit', f));
+      this.expectExit = true;
+      this.spawnedProcess.kill();
+      await exited;
+    }
     delete state.playwright;
+  }
+
+  _killProcess() {
+    if (this.spawnedProcess && this.spawnedProcess.pid) {
+      this.expectExit = true;
+      try {
+        if (process.platform === 'win32')
+          childProcess.execSync(`taskkill /pid ${this.spawnedProcess.pid} /T /F`);
+        else
+          process.kill(-this.spawnedProcess.pid, 'SIGKILL');
+      } catch (e) {
+        // the process might have already stopped
+      }
+    }
   }
 }
 

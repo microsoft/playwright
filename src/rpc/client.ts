@@ -22,6 +22,7 @@ import { Transport } from './transport';
 (async () => {
   const spawnedProcess = childProcess.fork(path.join(__dirname, 'server'), [], { stdio: 'pipe' });
   const transport = new Transport(spawnedProcess.stdin, spawnedProcess.stdout);
+  transport.onclose = () => process.exit(0);
   const connection = new Connection();
   connection.onmessage = message => transport.send(JSON.stringify(message));
   transport.onmessage = message => connection.dispatch(JSON.parse(message));
