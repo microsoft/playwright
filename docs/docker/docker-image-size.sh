@@ -26,4 +26,7 @@ echo "-- Saving .tar of the image..."
 docker save "${DOCKER_IMAGE_NAME}:bionic" > "${FILE_NAME}.tar"
 echo "-- Compressing image..."
 gzip "${FILE_NAME}.tar" >/dev/null
-du -sh ${FILE_NAME}.tar.gz
+
+echo "(generated with docker-image-size.sh)" > CURRENT_DOCKER_IMAGE_SIZE
+du -sh ${FILE_NAME}.tar.gz | cut -f1 | xargs >> CURRENT_DOCKER_IMAGE_SIZE
+
