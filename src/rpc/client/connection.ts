@@ -43,7 +43,7 @@ class Root extends ChannelOwner<Channel, {}> {
 export class Connection {
   readonly _objects = new Map<string, ChannelOwner>();
   private _waitingForObject = new Map<string, any>();
-  onmessage = (message: string): void => {};
+  onmessage = (message: object): void => {};
   private _lastId = 0;
   private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void }>();
   private _rootObject: ChannelOwner;
@@ -62,7 +62,7 @@ export class Connection {
     const id = ++this._lastId;
     const converted = { id, ...message, params: this._replaceChannelsWithGuids(message.params) };
     debug('pw:channel:command')(converted);
-    this.onmessage(JSON.stringify(converted));
+    this.onmessage(converted);
     return new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject }));
   }
 
@@ -70,11 +70,10 @@ export class Connection {
     return this._rootObject._debugScopeState();
   }
 
-  dispatch(message: string) {
-    const parsedMessage = JSON.parse(message);
-    const { id, guid, method, params, result, error } = parsedMessage;
+  dispatch(message: object) {
+    const { id, guid, method, params, result, error } = message as any;
     if (id) {
-      debug('pw:channel:response')(parsedMessage);
+      debug('pw:channel:response')(message);
       const callback = this._callbacks.get(id)!;
       this._callbacks.delete(id);
       if (error)
@@ -84,7 +83,7 @@ export class Connection {
       return;
     }
 
-    debug('pw:channel:event')(parsedMessage);
+    debug('pw:channel:event')(message);
     if (method === '__create__') {
       this._createRemoteObject(guid, params.type, params.guid, params.initializer);
       return;

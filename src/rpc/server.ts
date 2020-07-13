@@ -21,8 +21,8 @@ import { PlaywrightDispatcher } from './server/playwrightDispatcher';
 
 const dispatcherConnection = new DispatcherConnection();
 const transport = new Transport(process.stdout, process.stdin);
-transport.onmessage = message => dispatcherConnection.dispatch(message);
-dispatcherConnection.onmessage = message => transport.send(message);
+transport.onmessage = message => dispatcherConnection.dispatch(JSON.parse(message));
+dispatcherConnection.onmessage = message => transport.send(JSON.stringify(message));
 
 const playwright = new Playwright(__dirname, require('../../browsers.json')['browsers']);
 new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);

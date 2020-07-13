@@ -67,7 +67,7 @@ describe('Playwright', function() {
       const e = new Error('Dummy');
       const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
       const error = await browserType.launch(options).catch(e => e);
-      expect(error).toBe(e);
+      expect(error.message).toContain('Dummy');
     });
     it.skip(USES_HOOKS)('should report launch log', async({browserType, defaultBrowserOptions}) => {
       const e = new Error('Dummy');
