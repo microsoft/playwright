@@ -98,11 +98,7 @@ export interface BrowserContextChannel extends Channel {
   on(event: 'crServiceWorker', callback: (params: WorkerChannel) => void): this;
   crNewCDPSession(params: { page: PageChannel }): Promise<CDPSessionChannel>;
 }
-export type BrowserContextInitializer = {
-  pages: PageChannel[],
-  crBackgroundPages: PageChannel[],
-  crServiceWorkers: WorkerChannel[],
-};
+export type BrowserContextInitializer = {};
 
 
 export interface PageChannel extends Channel {
@@ -116,7 +112,6 @@ export interface PageChannel extends Channel {
   on(event: 'fileChooser', callback: (params: { element: ElementHandleChannel, isMultiple: boolean }) => void): this;
   on(event: 'frameAttached', callback: (params: FrameChannel) => void): this;
   on(event: 'frameDetached', callback: (params: FrameChannel) => void): this;
-  on(event: 'frameNavigated', callback: (params: { frame: FrameChannel, url: string, name: string }) => void): this;
   on(event: 'frameNavigated', callback: (params: { frame: FrameChannel, url: string, name: string }) => void): this;
   on(event: 'load', callback: () => void): this;
   on(event: 'pageError', callback: (params: { error: types.Error }) => void): this;

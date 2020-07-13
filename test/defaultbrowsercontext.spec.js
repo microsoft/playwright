@@ -374,4 +374,19 @@ describe('launchPersistentContext()', function() {
     await close(state);
     expect(closed).toBe(true);
   });
+  it.skip(!CHROMIUM)('coverage should work', async state => {
+    const { page, server } = await launch(state);
+    await page.coverage.startJSCoverage();
+    await page.goto(server.PREFIX + '/jscoverage/simple.html', { waitUntil: 'load' });
+    const coverage = await page.coverage.stopJSCoverage();
+    expect(coverage.length).toBe(1);
+    expect(coverage[0].url).toContain('/jscoverage/simple.html');
+    expect(coverage[0].functions.find(f => f.functionName === 'foo').ranges[0].count).toEqual(1);
+    await close(state);
+  });
+  it.skip(CHROMIUM)('coverage should be missing', async state => {
+    const { page } = await launch(state);
+    expect(page.coverage).toBe(null);
+    await close(state);
+  });
 });

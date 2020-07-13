@@ -21,6 +21,7 @@ import { ChannelOwner } from './channelOwner';
 import { Func1, JSHandle, parseResult, serializeArgument, SmartHandle } from './jsHandle';
 import { Page } from './page';
 import { BrowserContext } from './browserContext';
+import { ChromiumBrowserContext } from './chromiumBrowserContext';
 
 export class Worker extends ChannelOwner<WorkerChannel, WorkerInitializer> {
   _page: Page | undefined;  // Set for web workers.
@@ -36,7 +37,7 @@ export class Worker extends ChannelOwner<WorkerChannel, WorkerInitializer> {
       if (this._page)
         this._page._workers.delete(this);
       if (this._context)
-        this._context._crServiceWorkers.delete(this);
+        (this._context as ChromiumBrowserContext)._serviceWorkers.delete(this);
       this.emit(Events.Worker.Close, this);
     });
   }

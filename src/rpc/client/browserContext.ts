@@ -25,16 +25,13 @@ import { helper } from '../../helper';
 import { Browser } from './browser';
 import { Events } from '../../events';
 import { TimeoutSettings } from '../../timeoutSettings';
-import { CDPSession } from './cdpSession';
-import { Events as ChromiumEvents } from '../../chromium/events';
-import { Worker } from './worker';
+import { BrowserType } from './browserType';
 
 export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserContextInitializer> {
   _pages = new Set<Page>();
-  _crBackgroundPages = new Set<Page>();
-  _crServiceWorkers = new Set<Worker>();
   private _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
-  _browser: Browser | undefined;
+  readonly _browser: Browser | undefined;
+  readonly _browserType: BrowserType;
   readonly _bindings = new Map<string, frames.FunctionWithSource>();
   private _pendingWaitForEvents = new Map<(error: Error) => void, string>();
   _timeoutSettings = new TimeoutSettings();
@@ -52,43 +49,22 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserContextInitializer) {
     super(parent, type, guid, initializer, true);
-    initializer.pages.forEach(p => {
-      const page = Page.from(p);
-      this._pages.add(page);
-      page._setBrowserContext(this);
-    });
+    if (parent instanceof Browser) {
+      this._browser = parent;
+      this._browserType = this._browser._browserType;
+    } else {
+      // Launching persistent context does not produce a browser at all.
+      this._browserType = parent as BrowserType;
+    }
+
     this._channel.on('bindingCall', bindingCall => this._onBinding(BindingCall.from(bindingCall)));
     this._channel.on('close', () => this._onClose());
     this._channel.on('page', page => this._onPage(Page.from(page)));
     this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
-
-    initializer.crBackgroundPages.forEach(p => {
-      const page = Page.from(p);
-      this._crBackgroundPages.add(page);
-      page._setBrowserContext(this);
-    });
-    this._channel.on('crBackgroundPage', pageChannel => {
-      const page = Page.from(pageChannel);
-      page._setBrowserContext(this);
-      this._crBackgroundPages.add(page);
-      this.emit(ChromiumEvents.CRBrowserContext.BackgroundPage, page);
-    });
-    initializer.crServiceWorkers.forEach(w => {
-      const worker = Worker.from(w);
-      worker._context = this;
-      this._crServiceWorkers.add(worker);
-    });
-    this._channel.on('crServiceWorker', serviceWorkerChannel => {
-      const worker = Worker.from(serviceWorkerChannel);
-      worker._context = this;
-      this._crServiceWorkers.add(worker);
-      this.emit(ChromiumEvents.CRBrowserContext.ServiceWorker, worker);
-    });
   }
 
   private _onPage(page: Page): void {
-    page._setBrowserContext(this);
     this._pages.add(page);
     this.emit(Events.BrowserContext.Page, page);
   }
@@ -233,17 +209,5 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
       await this._channel.close();
     }
     await this._closedPromise;
-  }
-
-  async newCDPSession(page: Page): Promise<CDPSession> {
-    return CDPSession.from(await this._channel.crNewCDPSession({ page: page._channel }));
-  }
-
-  backgroundPages(): Page[] {
-    return [...this._crBackgroundPages];
-  }
-
-  serviceWorkers(): Worker[] {
-    return [...this._crServiceWorkers];
   }
 }

@@ -75,6 +75,7 @@ module.exports = {
         './autowaiting.spec.js',
         './click.spec.js',
         './cookies.spec.js',
+        './coverage.spec.js',
         './dialog.spec.js',
         './dispatchevent.spec.js',
         './download.spec.js',
@@ -90,6 +91,7 @@ module.exports = {
         './navigation.spec.js',
         './network.spec.js',
         './page.spec.js',
+        './pdf.spec.js',
         './queryselector.spec.js',
         './screenshot.spec.js',
         './waittask.spec.js',
@@ -105,8 +107,6 @@ module.exports = {
     {
       files: [
         './chromium/chromium.spec.js',
-        './chromium/coverage.spec.js',
-        './chromium/pdf.spec.js',
         './chromium/session.spec.js',
       ],
       browsers: ['chromium'],
