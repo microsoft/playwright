@@ -23,8 +23,11 @@ import { ChannelOwner } from './channelOwner';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
 import { JSHandle, Func1, FuncOn, SmartHandle, serializeArgument, parseResult } from './jsHandle';
 import * as network from './network';
-import { Response } from './network';
 import { Page } from './page';
+import { EventEmitter } from 'events';
+import { Waiter } from './waiter';
+import { Events } from '../../events';
+import { TimeoutError } from '../../errors';
 
 export type GotoOptions = types.NavigateOptions & {
   referer?: string,
@@ -33,6 +36,8 @@ export type GotoOptions = types.NavigateOptions & {
 export type FunctionWithSource = (source: { context: BrowserContext, page: Page, frame: Frame }, ...args: any) => any;
 
 export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
+  _eventEmitter: EventEmitter;
+  _loadStates: Set<types.LifecycleEvent>;
   _parentFrame: Frame | null = null;
   _url = '';
   _name = '';
@@ -50,23 +55,45 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: FrameInitializer) {
     super(parent, type, guid, initializer);
+    this._eventEmitter = new EventEmitter();
+    this._eventEmitter.setMaxListeners(0);
     this._parentFrame = Frame.fromNullable(initializer.parentFrame);
     if (this._parentFrame)
       this._parentFrame._childFrames.add(this);
     this._name = initializer.name;
     this._url = initializer.url;
+    this._loadStates = new Set(initializer.loadStates);
+    this._channel.on('loadstate', event => {
+      if (event.add) {
+        this._loadStates.add(event.add);
+        this._eventEmitter.emit('loadstate', event.add);
+      }
+      if (event.remove)
+        this._loadStates.delete(event.remove);
+    });
   }
 
   async goto(url: string, options: GotoOptions = {}): Promise<network.Response | null> {
-    return Response.fromNullable(await this._channel.goto({ url, ...options, isPage: this._page!._isPageCall }));
+    return network.Response.fromNullable(await this._channel.goto({ url, ...options, isPage: this._page!._isPageCall }));
   }
 
   async waitForNavigation(options: types.WaitForNavigationOptions = {}): Promise<network.Response | null> {
-    return Response.fromNullable(await this._channel.waitForNavigation({ ...options, isPage: this._page!._isPageCall }));
+    return network.Response.fromNullable(await this._channel.waitForNavigation({ ...options, isPage: this._page!._isPageCall }));
   }
 
   async waitForLoadState(state: types.LifecycleEvent = 'load', options: types.TimeoutOptions = {}): Promise<void> {
-    await this._channel.waitForLoadState({ state, ...options, isPage: this._page!._isPageCall });
+    state = verifyLoadState(state);
+    if (this._loadStates.has(state))
+      return;
+    const timeout = this._page!._timeoutSettings.navigationTimeout(options);
+    const apiName = this._page!._isPageCall ? 'page.waitForLoadState' : 'frame.waitForLoadState';
+    const waiter = new Waiter();
+    waiter.rejectOnEvent(this._page!, Events.Page.Close, new Error('Navigation failed because page was closed!'));
+    waiter.rejectOnEvent(this._page!, Events.Page.Crash, new Error('Navigation failed because page crashed!'));
+    waiter.rejectOnEvent<Frame>(this._page!, Events.Page.FrameDetached, new Error('Navigating frame was detached!'), frame => frame === this);
+    waiter.rejectOnTimeout(timeout, new TimeoutError(`Timeout ${timeout}ms exceeded during ${apiName}.`));
+    await waiter.waitForEvent<types.LifecycleEvent>(this._eventEmitter, 'loadstate', s => s === state);
+    waiter.dispose();
   }
 
   async frameElement(): Promise<ElementHandle> {
@@ -227,4 +254,12 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   async title(): Promise<string> {
     return await this._channel.title();
   }
+}
+
+function verifyLoadState(waitUntil: types.LifecycleEvent): types.LifecycleEvent {
+  if (waitUntil as unknown === 'networkidle0')
+    waitUntil = 'networkidle';
+  if (!types.kLifecycleEvents.has(waitUntil))
+    throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
+  return waitUntil;
 }

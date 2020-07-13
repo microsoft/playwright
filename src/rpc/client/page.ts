@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
 import { TimeoutError } from '../../errors';
 import { Events } from '../../events';
 import { assert, assertMaxArguments, helper, Listener } from '../../helper';
@@ -38,6 +37,7 @@ import { Request, Response, Route, RouteHandler } from './network';
 import { FileChooser } from './fileChooser';
 import { Buffer } from 'buffer';
 import { Coverage } from './coverage';
+import { Waiter } from './waiter';
 
 export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   private _browserContext: BrowserContext;
@@ -57,8 +57,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   pdf?: (options?: types.PDFOptions) => Promise<Buffer>;
 
   readonly _bindings = new Map<string, FunctionWithSource>();
-  private _pendingWaitForEvents = new Map<(error: Error) => void, string>();
-  private _timeoutSettings: TimeoutSettings;
+  readonly _timeoutSettings: TimeoutSettings;
   _isPageCall = false;
 
   static from(page: PageChannel): Page {
@@ -166,24 +165,11 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   private _onClose() {
     this._closed = true;
     this._browserContext._pages.delete(this);
-    this._rejectPendingOperations(false);
     this.emit(Events.Page.Close);
   }
 
   private _onCrash() {
-    this._rejectPendingOperations(true);
     this.emit(Events.Page.Crash);
-  }
-
-  private _rejectPendingOperations(isCrash: boolean) {
-    for (const [listener, event] of this._pendingWaitForEvents) {
-      if (event === Events.Page.Close && !isCrash)
-        continue;
-      if (event === Events.Page.Crash && isCrash)
-        continue;
-      listener(new Error(isCrash ? 'Page crashed' : 'Page closed'));
-    }
-    this._pendingWaitForEvents.clear();
   }
 
   context(): BrowserContext {
@@ -214,6 +200,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   setDefaultNavigationTimeout(timeout: number) {
+    this._timeoutSettings.setDefaultNavigationTimeout(timeout);
     this._channel.setDefaultNavigationTimeoutNoReply({ timeout });
   }
 
@@ -340,12 +327,16 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
-    let reject: () => void;
-    const result = await Promise.race([
-      waitForEvent(this, event, optionsOrPredicate, this._timeoutSettings.timeout(optionsOrPredicate instanceof Function ? {} : optionsOrPredicate)),
-      new Promise((f, r) => { reject = r; this._pendingWaitForEvents.set(reject, event); })
-    ]);
-    this._pendingWaitForEvents.delete(reject!);
+    const timeout = this._timeoutSettings.timeout(optionsOrPredicate instanceof Function ? {} : optionsOrPredicate);
+    const predicate = optionsOrPredicate instanceof Function ? optionsOrPredicate : optionsOrPredicate.predicate;
+    const waiter = new Waiter();
+    waiter.rejectOnTimeout(timeout, new TimeoutError(`Timeout while waiting for event "${event}"`));
+    if (event !== Events.Page.Crash)
+      waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
+    if (event !== Events.Page.Close)
+      waiter.rejectOnEvent(this, Events.Page.Close, new Error('Page closed'));
+    const result = await waiter.waitForEvent(this, event, predicate as any);
+    waiter.dispose();
     return result;
   }
 
@@ -542,30 +533,4 @@ export class BindingCall extends ChannelOwner<BindingCallChannel, BindingCallIni
       this._channel.reject({ error: serializeError(e) });
     }
   }
-}
-
-export async function waitForEvent(emitter: EventEmitter, event: string, optionsOrPredicate: types.WaitForEventOptions = {}, defaultTimeout: number): Promise<any> {
-  let predicate: Function | undefined;
-  let timeout = defaultTimeout;
-  if (typeof optionsOrPredicate === 'function') {
-    predicate = optionsOrPredicate;
-  } else if (optionsOrPredicate.predicate) {
-    if (optionsOrPredicate.timeout !== undefined)
-      timeout = optionsOrPredicate.timeout;
-    predicate = optionsOrPredicate.predicate;
-  }
-  let callback: (a: any) => void;
-  const result = new Promise(f => callback = f);
-  const listener = helper.addEventListener(emitter, event, param => {
-    if (predicate && !predicate(param))
-      return;
-    callback(param);
-    helper.removeEventListeners([listener]);
-  });
-  if (timeout === 0)
-    return result;
-  return Promise.race([
-    result,
-    new Promise((f, r) => setTimeout(() => r(new TimeoutError('Timeout while waiting for event')), timeout))
-  ]);
 }

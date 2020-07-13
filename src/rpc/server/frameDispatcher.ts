@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Frame } from '../../frames';
+import { Frame, kAddLifecycleEvent, kRemoveLifecycleEvent } from '../../frames';
 import * as types from '../../types';
 import { ElementHandleChannel, FrameChannel, FrameInitializer, JSHandleChannel, ResponseChannel, PageAttribution } from '../channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
@@ -34,19 +34,21 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     super(scope, frame, 'frame', {
       url: frame.url(),
       name: frame.name(),
-      parentFrame: lookupNullableDispatcher<FrameDispatcher>(frame.parentFrame())
+      parentFrame: lookupNullableDispatcher<FrameDispatcher>(frame.parentFrame()),
+      loadStates: Array.from(frame._subtreeLifecycleEvents),
     });
     this._frame = frame;
+    frame._eventEmitter.on(kAddLifecycleEvent, (event: types.LifecycleEvent) => {
+      this._dispatchEvent('loadstate', { add: event });
+    });
+    frame._eventEmitter.on(kRemoveLifecycleEvent, (event: types.LifecycleEvent) => {
+      this._dispatchEvent('loadstate', { remove: event });
+    });
   }
 
   async goto(params: { url: string } & types.GotoOptions & PageAttribution): Promise<ResponseChannel | null> {
     const target = params.isPage ? this._frame._page : this._frame;
     return lookupNullableDispatcher<ResponseDispatcher>(await target.goto(params.url, params));
-  }
-
-  async waitForLoadState(params: { state?: 'load' | 'domcontentloaded' | 'networkidle' } & types.TimeoutOptions & PageAttribution): Promise<void> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    await target.waitForLoadState(params.state, params);
   }
 
   async waitForNavigation(params: types.WaitForNavigationOptions & PageAttribution): Promise<ResponseChannel | null> {

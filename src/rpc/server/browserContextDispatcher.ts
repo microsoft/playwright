@@ -17,11 +17,10 @@
 import * as types from '../../types';
 import { BrowserContextBase, BrowserContext } from '../../browserContext';
 import { Events } from '../../events';
-import { Dispatcher, DispatcherScope, lookupNullableDispatcher, lookupDispatcher } from './dispatcher';
+import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
 import { PageChannel, BrowserContextChannel, BrowserContextInitializer, CDPSessionChannel } from '../channels';
 import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
-import { Page } from '../../page';
 import { CRBrowserContext } from '../../chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Events as ChromiumEvents } from '../../chromium/events';
@@ -119,13 +118,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
     this._context.route('**/*', (route, request) => {
       this._dispatchEvent('route', { route: new RouteDispatcher(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
     });
-  }
-
-  async waitForEvent(params: { event: string }): Promise<any> {
-    const result = await this._context.waitForEvent(params.event);
-    if (result instanceof Page)
-      return lookupNullableDispatcher<PageDispatcher>(result);
-    return result;
   }
 
   async close(): Promise<void> {
