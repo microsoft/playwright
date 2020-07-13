@@ -29,6 +29,7 @@ export type PlaywrightInitializer = {
   chromium: BrowserTypeChannel,
   firefox: BrowserTypeChannel,
   webkit: BrowserTypeChannel,
+  electron?: ElectronChannel,
   deviceDescriptors: types.Devices,
   selectors: SelectorsChannel,
 };
@@ -384,4 +385,33 @@ export type PDFOptions = {
   preferCSSPageSize?: boolean,
   margin?: {top?: string, bottom?: string, left?: string, right?: string},
   path?: string,
+};
+
+
+export type ElectronLaunchOptions = {
+  args?: string[],
+  cwd?: string,
+  env?: {[key: string]: string|number|boolean},
+  handleSIGINT?: boolean,
+  handleSIGTERM?: boolean,
+  handleSIGHUP?: boolean,
+  timeout?: number,
+};
+export interface ElectronChannel extends Channel {
+  launch(params: { executablePath: string } & ElectronLaunchOptions): Promise<ElectronApplicationChannel>;
 }
+export type ElectronInitializer = {};
+
+
+export interface ElectronApplicationChannel extends Channel {
+  on(event: 'close', callback: () => void): this;
+  on(event: 'window', callback: (params: PageChannel) => void): this;
+
+  newBrowserWindow(params: { arg: any }): Promise<PageChannel>;
+  evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<any>;
+  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any }): Promise<JSHandleChannel>;
+  close(): Promise<void>;
+}
+export type ElectronApplicationInitializer = {
+  context: BrowserContextChannel,
+};

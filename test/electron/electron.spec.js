@@ -21,7 +21,7 @@ const {CHANNEL} = utils.testOptions(browserType);
 
 const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
 
-describe.skip(CHANNEL)('Electron', function() {
+describe('Electron', function() {
   beforeEach(async (state, testRun) => {
     const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
     state.logger = utils.createTestLogger(config.dumpLogOnFailure, testRun);
@@ -55,7 +55,7 @@ describe.skip(CHANNEL)('Electron', function() {
     await page.goto('data:text/html,<title>Hello World 2</title>');
     expect(await page.title()).toBe('Hello World 2');
   });
-  it('should create multiple windows', async ({ application }) => {
+  it.skip(CHANNEL)('should create multiple windows', async ({ application }) => {
     const createPage = async ordinal => {
       const page = await application.newBrowserWindow({ width: 800, height: 600 });
       await Promise.all([
@@ -117,7 +117,7 @@ describe.skip(CHANNEL)('Electron', function() {
   });
 });
 
-describe.skip(CHANNEL)('Electron per window', function() {
+describe('Electron per window', function() {
   beforeAll(async state => {
     const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
     state.application = await state.playwright.electron.launch(electronPath, {

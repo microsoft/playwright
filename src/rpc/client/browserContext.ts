@@ -25,7 +25,6 @@ import { helper } from '../../helper';
 import { Browser } from './browser';
 import { Events } from '../../events';
 import { TimeoutSettings } from '../../timeoutSettings';
-import { BrowserType } from './browserType';
 import { Waiter } from './waiter';
 import { TimeoutError } from '../../errors';
 
@@ -33,7 +32,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   _pages = new Set<Page>();
   private _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
   readonly _browser: Browser | undefined;
-  readonly _browserType: BrowserType;
+  readonly _browserName: string;
   readonly _bindings = new Map<string, frames.FunctionWithSource>();
   _timeoutSettings = new TimeoutSettings();
   _ownerPage: Page | undefined;
@@ -48,15 +47,11 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     return context ? BrowserContext.from(context) : null;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserContextInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserContextInitializer, browserName: string) {
     super(parent, type, guid, initializer, true);
-    if (parent instanceof Browser) {
+    if (parent instanceof Browser)
       this._browser = parent;
-      this._browserType = this._browser._browserType;
-    } else {
-      // Launching persistent context does not produce a browser at all.
-      this._browserType = parent as BrowserType;
-    }
+    this._browserName = browserName;
 
     this._channel.on('bindingCall', bindingCall => this._onBinding(BindingCall.from(bindingCall)));
     this._channel.on('close', () => this._onClose());

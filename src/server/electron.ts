@@ -63,7 +63,7 @@ export class ElectronApplication extends EventEmitter {
   private _nodeConnection: CRConnection;
   private _nodeSession: CRSession;
   private _nodeExecutionContext: js.ExecutionContext | undefined;
-  private _nodeElectronHandle: js.JSHandle<any> | undefined;
+  _nodeElectronHandle: js.JSHandle<any> | undefined;
   private _windows = new Set<ElectronPage>();
   private _lastWindowId = 0;
   readonly _timeoutSettings = new TimeoutSettings();

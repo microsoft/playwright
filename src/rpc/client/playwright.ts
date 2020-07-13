@@ -19,6 +19,7 @@ import * as types from '../../types';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { Selectors } from './selectors';
+import { Electron } from './electron';
 
 export class Playwright extends ChannelOwner<PlaywrightChannel, PlaywrightInitializer> {
   chromium: BrowserType;
@@ -32,6 +33,8 @@ export class Playwright extends ChannelOwner<PlaywrightChannel, PlaywrightInitia
     this.chromium = BrowserType.from(initializer.chromium);
     this.firefox = BrowserType.from(initializer.firefox);
     this.webkit = BrowserType.from(initializer.webkit);
+    if (initializer.electron)
+      (this as any).electron = Electron.from(initializer.electron);
     this.devices = initializer.deviceDescriptors;
     this.selectors = Selectors.from(initializer.selectors);
   }

@@ -32,6 +32,7 @@ import { parseError } from '../serializers';
 import { BrowserServer } from './browserServer';
 import { CDPSession } from './cdpSession';
 import { Playwright } from './playwright';
+import { Electron, ElectronApplication } from './electron';
 import { Channel } from '../channels';
 import { ChromiumBrowser } from './chromiumBrowser';
 import { ChromiumBrowserContext } from './chromiumBrowserContext';
@@ -151,12 +152,21 @@ export class Connection {
         result = new CDPSession(parent, type, guid, initializer);
         break;
       case 'context':
-        // Launching persistent context produces BrowserType parent directly for BrowserContext.
-        const browserType = parent instanceof Browser ? parent._browserType : parent as BrowserType;
-        if (browserType.name() === 'chromium')
+        let browserName = '';
+        if (parent instanceof Electron) {
+          // Launching electron produces Electron parent for BrowserContext.
+          browserName = 'electron';
+        } else if (parent instanceof Browser) {
+          // Launching a browser produces Browser parent for BrowserContext.
+          browserName = parent._browserType.name();
+        } else {
+          // Launching persistent context produces BrowserType parent for BrowserContext.
+          browserName = (parent as BrowserType).name();
+        }
+        if (browserName === 'chromium')
           result = new ChromiumBrowserContext(parent, type, guid, initializer);
         else
-          result = new BrowserContext(parent, type, guid, initializer);
+          result = new BrowserContext(parent, type, guid, initializer, browserName);
         break;
       case 'consoleMessage':
         result = new ConsoleMessage(parent, type, guid, initializer);
@@ -166,6 +176,12 @@ export class Connection {
         break;
       case 'download':
         result = new Download(parent, type, guid, initializer);
+        break;
+      case 'electron':
+        result = new Electron(parent, type, guid, initializer);
+        break;
+      case 'electronApplication':
+        result = new ElectronApplication(parent, type, guid, initializer);
         break;
       case 'elementHandle':
         result = new ElementHandle(parent, type, guid, initializer);

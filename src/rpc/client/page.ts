@@ -104,7 +104,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     this._channel.on('route', ({ route, request }) => this._onRoute(Route.from(route), Request.from(request)));
     this._channel.on('worker', worker => this._onWorker(Worker.from(worker)));
 
-    if (this._browserContext._browserType.name() === 'chromium') {
+    if (this._browserContext._browserName === 'chromium') {
       this.coverage = new Coverage(this._channel);
       this.pdf = options => this._pdf(options);
     }
