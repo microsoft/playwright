@@ -1,4 +1,4 @@
-name: "canary"
+name: "devrelease"
 
 on:
   push:
@@ -10,8 +10,8 @@ env:
   CI: true
 
 jobs:
-  publish-canary:
-    name: "publish"
+  publish-canary-npm:
+    name: "publish to NPM"
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
@@ -26,14 +26,4 @@ jobs:
     - run: utils/publish_all_packages.sh --tip-of-tree
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-    - uses: docker/build-push-action@v1
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        registry: playwright.azurecr.io
-        repository: microsoft/playwright
-        path: docs/docker/
-        dockerfile: docs/docker/Dockerfile.bionic
-        tags: dev
-        tag_with_sha: true
 

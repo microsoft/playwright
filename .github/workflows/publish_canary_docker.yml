@@ -1,0 +1,27 @@
+name: "devrelease"
+
+on:
+  push:
+    branches:
+      - master
+      - release-*
+    paths:
+      - docs/docker/**
+
+jobs:
+  publish-canary-docker:
+    name: "publish to DockerHub"
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: docker/build-push-action@v1
+      with:
+        username: playwright
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        registry: playwright.azurecr.io
+        repository: public/playwright
+        path: docs/docker/
+        dockerfile: docs/docker/Dockerfile.bionic
+        tags: dev
+        tag_with_sha: true
+
