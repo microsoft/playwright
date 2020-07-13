@@ -455,7 +455,10 @@ export class WKPage implements PageDelegate {
     if (level === 'debug' && parameters && parameters[0].value === BINDING_CALL_MESSAGE) {
       const parsedObjectId = JSON.parse(parameters[1].objectId!);
       const context = this._contextIdToContext.get(parsedObjectId.injectedScriptId)!;
-      this._page._onBindingCalled(parameters[2].value, context);
+      this.pageOrError().then(pageOrError => {
+        if (!(pageOrError instanceof Error))
+          this._page._onBindingCalled(parameters[2].value, context);
+      });
       return;
     }
     if (level === 'error' && source === 'javascript') {

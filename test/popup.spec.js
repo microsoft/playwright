@@ -200,11 +200,15 @@ describe('window.open', function() {
     expect(await popup.evaluate('injected')).toBe(123);
     await context.close();
   });
-
   it('should expose function from browser context', async function({browser, server}) {
     const context = await browser.newContext();
-    await context.exposeFunction('add', (a, b) => a + b);
+    const messages = [];
+    await context.exposeFunction('add', (a, b) => {
+      messages.push('binding');
+      return a + b;
+    });
     const page = await context.newPage();
+    context.on('page', () => messages.push('page'));
     await page.goto(server.EMPTY_PAGE);
     const added = await page.evaluate(async () => {
       const win = window.open('about:blank');
@@ -212,6 +216,35 @@ describe('window.open', function() {
     });
     await context.close();
     expect(added).toBe(13);
+    expect(messages.join('|')).toBe('page|binding');
+  });
+  it('should not dispatch binding on a closed page', async function({browser, server}) {
+    const context = await browser.newContext();
+    const messages = [];
+    await context.exposeFunction('add', (a, b) => {
+      messages.push('binding');
+      return a + b;
+    });
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    await Promise.all([
+      page.waitForEvent('popup').then(popup => {
+        if (popup.isClosed())
+          messages.push('alreadyclosed');
+        else
+          return popup.waitForEvent('close').then(() => messages.push('close'));
+      }),
+      page.evaluate(async () => {
+        const win = window.open('about:blank');
+        win.add(9, 4);
+        win.close();
+      }),
+    ]);
+    await context.close();
+    if (FFOX)
+      expect(messages.join('|')).toBe('alreadyclosed');
+    else
+      expect(messages.join('|')).toBe('binding|close');
   });
 });
 
@@ -252,7 +285,7 @@ describe('Page.Events.Popup', function() {
     expect(popup).toBeTruthy();
     await context.close();
   });
-  it('should emit for immediately closed popups', async({browser, server}) => {
+  it('should emit for immediately closed popups 2', async({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
