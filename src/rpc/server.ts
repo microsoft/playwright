@@ -21,6 +21,7 @@ import { PlaywrightDispatcher } from './server/playwrightDispatcher';
 
 const dispatcherConnection = new DispatcherConnection();
 const transport = new Transport(process.stdout, process.stdin);
+transport.onclose = () => process.exit(0);
 transport.onmessage = message => dispatcherConnection.dispatch(JSON.parse(message));
 dispatcherConnection.onmessage = message => transport.send(JSON.stringify(message));
 

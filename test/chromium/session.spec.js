@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('../utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, CHANNEL, USES_HOOKS} = require('../utils').testOptions(browserType);
 
 describe('ChromiumBrowserContext.createSession', function() {
   it('should work', async function({page, browser, server}) {
@@ -66,7 +66,7 @@ describe('ChromiumBrowserContext.createSession', function() {
     }
     expect(error.message).toContain(CHANNEL ? 'Target browser or context has been closed' : 'Session closed.');
   });
-  it('should throw nice errors', async function({page, browser}) {
+  it.skip(USES_HOOKS)('should throw nice errors', async function({page, browser}) {
     const client = await page.context().newCDPSession(page);
     const error = await theSourceOfTheProblems().catch(error => error);
     expect(error.stack).toContain('theSourceOfTheProblems');

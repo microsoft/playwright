@@ -17,8 +17,6 @@
 
 const utils = require('./utils');
 const {FFOX, CHROMIUM, WEBKIT, LINUX} = utils.testOptions(browserType);
-const iPhone = playwright.devices['iPhone 6'];
-const iPhoneLandscape = playwright.devices['iPhone 6 landscape'];
 
 describe('BrowserContext({viewport})', function() {
   it('should get the proper default viewport size', async({page, server}) => {
@@ -84,7 +82,8 @@ describe('BrowserContext({viewport})', function() {
 
 describe.skip(FFOX)('viewport.isMobile', () => {
   // Firefox does not support isMobile.
-  it('should support mobile emulation', async({browser, server}) => {
+  it('should support mobile emulation', async({playwright, browser, server}) => {
+    const iPhone = playwright.devices['iPhone 6'];
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/mobile.html');
@@ -93,7 +92,8 @@ describe.skip(FFOX)('viewport.isMobile', () => {
     expect(await page.evaluate(() => window.innerWidth)).toBe(400);
     await context.close();
   });
-  it('should support touch emulation', async({browser, server}) => {
+  it('should support touch emulation', async({playwright, browser, server}) => {
+    const iPhone = playwright.devices['iPhone 6'];
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/mobile.html');
@@ -114,7 +114,8 @@ describe.skip(FFOX)('viewport.isMobile', () => {
       return promise;
     }
   });
-  it('should be detectable by Modernizr', async({browser, server}) => {
+  it('should be detectable by Modernizr', async({playwright, browser, server}) => {
+    const iPhone = playwright.devices['iPhone 6'];
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/detect-touch.html');
@@ -129,7 +130,9 @@ describe.skip(FFOX)('viewport.isMobile', () => {
     expect(await page.evaluate(() => Modernizr.touchevents)).toBe(true);
     await context.close();
   });
-  it('should support landscape emulation', async({browser, server}) => {
+  it('should support landscape emulation', async({playwright, browser, server}) => {
+    const iPhone = playwright.devices['iPhone 6'];
+    const iPhoneLandscape = playwright.devices['iPhone 6 landscape'];
     const context1 = await browser.newContext({ ...iPhone });
     const page1 = await context1.newPage();
     await page1.goto(server.PREFIX + '/mobile.html');
@@ -184,7 +187,8 @@ describe.skip(FFOX)('viewport.isMobile', () => {
 });
 
 describe.skip(FFOX)('Page.emulate', function() {
-  it('should work', async({browser, server}) => {
+  it('should work', async({playwright, browser, server}) => {
+    const iPhone = playwright.devices['iPhone 6'];
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/mobile.html');
@@ -192,7 +196,8 @@ describe.skip(FFOX)('Page.emulate', function() {
     expect(await page.evaluate(() => navigator.userAgent)).toContain('iPhone');
     await context.close();
   });
-  it('should support clicking', async({browser, server}) => {
+  it('should support clicking', async({playwright, browser, server}) => {
+    const iPhone = playwright.devices['iPhone 6'];
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/input/button.html');

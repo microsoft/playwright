@@ -202,7 +202,7 @@ const utils = module.exports = {
       GOLDEN_DIR,
       OUTPUT_DIR,
       ASSETS_DIR,
-      USES_HOOKS: process.env.PWCHANNELTRANSPORT === 'json',
+      USES_HOOKS: process.env.PWCHANNEL === 'wire',
       CHANNEL: !!process.env.PWCHANNEL,
       HEADLESS: !!valueFromEnv('HEADLESS', true),
     };

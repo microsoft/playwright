@@ -17,7 +17,7 @@
 
 const path = require('path');
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, CHANNEL, USES_HOOKS} = utils.testOptions(browserType);
 
 describe('Page.$eval', function() {
   it('should work with css selector', async({page, server}) => {
@@ -743,7 +743,7 @@ describe('attribute selector', () => {
   });
 });
 
-describe('selectors.register', () => {
+describe.skip(USES_HOOKS)('selectors.register', () => {
   it.skip(CHANNEL)('should work', async ({page}) => {
     const createTagSelector = () => ({
       create(root, target) {

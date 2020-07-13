@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = require('./utils').testOptions(browserType);
 
 class WritableBuffer {
   constructor() {
@@ -51,15 +51,15 @@ class WritableBuffer {
   }
 }
 
-describe.skip(CHANNEL)('Recorder', function() {
+describe.skip(USES_HOOKS)('Recorder', function() {
   beforeEach(async state => {
     state.context = await state.browser.newContext();
     state.output = new WritableBuffer();
-    const debugController = state.context._initDebugModeForTest({ recorderOutput: state.output });
+    const debugController = state.toImpl(state.context)._initDebugModeForTest({ recorderOutput: state.output });
     state.page = await state.context.newPage();
     state.setContent = async (content) => {
       await state.page.setContent(content);
-      await debugController.ensureInstalledInFrameForTest(state.page.mainFrame());
+      await debugController.ensureInstalledInFrameForTest(state.toImpl(state.page.mainFrame()));
     };
   });
 

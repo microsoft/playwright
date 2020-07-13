@@ -15,7 +15,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, WIN} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = utils.testOptions(browserType);
 
 describe('Page.dispatchEvent(click)', function() {
   it('should dispatch click event', async({page, server}) => {
@@ -97,7 +97,7 @@ describe('Page.dispatchEvent(click)', function() {
     await watchdog;
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
-  it('should be atomic', async({page}) => {
+  it.skip(USES_HOOKS)('should be atomic', async({page}) => {
     const createDummySelector = () => ({
       create(root, target) {},
       query(root, selector) {
