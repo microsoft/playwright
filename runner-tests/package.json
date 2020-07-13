@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "devDependencies": {
+    "jest": "^26.1.0",
+    "playwright": "file:../",
+    "playwright-runner": "0.0.9"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "jest": {
+    "preset": "playwright-runner"
+  }
+}

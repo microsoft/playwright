@@ -1,4 +1,4 @@
-/node_modules/
+node_modules/
 /test/output-chromium
 /test/output-firefox
 /test/output-webkit
