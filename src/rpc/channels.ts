@@ -30,7 +30,15 @@ export type PlaywrightInitializer = {
   firefox: BrowserTypeChannel,
   webkit: BrowserTypeChannel,
   deviceDescriptors: types.Devices,
+  selectors: SelectorsChannel,
 };
+
+
+export interface SelectorsChannel extends Channel {
+  register(params: { name: string, source: string, options: { contentScript?: boolean } }): Promise<void>;
+  createSelector(params: { name: string, handle: ElementHandleChannel }): Promise<string | undefined>;
+}
+export type SelectorsInitializer = {};
 
 
 export interface BrowserTypeChannel extends Channel {

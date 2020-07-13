@@ -18,6 +18,7 @@ import { Playwright } from '../../server/playwright';
 import { PlaywrightChannel, PlaywrightInitializer } from '../channels';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
+import { SelectorsDispatcher } from './selectorsDispatcher';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, PlaywrightInitializer> implements PlaywrightChannel {
   constructor(scope: DispatcherScope, playwright: Playwright) {
@@ -25,7 +26,8 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, PlaywrightIniti
       chromium: new BrowserTypeDispatcher(scope, playwright.chromium!),
       firefox: new BrowserTypeDispatcher(scope, playwright.firefox!),
       webkit: new BrowserTypeDispatcher(scope, playwright.webkit!),
-      deviceDescriptors: playwright.devices
+      deviceDescriptors: playwright.devices,
+      selectors: new SelectorsDispatcher(scope, playwright.selectors),
     }, false, 'playwright');
   }
 }

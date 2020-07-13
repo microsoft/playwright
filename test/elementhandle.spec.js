@@ -484,7 +484,7 @@ describe('ElementHandle convenience API', function() {
     expect(await handle.textContent()).toBe('Text,\nmore text');
     expect(await page.textContent('#inner')).toBe('Text,\nmore text');
   });
-  it.skip(USES_HOOKS)('textContent should be atomic', async({page}) => {
+  it('textContent should be atomic', async({playwright, page}) => {
     const createDummySelector = () => ({
       create(root, target) {},
       query(root, selector) {
@@ -500,13 +500,13 @@ describe('ElementHandle convenience API', function() {
         return result;
       }
     });
-    await utils.registerEngine('textContent', createDummySelector);
+    await utils.registerEngine(playwright, 'textContent', createDummySelector);
     await page.setContent(`<div>Hello</div>`);
     const tc = await page.textContent('textContent=div');
     expect(tc).toBe('Hello');
     expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('modified');
   });
-  it.skip(USES_HOOKS)('innerText should be atomic', async({page}) => {
+  it('innerText should be atomic', async({playwright, page}) => {
     const createDummySelector = () => ({
       create(root, target) {},
       query(root, selector) {
@@ -522,13 +522,13 @@ describe('ElementHandle convenience API', function() {
         return result;
       }
     });
-    await utils.registerEngine('innerText', createDummySelector);
+    await utils.registerEngine(playwright, 'innerText', createDummySelector);
     await page.setContent(`<div>Hello</div>`);
     const tc = await page.innerText('innerText=div');
     expect(tc).toBe('Hello');
     expect(await page.evaluate(() => document.querySelector('div').innerText)).toBe('modified');
   });
-  it.skip(USES_HOOKS)('innerHTML should be atomic', async({page}) => {
+  it('innerHTML should be atomic', async({playwright, page}) => {
     const createDummySelector = () => ({
       create(root, target) {},
       query(root, selector) {
@@ -544,13 +544,13 @@ describe('ElementHandle convenience API', function() {
         return result;
       }
     });
-    await utils.registerEngine('innerHTML', createDummySelector);
+    await utils.registerEngine(playwright, 'innerHTML', createDummySelector);
     await page.setContent(`<div>Hello<span>world</span></div>`);
     const tc = await page.innerHTML('innerHTML=div');
     expect(tc).toBe('Hello<span>world</span>');
     expect(await page.evaluate(() => document.querySelector('div').innerHTML)).toBe('modified');
   });
-  it.skip(USES_HOOKS)('getAttribute should be atomic', async({page}) => {
+  it('getAttribute should be atomic', async({playwright, page}) => {
     const createDummySelector = () => ({
       create(root, target) {},
       query(root, selector) {
@@ -566,7 +566,7 @@ describe('ElementHandle convenience API', function() {
         return result;
       }
     });
-    await utils.registerEngine('getAttribute', createDummySelector);
+    await utils.registerEngine(playwright, 'getAttribute', createDummySelector);
     await page.setContent(`<div foo=hello></div>`);
     const tc = await page.getAttribute('getAttribute=div', 'foo');
     expect(tc).toBe('hello');

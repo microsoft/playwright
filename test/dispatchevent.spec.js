@@ -97,7 +97,7 @@ describe('Page.dispatchEvent(click)', function() {
     await watchdog;
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
-  it.skip(USES_HOOKS)('should be atomic', async({page}) => {
+  it('should be atomic', async({playwright, page}) => {
     const createDummySelector = () => ({
       create(root, target) {},
       query(root, selector) {
@@ -113,7 +113,7 @@ describe('Page.dispatchEvent(click)', function() {
         return result;
       }
     });
-    await utils.registerEngine('dispatchEvent', createDummySelector);
+    await utils.registerEngine(playwright, 'dispatchEvent', createDummySelector);
     await page.setContent(`<div onclick="window._clicked=true">Hello</div>`);
     await page.dispatchEvent('dispatchEvent=div', 'click');
     expect(await page.evaluate(() => window._clicked)).toBe(true);

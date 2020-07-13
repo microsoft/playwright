@@ -32,6 +32,7 @@ describe.skip(!CHANNEL)('Channels', function() {
         { _guid: 'browserType', objects: [] },
         { _guid: 'browserType', objects: [] },
         { _guid: 'playwright' },
+        { _guid: 'selectors' },
       ]
     };
     await expectScopeState(browser, GOLDEN_PRECONDITION);
@@ -55,6 +56,7 @@ describe.skip(!CHANNEL)('Channels', function() {
           ] },
         ] },
         { _guid: 'playwright' },
+        { _guid: 'selectors' },
       ]
     });
 
@@ -72,6 +74,7 @@ describe.skip(!CHANNEL)('Channels', function() {
         { _guid: 'browserType', objects: [] },
         { _guid: 'browserType', objects: [] },
         { _guid: 'playwright' },
+        { _guid: 'selectors' },
       ]
     };
     await expectScopeState(browserType, GOLDEN_PRECONDITION);
@@ -88,6 +91,7 @@ describe.skip(!CHANNEL)('Channels', function() {
         { _guid: 'browserType', objects: [] },
         { _guid: 'browserType', objects: [] },
         { _guid: 'playwright' },
+        { _guid: 'selectors' },
       ]
     });
 
@@ -105,6 +109,7 @@ describe.skip(!CHANNEL)('Channels', function() {
         { _guid: 'browserType', objects: [] },
         { _guid: 'browserType', objects: [] },
         { _guid: 'playwright' },
+        { _guid: 'selectors' },
       ]
     };
     await expectScopeState(browserType, GOLDEN_PRECONDITION);
@@ -123,6 +128,7 @@ describe.skip(!CHANNEL)('Channels', function() {
         { _guid: 'browserType', objects: [] },
         { _guid: 'browserType', objects: [] },
         { _guid: 'playwright' },
+        { _guid: 'selectors' },
       ]
     });
 
