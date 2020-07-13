@@ -37,6 +37,7 @@ import { Channel } from '../channels';
 import { ChromiumBrowser } from './chromiumBrowser';
 import { ChromiumBrowserContext } from './chromiumBrowserContext';
 import { Selectors } from './selectors';
+import { Stream } from './stream';
 
 class Root extends ChannelOwner<Channel, {}> {
   constructor(connection: Connection) {
@@ -200,6 +201,9 @@ export class Connection {
         break;
       case 'request':
         result = new Request(parent, type, guid, initializer);
+        break;
+      case 'stream':
+        result = new Stream(parent, type, guid, initializer);
         break;
       case 'response':
         result = new Response(parent, type, guid, initializer);

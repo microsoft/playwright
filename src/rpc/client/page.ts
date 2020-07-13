@@ -39,6 +39,11 @@ import { Buffer } from 'buffer';
 import { Coverage } from './coverage';
 import { Waiter } from './waiter';
 
+import * as fs from 'fs';
+import * as util from 'util';
+
+const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
+
 export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   private _browserContext: BrowserContext;
   _ownedContext: BrowserContext | undefined;
@@ -494,7 +499,10 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async _pdf(options: types.PDFOptions = {}): Promise<Buffer> {
+    const path = options.path;
     const transportOptions: PDFOptions = { ...options } as PDFOptions;
+    if (path)
+      delete (transportOptions as any).path;
     if (transportOptions.margin)
       transportOptions.margin = { ...transportOptions.margin };
     if (typeof options.width === 'number')
@@ -507,7 +515,10 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
         transportOptions.margin![index] = transportOptions.margin![index] + 'px';
     }
     const binary = await this._channel.pdf(transportOptions);
-    return Buffer.from(binary, 'base64');
+    const buffer = Buffer.from(binary, 'base64');
+    if (path)
+      await fsWriteFileAsync(path, buffer);
+    return buffer;
   }
 }
 

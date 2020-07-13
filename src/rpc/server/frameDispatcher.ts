@@ -110,12 +110,12 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     await target.setContent(params.html, params);
   }
 
-  async addScriptTag(params: { url?: string | undefined, path?: string | undefined, content?: string | undefined, type?: string | undefined } & PageAttribution): Promise<ElementHandleChannel> {
+  async addScriptTag(params: { url?: string, content?: string, type?: string } & PageAttribution): Promise<ElementHandleChannel> {
     const target = params.isPage ? this._frame._page : this._frame;
     return new ElementHandleDispatcher(this._scope, await target.addScriptTag(params));
   }
 
-  async addStyleTag(params: { url?: string | undefined, path?: string | undefined, content?: string | undefined } & PageAttribution): Promise<ElementHandleChannel> {
+  async addStyleTag(params: { url?: string, content?: string } & PageAttribution): Promise<ElementHandleChannel> {
     const target = params.isPage ? this._frame._page : this._frame;
     return new ElementHandleDispatcher(this._scope, await target.addStyleTag(params));
   }
