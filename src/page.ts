@@ -293,6 +293,8 @@ export class Page extends EventEmitter {
   }
 
   async _onBindingCalled(payload: string, context: dom.FrameExecutionContext) {
+    if (this._disconnected || this._closedState === 'closed')
+      return;
     await PageBinding.dispatch(this, payload, context);
   }
 
