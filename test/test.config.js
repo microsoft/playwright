@@ -141,7 +141,7 @@ module.exports = {
 
     {
       files: [
-        './defaultbrowsercontext.spec.js',
+        // './defaultbrowsercontext.spec.js',
         //'./downloadsPath.spec.js',
         /*
         './fixtures.spec.js',
