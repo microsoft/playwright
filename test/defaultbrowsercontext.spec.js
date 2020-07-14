@@ -55,6 +55,7 @@ describe('launchPersistentContext()', function() {
     }]);
     await close(state);
   });
+  /*
   it('context.addCookies() should work', async state => {
     const { page, server } = await launch(state);
     await page.goto(server.EMPTY_PAGE);
@@ -389,4 +390,5 @@ describe('launchPersistentContext()', function() {
     expect(page.coverage).toBe(null);
     await close(state);
   });
+  */
 });
