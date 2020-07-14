@@ -525,7 +525,7 @@ describe('text selector', () => {
     expect(await page.$$eval(`text=lowo`, els => els.map(e => e.outerHTML).join(''))).toBe('<div>helloworld</div><span>helloworld</span>');
   });
 
-  it.skip(CHANNEL)('create', async ({page}) => {
+  it('create', async ({playwright, page}) => {
     await page.setContent(`<div>yo</div><div>"ya</div><div>ye ye</div>`);
     expect(await playwright.selectors._createSelector('text', await page.$('div'))).toBe('yo');
     expect(await playwright.selectors._createSelector('text', await page.$('div:nth-child(2)'))).toBe('"\\"ya"');

@@ -17,7 +17,7 @@
 
 const utils = require('./utils');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS, CHANNEL} = utils.testOptions(browserType);
 
 describe('Page.evaluate', function() {
   it('should work', async({page, server}) => {
@@ -373,7 +373,7 @@ describe('Page.evaluate', function() {
     });
     expect(result).toBe(undefined);
   });
-  it.slow().skip(USES_HOOKS)('should transfer 100Mb of data from page to node.js', async({page, server}) => {
+  it.slow().skip(CHANNEL)('should transfer 100Mb of data from page to node.js', async({page, server}) => {
     const a = await page.evaluate(() => Array(100 * 1024 * 1024 + 1).join('a'));
     expect(a.length).toBe(100 * 1024 * 1024);
   });

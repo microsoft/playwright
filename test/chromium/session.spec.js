@@ -66,7 +66,7 @@ describe('ChromiumBrowserContext.createSession', function() {
     }
     expect(error.message).toContain(CHANNEL ? 'Target browser or context has been closed' : 'Session closed.');
   });
-  it.skip(USES_HOOKS)('should throw nice errors', async function({page, browser}) {
+  it.skip(CHANNEL)('should throw nice errors', async function({page, browser}) {
     const client = await page.context().newCDPSession(page);
     const error = await theSourceOfTheProblems().catch(error => error);
     expect(error.stack).toContain('theSourceOfTheProblems');

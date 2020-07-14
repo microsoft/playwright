@@ -119,7 +119,6 @@ export interface PageChannel extends Channel {
   on(event: 'fileChooser', callback: (params: { element: ElementHandleChannel, isMultiple: boolean }) => void): this;
   on(event: 'frameAttached', callback: (params: { frame: FrameChannel }) => void): this;
   on(event: 'frameDetached', callback: (params: { frame: FrameChannel }) => void): this;
-  on(event: 'frameNavigated', callback: (params: { frame: FrameChannel, url: string, name: string }) => void): this;
   on(event: 'load', callback: () => void): this;
   on(event: 'pageError', callback: (params: { error: types.Error }) => void): this;
   on(event: 'popup', callback: (params: { page: PageChannel }) => void): this;
@@ -173,8 +172,11 @@ export type PageInitializer = {
   isClosed: boolean
 };
 
+export type FrameNavigatedEvent = { url: string, name: string, newDocument?: { request?: RequestChannel }, error?: string };
+
 export interface FrameChannel extends Channel {
   on(event: 'loadstate', callback: (params: { add?: types.LifecycleEvent, remove?: types.LifecycleEvent }) => void): this;
+  on(event: 'navigated', callback: (params: FrameNavigatedEvent) => void): this;
 
   evalOnSelector(params: { selector: string; expression: string, isFunction: boolean, arg: any}): Promise<{ value: any }>;
   evalOnSelectorAll(params: { selector: string; expression: string, isFunction: boolean, arg: any}): Promise<{ value: any }>;
@@ -206,7 +208,6 @@ export interface FrameChannel extends Channel {
   type(params: { selector: string, text: string, delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions): Promise<void>;
   uncheck(params: { selector: string, force?: boolean, noWaitAfter?: boolean } & types.TimeoutOptions): Promise<void>;
   waitForFunction(params: { expression: string, isFunction: boolean, arg: any } & types.WaitForFunctionOptions): Promise<{ handle: JSHandleChannel }>;
-  waitForNavigation(params: types.WaitForNavigationOptions): Promise<{ response: ResponseChannel | null }>;
   waitForSelector(params: { selector: string } & types.WaitForElementOptions): Promise<{ element: ElementHandleChannel | null }>;
 }
 export type FrameInitializer = {
@@ -403,7 +404,7 @@ export type ElectronInitializer = {};
 
 export interface ElectronApplicationChannel extends Channel {
   on(event: 'close', callback: () => void): this;
-  on(event: 'window', callback: (params: { page: PageChannel }) => void): this;
+  on(event: 'window', callback: (params: { page: PageChannel, browserWindow: JSHandleChannel }) => void): this;
 
   newBrowserWindow(params: { arg: any }): Promise<{ page: PageChannel }>;
   evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }>;

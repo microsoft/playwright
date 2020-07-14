@@ -15,11 +15,10 @@
  */
 
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
-import { Electron, ElectronApplication, ElectronEvents } from '../../server/electron';
+import { Electron, ElectronApplication, ElectronEvents, ElectronPage } from '../../server/electron';
 import { ElectronApplicationChannel, ElectronApplicationInitializer, PageChannel, JSHandleChannel, ElectronInitializer, ElectronChannel, ElectronLaunchOptions } from '../channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { BrowserContextBase } from '../../browserContext';
-import { Page } from '../../page';
 import { PageDispatcher } from './pageDispatcher';
 import { parseArgument } from './jsHandleDispatcher';
 import { createHandle } from './elementHandlerDispatcher';
@@ -42,8 +41,11 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
     });
 
     electronApplication.on(ElectronEvents.ElectronApplication.Close, () => this._dispatchEvent('close'));
-    electronApplication.on(ElectronEvents.ElectronApplication.Window, (page: Page) => {
-      this._dispatchEvent('window', { page: lookupDispatcher<PageDispatcher>(page) });
+    electronApplication.on(ElectronEvents.ElectronApplication.Window, (page: ElectronPage) => {
+      this._dispatchEvent('window', {
+        page: lookupDispatcher<PageDispatcher>(page),
+        browserWindow: createHandle(this._scope, page.browserWindow),
+      });
     });
   }
 

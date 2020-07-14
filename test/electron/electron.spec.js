@@ -55,7 +55,7 @@ describe('Electron', function() {
     await page.goto('data:text/html,<title>Hello World 2</title>');
     expect(await page.title()).toBe('Hello World 2');
   });
-  it.skip(CHANNEL)('should create multiple windows', async ({ application }) => {
+  it('should create multiple windows', async ({ application }) => {
     const createPage = async ordinal => {
       const page = await application.newBrowserWindow({ width: 800, height: 600 });
       await Promise.all([

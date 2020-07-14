@@ -52,7 +52,7 @@ export const ElectronEvents = {
   }
 };
 
-interface ElectronPage extends Page {
+export interface ElectronPage extends Page {
   browserWindow: js.JSHandle<BrowserWindow>;
   _browserWindowId: number;
 }
