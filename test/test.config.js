@@ -90,8 +90,9 @@ module.exports = {
         // -- crashed --
         './keyboard.spec.ts',
         './mouse.spec.js',
-        './navigation.spec.js',
         */
+        './navigation.spec.js',
+        // -- worked
         './network.spec.js',
         './page.spec.js',
         './pdf.spec.js',
