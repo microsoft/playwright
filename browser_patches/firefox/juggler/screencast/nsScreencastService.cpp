@@ -5,6 +5,8 @@
 #include "nsScreencastService.h"
 
 #include "ScreencastEncoder.h"
+#include "HeadlessWidget.h"
+#include "HeadlessWindowCapturer.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/PresShell.h"
 #include "mozilla/StaticPtr.h"
@@ -20,6 +22,8 @@
 #include "mozilla/widget/PlatformWidgetTypes.h"
 #include "video_engine/desktop_capture_impl.h"
 
+using namespace mozilla::widget;
+
 namespace mozilla {
 
 NS_IMPL_ISUPPORTS(nsScreencastService, nsIScreencastService)
@@ -28,13 +32,35 @@ namespace {
 
 StaticRefPtr<nsScreencastService> gScreencastService;
 
+rtc::scoped_refptr<webrtc::VideoCaptureModule> CreateWindowCapturer(nsIWidget* widget, int sessionId) {
+  if (gfxPlatform::IsHeadless()) {
+    HeadlessWidget* headlessWidget = static_cast<HeadlessWidget*>(widget);
+    return HeadlessWindowCapturer::Create(headlessWidget);
+  }
+#ifdef MOZ_WIDGET_GTK
+  mozilla::widget::CompositorWidgetInitData initData;
+  widget->GetCompositorWidgetInitData(&initData);
+  const mozilla::widget::GtkCompositorWidgetInitData& gtkInitData = initData.get_GtkCompositorWidgetInitData();
+  nsCString windowId;
+# ifdef MOZ_X11
+  windowId.AppendPrintf("%lu", gtkInitData.XWindow());
+  return webrtc::DesktopCaptureImpl::Create(sessionId, windowId.get(), webrtc::CaptureDeviceType::Window);
+# else
+  // TODO: support in wayland
+  fprintf(stderr, "Video capture for Wayland is not implemented\n");
+  return nullptr;
+# endif
+#else
+  fprintf(stderr, "Video capture is not implemented on this platform\n");
+  return nullptr;
+#endif
+}
 }
 
 class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::VideoFrame> {
  public:
-  Session(int sessionId, const nsCString& windowId, RefPtr<ScreencastEncoder>&& encoder)
-      : mCaptureModule(webrtc::DesktopCaptureImpl::Create(
-            sessionId, windowId.get(), webrtc::CaptureDeviceType::Window))
+  Session(rtc::scoped_refptr<webrtc::VideoCaptureModule>&& capturer, RefPtr<ScreencastEncoder>&& encoder)
+      : mCaptureModule(std::move(capturer))
       , mEncoder(std::move(encoder)) {
   }
 
@@ -107,17 +133,11 @@ nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const 
   nsIWidget* widget = view->GetWidget();
 
 #ifdef MOZ_WIDGET_GTK
-  mozilla::widget::CompositorWidgetInitData initData;
-  widget->GetCompositorWidgetInitData(&initData);
-  const mozilla::widget::GtkCompositorWidgetInitData& gtkInitData = initData.get_GtkCompositorWidgetInitData();
-  nsCString windowId;
-# ifdef MOZ_X11
-  windowId.AppendPrintf("%lu", gtkInitData.XWindow());
-# else
-  // TODO: support in wayland
-  return NS_ERROR_NOT_IMPLEMENTED;
-# endif
   *sessionId = ++mLastSessionId;
+  rtc::scoped_refptr<webrtc::VideoCaptureModule> capturer = CreateWindowCapturer(widget, *sessionId);
+  if (!capturer)
+    return NS_ERROR_FAILURE;
+
   nsCString error;
   Maybe<double> maybeScale;
   if (scale)
@@ -128,7 +148,7 @@ nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const 
     return NS_ERROR_FAILURE;
   }
 
-  auto session = std::make_unique<Session>(*sessionId, windowId, std::move(encoder));
+  auto session = std::make_unique<Session>(std::move(capturer), std::move(encoder));
   if (!session->Start())
     return NS_ERROR_FAILURE;
 
