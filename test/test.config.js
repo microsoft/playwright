@@ -93,8 +93,8 @@ module.exports = {
         // -- L - crashed --
         './navigation.spec.js',
         './network.spec.js',
-        // -- R -- worked
         './page.spec.js',
+        // -- R -- crashed
         /*
         './pdf.spec.js',
         // -- R -- crashed
@@ -115,8 +115,10 @@ module.exports = {
 
     {
       files: [
+        /*
         './chromium/chromium.spec.js',
         './chromium/session.spec.js',
+        */
       ],
       browsers: ['chromium'],
       title: '[Chromium]',
@@ -139,10 +141,10 @@ module.exports = {
       files: [
         './defaultbrowsercontext.spec.js',
         './downloadsPath.spec.js',
+        /*
         './fixtures.spec.js',
         './launcher.spec.js',
         './logger.spec.js',
-        /*
         './headful.spec.js',
         './multiclient.spec.js',
         './proxy.spec.js',
@@ -151,6 +153,7 @@ module.exports = {
       environments: [customEnvironment],
     },
 
+  /*
     {
       files: [
         './chromium/launcher.spec.js',
@@ -186,5 +189,6 @@ module.exports = {
       ],
       environments: [],
     },
+    */
   ],
 };
