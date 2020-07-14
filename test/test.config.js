@@ -93,9 +93,10 @@ module.exports = {
         // -- L - crashed --
         './navigation.spec.js',
         './network.spec.js',
+        /*
         './page.spec.js',
         './pdf.spec.js',
-        /*
+        // -- R -- crashed
         './queryselector.spec.js',
         './screenshot.spec.js',
         './waittask.spec.js',
