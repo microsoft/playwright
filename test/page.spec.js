@@ -296,7 +296,7 @@ describe('Page.Events.Console', function() {
   });
 });
 
-describe('Page.Events.DOMContentLoaded', function() {
+xdescribe('Page.Events.DOMContentLoaded', function() {
   it('should fire when expected', async({page, server}) => {
     const navigatedPromise = page.goto('about:blank');
     await page.waitForEvent('domcontentloaded');
@@ -304,7 +304,7 @@ describe('Page.Events.DOMContentLoaded', function() {
   });
 });
 
-describe('Page.waitForRequest', function() {
+xdescribe('Page.waitForRequest', function() {
   it('should work', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [request] = await Promise.all([
@@ -377,7 +377,7 @@ describe('Page.waitForRequest', function() {
   });
 });
 
-describe('Page.waitForEvent', function() {
+xdescribe('Page.waitForEvent', function() {
   it('should fail with error upon disconnect', async({page, server}) => {
     let error;
     const waitForPromise = page.waitForEvent('download').catch(e => error = e);
@@ -387,7 +387,7 @@ describe('Page.waitForEvent', function() {
   });
 });
 
-describe('Page.waitForResponse', function() {
+xdescribe('Page.waitForResponse', function() {
   it('should work', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [response] = await Promise.all([
@@ -437,7 +437,7 @@ describe('Page.waitForResponse', function() {
   });
 });
 
-describe('Page.exposeBinding', () => {
+xdescribe('Page.exposeBinding', () => {
   it('should work', async({browser}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -457,7 +457,7 @@ describe('Page.exposeBinding', () => {
   });
 });
 
-describe('Page.exposeFunction', function() {
+xdescribe('Page.exposeFunction', function() {
   it('should work', async({page, server}) => {
     await page.exposeFunction('compute', function(a, b) {
       return a * b;
@@ -569,7 +569,7 @@ describe('Page.exposeFunction', function() {
   });
 });
 
-describe('Page.Events.PageError', function() {
+xdescribe('Page.Events.PageError', function() {
   it('should fire', async({page, server}) => {
     const [error] = await Promise.all([
       page.waitForEvent('pageerror'),
@@ -623,7 +623,7 @@ describe('Page.Events.PageError', function() {
   });
 });
 
-describe('Page.setContent', function() {
+xdescribe('Page.setContent', function() {
   const expectedOutput = '<html><head></head><body><div>hello</div></body></html>';
   it('should work', async({page, server}) => {
     await page.setContent('<div>hello</div>');
