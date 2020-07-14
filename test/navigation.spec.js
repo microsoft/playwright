@@ -1002,7 +1002,7 @@ xdescribe('Frame.goto', function() {
   });
 });
 
-describe('Frame.waitForNavigation', function() {
+xdescribe('Frame.waitForNavigation', function() {
   it('should work', async({page, server}) => {
     await page.goto(server.PREFIX + '/frames/one-frame.html');
     const frame = page.frames()[1];
@@ -1030,7 +1030,7 @@ describe('Frame.waitForNavigation', function() {
   });
 });
 
-describe('Frame.waitForLoadState', function() {
+xdescribe('Frame.waitForLoadState', function() {
   it('should work', async({page, server}) => {
     await page.goto(server.PREFIX + '/frames/one-frame.html');
     const frame = page.frames()[1];
@@ -1048,7 +1048,7 @@ describe('Frame.waitForLoadState', function() {
   });
 });
 
-describe('Page.reload', function() {
+xdescribe('Page.reload', function() {
   it('should work', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => window._foo = 10);
@@ -1057,7 +1057,7 @@ describe('Page.reload', function() {
   });
 });
 
-describe('Click navigation', function() {
+xdescribe('Click navigation', function() {
   it('should work with _blank target', async({page, server}) => {
     server.setRoute('/empty.html', (req, res) => {
       res.end(`<a href="${server.EMPTY_PAGE}" target="_blank">Click me</a>`);
