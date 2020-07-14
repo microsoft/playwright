@@ -15,7 +15,7 @@ Releasing is a 3-step process.
 
 Once release branch is pushed, it's last commit will be picked up by our CI/CD:
 - make sure commit passes all the bots. If there are any failures, carefully inspect failures to see if these are flakes.
-- the [`publish_canary`](../../.github/workflows/publish_canary.yml) workflow will publish a `@next` version for the commit - this will be our **release candidate**. Go manually to it's page on NPM   to see what it looks like. Try installing locally.
+- the [`publish_canary`](../../.github/workflows/publish_canary_npm.yml) workflow will publish a `@next` version for the commit - this will be our **release candidate**. Go manually to it's page on NPM   to see what it looks like. Try installing locally.
 
 # 2. Prepare release notes
 
