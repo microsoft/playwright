@@ -20,7 +20,7 @@ const path = require('path');
 const url = require('url');
 const {FFOX, CHROMIUM, WEBKIT, ASSETS_DIR, MAC, WIN, CHANNEL} = utils.testOptions(browserType);
 
-describe('Page.goto', function() {
+xdescribe('Page.goto', function() {
   it('should work', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     expect(page.url()).toBe(server.EMPTY_PAGE);
