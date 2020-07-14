@@ -92,7 +92,7 @@ module.exports = {
         */
         // -- L - crashed --
         './navigation.spec.js',
-        './network.spec.js',
+        // './network.spec.js',
         './page.spec.js',
         // -- R -- crashed
         /*
@@ -142,7 +142,7 @@ module.exports = {
     {
       files: [
         './defaultbrowsercontext.spec.js',
-        './downloadsPath.spec.js',
+        //'./downloadsPath.spec.js',
         /*
         './fixtures.spec.js',
         './launcher.spec.js',
