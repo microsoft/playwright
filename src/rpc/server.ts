@@ -18,6 +18,7 @@ import { Transport } from './transport';
 import { DispatcherConnection } from './server/dispatcher';
 import { Playwright } from '../server/playwright';
 import { PlaywrightDispatcher } from './server/playwrightDispatcher';
+import { Electron } from '../server/electron';
 
 const dispatcherConnection = new DispatcherConnection();
 const transport = new Transport(process.stdout, process.stdin);
@@ -26,4 +27,5 @@ transport.onmessage = message => dispatcherConnection.dispatch(JSON.parse(messag
 dispatcherConnection.onmessage = message => transport.send(JSON.stringify(message));
 
 const playwright = new Playwright(__dirname, require('../../browsers.json')['browsers']);
+(playwright as any).electron = new Electron();
 new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);

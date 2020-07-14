@@ -28,7 +28,7 @@ export class ChromiumBrowserContext extends BrowserContext {
   _serviceWorkers = new Set<Worker>();
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserContextInitializer) {
-    super(parent, type, guid, initializer);
+    super(parent, type, guid, initializer, 'chromium');
     this._channel.on('crBackgroundPage', pageChannel => {
       const page = Page.from(pageChannel);
       this._backgroundPages.add(page);
