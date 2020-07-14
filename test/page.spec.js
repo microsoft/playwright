@@ -699,7 +699,7 @@ describe('Page.setContent', function() {
 });
 
 
-describe('Page.addScriptTag', function() {
+xdescribe('Page.addScriptTag', function() {
   it('should throw an error if no options are provided', async({page, server}) => {
     let error = null;
     try {
@@ -791,7 +791,7 @@ describe('Page.addScriptTag', function() {
   });
 });
 
-describe('Page.addStyleTag', function() {
+xdescribe('Page.addStyleTag', function() {
   it('should throw an error if no options are provided', async({page, server}) => {
     let error = null;
     try {
@@ -857,7 +857,7 @@ describe('Page.addStyleTag', function() {
   });
 });
 
-describe('Page.url', function() {
+xdescribe('Page.url', function() {
   it('should work', async({page, server}) => {
     expect(page.url()).toBe('about:blank');
     await page.goto(server.EMPTY_PAGE);
@@ -873,14 +873,14 @@ describe('Page.url', function() {
   });
 });
 
-describe('Page.title', function() {
+xdescribe('Page.title', function() {
   it('should return the page title', async({page, server}) => {
     await page.goto(server.PREFIX + '/title.html');
     expect(await page.title()).toBe('Woof-Woof');
   });
 });
 
-describe('Page.selectOption', function() {
+xdescribe('Page.selectOption', function() {
   it('should select single option', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.selectOption('select', 'blue');
@@ -1057,7 +1057,7 @@ describe('Page.selectOption', function() {
   });
 });
 
-describe('Page.fill', function() {
+xdescribe('Page.fill', function() {
   async function giveItAChanceToFill(page) {
     for (let i = 0; i < 5; i++)
       await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
@@ -1254,7 +1254,7 @@ describe('Page.fill', function() {
   });
 });
 
-describe('Page.Events.Close', function() {
+xdescribe('Page.Events.Close', function() {
   it('should work with window.close', async function({ page, context, server }) {
     const newPagePromise = page.waitForEvent('popup');
     await page.evaluate(() => window['newPage'] = window.open('about:blank'));
@@ -1271,13 +1271,13 @@ describe('Page.Events.Close', function() {
   });
 });
 
-describe('Page.browserContext', function() {
+xdescribe('Page.browserContext', function() {
   it('should return the correct browser instance', async function({page, context}) {
     expect(page.context()).toBe(context);
   });
 });
 
-describe('Page.frame', function() {
+xdescribe('Page.frame', function() {
   it('should respect name', async function({page, server}) {
     await page.setContent(`<iframe name=target></iframe>`);
     expect(page.frame({ name: 'bogus' })).toBe(null);
@@ -1292,7 +1292,7 @@ describe('Page.frame', function() {
   });
 });
 
-describe('user-agent sanity', function() {
+xdescribe('user-agent sanity', function() {
   it('should be a sane user agent', async ({page}) => {
     const userAgent = await page.evaluate(() => navigator.userAgent);
     const [
@@ -1328,7 +1328,7 @@ describe('user-agent sanity', function() {
   });
 });
 
-describe('Page api coverage', function() {
+xdescribe('Page api coverage', function() {
   it('Page.press should work', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.press('textarea', 'a');
