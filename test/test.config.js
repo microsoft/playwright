@@ -87,14 +87,16 @@ module.exports = {
         './focus.spec.js',
         './input.spec.js',
         './jshandle.spec.js',
+        // -- crashed --
         './keyboard.spec.ts',
         './mouse.spec.js',
         './navigation.spec.js',
+        */
         './network.spec.js',
         './page.spec.js',
         './pdf.spec.js',
         './queryselector.spec.js',
-        */
+        // -- worked --
         './screenshot.spec.js',
         './waittask.spec.js',
         './interception.spec.js',
