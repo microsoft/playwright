@@ -22,12 +22,16 @@ import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
 import { JSHandle, Func1, FuncOn, SmartHandle, serializeArgument, parseResult } from './jsHandle';
+import * as fs from 'fs';
 import * as network from './network';
+import * as util from 'util';
 import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Waiter } from './waiter';
 import { Events } from '../../events';
 import { TimeoutError } from '../../errors';
+
+const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
 export type GotoOptions = types.NavigateOptions & {
   referer?: string,
@@ -174,10 +178,18 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   }
 
   async addScriptTag(options: { url?: string, path?: string, content?: string, type?: string }): Promise<ElementHandle> {
-    return ElementHandle.from(await this._channel.addScriptTag({ ...options, isPage: this._page!._isPageCall }));
+    const copy = { ...options };
+    if (copy.path) {
+      copy.content = (await fsReadFileAsync(copy.path)).toString();
+      copy.content += '//# sourceURL=' + copy.path.replace(/\n/g, '');
+    }
+    return ElementHandle.from(await this._channel.addScriptTag({ ...copy, isPage: this._page!._isPageCall }));
   }
 
   async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
+    const copy = { ...options };
+    if (copy.path)
+      copy.content = (await fsReadFileAsync(copy.path)).toString();
     return ElementHandle.from(await this._channel.addStyleTag({ ...options, isPage: this._page!._isPageCall }));
   }
 

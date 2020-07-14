@@ -15,8 +15,9 @@
  */
 
 import { Download } from '../../download';
-import { DownloadChannel, DownloadInitializer } from '../channels';
+import { DownloadChannel, DownloadInitializer, StreamChannel } from '../channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
+import { StreamDispatcher } from './streamDispatcher';
 
 export class DownloadDispatcher extends Dispatcher<Download, DownloadInitializer> implements DownloadChannel {
   constructor(scope: DispatcherScope, download: Download) {
@@ -28,6 +29,14 @@ export class DownloadDispatcher extends Dispatcher<Download, DownloadInitializer
 
   async path(): Promise<string | null> {
     return this._object.path();
+  }
+
+  async stream(): Promise<StreamChannel | null> {
+    const stream = await this._object.createReadStream();
+    if (!stream)
+      return null;
+    await new Promise(f => stream.on('readable', f));
+    return new StreamDispatcher(this._scope, stream);
   }
 
   async failure(): Promise<string | null> {

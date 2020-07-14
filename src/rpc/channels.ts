@@ -22,7 +22,6 @@ export type Binary = string;
 export interface Channel extends EventEmitter {
 }
 
-
 export interface PlaywrightChannel extends Channel {
 }
 export type PlaywrightInitializer = {
@@ -181,8 +180,8 @@ export interface FrameChannel extends Channel {
 
   evalOnSelector(params: { selector: string; expression: string, isFunction: boolean, arg: any} & PageAttribution): Promise<any>;
   evalOnSelectorAll(params: { selector: string; expression: string, isFunction: boolean, arg: any} & PageAttribution): Promise<any>;
-  addScriptTag(params: { url?: string | undefined, path?: string | undefined, content?: string | undefined, type?: string | undefined} & PageAttribution): Promise<ElementHandleChannel>;
-  addStyleTag(params: { url?: string | undefined, path?: string | undefined, content?: string | undefined} & PageAttribution): Promise<ElementHandleChannel>;
+  addScriptTag(params: { url?: string, content?: string, type?: string } & PageAttribution): Promise<ElementHandleChannel>;
+  addStyleTag(params: { url?: string, content?: string } & PageAttribution): Promise<ElementHandleChannel>;
   check(params: { selector: string, force?: boolean, noWaitAfter?: boolean } & types.TimeoutOptions & PageAttribution): Promise<void>;
   click(params: { selector: string, force?: boolean, noWaitAfter?: boolean } & types.PointerActionOptions & types.MouseClickOptions & types.TimeoutOptions & PageAttribution): Promise<void>;
   content(): Promise<string>;
@@ -352,12 +351,20 @@ export type DialogInitializer = {
 export interface DownloadChannel extends Channel {
   path(): Promise<string | null>;
   failure(): Promise<string | null>;
+  stream(): Promise<StreamChannel | null>;
   delete(): Promise<void>;
 }
 export type DownloadInitializer = {
 	url: string,
   suggestedFilename: string,
 };
+
+
+export interface StreamChannel extends Channel {
+  read(params: { size?: number }): Promise<Binary>;
+}
+export type StreamInitializer = {
+}
 
 
 // Chromium-specific.
@@ -369,7 +376,6 @@ export interface CDPSessionChannel extends Channel {
   detach(): Promise<void>;
 }
 export type CDPSessionInitializer = {};
-
 
 export type PDFOptions = {
   scale?: number,
@@ -384,7 +390,6 @@ export type PDFOptions = {
   height?: string,
   preferCSSPageSize?: boolean,
   margin?: {top?: string, bottom?: string, left?: string, right?: string},
-  path?: string,
 };
 
 

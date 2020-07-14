@@ -162,7 +162,6 @@ describe('Download', function() {
     stream.on('data', data => content += data.toString());
     await new Promise(f => stream.on('end', f));
     expect(content).toBe('Hello world');
-    stream.close();
     await page.close();
   });
   it('should delete downloads on context destruction', async({browser, server}) => {
