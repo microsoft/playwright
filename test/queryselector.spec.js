@@ -173,6 +173,11 @@ describe('Page.$eval', function() {
     await page.setContent('<div><input placeholder="Select&quot;date"></div>');
     await inputPromise;
   });
+  it('should return complex values', async({page, server}) => {
+    await page.setContent('<section id="testAttribute">43543</section>');
+    const idAttribute = await page.$eval('css=section', e => [{ id: e.id }]);
+    expect(idAttribute).toEqual([{ id: 'testAttribute' }]);
+  });
 });
 
 describe('Page.$$eval', function() {
@@ -220,6 +225,11 @@ describe('Page.$$eval', function() {
     expect(await page.$$eval('*css=div >> span', els => els.length)).toBe(2);
     await page.setContent('<div><div><span></span></div><span></span><span></span></div><div></div>');
     expect(await page.$$eval('*css=div >> span', els => els.length)).toBe(2);
+  });
+  it('should return complex values', async({page, server}) => {
+    await page.setContent('<div>hello</div><div>beautiful</div><div>world!</div>');
+    const texts = await page.$$eval('css=div', divs => divs.map(div => div.textContent));
+    expect(texts).toEqual(['hello', 'beautiful', 'world!']);
   });
 });
 

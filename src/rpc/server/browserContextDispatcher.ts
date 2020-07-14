@@ -33,8 +33,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
     this._context = context;
 
     for (const page of context.pages())
-      this._dispatchEvent('page', new PageDispatcher(this._scope, page));
-    context.on(Events.BrowserContext.Page, page => this._dispatchEvent('page', new PageDispatcher(this._scope, page)));
+      this._dispatchEvent('page', { page: new PageDispatcher(this._scope, page) });
+    context.on(Events.BrowserContext.Page, page => this._dispatchEvent('page', { page: new PageDispatcher(this._scope, page) }));
     context.on(Events.BrowserContext.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
@@ -42,11 +42,11 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
 
     if (context._browserBase._options.name === 'chromium') {
       for (const page of (context as CRBrowserContext).backgroundPages())
-        this._dispatchEvent('crBackgroundPage', new PageDispatcher(this._scope, page));
-      context.on(ChromiumEvents.CRBrowserContext.BackgroundPage, page => this._dispatchEvent('crBackgroundPage', new PageDispatcher(this._scope, page)));
+        this._dispatchEvent('crBackgroundPage', { page: new PageDispatcher(this._scope, page) });
+      context.on(ChromiumEvents.CRBrowserContext.BackgroundPage, page => this._dispatchEvent('crBackgroundPage', { page: new PageDispatcher(this._scope, page) }));
       for (const serviceWorker of (context as CRBrowserContext).serviceWorkers())
         this._dispatchEvent('crServiceWorker', new WorkerDispatcher(this._scope, serviceWorker));
-      context.on(ChromiumEvents.CRBrowserContext.ServiceWorker, serviceWorker => this._dispatchEvent('crServiceWorker', new WorkerDispatcher(this._scope, serviceWorker)));
+      context.on(ChromiumEvents.CRBrowserContext.ServiceWorker, serviceWorker => this._dispatchEvent('crServiceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker) }));
     }
   }
 
@@ -60,18 +60,18 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
 
   async exposeBinding(params: { name: string }): Promise<void> {
     await this._context.exposeBinding(params.name, (source, ...args) => {
-      const bindingCall = new BindingCallDispatcher(this._scope, params.name, source, args);
-      this._dispatchEvent('bindingCall', bindingCall);
-      return bindingCall.promise();
+      const binding = new BindingCallDispatcher(this._scope, params.name, source, args);
+      this._dispatchEvent('bindingCall', { binding });
+      return binding.promise();
     });
   }
 
-  async newPage(): Promise<PageChannel> {
-    return lookupDispatcher<PageDispatcher>(await this._context.newPage());
+  async newPage(): Promise<{ page: PageChannel }> {
+    return { page: lookupDispatcher<PageDispatcher>(await this._context.newPage()) };
   }
 
-  async cookies(params: { urls: string[] }): Promise<types.NetworkCookie[]> {
-    return await this._context.cookies(params.urls);
+  async cookies(params: { urls: string[] }): Promise<{ cookies: types.NetworkCookie[] }> {
+    return { cookies: await this._context.cookies(params.urls) };
   }
 
   async addCookies(params: { cookies: types.SetNetworkCookieParam[] }): Promise<void> {
@@ -124,8 +124,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
     await this._context.close();
   }
 
-  async crNewCDPSession(params: { page: PageDispatcher }): Promise<CDPSessionChannel> {
+  async crNewCDPSession(params: { page: PageDispatcher }): Promise<{ session: CDPSessionChannel }> {
     const crBrowserContext = this._object as CRBrowserContext;
-    return new CDPSessionDispatcher(this._scope, await crBrowserContext.newCDPSession(params.page._object));
+    return { session: new CDPSessionDispatcher(this._scope, await crBrowserContext.newCDPSession(params.page._object)) };
   }
 }

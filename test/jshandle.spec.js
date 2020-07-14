@@ -99,6 +99,23 @@ describe('Page.evaluateHandle', function() {
   });
 });
 
+describe('JSHandle.evaluate', function() {
+  it('should work with function', async({page, server}) => {
+    const windowHandle = await page.evaluateHandle(() => {
+      window.foo = [1, 2];
+      return window;
+    });
+    expect(await windowHandle.evaluate(w => w.foo)).toEqual([1, 2]);
+  });
+  it('should work with expression', async({page, server}) => {
+    const windowHandle = await page.evaluateHandle(() => {
+      window.foo = [1, 2];
+      return window;
+    });
+    expect(await windowHandle.evaluate('window.foo')).toEqual([1, 2]);
+  });
+});
+
 describe('JSHandle.getProperty', function() {
   it('should work', async({page, server}) => {
     const aHandle = await page.evaluateHandle(() => ({

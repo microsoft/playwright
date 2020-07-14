@@ -88,26 +88,26 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     this._viewportSize = initializer.viewportSize;
     this._closed = initializer.isClosed;
 
-    this._channel.on('bindingCall', bindingCall => this._onBinding(BindingCall.from(bindingCall)));
+    this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
-    this._channel.on('console', message => this.emit(Events.Page.Console, ConsoleMessage.from(message)));
+    this._channel.on('console', ({ message }) => this.emit(Events.Page.Console, ConsoleMessage.from(message)));
     this._channel.on('crash', () => this._onCrash());
-    this._channel.on('dialog', dialog => this.emit(Events.Page.Dialog, Dialog.from(dialog)));
+    this._channel.on('dialog', ({ dialog }) => this.emit(Events.Page.Dialog, Dialog.from(dialog)));
     this._channel.on('domcontentloaded', () => this.emit(Events.Page.DOMContentLoaded));
-    this._channel.on('download', download => this.emit(Events.Page.Download, Download.from(download)));
+    this._channel.on('download', ({ download }) => this.emit(Events.Page.Download, Download.from(download)));
     this._channel.on('fileChooser', ({ element, isMultiple }) => this.emit(Events.Page.FileChooser, new FileChooser(this, ElementHandle.from(element), isMultiple)));
-    this._channel.on('frameAttached', frame => this._onFrameAttached(Frame.from(frame)));
-    this._channel.on('frameDetached', frame => this._onFrameDetached(Frame.from(frame)));
+    this._channel.on('frameAttached', ({ frame }) => this._onFrameAttached(Frame.from(frame)));
+    this._channel.on('frameDetached', ({ frame }) => this._onFrameDetached(Frame.from(frame)));
     this._channel.on('frameNavigated', ({ frame, url, name }) => this._onFrameNavigated(Frame.from(frame), url, name));
     this._channel.on('load', () => this.emit(Events.Page.Load));
     this._channel.on('pageError', ({ error }) => this.emit(Events.Page.PageError, parseError(error)));
-    this._channel.on('popup', popup => this.emit(Events.Page.Popup, Page.from(popup)));
-    this._channel.on('request', request => this.emit(Events.Page.Request, Request.from(request)));
+    this._channel.on('popup', ({ page }) => this.emit(Events.Page.Popup, Page.from(page)));
+    this._channel.on('request', ({ request }) => this.emit(Events.Page.Request, Request.from(request)));
     this._channel.on('requestFailed', ({ request, failureText }) => this._onRequestFailed(Request.from(request), failureText));
-    this._channel.on('requestFinished', request => this.emit(Events.Page.RequestFinished, Request.from(request)));
-    this._channel.on('response', response => this.emit(Events.Page.Response, Response.from(response)));
+    this._channel.on('requestFinished', ({ request }) => this.emit(Events.Page.RequestFinished, Request.from(request)));
+    this._channel.on('response', ({ response }) => this.emit(Events.Page.Response, Response.from(response)));
     this._channel.on('route', ({ route, request }) => this._onRoute(Route.from(route), Request.from(request)));
-    this._channel.on('worker', worker => this._onWorker(Worker.from(worker)));
+    this._channel.on('worker', ({ worker }) => this._onWorker(Worker.from(worker)));
 
     if (this._browserContext._browserName === 'chromium') {
       this.coverage = new Coverage(this._channel);
@@ -182,7 +182,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async opener(): Promise<Page | null> {
-    return Page.fromNullable(await this._channel.opener());
+    return Page.fromNullable((await this._channel.opener()).page);
   }
 
   mainFrame(): Frame {
@@ -302,7 +302,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async reload(options: types.NavigateOptions = {}): Promise<Response | null> {
-    return Response.fromNullable(await this._channel.reload(options));
+    return Response.fromNullable((await this._channel.reload(options)).response);
   }
 
   async waitForLoadState(state?: types.LifecycleEvent, options?: types.TimeoutOptions): Promise<void> {
@@ -346,11 +346,11 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async goBack(options: types.NavigateOptions = {}): Promise<Response | null> {
-    return Response.fromNullable(await this._channel.goBack(options));
+    return Response.fromNullable((await this._channel.goBack(options)).response);
   }
 
   async goForward(options: types.NavigateOptions = {}): Promise<Response | null> {
-    return Response.fromNullable(await this._channel.goForward(options));
+    return Response.fromNullable((await this._channel.goForward(options)).response);
   }
 
   async emulateMedia(options: { media?: types.MediaType, colorScheme?: types.ColorScheme }) {
@@ -391,7 +391,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async screenshot(options: types.ScreenshotOptions = {}): Promise<Buffer> {
-    return Buffer.from(await this._channel.screenshot(options), 'base64');
+    return Buffer.from((await this._channel.screenshot(options)).screenshot, 'base64');
   }
 
   async title(): Promise<string> {
@@ -514,8 +514,8 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
       if (options.margin && typeof options.margin[index] === 'number')
         transportOptions.margin![index] = transportOptions.margin![index] + 'px';
     }
-    const binary = await this._channel.pdf(transportOptions);
-    const buffer = Buffer.from(binary, 'base64');
+    const result = await this._channel.pdf(transportOptions);
+    const buffer = Buffer.from(result.pdf, 'base64');
     if (path)
       await fsWriteFileAsync(path, buffer);
     return buffer;

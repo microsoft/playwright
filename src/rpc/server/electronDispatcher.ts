@@ -29,9 +29,9 @@ export class ElectronDispatcher extends Dispatcher<Electron, ElectronInitializer
     super(scope, electron, 'electron', {}, true);
   }
 
-  async launch(params: { executablePath: string } & ElectronLaunchOptions): Promise<ElectronApplicationChannel> {
+  async launch(params: { executablePath: string } & ElectronLaunchOptions): Promise<{ application: ElectronApplicationChannel }> {
     const electronApplication = await this._object.launch(params.executablePath, params);
-    return new ElectronApplicationDispatcher(this._scope, electronApplication);
+    return { application: new ElectronApplicationDispatcher(this._scope, electronApplication) };
   }
 }
 
@@ -42,22 +42,25 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
     });
 
     electronApplication.on(ElectronEvents.ElectronApplication.Close, () => this._dispatchEvent('close'));
-    electronApplication.on(ElectronEvents.ElectronApplication.Window, (page: Page) => this._dispatchEvent('window', lookupDispatcher<PageDispatcher>(page)));
+    electronApplication.on(ElectronEvents.ElectronApplication.Window, (page: Page) => {
+      this._dispatchEvent('window', { page: lookupDispatcher<PageDispatcher>(page) });
+    });
   }
 
-  async newBrowserWindow(params: { arg: any }): Promise<PageChannel> {
-    return lookupDispatcher<PageChannel>(await this._object.newBrowserWindow(parseArgument(params.arg)));
+  async newBrowserWindow(params: { arg: any }): Promise<{ page: PageChannel }> {
+    const page = await this._object.newBrowserWindow(parseArgument(params.arg));
+    return { page: lookupDispatcher<PageChannel>(page) };
   }
 
-  async evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<any> {
+  async evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }> {
     const handle = this._object._nodeElectronHandle!;
-    return handle._evaluateExpression(params.expression, params.isFunction, true /* returnByValue */, parseArgument(params.arg));
+    return { value: await handle._evaluateExpression(params.expression, params.isFunction, true /* returnByValue */, parseArgument(params.arg)) };
   }
 
-  async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any}): Promise<JSHandleChannel> {
+  async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any}): Promise<{ handle: JSHandleChannel }> {
     const handle = this._object._nodeElectronHandle!;
     const result = await handle._evaluateExpression(params.expression, params.isFunction, false /* returnByValue */, parseArgument(params.arg));
-    return createHandle(this._scope, result);
+    return { handle: createHandle(this._scope, result) };
   }
 
   async close(): Promise<void> {

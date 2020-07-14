@@ -34,6 +34,6 @@ export class Selectors extends ChannelOwner<SelectorsChannel, SelectorsInitializ
   }
 
   async _createSelector(name: string, handle: ElementHandle<Element>): Promise<string | undefined> {
-    return this._channel.createSelector({ name, handle: handle._elementChannel });
+    return (await this._channel.createSelector({ name, handle: handle._elementChannel })).selector;
   }
 }

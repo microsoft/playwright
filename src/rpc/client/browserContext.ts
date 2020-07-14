@@ -53,9 +53,9 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
       this._browser = parent;
     this._browserName = browserName;
 
-    this._channel.on('bindingCall', bindingCall => this._onBinding(BindingCall.from(bindingCall)));
+    this._channel.on('bindingCall', ({binding}) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
-    this._channel.on('page', page => this._onPage(Page.from(page)));
+    this._channel.on('page', ({page}) => this._onPage(Page.from(page)));
     this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
   }
@@ -99,7 +99,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   async newPage(): Promise<Page> {
     if (this._ownerPage)
       throw new Error('Please use browser.newContext()');
-    return Page.from(await this._channel.newPage());
+    return Page.from((await this._channel.newPage()).page);
   }
 
   async cookies(urls?: string | string[]): Promise<network.NetworkCookie[]> {
@@ -107,7 +107,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
       urls = [];
     if (urls && typeof urls === 'string')
       urls = [ urls ];
-    return this._channel.cookies({ urls: urls as string[] });
+    return (await this._channel.cookies({ urls: urls as string[] })).cookies;
   }
 
   async addCookies(cookies: network.SetNetworkCookieParam[]): Promise<void> {

@@ -78,11 +78,11 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   }
 
   async goto(url: string, options: GotoOptions = {}): Promise<network.Response | null> {
-    return network.Response.fromNullable(await this._channel.goto({ url, ...options, isPage: this._page!._isPageCall }));
+    return network.Response.fromNullable((await this._channel.goto({ url, ...options, isPage: this._page!._isPageCall })).response);
   }
 
   async waitForNavigation(options: types.WaitForNavigationOptions = {}): Promise<network.Response | null> {
-    return network.Response.fromNullable(await this._channel.waitForNavigation({ ...options, isPage: this._page!._isPageCall }));
+    return network.Response.fromNullable((await this._channel.waitForNavigation({ ...options, isPage: this._page!._isPageCall })).response);
   }
 
   async waitForLoadState(state: types.LifecycleEvent = 'load', options: types.TimeoutOptions = {}): Promise<void> {
@@ -101,29 +101,33 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   }
 
   async frameElement(): Promise<ElementHandle> {
-    return ElementHandle.from(await this._channel.frameElement());
+    return ElementHandle.from((await this._channel.frameElement()).element);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: Func1<void, R>, arg?: any): Promise<SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
-    return JSHandle.from(await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), isPage: this._page!._isPageCall })) as SmartHandle<R>;
+    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), isPage: this._page!._isPageCall });
+    return JSHandle.from(result.handle) as SmartHandle<R>;
   }
 
   async evaluate<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<R>;
   async evaluate<R>(pageFunction: Func1<void, R>, arg?: any): Promise<R>;
   async evaluate<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
-    return parseResult(await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), isPage: this._page!._isPageCall }));
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), isPage: this._page!._isPageCall });
+    return parseResult(result.value);
   }
 
   async $(selector: string): Promise<ElementHandle<Element> | null> {
-    return ElementHandle.fromNullable(await this._channel.querySelector({ selector, isPage: this._page!._isPageCall })) as ElementHandle<Element> | null;
+    const result = await this._channel.querySelector({ selector, isPage: this._page!._isPageCall });
+    return ElementHandle.fromNullable(result.element) as ElementHandle<Element> | null;
   }
 
   async waitForSelector(selector: string, options: types.WaitForElementOptions = {}): Promise<ElementHandle<Element> | null> {
-    return ElementHandle.fromNullable(await this._channel.waitForSelector({ selector, ...options, isPage: this._page!._isPageCall })) as ElementHandle<Element> | null;
+    const result = await this._channel.waitForSelector({ selector, ...options, isPage: this._page!._isPageCall });
+    return ElementHandle.fromNullable(result.element) as ElementHandle<Element> | null;
   }
 
   async dispatchEvent(selector: string, type: string, eventInit?: any, options: types.TimeoutOptions = {}): Promise<void> {
@@ -134,23 +138,25 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   async $eval<R>(selector: string, pageFunction: FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
-    return await this._channel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), isPage: this._page!._isPageCall });
+    const result = await this._channel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), isPage: this._page!._isPageCall });
+    return parseResult(result.value);
   }
 
   async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
   async $$eval<R>(selector: string, pageFunction: FuncOn<Element[], void, R>, arg?: any): Promise<R>;
   async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
-    return await this._channel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), isPage: this._page!._isPageCall });
+    const result = await this._channel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), isPage: this._page!._isPageCall });
+    return parseResult(result.value);
   }
 
   async $$(selector: string): Promise<ElementHandle<Element>[]> {
     const result = await this._channel.querySelectorAll({ selector, isPage: this._page!._isPageCall });
-    return result.map(c => ElementHandle.from(c) as ElementHandle<Element>);
+    return result.elements.map(e => ElementHandle.from(e) as ElementHandle<Element>);
   }
 
   async content(): Promise<string> {
-    return await this._channel.content();
+    return (await this._channel.content()).content;
   }
 
   async setContent(html: string, options: types.NavigateOptions = {}): Promise<void> {
@@ -183,14 +189,14 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
       copy.content = (await fsReadFileAsync(copy.path)).toString();
       copy.content += '//# sourceURL=' + copy.path.replace(/\n/g, '');
     }
-    return ElementHandle.from(await this._channel.addScriptTag({ ...copy, isPage: this._page!._isPageCall }));
+    return ElementHandle.from((await this._channel.addScriptTag({ ...copy, isPage: this._page!._isPageCall })).element);
   }
 
   async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
     const copy = { ...options };
     if (copy.path)
       copy.content = (await fsReadFileAsync(copy.path)).toString();
-    return ElementHandle.from(await this._channel.addStyleTag({ ...options, isPage: this._page!._isPageCall }));
+    return ElementHandle.from((await this._channel.addStyleTag({ ...options, isPage: this._page!._isPageCall })).element);
   }
 
   async click(selector: string, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
@@ -210,19 +216,19 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   }
 
   async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<null|string> {
-    return await this._channel.textContent({ selector, ...options, isPage: this._page!._isPageCall });
+    return (await this._channel.textContent({ selector, ...options, isPage: this._page!._isPageCall })).textContent;
   }
 
   async innerText(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
-    return await this._channel.innerText({ selector, ...options, isPage: this._page!._isPageCall });
+    return (await this._channel.innerText({ selector, ...options, isPage: this._page!._isPageCall })).innerText;
   }
 
   async innerHTML(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
-    return await this._channel.innerHTML({ selector, ...options, isPage: this._page!._isPageCall });
+    return (await this._channel.innerHTML({ selector, ...options, isPage: this._page!._isPageCall })).innerHTML;
   }
 
   async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
-    return await this._channel.getAttribute({ selector, name, ...options, isPage: this._page!._isPageCall });
+    return (await this._channel.getAttribute({ selector, name, ...options, isPage: this._page!._isPageCall })).attribute;
   }
 
   async hover(selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions = {}) {
@@ -230,7 +236,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   }
 
   async selectOption(selector: string, values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return await this._channel.selectOption({ selector, ...convertSelectOptionValues(values), ...options, isPage: this._page!._isPageCall });
+    return (await this._channel.selectOption({ selector, ...convertSelectOptionValues(values), ...options, isPage: this._page!._isPageCall })).selectedValues;
   }
 
   async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
@@ -260,11 +266,12 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   async waitForFunction<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<SmartHandle<R>>;
   async waitForFunction<R>(pageFunction: Func1<void, R>, arg?: any, options?: types.WaitForFunctionOptions): Promise<SmartHandle<R>>;
   async waitForFunction<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg, options: types.WaitForFunctionOptions = {}): Promise<SmartHandle<R>> {
-    return JSHandle.from(await this._channel.waitForFunction({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), ...options, isPage: this._page!._isPageCall })) as SmartHandle<R>;
+    const result = await this._channel.waitForFunction({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), ...options, isPage: this._page!._isPageCall });
+    return JSHandle.from(result.handle) as SmartHandle<R>;
   }
 
   async title(): Promise<string> {
-    return await this._channel.title();
+    return (await this._channel.title()).title;
   }
 }
 

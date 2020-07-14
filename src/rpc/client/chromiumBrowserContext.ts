@@ -29,16 +29,16 @@ export class ChromiumBrowserContext extends BrowserContext {
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserContextInitializer) {
     super(parent, type, guid, initializer, 'chromium');
-    this._channel.on('crBackgroundPage', pageChannel => {
-      const page = Page.from(pageChannel);
-      this._backgroundPages.add(page);
-      this.emit(ChromiumEvents.CRBrowserContext.BackgroundPage, page);
+    this._channel.on('crBackgroundPage', ({ page }) => {
+      const backgroundPage = Page.from(page);
+      this._backgroundPages.add(backgroundPage);
+      this.emit(ChromiumEvents.CRBrowserContext.BackgroundPage, backgroundPage);
     });
-    this._channel.on('crServiceWorker', serviceWorkerChannel => {
-      const worker = Worker.from(serviceWorkerChannel);
-      worker._context = this;
-      this._serviceWorkers.add(worker);
-      this.emit(ChromiumEvents.CRBrowserContext.ServiceWorker, worker);
+    this._channel.on('crServiceWorker', ({worker}) => {
+      const serviceWorker = Worker.from(worker);
+      serviceWorker._context = this;
+      this._serviceWorkers.add(serviceWorker);
+      this.emit(ChromiumEvents.CRBrowserContext.ServiceWorker, serviceWorker);
     });
   }
 
@@ -51,6 +51,7 @@ export class ChromiumBrowserContext extends BrowserContext {
   }
 
   async newCDPSession(page: Page): Promise<CDPSession> {
-    return CDPSession.from(await this._channel.crNewCDPSession({ page: page._channel }));
+    const result = await this._channel.crNewCDPSession({ page: page._channel });
+    return CDPSession.from(result.session);
   }
 }

@@ -20,7 +20,7 @@ import { Browser } from './browser';
 
 export class ChromiumBrowser extends Browser {
   async newBrowserCDPSession(): Promise<CDPSession> {
-    return CDPSession.from(await this._channel.crNewBrowserCDPSession());
+    return CDPSession.from((await this._channel.crNewBrowserCDPSession()).session);
   }
 
   async startTracing(page?: Page, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
@@ -28,6 +28,6 @@ export class ChromiumBrowser extends Browser {
   }
 
   async stopTracing(): Promise<Buffer> {
-    return Buffer.from(await this._channel.crStopTracing(), 'base64');
+    return Buffer.from((await this._channel.crStopTracing()).trace, 'base64');
   }
 }

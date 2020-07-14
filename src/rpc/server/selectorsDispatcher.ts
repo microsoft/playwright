@@ -29,7 +29,7 @@ export class SelectorsDispatcher extends Dispatcher<Selectors, SelectorsInitiali
     await this._object.register(params.name, params.source, params.options);
   }
 
-  async createSelector(params: { name: string, handle: ElementHandleDispatcher }): Promise<string | undefined> {
-    return this._object._createSelector(params.name, params.handle._object as dom.ElementHandle<Element>);
+  async createSelector(params: { name: string, handle: ElementHandleDispatcher }): Promise<{ selector?: string }> {
+    return { selector: await this._object._createSelector(params.name, params.handle._object as dom.ElementHandle<Element>) };
   }
 }

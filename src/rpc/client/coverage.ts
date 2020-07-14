@@ -29,7 +29,7 @@ export class Coverage {
   }
 
   async stopJSCoverage(): Promise<types.JSCoverageEntry[]> {
-    return await this._channel.crStopJSCoverage();
+    return (await this._channel.crStopJSCoverage()).entries;
   }
 
   async startCSSCoverage(options: types.CSSCoverageOptions = {}) {
@@ -37,6 +37,6 @@ export class Coverage {
   }
 
   async stopCSSCoverage(): Promise<types.CSSCoverageEntry[]> {
-    return await this._channel.crStopCSSCoverage();
+    return (await this._channel.crStopCSSCoverage()).entries;
   }
 }

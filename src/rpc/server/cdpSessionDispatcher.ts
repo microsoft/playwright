@@ -28,8 +28,8 @@ export class CDPSessionDispatcher extends Dispatcher<CRSession, CDPSessionInitia
     });
   }
 
-  async send(params: { method: string, params?: Object }): Promise<Object> {
-    return this._object.send(params.method as any, params.params);
+  async send(params: { method: string, params?: Object }): Promise<{ result: Object }> {
+    return { result: await this._object.send(params.method as any, params.params) };
   }
 
   async detach(): Promise<void> {

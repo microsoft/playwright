@@ -36,16 +36,16 @@ export type PlaywrightInitializer = {
 
 export interface SelectorsChannel extends Channel {
   register(params: { name: string, source: string, options: { contentScript?: boolean } }): Promise<void>;
-  createSelector(params: { name: string, handle: ElementHandleChannel }): Promise<string | undefined>;
+  createSelector(params: { name: string, handle: ElementHandleChannel }): Promise<{ selector?: string }>;
 }
 export type SelectorsInitializer = {};
 
 
 export interface BrowserTypeChannel extends Channel {
-  connect(params: types.ConnectOptions): Promise<BrowserChannel>;
-  launch(params: types.LaunchOptions): Promise<BrowserChannel>;
-  launchServer(params: types.LaunchServerOptions): Promise<BrowserServerChannel>;
-  launchPersistentContext(params: { userDataDir: string } & types.LaunchOptions & types.BrowserContextOptions): Promise<BrowserContextChannel>;
+  connect(params: types.ConnectOptions): Promise<{ browser: BrowserChannel }>;
+  launch(params: types.LaunchOptions): Promise<{ browser: BrowserChannel }>;
+  launchServer(params: types.LaunchServerOptions): Promise<{ server: BrowserServerChannel }>;
+  launchPersistentContext(params: { userDataDir: string } & types.LaunchOptions & types.BrowserContextOptions): Promise<{ context: BrowserContextChannel }>;
 }
 export type BrowserTypeInitializer = {
   executablePath: string,
@@ -69,19 +69,19 @@ export interface BrowserChannel extends Channel {
   on(event: 'close', callback: () => void): this;
 
   close(): Promise<void>;
-  newContext(params: types.BrowserContextOptions): Promise<BrowserContextChannel>;
+  newContext(params: types.BrowserContextOptions): Promise<{ context: BrowserContextChannel }>;
 
-  crNewBrowserCDPSession(): Promise<CDPSessionChannel>;
+  crNewBrowserCDPSession(): Promise<{ session: CDPSessionChannel }>;
   crStartTracing(params: { page?: PageChannel, path?: string, screenshots?: boolean, categories?: string[] }): Promise<void>;
-  crStopTracing(): Promise<Binary>;
+  crStopTracing(): Promise<{ trace: Binary }>;
 }
 export type BrowserInitializer = {};
 
 
 export interface BrowserContextChannel extends Channel {
-  on(event: 'bindingCall', callback: (params: BindingCallChannel) => void): this;
+  on(event: 'bindingCall', callback: (params: { binding: BindingCallChannel }) => void): this;
   on(event: 'close', callback: () => void): this;
-  on(event: 'page', callback: (params: PageChannel) => void): this;
+  on(event: 'page', callback: (params: { page: PageChannel }) => void): this;
   on(event: 'route', callback: (params: { route: RouteChannel, request: RequestChannel }) => void): this;
 
   addCookies(params: { cookies: types.SetNetworkCookieParam[] }): Promise<void>;
@@ -89,10 +89,10 @@ export interface BrowserContextChannel extends Channel {
   clearCookies(): Promise<void>;
   clearPermissions(): Promise<void>;
   close(): Promise<void>;
-  cookies(params: { urls: string[] }): Promise<types.NetworkCookie[]>;
+  cookies(params: { urls: string[] }): Promise<{ cookies: types.NetworkCookie[] }>;
   exposeBinding(params: { name: string }): Promise<void>;
   grantPermissions(params: { permissions: string[], origin?: string }): Promise<void>;
-  newPage(): Promise<PageChannel>;
+  newPage(): Promise<{ page: PageChannel }>;
   setDefaultNavigationTimeoutNoReply(params: { timeout: number }): void;
   setDefaultTimeoutNoReply(params: { timeout: number }): void;
   setExtraHTTPHeaders(params: { headers: types.Headers }): Promise<void>;
@@ -101,34 +101,34 @@ export interface BrowserContextChannel extends Channel {
   setNetworkInterceptionEnabled(params: { enabled: boolean }): Promise<void>;
   setOffline(params: { offline: boolean }): Promise<void>;
 
-  on(event: 'crBackgroundPage', callback: (params: PageChannel) => void): this;
-  on(event: 'crServiceWorker', callback: (params: WorkerChannel) => void): this;
-  crNewCDPSession(params: { page: PageChannel }): Promise<CDPSessionChannel>;
+  on(event: 'crBackgroundPage', callback: (params: { page: PageChannel }) => void): this;
+  on(event: 'crServiceWorker', callback: (params: { worker: WorkerChannel }) => void): this;
+  crNewCDPSession(params: { page: PageChannel }): Promise<{ session: CDPSessionChannel }>;
 }
 export type BrowserContextInitializer = {};
 
 
 export interface PageChannel extends Channel {
-  on(event: 'bindingCall', callback: (params: BindingCallChannel) => void): this;
+  on(event: 'bindingCall', callback: (params: { binding: BindingCallChannel }) => void): this;
   on(event: 'close', callback: () => void): this;
-  on(event: 'console', callback: (params: ConsoleMessageChannel) => void): this;
+  on(event: 'console', callback: (params: { message: ConsoleMessageChannel }) => void): this;
   on(event: 'crash', callback: () => void): this;
-  on(event: 'dialog', callback: (params: DialogChannel) => void): this;
-  on(event: 'download', callback: (params: DownloadChannel) => void): this;
+  on(event: 'dialog', callback: (params: { dialog: DialogChannel }) => void): this;
+  on(event: 'download', callback: (params: { download: DownloadChannel }) => void): this;
   on(event: 'domcontentloaded', callback: () => void): this;
   on(event: 'fileChooser', callback: (params: { element: ElementHandleChannel, isMultiple: boolean }) => void): this;
-  on(event: 'frameAttached', callback: (params: FrameChannel) => void): this;
-  on(event: 'frameDetached', callback: (params: FrameChannel) => void): this;
+  on(event: 'frameAttached', callback: (params: { frame: FrameChannel }) => void): this;
+  on(event: 'frameDetached', callback: (params: { frame: FrameChannel }) => void): this;
   on(event: 'frameNavigated', callback: (params: { frame: FrameChannel, url: string, name: string }) => void): this;
   on(event: 'load', callback: () => void): this;
   on(event: 'pageError', callback: (params: { error: types.Error }) => void): this;
-  on(event: 'popup', callback: (params: PageChannel) => void): this;
-  on(event: 'request', callback: (params: RequestChannel) => void): this;
+  on(event: 'popup', callback: (params: { page: PageChannel }) => void): this;
+  on(event: 'request', callback: (params: { request: RequestChannel }) => void): this;
   on(event: 'requestFailed', callback: (params: { request: RequestChannel, failureText: string | null }) => void): this;
-  on(event: 'requestFinished', callback: (params: RequestChannel) => void): this;
-  on(event: 'response', callback: (params: ResponseChannel) => void): this;
+  on(event: 'requestFinished', callback: (params: { request: RequestChannel }) => void): this;
+  on(event: 'response', callback: (params: { response: ResponseChannel }) => void): this;
   on(event: 'route', callback: (params: { route: RouteChannel, request: RequestChannel }) => void): this;
-  on(event: 'worker', callback: (params: WorkerChannel) => void): this;
+  on(event: 'worker', callback: (params: { worker: WorkerChannel }) => void): this;
 
   setDefaultNavigationTimeoutNoReply(params: { timeout: number }): void;
   setDefaultTimeoutNoReply(params: { timeout: number }): Promise<void>;
@@ -138,11 +138,11 @@ export interface PageChannel extends Channel {
   close(params: { runBeforeUnload?: boolean }): Promise<void>;
   emulateMedia(params: { media?: 'screen' | 'print', colorScheme?: 'dark' | 'light' | 'no-preference' }): Promise<void>;
   exposeBinding(params: { name: string }): Promise<void>;
-  goBack(params: types.NavigateOptions): Promise<ResponseChannel | null>;
-  goForward(params: types.NavigateOptions): Promise<ResponseChannel | null>;
-  opener(): Promise<PageChannel | null>;
-  reload(params: types.NavigateOptions): Promise<ResponseChannel | null>;
-  screenshot(params: types.ScreenshotOptions): Promise<Binary>;
+  goBack(params: types.NavigateOptions): Promise<{ response: ResponseChannel | null }>;
+  goForward(params: types.NavigateOptions): Promise<{ response: ResponseChannel | null }>;
+  opener(): Promise<{ page: PageChannel | null }>;
+  reload(params: types.NavigateOptions): Promise<{ response: ResponseChannel | null }>;
+  screenshot(params: types.ScreenshotOptions): Promise<{ screenshot: Binary }>;
   setExtraHTTPHeaders(params: { headers: types.Headers }): Promise<void>;
   setNetworkInterceptionEnabled(params: { enabled: boolean }): Promise<void>;
   setViewportSize(params: { viewportSize: types.Size }): Promise<void>;
@@ -158,13 +158,13 @@ export interface PageChannel extends Channel {
   mouseUp(params: { button?: types.MouseButton, clickCount?: number }): Promise<void>;
   mouseClick(params: { x: number, y: number, delay?: number, button?: types.MouseButton, clickCount?: number }): Promise<void>;
 
-  accessibilitySnapshot(params: { interestingOnly?: boolean, root?: ElementHandleChannel }): Promise<types.SerializedAXNode | null>;
-  pdf: (params: PDFOptions) => Promise<Binary>;
+  accessibilitySnapshot(params: { interestingOnly?: boolean, root?: ElementHandleChannel }): Promise<{ axNode: types.SerializedAXNode | null }>;
+  pdf: (params: PDFOptions) => Promise<{ pdf: Binary }>;
 
   crStartJSCoverage(params: types.JSCoverageOptions): Promise<void>;
-  crStopJSCoverage(): Promise<types.JSCoverageEntry[]>;
+  crStopJSCoverage(): Promise<{ entries: types.JSCoverageEntry[] }>;
   crStartCSSCoverage(params: types.CSSCoverageOptions): Promise<void>;
-  crStopCSSCoverage(): Promise<types.CSSCoverageEntry[]>;
+  crStopCSSCoverage(): Promise<{ entries: types.CSSCoverageEntry[] }>;
 }
 
 export type PageInitializer = {
@@ -178,38 +178,38 @@ export type PageAttribution = { isPage?: boolean };
 export interface FrameChannel extends Channel {
   on(event: 'loadstate', callback: (params: { add?: types.LifecycleEvent, remove?: types.LifecycleEvent }) => void): this;
 
-  evalOnSelector(params: { selector: string; expression: string, isFunction: boolean, arg: any} & PageAttribution): Promise<any>;
-  evalOnSelectorAll(params: { selector: string; expression: string, isFunction: boolean, arg: any} & PageAttribution): Promise<any>;
-  addScriptTag(params: { url?: string, content?: string, type?: string } & PageAttribution): Promise<ElementHandleChannel>;
-  addStyleTag(params: { url?: string, content?: string } & PageAttribution): Promise<ElementHandleChannel>;
+  evalOnSelector(params: { selector: string; expression: string, isFunction: boolean, arg: any} & PageAttribution): Promise<{ value: any }>;
+  evalOnSelectorAll(params: { selector: string; expression: string, isFunction: boolean, arg: any} & PageAttribution): Promise<{ value: any }>;
+  addScriptTag(params: { url?: string, content?: string, type?: string } & PageAttribution): Promise<{ element: ElementHandleChannel }>;
+  addStyleTag(params: { url?: string, content?: string } & PageAttribution): Promise<{ element: ElementHandleChannel }>;
   check(params: { selector: string, force?: boolean, noWaitAfter?: boolean } & types.TimeoutOptions & PageAttribution): Promise<void>;
   click(params: { selector: string, force?: boolean, noWaitAfter?: boolean } & types.PointerActionOptions & types.MouseClickOptions & types.TimeoutOptions & PageAttribution): Promise<void>;
-  content(): Promise<string>;
+  content(): Promise<{ content: string }>;
   dblclick(params: { selector: string, force?: boolean } & types.PointerActionOptions & types.MouseMultiClickOptions & types.TimeoutOptions & PageAttribution): Promise<void>;
   dispatchEvent(params: { selector: string, type: string, eventInit: any } & types.TimeoutOptions & PageAttribution): Promise<void>;
-  evaluateExpression(params: { expression: string, isFunction: boolean, arg: any} & PageAttribution): Promise<any>;
-  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any} & PageAttribution): Promise<JSHandleChannel>;
+  evaluateExpression(params: { expression: string, isFunction: boolean, arg: any} & PageAttribution): Promise<{ value: any }>;
+  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any} & PageAttribution): Promise<{ handle: JSHandleChannel }>;
   fill(params: { selector: string, value: string } & types.NavigatingActionWaitOptions & PageAttribution): Promise<void>;
   focus(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<void>;
-  frameElement(): Promise<ElementHandleChannel>;
-  getAttribute(params: { selector: string, name: string } & types.TimeoutOptions & PageAttribution): Promise<string | null>;
-  goto(params: { url: string } & types.GotoOptions & PageAttribution): Promise<ResponseChannel | null>;
+  frameElement(): Promise<{ element: ElementHandleChannel }>;
+  getAttribute(params: { selector: string, name: string } & types.TimeoutOptions & PageAttribution): Promise<{ attribute: string | null }>;
+  goto(params: { url: string } & types.GotoOptions & PageAttribution): Promise<{ response: ResponseChannel | null }>;
   hover(params: { selector: string, force?: boolean } & types.PointerActionOptions & types.TimeoutOptions & PageAttribution): Promise<void>;
-  innerHTML(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<string>;
-  innerText(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<string>;
+  innerHTML(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ innerHTML: string }>;
+  innerText(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ innerText: string }>;
   press(params: { selector: string, key: string, delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions & PageAttribution): Promise<void>;
-  querySelector(params: { selector: string} & PageAttribution): Promise<ElementHandleChannel | null>;
-  querySelectorAll(params: { selector: string} & PageAttribution): Promise<ElementHandleChannel[]>;
-  selectOption(params: { selector: string, elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions & PageAttribution): Promise<string[]>;
+  querySelector(params: { selector: string} & PageAttribution): Promise<{ element: ElementHandleChannel | null }>;
+  querySelectorAll(params: { selector: string} & PageAttribution): Promise<{ elements: ElementHandleChannel[] }>;
+  selectOption(params: { selector: string, elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions & PageAttribution): Promise<{ selectedValues: string[] }>;
   setContent(params: { html: string } & types.NavigateOptions & PageAttribution): Promise<void>;
   setInputFiles(params: { selector: string, files: { name: string, mimeType: string, buffer: Binary }[] } & types.NavigatingActionWaitOptions & PageAttribution): Promise<void>;
-  textContent(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<string | null>;
-  title(): Promise<string>;
+  textContent(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ textContent: string | null }>;
+  title(): Promise<{ title: string }>;
   type(params: { selector: string, text: string, delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions & PageAttribution): Promise<void>;
   uncheck(params: { selector: string, force?: boolean, noWaitAfter?: boolean } & types.TimeoutOptions & PageAttribution): Promise<void>;
-  waitForFunction(params: { expression: string, isFunction: boolean, arg: any } & types.WaitForFunctionOptions & PageAttribution): Promise<JSHandleChannel>;
-  waitForNavigation(params: types.WaitForNavigationOptions & PageAttribution): Promise<ResponseChannel | null>;
-  waitForSelector(params: { selector: string } & types.WaitForElementOptions & PageAttribution): Promise<ElementHandleChannel | null>;
+  waitForFunction(params: { expression: string, isFunction: boolean, arg: any } & types.WaitForFunctionOptions & PageAttribution): Promise<{ handle: JSHandleChannel }>;
+  waitForNavigation(params: types.WaitForNavigationOptions & PageAttribution): Promise<{ response: ResponseChannel | null }>;
+  waitForSelector(params: { selector: string } & types.WaitForElementOptions & PageAttribution): Promise<{ element: ElementHandleChannel | null }>;
 }
 export type FrameInitializer = {
   url: string,
@@ -220,8 +220,8 @@ export type FrameInitializer = {
 
 
 export interface WorkerChannel extends Channel {
-  evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<any>;
-  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any }): Promise<JSHandleChannel>;
+  evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }>;
+  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any }): Promise<{ handle: JSHandleChannel }>;
 }
 export type WorkerInitializer = {
   url: string,
@@ -229,14 +229,14 @@ export type WorkerInitializer = {
 
 
 export interface JSHandleChannel extends Channel {
-  on(event: 'previewUpdated', callback: (preview: string) => void): this;
+  on(event: 'previewUpdated', callback: (params: { preview: string }) => void): this;
 
   dispose(): Promise<void>;
-  evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<any>;
-  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any}): Promise<JSHandleChannel>;
-  getPropertyList(): Promise<{ name: string, value: JSHandleChannel}[]>;
-  getProperty(params: { name: string }): Promise<JSHandleChannel>;
-  jsonValue(): Promise<any>;
+  evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }>;
+  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any}): Promise<{ handle: JSHandleChannel }>;
+  getPropertyList(): Promise<{ properties: { name: string, value: JSHandleChannel}[] }>;
+  getProperty(params: { name: string }): Promise<{ handle: JSHandleChannel }>;
+  jsonValue(): Promise<{ value: any }>;
 }
 export type JSHandleInitializer = {
   preview: string,
@@ -244,37 +244,37 @@ export type JSHandleInitializer = {
 
 
 export interface ElementHandleChannel extends JSHandleChannel {
-  evalOnSelector(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<any>;
-  evalOnSelectorAll(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<any>;
-  boundingBox(): Promise<types.Rect | null>;
+  evalOnSelector(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }>;
+  evalOnSelectorAll(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }>;
+  boundingBox(): Promise<{ box: types.Rect | null }>;
   check(params: { force?: boolean } & { noWaitAfter?: boolean } & types.TimeoutOptions): Promise<void>;
   click(params: { force?: boolean, noWaitAfter?: boolean } & types.PointerActionOptions & types.MouseClickOptions & types.TimeoutOptions): Promise<void>;
-  contentFrame(): Promise<FrameChannel | null>;
+  contentFrame(): Promise<{ frame: FrameChannel | null }>;
   dblclick(params: { force?: boolean, noWaitAfter?: boolean } & types.PointerActionOptions & types.MouseMultiClickOptions & types.TimeoutOptions): Promise<void>;
   dispatchEvent(params: { type: string, eventInit: any }): Promise<void>;
   fill(params: { value: string } & types.NavigatingActionWaitOptions): Promise<void>;
   focus(): Promise<void>;
-  getAttribute(params: { name: string }): Promise<string | null>;
+  getAttribute(params: { name: string }): Promise<{ attribute: string | null }>;
   hover(params: { force?: boolean } & types.PointerActionOptions & types.TimeoutOptions): Promise<void>;
-  innerHTML(): Promise<string>;
-  innerText(): Promise<string>;
-  ownerFrame(): Promise<FrameChannel | null>;
+  innerHTML(): Promise<{ innerHTML: string }>;
+  innerText(): Promise<{ innerText: string }>;
+  ownerFrame(): Promise<{ frame: FrameChannel | null }>;
   press(params: { key: string, delay?: number } & types.TimeoutOptions & { noWaitAfter?: boolean }): Promise<void>;
-  querySelector(params: { selector: string }): Promise<ElementHandleChannel | null>;
-  querySelectorAll(params: { selector: string }): Promise<ElementHandleChannel[]>;
-  screenshot(params: types.ElementScreenshotOptions): Promise<Binary>;
+  querySelector(params: { selector: string }): Promise<{ element: ElementHandleChannel | null }>;
+  querySelectorAll(params: { selector: string }): Promise<{ elements: ElementHandleChannel[] }>;
+  screenshot(params: types.ElementScreenshotOptions): Promise<{ screenshot: Binary }>;
   scrollIntoViewIfNeeded(params: types.TimeoutOptions): Promise<void>;
-  selectOption(params: { elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions): string[] | Promise<string[]>;
+  selectOption(params: { elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions): Promise<{ selectedValues: string[] }>;
   selectText(params: types.TimeoutOptions): Promise<void>;
   setInputFiles(params: { files: { name: string, mimeType: string, buffer: Binary }[] } & types.NavigatingActionWaitOptions): Promise<void>;
-  textContent(): Promise<string | null>;
+  textContent(): Promise<{ textContent: string | null }>;
   type(params: { text: string, delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions): Promise<void>;
   uncheck(params: { force?: boolean, noWaitAfter?: boolean } & types.TimeoutOptions): Promise<void>;
 }
 
 
 export interface RequestChannel extends Channel {
-  response(): Promise<ResponseChannel | null>;
+  response(): Promise<{ response: ResponseChannel | null }>;
 }
 export type RequestInitializer = {
   frame: FrameChannel,
@@ -304,8 +304,8 @@ export type RouteInitializer = {
 
 
 export interface ResponseChannel extends Channel {
-  body(): Promise<Binary>;
-  finished(): Promise<Error | null>;
+  body(): Promise<{ body: Binary }>;
+  finished(): Promise<{ error: Error | null }>;
 }
 export type ResponseInitializer = {
   request: RequestChannel,
@@ -349,9 +349,9 @@ export type DialogInitializer = {
 
 
 export interface DownloadChannel extends Channel {
-  path(): Promise<string | null>;
-  failure(): Promise<string | null>;
-  stream(): Promise<StreamChannel | null>;
+  path(): Promise<{ path: string | null }>;
+  failure(): Promise<{ error: string | null }>;
+  stream(): Promise<{ stream: StreamChannel | null }>;
   delete(): Promise<void>;
 }
 export type DownloadInitializer = {
@@ -361,7 +361,7 @@ export type DownloadInitializer = {
 
 
 export interface StreamChannel extends Channel {
-  read(params: { size?: number }): Promise<Binary>;
+  read(params: { size?: number }): Promise<{ data: Binary }>;
 }
 export type StreamInitializer = {
 }
@@ -372,7 +372,7 @@ export interface CDPSessionChannel extends Channel {
   on(event: 'event', callback: (params: { method: string, params?: Object }) => void): this;
   on(event: 'disconnected', callback: () => void): this;
 
-  send(params: { method: string, params?: Object }): Promise<Object>;
+  send(params: { method: string, params?: Object }): Promise<{ result: Object }>;
   detach(): Promise<void>;
 }
 export type CDPSessionInitializer = {};
@@ -403,18 +403,18 @@ export type ElectronLaunchOptions = {
   timeout?: number,
 };
 export interface ElectronChannel extends Channel {
-  launch(params: { executablePath: string } & ElectronLaunchOptions): Promise<ElectronApplicationChannel>;
+  launch(params: { executablePath: string } & ElectronLaunchOptions): Promise<{ application: ElectronApplicationChannel }>;
 }
 export type ElectronInitializer = {};
 
 
 export interface ElectronApplicationChannel extends Channel {
   on(event: 'close', callback: () => void): this;
-  on(event: 'window', callback: (params: PageChannel) => void): this;
+  on(event: 'window', callback: (params: { page: PageChannel }) => void): this;
 
-  newBrowserWindow(params: { arg: any }): Promise<PageChannel>;
-  evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<any>;
-  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any }): Promise<JSHandleChannel>;
+  newBrowserWindow(params: { arg: any }): Promise<{ page: PageChannel }>;
+  evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }>;
+  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any }): Promise<{ handle: JSHandleChannel }>;
   close(): Promise<void>;
 }
 export type ElectronApplicationInitializer = {
