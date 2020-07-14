@@ -151,10 +151,8 @@ export class CRBrowser extends BrowserBase {
       const opener = targetInfo.openerId ? this._crPages.get(targetInfo.openerId) || null : null;
       const crPage = new CRPage(session, targetInfo.targetId, context, opener, !!this._options.headful);
       this._crPages.set(targetInfo.targetId, crPage);
-      crPage.pageOrError().then(pageOrError => {
+      crPage.pageOrError().then(() => {
         const page = crPage._page;
-        if (pageOrError instanceof Error)
-          page._setIsError();
         context!.emit(CommonEvents.BrowserContext.Page, page);
         if (opener) {
           opener.pageOrError().then(openerPage => {

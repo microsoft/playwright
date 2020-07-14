@@ -131,7 +131,7 @@ describe('BrowserContext', function() {
   });
   it('should not report frameless pages on error', async({browser, server}) => {
     const context = await browser.newContext();
-    page = await context.newPage();
+    const page = await context.newPage();
     server.setRoute('/empty.html', (req, res) => {
       res.end(`<a href="${server.EMPTY_PAGE}" target="_blank">Click me</a>`);
     });

@@ -140,10 +140,8 @@ export class WKBrowser extends BrowserBase {
     const wkPage = new WKPage(context, pageProxySession, opener || null);
     this._wkPages.set(pageProxyId, wkPage);
 
-    wkPage.pageOrError().then(async pageOrError => {
+    wkPage.pageOrError().then(async () => {
       const page = wkPage._page;
-      if (pageOrError instanceof Error)
-        page._setIsError();
       context!.emit(Events.BrowserContext.Page, page);
       if (!opener)
         return;

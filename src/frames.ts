@@ -69,7 +69,8 @@ export class FrameManager {
 
   constructor(page: Page) {
     this._page = page;
-    this._mainFrame = undefined as any as Frame;
+    this._mainFrame = new Frame(this._page, 'dummyFrameId', null);
+    this._frames.set('dummyFrameId', this._mainFrame);
   }
 
   dispose() {
@@ -100,14 +101,9 @@ export class FrameManager {
   frameAttached(frameId: string, parentFrameId: string | null | undefined): Frame {
     const parentFrame = parentFrameId ? this._frames.get(parentFrameId)! : null;
     if (!parentFrame) {
-      if (this._mainFrame) {
-        // Update frame id to retain frame identity on cross-process navigation.
-        this._frames.delete(this._mainFrame._id);
-        this._mainFrame._id = frameId;
-      } else {
-        assert(!this._frames.has(frameId));
-        this._mainFrame = new Frame(this._page, frameId, parentFrame);
-      }
+      // Update frame id to retain frame identity on cross-process navigation.
+      this._frames.delete(this._mainFrame._id);
+      this._mainFrame._id = frameId;
       this._frames.set(frameId, this._mainFrame);
       return this._mainFrame;
     } else {
