@@ -11,6 +11,7 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'jugglerscreencast'
 
 SOURCES += [
+    'HeadlessWindowCapturer.cpp',
     'nsScreencastService.cpp',
     'ScreencastEncoder.cpp',
 ]
@@ -24,6 +25,11 @@ LOCAL_INCLUDES += [
     '/media/libyuv/libyuv/include',
     '/media/webrtc/trunk',
     '/media/webrtc/trunk/webrtc',
+]
+
+LOCAL_INCLUDES += [
+    '/widget',
+    '/widget/headless',
 ]
 
 include('/media/webrtc/webrtc.mozbuild')
