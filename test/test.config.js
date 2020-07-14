@@ -127,12 +127,14 @@ module.exports = {
 
     {
       files: [
+        /*
         './browser.spec.js',
         './browsercontext.spec.js',
         './channels.spec.js',
         './ignorehttpserrors.spec.js',
         './popup.spec.js',
         './recorder.spec.js',
+        */
       ],
       environments: [customEnvironment, 'browser'],
     },
