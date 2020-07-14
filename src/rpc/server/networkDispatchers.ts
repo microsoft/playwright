@@ -66,8 +66,8 @@ export class ResponseDispatcher extends Dispatcher<Response, ResponseInitializer
     return { error: await this._object.finished() };
   }
 
-  async body(): Promise<{ body: Binary }> {
-    return { body: (await this._object.body()).toString('base64') };
+  async body(): Promise<{ binary: Binary }> {
+    return { binary: (await this._object.body()).toString('base64') };
   }
 }
 

@@ -101,8 +101,8 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     return { elements: elements.map(e => new ElementHandleDispatcher(this._scope, e)) };
   }
 
-  async content(): Promise<{ content: string }> {
-    return { content: await this._frame.content() };
+  async content(): Promise<{ value: string }> {
+    return { value: await this._frame.content() };
   }
 
   async setContent(params: { html: string } & types.NavigateOptions & PageAttribution): Promise<void> {
@@ -140,24 +140,24 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     await target.focus(params.selector, params);
   }
 
-  async textContent(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ textContent: string | null }> {
+  async textContent(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ value: string | null }> {
     const target = params.isPage ? this._frame._page : this._frame;
-    return { textContent: await target.textContent(params.selector, params) };
+    return { value: await target.textContent(params.selector, params) };
   }
 
-  async innerText(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ innerText: string }> {
+  async innerText(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ value: string }> {
     const target = params.isPage ? this._frame._page : this._frame;
-    return { innerText: await target.innerText(params.selector, params) };
+    return { value: await target.innerText(params.selector, params) };
   }
 
-  async innerHTML(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ innerHTML: string }> {
+  async innerHTML(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ value: string }> {
     const target = params.isPage ? this._frame._page : this._frame;
-    return { innerHTML: await target.innerHTML(params.selector, params) };
+    return { value: await target.innerHTML(params.selector, params) };
   }
 
-  async getAttribute(params: { selector: string, name: string } & types.TimeoutOptions & PageAttribution): Promise<{ attribute: string | null }> {
+  async getAttribute(params: { selector: string, name: string } & types.TimeoutOptions & PageAttribution): Promise<{ value: string | null }> {
     const target = params.isPage ? this._frame._page : this._frame;
-    return { attribute: await target.getAttribute(params.selector, params.name, params) };
+    return { value: await target.getAttribute(params.selector, params.name, params) };
   }
 
   async hover(params: { selector: string } & types.PointerActionOptions & types.TimeoutOptions & { force?: boolean } & PageAttribution): Promise<void> {
@@ -165,9 +165,9 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     await target.hover(params.selector, params);
   }
 
-  async selectOption(params: { selector: string, elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions & PageAttribution): Promise<{ selectedValues: string[] }> {
+  async selectOption(params: { selector: string, elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions & PageAttribution): Promise<{ values: string[] }> {
     const target = params.isPage ? this._frame._page : this._frame;
-    return { selectedValues: await target.selectOption(params.selector, convertSelectOptionValues(params.elements, params.options), params) };
+    return { values: await target.selectOption(params.selector, convertSelectOptionValues(params.elements, params.options), params) };
   }
 
   async setInputFiles(params: { selector: string, files: { name: string, mimeType: string, buffer: string }[] } & types.NavigatingActionWaitOptions & PageAttribution): Promise<void> {
@@ -200,7 +200,7 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     return { handle: createHandle(this._scope, await target._waitForFunctionExpression(params.expression, params.isFunction, parseArgument(params.arg), params)) };
   }
 
-  async title(): Promise<{ title: string }> {
-    return { title: await this._frame.title() };
+  async title(): Promise<{ value: string }> {
+    return { value: await this._frame.title() };
   }
 }

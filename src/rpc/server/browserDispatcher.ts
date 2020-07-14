@@ -52,9 +52,9 @@ export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> i
     await crBrowser.startTracing(params.page ? params.page._object : undefined, params);
   }
 
-  async crStopTracing(): Promise<{ trace: Binary }> {
+  async crStopTracing(): Promise<{ binary: Binary }> {
     const crBrowser = this._object as CRBrowser;
     const buffer = await crBrowser.stopTracing();
-    return { trace: buffer.toString('base64') };
+    return { binary: buffer.toString('base64') };
   }
 }

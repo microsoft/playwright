@@ -27,8 +27,8 @@ export class DownloadDispatcher extends Dispatcher<Download, DownloadInitializer
     });
   }
 
-  async path(): Promise<{ path: string | null }> {
-    return { path: await this._object.path() };
+  async path(): Promise<{ value: string | null }> {
+    return { value: await this._object.path() };
   }
 
   async stream(): Promise<{ stream: StreamChannel | null }> {

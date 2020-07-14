@@ -28,6 +28,6 @@ export class ChromiumBrowser extends Browser {
   }
 
   async stopTracing(): Promise<Buffer> {
-    return Buffer.from((await this._channel.crStopTracing()).trace, 'base64');
+    return Buffer.from((await this._channel.crStopTracing()).binary, 'base64');
   }
 }

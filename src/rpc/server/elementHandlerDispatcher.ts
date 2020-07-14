@@ -48,20 +48,20 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
     return { frame: lookupNullableDispatcher<FrameDispatcher>(await this._elementHandle.contentFrame()) };
   }
 
-  async getAttribute(params: { name: string }): Promise<{ attribute: string | null }> {
-    return { attribute: await this._elementHandle.getAttribute(params.name) };
+  async getAttribute(params: { name: string }): Promise<{ value: string | null }> {
+    return { value: await this._elementHandle.getAttribute(params.name) };
   }
 
-  async textContent(): Promise<{ textContent: string | null }> {
-    return { textContent: await this._elementHandle.textContent() };
+  async textContent(): Promise<{ value: string | null }> {
+    return { value: await this._elementHandle.textContent() };
   }
 
-  async innerText(): Promise<{ innerText: string }> {
-    return { innerText: await this._elementHandle.innerText() };
+  async innerText(): Promise<{ value: string }> {
+    return { value: await this._elementHandle.innerText() };
   }
 
-  async innerHTML(): Promise<{ innerHTML: string }> {
-    return { innerHTML: await this._elementHandle.innerHTML() };
+  async innerHTML(): Promise<{ value: string }> {
+    return { value: await this._elementHandle.innerHTML() };
   }
 
   async dispatchEvent(params: { type: string, eventInit: Object }) {
@@ -84,8 +84,8 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
     await this._elementHandle.dblclick(params);
   }
 
-  async selectOption(params: { elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions): Promise<{ selectedValues: string[] }> {
-    return { selectedValues: await this._elementHandle.selectOption(convertSelectOptionValues(params.elements, params.options), params) };
+  async selectOption(params: { elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions): Promise<{ values: string[] }> {
+    return { values: await this._elementHandle.selectOption(convertSelectOptionValues(params.elements, params.options), params) };
   }
 
   async fill(params: { value: string } & types.NavigatingActionWaitOptions) {
@@ -120,12 +120,12 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
     await this._elementHandle.uncheck(params);
   }
 
-  async boundingBox(): Promise<{ box: types.Rect | null }> {
-    return { box: await this._elementHandle.boundingBox() };
+  async boundingBox(): Promise<{ value: types.Rect | null }> {
+    return { value: await this._elementHandle.boundingBox() };
   }
 
-  async screenshot(params: types.ElementScreenshotOptions): Promise<{ screenshot: Binary }> {
-    return { screenshot: (await this._elementHandle.screenshot(params)).toString('base64') };
+  async screenshot(params: types.ElementScreenshotOptions): Promise<{ binary: Binary }> {
+    return { binary: (await this._elementHandle.screenshot(params)).toString('base64') };
   }
 
   async querySelector(params: { selector: string }): Promise<{ element: ElementHandleChannel | null }> {

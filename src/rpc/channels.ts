@@ -36,7 +36,7 @@ export type PlaywrightInitializer = {
 
 export interface SelectorsChannel extends Channel {
   register(params: { name: string, source: string, options: { contentScript?: boolean } }): Promise<void>;
-  createSelector(params: { name: string, handle: ElementHandleChannel }): Promise<{ selector?: string }>;
+  createSelector(params: { name: string, handle: ElementHandleChannel }): Promise<{ value?: string }>;
 }
 export type SelectorsInitializer = {};
 
@@ -73,7 +73,7 @@ export interface BrowserChannel extends Channel {
 
   crNewBrowserCDPSession(): Promise<{ session: CDPSessionChannel }>;
   crStartTracing(params: { page?: PageChannel, path?: string, screenshots?: boolean, categories?: string[] }): Promise<void>;
-  crStopTracing(): Promise<{ trace: Binary }>;
+  crStopTracing(): Promise<{ binary: Binary }>;
 }
 export type BrowserInitializer = {};
 
@@ -142,7 +142,7 @@ export interface PageChannel extends Channel {
   goForward(params: types.NavigateOptions): Promise<{ response: ResponseChannel | null }>;
   opener(): Promise<{ page: PageChannel | null }>;
   reload(params: types.NavigateOptions): Promise<{ response: ResponseChannel | null }>;
-  screenshot(params: types.ScreenshotOptions): Promise<{ screenshot: Binary }>;
+  screenshot(params: types.ScreenshotOptions): Promise<{ binary: Binary }>;
   setExtraHTTPHeaders(params: { headers: types.Headers }): Promise<void>;
   setNetworkInterceptionEnabled(params: { enabled: boolean }): Promise<void>;
   setViewportSize(params: { viewportSize: types.Size }): Promise<void>;
@@ -158,7 +158,7 @@ export interface PageChannel extends Channel {
   mouseUp(params: { button?: types.MouseButton, clickCount?: number }): Promise<void>;
   mouseClick(params: { x: number, y: number, delay?: number, button?: types.MouseButton, clickCount?: number }): Promise<void>;
 
-  accessibilitySnapshot(params: { interestingOnly?: boolean, root?: ElementHandleChannel }): Promise<{ axNode: types.SerializedAXNode | null }>;
+  accessibilitySnapshot(params: { interestingOnly?: boolean, root?: ElementHandleChannel }): Promise<{ rootAXNode: types.SerializedAXNode | null }>;
   pdf: (params: PDFOptions) => Promise<{ pdf: Binary }>;
 
   crStartJSCoverage(params: types.JSCoverageOptions): Promise<void>;
@@ -184,7 +184,7 @@ export interface FrameChannel extends Channel {
   addStyleTag(params: { url?: string, content?: string } & PageAttribution): Promise<{ element: ElementHandleChannel }>;
   check(params: { selector: string, force?: boolean, noWaitAfter?: boolean } & types.TimeoutOptions & PageAttribution): Promise<void>;
   click(params: { selector: string, force?: boolean, noWaitAfter?: boolean } & types.PointerActionOptions & types.MouseClickOptions & types.TimeoutOptions & PageAttribution): Promise<void>;
-  content(): Promise<{ content: string }>;
+  content(): Promise<{ value: string }>;
   dblclick(params: { selector: string, force?: boolean } & types.PointerActionOptions & types.MouseMultiClickOptions & types.TimeoutOptions & PageAttribution): Promise<void>;
   dispatchEvent(params: { selector: string, type: string, eventInit: any } & types.TimeoutOptions & PageAttribution): Promise<void>;
   evaluateExpression(params: { expression: string, isFunction: boolean, arg: any} & PageAttribution): Promise<{ value: any }>;
@@ -192,19 +192,19 @@ export interface FrameChannel extends Channel {
   fill(params: { selector: string, value: string } & types.NavigatingActionWaitOptions & PageAttribution): Promise<void>;
   focus(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<void>;
   frameElement(): Promise<{ element: ElementHandleChannel }>;
-  getAttribute(params: { selector: string, name: string } & types.TimeoutOptions & PageAttribution): Promise<{ attribute: string | null }>;
+  getAttribute(params: { selector: string, name: string } & types.TimeoutOptions & PageAttribution): Promise<{ value: string | null }>;
   goto(params: { url: string } & types.GotoOptions & PageAttribution): Promise<{ response: ResponseChannel | null }>;
   hover(params: { selector: string, force?: boolean } & types.PointerActionOptions & types.TimeoutOptions & PageAttribution): Promise<void>;
-  innerHTML(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ innerHTML: string }>;
-  innerText(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ innerText: string }>;
+  innerHTML(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ value: string }>;
+  innerText(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ value: string }>;
   press(params: { selector: string, key: string, delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions & PageAttribution): Promise<void>;
   querySelector(params: { selector: string} & PageAttribution): Promise<{ element: ElementHandleChannel | null }>;
   querySelectorAll(params: { selector: string} & PageAttribution): Promise<{ elements: ElementHandleChannel[] }>;
-  selectOption(params: { selector: string, elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions & PageAttribution): Promise<{ selectedValues: string[] }>;
+  selectOption(params: { selector: string, elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions & PageAttribution): Promise<{ values: string[] }>;
   setContent(params: { html: string } & types.NavigateOptions & PageAttribution): Promise<void>;
   setInputFiles(params: { selector: string, files: { name: string, mimeType: string, buffer: Binary }[] } & types.NavigatingActionWaitOptions & PageAttribution): Promise<void>;
-  textContent(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ textContent: string | null }>;
-  title(): Promise<{ title: string }>;
+  textContent(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ value: string | null }>;
+  title(): Promise<{ value: string }>;
   type(params: { selector: string, text: string, delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions & PageAttribution): Promise<void>;
   uncheck(params: { selector: string, force?: boolean, noWaitAfter?: boolean } & types.TimeoutOptions & PageAttribution): Promise<void>;
   waitForFunction(params: { expression: string, isFunction: boolean, arg: any } & types.WaitForFunctionOptions & PageAttribution): Promise<{ handle: JSHandleChannel }>;
@@ -246,7 +246,7 @@ export type JSHandleInitializer = {
 export interface ElementHandleChannel extends JSHandleChannel {
   evalOnSelector(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }>;
   evalOnSelectorAll(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }>;
-  boundingBox(): Promise<{ box: types.Rect | null }>;
+  boundingBox(): Promise<{ value: types.Rect | null }>;
   check(params: { force?: boolean } & { noWaitAfter?: boolean } & types.TimeoutOptions): Promise<void>;
   click(params: { force?: boolean, noWaitAfter?: boolean } & types.PointerActionOptions & types.MouseClickOptions & types.TimeoutOptions): Promise<void>;
   contentFrame(): Promise<{ frame: FrameChannel | null }>;
@@ -254,20 +254,20 @@ export interface ElementHandleChannel extends JSHandleChannel {
   dispatchEvent(params: { type: string, eventInit: any }): Promise<void>;
   fill(params: { value: string } & types.NavigatingActionWaitOptions): Promise<void>;
   focus(): Promise<void>;
-  getAttribute(params: { name: string }): Promise<{ attribute: string | null }>;
+  getAttribute(params: { name: string }): Promise<{ value: string | null }>;
   hover(params: { force?: boolean } & types.PointerActionOptions & types.TimeoutOptions): Promise<void>;
-  innerHTML(): Promise<{ innerHTML: string }>;
-  innerText(): Promise<{ innerText: string }>;
+  innerHTML(): Promise<{ value: string }>;
+  innerText(): Promise<{ value: string }>;
   ownerFrame(): Promise<{ frame: FrameChannel | null }>;
   press(params: { key: string, delay?: number } & types.TimeoutOptions & { noWaitAfter?: boolean }): Promise<void>;
   querySelector(params: { selector: string }): Promise<{ element: ElementHandleChannel | null }>;
   querySelectorAll(params: { selector: string }): Promise<{ elements: ElementHandleChannel[] }>;
-  screenshot(params: types.ElementScreenshotOptions): Promise<{ screenshot: Binary }>;
+  screenshot(params: types.ElementScreenshotOptions): Promise<{ binary: Binary }>;
   scrollIntoViewIfNeeded(params: types.TimeoutOptions): Promise<void>;
-  selectOption(params: { elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions): Promise<{ selectedValues: string[] }>;
+  selectOption(params: { elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions): Promise<{ values: string[] }>;
   selectText(params: types.TimeoutOptions): Promise<void>;
   setInputFiles(params: { files: { name: string, mimeType: string, buffer: Binary }[] } & types.NavigatingActionWaitOptions): Promise<void>;
-  textContent(): Promise<{ textContent: string | null }>;
+  textContent(): Promise<{ value: string | null }>;
   type(params: { text: string, delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions): Promise<void>;
   uncheck(params: { force?: boolean, noWaitAfter?: boolean } & types.TimeoutOptions): Promise<void>;
 }
@@ -304,7 +304,7 @@ export type RouteInitializer = {
 
 
 export interface ResponseChannel extends Channel {
-  body(): Promise<{ body: Binary }>;
+  body(): Promise<{ binary: Binary }>;
   finished(): Promise<{ error: Error | null }>;
 }
 export type ResponseInitializer = {
@@ -349,7 +349,7 @@ export type DialogInitializer = {
 
 
 export interface DownloadChannel extends Channel {
-  path(): Promise<{ path: string | null }>;
+  path(): Promise<{ value: string | null }>;
   failure(): Promise<{ error: string | null }>;
   stream(): Promise<{ stream: StreamChannel | null }>;
   delete(): Promise<void>;
@@ -361,7 +361,7 @@ export type DownloadInitializer = {
 
 
 export interface StreamChannel extends Channel {
-  read(params: { size?: number }): Promise<{ data: Binary }>;
+  read(params: { size?: number }): Promise<{ binary: Binary }>;
 }
 export type StreamInitializer = {
 }
@@ -403,7 +403,7 @@ export type ElectronLaunchOptions = {
   timeout?: number,
 };
 export interface ElectronChannel extends Channel {
-  launch(params: { executablePath: string } & ElectronLaunchOptions): Promise<{ application: ElectronApplicationChannel }>;
+  launch(params: { executablePath: string } & ElectronLaunchOptions): Promise<{ electronApplication: ElectronApplicationChannel }>;
 }
 export type ElectronInitializer = {};
 

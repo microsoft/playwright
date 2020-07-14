@@ -129,8 +129,8 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     });
   }
 
-  async screenshot(params: types.ScreenshotOptions): Promise<{ screenshot: Binary }> {
-    return { screenshot: (await this._page.screenshot(params)).toString('base64') };
+  async screenshot(params: types.ScreenshotOptions): Promise<{ binary: Binary }> {
+    return { binary: (await this._page.screenshot(params)).toString('base64') };
   }
 
   async close(params: { runBeforeUnload?: boolean }): Promise<void> {
@@ -180,12 +180,12 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     await this._page.mouse.click(params.x, params.y, params);
   }
 
-  async accessibilitySnapshot(params: { interestingOnly?: boolean, root?: ElementHandleChannel }): Promise<{ axNode: types.SerializedAXNode | null }> {
-    const axNode = await this._page.accessibility.snapshot({
+  async accessibilitySnapshot(params: { interestingOnly?: boolean, root?: ElementHandleChannel }): Promise<{ rootAXNode: types.SerializedAXNode | null }> {
+    const rootAXNode = await this._page.accessibility.snapshot({
       interestingOnly: params.interestingOnly,
       root: params.root ? (params.root as ElementHandleDispatcher)._elementHandle : undefined
     });
-    return { axNode };
+    return { rootAXNode };
   }
 
   async pdf(params: PDFOptions): Promise<{ pdf: Binary }> {

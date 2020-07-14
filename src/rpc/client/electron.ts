@@ -37,7 +37,7 @@ export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer>
   async launch(executablePath: string, options: ElectronLaunchOptions = {}): Promise<ElectronApplication> {
     options = { ...options };
     delete (options as any).logger;
-    return ElectronApplication.from((await this._channel.launch({ executablePath, ...options })).application);
+    return ElectronApplication.from((await this._channel.launch({ executablePath, ...options })).electronApplication);
   }
 }
 

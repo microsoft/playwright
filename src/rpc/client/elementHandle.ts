@@ -51,19 +51,19 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   }
 
   async getAttribute(name: string): Promise<string | null> {
-    return (await this._elementChannel.getAttribute({ name })).attribute;
+    return (await this._elementChannel.getAttribute({ name })).value;
   }
 
   async textContent(): Promise<string | null> {
-    return (await this._elementChannel.textContent()).textContent;
+    return (await this._elementChannel.textContent()).value;
   }
 
   async innerText(): Promise<string> {
-    return (await this._elementChannel.innerText()).innerText;
+    return (await this._elementChannel.innerText()).value;
   }
 
   async innerHTML(): Promise<string> {
-    return (await this._elementChannel.innerHTML()).innerHTML;
+    return (await this._elementChannel.innerHTML()).value;
   }
 
   async dispatchEvent(type: string, eventInit: Object = {}) {
@@ -88,7 +88,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
 
   async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
     const result = await this._elementChannel.selectOption({ ...convertSelectOptionValues(values), ...options });
-    return result.selectedValues;
+    return result.values;
   }
 
   async fill(value: string, options: types.NavigatingActionWaitOptions = {}): Promise<void> {
@@ -124,11 +124,11 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   }
 
   async boundingBox(): Promise<types.Rect | null> {
-    return (await this._elementChannel.boundingBox()).box;
+    return (await this._elementChannel.boundingBox()).value;
   }
 
   async screenshot(options: types.ElementScreenshotOptions = {}): Promise<Buffer> {
-    return Buffer.from((await this._elementChannel.screenshot(options)).screenshot, 'base64');
+    return Buffer.from((await this._elementChannel.screenshot(options)).binary, 'base64');
   }
 
   async $(selector: string): Promise<ElementHandle<Element> | null> {

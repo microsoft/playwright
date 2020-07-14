@@ -156,7 +156,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   }
 
   async content(): Promise<string> {
-    return (await this._channel.content()).content;
+    return (await this._channel.content()).value;
   }
 
   async setContent(html: string, options: types.NavigateOptions = {}): Promise<void> {
@@ -216,19 +216,19 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   }
 
   async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<null|string> {
-    return (await this._channel.textContent({ selector, ...options, isPage: this._page!._isPageCall })).textContent;
+    return (await this._channel.textContent({ selector, ...options, isPage: this._page!._isPageCall })).value;
   }
 
   async innerText(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
-    return (await this._channel.innerText({ selector, ...options, isPage: this._page!._isPageCall })).innerText;
+    return (await this._channel.innerText({ selector, ...options, isPage: this._page!._isPageCall })).value;
   }
 
   async innerHTML(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
-    return (await this._channel.innerHTML({ selector, ...options, isPage: this._page!._isPageCall })).innerHTML;
+    return (await this._channel.innerHTML({ selector, ...options, isPage: this._page!._isPageCall })).value;
   }
 
   async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
-    return (await this._channel.getAttribute({ selector, name, ...options, isPage: this._page!._isPageCall })).attribute;
+    return (await this._channel.getAttribute({ selector, name, ...options, isPage: this._page!._isPageCall })).value;
   }
 
   async hover(selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions = {}) {
@@ -236,7 +236,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   }
 
   async selectOption(selector: string, values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return (await this._channel.selectOption({ selector, ...convertSelectOptionValues(values), ...options, isPage: this._page!._isPageCall })).selectedValues;
+    return (await this._channel.selectOption({ selector, ...convertSelectOptionValues(values), ...options, isPage: this._page!._isPageCall })).values;
   }
 
   async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
@@ -271,7 +271,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   }
 
   async title(): Promise<string> {
-    return (await this._channel.title()).title;
+    return (await this._channel.title()).value;
   }
 }
 

@@ -391,7 +391,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async screenshot(options: types.ScreenshotOptions = {}): Promise<Buffer> {
-    return Buffer.from((await this._channel.screenshot(options)).screenshot, 'base64');
+    return Buffer.from((await this._channel.screenshot(options)).binary, 'base64');
   }
 
   async title(): Promise<string> {

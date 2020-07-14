@@ -23,8 +23,8 @@ export class StreamDispatcher extends Dispatcher<stream.Readable, StreamInitiali
     super(scope, stream, 'stream', {});
   }
 
-  async read(params: { size?: number }): Promise<{ data: Binary }> {
+  async read(params: { size?: number }): Promise<{ binary: Binary }> {
     const buffer = this._object.read(Math.min(this._object.readableLength, params.size || this._object.readableLength));
-    return { data: buffer ? buffer.toString('base64') : '' };
+    return { binary: buffer ? buffer.toString('base64') : '' };
   }
 }

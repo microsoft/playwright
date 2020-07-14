@@ -37,7 +37,7 @@ export class Download extends ChannelOwner<DownloadChannel, DownloadInitializer>
   }
 
   async path(): Promise<string | null> {
-    return (await this._channel.path()).path;
+    return (await this._channel.path()).value;
   }
 
   async failure(): Promise<string | null> {

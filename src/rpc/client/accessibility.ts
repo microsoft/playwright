@@ -29,6 +29,6 @@ export class Accessibility {
   async snapshot(options: { interestingOnly?: boolean; root?: ElementHandle } = {}): Promise<types.SerializedAXNode | null> {
     const root = options.root ? options.root._elementChannel : undefined;
     const result = await this._channel.accessibilitySnapshot({ interestingOnly: options.interestingOnly, root });
-    return result.axNode;
+    return result.rootAXNode;
   }
 }

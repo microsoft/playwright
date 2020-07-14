@@ -29,9 +29,9 @@ export class ElectronDispatcher extends Dispatcher<Electron, ElectronInitializer
     super(scope, electron, 'electron', {}, true);
   }
 
-  async launch(params: { executablePath: string } & ElectronLaunchOptions): Promise<{ application: ElectronApplicationChannel }> {
+  async launch(params: { executablePath: string } & ElectronLaunchOptions): Promise<{ electronApplication: ElectronApplicationChannel }> {
     const electronApplication = await this._object.launch(params.executablePath, params);
-    return { application: new ElectronApplicationDispatcher(this._scope, electronApplication) };
+    return { electronApplication: new ElectronApplicationDispatcher(this._scope, electronApplication) };
   }
 }
 
