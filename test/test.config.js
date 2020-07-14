@@ -92,7 +92,6 @@ module.exports = {
         './mouse.spec.js',
         */
         './navigation.spec.js',
-        /*
         // -- worked
         './network.spec.js',
         './page.spec.js',
@@ -101,6 +100,7 @@ module.exports = {
         // -- worked --
         './screenshot.spec.js',
         './waittask.spec.js',
+        /*
         './interception.spec.js',
         './geolocation.spec.js',
         './workers.spec.js',
