@@ -8,8 +8,8 @@ env:
   CI: true
 
 jobs:
-  publish-canary:
-    name: "publish"
+  publish-npm-release:
+    name: "publish to NPM"
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
@@ -23,12 +23,18 @@ jobs:
     - run: utils/publish_all_packages.sh --release
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-docker-release:
+    name: "publish to DockerHub"
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
     - uses: docker/build-push-action@v1
       with:
-        username: ${{ secrets.DOCKER_USERNAME }}
+        username: playwright
         password: ${{ secrets.DOCKER_PASSWORD }}
         registry: playwright.azurecr.io
-        repository: microsoft/playwright
+        repository: public/playwright
         path: docs/docker/
         dockerfile: docs/docker/Dockerfile.bionic
         tags: bionic,latest
