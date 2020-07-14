@@ -18,12 +18,14 @@ import { PlaywrightChannel, PlaywrightInitializer } from '../channels';
 import * as types from '../../types';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
+import { Selectors } from './selectors';
 
 export class Playwright extends ChannelOwner<PlaywrightChannel, PlaywrightInitializer> {
   chromium: BrowserType;
   firefox: BrowserType;
   webkit: BrowserType;
   devices: types.Devices;
+  selectors: Selectors;
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: PlaywrightInitializer) {
     super(parent, type, guid, initializer);
@@ -31,5 +33,6 @@ export class Playwright extends ChannelOwner<PlaywrightChannel, PlaywrightInitia
     this.firefox = BrowserType.from(initializer.firefox);
     this.webkit = BrowserType.from(initializer.webkit);
     this.devices = initializer.deviceDescriptors;
+    this.selectors = Selectors.from(initializer.selectors);
   }
 }

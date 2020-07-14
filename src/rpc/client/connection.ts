@@ -35,6 +35,7 @@ import { Playwright } from './playwright';
 import { Channel } from '../channels';
 import { ChromiumBrowser } from './chromiumBrowser';
 import { ChromiumBrowserContext } from './chromiumBrowserContext';
+import { Selectors } from './selectors';
 
 class Root extends ChannelOwner<Channel, {}> {
   constructor(connection: Connection) {
@@ -189,6 +190,9 @@ export class Connection {
         break;
       case 'route':
         result = new Route(parent, type, guid, initializer);
+        break;
+      case 'selectors':
+        result = new Selectors(parent, type, guid, initializer);
         break;
       case 'worker':
         result = new Worker(parent, type, guid, initializer);
