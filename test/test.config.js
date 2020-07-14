@@ -87,7 +87,6 @@ module.exports = {
         './focus.spec.js',
         './input.spec.js',
         './jshandle.spec.js',
-        */
         './keyboard.spec.ts',
         './mouse.spec.js',
         './navigation.spec.js',
@@ -95,6 +94,7 @@ module.exports = {
         './page.spec.js',
         './pdf.spec.js',
         './queryselector.spec.js',
+        */
         './screenshot.spec.js',
         './waittask.spec.js',
         './interception.spec.js',
