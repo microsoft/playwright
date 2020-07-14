@@ -564,7 +564,7 @@ xdescribe('Page.goto', function() {
   });
 });
 
-describe.skip(CHANNEL)('Page.waitForNavigation', function() {
+xdescribe.skip(CHANNEL)('Page.waitForNavigation', function() {
   it('should work', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [response] = await Promise.all([
@@ -757,7 +757,7 @@ describe.skip(CHANNEL)('Page.waitForNavigation', function() {
   });
 });
 
-describe('Page.waitForLoadState', () => {
+xdescribe('Page.waitForLoadState', () => {
   it('should pick up ongoing navigation', async({page, server}) => {
     let response = null;
     server.setRoute('/one-style.css', (req, res) => response = res);
@@ -887,7 +887,7 @@ describe('Page.waitForLoadState', () => {
   });
 });
 
-describe('Page.goBack', function() {
+xdescribe('Page.goBack', function() {
   it('should work', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await page.goto(server.PREFIX + '/grid.html');
@@ -946,7 +946,7 @@ describe('Page.goBack', function() {
   });
 });
 
-describe('Frame.goto', function() {
+xdescribe('Frame.goto', function() {
   it('should navigate subframes', async({page, server}) => {
     await page.goto(server.PREFIX + '/frames/one-frame.html');
     expect(page.frames()[0].url()).toContain('/frames/one-frame.html');
