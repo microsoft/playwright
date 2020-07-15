@@ -9803,10 +9803,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..cea80a8f37fe56b3dc6eb3b36744c70c43a74282
+index 0000000000000000000000000000000000000000..012629e3d4e4b892a8c23c3984ab30409b9c2b1a
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,819 @@
+@@ -0,0 +1,821 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -10242,11 +10242,13 @@ index 0000000000000000000000000000000000000000..cea80a8f37fe56b3dc6eb3b36744c70c
 +void InspectorPlaywrightAgent::close(Ref<CloseCallback>&& callback)
 +{
 +    Vector<WebPageProxy*> pages;
-+    for (auto& pool : WebProcessPool::allProcessPools()) {
-+        for (auto& process : pool->processes()) {
-+            for (auto* page : process->pages())
-+                pages.append(page);
-+        }
++    // If Web Process crashed it will be disconnected from its pool until
++    // the page reloads. So we cannot discover such processes and the pages
++    // by traversing all process pools and their processes. Instead we look at
++    // all existing Web Processes wether in a pool or not.
++    for (auto* process : WebProcessProxy::allProcessesForInspector()) {
++        for (auto* page : process->pages())
++            pages.append(page);
 +    }
 +    for (auto* page : pages)
 +        page->closePage();
@@ -12285,6 +12287,34 @@ index 7a10eab7a8637b7c35471fe71098f4bc83298171..b3ba8f5734d9ec539e8ecf5756ee4e1b
  #endif
  
      bool m_memoryCacheDisabled { false };
+diff --git a/Source/WebKit/UIProcess/WebProcessProxy.cpp b/Source/WebKit/UIProcess/WebProcessProxy.cpp
+index ab1e837ddb4042cb9c2c969d6a2a918ab2cc0817..f04d862c4f703c4bc4c3b892878b4d4daf378559 100644
+--- a/Source/WebKit/UIProcess/WebProcessProxy.cpp
++++ b/Source/WebKit/UIProcess/WebProcessProxy.cpp
+@@ -115,6 +115,11 @@ static HashMap<ProcessIdentifier, WebProcessProxy*>& allProcesses()
+     return map;
+ }
+ 
++Vector<WebProcessProxy*> WebProcessProxy::allProcessesForInspector()
++{
++    return copyToVector(allProcesses().values());
++}
++
+ WebProcessProxy* WebProcessProxy::processForIdentifier(ProcessIdentifier identifier)
+ {
+     return allProcesses().get(identifier);
+diff --git a/Source/WebKit/UIProcess/WebProcessProxy.h b/Source/WebKit/UIProcess/WebProcessProxy.h
+index b1fb0ffb2ebed809af665955d16b5546b6f05fef..87e24456952e58846c6bbc3fe76466b7222b2e5d 100644
+--- a/Source/WebKit/UIProcess/WebProcessProxy.h
++++ b/Source/WebKit/UIProcess/WebProcessProxy.h
+@@ -131,6 +131,7 @@ public:
+     ~WebProcessProxy();
+ 
+     static void forWebPagesWithOrigin(PAL::SessionID, const WebCore::SecurityOriginData&, const Function<void(WebPageProxy&)>&);
++    static Vector<WebProcessProxy*> allProcessesForInspector();
+ 
+     WebConnection* webConnection() const { return m_webConnection.get(); }
+ 
 diff --git a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
 index ce9bd7f8b84119d90a838b5afee04b8bf79e2dd2..add34235c20d4b20f001baa4a977496b2e4eb661 100644
 --- a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
