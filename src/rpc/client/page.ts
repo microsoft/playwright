@@ -21,7 +21,7 @@ import { assert, assertMaxArguments, helper, Listener } from '../../helper';
 import { TimeoutSettings } from '../../timeoutSettings';
 import * as types from '../../types';
 import { BindingCallChannel, BindingCallInitializer, PageChannel, PageInitializer, PDFOptions } from '../channels';
-import { parseError, serializeError } from '../serializers';
+import { parseError, serializeError, headersObjectToArray } from '../serializers';
 import { Accessibility } from './accessibility';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
@@ -282,7 +282,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async setExtraHTTPHeaders(headers: types.Headers) {
-    await this._channel.setExtraHTTPHeaders({ headers });
+    await this._channel.setExtraHTTPHeaders({ headers: headersObjectToArray(headers) });
   }
 
   url(): string {

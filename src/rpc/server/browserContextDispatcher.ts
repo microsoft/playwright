@@ -24,6 +24,7 @@ import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../../chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Events as ChromiumEvents } from '../../chromium/events';
+import { headersArrayToObject } from '../serializers';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, BrowserContextInitializer> implements BrowserContextChannel {
   private _context: BrowserContextBase;
@@ -94,8 +95,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
     await this._context.setGeolocation(params.geolocation);
   }
 
-  async setExtraHTTPHeaders(params: { headers: types.Headers }): Promise<void> {
-    await this._context.setExtraHTTPHeaders(params.headers);
+  async setExtraHTTPHeaders(params: { headers: types.HeadersArray }): Promise<void> {
+    await this._context.setExtraHTTPHeaders(headersArrayToObject(params.headers));
   }
 
   async setOffline(params: { offline: boolean }): Promise<void> {

@@ -22,7 +22,7 @@ import { Page, Worker } from '../../page';
 import * as types from '../../types';
 import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary, PDFOptions } from '../channels';
 import { Dispatcher, DispatcherScope, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
-import { parseError, serializeError } from '../serializers';
+import { parseError, serializeError, headersArrayToObject } from '../serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
 import { DownloadDispatcher } from './downloadDispatcher';
@@ -91,8 +91,8 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     });
   }
 
-  async setExtraHTTPHeaders(params: { headers: types.Headers }): Promise<void> {
-    await this._page.setExtraHTTPHeaders(params.headers);
+  async setExtraHTTPHeaders(params: { headers: types.HeadersArray }): Promise<void> {
+    await this._page.setExtraHTTPHeaders(headersArrayToObject(params.headers));
   }
 
   async reload(params: types.NavigateOptions): Promise<{ response: ResponseChannel | null }> {

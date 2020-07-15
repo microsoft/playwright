@@ -158,17 +158,12 @@ class InterceptableRequest implements network.RouteDelegate {
         payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, payload.postData || null, headers);
   }
 
-  async continue(overrides: { method?: string; headers?: types.Headers; postData?: string }) {
-    const {
-      method,
-      headers,
-      postData
-    } = overrides;
+  async continue(overrides: types.NormalizedContinueOverrides) {
     await this._session.sendMayFail('Network.resumeInterceptedRequest', {
       requestId: this._id,
-      method,
-      headers: headers ? headersArray(headers) : undefined,
-      postData: postData ? Buffer.from(postData).toString('base64') : undefined
+      method: overrides.method,
+      headers: overrides.headers,
+      postData: overrides.postData ? Buffer.from(overrides.postData).toString('base64') : undefined
     });
   }
 
@@ -179,7 +174,7 @@ class InterceptableRequest implements network.RouteDelegate {
       requestId: this._id,
       status: response.status,
       statusText: network.STATUS_TEXTS[String(response.status)] || '',
-      headers: headersArray(response.headers),
+      headers: response.headers,
       base64body,
     });
   }

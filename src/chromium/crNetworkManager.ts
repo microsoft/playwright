@@ -348,12 +348,12 @@ class InterceptableRequest implements network.RouteDelegate {
     this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId, url, type, method, postData, headersObject(headers));
   }
 
-  async continue(overrides: { method?: string; headers?: types.Headers; postData?: string } = {}) {
+  async continue(overrides: types.NormalizedContinueOverrides) {
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
     await this._client._sendMayFail('Fetch.continueRequest', {
       requestId: this._interceptionId!,
-      headers: overrides.headers ? headersArray(overrides.headers) : undefined,
+      headers: overrides.headers,
       method: overrides.method,
       postData: overrides.postData
     });
@@ -368,7 +368,7 @@ class InterceptableRequest implements network.RouteDelegate {
       requestId: this._interceptionId!,
       responseCode: response.status,
       responsePhrase: network.STATUS_TEXTS[String(response.status)],
-      responseHeaders: headersArray(response.headers),
+      responseHeaders: response.headers,
       body,
     });
   }
@@ -401,15 +401,6 @@ const errorReasons: { [reason: string]: Protocol.Network.ErrorReason } = {
   'timedout': 'TimedOut',
   'failed': 'Failed',
 };
-
-function headersArray(headers: { [s: string]: string; }): { name: string; value: string; }[] {
-  const result = [];
-  for (const name in headers) {
-    if (!Object.is(headers[name], undefined))
-      result.push({name, value: headers[name] + ''});
-  }
-  return result;
-}
 
 function headersObject(headers: Protocol.Network.Headers): types.Headers {
   const result: types.Headers = {};
