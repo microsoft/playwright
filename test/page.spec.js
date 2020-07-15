@@ -92,7 +92,7 @@ xdescribe('Page.close', function() {
   });
 });
 
-describe('Page.Events.Load', function() {
+xdescribe('Page.Events.Load', function() {
   it('should fire when expected', async({page, server}) => {
     await Promise.all([
       page.goto('about:blank'),
@@ -101,7 +101,7 @@ describe('Page.Events.Load', function() {
   });
 });
 
-describe.skip(USES_HOOKS)('Async stacks', () => {
+xdescribe.skip(USES_HOOKS)('Async stacks', () => {
   it('should work', async({page, server}) => {
     server.setRoute('/empty.html', (req, res) => {
       req.socket.end();
@@ -162,7 +162,7 @@ describe.fail(FFOX && WIN).skip(USES_HOOKS)('Page.Events.Crash', function() {
   });
 });
 
-describe('Page.opener', function() {
+xdescribe('Page.opener', function() {
   it('should provide access to the opener page', async({page}) => {
     const [popup] = await Promise.all([
       page.waitForEvent('popup'),
@@ -182,7 +182,7 @@ describe('Page.opener', function() {
   });
 });
 
-describe('Page.Events.Console', function() {
+xdescribe('Page.Events.Console', function() {
   it('should work', async({page, server}) => {
     let message = null;
     page.once('console', m => message = m);
