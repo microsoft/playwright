@@ -62,7 +62,7 @@ describe('Page.evaluateHandle', function() {
     const a = { x: 1 };
     a.y = a;
     const error = await page.evaluate(x => x, a).catch(e => e);
-    expect(error.message).toBe('Argument is a circular structure');
+    expect(error.message).toContain('Argument is a circular structure');
   });
   it('should accept same handle multiple times', async({page, server}) => {
     const foo = await page.evaluateHandle(() => 1);

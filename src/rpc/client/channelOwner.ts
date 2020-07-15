@@ -19,6 +19,7 @@ import { Channel } from '../channels';
 import { Connection } from './connection';
 import { assert } from '../../helper';
 import { LoggerSink } from '../../loggerSink';
+import { rewriteErrorMessage } from '../../utils/stackTrace';
 
 export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}> extends EventEmitter {
   private _connection: Connection;
@@ -111,5 +112,14 @@ export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}
       _guid: this._guid,
       objects: this._isScope ? Array.from(this._objects.values()).map(o => o._debugScopeState()) : undefined,
     };
+  }
+
+  protected async _withName<T>(name: string, func: () => Promise<T>): Promise<T> {
+    try {
+      return await func();
+    } catch (e) {
+      rewriteErrorMessage(e, `${name}: ` + e.message);
+      throw e;
+    }
   }
 }

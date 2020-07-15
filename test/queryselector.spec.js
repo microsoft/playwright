@@ -120,11 +120,11 @@ describe('Page.$eval', function() {
   });
   it('should throw on multiple * captures', async({page, server}) => {
     const error = await page.$eval('*css=div >> *css=span', e => e.outerHTML).catch(e => e);
-    expect(error.message).toBe('Only one of the selectors can capture using * modifier');
+    expect(error.message).toContain('Only one of the selectors can capture using * modifier');
   });
   it('should throw on malformed * capture', async({page, server}) => {
     const error = await page.$eval('*=div', e => e.outerHTML).catch(e => e);
-    expect(error.message).toBe('Unknown engine "" while parsing selector *=div');
+    expect(error.message).toContain('Unknown engine "" while parsing selector *=div');
   });
   it('should work with spaces in css attributes', async({page, server}) => {
     await page.setContent('<div><input placeholder="Select date"></div>');
@@ -378,7 +378,7 @@ describe('ElementHandle.$eval', function() {
     await page.setContent(htmlContent);
     const elementHandle = await page.$('#myId');
     const errorMessage = await elementHandle.$eval('.a', node => node.innerText).catch(error => error.message);
-    expect(errorMessage).toBe(`Error: failed to find element matching selector ".a"`);
+    expect(errorMessage).toContain(`Error: failed to find element matching selector ".a"`);
   });
 });
 describe('ElementHandle.$$eval', function() {
@@ -775,7 +775,7 @@ describe('selectors.register', () => {
 
     // Selector names are case-sensitive.
     const error = await page.$('tAG=DIV').catch(e => e);
-    expect(error.message).toBe('Unknown engine "tAG" while parsing selector tAG=DIV');
+    expect(error.message).toContain('Unknown engine "tAG" while parsing selector tAG=DIV');
   });
   it('should work with path', async ({playwright, page}) => {
     await utils.registerEngine(playwright, 'foo', { path: path.join(__dirname, 'assets/sectionselectorengine.js') });
@@ -815,7 +815,7 @@ describe('selectors.register', () => {
   });
   it('should handle errors', async ({playwright, page}) => {
     let error = await page.$('neverregister=ignored').catch(e => e);
-    expect(error.message).toBe('Unknown engine "neverregister" while parsing selector neverregister=ignored');
+    expect(error.message).toContain('Unknown engine "neverregister" while parsing selector neverregister=ignored');
 
     const createDummySelector = () => ({
       create(root, target) {

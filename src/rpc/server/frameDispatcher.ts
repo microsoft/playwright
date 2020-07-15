@@ -16,7 +16,7 @@
 
 import { Frame, kAddLifecycleEvent, kRemoveLifecycleEvent } from '../../frames';
 import * as types from '../../types';
-import { ElementHandleChannel, FrameChannel, FrameInitializer, JSHandleChannel, ResponseChannel, PageAttribution } from '../channels';
+import { ElementHandleChannel, FrameChannel, FrameInitializer, JSHandleChannel, ResponseChannel } from '../channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { convertSelectOptionValues, ElementHandleDispatcher, createHandle, convertInputFiles } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
@@ -46,58 +46,48 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     });
   }
 
-  async goto(params: { url: string } & types.GotoOptions & PageAttribution): Promise<{ response: ResponseChannel | null }> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return { response: lookupNullableDispatcher<ResponseDispatcher>(await target.goto(params.url, params)) };
+  async goto(params: { url: string } & types.GotoOptions): Promise<{ response: ResponseChannel | null }> {
+    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._frame.goto(params.url, params)) };
   }
 
-  async waitForNavigation(params: types.WaitForNavigationOptions & PageAttribution): Promise<{ response: ResponseChannel | null }> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return { response: lookupNullableDispatcher<ResponseDispatcher>(await target.waitForNavigation(params)) };
+  async waitForNavigation(params: types.WaitForNavigationOptions): Promise<{ response: ResponseChannel | null }> {
+    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._frame.waitForNavigation(params)) };
   }
 
   async frameElement(): Promise<{ element: ElementHandleChannel }> {
     return { element: new ElementHandleDispatcher(this._scope, await this._frame.frameElement()) };
   }
 
-  async evaluateExpression(params: { expression: string, isFunction: boolean, arg: any } & PageAttribution): Promise<{ value: any }> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return { value: serializeResult(await target._evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg))) };
+  async evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }> {
+    return { value: serializeResult(await this._frame._evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any } & PageAttribution): Promise<{ handle: JSHandleChannel }> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return { handle: createHandle(this._scope, await target._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg))) };
+  async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any }): Promise<{ handle: JSHandleChannel }> {
+    return { handle: createHandle(this._scope, await this._frame._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async waitForSelector(params: { selector: string } & types.WaitForElementOptions & PageAttribution): Promise<{ element: ElementHandleChannel | null }> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return { element: ElementHandleDispatcher.createNullable(this._scope, await target.waitForSelector(params.selector, params)) };
+  async waitForSelector(params: { selector: string } & types.WaitForElementOptions): Promise<{ element: ElementHandleChannel | null }> {
+    return { element: ElementHandleDispatcher.createNullable(this._scope, await this._frame.waitForSelector(params.selector, params)) };
   }
 
-  async dispatchEvent(params: { selector: string, type: string, eventInit: any } & types.TimeoutOptions & PageAttribution): Promise<void> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return target.dispatchEvent(params.selector, params.type, parseArgument(params.eventInit), params);
+  async dispatchEvent(params: { selector: string, type: string, eventInit: any } & types.TimeoutOptions): Promise<void> {
+    return this._frame.dispatchEvent(params.selector, params.type, parseArgument(params.eventInit), params);
   }
 
-  async evalOnSelector(params: { selector: string, expression: string, isFunction: boolean, arg: any } & PageAttribution): Promise<{ value: any }> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return { value: serializeResult(await target._$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
+  async evalOnSelector(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }> {
+    return { value: serializeResult(await this._frame._$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async evalOnSelectorAll(params: { selector: string, expression: string, isFunction: boolean, arg: any } & PageAttribution): Promise<{ value: any }> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return { value: serializeResult(await target._$$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
+  async evalOnSelectorAll(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }> {
+    return { value: serializeResult(await this._frame._$$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async querySelector(params: { selector: string } & PageAttribution): Promise<{ element: ElementHandleChannel | null }> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return { element: ElementHandleDispatcher.createNullable(this._scope, await target.$(params.selector)) };
+  async querySelector(params: { selector: string }): Promise<{ element: ElementHandleChannel | null }> {
+    return { element: ElementHandleDispatcher.createNullable(this._scope, await this._frame.$(params.selector)) };
   }
 
-  async querySelectorAll(params: { selector: string } & PageAttribution): Promise<{ elements: ElementHandleChannel[] }> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    const elements = await target.$$(params.selector);
+  async querySelectorAll(params: { selector: string }): Promise<{ elements: ElementHandleChannel[] }> {
+    const elements = await this._frame.$$(params.selector);
     return { elements: elements.map(e => new ElementHandleDispatcher(this._scope, e)) };
   }
 
@@ -105,99 +95,80 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     return { value: await this._frame.content() };
   }
 
-  async setContent(params: { html: string } & types.NavigateOptions & PageAttribution): Promise<void> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    await target.setContent(params.html, params);
+  async setContent(params: { html: string } & types.NavigateOptions): Promise<void> {
+    await this._frame.setContent(params.html, params);
   }
 
-  async addScriptTag(params: { url?: string, content?: string, type?: string } & PageAttribution): Promise<{ element: ElementHandleChannel }> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return { element: new ElementHandleDispatcher(this._scope, await target.addScriptTag(params)) };
+  async addScriptTag(params: { url?: string, content?: string, type?: string }): Promise<{ element: ElementHandleChannel }> {
+    return { element: new ElementHandleDispatcher(this._scope, await this._frame.addScriptTag(params)) };
   }
 
-  async addStyleTag(params: { url?: string, content?: string } & PageAttribution): Promise<{ element: ElementHandleChannel }> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return { element: new ElementHandleDispatcher(this._scope, await target.addStyleTag(params)) };
+  async addStyleTag(params: { url?: string, content?: string }): Promise<{ element: ElementHandleChannel }> {
+    return { element: new ElementHandleDispatcher(this._scope, await this._frame.addStyleTag(params)) };
   }
 
-  async click(params: { selector: string } & types.PointerActionOptions & types.MouseClickOptions & types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean } & PageAttribution): Promise<void> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    await target.click(params.selector, params);
+  async click(params: { selector: string } & types.PointerActionOptions & types.MouseClickOptions & types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean }): Promise<void> {
+    await this._frame.click(params.selector, params);
   }
 
-  async dblclick(params: { selector: string } & types.PointerActionOptions & types.MouseMultiClickOptions & types.TimeoutOptions & { force?: boolean } & PageAttribution): Promise<void> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    await target.dblclick(params.selector, params);
+  async dblclick(params: { selector: string } & types.PointerActionOptions & types.MouseMultiClickOptions & types.TimeoutOptions & { force?: boolean }): Promise<void> {
+    await this._frame.dblclick(params.selector, params);
   }
 
-  async fill(params: { selector: string, value: string } & types.NavigatingActionWaitOptions & PageAttribution): Promise<void> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    await target.fill(params.selector, params.value, params);
+  async fill(params: { selector: string, value: string } & types.NavigatingActionWaitOptions): Promise<void> {
+    await this._frame.fill(params.selector, params.value, params);
   }
 
-  async focus(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<void> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    await target.focus(params.selector, params);
+  async focus(params: { selector: string } & types.TimeoutOptions): Promise<void> {
+    await this._frame.focus(params.selector, params);
   }
 
-  async textContent(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ value: string | null }> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return { value: await target.textContent(params.selector, params) };
+  async textContent(params: { selector: string } & types.TimeoutOptions): Promise<{ value: string | null }> {
+    return { value: await this._frame.textContent(params.selector, params) };
   }
 
-  async innerText(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ value: string }> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return { value: await target.innerText(params.selector, params) };
+  async innerText(params: { selector: string } & types.TimeoutOptions): Promise<{ value: string }> {
+    return { value: await this._frame.innerText(params.selector, params) };
   }
 
-  async innerHTML(params: { selector: string } & types.TimeoutOptions & PageAttribution): Promise<{ value: string }> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return { value: await target.innerHTML(params.selector, params) };
+  async innerHTML(params: { selector: string } & types.TimeoutOptions): Promise<{ value: string }> {
+    return { value: await this._frame.innerHTML(params.selector, params) };
   }
 
-  async getAttribute(params: { selector: string, name: string } & types.TimeoutOptions & PageAttribution): Promise<{ value: string | null }> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return { value: await target.getAttribute(params.selector, params.name, params) };
+  async getAttribute(params: { selector: string, name: string } & types.TimeoutOptions): Promise<{ value: string | null }> {
+    return { value: await this._frame.getAttribute(params.selector, params.name, params) };
   }
 
-  async hover(params: { selector: string } & types.PointerActionOptions & types.TimeoutOptions & { force?: boolean } & PageAttribution): Promise<void> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    await target.hover(params.selector, params);
+  async hover(params: { selector: string } & types.PointerActionOptions & types.TimeoutOptions & { force?: boolean }): Promise<void> {
+    await this._frame.hover(params.selector, params);
   }
 
-  async selectOption(params: { selector: string, elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions & PageAttribution): Promise<{ values: string[] }> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return { values: await target.selectOption(params.selector, convertSelectOptionValues(params.elements, params.options), params) };
+  async selectOption(params: { selector: string, elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions): Promise<{ values: string[] }> {
+    return { values: await this._frame.selectOption(params.selector, convertSelectOptionValues(params.elements, params.options), params) };
   }
 
-  async setInputFiles(params: { selector: string, files: { name: string, mimeType: string, buffer: string }[] } & types.NavigatingActionWaitOptions & PageAttribution): Promise<void> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    await target.setInputFiles(params.selector, convertInputFiles(params.files), params);
+  async setInputFiles(params: { selector: string, files: { name: string, mimeType: string, buffer: string }[] } & types.NavigatingActionWaitOptions): Promise<void> {
+    await this._frame.setInputFiles(params.selector, convertInputFiles(params.files), params);
   }
 
-  async type(params: { selector: string, text: string } & { delay?: number | undefined } & types.TimeoutOptions & { noWaitAfter?: boolean } & PageAttribution): Promise<void> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    await target.type(params.selector, params.text, params);
+  async type(params: { selector: string, text: string } & { delay?: number | undefined } & types.TimeoutOptions & { noWaitAfter?: boolean }): Promise<void> {
+    await this._frame.type(params.selector, params.text, params);
   }
 
-  async press(params: { selector: string, key: string } & { delay?: number | undefined } & types.TimeoutOptions & { noWaitAfter?: boolean } & PageAttribution): Promise<void> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    await target.press(params.selector, params.key, params);
+  async press(params: { selector: string, key: string } & { delay?: number | undefined } & types.TimeoutOptions & { noWaitAfter?: boolean }): Promise<void> {
+    await this._frame.press(params.selector, params.key, params);
   }
 
-  async check(params: { selector: string } & types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean } & PageAttribution): Promise<void> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    await target.check(params.selector, params);
+  async check(params: { selector: string } & types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean }): Promise<void> {
+    await this._frame.check(params.selector, params);
   }
 
-  async uncheck(params: { selector: string } & types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean } & PageAttribution): Promise<void> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    await target.uncheck(params.selector, params);
+  async uncheck(params: { selector: string } & types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean }): Promise<void> {
+    await this._frame.uncheck(params.selector, params);
   }
 
-  async waitForFunction(params: { expression: string, isFunction: boolean, arg: any } & types.WaitForFunctionOptions & PageAttribution): Promise<{ handle: JSHandleChannel }> {
-    const target = params.isPage ? this._frame._page : this._frame;
-    return { handle: createHandle(this._scope, await target._waitForFunctionExpression(params.expression, params.isFunction, parseArgument(params.arg), params)) };
+  async waitForFunction(params: { expression: string, isFunction: boolean, arg: any } & types.WaitForFunctionOptions): Promise<{ handle: JSHandleChannel }> {
+    return { handle: createHandle(this._scope, await this._frame._waitForFunctionExpression(params.expression, params.isFunction, parseArgument(params.arg), params)) };
   }
 
   async title(): Promise<{ value: string }> {
