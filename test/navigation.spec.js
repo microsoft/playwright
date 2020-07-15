@@ -198,7 +198,7 @@ describe('Page.goto', function() {
     server.setRoute('/empty.html', (req, res) => { });
     let error = null;
     await page.goto(server.PREFIX + '/empty.html', {timeout: 1}).catch(e => error = e);
-    expect(error.message).toContain('Timeout 1ms exceeded during page.goto.');
+    expect(error.message).toContain('page.goto: Timeout 1ms exceeded.');
     expect(error.message).toContain(server.PREFIX + '/empty.html');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
@@ -209,7 +209,7 @@ describe('Page.goto', function() {
     page.context().setDefaultNavigationTimeout(2);
     page.setDefaultNavigationTimeout(1);
     await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-    expect(error.message).toContain('Timeout 1ms exceeded during page.goto.');
+    expect(error.message).toContain('page.goto: Timeout 1ms exceeded.');
     expect(error.message).toContain(server.PREFIX + '/empty.html');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
@@ -219,7 +219,7 @@ describe('Page.goto', function() {
     let error = null;
     page.context().setDefaultNavigationTimeout(2);
     await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-    expect(error.message).toContain('Timeout 2ms exceeded during page.goto.');
+    expect(error.message).toContain('page.goto: Timeout 2ms exceeded.');
     expect(error.message).toContain(server.PREFIX + '/empty.html');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
@@ -230,7 +230,7 @@ describe('Page.goto', function() {
     page.context().setDefaultTimeout(2);
     page.setDefaultTimeout(1);
     await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-    expect(error.message).toContain('Timeout 1ms exceeded during page.goto.');
+    expect(error.message).toContain('page.goto: Timeout 1ms exceeded.');
     expect(error.message).toContain(server.PREFIX + '/empty.html');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
@@ -240,7 +240,7 @@ describe('Page.goto', function() {
     let error = null;
     page.context().setDefaultTimeout(2);
     await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-    expect(error.message).toContain('Timeout 2ms exceeded during page.goto.');
+    expect(error.message).toContain('page.goto: Timeout 2ms exceeded.');
     expect(error.message).toContain(server.PREFIX + '/empty.html');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
@@ -251,7 +251,7 @@ describe('Page.goto', function() {
     page.setDefaultTimeout(0);
     page.setDefaultNavigationTimeout(1);
     await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-    expect(error.message).toContain('Timeout 1ms exceeded during page.goto.');
+    expect(error.message).toContain('page.goto: Timeout 1ms exceeded.');
     expect(error.message).toContain(server.PREFIX + '/empty.html');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
@@ -578,7 +578,7 @@ describe.skip(CHANNEL)('Page.waitForNavigation', function() {
     const promise = page.waitForNavigation({ url: '**/frame.html', timeout: 5000 });
     await page.goto(server.EMPTY_PAGE);
     const error = await promise.catch(e => e);
-    expect(error.message).toContain('Timeout 5000ms exceeded during page.waitForNavigation.');
+    expect(error.message).toContain('page.waitForNavigation: Timeout 5000ms exceeded.');
     expect(error.message).toContain('waiting for navigation to "**/frame.html" until "load"');
     expect(error.message).toContain(`navigated to "${server.EMPTY_PAGE}"`);
   });
@@ -774,7 +774,7 @@ describe('Page.waitForLoadState', () => {
     server.setRoute('/one-style.css', (req, res) => response = res);
     await page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'domcontentloaded'});
     const error = await page.waitForLoadState('load', { timeout: 1 }).catch(e => e);
-    expect(error.message).toContain('Timeout 1ms exceeded during page.waitForLoadState.');
+    expect(error.message).toContain('page.waitForLoadState: Timeout 1ms exceeded.');
   });
   it('should resolve immediately if loaded', async({page, server}) => {
     await page.goto(server.PREFIX + '/one-style.html');
@@ -971,7 +971,7 @@ describe('Frame.goto', function() {
     server.setRoute('/frames/script.js', () => {});
     const url = server.PREFIX + '/frames/child-redirect.html';
     const error = await page.goto(url, { timeout: 5000, waitUntil: 'networkidle' }).catch(e => e);
-    expect(error.message).toContain('Timeout 5000ms exceeded during page.goto.');
+    expect(error.message).toContain('page.goto: Timeout 5000ms exceeded.');
     expect(error.message).toContain(`navigating to "${url}", waiting until "networkidle"`);
   });
   it('should return matching responses', async({page, server}) => {

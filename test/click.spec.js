@@ -71,7 +71,7 @@ describe('Page.click', function() {
     const error = await page.click('button', { timeout: 2000, __testHookBeforePointerAction: () => new Promise(f => setTimeout(f, 2500))}).catch(e => e);
     await page.waitForTimeout(5000);  // Give it some time to click after the test hook is done waiting.
     expect(await page.evaluate(() => result)).toBe('Was not clicked');
-    expect(error.message).toContain('Timeout 2000ms exceeded during page.click.');
+    expect(error.message).toContain('page.click: Timeout 2000ms exceeded.');
   });
   it('should click the button after navigation ', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
@@ -188,7 +188,7 @@ describe('Page.click', function() {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.display = 'none');
     const error = await page.click('button', { timeout: 5000 }).catch(e => e);
-    expect(error.message).toContain('Timeout 5000ms exceeded during page.click.');
+    expect(error.message).toContain('page.click: Timeout 5000ms exceeded.');
     expect(error.message).toContain('waiting for element to be visible, enabled and not moving');
     expect(error.message).toContain('element is not visible - waiting');
   });
@@ -196,7 +196,7 @@ describe('Page.click', function() {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', b => b.style.visibility = 'hidden');
     const error = await page.click('button', { timeout: 5000 }).catch(e => e);
-    expect(error.message).toContain('Timeout 5000ms exceeded during page.click.');
+    expect(error.message).toContain('page.click: Timeout 5000ms exceeded.');
     expect(error.message).toContain('waiting for element to be visible, enabled and not moving');
     expect(error.message).toContain('element is not visible - waiting');
   });
@@ -440,7 +440,7 @@ describe('Page.click', function() {
       button.style.marginLeft = '200px';
     });
     const error = await button.click({ timeout: 5000 }).catch(e => e);
-    expect(error.message).toContain('Timeout 5000ms exceeded during elementHandle.click.');
+    expect(error.message).toContain('elementHandle.click: Timeout 5000ms exceeded.');
     expect(error.message).toContain('waiting for element to be visible, enabled and not moving');
     expect(error.message).toContain('element is moving - waiting');
   });
@@ -489,9 +489,9 @@ describe('Page.click', function() {
       document.body.appendChild(blocker);
     });
     const error = await button.click({ timeout: 5000 }).catch(e => e);
-    expect(error.message).toContain('Timeout 5000ms exceeded during elementHandle.click.');
+    expect(error.message).toContain('elementHandle.click: Timeout 5000ms exceeded.');
     expect(error.message).toContain('element does not receive pointer events');
-    expect(error.message).toContain('retrying elementHandle.click action');
+    expect(error.message).toContain('retrying click action');
   });
   it('should fail when obscured and not waiting for hit target', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
@@ -525,7 +525,7 @@ describe('Page.click', function() {
     await page.setContent('<button onclick="javascript:window.__CLICKED=true;" disabled><span>Click target</span></button>');
     const error = await page.click('text=Click target', { timeout: 3000 }).catch(e => e);
     expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
-    expect(error.message).toContain('Timeout 3000ms exceeded during page.click.');
+    expect(error.message).toContain('page.click: Timeout 3000ms exceeded.');
     expect(error.message).toContain('element is disabled - waiting');
   });
   it('should wait for input to be enabled', async({page, server}) => {
@@ -720,9 +720,9 @@ describe('Page.click', function() {
     const error = await promise;
     expect(clicked).toBe(false);
     expect(await page.evaluate(() => window.clicked)).toBe(undefined);
-    expect(error.message).toContain('Timeout 5000ms exceeded during elementHandle.click.');
+    expect(error.message).toContain('elementHandle.click: Timeout 5000ms exceeded.');
     expect(error.message).toContain('element does not receive pointer events');
-    expect(error.message).toContain('retrying elementHandle.click action');
+    expect(error.message).toContain('retrying click action');
   });
   it('should dispatch microtasks in order', async({page, server}) => {
     await page.setContent(`
@@ -775,7 +775,7 @@ describe('Page.click', function() {
     const error = await page.dblclick('text=button1', { __testHookAfterStable, timeout: 3000 }).catch(e => e);
     expect(await page.evaluate(() => window.button1)).toBe(undefined);
     expect(await page.evaluate(() => window.button2)).toBe(undefined);
-    expect(error.message).toContain('Timeout 3000ms exceeded during page.dblclick.');
+    expect(error.message).toContain('page.dblclick: Timeout 3000ms exceeded.');
     expect(error.message).toContain('element does not match the selector anymore');
   });
   it.skip(USES_HOOKS).fail(true)('should retarget when element is recycled before enabled check', async ({page, server}) => {
@@ -806,7 +806,7 @@ describe('Page.click', function() {
     const error = await handle.click({ __testHookBeforeStable, timeout: 3000 }).catch(e => e);
     expect(await page.evaluate(() => window.button1)).toBe(undefined);
     expect(await page.evaluate(() => window.button2)).toBe(undefined);
-    expect(error.message).toContain('Timeout 3000ms exceeded during elementHandle.click.');
+    expect(error.message).toContain('elementHandle.click: Timeout 3000ms exceeded.');
     expect(error.message).toContain('element is disabled - waiting');
   });
   it('should not retarget when element changes on hover', async ({page, server}) => {
@@ -840,7 +840,7 @@ describe('Page.click', function() {
     const dialogPromise = page.waitForEvent('dialog');
     await page.setContent(`<div onclick='window.alert(123)'>Click me</div>`);
     const error = await page.click('div', { timeout: 3000 }).catch(e => e);
-    expect(error.message).toContain('Timeout 3000ms exceeded during page.click.');
+    expect(error.message).toContain('page.click: Timeout 3000ms exceeded.');
     const dialog = await dialogPromise;
     await dialog.dismiss();
   });

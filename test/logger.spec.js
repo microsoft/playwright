@@ -29,13 +29,8 @@ describe('Logger', function() {
     await browser.close();
     expect(log.length > 0).toBeTruthy();
     expect(log.filter(item => item.severity === 'info').length > 0).toBeTruthy();
-    if (CHANNEL) {
-      expect(log.filter(item => item.message.includes('browser.newContext started')).length > 0).toBeTruthy();
-      expect(log.filter(item => item.message.includes('browser.newContext succeeded')).length > 0).toBeTruthy();
-    } else {
-      expect(log.filter(item => item.message.includes('browserType.launch started')).length > 0).toBeTruthy();
-      expect(log.filter(item => item.message.includes('browserType.launch succeeded')).length > 0).toBeTruthy();
-    }
+    expect(log.filter(item => item.message.includes('browserType.launch started')).length > 0).toBeTruthy();
+    expect(log.filter(item => item.message.includes('browserType.launch succeeded')).length > 0).toBeTruthy();
   });
   it('should log context-level', async({browserType, defaultBrowserOptions}) => {
     const log = [];
@@ -52,11 +47,7 @@ describe('Logger', function() {
     await browser.close();
 
     expect(log.length > 0).toBeTruthy();
-    if (CHANNEL) {
-      expect(log.filter(item => item.message.includes('context.newPage')).length > 0).toBeTruthy();
-      expect(log.filter(item => item.message.includes('frame.click')).length > 0).toBeTruthy();
-    } else {
-      expect(log.filter(item => item.message.includes('page.click')).length > 0).toBeTruthy();
-    }
+    expect(log.filter(item => item.message.includes('page.setContent')).length > 0).toBeTruthy();
+    expect(log.filter(item => item.message.includes('page.click')).length > 0).toBeTruthy();
   });
 });

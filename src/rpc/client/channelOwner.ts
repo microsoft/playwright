@@ -19,6 +19,7 @@ import { Channel } from '../channels';
 import { Connection } from './connection';
 import { assert } from '../../helper';
 import { LoggerSink } from '../../loggerSink';
+import { rewriteErrorMessage } from '../../utils/stackTrace';
 
 export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}> extends EventEmitter {
   private _connection: Connection;
@@ -65,23 +66,7 @@ export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}
           return obj.addListener;
         if (prop === 'removeEventListener')
           return obj.removeListener;
-
-        return async (params: any) => {
-          const method = String(prop);
-          const apiName = this._type + '.' + method;
-          if (this._logger && this._logger.isEnabled('api', 'info'))
-            this._logger.log('api', 'info', `=> ${apiName} started`, [], { color: 'cyan' });
-          try {
-            const result = await this._connection.sendMessageToServer({ guid, method: String(prop), params });
-            if (this._logger && this._logger.isEnabled('api', 'info'))
-              this._logger.log('api', 'info', `=> ${apiName} succeeded`, [], { color: 'cyan' });
-            return result;
-          } catch (e) {
-            if (this._logger && this._logger.isEnabled('api', 'info'))
-              this._logger.log('api', 'info', `=> ${apiName} failed`, [], { color: 'cyan' });
-            throw e;
-          }
-        };
+        return (params: any) => this._connection.sendMessageToServer({ guid, method: String(prop), params });
       },
     });
     (this._channel as any)._object = this;
@@ -111,5 +96,22 @@ export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}
       _guid: this._guid,
       objects: this._isScope ? Array.from(this._objects.values()).map(o => o._debugScopeState()) : undefined,
     };
+  }
+
+  protected async _wrapApiCall<T>(apiName: string, func: () => Promise<T>, logger?: LoggerSink): Promise<T> {
+    logger = logger || this._logger;
+    try {
+      if (logger && logger.isEnabled('api', 'info'))
+        logger.log('api', 'info', `=> ${apiName} started`, [], { color: 'cyan' });
+      const result = await func();
+      if (logger && logger.isEnabled('api', 'info'))
+        logger.log('api', 'info', `=> ${apiName} succeeded`, [], { color: 'cyan' });
+      return result;
+    } catch (e) {
+      if (logger && logger.isEnabled('api', 'info'))
+        logger.log('api', 'info', `=> ${apiName} failed`, [], { color: 'cyan' });
+      rewriteErrorMessage(e, `${apiName}: ` + e.message);
+      throw e;
+    }
   }
 }

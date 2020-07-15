@@ -58,13 +58,15 @@ export class Logger {
     return this._innerLog('error', message, args);
   }
 
-  createScope(scopeName: string, record?: boolean): Logger {
-    this._loggerSink.log(this._name, 'info', `=> ${scopeName} started`, [], this._hints);
+  createScope(scopeName: string | undefined, record?: boolean): Logger {
+    if (scopeName)
+      this._loggerSink.log(this._name, 'info', `=> ${scopeName} started`, [], this._hints);
     return new Logger(this._loggerSink, this._name, this._hints, scopeName, record);
   }
 
   endScope(status: string) {
-    this._loggerSink.log(this._name, 'info', `<= ${this._scopeName} ${status}`, [], this._hints);
+    if (this._scopeName)
+      this._loggerSink.log(this._name, 'info', `<= ${this._scopeName} ${status}`, [], this._hints);
   }
 
   private _innerLog(severity: LoggerSeverity, message: string | Error, ...args: any[]) {

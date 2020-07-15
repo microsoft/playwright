@@ -662,7 +662,7 @@ describe('Page.setContent', function() {
     // stall for image
     server.setRoute(imgPath, (req, res) => {});
     const error = await page.setContent(`<img src="${server.PREFIX + imgPath}"></img>`).catch(e => e);
-    expect(error.message).toContain('Timeout 1ms exceeded during page.setContent.');
+    expect(error.message).toContain('page.setContent: Timeout 1ms exceeded.');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
   it('should await resources to load', async({page, server}) => {
@@ -707,7 +707,7 @@ describe('Page.addScriptTag', function() {
     } catch (e) {
       error = e;
     }
-    expect(error.message).toBe('Provide an object with a `url`, `path` or `content` property');
+    expect(error.message).toContain('Provide an object with a `url`, `path` or `content` property');
   });
 
   it('should work with a url', async({page, server}) => {
@@ -799,7 +799,7 @@ describe('Page.addStyleTag', function() {
     } catch (e) {
       error = e;
     }
-    expect(error.message).toBe('Provide an object with a `url`, `path` or `content` property');
+    expect(error.message).toContain('Provide an object with a `url`, `path` or `content` property');
   });
 
   it('should work with a url', async({page, server}) => {
