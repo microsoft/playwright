@@ -146,22 +146,6 @@ describe('BrowserContext', function() {
       expect(popup.mainFrame()).toBeTruthy();
     }
   });
-  it('should not call binding on errored pages', async({browser, server}) => {
-    const context = await browser.newContext();
-    let gotBinding = 0;
-    await context.exposeFunction('add', (a, b) => {
-      gotBinding++;
-      return a + b;
-    });
-    const page = await context.newPage();
-    server.setRoute('/empty.html', (req, res) => {
-      res.end(`<script>window.add(2, 3)</script><a href="${server.EMPTY_PAGE}" target="_blank">Click me</a>`);
-    });
-    await page.goto(server.EMPTY_PAGE);
-    await page.click('"Click me"');
-    await context.close();
-    expect(gotBinding).toBe(1);
-  })
 });
 
 describe('BrowserContext({userAgent})', function() {
