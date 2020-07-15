@@ -30,7 +30,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxslt1.1 \
     libevent-2.1-6 \
     libgles2 \
-    libvpx5
+    libvpx5 \
+    libxcomposite1 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libepoxy0 \
+    libgtk-3-0 \
+    libharfbuzz-icu0
 
 # 3. Install gstreamer and plugins to support video playback in WebKit.
 RUN apt-get update && apt-get install -y --no-install-recommends \
