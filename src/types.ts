@@ -149,9 +149,11 @@ export type CSSCoverageEntry = {
 
 export type JSCoverageEntry = {
   url: string,
+  scriptId: string,
   source?: string,
   functions: {
     functionName: string,
+    isBlockCoverage: boolean,
     ranges: JSRange[]
   }[]
 };
