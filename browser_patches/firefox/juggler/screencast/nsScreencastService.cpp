@@ -132,7 +132,6 @@ nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const 
     return NS_ERROR_UNEXPECTED;
   nsIWidget* widget = view->GetWidget();
 
-#ifdef MOZ_WIDGET_GTK
   *sessionId = ++mLastSessionId;
   rtc::scoped_refptr<webrtc::VideoCaptureModule> capturer = CreateWindowCapturer(widget, *sessionId);
   if (!capturer)
@@ -154,10 +153,6 @@ nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const 
 
   mIdToSession.emplace(*sessionId, std::move(session));
   return NS_OK;
-#else
-  // TODO: support Windows and Mac.
-  return NS_ERROR_NOT_IMPLEMENTED;
-#endif
 }
 
 nsresult nsScreencastService::StopVideoRecording(int32_t sessionId) {
