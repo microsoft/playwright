@@ -662,7 +662,7 @@ describe('Page.setContent', function() {
     // stall for image
     server.setRoute(imgPath, (req, res) => {});
     const error = await page.setContent(`<img src="${server.PREFIX + imgPath}"></img>`).catch(e => e);
-    expect(error.message).toContain('Timeout 1ms exceeded during page.setContent.');
+    expect(error.message).toContain('page.setContent: Timeout 1ms exceeded.');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
   it('should await resources to load', async({page, server}) => {

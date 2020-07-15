@@ -20,7 +20,6 @@ import { assert } from './helper';
 import { rewriteErrorMessage } from './utils/stackTrace';
 
 export interface Progress {
-  readonly apiName: string;
   readonly aborted: Promise<void>;
   readonly logger: Logger;
   timeUntilDeadline(): number;
@@ -32,6 +31,11 @@ export interface Progress {
 export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, logger: Logger, timeout: number, apiName: string): Promise<T> {
   const controller = new ProgressController(logger, timeout, apiName);
   return controller.run(task);
+}
+
+let useApiName = true;
+export function setUseApiName(value: boolean) {
+  useApiName = value;
 }
 
 export class ProgressController {
@@ -70,10 +74,9 @@ export class ProgressController {
     assert(this._state === 'before');
     this._state = 'running';
 
-    const loggerScope = this._logger.createScope(this._apiName, true);
+    const loggerScope = this._logger.createScope(useApiName ? this._apiName : undefined, true);
 
     const progress: Progress = {
-      apiName: this._apiName,
       aborted: this._abortedPromise,
       logger: loggerScope,
       timeUntilDeadline: () => this._deadline ? this._deadline - monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
@@ -90,7 +93,7 @@ export class ProgressController {
       },
     };
 
-    const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded during ${this._apiName}.`);
+    const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded.`);
     const timer = setTimeout(() => this._forceAbort(timeoutError), progress.timeUntilDeadline());
     try {
       const promise = task(progress);
@@ -101,7 +104,11 @@ export class ProgressController {
       return result;
     } catch (e) {
       this._aborted();
-      rewriteErrorMessage(e, e.message + formatLogRecording(loggerScope.recording(), this._apiName) + kLoggingNote);
+      rewriteErrorMessage(e,
+          (useApiName ? `${this._apiName}: ` : '') +
+          e.message +
+          formatLogRecording(loggerScope.recording()) +
+          kLoggingNote);
       clearTimeout(timer);
       this._state = 'aborted';
       loggerScope.endScope(`failed`);
@@ -124,14 +131,14 @@ async function runCleanup(cleanup: () => any) {
 
 const kLoggingNote = `\nNote: use DEBUG=pw:api environment variable and rerun to capture Playwright logs.`;
 
-function formatLogRecording(log: string[], name: string): string {
+function formatLogRecording(log: string[]): string {
   if (!log.length)
     return '';
-  name = ` ${name} logs `;
+  const header = ` logs `;
   const headerLength = 60;
-  const leftLength = (headerLength - name.length) / 2;
-  const rightLength = headerLength - name.length - leftLength;
-  return `\n${'='.repeat(leftLength)}${name}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
+  const leftLength = (headerLength - header.length) / 2;
+  const rightLength = headerLength - header.length - leftLength;
+  return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
 }
 
 function monotonicTime(): number {
