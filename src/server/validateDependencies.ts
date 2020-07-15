@@ -42,8 +42,7 @@ export async function validateDependencies(browserPath: string, browser: Browser
   if (!missingDeps.size)
     return;
   const deps = [...missingDeps].sort().map(dep => '   ' + dep).join('\n');
-  console.log(deps);
-  throw new Error('Host system is missing dependencies to run browser:\n' + deps);
+  throw new Error('Host system is missing the following dependencies to run browser\n' + deps);
 }
 
 async function executablesOrSharedLibraries(directoryPath: string): Promise<string[]> {
