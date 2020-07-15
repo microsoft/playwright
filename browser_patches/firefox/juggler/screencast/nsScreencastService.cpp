@@ -50,6 +50,13 @@ rtc::scoped_refptr<webrtc::VideoCaptureModule> CreateWindowCapturer(nsIWidget* w
   fprintf(stderr, "Video capture for Wayland is not implemented\n");
   return nullptr;
 # endif
+#elif defined(_WIN32)
+  mozilla::widget::CompositorWidgetInitData initData;
+  widget->GetCompositorWidgetInitData(&initData);
+  const mozilla::widget::WinCompositorWidgetInitData& winInitData = initData.get_WinCompositorWidgetInitData();
+  nsCString windowId;
+  windowId.AppendPrintf("%lu", winInitData.hWnd());
+  return webrtc::DesktopCaptureImpl::Create(sessionId, windowId.get(), webrtc::CaptureDeviceType::Window);
 #else
   fprintf(stderr, "Video capture is not implemented on this platform\n");
   return nullptr;
