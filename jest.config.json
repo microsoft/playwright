@@ -1,5 +1,6 @@
 {
-  "runner": "./jest-runner.js",
-  "rootDir": "./test/",
-  "testMatch":  ["**/?(*.)spec.[jt]s"]
+  "rootDir": "./test/jest",
+  "testEnvironment": ".",
+  "testMatch":  ["**/?(*.)spec.[jt]s"],
+  "testRunner": "jest-circus/runner"
 }

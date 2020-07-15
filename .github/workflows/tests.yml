@@ -41,6 +41,10 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "*,-pw:wrapped*"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest 2>>./testrun.log"
+      env:
+        BROWSER: ${{ matrix.browser }}
+        DEBUG: "*,-pw:wrapped*"
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -76,6 +80,10 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "*,-pw:wrapped*"
+    - run: npm run jest 2>>./${{ matrix.browser }}-mac-testrun.log
+      env:
+        BROWSER: ${{ matrix.browser }}
+        DEBUG: "*,-pw:wrapped*"
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -103,6 +111,11 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: npm run test 2>./${{ matrix.browser }}-win-testrun.log
+      shell: bash
+      env:
+        BROWSER: ${{ matrix.browser }}
+        DEBUG: "*,-pw:wrapped*"
+    - run: npm run jest 2>>./${{ matrix.browser }}-win-testrun.log
       shell: bash
       env:
         BROWSER: ${{ matrix.browser }}
