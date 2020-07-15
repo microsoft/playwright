@@ -27,20 +27,20 @@ export class DownloadDispatcher extends Dispatcher<Download, DownloadInitializer
     });
   }
 
-  async path(): Promise<string | null> {
-    return this._object.path();
+  async path(): Promise<{ value: string | null }> {
+    return { value: await this._object.path() };
   }
 
-  async stream(): Promise<StreamChannel | null> {
+  async stream(): Promise<{ stream: StreamChannel | null }> {
     const stream = await this._object.createReadStream();
     if (!stream)
-      return null;
+      return { stream: null };
     await new Promise(f => stream.on('readable', f));
-    return new StreamDispatcher(this._scope, stream);
+    return { stream: new StreamDispatcher(this._scope, stream) };
   }
 
-  async failure(): Promise<string | null> {
-    return this._object.failure();
+  async failure(): Promise<{ error: string | null }> {
+    return { error: await this._object.failure() };
   }
 
   async delete(): Promise<void> {

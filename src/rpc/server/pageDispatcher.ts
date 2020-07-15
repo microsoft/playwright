@@ -46,11 +46,11 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     });
     this._page = page;
     page.on(Events.Page.Close, () => this._dispatchEvent('close'));
-    page.on(Events.Page.Console, message => this._dispatchEvent('console', new ConsoleMessageDispatcher(this._scope, message)));
+    page.on(Events.Page.Console, message => this._dispatchEvent('console', { message: new ConsoleMessageDispatcher(this._scope, message) }));
     page.on(Events.Page.Crash, () => this._dispatchEvent('crash'));
     page.on(Events.Page.DOMContentLoaded, () => this._dispatchEvent('domcontentloaded'));
-    page.on(Events.Page.Dialog, dialog => this._dispatchEvent('dialog', new DialogDispatcher(this._scope, dialog)));
-    page.on(Events.Page.Download, dialog => this._dispatchEvent('download', new DownloadDispatcher(this._scope, dialog)));
+    page.on(Events.Page.Dialog, dialog => this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this._scope, dialog) }));
+    page.on(Events.Page.Download, dialog => this._dispatchEvent('download', { download: new DownloadDispatcher(this._scope, dialog) }));
     page.on(Events.Page.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
       element: new ElementHandleDispatcher(this._scope, fileChooser.element()),
       isMultiple: fileChooser.isMultiple()
@@ -60,15 +60,15 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     page.on(Events.Page.FrameNavigated, frame => this._onFrameNavigated(frame));
     page.on(Events.Page.Load, () => this._dispatchEvent('load'));
     page.on(Events.Page.PageError, error => this._dispatchEvent('pageError', { error: serializeError(error) }));
-    page.on(Events.Page.Popup, page => this._dispatchEvent('popup', lookupDispatcher<PageDispatcher>(page)));
-    page.on(Events.Page.Request, request => this._dispatchEvent('request', RequestDispatcher.from(this._scope, request)));
+    page.on(Events.Page.Popup, page => this._dispatchEvent('popup', { page: lookupDispatcher<PageDispatcher>(page) }));
+    page.on(Events.Page.Request, request => this._dispatchEvent('request', { request: RequestDispatcher.from(this._scope, request) }));
     page.on(Events.Page.RequestFailed, (request: Request) => this._dispatchEvent('requestFailed', {
       request: RequestDispatcher.from(this._scope, request),
       failureText: request._failureText
     }));
-    page.on(Events.Page.RequestFinished, request => this._dispatchEvent('requestFinished', RequestDispatcher.from(scope, request)));
-    page.on(Events.Page.Response, response => this._dispatchEvent('response', new ResponseDispatcher(this._scope, response)));
-    page.on(Events.Page.Worker, worker => this._dispatchEvent('worker', new WorkerDispatcher(this._scope, worker)));
+    page.on(Events.Page.RequestFinished, request => this._dispatchEvent('requestFinished', { request: RequestDispatcher.from(scope, request) }));
+    page.on(Events.Page.Response, response => this._dispatchEvent('response', { response: new ResponseDispatcher(this._scope, response) }));
+    page.on(Events.Page.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this._scope, worker) }));
   }
 
   async setDefaultNavigationTimeoutNoReply(params: { timeout: number }) {
@@ -79,15 +79,15 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     this._page.setDefaultTimeout(params.timeout);
   }
 
-  async opener(): Promise<PageChannel | null> {
-    return lookupNullableDispatcher<PageDispatcher>(await this._page.opener());
+  async opener(): Promise<{ page: PageChannel | null }> {
+    return { page: lookupNullableDispatcher<PageDispatcher>(await this._page.opener()) };
   }
 
   async exposeBinding(params: { name: string }): Promise<void> {
     await this._page.exposeBinding(params.name, (source, ...args) => {
-      const bindingCall = new BindingCallDispatcher(this._scope, params.name, source, args);
-      this._dispatchEvent('bindingCall', bindingCall);
-      return bindingCall.promise();
+      const binding = new BindingCallDispatcher(this._scope, params.name, source, args);
+      this._dispatchEvent('bindingCall', { binding });
+      return binding.promise();
     });
   }
 
@@ -95,16 +95,16 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     await this._page.setExtraHTTPHeaders(params.headers);
   }
 
-  async reload(params: types.NavigateOptions): Promise<ResponseChannel | null> {
-    return lookupNullableDispatcher<ResponseDispatcher>(await this._page.reload(params));
+  async reload(params: types.NavigateOptions): Promise<{ response: ResponseChannel | null }> {
+    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.reload(params)) };
   }
 
-  async goBack(params: types.NavigateOptions): Promise<ResponseChannel | null> {
-    return lookupNullableDispatcher<ResponseDispatcher>(await this._page.goBack(params));
+  async goBack(params: types.NavigateOptions): Promise<{ response: ResponseChannel | null }> {
+    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.goBack(params)) };
   }
 
-  async goForward(params: types.NavigateOptions): Promise<ResponseChannel | null> {
-    return lookupNullableDispatcher<ResponseDispatcher>(await this._page.goForward(params));
+  async goForward(params: types.NavigateOptions): Promise<{ response: ResponseChannel | null }> {
+    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.goForward(params)) };
   }
 
   async emulateMedia(params: { media?: 'screen' | 'print', colorScheme?: 'dark' | 'light' | 'no-preference' }): Promise<void> {
@@ -129,8 +129,8 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     });
   }
 
-  async screenshot(params: types.ScreenshotOptions): Promise<Binary> {
-    return (await this._page.screenshot(params)).toString('base64');
+  async screenshot(params: types.ScreenshotOptions): Promise<{ binary: Binary }> {
+    return { binary: (await this._page.screenshot(params)).toString('base64') };
   }
 
   async close(params: { runBeforeUnload?: boolean }): Promise<void> {
@@ -180,18 +180,19 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     await this._page.mouse.click(params.x, params.y, params);
   }
 
-  async accessibilitySnapshot(params: { interestingOnly?: boolean, root?: ElementHandleChannel }): Promise<types.SerializedAXNode | null> {
-    return await this._page.accessibility.snapshot({
+  async accessibilitySnapshot(params: { interestingOnly?: boolean, root?: ElementHandleChannel }): Promise<{ rootAXNode: types.SerializedAXNode | null }> {
+    const rootAXNode = await this._page.accessibility.snapshot({
       interestingOnly: params.interestingOnly,
       root: params.root ? (params.root as ElementHandleDispatcher)._elementHandle : undefined
     });
+    return { rootAXNode };
   }
 
-  async pdf(params: PDFOptions): Promise<Binary> {
+  async pdf(params: PDFOptions): Promise<{ pdf: Binary }> {
     if (!this._page.pdf)
       throw new Error('PDF generation is only supported for Headless Chromium');
-    const binary = await this._page.pdf(params);
-    return binary.toString('base64');
+    const buffer = await this._page.pdf(params);
+    return { pdf: buffer.toString('base64') };
   }
 
   async crStartJSCoverage(params: types.JSCoverageOptions): Promise<void> {
@@ -199,9 +200,9 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     await coverage.startJSCoverage(params);
   }
 
-  async crStopJSCoverage(): Promise<types.JSCoverageEntry[]> {
+  async crStopJSCoverage(): Promise<{ entries: types.JSCoverageEntry[] }> {
     const coverage = this._page.coverage as CRCoverage;
-    return await coverage.stopJSCoverage();
+    return { entries: await coverage.stopJSCoverage() };
   }
 
   async crStartCSSCoverage(params: types.CSSCoverageOptions): Promise<void> {
@@ -209,13 +210,13 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     await coverage.startCSSCoverage(params);
   }
 
-  async crStopCSSCoverage(): Promise<types.CSSCoverageEntry[]> {
+  async crStopCSSCoverage(): Promise<{ entries: types.CSSCoverageEntry[] }> {
     const coverage = this._page.coverage as CRCoverage;
-    return await coverage.stopCSSCoverage();
+    return { entries: await coverage.stopCSSCoverage() };
   }
 
   _onFrameAttached(frame: Frame) {
-    this._dispatchEvent('frameAttached', FrameDispatcher.from(this._scope, frame));
+    this._dispatchEvent('frameAttached', { frame: FrameDispatcher.from(this._scope, frame) });
   }
 
   _onFrameNavigated(frame: Frame) {
@@ -223,7 +224,7 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
   }
 
   _onFrameDetached(frame: Frame) {
-    this._dispatchEvent('frameDetached', lookupDispatcher<FrameDispatcher>(frame));
+    this._dispatchEvent('frameDetached', { frame: lookupDispatcher<FrameDispatcher>(frame) });
   }
 }
 
@@ -236,12 +237,12 @@ export class WorkerDispatcher extends Dispatcher<Worker, WorkerInitializer> impl
     worker.on(Events.Worker.Close, () => this._dispatchEvent('close'));
   }
 
-  async evaluateExpression(params: { expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<any> {
-    return serializeResult(await this._object._evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg)));
+  async evaluateExpression(params: { expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<{ value: any }> {
+    return { value: serializeResult(await this._object._evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<JSHandleChannel> {
-    return createHandle(this._scope, await this._object._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg)));
+  async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<{ handle: JSHandleChannel }> {
+    return { handle: createHandle(this._scope, await this._object._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 }
 

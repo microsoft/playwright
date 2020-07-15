@@ -37,7 +37,7 @@ export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer>
   async launch(executablePath: string, options: ElectronLaunchOptions = {}): Promise<ElectronApplication> {
     options = { ...options };
     delete (options as any).logger;
-    return ElectronApplication.from(await this._channel.launch({ executablePath, ...options }));
+    return ElectronApplication.from((await this._channel.launch({ executablePath, ...options })).electronApplication);
   }
 }
 
@@ -53,10 +53,10 @@ export class ElectronApplication extends ChannelOwner<ElectronApplicationChannel
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: ElectronApplicationInitializer) {
     super(parent, type, guid, initializer);
     this._context = BrowserContext.from(initializer.context);
-    this._channel.on('window', pageChannel => {
-      const page = Page.from(pageChannel);
-      this._windows.add(page);
-      this.emit(ElectronEvents.ElectronApplication.Window, page);
+    this._channel.on('window', ({page}) => {
+      const window = Page.from(page);
+      this._windows.add(window);
+      this.emit(ElectronEvents.ElectronApplication.Window, window);
     });
     this._channel.on('close', () => {
       this.emit(ElectronEvents.ElectronApplication.Close);
@@ -74,7 +74,8 @@ export class ElectronApplication extends ChannelOwner<ElectronApplicationChannel
   }
 
   async newBrowserWindow(options: any): Promise<Page> {
-    return Page.from(await this._channel.newBrowserWindow({ arg: serializeArgument(options) }));
+    const result = await this._channel.newBrowserWindow({ arg: serializeArgument(options) });
+    return Page.from(result.page);
   }
 
   context(): BrowserContext {
@@ -100,13 +101,14 @@ export class ElectronApplication extends ChannelOwner<ElectronApplicationChannel
   async evaluate<R, Arg>(pageFunction: FuncOn<any, Arg, R>, arg: Arg): Promise<R>;
   async evaluate<R>(pageFunction: FuncOn<any, void, R>, arg?: any): Promise<R>;
   async evaluate<R, Arg>(pageFunction: FuncOn<any, Arg, R>, arg: Arg): Promise<R> {
-    return parseResult(await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }));
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+    return parseResult(result.value);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: FuncOn<any, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: FuncOn<any, void, R>, arg?: any): Promise<SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: FuncOn<any, Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
-    const handleChannel = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-    return JSHandle.from(handleChannel) as SmartHandle<R>;
+    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+    return JSHandle.from(result.handle) as SmartHandle<R>;
   }
 }

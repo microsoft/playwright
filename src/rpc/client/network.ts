@@ -104,7 +104,7 @@ export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
   }
 
   async response(): Promise<Response | null> {
-    return Response.fromNullable(await this._channel.response());
+    return Response.fromNullable((await this._channel.response()).response);
   }
 
   frame(): Frame {
@@ -195,11 +195,11 @@ export class Response extends ChannelOwner<ResponseChannel, ResponseInitializer>
   }
 
   async finished(): Promise<Error | null> {
-    return await this._channel.finished();
+    return (await this._channel.finished()).error;
   }
 
   async body(): Promise<Buffer> {
-    return Buffer.from(await this._channel.body(), 'base64');
+    return Buffer.from((await this._channel.body()).binary, 'base64');
   }
 
   async text(): Promise<string> {

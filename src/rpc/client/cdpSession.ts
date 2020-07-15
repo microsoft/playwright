@@ -47,7 +47,7 @@ export class CDPSession extends ChannelOwner<CDPSessionChannel, CDPSessionInitia
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
     const result = await this._channel.send({ method, params });
-    return result as Protocol.CommandReturnValues[T];
+    return result.result as Protocol.CommandReturnValues[T];
   }
 
   async detach() {

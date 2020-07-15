@@ -43,27 +43,27 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   }
 
   async ownerFrame(): Promise<Frame | null> {
-    return Frame.fromNullable(await this._elementChannel.ownerFrame());
+    return Frame.fromNullable((await this._elementChannel.ownerFrame()).frame);
   }
 
   async contentFrame(): Promise<Frame | null> {
-    return Frame.fromNullable(await this._elementChannel.contentFrame());
+    return Frame.fromNullable((await this._elementChannel.contentFrame()).frame);
   }
 
   async getAttribute(name: string): Promise<string | null> {
-    return await this._elementChannel.getAttribute({ name });
+    return (await this._elementChannel.getAttribute({ name })).value;
   }
 
   async textContent(): Promise<string | null> {
-    return await this._elementChannel.textContent();
+    return (await this._elementChannel.textContent()).value;
   }
 
   async innerText(): Promise<string> {
-    return await this._elementChannel.innerText();
+    return (await this._elementChannel.innerText()).value;
   }
 
   async innerHTML(): Promise<string> {
-    return await this._elementChannel.innerHTML();
+    return (await this._elementChannel.innerHTML()).value;
   }
 
   async dispatchEvent(type: string, eventInit: Object = {}) {
@@ -87,7 +87,8 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   }
 
   async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return await this._elementChannel.selectOption({ ...convertSelectOptionValues(values), ...options });
+    const result = await this._elementChannel.selectOption({ ...convertSelectOptionValues(values), ...options });
+    return result.values;
   }
 
   async fill(value: string, options: types.NavigatingActionWaitOptions = {}): Promise<void> {
@@ -123,31 +124,34 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   }
 
   async boundingBox(): Promise<types.Rect | null> {
-    return await this._elementChannel.boundingBox();
+    return (await this._elementChannel.boundingBox()).value;
   }
 
   async screenshot(options: types.ElementScreenshotOptions = {}): Promise<Buffer> {
-    return Buffer.from(await this._elementChannel.screenshot(options), 'base64');
+    return Buffer.from((await this._elementChannel.screenshot(options)).binary, 'base64');
   }
 
   async $(selector: string): Promise<ElementHandle<Element> | null> {
-    return ElementHandle.fromNullable(await this._elementChannel.querySelector({ selector })) as ElementHandle<Element> | null;
+    return ElementHandle.fromNullable((await this._elementChannel.querySelector({ selector })).element) as ElementHandle<Element> | null;
   }
 
   async $$(selector: string): Promise<ElementHandle<Element>[]> {
-    return (await this._elementChannel.querySelectorAll({ selector })).map(h => ElementHandle.from(h) as ElementHandle<Element>);
+    const result = await this._elementChannel.querySelectorAll({ selector });
+    return result.elements.map(h => ElementHandle.from(h) as ElementHandle<Element>);
   }
 
   async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
   async $eval<R>(selector: string, pageFunction: FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
-    return parseResult(await this._elementChannel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }));
+    const result = await this._elementChannel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+    return parseResult(result.value);
   }
 
   async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
   async $$eval<R>(selector: string, pageFunction: FuncOn<Element[], void, R>, arg?: any): Promise<R>;
   async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
-    return parseResult(await this._elementChannel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }));
+    const result = await this._elementChannel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+    return parseResult(result.value);
   }
 }
 

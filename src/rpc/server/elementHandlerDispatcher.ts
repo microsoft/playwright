@@ -17,7 +17,7 @@
 import { ElementHandle } from '../../dom';
 import * as js from '../../javascript';
 import * as types from '../../types';
-import { ElementHandleChannel, FrameChannel } from '../channels';
+import { ElementHandleChannel, FrameChannel, Binary } from '../channels';
 import { DispatcherScope, lookupNullableDispatcher } from './dispatcher';
 import { JSHandleDispatcher, serializeResult, parseArgument } from './jsHandleDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
@@ -40,28 +40,28 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
     this._elementHandle = elementHandle;
   }
 
-  async ownerFrame(): Promise<FrameChannel | null> {
-    return lookupNullableDispatcher<FrameDispatcher>(await this._elementHandle.ownerFrame());
+  async ownerFrame(): Promise<{ frame: FrameChannel | null }> {
+    return { frame: lookupNullableDispatcher<FrameDispatcher>(await this._elementHandle.ownerFrame()) };
   }
 
-  async contentFrame(): Promise<FrameChannel | null> {
-    return lookupNullableDispatcher<FrameDispatcher>(await this._elementHandle.contentFrame());
+  async contentFrame(): Promise<{ frame: FrameChannel | null }> {
+    return { frame: lookupNullableDispatcher<FrameDispatcher>(await this._elementHandle.contentFrame()) };
   }
 
-  async getAttribute(params: { name: string }): Promise<string | null> {
-    return this._elementHandle.getAttribute(params.name);
+  async getAttribute(params: { name: string }): Promise<{ value: string | null }> {
+    return { value: await this._elementHandle.getAttribute(params.name) };
   }
 
-  async textContent(): Promise<string | null> {
-    return this._elementHandle.textContent();
+  async textContent(): Promise<{ value: string | null }> {
+    return { value: await this._elementHandle.textContent() };
   }
 
-  async innerText(): Promise<string> {
-    return this._elementHandle.innerText();
+  async innerText(): Promise<{ value: string }> {
+    return { value: await this._elementHandle.innerText() };
   }
 
-  async innerHTML(): Promise<string> {
-    return this._elementHandle.innerHTML();
+  async innerHTML(): Promise<{ value: string }> {
+    return { value: await this._elementHandle.innerHTML() };
   }
 
   async dispatchEvent(params: { type: string, eventInit: Object }) {
@@ -84,8 +84,8 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
     await this._elementHandle.dblclick(params);
   }
 
-  async selectOption(params: { elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions): Promise<string[]> {
-    return this._elementHandle.selectOption(convertSelectOptionValues(params.elements, params.options), params);
+  async selectOption(params: { elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions): Promise<{ values: string[] }> {
+    return { values: await this._elementHandle.selectOption(convertSelectOptionValues(params.elements, params.options), params) };
   }
 
   async fill(params: { value: string } & types.NavigatingActionWaitOptions) {
@@ -120,30 +120,30 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
     await this._elementHandle.uncheck(params);
   }
 
-  async boundingBox(): Promise<types.Rect | null> {
-    return await this._elementHandle.boundingBox();
+  async boundingBox(): Promise<{ value: types.Rect | null }> {
+    return { value: await this._elementHandle.boundingBox() };
   }
 
-  async screenshot(params: types.ElementScreenshotOptions): Promise<string> {
-    return (await this._elementHandle.screenshot(params)).toString('base64');
+  async screenshot(params: types.ElementScreenshotOptions): Promise<{ binary: Binary }> {
+    return { binary: (await this._elementHandle.screenshot(params)).toString('base64') };
   }
 
-  async querySelector(params: { selector: string }): Promise<ElementHandleChannel | null> {
+  async querySelector(params: { selector: string }): Promise<{ element: ElementHandleChannel | null }> {
     const handle = await this._elementHandle.$(params.selector);
-    return handle ? new ElementHandleDispatcher(this._scope, handle) : null;
+    return { element: handle ? new ElementHandleDispatcher(this._scope, handle) : null };
   }
 
-  async querySelectorAll(params: { selector: string }): Promise<ElementHandleChannel[]> {
+  async querySelectorAll(params: { selector: string }): Promise<{ elements: ElementHandleChannel[] }> {
     const elements = await this._elementHandle.$$(params.selector);
-    return elements.map(e => new ElementHandleDispatcher(this._scope, e));
+    return { elements: elements.map(e => new ElementHandleDispatcher(this._scope, e)) };
   }
 
-  async evalOnSelector(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<any> {
-    return serializeResult(await this._elementHandle._$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg)));
+  async evalOnSelector(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }> {
+    return { value: serializeResult(await this._elementHandle._$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async evalOnSelectorAll(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<any> {
-    return serializeResult(await this._elementHandle._$$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg)));
+  async evalOnSelectorAll(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }> {
+    return { value: serializeResult(await this._elementHandle._$$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 }
 

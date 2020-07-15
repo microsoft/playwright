@@ -53,7 +53,7 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   async newContext(options: types.BrowserContextOptions & { logger?: LoggerSink } = {}): Promise<BrowserContext> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
-    const context = BrowserContext.from(await this._channel.newContext(options));
+    const context = BrowserContext.from((await this._channel.newContext(options)).context);
     this._contexts.add(context);
     context._logger = logger || this._logger;
     return context;

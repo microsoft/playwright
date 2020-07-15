@@ -34,17 +34,17 @@ export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> i
     });
   }
 
-  async newContext(params: types.BrowserContextOptions): Promise<BrowserContextChannel> {
-    return new BrowserContextDispatcher(this._scope, await this._object.newContext(params) as BrowserContextBase);
+  async newContext(params: types.BrowserContextOptions): Promise<{ context: BrowserContextChannel }> {
+    return { context: new BrowserContextDispatcher(this._scope, await this._object.newContext(params) as BrowserContextBase) };
   }
 
   async close(): Promise<void> {
     await this._object.close();
   }
 
-  async crNewBrowserCDPSession(): Promise<CDPSessionChannel> {
+  async crNewBrowserCDPSession(): Promise<{ session: CDPSessionChannel }> {
     const crBrowser = this._object as CRBrowser;
-    return new CDPSessionDispatcher(this._scope, await crBrowser.newBrowserCDPSession());
+    return { session: new CDPSessionDispatcher(this._scope, await crBrowser.newBrowserCDPSession()) };
   }
 
   async crStartTracing(params: { page?: PageDispatcher, path?: string, screenshots?: boolean, categories?: string[] }): Promise<void> {
@@ -52,9 +52,9 @@ export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> i
     await crBrowser.startTracing(params.page ? params.page._object : undefined, params);
   }
 
-  async crStopTracing(): Promise<Binary> {
+  async crStopTracing(): Promise<{ binary: Binary }> {
     const crBrowser = this._object as CRBrowser;
     const buffer = await crBrowser.stopTracing();
-    return buffer.toString('base64');
+    return { binary: buffer.toString('base64') };
   }
 }

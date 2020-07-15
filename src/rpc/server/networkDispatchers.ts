@@ -44,8 +44,8 @@ export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> i
     });
   }
 
-  async response(): Promise<ResponseChannel | null> {
-    return lookupNullableDispatcher<ResponseDispatcher>(await this._object.response());
+  async response(): Promise<{ response: ResponseChannel | null }> {
+    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._object.response()) };
   }
 }
 
@@ -62,12 +62,12 @@ export class ResponseDispatcher extends Dispatcher<Response, ResponseInitializer
     });
   }
 
-  async finished(): Promise<Error | null> {
-    return await this._object.finished();
+  async finished(): Promise<{ error: Error | null }> {
+    return { error: await this._object.finished() };
   }
 
-  async body(): Promise<Binary> {
-    return (await this._object.body()).toString('base64');
+  async body(): Promise<{ binary: Binary }> {
+    return { binary: (await this._object.body()).toString('base64') };
   }
 }
 
