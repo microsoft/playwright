@@ -242,7 +242,7 @@ describe('Page.emulateMedia type', function() {
   it('should throw in case of bad type argument', async({page, server}) => {
     let error = null;
     await page.emulateMedia({ media: 'bad' }).catch(e => error = e);
-    expect(error.message).toBe('Unsupported media: bad');
+    expect(error.message).toContain('Unsupported media: bad');
   });
 });
 
@@ -270,7 +270,7 @@ describe('Page.emulateMedia colorScheme', function() {
   it('should throw in case of bad argument', async({page, server}) => {
     let error = null;
     await page.emulateMedia({ colorScheme: 'bad' }).catch(e => error = e);
-    expect(error.message).toBe('Unsupported color scheme: bad');
+    expect(error.message).toContain('Unsupported color scheme: bad');
   });
   it('should work during navigation', async({page, server}) => {
     await page.emulateMedia({ colorScheme: 'light' });
@@ -353,7 +353,7 @@ describe('BrowserContext({timezoneId})', function() {
       let error = null;
       const context = await browser.newContext({ timezoneId });
       const page = await context.newPage().catch(e => error = e);
-      expect(error.message).toBe(`Invalid timezone ID: ${timezoneId}`);
+      expect(error.message).toContain(`Invalid timezone ID: ${timezoneId}`);
       await context.close();
     }
   });

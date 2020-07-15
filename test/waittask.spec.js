@@ -458,7 +458,7 @@ describe('Frame.waitForSelector', function() {
     await page.setContent(`<div class='zombo'>anything</div>`);
     expect(await page.evaluate(x => x.textContent, await waitForSelector)).toBe('anything');
   });
-  it.skip(CHANNEL)('should have correct stack trace for timeout', async({page, server}) => {
+  it('should have correct stack trace for timeout', async({page, server}) => {
     let error;
     await page.waitForSelector('.zombo', { timeout: 10 }).catch(e => error = e);
     expect(error.stack).toContain('waittask.spec.js');

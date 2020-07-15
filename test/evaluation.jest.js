@@ -489,7 +489,7 @@ describe('Page.addInitScript', function() {
   });
   it('should throw without path and content', async({page, server}) => {
     const error = await page.addInitScript({ foo: 'bar' }).catch(e => e);
-    expect(error.message).toBe('Either path or content property must be present');
+    expect(error.message).toContain('Either path or content property must be present');
   });
   it('should work with browser context scripts', async({browser, server}) => {
     const context = await browser.newContext();

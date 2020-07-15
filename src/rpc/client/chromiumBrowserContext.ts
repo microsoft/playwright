@@ -51,7 +51,9 @@ export class ChromiumBrowserContext extends BrowserContext {
   }
 
   async newCDPSession(page: Page): Promise<CDPSession> {
-    const result = await this._channel.crNewCDPSession({ page: page._channel });
-    return CDPSession.from(result.session);
+    return this._wrapApiCall('chromiumBrowserContext.newCDPSession', async () => {
+      const result = await this._channel.crNewCDPSession({ page: page._channel });
+      return CDPSession.from(result.session);
+    });
   }
 }

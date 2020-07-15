@@ -104,11 +104,11 @@ describe('BrowserContext', function() {
   });
   it('should not allow deviceScaleFactor with null viewport', async({ browser }) => {
     const error = await browser.newContext({ viewport: null, deviceScaleFactor: 1 }).catch(e => e);
-    expect(error.message).toBe('"deviceScaleFactor" option is not supported with null "viewport"');
+    expect(error.message).toContain('"deviceScaleFactor" option is not supported with null "viewport"');
   });
   it('should not allow isMobile with null viewport', async({ browser }) => {
     const error = await browser.newContext({ viewport: null, isMobile: true }).catch(e => e);
-    expect(error.message).toBe('"isMobile" option is not supported with null "viewport"');
+    expect(error.message).toContain('"isMobile" option is not supported with null "viewport"');
   });
   it('close() should work for empty context', async({ browser }) => {
     const context = await browser.newContext();
@@ -393,13 +393,13 @@ describe('BrowserContext.exposeFunction', () => {
     await context.exposeFunction('foo', () => {});
     await context.exposeFunction('bar', () => {});
     let error = await context.exposeFunction('foo', () => {}).catch(e => e);
-    expect(error.message).toBe('Function "foo" has been already registered');
+    expect(error.message).toContain('Function "foo" has been already registered');
     const page = await context.newPage();
     error = await page.exposeFunction('foo', () => {}).catch(e => e);
-    expect(error.message).toBe('Function "foo" has been already registered in the browser context');
+    expect(error.message).toContain('Function "foo" has been already registered in the browser context');
     await page.exposeFunction('baz', () => {});
     error = await context.exposeFunction('baz', () => {}).catch(e => e);
-    expect(error.message).toBe('Function "baz" has been already registered in one of the pages');
+    expect(error.message).toContain('Function "baz" has been already registered in one of the pages');
     await context.close();
   });
   it('should be callable from-inside addInitScript', async({browser, server}) => {

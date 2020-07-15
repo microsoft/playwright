@@ -54,14 +54,16 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   async newContext(options: types.BrowserContextOptions & { logger?: LoggerSink } = {}): Promise<BrowserContext> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
-    const contextOptions: BrowserContextOptions = {
-      ...options,
-      extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
-    };
-    const context = BrowserContext.from((await this._channel.newContext(contextOptions)).context);
-    this._contexts.add(context);
-    context._logger = logger || this._logger;
-    return context;
+    return this._wrapApiCall('browser.newContext', async () => {
+      const contextOptions: BrowserContextOptions = {
+        ...options,
+        extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
+      };
+      const context = BrowserContext.from((await this._channel.newContext(contextOptions)).context);
+      this._contexts.add(context);
+      context._logger = logger || this._logger;
+      return context;
+    });
   }
 
   contexts(): BrowserContext[] {
@@ -81,10 +83,12 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   }
 
   async close(): Promise<void> {
-    if (!this._isClosedOrClosing) {
-      this._isClosedOrClosing = true;
-      await this._channel.close();
-    }
-    await this._closedPromise;
+    return this._wrapApiCall('browser.close', async () => {
+      if (!this._isClosedOrClosing) {
+        this._isClosedOrClosing = true;
+        await this._channel.close();
+      }
+      await this._closedPromise;
+    });
   }
 }

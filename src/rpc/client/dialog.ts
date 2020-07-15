@@ -39,10 +39,14 @@ export class Dialog extends ChannelOwner<DialogChannel, DialogInitializer> {
   }
 
   async accept(promptText: string | undefined) {
-    await this._channel.accept({ promptText });
+    return this._wrapApiCall('dialog.accept', async () => {
+      await this._channel.accept({ promptText });
+    });
   }
 
   async dismiss() {
-    await this._channel.dismiss();
+    return this._wrapApiCall('dialog.dismiss', async () => {
+      await this._channel.dismiss();
+    });
   }
 }

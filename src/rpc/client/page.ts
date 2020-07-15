@@ -259,7 +259,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
-    return  await this._mainFrame.addStyleTag(options);
+    return this._attributeToPage(() => this._mainFrame.addStyleTag(options));
   }
 
   async exposeFunction(name: string, playwrightFunction: Function) {
@@ -267,16 +267,20 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async exposeBinding(name: string, binding: FunctionWithSource) {
-    if (this._bindings.has(name))
-      throw new Error(`Function "${name}" has been already registered`);
-    if (this._browserContext._bindings.has(name))
-      throw new Error(`Function "${name}" has been already registered in the browser context`);
-    this._bindings.set(name, binding);
-    await this._channel.exposeBinding({ name });
+    return this._wrapApiCall('page.exposeBinding', async () => {
+      if (this._bindings.has(name))
+        throw new Error(`Function "${name}" has been already registered`);
+      if (this._browserContext._bindings.has(name))
+        throw new Error(`Function "${name}" has been already registered in the browser context`);
+      this._bindings.set(name, binding);
+      await this._channel.exposeBinding({ name });
+    });
   }
 
   async setExtraHTTPHeaders(headers: types.Headers) {
-    await this._channel.setExtraHTTPHeaders({ headers: headersObjectToArray(headers) });
+    return this._wrapApiCall('page.setExtraHTTPHeaders', async () => {
+      await this._channel.setExtraHTTPHeaders({ headers: headersObjectToArray(headers) });
+    });
   }
 
   url(): string {
@@ -296,7 +300,9 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async reload(options: types.NavigateOptions = {}): Promise<Response | null> {
-    return Response.fromNullable((await this._channel.reload(options)).response);
+    return this._wrapApiCall('page.reload', async () => {
+      return Response.fromNullable((await this._channel.reload(options)).response);
+    });
   }
 
   async waitForLoadState(state?: types.LifecycleEvent, options?: types.TimeoutOptions): Promise<void> {
@@ -340,20 +346,28 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async goBack(options: types.NavigateOptions = {}): Promise<Response | null> {
-    return Response.fromNullable((await this._channel.goBack(options)).response);
+    return this._wrapApiCall('page.goBack', async () => {
+      return Response.fromNullable((await this._channel.goBack(options)).response);
+    });
   }
 
   async goForward(options: types.NavigateOptions = {}): Promise<Response | null> {
-    return Response.fromNullable((await this._channel.goForward(options)).response);
+    return this._wrapApiCall('page.goForward', async () => {
+      return Response.fromNullable((await this._channel.goForward(options)).response);
+    });
   }
 
   async emulateMedia(options: { media?: types.MediaType, colorScheme?: types.ColorScheme }) {
-    await this._channel.emulateMedia(options);
+    return this._wrapApiCall('page.emulateMedia', async () => {
+      await this._channel.emulateMedia(options);
+    });
   }
 
   async setViewportSize(viewportSize: types.Size) {
-    this._viewportSize = viewportSize;
-    await this._channel.setViewportSize({ viewportSize });
+    return this._wrapApiCall('page.setViewportSize', async () => {
+      this._viewportSize = viewportSize;
+      await this._channel.setViewportSize({ viewportSize });
+    });
   }
 
   viewportSize(): types.Size | null {
@@ -368,20 +382,26 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
-    const source = await helper.evaluationScript(script, arg);
-    await this._channel.addInitScript({ source });
+    return this._wrapApiCall('page.addInitScript', async () => {
+      const source = await helper.evaluationScript(script, arg);
+      await this._channel.addInitScript({ source });
+    });
   }
 
   async route(url: types.URLMatch, handler: RouteHandler): Promise<void> {
-    this._routes.push({ url, handler });
-    if (this._routes.length === 1)
-      await this._channel.setNetworkInterceptionEnabled({ enabled: true });
+    return this._wrapApiCall('page.route', async () => {
+      this._routes.push({ url, handler });
+      if (this._routes.length === 1)
+        await this._channel.setNetworkInterceptionEnabled({ enabled: true });
+    });
   }
 
   async unroute(url: types.URLMatch, handler?: RouteHandler): Promise<void> {
-    this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
-    if (this._routes.length === 0)
-      await this._channel.setNetworkInterceptionEnabled({ enabled: false });
+    return this._wrapApiCall('page.unroute', async () => {
+      this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
+      if (this._routes.length === 0)
+        await this._channel.setNetworkInterceptionEnabled({ enabled: false });
+    });
   }
 
   async screenshot(options: types.ScreenshotOptions = {}): Promise<Buffer> {
@@ -395,9 +415,11 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async close(options: { runBeforeUnload?: boolean } = {runBeforeUnload: undefined}) {
-    await this._channel.close(options);
-    if (this._ownedContext)
-      await this._ownedContext.close();
+    return this._wrapApiCall('page.close', async () => {
+      await this._channel.close(options);
+      if (this._ownedContext)
+        await this._ownedContext.close();
+    });
   }
 
   isClosed(): boolean {

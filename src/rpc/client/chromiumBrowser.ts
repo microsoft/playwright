@@ -20,14 +20,20 @@ import { Browser } from './browser';
 
 export class ChromiumBrowser extends Browser {
   async newBrowserCDPSession(): Promise<CDPSession> {
-    return CDPSession.from((await this._channel.crNewBrowserCDPSession()).session);
+    return this._wrapApiCall('chromiumBrowser.newBrowserCDPSession', async () => {
+      return CDPSession.from((await this._channel.crNewBrowserCDPSession()).session);
+    });
   }
 
   async startTracing(page?: Page, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
-    await this._channel.crStartTracing({ ...options, page: page ? page._channel : undefined });
+    return this._wrapApiCall('chromiumBrowser.startTracing', async () => {
+      await this._channel.crStartTracing({ ...options, page: page ? page._channel : undefined });
+    });
   }
 
   async stopTracing(): Promise<Buffer> {
-    return Buffer.from((await this._channel.crStopTracing()).binary, 'base64');
+    return this._wrapApiCall('chromiumBrowser.stopTracing', async () => {
+      return Buffer.from((await this._channel.crStopTracing()).binary, 'base64');
+    });
   }
 }

@@ -38,11 +38,15 @@ export class BrowserServer extends ChannelOwner<BrowserServerChannel, BrowserSer
   }
 
   async kill(): Promise<void> {
-    await this._channel.kill();
+    return this._wrapApiCall('browserServer.kill', async () => {
+      await this._channel.kill();
+    });
   }
 
   async close(): Promise<void> {
-    await this._channel.close();
+    return this._wrapApiCall('browserServer.close', async () => {
+      await this._channel.close();
+    });
   }
 
   _checkLeaks() {}
