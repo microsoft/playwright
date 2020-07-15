@@ -1811,7 +1811,7 @@ index ea8b9b08f3e6f6e99b8a4fa3fa427beb8c5f5945..a7ec2bd3afe53d500f0cd8f800223ee2
  
  /**
 diff --git a/widget/headless/HeadlessCompositorWidget.cpp b/widget/headless/HeadlessCompositorWidget.cpp
-index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..41f483959bd80aa9cc6ad9eac068503639b33887 100644
+index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..5f4080dacc1376cda7ec75ed0ed2823cd01d6001 100644
 --- a/widget/headless/HeadlessCompositorWidget.cpp
 +++ b/widget/headless/HeadlessCompositorWidget.cpp
 @@ -3,6 +3,7 @@
@@ -1822,7 +1822,7 @@ index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..41f483959bd80aa9cc6ad9eac0685036
  #include "mozilla/widget/PlatformWidgetTypes.h"
  #include "HeadlessCompositorWidget.h"
  #include "VsyncDispatcher.h"
-@@ -17,6 +18,54 @@ HeadlessCompositorWidget::HeadlessCompositorWidget(
+@@ -17,6 +18,32 @@ HeadlessCompositorWidget::HeadlessCompositorWidget(
    mClientSize = aInitData.InitialClientSize();
  }
  
@@ -1839,6 +1839,7 @@ index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..41f483959bd80aa9cc6ad9eac0685036
 +  MOZ_ASSERT(NS_IsInCompositorThread());
 +  mSnapshotListener = std::move(listener);
 +  UpdateDrawTarget();
++  PeriodicSnapshot();
 +}
 +
 +already_AddRefed<gfx::DrawTarget> HeadlessCompositorWidget::StartRemoteDrawingInRegion(
@@ -1851,33 +1852,10 @@ index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..41f483959bd80aa9cc6ad9eac0685036
 +  return result.forget();
 +}
 +
-+void HeadlessCompositorWidget::EndRemoteDrawingInRegion(
-+    gfx::DrawTarget* aDrawTarget, const LayoutDeviceIntRegion& aInvalidRegion) {
-+  if (!mDrawTarget)
-+    return;
-+
-+  if (!mSnapshotListener)
-+    return;
-+
-+  RefPtr<gfx::SourceSurface> snapshot = mDrawTarget->Snapshot();
-+  if (!snapshot) {
-+    fprintf(stderr, "Failed to get snapshot of draw target\n");
-+    return;
-+  }
-+
-+  RefPtr<gfx::DataSourceSurface> dataSurface = snapshot->GetDataSurface();
-+  if (!dataSurface) {
-+    fprintf(stderr, "Failed to get data surface from snapshot\n");
-+    return;
-+  }
-+
-+  mSnapshotListener(std::move(dataSurface));
-+}
-+
  void HeadlessCompositorWidget::ObserveVsync(VsyncObserver* aObserver) {
    if (RefPtr<CompositorVsyncDispatcher> cvd =
            mWidget->GetCompositorVsyncDispatcher()) {
-@@ -29,6 +78,25 @@ nsIWidget* HeadlessCompositorWidget::RealWidget() { return mWidget; }
+@@ -29,6 +56,51 @@ nsIWidget* HeadlessCompositorWidget::RealWidget() { return mWidget; }
  void HeadlessCompositorWidget::NotifyClientSizeChanged(
      const LayoutDeviceIntSize& aClientSize) {
    mClientSize = aClientSize;
@@ -1900,14 +1878,40 @@ index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..41f483959bd80aa9cc6ad9eac0685036
 +  // TODO: this is called on Main thread, while Start/End drawing are on Compositor thread.
 +  mDrawTarget = mozilla::gfx::Factory::CreateDrawTarget(
 +      mozilla::gfx::BackendType::SKIA, size, format);
++}
++
++void HeadlessCompositorWidget::PeriodicSnapshot() {
++  if (!mDrawTarget)
++    return;
++
++  if (!mSnapshotListener)
++    return;
++
++  RefPtr<gfx::SourceSurface> snapshot = mDrawTarget->Snapshot();
++  if (!snapshot) {
++    fprintf(stderr, "Failed to get snapshot of draw target\n");
++    return;
++  }
++
++  RefPtr<gfx::DataSourceSurface> dataSurface = snapshot->GetDataSurface();
++  if (!dataSurface) {
++    fprintf(stderr, "Failed to get data surface from snapshot\n");
++    return;
++  }
++
++  mSnapshotListener(std::move(dataSurface));
++
++  NS_DelayedDispatchToCurrentThread(NewRunnableMethod(
++      "HeadlessCompositorWidget::PeriodicSnapshot", this,
++      &HeadlessCompositorWidget::PeriodicSnapshot), 40);
  }
  
  LayoutDeviceIntSize HeadlessCompositorWidget::GetClientSize() {
 diff --git a/widget/headless/HeadlessCompositorWidget.h b/widget/headless/HeadlessCompositorWidget.h
-index 7f91de9e67d7ffa02de3eef1d760e5cfd05e7ad6..849cd6f98982fbabc8e483c8bb8f7935225869fc 100644
+index 7f91de9e67d7ffa02de3eef1d760e5cfd05e7ad6..e6d542ac3945a1845d604e1c24bf7505fcc40e13 100644
 --- a/widget/headless/HeadlessCompositorWidget.h
 +++ b/widget/headless/HeadlessCompositorWidget.h
-@@ -23,9 +23,16 @@ class HeadlessCompositorWidget final : public CompositorWidget,
+@@ -23,9 +23,13 @@ class HeadlessCompositorWidget final : public CompositorWidget,
                             HeadlessWidget* aWindow);
  
    void NotifyClientSizeChanged(const LayoutDeviceIntSize& aClientSize);
@@ -1917,19 +1921,17 @@ index 7f91de9e67d7ffa02de3eef1d760e5cfd05e7ad6..849cd6f98982fbabc8e483c8bb8f7935
  
 +  already_AddRefed<gfx::DrawTarget> StartRemoteDrawingInRegion(
 +      LayoutDeviceIntRegion& aInvalidRegion, layers::BufferMode* aBufferMode) override;
-+  void EndRemoteDrawingInRegion(
-+      gfx::DrawTarget* aDrawTarget,
-+      const LayoutDeviceIntRegion& aInvalidRegion) override;
 +
    uintptr_t GetWidgetKey() override;
  
    LayoutDeviceIntSize GetClientSize() override;
-@@ -42,9 +49,15 @@ class HeadlessCompositorWidget final : public CompositorWidget,
+@@ -42,9 +46,16 @@ class HeadlessCompositorWidget final : public CompositorWidget,
    }
  
   private:
 +  void SetSnapshotListenerOnCompositorThread(HeadlessWidget::SnapshotListener&& listener);
 +  void UpdateDrawTarget();
++  void PeriodicSnapshot();
 +
    HeadlessWidget* mWidget;
  
@@ -1941,10 +1943,19 @@ index 7f91de9e67d7ffa02de3eef1d760e5cfd05e7ad6..849cd6f98982fbabc8e483c8bb8f7935
  
  }  // namespace widget
 diff --git a/widget/headless/HeadlessWidget.cpp b/widget/headless/HeadlessWidget.cpp
-index 7589d8a1a886dab5431e423d20f7d0aa19c2af75..19dd67a330848b6b39bfc578a6940385329fff8e 100644
+index 7589d8a1a886dab5431e423d20f7d0aa19c2af75..b14925a7b6972c120a59f70fbbe70a1145a5cb4e 100644
 --- a/widget/headless/HeadlessWidget.cpp
 +++ b/widget/headless/HeadlessWidget.cpp
-@@ -499,5 +499,13 @@ nsresult HeadlessWidget::SynthesizeNativeTouchPoint(
+@@ -104,6 +104,8 @@ void HeadlessWidget::Destroy() {
+     }
+   }
+ 
++  SetSnapshotListener(nullptr);
++
+   nsBaseWidget::OnDestroy();
+ 
+   nsBaseWidget::Destroy();
+@@ -499,5 +501,13 @@ nsresult HeadlessWidget::SynthesizeNativeTouchPoint(
    return NS_OK;
  }
  
