@@ -153,7 +153,7 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run wtest -- --line-break=100 2>./headful-linux-testrun.log"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run wtest -- --line-break=100 --verbose 2>./headful-linux-testrun.log"
       env:
         DEBUG: "*"
         HEADLESS: "false"
