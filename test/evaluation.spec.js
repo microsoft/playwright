@@ -611,7 +611,7 @@ describe('Frame.evaluate', function() {
     const childResult = await childFrame.evaluate(() => window.__foo);
     expect(childResult).toEqual({ bar: 'baz' });
     const error = await childFrame.evaluate(foo => foo.bar, handle).catch(e => e);
-    expect(error.message).toBe('JSHandles can be evaluated only in the context they were created!');
+    expect(error.message).toContain('JSHandles can be evaluated only in the context they were created!');
   });
   it('should allow cross-frame element handles', async({page, server}) => {
     await page.goto(server.PREFIX + '/frames/one-frame.html');

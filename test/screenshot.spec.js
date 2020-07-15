@@ -379,7 +379,7 @@ describe.skip(ffheadful)('ElementHandle.screenshot', function() {
     await page.setContent('<div style="width: 50px; height: 0"></div>');
     const div = await page.$('div');
     const error = await div.screenshot({ timeout: 3000 }).catch(e => e);
-    expect(error.message).toContain('Timeout 3000ms exceeded during elementHandle.screenshot');
+    expect(error.message).toContain('elementHandle.screenshot: Timeout 3000ms exceeded');
     expect(error.message).toContain('element is not visible');
   });
   it('should wait for visible', async({page, server, golden}) => {
@@ -490,7 +490,7 @@ describe.skip(ffheadful)('ElementHandle.screenshot', function() {
     await page.goto(server.PREFIX + '/grid.html');
     const __testHookAfterScreenshot = () => new Promise(f => setTimeout(f, 5000));
     const error = await page.screenshot({ fullPage: true, __testHookAfterScreenshot, timeout: 3000 }).catch(e => e);
-    expect(error.message).toContain('Timeout 3000ms exceeded during page.screenshot');
+    expect(error.message).toContain('page.screenshot: Timeout 3000ms exceeded');
     await utils.verifyViewport(page, 350, 360);
     await page.setViewportSize({ width: 400, height: 400 });
     await page.waitForTimeout(3000); // Give it some time to wrongly restore previous viewport.

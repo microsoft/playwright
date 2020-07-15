@@ -69,12 +69,12 @@ describe('Frame.waitForFunction', function() {
     const savedCounter = counter;
     await page.waitForTimeout(2000); // Give it some time to produce more logs.
 
-    expect(error.message).toContain('Timeout 1000ms exceeded during page.waitForFunction');
+    expect(error.message).toContain('page.waitForFunction: Timeout 1000ms exceeded');
     expect(counter).toBe(savedCounter);
   });
   it('should throw on polling:mutation', async({page, server}) => {
     const error = await page.waitForFunction(() => true, {}, {polling: 'mutation'}).catch(e => e);
-    expect(error.message).toBe('Unknown polling option: mutation');
+    expect(error.message).toContain('Unknown polling option: mutation');
   });
   it('should poll on raf', async({page, server}) => {
     const watchdog = page.waitForFunction(() => window.__FOO === 'hit', {}, {polling: 'raf'});
@@ -147,7 +147,7 @@ describe('Frame.waitForFunction', function() {
     let error = null;
     await page.waitForFunction('false', {}, {timeout: 10}).catch(e => error = e);
     expect(error).toBeTruthy();
-    expect(error.message).toContain('Timeout 10ms exceeded during page.waitForFunction');
+    expect(error.message).toContain('page.waitForFunction: Timeout 10ms exceeded');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
   it('should respect default timeout', async({page}) => {
@@ -155,7 +155,7 @@ describe('Frame.waitForFunction', function() {
     let error = null;
     await page.waitForFunction('false').catch(e => error = e);
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
-    expect(error.message).toContain('Timeout 1ms exceeded during page.waitForFunction');
+    expect(error.message).toContain('page.waitForFunction: Timeout 1ms exceeded');
   });
   it('should disable timeout when its set to 0', async({page}) => {
     const watchdog = page.waitForFunction(() => {
@@ -203,7 +203,7 @@ describe('Frame.waitForSelector', function() {
     await page.goto(server.EMPTY_PAGE);
     let error;
     await page.waitForSelector('*', { waitFor: 'attached' }).catch(e => error = e);
-    expect(error.message).toBe('options.waitFor is not supported, did you mean options.state?');
+    expect(error.message).toContain('options.waitFor is not supported, did you mean options.state?');
   });
   it('should tolerate waitFor=visible', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
@@ -262,7 +262,7 @@ describe('Frame.waitForSelector', function() {
     await giveItTimeToLog(frame);
 
     const error = await watchdog.catch(e => e);
-    expect(error.message).toContain(`Timeout 5000ms exceeded during frame.waitForSelector.`);
+    expect(error.message).toContain(`frame.waitForSelector: Timeout 5000ms exceeded.`);
     expect(error.message).toContain(`waiting for selector "div" to be visible`);
     expect(error.message).toContain(`selector resolved to hidden <div id="mydiv" class="foo bar" foo="1234567890123456…>abcdefghijklmnopqrstuvwyxzabcdefghijklmnopqrstuvw…</div>`);
     expect(error.message).toContain(`selector did not resolve to any element`);
@@ -292,7 +292,7 @@ describe('Frame.waitForSelector', function() {
     await giveItTimeToLog(frame);
 
     const error = await watchdog.catch(e => e);
-    expect(error.message).toContain(`Timeout 5000ms exceeded during frame.waitForSelector.`);
+    expect(error.message).toContain(`frame.waitForSelector: Timeout 5000ms exceeded.`);
     expect(error.message).toContain(`waiting for selector "div" to be hidden`);
     expect(error.message).toContain(`selector resolved to visible <div id="mydiv" class="foo bar">hello</div>`);
     expect(error.message).toContain(`selector resolved to visible <div class="another">hello</div>`);
@@ -377,10 +377,10 @@ describe('Frame.waitForSelector', function() {
   it('should not consider visible when zero-sized', async({page, server}) => {
     await page.setContent(`<div style='width: 0; height: 0;'>1</div>`);
     let error = await page.waitForSelector('div', { timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain('Timeout 1000ms exceeded during page.waitForSelector');
+    expect(error.message).toContain('page.waitForSelector: Timeout 1000ms exceeded');
     await page.evaluate(() => document.querySelector('div').style.width = '10px');
     error = await page.waitForSelector('div', { timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain('Timeout 1000ms exceeded during page.waitForSelector');
+    expect(error.message).toContain('page.waitForSelector: Timeout 1000ms exceeded');
     await page.evaluate(() => document.querySelector('div').style.height = '10px');
     expect(await page.waitForSelector('div', { timeout: 1000 })).toBeTruthy();
   });
@@ -433,7 +433,7 @@ describe('Frame.waitForSelector', function() {
     let error = null;
     await page.waitForSelector('div', { timeout: 3000, state: 'attached' }).catch(e => error = e);
     expect(error).toBeTruthy();
-    expect(error.message).toContain('Timeout 3000ms exceeded during page.waitForSelector');
+    expect(error.message).toContain('page.waitForSelector: Timeout 3000ms exceeded');
     expect(error.message).toContain('waiting for selector "div"');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
@@ -442,7 +442,7 @@ describe('Frame.waitForSelector', function() {
     let error = null;
     await page.waitForSelector('div', { state: 'hidden', timeout: 1000 }).catch(e => error = e);
     expect(error).toBeTruthy();
-    expect(error.message).toContain('Timeout 1000ms exceeded during page.waitForSelector');
+    expect(error.message).toContain('page.waitForSelector: Timeout 1000ms exceeded');
     expect(error.message).toContain('waiting for selector "div" to be hidden');
   });
   it('should respond to node attribute mutation', async({page, server}) => {
@@ -471,7 +471,7 @@ describe('Frame.waitForSelector', function() {
   it('should throw for visibility option', async({page, server}) => {
     await page.setContent('<section>test</section>');
     const error = await page.waitForSelector('section', { visibility: 'hidden' }).catch(e => e);
-    expect(error.message).toBe('options.visibility is not supported, did you mean options.state?');
+    expect(error.message).toContain('options.visibility is not supported, did you mean options.state?');
   });
   it('should throw for true state option', async({page, server}) => {
     await page.setContent('<section>test</section>');
@@ -523,7 +523,7 @@ describe('Frame.waitForSelector xpath', function() {
     let error = null;
     await page.waitForSelector('//div', { state: 'attached', timeout: 3000 }).catch(e => error = e);
     expect(error).toBeTruthy();
-    expect(error.message).toContain('Timeout 3000ms exceeded during page.waitForSelector');
+    expect(error.message).toContain('page.waitForSelector: Timeout 3000ms exceeded');
     expect(error.message).toContain('waiting for selector "//div"');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });

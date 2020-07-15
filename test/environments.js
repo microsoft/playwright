@@ -25,6 +25,7 @@ const { DispatcherConnection } = require('../lib/rpc/server/dispatcher');
 const { Connection } = require('../lib/rpc/client/connection');
 const { Transport } = require('../lib/rpc/transport');
 const { PlaywrightDispatcher } = require('../lib/rpc/server/playwrightDispatcher');
+const { setUseApiName } = require('../lib/progress');
 
 class ServerEnvironment {
   async beforeAll(state) {
@@ -167,6 +168,7 @@ class PlaywrightEnvironment {
 
   async beforeAll(state) {
     if (process.env.PWCHANNEL) {
+      setUseApiName(false);
       const connection = new Connection();
       if (process.env.PWCHANNEL === 'wire') {
         this.spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'rpc', 'server'), [], {

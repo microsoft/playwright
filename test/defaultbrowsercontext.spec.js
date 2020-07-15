@@ -356,7 +356,7 @@ describe('launchPersistentContext()', function() {
     const userDataDir = await makeUserDataDir();
     const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
     const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
-    expect(error.message).toContain(`Timeout 5000ms exceeded during browserType.launchPersistentContext.`);
+    expect(error.message).toContain(`browserType.launchPersistentContext: Timeout 5000ms exceeded.`);
     await removeUserDataDir(userDataDir);
   });
   it.skip(USES_HOOKS)('should handle exception', async({browserType, defaultBrowserOptions}) => {
