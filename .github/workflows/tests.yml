@@ -41,10 +41,10 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "*,-pw:wrapped*"
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest 2>>./testrun.log"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
+      if: ${{ always() }}
       env:
         BROWSER: ${{ matrix.browser }}
-        DEBUG: "*,-pw:wrapped*"
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -80,10 +80,10 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "*,-pw:wrapped*"
-    - run: npm run jest 2>>./${{ matrix.browser }}-mac-testrun.log
+    - run: npm run jest -- --testTimeout=30000
+      if: ${{ always() }}
       env:
         BROWSER: ${{ matrix.browser }}
-        DEBUG: "*,-pw:wrapped*"
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -115,11 +115,11 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "*,-pw:wrapped*"
-    - run: npm run jest 2>>./${{ matrix.browser }}-win-testrun.log
+    - run: npm run jest -- --testTimeout=30000
+      if: ${{ always() }}
       shell: bash
       env:
         BROWSER: ${{ matrix.browser }}
-        DEBUG: "*,-pw:wrapped*"
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -170,6 +170,21 @@ jobs:
       env:
         DEBUG: "*"
         HEADLESS: "false"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
+      if: ${{ always() }}
+      env:
+        BROWSER: "chromium"
+        HEADLESS: "false"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
+      if: ${{ always() }}
+      env:
+        BROWSER: "firefox"
+        HEADLESS: "false"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
+      if: ${{ always() }}
+      env:
+        BROWSER: "webkit"
+        HEADLESS: "false"
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -207,6 +222,11 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "*,-pw:wrapped*"
+        PWCHANNEL: ${{ matrix.transport }}
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
+      if: ${{ always() }}
+      env:
+        BROWSER: ${{ matrix.browser }}
         PWCHANNEL: ${{ matrix.transport }}
     - uses: actions/upload-artifact@v1
       if: failure()

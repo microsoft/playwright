@@ -1,0 +1,132 @@
+/**
+ * Copyright Microsoft Corporation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+const path = require('path');
+const childProcess = require('child_process');
+
+const playwright = require('../../index');
+const { TestServer } = require('../../utils/testserver/');
+const { DispatcherConnection } = require('../../lib/rpc/server/dispatcher');
+const { Connection } = require('../../lib/rpc/client/connection');
+const { Transport } = require('../../lib/rpc/transport');
+const { PlaywrightDispatcher } = require('../../lib/rpc/server/playwrightDispatcher');
+const { setUseApiName } = require('../../lib/progress');
+
+module.exports = function registerFixtures(global) {
+
+  global.registerWorkerFixture('server', async ({}, test) => {
+    const assetsPath = path.join(__dirname, '..', 'assets');
+    const cachedPath = path.join(__dirname, '..', 'assets', 'cached');
+
+    const port = 8907 + (process.env.JEST_WORKER_ID - 1) * 2;
+    const server = await TestServer.create(assetsPath, port);
+    server.enableHTTPCache(cachedPath);
+    server.PORT = port;
+    server.PREFIX = `http://localhost:${port}`;
+    server.CROSS_PROCESS_PREFIX = `http://127.0.0.1:${port}`;
+    server.EMPTY_PAGE = `http://localhost:${port}/empty.html`;
+  
+    const httpsPort = port + 1;
+    httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
+    httpsServer.enableHTTPCache(cachedPath);
+    httpsServer.PORT = httpsPort;
+    httpsServer.PREFIX = `https://localhost:${httpsPort}`;
+    httpsServer.CROSS_PROCESS_PREFIX = `https://127.0.0.1:${httpsPort}`;
+    httpsServer.EMPTY_PAGE = `https://localhost:${httpsPort}/empty.html`;
+  
+    await test(server);
+
+    await Promise.all([
+      server.stop(),
+      httpsServer.stop(),
+    ]);  
+  });
+
+  global.registerWorkerFixture('playwright', async({}, test) => {
+    if (process.env.PWCHANNEL) {
+      setUseApiName(false);
+      const connection = new Connection();
+      let toImpl;
+      let spawnedProcess;
+      let expectExit;
+      if (process.env.PWCHANNEL === 'wire') {
+        spawnedProcess = childProcess.fork(path.join(__dirname, '..', '..', 'lib', 'rpc', 'server'), [], {
+          stdio: 'pipe',
+          detached: process.platform !== 'win32',
+        });
+        spawnedProcess.once('exit', (exitCode, signal) => {
+          spawnedProcess = undefined;
+          if (!expectExit)
+            throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
+        });
+        const transport = new Transport(spawnedProcess.stdin, spawnedProcess.stdout);
+        connection.onmessage = message => transport.send(JSON.stringify(message));
+        transport.onmessage = message => connection.dispatch(JSON.parse(message));
+      } else {
+        const dispatcherConnection = new DispatcherConnection();
+        dispatcherConnection.onmessage = async message => {
+          setImmediate(() => connection.dispatch(message));
+        };
+        connection.onmessage = async message => {
+          const result = await dispatcherConnection.dispatch(message);
+          await new Promise(f => setImmediate(f));
+          return result;
+        };
+        new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
+        toImpl = x => dispatcherConnection._dispatchers.get(x._guid)._object;
+      }
+
+      const playwrightObject = await connection.waitForObjectWithKnownName('playwright');
+      playwrightObject.toImpl = toImpl;
+      await test(playwrightObject);
+
+      if (spawnedProcess) {
+        const exited = new Promise(f => spawnedProcess.once('exit', f));
+        expectExit = true;
+        spawnedProcess.kill();
+        await exited;
+      }
+      return;
+    }
+    playwright.toImpl = x => x;
+    await test(playwright);
+  });
+
+  global.registerFixture('toImpl', async ({playwright}, test) => {
+    await test(playwright.toImpl);
+  });
+
+  global.registerWorkerFixture('browserType', async ({playwright}, test) => {
+    await test(playwright[process.env.BROWSER || 'chromium']);
+  });
+  
+  global.registerWorkerFixture('browser', async ({browserType}, test) => {
+    const browser = await browserType.launch({ headless: !!global.HEADLESS });
+    await test(browser);
+    await browser.close();
+  });
+  
+  global.registerFixture('context', async ({browser}, test) => {
+    const context = await browser.newContext();
+    await test(context);
+    await context.close();
+  });
+  
+  global.registerFixture('page', async ({context}, test) => {
+    const page = await context.newPage();
+    await test(page);
+  });
+}

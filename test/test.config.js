@@ -81,7 +81,6 @@ module.exports = {
         './download.spec.js',
         './elementhandle.spec.js',
         './emulation.spec.js',
-        './evaluation.spec.js',
         './frame.spec.js',
         './focus.spec.js',
         './input.spec.js',

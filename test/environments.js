@@ -180,7 +180,6 @@ class PlaywrightEnvironment {
           if (!this.expectExit)
             throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
         });
-        process.on('exit', () => this._killProcess());
         const transport = new Transport(this.spawnedProcess.stdin, this.spawnedProcess.stdout);
         connection.onmessage = message => transport.send(JSON.stringify(message));
         transport.onmessage = message => connection.dispatch(JSON.parse(message));
@@ -212,20 +211,6 @@ class PlaywrightEnvironment {
       await exited;
     }
     delete state.playwright;
-  }
-
-  _killProcess() {
-    if (this.spawnedProcess && this.spawnedProcess.pid) {
-      this.expectExit = true;
-      try {
-        if (process.platform === 'win32')
-          childProcess.execSync(`taskkill /pid ${this.spawnedProcess.pid} /T /F`);
-        else
-          process.kill(-this.spawnedProcess.pid, 'SIGKILL');
-      } catch (e) {
-        // the process might have already stopped
-      }
-    }
   }
 }
 

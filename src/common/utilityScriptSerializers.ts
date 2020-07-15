@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 
+function isRegExp(obj: any): obj is RegExp {
+  return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
+}
+
+function isDate(obj: any): obj is Date {
+  return obj instanceof Date || Object.prototype.toString.call(obj) === '[object Date]';
+}
+
 export function parseEvaluationResultValue(value: any, handles: any[] = []): any {
   if (value === undefined)
     return undefined;
@@ -85,9 +93,9 @@ function serialize(value: any, jsHandleSerializer: (value: any) => { fallThrough
     }
     return `${error.name}: ${error.message}\n${error.stack}`;
   }
-  if (value instanceof Date)
+  if (isDate(value))
     return { d: value.toJSON() };
-  if (value instanceof RegExp)
+  if (isRegExp(value))
     return { r: [ value.source, value.flags ] };
 
   if (Array.isArray(value)) {
