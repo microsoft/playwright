@@ -4299,9 +4299,11 @@ const v8toIstanbul = require('v8-to-istanbul');
 #### chromiumCoverage.stopJSCoverage()
 - returns: <[Promise]<[Array]<[Object]>>> Promise that resolves to the array of coverage reports for all scripts
   - `url` <[string]> Script URL
+  - `scriptId` <[string]> Script ID
   - `source` <[string]> Script content, if applicable.
   - `functions` <[Array]<[Object]>> V8-specific coverage format.
     - `functionName` <[string]>
+    - `isBlockCoverage` <[boolean]>
     - `ranges` <[Array]<[Object]>>
       - `count` <[number]>
       - `startOffset` <[number]>
