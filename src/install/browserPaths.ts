@@ -40,6 +40,20 @@ export const hostPlatform = ((): BrowserPlatform => {
   return platform as BrowserPlatform;
 })();
 
+export function linuxLddDirectories(browserPath: string, browser: BrowserDescriptor): string[] {
+  if (browser.name === 'chromium')
+    return [path.join(browserPath, 'chrome-linux')];
+  if (browser.name === 'firefox')
+    return [path.join(browserPath, 'firefox')];
+  if (browser.name === 'webkit') {
+    return [
+      path.join(browserPath, 'linux', 'minibrowser-gtk'),
+      path.join(browserPath, 'linux', 'minibrowser-wpe'),
+    ];
+  }
+  return [];
+}
+
 export function executablePath(browserPath: string, browser: BrowserDescriptor): string | undefined {
   let tokens: string[] | undefined;
   if (browser.name === 'chromium') {
