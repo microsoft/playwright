@@ -20,7 +20,7 @@ const util = require('util');
 const vm = require('vm');
 const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = require('./utils').testOptions(browserType);
 
-describe('Page.close', function() {
+xdescribe('Page.close', function() {
   it('should reject all promises when page is closed', async({context}) => {
     const newPage = await context.newPage();
     let error = null;
