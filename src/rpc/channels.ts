@@ -95,7 +95,7 @@ export interface BrowserContextChannel extends Channel {
   newPage(): Promise<{ page: PageChannel }>;
   setDefaultNavigationTimeoutNoReply(params: { timeout: number }): void;
   setDefaultTimeoutNoReply(params: { timeout: number }): void;
-  setExtraHTTPHeaders(params: { headers: types.Headers }): Promise<void>;
+  setExtraHTTPHeaders(params: { headers: types.HeadersArray }): Promise<void>;
   setGeolocation(params: { geolocation: types.Geolocation | null }): Promise<void>;
   setHTTPCredentials(params: { httpCredentials: types.Credentials | null }): Promise<void>;
   setNetworkInterceptionEnabled(params: { enabled: boolean }): Promise<void>;
@@ -143,7 +143,7 @@ export interface PageChannel extends Channel {
   opener(): Promise<{ page: PageChannel | null }>;
   reload(params: types.NavigateOptions): Promise<{ response: ResponseChannel | null }>;
   screenshot(params: types.ScreenshotOptions): Promise<{ binary: Binary }>;
-  setExtraHTTPHeaders(params: { headers: types.Headers }): Promise<void>;
+  setExtraHTTPHeaders(params: { headers: types.HeadersArray }): Promise<void>;
   setNetworkInterceptionEnabled(params: { enabled: boolean }): Promise<void>;
   setViewportSize(params: { viewportSize: types.Size }): Promise<void>;
 
@@ -282,7 +282,7 @@ export type RequestInitializer = {
   resourceType: string,
   method: string,
   postData: string | null,
-  headers: types.Headers,
+  headers: types.HeadersArray,
   isNavigationRequest: boolean,
   redirectedFrom: RequestChannel | null,
 };
@@ -290,13 +290,8 @@ export type RequestInitializer = {
 
 export interface RouteChannel extends Channel {
   abort(params: { errorCode: string }): Promise<void>;
-  continue(params: { method?: string, headers?: types.Headers, postData?: string }): Promise<void>;
-  fulfill(params: {
-    status?: number,
-    headers?: types.Headers,
-    body: string,
-    isBase64: boolean,
-  }): Promise<void>;
+  continue(params: types.NormalizedContinueOverrides): Promise<void>;
+  fulfill(params: types.NormalizedFulfillResponse): Promise<void>;
 }
 export type RouteInitializer = {
   request: RequestChannel,
@@ -312,7 +307,7 @@ export type ResponseInitializer = {
   url: string,
   status: number,
   statusText: string,
-  headers: types.Headers,
+  headers: types.HeadersArray,
 };
 
 

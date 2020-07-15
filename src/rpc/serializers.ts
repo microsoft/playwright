@@ -20,7 +20,7 @@ import * as path from 'path';
 import * as util from 'util';
 import { TimeoutError } from '../errors';
 import * as types from '../types';
-import { helper } from '../helper';
+import { helper, assert } from '../helper';
 
 
 export function serializeError(e: any): types.Error {
@@ -82,7 +82,7 @@ export async function normalizeFulfillParameters(params: types.FulfillResponse &
     isBase64 = true;
     length = params.body.length;
   }
-  const headers: { [s: string]: string; } = {};
+  const headers: types.Headers = {};
   for (const header of Object.keys(params.headers || {}))
     headers[header.toLowerCase()] = String(params.headers![header]);
   if (params.contentType)
@@ -94,8 +94,35 @@ export async function normalizeFulfillParameters(params: types.FulfillResponse &
 
   return {
     status: params.status || 200,
-    headers,
+    headers: headersObjectToArray(headers),
     body,
     isBase64
   };
+}
+
+export function normalizeContinueOverrides(overrides: types.ContinueOverrides): types.NormalizedContinueOverrides {
+  return {
+    method: overrides.method,
+    headers: overrides.headers ? headersObjectToArray(overrides.headers) : undefined,
+    postData: overrides.postData,
+  };
+}
+
+export function headersObjectToArray(headers: types.Headers): types.HeadersArray {
+  const result: types.HeadersArray = [];
+  for (const name in headers) {
+    if (!Object.is(headers[name], undefined)) {
+      const value = headers[name];
+      assert(helper.isString(value), `Expected value of header "${name}" to be String, but "${typeof value}" is found.`);
+      result.push({ name, value });
+    }
+  }
+  return result;
+}
+
+export function headersArrayToObject(headers: types.HeadersArray): types.Headers {
+  const result: types.Headers = {};
+  for (const { name, value } of headers)
+    result[name] = value;
+  return result;
 }

@@ -27,6 +27,7 @@ import { Events } from '../../events';
 import { TimeoutSettings } from '../../timeoutSettings';
 import { Waiter } from './waiter';
 import { TimeoutError } from '../../errors';
+import { headersObjectToArray } from '../serializers';
 
 export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserContextInitializer> {
   _pages = new Set<Page>();
@@ -131,7 +132,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   }
 
   async setExtraHTTPHeaders(headers: types.Headers): Promise<void> {
-    await this._channel.setExtraHTTPHeaders({ headers });
+    await this._channel.setExtraHTTPHeaders({ headers: headersObjectToArray(headers) });
   }
 
   async setOffline(offline: boolean): Promise<void> {
