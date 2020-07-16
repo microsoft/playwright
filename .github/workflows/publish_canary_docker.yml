@@ -7,6 +7,7 @@ on:
       - release-*
     paths:
       - docs/docker/**
+      - browsers.json
 
 jobs:
   publish-canary-docker:
@@ -14,6 +15,12 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10.15
+    - run: npm ci
+    - run: npm run build
+    - run: ./docs/docker/build.sh --prepare-context
     - uses: docker/build-push-action@v1
       with:
         username: playwright

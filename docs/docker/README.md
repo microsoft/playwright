@@ -2,7 +2,7 @@
 
 [Dockerfile.bionic](Dockerfile.bionic) is a playwright-ready image of playwright.
 This image includes all the dependencies needed to run browsers in a Docker
-container.
+container, including browsers.
 
 <!-- GEN:toc -->
 - [Usage](#usage)
@@ -47,17 +47,29 @@ See our [Continuous Integration guides](../ci.md) for sample configs.
 
 ### Build the image
 
+Use [`//docs/docker/build.sh`](build.sh) to build the image.
+
 ```
-$ docker build -t mcr.microsoft.com/playwright:bionic -f Dockerfile.bionic .
+$ ./docs/docker/build.sh
 ```
+
+The image will be tagged as `playwright:localbuild` and could be run as:
+
+```
+$ docker run --rm -it playwright:localbuild /bin/bash
+```
+
+> **NOTE**: any commit that changes docker image should also update [`//docs/docker/CURRENT_DOCKER_IMAGE_SIZE`](CURRENT_DOCKER_IMAGE_SIZE). Please run [`//docs/docker/docker-image-size.sh`](docker-image-size.sh) locally and commit updated number.
 
 ### Push
 
-Playwright on Docker Hub is published via the [Microsoft Container Registry](https://github.com/microsoft/containerregistry).
+Docker images are published automatically by Github Actions. We currently publish the following
+images:
+- `mcr.microsoft.com/playwright:dev` - tip-of-tree image version.
+- `mcr.microsoft.com/playwright:bionic` - last Playwright release docker image.
+- `mcr.microsoft.com/playwright:sha-XXXXXXX` - docker image for every commit that changed
+  docker files or browsers, marked with a [short sha](https://git-scm.com/book/en/v2/Git-Tools-Revision-Selection#Short-SHA-1) (first 7 digits of the SHA commit).
 
-```
-$ docker push playwright.azurecr.io/public/playwright:bionic
-```
 
 ## Base images
 
