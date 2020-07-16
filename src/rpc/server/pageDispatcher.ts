@@ -268,7 +268,7 @@ export class BindingCallDispatcher extends Dispatcher<{}, BindingCallInitializer
   }
 
   resolve(params: { result: any }) {
-    this._resolve!(params.result);
+    this._resolve!(parseArgument(params.result));
   }
 
   reject(params: { error: types.Error }) {
