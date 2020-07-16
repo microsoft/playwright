@@ -15,38 +15,26 @@
  */
 
 const NodeEnvironment = require('jest-environment-node');
-const path = require('path');
-const playwright = require('../../index');
+const registerFixtures = require('./fixtures');
 
 class PlaywrightEnvironment extends NodeEnvironment {
   constructor(config, context) {
     super(config, context);
     this.fixturePool = new FixturePool();
+    this.global.CHROMIUM = process.env.BROWSER === 'chromium' || !process.env.BROWSER;
+    this.global.FFOX = process.env.BROWSER === 'firefox';
+    this.global.WEBKIT = process.env.BROWSER === 'webkit';
+    this.global.USES_HOOKS = process.env.PWCHANNEL === 'wire';
+    this.global.CHANNEL = !!process.env.PWCHANNEL;
+    this.global.HEADLESS = !!valueFromEnv('HEADLESS', true);
 
     this.global.registerFixture = (name, fn) => {
       this.fixturePool.registerFixture(name, 'test', fn);
     };
-
     this.global.registerWorkerFixture = (name, fn) => {
       this.fixturePool.registerFixture(name, 'worker', fn);
     };
-
-    this.global.registerWorkerFixture('browser', async (test) => {
-      const browser = await playwright[process.env.BROWSER || 'chromium'].launch();
-      await test(browser);
-      await browser.close();
-    });
-
-    this.global.registerFixture('context', async (browser, test) => {
-      const context = await browser.newContext();
-      await test(context);
-      await context.close();
-    });
-
-    this.global.registerFixture('page', async (context, test) => {
-      const page = await context.newPage();
-      await test(page);
-    });
+    registerFixtures(this.global);
   }
 
   async setup() {
@@ -93,16 +81,20 @@ class Fixture {
       this.pool.instances.get(name).usages.add(this.name);
     }
 
-    const params = this.deps.map(n => this.pool.instances.get(n).value);
-    let setupFenceCallback;
-    const setupFence = new Promise(f => setupFenceCallback = f);
+    const params = {};
+    for (const n of this.deps)
+      params[n] = this.pool.instances.get(n).value;
+    let setupFenceFulfill;
+    let setupFenceReject;
+    const setupFence = new Promise((f, r) => { setupFenceFulfill = f; setupFenceReject = r; });
     const teardownFence = new Promise(f => this._teardownFenceCallback = f);
-    this._tearDownComplete = this.fn(...params, async value => {
+    this._tearDownComplete = this.fn(params, async value => {
       this.value = value;
-      setupFenceCallback();
+      setupFenceFulfill();
       await teardownFence;
-    });
+    }).catch(e => setupFenceReject(e));
     await setupFence;
+    this._setup = true;
   }
 
   async teardown() {
@@ -115,7 +107,8 @@ class Fixture {
         continue;
       await fixture.teardown();
     }
-    this._teardownFenceCallback();
+    if (this._setup)
+      this._teardownFenceCallback();
     await this._tearDownComplete;
     this.pool.instances.delete(this.name);
   }
@@ -136,6 +129,8 @@ class FixturePool {
     if (fixture)
       return fixture;
 
+    if (!this.registrations.has(name))
+      throw new Error('Unknown fixture: ' + name);
     const { scope, fn } = this.registrations.get(name);
     fixture = new Fixture(this, name, scope, fn);
     this.instances.set(name, fixture);
@@ -154,7 +149,10 @@ class FixturePool {
     const names = fixtureParameterNames(fn);
     for (const name of names)
       await this.setupFixture(name);
-    await fn(...names.map(n => this.instances.get(n).value));
+    const params = {};
+    for (const n of names)
+      params[n] = this.instances.get(n).value; 
+    await fn(params);
   }
 }
 
@@ -163,14 +161,15 @@ exports.default = exports.getPlaywrightEnv();
 
 function fixtureParameterNames(fn) {
   const text = fn.toString();
-  const match = text.match(/async\ (.*) =>/);
-  if (!match)
+  const match = text.match(/async\s*\(\s*{\s*([^}]*)\s*}/);
+  if (!match || !match[1].trim())
     return [];
   let signature = match[1];
-  if (signature.startsWith('(') && signature.endsWith(')'))
-    signature = signature.substring(1, signature.length - 1);
-  if (!signature.trim())
-    return [];
-  const result = signature.split(',').map(t => t.trim());
-  return result.filter(s => s !== 'test');
+  return signature.split(',').map(t => t.trim());
+}
+
+function valueFromEnv(name, defaultValue) {
+  if (!(name in process.env))
+    return defaultValue;
+  return JSON.parse(process.env[name]);
 }

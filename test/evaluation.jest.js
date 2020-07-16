@@ -17,7 +17,6 @@
 
 const utils = require('./utils');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS, CHANNEL} = utils.testOptions(browserType);
 
 describe('Page.evaluate', function() {
   it('should work', async({page, server}) => {
@@ -357,7 +356,7 @@ describe('Page.evaluate', function() {
     });
     expect(result).toEqual([42]);
   });
-  it.fail(WEBKIT)('should not throw an error when evaluation does a synchronous navigation and returns an object', async({page, server}) => {
+  (WEBKIT ? it.skip : it)('should not throw an error when evaluation does a synchronous navigation and returns an object', async({page, server}) => {
     // It is imporant to be on about:blank for sync reload.
     const result = await page.evaluate(() => {
       window.location.reload();
@@ -373,7 +372,7 @@ describe('Page.evaluate', function() {
     });
     expect(result).toBe(undefined);
   });
-  it.slow().skip(CHANNEL)('should transfer 100Mb of data from page to node.js', async({page, server}) => {
+  (CHANNEL ? it.skip : it)('should transfer 100Mb of data from page to node.js', async({page}) => {
     const a = await page.evaluate(() => Array(100 * 1024 * 1024 + 1).join('a'));
     expect(a.length).toBe(100 * 1024 * 1024);
   });
@@ -389,7 +388,7 @@ describe('Page.evaluate', function() {
     const result = await page.evaluate(() => ({abc: 123}));
     expect(result).toEqual({abc: 123});
   });
-  it.fail(FFOX)('should await promise from popup', async function({page, server}) {
+  (FFOX ? it.skip : it)('should await promise from popup', async ({page, server}) => {
     // Something is wrong about the way Firefox waits for the chained promise
     await page.goto(server.EMPTY_PAGE);
     const result = await page.evaluate(() => {
@@ -574,14 +573,14 @@ describe('Frame.evaluate', function() {
     else
       expect(pageImpl._delegate._contextIdToContext.size).toBe(count);
   }
-  it.skip(USES_HOOKS)('should dispose context on navigation', async({page, server, toImpl}) => {
+  (USES_HOOKS ? it.skip : it)('should dispose context on navigation', async({page, server, toImpl}) => {
     await page.goto(server.PREFIX + '/frames/one-frame.html');
     expect(page.frames().length).toBe(2);
     expectContexts(toImpl(page), 4);
     await page.goto(server.EMPTY_PAGE);
     expectContexts(toImpl(page), 2);
   });
-  it.skip(USES_HOOKS)('should dispose context on cross-origin navigation', async({page, server, toImpl}) => {
+  (USES_HOOKS ? it.skip : it)('should dispose context on cross-origin navigation', async({page, server, toImpl}) => {
     await page.goto(server.PREFIX + '/frames/one-frame.html');
     expect(page.frames().length).toBe(2);
     expectContexts(toImpl(page), 4);

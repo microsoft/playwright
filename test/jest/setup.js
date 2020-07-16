@@ -14,12 +14,5 @@
  * limitations under the License.
  */
 
-test('test 1', async (page, context) => {
-  expect(page.url()).toBe('about:blank');
-  expect(page.context()).toEqual(context);
-});
-
-test('test 2', async (page, context) => {
-  expect(page.url()).toBe('about:blank');
-  expect(page.context()).toEqual(context);
-});
+module.exports = async function setup() {
+};
