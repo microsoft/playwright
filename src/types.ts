@@ -280,6 +280,7 @@ export type BrowserContextOptions = {
 };
 
 export type Env = {[key: string]: string | number | boolean | undefined};
+export type EnvArray = { name: string, value: string }[];
 
 export type LaunchOptionsBase = {
   executablePath?: string,
