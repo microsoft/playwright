@@ -93,7 +93,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return this._injectedScriptPromise;
   }
 
-  createDebugScript(options: { record?: boolean, console?: boolean }): Promise<js.JSHandle<DebugScript> | undefined> {
+  createDebugScript(options: { console?: boolean }): Promise<js.JSHandle<DebugScript> | undefined> {
     if (!this._debugScriptPromise) {
       const source = `new (${debugScriptSource.source})()`;
       this._debugScriptPromise = this._delegate.rawEvaluate(source).then(objectId => new js.JSHandle(this, 'object', objectId)).then(async debugScript => {

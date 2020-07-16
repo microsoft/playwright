@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { Writable } from 'stream';
 import { isUnderTest, helper, deprecate} from './helper';
 import * as network from './network';
 import { Page, PageBinding } from './page';
@@ -69,7 +68,6 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   readonly _downloads = new Set<Download>();
   readonly _browserBase: BrowserBase;
   readonly _apiLogger: Logger;
-  private _debugController: DebugController | undefined;
 
   constructor(browserBase: BrowserBase, options: BrowserContextOptions, isPersistentContext: boolean) {
     super();
@@ -82,16 +80,8 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   }
 
   async _initialize() {
-    if (helper.isDebugMode() || helper.isRecordMode()) {
-      this._debugController = new DebugController(this, {
-        recorderOutput: helper.isRecordMode() ? process.stdout : undefined
-      });
-    }
-  }
-
-  _initDebugModeForTest(options: { recorderOutput: Writable }): DebugController {
-    this._debugController = new DebugController(this, options);
-    return this._debugController;
+    if (helper.isDebugMode())
+      new DebugController(this);
   }
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {

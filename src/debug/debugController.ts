@@ -14,24 +14,15 @@
  * limitations under the License.
  */
 
-import { Writable } from 'stream';
 import { BrowserContextBase } from '../browserContext';
 import { Events } from '../events';
 import * as frames from '../frames';
 import * as js from '../javascript';
 import { Page } from '../page';
-import { RecorderController } from './recorderController';
 import DebugScript from './injected/debugScript';
 
 export class DebugController {
-  private _options: { recorderOutput?: Writable | undefined };
-
-  constructor(context: BrowserContextBase, options: { recorderOutput?: Writable | undefined }) {
-    this._options = options;
-
-    if (options.recorderOutput)
-      new RecorderController(context, options.recorderOutput);
-
+  constructor(context: BrowserContextBase) {
     context.on(Events.BrowserContext.Page, (page: Page) => {
       for (const frame of page.frames())
         this.ensureInstalledInFrame(frame);
@@ -42,13 +33,8 @@ export class DebugController {
   private async ensureInstalledInFrame(frame: frames.Frame): Promise<js.JSHandle<DebugScript> | undefined> {
     try {
       const mainContext = await frame._mainContext();
-      return await mainContext.createDebugScript({ console: true, record: !!this._options.recorderOutput });
+      return await mainContext.createDebugScript({ console: true });
     } catch (e) {
     }
-  }
-
-  async ensureInstalledInFrameForTest(frame: frames.Frame): Promise<void> {
-    const handle = await this.ensureInstalledInFrame(frame);
-    await handle!.evaluate(debugScript => debugScript.recorder!.refreshListeners());
   }
 }
