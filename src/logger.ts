@@ -140,7 +140,7 @@ const colorMap = new Map<string, number>([
   ['reset', 0],
 ]);
 
-class DebugLoggerSink {
+export class DebugLoggerSink {
   private _debuggers = new Map<string, debug.IDebugger>();
 
   isEnabled(name: string, severity: LoggerSeverity): boolean {

@@ -25,6 +25,7 @@ import { TimeoutSettings } from '../../timeoutSettings';
 import { Waiter } from './waiter';
 import { TimeoutError } from '../../errors';
 import { Events } from '../../events';
+import { LoggerSink } from '../../loggerSink';
 
 export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer> {
   static from(electron: ElectronChannel): Electron {
@@ -35,10 +36,12 @@ export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer>
     super(parent, type, guid, initializer, true);
   }
 
-  async launch(executablePath: string, options: ElectronLaunchOptions = {}): Promise<ElectronApplication> {
-    options = { ...options };
-    delete (options as any).logger;
-    return ElectronApplication.from((await this._channel.launch({ executablePath, ...options })).electronApplication);
+  async launch(executablePath: string, options: ElectronLaunchOptions & { logger?: LoggerSink } = {}): Promise<ElectronApplication> {
+    const logger = options.logger;
+    options = { ...options, logger: undefined };
+    return this._wrapApiCall('electron.launch', async () => {
+      return ElectronApplication.from((await this._channel.launch({ executablePath, ...options })).electronApplication);
+    }, logger);
   }
 }
 

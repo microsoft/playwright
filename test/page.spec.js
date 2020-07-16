@@ -101,7 +101,7 @@ describe('Page.Events.Load', function() {
   });
 });
 
-describe.skip(CHANNEL)('Async stacks', () => {
+describe('Async stacks', () => {
   it('should work', async({page, server}) => {
     server.setRoute('/empty.html', (req, res) => {
       req.socket.end();

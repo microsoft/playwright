@@ -369,7 +369,7 @@ describe('BrowserContext.addCookies', function() {
     } catch (e) {
       error = e;
     }
-    expect(error.message).toEqual(
+    expect(error.message).toContain(
         `Blank page can not have cookie "example-cookie-blank"`
     );
   });
