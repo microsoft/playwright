@@ -27,7 +27,7 @@ const { setUseApiName } = require('../../lib/progress');
 
 module.exports = function registerFixtures(global) {
 
-  global.registerWorkerFixture('server', async ({}, test) => {
+  global.registerWorkerFixture('http_server', async ({}, test) => {
     const assetsPath = path.join(__dirname, '..', 'assets');
     const cachedPath = path.join(__dirname, '..', 'assets', 'cached');
 
@@ -40,19 +40,27 @@ module.exports = function registerFixtures(global) {
     server.EMPTY_PAGE = `http://localhost:${port}/empty.html`;
   
     const httpsPort = port + 1;
-    httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
+    const httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
     httpsServer.enableHTTPCache(cachedPath);
     httpsServer.PORT = httpsPort;
     httpsServer.PREFIX = `https://localhost:${httpsPort}`;
     httpsServer.CROSS_PROCESS_PREFIX = `https://127.0.0.1:${httpsPort}`;
     httpsServer.EMPTY_PAGE = `https://localhost:${httpsPort}/empty.html`;
   
-    await test(server);
+    await test({server, httpsServer});
 
     await Promise.all([
       server.stop(),
       httpsServer.stop(),
     ]);  
+  });
+
+  global.registerWorkerFixture('defaultBrowserOptions', async({}, test) => {
+    await test({
+      handleSIGINT: false,
+      slowMo: valueFromEnv('SLOW_MO', 0),
+      headless: !!valueFromEnv('HEADLESS', true),
+    });
   });
 
   global.registerWorkerFixture('playwright', async({}, test) => {
@@ -113,8 +121,8 @@ module.exports = function registerFixtures(global) {
     await test(playwright[process.env.BROWSER || 'chromium']);
   });
   
-  global.registerWorkerFixture('browser', async ({browserType}, test) => {
-    const browser = await browserType.launch({ headless: !!global.HEADLESS });
+  global.registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
+    const browser = await browserType.launch(defaultBrowserOptions);
     await test(browser);
     await browser.close();
   });
@@ -129,4 +137,20 @@ module.exports = function registerFixtures(global) {
     const page = await context.newPage();
     await test(page);
   });
+
+  global.registerFixture('server', async ({http_server}, test) => {
+    http_server.server.reset();
+    await test(http_server.server);
+  });
+
+  global.registerFixture('httpsServer', async ({http_server}, test) => {
+    http_server.httpsServer.reset();
+    await test(http_server.httpsServer);
+  });
+}
+
+function valueFromEnv(name, defaultValue) {
+  if (!(name in process.env))
+    return defaultValue;
+  return JSON.parse(process.env[name]);
 }

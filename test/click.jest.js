@@ -16,7 +16,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, WIN, HEADLESS, USES_HOOKS} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, HEADLESS, USES_HOOKS} = testOptions;
 
 async function giveItAChanceToClick(page) {
   for (let i = 0; i < 5; i++)
@@ -251,7 +251,7 @@ describe('Page.click', function() {
     await page.click('label[for="agree"]');
     expect(await page.evaluate(() => result.check)).toBe(false);
   });
-  it('should not hang with touch-enabled viewports', async({server, browser}) => {
+  it('should not hang with touch-enabled viewports', async({browser, playwright}) => {
     // @see https://github.com/GoogleChrome/puppeteer/issues/161
     const { viewport, hasTouch } = playwright.devices['iPhone 6'];
     const context = await browser.newContext({ viewport, hasTouch });

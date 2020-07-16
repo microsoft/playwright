@@ -71,11 +71,6 @@ module.exports = {
   specs: [
     {
       files: [
-        './accessibility.spec.js',
-        './autowaiting.spec.js',
-        './click.spec.js',
-        './cookies.spec.js',
-        './coverage.spec.js',
         './dialog.spec.js',
         './dispatchevent.spec.js',
         './download.spec.js',
@@ -88,8 +83,6 @@ module.exports = {
         './keyboard.spec.ts',
         './mouse.spec.js',
         './navigation.spec.js',
-        './network.spec.js',
-        './page.spec.js',
         './pdf.spec.js',
         './queryselector.spec.js',
         './screenshot.spec.js',

@@ -16,17 +16,25 @@
 
 const NodeEnvironment = require('jest-environment-node');
 const registerFixtures = require('./fixtures');
+const os = require('os');
+
+const platform = os.platform();
 
 class PlaywrightEnvironment extends NodeEnvironment {
   constructor(config, context) {
     super(config, context);
     this.fixturePool = new FixturePool();
-    this.global.CHROMIUM = process.env.BROWSER === 'chromium' || !process.env.BROWSER;
-    this.global.FFOX = process.env.BROWSER === 'firefox';
-    this.global.WEBKIT = process.env.BROWSER === 'webkit';
-    this.global.USES_HOOKS = process.env.PWCHANNEL === 'wire';
-    this.global.CHANNEL = !!process.env.PWCHANNEL;
-    this.global.HEADLESS = !!valueFromEnv('HEADLESS', true);
+    const testOptions = {};
+    testOptions.MAC = platform === 'darwin';
+    testOptions.LINUX = platform === 'linux';
+    testOptions.WIN = platform === 'win32';
+    testOptions.CHROMIUM = process.env.BROWSER === 'chromium' || !process.env.BROWSER;
+    testOptions.FFOX = process.env.BROWSER === 'firefox';
+    testOptions.WEBKIT = process.env.BROWSER === 'webkit';
+    testOptions.USES_HOOKS = process.env.PWCHANNEL === 'wire';
+    testOptions.CHANNEL = !!process.env.PWCHANNEL;
+    testOptions.HEADLESS = !!valueFromEnv('HEADLESS', true);
+    this.global.testOptions = testOptions;
 
     this.global.registerFixture = (name, fn) => {
       this.fixturePool.registerFixture(name, 'test', fn);
@@ -51,6 +59,24 @@ class PlaywrightEnvironment extends NodeEnvironment {
   }
 
   async handleTestEvent(event, state) {
+    if (event.name === 'setup') {
+      const describeSkip = this.global.describe.skip;
+      this.global.describe.skip = (...args) => {
+        if (args.length = 1)
+          return args[0] ? describeSkip : this.global.describe;
+        return describeSkip(...args);
+      };
+      this.global.describe.fail = this.global.describe.skip;
+
+      const itSkip = this.global.it.skip;
+      this.global.it.skip = (...args) => {
+        if (args.length = 1)
+          return args[0] ? itSkip : this.global.it;
+        return itSkip(...args);
+      };
+      this.global.it.fail = this.global.it.skip;
+      this.global.it.slow = () => this.global.it;
+    }
     if (event.name === 'test_start') {
       const fn = event.test.fn;
       event.test.fn = async () => {
@@ -161,7 +187,7 @@ exports.default = exports.getPlaywrightEnv();
 
 function fixtureParameterNames(fn) {
   const text = fn.toString();
-  const match = text.match(/async\s*\(\s*{\s*([^}]*)\s*}/);
+  const match = text.match(/async(?:\s+function)?\s*\(\s*{\s*([^}]*)\s*}/);
   if (!match || !match[1].trim())
     return [];
   let signature = match[1];

@@ -18,7 +18,7 @@
 const path = require('path');
 const util = require('util');
 const vm = require('vm');
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
 
 describe('Page.close', function() {
   it('should reject all promises when page is closed', async({context}) => {
@@ -113,7 +113,7 @@ describe('Async stacks', () => {
   });
 });
 
-describe.fail(FFOX && WIN).skip(USES_HOOKS)('Page.Events.Crash', function() {
+describe.fail(FFOX && WIN || USES_HOOKS)('Page.Events.Crash', function() {
   // Firefox Win: it just doesn't crash sometimes.
 
   function crash(pageImpl) {
@@ -329,12 +329,12 @@ describe('Page.waitForRequest', function() {
     ]);
     expect(request.url()).toBe(server.PREFIX + '/digits/2.png');
   });
-  it('should respect timeout', async({page, server}) => {
+  it('should respect timeout', async({page, playwright}) => {
     let error = null;
     await page.waitForEvent('request', { predicate: () => false, timeout: 1 }).catch(e => error = e);
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
-  it('should respect default timeout', async({page, server}) => {
+  it('should respect default timeout', async({page, playwright}) => {
     let error = null;
     page.setDefaultTimeout(1);
     await page.waitForEvent('request', () => false).catch(e => error = e);
@@ -400,12 +400,12 @@ describe('Page.waitForResponse', function() {
     ]);
     expect(response.url()).toBe(server.PREFIX + '/digits/2.png');
   });
-  it('should respect timeout', async({page, server}) => {
+  it('should respect timeout', async({page, playwright}) => {
     let error = null;
     await page.waitForEvent('response', { predicate: () => false, timeout: 1 }).catch(e => error = e);
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
-  it('should respect default timeout', async({page, server}) => {
+  it('should respect default timeout', async({page, playwright}) => {
     let error = null;
     page.setDefaultTimeout(1);
     await page.waitForEvent('response', () => false).catch(e => error = e);
@@ -663,7 +663,7 @@ describe('Page.setContent', function() {
     const result = await page.content();
     expect(result).toBe(`${doctype}${expectedOutput}`);
   });
-  it('should respect timeout', async({page, server}) => {
+  it('should respect timeout', async({page, server, playwright}) => {
     const imgPath = '/img.png';
     // stall for image
     server.setRoute(imgPath, (req, res) => {});
@@ -671,7 +671,7 @@ describe('Page.setContent', function() {
     await page.setContent(`<img src="${server.PREFIX + imgPath}"></img>`, {timeout: 1}).catch(e => error = e);
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
-  it('should respect default navigation timeout', async({page, server}) => {
+  it('should respect default navigation timeout', async({page, server, playwright}) => {
     page.setDefaultNavigationTimeout(1);
     const imgPath = '/img.png';
     // stall for image

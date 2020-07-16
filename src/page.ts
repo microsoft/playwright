@@ -693,7 +693,7 @@ export class PageBinding {
       const result = await binding!.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
       context.evaluateInternal(deliverResult, { name, seq, result }).catch(logError(page._logger));
     } catch (error) {
-      if (error instanceof Error)
+      if (helper.isError(error))
         context.evaluateInternal(deliverError, { name, seq, message: error.message, stack: error.stack }).catch(logError(page._logger));
       else
         context.evaluateInternal(deliverErrorValue, { name, seq, error }).catch(logError(page._logger));
