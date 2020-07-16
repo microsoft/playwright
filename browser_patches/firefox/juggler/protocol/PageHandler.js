@@ -296,7 +296,8 @@ class PageHandler {
     const docShell = this._pageTarget._gBrowser.ownerGlobal.docShell;
     // Exclude address bar and navigation control from the video.
     const rect = this._pageTarget.linkedBrowser().getBoundingClientRect();
-    this._videoSessionId = screencast.startVideoRecording(docShell, file, width, height, scale || 0, rect.top);
+    const devicePixelRatio = this._pageTarget._window.devicePixelRatio;
+    this._videoSessionId = screencast.startVideoRecording(docShell, file, width, height, scale || 0, devicePixelRatio * rect.top);
   }
 
   stopVideoRecording() {
