@@ -15,25 +15,26 @@
  */
 
 const path = require('path');
-const config = require('../test.config');
-const utils = require('../utils');
-
+const {FIREFOX, CHROMIUM, WEBKIT} = require('playwright-runner');
+const playwright = require('playwright');
 const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
+if (!CHROMIUM)
+  return
+const electronEnv = require('../environments/server').serverEnv.extend({
+  async beforeEach() {
+    const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
+    const application = await playwright.electron.launch(electronPath, {
+      args: [path.join(__dirname, 'testApp.js')],
+    });
+    return {application};
+  },
+  async afterEach({application}) {
+    await application.close();
+  }
+});
 
 describe('Electron', function() {
-  beforeEach(async (state, testRun) => {
-    const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
-    state.logger = utils.createTestLogger(config.dumpLogOnFailure, testRun);
-    state.application = await playwright.electron.launch(electronPath, {
-      args: [path.join(__dirname, 'testApp.js')],
-      // This is for our own extensive protocol logging, customers don't need it.
-      logger: state.logger,
-    });
-  });
-  afterEach(async (state, testRun) => {
-    await state.application.close();
-    state.logger.setTestRun(null);
-  });
+  const {it} = electronEnv;
   it('should script application', async ({ application }) => {
     const appPath = await application.evaluate(async ({ app }) => app.getAppPath());
     expect(appPath).toContain('electron');
@@ -80,14 +81,14 @@ describe('Electron', function() {
         status: 200,
         contentType: 'text/html',
         body: '<title>Hello World</title>',
-      })
+      });
     });
     const page = await application.newBrowserWindow({ width: 800, height: 600 });
     await page.goto('https://localhost:1000/empty.html');
     expect(await page.title()).toBe('Hello World');
   });
   it('should support init script', async ({ application }) => {
-    await application.context().addInitScript('window.magic = 42;')
+    await application.context().addInitScript('window.magic = 42;');
     const page = await application.newBrowserWindow({ width: 800, height: 600 });
     await page.goto('data:text/html,<script>window.copy = magic</script>');
     expect(await page.evaluate(() => copy)).toBe(42);
@@ -116,42 +117,33 @@ describe('Electron', function() {
   });
 });
 
-describe('Electron per window', function() {
-  beforeAll(async state => {
-    const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
-    state.application = await playwright.electron.launch(electronPath, {
-      args: [path.join(__dirname, 'testApp.js')]
-    });
-  });
+describe.skip(!CHROMIUM)('Electron per window', function() {
+  const {it} = electronEnv.extend({
+    async beforeEach({application}) {
+      const page = await application.newBrowserWindow({ width: 800, height: 600 });
+      return {page};
+    },
+    async afterEach({page}) {
+      await page.close();
+    }
+  })
 
-  afterAll(async state => {
-    await state.application.close();
-  });
-
-  beforeEach(async state => {
-    state.page = await state.application.newBrowserWindow({ width: 800, height: 600 });
-  });
-
-  afterEach(async state => {
-    await state.page.close();
-  });
-
-  it('should click the button', async({page, server}) => {
+  it('should click the button', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.click('button');
     expect(await page.evaluate(() => result)).toBe('Clicked');
   });
-  it('should check the box', async({page}) => {
+  it('should check the box', async ({page}) => {
     await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
     await page.check('input');
     expect(await page.evaluate(() => checkbox.checked)).toBe(true);
   });
-  it('should not check the checked box', async({page}) => {
+  it('should not check the checked box', async ({page}) => {
     await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
     await page.check('input');
     expect(await page.evaluate(() => checkbox.checked)).toBe(true);
   });
-  it('should type into a textarea', async({page, server}) => {
+  it('should type into a textarea', async ({page, server}) => {
     await page.evaluate(() => {
       const textarea = document.createElement('textarea');
       document.body.appendChild(textarea);

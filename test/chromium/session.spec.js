@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('../utils').testOptions(browserType);
+const {CHANNEL} = require('../utils');
+const {FIREFOX, CHROMIUM, WEBKIT} = require('playwright-runner');
+const expect = require('expect');
+const {it} = require('../environments/server');
+if (!CHROMIUM)
+  return;
 
 describe('ChromiumBrowserContext.createSession', function() {
   it('should work', async function({page, browser, server}) {
@@ -91,7 +96,7 @@ describe('ChromiumBrowserContext.createSession', function() {
     await page.close();
     let error;
     await session.detach().catch(e => error = e);
-    expect(error).toBeTruthy('Calling detach on a closed page\'s session should throw');
+    expect(error).toBeTruthy(); // Calling detach on a closed page\'s session should throw
     await context.close();
   });
 });

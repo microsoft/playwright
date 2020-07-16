@@ -39,8 +39,7 @@
     "generate-types": "node utils/generate_types/",
     "typecheck-tests": "tsc -p ./test/",
     "roll-browser": "node utils/roll_browser.js",
-    "jest": "jest",
-    "runner-tests": "cd runner-tests && npm ci && npx jest"
+    "jest": "jest"
   },
   "author": {
     "name": "Microsoft Corporation"

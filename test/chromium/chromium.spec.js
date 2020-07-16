@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('../utils').testOptions(browserType);
-
+const {FIREFOX, CHROMIUM, WEBKIT, CHANNEL} = require('playwright-runner');
+const {it} = require('../environments/server');
+if (!CHROMIUM)
+  return;
 describe('ChromiumBrowserContext', function() {
-  it('should create a worker from a service worker', async({browser, page, server, context}) => {
+  it('should create a worker from a service worker', async ({browser, page, server, context}) => {
     const [worker] = await Promise.all([
       context.waitForEvent('serviceworker'),
       page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
     ]);
     expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
   });
-  it('serviceWorkers() should return current workers', async({browser, page, server, context}) => {
+  it('serviceWorkers() should return current workers', async ({browser, page, server, context}) => {
     const [worker1] = await Promise.all([
       context.waitForEvent('serviceworker'),
       page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
@@ -41,7 +43,7 @@ describe('ChromiumBrowserContext', function() {
     expect(workers).toContain(worker1);
     expect(workers).toContain(worker2);
   });
-  it('should not create a worker from a shared worker', async({browser, page, server, context}) => {
+  it('should not create a worker from a shared worker', async ({browser, page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     let serviceWorkerCreated;
     context.once('serviceworker', () => serviceWorkerCreated = true);
@@ -50,7 +52,7 @@ describe('ChromiumBrowserContext', function() {
     });
     expect(serviceWorkerCreated).not.toBeTruthy();
   });
-  it('should close service worker together with the context', async({browser, server}) => {
+  it('should close service worker together with the context', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const [worker] = await Promise.all([
@@ -66,7 +68,7 @@ describe('ChromiumBrowserContext', function() {
 });
 
 describe('Chromium-Specific Page Tests', function() {
-  it('Page.route should work with intervention headers', async({server, page}) => {
+  it('Page.route should work with intervention headers', async ({server, page}) => {
     server.setRoute('/intervention', (req, res) => res.end(`
       <script>
         document.write('<script src="${server.CROSS_PROCESS_PREFIX}/intervention.js">' + '</scr' + 'ipt>');

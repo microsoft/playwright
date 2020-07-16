@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, LINUX} = require('./utils').testOptions(browserType);
+const {WIN, LINUX, MAC, HEADLESS, CHANNEL} = utils = require('./utils');
+const {FIREFOX, CHROMIUM, WEBKIT} = require('playwright-runner');
+const {it} = require('./environments/server');
 
 // Permissions API is not implemented in WebKit (see https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API)
 describe.skip(WEBKIT)('Permissions', function() {
@@ -23,39 +25,39 @@ describe.skip(WEBKIT)('Permissions', function() {
     return page.evaluate(name => navigator.permissions.query({name}).then(result => result.state), name);
   }
 
-  it('should be prompt by default', async({page, server, context}) => {
+  it('should be prompt by default', async ({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
-  it('should deny permission when not listed', async({page, server, context}) => {
+  it('should deny permission when not listed', async ({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions([], { origin: server.EMPTY_PAGE });
     expect(await getPermission(page, 'geolocation')).toBe('denied');
   });
-  it('should fail when bad permission is given', async({page, server, context}) => {
+  it('should fail when bad permission is given', async ({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     let error = {};
     await context.grantPermissions(['foo'], { origin: server.EMPTY_PAGE }).catch(e => error = e);
     expect(error.message).toBe('Unknown permission: foo');
   });
-  it('should grant geolocation permission when listed', async({page, server, context}) => {
+  it('should grant geolocation permission when listed', async ({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
     expect(await getPermission(page, 'geolocation')).toBe('granted');
   });
-  it('should grant notifications permission when listed', async({page, server, context}) => {
+  it('should grant notifications permission when listed', async ({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['notifications'], { origin: server.EMPTY_PAGE });
     expect(await getPermission(page, 'notifications')).toBe('granted');
   });
-  it('should accumulate when adding', async({page, server, context}) => {
+  it('should accumulate when adding', async ({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation']);
     await context.grantPermissions(['notifications']);
     expect(await getPermission(page, 'geolocation')).toBe('granted');
     expect(await getPermission(page, 'notifications')).toBe('granted');
   });
-  it('should clear permissions', async({page, server, context}) => {
+  it('should clear permissions', async ({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation']);
     await context.clearPermissions();
@@ -63,29 +65,29 @@ describe.skip(WEBKIT)('Permissions', function() {
     expect(await getPermission(page, 'geolocation')).not.toBe('granted');
     expect(await getPermission(page, 'notifications')).toBe('granted');
   });
-  it('should grant permission when listed for all domains', async({page, server, context}) => {
+  it('should grant permission when listed for all domains', async ({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation']);
     expect(await getPermission(page, 'geolocation')).toBe('granted');
   });
-  it('should grant permission when creating context', async({server, browser}) => {
+  it('should grant permission when creating context', async ({server, browser}) => {
     const context = await browser.newContext({ permissions: ['geolocation'] });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
     expect(await getPermission(page, 'geolocation')).toBe('granted');
     await context.close();
   });
-  it('should reset permissions', async({page, server, context}) => {
+  it('should reset permissions', async ({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
     expect(await getPermission(page, 'geolocation')).toBe('granted');
     await context.clearPermissions();
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
-  //TODO: flaky
+  // TODO: flaky
   // - Linux: https://github.com/microsoft/playwright/pull/1790/checks?check_run_id=587327883
   // - Win: https://ci.appveyor.com/project/aslushnikov/playwright/builds/32402536
-  it.fail(FFOX).fail(CHROMIUM && !HEADLESS)('should trigger permission onchange', async({page, server, context}) => {
+  it.todo(FIREFOX).todo(CHROMIUM && !HEADLESS)('should trigger permission onchange', async ({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => {
       window['events'] = [];
@@ -104,7 +106,7 @@ describe.skip(WEBKIT)('Permissions', function() {
     await context.clearPermissions();
     expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied', 'granted', 'prompt']);
   });
-  it('should isolate permissions between browser contexts', async({page, server, context, browser}) => {
+  it('should isolate permissions between browser contexts', async ({page, server, context, browser}) => {
     await page.goto(server.EMPTY_PAGE);
     const otherContext = await browser.newContext();
     const otherPage = await otherContext.newPage();
@@ -122,7 +124,7 @@ describe.skip(WEBKIT)('Permissions', function() {
     expect(await getPermission(otherPage, 'geolocation')).toBe('granted');
     await otherContext.close();
   });
-  it.skip(FFOX).fail(CHROMIUM && !HEADLESS)('should support clipboard read', async({page, server, context, browser}) => {
+  it.skip(FIREFOX).todo(CHROMIUM && !HEADLESS)('should support clipboard read', async ({page, server, context, browser}) => {
     // No such permissions (requires flag) in Firefox
     await page.goto(server.EMPTY_PAGE);
     expect(await getPermission(page, 'clipboard-read')).toBe('prompt');

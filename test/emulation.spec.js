@@ -15,21 +15,23 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, LINUX} = utils.testOptions(browserType);
-const iPhone = playwright.devices['iPhone 6'];
-const iPhoneLandscape = playwright.devices['iPhone 6 landscape'];
+const {LINUX, golden} = utils = require('./utils');
+const {FIREFOX, CHROMIUM, WEBKIT, HEADLESS, pageEnv, launchEnv} = require('playwright-runner');
+const {it} = require('./environments/server');
+const {devices} = require('playwright');
+const iPhone = devices['iPhone 6'];
+const iPhoneLandscape = devices['iPhone 6 landscape'];
 
 describe('BrowserContext({viewport})', function() {
-  it('should get the proper default viewport size', async({page, server}) => {
+  it('should get the proper default viewport size', async ({page, server}) => {
     await utils.verifyViewport(page, 1280, 720);
   });
-  it('should set the proper viewport size', async({page, server}) => {
+  it('should set the proper viewport size', async ({page, server}) => {
     await utils.verifyViewport(page, 1280, 720);
     await page.setViewportSize({width: 123, height: 456});
     await utils.verifyViewport(page, 123, 456);
   });
-  it('should emulate device width', async({page, server}) => {
+  it('should emulate device width', async ({page, server}) => {
     expect(page.viewportSize()).toEqual({width: 1280, height: 720});
     await page.setViewportSize({width: 200, height: 200});
     expect(await page.evaluate(() => window.screen.width)).toBe(200);
@@ -48,7 +50,7 @@ describe('BrowserContext({viewport})', function() {
     expect(await page.evaluate(() => matchMedia('(device-width: 200px)').matches)).toBe(false);
     expect(await page.evaluate(() => matchMedia('(device-width: 500px)').matches)).toBe(true);
   });
-  it('should emulate device height', async({page, server}) => {
+  it('should emulate device height', async ({page, server}) => {
     expect(page.viewportSize()).toEqual({width: 1280, height: 720});
     await page.setViewportSize({width: 200, height: 200});
     expect(await page.evaluate(() => window.screen.height)).toBe(200);
@@ -67,13 +69,13 @@ describe('BrowserContext({viewport})', function() {
     expect(await page.evaluate(() => matchMedia('(device-height: 200px)').matches)).toBe(false);
     expect(await page.evaluate(() => matchMedia('(device-height: 500px)').matches)).toBe(true);
   });
-  it('should not have touch by default', async({page, server}) => {
+  it('should not have touch by default', async ({page, server}) => {
     await page.goto(server.PREFIX + '/mobile.html');
     expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(false);
     await page.goto(server.PREFIX + '/detect-touch.html');
     expect(await page.evaluate(() => document.body.textContent.trim())).toBe('NO');
   });
-  it('should support touch with null viewport', async({browser, server}) => {
+  it('should support touch with null viewport', async ({browser, server}) => {
     const context = await browser.newContext({ viewport: null, hasTouch: true });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/mobile.html');
@@ -82,9 +84,9 @@ describe('BrowserContext({viewport})', function() {
   });
 });
 
-describe.skip(FFOX)('viewport.isMobile', () => {
+describe.skip(FIREFOX)('viewport.isMobile', () => {
   // Firefox does not support isMobile.
-  it('should support mobile emulation', async({browser, server}) => {
+  it('should support mobile emulation', async ({browser, server}) => {
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/mobile.html');
@@ -93,7 +95,7 @@ describe.skip(FFOX)('viewport.isMobile', () => {
     expect(await page.evaluate(() => window.innerWidth)).toBe(400);
     await context.close();
   });
-  it('should support touch emulation', async({browser, server}) => {
+  it('should support touch emulation', async ({browser, server}) => {
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/mobile.html');
@@ -114,14 +116,14 @@ describe.skip(FFOX)('viewport.isMobile', () => {
       return promise;
     }
   });
-  it('should be detectable by Modernizr', async({browser, server}) => {
+  it('should be detectable by Modernizr', async ({browser, server}) => {
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/detect-touch.html');
     expect(await page.evaluate(() => document.body.textContent.trim())).toBe('YES');
     await context.close();
   });
-  it('should detect touch when applying viewport with touches', async({browser, server}) => {
+  it('should detect touch when applying viewport with touches', async ({browser, server}) => {
     const context = await browser.newContext({ viewport: { width: 800, height: 600 }, hasTouch: true });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
@@ -129,7 +131,7 @@ describe.skip(FFOX)('viewport.isMobile', () => {
     expect(await page.evaluate(() => Modernizr.touchevents)).toBe(true);
     await context.close();
   });
-  it('should support landscape emulation', async({browser, server}) => {
+  it('should support landscape emulation', async ({browser, server}) => {
     const context1 = await browser.newContext({ ...iPhone });
     const page1 = await context1.newPage();
     await page1.goto(server.PREFIX + '/mobile.html');
@@ -140,7 +142,7 @@ describe.skip(FFOX)('viewport.isMobile', () => {
     await context1.close();
     await context2.close();
   });
-  it('should support window.orientation emulation', async({browser, server}) => {
+  it('should support window.orientation emulation', async ({browser, server}) => {
     const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/mobile.html');
@@ -149,7 +151,7 @@ describe.skip(FFOX)('viewport.isMobile', () => {
     expect(await page.evaluate(() => window.orientation)).toBe(90);
     await context.close();
   });
-  it('should fire orientationchange event', async({browser, server}) => {
+  it('should fire orientationchange event', async ({browser, server}) => {
     const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/mobile.html');
@@ -167,14 +169,14 @@ describe.skip(FFOX)('viewport.isMobile', () => {
     expect((await event2).text()).toBe('2');
     await context.close();
   });
-  it('default mobile viewports to 980 width', async({browser, server}) => {
+  it('default mobile viewports to 980 width', async ({browser, server}) => {
     const context = await browser.newContext({ viewport: {width: 320, height: 480 }, isMobile: true });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/empty.html');
     expect(await page.evaluate(() => window.innerWidth)).toBe(980);
     await context.close();
   });
-  it('respect meta viewport tag', async({browser, server}) => {
+  it('respect meta viewport tag', async ({browser, server}) => {
     const context = await browser.newContext({ viewport: {width: 320, height: 480 }, isMobile: true });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/mobile.html');
@@ -183,8 +185,8 @@ describe.skip(FFOX)('viewport.isMobile', () => {
   });
 });
 
-describe.skip(FFOX)('Page.emulate', function() {
-  it('should work', async({browser, server}) => {
+describe.skip(FIREFOX)('Page.emulate', function() {
+  it('should work', async ({browser, server}) => {
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/mobile.html');
@@ -192,7 +194,7 @@ describe.skip(FFOX)('Page.emulate', function() {
     expect(await page.evaluate(() => navigator.userAgent)).toContain('iPhone');
     await context.close();
   });
-  it('should support clicking', async({browser, server}) => {
+  it('should support clicking', async ({browser, server}) => {
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/input/button.html');
@@ -202,7 +204,7 @@ describe.skip(FFOX)('Page.emulate', function() {
     expect(await page.evaluate(() => result)).toBe('Clicked');
     await context.close();
   });
-  it('should scroll to click', async({browser, server}) => {
+  it('should scroll to click', async ({browser, server}) => {
     const context = await browser.newContext({
       viewport: {
         width: 400,
@@ -221,7 +223,7 @@ describe.skip(FFOX)('Page.emulate', function() {
 });
 
 describe('Page.emulateMedia type', function() {
-  it('should work', async({page, server}) => {
+  it('should work', async ({page, server}) => {
     expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
     expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
     await page.emulateMedia({ media: 'print' });
@@ -234,7 +236,7 @@ describe('Page.emulateMedia type', function() {
     expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
     expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
   });
-  it('should throw in case of bad type argument', async({page, server}) => {
+  it('should throw in case of bad type argument', async ({page, server}) => {
     let error = null;
     await page.emulateMedia({ media: 'bad' }).catch(e => error = e);
     expect(error.message).toBe('Unsupported media: bad');
@@ -242,7 +244,7 @@ describe('Page.emulateMedia type', function() {
 });
 
 describe('Page.emulateMedia colorScheme', function() {
-  it('should work', async({page, server}) => {
+  it('should work', async ({page, server}) => {
     await page.emulateMedia({ colorScheme: 'light' });
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
@@ -250,7 +252,7 @@ describe('Page.emulateMedia colorScheme', function() {
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
   });
-  it('should default to light', async({page, server}) => {
+  it('should default to light', async ({page, server}) => {
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
 
@@ -262,12 +264,12 @@ describe('Page.emulateMedia colorScheme', function() {
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
   });
-  it('should throw in case of bad argument', async({page, server}) => {
+  it('should throw in case of bad argument', async ({page, server}) => {
     let error = null;
     await page.emulateMedia({ colorScheme: 'bad' }).catch(e => error = e);
     expect(error.message).toBe('Unsupported color scheme: bad');
   });
-  it('should work during navigation', async({page, server}) => {
+  it('should work during navigation', async ({page, server}) => {
     await page.emulateMedia({ colorScheme: 'light' });
     const navigated = page.goto(server.EMPTY_PAGE);
     for (let i = 0; i < 9; i++) {
@@ -279,7 +281,7 @@ describe('Page.emulateMedia colorScheme', function() {
     await navigated;
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
   });
-  it('should work in popup', async({browser, server}) => {
+  it('should work in popup', async ({browser, server}) => {
     {
       const context = await browser.newContext({ colorScheme: 'dark' });
       const page = await context.newPage();
@@ -304,7 +306,7 @@ describe('Page.emulateMedia colorScheme', function() {
       await page.close();
     }
   });
-  it('should work in cross-process iframe', async({browser, server}) => {
+  it('should work in cross-process iframe', async ({browser, server}) => {
     const page = await browser.newPage({ colorScheme: 'dark' });
     await page.goto(server.EMPTY_PAGE);
     await utils.attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');
@@ -343,7 +345,7 @@ describe('BrowserContext({timezoneId})', function() {
     }
   });
 
-  it('should throw for invalid timezone IDs when creating pages', async({browser}) => {
+  it('should throw for invalid timezone IDs when creating pages', async ({browser}) => {
     for (const timezoneId of ['Foo/Bar', 'Baz/Qux']) {
       let error = null;
       const context = await browser.newContext({ timezoneId });
@@ -352,7 +354,7 @@ describe('BrowserContext({timezoneId})', function() {
       await context.close();
     }
   });
-  it('should work for multiple pages sharing same process', async({browser, server}) => {
+  it('should work for multiple pages sharing same process', async ({browser, server}) => {
     const context = await browser.newContext({ timezoneId: 'Europe/Moscow' });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
@@ -369,7 +371,7 @@ describe('BrowserContext({timezoneId})', function() {
 });
 
 describe('BrowserContext({locale})', function() {
-  it('should affect accept-language header', async({browser, server}) => {
+  it('should affect accept-language header', async ({browser, server}) => {
     const context = await browser.newContext({ locale: 'fr-CH' });
     const page = await context.newPage();
     const [request] = await Promise.all([
@@ -379,13 +381,13 @@ describe('BrowserContext({locale})', function() {
     expect(request.headers['accept-language'].substr(0, 5)).toBe('fr-CH');
     await context.close();
   });
-  it('should affect navigator.language', async({browser, server}) => {
+  it('should affect navigator.language', async ({browser, server}) => {
     const context = await browser.newContext({ locale: 'fr-CH' });
     const page = await context.newPage();
     expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
     await context.close();
   });
-  it('should format number', async({browser, server}) => {
+  it('should format number', async ({browser, server}) => {
     {
       const context = await browser.newContext({ locale: 'en-US' });
       const page = await context.newPage();
@@ -401,7 +403,7 @@ describe('BrowserContext({locale})', function() {
       await context.close();
     }
   });
-  it('should format date', async({browser, server}) => {
+  it('should format date', async ({browser, server}) => {
     {
       const context = await browser.newContext({ locale: 'en-US', timezoneId: 'America/Los_Angeles' });
       const page = await context.newPage();
@@ -419,7 +421,7 @@ describe('BrowserContext({locale})', function() {
       await context.close();
     }
   });
-  it('should format number in popups', async({browser, server}) => {
+  it('should format number in popups', async ({browser, server}) => {
     const context = await browser.newContext({ locale: 'fr-CH' });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
@@ -433,7 +435,7 @@ describe('BrowserContext({locale})', function() {
     expect(result).toBe('1 000 000,5');
     await context.close();
   });
-  it('should affect navigator.language in popups', async({browser, server}) => {
+  it('should affect navigator.language in popups', async ({browser, server}) => {
     const context = await browser.newContext({ locale: 'fr-CH' });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
@@ -446,7 +448,7 @@ describe('BrowserContext({locale})', function() {
     expect(result).toBe('fr-CH');
     await context.close();
   });
-  it('should work for multiple pages sharing same process', async({browser, server}) => {
+  it('should work for multiple pages sharing same process', async ({browser, server}) => {
     const context = await browser.newContext({ locale: 'ru-RU' });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
@@ -460,11 +462,11 @@ describe('BrowserContext({locale})', function() {
     ]);
     await context.close();
   });
-  it('should be isolated between contexts', async({browser, server}) => {
+  it('should be isolated between contexts', async ({browser, server}) => {
     const context1 = await browser.newContext({ locale: 'en-US' });
     const promises = [];
     // By default firefox limits number of child web processes to 8.
-    for (let i = 0; i< 8; i++)
+    for (let i = 0; i < 8; i++)
       promises.push(context1.newPage());
     await Promise.all(promises);
 
@@ -485,16 +487,16 @@ describe('BrowserContext({locale})', function() {
 });
 
 describe('focus', function() {
-  it('should think that it is focused by default', async({page}) => {
+  it('should think that it is focused by default', async ({page}) => {
     expect(await page.evaluate('document.hasFocus()')).toBe(true);
   });
-  it('should think that all pages are focused', async({page}) => {
+  it('should think that all pages are focused', async ({page}) => {
     const page2 = await page.context().newPage();
     expect(await page.evaluate('document.hasFocus()')).toBe(true);
     expect(await page2.evaluate('document.hasFocus()')).toBe(true);
     await page2.close();
   });
-  it('should focus popups by default', async({page, server}) => {
+  it('should focus popups by default', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [popup] = await Promise.all([
       page.waitForEvent('popup'),
@@ -503,7 +505,7 @@ describe('focus', function() {
     expect(await popup.evaluate('document.hasFocus()')).toBe(true);
     expect(await page.evaluate('document.hasFocus()')).toBe(true);
   });
-  it('should provide target for keyboard events', async({page, server}) => {
+  it('should provide target for keyboard events', async ({page, server}) => {
     const page2 = await page.context().newPage();
     await Promise.all([
       page.goto(server.PREFIX + '/input/textarea.html'),
@@ -525,7 +527,7 @@ describe('focus', function() {
     ]);
     expect(results).toEqual([text, text2]);
   });
-  it('should not affect mouse event target page', async({page, server}) => {
+  it('should not affect mouse event target page', async ({page, server}) => {
     const page2 = await page.context().newPage();
     function clickCounter() {
       document.onclick = () => window.clickCount  = (window.clickCount || 0) + 1;
@@ -544,9 +546,9 @@ describe('focus', function() {
       page.evaluate('window.clickCount'),
       page2.evaluate('window.clickCount'),
     ]);
-    expect(counters ).toEqual([1,1]);
+    expect(counters).toEqual([1,1]);
   });
-  it('should change document.activeElement', async({page, server}) => {
+  it('should change document.activeElement', async ({page, server}) => {
     const page2 = await page.context().newPage();
     await Promise.all([
       page.goto(server.PREFIX + '/input/textarea.html'),
@@ -562,7 +564,7 @@ describe('focus', function() {
     ]);
     expect(active).toEqual(['INPUT', 'TEXTAREA']);
   });
-  it.skip(FFOX && !HEADLESS)('should not affect screenshots', async({page, server, golden}) => {
+  it.skip(FIREFOX && !HEADLESS)('should not affect screenshots', async ({page, server}) => {
     // Firefox headful produces a different image.
     const page2 = await page.context().newPage();
     await Promise.all([
@@ -579,10 +581,10 @@ describe('focus', function() {
       page.screenshot(),
       page2.screenshot(),
     ]);
-    expect(screenshots[0]).toBeGolden(golden('screenshot-sanity.png'));
-    expect(screenshots[1]).toBeGolden(golden('grid-cell-0.png'));
+    expect(screenshots[0]).toMatchGolden('screenshot-sanity.png');
+    expect(screenshots[1]).toMatchGolden('grid-cell-0.png');
   });
-  it('should change focused iframe', async({page, server}) => {
+  it('should change focused iframe', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [frame1, frame2] = await Promise.all([
       utils.attachFrame(page, 'frame1', server.PREFIX + '/input/textarea.html'),
@@ -591,7 +593,7 @@ describe('focus', function() {
     function logger() {
       self._events = [];
       const element = document.querySelector('input');
-      element.onfocus = element.onblur = (e) => self._events.push(e.type);
+      element.onfocus = element.onblur = e => self._events.push(e.type);
     }
     await Promise.all([
       frame1.evaluate(logger),

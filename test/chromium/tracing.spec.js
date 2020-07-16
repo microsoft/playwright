@@ -16,23 +16,26 @@
 
 const fs = require('fs');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, OUTPUT_DIR, CHANNEL} = require('../utils').testOptions(browserType);
-
+const {output, CHANNEL} = require('../utils');
+const {FIREFOX, CHROMIUM, WEBKIT} = require('playwright-runner');
+const expect = require('expect');
+const {browserEnv} = require('../environments/browser');
+const {serverEnv} = require('../environments/server');
+if (!CHROMIUM)
+  return;
+let traceNum = 0;
+const {it} = serverEnv.mixin(browserEnv).extend({
+  async beforeEach({browser}) {
+    const page = await browser.newPage();
+    const outputFile = output(`trace-${traceNum++}.json`);
+    return {page, outputFile};
+  },
+  async afterEach({outputFile}) {
+    if (fs.existsSync(outputFile))
+      fs.unlinkSync(outputFile);
+  }
+})
 describe('Chromium.startTracing', function() {
-  beforeEach(async function(state) {
-    state.outputFile = path.join(OUTPUT_DIR, `trace-${state.parallelIndex}.json`);
-    state.browser = await state.browserType.launch(state.defaultBrowserOptions);
-    state.page = await state.browser.newPage();
-  });
-  afterEach(async function(state) {
-    await state.browser.close();
-    state.browser = null;
-    state.page = null;
-    if (fs.existsSync(state.outputFile)) {
-      fs.unlinkSync(state.outputFile);
-      state.outputFile = null;
-    }
-  });
   it('should output a trace', async({browser, page, server, outputFile}) => {
     await browser.startTracing(page, {screenshots: true, path: outputFile});
     await page.goto(server.PREFIX + '/grid.html');

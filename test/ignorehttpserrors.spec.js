@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, MAC} = require('./utils').testOptions(browserType);
+const {WIN, LINUX, MAC, HEADLESS} = utils = require('./utils');
+const {FIREFOX, CHROMIUM, WEBKIT} = require('playwright-runner');
+const {it} = require('./environments/browser');
 
 describe('ignoreHTTPSErrors', function() {
-  it('should work', async({browser, httpsServer}) => {
+  it('should work', async ({browser, httpsServer}) => {
     let error = null;
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
     const page = await context.newPage();
@@ -27,7 +29,7 @@ describe('ignoreHTTPSErrors', function() {
     expect(response.ok()).toBe(true);
     await context.close();
   });
-  it('should isolate contexts', async({browser, httpsServer}) => {
+  it('should isolate contexts', async ({browser, httpsServer}) => {
     {
       let error = null;
       const context = await browser.newContext({ ignoreHTTPSErrors: true });
@@ -46,7 +48,7 @@ describe('ignoreHTTPSErrors', function() {
       await context.close();
     }
   });
-  it('should work with mixed content', async({browser, server, httpsServer}) => {
+  it('should work with mixed content', async ({browser, server, httpsServer}) => {
     httpsServer.setRoute('/mixedcontent.html', (req, res) => {
       res.end(`<iframe src=${server.EMPTY_PAGE}></iframe>`);
     });
@@ -60,7 +62,7 @@ describe('ignoreHTTPSErrors', function() {
     expect(await page.frames()[1].evaluate('2 + 3')).toBe(5);
     await context.close();
   });
-  it('should work with WebSocket', async({browser, httpsServer}) => {
+  it('should work with WebSocket', async ({browser, httpsServer}) => {
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
     const page = await context.newPage();
     const value = await page.evaluate(endpoint => {
@@ -74,7 +76,7 @@ describe('ignoreHTTPSErrors', function() {
     expect(value).toBe('incoming');
     await context.close();
   });
-  it('should fail with WebSocket if not ignored', async({browser, httpsServer}) => {
+  it('should fail with WebSocket if not ignored', async ({browser, httpsServer}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const value = await page.evaluate(endpoint => {

@@ -14,9 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
-
+const {it, describe, CHROMIUM, FIREFOX, WEBKIT} = require('playwright-runner');
 describe('Accessibility', function() {
   it('should work', async function({page}) {
     await page.setContent(`
@@ -37,7 +35,7 @@ describe('Accessibility', function() {
     // autofocus happens after a delay in chrome these days
     await page.waitForFunction(() => document.activeElement.hasAttribute('autofocus'));
 
-    const golden = FFOX ? {
+    const golden = FIREFOX ? {
       role: 'document',
       name: 'Accessibility Test',
       children: [
@@ -83,7 +81,7 @@ describe('Accessibility', function() {
     await page.setContent(`<div>Hello World</div>`);
     const snapshot = await page.accessibility.snapshot();
     expect(snapshot.children[0]).toEqual({
-      role: FFOX ? 'text leaf' : 'text',
+      role: FIREFOX ? 'text leaf' : 'text',
       name: 'Hello World',
     });
   });
@@ -120,7 +118,7 @@ describe('Accessibility', function() {
         <div role="tab">Tab2</div>
       </div>`);
       const golden = {
-        role: FFOX ? 'document' : 'WebArea',
+        role: FIREFOX ? 'document' : 'WebArea',
         name: '',
         children: [{
           role: 'tab',
@@ -139,7 +137,7 @@ describe('Accessibility', function() {
       <div contenteditable="true">
         Edit this image: <img src="fakeimage.png" alt="my fake image">
       </div>`);
-      const golden = FFOX ? {
+      const golden = FIREFOX ? {
         role: 'section',
         name: '',
         children: [{
@@ -164,13 +162,13 @@ describe('Accessibility', function() {
       const snapshot = await page.accessibility.snapshot();
       expect(snapshot.children[0]).toEqual(golden);
     });
-    // WebKit rich text accessibility is iffy
+    // // WebKit rich text accessibility is iffy
     it.skip(WEBKIT)('rich text editable fields with role should have children', async function({page}) {
       await page.setContent(`
       <div contenteditable="true" role='textbox'>
         Edit this image: <img src="fakeimage.png" alt="my fake image">
       </div>`);
-      const golden = FFOX ? {
+      const golden = FIREFOX ? {
         role: 'textbox',
         name: '',
         value: 'Edit this image: my fake image',
@@ -195,7 +193,7 @@ describe('Accessibility', function() {
     });
     // Firefox does not support contenteditable="plaintext-only".
     // WebKit rich text accessibility is iffy
-    describe.skip(FFOX || WEBKIT)('plaintext contenteditable', function() {
+    describe.skip(FIREFOX || WEBKIT)('plaintext contenteditable', function() {
       it('plain text field with role should not have children', async function({page}) {
         await page.setContent(`
         <div contenteditable="plaintext-only" role='textbox'>Edit this image:<img src="fakeimage.png" alt="my fake image"></div>`);
@@ -231,7 +229,7 @@ describe('Accessibility', function() {
         this is the inner content
         <img alt="yo" src="fakeimg.png">
       </div>`);
-      const golden = FFOX ? {
+      const golden = FIREFOX ? {
         role: 'textbox',
         name: 'my favorite textbox',
         value: 'this is the inner content yo'
@@ -267,7 +265,7 @@ describe('Accessibility', function() {
         this is the inner content
         <img alt="yo" src="fakeimg.png">
       </div>`);
-      const golden = FFOX ? {
+      const golden = FIREFOX ? {
         role: 'checkbox',
         name: 'this is the inner content yo',
         checked: true

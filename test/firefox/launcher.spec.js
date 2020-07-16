@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-const path = require('path');
-const utils = require('../utils');
-const {makeUserDataDir, removeUserDataDir} = utils;
-const {FFOX, CHROMIUM, WEBKIT, WIN} = utils.testOptions(browserType);
+const {makeUserDataDir, removeUserDataDir} = require('../utils');
+const {FIREFOX, CHROMIUM, WEBKIT, launchEnv} = require('playwright-runner');
+const {it} = launchEnv;
 
-describe('launcher', function() {
-  it('should pass firefox user preferences', async({browserType, defaultBrowserOptions}) => {
-    const browser = await browserType.launch({
-      ...defaultBrowserOptions,
+describe.skip(!FIREFOX)('launcher', function() {
+  it('should pass firefox user preferences', async ({launcher}) => {
+    const browser = await launcher.launch({
       firefoxUserPrefs: {
         'network.proxy.type': 1,
         'network.proxy.http': '127.0.0.1',

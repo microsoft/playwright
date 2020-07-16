@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+const {FIREFOX, CHROMIUM, WEBKIT} = require('playwright-runner');
+const {it} = require('./environments/browser');
 
 describe('Browser.newPage', function() {
   it('should create new page', async function({browser}) {

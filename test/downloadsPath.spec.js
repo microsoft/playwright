@@ -23,27 +23,32 @@ const removeFolder = require('rimraf');
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 const removeFolderAsync = util.promisify(removeFolder);
 
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = utils.testOptions(browserType);
+const {CHANNEL} = utils;
+
+const {FIREFOX, CHROMIUM, WEBKIT, HEADLESS, pageEnv, launchEnv} = require('playwright-runner');
+const {serverEnv} = require('./environments/server');
 
 describe('browserType.launch({downloadsPath})', function() {
-  beforeEach(async(state) => {
-    state.downloadsPath = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
-    state.server.setRoute('/download', (req, res) => {
-      res.setHeader('Content-Type', 'application/octet-stream');
-      res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
-      res.end(`Hello world`);
-    });
-    state.browser = await state.browserType.launch({
-      ...state.defaultBrowserOptions,
-      downloadsPath: state.downloadsPath,
-    });
-  });
-  afterEach(async(state) => {
-    await state.browser.close();
-    await removeFolderAsync(state.downloadsPath);
+  const {it} = launchEnv.mixin(serverEnv).extend({
+    async beforeEach({server, launcher}) {
+      const downloadsPath = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
+      server.setRoute('/download', (req, res) => {
+        res.setHeader('Content-Type', 'application/octet-stream');
+        res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
+        res.end(`Hello world`);
+      });
+      const browser = await launcher.launch({
+        downloadsPath,
+      });
+      return {downloadsPath, browser};
+    },
+    async afterEach({browser, downloadsPath}) {
+      await browser.close();
+      await removeFolderAsync(downloadsPath);
+    }
   });
 
-  it('should keep downloadsPath folder', async({browser, downloadsPath, server})  => {
+  it('should keep downloadsPath folder', async ({browser, downloadsPath, server})  => {
     const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
@@ -57,7 +62,7 @@ describe('browserType.launch({downloadsPath})', function() {
     await browser.close();
     expect(fs.existsSync(downloadsPath)).toBeTruthy();
   });
-  it('should delete downloads when context closes', async({browser, downloadsPath, server}) => {
+  it('should delete downloads when context closes', async ({browser, downloadsPath, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
@@ -69,7 +74,7 @@ describe('browserType.launch({downloadsPath})', function() {
     await page.close();
     expect(fs.existsSync(path)).toBeFalsy();
   });
-  it('should report downloads in downloadsPath folder', async({browser, downloadsPath, server}) => {
+  it('should report downloads in downloadsPath folder', async ({browser, downloadsPath, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
@@ -83,31 +88,34 @@ describe('browserType.launch({downloadsPath})', function() {
 });
 
 describe('browserType.launchPersistent({acceptDownloads})', function() {
-  beforeEach(async(state) => {
-    state.userDataDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
-    state.downloadsPath = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
-    state.server.setRoute('/download', (req, res) => {
-      res.setHeader('Content-Type', 'application/octet-stream');
-      res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
-      res.end(`Hello world`);
-    });
-    state.context = await state.browserType.launchPersistentContext(
-      state.userDataDir,
-      {
-        ...state.defaultBrowserOptions,
-        downloadsPath: state.downloadsPath,
-        acceptDownloads: true
+  const {it} = launchEnv.mixin(serverEnv).extend({
+    async beforeEach({server, launcher}) {
+      const userDataDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
+      const downloadsPath = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
+      server.setRoute('/download', (req, res) => {
+        res.setHeader('Content-Type', 'application/octet-stream');
+        res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
+        res.end(`Hello world`);
       });
-    state.page = state.context.pages()[0];
-    state.page.setContent(`<a href="${state.server.PREFIX}/download">download</a>`);
-  });
-  afterEach(async(state) => {
-    await state.context.close();
-    await removeFolderAsync(state.userDataDir);
-    await removeFolderAsync(state.downloadsPath);
+      const context = await launcher.launchPersistentContext(
+          userDataDir,
+          {
+            downloadsPath,
+            acceptDownloads: true
+          });
+      const page = context.pages()[0];
+      await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+      return {page, context, userDataDir, downloadsPath};
+    },
+    async afterEach({context, downloadsPath, userDataDir}) {
+      await context.close();
+      await removeFolderAsync(userDataDir);
+      await removeFolderAsync(downloadsPath);
+    }
   });
 
-  it('should accept downloads', async({context, page, downloadsPath, server})  => {
+
+  it('should accept downloads', async ({context, page, downloadsPath, server})  => {
     const [ download ] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
@@ -118,7 +126,7 @@ describe('browserType.launchPersistent({acceptDownloads})', function() {
     expect(path.startsWith(downloadsPath)).toBeTruthy();
   });
 
-  it('should not delete downloads when the context closes', async({page, context}) => {
+  it('should not delete downloads when the context closes', async ({page, context}) => {
     const [ download ] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')

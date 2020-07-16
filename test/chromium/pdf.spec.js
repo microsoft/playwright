@@ -15,13 +15,16 @@
  */
 
 const fs = require('fs');
-const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, OUTPUT_DIR} = require('../utils').testOptions(browserType);
+const {output} = require('../utils');
+const {FIREFOX, CHROMIUM, WEBKIT, HEADLESS} = require('playwright-runner');
+const {it} = require('../environments/server');
+if (!CHROMIUM)
+  return;
 
 // Printing to pdf is currently only supported in headless
 describe.skip(!HEADLESS)('Page.pdf', function() {
   it('should be able to save file', async({page, server}) => {
-    const outputFile = path.join(OUTPUT_DIR, 'output.pdf');
+    const outputFile = output('output.pdf');
     await page.pdf({path: outputFile});
     expect(fs.readFileSync(outputFile).byteLength).toBeGreaterThan(0);
     fs.unlinkSync(outputFile);

@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('../utils').testOptions(browserType);
+const {golden} = require('../utils');
+const {FIREFOX, CHROMIUM, WEBKIT, CHANNEL} = require('playwright-runner');
+const {it} = require('../environments/server');
+if (!CHROMIUM)
+  return;
 
 describe('JSCoverage', function() {
   it('should work', async function({page, server}) {
@@ -135,11 +138,11 @@ describe('CSSCoverage', function() {
       {start: 17, end: 38}
     ]);
   });
-  it('should work with complicated usecases', async function({page, server, golden}) {
+  it('should work with complicated usecases', async function({page, server}) {
     await page.coverage.startCSSCoverage();
     await page.goto(server.PREFIX + '/csscoverage/involved.html');
     const coverage = await page.coverage.stopCSSCoverage();
-    expect(JSON.stringify(coverage, null, 2).replace(/:\d{4}\//g, ':<PORT>/')).toBeGolden(golden('csscoverage-involved.txt'));
+    expect(JSON.stringify(coverage, null, 2).replace(/:\d{4}\//g, ':<PORT>/')).toMatchSnapshot(golden('csscoverage-involved.txt'));
   });
   it('should ignore injected stylesheets', async function({page, server}) {
     await page.coverage.startCSSCoverage();

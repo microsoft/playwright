@@ -14,9 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+const {devices} = require('playwright');
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, MAC, CHANNEL} = utils.testOptions(browserType);
+const {FIREFOX, CHROMIUM, WEBKIT, MAC, HEADLESS} = require('playwright-runner');
+const {it} = require('./environments/browser');
 
 describe('BrowserContext', function() {
   it('should create new context', async function({browser}) {
@@ -82,13 +83,13 @@ describe('BrowserContext', function() {
     ]);
     expect(browser.contexts().length).toBe(0);
   });
-  it('should propagate default viewport to the page', async({ browser }) => {
+  it('should propagate default viewport to the page', async ({ browser }) => {
     const context = await browser.newContext({ viewport: { width: 456, height: 789 } });
     const page = await context.newPage();
     await utils.verifyViewport(page, 456, 789);
     await context.close();
   });
-  it('should make a copy of default viewport', async({ browser }) => {
+  it('should make a copy of default viewport', async ({ browser }) => {
     const viewport = { width: 456, height: 789 };
     const context = await browser.newContext({ viewport });
     viewport.width = 567;
@@ -96,32 +97,32 @@ describe('BrowserContext', function() {
     await utils.verifyViewport(page, 456, 789);
     await context.close();
   });
-  it('should respect deviceScaleFactor', async({ browser }) => {
+  it('should respect deviceScaleFactor', async ({ browser }) => {
     const context = await browser.newContext({ deviceScaleFactor: 3 });
     const page = await context.newPage();
     expect(await page.evaluate('window.devicePixelRatio')).toBe(3);
     await context.close();
   });
-  it('should not allow deviceScaleFactor with null viewport', async({ browser }) => {
+  it.todo('should not allow deviceScaleFactor with null viewport', async ({ browser }) => {
     const error = await browser.newContext({ viewport: null, deviceScaleFactor: 1 }).catch(e => e);
     expect(error.message).toBe('"deviceScaleFactor" option is not supported with null "viewport"');
   });
-  it('should not allow isMobile with null viewport', async({ browser }) => {
+  it.todo('should not allow isMobile with null viewport', async ({ browser }) => {
     const error = await browser.newContext({ viewport: null, isMobile: true }).catch(e => e);
     expect(error.message).toBe('"isMobile" option is not supported with null "viewport"');
   });
-  it('close() should work for empty context', async({ browser }) => {
+  it('close() should work for empty context', async ({ browser }) => {
     const context = await browser.newContext();
     await context.close();
   });
-  it('close() should abort waitForEvent', async({ browser }) => {
+  it('close() should abort waitForEvent', async ({ browser }) => {
     const context = await browser.newContext();
     const promise = context.waitForEvent('page').catch(e => e);
     await context.close();
-    let error = await promise;
+    const error = await promise;
     expect(error.message).toContain('Context closed');
   });
-  it('close() should be callable twice', async({browser}) => {
+  it.todo('close() should be callable twice', async ({browser}) => {
     const context = await browser.newContext();
     await Promise.all([
       context.close(),
@@ -132,7 +133,7 @@ describe('BrowserContext', function() {
 });
 
 describe('BrowserContext({userAgent})', function() {
-  it('should work', async({browser, server}) => {
+  it('should work', async ({browser, server}) => {
     {
       const context = await browser.newContext();
       const page = await context.newPage();
@@ -150,7 +151,7 @@ describe('BrowserContext({userAgent})', function() {
       await context.close();
     }
   });
-  it('should work for subframes', async({browser, server}) => {
+  it('should work for subframes', async ({browser, server}) => {
     {
       const context = await browser.newContext();
       const page = await context.newPage();
@@ -168,7 +169,7 @@ describe('BrowserContext({userAgent})', function() {
       await context.close();
     }
   });
-  it('should emulate device user-agent', async({browser, server}) => {
+  it('should emulate device user-agent', async ({browser, server}) => {
     {
       const context = await browser.newContext();
       const page = await context.newPage();
@@ -177,14 +178,14 @@ describe('BrowserContext({userAgent})', function() {
       await context.close();
     }
     {
-      const context = await browser.newContext({ userAgent: playwright.devices['iPhone 6'].userAgent });
+      const context = await browser.newContext({ userAgent: devices['iPhone 6'].userAgent });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => navigator.userAgent)).toContain('iPhone');
       await context.close();
     }
   });
-  it('should make a copy of default options', async({browser, server}) => {
+  it('should make a copy of default options', async ({browser, server}) => {
     const options = { userAgent: 'foobar' };
     const context = await browser.newContext(options);
     options.userAgent = 'wrong';
@@ -199,7 +200,7 @@ describe('BrowserContext({userAgent})', function() {
 });
 
 describe('BrowserContext({bypassCSP})', function() {
-  it('should bypass CSP meta tag', async({browser, server}) => {
+  it('should bypass CSP meta tag', async ({browser, server}) => {
     // Make sure CSP prohibits addScriptTag.
     {
       const context = await browser.newContext();
@@ -221,7 +222,7 @@ describe('BrowserContext({bypassCSP})', function() {
     }
   });
 
-  it('should bypass CSP header', async({browser, server}) => {
+  it('should bypass CSP header', async ({browser, server}) => {
     // Make sure CSP prohibits addScriptTag.
     server.setCSP('/empty.html', 'default-src "self"');
 
@@ -245,7 +246,7 @@ describe('BrowserContext({bypassCSP})', function() {
     }
   });
 
-  it('should bypass after cross-process navigation', async({browser, server}) => {
+  it('should bypass after cross-process navigation', async ({browser, server}) => {
     const context = await browser.newContext({ bypassCSP: true });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/csp.html');
@@ -257,7 +258,7 @@ describe('BrowserContext({bypassCSP})', function() {
     expect(await page.evaluate(() => window.__injected)).toBe(42);
     await context.close();
   });
-  it('should bypass CSP in iframes as well', async({browser, server}) => {
+  it('should bypass CSP in iframes as well', async ({browser, server}) => {
     // Make sure CSP prohibits addScriptTag in an iframe.
     {
       const context = await browser.newContext();
@@ -283,7 +284,7 @@ describe('BrowserContext({bypassCSP})', function() {
 });
 
 describe('BrowserContext({javaScriptEnabled})', function() {
-  it('should work', async({browser}) => {
+  it('should work', async ({browser}) => {
     {
       const context = await browser.newContext({ javaScriptEnabled: false });
       const page = await context.newPage();
@@ -305,7 +306,7 @@ describe('BrowserContext({javaScriptEnabled})', function() {
       await context.close();
     }
   });
-  it('should be able to navigate after disabling javascript', async({browser, server}) => {
+  it('should be able to navigate after disabling javascript', async ({browser, server}) => {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
@@ -314,7 +315,7 @@ describe('BrowserContext({javaScriptEnabled})', function() {
 });
 
 describe('BrowserContext.pages()', function() {
-  it('should return all of the pages', async({browser, server}) => {
+  it('should return all of the pages', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const second = await context.newPage();
@@ -335,7 +336,7 @@ describe('BrowserContext.pages()', function() {
 });
 
 describe('BrowserContext.exposeBinding', () => {
-  it('should work', async({browser}) => {
+  it.todo('should work', async ({browser}) => {
     const context = await browser.newContext();
     let bindingSource;
     await context.exposeBinding('add', (source, a, b) => {
@@ -355,7 +356,7 @@ describe('BrowserContext.exposeBinding', () => {
 });
 
 describe('BrowserContext.exposeFunction', () => {
-  it('should work', async({browser, server}) => {
+  it('should work', async ({browser, server}) => {
     const context = await browser.newContext();
     await context.exposeFunction('add', (a, b) => a + b);
     const page = await context.newPage();
@@ -367,7 +368,7 @@ describe('BrowserContext.exposeFunction', () => {
     expect(result).toEqual({ mul: 36, add: 13, sub: 5 });
     await context.close();
   });
-  it('should throw for duplicate registrations', async({browser, server}) => {
+  it('should throw for duplicate registrations', async ({browser, server}) => {
     const context = await browser.newContext();
     await context.exposeFunction('foo', () => {});
     await context.exposeFunction('bar', () => {});
@@ -381,7 +382,7 @@ describe('BrowserContext.exposeFunction', () => {
     expect(error.message).toBe('Function "baz" has been already registered in one of the pages');
     await context.close();
   });
-  it('should be callable from-inside addInitScript', async({browser, server}) => {
+  it('should be callable from-inside addInitScript', async ({browser, server}) => {
     const context = await browser.newContext();
     let args = [];
     await context.exposeFunction('woof', function(arg) {
@@ -398,7 +399,7 @@ describe('BrowserContext.exposeFunction', () => {
 });
 
 describe('BrowserContext.route', () => {
-  it('should intercept', async({browser, server}) => {
+  it('should intercept', async ({browser, server}) => {
     const context = await browser.newContext();
     let intercepted = false;
     await context.route('**/empty.html', route => {
@@ -420,7 +421,7 @@ describe('BrowserContext.route', () => {
     expect(intercepted).toBe(true);
     await context.close();
   });
-  it('should unroute', async({browser, server}) => {
+  it('should unroute', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
 
@@ -457,7 +458,7 @@ describe('BrowserContext.route', () => {
 
     await context.close();
   });
-  it('should yield to page.route', async({browser, server}) => {
+  it('should yield to page.route', async ({browser, server}) => {
     const context = await browser.newContext();
     await context.route('**/empty.html', route => {
       route.fulfill({ status: 200, body: 'context' });
@@ -471,7 +472,7 @@ describe('BrowserContext.route', () => {
     expect(await response.text()).toBe('page');
     await context.close();
   });
-  it('should fall back to context.route', async({browser, server}) => {
+  it('should fall back to context.route', async ({browser, server}) => {
     const context = await browser.newContext();
     await context.route('**/empty.html', route => {
       route.fulfill({ status: 200, body: 'context' });
@@ -488,7 +489,7 @@ describe('BrowserContext.route', () => {
 });
 
 describe('BrowserContext({httpCredentials})', function() {
-  it.fail(CHROMIUM && !HEADLESS)('should fail without credentials', async({browser, server}) => {
+  it.todo(CHROMIUM && !HEADLESS)('should fail without credentials', async ({browser, server}) => {
     server.setAuth('/empty.html', 'user', 'pass');
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -496,7 +497,7 @@ describe('BrowserContext({httpCredentials})', function() {
     expect(response.status()).toBe(401);
     await context.close();
   });
-  it.fail(CHROMIUM && !HEADLESS)('should work with setHTTPCredentials', async({browser, server}) => {
+  it.todo(CHROMIUM && !HEADLESS)('should work with setHTTPCredentials', async ({browser, server}) => {
     server.setAuth('/empty.html', 'user', 'pass');
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -507,7 +508,7 @@ describe('BrowserContext({httpCredentials})', function() {
     expect(response.status()).toBe(200);
     await context.close();
   });
-  it('should work with correct credentials', async({browser, server}) => {
+  it('should work with correct credentials', async ({browser, server}) => {
     server.setAuth('/empty.html', 'user', 'pass');
     const context = await browser.newContext({
       httpCredentials: { username: 'user', password: 'pass' }
@@ -517,7 +518,7 @@ describe('BrowserContext({httpCredentials})', function() {
     expect(response.status()).toBe(200);
     await context.close();
   });
-  it.fail(CHROMIUM && !HEADLESS)('should fail with wrong credentials', async({browser, server}) => {
+  it.todo(CHROMIUM && !HEADLESS)('should fail with wrong credentials', async ({browser, server}) => {
     server.setAuth('/empty.html', 'user', 'pass');
     const context = await browser.newContext({
       httpCredentials: { username: 'foo', password: 'bar' }
@@ -527,7 +528,7 @@ describe('BrowserContext({httpCredentials})', function() {
     expect(response.status()).toBe(401);
     await context.close();
   });
-  it('should return resource body', async({browser, server}) => {
+  it('should return resource body', async ({browser, server}) => {
     server.setAuth('/playground.html', 'user', 'pass');
     const context = await browser.newContext({
       httpCredentials: { username: 'user', password: 'pass' }
@@ -535,14 +536,14 @@ describe('BrowserContext({httpCredentials})', function() {
     const page = await context.newPage();
     const response = await page.goto(server.PREFIX + '/playground.html');
     expect(response.status()).toBe(200);
-    expect(await page.title()).toBe("Playground");
-    expect((await response.body()).toString()).toContain("Playground");
+    expect(await page.title()).toBe('Playground');
+    expect((await response.body()).toString()).toContain('Playground');
     await context.close();
   });
 });
 
 describe('BrowserContext.setOffline', function() {
-  it('should work with initial option', async({browser, server}) => {
+  it('should work with initial option', async ({browser, server}) => {
     const context = await browser.newContext({offline: true});
     const page = await context.newPage();
     let error = null;
@@ -553,7 +554,7 @@ describe('BrowserContext.setOffline', function() {
     expect(response.status()).toBe(200);
     await context.close();
   });
-  it('should emulate navigator.onLine', async({browser, server}) => {
+  it('should emulate navigator.onLine', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     expect(await page.evaluate(() => window.navigator.onLine)).toBe(true);
@@ -566,7 +567,7 @@ describe('BrowserContext.setOffline', function() {
 });
 
 describe('Events.BrowserContext.Page', function() {
-  it('should have url', async({browser, server}) => {
+  it('should have url', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const [otherPage] = await Promise.all([
@@ -576,7 +577,7 @@ describe('Events.BrowserContext.Page', function() {
     expect(otherPage.url()).toBe(server.EMPTY_PAGE);
     await context.close();
   });
-  it('should have url after domcontentloaded', async({browser, server}) => {
+  it('should have url after domcontentloaded', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const [otherPage] = await Promise.all([
@@ -587,7 +588,7 @@ describe('Events.BrowserContext.Page', function() {
     expect(otherPage.url()).toBe(server.EMPTY_PAGE);
     await context.close();
   });
-  it('should have about:blank url with domcontentloaded', async({browser, server}) => {
+  it('should have about:blank url with domcontentloaded', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const [otherPage] = await Promise.all([
@@ -598,7 +599,7 @@ describe('Events.BrowserContext.Page', function() {
     expect(otherPage.url()).toBe('about:blank');
     await context.close();
   });
-  it('should have about:blank for empty url with domcontentloaded', async({browser, server}) => {
+  it('should have about:blank for empty url with domcontentloaded', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const [otherPage] = await Promise.all([
@@ -609,7 +610,7 @@ describe('Events.BrowserContext.Page', function() {
     expect(otherPage.url()).toBe('about:blank');
     await context.close();
   });
-  it('should report when a new page is created and closed', async({browser, server}) => {
+  it('should report when a new page is created and closed', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const [otherPage] = await Promise.all([
@@ -635,7 +636,7 @@ describe('Events.BrowserContext.Page', function() {
     expect(allPages).not.toContain(otherPage);
     await context.close();
   });
-  it('should report initialized pages', async({browser, server}) => {
+  it('should report initialized pages', async ({browser, server}) => {
     const context = await browser.newContext();
     const pagePromise = context.waitForEvent('page');
     context.newPage();
@@ -649,7 +650,7 @@ describe('Events.BrowserContext.Page', function() {
     await evaluatePromise;
     await context.close();
   });
-  it('should not crash while redirecting of original request was missed', async({browser, server}) => {
+  it('should not crash while redirecting of original request was missed', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     let serverResponse = null;
@@ -668,7 +669,7 @@ describe('Events.BrowserContext.Page', function() {
     // Cleanup.
     await context.close();
   });
-  it('should have an opener', async({browser, server}) => {
+  it('should have an opener', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
@@ -697,7 +698,7 @@ describe('Events.BrowserContext.Page', function() {
     ]);
     await context.close();
   });
-  it.fail(WEBKIT)('should work with Shift-clicking', async({browser, server}) => {
+  it.todo(WEBKIT)('should work with Shift-clicking', async ({browser, server}) => {
     // WebKit: Shift+Click does not open a new window.
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -710,7 +711,7 @@ describe('Events.BrowserContext.Page', function() {
     expect(await popup.opener()).toBe(null);
     await context.close();
   });
-  it.fail(WEBKIT || FFOX)('should work with Ctrl-clicking', async({browser, server}) => {
+  it.todo(WEBKIT || FIREFOX)('should work with Ctrl-clicking', async ({browser, server}) => {
     // Firefox: reports an opener in this case.
     // WebKit: Ctrl+Click does not open a new tab.
     const context = await browser.newContext();

@@ -16,12 +16,15 @@
 
 const fs = require('fs');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('./utils').testOptions(browserType);
+const {WIN, LINUX, MAC, HEADLESS, USES_HOOKS, CHANNEL} = utils = require('./utils');
+const {FIREFOX, CHROMIUM, WEBKIT, launchEnv} = require('playwright-runner');
+const {serverEnv} = require('./environments/server');
+const {it} = launchEnv;
 
 describe.skip(CHANNEL)('Logger', function() {
-  it('should log', async({browserType, defaultBrowserOptions}) => {
+  it('should log', async ({launcher}) => {
     const log = [];
-    const browser = await browserType.launch({...defaultBrowserOptions, logger: {
+    const browser = await launcher.launch({ logger: {
       log: (name, severity, message) => log.push({name, severity, message}),
       isEnabled: (name, severity) => severity !== 'verbose'
     }});
@@ -31,9 +34,9 @@ describe.skip(CHANNEL)('Logger', function() {
     expect(log.filter(item => item.severity === 'info').length > 0).toBeTruthy();
     expect(log.filter(item => item.message.includes('<launching>')).length > 0).toBeTruthy();
   });
-  it('should log context-level', async({browserType, defaultBrowserOptions}) => {
+  it('should log context-level', async ({launcher}) => {
     const log = [];
-    const browser = await browserType.launch(defaultBrowserOptions);
+    const browser = await launcher.launch();
     const page = await browser.newPage({
       logger: {
         log: (name, severity, message) => log.push({name, severity, message}),

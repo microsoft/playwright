@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX} = require('./utils').testOptions(browserType);
+const {WIN, LINUX} = require('./utils');
+const {FIREFOX, CHROMIUM, WEBKIT} = require('playwright-runner');
+const {it} = require('./environments/server');
 
 describe('Capabilities', function() {
-  it.fail(WEBKIT && WIN)('Web Assembly should work', async function({page, server}) {
+  it.todo(WEBKIT && WIN)('Web Assembly should work', async function({page, server}) {
     await page.goto(server.PREFIX + '/wasm/table2.html');
     expect(await page.evaluate(() => loadTable())).toBe('42, 83');
   });
 
-  it('WebSocket should work', async({page, server}) => {
-    const value = await page.evaluate((port) => {
+  it('WebSocket should work', async ({page, server}) => {
+    const value = await page.evaluate(port => {
       let cb;
       const result = new Promise(f => cb = f);
       const ws = new WebSocket('ws://localhost:' + port + '/ws');
@@ -34,7 +36,7 @@ describe('Capabilities', function() {
     expect(value).toBe('incoming');
   });
 
-  it('should respect CSP', async({page, server}) => {
+  it('should respect CSP', async ({page, server}) => {
     server.setRoute('/empty.html', async (req, res) => {
       res.setHeader('Content-Security-Policy', `script-src 'unsafe-inline';`);
       res.end(`
@@ -47,7 +49,7 @@ describe('Capabilities', function() {
     await page.goto(server.EMPTY_PAGE);
     expect(await page.evaluate(() => window.testStatus)).toBe('SUCCESS');
   });
-  it.fail(WEBKIT && !LINUX)('should play video', async({page, server}) => {
+  it.todo(WEBKIT && !LINUX)('should play video', async ({page, server}) => {
     await page.goto(server.PREFIX + '/video.html');
     await page.$eval('video', v => v.play());
     await page.$eval('video', v => v.pause());

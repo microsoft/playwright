@@ -13,28 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+const {CHANNEL} = require('../utils');
+const {FIREFOX, CHROMIUM, WEBKIT, launchEnv} = require('playwright-runner');
+const {serverEnv} = require('../environments/server');
+const playwright = require('playwright');
 
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('../utils').testOptions(browserType);
+if (!CHROMIUM)
+  return;
+
+const {it} = serverEnv.mixin(launchEnv).extend({
+  async beforeAll({launcher}) {
+    const browser = await launcher.launch({
+      args: ['--site-per-process']
+    });
+    return {browser};
+  },
+
+  async beforeEach({browser}) {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    return {page, context, browser};
+  },
+  async afterEach({context}) {
+    await context.close();
+  },
+  async afterAll({browser}) {
+    await browser.close();
+  }
+});
 
 describe('OOPIF', function() {
-  beforeAll(async function(state) {
-    state.browser = await state.browserType.launch(Object.assign({}, state.defaultBrowserOptions, {
-      args: (state.defaultBrowserOptions.args || []).concat(['--site-per-process']),
-    }));
-  });
-  beforeEach(async function(state) {
-    state.context = await state.browser.newContext();
-    state.page = await state.context.newPage();
-  });
-  afterEach(async function(state) {
-    await state.context.close();
-    state.page = null;
-    state.context = null;
-  });
-  afterAll(async function(state) {
-    await state.browser.close();
-    state.browser = null;
-  });
   it('should report oopif frames', async function({browser, page, server, context}) {
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(await countOOPIFs(browser)).toBe(1);
@@ -71,7 +79,7 @@ describe('OOPIF', function() {
     expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
     expect(await countOOPIFs(browser)).toBe(1);
   });
-  it.fail(CHROMIUM)('should get the proper viewport', async({browser, page, server}) => {
+  it.todo(CHROMIUM)('should get the proper viewport', async({browser, page, server}) => {
     expect(page.viewportSize()).toEqual({width: 1280, height: 720});
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(page.frames().length).toBe(2);
@@ -150,12 +158,12 @@ describe('OOPIF', function() {
     expect(await countOOPIFs(browser)).toBe(1);
     expect(intercepted).toBe(true);
   });
-  it('should take screenshot', async({browser, page, server, golden}) => {
+  it('should take screenshot', async({browser, page, server}) => {
     await page.setViewportSize({width: 500, height: 500});
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(page.frames().length).toBe(2);
     expect(await countOOPIFs(browser)).toBe(1);
-    expect(await page.screenshot()).toBeGolden(golden('screenshot-oopif.png'));
+    expect(await page.screenshot()).toMatchGolden('screenshot-oopif.png');
   });
   it('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {
     await page.route('**/*', route => route.continue());
@@ -228,10 +236,10 @@ describe('OOPIF', function() {
     await page.click('button');
     expect(await page.evaluate(() => window.BUTTON_CLICKED)).toBe(true);
   });
-  it('should report google.com frame with headful', async({browserType, defaultBrowserOptions, server}) => {
+  it('should report google.com frame with headful', async({launcher, server}) => {
     // @see https://github.com/GoogleChrome/puppeteer/issues/2548
     // https://google.com is isolated by default in Chromium embedder.
-    const browser = await browserType.launch({...defaultBrowserOptions, headless: false});
+    const browser = await launcher.launch({ headless: false});
     const page = await browser.newPage();
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/*', route => {

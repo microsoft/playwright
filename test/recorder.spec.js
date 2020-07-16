@@ -14,7 +14,27 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = require('./utils').testOptions(browserType);
+const {WIN, LINUX, MAC, HEADLESS, CHANNEL, USES_HOOKS} = utils = require('./utils');
+const {FIREFOX, CHROMIUM, WEBKIT} = require('playwright-runner');
+const {browserEnv} = require('./environments/browser');
+const {serverEnv} = require('./environments/server');
+const {it} = browserEnv.mixin(serverEnv).extend({
+  async beforeEach({browser}) {
+    const context = await browser.newContext();
+    const output = new WritableBuffer();
+    const debugController = context._initDebugModeForTest({ recorderOutput: output });
+    const page = await context.newPage();
+    const setContent = async content => {
+      await page.setContent(content);
+      await debugController.ensureInstalledInFrameForTest(page.mainFrame());
+    };
+    return {context, output, page, setContent};
+  },
+
+  async afterEach({context}) {
+    await context.close();
+  }
+});
 
 class WritableBuffer {
   constructor() {
@@ -52,20 +72,6 @@ class WritableBuffer {
 }
 
 describe.skip(USES_HOOKS)('Recorder', function() {
-  beforeEach(async state => {
-    state.context = await state.browser.newContext();
-    state.output = new WritableBuffer();
-    const debugController = state.context._initDebugModeForTest({ recorderOutput: state.output });
-    state.page = await state.context.newPage();
-    state.setContent = async (content) => {
-      await state.page.setContent(content);
-      await debugController.ensureInstalledInFrameForTest(state.page.mainFrame());
-    };
-  });
-
-  afterEach(async state => {
-    await state.context.close();
-  });
 
   it('should click', async function({page, output, setContent, server}) {
     await page.goto(server.EMPTY_PAGE);
@@ -142,7 +148,7 @@ describe.skip(USES_HOOKS)('Recorder', function() {
     expect(output.text()).toContain(`
   // Check input[name=accept]
   await page.check('input[name=accept]');`);
-    expect(message.text()).toBe("true");
+    expect(message.text()).toBe('true');
   });
 
   it('should uncheck', async function({page, output, setContent, server}) {
@@ -156,7 +162,7 @@ describe.skip(USES_HOOKS)('Recorder', function() {
     expect(output.text()).toContain(`
   // Uncheck input[name=accept]
   await page.uncheck('input[name=accept]');`);
-    expect(message.text()).toBe("false");
+    expect(message.text()).toBe('false');
   });
 
   it('should select', async function({page, output, setContent, server}) {
@@ -170,7 +176,7 @@ describe.skip(USES_HOOKS)('Recorder', function() {
     expect(output.text()).toContain(`
   // Select select[id=age]
   await page.selectOption('select[id=age]', '2');`);
-    expect(message.text()).toBe("2");
+    expect(message.text()).toBe('2');
   });
 
   it('should await popup', async function({context, page, output, setContent, server}) {

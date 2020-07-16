@@ -3,7 +3,7 @@
   "devDependencies": {
     "jest": "^26.1.0",
     "playwright": "file:../",
-    "playwright-runner": "0.0.9"
+    "playwright-runner": "^0.1.0"
   },
   "scripts": {
     "test": "jest"

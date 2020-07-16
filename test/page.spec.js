@@ -18,10 +18,13 @@
 const path = require('path');
 const util = require('util');
 const vm = require('vm');
-const {FFOX, CHROMIUM, WEBKIT, WIN, CHANNEL} = require('./utils').testOptions(browserType);
+const {WIN, LINUX, MAC, HEADLESS, CHANNEL} = utils = require('./utils');
+const {FIREFOX, CHROMIUM, WEBKIT} = require('playwright-runner');
+const {it} = require('./environments/server');
+const {errors} = require('playwright');
 
 describe('Page.close', function() {
-  it('should reject all promises when page is closed', async({context}) => {
+  it('should reject all promises when page is closed', async ({context}) => {
     const newPage = await context.newPage();
     let error = null;
     await Promise.all([
@@ -30,13 +33,13 @@ describe('Page.close', function() {
     ]);
     expect(error.message).toContain('Protocol error');
   });
-  it('should not be visible in context.pages', async({context}) => {
+  it('should not be visible in context.pages', async ({context}) => {
     const newPage = await context.newPage();
     expect(context.pages()).toContain(newPage);
     await newPage.close();
     expect(context.pages()).not.toContain(newPage);
   });
-  it('should run beforeunload if asked for', async({context, server}) => {
+  it('should run beforeunload if asked for', async ({context, server}) => {
     const newPage = await context.newPage();
     await newPage.goto(server.PREFIX + '/beforeunload.html');
     // We have to interact with a page so that 'beforeunload' handlers
@@ -55,7 +58,7 @@ describe('Page.close', function() {
     await dialog.accept();
     await pageClosingPromise;
   });
-  it('should *not* run beforeunload by default', async({context, server}) => {
+  it('should *not* run beforeunload by default', async ({context, server}) => {
     const newPage = await context.newPage();
     await newPage.goto(server.PREFIX + '/beforeunload.html');
     // We have to interact with a page so that 'beforeunload' handlers
@@ -63,13 +66,13 @@ describe('Page.close', function() {
     await newPage.click('body');
     await newPage.close();
   });
-  it('should set the page close state', async({context}) => {
+  it('should set the page close state', async ({context}) => {
     const newPage = await context.newPage();
     expect(newPage.isClosed()).toBe(false);
     await newPage.close();
     expect(newPage.isClosed()).toBe(true);
   });
-  it('should terminate network waiters', async({context, server}) => {
+  it('should terminate network waiters', async ({context, server}) => {
     const newPage = await context.newPage();
     const results = await Promise.all([
       newPage.waitForRequest(server.EMPTY_PAGE).catch(e => e),
@@ -82,7 +85,7 @@ describe('Page.close', function() {
       expect(message).not.toContain('Timeout');
     }
   });
-  it('should be callable twice', async({context}) => {
+  it('should be callable twice', async ({context}) => {
     const newPage = await context.newPage();
     await Promise.all([
       newPage.close(),
@@ -93,7 +96,7 @@ describe('Page.close', function() {
 });
 
 describe('Page.Events.Load', function() {
-  it('should fire when expected', async({page, server}) => {
+  it('should fire when expected', async ({page, server}) => {
     await Promise.all([
       page.goto('about:blank'),
       page.waitForEvent('load'),
@@ -102,7 +105,7 @@ describe('Page.Events.Load', function() {
 });
 
 describe('Async stacks', () => {
-  it('should work', async({page, server}) => {
+  it('should work', async ({page, server}) => {
     server.setRoute('/empty.html', (req, res) => {
       req.socket.end();
     });
@@ -113,7 +116,7 @@ describe('Async stacks', () => {
   });
 });
 
-describe.fail(FFOX && WIN)('Page.Events.Crash', function() {
+describe.todo(FIREFOX && WIN)('Page.Events.Crash', function() {
   // Firefox Win: it just doesn't crash sometimes.
 
   function crash(page) {
@@ -121,16 +124,16 @@ describe.fail(FFOX && WIN)('Page.Events.Crash', function() {
       page.goto('chrome://crash').catch(e => {});
     else if (WEBKIT)
       page._delegate._session.send('Page.crash', {}).catch(e => {});
-    else if (FFOX)
+    else if (FIREFOX)
       page._delegate._session.send('Page.crash', {}).catch(e => {});
   }
 
-  it('should emit crash event when page crashes', async({page}) => {
+  it('should emit crash event when page crashes', async ({page}) => {
     await page.setContent(`<div>This page should crash</div>`);
     crash(page);
     await new Promise(f => page.on('crash', f));
   });
-  it('should throw on any action after page crashes', async({page}) => {
+  it('should throw on any action after page crashes', async ({page}) => {
     await page.setContent(`<div>This page should crash</div>`);
     crash(page);
     await page.waitForEvent('crash');
@@ -138,14 +141,14 @@ describe.fail(FFOX && WIN)('Page.Events.Crash', function() {
     expect(err).toBeTruthy();
     expect(err.message).toContain('crash');
   });
-  it('should cancel waitForEvent when page crashes', async({page}) => {
+  it('should cancel waitForEvent when page crashes', async ({page}) => {
     await page.setContent(`<div>This page should crash</div>`);
     const promise = page.waitForEvent('response').catch(e => e);
     crash(page);
     const error = await promise;
     expect(error.message).toContain('Page crashed');
   });
-  it('should cancel navigation when page crashes', async({page, server}) => {
+  it('should cancel navigation when page crashes', async ({page, server}) => {
     await page.setContent(`<div>This page should crash</div>`);
     server.setRoute('/one-style.css', () => {});
     const promise = page.goto(server.PREFIX + '/one-style.html').catch(e => e);
@@ -154,7 +157,7 @@ describe.fail(FFOX && WIN)('Page.Events.Crash', function() {
     const error = await promise;
     expect(error.message).toContain('Navigation failed because page crashed');
   });
-  it('should be able to close context when page crashes', async({page}) => {
+  it('should be able to close context when page crashes', async ({page}) => {
     await page.setContent(`<div>This page should crash</div>`);
     crash(page);
     await page.waitForEvent('crash');
@@ -163,7 +166,7 @@ describe.fail(FFOX && WIN)('Page.Events.Crash', function() {
 });
 
 describe('Page.opener', function() {
-  it('should provide access to the opener page', async({page}) => {
+  it('should provide access to the opener page', async ({page}) => {
     const [popup] = await Promise.all([
       page.waitForEvent('popup'),
       page.evaluate(() => window.open('about:blank')),
@@ -171,7 +174,7 @@ describe('Page.opener', function() {
     const opener = await popup.opener();
     expect(opener).toBe(page);
   });
-  it('should return null if parent page has been closed', async({page}) => {
+  it('should return null if parent page has been closed', async ({page}) => {
     const [popup] = await Promise.all([
       page.waitForEvent('popup'),
       page.evaluate(() => window.open('about:blank')),
@@ -183,7 +186,7 @@ describe('Page.opener', function() {
 });
 
 describe('Page.Events.Console', function() {
-  it('should work', async({page, server}) => {
+  it('should work', async ({page, server}) => {
     let message = null;
     page.once('console', m => message = m);
     await Promise.all([
@@ -196,22 +199,22 @@ describe('Page.Events.Console', function() {
     expect(await message.args()[1].jsonValue()).toEqual(5);
     expect(await message.args()[2].jsonValue()).toEqual({foo: 'bar'});
   });
-  it('should emit same log twice', async({page, server}) => {
+  it('should emit same log twice', async ({page, server}) => {
     const messages = [];
     page.on('console', m => messages.push(m.text()));
-    await page.evaluate(() => { for (let i = 0; i < 2; ++i ) console.log('hello'); } );
+    await page.evaluate(() => { for (let i = 0; i < 2; ++i) console.log('hello'); });
     expect(messages).toEqual(['hello', 'hello']);
   });
-  it('should use text() for inspection', async({page}) => {
+  it('should use text() for inspection', async ({page}) => {
     let text;
     const inspect = value => {
       text = util.inspect(value);
-    }
+    };
     page.on('console', inspect);
     await page.evaluate(() => console.log('Hello world'));
     expect(text).toEqual('Hello world');
   });
-  it('should work for different console API calls', async({page, server}) => {
+  it('should work for different console API calls', async ({page, server}) => {
     const messages = [];
     page.on('console', msg => messages.push(msg));
     // All console events will be reported before `page.evaluate` is finished.
@@ -237,7 +240,7 @@ describe('Page.Events.Console', function() {
       'JSHandle@promise',
     ]);
   });
-  it('should not fail for window object', async({page, server}) => {
+  it('should not fail for window object', async ({page, server}) => {
     let message = null;
     page.once('console', msg => message = msg);
     await Promise.all([
@@ -246,7 +249,7 @@ describe('Page.Events.Console', function() {
     ]);
     expect(message.text()).toBe('JSHandle@object');
   });
-  it('should trigger correct Log', async({page, server}) => {
+  it('should trigger correct Log', async ({page, server}) => {
     await page.goto('about:blank');
     const [message] = await Promise.all([
       page.waitForEvent('console'),
@@ -255,7 +258,7 @@ describe('Page.Events.Console', function() {
     expect(message.text()).toContain('Access-Control-Allow-Origin');
     expect(message.type()).toEqual('error');
   });
-  it('should have location for console API calls', async({page, server}) => {
+  it('should have location for console API calls', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [message] = await Promise.all([
       page.waitForEvent('console'),
@@ -272,11 +275,11 @@ describe('Page.Events.Console', function() {
     });
   });
   // @see https://github.com/GoogleChrome/puppeteer/issues/3865
-  it('should not throw when there are console messages in detached iframes', async({page, server}) => {
+  it('should not throw when there are console messages in detached iframes', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [popup] = await Promise.all([
       page.waitForEvent('popup'),
-      page.evaluate(async() => {
+      page.evaluate(async () => {
         // 1. Create a popup that Playwright is not connected to.
         const win = window.open('');
         window._popup = win;
@@ -297,7 +300,7 @@ describe('Page.Events.Console', function() {
 });
 
 describe('Page.Events.DOMContentLoaded', function() {
-  it('should fire when expected', async({page, server}) => {
+  it('should fire when expected', async ({page, server}) => {
     const navigatedPromise = page.goto('about:blank');
     await page.waitForEvent('domcontentloaded');
     await navigatedPromise;
@@ -305,7 +308,7 @@ describe('Page.Events.DOMContentLoaded', function() {
 });
 
 describe('Page.waitForRequest', function() {
-  it('should work', async({page, server}) => {
+  it('should work', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [request] = await Promise.all([
       page.waitForRequest(server.PREFIX + '/digits/2.png'),
@@ -317,7 +320,7 @@ describe('Page.waitForRequest', function() {
     ]);
     expect(request.url()).toBe(server.PREFIX + '/digits/2.png');
   });
-  it('should work with predicate', async({page, server}) => {
+  it('should work with predicate', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [request] = await Promise.all([
       page.waitForEvent('request', request => request.url() === server.PREFIX + '/digits/2.png'),
@@ -329,18 +332,18 @@ describe('Page.waitForRequest', function() {
     ]);
     expect(request.url()).toBe(server.PREFIX + '/digits/2.png');
   });
-  it('should respect timeout', async({page, server}) => {
+  it('should respect timeout', async ({page, server}) => {
     let error = null;
     await page.waitForEvent('request', { predicate: () => false, timeout: 1 }).catch(e => error = e);
-    expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+    expect(error).toBeInstanceOf(errors.TimeoutError);
   });
-  it('should respect default timeout', async({page, server}) => {
+  it('should respect default timeout', async ({page, server}) => {
     let error = null;
     page.setDefaultTimeout(1);
     await page.waitForEvent('request', () => false).catch(e => error = e);
-    expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+    expect(error).toBeInstanceOf(errors.TimeoutError);
   });
-  it('should work with no timeout', async({page, server}) => {
+  it('should work with no timeout', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [request] = await Promise.all([
       page.waitForRequest(server.PREFIX + '/digits/2.png', {timeout: 0}),
@@ -352,7 +355,7 @@ describe('Page.waitForRequest', function() {
     ]);
     expect(request.url()).toBe(server.PREFIX + '/digits/2.png');
   });
-  it('should work with url match', async({page, server}) => {
+  it('should work with url match', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [request] = await Promise.all([
       page.waitForRequest(/digits\/\d\.png/),
@@ -362,7 +365,7 @@ describe('Page.waitForRequest', function() {
     ]);
     expect(request.url()).toBe(server.PREFIX + '/digits/1.png');
   });
-  it('should work with url match regular expression from a different context', async({page, server}) => {
+  it('should work with url match regular expression from a different context', async ({page, server}) => {
     const ctx = vm.createContext();
     const regexp = vm.runInContext('new RegExp(/digits\\/\\d\\.png/)', ctx);
 
@@ -378,7 +381,7 @@ describe('Page.waitForRequest', function() {
 });
 
 describe('Page.waitForEvent', function() {
-  it('should fail with error upon disconnect', async({page, server}) => {
+  it('should fail with error upon disconnect', async ({page, server}) => {
     let error;
     const waitForPromise = page.waitForEvent('download').catch(e => error = e);
     await page.close();
@@ -388,7 +391,7 @@ describe('Page.waitForEvent', function() {
 });
 
 describe('Page.waitForResponse', function() {
-  it('should work', async({page, server}) => {
+  it('should work', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [response] = await Promise.all([
       page.waitForResponse(server.PREFIX + '/digits/2.png'),
@@ -400,18 +403,18 @@ describe('Page.waitForResponse', function() {
     ]);
     expect(response.url()).toBe(server.PREFIX + '/digits/2.png');
   });
-  it('should respect timeout', async({page, server}) => {
+  it('should respect timeout', async ({page, server}) => {
     let error = null;
     await page.waitForEvent('response', { predicate: () => false, timeout: 1 }).catch(e => error = e);
-    expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+    expect(error).toBeInstanceOf(errors.TimeoutError);
   });
-  it('should respect default timeout', async({page, server}) => {
+  it('should respect default timeout', async ({page, server}) => {
     let error = null;
     page.setDefaultTimeout(1);
     await page.waitForEvent('response', () => false).catch(e => error = e);
-    expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+    expect(error).toBeInstanceOf(errors.TimeoutError);
   });
-  it('should work with predicate', async({page, server}) => {
+  it('should work with predicate', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [response] = await Promise.all([
       page.waitForEvent('response', response => response.url() === server.PREFIX + '/digits/2.png'),
@@ -423,7 +426,7 @@ describe('Page.waitForResponse', function() {
     ]);
     expect(response.url()).toBe(server.PREFIX + '/digits/2.png');
   });
-  it('should work with no timeout', async({page, server}) => {
+  it('should work with no timeout', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [response] = await Promise.all([
       page.waitForResponse(server.PREFIX + '/digits/2.png', { timeout: 0 }),
@@ -438,7 +441,7 @@ describe('Page.waitForResponse', function() {
 });
 
 describe('Page.exposeBinding', () => {
-  it('should work', async({browser}) => {
+  it('should work', async ({browser}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     let bindingSource;
@@ -458,7 +461,7 @@ describe('Page.exposeBinding', () => {
 });
 
 describe('Page.exposeFunction', function() {
-  it('should work', async({page, server}) => {
+  it('should work', async ({page, server}) => {
     await page.exposeFunction('compute', function(a, b) {
       return a * b;
     });
@@ -467,11 +470,11 @@ describe('Page.exposeFunction', function() {
     });
     expect(result).toBe(36);
   });
-  it('should throw exception in page context', async({page, server}) => {
+  it('should throw exception in page context', async ({page, server}) => {
     await page.exposeFunction('woof', function() {
       throw new Error('WOOF WOOF');
     });
-    const {message, stack} = await page.evaluate(async() => {
+    const {message, stack} = await page.evaluate(async () => {
       try {
         await woof();
       } catch (e) {
@@ -481,11 +484,11 @@ describe('Page.exposeFunction', function() {
     expect(message).toBe('WOOF WOOF');
     expect(stack).toContain(__filename);
   });
-  it('should support throwing "null"', async({page, server}) => {
+  it('should support throwing "null"', async ({page, server}) => {
     await page.exposeFunction('woof', function() {
       throw null;
     });
-    const thrown = await page.evaluate(async() => {
+    const thrown = await page.evaluate(async () => {
       try {
         await woof();
       } catch (e) {
@@ -494,7 +497,7 @@ describe('Page.exposeFunction', function() {
     });
     expect(thrown).toBe(null);
   });
-  it('should be callable from-inside addInitScript', async({page, server}) => {
+  it('should be callable from-inside addInitScript', async ({page, server}) => {
     let called = false;
     await page.exposeFunction('woof', function() {
       called = true;
@@ -503,7 +506,7 @@ describe('Page.exposeFunction', function() {
     await page.reload();
     expect(called).toBe(true);
   });
-  it('should survive navigation', async({page, server}) => {
+  it('should survive navigation', async ({page, server}) => {
     await page.exposeFunction('compute', function(a, b) {
       return a * b;
     });
@@ -514,7 +517,7 @@ describe('Page.exposeFunction', function() {
     });
     expect(result).toBe(36);
   });
-  it('should await returned promise', async({page, server}) => {
+  it('should await returned promise', async ({page, server}) => {
     await page.exposeFunction('compute', function(a, b) {
       return Promise.resolve(a * b);
     });
@@ -524,7 +527,7 @@ describe('Page.exposeFunction', function() {
     });
     expect(result).toBe(15);
   });
-  it('should work on frames', async({page, server}) => {
+  it('should work on frames', async ({page, server}) => {
     await page.exposeFunction('compute', function(a, b) {
       return Promise.resolve(a * b);
     });
@@ -536,7 +539,7 @@ describe('Page.exposeFunction', function() {
     });
     expect(result).toBe(15);
   });
-  it('should work on frames before navigation', async({page, server}) => {
+  it('should work on frames before navigation', async ({page, server}) => {
     await page.goto(server.PREFIX + '/frames/nested-frames.html');
     await page.exposeFunction('compute', function(a, b) {
       return Promise.resolve(a * b);
@@ -548,7 +551,7 @@ describe('Page.exposeFunction', function() {
     });
     expect(result).toBe(15);
   });
-  it('should work after cross origin navigation', async({page, server}) => {
+  it('should work after cross origin navigation', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await page.exposeFunction('compute', function(a, b) {
       return a * b;
@@ -560,17 +563,17 @@ describe('Page.exposeFunction', function() {
     });
     expect(result).toBe(36);
   });
-  it('should work with complex objects', async({page, server}) => {
+  it('should work with complex objects', async ({page, server}) => {
     await page.exposeFunction('complexObject', function(a, b) {
       return {x: a.x + b.x};
     });
-    const result = await page.evaluate(async() => complexObject({x: 5}, {x: 2}));
+    const result = await page.evaluate(async () => complexObject({x: 5}, {x: 2}));
     expect(result.x).toBe(7);
   });
 });
 
 describe('Page.Events.PageError', function() {
-  it('should fire', async({page, server}) => {
+  it('should fire', async ({page, server}) => {
     const [error] = await Promise.all([
       page.waitForEvent('pageerror'),
       page.goto(server.PREFIX + '/error.html'),
@@ -583,7 +586,7 @@ describe('Page.Events.PageError', function() {
       stack = stack.replace('14:25', '15:19');
     expect(error.stack).toBe(stack);
   });
-  it.fail(WEBKIT)('should contain sourceURL', async({page, server}) => {
+  it.todo(WEBKIT)('should contain sourceURL', async ({page, server}) => {
     const [error] = await Promise.all([
       page.waitForEvent('pageerror'),
       page.goto(server.PREFIX + '/error.html'),
@@ -602,10 +605,10 @@ describe('Page.Events.PageError', function() {
         page.waitForEvent('pageerror'),
         page.evaluate(value => setTimeout(() => { throw value; }, 0), value),
       ]);
-      expect(error.message).toBe(FFOX ? 'uncaught exception: ' + message : message);
+      expect(error.message).toBe(FIREFOX ? 'uncaught exception: ' + message : message);
     }
   });
-  it.fail(FFOX)('should handle object', async ({page}) => {
+  it.todo(FIREFOX)('should handle object', async ({page}) => {
     // Firefox just does not report this error.
     const [error] = await Promise.all([
       page.waitForEvent('pageerror'),
@@ -613,7 +616,7 @@ describe('Page.Events.PageError', function() {
     ]);
     expect(error.message).toBe(CHROMIUM ? 'Object' : '[object Object]');
   });
-  it.fail(FFOX)('should handle window', async ({page}) => {
+  it.todo(FIREFOX)('should handle window', async ({page}) => {
     // Firefox just does not report this error.
     const [error] = await Promise.all([
       page.waitForEvent('pageerror'),
@@ -625,47 +628,47 @@ describe('Page.Events.PageError', function() {
 
 describe('Page.setContent', function() {
   const expectedOutput = '<html><head></head><body><div>hello</div></body></html>';
-  it('should work', async({page, server}) => {
+  it('should work', async ({page, server}) => {
     await page.setContent('<div>hello</div>');
     const result = await page.content();
     expect(result).toBe(expectedOutput);
   });
-  it('should work with domcontentloaded', async({page, server}) => {
+  it('should work with domcontentloaded', async ({page, server}) => {
     await page.setContent('<div>hello</div>', { waitUntil: 'domcontentloaded' });
     const result = await page.content();
     expect(result).toBe(expectedOutput);
   });
-  it('should work with doctype', async({page, server}) => {
+  it('should work with doctype', async ({page, server}) => {
     const doctype = '<!DOCTYPE html>';
     await page.setContent(`${doctype}<div>hello</div>`);
     const result = await page.content();
     expect(result).toBe(`${doctype}${expectedOutput}`);
   });
-  it('should work with HTML 4 doctype', async({page, server}) => {
+  it('should work with HTML 4 doctype', async ({page, server}) => {
     const doctype = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" ' +
       '"http://www.w3.org/TR/html4/strict.dtd">';
     await page.setContent(`${doctype}<div>hello</div>`);
     const result = await page.content();
     expect(result).toBe(`${doctype}${expectedOutput}`);
   });
-  it('should respect timeout', async({page, server}) => {
+  it('should respect timeout', async ({page, server}) => {
     const imgPath = '/img.png';
     // stall for image
     server.setRoute(imgPath, (req, res) => {});
     let error = null;
     await page.setContent(`<img src="${server.PREFIX + imgPath}"></img>`, {timeout: 1}).catch(e => error = e);
-    expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+    expect(error).toBeInstanceOf(errors.TimeoutError);
   });
-  it('should respect default navigation timeout', async({page, server}) => {
+  it('should respect default navigation timeout', async ({page, server}) => {
     page.setDefaultNavigationTimeout(1);
     const imgPath = '/img.png';
     // stall for image
     server.setRoute(imgPath, (req, res) => {});
     const error = await page.setContent(`<img src="${server.PREFIX + imgPath}"></img>`).catch(e => e);
     expect(error.message).toContain('Timeout 1ms exceeded during page.setContent.');
-    expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+    expect(error).toBeInstanceOf(errors.TimeoutError);
   });
-  it('should await resources to load', async({page, server}) => {
+  it('should await resources to load', async ({page, server}) => {
     const imgPath = '/img.png';
     let imgResponse = null;
     server.setRoute(imgPath, (req, res) => imgResponse = res);
@@ -676,23 +679,23 @@ describe('Page.setContent', function() {
     imgResponse.end();
     await contentPromise;
   });
-  it('should work fast enough', async({page, server}) => {
+  it('should work fast enough', async ({page, server}) => {
     for (let i = 0; i < 20; ++i)
       await page.setContent('<div>yo</div>');
   });
-  it('should work with tricky content', async({page, server}) => {
+  it('should work with tricky content', async ({page, server}) => {
     await page.setContent('<div>hello world</div>' + '\x7F');
     expect(await page.$eval('div', div => div.textContent)).toBe('hello world');
   });
-  it('should work with accents', async({page, server}) => {
+  it('should work with accents', async ({page, server}) => {
     await page.setContent('<div>aberración</div>');
     expect(await page.$eval('div', div => div.textContent)).toBe('aberración');
   });
-  it('should work with emojis', async({page, server}) => {
+  it('should work with emojis', async ({page, server}) => {
     await page.setContent('<div>🐥</div>');
     expect(await page.$eval('div', div => div.textContent)).toBe('🐥');
   });
-  it('should work with newline', async({page, server}) => {
+  it('should work with newline', async ({page, server}) => {
     await page.setContent('<div>\n</div>');
     expect(await page.$eval('div', div => div.textContent)).toBe('\n');
   });
@@ -700,7 +703,7 @@ describe('Page.setContent', function() {
 
 
 describe('Page.addScriptTag', function() {
-  it('should throw an error if no options are provided', async({page, server}) => {
+  it('should throw an error if no options are provided', async ({page, server}) => {
     let error = null;
     try {
       await page.addScriptTag('/injectedfile.js');
@@ -710,34 +713,34 @@ describe('Page.addScriptTag', function() {
     expect(error.message).toBe('Provide an object with a `url`, `path` or `content` property');
   });
 
-  it('should work with a url', async({page, server}) => {
+  it('should work with a url', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const scriptHandle = await page.addScriptTag({ url: '/injectedfile.js' });
     expect(scriptHandle.asElement()).not.toBeNull();
     expect(await page.evaluate(() => __injected)).toBe(42);
   });
 
-  it('should work with a url and type=module', async({page, server}) => {
+  it('should work with a url and type=module', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await page.addScriptTag({ url: '/es6/es6import.js', type: 'module' });
     expect(await page.evaluate(() => __es6injected)).toBe(42);
   });
 
-  it('should work with a path and type=module', async({page, server}) => {
+  it('should work with a path and type=module', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await page.addScriptTag({ path: path.join(__dirname, 'assets/es6/es6pathimport.js'), type: 'module' });
     await page.waitForFunction('window.__es6injected');
     expect(await page.evaluate(() => __es6injected)).toBe(42);
   });
 
-  it('should work with a content and type=module', async({page, server}) => {
+  it('should work with a content and type=module', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await page.addScriptTag({ content: `import num from '/es6/es6module.js';window.__es6injected = num;`, type: 'module' });
     await page.waitForFunction('window.__es6injected');
     expect(await page.evaluate(() => __es6injected)).toBe(42);
   });
 
-  it('should throw an error if loading from url fail', async({page, server}) => {
+  it('should throw an error if loading from url fail', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     let error = null;
     try {
@@ -748,28 +751,28 @@ describe('Page.addScriptTag', function() {
     expect(error).not.toBe(null);
   });
 
-  it('should work with a path', async({page, server}) => {
+  it('should work with a path', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const scriptHandle = await page.addScriptTag({ path: path.join(__dirname, 'assets/injectedfile.js') });
     expect(scriptHandle.asElement()).not.toBeNull();
     expect(await page.evaluate(() => __injected)).toBe(42);
   });
 
-  it.skip(WEBKIT)('should include sourceURL when path is provided', async({page, server}) => {
+  it.skip(WEBKIT)('should include sourceURL when path is provided', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await page.addScriptTag({ path: path.join(__dirname, 'assets/injectedfile.js') });
     const result = await page.evaluate(() => __injectedError.stack);
     expect(result).toContain(path.join('assets', 'injectedfile.js'));
   });
 
-  it('should work with content', async({page, server}) => {
+  it('should work with content', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const scriptHandle = await page.addScriptTag({ content: 'window.__injected = 35;' });
     expect(scriptHandle.asElement()).not.toBeNull();
     expect(await page.evaluate(() => __injected)).toBe(35);
   });
 
-  it.fail(FFOX)('should throw when added with content to the CSP page', async({page, server}) => {
+  it.todo(FIREFOX)('should throw when added with content to the CSP page', async ({page, server}) => {
     // Firefox fires onload for blocked script before it issues the CSP console error.
     await page.goto(server.PREFIX + '/csp.html');
     let error = null;
@@ -777,13 +780,13 @@ describe('Page.addScriptTag', function() {
     expect(error).toBeTruthy();
   });
 
-  it('should throw when added with URL to the CSP page', async({page, server}) => {
+  it('should throw when added with URL to the CSP page', async ({page, server}) => {
     await page.goto(server.PREFIX + '/csp.html');
     let error = null;
     await page.addScriptTag({ url: server.CROSS_PROCESS_PREFIX + '/injectedfile.js' }).catch(e => error = e);
     expect(error).toBeTruthy();
   });
-  it('should throw a nice error when the request fails', async({page, server}) => {
+  it('should throw a nice error when the request fails', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const url = server.PREFIX + '/this_does_not_exist.js';
     const error = await page.addScriptTag({url}).catch(e => e);
@@ -792,7 +795,7 @@ describe('Page.addScriptTag', function() {
 });
 
 describe('Page.addStyleTag', function() {
-  it('should throw an error if no options are provided', async({page, server}) => {
+  it('should throw an error if no options are provided', async ({page, server}) => {
     let error = null;
     try {
       await page.addStyleTag('/injectedstyle.css');
@@ -802,14 +805,14 @@ describe('Page.addStyleTag', function() {
     expect(error.message).toBe('Provide an object with a `url`, `path` or `content` property');
   });
 
-  it('should work with a url', async({page, server}) => {
+  it('should work with a url', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const styleHandle = await page.addStyleTag({ url: '/injectedstyle.css' });
     expect(styleHandle.asElement()).not.toBeNull();
     expect(await page.evaluate(`window.getComputedStyle(document.querySelector('body')).getPropertyValue('background-color')`)).toBe('rgb(255, 0, 0)');
   });
 
-  it('should throw an error if loading from url fail', async({page, server}) => {
+  it('should throw an error if loading from url fail', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     let error = null;
     try {
@@ -820,14 +823,14 @@ describe('Page.addStyleTag', function() {
     expect(error).not.toBe(null);
   });
 
-  it('should work with a path', async({page, server}) => {
+  it('should work with a path', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const styleHandle = await page.addStyleTag({ path: path.join(__dirname, 'assets/injectedstyle.css') });
     expect(styleHandle.asElement()).not.toBeNull();
     expect(await page.evaluate(`window.getComputedStyle(document.querySelector('body')).getPropertyValue('background-color')`)).toBe('rgb(255, 0, 0)');
   });
 
-  it('should include sourceURL when path is provided', async({page, server}) => {
+  it('should include sourceURL when path is provided', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await page.addStyleTag({ path: path.join(__dirname, 'assets/injectedstyle.css') });
     const styleHandle = await page.$('style');
@@ -835,21 +838,21 @@ describe('Page.addStyleTag', function() {
     expect(styleContent).toContain(path.join('assets', 'injectedstyle.css'));
   });
 
-  it('should work with content', async({page, server}) => {
+  it('should work with content', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const styleHandle = await page.addStyleTag({ content: 'body { background-color: green; }' });
     expect(styleHandle.asElement()).not.toBeNull();
     expect(await page.evaluate(`window.getComputedStyle(document.querySelector('body')).getPropertyValue('background-color')`)).toBe('rgb(0, 128, 0)');
   });
 
-  it('should throw when added with content to the CSP page', async({page, server}) => {
+  it('should throw when added with content to the CSP page', async ({page, server}) => {
     await page.goto(server.PREFIX + '/csp.html');
     let error = null;
     await page.addStyleTag({ content: 'body { background-color: green; }' }).catch(e => error = e);
     expect(error).toBeTruthy();
   });
 
-  it('should throw when added with URL to the CSP page', async({page, server}) => {
+  it('should throw when added with URL to the CSP page', async ({page, server}) => {
     await page.goto(server.PREFIX + '/csp.html');
     let error = null;
     await page.addStyleTag({ url: server.CROSS_PROCESS_PREFIX + '/injectedstyle.css' }).catch(e => error = e);
@@ -858,77 +861,78 @@ describe('Page.addStyleTag', function() {
 });
 
 describe('Page.url', function() {
-  it('should work', async({page, server}) => {
+  it('should work', async ({page, server}) => {
     expect(page.url()).toBe('about:blank');
     await page.goto(server.EMPTY_PAGE);
     expect(page.url()).toBe(server.EMPTY_PAGE);
   });
-  it('should include hashes', async({page, server}) => {
+  it('should include hashes', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE + '#hash');
     expect(page.url()).toBe(server.EMPTY_PAGE + '#hash');
     await page.evaluate(() => {
-      window.location.hash = "dynamic";
+      window.location.hash = 'dynamic';
     });
     expect(page.url()).toBe(server.EMPTY_PAGE + '#dynamic');
   });
 });
 
 describe('Page.title', function() {
-  it('should return the page title', async({page, server}) => {
+  it('should return the page title', async ({page, server}) => {
     await page.goto(server.PREFIX + '/title.html');
     expect(await page.title()).toBe('Woof-Woof');
   });
 });
 
 describe('Page.selectOption', function() {
-  it('should select single option', async({page, server}) => {
+  it('should select single option', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.selectOption('select', 'blue');
     expect(await page.evaluate(() => result.onInput)).toEqual(['blue']);
     expect(await page.evaluate(() => result.onChange)).toEqual(['blue']);
   });
-  it('should select single option by value', async({page, server}) => {
+  it('should select single option by value', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.selectOption('select', { value: 'blue' });
     expect(await page.evaluate(() => result.onInput)).toEqual(['blue']);
     expect(await page.evaluate(() => result.onChange)).toEqual(['blue']);
   });
-  it('should select single option by label', async({page, server}) => {
+  it('should select single option by label', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.selectOption('select', { label: 'Indigo' });
     expect(await page.evaluate(() => result.onInput)).toEqual(['indigo']);
     expect(await page.evaluate(() => result.onChange)).toEqual(['indigo']);
   });
-  it('should select single option by handle', async({page, server}) => {
+  it('should select single option by handle', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.selectOption('select', await page.$('[id=whiteOption]'));
     expect(await page.evaluate(() => result.onInput)).toEqual(['white']);
     expect(await page.evaluate(() => result.onChange)).toEqual(['white']);
   });
-  it('should select single option by index', async({page, server}) => {
+  it('should select single option by index', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.selectOption('select', { index: 2 });
     expect(await page.evaluate(() => result.onInput)).toEqual(['brown']);
     expect(await page.evaluate(() => result.onChange)).toEqual(['brown']);
   });
-  it('should select single option by multiple attributes', async({page, server}) => {
+  it('should select single option by multiple attributes', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.selectOption('select', { value: 'green', label: 'Green' });
     expect(await page.evaluate(() => result.onInput)).toEqual(['green']);
     expect(await page.evaluate(() => result.onChange)).toEqual(['green']);
   });
-  it('should not select single option when some attributes do not match', async({page, server}) => {
+  it('should not select single option when some attributes do not match', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.selectOption('select', { value: 'green', label: 'Brown' });
     expect(await page.evaluate(() => document.querySelector('select').value)).toEqual('');
   });
-  it('should select only first option', async({page, server}) => {
+  it('should select only first option', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.selectOption('select', 'blue', 'green', 'red');
     expect(await page.evaluate(() => result.onInput)).toEqual(['blue']);
     expect(await page.evaluate(() => result.onChange)).toEqual(['blue']);
   });
-  it('should not throw when select causes navigation', async({page, server}) => { await page.goto(server.PREFIX + '/input/select.html');
+  it('should not throw when select causes navigation', async ({page, server}) => {
+    await page.goto(server.PREFIX + '/input/select.html');
     await page.$eval('select', select => select.addEventListener('input', () => window.location = '/empty.html'));
     await Promise.all([
       page.selectOption('select', 'blue'),
@@ -936,61 +940,61 @@ describe('Page.selectOption', function() {
     ]);
     expect(page.url()).toContain('empty.html');
   });
-  it('should select multiple options', async({page, server}) => {
+  it('should select multiple options', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.evaluate(() => makeMultiple());
     await page.selectOption('select', ['blue', 'green', 'red']);
     expect(await page.evaluate(() => result.onInput)).toEqual(['blue', 'green', 'red']);
     expect(await page.evaluate(() => result.onChange)).toEqual(['blue', 'green', 'red']);
   });
-  it('should select multiple options with attributes', async({page, server}) => {
+  it('should select multiple options with attributes', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.evaluate(() => makeMultiple());
     await page.selectOption('select', ['blue', { label: 'Green' }, { index: 4 }]);
     expect(await page.evaluate(() => result.onInput)).toEqual(['blue', 'gray', 'green']);
     expect(await page.evaluate(() => result.onChange)).toEqual(['blue', 'gray', 'green']);
   });
-  it('should respect event bubbling', async({page, server}) => {
+  it('should respect event bubbling', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.selectOption('select', 'blue');
     expect(await page.evaluate(() => result.onBubblingInput)).toEqual(['blue']);
     expect(await page.evaluate(() => result.onBubblingChange)).toEqual(['blue']);
   });
-  it('should throw when element is not a <select>', async({page, server}) => {
+  it('should throw when element is not a <select>', async ({page, server}) => {
     let error = null;
     await page.goto(server.PREFIX + '/input/select.html');
     await page.selectOption('body', '').catch(e => error = e);
     expect(error.message).toContain('Element is not a <select> element.');
   });
-  it('should return [] on no matched values', async({page, server}) => {
+  it('should return [] on no matched values', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     const result = await page.selectOption('select','42','abc');
     expect(result).toEqual([]);
   });
-  it('should return an array of matched values', async({page, server}) => {
+  it('should return an array of matched values', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.evaluate(() => makeMultiple());
     const result = await page.selectOption('select','blue','black','magenta');
     expect(result.reduce((accumulator,current) => ['blue', 'black', 'magenta'].includes(current) && accumulator, true)).toEqual(true);
   });
-  it('should return an array of one element when multiple is not set', async({page, server}) => {
+  it('should return an array of one element when multiple is not set', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     const result = await page.selectOption('select',['42','blue','black','magenta']);
     expect(result.length).toEqual(1);
   });
-  it('should return [] on no values',async({page, server}) => {
+  it('should return [] on no values',async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     const result = await page.selectOption('select', []);
     expect(result).toEqual([]);
   });
-  it('should not allow null items',async({page, server}) => {
+  it('should not allow null items',async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.evaluate(() => makeMultiple());
-    let error = null
+    let error = null;
     await page.selectOption('select', ['blue', null, 'black','magenta']).catch(e => error = e);
     expect(error.message).toContain('Value items must not be null');
   });
-  it('should unselect with null',async({page, server}) => {
+  it('should unselect with null',async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.evaluate(() => makeMultiple());
     const result = await page.selectOption('select', ['blue', 'black','magenta']);
@@ -998,20 +1002,20 @@ describe('Page.selectOption', function() {
     await page.selectOption('select', null);
     expect(await page.$eval('select', select => Array.from(select.options).every(option => !option.selected))).toEqual(true);
   });
-  it('should deselect all options when passed no values for a multiple select',async({page, server}) => {
+  it('should deselect all options when passed no values for a multiple select',async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.evaluate(() => makeMultiple());
     await page.selectOption('select', ['blue','black','magenta']);
     await page.selectOption('select', []);
     expect(await page.$eval('select', select => Array.from(select.options).every(option => !option.selected))).toEqual(true);
   });
-  it('should deselect all options when passed no values for a select without multiple',async({page, server}) => {
+  it('should deselect all options when passed no values for a select without multiple',async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.selectOption('select', ['blue','black','magenta']);
     await page.selectOption('select', []);
     expect(await page.$eval('select', select => Array.from(select.options).every(option => !option.selected))).toEqual(true);
   });
-  it('should throw if passed wrong types', async({page, server}) => {
+  it('should throw if passed wrong types', async ({page, server}) => {
     let error;
     await page.setContent('<select><option value="12"/></select>');
 
@@ -1048,7 +1052,7 @@ describe('Page.selectOption', function() {
     expect(error.message).toContain('Indices must be numbers');
   });
   // @see https://github.com/GoogleChrome/puppeteer/issues/3327
-  it('should work when re-defining top-level Event class', async({page, server}) => {
+  it('should work when re-defining top-level Event class', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.evaluate(() => window.Event = null);
     await page.selectOption('select', 'blue');
@@ -1063,17 +1067,17 @@ describe('Page.fill', function() {
       await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
   }
 
-  it('should fill textarea', async({page, server}) => {
+  it('should fill textarea', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.fill('textarea', 'some value');
     expect(await page.evaluate(() => result)).toBe('some value');
   });
-  it('should fill input', async({page, server}) => {
+  it('should fill input', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.fill('input', 'some value');
     expect(await page.evaluate(() => result)).toBe('some value');
   });
-  it('should throw on unsupported inputs', async({page, server}) => {
+  it('should throw on unsupported inputs', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     for (const type of ['color', 'file']) {
       await page.$eval('input', (input, type) => input.setAttribute('type', type), type);
@@ -1082,7 +1086,7 @@ describe('Page.fill', function() {
       expect(error.message).toContain(`input of type "${type}" cannot be filled`);
     }
   });
-  it('should fill different input types', async({page, server}) => {
+  it('should fill different input types', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     for (const type of ['password', 'search', 'tel', 'text', 'url']) {
       await page.$eval('input', (input, type) => input.setAttribute('type', type), type);
@@ -1090,43 +1094,43 @@ describe('Page.fill', function() {
       expect(await page.evaluate(() => result)).toBe('text ' + type);
     }
   });
-  it('should fill date input after clicking', async({page, server}) => {
+  it('should fill date input after clicking', async ({page, server}) => {
     await page.setContent('<input type=date>');
     await page.click('input');
     await page.fill('input', '2020-03-02');
     expect(await page.$eval('input', input => input.value)).toBe('2020-03-02');
   });
-  it.skip(WEBKIT)('should throw on incorrect date', async({page, server}) => {
+  it.skip(WEBKIT)('should throw on incorrect date', async ({page, server}) => {
     await page.setContent('<input type=date>');
     const error = await page.fill('input', '2020-13-05').catch(e => e);
     expect(error.message).toContain('Malformed value');
   });
-  it('should fill time input', async({page, server}) => {
+  it('should fill time input', async ({page, server}) => {
     await page.setContent('<input type=time>');
     await page.fill('input', '13:15');
     expect(await page.$eval('input', input => input.value)).toBe('13:15');
   });
-  it.skip(WEBKIT)('should throw on incorrect time', async({page, server}) => {
+  it.skip(WEBKIT)('should throw on incorrect time', async ({page, server}) => {
     await page.setContent('<input type=time>');
     const error = await page.fill('input', '25:05').catch(e => e);
     expect(error.message).toContain('Malformed value');
   });
-  it('should fill datetime-local input', async({page, server}) => {
+  it('should fill datetime-local input', async ({page, server}) => {
     await page.setContent('<input type=datetime-local>');
     await page.fill('input', '2020-03-02T05:15');
     expect(await page.$eval('input', input => input.value)).toBe('2020-03-02T05:15');
   });
-  it.skip(WEBKIT || FFOX)('should throw on incorrect datetime-local', async({page, server}) => {
+  it.skip(WEBKIT || FIREFOX)('should throw on incorrect datetime-local', async ({page, server}) => {
     await page.setContent('<input type=datetime-local>');
     const error = await page.fill('input', 'abc').catch(e => e);
     expect(error.message).toContain('Malformed value');
   });
-  it('should fill contenteditable', async({page, server}) => {
+  it('should fill contenteditable', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.fill('div[contenteditable]', 'some value');
     expect(await page.$eval('div[contenteditable]', div => div.textContent)).toBe('some value');
   });
-  it('should fill elements with existing value and selection', async({page, server}) => {
+  it('should fill elements with existing value and selection', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
 
     await page.$eval('input', input => input.value = 'value one');
@@ -1151,19 +1155,19 @@ describe('Page.fill', function() {
     await page.fill('div[contenteditable]', 'replace with this');
     expect(await page.$eval('div[contenteditable]', div => div.textContent)).toBe('replace with this');
   });
-  it('should throw when element is not an <input>, <textarea> or [contenteditable]', async({page, server}) => {
+  it('should throw when element is not an <input>, <textarea> or [contenteditable]', async ({page, server}) => {
     let error = null;
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.fill('body', '').catch(e => error = e);
     expect(error.message).toContain('Element is not an <input>');
   });
-  it('should throw if passed a non-string value', async({page, server}) => {
+  it('should throw if passed a non-string value', async ({page, server}) => {
     let error = null;
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.fill('textarea', 123).catch(e => error = e);
     expect(error.message).toContain('Value must be string.');
   });
-  it('should retry on disabled element', async({page, server}) => {
+  it('should retry on disabled element', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.$eval('input', i => i.disabled = true);
     let done = false;
@@ -1177,7 +1181,7 @@ describe('Page.fill', function() {
     await promise;
     expect(await page.evaluate(() => result)).toBe('some value');
   });
-  it('should retry on readonly element', async({page, server}) => {
+  it('should retry on readonly element', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.$eval('textarea', i => i.readOnly = true);
     let done = false;
@@ -1191,7 +1195,7 @@ describe('Page.fill', function() {
     await promise;
     expect(await page.evaluate(() => result)).toBe('some value');
   });
-  it('should retry on invisible element', async({page, server}) => {
+  it('should retry on invisible element', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.$eval('input', i => i.style.display = 'none');
     let done = false;
@@ -1205,7 +1209,7 @@ describe('Page.fill', function() {
     await promise;
     expect(await page.evaluate(() => result)).toBe('some value');
   });
-  it('should be able to fill the body', async({page}) => {
+  it('should be able to fill the body', async ({page}) => {
     await page.setContent(`<body contentEditable="true"></body>`);
     await page.fill('body', 'some value');
     expect(await page.evaluate(() => document.body.textContent)).toBe('some value');
@@ -1215,7 +1219,7 @@ describe('Page.fill', function() {
     await page.fill('input', 'some value');
     expect(await page.evaluate(() => document.querySelector('input').value)).toBe('some value');
   });
-  it('should be able to fill when focus is in the wrong frame', async({page}) => {
+  it('should be able to fill when focus is in the wrong frame', async ({page}) => {
     await page.setContent(`
       <div contentEditable="true"></div>
       <iframe></iframe>
@@ -1224,28 +1228,28 @@ describe('Page.fill', function() {
     await page.fill('div', 'some value');
     expect(await page.$eval('div', d => d.textContent)).toBe('some value');
   });
-  it('should be able to fill the input[type=number]', async({page}) => {
+  it('should be able to fill the input[type=number]', async ({page}) => {
     await page.setContent(`<input id="input" type="number"></input>`);
     await page.fill('input', '42');
     expect(await page.evaluate(() => input.value)).toBe('42');
   });
-  it('should be able to fill exponent into the input[type=number]', async({page}) => {
+  it('should be able to fill exponent into the input[type=number]', async ({page}) => {
     await page.setContent(`<input id="input" type="number"></input>`);
     await page.fill('input', '-10e5');
     expect(await page.evaluate(() => input.value)).toBe('-10e5');
   });
-  it('should be able to fill input[type=number] with empty string', async({page}) => {
+  it('should be able to fill input[type=number] with empty string', async ({page}) => {
     await page.setContent(`<input id="input" type="number" value="123"></input>`);
     await page.fill('input', '');
     expect(await page.evaluate(() => input.value)).toBe('');
   });
-  it('should not be able to fill text into the input[type=number]', async({page}) => {
+  it('should not be able to fill text into the input[type=number]', async ({page}) => {
     await page.setContent(`<input id="input" type="number"></input>`);
     let error = null;
     await page.fill('input', 'abc').catch(e => error = e);
     expect(error.message).toContain('Cannot type text into input[type=number]');
   });
-  it('should be able to clear', async({page, server}) => {
+  it('should be able to clear', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.fill('input', 'some value');
     expect(await page.evaluate(() => result)).toBe('some value');
@@ -1307,7 +1311,7 @@ describe('user-agent sanity', function() {
     // Second part in parenthesis is platform - ignore it.
 
     // Third part for Firefox is the last one and encodes engine and browser versions.
-    if (FFOX) {
+    if (FIREFOX) {
       const [engine, browser] = part3.split(' ');
       expect(engine.startsWith('Gecko')).toBe(true);
       expect(browser.startsWith('Firefox')).toBe(true);
@@ -1329,12 +1333,12 @@ describe('user-agent sanity', function() {
 });
 
 describe('Page api coverage', function() {
-  it('Page.press should work', async({page, server}) => {
+  it('Page.press should work', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.press('textarea', 'a');
     expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('a');
   });
-  it('Frame.press should work', async({page, server}) => {
+  it('Frame.press should work', async ({page, server}) => {
     await page.setContent(`<iframe name=inner src="${server.PREFIX}/input/textarea.html"></iframe>`);
     const frame = page.frame('inner');
     await frame.press('textarea', 'a');
@@ -1343,7 +1347,7 @@ describe('Page api coverage', function() {
 });
 
 describe.skip(!CHANNEL)('Page channel', function() {
-  it('page should be client stub', async({page, server}) => {
+  it('page should be client stub', async ({page, server}) => {
     expect(!!page._channel).toBeTruthy();
   });
 });

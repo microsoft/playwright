@@ -16,7 +16,7 @@
  */
 
 // This file is only run when someone installs via the github repo
-
+const path = require('path');
 const {execSync} = require('child_process');
 
 console.log(`Rebuilding installer...`);
@@ -28,5 +28,13 @@ try {
 console.log(`Downloading browsers...`);
 const { installBrowsersWithProgressBar } = require('./lib/install/installer');
 installBrowsersWithProgressBar(__dirname);
+
+console.log(`Installing test dependencies...`);
+try {
+  execSync('npm ci', {
+    cwd: path.join(__dirname, 'test')
+  });
+} catch (e) {
+}
 
 console.log(`Done. Use "npm run watch" to compile.`);

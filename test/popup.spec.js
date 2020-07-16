@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, MAC} = require('./utils').testOptions(browserType);
+const {WIN, LINUX, MAC, HEADLESS, CHANNEL} = utils = require('./utils');
+const {FIREFOX, CHROMIUM, WEBKIT} = require('playwright-runner');
+const {it} = require('./environments/browser');
 
 describe('Link navigation', function() {
   it('should inherit user agent from browser context', async function({browser, server}) {
@@ -216,7 +218,7 @@ describe('window.open', function() {
 });
 
 describe('Page.Events.Popup', function() {
-  it('should work', async({browser}) => {
+  it('should work', async ({browser}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const [popup] = await Promise.all([
@@ -227,7 +229,7 @@ describe('Page.Events.Popup', function() {
     expect(await popup.evaluate(() => !!window.opener)).toBe(true);
     await context.close();
   });
-  it('should work with window features', async({browser, server}) => {
+  it('should work with window features', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
@@ -239,7 +241,7 @@ describe('Page.Events.Popup', function() {
     expect(await popup.evaluate(() => !!window.opener)).toBe(true);
     await context.close();
   });
-  it('should emit for immediately closed popups', async({browser}) => {
+  it('should emit for immediately closed popups', async ({browser}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const [popup] = await Promise.all([
@@ -252,7 +254,7 @@ describe('Page.Events.Popup', function() {
     expect(popup).toBeTruthy();
     await context.close();
   });
-  it('should emit for immediately closed popups', async({browser, server}) => {
+  it('should emit for immediately closed popups', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
@@ -266,7 +268,7 @@ describe('Page.Events.Popup', function() {
     expect(popup).toBeTruthy();
     await context.close();
   });
-  it('should be able to capture alert', async({browser}) => {
+  it('should be able to capture alert', async ({browser}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const evaluatePromise = page.evaluate(() => {
@@ -280,7 +282,7 @@ describe('Page.Events.Popup', function() {
     await evaluatePromise;
     await context.close();
   });
-  it('should work with empty url', async({browser}) => {
+  it('should work with empty url', async ({browser}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const [popup] = await Promise.all([
@@ -291,7 +293,7 @@ describe('Page.Events.Popup', function() {
     expect(await popup.evaluate(() => !!window.opener)).toBe(true);
     await context.close();
   });
-  it('should work with noopener and no url', async({browser}) => {
+  it('should work with noopener and no url', async ({browser}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const [popup] = await Promise.all([
@@ -304,7 +306,7 @@ describe('Page.Events.Popup', function() {
     expect(await popup.evaluate(() => !!window.opener)).toBe(false);
     await context.close();
   });
-  it('should work with noopener and about:blank', async({browser}) => {
+  it('should work with noopener and about:blank', async ({browser}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const [popup] = await Promise.all([
@@ -315,7 +317,7 @@ describe('Page.Events.Popup', function() {
     expect(await popup.evaluate(() => !!window.opener)).toBe(false);
     await context.close();
   });
-  it('should work with noopener and url', async({browser, server}) => {
+  it('should work with noopener and url', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
@@ -327,7 +329,7 @@ describe('Page.Events.Popup', function() {
     expect(await popup.evaluate(() => !!window.opener)).toBe(false);
     await context.close();
   });
-  it('should work with clicking target=_blank', async({browser, server}) => {
+  it('should work with clicking target=_blank', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
@@ -340,7 +342,7 @@ describe('Page.Events.Popup', function() {
     expect(await popup.evaluate(() => !!window.opener)).toBe(true);
     await context.close();
   });
-  it('should work with fake-clicking target=_blank and rel=noopener', async({browser, server}) => {
+  it('should work with fake-clicking target=_blank and rel=noopener', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
@@ -353,7 +355,7 @@ describe('Page.Events.Popup', function() {
     expect(await popup.evaluate(() => !!window.opener)).toBe(false);
     await context.close();
   });
-  it('should work with clicking target=_blank and rel=noopener', async({browser, server}) => {
+  it('should work with clicking target=_blank and rel=noopener', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
@@ -366,7 +368,7 @@ describe('Page.Events.Popup', function() {
     expect(await popup.evaluate(() => !!window.opener)).toBe(false);
     await context.close();
   });
-  it('should not treat navigations as new popups', async({browser, server}) => {
+  it('should not treat navigations as new popups', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);

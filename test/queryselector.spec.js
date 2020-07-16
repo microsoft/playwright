@@ -16,8 +16,10 @@
  */
 
 const path = require('path');
-const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = utils.testOptions(browserType);
+const {WIN, LINUX, MAC, HEADLESS, USES_HOOKS} = utils = require('./utils');
+const {FIREFOX, CHROMIUM, WEBKIT} = require('playwright-runner');
+const {it} = require('./environments/server');
+const playwright = require('playwright');
 
 describe('Page.$eval', function() {
   it('should work with css selector', async({page, server}) => {

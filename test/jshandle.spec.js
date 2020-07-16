@@ -15,38 +15,40 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+const {WIN, LINUX, MAC, HEADLESS} = utils = require('./utils');
+const {FIREFOX, CHROMIUM, WEBKIT} = require('playwright-runner');
+const {it} = require('./environments/server');
 
 describe('Page.evaluateHandle', function() {
-  it('should work', async({page, server}) => {
+  it('should work', async ({page, server}) => {
     const windowHandle = await page.evaluateHandle(() => window);
     expect(windowHandle).toBeTruthy();
   });
-  it('should accept object handle as an argument', async({page, server}) => {
+  it('should accept object handle as an argument', async ({page, server}) => {
     const navigatorHandle = await page.evaluateHandle(() => navigator);
     const text = await page.evaluate(e => e.userAgent, navigatorHandle);
     expect(text).toContain('Mozilla');
   });
-  it('should accept object handle to primitive types', async({page, server}) => {
+  it('should accept object handle to primitive types', async ({page, server}) => {
     const aHandle = await page.evaluateHandle(() => 5);
     const isFive = await page.evaluate(e => Object.is(e, 5), aHandle);
     expect(isFive).toBeTruthy();
   });
-  it('should accept nested handle', async({page, server}) => {
+  it('should accept nested handle', async ({page, server}) => {
     const foo = await page.evaluateHandle(() => ({ x: 1, y: 'foo' }));
     const result = await page.evaluate(({ foo }) => {
       return foo;
     }, { foo });
     expect(result).toEqual({ x: 1, y: 'foo' });
   });
-  it('should accept nested window handle', async({page, server}) => {
+  it('should accept nested window handle', async ({page, server}) => {
     const foo = await page.evaluateHandle(() => window);
     const result = await page.evaluate(({ foo }) => {
       return foo === window;
     }, { foo });
     expect(result).toBe(true);
   });
-  it('should accept multiple nested handles', async({page, server}) => {
+  it('should accept multiple nested handles', async ({page, server}) => {
     const foo = await page.evaluateHandle(() => ({ x: 1, y: 'foo' }));
     const bar = await page.evaluateHandle(() => 5);
     const baz = await page.evaluateHandle(() => (['baz']));
@@ -58,25 +60,25 @@ describe('Page.evaluateHandle', function() {
       a2: { bar: 5, arr: [{ baz: ['baz'] }] }
     });
   });
-  it('should throw for circular objects', async({page, server}) => {
+  it('should throw for circular objects', async ({page, server}) => {
     const a = { x: 1 };
     a.y = a;
     const error = await page.evaluate(x => x, a).catch(e => e);
     expect(error.message).toBe('Argument is a circular structure');
   });
-  it('should accept same handle multiple times', async({page, server}) => {
+  it('should accept same handle multiple times', async ({page, server}) => {
     const foo = await page.evaluateHandle(() => 1);
     expect(await page.evaluate(x => x, { foo, bar: [foo], baz: { foo }})).toEqual({ foo: 1, bar: [1], baz: { foo: 1 } });
   });
-  it('should accept same nested object multiple times', async({page, server}) => {
+  it('should accept same nested object multiple times', async ({page, server}) => {
     const foo = { x: 1 };
-    expect(await page.evaluate(x => x, { foo, bar: [foo], baz: { foo }})).toEqual({ foo: { x: 1 }, bar: [{ x : 1 }], baz: { foo: { x : 1 } } });
+    expect(await page.evaluate(x => x, { foo, bar: [foo], baz: { foo }})).toEqual({ foo: { x: 1 }, bar: [{ x: 1 }], baz: { foo: { x: 1 } } });
   });
-  it('should accept object handle to unserializable value', async({page, server}) => {
+  it('should accept object handle to unserializable value', async ({page, server}) => {
     const aHandle = await page.evaluateHandle(() => Infinity);
     expect(await page.evaluate(e => Object.is(e, Infinity), aHandle)).toBe(true);
   });
-  it('should pass configurable args', async({page, server}) => {
+  it('should pass configurable args', async ({page, server}) => {
     const result = await page.evaluate(arg => {
       if (arg.foo !== 42)
         throw new Error('Not a 42');
@@ -90,7 +92,7 @@ describe('Page.evaluateHandle', function() {
     }, { foo: 42 });
     expect(result).toEqual({});
   });
-  it('should work with primitives', async({page, server}) => {
+  it('should work with primitives', async ({page, server}) => {
     const aHandle = await page.evaluateHandle(() => {
       window.FOO = 123;
       return window;
@@ -100,7 +102,7 @@ describe('Page.evaluateHandle', function() {
 });
 
 describe('JSHandle.getProperty', function() {
-  it('should work', async({page, server}) => {
+  it('should work', async ({page, server}) => {
     const aHandle = await page.evaluateHandle(() => ({
       one: 1,
       two: 2,
@@ -109,7 +111,7 @@ describe('JSHandle.getProperty', function() {
     const twoHandle = await aHandle.getProperty('two');
     expect(await twoHandle.jsonValue()).toEqual(2);
   });
-  it('should work with undefined, null, and empty', async({page, server}) => {
+  it('should work with undefined, null, and empty', async ({page, server}) => {
     const aHandle = await page.evaluateHandle(() => ({
       undefined: undefined,
       null: null,
@@ -121,7 +123,7 @@ describe('JSHandle.getProperty', function() {
     const emptyhandle = await aHandle.getProperty('empty');
     expect(String(await emptyhandle.jsonValue())).toEqual('undefined');
   });
-  it('should work with unserializable values', async({page, server}) => {
+  it('should work with unserializable values', async ({page, server}) => {
     const aHandle = await page.evaluateHandle(() => ({
       infinity: Infinity,
       nInfinity: -Infinity,
@@ -140,17 +142,17 @@ describe('JSHandle.getProperty', function() {
 });
 
 describe('JSHandle.jsonValue', function() {
-  it('should work', async({page, server}) => {
+  it('should work', async ({page, server}) => {
     const aHandle = await page.evaluateHandle(() => ({foo: 'bar'}));
     const json = await aHandle.jsonValue();
     expect(json).toEqual({foo: 'bar'});
   });
-  it('should work with dates', async({page, server}) => {
+  it('should work with dates', async ({page, server}) => {
     const dateHandle = await page.evaluateHandle(() => new Date('2017-09-26T00:00:00.000Z'));
     const json = await dateHandle.jsonValue();
     expect(json instanceof Date).toBeTruthy();
   });
-  it('should throw for circular objects', async({page, server}) => {
+  it('should throw for circular objects', async ({page, server}) => {
     const windowHandle = await page.evaluateHandle('window');
     let error = null;
     await windowHandle.jsonValue().catch(e => error = e);
@@ -159,7 +161,7 @@ describe('JSHandle.jsonValue', function() {
 });
 
 describe('JSHandle.getProperties', function() {
-  it('should work', async({page, server}) => {
+  it('should work', async ({page, server}) => {
     const aHandle = await page.evaluateHandle(() => ({
       foo: 'bar'
     }));
@@ -168,12 +170,12 @@ describe('JSHandle.getProperties', function() {
     expect(foo).toBeTruthy();
     expect(await foo.jsonValue()).toBe('bar');
   });
-  it('should return empty map for non-objects', async({page, server}) => {
+  it('should return empty map for non-objects', async ({page, server}) => {
     const aHandle = await page.evaluateHandle(() => 123);
     const properties = await aHandle.getProperties();
     expect(properties.size).toBe(0);
   });
-  it('should return even non-own properties', async({page, server}) => {
+  it('should return even non-own properties', async ({page, server}) => {
     const aHandle = await page.evaluateHandle(() => {
       class A {
         constructor() {
@@ -195,24 +197,24 @@ describe('JSHandle.getProperties', function() {
 });
 
 describe('JSHandle.asElement', function() {
-  it('should work', async({page, server}) => {
+  it('should work', async ({page, server}) => {
     const aHandle = await page.evaluateHandle(() => document.body);
     const element = aHandle.asElement();
     expect(element).toBeTruthy();
   });
-  it('should return null for non-elements', async({page, server}) => {
+  it('should return null for non-elements', async ({page, server}) => {
     const aHandle = await page.evaluateHandle(() => 2);
     const element = aHandle.asElement();
     expect(element).toBeFalsy();
   });
-  it('should return ElementHandle for TextNodes', async({page, server}) => {
+  it('should return ElementHandle for TextNodes', async ({page, server}) => {
     await page.setContent('<div>ee!</div>');
     const aHandle = await page.evaluateHandle(() => document.querySelector('div').firstChild);
     const element = aHandle.asElement();
     expect(element).toBeTruthy();
     expect(await page.evaluate(e => e.nodeType === HTMLElement.TEXT_NODE, element)).toBeTruthy();
   });
-  it('should work with nullified Node', async({page, server}) => {
+  it('should work with nullified Node', async ({page, server}) => {
     await page.setContent('<section>test</section>');
     await page.evaluate(() => delete Node);
     const handle = await page.evaluateHandle(() => document.querySelector('section'));
@@ -222,23 +224,23 @@ describe('JSHandle.asElement', function() {
 });
 
 describe('JSHandle.toString', function() {
-  it('should work for primitives', async({page, server}) => {
+  it('should work for primitives', async ({page, server}) => {
     const numberHandle = await page.evaluateHandle(() => 2);
     expect(numberHandle.toString()).toBe('JSHandle@2');
     const stringHandle = await page.evaluateHandle(() => 'a');
     expect(stringHandle.toString()).toBe('JSHandle@a');
   });
-  it('should work for complicated objects', async({page, server}) => {
+  it('should work for complicated objects', async ({page, server}) => {
     const aHandle = await page.evaluateHandle(() => window);
     expect(aHandle.toString()).toBe('JSHandle@object');
   });
-  it('should work for promises', async({page, server}) => {
+  it('should work for promises', async ({page, server}) => {
     // wrap the promise in an object, otherwise we will await.
     const wrapperHandle = await page.evaluateHandle(() => ({b: Promise.resolve(123)}));
     const bHandle = await wrapperHandle.getProperty('b');
     expect(bHandle.toString()).toBe('JSHandle@promise');
   });
-  it('should work with different subtypes', async({page, server}) => {
+  it('should work with different subtypes', async ({page, server}) => {
     expect((await page.evaluateHandle('(function(){})')).toString()).toBe('JSHandle@function');
     expect((await page.evaluateHandle('12')).toString()).toBe('JSHandle@12');
     expect((await page.evaluateHandle('true')).toString()).toBe('JSHandle@true');

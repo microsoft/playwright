@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, WIN} = utils.testOptions(browserType);
+const {FIREFOX, CHROMIUM, WEBKIT} = require('playwright-runner');
+const {it} = require('./environments/server');
+const {WIN, USES_HOOKS, CHANNEL} = utils = require('./utils');
 
 describe('Page.dispatchEvent(click)', function() {
-  it('should dispatch click event', async({page, server}) => {
+  it('should dispatch click event', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.dispatchEvent('button', 'click');
     expect(await page.evaluate(() => result)).toBe('Clicked');
   });
-  it('should dispatch click event properties', async({page, server}) => {
+  it('should dispatch click event properties', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.dispatchEvent('button', 'click');
     expect(await page.evaluate(() => bubbles)).toBeTruthy();
     expect(await page.evaluate(() => cancelable)).toBeTruthy();
     expect(await page.evaluate(() => composed)).toBeTruthy();
   });
-  it('should dispatch click svg', async({page, server}) => {
+  it('should dispatch click svg', async ({page, server}) => {
     await page.setContent(`
       <svg height="100" width="100">
         <circle onclick="javascript:window.__CLICKED=42" cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
@@ -39,7 +40,7 @@ describe('Page.dispatchEvent(click)', function() {
     await page.dispatchEvent('circle', 'click');
     expect(await page.evaluate(() => window.__CLICKED)).toBe(42);
   });
-  it('should dispatch click on a span with an inline element inside', async({page, server}) => {
+  it('should dispatch click on a span with an inline element inside', async ({page, server}) => {
     await page.setContent(`
       <style>
       span::before {
@@ -51,21 +52,21 @@ describe('Page.dispatchEvent(click)', function() {
     await page.dispatchEvent('span', 'click');
     expect(await page.evaluate(() => window.CLICKED)).toBe(42);
   });
-  it('should dispatch click after navigation ', async({page, server}) => {
+  it('should dispatch click after navigation ', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.dispatchEvent('button', 'click');
     await page.goto(server.PREFIX + '/input/button.html');
     await page.dispatchEvent('button', 'click');
     expect(await page.evaluate(() => result)).toBe('Clicked');
   });
-  it('should dispatch click after a cross origin navigation ', async({page, server}) => {
+  it('should dispatch click after a cross origin navigation ', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.dispatchEvent('button', 'click');
     await page.goto(server.CROSS_PROCESS_PREFIX + '/input/button.html');
     await page.dispatchEvent('button', 'click');
     expect(await page.evaluate(() => result)).toBe('Clicked');
   });
-  it('should not fail when element is blocked on hover', async({page, server}) => {
+  it('should not fail when element is blocked on hover', async ({page, server}) => {
     await page.setContent(`<style>
       container { display: block; position: relative; width: 200px; height: 50px; }
       div, button { position: absolute; left: 0; top: 0; bottom: 0; right: 0; }
@@ -79,7 +80,7 @@ describe('Page.dispatchEvent(click)', function() {
     await page.dispatchEvent('button', 'click');
     expect(await page.evaluate(() => window.clicked)).toBeTruthy();
   });
-  it('should dispatch click when node is added in shadow dom', async({page, server}) => {
+  it('should dispatch click when node is added in shadow dom', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const watchdog = page.dispatchEvent('span', 'click');
     await page.evaluate(() => {
@@ -97,19 +98,19 @@ describe('Page.dispatchEvent(click)', function() {
     await watchdog;
     expect(await page.evaluate(() => window.clicked)).toBe(true);
   });
-  it('should be atomic', async({page}) => {
+  it('should be atomic', async ({page}) => {
     const createDummySelector = () => ({
       create(root, target) {},
       query(root, selector) {
         const result = root.querySelector(selector);
         if (result)
-          Promise.resolve().then(() => result.onclick = "");
+          Promise.resolve().then(() => result.onclick = '');
         return result;
       },
       queryAll(root, selector) {
         const result = Array.from(root.querySelectorAll(selector));
         for (const e of result)
-          Promise.resolve().then(() => result.onclick = "");
+          Promise.resolve().then(() => result.onclick = '');
         return result;
       }
     });
@@ -121,7 +122,7 @@ describe('Page.dispatchEvent(click)', function() {
 });
 
 describe('Page.dispatchEvent(drag)', function() {
-  it.fail(WEBKIT)('should dispatch drag drop events', async({page, server}) => {
+  it.todo(WEBKIT)('should dispatch drag drop events', async ({page, server}) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
     const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
     await page.dispatchEvent('#source', 'dragstart', { dataTransfer });
@@ -133,7 +134,7 @@ describe('Page.dispatchEvent(drag)', function() {
 });
 
 describe('ElementHandle.dispatchEvent(click)', function() {
-  it('should dispatch click event', async({page, server}) => {
+  it('should dispatch click event', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     const button = await page.$('button');
     await button.dispatchEvent('click');

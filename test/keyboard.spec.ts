@@ -14,10 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import utils from './utils';
-import type { Page } from '..';
+import {MAC, attachFrame} from './utils';
+import type { Page } from 'playwright';
+import {FIREFOX, CHROMIUM, WEBKIT} from 'playwright-runner';
+import {it} from './environments/server';
 
-const {FFOX, WEBKIT, CHROMIUM, MAC} = utils.testOptions(browserType);
+// keyboard.html
+declare function getResult(): string;
+
 describe('Keyboard', function() {
   it('should type into a textarea', async ({page, server}) => {
     await page.evaluate(() => {
@@ -79,7 +83,7 @@ describe('Keyboard', function() {
     await page.keyboard.insertText('hello world');
     expect(await events.jsonValue()).toEqual(['input']);
   });
-  it.fail(FFOX && MAC)('should report shiftKey', async ({page, server}) => {
+  it.todo(FIREFOX && MAC)('should report shiftKey', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/keyboard.html');
     const keyboard = page.keyboard;
     const codeForKey = {'Shift': 16, 'Alt': 18, 'Control': 17};
@@ -259,10 +263,10 @@ describe('Keyboard', function() {
     async function testEnterKey(key, expectedKey, expectedCode) {
       await page.keyboard.press(key);
       const lastEvent = await lastEventHandle.jsonValue();
-      expect(lastEvent.key).toBe(expectedKey, `${JSON.stringify(key)} had the wrong key: ${lastEvent.key}`);
-      expect(lastEvent.code).toBe(expectedCode, `${JSON.stringify(key)} had the wrong code: ${lastEvent.code}`);
+      expect(lastEvent.key).toBe(expectedKey);
+      expect(lastEvent.code).toBe(expectedCode);
       const value = await page.$eval('textarea', t => t.value);
-      expect(value).toBe('\n', `${JSON.stringify(key)} failed to create a newline: ${JSON.stringify(value)}`);
+      expect(value).toBe('\n');
       await page.$eval('textarea', t => t.value = '');
     }
   });
@@ -283,7 +287,7 @@ describe('Keyboard', function() {
   });
   it('should type emoji into an iframe', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
-    await utils.attachFrame(page, 'emoji-test', server.PREFIX + '/input/textarea.html');
+    await attachFrame(page, 'emoji-test', server.PREFIX + '/input/textarea.html');
     const frame = page.frames()[1];
     const textarea = await frame.$('textarea');
     await textarea.type('👹 Tokyo street Japan 🇯🇵');
@@ -321,17 +325,17 @@ describe('Keyboard', function() {
     const lastEvent = await captureLastKeydown(page);
     await page.keyboard.press('Meta');
     const {key, code, metaKey} = await lastEvent.jsonValue();
-    if (FFOX && !MAC)
+    if (FIREFOX && !MAC)
       expect(key).toBe('OS');
     else
       expect(key).toBe('Meta');
 
-    if (FFOX)
+    if (FIREFOX)
       expect(code).toBe('OSLeft');
     else
       expect(code).toBe('MetaLeft');
 
-    if (FFOX && !MAC)
+    if (FIREFOX && !MAC)
       expect(metaKey).toBe(false);
     else
       expect(metaKey).toBe(true);

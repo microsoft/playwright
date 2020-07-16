@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+const {WIN, LINUX, MAC, HEADLESS, USES_HOOKS} = utils = require('./utils');
+const {FIREFOX, CHROMIUM, WEBKIT} = require('playwright-runner');
+const {it} = require('./environments/server');
 
 describe('Workers', function() {
   it('Page.workers', async function({page, server}) {
@@ -128,7 +130,7 @@ describe('Workers', function() {
     expect(response.request()).toBe(request);
     expect(response.ok()).toBe(true);
   });
-  it('should format number using context locale', async({browser, server}) => {
+  it('should format number using context locale', async ({browser, server}) => {
     const context = await browser.newContext({ locale: 'ru-RU' });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);

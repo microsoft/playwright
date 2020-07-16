@@ -16,30 +16,33 @@
 
 const path = require('path');
 const utils = require('../utils');
-const {makeUserDataDir, removeUserDataDir} = utils;
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = utils.testOptions(browserType);
+const {WIN, USES_HOOKS, CHANNEL, makeUserDataDir, removeUserDataDir} = utils;
+const {FIREFOX, CHROMIUM, WEBKIT, launchEnv} = require('playwright-runner');
+const {it} = launchEnv;
+if (!CHROMIUM)
+  return;
 
 describe('launcher', function() {
-  it('should throw with remote-debugging-pipe argument', async({browserType, defaultBrowserOptions}) => {
-    const options = Object.assign({}, defaultBrowserOptions);
+  it('should throw with remote-debugging-pipe argument', async ({launcher}) => {
+    const options = {};
     options.args = ['--remote-debugging-pipe'].concat(options.args || []);
-    const error = await browserType.launchServer(options).catch(e => e);
+    const error = await launcher.launchServer(options).catch(e => e);
     expect(error.message).toContain('Playwright manages remote debugging connection itself');
   });
-  it('should not throw with remote-debugging-port argument', async({browserType, defaultBrowserOptions}) => {
-    const options = Object.assign({}, defaultBrowserOptions);
+  it('should not throw with remote-debugging-port argument', async ({launcher}) => {
+    const options = {};
     options.args = ['--remote-debugging-port=0'].concat(options.args || []);
-    const browser = await browserType.launchServer(options);
+    const browser = await launcher.launchServer(options);
     await browser.close();
   });
-  it.skip(USES_HOOKS)('should open devtools when "devtools: true" option is given', async({browserType, defaultBrowserOptions}) => {
+  it.skip(USES_HOOKS)('should open devtools when "devtools: true" option is given', async ({launcher}) => {
     let devtoolsCallback;
     const devtoolsPromise = new Promise(f => devtoolsCallback = f);
     const __testHookForDevTools = devtools => devtools.__testHookOnBinding = parsed => {
       if (parsed.method === 'getPreferences')
         devtoolsCallback();
     };
-    const browser = await browserType.launch({...defaultBrowserOptions, headless: false, devtools: true, __testHookForDevTools});
+    const browser = await launcher.launch({ headless: false, devtools: true, __testHookForDevTools});
     const context = await browser.newContext();
     await Promise.all([
       devtoolsPromise,
@@ -50,21 +53,21 @@ describe('launcher', function() {
 });
 
 describe('extensions', () => {
-  it('should return background pages', async({browserType, defaultBrowserOptions}) => {
+  it('should return background pages', async ({launcher}) => {
     const userDataDir = await makeUserDataDir();
     const extensionPath = path.join(__dirname, '..', 'assets', 'simple-extension');
-    const extensionOptions = {...defaultBrowserOptions,
+    const extensionOptions = {
       headless: false,
       args: [
         `--disable-extensions-except=${extensionPath}`,
         `--load-extension=${extensionPath}`,
       ],
     };
-    const context = await browserType.launchPersistentContext(userDataDir, extensionOptions);
+    const context = await launcher.launchPersistentContext(userDataDir, extensionOptions);
     const backgroundPages = context.backgroundPages();
-    let backgroundPage = backgroundPages.length
-        ? backgroundPages[0]
-        : await context.waitForEvent('backgroundpage');
+    const backgroundPage = backgroundPages.length
+      ? backgroundPages[0]
+      : await context.waitForEvent('backgroundpage');
     expect(backgroundPage).toBeTruthy();
     expect(context.backgroundPages()).toContain(backgroundPage);
     expect(context.pages()).not.toContain(backgroundPage);
@@ -74,13 +77,13 @@ describe('extensions', () => {
 });
 
 describe('BrowserContext', function() {
-  it('should not create pages automatically', async ({browserType, defaultBrowserOptions}) => {
-    const browser = await browserType.launch(defaultBrowserOptions);
+  it('should not create pages automatically', async ({launcher}) => {
+    const browser = await launcher.launch();
     const browserSession = await browser.newBrowserCDPSession();
     const targets = [];
     browserSession.on('Target.targetCreated', async ({targetInfo}) => {
       if (targetInfo.type !== 'browser')
-          targets.push(targetInfo);
+        targets.push(targetInfo);
     });
     await browserSession.send('Target.setDiscoverTargets', { discover: true });
     await browser.newContext();

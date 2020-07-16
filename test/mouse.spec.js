@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = require('./utils').testOptions(browserType);
+const {WIN, LINUX, MAC, HEADLESS} = utils = require('./utils');
+const {FIREFOX, CHROMIUM, WEBKIT} = require('playwright-runner');
+const {it} = require('./environments/server');
 
 function dimensions() {
   const rect = document.querySelector('textarea').getBoundingClientRect();
@@ -28,8 +30,8 @@ function dimensions() {
 }
 
 describe('Mouse', function() {
-  // Occasionally times out on FFOX on Windows: https://github.com/microsoft/playwright/pull/1911/checks?check_run_id=607149016
-  it.fail(FFOX && WIN)('should click the document', async({page, server}) => {
+  // Occasionally times out on FIREFOX on Windows: https://github.com/microsoft/playwright/pull/1911/checks?check_run_id=607149016
+  it.todo(FIREFOX && WIN)('should click the document', async ({page, server}) => {
     await page.evaluate(() => {
       window.clickPromise = new Promise(resolve => {
         document.addEventListener('click', event => {
@@ -53,7 +55,7 @@ describe('Mouse', function() {
     expect(event.isTrusted).toBe(true);
     expect(event.button).toBe(0);
   });
-  it('should select the text with mouse', async({page, server}) => {
+  it('should select the text with mouse', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.focus('textarea');
     const text = 'This is the text that we are going to try to select. Let\'s see how it goes.';
@@ -71,7 +73,7 @@ describe('Mouse', function() {
       return textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
     })).toBe(text);
   });
-  it('should trigger hover state', async({page, server}) => {
+  it('should trigger hover state', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/scrollable.html');
     await page.hover('#button-6');
     expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-6');
@@ -80,18 +82,18 @@ describe('Mouse', function() {
     await page.hover('#button-91');
     expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-91');
   });
-  it('should trigger hover state with removed window.Node', async({page, server}) => {
+  it('should trigger hover state with removed window.Node', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/scrollable.html');
     await page.evaluate(() => delete window.Node);
     await page.hover('#button-6');
     expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-6');
   });
-  it('should set modifier keys on click', async({page, server}) => {
+  it('should set modifier keys on click', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/scrollable.html');
     await page.evaluate(() => document.querySelector('#button-3').addEventListener('mousedown', e => window.lastEvent = e, true));
     const modifiers = {'Shift': 'shiftKey', 'Control': 'ctrlKey', 'Alt': 'altKey', 'Meta': 'metaKey'};
     // In Firefox, the Meta modifier only exists on Mac
-    if (FFOX && !MAC)
+    if (FIREFOX && !MAC)
       delete modifiers['Meta'];
     for (const modifier in modifiers) {
       await page.keyboard.down(modifier);
@@ -106,7 +108,7 @@ describe('Mouse', function() {
         throw new Error(modifiers[modifier] + ' should be false');
     }
   });
-  it('should tween mouse movement', async({page, server}) => {
+  it('should tween mouse movement', async ({page, server}) => {
     // The test becomes flaky on WebKit without next line.
     if (WEBKIT)
       await page.evaluate(() => new Promise(requestAnimationFrame));
@@ -126,7 +128,7 @@ describe('Mouse', function() {
       [200, 300]
     ]);
   });
-  it.skip(FFOX)('should work with mobile viewports and cross process navigations', async({browser, server}) => {
+  it.skip(FIREFOX)('should work with mobile viewports and cross process navigations', async ({browser, server}) => {
     // @see https://crbug.com/929806
     const context = await browser.newContext({ viewport: {width: 360, height: 640, isMobile: true} });
     const page = await context.newPage();
@@ -144,13 +146,13 @@ describe('Mouse', function() {
     await context.close();
   });
   xdescribe('Drag and Drop', function() {
-    it('should work', async({server, page}) => {
+    it('should work', async ({server, page}) => {
       await page.goto(server.PREFIX + '/drag-n-drop.html');
       await page.hover('#source');
       await page.mouse.down();
       await page.hover('#target');
       await page.mouse.up();
       expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true, 'could not find source in target');
-    })
+    });
   });
 });

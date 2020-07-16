@@ -15,17 +15,20 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+const {WIN, LINUX, MAC, HEADLESS, USES_HOOKS, CHANNEL} = utils = require('./utils');
+const {FIREFOX, CHROMIUM, WEBKIT, launchEnv} = require('playwright-runner');
+const {serverEnv} = require('./environments/server');
+const {it} = launchEnv;
 
 describe('BrowserContext', function() {
-  it('should work across sessions', async ({browserType, defaultBrowserOptions}) => {
-    const browserServer = await browserType.launchServer(defaultBrowserOptions);
-    const browser1 = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
+  it('should work across sessions', async ({launcher}) => {
+    const browserServer = await launcher.launchServer();
+    const browser1 = await launcher.connect({ wsEndpoint: browserServer.wsEndpoint() });
     expect(browser1.contexts().length).toBe(0);
     await browser1.newContext();
     expect(browser1.contexts().length).toBe(1);
 
-    const browser2 = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
+    const browser2 = await launcher.connect({ wsEndpoint: browserServer.wsEndpoint() });
     expect(browser2.contexts().length).toBe(0);
     await browser2.newContext();
     expect(browser2.contexts().length).toBe(1);
@@ -41,12 +44,12 @@ describe('BrowserContext', function() {
 });
 
 describe('Browser.Events.disconnected', function() {
-  it.slow()('should be emitted when: browser gets closed, disconnected or underlying websocket gets closed', async ({browserType, defaultBrowserOptions}) => {
-    const browserServer = await browserType.launchServer(defaultBrowserOptions);
-    const originalBrowser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
+  it.slow('should be emitted when: browser gets closed, disconnected or underlying websocket gets closed', async ({launcher}) => {
+    const browserServer = await launcher.launchServer();
+    const originalBrowser = await launcher.connect({ wsEndpoint: browserServer.wsEndpoint() });
     const wsEndpoint = browserServer.wsEndpoint();
-    const remoteBrowser1 = await browserType.connect({ wsEndpoint });
-    const remoteBrowser2 = await browserType.connect({ wsEndpoint });
+    const remoteBrowser1 = await launcher.connect({ wsEndpoint });
+    const remoteBrowser2 = await launcher.connect({ wsEndpoint });
 
     let disconnectedOriginal = 0;
     let disconnectedRemote1 = 0;
@@ -76,11 +79,11 @@ describe('Browser.Events.disconnected', function() {
   });
 });
 
-describe('browserType.connect', function() {
-  it('should be able to connect multiple times to the same browser', async({browserType, defaultBrowserOptions}) => {
-    const browserServer = await browserType.launchServer(defaultBrowserOptions);
-    const browser1 = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
-    const browser2 = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
+describe('launcher.connect', function() {
+  it('should be able to connect multiple times to the same browser', async ({launcher}) => {
+    const browserServer = await launcher.launchServer();
+    const browser1 = await launcher.connect({ wsEndpoint: browserServer.wsEndpoint() });
+    const browser2 = await launcher.connect({ wsEndpoint: browserServer.wsEndpoint() });
     const page1 = await browser1.newPage();
     expect(await page1.evaluate(() => 7 * 8)).toBe(56);
     browser1.close();
@@ -91,15 +94,15 @@ describe('browserType.connect', function() {
     await browserServer._checkLeaks();
     await browserServer.close();
   });
-  it('should not be able to close remote browser', async({browserType, defaultBrowserOptions}) => {
-    const browserServer = await browserType.launchServer(defaultBrowserOptions);
+  it('should not be able to close remote browser', async ({launcher}) => {
+    const browserServer = await launcher.launchServer();
     {
-      const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const remote = await launcher.connect({ wsEndpoint: browserServer.wsEndpoint() });
       await remote.newContext();
       await remote.close();
     }
     {
-      const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const remote = await launcher.connect({ wsEndpoint: browserServer.wsEndpoint() });
       await remote.newContext();
       await remote.close();
     }

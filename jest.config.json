@@ -1,5 +1,0 @@
-{
-  "runner": "./jest-runner.js",
-  "rootDir": "./test/",
-  "testMatch":  ["**/?(*.)spec.[jt]s"]
-}

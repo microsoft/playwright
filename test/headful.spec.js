@@ -14,30 +14,32 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
+const {WIN, LINUX, MAC, HEADLESS} = utils = require('./utils');
+const {FIREFOX, CHROMIUM, WEBKIT, launchEnv} = require('playwright-runner');
 const { makeUserDataDir, removeUserDataDir } = utils;
-const {FFOX, CHROMIUM, WEBKIT, WIN, MAC} = utils.testOptions(browserType);
+const {serverEnv} = require('./environments/server');
+const {it} = serverEnv.mixin(launchEnv);
 
 describe('Headful', function() {
-  it('should have default url when launching browser', async ({browserType, defaultBrowserOptions}) => {
+  it('should have default url when launching browser', async ({launcher}) => {
     const userDataDir = await makeUserDataDir();
-    const browserContext = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, headless: false });
+    const browserContext = await launcher.launchPersistentContext(userDataDir, {headless: false });
     const urls = browserContext.pages().map(page => page.url());
     expect(urls).toEqual(['about:blank']);
     await browserContext.close();
     await removeUserDataDir(userDataDir);
   });
-  it.slow().fail(WIN && CHROMIUM)('headless should be able to read cookies written by headful', async({browserType, defaultBrowserOptions, server}) => {
+  it.slow.todo(WIN && CHROMIUM)('headless should be able to read cookies written by headful', async ({launcher, server}) => {
     // see https://github.com/microsoft/playwright/issues/717
     const userDataDir = await makeUserDataDir();
     // Write a cookie in headful chrome
-    const headfulContext = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, headless: false});
+    const headfulContext = await launcher.launchPersistentContext(userDataDir, {headless: false});
     const headfulPage = await headfulContext.newPage();
     await headfulPage.goto(server.EMPTY_PAGE);
     await headfulPage.evaluate(() => document.cookie = 'foo=true; expires=Fri, 31 Dec 9999 23:59:59 GMT');
     await headfulContext.close();
     // Read the cookie from headless chrome
-    const headlessContext = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, headless: true});
+    const headlessContext = await launcher.launchPersistentContext(userDataDir, {headless: true});
     const headlessPage = await headlessContext.newPage();
     await headlessPage.goto(server.EMPTY_PAGE);
     const cookie = await headlessPage.evaluate(() => document.cookie);
@@ -46,9 +48,9 @@ describe('Headful', function() {
     await removeUserDataDir(userDataDir);
     expect(cookie).toBe('foo=true');
   });
-  it.slow()('should close browser with beforeunload page', async({browserType, defaultBrowserOptions, server}) => {
+  it.slow('should close browser with beforeunload page', async ({launcher, server}) => {
     const userDataDir = await makeUserDataDir();
-    const browserContext = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, headless: false});
+    const browserContext = await launcher.launchPersistentContext(userDataDir, {headless: false});
     const page = await browserContext.newPage();
     await page.goto(server.PREFIX + '/beforeunload.html');
     // We have to interact with a page so that 'beforeunload' handlers
@@ -57,8 +59,8 @@ describe('Headful', function() {
     await browserContext.close();
     await removeUserDataDir(userDataDir);
   });
-  it('should not crash when creating second context', async ({browserType, defaultBrowserOptions, server}) => {
-    const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
+  it('should not crash when creating second context', async ({launcher, server}) => {
+    const browser = await launcher.launch({headless: false });
     {
       const browserContext = await browser.newContext();
       const page = await browserContext.newPage();
@@ -71,23 +73,23 @@ describe('Headful', function() {
     }
     await browser.close();
   });
-  it('should click background tab', async({browserType, defaultBrowserOptions, server}) => {
-    const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
+  it('should click background tab', async ({launcher, server}) => {
+    const browser = await launcher.launch({headless: false });
     const page = await browser.newPage();
     await page.setContent(`<button>Hello</button><a target=_blank href="${server.EMPTY_PAGE}">empty.html</a>`);
     await page.click('a');
     await page.click('button');
     await browser.close();
   });
-  it('should close browser after context menu was triggered', async({browserType, defaultBrowserOptions, server}) => {
-    const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
+  it('should close browser after context menu was triggered', async ({launcher, server}) => {
+    const browser = await launcher.launch({headless: false });
     const page = await browser.newPage();
     await page.goto(server.PREFIX + '/grid.html');
     await page.click('body', {button: 'right'});
     await browser.close();
   });
-  it('should(not) block third party cookies', async({browserType, defaultBrowserOptions, server}) => {
-    const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
+  it('should(not) block third party cookies', async ({launcher, server}) => {
+    const browser = await launcher.launch({headless: false });
     const page = await browser.newPage();
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(src => {
@@ -104,20 +106,20 @@ describe('Headful', function() {
       return document.cookie;
     });
     await page.waitForTimeout(2000);
-    const allowsThirdParty = CHROMIUM || FFOX;
+    const allowsThirdParty = CHROMIUM || FIREFOX;
     expect(documentCookie).toBe(allowsThirdParty ? 'username=John Doe' : '');
     const cookies = await page.context().cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
     if (allowsThirdParty) {
       expect(cookies).toEqual([
         {
-          "domain": "127.0.0.1",
-          "expires": -1,
-          "httpOnly": false,
-          "name": "username",
-          "path": "/",
-          "sameSite": "None",
-          "secure": false,
-          "value": "John Doe"
+          'domain': '127.0.0.1',
+          'expires': -1,
+          'httpOnly': false,
+          'name': 'username',
+          'path': '/',
+          'sameSite': 'None',
+          'secure': false,
+          'value': 'John Doe'
         }
       ]);
     } else {
@@ -125,9 +127,9 @@ describe('Headful', function() {
     }
     await browser.close();
   });
-  it.fail(WEBKIT)('should not override viewport size when passed null', async function({browserType, defaultBrowserOptions, server}) {
+  it.todo(WEBKIT)('should not override viewport size when passed null', async function({launcher, server}) {
     // Our WebKit embedder does not respect window features.
-    const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
+    const browser = await launcher.launch({headless: false });
     const context = await browser.newContext({ viewport: null });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
