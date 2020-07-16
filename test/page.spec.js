@@ -467,6 +467,21 @@ describe('Page.exposeFunction', function() {
     });
     expect(result).toBe(36);
   });
+  it('should work with handles and complex objects', async({page, server}) => {
+    const fooHandle = await page.evaluateHandle(() => {
+      window.fooValue = { bar: 2 };
+      return window.fooValue;
+    });
+    await page.exposeFunction('handle', () => {
+      return [{ foo: fooHandle }];
+    });
+    const equals = await page.evaluate(async function() {
+      const value = await handle();
+      const [{ foo }] = value;
+      return foo === window.fooValue;
+    });
+    expect(equals).toBe(true);
+  });
   it('should throw exception in page context', async({page, server}) => {
     await page.exposeFunction('woof', function() {
       throw new Error('WOOF WOOF');

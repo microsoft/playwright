@@ -32,7 +32,7 @@ import { ElementHandle } from './elementHandle';
 import { Worker } from './worker';
 import { Frame, FunctionWithSource, GotoOptions } from './frame';
 import { Keyboard, Mouse } from './input';
-import { Func1, FuncOn, SmartHandle } from './jsHandle';
+import { Func1, FuncOn, SmartHandle, serializeArgument } from './jsHandle';
 import { Request, Response, Route, RouteHandler } from './network';
 import { FileChooser } from './fileChooser';
 import { Buffer } from 'buffer';
@@ -535,7 +535,8 @@ export class BindingCall extends ChannelOwner<BindingCallChannel, BindingCallIni
         page: frame._page!,
         frame
       };
-      this._channel.resolve({ result: await func(source, ...this._initializer.args) });
+      const result = await func(source, ...this._initializer.args);
+      this._channel.resolve({ result: serializeArgument(result) });
     } catch (e) {
       this._channel.reject({ error: serializeError(e) });
     }
