@@ -24,6 +24,7 @@ import { ElectronEvents } from '../../server/electron';
 import { TimeoutSettings } from '../../timeoutSettings';
 import { Waiter } from './waiter';
 import { TimeoutError } from '../../errors';
+import { Events } from '../../events';
 
 export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer> {
   static from(electron: ElectronChannel): Electron {
@@ -53,10 +54,12 @@ export class ElectronApplication extends ChannelOwner<ElectronApplicationChannel
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: ElectronApplicationInitializer) {
     super(parent, type, guid, initializer);
     this._context = BrowserContext.from(initializer.context);
-    this._channel.on('window', ({page}) => {
+    this._channel.on('window', ({ page, browserWindow }) => {
       const window = Page.from(page);
+      (window as any).browserWindow = JSHandle.from(browserWindow);
       this._windows.add(window);
       this.emit(ElectronEvents.ElectronApplication.Window, window);
+      window.once(Events.Page.Close, () => this._windows.delete(window));
     });
     this._channel.on('close', () => {
       this.emit(ElectronEvents.ElectronApplication.Close);

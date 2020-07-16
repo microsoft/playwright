@@ -18,7 +18,7 @@
 const path = require('path');
 const util = require('util');
 const vm = require('vm');
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = require('./utils').testOptions(browserType);
 
 describe('Page.close', function() {
   it('should reject all promises when page is closed', async({context}) => {
@@ -101,7 +101,7 @@ describe('Page.Events.Load', function() {
   });
 });
 
-describe.skip(USES_HOOKS)('Async stacks', () => {
+describe.skip(CHANNEL)('Async stacks', () => {
   it('should work', async({page, server}) => {
     server.setRoute('/empty.html', (req, res) => {
       req.socket.end();

@@ -132,6 +132,10 @@ export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
       errorText: this._failureText
     };
   }
+
+  _finalRequest(): Request {
+    return this._redirectedTo ? this._redirectedTo._finalRequest() : this;
+  }
 }
 
 export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {

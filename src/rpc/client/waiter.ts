@@ -15,14 +15,17 @@
  */
 
 import { EventEmitter } from 'events';
+import { rewriteErrorMessage } from '../../utils/stackTrace';
 
 export class Waiter {
   private _dispose: (() => void)[] = [];
   private _failures: Promise<any>[] = [];
+  // TODO: can/should we move these logs into wrapApiCall?
+  private _logs: string[] = [];
 
   async waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean): Promise<T> {
     const { promise, dispose } = waitForEvent(emitter, event, predicate);
-    return this._wait(promise, dispose);
+    return this.waitForPromise(promise, dispose);
   }
 
   rejectOnEvent<T = void>(emitter: EventEmitter, event: string, error: Error, predicate?: (arg: T) => boolean) {
@@ -42,7 +45,7 @@ export class Waiter {
       dispose();
   }
 
-  private async _wait<T>(promise: Promise<T>, dispose?: () => void): Promise<T> {
+  async waitForPromise<T>(promise: Promise<T>, dispose?: () => void): Promise<T> {
     try {
       const result = await Promise.race([promise, ...this._failures]);
       if (dispose)
@@ -52,8 +55,13 @@ export class Waiter {
       if (dispose)
         dispose();
       this.dispose();
+      rewriteErrorMessage(e, e.message + formatLogRecording(this._logs) + kLoggingNote);
       throw e;
     }
+  }
+
+  log(s: string) {
+    this._logs.push(s);
   }
 
   private _rejectOn(promise: Promise<any>, dispose?: () => void) {
@@ -88,4 +96,16 @@ function waitForTimeout(timeout: number): { promise: Promise<void>, dispose: () 
   const promise = new Promise<void>(resolve => timeoutId = setTimeout(resolve, timeout));
   const dispose = () => clearTimeout(timeoutId);
   return { promise, dispose };
+}
+
+const kLoggingNote = `\nNote: use DEBUG=pw:api environment variable and rerun to capture Playwright logs.`;
+
+function formatLogRecording(log: string[]): string {
+  if (!log.length)
+    return '';
+  const header = ` logs `;
+  const headerLength = 60;
+  const leftLength = (headerLength - header.length) / 2;
+  const rightLength = headerLength - header.length - leftLength;
+  return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
 }

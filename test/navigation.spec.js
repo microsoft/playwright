@@ -460,18 +460,14 @@ describe('Page.goto', function() {
         return Promise.all([
           server.waitForRequest(suffix),
           frame._page.waitForRequest(server.PREFIX + suffix),
-        ])
+        ]);
       }
       let responses = {};
       // Hold on to a bunch of requests without answering.
       server.setRoute('/fetch-request-a.js', (req, res) => responses.a = res);
-      const initialFetchResourcesRequested = Promise.all([
-        waitForRequest('/fetch-request-a.js'),
-      ]);
-
-      let secondFetchResourceRequested;
+      const firstFetchResourceRequested = waitForRequest('/fetch-request-a.js');
       server.setRoute('/fetch-request-d.js', (req, res) => responses.d = res);
-      secondFetchResourceRequested = waitForRequest('/fetch-request-d.js');
+      const secondFetchResourceRequested = waitForRequest('/fetch-request-d.js');
 
       const waitForLoadPromise = isSetContent ? Promise.resolve() : frame.waitForNavigation({ waitUntil: 'load' });
 
@@ -487,8 +483,8 @@ describe('Page.goto', function() {
       await waitForLoadPromise;
       expect(actionFinished).toBe(false);
 
-      // Wait for the initial three resources to be requested.
-      await initialFetchResourcesRequested;
+      // Wait for the initial resource to be requested.
+      await firstFetchResourceRequested;
       expect(actionFinished).toBe(false);
 
       expect(responses.a).toBeTruthy();
@@ -564,7 +560,7 @@ describe('Page.goto', function() {
   });
 });
 
-describe.skip(CHANNEL)('Page.waitForNavigation', function() {
+describe('Page.waitForNavigation', function() {
   it('should work', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const [response] = await Promise.all([

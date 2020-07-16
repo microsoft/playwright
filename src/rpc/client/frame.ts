@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import { assertMaxArguments } from '../../helper';
+import { assertMaxArguments, helper } from '../../helper';
 import * as types from '../../types';
-import { FrameChannel, FrameInitializer } from '../channels';
+import { FrameChannel, FrameInitializer, FrameNavigatedEvent } from '../channels';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
@@ -75,6 +75,13 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
       if (event.remove)
         this._loadStates.delete(event.remove);
     });
+    this._channel.on('navigated', event => {
+      this._url = event.url;
+      this._name = event.name;
+      this._eventEmitter.emit('navigated', event);
+      if (!event.error && this._page)
+        this._page.emit(Events.Page.FrameNavigated, this);
+    });
   }
 
   private _apiName(method: string) {
@@ -87,9 +94,48 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
     });
   }
 
+  private _setupNavigationWaiter(): Waiter {
+    const waiter = new Waiter();
+    waiter.rejectOnEvent(this._page!, Events.Page.Close, new Error('Navigation failed because page was closed!'));
+    waiter.rejectOnEvent(this._page!, Events.Page.Crash, new Error('Navigation failed because page crashed!'));
+    waiter.rejectOnEvent<Frame>(this._page!, Events.Page.FrameDetached, new Error('Navigating frame was detached!'), frame => frame === this);
+    return waiter;
+  }
+
   async waitForNavigation(options: types.WaitForNavigationOptions = {}): Promise<network.Response | null> {
     return this._wrapApiCall(this._apiName('waitForNavigation'), async () => {
-      return network.Response.fromNullable((await this._channel.waitForNavigation({ ...options })).response);
+      const waitUntil = verifyLoadState(options.waitUntil === undefined ? 'load' : options.waitUntil);
+      const timeout = this._page!._timeoutSettings.navigationTimeout(options);
+      const waiter = this._setupNavigationWaiter();
+      waiter.rejectOnTimeout(timeout, new TimeoutError(`Timeout ${timeout}ms exceeded.`));
+
+      const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
+      waiter.log(`waiting for navigation${toUrl} until "${waitUntil}"`);
+
+      const navigatedEvent = await waiter.waitForEvent<FrameNavigatedEvent>(this._eventEmitter, 'navigated', event => {
+        // Any failed navigation results in a rejection.
+        if (event.error)
+          return true;
+        waiter.log(`  navigated to "${event.url}"`);
+        return helper.urlMatches(event.url, options.url);
+      });
+      if (navigatedEvent.error) {
+        const e = new Error(navigatedEvent.error);
+        e.stack = '';
+        await waiter.waitForPromise(Promise.reject(e));
+      }
+
+      if (!this._loadStates.has(waitUntil)) {
+        await waiter.waitForEvent<types.LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
+          waiter.log(`  "${s}" event fired`);
+          return s === waitUntil;
+        });
+      }
+
+      const request = navigatedEvent.newDocument ? network.Request.fromNullable(navigatedEvent.newDocument.request || null) : null;
+      const response = request ? await waiter.waitForPromise(request._finalRequest().response()) : null;
+      waiter.dispose();
+      return response;
     });
   }
 
@@ -99,12 +145,12 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
       return;
     return this._wrapApiCall(this._apiName('waitForLoadState'), async () => {
       const timeout = this._page!._timeoutSettings.navigationTimeout(options);
-      const waiter = new Waiter();
-      waiter.rejectOnEvent(this._page!, Events.Page.Close, new Error('Navigation failed because page was closed!'));
-      waiter.rejectOnEvent(this._page!, Events.Page.Crash, new Error('Navigation failed because page crashed!'));
-      waiter.rejectOnEvent<Frame>(this._page!, Events.Page.FrameDetached, new Error('Navigating frame was detached!'), frame => frame === this);
+      const waiter = this._setupNavigationWaiter();
       waiter.rejectOnTimeout(timeout, new TimeoutError(`Timeout ${timeout}ms exceeded.`));
-      await waiter.waitForEvent<types.LifecycleEvent>(this._eventEmitter, 'loadstate', s => s === state);
+      await waiter.waitForEvent<types.LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
+        waiter.log(`  "${s}" event fired`);
+        return s === state;
+      });
       waiter.dispose();
     });
   }

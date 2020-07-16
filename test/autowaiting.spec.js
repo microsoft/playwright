@@ -166,7 +166,7 @@ describe('Auto waiting', () => {
     await page.setContent(`<a href="${server.EMPTY_PAGE}">empty.html</a>`);
     await Promise.all([
       page.click('a').then(() => page.waitForLoadState('load')).then(() => messages.push('clickload')),
-      page.waitForNavigation({ waitUntil: 'domcontentloaded' }).then(() => messages.push('domcontentloaded')),
+      page.waitForEvent('framenavigated').then(() => page.waitForLoadState('domcontentloaded')).then(() => messages.push('domcontentloaded')),
     ]);
     expect(messages.join('|')).toBe('route|domcontentloaded|clickload');
   });

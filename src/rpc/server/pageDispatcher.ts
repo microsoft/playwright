@@ -57,7 +57,6 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     }));
     page.on(Events.Page.FrameAttached, frame => this._onFrameAttached(frame));
     page.on(Events.Page.FrameDetached, frame => this._onFrameDetached(frame));
-    page.on(Events.Page.FrameNavigated, frame => this._onFrameNavigated(frame));
     page.on(Events.Page.Load, () => this._dispatchEvent('load'));
     page.on(Events.Page.PageError, error => this._dispatchEvent('pageError', { error: serializeError(error) }));
     page.on(Events.Page.Popup, page => this._dispatchEvent('popup', { page: lookupDispatcher<PageDispatcher>(page) }));
@@ -217,10 +216,6 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
 
   _onFrameAttached(frame: Frame) {
     this._dispatchEvent('frameAttached', { frame: FrameDispatcher.from(this._scope, frame) });
-  }
-
-  _onFrameNavigated(frame: Frame) {
-    this._dispatchEvent('frameNavigated', { frame: lookupDispatcher<FrameDispatcher>(frame), url: frame.url(), name: frame.name() });
   }
 
   _onFrameDetached(frame: Frame) {
