@@ -26,7 +26,6 @@ const { PlaywrightDispatcher } = require('../../lib/rpc/server/playwrightDispatc
 const { setUseApiName } = require('../../lib/progress');
 
 module.exports = function registerFixtures(global) {
-
   global.registerWorkerFixture('http_server', async ({}, test) => {
     const assetsPath = path.join(__dirname, '..', 'assets');
     const cachedPath = path.join(__dirname, '..', 'assets', 'cached');

@@ -16,7 +16,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, LINUX} = utils.testOptions(browserType);
+const {FFOX, HEADLESS} = testOptions;
 
 describe('BrowserContext({viewport})', function() {
   it('should get the proper default viewport size', async({page, server}) => {
@@ -567,7 +567,7 @@ describe('focus', function() {
     ]);
     expect(active).toEqual(['INPUT', 'TEXTAREA']);
   });
-  it.skip(FFOX && !HEADLESS)('should not affect screenshots', async({page, server, golden}) => {
+  it.skip(FFOX && !HEADLESS)('should not affect screenshots', async({page, server}) => {
     // Firefox headful produces a different image.
     const page2 = await page.context().newPage();
     await Promise.all([
@@ -584,8 +584,8 @@ describe('focus', function() {
       page.screenshot(),
       page2.screenshot(),
     ]);
-    expect(screenshots[0]).toBeGolden(golden('screenshot-sanity.png'));
-    expect(screenshots[1]).toBeGolden(golden('grid-cell-0.png'));
+    expect(screenshots[0]).toMatchImageSnapshot('screenshot-sanity');
+    expect(screenshots[1]).toMatchImageSnapshot('grid-cell-0');
   });
   it('should change focused iframe', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);

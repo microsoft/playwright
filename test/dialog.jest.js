@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = testOptions;
 
 describe('Page.Events.Dialog', function() {
   it('should fire', async({page, server}) => {

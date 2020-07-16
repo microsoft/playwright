@@ -71,13 +71,6 @@ module.exports = {
   specs: [
     {
       files: [
-        './dialog.spec.js',
-        './dispatchevent.spec.js',
-        './download.spec.js',
-        './elementhandle.spec.js',
-        './emulation.spec.js',
-        './frame.spec.js',
-        './focus.spec.js',
         './input.spec.js',
         './jshandle.spec.js',
         './keyboard.spec.ts',

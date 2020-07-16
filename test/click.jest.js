@@ -746,7 +746,7 @@ describe('Page.click', function() {
     await page.click('button');
     expect(await page.evaluate(() => window.result)).toBe(1);
   });
-  it.skip(USES_HOOKS).fail(true)('should retarget when element is recycled during hit testing', async ({page, server}) => {
+  it.fail(true)('should retarget when element is recycled during hit testing', async ({page, server}) => {
     await page.goto(server.PREFIX + '/react.html');
     await page.evaluate(() => {
       renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2' })] ));
@@ -760,7 +760,7 @@ describe('Page.click', function() {
     expect(await page.evaluate(() => window.button1)).toBe(true);
     expect(await page.evaluate(() => window.button2)).toBe(undefined);
   });
-  it.skip(USES_HOOKS).fail(true)('should report that selector does not match anymore', async ({page, server}) => {
+  it.fail(true)('should report that selector does not match anymore', async ({page, server}) => {
     await page.goto(server.PREFIX + '/react.html');
     await page.evaluate(() => {
       renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2' })] ));
@@ -778,7 +778,7 @@ describe('Page.click', function() {
     expect(error.message).toContain('page.dblclick: Timeout 3000ms exceeded.');
     expect(error.message).toContain('element does not match the selector anymore');
   });
-  it.skip(USES_HOOKS).fail(true)('should retarget when element is recycled before enabled check', async ({page, server}) => {
+  it.fail(true)('should retarget when element is recycled before enabled check', async ({page, server}) => {
     await page.goto(server.PREFIX + '/react.html');
     await page.evaluate(() => {
       renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2', disabled: true })] ));
@@ -792,7 +792,7 @@ describe('Page.click', function() {
     expect(await page.evaluate(() => window.button1)).toBe(true);
     expect(await page.evaluate(() => window.button2)).toBe(undefined);
   });
-  it.skip(USES_HOOKS).fail(true)('should not retarget the handle when element is recycled', async ({page, server}) => {
+  it.fail(true)('should not retarget the handle when element is recycled', async ({page, server}) => {
     await page.goto(server.PREFIX + '/react.html');
     await page.evaluate(() => {
       renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2', disabled: true })] ));

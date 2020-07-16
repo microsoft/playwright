@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, LINUX, WEBKIT} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, LINUX, WEBKIT} = testOptions;
 
 describe('Page.focus', function() {
   it('should work', async function({page, server}) {

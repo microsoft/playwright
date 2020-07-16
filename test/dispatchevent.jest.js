@@ -15,7 +15,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = testOptions;
 
 describe('Page.dispatchEvent(click)', function() {
   it('should dispatch click event', async({page, server}) => {
