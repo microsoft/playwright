@@ -16,11 +16,12 @@
 
 import { Frame, kAddLifecycleEvent, kRemoveLifecycleEvent, kNavigationEvent, NavigationEvent } from '../../frames';
 import * as types from '../../types';
-import { ElementHandleChannel, FrameChannel, FrameInitializer, JSHandleChannel, ResponseChannel } from '../channels';
+import { ElementHandleChannel, FrameChannel, FrameInitializer, JSHandleChannel, ResponseChannel, SerializedArgument } from '../channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { convertSelectOptionValues, ElementHandleDispatcher, createHandle, convertInputFiles } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher, RequestDispatcher } from './networkDispatchers';
+import { SerializedValue } from '../../common/utilityScriptSerializers';
 
 export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> implements FrameChannel {
   private _frame: Frame;
@@ -64,11 +65,11 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     return { element: new ElementHandleDispatcher(this._scope, await this._frame.frameElement()) };
   }
 
-  async evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }> {
+  async evaluateExpression(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }> {
     return { value: serializeResult(await this._frame._evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any }): Promise<{ handle: JSHandleChannel }> {
+  async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ handle: JSHandleChannel }> {
     return { handle: createHandle(this._scope, await this._frame._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
@@ -76,15 +77,15 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     return { element: ElementHandleDispatcher.createNullable(this._scope, await this._frame.waitForSelector(params.selector, params)) };
   }
 
-  async dispatchEvent(params: { selector: string, type: string, eventInit: any } & types.TimeoutOptions): Promise<void> {
+  async dispatchEvent(params: { selector: string, type: string, eventInit: SerializedArgument } & types.TimeoutOptions): Promise<void> {
     return this._frame.dispatchEvent(params.selector, params.type, parseArgument(params.eventInit), params);
   }
 
-  async evalOnSelector(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }> {
+  async evalOnSelector(params: { selector: string, expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }> {
     return { value: serializeResult(await this._frame._$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async evalOnSelectorAll(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }> {
+  async evalOnSelectorAll(params: { selector: string, expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }> {
     return { value: serializeResult(await this._frame._$$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
@@ -173,7 +174,7 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     await this._frame.uncheck(params.selector, params);
   }
 
-  async waitForFunction(params: { expression: string, isFunction: boolean, arg: any } & types.WaitForFunctionOptions): Promise<{ handle: JSHandleChannel }> {
+  async waitForFunction(params: { expression: string, isFunction: boolean, arg: SerializedArgument } & types.WaitForFunctionOptions): Promise<{ handle: JSHandleChannel }> {
     return { handle: createHandle(this._scope, await this._frame._waitForFunctionExpression(params.expression, params.isFunction, parseArgument(params.arg), params)) };
   }
 

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { JSHandleChannel, JSHandleInitializer } from '../channels';
+import { JSHandleChannel, JSHandleInitializer, SerializedArgument, Channel } from '../channels';
 import { ElementHandle } from './elementHandle';
 import { ChannelOwner } from './channelOwner';
-import { serializeAsCallArgument, parseEvaluationResultValue } from '../../common/utilityScriptSerializers';
+import { serializeAsCallArgument, parseEvaluationResultValue, SerializedValue } from '../../common/utilityScriptSerializers';
 
 type NoHandles<Arg> = Arg extends JSHandle ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg);
 type Unboxed<Arg> =
@@ -95,20 +95,22 @@ export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel, JSHandleIni
   }
 }
 
-export function serializeArgument(arg: any): any {
-  const guids: { guid: string }[] = [];
-  const pushHandle = (guid: string): number => {
-    guids.push({ guid });
-    return guids.length - 1;
+// This function takes care of converting all JSHandles to their channels,
+// so that generic channel serializer converts them to guids.
+export function serializeArgument(arg: any): SerializedArgument {
+  const handles: Channel[] = [];
+  const pushHandle = (channel: Channel): number => {
+    handles.push(channel);
+    return handles.length - 1;
   };
   const value = serializeAsCallArgument(arg, value => {
-    if (value instanceof ChannelOwner)
-      return { h: pushHandle(value._guid) };
+    if (value instanceof JSHandle)
+      return { h: pushHandle(value._channel) };
     return { fallThrough: value };
   });
-  return { value, guids };
+  return { value, handles };
 }
 
-export function parseResult(arg: any): any {
+export function parseResult(arg: SerializedValue): any {
   return parseEvaluationResultValue(arg, []);
 }

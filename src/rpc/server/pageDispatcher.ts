@@ -20,7 +20,7 @@ import { Frame } from '../../frames';
 import { Request } from '../../network';
 import { Page, Worker } from '../../page';
 import * as types from '../../types';
-import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary, PDFOptions } from '../channels';
+import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary, PDFOptions, SerializedArgument } from '../channels';
 import { Dispatcher, DispatcherScope, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { parseError, serializeError, headersArrayToObject } from '../serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
@@ -32,6 +32,7 @@ import { serializeResult, parseArgument } from './jsHandleDispatcher';
 import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
 import { FileChooser } from '../../fileChooser';
 import { CRCoverage } from '../../chromium/crCoverage';
+import { SerializedValue } from '../../common/utilityScriptSerializers';
 
 export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements PageChannel {
   private _page: Page;
@@ -232,11 +233,11 @@ export class WorkerDispatcher extends Dispatcher<Worker, WorkerInitializer> impl
     worker.on(Events.Worker.Close, () => this._dispatchEvent('close'));
   }
 
-  async evaluateExpression(params: { expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<{ value: any }> {
+  async evaluateExpression(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }> {
     return { value: serializeResult(await this._object._evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any, isPage?: boolean }): Promise<{ handle: JSHandleChannel }> {
+  async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ handle: JSHandleChannel }> {
     return { handle: createHandle(this._scope, await this._object._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 }
@@ -262,7 +263,7 @@ export class BindingCallDispatcher extends Dispatcher<{}, BindingCallInitializer
     return this._promise;
   }
 
-  resolve(params: { result: any }) {
+  resolve(params: { result: SerializedArgument }) {
     this._resolve!(parseArgument(params.result));
   }
 

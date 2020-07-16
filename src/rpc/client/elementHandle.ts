@@ -80,7 +80,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
 
   async dispatchEvent(type: string, eventInit: Object = {}) {
     return this._wrapApiCall('elementHandle.dispatchEvent', async () => {
-      await this._elementChannel.dispatchEvent({ type, eventInit });
+      await this._elementChannel.dispatchEvent({ type, eventInit: serializeArgument(eventInit) });
     });
   }
 
