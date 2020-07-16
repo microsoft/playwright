@@ -35,7 +35,9 @@ export class Playwright extends ChannelOwner<PlaywrightChannel, PlaywrightInitia
     this.webkit = BrowserType.from(initializer.webkit);
     if (initializer.electron)
       (this as any).electron = Electron.from(initializer.electron);
-    this.devices = initializer.deviceDescriptors;
+    this.devices = {};
+    for (const { name, descriptor } of initializer.deviceDescriptors)
+      this.devices[name] = descriptor;
     this.selectors = Selectors.from(initializer.selectors);
   }
 }

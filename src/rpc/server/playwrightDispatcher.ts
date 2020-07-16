@@ -25,12 +25,14 @@ import { ElectronDispatcher } from './electronDispatcher';
 export class PlaywrightDispatcher extends Dispatcher<Playwright, PlaywrightInitializer> implements PlaywrightChannel {
   constructor(scope: DispatcherScope, playwright: Playwright) {
     const electron = (playwright as any).electron as (Electron | undefined);
+    const deviceDescriptors = Object.entries(playwright.devices)
+        .map(([name, descriptor]) => ({ name, descriptor }));
     super(scope, playwright, 'playwright', {
       chromium: new BrowserTypeDispatcher(scope, playwright.chromium!),
       firefox: new BrowserTypeDispatcher(scope, playwright.firefox!),
       webkit: new BrowserTypeDispatcher(scope, playwright.webkit!),
       electron: electron ? new ElectronDispatcher(scope, electron) : undefined,
-      deviceDescriptors: playwright.devices,
+      deviceDescriptors,
       selectors: new SelectorsDispatcher(scope, playwright.selectors),
     }, false, 'playwright');
   }

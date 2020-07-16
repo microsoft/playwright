@@ -29,7 +29,7 @@ export type PlaywrightInitializer = {
   firefox: BrowserTypeChannel,
   webkit: BrowserTypeChannel,
   electron?: ElectronChannel,
-  deviceDescriptors: types.Devices,
+  deviceDescriptors: { name: string, descriptor: types.DeviceDescriptor }[],
   selectors: SelectorsChannel,
 };
 
