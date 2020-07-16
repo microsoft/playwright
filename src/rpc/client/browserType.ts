@@ -15,12 +15,13 @@
  */
 
 import * as types from '../../types';
-import { BrowserTypeChannel, BrowserTypeInitializer } from '../channels';
+import { BrowserTypeChannel, BrowserTypeInitializer, LaunchPersistentContextOptions } from '../channels';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { BrowserServer } from './browserServer';
 import { LoggerSink } from '../../loggerSink';
+import { headersObjectToArray } from '../serializers';
 
 export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {
 
@@ -62,7 +63,12 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.launchPersistentContext', async () => {
-      const result = await this._channel.launchPersistentContext({ userDataDir, ...options });
+      const persistentOptions: LaunchPersistentContextOptions = {
+        ...options,
+        extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
+        userDataDir,
+      };
+      const result = await this._channel.launchPersistentContext(persistentOptions);
       const context = BrowserContext.from(result.context);
       context._logger = logger;
       return context;

@@ -18,6 +18,25 @@ import { EventEmitter } from 'events';
 import * as types from '../types';
 
 export type Binary = string;
+export type BrowserContextOptions = {
+  viewport?: types.Size | null,
+  ignoreHTTPSErrors?: boolean,
+  javaScriptEnabled?: boolean,
+  bypassCSP?: boolean,
+  userAgent?: string,
+  locale?: string,
+  timezoneId?: string,
+  geolocation?: types.Geolocation,
+  permissions?: string[],
+  extraHTTPHeaders?: types.HeadersArray,
+  offline?: boolean,
+  httpCredentials?: types.Credentials,
+  deviceScaleFactor?: number,
+  isMobile?: boolean,
+  hasTouch?: boolean,
+  colorScheme?: types.ColorScheme,
+  acceptDownloads?: boolean,
+};
 
 export interface Channel extends EventEmitter {
 }
@@ -41,11 +60,12 @@ export interface SelectorsChannel extends Channel {
 export type SelectorsInitializer = {};
 
 
+export type LaunchPersistentContextOptions = { userDataDir: string } & types.LaunchOptions & BrowserContextOptions;
 export interface BrowserTypeChannel extends Channel {
   connect(params: types.ConnectOptions): Promise<{ browser: BrowserChannel }>;
   launch(params: types.LaunchOptions): Promise<{ browser: BrowserChannel }>;
   launchServer(params: types.LaunchServerOptions): Promise<{ server: BrowserServerChannel }>;
-  launchPersistentContext(params: { userDataDir: string } & types.LaunchOptions & types.BrowserContextOptions): Promise<{ context: BrowserContextChannel }>;
+  launchPersistentContext(params: LaunchPersistentContextOptions): Promise<{ context: BrowserContextChannel }>;
 }
 export type BrowserTypeInitializer = {
   executablePath: string,
@@ -69,7 +89,7 @@ export interface BrowserChannel extends Channel {
   on(event: 'close', callback: () => void): this;
 
   close(): Promise<void>;
-  newContext(params: types.BrowserContextOptions): Promise<{ context: BrowserContextChannel }>;
+  newContext(params: BrowserContextOptions): Promise<{ context: BrowserContextChannel }>;
 
   crNewBrowserCDPSession(): Promise<{ session: CDPSessionChannel }>;
   crStartTracing(params: { page?: PageChannel, path?: string, screenshots?: boolean, categories?: string[] }): Promise<void>;

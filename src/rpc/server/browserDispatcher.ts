@@ -17,13 +17,13 @@
 import { Browser, BrowserBase } from '../../browser';
 import { BrowserContextBase } from '../../browserContext';
 import { Events } from '../../events';
-import * as types from '../../types';
-import { BrowserChannel, BrowserContextChannel, BrowserInitializer, CDPSessionChannel, Binary } from '../channels';
+import { BrowserChannel, BrowserContextChannel, BrowserInitializer, CDPSessionChannel, Binary, BrowserContextOptions } from '../channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { CRBrowser } from '../../chromium/crBrowser';
 import { PageDispatcher } from './pageDispatcher';
+import { headersArrayToObject } from '../serializers';
 
 export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> implements BrowserChannel {
   constructor(scope: DispatcherScope, browser: BrowserBase) {
@@ -34,8 +34,12 @@ export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> i
     });
   }
 
-  async newContext(params: types.BrowserContextOptions): Promise<{ context: BrowserContextChannel }> {
-    return { context: new BrowserContextDispatcher(this._scope, await this._object.newContext(params) as BrowserContextBase) };
+  async newContext(params: BrowserContextOptions): Promise<{ context: BrowserContextChannel }> {
+    const options = {
+      ...params,
+      extraHTTPHeaders: params.extraHTTPHeaders ? headersArrayToObject(params.extraHTTPHeaders) : undefined,
+    };
+    return { context: new BrowserContextDispatcher(this._scope, await this._object.newContext(options) as BrowserContextBase) };
   }
 
   async close(): Promise<void> {

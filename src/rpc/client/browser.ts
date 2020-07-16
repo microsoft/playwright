@@ -15,13 +15,14 @@
  */
 
 import * as types from '../../types';
-import { BrowserChannel, BrowserInitializer } from '../channels';
+import { BrowserChannel, BrowserInitializer, BrowserContextOptions } from '../channels';
 import { BrowserContext } from './browserContext';
 import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Events } from '../../events';
 import { LoggerSink } from '../../loggerSink';
 import { BrowserType } from './browserType';
+import { headersObjectToArray } from '../serializers';
 
 export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   readonly _contexts = new Set<BrowserContext>();
@@ -53,7 +54,11 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   async newContext(options: types.BrowserContextOptions & { logger?: LoggerSink } = {}): Promise<BrowserContext> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
-    const context = BrowserContext.from((await this._channel.newContext(options)).context);
+    const contextOptions: BrowserContextOptions = {
+      ...options,
+      extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
+    };
+    const context = BrowserContext.from((await this._channel.newContext(contextOptions)).context);
     this._contexts.add(context);
     context._logger = logger || this._logger;
     return context;
