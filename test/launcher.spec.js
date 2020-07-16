@@ -18,7 +18,7 @@
 const path = require('path');
 const fs = require('fs');
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = utils.testOptions(browserType);
 
 describe('Playwright', function() {
   describe('browserType.launch', function() {
@@ -74,6 +74,10 @@ describe('Playwright', function() {
       const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
       const error = await browserType.launch(options).catch(e => e);
       expect(error.message).toContain('<launching>');
+    });
+    it.slow().skip(CHANNEL)('should accept objects as options', async({browserType, defaultBrowserOptions}) => {
+      const browser = await browserType.launch({ ...defaultBrowserOptions, process });
+      await browser.close();
     });
   });
 
