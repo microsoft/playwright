@@ -37,30 +37,14 @@ rtc::scoped_refptr<webrtc::VideoCaptureModule> CreateWindowCapturer(nsIWidget* w
     HeadlessWidget* headlessWidget = static_cast<HeadlessWidget*>(widget);
     return HeadlessWindowCapturer::Create(headlessWidget);
   }
-#ifdef MOZ_WIDGET_GTK
-  mozilla::widget::CompositorWidgetInitData initData;
-  widget->GetCompositorWidgetInitData(&initData);
-  const mozilla::widget::GtkCompositorWidgetInitData& gtkInitData = initData.get_GtkCompositorWidgetInitData();
+  uintptr_t rawWindowId = reinterpret_cast<uintptr_t>(widget->GetNativeData(NS_NATIVE_WINDOW_WEBRTC_DEVICE_ID));
+  if (!rawWindowId) {
+    fprintf(stderr, "Failed to get native window id\n");
+    return nullptr;
+  }
   nsCString windowId;
-# ifdef MOZ_X11
-  windowId.AppendPrintf("%lu", gtkInitData.XWindow());
+  windowId.AppendPrintf("%" PRIuPTR, rawWindowId);
   return webrtc::DesktopCaptureImpl::Create(sessionId, windowId.get(), webrtc::CaptureDeviceType::Window);
-# else
-  // TODO: support in wayland
-  fprintf(stderr, "Video capture for Wayland is not implemented\n");
-  return nullptr;
-# endif
-#elif defined(_WIN32)
-  mozilla::widget::CompositorWidgetInitData initData;
-  widget->GetCompositorWidgetInitData(&initData);
-  const mozilla::widget::WinCompositorWidgetInitData& winInitData = initData.get_WinCompositorWidgetInitData();
-  nsCString windowId;
-  windowId.AppendPrintf("%lu", winInitData.hWnd());
-  return webrtc::DesktopCaptureImpl::Create(sessionId, windowId.get(), webrtc::CaptureDeviceType::Window);
-#else
-  fprintf(stderr, "Video capture is not implemented on this platform\n");
-  return nullptr;
-#endif
 }
 }
 
