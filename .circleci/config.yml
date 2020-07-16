@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: mcr.microsoft.com/playwright:bionic
+      - image: mcr.microsoft.com/playwright:dev
     steps:
       - checkout
 
