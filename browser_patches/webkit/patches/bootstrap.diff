@@ -9803,10 +9803,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..012629e3d4e4b892a8c23c3984ab30409b9c2b1a
+index 0000000000000000000000000000000000000000..d9218841c5ca436d291e5c0918906be084146cb8
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,821 @@
+@@ -0,0 +1,823 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -10007,7 +10007,9 @@ index 0000000000000000000000000000000000000000..012629e3d4e4b892a8c23c3984ab3040
 +
 +Vector<WebPageProxy*> BrowserContext::pages() const {
 +    Vector<WebPageProxy*> pages;
-+    for (auto& process : processPool->processes()) {
++    for (auto* process : WebProcessProxy::allProcessesForInspector()) {
++        if (process->processPoolIfExists() != processPool)
++            continue;
 +        for (auto* page : process->pages())
 +            pages.append(page);
 +    }
