@@ -132,6 +132,10 @@ class Helper {
     return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
   }
 
+  static isError(obj: any): obj is Error {
+    return obj instanceof Error || (obj && obj.__proto__ && obj.__proto__.name === 'Error');
+  }
+
   static isObject(obj: any): obj is NonNullable<object> {
     return typeof obj === 'object' && obj !== null;
   }

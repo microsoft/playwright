@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = testOptions;
 
 describe('Auto waiting', () => {
   it('should await navigation when clicking anchor', async({page, server}) => {

@@ -24,7 +24,7 @@ import { helper, assert } from '../helper';
 
 
 export function serializeError(e: any): types.Error {
-  if (e instanceof Error)
+  if (helper.isError(e))
     return { message: e.message, stack: e.stack, name: e.name };
   return { value: e };
 }

@@ -18,7 +18,7 @@
 const fs = require('fs');
 const path = require('path');
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = testOptions;
 
 describe('Page.Events.Request', function() {
   it('should fire for navigation requests', async({page, server}) => {

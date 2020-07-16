@@ -22,6 +22,10 @@ function isDate(obj: any): obj is Date {
   return obj instanceof Date || Object.prototype.toString.call(obj) === '[object Date]';
 }
 
+function isError(obj: any): obj is Error {
+  return obj instanceof Error || (obj && obj.__proto__ && obj.__proto__.name === 'Error');
+}
+
 export function parseEvaluationResultValue(value: any, handles: any[] = []): any {
   if (value === undefined)
     return undefined;
@@ -85,7 +89,7 @@ function serialize(value: any, jsHandleSerializer: (value: any) => { fallThrough
   if (isPrimitiveValue(value))
     return value;
 
-  if (value instanceof Error) {
+  if (isError(value)) {
     const error = value;
     if ('captureStackTrace' in global.Error) {
       // v8

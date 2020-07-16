@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, WIN} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN} = testOptions;
 
 describe('BrowserContext.cookies', function() {
   it('should return no cookies in pristine browser context', async({context, page, server}) => {
