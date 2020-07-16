@@ -8,9 +8,6 @@
   "engines": {
     "node": ">=10.15.0"
   },
-  "bin": {
-    "playwright": "lib/cli/index.js"
-  },
   "scripts": {
     "ctest": "cross-env BROWSER=chromium node --unhandled-rejections=strict test/test.js",
     "ftest": "cross-env BROWSER=firefox node --unhandled-rejections=strict test/test.js",
@@ -42,7 +39,6 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "commander": "^5.1.0",
     "debug": "^4.1.1",
     "extract-zip": "^2.0.0",
     "https-proxy-agent": "^5.0.0",

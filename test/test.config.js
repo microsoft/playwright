@@ -120,7 +120,6 @@ module.exports = {
         './channels.spec.js',
         './ignorehttpserrors.spec.js',
         './popup.spec.js',
-        './recorder.spec.js',
       ],
       environments: [customEnvironment, 'browser'],
     },
