@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL, USES_HOOKS} = require('../utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, CHANNEL, USES_HOOKS} = testOptions;
 
-describe('ChromiumBrowserContext.createSession', function() {
-  it('should work', async function({page, browser, server}) {
+describe.skip(!CHROMIUM)('ChromiumBrowserContext.createSession', function() {
+  it('should work', async function({page}) {
     const client = await page.context().newCDPSession(page);
 
     await Promise.all([
@@ -27,7 +27,7 @@ describe('ChromiumBrowserContext.createSession', function() {
     const foo = await page.evaluate(() => window.foo);
     expect(foo).toBe('bar');
   });
-  it('should send events', async function({page, browser, server}) {
+  it('should send events', async function({page, server}) {
     const client = await page.context().newCDPSession(page);
     await client.send('Network.enable');
     const events = [];
@@ -35,7 +35,7 @@ describe('ChromiumBrowserContext.createSession', function() {
     await page.goto(server.EMPTY_PAGE);
     expect(events.length).toBe(1);
   });
-  it('should enable and disable domains independently', async function({page, browser, server}) {
+  it('should enable and disable domains independently', async function({page}) {
     const client = await page.context().newCDPSession(page);
     await client.send('Runtime.enable');
     await client.send('Debugger.enable');
@@ -52,7 +52,7 @@ describe('ChromiumBrowserContext.createSession', function() {
       page.evaluate('//# sourceURL=foo.js')
     ]);
   });
-  it('should be able to detach session', async function({page, browser, server}) {
+  it('should be able to detach session', async function({page}) {
     const client = await page.context().newCDPSession(page);
     await client.send('Runtime.enable');
     const evalResponse = await client.send('Runtime.evaluate', {expression: '1 + 2', returnByValue: true});
@@ -66,7 +66,7 @@ describe('ChromiumBrowserContext.createSession', function() {
     }
     expect(error.message).toContain(CHANNEL ? 'Target browser or context has been closed' : 'Session closed.');
   });
-  it('should throw nice errors', async function({page, browser}) {
+  it('should throw nice errors', async function({page}) {
     const client = await page.context().newCDPSession(page);
     const error = await theSourceOfTheProblems().catch(error => error);
     expect(error.stack).toContain('theSourceOfTheProblems');
@@ -76,7 +76,7 @@ describe('ChromiumBrowserContext.createSession', function() {
       await client.send('ThisCommand.DoesNotExist');
     }
   });
-  it('should not break page.close()', async function({browser, server}) {
+  it('should not break page.close()', async function({browser}) {
     const context = await browser.newContext();
     const page = await context.newPage();
     const session = await page.context().newCDPSession(page);
@@ -84,19 +84,19 @@ describe('ChromiumBrowserContext.createSession', function() {
     await page.close();
     await context.close();
   });
-  it('should detach when page closes', async function({browser, server}) {
+  it('should detach when page closes', async function({browser}) {
     const context = await browser.newContext();
     const page = await context.newPage();
     const session = await context.newCDPSession(page);
     await page.close();
     let error;
     await session.detach().catch(e => error = e);
-    expect(error).toBeTruthy('Calling detach on a closed page\'s session should throw');
+    expect(error).toBeTruthy();
     await context.close();
   });
 });
-describe('ChromiumBrowser.newBrowserCDPSession', function() {
-  it('should work', async function({page, browser, server}) {
+describe.skip(!CHROMIUM)('ChromiumBrowser.newBrowserCDPSession', function() {
+  it('should work', async function({browser}) {
     const session = await browser.newBrowserCDPSession();
 
     const version = await session.send('Browser.getVersion');

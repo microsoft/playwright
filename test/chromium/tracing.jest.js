@@ -16,23 +16,16 @@
 
 const fs = require('fs');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, OUTPUT_DIR, CHANNEL} = require('../utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, OUTPUT_DIR, CHANNEL} = testOptions;
 
-describe('Chromium.startTracing', function() {
-  beforeEach(async function(state) {
-    state.outputFile = path.join(OUTPUT_DIR, `trace-${state.parallelIndex}.json`);
-    state.browser = await state.browserType.launch(state.defaultBrowserOptions);
-    state.page = await state.browser.newPage();
-  });
-  afterEach(async function(state) {
-    await state.browser.close();
-    state.browser = null;
-    state.page = null;
-    if (fs.existsSync(state.outputFile)) {
-      fs.unlinkSync(state.outputFile);
-      state.outputFile = null;
-    }
-  });
+registerFixture('outputFile', async ({parallelIndex}, test) => {
+  const outputFile = path.join(OUTPUT_DIR, `trace-${parallelIndex}.json`);
+  await test(outputFile);
+  if (fs.existsSync(outputFile))
+    fs.unlinkSync(outputFile);
+});
+
+describe.skip(!CHROMIUM)('Chromium.startTracing', function() {
   it('should output a trace', async({browser, page, server, outputFile}) => {
     await browser.startTracing(page, {screenshots: true, path: outputFile});
     await page.goto(server.PREFIX + '/grid.html');
@@ -46,7 +39,7 @@ describe('Chromium.startTracing', function() {
     const traceJson = JSON.parse(fs.readFileSync(outputFile).toString());
     expect(traceJson.metadata['trace-config']).toContain('disabled-by-default-v8.cpu_profiler.hires', 'Does not contain expected category');
   });
-  it('should throw if tracing on two pages', async({browser, page, server, outputFile}) => {
+  it('should throw if tracing on two pages', async({browser, page, outputFile}) => {
     await browser.startTracing(page, {path: outputFile});
     const newPage = await browser.newPage();
     let error = null;
@@ -62,7 +55,7 @@ describe('Chromium.startTracing', function() {
     const buf = fs.readFileSync(outputFile);
     expect(trace.toString()).toEqual(buf.toString(), 'Tracing buffer mismatch');
   });
-  it('should work without options', async({browser, page, server, outputFile}) => {
+  it('should work without options', async({browser, page, server}) => {
     await browser.startTracing(page);
     await page.goto(server.PREFIX + '/grid.html');
     const trace = await browser.stopTracing();

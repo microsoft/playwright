@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('../utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = testOptions;
 
-describe('Service Worker', function() {
-  it('should create a worker from a service worker', async({browser, page, server, context}) => {
+describe.skip(!CHROMIUM)('Service Worker', function() {
+  it('should create a worker from a service worker', async({page, server, context}) => {
     const [worker] = await Promise.all([
       context.waitForEvent('serviceworker'),
       page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
     ]);
     expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
   });
-  it('serviceWorkers() should return current workers', async({browser, page, server, context}) => {
+  it('serviceWorkers() should return current workers', async({page, server, context}) => {
     const [worker1] = await Promise.all([
       context.waitForEvent('serviceworker'),
       page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
@@ -41,7 +41,7 @@ describe('Service Worker', function() {
     expect(workers).toContain(worker1);
     expect(workers).toContain(worker2);
   });
-  it('should not create a worker from a shared worker', async({browser, page, server, context}) => {
+  it('should not create a worker from a shared worker', async({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     let serviceWorkerCreated;
     context.once('serviceworker', () => serviceWorkerCreated = true);
@@ -65,7 +65,7 @@ describe('Service Worker', function() {
   });
 });
 
-describe('Chromium-Specific Page Tests', function() {
+describe.skip(!CHROMIUM)('Chromium-Specific Page Tests', function() {
   it('Page.route should work with intervention headers', async({server, page}) => {
     server.setRoute('/intervention', (req, res) => res.end(`
       <script>

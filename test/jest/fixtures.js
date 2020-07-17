@@ -26,11 +26,14 @@ const { PlaywrightDispatcher } = require('../../lib/rpc/server/playwrightDispatc
 const { setUseApiName } = require('../../lib/progress');
 
 module.exports = function registerFixtures(global) {
-  global.registerWorkerFixture('http_server', async ({}, test) => {
+  global.registerWorkerFixture('parallelIndex', async ({}, test) => {
+    await test(process.env.JEST_WORKER_ID - 1);
+  });
+  global.registerWorkerFixture('http_server', async ({parallelIndex}, test) => {
     const assetsPath = path.join(__dirname, '..', 'assets');
     const cachedPath = path.join(__dirname, '..', 'assets', 'cached');
 
-    const port = 8907 + (process.env.JEST_WORKER_ID - 1) * 2;
+    const port = 8907 + parallelIndex * 2;
     const server = await TestServer.create(assetsPath, port);
     server.enableHTTPCache(cachedPath);
     server.PORT = port;

@@ -16,7 +16,7 @@
 
 const socks = require('socksv5');
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, MAC} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, MAC} = testOptions;
 
 describe('HTTP Proxy', () => {
   it('should use proxy', async ({browserType, defaultBrowserOptions, server}) => {

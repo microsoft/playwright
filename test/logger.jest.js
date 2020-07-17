@@ -16,7 +16,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = testOptions;
 
 describe('Logger', function() {
   it('should log', async({browserType, defaultBrowserOptions}) => {

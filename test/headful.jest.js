@@ -16,7 +16,7 @@
 
 const utils = require('./utils');
 const { makeUserDataDir, removeUserDataDir } = utils;
-const {FFOX, CHROMIUM, WEBKIT, WIN, MAC} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, MAC} = testOptions;
 
 describe('Headful', function() {
   it('should have default url when launching browser', async ({browserType, defaultBrowserOptions}) => {
@@ -141,5 +141,6 @@ describe('Headful', function() {
     await popup.waitForLoadState();
     await popup.waitForFunction(() => window.outerWidth === 500 && window.outerHeight === 450);
     await context.close();
+    await browser.close();
   });
 });
