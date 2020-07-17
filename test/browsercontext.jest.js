@@ -16,7 +16,8 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, MAC, CHANNEL} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, MAC, CHANNEL, HEADLESS} = testOptions;
+const {devices} = require('..');
 
 describe('BrowserContext', function() {
   it('should create new context', async function({browser}) {
@@ -194,7 +195,7 @@ describe('BrowserContext({userAgent})', function() {
       await context.close();
     }
     {
-      const context = await browser.newContext({ userAgent: playwright.devices['iPhone 6'].userAgent });
+      const context = await browser.newContext({ userAgent: devices['iPhone 6'].userAgent });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => navigator.userAgent)).toContain('iPhone');

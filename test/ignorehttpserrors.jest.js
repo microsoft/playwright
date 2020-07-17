@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, MAC} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, MAC} = testOptions;
 
 describe('ignoreHTTPSErrors', function() {
   it('should work', async({browser, httpsServer}) => {

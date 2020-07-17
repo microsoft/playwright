@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT} = testOptions;
 
 describe('Browser.newPage', function() {
   it('should create new page', async function({browser}) {
