@@ -27,7 +27,7 @@ describe('Headful', function() {
     await browserContext.close();
     await removeUserDataDir(userDataDir);
   });
-  it.slow().fail(WIN && CHROMIUM)('headless should be able to read cookies written by headful', async({browserType, defaultBrowserOptions, server}) => {
+  it.fail(WIN && CHROMIUM).slow()('headless should be able to read cookies written by headful', async({browserType, defaultBrowserOptions, server}) => {
     // see https://github.com/microsoft/playwright/issues/717
     const userDataDir = await makeUserDataDir();
     // Write a cookie in headful chrome

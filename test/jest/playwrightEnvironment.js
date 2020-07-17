@@ -64,14 +64,21 @@ class PlaywrightEnvironment extends NodeEnvironment {
     return super.runScript(script);
   }
 
+  patchToEnableFixtures(object, name) {
+    const original = object[name];
+    object[name] = fn => {
+      return original(async () => {
+        return await this.fixturePool.resolveParametersAndRun(fn);
+      });
+    }
+  }
+
   async handleTestEvent(event, state) {
     if (event.name === 'setup') {
-      const beforeEach = this.global.beforeEach;
-      this.global.beforeEach = fn => {
-        return beforeEach(async () => {
-          return await this.fixturePool.resolveParametersAndRun(fn);
-        });
-      }
+
+      this.patchToEnableFixtures(this.global, 'beforeEach');
+      this.patchToEnableFixtures(this.global, 'afterEach');
+
       const describeSkip = this.global.describe.skip;
       this.global.describe.skip = (...args) => {
         if (args.length = 1)
@@ -88,7 +95,11 @@ class PlaywrightEnvironment extends NodeEnvironment {
         return itSkip(...args);
       };
       this.global.it.fail = this.global.it.skip;
-      this.global.it.slow = () => this.global.it;
+      this.global.it.slow = () => {
+        return (name, fn) => {
+          return this.global.it(name, fn, 90000);
+        }
+      }
 
       const testOptions = this.global.testOptions;
       function toBeGolden(received, goldenName) {
