@@ -22,10 +22,10 @@ export default class UtilityScript {
     return returnByValue ? this._promiseAwareJsonValueNoThrow(result) : result;
   }
 
-  callFunction(returnByValue: boolean, functionText: string, ...args: any[]) {
-    const argCount = args[0] as number;
-    const handles = args.slice(argCount + 1);
-    const parameters = args.slice(1, argCount + 1).map(a => parseEvaluationResultValue(a, handles));
+  callFunction(returnByValue: boolean, functionText: string, argCount: number, ...argsAndHandles: any[]) {
+    const args = argsAndHandles.slice(0, argCount);
+    const handles = argsAndHandles.slice(argCount);
+    const parameters = args.map(a => parseEvaluationResultValue(a, handles));
     const func = global.eval('(' + functionText + ')');
     const result = func(...parameters);
     return returnByValue ? this._promiseAwareJsonValueNoThrow(result) : result;

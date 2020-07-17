@@ -18,9 +18,9 @@ export type SerializedValue =
     undefined | boolean | number | string |
     { v: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0' } |
     { d: string } |
-    { r: [string, string] } |
+    { r: { p: string, f: string} } |
     { a: SerializedValue[] } |
-    { o: { [key: string]: SerializedValue } } |
+    { o: { k: string, v: SerializedValue }[] } |
     { h: number };
 
 function isRegExp(obj: any): obj is RegExp {
@@ -36,9 +36,9 @@ function isError(obj: any): obj is Error {
 }
 
 export function parseEvaluationResultValue(value: SerializedValue, handles: any[] = []): any {
-  if (value === undefined)
+  if (Object.is(value, undefined))
     return undefined;
-  if (typeof value === 'object') {
+  if (typeof value === 'object' && value) {
     if ('v' in value) {
       if (value.v === 'undefined')
         return undefined;
@@ -52,17 +52,18 @@ export function parseEvaluationResultValue(value: SerializedValue, handles: any[
         return -Infinity;
       if (value.v === '-0')
         return -0;
+      return undefined;
     }
     if ('d' in value)
       return new Date(value.d);
     if ('r' in value)
-      return new RegExp(value.r[0], value.r[1]);
+      return new RegExp(value.r.p, value.r.f);
     if ('a' in value)
       return value.a.map((a: any) => parseEvaluationResultValue(a, handles));
     if ('o' in value) {
       const result: any = {};
-      for (const name of Object.keys(value.o))
-        result[name] = parseEvaluationResultValue(value.o[name], handles);
+      for (const { k, v } of value.o)
+        result[k] = parseEvaluationResultValue(v, handles);
       return result;
     }
     if ('h' in value)
@@ -72,12 +73,12 @@ export function parseEvaluationResultValue(value: SerializedValue, handles: any[
 }
 
 export type HandleOrValue = { h: number } | { fallThrough: any };
-export function serializeAsCallArgument(value: any, jsHandleSerializer: (value: any) => HandleOrValue): SerializedValue {
-  return serialize(value, jsHandleSerializer, new Set());
+export function serializeAsCallArgument(value: any, handleSerializer: (value: any) => HandleOrValue): SerializedValue {
+  return serialize(value, handleSerializer, new Set());
 }
 
-function serialize(value: any, jsHandleSerializer: (value: any) => HandleOrValue, visited: Set<any>): SerializedValue {
-  const result = jsHandleSerializer(value);
+function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, visited: Set<any>): SerializedValue {
+  const result = handleSerializer(value);
   if ('fallThrough' in result)
     value = result.fallThrough;
   else
@@ -111,26 +112,26 @@ function serialize(value: any, jsHandleSerializer: (value: any) => HandleOrValue
     const error = value;
     if ('captureStackTrace' in global.Error) {
       // v8
-      return error.stack;
+      return error.stack || '';
     }
     return `${error.name}: ${error.message}\n${error.stack}`;
   }
   if (isDate(value))
     return { d: value.toJSON() };
   if (isRegExp(value))
-    return { r: [ value.source, value.flags ] };
+    return { r: { p: value.source, f: value.flags } };
 
   if (Array.isArray(value)) {
-    const result = [];
+    const a = [];
     visited.add(value);
     for (let i = 0; i < value.length; ++i)
-      result.push(serialize(value[i], jsHandleSerializer, visited));
+      a.push(serialize(value[i], handleSerializer, visited));
     visited.delete(value);
-    return { a: result };
+    return { a };
   }
 
   if (typeof value === 'object') {
-    const result: any = {};
+    const o: { k: string, v: SerializedValue }[] = [];
     visited.add(value);
     for (const name of Object.keys(value)) {
       let item;
@@ -140,11 +141,11 @@ function serialize(value: any, jsHandleSerializer: (value: any) => HandleOrValue
         continue;  // native bindings will throw sometimes
       }
       if (name === 'toJSON' && typeof item === 'function')
-        result[name] = {};
+        o.push({ k: name, v: { o: [] } });
       else
-        result[name] = serialize(item, jsHandleSerializer, visited);
+        o.push({ k: name, v: serialize(item, handleSerializer, visited) });
     }
     visited.delete(value);
-    return { o: result };
+    return { o };
   }
 }

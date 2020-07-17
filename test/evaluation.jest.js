@@ -17,7 +17,7 @@
 
 const utils = require('./utils');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS, CHANNEL} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = testOptions;
 
 describe('Page.evaluate', function() {
   it('should work', async({page, server}) => {
@@ -373,7 +373,8 @@ describe('Page.evaluate', function() {
     });
     expect(result).toBe(undefined);
   });
-  it.skip(CHANNEL)('should transfer 100Mb of data from page to node.js', async({page}) => {
+  it.fail(USES_HOOKS)('should transfer 100Mb of data from page to node.js', async({page}) => {
+    // This does not use hooks, but is slow in wire channel.
     const a = await page.evaluate(() => Array(100 * 1024 * 1024 + 1).join('a'));
     expect(a.length).toBe(100 * 1024 * 1024);
   });

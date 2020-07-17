@@ -20,7 +20,7 @@ import { ElectronApplicationChannel, ElectronApplicationInitializer, PageChannel
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { BrowserContextBase } from '../../browserContext';
 import { PageDispatcher } from './pageDispatcher';
-import { parseArgument } from './jsHandleDispatcher';
+import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { createHandle } from './elementHandlerDispatcher';
 import { SerializedValue } from '../../common/utilityScriptSerializers';
 
@@ -57,7 +57,7 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
 
   async evaluateExpression(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }> {
     const handle = this._object._nodeElectronHandle!;
-    return { value: await handle._evaluateExpression(params.expression, params.isFunction, true /* returnByValue */, parseArgument(params.arg)) };
+    return { value: serializeResult(await handle._evaluateExpression(params.expression, params.isFunction, true /* returnByValue */, parseArgument(params.arg))) };
   }
 
   async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ handle: JSHandleChannel }> {
