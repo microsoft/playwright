@@ -66,13 +66,6 @@ describe('Page.click', function() {
     ]).catch(e => {});
     await context.close();
   });
-  it.skip(USES_HOOKS)('should avoid side effects after timeout', async({page, server}) => {
-    await page.goto(server.PREFIX + '/input/button.html');
-    const error = await page.click('button', { timeout: 2000, __testHookBeforePointerAction: () => new Promise(f => setTimeout(f, 2500))}).catch(e => e);
-    await page.waitForTimeout(5000);  // Give it some time to click after the test hook is done waiting.
-    expect(await page.evaluate(() => result)).toBe('Was not clicked');
-    expect(error.message).toContain('page.click: Timeout 2000ms exceeded.');
-  });
   it('should click the button after navigation ', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.click('button');
@@ -183,22 +176,6 @@ describe('Page.click', function() {
     await clicked;
     expect(done).toBe(true);
     expect(await page.evaluate(() => result)).toBe('Clicked');
-  });
-  it('should timeout waiting for display:none to be gone', async({page, server}) => {
-    await page.goto(server.PREFIX + '/input/button.html');
-    await page.$eval('button', b => b.style.display = 'none');
-    const error = await page.click('button', { timeout: 5000 }).catch(e => e);
-    expect(error.message).toContain('page.click: Timeout 5000ms exceeded.');
-    expect(error.message).toContain('waiting for element to be visible, enabled and not moving');
-    expect(error.message).toContain('element is not visible - waiting');
-  });
-  it('should timeout waiting for visbility:hidden to be gone', async({page, server}) => {
-    await page.goto(server.PREFIX + '/input/button.html');
-    await page.$eval('button', b => b.style.visibility = 'hidden');
-    const error = await page.click('button', { timeout: 5000 }).catch(e => e);
-    expect(error.message).toContain('page.click: Timeout 5000ms exceeded.');
-    expect(error.message).toContain('waiting for element to be visible, enabled and not moving');
-    expect(error.message).toContain('element is not visible - waiting');
   });
   it('should waitFor visible when parent is hidden', async({page, server}) => {
     let done = false;
@@ -432,18 +409,6 @@ describe('Page.click', function() {
     expect(await page.evaluate(() => pageX)).toBe(300);
     expect(await page.evaluate(() => pageY)).toBe(10);
   });
-  it('should timeout waiting for stable position', async({page, server}) => {
-    await page.goto(server.PREFIX + '/input/button.html');
-    const button = await page.$('button');
-    await button.evaluate(button => {
-      button.style.transition = 'margin 5s linear 0s';
-      button.style.marginLeft = '200px';
-    });
-    const error = await button.click({ timeout: 5000 }).catch(e => e);
-    expect(error.message).toContain('elementHandle.click: Timeout 5000ms exceeded.');
-    expect(error.message).toContain('waiting for element to be visible, enabled and not moving');
-    expect(error.message).toContain('element is moving - waiting');
-  });
   it('should wait for becoming hit target', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     await page.$eval('button', button => {
@@ -475,24 +440,6 @@ describe('Page.click', function() {
     expect(clicked).toBe(true);
     expect(await page.evaluate(() => window.result)).toBe('Clicked');
   });
-  it('should timeout waiting for hit target', async({page, server}) => {
-    await page.goto(server.PREFIX + '/input/button.html');
-    const button = await page.$('button');
-    await page.evaluate(() => {
-      document.body.style.position = 'relative';
-      const blocker = document.createElement('div');
-      blocker.style.position = 'absolute';
-      blocker.style.width = '400px';
-      blocker.style.height = '20px';
-      blocker.style.left = '0';
-      blocker.style.top = '0';
-      document.body.appendChild(blocker);
-    });
-    const error = await button.click({ timeout: 5000 }).catch(e => e);
-    expect(error.message).toContain('elementHandle.click: Timeout 5000ms exceeded.');
-    expect(error.message).toContain('element does not receive pointer events');
-    expect(error.message).toContain('retrying click action');
-  });
   it('should fail when obscured and not waiting for hit target', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');
     const button = await page.$('button');
@@ -520,13 +467,6 @@ describe('Page.click', function() {
     await page.evaluate(() => document.querySelector('button').removeAttribute('disabled'));
     await clickPromise;
     expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
-  });
-  it('should timeout waiting for button to be enabled', async({page, server}) => {
-    await page.setContent('<button onclick="javascript:window.__CLICKED=true;" disabled><span>Click target</span></button>');
-    const error = await page.click('text=Click target', { timeout: 3000 }).catch(e => e);
-    expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
-    expect(error.message).toContain('page.click: Timeout 3000ms exceeded.');
-    expect(error.message).toContain('element is disabled - waiting');
   });
   it('should wait for input to be enabled', async({page, server}) => {
     await page.setContent('<input onclick="javascript:window.__CLICKED=true;" disabled>');
@@ -708,22 +648,6 @@ describe('Page.click', function() {
     expect(await page.evaluate(() => window.clicked)).toBe(undefined);
     expect(error.message).toContain('Element is outside of the viewport');
   });
-  it.skip(USES_HOOKS)('should fail when element jumps during hit testing', async({page, server}) => {
-    await page.setContent('<button>Click me</button>');
-    let clicked = false;
-    const handle = await page.$('button');
-    const __testHookBeforeHitTarget = () => page.evaluate(() => {
-      const margin = parseInt(document.querySelector('button').style.marginLeft || 0) + 100;
-      document.querySelector('button').style.marginLeft = margin + 'px';
-    });
-    const promise = handle.click({ timeout: 5000, __testHookBeforeHitTarget }).then(() => clicked = true).catch(e => e);
-    const error = await promise;
-    expect(clicked).toBe(false);
-    expect(await page.evaluate(() => window.clicked)).toBe(undefined);
-    expect(error.message).toContain('elementHandle.click: Timeout 5000ms exceeded.');
-    expect(error.message).toContain('element does not receive pointer events');
-    expect(error.message).toContain('retrying click action');
-  });
   it('should dispatch microtasks in order', async({page, server}) => {
     await page.setContent(`
       <button id=button>Click me</button>
@@ -760,24 +684,6 @@ describe('Page.click', function() {
     expect(await page.evaluate(() => window.button1)).toBe(true);
     expect(await page.evaluate(() => window.button2)).toBe(undefined);
   });
-  it.fail(true)('should report that selector does not match anymore', async ({page, server}) => {
-    await page.goto(server.PREFIX + '/react.html');
-    await page.evaluate(() => {
-      renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2' })] ));
-    });
-    const __testHookAfterStable = () => page.evaluate(() => {
-      window.counter = (window.counter || 0) + 1;
-      if (window.counter === 1)
-        renderComponent(e('div', {}, [e(MyButton, { name: 'button2' }), e(MyButton, { name: 'button1' })] ));
-      else
-        renderComponent(e('div', {}, []));
-    });
-    const error = await page.dblclick('text=button1', { __testHookAfterStable, timeout: 3000 }).catch(e => e);
-    expect(await page.evaluate(() => window.button1)).toBe(undefined);
-    expect(await page.evaluate(() => window.button2)).toBe(undefined);
-    expect(error.message).toContain('page.dblclick: Timeout 3000ms exceeded.');
-    expect(error.message).toContain('element does not match the selector anymore');
-  });
   it.fail(true)('should retarget when element is recycled before enabled check', async ({page, server}) => {
     await page.goto(server.PREFIX + '/react.html');
     await page.evaluate(() => {
@@ -791,23 +697,6 @@ describe('Page.click', function() {
     await page.click('text=button1', { __testHookBeforeStable });
     expect(await page.evaluate(() => window.button1)).toBe(true);
     expect(await page.evaluate(() => window.button2)).toBe(undefined);
-  });
-  it.fail(true)('should not retarget the handle when element is recycled', async ({page, server}) => {
-    await page.goto(server.PREFIX + '/react.html');
-    await page.evaluate(() => {
-      renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2', disabled: true })] ));
-    });
-    const __testHookBeforeStable = () => page.evaluate(() => {
-      window.counter = (window.counter || 0) + 1;
-      if (window.counter === 1)
-        renderComponent(e('div', {}, [e(MyButton, { name: 'button2', disabled: true }), e(MyButton, { name: 'button1' })] ));
-    });
-    const handle = await page.$('text=button1');
-    const error = await handle.click({ __testHookBeforeStable, timeout: 3000 }).catch(e => e);
-    expect(await page.evaluate(() => window.button1)).toBe(undefined);
-    expect(await page.evaluate(() => window.button2)).toBe(undefined);
-    expect(error.message).toContain('elementHandle.click: Timeout 3000ms exceeded.');
-    expect(error.message).toContain('element is disabled - waiting');
   });
   it('should not retarget when element changes on hover', async ({page, server}) => {
     await page.goto(server.PREFIX + '/react.html');
@@ -835,67 +724,5 @@ describe('Page.click', function() {
     await page.evaluate(() => window.innerWidth = 0);
     await page.click('button');
     expect(await page.evaluate(() => result)).toBe('Clicked');
-  });
-  it('should timeout when click opens alert', async({page, server}) => {
-    const dialogPromise = page.waitForEvent('dialog');
-    await page.setContent(`<div onclick='window.alert(123)'>Click me</div>`);
-    const error = await page.click('div', { timeout: 3000 }).catch(e => e);
-    expect(error.message).toContain('page.click: Timeout 3000ms exceeded.');
-    const dialog = await dialogPromise;
-    await dialog.dismiss();
-  });
-});
-
-describe('Page.check', function() {
-  it('should check the box', async({page}) => {
-    await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
-    await page.check('input');
-    expect(await page.evaluate(() => checkbox.checked)).toBe(true);
-  });
-  it('should not check the checked box', async({page}) => {
-    await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
-    await page.check('input');
-    expect(await page.evaluate(() => checkbox.checked)).toBe(true);
-  });
-  it('should uncheck the box', async({page}) => {
-    await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
-    await page.uncheck('input');
-    expect(await page.evaluate(() => checkbox.checked)).toBe(false);
-  });
-  it('should not uncheck the unchecked box', async({page}) => {
-    await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
-    await page.uncheck('input');
-    expect(await page.evaluate(() => checkbox.checked)).toBe(false);
-  });
-  it('should check the box by label', async({page}) => {
-    await page.setContent(`<label for='checkbox'><input id='checkbox' type='checkbox'></input></label>`);
-    await page.check('label');
-    expect(await page.evaluate(() => checkbox.checked)).toBe(true);
-  });
-  it('should check the box outside label', async({page}) => {
-    await page.setContent(`<label for='checkbox'>Text</label><div><input id='checkbox' type='checkbox'></input></div>`);
-    await page.check('label');
-    expect(await page.evaluate(() => checkbox.checked)).toBe(true);
-  });
-  it('should check the box inside label w/o id', async({page}) => {
-    await page.setContent(`<label>Text<span><input id='checkbox' type='checkbox'></input></span></label>`);
-    await page.check('label');
-    expect(await page.evaluate(() => checkbox.checked)).toBe(true);
-  });
-  it('should check radio', async({page}) => {
-    await page.setContent(`
-      <input type='radio'>one</input>
-      <input id='two' type='radio'>two</input>
-      <input type='radio'>three</input>`);
-    await page.check('#two');
-    expect(await page.evaluate(() => two.checked)).toBe(true);
-  });
-  it('should check the box by aria role', async({page}) => {
-    await page.setContent(`<div role='checkbox' id='checkbox'>CHECKBOX</div>
-      <script>
-        checkbox.addEventListener('click', () => checkbox.setAttribute('aria-checked', 'true'));
-      </script>`);
-    await page.check('div');
-    expect(await page.evaluate(() => checkbox.getAttribute('aria-checked'))).toBe('true');
   });
 });
