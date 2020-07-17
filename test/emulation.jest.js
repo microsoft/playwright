@@ -584,8 +584,8 @@ describe('focus', function() {
       page.screenshot(),
       page2.screenshot(),
     ]);
-    expect(screenshots[0]).toMatchImageSnapshot('screenshot-sanity');
-    expect(screenshots[1]).toMatchImageSnapshot('grid-cell-0');
+    expect(screenshots[0]).toBeGolden('screenshot-sanity.png');
+    expect(screenshots[1]).toBeGolden('grid-cell-0.png');
   });
   it('should change focused iframe', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);

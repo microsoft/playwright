@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = testOptions;
 
 function dimensions() {
   const rect = document.querySelector('textarea').getBoundingClientRect();

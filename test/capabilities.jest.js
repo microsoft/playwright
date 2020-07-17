@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX} = testOptions;
 
 describe('Capabilities', function() {
   it.fail(WEBKIT && WIN)('Web Assembly should work', async function({page, server}) {

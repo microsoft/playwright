@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT} = testOptions;
 
 describe('Overrides.setGeolocation', function() {
   it('should work', async({page, server, context}) => {

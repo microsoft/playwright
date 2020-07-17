@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT} = testOptions;
 
 describe('Page.evaluateHandle', function() {
   it('should work', async({page, server}) => {
@@ -164,8 +164,8 @@ describe('JSHandle.jsonValue', function() {
   });
   it('should work with dates', async({page, server}) => {
     const dateHandle = await page.evaluateHandle(() => new Date('2017-09-26T00:00:00.000Z'));
-    const json = await dateHandle.jsonValue();
-    expect(json instanceof Date).toBeTruthy();
+    const date = await dateHandle.jsonValue();
+    expect(date.toJSON()).toBe('2017-09-26T00:00:00.000Z');
   });
   it('should throw for circular objects', async({page, server}) => {
     const windowHandle = await page.evaluateHandle('window');
@@ -231,7 +231,7 @@ describe('JSHandle.asElement', function() {
   });
   it('should work with nullified Node', async({page, server}) => {
     await page.setContent('<section>test</section>');
-    await page.evaluate(() => delete Node);
+    await page.evaluate('delete Node');
     const handle = await page.evaluateHandle(() => document.querySelector('section'));
     const element = handle.asElement();
     expect(element).not.toBe(null);

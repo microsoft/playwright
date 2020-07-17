@@ -14,10 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import utils from './utils';
-import type { Page } from '..';
 
-const {FFOX, WEBKIT, CHROMIUM, MAC} = utils.testOptions(browserType);
+const utils = require('./utils');
+
+const {FFOX, WEBKIT, CHROMIUM, MAC} = testOptions;
+
 describe('Keyboard', function() {
   it('should type into a textarea', async ({page, server}) => {
     await page.evaluate(() => {
@@ -69,7 +70,7 @@ describe('Keyboard', function() {
     await page.focus('textarea');
     page.on('console', m => console.log(m.text()));
     const events = await page.evaluateHandle(() => {
-      const events: string[] = [];
+      const events = [];
       document.addEventListener('keydown', e => events.push(e.type));
       document.addEventListener('keyup', e => events.push(e.type));
       document.addEventListener('keypress', e => events.push(e.type));
@@ -375,7 +376,7 @@ describe('Keyboard', function() {
   });
 });
 
-async function captureLastKeydown(page: Page) {
+async function captureLastKeydown(page) {
   const lastEvent = await page.evaluateHandle(() => {
     const lastEvent = {
       repeat: false,
@@ -392,7 +393,7 @@ async function captureLastKeydown(page: Page) {
       lastEvent.code = e.code;
       lastEvent.metaKey = e.metaKey;
       // keyIdentifier only exists in WebKit, and isn't in TypeScript's lib.
-      lastEvent.keyIdentifier = 'keyIdentifier' in e && (e as any).keyIdentifier;
+      lastEvent.keyIdentifier = 'keyIdentifier' in e && e.keyIdentifier;
     }, true);
     return lastEvent;
   });
