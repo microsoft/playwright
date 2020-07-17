@@ -71,26 +71,6 @@ module.exports = {
   specs: [
     {
       files: [
-        './input.spec.js',
-        './jshandle.spec.js',
-        './keyboard.spec.ts',
-        './mouse.spec.js',
-        './navigation.spec.js',
-        './pdf.spec.js',
-        './queryselector.spec.js',
-        './screenshot.spec.js',
-        './waittask.spec.js',
-        './interception.spec.js',
-        './geolocation.spec.js',
-        './workers.spec.js',
-        './capabilities.spec.js',
-        './permissions.spec.js',
-      ],
-      environments: [customEnvironment,  'page'],
-    },
-
-    {
-      files: [
         './chromium/chromium.spec.js',
         './chromium/session.spec.js',
       ],

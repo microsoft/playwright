@@ -18,7 +18,7 @@
 const utils = require('./utils');
 const path = require('path');
 const url = require('url');
-const {FFOX, CHROMIUM, WEBKIT, ASSETS_DIR, MAC, WIN, CHANNEL} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, ASSETS_DIR, MAC, WIN} = testOptions;
 
 describe('Page.goto', function() {
   it('should work', async({page, server}) => {
@@ -193,7 +193,7 @@ describe('Page.goto', function() {
     else
       expect(error.message).toContain('NS_ERROR_CONNECTION_REFUSED');
   });
-  it('should fail when exceeding maximum navigation timeout', async({page, server}) => {
+  it('should fail when exceeding maximum navigation timeout', async({page, server, playwright}) => {
     // Hang for request to the empty.html
     server.setRoute('/empty.html', (req, res) => { });
     let error = null;
@@ -202,7 +202,7 @@ describe('Page.goto', function() {
     expect(error.message).toContain(server.PREFIX + '/empty.html');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
-  it('should fail when exceeding default maximum navigation timeout', async({page, server}) => {
+  it('should fail when exceeding default maximum navigation timeout', async({page, server, playwright}) => {
     // Hang for request to the empty.html
     server.setRoute('/empty.html', (req, res) => { });
     let error = null;
@@ -213,7 +213,7 @@ describe('Page.goto', function() {
     expect(error.message).toContain(server.PREFIX + '/empty.html');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
-  it('should fail when exceeding browser context navigation timeout', async({page, server}) => {
+  it('should fail when exceeding browser context navigation timeout', async({page, server, playwright}) => {
     // Hang for request to the empty.html
     server.setRoute('/empty.html', (req, res) => { });
     let error = null;
@@ -223,7 +223,7 @@ describe('Page.goto', function() {
     expect(error.message).toContain(server.PREFIX + '/empty.html');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
-  it('should fail when exceeding default maximum timeout', async({page, server}) => {
+  it('should fail when exceeding default maximum timeout', async({page, server, playwright}) => {
     // Hang for request to the empty.html
     server.setRoute('/empty.html', (req, res) => { });
     let error = null;
@@ -234,7 +234,7 @@ describe('Page.goto', function() {
     expect(error.message).toContain(server.PREFIX + '/empty.html');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
-  it('should fail when exceeding browser context timeout', async({page, server}) => {
+  it('should fail when exceeding browser context timeout', async({page, server, playwright}) => {
     // Hang for request to the empty.html
     server.setRoute('/empty.html', (req, res) => { });
     let error = null;
@@ -244,7 +244,7 @@ describe('Page.goto', function() {
     expect(error.message).toContain(server.PREFIX + '/empty.html');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
-  it('should prioritize default navigation timeout over default timeout', async({page, server}) => {
+  it('should prioritize default navigation timeout over default timeout', async({page, server, playwright}) => {
     // Hang for request to the empty.html
     server.setRoute('/empty.html', (req, res) => { });
     let error = null;

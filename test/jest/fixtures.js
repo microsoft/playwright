@@ -63,6 +63,7 @@ module.exports = function registerFixtures(global) {
   });
 
   global.registerWorkerFixture('playwright', async({}, test) => {
+    Error.stackTraceLimit = 15;
     if (process.env.PWCHANNEL) {
       setUseApiName(false);
       const connection = new Connection();
@@ -122,14 +123,24 @@ module.exports = function registerFixtures(global) {
   
   global.registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
     const browser = await browserType.launch(defaultBrowserOptions);
-    await test(browser);
-    await browser.close();
+    try {
+      await test(browser);
+      if (browser.contexts().length !== 0) {
+        console.warn(`\nWARNING: test did not close all created contexts! ${new Error().stack}\n`);
+        await Promise.all(browser.contexts().map(context => context.close()));
+      }
+    } finally {
+      await browser.close();
+    }
   });
   
   global.registerFixture('context', async ({browser}, test) => {
     const context = await browser.newContext();
-    await test(context);
-    await context.close();
+    try {
+      await test(context);
+    } finally {
+      await context.close();
+    }
   });
   
   global.registerFixture('page', async ({context}, test) => {

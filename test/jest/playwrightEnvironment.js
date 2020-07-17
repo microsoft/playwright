@@ -16,10 +16,10 @@
 
 const NodeEnvironment = require('jest-environment-node');
 const registerFixtures = require('./fixtures');
-const { toMatchImageSnapshot: jestImageSnapshot } = require('jest-image-snapshot');
 const os = require('os');
 const path = require('path');
 const platform = os.platform();
+const GoldenUtils = require('../../utils/testrunner/GoldenUtils');
 
 const browserName = process.env.BROWSER || 'chromium';
 
@@ -37,6 +37,9 @@ class PlaywrightEnvironment extends NodeEnvironment {
     testOptions.USES_HOOKS = process.env.PWCHANNEL === 'wire';
     testOptions.CHANNEL = !!process.env.PWCHANNEL;
     testOptions.HEADLESS = !!valueFromEnv('HEADLESS', true);
+    testOptions.ASSETS_DIR = path.join(__dirname, '..', 'assets');
+    testOptions.GOLDEN_DIR = path.join(__dirname, '..', 'golden-' + browserName);
+    testOptions.OUTPUT_DIR = path.join(__dirname, '..', 'output-' + browserName);
     this.global.testOptions = testOptions;
 
     this.global.registerFixture = (name, fn) => {
@@ -86,14 +89,15 @@ class PlaywrightEnvironment extends NodeEnvironment {
       this.global.it.fail = this.global.it.skip;
       this.global.it.slow = () => this.global.it;
 
-      function toMatchImageSnapshot(received, fileName) {
-        return jestImageSnapshot.call(this, received, {
-          customDiffConfig: { threshold: 0.2 },
-          customSnapshotsDir: path.join(__dirname, '..', `golden-${browserName}`),
-          customSnapshotIdentifier: fileName
+      const testOptions = this.global.testOptions;
+      function toBeGolden(received, goldenName) {
+        return GoldenUtils.compare(received, {
+          goldenPath: testOptions.GOLDEN_DIR,
+          outputPath: testOptions.OUTPUT_DIR,
+          goldenName
         });
       };
-      this.global.expect.extend({ toMatchImageSnapshot });
+      this.global.expect.extend({ toBeGolden });
     }
     if (event.name === 'test_start') {
       const fn = event.test.fn;
@@ -196,7 +200,7 @@ class FixturePool {
     const params = {};
     for (const n of names)
       params[n] = this.instances.get(n).value; 
-    await fn(params);
+    return fn(params);
   }
 }
 

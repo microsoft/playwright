@@ -14,5 +14,15 @@
  * limitations under the License.
  */
 
+const fs = require('fs');
+const path = require('path');
+const rm = require('rimraf').sync;
+
+const browserName = process.env.BROWSER || 'chromium';
+
 module.exports = async function setup() {
+	const OUTPUT_DIR = path.join(__dirname, '..', 'output-' + browserName);
+	if (fs.existsSync(OUTPUT_DIR))
+  	rm(OUTPUT_DIR);
+	fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 };

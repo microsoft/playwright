@@ -16,7 +16,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = testOptions;
 
 async function giveItTimeToLog(frame) {
   await frame.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
@@ -143,14 +143,14 @@ describe('Frame.waitForFunction', function() {
     await page.evaluate(element => element.remove(), div);
     await waitForFunction;
   });
-  it('should respect timeout', async({page}) => {
+  it('should respect timeout', async({page, playwright}) => {
     let error = null;
     await page.waitForFunction('false', {}, {timeout: 10}).catch(e => error = e);
     expect(error).toBeTruthy();
     expect(error.message).toContain('page.waitForFunction: Timeout 10ms exceeded');
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
-  it('should respect default timeout', async({page}) => {
+  it('should respect default timeout', async({page, playwright}) => {
     page.setDefaultTimeout(1);
     let error = null;
     await page.waitForFunction('false').catch(e => error = e);
@@ -429,7 +429,7 @@ describe('Frame.waitForSelector', function() {
     const handle = await page.waitForSelector('non-existing', { state: 'hidden' });
     expect(handle).toBe(null);
   });
-  it('should respect timeout', async({page, server}) => {
+  it('should respect timeout', async({page, playwright}) => {
     let error = null;
     await page.waitForSelector('div', { timeout: 3000, state: 'attached' }).catch(e => error = e);
     expect(error).toBeTruthy();
@@ -461,7 +461,7 @@ describe('Frame.waitForSelector', function() {
   it('should have correct stack trace for timeout', async({page, server}) => {
     let error;
     await page.waitForSelector('.zombo', { timeout: 10 }).catch(e => error = e);
-    expect(error.stack).toContain('waittask.spec.js');
+    expect(error.stack).toContain('waittask');
   });
   it('should throw for unknown state option', async({page, server}) => {
     await page.setContent('<section>test</section>');
@@ -519,7 +519,7 @@ describe('Frame.waitForSelector xpath', function() {
     const waitForXPath = page.waitForSelector('//p[normalize-space(.)="hello world"]');
     expect(await page.evaluate(x => x.textContent, await waitForXPath)).toBe('hello  world  ');
   });
-  it('should respect timeout', async({page}) => {
+  it('should respect timeout', async({page, playwright}) => {
     let error = null;
     await page.waitForSelector('//div', { state: 'attached', timeout: 3000 }).catch(e => error = e);
     expect(error).toBeTruthy();

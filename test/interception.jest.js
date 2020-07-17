@@ -19,7 +19,7 @@ const fs = require('fs');
 const path = require('path');
 const { helper } = require('../lib/helper');
 const vm = require('vm');
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, HEADLESS} = testOptions;
 
 describe('Page.route', function() {
   it('should intercept', async({page, server}) => {
@@ -565,7 +565,7 @@ describe('Request.fulfill', function() {
     expect(response.statusText()).toBe('Unprocessable Entity');
     expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
   });
-  it.skip(FFOX && !HEADLESS)('should allow mocking binary responses', async({page, server, golden}) => {
+  it.skip(FFOX && !HEADLESS)('should allow mocking binary responses', async({page, server}) => {
     // Firefox headful produces a different image.
     await page.route('**/*', route => {
       const imageBuffer = fs.readFileSync(path.join(__dirname, 'assets', 'pptr.png'));
@@ -581,9 +581,9 @@ describe('Request.fulfill', function() {
       return new Promise(fulfill => img.onload = fulfill);
     }, server.PREFIX);
     const img = await page.$('img');
-    expect(await img.screenshot()).toBeGolden(golden('mock-binary-response.png'));
+    expect(await img.screenshot()).toBeGolden('mock-binary-response.png');
   });
-  it.skip(FFOX && !HEADLESS)('should allow mocking svg with charset', async({page, server, golden}) => {
+  it.skip(FFOX && !HEADLESS)('should allow mocking svg with charset', async({page, server}) => {
     // Firefox headful produces a different image.
     await page.route('**/*', route => {
       route.fulfill({
@@ -598,9 +598,9 @@ describe('Request.fulfill', function() {
       return new Promise((f, r) => { img.onload = f; img.onerror = r; });
     }, server.PREFIX);
     const img = await page.$('img');
-    expect(await img.screenshot()).toBeGolden(golden('mock-svg.png'));
+    expect(await img.screenshot()).toBeGolden('mock-svg.png');
   });
-  it('should work with file path', async({page, server, golden}) => {
+  it('should work with file path', async({page, server}) => {
     await page.route('**/*', route => route.fulfill({ contentType: 'shouldBeIgnored', path: path.join(__dirname, 'assets', 'pptr.png') }));
     await page.evaluate(PREFIX => {
       const img = document.createElement('img');
@@ -609,7 +609,7 @@ describe('Request.fulfill', function() {
       return new Promise(fulfill => img.onload = fulfill);
     }, server.PREFIX);
     const img = await page.$('img');
-    expect(await img.screenshot()).toBeGolden(golden('mock-binary-response.png'));
+    expect(await img.screenshot()).toBeGolden('mock-binary-response.png');
   });
   it('should stringify intercepted request response headers', async({page, server}) => {
     await page.route('**/*', route => {
@@ -746,7 +746,7 @@ describe('service worker', function() {
 });
 
 describe('glob', function() {
-  it('should work with glob', async({newPage, httpsServer}) => {
+  it('should work with glob', async() => {
     expect(helper.globToRegex('**/*.js').test('https://localhost:8080/foo.js')).toBeTruthy();
     expect(helper.globToRegex('**/*.css').test('https://localhost:8080/foo.js')).toBeFalsy();
     expect(helper.globToRegex('*.js').test('https://localhost:8080/foo.js')).toBeFalsy();

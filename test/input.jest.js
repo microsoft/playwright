@@ -20,7 +20,6 @@ const fs = require('fs');
 const formidable = require('formidable');
 
 const FILE_TO_UPLOAD = path.join(__dirname, '/assets/file-to-upload.txt');
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
 
 describe('input', function() {
   it('should upload the file', async({page, server}) => {
@@ -85,18 +84,18 @@ describe('Page.waitForFileChooser', function() {
     ]);
     expect(chooser).toBeTruthy();
   });
-  it('should respect timeout', async({page, server}) => {
+  it('should respect timeout', async({page, playwright}) => {
     let error = null;
     await page.waitForEvent('filechooser', {timeout: 1}).catch(e => error = e);
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
-  it('should respect default timeout when there is no custom timeout', async({page, server}) => {
+  it('should respect default timeout when there is no custom timeout', async({page, playwright}) => {
     page.setDefaultTimeout(1);
     let error = null;
     await page.waitForEvent('filechooser').catch(e => error = e);
     expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   });
-  it('should prioritize exact timeout over default timeout', async({page, server}) => {
+  it('should prioritize exact timeout over default timeout', async({page, playwright}) => {
     page.setDefaultTimeout(0);
     let error = null;
     await page.waitForEvent('filechooser', {timeout: 1}).catch(e => error = e);

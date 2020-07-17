@@ -17,7 +17,7 @@
 
 const path = require('path');
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL, USES_HOOKS} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, CHANNEL, USES_HOOKS} = testOptions;
 
 describe('Page.$eval', function() {
   it('should work with css selector', async({page, server}) => {
