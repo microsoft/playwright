@@ -15,10 +15,9 @@
  */
 
 const path = require('path');
-const config = require('../test.config');
-const utils = require('../utils');
-
 const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
+
+const { CHROMIUM } = testOptions;
 
 registerFixture('application', async ({playwright}, test) => {
   const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
@@ -41,7 +40,7 @@ registerFixture('window', async ({application}, test) => {
   }
 });
 
-describe('Electron', function() {
+describe.skip(!CHROMIUM)('Electron', function() {
   it('should script application', async ({ application }) => {
     const appPath = await application.evaluate(async ({ app }) => app.getAppPath());
     expect(appPath).toContain('electron');
@@ -124,7 +123,7 @@ describe('Electron', function() {
   });
 });
 
-describe('Electron per window', function() {
+describe.skip(!CHROMIUM)('Electron per window', function() {
   it('should click the button', async({window, server}) => {
     await window.goto(server.PREFIX + '/input/button.html');
     await window.click('button');

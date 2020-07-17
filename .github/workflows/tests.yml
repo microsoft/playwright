@@ -37,14 +37,12 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run test 2>./testrun.log"
-      env:
-        BROWSER: ${{ matrix.browser }}
-        DEBUG: "*,-pw:wrapped*"
     - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
       if: ${{ always() }}
       env:
         BROWSER: ${{ matrix.browser }}
+        DEBUG: "*,-pw:wrapped*"
+        DEBUG_FILE: "testrun.log"
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -76,14 +74,11 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
-    - run: npm run test 2>./${{ matrix.browser }}-mac-testrun.log
+    - run: npm run jest -- --testTimeout=30000
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "*,-pw:wrapped*"
-    - run: npm run jest -- --testTimeout=30000
-      if: ${{ always() }}
-      env:
-        BROWSER: ${{ matrix.browser }}
+        DEBUG_FILE: "testrun.log"
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -93,7 +88,7 @@ jobs:
       if: failure()
       with:
         name: ${{ matrix.browser }}-mac-testrun.log
-        path: ${{ matrix.browser }}-mac-testrun.log
+        path: testrun.log
 
   test_win:
     name: "Windows"
@@ -110,16 +105,12 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
-    - run: npm run test 2>./${{ matrix.browser }}-win-testrun.log
+    - run: npm run jest -- --testTimeout=30000
       shell: bash
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "*,-pw:wrapped*"
-    - run: npm run jest -- --testTimeout=30000
-      if: ${{ always() }}
-      shell: bash
-      env:
-        BROWSER: ${{ matrix.browser }}
+        DEBUG_FILE: "testrun.log"
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -129,7 +120,7 @@ jobs:
       if: failure()
       with:
         name: ${{ matrix.browser }}-win-testrun.log
-        path: ${{ matrix.browser }}-win-testrun.log
+        path: testrun.log
 
   test-package-installations:
     runs-on: ubuntu-latest
@@ -166,30 +157,29 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run test -- --line-break=100 2>./headful-linux-testrun.log"
-      env:
-        DEBUG: "*"
-        HEADLESS: "false"
     - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
       if: ${{ always() }}
       env:
         BROWSER: "chromium"
         HEADLESS: "false"
+        DEBUG_FILE: "testrun.log"
     - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
       if: ${{ always() }}
       env:
         BROWSER: "firefox"
         HEADLESS: "false"
+        DEBUG_FILE: "testrun.log"
     - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
       if: ${{ always() }}
       env:
         BROWSER: "webkit"
         HEADLESS: "false"
+        DEBUG_FILE: "testrun.log"
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
         name: headful-linux-testrun.log
-        path: headful-linux-testrun.log
+        path: testrun.log
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -218,15 +208,11 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run test 2>./testrun.log"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "*,-pw:wrapped*"
-        PWCHANNEL: ${{ matrix.transport }}
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
-      if: ${{ always() }}
-      env:
-        BROWSER: ${{ matrix.browser }}
+        DEBUG_FILE: "testrun.log"
         PWCHANNEL: ${{ matrix.transport }}
     - uses: actions/upload-artifact@v1
       if: failure()
