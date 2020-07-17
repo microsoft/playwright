@@ -25,6 +25,8 @@ const { Transport } = require('../../lib/rpc/transport');
 const { PlaywrightDispatcher } = require('../../lib/rpc/server/playwrightDispatcher');
 const { setUseApiName } = require('../../lib/progress');
 
+const browserName = process.env.BROWSER || 'chromium';
+
 module.exports = function registerFixtures(global) {
   global.registerWorkerFixture('parallelIndex', async ({}, test) => {
     await test(process.env.JEST_WORKER_ID - 1);
@@ -58,10 +60,20 @@ module.exports = function registerFixtures(global) {
   });
 
   global.registerWorkerFixture('defaultBrowserOptions', async({}, test) => {
+    let executablePath = undefined;
+    if (browserName === 'chromium' && process.env.CRPATH)
+      executablePath = process.env.CRPATH;
+    if (browserName === 'firefox' && process.env.FFPATH)
+      executablePath = process.env.FFPATH;
+    if (browserName === 'webkit' && process.env.WKPATH)
+      executablePath = process.env.WKPATH;
+    if (executablePath)
+      console.error(`Using executable at ${executablePath}`);
     await test({
       handleSIGINT: false,
       slowMo: valueFromEnv('SLOW_MO', 0),
       headless: !!valueFromEnv('HEADLESS', true),
+      executablePath
     });
   });
 
