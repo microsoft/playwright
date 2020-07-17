@@ -37,6 +37,24 @@ export type BrowserContextOptions = {
   colorScheme?: types.ColorScheme,
   acceptDownloads?: boolean,
 };
+type LaunchOptionsBase = {
+  executablePath?: string,
+  args?: string[],
+  ignoreAllDefaultArgs?: boolean,
+  ignoreDefaultArgs?: string[],
+  handleSIGINT?: boolean,
+  handleSIGTERM?: boolean,
+  handleSIGHUP?: boolean,
+  timeout?: number,
+  env?: types.EnvArray,
+  headless?: boolean,
+  devtools?: boolean,
+  proxy?: types.ProxySettings,
+  downloadsPath?: string,
+};
+export type LaunchOptions = LaunchOptionsBase & { slowMo?: number };
+export type LaunchServerOptions = LaunchOptionsBase & { port?: number };
+export type LaunchPersistentContextOptions = { userDataDir: string } & LaunchOptions & BrowserContextOptions;
 
 export interface Channel extends EventEmitter {
 }
@@ -60,11 +78,10 @@ export interface SelectorsChannel extends Channel {
 export type SelectorsInitializer = {};
 
 
-export type LaunchPersistentContextOptions = { userDataDir: string } & types.LaunchOptions & BrowserContextOptions;
 export interface BrowserTypeChannel extends Channel {
   connect(params: types.ConnectOptions): Promise<{ browser: BrowserChannel }>;
-  launch(params: types.LaunchOptions): Promise<{ browser: BrowserChannel }>;
-  launchServer(params: types.LaunchServerOptions): Promise<{ server: BrowserServerChannel }>;
+  launch(params: LaunchOptions): Promise<{ browser: BrowserChannel }>;
+  launchServer(params: LaunchServerOptions): Promise<{ server: BrowserServerChannel }>;
   launchPersistentContext(params: LaunchPersistentContextOptions): Promise<{ context: BrowserContextChannel }>;
 }
 export type BrowserTypeInitializer = {

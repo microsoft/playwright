@@ -126,3 +126,19 @@ export function headersArrayToObject(headers: types.HeadersArray): types.Headers
     result[name] = value;
   return result;
 }
+
+export function envObjectToArray(env: types.Env): types.EnvArray {
+  const result: types.EnvArray = [];
+  for (const name in env) {
+    if (!Object.is(env[name], undefined))
+      result.push({ name, value: String(env[name]) });
+  }
+  return result;
+}
+
+export function envArrayToObject(env: types.EnvArray): types.Env {
+  const result: types.Env = {};
+  for (const { name, value } of env)
+    result[name] = value;
+  return result;
+}

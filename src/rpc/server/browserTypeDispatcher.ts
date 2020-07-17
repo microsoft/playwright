@@ -18,12 +18,12 @@ import { BrowserBase } from '../../browser';
 import { BrowserTypeBase, BrowserType } from '../../server/browserType';
 import * as types from '../../types';
 import { BrowserDispatcher } from './browserDispatcher';
-import { BrowserChannel, BrowserTypeChannel, BrowserContextChannel, BrowserTypeInitializer, BrowserServerChannel, LaunchPersistentContextOptions } from '../channels';
+import { BrowserChannel, BrowserTypeChannel, BrowserContextChannel, BrowserTypeInitializer, BrowserServerChannel, LaunchPersistentContextOptions, LaunchOptions, LaunchServerOptions } from '../channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { BrowserContextBase } from '../../browserContext';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { BrowserServerDispatcher } from './browserServerDispatcher';
-import { headersArrayToObject } from '../serializers';
+import { headersArrayToObject, envArrayToObject } from '../serializers';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeInitializer> implements BrowserTypeChannel {
   constructor(scope: DispatcherScope, browserType: BrowserTypeBase) {
@@ -33,22 +33,34 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
     }, true, browserType.name());
   }
 
-  async launch(params: types.LaunchOptions): Promise<{ browser: BrowserChannel }> {
-    const browser = await this._object.launch(params);
+  async launch(params: LaunchOptions): Promise<{ browser: BrowserChannel }> {
+    const options = {
+      ...params,
+      ignoreDefaultArgs: params.ignoreAllDefaultArgs ? true : params.ignoreDefaultArgs,
+      env: params.env ? envArrayToObject(params.env) : undefined,
+    };
+    const browser = await this._object.launch(options);
     return { browser: new BrowserDispatcher(this._scope, browser as BrowserBase) };
   }
 
   async launchPersistentContext(params: LaunchPersistentContextOptions): Promise<{ context: BrowserContextChannel }> {
     const options = {
       ...params,
+      ignoreDefaultArgs: params.ignoreAllDefaultArgs ? true : params.ignoreDefaultArgs,
+      env: params.env ? envArrayToObject(params.env) : undefined,
       extraHTTPHeaders: params.extraHTTPHeaders ? headersArrayToObject(params.extraHTTPHeaders) : undefined,
     };
     const browserContext = await this._object.launchPersistentContext(params.userDataDir, options);
     return { context: new BrowserContextDispatcher(this._scope, browserContext as BrowserContextBase) };
   }
 
-  async launchServer(params: types.LaunchServerOptions): Promise<{ server: BrowserServerChannel }> {
-    return { server: new BrowserServerDispatcher(this._scope, await this._object.launchServer(params)) };
+  async launchServer(params: LaunchServerOptions): Promise<{ server: BrowserServerChannel }> {
+    const options = {
+      ...params,
+      ignoreDefaultArgs: params.ignoreAllDefaultArgs ? true : params.ignoreDefaultArgs,
+      env: params.env ? envArrayToObject(params.env) : undefined,
+    };
+    return { server: new BrowserServerDispatcher(this._scope, await this._object.launchServer(options)) };
   }
 
   async connect(params: types.ConnectOptions): Promise<{ browser: BrowserChannel }> {

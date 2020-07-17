@@ -15,13 +15,13 @@
  */
 
 import * as types from '../../types';
-import { BrowserTypeChannel, BrowserTypeInitializer, LaunchPersistentContextOptions } from '../channels';
+import { BrowserTypeChannel, BrowserTypeInitializer, LaunchPersistentContextOptions, LaunchOptions, LaunchServerOptions } from '../channels';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { BrowserServer } from './browserServer';
 import { LoggerSink } from '../../loggerSink';
-import { headersObjectToArray } from '../serializers';
+import { headersObjectToArray, envObjectToArray } from '../serializers';
 
 export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {
 
@@ -45,7 +45,13 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.launch', async () => {
-      const browser = Browser.from((await this._channel.launch(options)).browser);
+      const launchOptions: LaunchOptions = {
+        ...options,
+        ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
+        ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
+        env: options.env ? envObjectToArray(options.env) : undefined,
+      };
+      const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
       browser._logger = logger;
       return browser;
     }, logger);
@@ -55,7 +61,13 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.launchServer', async () => {
-      return BrowserServer.from((await this._channel.launchServer(options)).server);
+      const launchServerOptions: LaunchServerOptions = {
+        ...options,
+        ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
+        ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
+        env: options.env ? envObjectToArray(options.env) : undefined,
+      };
+      return BrowserServer.from((await this._channel.launchServer(launchServerOptions)).server);
     }, logger);
   }
 
@@ -65,6 +77,9 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     return this._wrapApiCall('browserType.launchPersistentContext', async () => {
       const persistentOptions: LaunchPersistentContextOptions = {
         ...options,
+        ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
+        ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
+        env: options.env ? envObjectToArray(options.env) : undefined,
         extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
         userDataDir,
       };
