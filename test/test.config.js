@@ -71,57 +71,11 @@ module.exports = {
   specs: [
     {
       files: [
-        './chromium/chromium.spec.js',
-        './chromium/session.spec.js',
-      ],
-      browsers: ['chromium'],
-      title: '[Chromium]',
-      environments: [customEnvironment, 'page'],
-    },
-
-    {
-      files: [
         './defaultbrowsercontext.spec.js',
-        './downloadsPath.spec.js',
         './fixtures.spec.js',
-        './launcher.spec.js',
-        './logger.spec.js',
-        './headful.spec.js',
-        './multiclient.spec.js',
-        './proxy.spec.js',
       ],
       environments: [customEnvironment],
     },
-
-    {
-      files: [
-        './chromium/launcher.spec.js',
-        './chromium/oopif.spec.js',
-        './chromium/tracing.spec.js',
-      ],
-      browsers: ['chromium'],
-      title: '[Chromium]',
-      environments: [customEnvironment],
-    },
-
-    {
-      files: [
-        './firefox/launcher.spec.js',
-      ],
-      browsers: ['firefox'],
-      title: '[Firefox]',
-      environments: [customEnvironment],
-    },
-
-    {
-      files: [
-        './electron/electron.spec.js',
-      ],
-      browsers: ['chromium'],
-      title: '[Electron]',
-      environments: [customEnvironment],
-    },
-
     {
       files: [
         './apicoverage.spec.js',

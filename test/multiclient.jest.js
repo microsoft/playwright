@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT} = testOptions;
 
 describe('BrowserContext', function() {
   it('should work across sessions', async ({browserType, defaultBrowserOptions}) => {

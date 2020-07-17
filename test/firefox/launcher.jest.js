@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-const path = require('path');
-const utils = require('../utils');
-const {makeUserDataDir, removeUserDataDir} = utils;
-const {FFOX, CHROMIUM, WEBKIT, WIN} = utils.testOptions(browserType);
+const { FFOX } = testOptions;
 
-describe('launcher', function() {
+describe.skip(!FFOX)('launcher', function() {
   it('should pass firefox user preferences', async({browserType, defaultBrowserOptions}) => {
     const browser = await browserType.launch({
       ...defaultBrowserOptions,
