@@ -47,13 +47,13 @@ function parseStackFrame(frame: string): ParsedStackFrame | null {
 
 export function getCallerFilePath(ignorePrefix = PLAYWRIGHT_LIB_PATH): string | null {
   const error = new Error();
-  const stackFrames = (error.stack || '').split('\n').slice(1);
+  const stackFrames = (error.stack || '').split('\n').slice(2);
   // Find first stackframe that doesn't point to ignorePrefix.
   for (const frame of stackFrames) {
     const parsed = parseStackFrame(frame);
     if (!parsed)
       return null;
-    if (parsed.filePath.startsWith(ignorePrefix) || parsed.filePath === __filename)
+    if (parsed.filePath.startsWith(ignorePrefix))
       continue;
     return parsed.filePath;
   }
