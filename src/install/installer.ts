@@ -26,6 +26,7 @@ import * as browserFetcher from './browserFetcher';
 const fsMkdirAsync = util.promisify(fs.mkdir.bind(fs));
 const fsReaddirAsync = util.promisify(fs.readdir.bind(fs));
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
+const fsExistsAsync = (filePath: string) => fsReadFileAsync(filePath).then(() => true).catch(e => false);
 const fsUnlinkAsync = util.promisify(fs.unlink.bind(fs));
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const removeFolderAsync = util.promisify(removeFolder);
@@ -44,15 +45,24 @@ export async function installBrowsersWithProgressBar(packagePath: string) {
 }
 
 async function validateCache(packagePath: string, browsersPath: string, linksDir: string) {
-  // 1. Collect unused downloads and package descriptors.
-  const allBrowsers: browserPaths.BrowserDescriptor[] = [];
+  // 1. Collect used downloads and package descriptors.
+  const usedBrowserPaths: Set<string> = new Set();
   for (const fileName of await fsReaddirAsync(linksDir)) {
     const linkPath = path.join(linksDir, fileName);
     let linkTarget = '';
     try {
       linkTarget = (await fsReadFileAsync(linkPath)).toString();
       const browsers = JSON.parse((await fsReadFileAsync(path.join(linkTarget, 'browsers.json'))).toString())['browsers'];
-      allBrowsers.push(...browsers);
+      for (const browser of browsers) {
+        const usedBrowserPath = browserPaths.browserDirectory(browsersPath, browser);
+        const browserRevision = parseInt(browser.revision, 10);
+        // Old browser installations don't have marker file.
+        const shouldHaveMarkerFile = (browser.name === 'chromium' && browserRevision >= 786218) ||
+            (browser.name === 'firefox' && browserRevision >= 1128) ||
+            (browser.name === 'webkit' && browserRevision >= 1307);
+        if (!shouldHaveMarkerFile || (await fsExistsAsync(browserPaths.markerFilePath(browsersPath, browser))))
+          usedBrowserPaths.add(usedBrowserPath);
+      }
     } catch (e) {
       if (linkTarget)
         logPolitely('Failed to process descriptor at ' + linkTarget);
@@ -64,8 +74,8 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
   let downloadedBrowsers = (await fsReaddirAsync(browsersPath)).map(file => path.join(browsersPath, file));
   downloadedBrowsers = downloadedBrowsers.filter(file => browserPaths.isBrowserDirectory(file));
   const directories = new Set<string>(downloadedBrowsers);
-  for (const browser of allBrowsers)
-    directories.delete(browserPaths.browserDirectory(browsersPath, browser));
+  for (const browserPath of usedBrowserPaths)
+    directories.delete(browserPath);
   for (const directory of directories) {
     logPolitely('Removing unused browser at ' + directory);
     await removeFolderAsync(directory).catch(e => {});
@@ -76,6 +86,7 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
   for (const browser of myBrowsers) {
     const browserPath = browserPaths.browserDirectory(browsersPath, browser);
     await browserFetcher.downloadBrowserWithProgressBar(browserPath, browser);
+    await fsWriteFileAsync(browserPaths.markerFilePath(browsersPath, browser), '');
   }
 }
 

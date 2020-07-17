@@ -118,6 +118,10 @@ export function browserDirectory(browsersPath: string, browser: BrowserDescripto
   return path.join(browsersPath, `${browser.name}-${browser.revision}`);
 }
 
+export function markerFilePath(browsersPath: string, browser: BrowserDescriptor): string {
+  return path.join(browserDirectory(browsersPath, browser), 'INSTALLATION_COMPLETE');
+}
+
 export function isBrowserDirectory(browserPath: string): boolean {
   const baseName = path.basename(browserPath);
   return baseName.startsWith('chromium-') || baseName.startsWith('firefox-') || baseName.startsWith('webkit-');
