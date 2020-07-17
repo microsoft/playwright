@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, MAC} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, MAC} = testOptions;
 
 describe('Link navigation', function() {
   it('should inherit user agent from browser context', async function({browser, server}) {

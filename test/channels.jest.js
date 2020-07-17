@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const { FFOX, CHROMIUM, WEBKIT, WIN, CHANNEL } = require('./utils').testOptions(browserType);
+const { FFOX, CHROMIUM, WEBKIT, WIN, CHANNEL } = testOptions;
 
 describe.skip(!CHANNEL)('Channels', function() {
   it('should work', async({browser}) => {
