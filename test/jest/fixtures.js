@@ -16,6 +16,10 @@
 
 const path = require('path');
 const childProcess = require('child_process');
+const fs = require('fs');
+const os = require('os');
+const {promisify} = require('util');
+const mkdtempAsync = promisify(fs.mkdtemp);
 
 const playwright = require('../../index');
 const { TestServer } = require('../../utils/testserver/');
@@ -155,6 +159,27 @@ module.exports = function registerFixtures(global) {
     http_server.server.reset();
     await test(http_server.server);
   });
+
+  global.registerFixture('userDataDir', async ({}, test) => {
+    const userDataDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_profile-'));
+    await test(userDataDir);
+    removeFolderAsync(userDataDir).catch(e => {});
+  });
+
+  global.registerFixture('launchPersistent', async ({userDataDir, defaultBrowserOptions, browserType}, test) => {
+    let context;
+    async function launchPersistent(options) {
+      if (context)
+        throw new Error('can only launch one persitent context');
+      context = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, ...options});
+      const page = context.pages()[0];
+      return {context, page};
+    }
+    await test(launchPersistent);
+    if (context)
+      await context.close();
+  });
+  
 
   global.registerFixture('httpsServer', async ({http_server}, test) => {
     http_server.httpsServer.reset();
