@@ -20,13 +20,15 @@ import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { Selectors } from './selectors';
 import { Electron } from './electron';
+import { TimeoutError } from '../../errors';
 
 export class Playwright extends ChannelOwner<PlaywrightChannel, PlaywrightInitializer> {
-  chromium: BrowserType;
-  firefox: BrowserType;
-  webkit: BrowserType;
-  devices: types.Devices;
-  selectors: Selectors;
+  readonly chromium: BrowserType;
+  readonly firefox: BrowserType;
+  readonly webkit: BrowserType;
+  readonly devices: types.Devices;
+  readonly selectors: Selectors;
+  readonly errors: { TimeoutError: typeof TimeoutError };
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: PlaywrightInitializer) {
     super(parent, type, guid, initializer);
@@ -39,5 +41,6 @@ export class Playwright extends ChannelOwner<PlaywrightChannel, PlaywrightInitia
     for (const { name, descriptor } of initializer.deviceDescriptors)
       this.devices[name] = descriptor;
     this.selectors = Selectors.from(initializer.selectors);
+    this.errors = { TimeoutError };
   }
 }

@@ -16,9 +16,12 @@
 
 const NodeEnvironment = require('jest-environment-node');
 const registerFixtures = require('./fixtures');
+const { toMatchImageSnapshot: jestImageSnapshot } = require('jest-image-snapshot');
 const os = require('os');
-
+const path = require('path');
 const platform = os.platform();
+
+const browserName = process.env.BROWSER || 'chromium';
 
 class PlaywrightEnvironment extends NodeEnvironment {
   constructor(config, context) {
@@ -28,9 +31,9 @@ class PlaywrightEnvironment extends NodeEnvironment {
     testOptions.MAC = platform === 'darwin';
     testOptions.LINUX = platform === 'linux';
     testOptions.WIN = platform === 'win32';
-    testOptions.CHROMIUM = process.env.BROWSER === 'chromium' || !process.env.BROWSER;
-    testOptions.FFOX = process.env.BROWSER === 'firefox';
-    testOptions.WEBKIT = process.env.BROWSER === 'webkit';
+    testOptions.CHROMIUM = browserName === 'chromium';
+    testOptions.FFOX = browserName === 'firefox';
+    testOptions.WEBKIT = browserName === 'webkit';
     testOptions.USES_HOOKS = process.env.PWCHANNEL === 'wire';
     testOptions.CHANNEL = !!process.env.PWCHANNEL;
     testOptions.HEADLESS = !!valueFromEnv('HEADLESS', true);
@@ -60,6 +63,12 @@ class PlaywrightEnvironment extends NodeEnvironment {
 
   async handleTestEvent(event, state) {
     if (event.name === 'setup') {
+      const beforeEach = this.global.beforeEach;
+      this.global.beforeEach = fn => {
+        return beforeEach(async () => {
+          return await this.fixturePool.resolveParametersAndRun(fn);
+        });
+      }
       const describeSkip = this.global.describe.skip;
       this.global.describe.skip = (...args) => {
         if (args.length = 1)
@@ -76,6 +85,15 @@ class PlaywrightEnvironment extends NodeEnvironment {
       };
       this.global.it.fail = this.global.it.skip;
       this.global.it.slow = () => this.global.it;
+
+      function toMatchImageSnapshot(received, fileName) {
+        return jestImageSnapshot.call(this, received, {
+          customDiffConfig: { threshold: 0.2 },
+          customSnapshotsDir: path.join(__dirname, '..', `golden-${browserName}`),
+          customSnapshotIdentifier: fileName
+        });
+      };
+      this.global.expect.extend({ toMatchImageSnapshot });
     }
     if (event.name === 'test_start') {
       const fn = event.test.fn;

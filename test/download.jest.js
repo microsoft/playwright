@@ -16,16 +16,16 @@
 
 const fs = require('fs');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, HEADLESS} = testOptions;
 
 describe('Download', function() {
-  beforeEach(async(state) => {
-    state.server.setRoute('/download', (req, res) => {
+  beforeEach(async ({server}) => {
+    server.setRoute('/download', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
       res.setHeader('Content-Disposition', 'attachment');
       res.end(`Hello world`);
     });
-    state.server.setRoute('/downloadWithFilename', (req, res) => {
+    server.setRoute('/downloadWithFilename', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
       res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
       res.end(`Hello world`);
@@ -103,7 +103,7 @@ describe('Download', function() {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   })
-  it.skip(FFOX).fail(WEBKIT)('should report alt-click downloads', async({browser, server}) => {
+  it.fail(FFOX || WEBKIT)('should report alt-click downloads', async({browser, server}) => {
     // Firefox does not download on alt-click by default.
     // Our WebKit embedder does not download on alt-click, although Safari does.
     server.setRoute('/download', (req, res) => {

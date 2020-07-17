@@ -16,7 +16,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT} = testOptions;
 
 describe('Frame.evaluateHandle', function() {
   it('should work', async({page, server}) => {
@@ -101,7 +101,7 @@ describe('Frame.evaluate', function() {
     // Main world should work.
     expect(await page.frames()[1].evaluate(() => window.location.href)).toBe('about:blank');
     // Utility world should work.
-    expect(await page.frames()[1].$('div')).toBeTruthy(null);
+    expect(await page.frames()[1].$('div')).toBeTruthy();
   });
   it.fail(CHROMIUM)('should work in iframes that interrupted initial javascript url navigation', async({page, server}) => {
     // Chromium does not report isolated world for the iframe.
@@ -117,7 +117,7 @@ describe('Frame.evaluate', function() {
     // Main world should work.
     expect(await page.frames()[1].evaluate(() => window.top.location.href)).toBe(server.EMPTY_PAGE);
     // Utility world should work.
-    expect(await page.frames()[1].$('div')).toBeTruthy(null);
+    expect(await page.frames()[1].$('div')).toBeTruthy();
   });
 });
 

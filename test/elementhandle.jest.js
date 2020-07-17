@@ -16,7 +16,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = require('./utils').testOptions(browserType);
+const {FFOX, HEADLESS} = testOptions;
 
 describe('ElementHandle.boundingBox', function() {
   it.fail(FFOX && !HEADLESS)('should work', async({page, server}) => {
