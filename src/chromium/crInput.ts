@@ -18,6 +18,8 @@
 import * as input from '../input';
 import * as types from '../types';
 import { CRSession } from './crConnection';
+import { macEditingCommands } from '../macEditingCommands';
+import { helper } from '../helper';
 
 function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
   let mask = 0;
@@ -33,18 +35,36 @@ function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
 }
 
 export class RawKeyboardImpl implements input.RawKeyboard {
-  private _client: CRSession;
+  constructor(
+    private _client: CRSession,
+    private _isMac: boolean,
+  ) { }
 
-  constructor(client: CRSession) {
-    this._client = client;
+  _commandsForCode(code: string, modifiers: Set<types.KeyboardModifier>) {
+    if (!this._isMac)
+      return [];
+    const parts = [];
+    for (const modifier of (['Shift', 'Control', 'Alt', 'Meta']) as types.KeyboardModifier[]) {
+      if (modifiers.has(modifier))
+        parts.push(modifier);
+    }
+    parts.push(code);
+    const shortcut = parts.join('+');
+    let commands = (this._isMac && macEditingCommands[shortcut]) || [];
+    if (helper.isString(commands))
+      commands = [commands];
+    // remove the trailing : to match the Chromium command names.
+    return commands.map(c => c.substring(0, c.length - 1));
   }
 
   async keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
+    const commands = this._commandsForCode(code, modifiers);
     await this._client.send('Input.dispatchKeyEvent', {
       type: text ? 'keyDown' : 'rawKeyDown',
       modifiers: toModifiersMask(modifiers),
       windowsVirtualKeyCode: keyCodeWithoutLocation,
       code,
+      commands,
       key,
       text,
       unmodifiedText: text,
