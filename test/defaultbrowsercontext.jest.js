@@ -16,9 +16,40 @@
  */
 
 const fs = require('fs');
+const path = require('path');
 const utils = require('./utils');
+const os = require('os');
+const {promisify} = require('util');
+
+const mkdtempAsync = promisify(fs.mkdtemp);
 const {makeUserDataDir, removeUserDataDir} = utils;
 const {FFOX, MAC, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = testOptions;
+
+registerFixture('userDataDir', async ({}, test) => {
+  const userDataDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_profile-'));
+  try {
+    await test(userDataDir);
+  } finally {
+    removeFolderAsync(userDataDir).catch(e => {});
+  }
+});
+
+registerFixture('launchPersistent', async ({userDataDir, defaultBrowserOptions, browserType}, test) => {
+  let context;
+  async function launchPersistent(options) {
+    if (context)
+      throw new Error('can only launch one persitent context');
+    context = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, ...options});
+    const page = context.pages()[0];
+    return {context, page};
+  }
+  try {
+    await test(launchPersistent);
+  } finally {
+    if (context)
+      await context.close();
+  }
+});
 
 describe('launchPersistentContext()', function() {
   it('context.cookies() should work', async ({server, launchPersistent}) => {
