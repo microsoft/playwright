@@ -132,6 +132,20 @@ describe('Page.dispatchEvent(drag)', function() {
   });
 });
 
+describe('ElementHandle.dispatchEvent(drag)', function() {
+  it.fail(WEBKIT)('should dispatch drag drop events', async({page, server}) => {
+    await page.goto(server.PREFIX + '/drag-n-drop.html');
+    const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
+    const source = await page.$('#source');
+    await source.dispatchEvent('dragstart', { dataTransfer });
+    const target = await page.$('#target');
+    await target.dispatchEvent('drop', { dataTransfer });
+    expect(await page.evaluate(() => {
+      return source.parentElement === target;
+    })).toBeTruthy();
+  });
+});
+
 describe('ElementHandle.dispatchEvent(click)', function() {
   it('should dispatch click event', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/button.html');

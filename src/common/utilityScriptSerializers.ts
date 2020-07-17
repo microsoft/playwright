@@ -14,6 +14,15 @@
  * limitations under the License.
  */
 
+export type SerializedValue =
+    undefined | boolean | number | string |
+    { v: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0' } |
+    { d: string } |
+    { r: [string, string] } |
+    { a: SerializedValue[] } |
+    { o: { [key: string]: SerializedValue } } |
+    { h: number };
+
 function isRegExp(obj: any): obj is RegExp {
   return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
 }
@@ -26,44 +35,48 @@ function isError(obj: any): obj is Error {
   return obj instanceof Error || (obj && obj.__proto__ && obj.__proto__.name === 'Error');
 }
 
-export function parseEvaluationResultValue(value: any, handles: any[] = []): any {
+export function parseEvaluationResultValue(value: SerializedValue, handles: any[] = []): any {
   if (value === undefined)
     return undefined;
   if (typeof value === 'object') {
-    if (value.v === 'undefined')
-      return undefined;
-    if (value.v === null)
-      return null;
-    if (value.v === 'NaN')
-      return NaN;
-    if (value.v === 'Infinity')
-      return Infinity;
-    if (value.v === '-Infinity')
-      return -Infinity;
-    if (value.v === '-0')
-      return -0;
-    if (value.d)
-      return new Date(value.d);
-    if (value.r)
-      return new RegExp(value.r[0], value.r[1]);
-    if (value.a)
-      return value.a.map((a: any) => parseEvaluationResultValue(a, handles));
-    if (value.o) {
-      for (const name of Object.keys(value.o))
-        value.o[name] = parseEvaluationResultValue(value.o[name], handles);
-      return value.o;
+    if ('v' in value) {
+      if (value.v === 'undefined')
+        return undefined;
+      if (value.v === 'null')
+        return null;
+      if (value.v === 'NaN')
+        return NaN;
+      if (value.v === 'Infinity')
+        return Infinity;
+      if (value.v === '-Infinity')
+        return -Infinity;
+      if (value.v === '-0')
+        return -0;
     }
-    if (typeof value.h === 'number')
+    if ('d' in value)
+      return new Date(value.d);
+    if ('r' in value)
+      return new RegExp(value.r[0], value.r[1]);
+    if ('a' in value)
+      return value.a.map((a: any) => parseEvaluationResultValue(a, handles));
+    if ('o' in value) {
+      const result: any = {};
+      for (const name of Object.keys(value.o))
+        result[name] = parseEvaluationResultValue(value.o[name], handles);
+      return result;
+    }
+    if ('h' in value)
       return handles[value.h];
   }
   return value;
 }
 
-export function serializeAsCallArgument(value: any, jsHandleSerializer: (value: any) => { fallThrough?: any }): any {
+export type HandleOrValue = { h: number } | { fallThrough: any };
+export function serializeAsCallArgument(value: any, jsHandleSerializer: (value: any) => HandleOrValue): SerializedValue {
   return serialize(value, jsHandleSerializer, new Set());
 }
 
-function serialize(value: any, jsHandleSerializer: (value: any) => { fallThrough?: any }, visited: Set<any>): any {
+function serialize(value: any, jsHandleSerializer: (value: any) => HandleOrValue, visited: Set<any>): SerializedValue {
   const result = jsHandleSerializer(value);
   if ('fallThrough' in result)
     value = result.fallThrough;
@@ -77,7 +90,7 @@ function serialize(value: any, jsHandleSerializer: (value: any) => { fallThrough
   if (Object.is(value, undefined))
     return { v: 'undefined' };
   if (Object.is(value, null))
-    return { v: null };
+    return { v: 'null' };
   if (Object.is(value, NaN))
     return { v: 'NaN' };
   if (Object.is(value, Infinity))
@@ -86,7 +99,12 @@ function serialize(value: any, jsHandleSerializer: (value: any) => { fallThrough
     return { v: '-Infinity' };
   if (Object.is(value, -0))
     return { v: '-0' };
-  if (isPrimitiveValue(value))
+
+  if (typeof value === 'boolean')
+    return value;
+  if (typeof value === 'number')
+    return value;
+  if (typeof value === 'string')
     return value;
 
   if (isError(value)) {
@@ -128,16 +146,5 @@ function serialize(value: any, jsHandleSerializer: (value: any) => { fallThrough
     }
     visited.delete(value);
     return { o: result };
-  }
-}
-
-export function isPrimitiveValue(value: any): boolean {
-  switch (typeof value) {
-    case 'boolean':
-    case 'number':
-    case 'string':
-      return true;
-    default:
-      return false;
   }
 }

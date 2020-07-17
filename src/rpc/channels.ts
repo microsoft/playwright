@@ -16,8 +16,11 @@
 
 import { EventEmitter } from 'events';
 import * as types from '../types';
+import { SerializedValue } from '../common/utilityScriptSerializers';
 
 export type Binary = string;
+export type SerializedArgument = { value: SerializedValue, handles: Channel[] };
+
 export type BrowserContextOptions = {
   viewport?: types.Size | null,
   ignoreHTTPSErrors?: boolean,
@@ -215,17 +218,17 @@ export interface FrameChannel extends Channel {
   on(event: 'loadstate', callback: (params: { add?: types.LifecycleEvent, remove?: types.LifecycleEvent }) => void): this;
   on(event: 'navigated', callback: (params: FrameNavigatedEvent) => void): this;
 
-  evalOnSelector(params: { selector: string; expression: string, isFunction: boolean, arg: any}): Promise<{ value: any }>;
-  evalOnSelectorAll(params: { selector: string; expression: string, isFunction: boolean, arg: any}): Promise<{ value: any }>;
+  evalOnSelector(params: { selector: string; expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }>;
+  evalOnSelectorAll(params: { selector: string; expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }>;
   addScriptTag(params: { url?: string, content?: string, type?: string }): Promise<{ element: ElementHandleChannel }>;
   addStyleTag(params: { url?: string, content?: string }): Promise<{ element: ElementHandleChannel }>;
   check(params: { selector: string, force?: boolean, noWaitAfter?: boolean } & types.TimeoutOptions): Promise<void>;
   click(params: { selector: string, force?: boolean, noWaitAfter?: boolean } & types.PointerActionOptions & types.MouseClickOptions & types.TimeoutOptions): Promise<void>;
   content(): Promise<{ value: string }>;
   dblclick(params: { selector: string, force?: boolean } & types.PointerActionOptions & types.MouseMultiClickOptions & types.TimeoutOptions): Promise<void>;
-  dispatchEvent(params: { selector: string, type: string, eventInit: any } & types.TimeoutOptions): Promise<void>;
-  evaluateExpression(params: { expression: string, isFunction: boolean, arg: any}): Promise<{ value: any }>;
-  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any}): Promise<{ handle: JSHandleChannel }>;
+  dispatchEvent(params: { selector: string, type: string, eventInit: SerializedArgument } & types.TimeoutOptions): Promise<void>;
+  evaluateExpression(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }>;
+  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ handle: JSHandleChannel }>;
   fill(params: { selector: string, value: string } & types.NavigatingActionWaitOptions): Promise<void>;
   focus(params: { selector: string } & types.TimeoutOptions): Promise<void>;
   frameElement(): Promise<{ element: ElementHandleChannel }>;
@@ -244,7 +247,7 @@ export interface FrameChannel extends Channel {
   title(): Promise<{ value: string }>;
   type(params: { selector: string, text: string, delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions): Promise<void>;
   uncheck(params: { selector: string, force?: boolean, noWaitAfter?: boolean } & types.TimeoutOptions): Promise<void>;
-  waitForFunction(params: { expression: string, isFunction: boolean, arg: any } & types.WaitForFunctionOptions): Promise<{ handle: JSHandleChannel }>;
+  waitForFunction(params: { expression: string, isFunction: boolean, arg: SerializedArgument } & types.WaitForFunctionOptions): Promise<{ handle: JSHandleChannel }>;
   waitForSelector(params: { selector: string } & types.WaitForElementOptions): Promise<{ element: ElementHandleChannel | null }>;
 }
 export type FrameInitializer = {
@@ -256,8 +259,8 @@ export type FrameInitializer = {
 
 
 export interface WorkerChannel extends Channel {
-  evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }>;
-  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any }): Promise<{ handle: JSHandleChannel }>;
+  evaluateExpression(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }>;
+  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ handle: JSHandleChannel }>;
 }
 export type WorkerInitializer = {
   url: string,
@@ -268,11 +271,11 @@ export interface JSHandleChannel extends Channel {
   on(event: 'previewUpdated', callback: (params: { preview: string }) => void): this;
 
   dispose(): Promise<void>;
-  evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }>;
-  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any}): Promise<{ handle: JSHandleChannel }>;
+  evaluateExpression(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }>;
+  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ handle: JSHandleChannel }>;
   getPropertyList(): Promise<{ properties: { name: string, value: JSHandleChannel}[] }>;
   getProperty(params: { name: string }): Promise<{ handle: JSHandleChannel }>;
-  jsonValue(): Promise<{ value: any }>;
+  jsonValue(): Promise<{ value: SerializedValue }>;
 }
 export type JSHandleInitializer = {
   preview: string,
@@ -280,14 +283,14 @@ export type JSHandleInitializer = {
 
 
 export interface ElementHandleChannel extends JSHandleChannel {
-  evalOnSelector(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }>;
-  evalOnSelectorAll(params: { selector: string; expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }>;
+  evalOnSelector(params: { selector: string; expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }>;
+  evalOnSelectorAll(params: { selector: string; expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }>;
   boundingBox(): Promise<{ value: types.Rect | null }>;
   check(params: { force?: boolean } & { noWaitAfter?: boolean } & types.TimeoutOptions): Promise<void>;
   click(params: { force?: boolean, noWaitAfter?: boolean } & types.PointerActionOptions & types.MouseClickOptions & types.TimeoutOptions): Promise<void>;
   contentFrame(): Promise<{ frame: FrameChannel | null }>;
   dblclick(params: { force?: boolean, noWaitAfter?: boolean } & types.PointerActionOptions & types.MouseMultiClickOptions & types.TimeoutOptions): Promise<void>;
-  dispatchEvent(params: { type: string, eventInit: any }): Promise<void>;
+  dispatchEvent(params: { type: string, eventInit: SerializedArgument }): Promise<void>;
   fill(params: { value: string } & types.NavigatingActionWaitOptions): Promise<void>;
   focus(): Promise<void>;
   getAttribute(params: { name: string }): Promise<{ value: string | null }>;
@@ -359,11 +362,12 @@ export type ConsoleMessageInitializer = {
 
 export interface BindingCallChannel extends Channel {
   reject(params: { error: types.Error }): void;
-  resolve(params: { result: any }): void;
+  resolve(params: { result: SerializedArgument }): void;
 }
 export type BindingCallInitializer = {
   frame: FrameChannel,
   name: string,
+  // TODO: migrate this to SerializedArgument.
   args: any[]
 };
 
@@ -443,9 +447,9 @@ export interface ElectronApplicationChannel extends Channel {
   on(event: 'close', callback: () => void): this;
   on(event: 'window', callback: (params: { page: PageChannel, browserWindow: JSHandleChannel }) => void): this;
 
-  newBrowserWindow(params: { arg: any }): Promise<{ page: PageChannel }>;
-  evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }>;
-  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any }): Promise<{ handle: JSHandleChannel }>;
+  newBrowserWindow(params: { arg: SerializedArgument }): Promise<{ page: PageChannel }>;
+  evaluateExpression(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }>;
+  evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ handle: JSHandleChannel }>;
   close(): Promise<void>;
 }
 export type ElectronApplicationInitializer = {

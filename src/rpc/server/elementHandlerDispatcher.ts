@@ -17,10 +17,11 @@
 import { ElementHandle } from '../../dom';
 import * as js from '../../javascript';
 import * as types from '../../types';
-import { ElementHandleChannel, FrameChannel, Binary } from '../channels';
+import { ElementHandleChannel, FrameChannel, Binary, SerializedArgument } from '../channels';
 import { DispatcherScope, lookupNullableDispatcher } from './dispatcher';
 import { JSHandleDispatcher, serializeResult, parseArgument } from './jsHandleDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
+import { SerializedValue } from '../../common/utilityScriptSerializers';
 
 export function createHandle(scope: DispatcherScope, handle: js.JSHandle): JSHandleDispatcher {
   return handle.asElement() ? new ElementHandleDispatcher(scope, handle.asElement()!) : new JSHandleDispatcher(scope, handle);
@@ -64,8 +65,8 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
     return { value: await this._elementHandle.innerHTML() };
   }
 
-  async dispatchEvent(params: { type: string, eventInit: Object }) {
-    await this._elementHandle.dispatchEvent(params.type, params.eventInit);
+  async dispatchEvent(params: { type: string, eventInit: SerializedArgument }) {
+    await this._elementHandle.dispatchEvent(params.type, parseArgument(params.eventInit));
   }
 
   async scrollIntoViewIfNeeded(params: types.TimeoutOptions) {
@@ -138,11 +139,11 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
     return { elements: elements.map(e => new ElementHandleDispatcher(this._scope, e)) };
   }
 
-  async evalOnSelector(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }> {
+  async evalOnSelector(params: { selector: string, expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }> {
     return { value: serializeResult(await this._elementHandle._$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async evalOnSelectorAll(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<{ value: any }> {
+  async evalOnSelectorAll(params: { selector: string, expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }> {
     return { value: serializeResult(await this._elementHandle._$$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 }
