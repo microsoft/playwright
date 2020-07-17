@@ -76,7 +76,6 @@ module.exports = {
         './keyboard.spec.ts',
         './mouse.spec.js',
         './navigation.spec.js',
-        './pdf.spec.js',
         './queryselector.spec.js',
         './screenshot.spec.js',
         './waittask.spec.js',

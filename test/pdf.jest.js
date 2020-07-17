@@ -16,7 +16,16 @@
 
 const fs = require('fs');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, OUTPUT_DIR} = require('./utils').testOptions(browserType);
+const {
+  FFOX,
+  CHROMIUM,
+  WEBKIT,
+  WIN,
+  USES_HOOKS,
+  CHANNEL,
+  HEADLESS,
+  OUTPUT_DIR,
+} = testOptions;
 
 // Printing to pdf is currently only supported in headless chromium.
 describe.skip(!(HEADLESS && CHROMIUM))('Page.pdf', function() {

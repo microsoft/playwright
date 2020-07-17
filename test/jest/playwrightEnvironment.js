@@ -20,6 +20,7 @@ const { toMatchImageSnapshot: jestImageSnapshot } = require('jest-image-snapshot
 const os = require('os');
 const path = require('path');
 const platform = os.platform();
+const fs = require('fs');
 
 const browserName = process.env.BROWSER || 'chromium';
 
@@ -37,6 +38,8 @@ class PlaywrightEnvironment extends NodeEnvironment {
     testOptions.USES_HOOKS = process.env.PWCHANNEL === 'wire';
     testOptions.CHANNEL = !!process.env.PWCHANNEL;
     testOptions.HEADLESS = !!valueFromEnv('HEADLESS', true);
+    testOptions.OUTPUT_DIR = path.join(__dirname, '..', 'output-' + browserName);
+    fs.mkdirSync(testOptions.OUTPUT_DIR, { recursive: true });
     this.global.testOptions = testOptions;
 
     this.global.registerFixture = (name, fn) => {
