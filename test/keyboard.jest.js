@@ -290,7 +290,7 @@ describe('Keyboard', function() {
     await textarea.type('👹 Tokyo street Japan 🇯🇵');
     expect(await frame.$eval('textarea', textarea => textarea.value)).toBe('👹 Tokyo street Japan 🇯🇵');
   });
-  it('should handle selectAll', async ({page, server}) => {
+  it.skip(CHROMIUM && MAC)('should handle selectAll', async ({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     const textarea = await page.$('textarea');
     await textarea.type('some text');
@@ -317,15 +317,6 @@ describe('Keyboard', function() {
     await page.keyboard.up(modifier);
     await page.keyboard.press('Backspace');
     expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some tex');
-  });
-  it.skip(!MAC)('should support MacOS shortcuts', async ({page, server}) => {
-    await page.goto(server.PREFIX + '/input/textarea.html');
-    const textarea = await page.$('textarea');
-    await textarea.type('some text');
-    // select one word backwards
-    await page.keyboard.press('Shift+Control+Alt+KeyB');
-    await page.keyboard.press('Backspace');
-    expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some ');
   });
   it('should press the meta key', async ({page}) => {
     const lastEvent = await captureLastKeydown(page);
