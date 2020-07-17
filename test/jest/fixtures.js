@@ -162,8 +162,11 @@ module.exports = function registerFixtures(global) {
 
   global.registerFixture('userDataDir', async ({}, test) => {
     const userDataDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_profile-'));
-    await test(userDataDir);
-    removeFolderAsync(userDataDir).catch(e => {});
+    try {
+      await test(userDataDir);
+    } finally {
+      removeFolderAsync(userDataDir).catch(e => {});
+    }
   });
 
   global.registerFixture('launchPersistent', async ({userDataDir, defaultBrowserOptions, browserType}, test) => {
@@ -175,9 +178,12 @@ module.exports = function registerFixtures(global) {
       const page = context.pages()[0];
       return {context, page};
     }
-    await test(launchPersistent);
-    if (context)
-      await context.close();
+    try {
+      await test(launchPersistent);
+    } finally {
+      if (context)
+        await context.close();
+    }
   });
   
 
