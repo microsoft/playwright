@@ -211,7 +211,7 @@ const DefaultMatchers = {
       formatter = stringFormatter.bind(null, receivedJson, otherJson);
     }
     message = message || `\n${receivedJson} ≈ ${otherJson}`;
-    return { pass: receivedJson === otherJson, message, formatter };
+    return { pass: Object.is(receivedJson, otherJson), message, formatter };
   },
 
   toBeCloseTo: function(received, other, precision, message) {
