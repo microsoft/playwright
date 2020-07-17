@@ -81,21 +81,6 @@ describe('Playwright', function() {
     });
   });
 
-  describe('browserType.launchServer', function() {
-    it('should return child_process instance', async ({browserType, defaultBrowserOptions}) => {
-      const browserServer = await browserType.launchServer(defaultBrowserOptions);
-      expect(browserServer.process().pid).toBeGreaterThan(0);
-      await browserServer.close();
-    });
-    it('should fire close event', async ({browserType, defaultBrowserOptions}) => {
-      const browserServer = await browserType.launchServer(defaultBrowserOptions);
-      await Promise.all([
-        new Promise(f => browserServer.on('close', f)),
-        browserServer.close(),
-      ]);
-    });
-  });
-
   describe('browserType.executablePath', function() {
     it('should work', async({browserType}) => {
       const executablePath = browserType.executablePath();
@@ -280,6 +265,18 @@ describe('browserType.launchServer', function() {
       closedPromise,
     ]);
     expect(order).toEqual(['closed', 'killed']);
+  });
+  it('should return child_process instance', async ({browserType, defaultBrowserOptions}) => {
+    const browserServer = await browserType.launchServer(defaultBrowserOptions);
+    expect(browserServer.process().pid).toBeGreaterThan(0);
+    await browserServer.close();
+  });
+  it('should fire close event', async ({browserType, defaultBrowserOptions}) => {
+    const browserServer = await browserType.launchServer(defaultBrowserOptions);
+    await Promise.all([
+      new Promise(f => browserServer.on('close', f)),
+      browserServer.close(),
+    ]);
   });
 });
 
