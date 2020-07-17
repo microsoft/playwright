@@ -15,7 +15,15 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, LINUX} = require('./utils').testOptions(browserType);
+const {
+  FFOX,
+  CHROMIUM,
+  WEBKIT,
+  WIN,
+  USES_HOOKS,
+  CHANNEL,
+  HEADLESS,
+} = testOptions;
 
 // Permissions API is not implemented in WebKit (see https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API)
 describe.skip(WEBKIT)('Permissions', function() {

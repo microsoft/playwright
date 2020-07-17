@@ -84,7 +84,6 @@ module.exports = {
         './geolocation.spec.js',
         './workers.spec.js',
         './capabilities.spec.js',
-        './permissions.spec.js',
       ],
       environments: [customEnvironment,  'page'],
     },
