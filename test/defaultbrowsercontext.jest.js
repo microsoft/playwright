@@ -16,27 +16,44 @@
  */
 
 const fs = require('fs');
+const path = require('path');
 const utils = require('./utils');
+const os = require('os');
+const {promisify} = require('util');
+
+const mkdtempAsync = promisify(fs.mkdtemp);
 const {makeUserDataDir, removeUserDataDir} = utils;
-const {FFOX, MAC, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = utils.testOptions(browserType);
+const {FFOX, MAC, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = testOptions;
+
+registerFixture('userDataDir', async ({}, test) => {
+  const userDataDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_profile-'));
+  try {
+    await test(userDataDir);
+  } finally {
+    removeFolderAsync(userDataDir).catch(e => {});
+  }
+});
+
+registerFixture('launchPersistent', async ({userDataDir, defaultBrowserOptions, browserType}, test) => {
+  let context;
+  async function launchPersistent(options) {
+    if (context)
+      throw new Error('can only launch one persitent context');
+    context = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, ...options});
+    const page = context.pages()[0];
+    return {context, page};
+  }
+  try {
+    await test(launchPersistent);
+  } finally {
+    if (context)
+      await context.close();
+  }
+});
 
 describe('launchPersistentContext()', function() {
-  async function launch(state, options = {}) {
-    state.userDataDir = await makeUserDataDir();
-    state.context = await state.browserType.launchPersistentContext(state.userDataDir, {...state.defaultBrowserOptions, ...options});
-    state.page = state.context.pages()[0];
-    return state;
-  }
-  async function close(state) {
-    await state.context.close();
-    await removeUserDataDir(state.userDataDir);
-    delete state.page;
-    delete state.context;
-    delete state.userDataDir;
-  }
-
-  it('context.cookies() should work', async state => {
-    const { page, server } = await launch(state);
+  it('context.cookies() should work', async ({server, launchPersistent}) => {
+    const {page, context} = await launchPersistent();
     await page.goto(server.EMPTY_PAGE);
     const documentCookie = await page.evaluate(() => {
       document.cookie = 'username=John Doe';
@@ -53,10 +70,9 @@ describe('launchPersistentContext()', function() {
       secure: false,
       sameSite: 'None',
     }]);
-    await close(state);
   });
-  it('context.addCookies() should work', async state => {
-    const { page, server } = await launch(state);
+  it('context.addCookies() should work', async ({server, launchPersistent}) => {
+    const {page, context} = await launchPersistent();
     await page.goto(server.EMPTY_PAGE);
     await page.context().addCookies([{
       url: server.EMPTY_PAGE,
@@ -74,10 +90,9 @@ describe('launchPersistentContext()', function() {
       secure: false,
       sameSite: 'None',
     }]);
-    await close(state);
   });
-  it('context.clearCookies() should work', async state => {
-    const { page, server } = await launch(state);
+  it('context.clearCookies() should work', async ({server, launchPersistent}) => {
+    const {page, context} = await launchPersistent();
     await page.goto(server.EMPTY_PAGE);
     await page.context().addCookies([{
       url: server.EMPTY_PAGE,
@@ -93,10 +108,9 @@ describe('launchPersistentContext()', function() {
     await page.reload();
     expect(await page.context().cookies([])).toEqual([]);
     expect(await page.evaluate('document.cookie')).toBe('');
-    await close(state);
   });
-  it('should(not) block third party cookies', async state => {
-    const { page, server, context } = await launch(state);
+  it('should(not) block third party cookies', async ({server, launchPersistent}) => {
+    const {page, context} = await launchPersistent();
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(src => {
       let fulfill;
@@ -131,39 +145,34 @@ describe('launchPersistentContext()', function() {
     } else {
       expect(cookies).toEqual([]);
     }
-    await close(state);
   });
-  it('should support viewport option', async state => {
-    let { page, context } = await launch(state, {viewport: { width: 456, height: 789 }});
+  it('should support viewport option', async ({launchPersistent}) => {
+    const {page, context} = await launchPersistent({viewport: { width: 456, height: 789 }});
     await utils.verifyViewport(page, 456, 789);
-    page = await context.newPage();
-    await utils.verifyViewport(page, 456, 789);
-    await close(state);
+    const page2 = await context.newPage();
+    await utils.verifyViewport(page2, 456, 789);
   });
-  it('should support deviceScaleFactor option', async state => {
-    const { page } = await launch(state, {deviceScaleFactor: 3});
+  it('should support deviceScaleFactor option', async ({launchPersistent}) => {
+    const {page, context} = await launchPersistent({deviceScaleFactor: 3});
     expect(await page.evaluate('window.devicePixelRatio')).toBe(3);
-    await close(state);
   });
-  it('should support userAgent option', async state => {
-    const { page, server } = await launch(state, {userAgent: 'foobar'});
+  it('should support userAgent option', async ({server, launchPersistent}) => {
+    const {page, context} = await launchPersistent({userAgent: 'foobar'});
     expect(await page.evaluate(() => navigator.userAgent)).toBe('foobar');
     const [request] = await Promise.all([
       server.waitForRequest('/empty.html'),
       page.goto(server.EMPTY_PAGE),
     ]);
     expect(request.headers['user-agent']).toBe('foobar');
-    await close(state);
   });
-  it('should support bypassCSP option', async state => {
-    const { page, server } = await launch(state, {bypassCSP: true});
+  it('should support bypassCSP option', async ({server, launchPersistent}) => {
+    const {page, context} = await launchPersistent({bypassCSP: true});
     await page.goto(server.PREFIX + '/csp.html');
     await page.addScriptTag({content: 'window.__injected = 42;'});
     expect(await page.evaluate(() => window.__injected)).toBe(42);
-    await close(state);
   });
-  it('should support javascriptEnabled option', async state => {
-    const { page } = await launch(state, {javaScriptEnabled: false});
+  it('should support javascriptEnabled option', async ({server, launchPersistent}) => {
+    const {page, context} = await launchPersistent({javaScriptEnabled: false});
     await page.goto('data:text/html, <script>var something = "forbidden"</script>');
     let error = null;
     await page.evaluate('something').catch(e => error = e);
@@ -171,24 +180,21 @@ describe('launchPersistentContext()', function() {
       expect(error.message).toContain('Can\'t find variable: something');
     else
       expect(error.message).toContain('something is not defined');
-    await close(state);
   });
-  it('should support httpCredentials option', async state => {
-    const { page, server } = await launch(state, {httpCredentials: { username: 'user', password: 'pass' }});
+  it('should support httpCredentials option', async ({server, launchPersistent}) => {
+    const {page, context} = await launchPersistent({httpCredentials: { username: 'user', password: 'pass' }});
     server.setAuth('/playground.html', 'user', 'pass');
     const response = await page.goto(server.PREFIX + '/playground.html');
     expect(response.status()).toBe(200);
-    await close(state);
   });
-  it('should support offline option', async state => {
-    const { page, server } = await launch(state, {offline: true});
+  it('should support offline option', async ({server, launchPersistent}) => {
+    const {page, context} = await launchPersistent({offline: true});
     const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
     expect(error).toBeTruthy();
-    await close(state);
   });
-  it.skip(true)('should support acceptDownloads option', async state => {
+  it.skip(true)('should support acceptDownloads option', async ({server, launchPersistent}) => {
     // TODO: unskip once we support downloads in persistent context.
-    const { page, server } = await launch(state, {acceptDownloads: true});
+    const {page, context} = await launchPersistent({acceptDownloads: true});
     server.setRoute('/download', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
       res.setHeader('Content-Disposition', 'attachment');
@@ -202,65 +208,56 @@ describe('launchPersistentContext()', function() {
     const path = await download.path();
     expect(fs.existsSync(path)).toBeTruthy();
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
-    await close(state);
   });
-  it('should support hasTouch option', async state => {
-    const { page, server } = await launch(state, {hasTouch: true});
+  it('should support hasTouch option', async ({server, launchPersistent}) => {
+    const {page, context} = await launchPersistent({hasTouch: true});
     await page.goto(server.PREFIX + '/mobile.html');
     expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(true);
-    await close(state);
   });
-  it.skip(FFOX)('should work in persistent context', async state => {
+  it.skip(FFOX)('should work in persistent context', async ({server, launchPersistent}) => {
     // Firefox does not support mobile.
-    const { page, server } = await launch(state, {viewport: {width: 320, height: 480}, isMobile: true});
+    const {page, context} = await launchPersistent({viewport: {width: 320, height: 480}, isMobile: true});
     await page.goto(server.PREFIX + '/empty.html');
     expect(await page.evaluate(() => window.innerWidth)).toBe(980);
-    await close(state);
   });
-  it('should support colorScheme option', async state => {
-    const { page } = await launch(state, {colorScheme: 'dark'});
+  it('should support colorScheme option', async ({launchPersistent}) => {
+    const {page, context} = await launchPersistent({colorScheme: 'dark'});
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
     expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
-    await close(state);
   });
-  it('should support timezoneId option', async state => {
-    const { page } = await launch(state, {timezoneId: 'America/Jamaica'});
+  it('should support timezoneId option', async ({launchPersistent}) => {
+    const {page, context} = await launchPersistent({timezoneId: 'America/Jamaica'});
     expect(await page.evaluate(() => new Date(1479579154987).toString())).toBe('Sat Nov 19 2016 13:12:34 GMT-0500 (Eastern Standard Time)');
-    await close(state);
   });
-  it('should support locale option', async state => {
-    const { page } = await launch(state, {locale: 'fr-CH'});
+  it('should support locale option', async ({launchPersistent}) => {
+    const {page, context} = await launchPersistent({locale: 'fr-CH'});
     expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
-    await close(state);
   });
-  it('should support geolocation and permissions options', async state => {
-    const { page, server } = await launch(state, {geolocation: {longitude: 10, latitude: 10}, permissions: ['geolocation']});
+  it('should support geolocation and permissions options', async ({server, launchPersistent}) => {
+    const {page, context} = await launchPersistent({geolocation: {longitude: 10, latitude: 10}, permissions: ['geolocation']});
     await page.goto(server.EMPTY_PAGE);
     const geolocation = await page.evaluate(() => new Promise(resolve => navigator.geolocation.getCurrentPosition(position => {
       resolve({latitude: position.coords.latitude, longitude: position.coords.longitude});
     })));
     expect(geolocation).toEqual({latitude: 10, longitude: 10});
-    await close(state);
   });
-  it('should support ignoreHTTPSErrors option', async state => {
-    const { page, httpsServer } = await launch(state, {ignoreHTTPSErrors: true});
+  it('should support ignoreHTTPSErrors option', async ({httpsServer, launchPersistent}) => {
+    const {page, context} = await launchPersistent({ignoreHTTPSErrors: true});
     let error = null;
     const response = await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
     expect(error).toBe(null);
     expect(response.ok()).toBe(true);
-    await close(state);
   });
-  it('should support extraHTTPHeaders option', async state => {
-    const { page, server } = await launch(state, {extraHTTPHeaders: { foo: 'bar' }});
+  it('should support extraHTTPHeaders option', async ({server, launchPersistent}) => {
+    const {page, context} = await launchPersistent({extraHTTPHeaders: { foo: 'bar' }});
     const [request] = await Promise.all([
       server.waitForRequest('/empty.html'),
       page.goto(server.EMPTY_PAGE),
     ]);
     expect(request.headers['foo']).toBe('bar');
-    await close(state);
   });
-  it('should accept userDataDir', async state => {
-    const { userDataDir, context } = await launch(state);
+  it('should accept userDataDir', async ({launchPersistent, userDataDir}) => {
+    const {page, context} = await launchPersistent();
     // Note: we need an open page to make sure its functional.
     expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
     await context.close();
@@ -268,7 +265,7 @@ describe('launchPersistentContext()', function() {
     // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
     await removeUserDataDir(userDataDir);
   });
-  it.slow()('should restore state from userDataDir', async({browserType, defaultBrowserOptions, server}) => {
+  it.slow()('should restore state from userDataDir', async({browserType, defaultBrowserOptions, server, launchPersistent}) => {
     const userDataDir = await makeUserDataDir();
     const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
     const page = await browserContext.newPage();
@@ -293,7 +290,7 @@ describe('launchPersistentContext()', function() {
     await removeUserDataDir(userDataDir);
     await removeUserDataDir(userDataDir2);
   });
-  it.slow().fail(CHROMIUM && (WIN || MAC))('should restore cookies from userDataDir', async({browserType, defaultBrowserOptions,  server}) => {
+  it.slow().fail(CHROMIUM && (WIN || MAC))('should restore cookies from userDataDir', async({browserType, defaultBrowserOptions,  server, launchPersistent}) => {
     const userDataDir = await makeUserDataDir();
     const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
     const page = await browserContext.newPage();
@@ -322,22 +319,18 @@ describe('launchPersistentContext()', function() {
     await removeUserDataDir(userDataDir);
     await removeUserDataDir(userDataDir2);
   });
-  it('should have default URL when launching browser', async state => {
-    const { context } = await launch(state);
+  it('should have default URL when launching browser', async ({launchPersistent}) => {
+    const {page, context} = await launchPersistent();
     const urls = context.pages().map(page => page.url());
     expect(urls).toEqual(['about:blank']);
-    await close(state);
   });
-  it.skip(FFOX)('should throw if page argument is passed', async ({browserType, defaultBrowserOptions, server}) => {
-    const userDataDir = await makeUserDataDir();
+  it.skip(FFOX)('should throw if page argument is passed', async ({browserType, defaultBrowserOptions, server, userDataDir}) => {
     const options = {...defaultBrowserOptions, args: [server.EMPTY_PAGE] };
     const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
     expect(error.message).toContain('can not specify page');
-    await removeUserDataDir(userDataDir);
   });
-  it('should have passed URL when launching with ignoreDefaultArgs: true', async ({playwrightPath, browserType, defaultBrowserOptions, server}) => {
-    const userDataDir = await makeUserDataDir();
-    const args = require(playwrightPath)[browserType.name()]._defaultArgs(defaultBrowserOptions, 'persistent', userDataDir, 0).filter(a => a !== 'about:blank');
+  it('should have passed URL when launching with ignoreDefaultArgs: true', async ({browserType, defaultBrowserOptions, server, userDataDir}) => {
+    const args = require('..')[browserType.name()]._defaultArgs(defaultBrowserOptions, 'persistent', userDataDir, 0).filter(a => a !== 'about:blank');
     const options = {
       ...defaultBrowserOptions,
       args: [...args, server.EMPTY_PAGE],
@@ -350,43 +343,36 @@ describe('launchPersistentContext()', function() {
     const gotUrls = browserContext.pages().map(page => page.url());
     expect(gotUrls).toEqual([server.EMPTY_PAGE]);
     await browserContext.close();
-    await removeUserDataDir(userDataDir);
   });
-  it.skip(USES_HOOKS)('should handle timeout', async({browserType, defaultBrowserOptions}) => {
-    const userDataDir = await makeUserDataDir();
+  it.skip(USES_HOOKS)('should handle timeout', async({browserType, defaultBrowserOptions, userDataDir}) => {
     const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
     const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
     expect(error.message).toContain(`browserType.launchPersistentContext: Timeout 5000ms exceeded.`);
-    await removeUserDataDir(userDataDir);
   });
-  it.skip(USES_HOOKS)('should handle exception', async({browserType, defaultBrowserOptions}) => {
-    const userDataDir = await makeUserDataDir();
+  it.skip(USES_HOOKS)('should handle exception', async({browserType, defaultBrowserOptions, userDataDir}) => {
     const e = new Error('Dummy');
     const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; } };
     const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
     expect(error.message).toContain('Dummy');
-    await removeUserDataDir(userDataDir);
   });
-  it('should fire close event for a persistent context', async(state) => {
-    const {context} = await launch(state);
+  it('should fire close event for a persistent context', async({launchPersistent}) => {
+    const {page, context} = await launchPersistent();
     let closed = false;
     context.on('close', () => closed = true);
-    await close(state);
+    await context.close();
     expect(closed).toBe(true);
   });
-  it.skip(!CHROMIUM)('coverage should work', async state => {
-    const { page, server } = await launch(state);
+  it.skip(!CHROMIUM)('coverage should work', async ({server, launchPersistent}) => {
+    const {page, context} = await launchPersistent();
     await page.coverage.startJSCoverage();
     await page.goto(server.PREFIX + '/jscoverage/simple.html', { waitUntil: 'load' });
     const coverage = await page.coverage.stopJSCoverage();
     expect(coverage.length).toBe(1);
     expect(coverage[0].url).toContain('/jscoverage/simple.html');
     expect(coverage[0].functions.find(f => f.functionName === 'foo').ranges[0].count).toEqual(1);
-    await close(state);
   });
-  it.skip(CHROMIUM)('coverage should be missing', async state => {
-    const { page } = await launch(state);
+  it.skip(CHROMIUM)('coverage should be missing', async ({launchPersistent}) => {
+    const {page, context} = await launchPersistent();
     expect(page.coverage).toBe(null);
-    await close(state);
   });
 });

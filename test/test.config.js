@@ -71,7 +71,6 @@ module.exports = {
   specs: [
     {
       files: [
-        './defaultbrowsercontext.spec.js',
       ],
       environments: [customEnvironment],
     },
