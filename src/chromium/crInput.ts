@@ -50,7 +50,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     }
     parts.push(code);
     const shortcut = parts.join('+');
-    let commands = (this._isMac && macEditingCommands[shortcut]) || [];
+    let commands = macEditingCommands[shortcut] || [];
     if (helper.isString(commands))
       commands = [commands];
     // remove the trailing : to match the Chromium command names.
