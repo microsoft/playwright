@@ -15,6 +15,7 @@
  */
 
 import * as debug from 'debug';
+import * as fs from 'fs';
 import { helper } from './helper';
 import { LoggerSink, LoggerSeverity } from './loggerSink';
 
@@ -142,6 +143,19 @@ const colorMap = new Map<string, number>([
 
 export class DebugLoggerSink {
   private _debuggers = new Map<string, debug.IDebugger>();
+  constructor() {
+    if (process.env.DEBUG_FILE) {
+      const ansiRegex = new RegExp([
+        '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
+        '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))'
+      ].join('|'), 'g');
+      const stream = fs.createWriteStream(process.env.DEBUG_FILE);
+      (debug as any).log = (data: string) => {
+        stream.write(data.replace(ansiRegex, ''));
+        stream.write('\n');
+      };
+    }
+  }
 
   isEnabled(name: string, severity: LoggerSeverity): boolean {
     return debug.enabled(`pw:${name}`);
