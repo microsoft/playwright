@@ -72,7 +72,6 @@ module.exports = {
     {
       files: [
         './defaultbrowsercontext.spec.js',
-        './fixtures.spec.js',
       ],
       environments: [customEnvironment],
     },
