@@ -31,12 +31,10 @@ $ docker pull mcr.microsoft.com/playwright:bionic
 ### Run the image
 
 ```
-$ docker container run -it --rm --ipc=host --security-opt seccomp=chrome.json mcr.microsoft.com/playwright:bionic /bin/bash
+$ docker container run -it --rm --ipc=host mcr.microsoft.com/playwright:bionic /bin/bash
 ```
 
 Note that:
-
-* The seccomp profile is required to run Chrome without sandbox. Thanks to [Jessie Frazelle](https://github.com/jessfraz/dotfiles/blob/master/etc/docker/seccomp/chrome.json).
 * Using `--ipc=host` is also recommended when using Chrome ([Docker docs](https://docs.docker.com/engine/reference/run/#ipc-settings---ipc)). Chrome can run out of memory without this flag.
 
 ### Using on CI

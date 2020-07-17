@@ -63,8 +63,6 @@ export class Chromium extends BrowserTypeBase {
   }
 
   _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
-    const runningAsRoot = process.geteuid && process.geteuid() === 0;
-    assert(!runningAsRoot || browserArguments.includes('--no-sandbox'), 'Cannot launch Chromium as root without --no-sandbox. See https://crbug.com/638180.');
     return env;
   }
 
@@ -276,6 +274,7 @@ const DEFAULT_ARGS = [
   '--force-color-profile=srgb',
   '--metrics-recording-only',
   '--no-first-run',
+  '--no-sandbox',
   '--enable-automation',
   '--password-store=basic',
   '--use-mock-keychain',
