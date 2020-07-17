@@ -1,12 +1,3 @@
-################################################
-# Compile with:
-#     sudo docker build -t microsoft/playwright:bionic -f Dockerfile.bionic .
-#
-# Run with:
-#     sudo docker run -d -p --rm --name playwright microsoft/playwright:bionic
-#
-#################################################
-
 FROM ubuntu:bionic
 
 # 1. Install node12
@@ -72,3 +63,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # 9. Run everything after as non-privileged user.
 USER pwuser
+
+# === BAKE BROWSERS INTO IMAGE ===
+
+# 1. Add tip-of-tree Playwright package to install its browsers.
+#    The package should be built beforehand from tip-of-tree Playwright.
+COPY --chown=pwuser ./playwright.tar.gz /home/pwuser/playwright.tar.gz
+
+# 2. Install playwright and then delete the installation.
+#    Browsers will remain downloaded in `/home/pwuser/.cache/ms-playwright`.
+RUN mkdir /home/pwuser/tmp && cd /home/pwuser/tmp && npm init -y && \
+    npm i ../playwright.tar.gz && \
+    cd ../ && rm -rf tmp && rm /home/pwuser/playwright.tar.gz
+
