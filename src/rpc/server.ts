@@ -20,12 +20,19 @@ import { Playwright } from '../server/playwright';
 import { PlaywrightDispatcher } from './server/playwrightDispatcher';
 import { Electron } from '../server/electron';
 import { setUseApiName } from '../progress';
+import { gracefullyCloseAll } from '../server/processLauncher';
 
 setUseApiName(false);
 
 const dispatcherConnection = new DispatcherConnection();
 const transport = new Transport(process.stdout, process.stdin);
-transport.onclose = () => process.exit(0);
+transport.onclose = async () => {
+  // Force exit after 30 seconds.
+  setTimeout(() => process.exit(0), 30000);
+  // Meanwhile, try to gracefully close all browsers.
+  await gracefullyCloseAll();
+  process.exit(0);
+};
 transport.onmessage = message => dispatcherConnection.dispatch(JSON.parse(message));
 dispatcherConnection.onmessage = message => transport.send(JSON.stringify(message));
 

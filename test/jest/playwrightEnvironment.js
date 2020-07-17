@@ -81,6 +81,7 @@ class PlaywrightEnvironment extends NodeEnvironment {
       this.global.describe.fail = this.global.describe.skip;
 
       const itSkip = this.global.it.skip;
+      itSkip.slow = () => itSkip;
       this.global.it.skip = (...args) => {
         if (args.length = 1)
           return args[0] ? itSkip : this.global.it;
@@ -199,7 +200,7 @@ class FixturePool {
       await this.setupFixture(name);
     const params = {};
     for (const n of names)
-      params[n] = this.instances.get(n).value; 
+      params[n] = this.instances.get(n).value;
     return fn(params);
   }
 }

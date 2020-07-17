@@ -161,7 +161,7 @@ class PlaywrightEnvironment {
   constructor(playwright) {
     this._playwright = playwright;
     this.spawnedProcess = undefined;
-    this.expectExit = false;
+    this.onExit = undefined;
   }
 
   name() { return 'Playwright'; };
@@ -173,13 +173,13 @@ class PlaywrightEnvironment {
       if (process.env.PWCHANNEL === 'wire') {
         this.spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'rpc', 'server'), [], {
           stdio: 'pipe',
-          detached: process.platform !== 'win32',
+          detached: true,
         });
-        this.spawnedProcess.once('exit', (exitCode, signal) => {
-          this.spawnedProcess = undefined;
-          if (!this.expectExit)
-            throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
-        });
+        this.spawnedProcess.unref();
+        this.onExit = (exitCode, signal) => {
+          throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
+        };
+        this.spawnedProcess.once('exit', this.onExit);
         const transport = new Transport(this.spawnedProcess.stdin, this.spawnedProcess.stdout);
         connection.onmessage = message => transport.send(JSON.stringify(message));
         transport.onmessage = message => connection.dispatch(JSON.parse(message));
@@ -205,10 +205,10 @@ class PlaywrightEnvironment {
 
   async afterAll(state) {
     if (this.spawnedProcess) {
-      const exited = new Promise(f => this.spawnedProcess.once('exit', f));
-      this.expectExit = true;
-      this.spawnedProcess.kill();
-      await exited;
+      this.spawnedProcess.removeListener('exit', this.onExit);
+      this.spawnedProcess.stdin.destroy();
+      this.spawnedProcess.stdout.destroy();
+      this.spawnedProcess.stderr.destroy();
     }
     delete state.playwright;
   }

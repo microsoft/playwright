@@ -40,7 +40,7 @@ module.exports = function registerFixtures(global) {
     server.PREFIX = `http://localhost:${port}`;
     server.CROSS_PROCESS_PREFIX = `http://127.0.0.1:${port}`;
     server.EMPTY_PAGE = `http://localhost:${port}/empty.html`;
-  
+
     const httpsPort = port + 1;
     const httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
     httpsServer.enableHTTPCache(cachedPath);
@@ -48,13 +48,13 @@ module.exports = function registerFixtures(global) {
     httpsServer.PREFIX = `https://localhost:${httpsPort}`;
     httpsServer.CROSS_PROCESS_PREFIX = `https://127.0.0.1:${httpsPort}`;
     httpsServer.EMPTY_PAGE = `https://localhost:${httpsPort}/empty.html`;
-  
+
     await test({server, httpsServer});
 
     await Promise.all([
       server.stop(),
       httpsServer.stop(),
-    ]);  
+    ]);
   });
 
   global.registerWorkerFixture('defaultBrowserOptions', async({}, test) => {
@@ -72,17 +72,17 @@ module.exports = function registerFixtures(global) {
       const connection = new Connection();
       let toImpl;
       let spawnedProcess;
-      let expectExit;
+      let onExit;
       if (process.env.PWCHANNEL === 'wire') {
         spawnedProcess = childProcess.fork(path.join(__dirname, '..', '..', 'lib', 'rpc', 'server'), [], {
           stdio: 'pipe',
-          detached: process.platform !== 'win32',
+          detached: true,
         });
-        spawnedProcess.once('exit', (exitCode, signal) => {
-          spawnedProcess = undefined;
-          if (!expectExit)
-            throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
-        });
+        spawnedProcess.unref();
+        onExit = (exitCode, signal) => {
+          throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
+        };
+        spawnedProcess.on('exit', onExit);
         const transport = new Transport(spawnedProcess.stdin, spawnedProcess.stdout);
         connection.onmessage = message => transport.send(JSON.stringify(message));
         transport.onmessage = message => connection.dispatch(JSON.parse(message));
@@ -103,17 +103,16 @@ module.exports = function registerFixtures(global) {
       const playwrightObject = await connection.waitForObjectWithKnownName('playwright');
       playwrightObject.toImpl = toImpl;
       await test(playwrightObject);
-
       if (spawnedProcess) {
-        const exited = new Promise(f => spawnedProcess.once('exit', f));
-        expectExit = true;
-        spawnedProcess.kill();
-        await exited;
+        spawnedProcess.removeListener('exit', onExit);
+        spawnedProcess.stdin.destroy();
+        spawnedProcess.stdout.destroy();
+        spawnedProcess.stderr.destroy();
       }
-      return;
+    } else {
+      playwright.toImpl = x => x;
+      await test(playwright);
     }
-    playwright.toImpl = x => x;
-    await test(playwright);
   });
 
   global.registerFixture('toImpl', async ({playwright}, test) => {
@@ -123,7 +122,7 @@ module.exports = function registerFixtures(global) {
   global.registerWorkerFixture('browserType', async ({playwright}, test) => {
     await test(playwright[process.env.BROWSER || 'chromium']);
   });
-  
+
   global.registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
     const browser = await browserType.launch(defaultBrowserOptions);
     try {
@@ -136,7 +135,7 @@ module.exports = function registerFixtures(global) {
       await browser.close();
     }
   });
-  
+
   global.registerFixture('context', async ({browser}, test) => {
     const context = await browser.newContext();
     try {
@@ -145,7 +144,7 @@ module.exports = function registerFixtures(global) {
       await context.close();
     }
   });
-  
+
   global.registerFixture('page', async ({context}, test) => {
     const page = await context.newPage();
     await test(page);
