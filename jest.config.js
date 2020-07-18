@@ -7,5 +7,9 @@ module.exports = /** @type {import('@jest/types').Config.InitialOptions} */ ({
   testRunner: 'jest-circus/runner',
   testTimeout: 10000,
   globalSetup: './jest/setup.js',
-  globalTeardown: './jest/teardown.js'
+  globalTeardown: './jest/teardown.js',
+  reporters: [
+    'default',
+    './jest/reporter'
+  ]
 });
