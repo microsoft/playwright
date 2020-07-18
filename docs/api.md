@@ -616,8 +616,8 @@ Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-U
 - returns: <[Promise]>
 
 #### browserContext.unroute(url[, handler])
-- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
-- `handler` <[function]\([Route], [Request]\)> Handler function to route the request.
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with [browserContext.route(url, handler)](#browsercontextrouteurl-handler).
+- `handler` <[function]\([Route], [Request]\)> Handler function used to register a routing with [browserContext.route(url, handler)](#browsercontextrouteurl-handler).
 - returns: <[Promise]>
 
 Removes a route created with [browserContext.route(url, handler)](#browsercontextrouteurl-handler). When `handler` is not specified, removes all routes for the `url`.
