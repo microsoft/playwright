@@ -72,7 +72,7 @@ describe('Download', function() {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   });
-  it('should save to user-specified path', async({persistentDirectory, browser, server}) => {
+  fit('should save to user-specified path', async({persistentDirectory, browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
@@ -85,7 +85,7 @@ describe('Download', function() {
     expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
     await page.close();
   });
-  it('should save to user-specified path without updating original path', async({persistentDirectory, browser, server}) => {
+  fit('should save to user-specified path without updating original path', async({persistentDirectory, browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
@@ -100,6 +100,40 @@ describe('Download', function() {
     const originalPath = await download.path();
     expect(fs.existsSync(originalPath)).toBeTruthy();
     expect(fs.readFileSync(originalPath).toString()).toBe('Hello world');
+    await page.close();
+  });
+  it('should save to two different paths with multiple saveAs calls', async({persistentDirectory, browser, server}) => {
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const userPath = path.join(persistentDirectory, "download.txt");
+    await download.saveAs(userPath);
+    expect(fs.existsSync(userPath)).toBeTruthy();
+    expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
+
+    const anotherUserPath = path.join(persistentDirectory, "download (2).txt");
+    await download.saveAs(anotherUserPath);
+    expect(fs.existsSync(anotherUserPath)).toBeTruthy();
+    expect(fs.readFileSync(anotherUserPath).toString()).toBe('Hello world');
+    await page.close();
+  });
+  it('should save to overwritten filepath', async({persistentDirectory, browser, server}) => {
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const userPath = path.join(persistentDirectory, "download.txt");
+    await download.saveAs(userPath);
+    expect((await util.promisify(fs.readdir)(persistentDirectory)).length).toBe(1);
+    await download.saveAs(userPath);
+    expect((await util.promisify(fs.readdir)(persistentDirectory)).length).toBe(1);
+    expect(fs.existsSync(userPath)).toBeTruthy();
+    expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
     await page.close();
   });
   it('should error when saving to non-existent user-specified path', async({persistentDirectory, browser, server}) => {
