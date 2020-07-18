@@ -77,7 +77,6 @@
     - [Azure Pipelines](./ci.md#azure-pipelines)
     - [Travis CI](./ci.md#travis-ci)
     - [CircleCI](./ci.md#circleci)
-    - [AppVeyor](./ci.md#appveyor)
     - [Troubleshooting](./troubleshooting.md)
 1. [Selector engines](./selectors.md)
 1. [Actionability](./actionability.md)
