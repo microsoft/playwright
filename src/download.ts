@@ -27,6 +27,7 @@ export class Download {
   private _uuid: string;
   private _finishedCallback: () => void;
   private _finishedPromise: Promise<void>;
+  private _saveAsCallbacks: (() => Promise<void>)[] = [];
   private _page: Page;
   private _acceptDownloads: boolean;
   private _failure: string | null = null;
@@ -73,12 +74,19 @@ export class Download {
   }
 
   async saveAs(path: string) {
-    const internalPath = await this.path();
-    if (internalPath === null)
-      throw new Error('Download not found on disk. Check download.failure() for details.');
-    if (this._deleted)
-      throw new Error('Download already deleted. Save before deleting.');
-    await util.promisify(fs.copyFile)(internalPath, path);
+    return new Promise(async (res, rej) => {
+      try {
+        const internalPath = await this.path();
+        if (internalPath === null)
+          throw new Error('Download not found on disk. Check download.failure() for details.');
+        if (this._deleted)
+          throw new Error('Download already deleted. Save before deleting.');
+        await util.promisify(fs.copyFile)(internalPath, path);
+        res();
+      } catch (error) {
+        rej(error);
+      }
+    });
   }
 
   async failure(): Promise<string | null> {
@@ -104,8 +112,10 @@ export class Download {
       await util.promisify(fs.unlink)(fileName).catch(e => {});
   }
 
-  _reportFinished(error?: string) {
+  async _reportFinished(error?: string) {
     this._failure = error || null;
+    for (const f of this._saveAsCallbacks)
+      await f();
     this._finishedCallback();
   }
 }
