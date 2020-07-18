@@ -9,25 +9,40 @@ const browserPaths = require('playwright/lib/install/browserPaths.js');
 (async () => {
   const allBrowsersPath = browserPaths.browsersPath();
   const {stdout} = await runCommand('find', [allBrowsersPath, '-executable', '-type', 'f']);
-  const lddPaths = stdout.split('\n').map(f => f.trim()).filter(filePath => !filePath.toLowerCase().endsWith('.sh'));
-  const allMissingDeps = await Promise.all(lddPaths.map(lddPath => missingFileDependencies(lddPath)));
+  // lddPaths - files we want to run LDD against.
+  const lddPaths = stdout.trim().split('\n').map(f => f.trim()).filter(filePath => !filePath.toLowerCase().endsWith('.sh'));
+  // List of all shared libraries missing.
   const missingDeps = new Set();
-  for (const deps of allMissingDeps) {
-    for (const dep of deps)
+  // Multimap: reverse-mapping from shared library to requiring file.
+  const depsToLddPaths = new Map();
+  await Promise.all(lddPaths.map(async lddPath => {
+    const deps = await missingFileDependencies(lddPath);
+    for (const dep of deps) {
       missingDeps.add(dep);
-  }
+      let depsToLdd = depsToLddPaths.get(dep);
+      if (!depsToLdd) {
+        depsToLdd = new Set();
+        depsToLddPaths.set(dep, depsToLdd);
+      }
+      depsToLdd.add(lddPath);
+    }
+  }));
   console.log(`==== MISSING DEPENDENCIES: ${missingDeps.size} ====`);
   console.log([...missingDeps].sort().join('\n'));
 
   console.log('{');
   for (const dep of missingDeps) {
     const packages = await findPackages(dep);
-    if (packages.length === 0)
+    if (packages.length === 0) {
       console.log(`  // UNRESOLVED: ${dep} `);
-    else if (packages.length === 1)
+      const depsToLdd = depsToLddPaths.get(dep);
+      for (const filePath of depsToLdd)
+        console.log(`  // - required by ${filePath}`);
+    } else if (packages.length === 1) {
       console.log(`  "${dep}": "${packages[0]}",`);
-    else
+    } else {
       console.log(`  "${dep}": ${JSON.stringify(packages)},`);
+    }
   }
   console.log('}');
 })();
@@ -57,11 +72,17 @@ async function missingFileDependencies(filePath) {
 }
 
 async function lddAsync(filePath) {
+  let LD_LIBRARY_PATH = [];
+  // Some shared objects inside browser sub-folders link against libraries that
+  // ship with the browser. We consider these to be included, so we want to account
+  // for them in the LD_LIBRARY_PATH.
+  for (let dirname = path.dirname(filePath); dirname !== '/'; dirname = path.dirname(dirname))
+    LD_LIBRARY_PATH.push(dirname);
   return await runCommand('ldd', [filePath], {
     cwd: path.dirname(filePath),
     env: {
       ...process.env,
-      LD_LIBRARY_PATH: path.dirname(filePath),
+      LD_LIBRARY_PATH: LD_LIBRARY_PATH.join(':'),
     },
   });
 }
