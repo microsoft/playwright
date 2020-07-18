@@ -75,7 +75,6 @@ class PlaywrightEnvironment extends NodeEnvironment {
 
   async handleTestEvent(event, state) {
     if (event.name === 'setup') {
-
       this.patchToEnableFixtures(this.global, 'beforeEach');
       this.patchToEnableFixtures(this.global, 'afterEach');
 
@@ -111,6 +110,7 @@ class PlaywrightEnvironment extends NodeEnvironment {
       };
       this.global.expect.extend({ toBeGolden });
     }
+
     if (event.name === 'test_start') {
       const fn = event.test.fn;
       event.test.fn = async () => {
@@ -120,6 +120,10 @@ class PlaywrightEnvironment extends NodeEnvironment {
           await this.fixturePool.teardownScope('test');
         }
       };
+    }
+
+    if (event.name === 'test_fn_failure') {
+      await this.fixturePool.teardownScope('worker');
     }
   }
 }
