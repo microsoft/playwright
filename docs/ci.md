@@ -11,7 +11,6 @@ configurations for common CI providers.
   * [Azure Pipelines](#azure-pipelines)
   * [Travis CI](#travis-ci)
   * [CircleCI](#circleci)
-  * [AppVeyor](#appveyor)
   * [Bitbucket Pipelines](#bitbucket-pipelines)
   * [GitLab CI](#gitlab-ci)
 - [Caching browsers](#caching-browsers)
@@ -94,7 +93,7 @@ steps:
 
 ### Travis CI
 
-We run our tests on Travis CI over a Linux agent (Ubuntu 18.04). Use our [Travis configuration](/.travis.yml) to see list of additional dependencies to be installed.
+We run our tests on Travis CI over a Linux agent (Ubuntu 18.04).
 
 Suggested configuration
 1. [User namespace cloning](http://man7.org/linux/man-pages/man7/user_namespaces.7.html)
@@ -113,9 +112,7 @@ dist: bionic
 addons:
   apt:
     packages:
-    # This is required to run chromium
-    - libgbm1
-    # These are required to run webkit
+    # These are required to run webkit	
     - libwoff1
     - libopus0
     - libwebp6
@@ -131,7 +128,14 @@ addons:
     - libnotify4
     - libxslt1.1
     - libvpx5
-    # For headful execution
+    # gstreamer and plugins to support video playback in WebKit.
+    - gstreamer1.0-gl
+    - gstreamer1.0-plugins-base
+    - gstreamer1.0-plugins-good
+    - gstreamer1.0-plugins-bad
+    # This is required to run chromium
+    - libgbm1
+    # this is needed for running headful tests
     - xvfb
 
 # allow headful tests
@@ -145,7 +149,7 @@ before_install:
 
 ### CircleCI
 
-We run our tests on CircleCI, with our [pre-built Docker image](docker/README.md). Use our [CircleCI configuration](/.circleci/config.yml) to create your own. Running Playwright smoothly on CircleCI requires the following steps:
+We run our tests on CircleCI, with our [pre-built Docker image](docker/README.md). Running Playwright smoothly on CircleCI requires the following steps:
 
 1. Use the pre-built [Docker image](docker/README.md) in your config like so:
 
@@ -165,10 +169,6 @@ We run our tests on CircleCI, with our [pre-built Docker image](docker/README.md
    ```
 
    This is likely caused by Jest autodetecting the number of processes on the entire machine (`36`) rather than the number allowed to your container (`2`). To fix this, set `jest --maxWorkers=2` in your test command.
-
-### AppVeyor
-
-We run our tests on Windows agents in AppVeyor. Use our [AppVeyor configuration](/.appveyor.yml) to create your own.
 
 ### Bitbucket Pipelines
 
