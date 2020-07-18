@@ -38,26 +38,25 @@ jobs:
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
     - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
-      if: ${{ always() }}
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "*,-pw:wrapped*"
         DEBUG_FILE: "testrun.log"
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: ${{ matrix.browser }}-linux-jest-report
+        path: jest-report.json  
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
         name: ${{ matrix.browser }}-linux-output
         path: test/output-${{ matrix.browser }}
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
         name: ${{ matrix.browser }}-linux-testrun.log
         path: testrun.log
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: ${{ matrix.browser }}-linux-coredumps
-        path: coredumps
 
   test_mac:
     name: "macOS"
@@ -80,12 +79,17 @@ jobs:
         DEBUG: "*,-pw:wrapped*"
         DEBUG_FILE: "testrun.log"
     - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: ${{ matrix.browser }}-mac-jest-report
+        path: jest-report.json  
+    - uses: actions/upload-artifact@v1
       if: failure()
       with:
         name: ${{ matrix.browser }}-mac-output
         path: test/output-${{ matrix.browser }}
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
         name: ${{ matrix.browser }}-mac-testrun.log
         path: testrun.log
@@ -112,12 +116,17 @@ jobs:
         DEBUG: "*,-pw:wrapped*"
         DEBUG_FILE: "testrun.log"
     - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: ${{ matrix.browser }}-win-jest-report
+        path: jest-report.json
+    - uses: actions/upload-artifact@v1
       if: failure()
       with:
         name: ${{ matrix.browser }}-win-output
         path: test/output-${{ matrix.browser }}
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
         name: ${{ matrix.browser }}-win-testrun.log
         path: testrun.log
@@ -142,6 +151,10 @@ jobs:
 
   headful_linux:
     name: "Headful Linux"
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
@@ -160,31 +173,19 @@ jobs:
     - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
       if: ${{ always() }}
       env:
-        BROWSER: "chromium"
-        HEADLESS: "false"
-        DEBUG_FILE: "testrun.log"
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
-      if: ${{ always() }}
-      env:
-        BROWSER: "firefox"
-        HEADLESS: "false"
-        DEBUG_FILE: "testrun.log"
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
-      if: ${{ always() }}
-      env:
-        BROWSER: "webkit"
+        BROWSER: ${{ matrix.browser }}
         HEADLESS: "false"
         DEBUG_FILE: "testrun.log"
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
-        name: headful-linux-testrun.log
+        name: headful-${{ matrix.browser }}-linux-jest-report
+        path: jest-report.json
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: headful-${{ matrix.browser }}-linux-testrun.log
         path: testrun.log
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: headful-linux-coredumps
-        path: coredumps
 
   rpc_linux:
     name: "RPC Linux"
@@ -215,17 +216,17 @@ jobs:
         DEBUG_FILE: "testrun.log"
         PWCHANNEL: ${{ matrix.transport }}
     - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: rpc-${{ matrix.transport }}-${{ matrix.browser }}-linux-jest-report
+        path: jest-report.json
+    - uses: actions/upload-artifact@v1
       if: failure()
       with:
         name: rpc-${{ matrix.transport }}-${{ matrix.browser }}-linux-output
         path: test/output-${{ matrix.browser }}
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
         name: rpc-${{ matrix.transport }}-${{ matrix.browser }}-linux-testrun.log
         path: testrun.log
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: rpc-${{ matrix.transport }}-${{ matrix.browser }}-linux-coredumps
-        path: coredumps
