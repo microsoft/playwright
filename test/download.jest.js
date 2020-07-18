@@ -72,7 +72,7 @@ describe('Download', function() {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   });
-  fit('should save to user-specified path', async({persistentDirectory, browser, server}) => {
+  it('should save to user-specified path', async({persistentDirectory, browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
@@ -85,7 +85,7 @@ describe('Download', function() {
     expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
     await page.close();
   });
-  fit('should save to user-specified path without updating original path', async({persistentDirectory, browser, server}) => {
+  it('should save to user-specified path without updating original path', async({persistentDirectory, browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
