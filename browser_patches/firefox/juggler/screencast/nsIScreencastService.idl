@@ -13,5 +13,9 @@ interface nsIDocShell;
 interface nsIScreencastService : nsISupports
 {
   long startVideoRecording(in nsIDocShell docShell, in ACString fileName, in uint32_t width, in uint32_t height, in double scale, in int32_t offset_top);
+
+  /**
+   * Will emit 'juggler-screencast-stopped' when the video file is saved.
+   */
   void stopVideoRecording(in long sessionId);
 };

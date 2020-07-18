@@ -11,6 +11,8 @@
 #include "mozilla/PresShell.h"
 #include "mozilla/StaticPtr.h"
 #include "nsIDocShell.h"
+#include "nsIObserverService.h"
+#include "nsISupportsPrimitives.h"
 #include "nsThreadManager.h"
 #include "nsView.h"
 #include "nsViewManager.h"
@@ -46,6 +48,18 @@ rtc::scoped_refptr<webrtc::VideoCaptureModule> CreateWindowCapturer(nsIWidget* w
   windowId.AppendPrintf("%" PRIuPTR, rawWindowId);
   return webrtc::DesktopCaptureImpl::Create(sessionId, windowId.get(), webrtc::CaptureDeviceType::Window);
 }
+
+void NotifyScreencastStopped(int32_t sessionId) {
+  nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
+  if (!observerService) {
+    fprintf(stderr, "NotifyScreencastStopped error: no observer service\n");
+    return;
+  }
+
+  nsString id;
+  id.AppendPrintf("%" PRIi32, sessionId);
+  observerService->NotifyObservers(nullptr, "juggler-screencast-stopped", id.get());
+}
 }
 
 class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::VideoFrame> {
@@ -72,13 +86,13 @@ class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::Vide
     return true;
   }
 
-  void Stop() {
+  void Stop(std::function<void()>&& callback) {
     mCaptureModule->DeRegisterCaptureDataCallback(this);
     int error = mCaptureModule->StopCapture();
     if (error) {
       fprintf(stderr, "StopCapture error %d\n", error);
-      return;
     }
+    mEncoder->finish(std::move(callback));
   }
 
   // These callbacks end up running on the VideoCapture thread.
@@ -150,7 +164,12 @@ nsresult nsScreencastService::StopVideoRecording(int32_t sessionId) {
   auto it = mIdToSession.find(sessionId);
   if (it == mIdToSession.end())
     return NS_ERROR_INVALID_ARG;
-  it->second->Stop();
+  it->second->Stop([sessionId] {
+    NS_DispatchToMainThread(NS_NewRunnableFunction(
+        "NotifyScreencastStopped", [sessionId]() -> void {
+          NotifyScreencastStopped(sessionId);
+        }));
+  });
   mIdToSession.erase(it);
   return NS_OK;
 }

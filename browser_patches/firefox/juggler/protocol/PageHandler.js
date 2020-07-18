@@ -300,13 +300,23 @@ class PageHandler {
     this._videoSessionId = screencast.startVideoRecording(docShell, file, width, height, scale || 0, devicePixelRatio * rect.top);
   }
 
-  stopVideoRecording() {
+  async stopVideoRecording() {
     if (this._videoSessionId === -1)
       throw new Error('No video recording in progress');
     const videoSessionId = this._videoSessionId;
     this._videoSessionId = -1;
     const screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
+    const result = new Promise(resolve =>
+      Services.obs.addObserver(function onStopped(subject, topic, data) {
+        if (videoSessionId != data)
+          return;
+
+        Services.obs.removeObserver(onStopped, 'juggler-screencast-stopped');
+        resolve();
+      }, 'juggler-screencast-stopped')
+    );
     screencast.stopVideoRecording(videoSessionId);
+    return result;
   }
 }
 
