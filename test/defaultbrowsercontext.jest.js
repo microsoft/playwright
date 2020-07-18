@@ -290,7 +290,7 @@ describe('launchPersistentContext()', function() {
     await removeUserDataDir(userDataDir);
     await removeUserDataDir(userDataDir2);
   });
-  it.slow().fail(CHROMIUM && (WIN || MAC))('should restore cookies from userDataDir', async({browserType, defaultBrowserOptions,  server, launchPersistent}) => {
+  it.fail(CHROMIUM && (WIN || MAC)).slow()('should restore cookies from userDataDir', async({browserType, defaultBrowserOptions,  server, launchPersistent}) => {
     const userDataDir = await makeUserDataDir();
     const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
     const page = await browserContext.newPage();

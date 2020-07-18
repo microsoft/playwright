@@ -76,7 +76,7 @@ describe('Playwright', function() {
       const error = await browserType.launch(options).catch(e => e);
       expect(error.message).toContain('<launching>');
     });
-    it.slow().skip(CHANNEL)('should accept objects as options', async({browserType, defaultBrowserOptions}) => {
+    it.skip(CHANNEL).slow()('should accept objects as options', async({browserType, defaultBrowserOptions}) => {
       const browser = await browserType.launch({ ...defaultBrowserOptions, process });
       await browser.close();
     });
