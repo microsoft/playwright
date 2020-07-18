@@ -1,9 +1,16 @@
 language: node_js
+node_js:
+  - "12"
 notifications:
   email: false
 
 install:
 - npm ci
+
+env:
+- BROWSER=chromium
+- BROWSER=firefox
+- BROWSER=webkit
 
 jobs:
   include:
@@ -39,12 +46,13 @@ jobs:
           # this is needed for running headful tests
           - xvfb
       script:
+        - echo "npm test temporarily disabled"
         - npm run build
-        - xvfb-run --auto-servernum npm run test
+        - xvfb-run --auto-servernum npm run jest -- --testTimeout=30000
     - os: osx
       osx_image: xcode11.3
       node_js: '12'
       script:
+        - echo "npm test temporarily disabled"
         - npm run build
-        - npm run test
-
+        - npm run jest -- --testTimeout=30000

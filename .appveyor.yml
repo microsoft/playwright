@@ -1,6 +1,13 @@
 environment:
   matrix:
-    - nodejs_version: "10"
+    - browser: chromium
+      nodejs_version: "10"
+
+    - browser: firefox
+      nodejs_version: "10"
+
+    - browser: webkit
+      nodejs_version: "10"
 
 build: off
 
@@ -8,4 +15,5 @@ install:
   - ps: Install-Product node $env:nodejs_version
   - npm ci
   - npm run build
-  - npm run test
+  - cmd: set BROWSER=$env:browser
+  - npm run jest -- --testTimeout=30000 -vv

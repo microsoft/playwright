@@ -22,4 +22,12 @@ jobs:
 
       - run:
           command: |
-            xvfb-run --auto-servernum npm run test
+            xvfb-run --auto-servernum npm run jest -- --testTimeout=30000
+          environment:
+            BROWSER: chromium
+
+      - run:
+          command: |
+            xvfb-run --auto-servernum npm run jest -- --testTimeout=30000
+          environment:
+            BROWSER: webkit
