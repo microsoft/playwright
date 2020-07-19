@@ -979,13 +979,13 @@ describe('Page.selectOption', function() {
   });
   it('should return [] on no matched values', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
-    const result = await page.selectOption('select','42','abc');
+    const result = await page.selectOption('select', ['42','abc']);
     expect(result).toEqual([]);
   });
   it('should return an array of matched values', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
     await page.evaluate(() => makeMultiple());
-    const result = await page.selectOption('select','blue','black','magenta');
+    const result = await page.selectOption('select', ['blue','black','magenta']);
     expect(result.reduce((accumulator,current) => ['blue', 'black', 'magenta'].includes(current) && accumulator, true)).toEqual(true);
   });
   it('should return an array of one element when multiple is not set', async({page, server}) => {

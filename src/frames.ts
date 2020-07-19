@@ -685,7 +685,7 @@ export class Frame {
       let result;
       if (path !== null) {
         let contents = await util.promisify(fs.readFile)(path, 'utf8');
-        contents += '//# sourceURL=' + path.replace(/\n/g, '');
+        contents += '\n//# sourceURL=' + path.replace(/\n/g, '');
         result = (await context.evaluateHandleInternal(addScriptContent, { content: contents, type })).asElement()!;
       } else {
         result = (await context.evaluateHandleInternal(addScriptContent, { content: content!, type })).asElement()!;
@@ -740,7 +740,7 @@ export class Frame {
 
       if (path !== null) {
         let contents = await util.promisify(fs.readFile)(path, 'utf8');
-        contents += '/*# sourceURL=' + path.replace(/\n/g, '') + '*/';
+        contents += '\n/*# sourceURL=' + path.replace(/\n/g, '') + '*/';
         return (await context.evaluateHandleInternal(addStyleContent, contents)).asElement()!;
       }
 

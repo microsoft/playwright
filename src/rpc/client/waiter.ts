@@ -16,6 +16,7 @@
 
 import { EventEmitter } from 'events';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
+import { TimeoutError } from '../../errors';
 
 export class Waiter {
   private _dispose: (() => void)[] = [];
@@ -33,11 +34,11 @@ export class Waiter {
     this._rejectOn(promise.then(() => { throw error; }), dispose);
   }
 
-  rejectOnTimeout(timeout: number, error: Error) {
+  rejectOnTimeout(timeout: number, message: string) {
     if (!timeout)
       return;
     const { promise, dispose } = waitForTimeout(timeout);
-    this._rejectOn(promise.then(() => { throw error; }), dispose);
+    this._rejectOn(promise.then(() => { throw new TimeoutError(message); }), dispose);
   }
 
   dispose() {

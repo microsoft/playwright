@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { TimeoutError } from '../../errors';
 import { Events } from '../../events';
 import { assert, assertMaxArguments, helper, Listener } from '../../helper';
 import { TimeoutSettings } from '../../timeoutSettings';
@@ -335,7 +334,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
     const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
     const waiter = new Waiter();
-    waiter.rejectOnTimeout(timeout, new TimeoutError(`Timeout while waiting for event "${event}"`));
+    waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);
     if (event !== Events.Page.Crash)
       waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
     if (event !== Events.Page.Close)

@@ -23,7 +23,6 @@ import { serializeArgument, FuncOn, parseResult, SmartHandle, JSHandle } from '.
 import { ElectronEvents, ElectronLaunchOptionsBase } from '../../server/electron';
 import { TimeoutSettings } from '../../timeoutSettings';
 import { Waiter } from './waiter';
-import { TimeoutError } from '../../errors';
 import { Events } from '../../events';
 import { LoggerSink } from '../../loggerSink';
 import { envObjectToArray } from '../serializers';
@@ -102,7 +101,7 @@ export class ElectronApplication extends ChannelOwner<ElectronApplicationChannel
     const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
     const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
     const waiter = new Waiter();
-    waiter.rejectOnTimeout(timeout, new TimeoutError(`Timeout while waiting for event "${event}"`));
+    waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);
     if (event !== ElectronEvents.ElectronApplication.Close)
       waiter.rejectOnEvent(this, ElectronEvents.ElectronApplication.Close, new Error('Electron application closed'));
     const result = await waiter.waitForEvent(this, event, predicate as any);

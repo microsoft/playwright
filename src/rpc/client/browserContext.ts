@@ -26,7 +26,6 @@ import { Browser } from './browser';
 import { Events } from '../../events';
 import { TimeoutSettings } from '../../timeoutSettings';
 import { Waiter } from './waiter';
-import { TimeoutError } from '../../errors';
 import { headersObjectToArray } from '../serializers';
 
 export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserContextInitializer> {
@@ -207,7 +206,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function'  ? {} : optionsOrPredicate);
     const predicate = typeof optionsOrPredicate === 'function'  ? optionsOrPredicate : optionsOrPredicate.predicate;
     const waiter = new Waiter();
-    waiter.rejectOnTimeout(timeout, new TimeoutError(`Timeout while waiting for event "${event}"`));
+    waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);
     if (event !== Events.BrowserContext.Close)
       waiter.rejectOnEvent(this, Events.BrowserContext.Close, new Error('Context closed'));
     const result = await waiter.waitForEvent(this, event, predicate as any);
