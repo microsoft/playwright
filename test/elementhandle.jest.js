@@ -456,7 +456,9 @@ describe('ElementHandle convenience API', function() {
     await page.goto(`${server.PREFIX}/dom.html`);
     const handle = await page.$('#outer');
     expect(await handle.getAttribute('name')).toBe('value');
+    expect(await handle.getAttribute('foo')).toBe(null);
     expect(await page.getAttribute('#outer', 'name')).toBe('value');
+    expect(await page.getAttribute('#outer', 'foo')).toBe(null);
   });
   it('innerHTML should work', async({page, server}) => {
     await page.goto(`${server.PREFIX}/dom.html`);

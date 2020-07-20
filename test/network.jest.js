@@ -345,13 +345,14 @@ describe('Network Events', function() {
     expect(await request.response()).toBeTruthy();
     expect(request.frame() === page.mainFrame()).toBe(true);
     expect(request.frame().url()).toBe(server.EMPTY_PAGE);
+    expect(request.failure()).toBe(null);
   });
   it('should fire events in proper order', async({page, server}) => {
     const events = [];
     page.on('request', request => events.push('request'));
     page.on('response', response => events.push('response'));
     const response = await page.goto(server.EMPTY_PAGE);
-    await response.finished();
+    expect(await response.finished()).toBe(null);
     events.push('requestfinished')
     expect(events).toEqual(['request', 'response', 'requestfinished']);
   });

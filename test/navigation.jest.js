@@ -885,6 +885,8 @@ describe('Page.waitForLoadState', () => {
 
 describe('Page.goBack', function() {
   it('should work', async({page, server}) => {
+    expect(await page.goBack()).toBe(null);
+
     await page.goto(server.EMPTY_PAGE);
     await page.goto(server.PREFIX + '/grid.html');
 
@@ -1050,6 +1052,12 @@ describe('Page.reload', function() {
     await page.evaluate(() => window._foo = 10);
     await page.reload();
     expect(await page.evaluate(() => window._foo)).toBe(undefined);
+  });
+  it('should work with data url', async({page, server}) => {
+    await page.goto('data:text/html,hello');
+    expect(await page.content()).toContain('hello');
+    expect(await page.reload()).toBe(null);
+    expect(await page.content()).toContain('hello');
   });
 });
 
