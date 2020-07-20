@@ -26,19 +26,17 @@ import { helper, assert } from '../helper';
 export function serializeError(e: any): types.Error {
   if (helper.isError(e))
     return { message: e.message, stack: e.stack, name: e.name };
-  return { value: e };
+  return { message: '', name: '' };
 }
 
-export function parseError(error: types.Error): any {
-  if (error.message === undefined)
-    return error.value;
+export function parseError(error: types.Error): Error {
   if (error.name === 'TimeoutError') {
     const e = new TimeoutError(error.message);
-    e.stack = error.stack;
+    e.stack = error.stack || '';
     return e;
   }
   const e = new Error(error.message);
-  e.stack = error.stack;
+  e.stack = error.stack || '';
   return e;
 }
 

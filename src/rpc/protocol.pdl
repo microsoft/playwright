@@ -1,0 +1,1483 @@
+# Copyright (c) Microsoft Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+union SerializedValue
+  undefined
+  boolean
+  number
+  string
+  ComplexSerializedValue
+
+type ComplexSerializedValue
+  v?: enum
+    null
+    undefined
+    NaN
+    Infinity
+    -Infinity
+    -0
+  d?: string
+  r?: object
+    p: string
+    f: string
+  a?: SerializedValue[]
+  o?: object[]
+    k: string
+    v: SerializedValue
+  h?: number
+
+union AXNodeValue
+  string
+  number
+
+union AXNodeChecked
+  boolean
+  enum
+    mixed
+
+union AXNodePressed
+  boolean
+  enum
+    mixed
+
+type AXNode
+  role: string
+  name: string
+  value?: AXNodeValue
+  description?: string
+  keyshortcuts?: string
+  roledescription?: string
+  valuetext?: string
+  disabled?: boolean
+  expanded?: boolean
+  focused?: boolean
+  modal?: boolean
+  multiline?: boolean
+  multiselectable?: boolean
+  readonly?: boolean
+  required?: boolean
+  selected?: boolean
+  checked?: AXNodeChecked
+  pressed?: AXNodePressed
+  level?: number
+  valuemin?: number
+  valuemax?: number
+  autocomplete?: string
+  haspopup?: string
+  invalid?: string
+  orientation?: string
+  children?: AXNode[]
+
+union WaitForFunctionPolling
+  number
+  enum
+    raf
+
+interface Playwright
+  initializer
+    chromium: BrowserType
+    firefox: BrowserType
+    webkit: BrowserType
+    electron: Electron
+    deviceDescriptors: object[]
+      name: string
+      descriptor: object
+        userAgent: string
+        viewport: object
+          width: number
+          height: number
+        deviceScaleFactor: number
+        isMobile: boolean
+        hasTouch: boolean
+    selectors: Selectors
+
+interface Selectors
+  command register
+    parameters
+      name: string
+      source: string
+      options: object
+        contentScript?: boolean
+
+  command createSelector
+    parameters
+      name: string
+      handle: ElementHandle
+    returns
+      value?: string
+
+interface BrowserType
+  initializer
+    executablePath: string
+    name: string
+
+  command connect
+    parameters
+      wsEndpoint: string
+      slowMo?: number
+      timeout?: number
+    returns
+      browser: Browser
+
+  command launch
+    parameters
+      executablePath?: string
+      args?: string[]
+      ignoreAllDefaultArgs?: boolean
+      ignoreDefaultArgs?: string[]
+      handleSIGINT?: boolean
+      handleSIGTERM?: boolean
+      handleSIGHUP?: boolean
+      timeout?: number
+      env?: object[]
+        name: string
+        value: string
+      headless?: boolean
+      devtools?: boolean
+      proxy?: object
+        server: string
+        bypass?: string
+        username?: string
+        password?: string
+      downloadsPath?: string
+      slowMo?: number
+    returns
+      browser: Browser
+
+  command launchServer
+    parameters
+      executablePath?: string
+      args?: string[]
+      ignoreAllDefaultArgs?: boolean
+      ignoreDefaultArgs?: string[]
+      handleSIGINT?: boolean
+      handleSIGTERM?: boolean
+      handleSIGHUP?: boolean
+      timeout?: number
+      env?: object[]
+        name: string
+        value: string
+      headless?: boolean
+      devtools?: boolean
+      proxy?: object
+        server: string
+        bypass?: string
+        username?: string
+        password?: string
+      downloadsPath?: string
+      port?: number
+    returns
+      server: BrowserServer
+
+  command launchPersistentContext
+    parameters
+      userDataDir: string
+      executablePath?: string
+      args?: string[]
+      ignoreAllDefaultArgs?: boolean
+      ignoreDefaultArgs?: string[]
+      handleSIGINT?: boolean
+      handleSIGTERM?: boolean
+      handleSIGHUP?: boolean
+      timeout?: number
+      env?: object[]
+        name: string
+        value: string
+      headless?: boolean
+      devtools?: boolean
+      proxy?: object
+        server: string
+        bypass?: string
+        username?: string
+        password?: string
+      downloadsPath?: string
+      slowMo?: number
+      viewport?: object
+        width: number
+        height: number
+      ignoreHTTPSErrors?: boolean
+      javaScriptEnabled?: boolean
+      bypassCSP?: boolean
+      userAgent?: string
+      locale?: string
+      timezoneId?: string
+      geolocation?: object
+        longitude: number
+        latitude: number
+        accuracy?: number
+      permissions?: string[]
+      extraHTTPHeaders?: object[]
+        name: string
+        value: string
+      offline?: boolean
+      httpCredentials?: object
+        username: string
+        password: string
+      deviceScaleFactor?: number
+      isMobile?: boolean
+      hasTouch?: boolean
+      colorScheme?: enum
+        dark
+        light
+        no-preference
+      acceptDownloads?: boolean
+    returns
+      context: BrowserContext
+
+interface BrowserServer
+  initializer
+    wsEndpoint: string
+    pid: number
+
+  event close
+
+  command close
+
+  command kill
+
+interface Browser
+  event close
+
+  command close
+
+  command newContext
+    parameters
+      viewport?: object
+        width: number
+        height: number
+      ignoreHTTPSErrors?: boolean
+      javaScriptEnabled?: boolean
+      bypassCSP?: boolean
+      userAgent?: string
+      locale?: string
+      timezoneId?: string
+      geolocation?: object
+        longitude: number
+        latitude: number
+        accuracy?: number
+      permissions?: string[]
+      extraHTTPHeaders?: object[]
+        name: string
+        value: string
+      offline?: boolean
+      httpCredentials?: object
+        username: string
+        password: string
+      deviceScaleFactor?: number
+      isMobile?: boolean
+      hasTouch?: boolean
+      colorScheme?: enum
+        dark
+        light
+        no-preference
+      acceptDownloads?: boolean
+    returns
+      context: BrowserContext
+
+  command crNewBrowserCDPSession
+    returns
+      session: CDPSession
+
+  command crStartTracing
+    parameters
+      page?: Page
+      path?: string
+      screenshots?: boolean
+      categories?: string[]
+
+  command crStopTracing
+    returns
+      binary: binary
+
+interface BrowserContext
+  event bindingCall
+    parameters
+      binding: BindingCall
+
+  event close
+
+  event page
+    parameters
+      page: Page
+
+  event route
+    parameters
+      route: Route
+      request: Request
+
+  command addCookies
+    parameters
+      cookies: object[]
+        name: string
+        value: string
+        url?: string
+        domain?: string
+        path?: string
+        expires?: number
+        httpOnly?: boolean
+        secure?: boolean
+        sameSite?: enum
+          Strict
+          Lax
+          None
+
+  command addInitScript
+    parameters
+      source: string
+
+  command clearCookies
+
+  command clearPermissions
+
+  command close
+
+  command cookies
+    parameters
+      urls: string[]
+    returns
+      cookies: object[]
+        name: string
+        value: string
+        domain: string
+        path: string
+        expires: number
+        httpOnly: boolean
+        secure: boolean
+        sameSite: enum
+          Strict
+          Lax
+          None
+
+  command exposeBinding
+    parameters
+      name: string
+
+  command grantPermissions
+    parameters
+      permissions: string[]
+      origin?: string
+
+  command newPage
+    returns
+      page: Page
+
+  command setDefaultNavigationTimeoutNoReply
+    parameters
+      timeout: number
+
+  command setDefaultTimeoutNoReply
+    parameters
+      timeout: number
+
+  command setExtraHTTPHeaders
+    parameters
+      headers: object[]
+        name: string
+        value: string
+
+  command setGeolocation
+    parameters
+      geolocation?: object
+        longitude: number
+        latitude: number
+        accuracy?: number
+
+  command setHTTPCredentials
+    parameters
+      httpCredentials?: object
+        username: string
+        password: string
+
+  command setNetworkInterceptionEnabled
+    parameters
+      enabled: boolean
+
+  command setOffline
+    parameters
+      offline: boolean
+
+  event crBackgroundPage
+    parameters
+      page: Page
+
+  event crServiceWorker
+    parameters
+      worker: Worker
+
+  command crNewCDPSession
+    parameters
+      page: Page
+    returns
+      session: CDPSession
+
+interface Page
+  initializer
+    mainFrame: Frame
+    viewportSize?: object
+      width: number
+      height: number
+    isClosed: boolean
+
+  event bindingCall
+    parameters
+      binding: BindingCall
+
+  event close
+
+  event console
+    parameters
+      message: ConsoleMessage
+
+  event crash
+
+  event dialog
+    parameters
+      dialog: Dialog
+
+  event download
+    parameters
+      download: Download
+
+  event domcontentloaded
+
+  event fileChooser
+    parameters
+      element: ElementHandle
+      isMultiple: boolean
+
+  event frameAttached
+    parameters
+      frame: Frame
+
+  event frameDetached
+    parameters
+      frame: Frame
+
+  event load
+
+  event pageError
+    parameters
+      error: Error
+
+  event popup
+    parameters
+      page: Page
+
+  event request
+    parameters
+      request: Request
+
+  event requestFailed
+    parameters
+      request: Request
+      failureText?: string
+
+  event requestFinished
+    parameters
+      request: Request
+
+  event response
+    parameters
+      response: Response
+
+  event route
+    parameters
+      route: Route
+      request: Request
+
+  event worker
+    parameters
+      worker: Worker
+
+  command setDefaultNavigationTimeoutNoReply
+    parameters
+      timeout: number
+
+  command setDefaultTimeoutNoReply
+    parameters
+      timeout: number
+
+  command setFileChooserInterceptedNoReply
+    parameters
+      intercepted: boolean
+
+  command addInitScript
+    parameters
+      source: string
+
+  command close
+    parameters
+      runBeforeUnload?: boolean
+
+  command emulateMedia
+    parameters
+      media?: enum
+        screen
+        print
+      colorScheme?: enum
+        dark
+        light
+        no-preference
+
+  command exposeBinding
+    parameters
+      name: string
+
+  command goBack
+    parameters
+      timeout?: number
+      waitUntil?: enum
+        load
+        domcontentloaded
+        networkidle
+    returns
+      response?: Response
+
+  command goForward
+    parameters
+      timeout?: number
+      waitUntil?: enum
+        load
+        domcontentloaded
+        networkidle
+    returns
+      response?: Response
+
+  command opener
+    returns
+      page?: Page
+
+  command reload
+    parameters
+      timeout?: number
+      waitUntil?: enum
+        load
+        domcontentloaded
+        networkidle
+    returns
+      response?: Response
+
+  command screenshot
+    parameters
+      timeout?: number
+      type?: enum
+        png
+        jpeg
+      path?: string
+      quality?: number
+      omitBackground?: boolean
+      fullPage?: boolean
+      clip?: object
+        width: number
+        height: number
+        x: number
+        y: number
+    returns
+      binary: binary
+
+  command setExtraHTTPHeaders
+    parameters
+      headers: object[]
+        name: string
+        value: string
+
+  command setNetworkInterceptionEnabled
+    parameters
+      enabled: boolean
+
+  command setViewportSize
+    parameters
+      viewportSize: object
+        width: number
+        height: number
+
+  command keyboardDown
+    parameters
+      key: string
+
+  command keyboardUp
+    parameters
+      key: string
+
+  command keyboardInsertText
+    parameters
+      text: string
+
+  command keyboardType
+    parameters
+      text: string
+      delay?: number
+
+  command keyboardPress
+    parameters
+      key: string
+      delay?: number
+
+  command mouseMove
+    parameters
+      x: number
+      y: number
+      steps?: number
+
+  command mouseDown
+    parameters
+      button?: enum
+        left
+        right
+        middle
+      clickCount?: number
+
+  command mouseUp
+    parameters
+      button?: enum
+        left
+        right
+        middle
+      clickCount?: number
+
+  command mouseClick
+    parameters
+      x: number
+      y: number
+      delay?: number
+      button?: enum
+        left
+        right
+        middle
+      clickCount?: number
+
+  command accessibilitySnapshot
+    parameters
+      interestingOnly?: boolean
+      root?: ElementHandle
+    returns
+      rootAXNode?: AXNode
+
+  command pdf
+    returns
+      pdf: binary
+
+  command crStartJSCoverage
+    parameters
+      resetOnNavigation?: boolean
+      reportAnonymousScripts?: boolean
+
+  command crStopJSCoverage
+    returns
+      entries: object[]
+        url: string
+        scriptId: string
+        source?: string
+        functions: object[]
+          functionName: string
+          isBlockCoverage: boolean
+          ranges: object[]
+            startOffset: number
+            endOffset: number
+            count: number
+
+  command crStartCSSCoverage
+    parameters
+      resetOnNavigation?: boolean
+
+  command crStopCSSCoverage
+    returns
+      entries: object[]
+        url: string
+        text?: string
+        ranges: object[]
+          start: number
+          end: number
+
+interface Frame
+  initializer
+    url: string
+    name: string
+    parentFrame?: Frame
+    loadStates: enum[]
+      load
+      domcontentloaded
+      networkidle
+
+  event loadstate
+    parameters
+      add?: enum
+        load
+        domcontentloaded
+        networkidle
+      remove?: enum
+        load
+        domcontentloaded
+        networkidle
+
+  event navigated
+
+  command evalOnSelector
+    parameters
+      selector: string
+      expression: string
+      isFunction: boolean
+      arg: object
+        value?: SerializedValue
+        handles: []
+    returns
+      value?: SerializedValue
+
+  command evalOnSelectorAll
+    parameters
+      selector: string
+      expression: string
+      isFunction: boolean
+      arg: object
+        value?: SerializedValue
+        handles: []
+    returns
+      value?: SerializedValue
+
+  command addScriptTag
+    parameters
+      url?: string
+      content?: string
+      type?: string
+    returns
+      element: ElementHandle
+
+  command addStyleTag
+    parameters
+      url?: string
+      content?: string
+    returns
+      element: ElementHandle
+
+  command check
+    parameters
+      selector: string
+      force?: boolean
+      noWaitAfter?: boolean
+      timeout?: number
+
+  command click
+    parameters
+      selector: string
+      force?: boolean
+      noWaitAfter?: boolean
+      modifiers?: enum[]
+        Alt
+        Control
+        Meta
+        Shift
+      position?: object
+        x: number
+        y: number
+      delay?: number
+      button?: enum
+        left
+        right
+        middle
+      clickCount?: number
+      timeout?: number
+
+  command content
+    returns
+      value: string
+
+  command dblclick
+    parameters
+      selector: string
+      force?: boolean
+      modifiers?: enum[]
+        Alt
+        Control
+        Meta
+        Shift
+      position?: object
+        x: number
+        y: number
+      delay?: number
+      button?: enum
+        left
+        right
+        middle
+      timeout?: number
+
+  command dispatchEvent
+    parameters
+      selector: string
+      type: string
+      eventInit: object
+        value?: SerializedValue
+        handles: []
+      timeout?: number
+
+  command evaluateExpression
+    parameters
+      expression: string
+      isFunction: boolean
+      arg: object
+        value?: SerializedValue
+        handles: []
+    returns
+      value?: SerializedValue
+
+  command evaluateExpressionHandle
+    parameters
+      expression: string
+      isFunction: boolean
+      arg: object
+        value?: SerializedValue
+        handles: []
+    returns
+      handle: JSHandle
+
+  command fill
+    parameters
+      selector: string
+      value: string
+      timeout?: number
+      noWaitAfter?: boolean
+
+  command focus
+    parameters
+      selector: string
+      timeout?: number
+
+  command frameElement
+    returns
+      element: ElementHandle
+
+  command getAttribute
+    parameters
+      selector: string
+      name: string
+      timeout?: number
+    returns
+      value?: string
+
+  command goto
+    parameters
+      url: string
+      timeout?: number
+      waitUntil?: enum
+        load
+        domcontentloaded
+        networkidle
+      referer?: string
+    returns
+      response?: Response
+
+  command hover
+    parameters
+      selector: string
+      force?: boolean
+      modifiers?: enum[]
+        Alt
+        Control
+        Meta
+        Shift
+      position?: object
+        x: number
+        y: number
+      timeout?: number
+
+  command innerHTML
+    parameters
+      selector: string
+      timeout?: number
+    returns
+      value: string
+
+  command innerText
+    parameters
+      selector: string
+      timeout?: number
+    returns
+      value: string
+
+  command press
+    parameters
+      selector: string
+      key: string
+      delay?: number
+      noWaitAfter?: boolean
+      timeout?: number
+
+  command querySelector
+    parameters
+      selector: string
+    returns
+      element?: ElementHandle
+
+  command querySelectorAll
+    parameters
+      selector: string
+    returns
+      elements: ElementHandle[]
+
+  command selectOption
+    parameters
+      selector: string
+      elements?: ElementHandle[]
+      options?: object[]
+        value?: string
+        label?: string
+        index?: number
+      timeout?: number
+      noWaitAfter?: boolean
+    returns
+      values: string[]
+
+  command setContent
+    parameters
+      html: string
+      timeout?: number
+      waitUntil?: enum
+        load
+        domcontentloaded
+        networkidle
+
+  command setInputFiles
+    parameters
+      selector: string
+      files: object[]
+        name: string
+        mimeType: string
+        buffer: string
+      timeout?: number
+      noWaitAfter?: boolean
+
+  command textContent
+    parameters
+      selector: string
+      timeout?: number
+    returns
+      value?: string
+
+  command title
+    returns
+      value: string
+
+  command type
+    parameters
+      selector: string
+      text: string
+      delay?: number
+      noWaitAfter?: boolean
+      timeout?: number
+
+  command uncheck
+    parameters
+      selector: string
+      force?: boolean
+      noWaitAfter?: boolean
+      timeout?: number
+
+  command waitForFunction
+    parameters
+      expression: string
+      isFunction: boolean
+      arg: object
+        value?: SerializedValue
+        handles: []
+      timeout?: number
+      polling?: WaitForFunctionPolling
+    returns
+      handle: JSHandle
+
+  command waitForSelector
+    parameters
+      selector: string
+      timeout?: number
+      state?: enum
+        attached
+        detached
+        visible
+        hidden
+    returns
+      element?: ElementHandle
+
+interface Worker
+  initializer
+    url: string
+
+  command evaluateExpression
+    parameters
+      expression: string
+      isFunction: boolean
+      arg: object
+        value?: SerializedValue
+        handles: []
+    returns
+      value?: SerializedValue
+
+  command evaluateExpressionHandle
+    parameters
+      expression: string
+      isFunction: boolean
+      arg: object
+        value?: SerializedValue
+        handles: []
+    returns
+      handle: JSHandle
+
+interface JSHandle
+  initializer
+    preview: string
+
+  event previewUpdated
+    parameters
+      preview: string
+
+  command dispose
+
+  command evaluateExpression
+    parameters
+      expression: string
+      isFunction: boolean
+      arg: object
+        value?: SerializedValue
+        handles: []
+    returns
+      value?: SerializedValue
+
+  command evaluateExpressionHandle
+    parameters
+      expression: string
+      isFunction: boolean
+      arg: object
+        value?: SerializedValue
+        handles: []
+    returns
+      handle: JSHandle
+
+  command getPropertyList
+    returns
+      properties: object[]
+        name: string
+        value: JSHandle
+
+  command getProperty
+    parameters
+      name: string
+    returns
+      handle: JSHandle
+
+  command jsonValue
+    returns
+      value?: SerializedValue
+
+interface ElementHandle
+  command evalOnSelector
+    parameters
+      selector: string
+      expression: string
+      isFunction: boolean
+      arg: object
+        value?: SerializedValue
+        handles: []
+    returns
+      value?: SerializedValue
+
+  command evalOnSelectorAll
+    parameters
+      selector: string
+      expression: string
+      isFunction: boolean
+      arg: object
+        value?: SerializedValue
+        handles: []
+    returns
+      value?: SerializedValue
+
+  command boundingBox
+    returns
+      value?: object
+        width: number
+        height: number
+        x: number
+        y: number
+
+  command check
+    parameters
+      force?: boolean
+      noWaitAfter?: boolean
+      timeout?: number
+
+  command click
+    parameters
+      force?: boolean
+      noWaitAfter?: boolean
+      modifiers?: enum[]
+        Alt
+        Control
+        Meta
+        Shift
+      position?: object
+        x: number
+        y: number
+      delay?: number
+      button?: enum
+        left
+        right
+        middle
+      clickCount?: number
+      timeout?: number
+
+  command contentFrame
+    returns
+      frame?: Frame
+
+  command dblclick
+    parameters
+      force?: boolean
+      noWaitAfter?: boolean
+      modifiers?: enum[]
+        Alt
+        Control
+        Meta
+        Shift
+      position?: object
+        x: number
+        y: number
+      delay?: number
+      button?: enum
+        left
+        right
+        middle
+      timeout?: number
+
+  command dispatchEvent
+    parameters
+      type: string
+      eventInit: object
+        value?: SerializedValue
+        handles: []
+
+  command fill
+    parameters
+      value: string
+      timeout?: number
+      noWaitAfter?: boolean
+
+  command focus
+
+  command getAttribute
+    parameters
+      name: string
+    returns
+      value?: string
+
+  command hover
+    parameters
+      force?: boolean
+      modifiers?: enum[]
+        Alt
+        Control
+        Meta
+        Shift
+      position?: object
+        x: number
+        y: number
+      timeout?: number
+
+  command innerHTML
+    returns
+      value: string
+
+  command innerText
+    returns
+      value: string
+
+  command ownerFrame
+    returns
+      frame?: Frame
+
+  command press
+    parameters
+      key: string
+      delay?: number
+      timeout?: number
+      noWaitAfter?: boolean
+
+  command querySelector
+    parameters
+      selector: string
+    returns
+      element?: ElementHandle
+
+  command querySelectorAll
+    parameters
+      selector: string
+    returns
+      elements: ElementHandle[]
+
+  command screenshot
+    parameters
+      timeout?: number
+      type?: enum
+        png
+        jpeg
+      path?: string
+      quality?: number
+      omitBackground?: boolean
+    returns
+      binary: binary
+
+  command scrollIntoViewIfNeeded
+    parameters
+      timeout?: number
+
+  command selectOption
+    parameters
+      elements?: ElementHandle[]
+      options?: object[]
+        value?: string
+        label?: string
+        index?: number
+      timeout?: number
+      noWaitAfter?: boolean
+    returns
+      values: string[]
+
+  command selectText
+    parameters
+      timeout?: number
+
+  command setInputFiles
+    parameters
+      files: object[]
+        name: string
+        mimeType: string
+        buffer: string
+      timeout?: number
+      noWaitAfter?: boolean
+
+  command textContent
+    returns
+      value?: string
+
+  command type
+    parameters
+      text: string
+      delay?: number
+      noWaitAfter?: boolean
+      timeout?: number
+
+  command uncheck
+    parameters
+      force?: boolean
+      noWaitAfter?: boolean
+      timeout?: number
+
+interface Request
+  initializer
+    frame: Frame
+    url: string
+    resourceType: string
+    method: string
+    postData?: string
+    headers: object[]
+      name: string
+      value: string
+    isNavigationRequest: boolean
+    redirectedFrom?: Request
+
+  command response
+    returns
+      response?: Response
+
+interface Route
+  initializer
+    request: Request
+
+  command abort
+    parameters
+      errorCode: string
+
+  command continue
+    parameters
+      method?: string
+      headers?: object[]
+        name: string
+        value: string
+      postData?: string
+
+  command fulfill
+    parameters
+      status: number
+      headers: object[]
+        name: string
+        value: string
+      body: string
+      isBase64: boolean
+
+interface Response
+  initializer
+    request: Request
+    url: string
+    status: number
+    statusText: string
+    headers: object[]
+      name: string
+      value: string
+
+  command body
+    returns
+      binary: binary
+
+  command finished
+    returns
+      error?: Error
+
+interface ConsoleMessage
+  initializer
+    type: string
+    text: string
+    args: JSHandle[]
+    location: object
+      url?: string
+      lineNumber?: number
+      columnNumber?: number
+
+interface BindingCall
+  initializer
+    frame: Frame
+    name: string
+    args: SerializedValue[]
+
+  command reject
+    parameters
+      error: object
+        message?: string
+        name?: string
+        stack?: string
+        value: object
+
+  command resolve
+    parameters
+      result: object
+        value?: SerializedValue
+        handles: []
+
+interface Dialog
+  initializer
+    type: string
+    message: string
+    defaultValue: string
+
+  command accept
+    parameters
+      promptText?: string
+
+  command dismiss
+
+interface Download
+  initializer
+    url: string
+    suggestedFilename: string
+
+  command path
+    returns
+      value?: string
+
+  command failure
+    returns
+      error?: string
+
+  command stream
+    returns
+      stream?: Stream
+
+  command delete
+
+interface Stream
+  command read
+    parameters
+      size?: number
+    returns
+      binary: binary
+
+interface CDPSession
+  event event
+    parameters
+      method: string
+      params?: object
+
+  event disconnected
+
+  command send
+    parameters
+      method: string
+      params?: object
+    returns
+      result: object
+
+  command detach
+
+interface Electron
+  command launch
+    parameters
+      executablePath: string
+      args?: string[]
+      cwd?: string
+      env?: object[]
+        name: string
+        value: string
+      handleSIGINT?: boolean
+      handleSIGTERM?: boolean
+      handleSIGHUP?: boolean
+      timeout?: number
+    returns
+      electronApplication: ElectronApplication
+
+interface ElectronApplication
+  initializer
+    context: BrowserContext
+
+  event close
+
+  event window
+    parameters
+      page: Page
+      browserWindow: JSHandle
+
+  command newBrowserWindow
+    parameters
+      arg: object
+        value?: SerializedValue
+        handles: []
+    returns
+      page: Page
+
+  command evaluateExpression
+    parameters
+      expression: string
+      isFunction: boolean
+      arg: object
+        value?: SerializedValue
+        handles: []
+    returns
+      value?: SerializedValue
+
+  command evaluateExpressionHandle
+    parameters
+      expression: string
+      isFunction: boolean
+      arg: object
+        value?: SerializedValue
+        handles: []
+    returns
+      handle: JSHandle
+
+  command close
+

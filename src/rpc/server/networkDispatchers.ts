@@ -18,7 +18,7 @@ import { Request, Response, Route } from '../../network';
 import { RequestChannel, ResponseChannel, RouteChannel, ResponseInitializer, RequestInitializer, RouteInitializer, Binary } from '../channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
-import { headersObjectToArray, headersArrayToObject } from '../serializers';
+import { headersObjectToArray, headersArrayToObject, serializeError } from '../serializers';
 import * as types from '../../types';
 
 export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> implements RequestChannel {
@@ -64,7 +64,8 @@ export class ResponseDispatcher extends Dispatcher<Response, ResponseInitializer
   }
 
   async finished(): Promise<{ error: Error | null }> {
-    return { error: await this._object.finished() };
+    const error = await this._object.finished();
+    return { error: error ? serializeError(error) : null };
   }
 
   async body(): Promise<{ binary: Binary }> {
