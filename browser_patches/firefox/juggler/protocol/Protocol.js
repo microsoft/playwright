@@ -654,6 +654,10 @@ const Page = {
         viewportSize: t.Nullable(pageTypes.Size),
       },
     },
+    'bringToFront': {
+      params: {
+      },
+    },
     'setEmulatedMedia': {
       params: {
         type: t.Optional(t.Enum(['screen', 'print', ''])),
