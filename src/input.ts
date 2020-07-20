@@ -165,6 +165,13 @@ export class Mouse {
     this._keyboard = keyboard;
   }
 
+  currentState(): {x: number, y: number} {
+    return {
+      x: this._x,
+      y: this._y,
+    };
+  }
+
   async move(x: number, y: number, options: { steps?: number } = {}) {
     const { steps = 1 } = options;
     const fromX = this._x;
