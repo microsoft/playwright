@@ -141,7 +141,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
 
   async setGeolocation(geolocation: types.Geolocation | null): Promise<void> {
     return this._wrapApiCall('browserContext.setGeolocation', async () => {
-      await this._channel.setGeolocation({ geolocation });
+      await this._channel.setGeolocation({ geolocation: geolocation || undefined });
     });
   }
 
@@ -159,7 +159,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
 
   async setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
     return this._wrapApiCall('browserContext.setHTTPCredentials', async () => {
-      await this._channel.setHTTPCredentials({ httpCredentials });
+      await this._channel.setHTTPCredentials({ httpCredentials: httpCredentials || undefined });
     });
   }
 

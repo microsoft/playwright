@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { JSHandleChannel, JSHandleInitializer, SerializedArgument, Channel } from '../channels';
+import { JSHandleChannel, JSHandleInitializer, SerializedArgument, SerializedValue, Channel } from '../channels';
 import { ElementHandle } from './elementHandle';
 import { ChannelOwner } from './channelOwner';
-import { serializeAsCallArgument, parseEvaluationResultValue, SerializedValue } from '../../common/utilityScriptSerializers';
+import { serializeAsCallArgument, parseEvaluationResultValue } from '../../common/utilityScriptSerializers';
 
 type NoHandles<Arg> = Arg extends JSHandle ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg);
 type Unboxed<Arg> =
@@ -40,10 +40,6 @@ export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel, JSHandleIni
 
   static from(handle: JSHandleChannel): JSHandle {
     return (handle as any)._object;
-  }
-
-  static fromNullable(handle: JSHandleChannel | null): JSHandle | null {
-    return handle ? JSHandle.from(handle) : null;
   }
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: JSHandleInitializer) {
@@ -112,5 +108,5 @@ export function serializeArgument(arg: any): SerializedArgument {
 }
 
 export function parseResult(arg: SerializedValue): any {
-  return parseEvaluationResultValue(arg, []);
+  return parseEvaluationResultValue(arg as any, []);
 }

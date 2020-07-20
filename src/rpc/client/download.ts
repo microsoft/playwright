@@ -37,11 +37,11 @@ export class Download extends ChannelOwner<DownloadChannel, DownloadInitializer>
   }
 
   async path(): Promise<string | null> {
-    return (await this._channel.path()).value;
+    return (await this._channel.path()).value || null;
   }
 
   async failure(): Promise<string | null> {
-    return (await this._channel.failure()).error;
+    return (await this._channel.failure()).error || null;
   }
 
   async createReadStream(): Promise<Readable | null> {

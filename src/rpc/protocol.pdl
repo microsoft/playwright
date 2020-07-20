@@ -39,7 +39,7 @@ type ComplexSerializedValue
 
 type SerializedArgument
   value: SerializedValue
-  handles: []
+  handles: Channel[]
 
 union AXNodeValue
   string
@@ -88,12 +88,27 @@ union WaitForFunctionPolling
   enum
     raf
 
+type Viewport
+  width: number
+  height: number
+
+union ViewportOrNull
+  null
+  Viewport
+
+type SerializedError
+  error?: object
+    message: string
+    name: string
+    stack?: string
+  value?: SerializedValue
+
 interface Playwright
   initializer
     chromium: BrowserType
     firefox: BrowserType
     webkit: BrowserType
-    electron: Electron
+    electron?: Electron
     deviceDescriptors: object[]
       name: string
       descriptor: object
@@ -207,9 +222,7 @@ interface BrowserType
         password?: string
       downloadsPath?: string
       slowMo?: number
-      viewport?: object
-        width: number
-        height: number
+      viewport?: ViewportOrNull
       ignoreHTTPSErrors?: boolean
       javaScriptEnabled?: boolean
       bypassCSP?: boolean
@@ -257,9 +270,7 @@ interface Browser
 
   command newContext
     parameters
-      viewport?: object
-        width: number
-        height: number
+      viewport?: ViewportOrNull
       ignoreHTTPSErrors?: boolean
       javaScriptEnabled?: boolean
       bypassCSP?: boolean
@@ -472,7 +483,7 @@ interface Page
 
   event pageError
     parameters
-      error: Error
+      error: SerializedError
 
   event popup
     parameters
@@ -669,6 +680,23 @@ interface Page
       rootAXNode?: AXNode
 
   command pdf
+    parameters
+      scale?: number
+      displayHeaderFooter?: boolean
+      headerTemplate?: string
+      footerTemplate?: string
+      printBackground?: boolean
+      landscape?: boolean
+      pageRanges?: string
+      format?: string
+      width?: string
+      height?: string
+      preferCSSPageSize?: boolean
+      margin?: object
+        top?: string
+        bottom?: string
+        left?: string
+        right?: string
     returns
       pdf: binary
 
@@ -726,6 +754,12 @@ interface Frame
         networkidle
 
   event navigated
+    parameters
+      url: string
+      name: string
+      newDocument?: object
+        request?: Request
+      error?: string
 
   command evalOnSelector
     parameters
@@ -1060,7 +1094,7 @@ interface JSHandle
     returns
       value?: SerializedValue
 
-interface ElementHandle
+interface ElementHandle extends JSHandle
   command evalOnSelector
     parameters
       selector: string
@@ -1315,7 +1349,7 @@ interface Response
 
   command finished
     returns
-      error?: Error
+      error?: SerializedError
 
 interface ConsoleMessage
   initializer
@@ -1335,7 +1369,7 @@ interface BindingCall
 
   command reject
     parameters
-      error: Error
+      error: SerializedError
 
   command resolve
     parameters

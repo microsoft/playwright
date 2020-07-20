@@ -63,7 +63,7 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitiali
 // Generic channel parser converts guids to JSHandleDispatchers,
 // and this function takes care of coverting them into underlying JSHandles.
 export function parseArgument(arg: SerializedArgument): any {
-  return parseEvaluationResultValue(arg.value, arg.handles.map(arg => (arg as JSHandleDispatcher)._object));
+  return parseEvaluationResultValue(arg.value as any, arg.handles.map(arg => (arg as JSHandleDispatcher)._object));
 }
 
 export function serializeResult(arg: any): SerializedValue {

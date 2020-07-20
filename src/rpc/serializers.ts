@@ -21,22 +21,25 @@ import * as util from 'util';
 import { TimeoutError } from '../errors';
 import * as types from '../types';
 import { helper, assert } from '../helper';
+import { SerializedError } from './channels';
+import { serializeAsCallArgument, parseEvaluationResultValue } from '../common/utilityScriptSerializers';
 
-
-export function serializeError(e: any): types.Error {
+export function serializeError(e: any): SerializedError {
   if (helper.isError(e))
-    return { message: e.message, stack: e.stack, name: e.name };
-  return { message: '', name: '' };
+    return { error: { message: e.message, stack: e.stack, name: e.name } };
+  return { value: serializeAsCallArgument(e, value => ({ fallThrough: value })) };
 }
 
-export function parseError(error: types.Error): Error {
-  if (error.name === 'TimeoutError') {
-    const e = new TimeoutError(error.message);
-    e.stack = error.stack || '';
+export function parseError(error: SerializedError): Error {
+  if (!error.error)
+    return parseEvaluationResultValue(error.value as any, []);
+  if (error.error.name === 'TimeoutError') {
+    const e = new TimeoutError(error.error.message);
+    e.stack = error.error.stack || '';
     return e;
   }
-  const e = new Error(error.message);
-  e.stack = error.stack || '';
+  const e = new Error(error.error.message);
+  e.stack = error.error.stack || '';
   return e;
 }
 

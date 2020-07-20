@@ -20,8 +20,8 @@ import { Events } from '../../events';
 import { assert, assertMaxArguments, helper, Listener } from '../../helper';
 import { TimeoutSettings } from '../../timeoutSettings';
 import * as types from '../../types';
-import { BindingCallChannel, BindingCallInitializer, PageChannel, PageInitializer, PDFOptions } from '../channels';
-import { parseError, serializeError, headersObjectToArray } from '../serializers';
+import { BindingCallChannel, BindingCallInitializer, PageChannel, PageInitializer, PagePdfParams } from '../channels';
+import { parseError, headersObjectToArray, serializeError } from '../serializers';
 import { Accessibility } from './accessibility';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
@@ -69,7 +69,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     return (page as any)._object;
   }
 
-  static fromNullable(page: PageChannel | null): Page | null {
+  static fromNullable(page: PageChannel | undefined): Page | null {
     return page ? Page.from(page) : null;
   }
 
@@ -86,7 +86,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     this._mainFrame = Frame.from(initializer.mainFrame);
     this._mainFrame._page = this;
     this._frames.add(this._mainFrame);
-    this._viewportSize = initializer.viewportSize;
+    this._viewportSize = initializer.viewportSize || null;
     this._closed = initializer.isClosed;
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
@@ -115,8 +115,8 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     }
   }
 
-  private _onRequestFailed(request: Request, failureText: string | null) {
-    request._failureText = failureText;
+  private _onRequestFailed(request: Request, failureText: string | undefined) {
+    request._failureText = failureText || null;
     this.emit(Events.Page.RequestFailed,  request);
   }
 
@@ -518,7 +518,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
 
   async _pdf(options: types.PDFOptions = {}): Promise<Buffer> {
     const path = options.path;
-    const transportOptions: PDFOptions = { ...options } as PDFOptions;
+    const transportOptions: PagePdfParams = { ...options } as PagePdfParams;
     if (path)
       delete (transportOptions as any).path;
     if (transportOptions.margin)

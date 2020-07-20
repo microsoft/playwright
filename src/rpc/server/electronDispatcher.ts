@@ -23,6 +23,7 @@ import { PageDispatcher } from './pageDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { createHandle } from './elementHandlerDispatcher';
 import { SerializedValue } from '../../common/utilityScriptSerializers';
+import { envArrayToObject } from '../serializers';
 
 export class ElectronDispatcher extends Dispatcher<Electron, ElectronInitializer> implements ElectronChannel {
   constructor(scope: DispatcherScope, electron: Electron) {
@@ -30,7 +31,11 @@ export class ElectronDispatcher extends Dispatcher<Electron, ElectronInitializer
   }
 
   async launch(params: ElectronLaunchParams): Promise<{ electronApplication: ElectronApplicationChannel }> {
-    const electronApplication = await this._object.launch(params.executablePath, params);
+    const options = {
+      ...params,
+      env: params.env ? envArrayToObject(params.env) : undefined,
+    };
+    const electronApplication = await this._object.launch(params.executablePath, options);
     return { electronApplication: new ElectronApplicationDispatcher(this._scope, electronApplication) };
   }
 }

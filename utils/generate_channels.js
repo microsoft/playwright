@@ -62,7 +62,7 @@ function inlineType(type, item, indent) {
         raise(literal);
       return literal.words[0];
     });
-    inner = literals.map(literal => `"${literal}"`).join(' | ');
+    inner = literals.map(literal => `'${literal}'`).join(' | ');
     if (array)
       inner = `(${inner})`;
   } else if (['string', 'boolean', 'number', 'undefined'].includes(type)) {
@@ -93,7 +93,7 @@ function properties(item, indent) {
     const optional = name.endsWith('?');
     if (optional)
       name = name.substring(0, name.length - 1);
-    result.push(`${indent}${name}${optional ? '?' : ''}: ${inlineType(prop.words[1], prop, indent)}${false ? ' | null' : ''},`);
+    result.push(`${indent}${name}${optional ? '?' : ''}: ${inlineType(prop.words[1], prop, indent)},`);
   }
   return result.join('\n');
 }
@@ -127,12 +127,6 @@ import { EventEmitter } from 'events';
 
 export type Binary = string;
 
-export type SerializedError = {
-  message: string,
-  name: string,
-  stack?: string,
-};
-
 export interface Channel extends EventEmitter {
 }
 `];
@@ -162,12 +156,19 @@ for (const item of list) {
     result.push(`};`);
   } else if (item.words[0] === 'interface') {
     const channelName = item.words[1];
-    result.push(`// ----------- ${channelName} ----------- `);
+    result.push(`// ----------- ${channelName} -----------`);
     const init = item.list.find(i => i.words[0] === 'initializer');
     if (init && init.words.length > 1)
       raise(init);
     result.push(objectType(channelName + 'Initializer', init || { list: [] }, '  '));
-    result.push(`export interface ${channelName}Channel extends Channel {`);
+
+    let extendsName = 'Channel';
+    if (item.words.length === 4 && item.words[2] === 'extends')
+      extendsName = item.words[3] + 'Channel';
+    else if (item.words.length !== 2)
+      raise(item);
+    result.push(`export interface ${channelName}Channel extends ${extendsName} {`);
+
     const types = new Map();
     for (const method of item.list) {
       if (method === init)
@@ -185,7 +186,7 @@ for (const item of list) {
         const resultName = `${channelName}${titleCase(methodName)}Result`;
         types.set(resultName, returns);
 
-        result.push(`  ${methodName}(params: ${paramsName}): Promise<${resultName}>;`);
+        result.push(`  ${methodName}(params${parameters ? '' : '?'}: ${paramsName}): Promise<${resultName}>;`);
       } else if (method.words[0] === 'event') {
         if (method.words.length !== 2)
           raise(method);

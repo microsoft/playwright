@@ -31,8 +31,8 @@ export function existingDispatcher<DispatcherType>(object: any): DispatcherType 
   return object[dispatcherSymbol];
 }
 
-export function lookupNullableDispatcher<DispatcherType>(object: any | null): DispatcherType | null {
-  return object ? lookupDispatcher(object) : null;
+export function lookupNullableDispatcher<DispatcherType>(object: any | null): DispatcherType | undefined {
+  return object ? lookupDispatcher(object) : undefined;
 }
 
 export class Dispatcher<Type, Initializer> extends EventEmitter implements Channel {

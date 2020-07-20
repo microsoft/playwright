@@ -19,7 +19,7 @@ import { BrowserContextBase, BrowserContext } from '../../browserContext';
 import { Events } from '../../events';
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
-import { PageChannel, BrowserContextChannel, BrowserContextInitializer, CDPSessionChannel } from '../channels';
+import { PageChannel, BrowserContextChannel, BrowserContextInitializer, CDPSessionChannel, BrowserContextSetGeolocationParams, BrowserContextSetHTTPCredentialsParams } from '../channels';
 import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../../chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
@@ -91,8 +91,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
     await this._context.clearPermissions();
   }
 
-  async setGeolocation(params: { geolocation: types.Geolocation | null }): Promise<void> {
-    await this._context.setGeolocation(params.geolocation);
+  async setGeolocation(params: BrowserContextSetGeolocationParams): Promise<void> {
+    await this._context.setGeolocation(params.geolocation || null);
   }
 
   async setExtraHTTPHeaders(params: { headers: types.HeadersArray }): Promise<void> {
@@ -103,8 +103,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
     await this._context.setOffline(params.offline);
   }
 
-  async setHTTPCredentials(params: { httpCredentials: types.Credentials | null }): Promise<void> {
-    await this._context.setHTTPCredentials(params.httpCredentials);
+  async setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams): Promise<void> {
+    await this._context.setHTTPCredentials(params.httpCredentials || null);
   }
 
   async addInitScript(params: { source: string }): Promise<void> {

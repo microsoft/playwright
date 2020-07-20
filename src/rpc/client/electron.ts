@@ -15,17 +15,18 @@
  */
 
 import * as types from '../../types';
-import { ElectronChannel, ElectronInitializer, ElectronLaunchOptions, ElectronApplicationChannel, ElectronApplicationInitializer } from '../channels';
+import { ElectronChannel, ElectronInitializer, ElectronApplicationChannel, ElectronApplicationInitializer, ElectronLaunchParams } from '../channels';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { Page } from './page';
 import { serializeArgument, FuncOn, parseResult, SmartHandle, JSHandle } from './jsHandle';
-import { ElectronEvents } from '../../server/electron';
+import { ElectronEvents, ElectronLaunchOptionsBase } from '../../server/electron';
 import { TimeoutSettings } from '../../timeoutSettings';
 import { Waiter } from './waiter';
 import { TimeoutError } from '../../errors';
 import { Events } from '../../events';
 import { LoggerSink } from '../../loggerSink';
+import { envObjectToArray } from '../serializers';
 
 export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer> {
   static from(electron: ElectronChannel): Electron {
@@ -36,11 +37,16 @@ export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer>
     super(parent, type, guid, initializer, true);
   }
 
-  async launch(executablePath: string, options: ElectronLaunchOptions & { logger?: LoggerSink } = {}): Promise<ElectronApplication> {
+  async launch(executablePath: string, options: ElectronLaunchOptionsBase & { logger?: LoggerSink } = {}): Promise<ElectronApplication> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('electron.launch', async () => {
-      return ElectronApplication.from((await this._channel.launch({ executablePath, ...options })).electronApplication);
+      const params: ElectronLaunchParams = {
+        ...options,
+        env: options.env ? envObjectToArray(options.env) : undefined,
+        executablePath,
+      };
+      return ElectronApplication.from((await this._channel.launch(params)).electronApplication);
     }, logger);
   }
 }
