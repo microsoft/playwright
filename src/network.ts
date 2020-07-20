@@ -256,7 +256,7 @@ export class Response {
   }
 
   _requestFinished(error?: Error) {
-    this._finishedPromiseCallback.call(null, error);
+    this._finishedPromiseCallback.call(null, error || null);
   }
 
   url(): string {

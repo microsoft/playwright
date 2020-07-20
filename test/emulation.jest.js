@@ -78,6 +78,12 @@ describe('BrowserContext({viewport})', function() {
     expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(true);
     await context.close();
   });
+  it('should report null viewportSize when given null viewport', async({browser, server}) => {
+    const context = await browser.newContext({ viewport: null });
+    const page = await context.newPage();
+    expect(page.viewportSize()).toBe(null);
+    await context.close();
+  });
 });
 
 describe.skip(FFOX)('viewport.isMobile', () => {
