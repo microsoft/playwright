@@ -651,6 +651,21 @@ index e268e2bbe8add1b43f6e4d6507cc7810d707a344..a34a7a292a02ea8d94042475a43ae3a0
  
    dom::MediaCapabilities* MediaCapabilities();
    dom::MediaSession* MediaSession();
+diff --git a/dom/base/nsFocusManager.cpp b/dom/base/nsFocusManager.cpp
+index 7fd3b0069dfd8159818c0f80d0c1cee901ce074a..77f08fb399145302677d36003884e9d775cc4e44 100644
+--- a/dom/base/nsFocusManager.cpp
++++ b/dom/base/nsFocusManager.cpp
+@@ -2649,7 +2649,9 @@ void nsFocusManager::RaiseWindow(nsPIDOMWindowOuter* aWindow,
+     }
+   }
+ 
+-  if (sTestMode) {
++  // In Playwright, we still want to execte the embedder functions
++  // to actually show / focus windows.
++  if (false && sTestMode) {
+     // In test mode, emulate raising the window. WindowRaised takes
+     // care of lowering the present active window. This happens in
+     // a separate runnable to avoid touching multiple windows in
 diff --git a/dom/base/nsGlobalWindowOuter.cpp b/dom/base/nsGlobalWindowOuter.cpp
 index da9d56e843a2c762dc7d5527712cdd3d30418f7f..aa3d2d6022b60ac3a263c2d1df4eb12714d8e728 100644
 --- a/dom/base/nsGlobalWindowOuter.cpp

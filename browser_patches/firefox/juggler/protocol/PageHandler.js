@@ -179,6 +179,10 @@ class PageHandler {
     return await this._contentPage.send('setEmulatedMedia', options);
   }
 
+  async bringToFront(options) {
+    this._pageTarget._window.focus();
+  }
+
   async setCacheDisabled(options) {
     return await this._contentPage.send('setCacheDisabled', options);
   }
