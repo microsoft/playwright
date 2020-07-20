@@ -6255,7 +6255,7 @@ index 666b594e54696f32265ae20083a14c8b17f215bd..d9c4c56ed35b4e9ee8c0ed3377f8c377
      String themeName;
  #endif
 diff --git a/Source/WebKit/Shared/WebPreferences.yaml b/Source/WebKit/Shared/WebPreferences.yaml
-index e04cadca2dc5a8c419b72fa19ee73fe73a10b601..b1517762e012092d95764f322ced92f23e2d0c7d 100644
+index e04cadca2dc5a8c419b72fa19ee73fe73a10b601..75e6dd01362a8eee75400052636c306b371e7d37 100644
 --- a/Source/WebKit/Shared/WebPreferences.yaml
 +++ b/Source/WebKit/Shared/WebPreferences.yaml
 @@ -317,7 +317,7 @@ MediaControlsScaleWithPageZoom:
@@ -6267,6 +6267,15 @@ index e04cadca2dc5a8c419b72fa19ee73fe73a10b601..b1517762e012092d95764f322ced92f2
    webcoreBinding: none
  
  ShowsToolTipOverTruncatedText:
+@@ -1466,7 +1466,7 @@ WebGPUEnabled:
+ 
+ MaskWebGLStringsEnabled:
+   type: bool
+-  defaultValue: true
++  defaultValue: false
+   humanReadableName: "Mask WebGL Strings"
+   humanReadableDescription: "Mask WebGL Vendor, Renderer, Shader Language Strings"
+   category: experimental
 diff --git a/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp b/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp
 index c76a9e1f7dae7a31c4048d8f00d849a18ebaff23..1cfd9c7acb69dea69783c42b3f427929509782a4 100644
 --- a/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp
