@@ -137,6 +137,8 @@ class PageHandler {
   dispose() {
     this._contentPage.dispose();
     helper.removeListeners(this._eventListeners);
+    if (this._videoSessionId !== -1)
+      this.stopVideoRecording().catch(e => dump(`stopVideoRecording failed:\n${e}\n`));
   }
 
   async setViewportSize({viewportSize}) {
