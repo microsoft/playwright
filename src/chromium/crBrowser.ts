@@ -40,6 +40,7 @@ export class CRBrowser extends BrowserBase {
   _backgroundPages = new Map<string, CRPage>();
   _serviceWorkers = new Map<string, CRServiceWorker>();
   _devtools?: CRDevTools;
+  _isMac = false;
 
   private _tracingRecording = false;
   private _tracingPath: string | null = '';
@@ -50,6 +51,8 @@ export class CRBrowser extends BrowserBase {
     const browser = new CRBrowser(connection, options);
     browser._devtools = devtools;
     const session = connection.rootSession;
+    const version = await session.send('Browser.getVersion');
+    browser._isMac = version.userAgent.includes('Macintosh');
     if (!options.persistent) {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
       return browser;

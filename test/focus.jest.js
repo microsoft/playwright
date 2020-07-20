@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, LINUX, WEBKIT} = testOptions;
+const {FFOX, CHROMIUM, LINUX, WEBKIT, MAC} = testOptions;
 
 describe('Page.focus', function() {
   it('should work', async function({page, server}) {
@@ -44,7 +44,7 @@ describe('Page.focus', function() {
     expect(focused).toBe(true);
     expect(blurred).toBe(true);
   });
-  it.fail(WEBKIT && !LINUX)('should traverse focus', async function({page, server}) {
+  it('should traverse focus', async function({page}) {
     await page.setContent(`<input id="i1"><input id="i2">`);
     let focused = false;
     await page.exposeFunction('focusEvent', () => focused = true);
@@ -58,5 +58,46 @@ describe('Page.focus', function() {
     expect(focused).toBe(true);
     expect(await page.$eval('#i1', e => e.value)).toBe('First');
     expect(await page.$eval('#i2', e => e.value)).toBe('Last');
+  });
+  it('should traverse focus in all directions', async function({page}) {
+    await page.setContent(`<input value="1"><input value="2"><input value="3">`);
+    await page.keyboard.press('Tab');
+    expect(await page.evaluate(() => document.activeElement.value)).toBe('1');
+    await page.keyboard.press('Tab');
+    expect(await page.evaluate(() => document.activeElement.value)).toBe('2');
+    await page.keyboard.press('Tab');
+    expect(await page.evaluate(() => document.activeElement.value)).toBe('3');
+    await page.keyboard.press('Shift+Tab');
+    expect(await page.evaluate(() => document.activeElement.value)).toBe('2');
+    await page.keyboard.press('Shift+Tab');
+    expect(await page.evaluate(() => document.activeElement.value)).toBe('1');
+  });
+  // Chromium and WebKit both have settings for tab traversing all links, but 
+  // it is only on by default in WebKit.
+  it.skip(!MAC || !WEBKIT)('should traverse only form elements', async function({page}) {
+    await page.setContent(`
+      <input id="input-1">
+      <button id="button">buttton</button>
+      <a href id="link">link</a>
+      <input id="input-2">
+    `);
+    await page.keyboard.press('Tab');
+    expect(await page.evaluate(() => document.activeElement.id)).toBe('input-1');
+    await page.keyboard.press('Tab');
+    expect(await page.evaluate(() => document.activeElement.id)).toBe('input-2');
+    await page.keyboard.press('Shift+Tab');
+    expect(await page.evaluate(() => document.activeElement.id)).toBe('input-1');
+    await page.keyboard.press('Alt+Tab');
+    expect(await page.evaluate(() => document.activeElement.id)).toBe('button');
+    await page.keyboard.press('Alt+Tab');
+    expect(await page.evaluate(() => document.activeElement.id)).toBe('link');
+    await page.keyboard.press('Alt+Tab');
+    expect(await page.evaluate(() => document.activeElement.id)).toBe('input-2');
+    await page.keyboard.press('Alt+Shift+Tab');
+    expect(await page.evaluate(() => document.activeElement.id)).toBe('link');
+    await page.keyboard.press('Alt+Shift+Tab');
+    expect(await page.evaluate(() => document.activeElement.id)).toBe('button');
+    await page.keyboard.press('Alt+Shift+Tab');
+    expect(await page.evaluate(() => document.activeElement.id)).toBe('input-1');
   });
 });
