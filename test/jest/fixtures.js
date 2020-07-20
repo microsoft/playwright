@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+
+/** @typedef {import('../..').Browser} Browser */
+/** @typedef {import('../..').BrowserType} BrowserType */
+/** @typedef {import('../..').BrowserServer} BrowserServer */
+/** @typedef {import('../..').BrowserContext} BrowserContext */
+
 const path = require('path');
 const childProcess = require('child_process');
 
@@ -59,7 +65,7 @@ module.exports = function registerFixtures(global) {
     ]);
   });
 
-  global.registerWorkerFixture('defaultBrowserOptions', async({}, test) => {
+  const defaultBrowserOptions = (function () {
     let executablePath = undefined;
     if (browserName === 'chromium' && process.env.CRPATH)
       executablePath = process.env.CRPATH;
@@ -69,13 +75,13 @@ module.exports = function registerFixtures(global) {
       executablePath = process.env.WKPATH;
     if (executablePath)
       console.error(`Using executable at ${executablePath}`);
-    await test({
+    return {
       handleSIGINT: false,
       slowMo: valueFromEnv('SLOW_MO', 0),
       headless: !!valueFromEnv('HEADLESS', true),
       executablePath
-    });
-  });
+    };
+  })();
 
   global.registerWorkerFixture('playwright', async({}, test) => {
     Error.stackTraceLimit = 15;
@@ -131,12 +137,75 @@ module.exports = function registerFixtures(global) {
     await test(playwright.toImpl);
   });
 
-  global.registerWorkerFixture('browserType', async ({playwright}, test) => {
-    await test(playwright[process.env.BROWSER || 'chromium']);
+  /** @type {Set<Set<Browser|BrowserServer|BrowserContext>>} */
+  const allClosables = new Set();
+
+  process.on('SIGINT', () => {
+    const promises = [];
+    for (const closables of allClosables) {
+      for (const closable of closables)
+        promises.push(closable.close());
+    }
+    Promise.all(promises).then(() => process.exit(130));
   });
 
-  global.registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
-    const browser = await browserType.launch(defaultBrowserOptions);
+  global.registerWorkerFixture('browserType', async ({playwright}, test) => {
+    /** @type {BrowserType} */
+    const browserType = playwright[process.env.BROWSER || 'chromium'];
+    /** @type {Set<Browser|BrowserServer|BrowserContext>} */
+    const closables = new Set();
+    /** @type {BrowserType} */
+    const wrapper = {
+      async connect(options) {
+        const browser = await browserType.connect(options);
+        closables.add(browser);
+        browser.on('disconnected', () => closables.delete(browser));
+        return browser;
+      },
+      executablePath() {
+        return browserType.executablePath();
+      },
+      async launch(options) {
+        const browser = await browserType.launch(launchOptions(options));
+        closables.add(browser);
+        browser.on('disconnected', () => closables.delete(browser));
+        return browser;
+      },
+      async launchPersistentContext(userDataDir, options) {
+        const context = await browserType.launchPersistentContext(userDataDir, launchOptions(options));
+        closables.add(context);
+        context.on('close', () => closables.delete(context));
+        return context;
+      },
+      async launchServer(options) {
+        const server = await browserType.launchServer(launchOptions(options));
+        closables.add(server);
+        server.on('close', () => closables.delete(server));
+        return server;
+      },
+      name() {
+        return browserName;
+      }
+    };
+    allClosables.add(closables);
+    wrapper._defaultArgs = (options, ...args) => {
+      return browserType._defaultArgs(launchOptions(options), ...args);
+    };
+    try {
+      await test(wrapper);
+    } finally {
+      for (const browser of closables)
+        await browser.close();
+      allClosables.delete(closables);
+    }
+
+    function launchOptions(options) {
+      return {...defaultBrowserOptions, ...options};
+    }
+  });
+
+  global.registerWorkerFixture('browser', async ({browserType}, test) => {
+    const browser = await browserType.launch();
     try {
       await test(browser);
       if (browser.contexts().length !== 0) {

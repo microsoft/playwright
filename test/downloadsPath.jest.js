@@ -34,14 +34,13 @@ registerFixture('downloadsPath', async ({}, test) => {
   }
 });
 
-registerFixture('downloadsBrowser', async ({server, browserType, defaultBrowserOptions, downloadsPath}, test) => {
+registerFixture('downloadsBrowser', async ({server, browserType, downloadsPath}, test) => {
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
     res.end(`Hello world`);
   });
   const browser = await browserType.launch({
-    ...defaultBrowserOptions,
     downloadsPath: downloadsPath,
   });
   try {
@@ -51,7 +50,7 @@ registerFixture('downloadsBrowser', async ({server, browserType, defaultBrowserO
   }
 });
 
-registerFixture('persistentDownloadsContext', async ({server, browserType, defaultBrowserOptions, downloadsPath}, test) => {
+registerFixture('persistentDownloadsContext', async ({server, browserType, downloadsPath}, test) => {
   const userDataDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
@@ -61,7 +60,6 @@ registerFixture('persistentDownloadsContext', async ({server, browserType, defau
   const context = await browserType.launchPersistentContext(
     userDataDir,
     {
-      ...defaultBrowserOptions,
       downloadsPath,
       acceptDownloads: true
     }

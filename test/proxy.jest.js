@@ -19,12 +19,11 @@ const utils = require('./utils');
 const {FFOX, CHROMIUM, WEBKIT, MAC} = testOptions;
 
 describe('HTTP Proxy', () => {
-  it('should use proxy', async ({browserType, defaultBrowserOptions, server}) => {
+  it('should use proxy', async ({browserType, server}) => {
     server.setRoute('/target.html', async (req, res) => {
       res.end('<html><title>Served by the proxy</title></html>');
     });
     const browser = await browserType.launch({
-      ...defaultBrowserOptions,
       proxy: { server: `localhost:${server.PORT}` }
     });
     const page = await browser.newPage();
@@ -33,7 +32,7 @@ describe('HTTP Proxy', () => {
     await browser.close();
   });
 
-  it('should authenticate', async ({browserType, defaultBrowserOptions, server}) => {
+  it('should authenticate', async ({browserType, server}) => {
     server.setRoute('/target.html', async (req, res) => {
       const auth = req.headers['proxy-authorization'];
       if (!auth) {
@@ -41,11 +40,11 @@ describe('HTTP Proxy', () => {
           'Proxy-Authenticate': 'Basic realm="Access to internal site"'
         });
         res.end();  
+      } else {
+        res.end(`<html><title>${auth}</title></html>`);
       }
-      res.end(`<html><title>${auth}</title></html>`);
     });
     const browser = await browserType.launch({
-      ...defaultBrowserOptions,
       proxy: { server: `localhost:${server.PORT}`, username: 'user', password: 'secret' }
     });
     const page = await browser.newPage();
@@ -54,12 +53,11 @@ describe('HTTP Proxy', () => {
     await browser.close();
   });
 
-  it('should exclude patterns', async ({browserType, defaultBrowserOptions, server}) => {
+  it('should exclude patterns', async ({browserType, server}) => {
     server.setRoute('/target.html', async (req, res) => {
       res.end('<html><title>Served by the proxy</title></html>');
     });
     const browser = await browserType.launch({
-      ...defaultBrowserOptions,
       proxy: { server: `localhost:${server.PORT}`, bypass: 'non-existent1.com, .non-existent2.com, .zone' }
     });
 
@@ -87,7 +85,7 @@ describe('HTTP Proxy', () => {
 });
 
 describe('SOCKS Proxy', () => {
-  it('should use proxy', async ({ browserType, defaultBrowserOptions, parallelIndex }) => {
+  it('should use proxy', async ({ browserType, parallelIndex }) => {
     const server = socks.createServer((info, accept, deny) => {
       if (socket = accept(true)) {
         const body = '<html><title>Served by the SOCKS proxy</title></html>';
@@ -106,7 +104,6 @@ describe('SOCKS Proxy', () => {
     server.useAuth(socks.auth.None());
 
     const browser = await browserType.launch({
-      ...defaultBrowserOptions,
       proxy: { server: `socks5://localhost:${socksPort}` }
     });
     const page = await browser.newPage();

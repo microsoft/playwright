@@ -19,9 +19,9 @@ const path = require('path');
 const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = testOptions;
 
 describe('Logger', function() {
-  it('should log', async({browserType, defaultBrowserOptions}) => {
+  it('should log', async({browserType}) => {
     const log = [];
-    const browser = await browserType.launch({...defaultBrowserOptions, logger: {
+    const browser = await browserType.launch({ logger: {
       log: (name, severity, message) => log.push({name, severity, message}),
       isEnabled: (name, severity) => severity !== 'verbose'
     }});
@@ -32,9 +32,9 @@ describe('Logger', function() {
     expect(log.filter(item => item.message.includes('browserType.launch started')).length > 0).toBeTruthy();
     expect(log.filter(item => item.message.includes('browserType.launch succeeded')).length > 0).toBeTruthy();
   });
-  it('should log context-level', async({browserType, defaultBrowserOptions}) => {
+  it('should log context-level', async({browserType}) => {
     const log = [];
-    const browser = await browserType.launch(defaultBrowserOptions);
+    const browser = await browserType.launch();
     const context = await browser.newContext({
       logger: {
         log: (name, severity, message) => log.push({name, severity, message}),

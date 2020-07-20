@@ -16,10 +16,9 @@
 
 const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = testOptions;
 
-registerFixture('sppBrowser', async ({browserType, defaultBrowserOptions}, test) => {
+registerFixture('sppBrowser', async ({browserType}, test) => {
   const browser = await browserType.launch({
-    ...defaultBrowserOptions,
-    args: (defaultBrowserOptions.args || []).concat(['--site-per-process'])
+    args: ['--site-per-process']
   });
   try {
     await test(browser);
@@ -269,10 +268,10 @@ describe.skip(!CHROMIUM)('OOPIF', function() {
     await page.click('button');
     expect(await page.evaluate(() => window.BUTTON_CLICKED)).toBe(true);
   });
-  it('should report google.com frame with headful', async({browserType, defaultBrowserOptions, server}) => {
+  it('should report google.com frame with headful', async({browserType, server}) => {
     // @see https://github.com/GoogleChrome/puppeteer/issues/2548
     // https://google.com is isolated by default in Chromium embedder.
-    const browser = await browserType.launch({...defaultBrowserOptions, headless: false});
+    const browser = await browserType.launch({headless: false});
     const page = await browser.newPage();
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/*', route => {

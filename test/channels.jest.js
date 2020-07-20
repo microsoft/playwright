@@ -103,7 +103,7 @@ describe.skip(!CHANNEL)('Channels', function() {
     await expectScopeState(browserType, GOLDEN_PRECONDITION);
   });
 
-  it('should scope browser handles', async({browserType, defaultBrowserOptions}) => {
+  it('should scope browser handles', async({browserType}) => {
     const GOLDEN_PRECONDITION = {
       _guid: '',
       objects: [
@@ -119,7 +119,7 @@ describe.skip(!CHANNEL)('Channels', function() {
     };
     await expectScopeState(browserType, GOLDEN_PRECONDITION);
 
-    const browser = await browserType.launch(defaultBrowserOptions);
+    const browser = await browserType.launch();
     await browser.newContext();
     await expectScopeState(browserType, {
       _guid: '',

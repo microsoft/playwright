@@ -277,13 +277,13 @@ describe('BrowserContext.addCookies', function() {
       await context.close();
     }
   });
-  it.slow()('should isolate cookies between launches', async({browserType, server, defaultBrowserOptions}) => {
-    const browser1 = await browserType.launch(defaultBrowserOptions);
+  it.slow()('should isolate cookies between launches', async({browserType, server,}) => {
+    const browser1 = await browserType.launch();
     const context1 = await browser1.newContext();
     await context1.addCookies([{url: server.EMPTY_PAGE, name: 'cookie-in-context-1', value: 'value', expires: Date.now() / 1000 + 10000}]);
     await browser1.close();
 
-    const browser2 = await browserType.launch(defaultBrowserOptions);
+    const browser2 = await browserType.launch();
     const context2 = await browser2.newContext();
     const cookies = await context2.cookies();
     expect(cookies.length).toBe(0);

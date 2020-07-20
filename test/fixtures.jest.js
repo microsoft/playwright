@@ -22,12 +22,12 @@ const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX, HEADLESS} = testOptions;
 const playwrightPath = path.join(__dirname, '..');
 
 class Wrapper {
-  constructor(browserType, defaultBrowserOptions, extraOptions) {
+  constructor(browserType, extraOptions) {
     this._output = new Map();
     this._outputCallback = new Map();
 
     this._browserType = browserType;
-    const launchOptions = {...defaultBrowserOptions,
+    const launchOptions = {
       handleSIGINT: true,
       handleSIGTERM: true,
       handleSIGHUP: true,
@@ -91,14 +91,14 @@ class Wrapper {
   }
 }
 
-registerFixture('wrapper', async ({browserType, defaultBrowserOptions}, test) => {
-  const wrapper = new Wrapper(browserType, defaultBrowserOptions);
+registerFixture('wrapper', async ({browserType}, test) => {
+  const wrapper = new Wrapper(browserType);
   await wrapper.connect();
   await test(wrapper);
 });
 
-registerFixture('stallingWrapper', async ({browserType, defaultBrowserOptions}, test) => {
-  const wrapper = new Wrapper(browserType, defaultBrowserOptions, { stallOnClose: true });
+registerFixture('stallingWrapper', async ({browserType}, test) => {
+  const wrapper = new Wrapper(browserType, { stallOnClose: true });
   await wrapper.connect();
   await test(wrapper);
 });

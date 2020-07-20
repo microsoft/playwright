@@ -20,26 +20,26 @@ const {makeUserDataDir, removeUserDataDir} = utils;
 const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = testOptions;
 
 describe.skip(!CHROMIUM)('launcher', function() {
-  it('should throw with remote-debugging-pipe argument', async({browserType, defaultBrowserOptions}) => {
-    const options = Object.assign({}, defaultBrowserOptions);
-    options.args = ['--remote-debugging-pipe'].concat(options.args || []);
-    const error = await browserType.launchServer(options).catch(e => e);
+  it('should throw with remote-debugging-pipe argument', async({browserType}) => {
+    const error = await browserType.launchServer({
+      args: ['--remote-debugging-pipe']
+    }).catch(e => e);
     expect(error.message).toContain('Playwright manages remote debugging connection itself');
   });
-  it('should not throw with remote-debugging-port argument', async({browserType, defaultBrowserOptions}) => {
-    const options = Object.assign({}, defaultBrowserOptions);
-    options.args = ['--remote-debugging-port=0'].concat(options.args || []);
-    const browser = await browserType.launchServer(options);
+  it('should not throw with remote-debugging-port argument', async({browserType}) => {
+    const browser = await browserType.launchServer({
+      args: ['--remote-debugging-port=0']
+    });
     await browser.close();
   });
-  it.fail(USES_HOOKS || WIN)('should open devtools when "devtools: true" option is given', async({browserType, defaultBrowserOptions}) => {
+  it.fail(USES_HOOKS || WIN)('should open devtools when "devtools: true" option is given', async({browserType}) => {
     let devtoolsCallback;
     const devtoolsPromise = new Promise(f => devtoolsCallback = f);
     const __testHookForDevTools = devtools => devtools.__testHookOnBinding = parsed => {
       if (parsed.method === 'getPreferences')
         devtoolsCallback();
     };
-    const browser = await browserType.launch({...defaultBrowserOptions, headless: false, devtools: true, __testHookForDevTools});
+    const browser = await browserType.launch({ headless: false, devtools: true, __testHookForDevTools});
     const context = await browser.newContext();
     await Promise.all([
       devtoolsPromise,
@@ -50,10 +50,10 @@ describe.skip(!CHROMIUM)('launcher', function() {
 });
 
 describe.skip(!CHROMIUM)('extensions', () => {
-  it('should return background pages', async({browserType, defaultBrowserOptions}) => {
+  it('should return background pages', async({browserType}) => {
     const userDataDir = await makeUserDataDir();
     const extensionPath = path.join(__dirname, '..', 'assets', 'simple-extension');
-    const extensionOptions = {...defaultBrowserOptions,
+    const extensionOptions = {
       headless: false,
       args: [
         `--disable-extensions-except=${extensionPath}`,
@@ -74,8 +74,8 @@ describe.skip(!CHROMIUM)('extensions', () => {
 });
 
 describe.skip(!CHROMIUM)('BrowserContext', function() {
-  it('should not create pages automatically', async ({browserType, defaultBrowserOptions}) => {
-    const browser = await browserType.launch(defaultBrowserOptions);
+  it('should not create pages automatically', async ({browserType}) => {
+    const browser = await browserType.launch();
     const browserSession = await browser.newBrowserCDPSession();
     const targets = [];
     browserSession.on('Target.targetCreated', async ({targetInfo}) => {

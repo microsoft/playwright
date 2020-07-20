@@ -17,9 +17,8 @@
 const { FFOX } = testOptions;
 
 describe.skip(!FFOX)('launcher', function() {
-  it('should pass firefox user preferences', async({browserType, defaultBrowserOptions}) => {
+  it('should pass firefox user preferences', async({browserType}) => {
     const browser = await browserType.launch({
-      ...defaultBrowserOptions,
       firefoxUserPrefs: {
         'network.proxy.type': 1,
         'network.proxy.http': '127.0.0.1',
