@@ -251,7 +251,7 @@ export class BindingCallDispatcher extends Dispatcher<{}, BindingCallInitializer
     super(scope, {}, 'bindingCall', {
       frame: lookupDispatcher<FrameDispatcher>(source.frame),
       name,
-      args
+      args: args.map(serializeResult),
     });
     this._promise = new Promise((resolve, reject) => {
       this._resolve = resolve;

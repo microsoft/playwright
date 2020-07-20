@@ -367,8 +367,7 @@ export interface BindingCallChannel extends Channel {
 export type BindingCallInitializer = {
   frame: FrameChannel,
   name: string,
-  // TODO: migrate this to SerializedArgument.
-  args: any[]
+  args: SerializedValue[],
 };
 
 
