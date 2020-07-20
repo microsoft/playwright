@@ -41,8 +41,9 @@ describe('HTTP Proxy', () => {
           'Proxy-Authenticate': 'Basic realm="Access to internal site"'
         });
         res.end();  
+      } else {
+        res.end(`<html><title>${auth}</title></html>`);
       }
-      res.end(`<html><title>${auth}</title></html>`);
     });
     const browser = await browserType.launch({
       ...defaultBrowserOptions,
