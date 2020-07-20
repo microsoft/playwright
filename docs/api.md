@@ -3624,6 +3624,7 @@ await page.mouse.up();
 
 <!-- GEN:toc -->
 - [mouse.click(x, y[, options])](#mouseclickx-y-options)
+- [mouse.currentState()](#mousecurrentstate)
 - [mouse.dblclick(x, y[, options])](#mousedblclickx-y-options)
 - [mouse.down([options])](#mousedownoptions)
 - [mouse.move(x, y[, options])](#mousemovex-y-options)
@@ -3640,6 +3641,13 @@ await page.mouse.up();
 - returns: <[Promise]>
 
 Shortcut for [`mouse.move`](#mousemovex-y-options), [`mouse.down`](#mousedownoptions) and [`mouse.up`](#mouseupoptions).
+
+#### mouse.currentState()
+- returns: <[Object]>
+  - `x` <[number]> Current mouse `x` position
+  - `y` <[number]> Current mouse `y` position
+
+Returns current mouse state.
 
 #### mouse.dblclick(x, y[, options])
 - `x` <[number]>

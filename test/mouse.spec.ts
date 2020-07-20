@@ -195,3 +195,19 @@ xdescribe('Drag and Drop', function() {
     expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
   });
 });
+
+describe('Mouse.currentState', () => {
+  it('should work', async({server, page}) => {
+    await page.mouse.click(30, 40);
+    expect(page.mouse.currentState()).toEqual({
+      x: 30,
+      y: 40,
+    });
+    await page.mouse.move(33, 43);
+    expect(page.mouse.currentState()).toEqual({
+      x: 33,
+      y: 43,
+    });
+  });
+});
+
