@@ -576,6 +576,12 @@ export class WKPage implements PageDelegate {
     await this._updateViewport();
   }
 
+  async bringToFront(): Promise<void> {
+    this._pageProxySession.send('Target.activate', {
+      targetId: this._session.sessionId
+    });
+  }
+
   async _updateViewport(): Promise<void> {
     const options = this._browserContext._options;
     const viewportSize = this._page._state.viewportSize;

@@ -143,4 +143,22 @@ describe('Headful', function() {
     await context.close();
     await browser.close();
   });
+  it('Page.bringToFront should work', async ({browserType, defaultBrowserOptions}) => {
+    const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
+    const page1 = await browser.newPage();
+    await page1.setContent('Page1')
+    const page2 = await browser.newPage();
+    await page2.setContent('Page2')
+
+    await page1.bringToFront();
+    expect(await page1.evaluate('document.visibilityState')).toBe('visible');
+    expect(await page2.evaluate('document.visibilityState')).toBe('visible');
+
+    await page2.bringToFront();
+    expect(await page1.evaluate('document.visibilityState')).toBe('visible');
+    expect(await page2.evaluate('document.visibilityState')).toBe(
+      'visible'
+    );
+    await browser.close();
+  });
 });

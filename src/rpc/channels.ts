@@ -544,6 +544,7 @@ export interface PageChannel extends Channel {
   crStopJSCoverage(params?: PageCrStopJSCoverageParams): Promise<PageCrStopJSCoverageResult>;
   crStartCSSCoverage(params: PageCrStartCSSCoverageParams): Promise<PageCrStartCSSCoverageResult>;
   crStopCSSCoverage(params?: PageCrStopCSSCoverageParams): Promise<PageCrStopCSSCoverageResult>;
+  bringToFront(params?: PageBringToFrontParams): Promise<PageBringToFrontResult>;
 }
 export type PageBindingCallEvent = {
   binding: BindingCallChannel,
@@ -798,6 +799,8 @@ export type PageCrStopCSSCoverageResult = {
     }[],
   }[],
 };
+export type PageBringToFrontParams = {};
+export type PageBringToFrontResult = void;
 
 // ----------- Frame -----------
 export type FrameInitializer = {

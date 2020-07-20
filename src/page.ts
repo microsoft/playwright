@@ -53,6 +53,7 @@ export interface PageDelegate {
   updateEmulateMedia(): Promise<void>;
   updateRequestInterception(): Promise<void>;
   setFileChooserIntercepted(enabled: boolean): Promise<void>;
+  bringToFront(): Promise<void>;
 
   canScreenshotOutsideViewport(): boolean;
   resetViewport(): Promise<void>; // Only called if canScreenshotOutsideViewport() returns false.
@@ -401,6 +402,10 @@ export class Page extends EventEmitter {
 
   viewportSize(): types.Size | null {
     return this._state.viewportSize;
+  }
+
+  async bringToFront(): Promise<void> {
+    await this._delegate.bringToFront();
   }
 
   async evaluate<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<R>;

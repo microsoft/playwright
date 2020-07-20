@@ -414,6 +414,12 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     return this._attributeToPage(() => this._mainFrame.title());
   }
 
+  async bringToFront(): Promise<void> {
+    return this._wrapApiCall('page.bringToFront', async () => {
+      await this._channel.bringToFront();
+    });
+  }
+
   async close(options: { runBeforeUnload?: boolean } = {runBeforeUnload: undefined}) {
     return this._wrapApiCall('page.close', async () => {
       await this._channel.close(options);

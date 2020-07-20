@@ -143,6 +143,10 @@ export class CRPage implements PageDelegate {
     await this._mainFrameSession._updateViewport();
   }
 
+  async bringToFront(): Promise<void> {
+    await this._mainFrameSession._client.send('Page.bringToFront');
+  }
+
   async updateEmulateMedia(): Promise<void> {
     await this._forAllFrameSessions(frame => frame._updateEmulateMedia());
   }

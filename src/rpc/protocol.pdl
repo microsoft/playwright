@@ -718,6 +718,8 @@ interface Page
           start: number
           end: number
 
+  command bringToFront
+
 interface Frame
   initializer
     url: string

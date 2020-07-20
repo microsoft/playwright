@@ -409,6 +409,9 @@ export module Protocol {
       }|null;
     };
     export type setViewportSizeReturnValue = void;
+    export type bringToFrontParameters = {
+    };
+    export type bringToFrontReturnValue = void;
     export type setEmulatedMediaParameters = {
       type?: ("screen"|"print"|"");
       colorScheme?: ("dark"|"light"|"no-preference");
@@ -963,6 +966,7 @@ export module Protocol {
     "Page.setFileInputFiles": Page.setFileInputFilesParameters;
     "Page.addBinding": Page.addBindingParameters;
     "Page.setViewportSize": Page.setViewportSizeParameters;
+    "Page.bringToFront": Page.bringToFrontParameters;
     "Page.setEmulatedMedia": Page.setEmulatedMediaParameters;
     "Page.setCacheDisabled": Page.setCacheDisabledParameters;
     "Page.describeNode": Page.describeNodeParameters;
@@ -1033,6 +1037,7 @@ export module Protocol {
     "Page.setFileInputFiles": Page.setFileInputFilesReturnValue;
     "Page.addBinding": Page.addBindingReturnValue;
     "Page.setViewportSize": Page.setViewportSizeReturnValue;
+    "Page.bringToFront": Page.bringToFrontReturnValue;
     "Page.setEmulatedMedia": Page.setEmulatedMediaReturnValue;
     "Page.setCacheDisabled": Page.setCacheDisabledReturnValue;
     "Page.describeNode": Page.describeNodeReturnValue;
