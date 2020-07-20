@@ -57,6 +57,24 @@ describe('Download', function() {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   });
+  it.fail(true)('should report download error', async({browser, server}) => {
+    server.setRoute('/downloadError', (req, res) => {
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
+      res.socket.destroy();
+    });
+
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent(`<a download="file.txt" href="${server.PREFIX}/downloadError">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a'),
+    ]);
+    expect(await download.failure()).toBe('TODO');
+    expect(await download.path()).toBe(null);
+    await page.close();
+  });
   it('should report non-navigation downloads', async({browser, server}) => {
     // Mac WebKit embedder does not download in this case, although Safari does.
     server.setRoute('/download', (req, res) => {
