@@ -18,17 +18,34 @@
 const {FFOX, CHROMIUM, WEBKIT} = testOptions;
 
 describe('Overrides.setGeolocation', function() {
+  async function getGeolocation(page) {
+    return await page.evaluate(() => new Promise(resolve => navigator.geolocation.getCurrentPosition(position => {
+      resolve({latitude: position.coords.latitude, longitude: position.coords.longitude});
+    })));
+  }
+
   it('should work', async({page, server, context}) => {
     await context.grantPermissions(['geolocation']);
     await page.goto(server.EMPTY_PAGE);
     await context.setGeolocation({longitude: 10, latitude: 10});
-    const geolocation = await page.evaluate(() => new Promise(resolve => navigator.geolocation.getCurrentPosition(position => {
-      resolve({latitude: position.coords.latitude, longitude: position.coords.longitude});
-    })));
-    expect(geolocation).toEqual({
-      latitude: 10,
-      longitude: 10
-    });
+    expect(await getGeolocation(page)).toEqual({ latitude: 10, longitude: 10 });
+  });
+  it.fail(WEBKIT || FFOX)('should reset', async({page, server, context}) => {
+    await context.grantPermissions(['geolocation']);
+    await page.goto(server.EMPTY_PAGE);
+    const before = await Promise.race([
+      page.waitForTimeout(1000).then(() => null),
+      getGeolocation(page),
+    ]);
+    expect(before).toBe(null);
+    await context.setGeolocation({longitude: 10, latitude: 10});
+    expect(await getGeolocation(page)).toEqual({ latitude: 10, longitude: 10 });
+    await context.setGeolocation(null);
+    const after = await Promise.race([
+      page.waitForTimeout(1000).then(() => null),
+      getGeolocation(page),
+    ]);
+    expect(after).toBe(null);
   });
   it('should throw when invalid longitude', async({context}) => {
     let error = null;
@@ -51,21 +68,8 @@ describe('Overrides.setGeolocation', function() {
     const page2 = await context2.newPage();
     await page2.goto(server.EMPTY_PAGE);
 
-    const geolocation = await page.evaluate(() => new Promise(resolve => navigator.geolocation.getCurrentPosition(position => {
-      resolve({latitude: position.coords.latitude, longitude: position.coords.longitude});
-    })));
-    expect(geolocation).toEqual({
-      latitude: 10,
-      longitude: 10
-    });
-
-    const geolocation2 = await page2.evaluate(() => new Promise(resolve => navigator.geolocation.getCurrentPosition(position => {
-      resolve({latitude: position.coords.latitude, longitude: position.coords.longitude});
-    })));
-    expect(geolocation2).toEqual({
-      latitude: 20,
-      longitude: 20
-    });
+    expect(await getGeolocation(page)).toEqual({ latitude: 10, longitude: 10 });
+    expect(await getGeolocation(page2)).toEqual({ latitude: 20, longitude: 20 });
 
     await context2.close();
   });
@@ -102,13 +106,7 @@ describe('Overrides.setGeolocation', function() {
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
 
-    const geolocation = await page.evaluate(() => new Promise(resolve => navigator.geolocation.getCurrentPosition(position => {
-      resolve({latitude: position.coords.latitude, longitude: position.coords.longitude});
-    })));
-    expect(geolocation).toEqual({
-      latitude: 10,
-      longitude: 10
-    });
+    expect(await getGeolocation(page)).toEqual({ latitude: 10, longitude: 10 });
     await context.close();
   });
   it('watchPosition should be notified', async({page, server, context}) => {
