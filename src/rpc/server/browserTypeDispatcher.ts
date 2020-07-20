@@ -18,7 +18,7 @@ import { BrowserBase } from '../../browser';
 import { BrowserTypeBase, BrowserType } from '../../server/browserType';
 import * as types from '../../types';
 import { BrowserDispatcher } from './browserDispatcher';
-import { BrowserChannel, BrowserTypeChannel, BrowserContextChannel, BrowserTypeInitializer, BrowserServerChannel, LaunchPersistentContextOptions, LaunchOptions, LaunchServerOptions } from '../channels';
+import { BrowserChannel, BrowserTypeChannel, BrowserContextChannel, BrowserTypeInitializer, BrowserServerChannel, BrowserTypeLaunchParams, BrowserTypeLaunchPersistentContextParams, BrowserTypeLaunchServerParams } from '../channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { BrowserContextBase } from '../../browserContext';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
@@ -33,7 +33,7 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
     }, true, browserType.name());
   }
 
-  async launch(params: LaunchOptions): Promise<{ browser: BrowserChannel }> {
+  async launch(params: BrowserTypeLaunchParams): Promise<{ browser: BrowserChannel }> {
     const options = {
       ...params,
       ignoreDefaultArgs: params.ignoreAllDefaultArgs ? true : params.ignoreDefaultArgs,
@@ -43,7 +43,7 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
     return { browser: new BrowserDispatcher(this._scope, browser as BrowserBase) };
   }
 
-  async launchPersistentContext(params: LaunchPersistentContextOptions): Promise<{ context: BrowserContextChannel }> {
+  async launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams): Promise<{ context: BrowserContextChannel }> {
     const options = {
       ...params,
       ignoreDefaultArgs: params.ignoreAllDefaultArgs ? true : params.ignoreDefaultArgs,
@@ -54,7 +54,7 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
     return { context: new BrowserContextDispatcher(this._scope, browserContext as BrowserContextBase) };
   }
 
-  async launchServer(params: LaunchServerOptions): Promise<{ server: BrowserServerChannel }> {
+  async launchServer(params: BrowserTypeLaunchServerParams): Promise<{ server: BrowserServerChannel }> {
     const options = {
       ...params,
       ignoreDefaultArgs: params.ignoreAllDefaultArgs ? true : params.ignoreDefaultArgs,

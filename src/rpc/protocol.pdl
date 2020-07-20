@@ -37,6 +37,10 @@ type ComplexSerializedValue
     v: SerializedValue
   h?: number
 
+type SerializedArgument
+  value: SerializedValue
+  handles: []
+
 union AXNodeValue
   string
   number
@@ -728,9 +732,7 @@ interface Frame
       selector: string
       expression: string
       isFunction: boolean
-      arg: object
-        value?: SerializedValue
-        handles: []
+      arg: SerializedArgument
     returns
       value?: SerializedValue
 
@@ -739,9 +741,7 @@ interface Frame
       selector: string
       expression: string
       isFunction: boolean
-      arg: object
-        value?: SerializedValue
-        handles: []
+      arg: SerializedArgument
     returns
       value?: SerializedValue
 
@@ -815,18 +815,14 @@ interface Frame
     parameters
       selector: string
       type: string
-      eventInit: object
-        value?: SerializedValue
-        handles: []
+      eventInit: SerializedArgument
       timeout?: number
 
   command evaluateExpression
     parameters
       expression: string
       isFunction: boolean
-      arg: object
-        value?: SerializedValue
-        handles: []
+      arg: SerializedArgument
     returns
       value?: SerializedValue
 
@@ -834,9 +830,7 @@ interface Frame
     parameters
       expression: string
       isFunction: boolean
-      arg: object
-        value?: SerializedValue
-        handles: []
+      arg: SerializedArgument
     returns
       handle: JSHandle
 
@@ -986,9 +980,7 @@ interface Frame
     parameters
       expression: string
       isFunction: boolean
-      arg: object
-        value?: SerializedValue
-        handles: []
+      arg: SerializedArgument
       timeout?: number
       polling?: WaitForFunctionPolling
     returns
@@ -1014,9 +1006,7 @@ interface Worker
     parameters
       expression: string
       isFunction: boolean
-      arg: object
-        value?: SerializedValue
-        handles: []
+      arg: SerializedArgument
     returns
       value?: SerializedValue
 
@@ -1024,9 +1014,7 @@ interface Worker
     parameters
       expression: string
       isFunction: boolean
-      arg: object
-        value?: SerializedValue
-        handles: []
+      arg: SerializedArgument
     returns
       handle: JSHandle
 
@@ -1044,9 +1032,7 @@ interface JSHandle
     parameters
       expression: string
       isFunction: boolean
-      arg: object
-        value?: SerializedValue
-        handles: []
+      arg: SerializedArgument
     returns
       value?: SerializedValue
 
@@ -1054,9 +1040,7 @@ interface JSHandle
     parameters
       expression: string
       isFunction: boolean
-      arg: object
-        value?: SerializedValue
-        handles: []
+      arg: SerializedArgument
     returns
       handle: JSHandle
 
@@ -1082,9 +1066,7 @@ interface ElementHandle
       selector: string
       expression: string
       isFunction: boolean
-      arg: object
-        value?: SerializedValue
-        handles: []
+      arg: SerializedArgument
     returns
       value?: SerializedValue
 
@@ -1093,9 +1075,7 @@ interface ElementHandle
       selector: string
       expression: string
       isFunction: boolean
-      arg: object
-        value?: SerializedValue
-        handles: []
+      arg: SerializedArgument
     returns
       value?: SerializedValue
 
@@ -1159,9 +1139,7 @@ interface ElementHandle
   command dispatchEvent
     parameters
       type: string
-      eventInit: object
-        value?: SerializedValue
-        handles: []
+      eventInit: SerializedArgument
 
   command fill
     parameters
@@ -1357,17 +1335,11 @@ interface BindingCall
 
   command reject
     parameters
-      error: object
-        message?: string
-        name?: string
-        stack?: string
-        value: object
+      error: Error
 
   command resolve
     parameters
-      result: object
-        value?: SerializedValue
-        handles: []
+      result: SerializedArgument
 
 interface Dialog
   initializer
@@ -1453,9 +1425,7 @@ interface ElectronApplication
 
   command newBrowserWindow
     parameters
-      arg: object
-        value?: SerializedValue
-        handles: []
+      arg: SerializedArgument
     returns
       page: Page
 
@@ -1463,9 +1433,7 @@ interface ElectronApplication
     parameters
       expression: string
       isFunction: boolean
-      arg: object
-        value?: SerializedValue
-        handles: []
+      arg: SerializedArgument
     returns
       value?: SerializedValue
 
@@ -1473,9 +1441,7 @@ interface ElectronApplication
     parameters
       expression: string
       isFunction: boolean
-      arg: object
-        value?: SerializedValue
-        handles: []
+      arg: SerializedArgument
     returns
       handle: JSHandle
 

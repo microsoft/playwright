@@ -20,7 +20,7 @@ import { Frame } from '../../frames';
 import { Request } from '../../network';
 import { Page, Worker } from '../../page';
 import * as types from '../../types';
-import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary, PDFOptions, SerializedArgument } from '../channels';
+import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary, SerializedArgument, PagePdfParams, SerializedError } from '../channels';
 import { Dispatcher, DispatcherScope, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { parseError, serializeError, headersArrayToObject } from '../serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
@@ -188,7 +188,7 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     return { rootAXNode };
   }
 
-  async pdf(params: PDFOptions): Promise<{ pdf: Binary }> {
+  async pdf(params: PagePdfParams): Promise<{ pdf: Binary }> {
     if (!this._page.pdf)
       throw new Error('PDF generation is only supported for Headless Chromium');
     const buffer = await this._page.pdf(params);
@@ -263,11 +263,11 @@ export class BindingCallDispatcher extends Dispatcher<{}, BindingCallInitializer
     return this._promise;
   }
 
-  resolve(params: { result: SerializedArgument }) {
+  async resolve(params: { result: SerializedArgument }) {
     this._resolve!(parseArgument(params.result));
   }
 
-  reject(params: { error: types.Error }) {
+  async reject(params: { error: SerializedError }) {
     this._reject!(parseError(params.error));
   }
 }

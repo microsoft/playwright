@@ -16,7 +16,7 @@
 
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { Electron, ElectronApplication, ElectronEvents, ElectronPage } from '../../server/electron';
-import { ElectronApplicationChannel, ElectronApplicationInitializer, PageChannel, JSHandleChannel, ElectronInitializer, ElectronChannel, ElectronLaunchOptions, SerializedArgument } from '../channels';
+import { ElectronApplicationChannel, ElectronApplicationInitializer, PageChannel, JSHandleChannel, ElectronInitializer, ElectronChannel, SerializedArgument, ElectronLaunchParams } from '../channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { BrowserContextBase } from '../../browserContext';
 import { PageDispatcher } from './pageDispatcher';
@@ -29,7 +29,7 @@ export class ElectronDispatcher extends Dispatcher<Electron, ElectronInitializer
     super(scope, electron, 'electron', {}, true);
   }
 
-  async launch(params: { executablePath: string } & ElectronLaunchOptions): Promise<{ electronApplication: ElectronApplicationChannel }> {
+  async launch(params: ElectronLaunchParams): Promise<{ electronApplication: ElectronApplicationChannel }> {
     const electronApplication = await this._object.launch(params.executablePath, params);
     return { electronApplication: new ElectronApplicationDispatcher(this._scope, electronApplication) };
   }
