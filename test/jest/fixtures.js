@@ -156,6 +156,7 @@ module.exports = function registerFixtures(global) {
     const closables = new Set();
     /** @type {BrowserType} */
     const wrapper = {
+      ...browserType,
       async connect(options) {
         const browser = await browserType.connect(options);
         closables.add(browser);
