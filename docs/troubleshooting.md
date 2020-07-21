@@ -148,41 +148,28 @@ const browser = await playwright.chromium.launch({ chromiumSandbox: false });
 
 > **NOTE**: Running without a sandbox is **strongly discouraged**. Consider configuring a sandbox instead.
 
-There are 2 ways to configure a sandbox in Chromium.
+To enable Chromium sandbox, you should enable [user namespace cloning](http://man7.org/linux/man-pages/man7/user_namespaces.7.html).
 
-#### [recommended] Enable [user namespace cloning](http://man7.org/linux/man-pages/man7/user_namespaces.7.html)
+User namespace cloning is only supported by modern kernels. Unprivileged user
+namespaces are generally fine to enable, but in some cases they open up more
+kernel attack surface for (unsandboxed) non-root processes to elevate to kernel
+privileges.
 
-User namespace cloning is only supported by modern kernels. Unprivileged user namespaces are generally fine to enable,
-but in some cases they open up more kernel attack surface for (unsandboxed) non-root processes to elevate to
-kernel privileges.
+In general, user namespace cloning can be enabled with the following command:
 
 ```bash
 sudo sysctl -w kernel.unprivileged_userns_clone=1
 ```
 
-#### [alternative] Setup [setuid sandbox](https://chromium.googlesource.com/chromium/src/+/HEAD/docs/linux_suid_sandbox_development.md)
+In case of Docker, containers need to be run with a custom [security profile](https://docs.docker.com/engine/security/seccomp/) that enables
+user namespace cloning. You can download this profile here: [`seccomp_profile.json`](./docker/seccomp_profile.json)
 
-The setuid sandbox comes as a standalone executable and is located next to the Chromium that Playwright downloads. It is
-fine to re-use the same sandbox executable for different Chromium versions, so the following could be
-done only once per host environment:
+With the downloaded profile, docker container could be run like this:
 
-```bash
-# cd to the downloaded instance
-cd <project-dir-path>/node_modules/playwright/.local-browsers/chromium-<revision>/
-sudo chown root:root chrome_sandbox
-sudo chmod 4755 chrome_sandbox
-# copy sandbox executable to a shared location
-sudo cp -p chrome_sandbox /usr/local/sbin/chrome-devel-sandbox
-# export CHROME_DEVEL_SANDBOX env variable
-export CHROME_DEVEL_SANDBOX=/usr/local/sbin/chrome-devel-sandbox
+```sh
+docker run --rm --security-opt seccomp=/path/to/seccomp/profile.json -it my-image-name
 ```
 
-You might want to export the `CHROME_DEVEL_SANDBOX` env variable by default. In this case, add the following to the `~/.bashrc`
-or `.zshenv`:
-
-```bash
-export CHROME_DEVEL_SANDBOX=/usr/local/sbin/chrome-devel-sandbox
-```
 
 ## Firefox
 

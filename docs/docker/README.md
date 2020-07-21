@@ -31,13 +31,30 @@ $ docker pull mcr.microsoft.com/playwright:bionic
 ### Run the image
 
 ```
-$ docker container run -it --rm --ipc=host --security-opt seccomp=chrome.json mcr.microsoft.com/playwright:bionic /bin/bash
+$ docker container run -it --rm --ipc=host --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:bionic /bin/bash
 ```
 
-Note that:
+[`seccomp_profile.json`](seccomp_profile.json) is needed to run Chromium with sandbox. This is
+a [default Docker seccomp profile](https://github.com/docker/engine/blob/d0d99b04cf6e00ed3fc27e81fc3d94e7eda70af3/profiles/seccomp/default.json) with extra user namespace cloning permissions:
 
-* The seccomp profile is required to run Chrome without sandbox. Thanks to [Jessie Frazelle](https://github.com/jessfraz/dotfiles/blob/master/etc/docker/seccomp/chrome.json).
-* Using `--ipc=host` is also recommended when using Chrome ([Docker docs](https://docs.docker.com/engine/reference/run/#ipc-settings---ipc)). Chrome can run out of memory without this flag.
+```json
+[
+  {
+    "comment": "Allow create user namespaces",
+    "names": [
+      "clone",
+      "setns",
+      "unshare"
+    ],
+    "action": "SCMP_ACT_ALLOW",
+    "args": [],
+    "includes": {},
+    "excludes": {}
+  }
+]
+```
+
+> **NOTE**: Using `--ipc=host` is recommended when using Chrome ([Docker docs](https://docs.docker.com/engine/reference/run/#ipc-settings---ipc)). Chrome can run out of memory without this flag.
 
 ### Using on CI
 
