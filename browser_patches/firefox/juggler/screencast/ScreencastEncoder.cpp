@@ -37,6 +37,7 @@
 #include <vpx/vp8cx.h>
 #include <vpx/vpx_encoder.h>
 #include "nsThreadUtils.h"
+#include "WebMFileWriter.h"
 #include "webrtc/api/video/video_frame.h"
 
 namespace mozilla {
@@ -98,60 +99,6 @@ void createImage(unsigned int width, unsigned int height,
 
   out_image = std::move(image);
   out_image_buffer = std::move(image_buffer);
-}
-
-void mem_put_le16(void *vmem, int val) {
-  unsigned char *mem = (unsigned char *)vmem;
-
-  mem[0] = (unsigned char)((val >> 0) & 0xff);
-  mem[1] = (unsigned char)((val >> 8) & 0xff);
-}
-
-void mem_put_le32(void *vmem, int val) {
-  unsigned char *mem = (unsigned char *)vmem;
-
-  mem[0] = (unsigned char)((val >>  0) & 0xff);
-  mem[1] = (unsigned char)((val >>  8) & 0xff);
-  mem[2] = (unsigned char)((val >> 16) & 0xff);
-  mem[3] = (unsigned char)((val >> 24) & 0xff);
-}
-
-void ivf_write_file_header_with_video_info(FILE *outfile, uint32_t fourcc,
-                                           int frame_cnt, int frame_width,
-                                           int frame_height,
-                                           vpx_rational_t timebase) {
-  char header[32];
-
-  header[0] = 'D';
-  header[1] = 'K';
-  header[2] = 'I';
-  header[3] = 'F';
-  mem_put_le16(header + 4, 0);              // version
-  mem_put_le16(header + 6, 32);             // header size
-  mem_put_le32(header + 8, fourcc);         // fourcc
-  mem_put_le16(header + 12, frame_width);   // width
-  mem_put_le16(header + 14, frame_height);  // height
-  mem_put_le32(header + 16, timebase.den);  // rate
-  mem_put_le32(header + 20, timebase.num);  // scale
-  mem_put_le32(header + 24, frame_cnt);     // length
-  mem_put_le32(header + 28, 0);             // unused
-
-  fwrite(header, 1, 32, outfile);
-}
-
-void ivf_write_file_header(FILE *outfile, const struct vpx_codec_enc_cfg *cfg,
-                           uint32_t fourcc, int frame_cnt) {
-  ivf_write_file_header_with_video_info(outfile, fourcc, frame_cnt, cfg->g_w,
-                                        cfg->g_h, cfg->g_timebase);
-}
-
-void ivf_write_frame_header(FILE *outfile, int64_t pts, size_t frame_size) {
-  char header[12];
-
-  mem_put_le32(header, (int)frame_size);
-  mem_put_le32(header + 4, (int)(pts & 0xFFFFFFFF));
-  mem_put_le32(header + 8, (int)(pts >> 32));
-  fwrite(header, 1, 12, outfile);
 }
 
 } // namespace
@@ -229,19 +176,17 @@ private:
 
 class ScreencastEncoder::VPXCodec {
 public:
-    VPXCodec(uint32_t fourcc, vpx_codec_ctx_t codec, vpx_codec_enc_cfg_t cfg, FILE* file)
-        : m_fourcc(fourcc)
-        , m_codec(codec)
+    VPXCodec(vpx_codec_ctx_t codec, vpx_codec_enc_cfg_t cfg, FILE* file)
+        : m_codec(codec)
         , m_cfg(cfg)
         , m_file(file)
+        , m_writer(new WebMFileWriter(file, &m_cfg))
     {
         nsresult rv = NS_NewNamedThread("Screencast enc", getter_AddRefs(m_encoderQueue));
         if (rv != NS_OK) {
           fprintf(stderr, "ScreencastEncoder::VPXCodec failed to spawn thread %d\n", rv);
           return;
         }
-
-        ivf_write_file_header(m_file, &m_cfg, m_fourcc, 0);
 
         createImage(cfg.g_w, cfg.g_h, m_image, m_imageBuffer, m_imageBufferSize);
     }
@@ -288,11 +233,7 @@ private:
             gotPkts = true;
 
             if (pkt->kind == VPX_CODEC_CX_FRAME_PKT) {
-                ivf_write_frame_header(m_file, m_pts, pkt->data.frame.sz);
-                if (fwrite(pkt->data.frame.buf, 1, pkt->data.frame.sz, m_file) != pkt->data.frame.sz) {
-                    fprintf(stderr, "Failed to write compressed frame\n");
-                    return 0;
-                }
+                m_writer->writeFrame(pkt);
                 bool keyframe = (pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0;
                 ++m_frameCount;
                 fprintf(stderr, "  #%03d %spts=%" PRId64 " sz=%zd\n", m_frameCount, keyframe ? "[K] " : "", pkt->data.frame.pts, pkt->data.frame.sz);
@@ -309,18 +250,16 @@ private:
         while (encodeFrame(nullptr, 1))
             ++m_frameCount;
 
-        rewind(m_file);
-        // Update total frame count.
-        ivf_write_file_header(m_file, &m_cfg, m_fourcc, m_frameCount);
+        m_writer->finish();
         fclose(m_file);
         fprintf(stderr, "ScreencastEncoder::finish %d frames\n", m_frameCount);
     }
 
     RefPtr<nsIThread> m_encoderQueue;
-    uint32_t m_fourcc { 0 };
     vpx_codec_ctx_t m_codec;
     vpx_codec_enc_cfg_t m_cfg;
     FILE* m_file { nullptr };
+    std::unique_ptr<WebMFileWriter> m_writer;
     int m_frameCount { 0 };
     int64_t m_pts { 0 };
     std::unique_ptr<uint8_t[]> m_imageBuffer;
@@ -339,12 +278,10 @@ ScreencastEncoder::~ScreencastEncoder()
 {
 }
 
-static constexpr uint32_t vp8fourcc = 0x30385056;
 static constexpr int fps = 24;
 
 RefPtr<ScreencastEncoder> ScreencastEncoder::create(nsCString& errorString, const nsCString& filePath, int width, int height, Maybe<double> scale, int offsetTop)
 {
-    const uint32_t fourcc = vp8fourcc;
     vpx_codec_iface_t* codec_interface = vpx_codec_vp8_cx();
     if (!codec_interface) {
         errorString = "Codec not found.";
@@ -382,7 +319,7 @@ RefPtr<ScreencastEncoder> ScreencastEncoder::create(nsCString& errorString, cons
         return nullptr;
     }
 
-    std::unique_ptr<VPXCodec> vpxCodec(new VPXCodec(fourcc, codec, cfg, file));
+    std::unique_ptr<VPXCodec> vpxCodec(new VPXCodec(codec, cfg, file));
     fprintf(stderr, "ScreencastEncoder initialized with: %s\n", vpx_codec_iface_name(codec_interface));
     return new ScreencastEncoder(std::move(vpxCodec), scale, offsetTop);
 }
