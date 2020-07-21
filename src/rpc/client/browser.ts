@@ -15,7 +15,7 @@
  */
 
 import * as types from '../../types';
-import { BrowserChannel, BrowserInitializer, BrowserContextOptions } from '../channels';
+import { BrowserChannel, BrowserInitializer, BrowserNewContextParams } from '../channels';
 import { BrowserContext } from './browserContext';
 import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
@@ -55,7 +55,7 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browser.newContext', async () => {
-      const contextOptions: BrowserContextOptions = {
+      const contextOptions: BrowserNewContextParams = {
         ...options,
         extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
       };

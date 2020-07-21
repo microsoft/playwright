@@ -53,7 +53,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
     return (frame as any)._object;
   }
 
-  static fromNullable(frame: FrameChannel | null): Frame | null {
+  static fromNullable(frame: FrameChannel | undefined): Frame | null {
     return frame ? Frame.from(frame) : null;
   }
 
@@ -132,7 +132,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
         });
       }
 
-      const request = navigatedEvent.newDocument ? network.Request.fromNullable(navigatedEvent.newDocument.request || null) : null;
+      const request = navigatedEvent.newDocument ? network.Request.fromNullable(navigatedEvent.newDocument.request) : null;
       const response = request ? await waiter.waitForPromise(request._finalRequest().response()) : null;
       waiter.dispose();
       return response;
@@ -306,7 +306,8 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
 
   async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<null|string> {
     return this._wrapApiCall(this._apiName('textContent'), async () => {
-      return (await this._channel.textContent({ selector, ...options })).value;
+      const value = (await this._channel.textContent({ selector, ...options })).value;
+      return value === undefined ? null : value;
     });
   }
 
@@ -324,7 +325,8 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
 
   async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
     return this._wrapApiCall(this._apiName('getAttribute'), async () => {
-      return (await this._channel.getAttribute({ selector, name, ...options })).value;
+      const value = (await this._channel.getAttribute({ selector, name, ...options })).value;
+      return value === undefined ? null : value;
     });
   }
 

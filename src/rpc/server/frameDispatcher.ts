@@ -53,11 +53,11 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     });
   }
 
-  async goto(params: { url: string } & types.GotoOptions): Promise<{ response: ResponseChannel | null }> {
+  async goto(params: { url: string } & types.GotoOptions): Promise<{ response?: ResponseChannel }> {
     return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._frame.goto(params.url, params)) };
   }
 
-  async waitForNavigation(params: types.WaitForNavigationOptions): Promise<{ response: ResponseChannel | null }> {
+  async waitForNavigation(params: types.WaitForNavigationOptions): Promise<{ response?: ResponseChannel }> {
     return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._frame.waitForNavigation(params)) };
   }
 
@@ -73,7 +73,7 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     return { handle: createHandle(this._scope, await this._frame._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async waitForSelector(params: { selector: string } & types.WaitForElementOptions): Promise<{ element: ElementHandleChannel | null }> {
+  async waitForSelector(params: { selector: string } & types.WaitForElementOptions): Promise<{ element?: ElementHandleChannel }> {
     return { element: ElementHandleDispatcher.createNullable(this._scope, await this._frame.waitForSelector(params.selector, params)) };
   }
 
@@ -89,7 +89,7 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     return { value: serializeResult(await this._frame._$$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async querySelector(params: { selector: string }): Promise<{ element: ElementHandleChannel | null }> {
+  async querySelector(params: { selector: string }): Promise<{ element?: ElementHandleChannel }> {
     return { element: ElementHandleDispatcher.createNullable(this._scope, await this._frame.$(params.selector)) };
   }
 
@@ -130,8 +130,9 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     await this._frame.focus(params.selector, params);
   }
 
-  async textContent(params: { selector: string } & types.TimeoutOptions): Promise<{ value: string | null }> {
-    return { value: await this._frame.textContent(params.selector, params) };
+  async textContent(params: { selector: string } & types.TimeoutOptions): Promise<{ value?: string }> {
+    const value = await this._frame.textContent(params.selector, params);
+    return { value: value === null ? undefined : value };
   }
 
   async innerText(params: { selector: string } & types.TimeoutOptions): Promise<{ value: string }> {
@@ -142,8 +143,9 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     return { value: await this._frame.innerHTML(params.selector, params) };
   }
 
-  async getAttribute(params: { selector: string, name: string } & types.TimeoutOptions): Promise<{ value: string | null }> {
-    return { value: await this._frame.getAttribute(params.selector, params.name, params) };
+  async getAttribute(params: { selector: string, name: string } & types.TimeoutOptions): Promise<{ value?: string }> {
+    const value = await this._frame.getAttribute(params.selector, params.name, params);
+    return { value: value === null ? undefined : value };
   }
 
   async hover(params: { selector: string } & types.PointerActionOptions & types.TimeoutOptions & { force?: boolean }): Promise<void> {

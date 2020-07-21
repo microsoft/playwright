@@ -34,15 +34,14 @@ import { EventEmitter } from 'events';
 import { helper } from '../helper';
 import { LoggerSink } from '../loggerSink';
 
-type ElectronLaunchOptions = {
+export type ElectronLaunchOptionsBase = {
   args?: string[],
   cwd?: string,
-  env?: {[key: string]: string|number|boolean},
+  env?: types.Env,
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
   timeout?: number,
-  logger?: LoggerSink,
 };
 
 export const ElectronEvents = {
@@ -165,7 +164,7 @@ export class ElectronApplication extends EventEmitter {
 }
 
 export class Electron  {
-  async launch(executablePath: string, options: ElectronLaunchOptions = {}): Promise<ElectronApplication> {
+  async launch(executablePath: string, options: ElectronLaunchOptionsBase & { logger?: LoggerSink } = {}): Promise<ElectronApplication> {
     const {
       args = [],
       env = process.env,

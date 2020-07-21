@@ -30,9 +30,9 @@ export function createHandle(scope: DispatcherScope, handle: js.JSHandle): JSHan
 export class ElementHandleDispatcher extends JSHandleDispatcher implements ElementHandleChannel {
   readonly _elementHandle: ElementHandle;
 
-  static createNullable(scope: DispatcherScope, handle: ElementHandle | null): ElementHandleDispatcher | null {
+  static createNullable(scope: DispatcherScope, handle: ElementHandle | null): ElementHandleDispatcher | undefined {
     if (!handle)
-      return null;
+      return undefined;
     return new ElementHandleDispatcher(scope, handle);
   }
 
@@ -41,20 +41,22 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
     this._elementHandle = elementHandle;
   }
 
-  async ownerFrame(): Promise<{ frame: FrameChannel | null }> {
+  async ownerFrame(): Promise<{ frame?: FrameChannel }> {
     return { frame: lookupNullableDispatcher<FrameDispatcher>(await this._elementHandle.ownerFrame()) };
   }
 
-  async contentFrame(): Promise<{ frame: FrameChannel | null }> {
+  async contentFrame(): Promise<{ frame?: FrameChannel }> {
     return { frame: lookupNullableDispatcher<FrameDispatcher>(await this._elementHandle.contentFrame()) };
   }
 
-  async getAttribute(params: { name: string }): Promise<{ value: string | null }> {
-    return { value: await this._elementHandle.getAttribute(params.name) };
+  async getAttribute(params: { name: string }): Promise<{ value?: string }> {
+    const value = await this._elementHandle.getAttribute(params.name);
+    return { value: value === null ? undefined : value };
   }
 
-  async textContent(): Promise<{ value: string | null }> {
-    return { value: await this._elementHandle.textContent() };
+  async textContent(): Promise<{ value?: string }> {
+    const value = await this._elementHandle.textContent();
+    return { value: value === null ? undefined : value };
   }
 
   async innerText(): Promise<{ value: string }> {
@@ -121,17 +123,18 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
     await this._elementHandle.uncheck(params);
   }
 
-  async boundingBox(): Promise<{ value: types.Rect | null }> {
-    return { value: await this._elementHandle.boundingBox() };
+  async boundingBox(): Promise<{ value?: types.Rect }> {
+    const value = await this._elementHandle.boundingBox();
+    return { value: value || undefined };
   }
 
   async screenshot(params: types.ElementScreenshotOptions): Promise<{ binary: Binary }> {
     return { binary: (await this._elementHandle.screenshot(params)).toString('base64') };
   }
 
-  async querySelector(params: { selector: string }): Promise<{ element: ElementHandleChannel | null }> {
+  async querySelector(params: { selector: string }): Promise<{ element?: ElementHandleChannel }> {
     const handle = await this._elementHandle.$(params.selector);
-    return { element: handle ? new ElementHandleDispatcher(this._scope, handle) : null };
+    return { element: handle ? new ElementHandleDispatcher(this._scope, handle) : undefined };
   }
 
   async querySelectorAll(params: { selector: string }): Promise<{ elements: ElementHandleChannel[] }> {

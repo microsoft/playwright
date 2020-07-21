@@ -17,7 +17,7 @@
 import { Browser, BrowserBase } from '../../browser';
 import { BrowserContextBase } from '../../browserContext';
 import { Events } from '../../events';
-import { BrowserChannel, BrowserContextChannel, BrowserInitializer, CDPSessionChannel, Binary, BrowserContextOptions } from '../channels';
+import { BrowserChannel, BrowserContextChannel, BrowserInitializer, CDPSessionChannel, Binary, BrowserNewContextParams } from '../channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
@@ -34,7 +34,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> i
     });
   }
 
-  async newContext(params: BrowserContextOptions): Promise<{ context: BrowserContextChannel }> {
+  async newContext(params: BrowserNewContextParams): Promise<{ context: BrowserContextChannel }> {
     const options = {
       ...params,
       extraHTTPHeaders: params.extraHTTPHeaders ? headersArrayToObject(params.extraHTTPHeaders) : undefined,

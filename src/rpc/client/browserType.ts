@@ -15,7 +15,7 @@
  */
 
 import * as types from '../../types';
-import { BrowserTypeChannel, BrowserTypeInitializer, LaunchPersistentContextOptions, LaunchOptions, LaunchServerOptions } from '../channels';
+import { BrowserTypeChannel, BrowserTypeInitializer, BrowserTypeLaunchParams, BrowserTypeLaunchServerParams, BrowserTypeLaunchPersistentContextParams } from '../channels';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
@@ -45,7 +45,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.launch', async () => {
-      const launchOptions: LaunchOptions = {
+      const launchOptions: BrowserTypeLaunchParams = {
         ...options,
         ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
         ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
@@ -61,7 +61,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.launchServer', async () => {
-      const launchServerOptions: LaunchServerOptions = {
+      const launchServerOptions: BrowserTypeLaunchServerParams = {
         ...options,
         ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
         ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
@@ -75,7 +75,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.launchPersistentContext', async () => {
-      const persistentOptions: LaunchPersistentContextOptions = {
+      const persistentOptions: BrowserTypeLaunchPersistentContextParams = {
         ...options,
         ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
         ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),

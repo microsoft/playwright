@@ -15,10 +15,10 @@
  */
 
 import { Request, Response, Route } from '../../network';
-import { RequestChannel, ResponseChannel, RouteChannel, ResponseInitializer, RequestInitializer, RouteInitializer, Binary } from '../channels';
+import { RequestChannel, ResponseChannel, RouteChannel, ResponseInitializer, RequestInitializer, RouteInitializer, Binary, SerializedError } from '../channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
-import { headersObjectToArray, headersArrayToObject } from '../serializers';
+import { headersObjectToArray, headersArrayToObject, serializeError } from '../serializers';
 import * as types from '../../types';
 
 export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> implements RequestChannel {
@@ -28,24 +28,25 @@ export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> i
     return result || new RequestDispatcher(scope, request);
   }
 
-  static fromNullable(scope: DispatcherScope, request: Request | null): RequestDispatcher | null {
-    return request ? RequestDispatcher.from(scope, request) : null;
+  static fromNullable(scope: DispatcherScope, request: Request | null): RequestDispatcher | undefined {
+    return request ? RequestDispatcher.from(scope, request) : undefined;
   }
 
   private constructor(scope: DispatcherScope, request: Request) {
+    const postData = request.postData();
     super(scope, request, 'request', {
       frame: FrameDispatcher.from(scope, request.frame()),
       url: request.url(),
       resourceType: request.resourceType(),
       method: request.method(),
-      postData: request.postData(),
+      postData: postData === null ? undefined : postData,
       headers: headersObjectToArray(request.headers()),
       isNavigationRequest: request.isNavigationRequest(),
       redirectedFrom: RequestDispatcher.fromNullable(scope, request.redirectedFrom()),
     });
   }
 
-  async response(): Promise<{ response: ResponseChannel | null }> {
+  async response(): Promise<{ response?: ResponseChannel }> {
     return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._object.response()) };
   }
 }
@@ -63,8 +64,9 @@ export class ResponseDispatcher extends Dispatcher<Response, ResponseInitializer
     });
   }
 
-  async finished(): Promise<{ error: Error | null }> {
-    return { error: await this._object.finished() };
+  async finished(): Promise<{ error?: SerializedError }> {
+    const error = await this._object.finished();
+    return { error: error ? serializeError(error) : undefined };
   }
 
   async body(): Promise<{ binary: Binary }> {

@@ -29,7 +29,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     return (handle as any)._object;
   }
 
-  static fromNullable(handle: ElementHandleChannel | null): ElementHandle | null {
+  static fromNullable(handle: ElementHandleChannel | undefined): ElementHandle | null {
     return handle ? ElementHandle.from(handle) : null;
   }
 
@@ -56,13 +56,15 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
 
   async getAttribute(name: string): Promise<string | null> {
     return this._wrapApiCall('elementHandle.getAttribute', async () => {
-      return (await this._elementChannel.getAttribute({ name })).value;
+      const value = (await this._elementChannel.getAttribute({ name })).value;
+      return value === undefined ? null : value;
     });
   }
 
   async textContent(): Promise<string | null> {
     return this._wrapApiCall('elementHandle.textContent', async () => {
-      return (await this._elementChannel.textContent()).value;
+      const value = (await this._elementChannel.textContent()).value;
+      return value === undefined ? null : value;
     });
   }
 
@@ -165,7 +167,8 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
 
   async boundingBox(): Promise<types.Rect | null> {
     return this._wrapApiCall('elementHandle.boundingBox', async () => {
-      return (await this._elementChannel.boundingBox()).value;
+      const value = (await this._elementChannel.boundingBox()).value;
+      return value === undefined ? null : value;
     });
   }
 

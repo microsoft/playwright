@@ -20,7 +20,7 @@ import { Frame } from '../../frames';
 import { Request } from '../../network';
 import { Page, Worker } from '../../page';
 import * as types from '../../types';
-import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary, PDFOptions, SerializedArgument } from '../channels';
+import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary, SerializedArgument, PagePdfParams, SerializedError } from '../channels';
 import { Dispatcher, DispatcherScope, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { parseError, serializeError, headersArrayToObject } from '../serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
@@ -42,7 +42,7 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     // If we split pageCreated and pageReady, there should be no main frame during pageCreated.
     super(scope, page, 'page', {
       mainFrame: FrameDispatcher.from(scope, page.mainFrame()),
-      viewportSize: page.viewportSize(),
+      viewportSize: page.viewportSize() || undefined,
       isClosed: page.isClosed()
     });
     this._page = page;
@@ -79,7 +79,7 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     this._page.setDefaultTimeout(params.timeout);
   }
 
-  async opener(): Promise<{ page: PageChannel | null }> {
+  async opener(): Promise<{ page?: PageChannel }> {
     return { page: lookupNullableDispatcher<PageDispatcher>(await this._page.opener()) };
   }
 
@@ -95,15 +95,15 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     await this._page.setExtraHTTPHeaders(headersArrayToObject(params.headers));
   }
 
-  async reload(params: types.NavigateOptions): Promise<{ response: ResponseChannel | null }> {
+  async reload(params: types.NavigateOptions): Promise<{ response?: ResponseChannel }> {
     return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.reload(params)) };
   }
 
-  async goBack(params: types.NavigateOptions): Promise<{ response: ResponseChannel | null }> {
+  async goBack(params: types.NavigateOptions): Promise<{ response?: ResponseChannel }> {
     return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.goBack(params)) };
   }
 
-  async goForward(params: types.NavigateOptions): Promise<{ response: ResponseChannel | null }> {
+  async goForward(params: types.NavigateOptions): Promise<{ response?: ResponseChannel }> {
     return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.goForward(params)) };
   }
 
@@ -180,15 +180,15 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     await this._page.mouse.click(params.x, params.y, params);
   }
 
-  async accessibilitySnapshot(params: { interestingOnly?: boolean, root?: ElementHandleChannel }): Promise<{ rootAXNode: types.SerializedAXNode | null }> {
+  async accessibilitySnapshot(params: { interestingOnly?: boolean, root?: ElementHandleChannel }): Promise<{ rootAXNode?: types.SerializedAXNode }> {
     const rootAXNode = await this._page.accessibility.snapshot({
       interestingOnly: params.interestingOnly,
       root: params.root ? (params.root as ElementHandleDispatcher)._elementHandle : undefined
     });
-    return { rootAXNode };
+    return { rootAXNode: rootAXNode || undefined };
   }
 
-  async pdf(params: PDFOptions): Promise<{ pdf: Binary }> {
+  async pdf(params: PagePdfParams): Promise<{ pdf: Binary }> {
     if (!this._page.pdf)
       throw new Error('PDF generation is only supported for Headless Chromium');
     const buffer = await this._page.pdf(params);
@@ -263,11 +263,11 @@ export class BindingCallDispatcher extends Dispatcher<{}, BindingCallInitializer
     return this._promise;
   }
 
-  resolve(params: { result: SerializedArgument }) {
+  async resolve(params: { result: SerializedArgument }) {
     this._resolve!(parseArgument(params.result));
   }
 
-  reject(params: { error: types.Error }) {
+  async reject(params: { error: SerializedError }) {
     this._reject!(parseError(params.error));
   }
 }

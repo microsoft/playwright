@@ -19,7 +19,7 @@ import * as types from '../../types';
 import { RequestChannel, ResponseChannel, RouteChannel, RequestInitializer, ResponseInitializer, RouteInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
-import { normalizeFulfillParameters, headersArrayToObject, normalizeContinueOverrides } from '../serializers';
+import { normalizeFulfillParameters, headersArrayToObject, normalizeContinueOverrides, parseError } from '../serializers';
 
 export type NetworkCookie = {
   name: string,
@@ -54,7 +54,7 @@ export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
     return (request as any)._object;
   }
 
-  static fromNullable(request: RequestChannel | null): Request | null {
+  static fromNullable(request: RequestChannel | undefined): Request | null {
     return request ? Request.from(request) : null;
   }
 
@@ -79,7 +79,7 @@ export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
   }
 
   postData(): string | null {
-    return this._initializer.postData;
+    return this._initializer.postData || null;
   }
 
   postDataJSON(): Object | null {
@@ -174,7 +174,7 @@ export class Response extends ChannelOwner<ResponseChannel, ResponseInitializer>
     return (response as any)._object;
   }
 
-  static fromNullable(response: ResponseChannel | null): Response | null {
+  static fromNullable(response: ResponseChannel | undefined): Response | null {
     return response ? Response.from(response) : null;
   }
 
@@ -204,7 +204,10 @@ export class Response extends ChannelOwner<ResponseChannel, ResponseInitializer>
   }
 
   async finished(): Promise<Error | null> {
-    return (await this._channel.finished()).error;
+    const result = await this._channel.finished();
+    if (result.error)
+      return parseError(result.error);
+    return null;
   }
 
   async body(): Promise<Buffer> {
