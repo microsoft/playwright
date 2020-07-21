@@ -17,11 +17,10 @@
 import { ElementHandle } from '../../dom';
 import * as js from '../../javascript';
 import * as types from '../../types';
-import { ElementHandleChannel, FrameChannel, Binary, SerializedArgument } from '../channels';
+import { ElementHandleChannel, FrameChannel, Binary, SerializedArgument, SerializedValue } from '../channels';
 import { DispatcherScope, lookupNullableDispatcher } from './dispatcher';
 import { JSHandleDispatcher, serializeResult, parseArgument } from './jsHandleDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
-import { SerializedValue } from '../../common/utilityScriptSerializers';
 
 export function createHandle(scope: DispatcherScope, handle: js.JSHandle): JSHandleDispatcher {
   return handle.asElement() ? new ElementHandleDispatcher(scope, handle.asElement()!) : new JSHandleDispatcher(scope, handle);

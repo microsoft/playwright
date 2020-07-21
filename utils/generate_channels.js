@@ -51,7 +51,8 @@ function titleCase(name) {
   return name[0].toUpperCase() + name.substring(1);
 }
 
-function inlineType(type, item, indent) {
+function inlineType(item, indent) {
+  let type = item.words[1];
   const array = type.endsWith('[]');
   if (array)
     type = type.substring(0, type.length - 2);
@@ -93,7 +94,7 @@ function properties(item, indent) {
     const optional = name.endsWith('?');
     if (optional)
       name = name.substring(0, name.length - 1);
-    result.push(`${indent}${name}${optional ? '?' : ''}: ${inlineType(prop.words[1], prop, indent)},`);
+    result.push(`${indent}${name}${optional ? '?' : ''}: ${inlineType(prop, indent)},`);
   }
   return result.join('\n');
 }
@@ -140,15 +141,7 @@ for (const item of list) {
 }
 
 for (const item of list) {
-  if (item.words[0] === 'union') {
-    if (item.words.length !== 2)
-      raise(item);
-    result.push(`export type ${item.words[1]} = ${item.list.map(clause => {
-      if (clause.words.length !== 1)
-        raise(clause);
-      return inlineType(clause.words[0], clause, '  ');
-    }).join(' | ')};`);
-  } else if (item.words[0] === 'type') {
+  if (item.words[0] === 'type') {
     if (item.words.length !== 2)
       raise(item);
     result.push(`export type ${item.words[1]} = {`);
