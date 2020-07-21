@@ -18,9 +18,10 @@ const NodeEnvironment = require('jest-environment-node');
 const registerFixtures = require('./fixtures');
 const os = require('os');
 const path = require('path');
+const fs = require('fs');
 const platform = os.platform();
 const GoldenUtils = require('../../utils/testrunner/GoldenUtils');
-
+const {installCoverageHooks} = require('./coverage');
 const browserName = process.env.BROWSER || 'chromium';
 
 class PlaywrightEnvironment extends NodeEnvironment {
@@ -41,6 +42,7 @@ class PlaywrightEnvironment extends NodeEnvironment {
     testOptions.GOLDEN_DIR = path.join(__dirname, '..', 'golden-' + browserName);
     testOptions.OUTPUT_DIR = path.join(__dirname, '..', 'output-' + browserName);
     this.global.testOptions = testOptions;
+    this.testPath = context.testPath;
 
     this.global.registerFixture = (name, fn) => {
       this.fixturePool.registerFixture(name, 'test', fn);
@@ -53,11 +55,18 @@ class PlaywrightEnvironment extends NodeEnvironment {
 
   async setup() {
     await super.setup();
+    this.coverage = installCoverageHooks(browserName);
   }
 
   async teardown() {
     await this.fixturePool.teardownScope('worker');
     await super.teardown();
+    const testRoot = path.join(__dirname, '..');
+    const relativeTestPath = path.relative(testRoot, this.testPath);
+    const coveragePath = path.join(this.global.testOptions.OUTPUT_DIR, 'coverage', relativeTestPath + '.json');
+    const coverageJSON = [...this.coverage.keys()].filter(key => this.coverage.get(key));
+    await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
+    await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
   }
 
   runScript(script) {
