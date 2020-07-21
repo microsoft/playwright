@@ -86,7 +86,9 @@ function apiForBrowser(browserName) {
   const filteredKeys = Object.keys(api).filter(apiName => {
     return !BROWSER_CONFIGS.some(config => apiName.startsWith(config.name)) || apiName.startsWith(browserConfig.name);
   });
-  const filteredAPI = Object.fromEntries(filteredKeys.map(key => [key, api[key]]));
+  const filteredAPI = {};
+  for (const key of filteredKeys)
+    filteredAPI[key] = api[key];
   return {
     api: filteredAPI,
     events
