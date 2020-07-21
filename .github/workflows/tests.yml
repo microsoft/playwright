@@ -40,7 +40,7 @@ jobs:
     - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
       env:
         BROWSER: ${{ matrix.browser }}
-        DEBUG: "*,-pw:wrapped*"
+        DEBUG: "pw:*,-pw:wrapped*"
         DEBUG_FILE: "testrun.log"
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
@@ -76,7 +76,7 @@ jobs:
     - run: npm run jest -- --testTimeout=30000
       env:
         BROWSER: ${{ matrix.browser }}
-        DEBUG: "*,-pw:wrapped*"
+        DEBUG: "pw:*,-pw:wrapped*"
         DEBUG_FILE: "testrun.log"
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
@@ -113,7 +113,7 @@ jobs:
       shell: bash
       env:
         BROWSER: ${{ matrix.browser }}
-        DEBUG: "*,-pw:wrapped*"
+        DEBUG: "pw:*,-pw:wrapped*"
         DEBUG_FILE: "testrun.log"
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
@@ -212,7 +212,7 @@ jobs:
     - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
       env:
         BROWSER: ${{ matrix.browser }}
-        DEBUG: "*,-pw:wrapped*"
+        DEBUG: "pw:*,-pw:wrapped*"
         DEBUG_FILE: "testrun.log"
         PWCHANNEL: ${{ matrix.transport }}
     - uses: actions/upload-artifact@v1
