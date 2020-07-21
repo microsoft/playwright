@@ -17,7 +17,7 @@
 
 import * as path from 'path';
 import * as os from 'os';
-import { assert, getFromENV, logPolitely, helper } from '../helper';
+import { getFromENV, logPolitely, helper } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
 import * as ws from 'ws';
 import { Env } from './processLauncher';
