@@ -386,8 +386,8 @@ export class Page extends EventEmitter {
   }
 
   async emulateMedia(options: { media?: types.MediaType, colorScheme?: types.ColorScheme }) {
-    assert(!options.media || types.mediaTypes.has(options.media), 'Unsupported media: ' + options.media);
-    assert(!options.colorScheme || types.colorSchemes.has(options.colorScheme), 'Unsupported color scheme: ' + options.colorScheme);
+    assert(!options.media || types.mediaTypes.has(options.media), 'media: expected one of (screen|print)');
+    assert(!options.colorScheme || types.colorSchemes.has(options.colorScheme), 'colorScheme: expected one of (dark|light|no-preference)');
     if (options.media !== undefined)
       this._state.mediaType = options.media;
     if (options.colorScheme !== undefined)

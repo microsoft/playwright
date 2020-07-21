@@ -290,12 +290,18 @@ export function verifyGeolocation(geolocation: types.Geolocation): types.Geoloca
   const result = { ...geolocation };
   result.accuracy = result.accuracy || 0;
   const { longitude, latitude, accuracy } = result;
-  if (!helper.isNumber(longitude) || longitude < -180 || longitude > 180)
-    throw new Error(`Invalid longitude "${longitude}": precondition -180 <= LONGITUDE <= 180 failed.`);
-  if (!helper.isNumber(latitude) || latitude < -90 || latitude > 90)
-    throw new Error(`Invalid latitude "${latitude}": precondition -90 <= LATITUDE <= 90 failed.`);
-  if (!helper.isNumber(accuracy) || accuracy < 0)
-    throw new Error(`Invalid accuracy "${accuracy}": precondition 0 <= ACCURACY failed.`);
+  if (!helper.isNumber(longitude))
+    throw new Error(`geolocation.longitude: expected number, got ${typeof longitude}`);
+  if (longitude < -180 || longitude > 180)
+    throw new Error(`geolocation.longitude: precondition -180 <= LONGITUDE <= 180 failed.`);
+  if (!helper.isNumber(latitude))
+    throw new Error(`geolocation.latitude: expected number, got ${typeof latitude}`);
+  if (latitude < -90 || latitude > 90)
+    throw new Error(`geolocation.latitude: precondition -90 <= LATITUDE <= 90 failed.`);
+  if (!helper.isNumber(accuracy))
+    throw new Error(`geolocation.accuracy: expected number, got ${typeof accuracy}`);
+  if (accuracy < 0)
+    throw new Error(`geolocation.accuracy: precondition 0 <= ACCURACY failed.`);
   return result;
 }
 

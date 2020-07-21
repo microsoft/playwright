@@ -104,7 +104,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
 
   async waitForNavigation(options: types.WaitForNavigationOptions = {}): Promise<network.Response | null> {
     return this._wrapApiCall(this._apiName('waitForNavigation'), async () => {
-      const waitUntil = verifyLoadState(options.waitUntil === undefined ? 'load' : options.waitUntil);
+      const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
       const timeout = this._page!._timeoutSettings.navigationTimeout(options);
       const waiter = this._setupNavigationWaiter();
       waiter.rejectOnTimeout(timeout, new TimeoutError(`Timeout ${timeout}ms exceeded.`));
@@ -140,7 +140,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   }
 
   async waitForLoadState(state: types.LifecycleEvent = 'load', options: types.TimeoutOptions = {}): Promise<void> {
-    state = verifyLoadState(state);
+    state = verifyLoadState('state', state);
     if (this._loadStates.has(state))
       return;
     return this._wrapApiCall(this._apiName('waitForLoadState'), async () => {
@@ -398,10 +398,10 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   }
 }
 
-function verifyLoadState(waitUntil: types.LifecycleEvent): types.LifecycleEvent {
+function verifyLoadState(name: string, waitUntil: types.LifecycleEvent): types.LifecycleEvent {
   if (waitUntil as unknown === 'networkidle0')
     waitUntil = 'networkidle';
   if (!types.kLifecycleEvents.has(waitUntil))
-    throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
+    throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle)`);
   return waitUntil;
 }

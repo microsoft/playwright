@@ -412,7 +412,7 @@ export class Frame {
 
   async goto(url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
     return runNavigationTask(this, options, this._apiName('goto'), async progress => {
-      const waitUntil = verifyLifecycle(options.waitUntil === undefined ? 'load' : options.waitUntil);
+      const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
       progress.logger.info(`navigating to "${url}", waiting until "${waitUntil}"`);
       const headers = (this._page._state.extraHTTPHeaders || {});
       let referer = headers['referer'] || headers['Referer'];
@@ -457,7 +457,7 @@ export class Frame {
   async waitForNavigation(options: types.WaitForNavigationOptions = {}): Promise<network.Response | null> {
     return runNavigationTask(this, options, this._apiName('waitForNavigation'), async progress => {
       const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
-      const waitUntil = verifyLifecycle(options.waitUntil === undefined ? 'load' : options.waitUntil);
+      const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
       progress.logger.info(`waiting for navigation${toUrl} until "${waitUntil}"`);
 
       const navigationEvent: NavigationEvent = await helper.waitForEvent(progress, this._eventEmitter, kNavigationEvent, (event: NavigationEvent) => {
@@ -483,7 +483,7 @@ export class Frame {
   }
 
   async _waitForLoadState(progress: Progress, state: types.LifecycleEvent): Promise<void> {
-    const waitUntil = verifyLifecycle(state);
+    const waitUntil = verifyLifecycle('state', state);
     if (!this._subtreeLifecycleEvents.has(waitUntil))
       await helper.waitForEvent(progress, this._eventEmitter, kAddLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
   }
@@ -543,7 +543,7 @@ export class Frame {
       throw new Error('options.waitFor is not supported, did you mean options.state?');
     const { state = 'visible' } = options;
     if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
-      throw new Error(`Unsupported state option "${state}"`);
+      throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
     const info = selectors._parseSelector(selector);
     const task = dom.waitForSelectorTask(info, state);
     return this._page._runAbortableTask(async progress => {
@@ -1126,10 +1126,10 @@ async function runNavigationTask<T>(frame: Frame, options: types.TimeoutOptions,
   return controller.run(task);
 }
 
-function verifyLifecycle(waitUntil: types.LifecycleEvent): types.LifecycleEvent {
+function verifyLifecycle(name: string, waitUntil: types.LifecycleEvent): types.LifecycleEvent {
   if (waitUntil as unknown === 'networkidle0')
     waitUntil = 'networkidle';
   if (!types.kLifecycleEvents.has(waitUntil))
-    throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
+    throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle)`);
   return waitUntil;
 }
