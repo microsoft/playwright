@@ -118,9 +118,7 @@ export interface SelectorsChannel extends Channel {
 export type SelectorsRegisterParams = {
   name: string,
   source: string,
-  options: {
-    contentScript?: boolean,
-  },
+  contentScript?: boolean,
 };
 export type SelectorsRegisterResult = void;
 export type SelectorsCreateSelectorParams = {

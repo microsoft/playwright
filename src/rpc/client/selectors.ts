@@ -30,7 +30,7 @@ export class Selectors extends ChannelOwner<SelectorsChannel, SelectorsInitializ
 
   async register(name: string, script: string | Function | { path?: string, content?: string }, options: { contentScript?: boolean } = {}): Promise<void> {
     const source = await helper.evaluationScript(script, undefined, false);
-    await this._channel.register({ name, source, options });
+    await this._channel.register({ ...options, name, source });
   }
 
   async _createSelector(name: string, handle: ElementHandle<Element>): Promise<string | undefined> {
