@@ -234,8 +234,8 @@ type GetResponseBodyCallback = () => Promise<Buffer>;
 export class Response {
   private _request: Request;
   private _contentPromise: Promise<Buffer> | null = null;
-  _finishedPromise: Promise<Error | null>;
-  private _finishedPromiseCallback: any;
+  _finishedPromise: Promise<{ error?: string }>;
+  private _finishedPromiseCallback: (arg: { error?: string }) => void = () => {};
   private _status: number;
   private _statusText: string;
   private _url: string;
@@ -255,8 +255,8 @@ export class Response {
     this._request._setResponse(this);
   }
 
-  _requestFinished(error?: Error) {
-    this._finishedPromiseCallback.call(null, error || null);
+  _requestFinished(error?: string) {
+    this._finishedPromiseCallback({ error });
   }
 
   url(): string {
@@ -280,14 +280,14 @@ export class Response {
   }
 
   finished(): Promise<Error | null> {
-    return this._finishedPromise;
+    return this._finishedPromise.then(({ error }) => error ? new Error(error) : null);
   }
 
   body(): Promise<Buffer> {
     if (!this._contentPromise) {
-      this._contentPromise = this._finishedPromise.then(async error => {
+      this._contentPromise = this._finishedPromise.then(async ({ error }) => {
         if (error)
-          throw error;
+          throw new Error(error);
         return this._getResponseBodyCallback();
       });
     }

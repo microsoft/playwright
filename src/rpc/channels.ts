@@ -1472,7 +1472,7 @@ export type ResponseBodyResult = {
 };
 export type ResponseFinishedParams = {};
 export type ResponseFinishedResult = {
-  error?: SerializedError,
+  error?: string,
 };
 
 // ----------- ConsoleMessage -----------
