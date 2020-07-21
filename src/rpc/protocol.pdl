@@ -41,24 +41,11 @@ type SerializedArgument
   value: SerializedValue
   handles: Channel[]
 
-union AXNodeValue
-  string
-  number
-
-union AXNodeChecked
-  boolean
-  enum
-    mixed
-
-union AXNodePressed
-  boolean
-  enum
-    mixed
-
 type AXNode
   role: string
   name: string
-  value?: AXNodeValue
+  valueString?: string
+  valueNumber?: number
   description?: string
   keyshortcuts?: string
   roledescription?: string
@@ -72,8 +59,14 @@ type AXNode
   readonly?: boolean
   required?: boolean
   selected?: boolean
-  checked?: AXNodeChecked
-  pressed?: AXNodePressed
+  checked?: enum
+    checked
+    unchecked
+    mixed
+  pressed?: enum
+    pressed
+    released
+    mixed
   level?: number
   valuemin?: number
   valuemax?: number
@@ -82,19 +75,6 @@ type AXNode
   invalid?: string
   orientation?: string
   children?: AXNode[]
-
-union WaitForFunctionPolling
-  number
-  enum
-    raf
-
-type Viewport
-  width: number
-  height: number
-
-union ViewportOrNull
-  null
-  Viewport
 
 type SerializedError
   error?: object
@@ -222,7 +202,10 @@ interface BrowserType
         password?: string
       downloadsPath?: string
       slowMo?: number
-      viewport?: ViewportOrNull
+      noDefaultViewport?: boolean
+      viewport?: object
+        width: number
+        height: number
       ignoreHTTPSErrors?: boolean
       javaScriptEnabled?: boolean
       bypassCSP?: boolean
@@ -270,7 +253,10 @@ interface Browser
 
   command newContext
     parameters
-      viewport?: ViewportOrNull
+      noDefaultViewport?: boolean
+      viewport?: object
+        width: number
+        height: number
       ignoreHTTPSErrors?: boolean
       javaScriptEnabled?: boolean
       bypassCSP?: boolean
@@ -1016,7 +1002,8 @@ interface Frame
       isFunction: boolean
       arg: SerializedArgument
       timeout?: number
-      polling?: WaitForFunctionPolling
+      # When present, polls on interval. Otherwise, polls on raf.
+      pollingInterval?: number
     returns
       handle: JSHandle
 

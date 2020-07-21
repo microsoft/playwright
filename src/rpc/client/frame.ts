@@ -380,7 +380,13 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   async waitForFunction<R>(pageFunction: Func1<void, R>, arg?: any, options?: types.WaitForFunctionOptions): Promise<SmartHandle<R>>;
   async waitForFunction<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg, options: types.WaitForFunctionOptions = {}): Promise<SmartHandle<R>> {
     return this._wrapApiCall(this._apiName('waitForFunction'), async () => {
-      const result = await this._channel.waitForFunction({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), ...options });
+      const result = await this._channel.waitForFunction({
+        ...options,
+        pollingInterval: options.polling === 'raf' ? undefined : options.polling,
+        expression: String(pageFunction),
+        isFunction: typeof pageFunction === 'function',
+        arg: serializeArgument(arg),
+      });
       return JSHandle.from(result.handle) as SmartHandle<R>;
     });
   }

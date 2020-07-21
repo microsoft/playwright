@@ -46,6 +46,7 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
   async launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams): Promise<{ context: BrowserContextChannel }> {
     const options = {
       ...params,
+      viewport: params.viewport || (params.noDefaultViewport ? null : undefined),
       ignoreDefaultArgs: params.ignoreAllDefaultArgs ? true : params.ignoreDefaultArgs,
       env: params.env ? envArrayToObject(params.env) : undefined,
       extraHTTPHeaders: params.extraHTTPHeaders ? headersArrayToObject(params.extraHTTPHeaders) : undefined,

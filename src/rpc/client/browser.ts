@@ -57,6 +57,8 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
     return this._wrapApiCall('browser.newContext', async () => {
       const contextOptions: BrowserNewContextParams = {
         ...options,
+        viewport: options.viewport === null ? undefined : options.viewport,
+        noDefaultViewport: options.viewport === null,
         extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
       };
       const context = BrowserContext.from((await this._channel.newContext(contextOptions)).context);
