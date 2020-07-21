@@ -178,11 +178,11 @@ Bitbucket Pipelines can use public [Docker images as build environments](https:/
 image: mcr.microsoft.com/playwright:bionic
 ```
 
-While the Docker image supports sandboxing for Chromium, it does not work in the Bitbucket Pipelines environment. To launch Chromium on Bitbucket Pipelines, use the `--no-sandbox` launch argument.
+While the Docker image supports sandboxing for Chromium, it does not work in the Bitbucket Pipelines environment. To launch Chromium on Bitbucket Pipelines, use the `chromiumSandbox: false` launch argument.
 
 ```js
 const { chromium } = require('playwright');
-const browser = await chromium.launch({ args: ['--no-sandbox'] });
+const browser = await chromium.launch({ chromiumSandbox: false });
 ```
 
 ### GitLab CI

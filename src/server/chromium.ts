@@ -115,6 +115,8 @@ export class Chromium extends BrowserTypeBase {
           '--mute-audio'
       );
     }
+    if (options.chromiumSandbox === false)
+      chromeArguments.push('--no-sandbox');
     if (proxy) {
       const proxyURL = new URL(proxy.server);
       const isSocks = proxyURL.protocol === 'socks5:';

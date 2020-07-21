@@ -140,10 +140,10 @@ the host should be configured first. If there's no good sandbox for Chrome to us
 with the error `No usable sandbox!`.
 
 If you **absolutely trust** the content you open in Chrome, you can launch Chrome
-with the `--no-sandbox` argument:
+with the `chromiumSandbox: false` option:
 
 ```js
-const browser = await playwright.chromium.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
+const browser = await playwright.chromium.launch({ chromiumSandbox: false });
 ```
 
 > **NOTE**: Running without a sandbox is **strongly discouraged**. Consider configuring a sandbox instead.
