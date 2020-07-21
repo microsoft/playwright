@@ -25,8 +25,8 @@ export class SelectorsDispatcher extends Dispatcher<Selectors, SelectorsInitiali
     super(scope, selectors, 'selectors', {});
   }
 
-  async register(params: { name: string, source: string, options: { contentScript?: boolean } }): Promise<void> {
-    await this._object.register(params.name, params.source, params.options);
+  async register(params: { name: string, source: string, contentScript?: boolean }): Promise<void> {
+    await this._object.register(params.name, params.source, params);
   }
 
   async createSelector(params: { name: string, handle: ElementHandleDispatcher }): Promise<{ value?: string }> {

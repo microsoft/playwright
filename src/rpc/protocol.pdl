@@ -108,8 +108,7 @@ interface Selectors
     parameters
       name: string
       source: string
-      options: object
-        contentScript?: boolean
+      contentScript?: boolean
 
   command createSelector
     parameters
