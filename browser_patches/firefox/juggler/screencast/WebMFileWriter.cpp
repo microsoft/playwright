@@ -8,6 +8,7 @@
 
 #include "WebMFileWriter.h"
 
+#include <string>
 #include "mkvmuxer/mkvmuxerutil.h"
 
 namespace mozilla {
