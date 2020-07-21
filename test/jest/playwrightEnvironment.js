@@ -61,6 +61,9 @@ class PlaywrightEnvironment extends NodeEnvironment {
   async teardown() {
     await this.fixturePool.teardownScope('worker');
     await super.teardown();
+    // The setup might have failed for some reason.
+    if (!this.coverage)
+      return;
     const testRoot = path.join(__dirname, '..');
     const relativeTestPath = path.relative(testRoot, this.testPath);
     const coveragePath = path.join(this.global.testOptions.OUTPUT_DIR, 'coverage', relativeTestPath + '.json');
