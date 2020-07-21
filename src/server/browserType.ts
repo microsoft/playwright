@@ -200,7 +200,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose, kill } = await launchProcess({
       executablePath: executable,
-      args: browserArguments,
+      args: this._amendArguments(browserArguments),
       env: this._amendEnvironment(env, userDataDir, executable, browserArguments),
       handleSIGINT,
       handleSIGTERM,
@@ -239,6 +239,7 @@ export abstract class BrowserTypeBase implements BrowserType {
   abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BrowserBase>;
   abstract _startWebSocketServer(transport: ConnectionTransport, logger: Logger, port: number): WebSocketServer;
   abstract _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;
+  abstract _amendArguments(browserArguments: string[]): string[];
   abstract _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void;
 }
 

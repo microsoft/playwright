@@ -16,7 +16,8 @@
  */
 
 import * as path from 'path';
-import { assert, getFromENV, logPolitely, helper } from '../helper';
+import * as os from 'os';
+import { getFromENV, logPolitely, helper } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
 import * as ws from 'ws';
 import { Env } from './processLauncher';
@@ -63,9 +64,22 @@ export class Chromium extends BrowserTypeBase {
   }
 
   _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
-    const runningAsRoot = process.geteuid && process.geteuid() === 0;
-    assert(!runningAsRoot || browserArguments.includes('--no-sandbox'), 'Cannot launch Chromium as root without --no-sandbox. See https://crbug.com/638180.');
     return env;
+  }
+
+  _amendArguments(browserArguments: string[]): string[] {
+    // We currently only support Linux.
+    if (os.platform() !== 'linux')
+      return browserArguments;
+    // If there's already --no-sandbox passed in, do nothing.
+    if (browserArguments.indexOf('--no-sandbox') !== -1)
+      return browserArguments;
+    const runningAsRoot = process.geteuid && process.geteuid() === 0;
+    if (runningAsRoot) {
+      console.warn('WARNING: Playwright is being run under "root" user - disabling Chromium sandbox! Run under regular user to get rid of this warning.');
+      return ['--no-sandbox', ...browserArguments];
+    }
+    return browserArguments;
   }
 
   _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
