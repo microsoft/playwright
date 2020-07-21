@@ -17,7 +17,7 @@
 import { JSHandleChannel, JSHandleInitializer, SerializedArgument, SerializedValue, Channel } from '../channels';
 import { ElementHandle } from './elementHandle';
 import { ChannelOwner } from './channelOwner';
-import { serializeAsCallArgument, parseEvaluationResultValue } from '../../common/utilityScriptSerializers';
+import { parseSerializedValue, serializeValue } from '../serializers';
 
 type NoHandles<Arg> = Arg extends JSHandle ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg);
 type Unboxed<Arg> =
@@ -99,14 +99,14 @@ export function serializeArgument(arg: any): SerializedArgument {
     handles.push(channel);
     return handles.length - 1;
   };
-  const value = serializeAsCallArgument(arg, value => {
+  const value = serializeValue(arg, value => {
     if (value instanceof JSHandle)
       return { h: pushHandle(value._channel) };
     return { fallThrough: value };
-  });
+  }, new Set());
   return { value, handles };
 }
 
-export function parseResult(arg: SerializedValue): any {
-  return parseEvaluationResultValue(arg as any, []);
+export function parseResult(value: SerializedValue): any {
+  return parseSerializedValue(value, undefined);
 }

@@ -16,13 +16,12 @@
 
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { Electron, ElectronApplication, ElectronEvents, ElectronPage } from '../../server/electron';
-import { ElectronApplicationChannel, ElectronApplicationInitializer, PageChannel, JSHandleChannel, ElectronInitializer, ElectronChannel, SerializedArgument, ElectronLaunchParams } from '../channels';
+import { ElectronApplicationChannel, ElectronApplicationInitializer, PageChannel, JSHandleChannel, ElectronInitializer, ElectronChannel, SerializedArgument, ElectronLaunchParams, SerializedValue } from '../channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { BrowserContextBase } from '../../browserContext';
 import { PageDispatcher } from './pageDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { createHandle } from './elementHandlerDispatcher';
-import { SerializedValue } from '../../common/utilityScriptSerializers';
 import { envArrayToObject } from '../serializers';
 
 export class ElectronDispatcher extends Dispatcher<Electron, ElectronInitializer> implements ElectronChannel {

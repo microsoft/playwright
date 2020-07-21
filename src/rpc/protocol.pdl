@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-union SerializedValue
-  undefined
-  boolean
-  number
-  string
-  ComplexSerializedValue
-
-type ComplexSerializedValue
+# Exactly one of the optional fields must be present.
+type SerializedValue
+  n?: number
+  b?: boolean
+  s?: string
   v?: enum
     null
     undefined
@@ -27,16 +24,21 @@ type ComplexSerializedValue
     Infinity
     -Infinity
     -0
+  # String representation of the Date.
   d?: string
+  # Regular expression pattern and flags.
   r?: object
     p: string
     f: string
   a?: SerializedValue[]
+  # Object with keys and values.
   o?: object[]
     k: string
     v: SerializedValue
+  # An index in the handles array from SerializedArgument.
   h?: number
 
+# Represents a value with handle references.
 type SerializedArgument
   value: SerializedValue
   handles: Channel[]
@@ -756,7 +758,7 @@ interface Frame
       isFunction: boolean
       arg: SerializedArgument
     returns
-      value?: SerializedValue
+      value: SerializedValue
 
   command evalOnSelectorAll
     parameters
@@ -765,7 +767,7 @@ interface Frame
       isFunction: boolean
       arg: SerializedArgument
     returns
-      value?: SerializedValue
+      value: SerializedValue
 
   command addScriptTag
     parameters
@@ -846,7 +848,7 @@ interface Frame
       isFunction: boolean
       arg: SerializedArgument
     returns
-      value?: SerializedValue
+      value: SerializedValue
 
   command evaluateExpressionHandle
     parameters
@@ -1031,7 +1033,7 @@ interface Worker
       isFunction: boolean
       arg: SerializedArgument
     returns
-      value?: SerializedValue
+      value: SerializedValue
 
   command evaluateExpressionHandle
     parameters
@@ -1057,7 +1059,7 @@ interface JSHandle
       isFunction: boolean
       arg: SerializedArgument
     returns
-      value?: SerializedValue
+      value: SerializedValue
 
   command evaluateExpressionHandle
     parameters
@@ -1081,7 +1083,7 @@ interface JSHandle
 
   command jsonValue
     returns
-      value?: SerializedValue
+      value: SerializedValue
 
 interface ElementHandle extends JSHandle
   command evalOnSelector
@@ -1091,7 +1093,7 @@ interface ElementHandle extends JSHandle
       isFunction: boolean
       arg: SerializedArgument
     returns
-      value?: SerializedValue
+      value: SerializedValue
 
   command evalOnSelectorAll
     parameters
@@ -1100,7 +1102,7 @@ interface ElementHandle extends JSHandle
       isFunction: boolean
       arg: SerializedArgument
     returns
-      value?: SerializedValue
+      value: SerializedValue
 
   command boundingBox
     returns
@@ -1458,7 +1460,7 @@ interface ElectronApplication
       isFunction: boolean
       arg: SerializedArgument
     returns
-      value?: SerializedValue
+      value: SerializedValue
 
   command evaluateExpressionHandle
     parameters

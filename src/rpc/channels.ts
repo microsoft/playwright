@@ -23,9 +23,10 @@ export type Binary = string;
 export interface Channel extends EventEmitter {
 }
 
-export type SerializedValue = undefined | boolean | number | string | ComplexSerializedValue;
-
-export type ComplexSerializedValue = {
+export type SerializedValue = {
+  n?: number,
+  b?: boolean,
+  s?: string,
   v?: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0',
   d?: string,
   r?: {
@@ -863,7 +864,7 @@ export type FrameEvalOnSelectorParams = {
   arg: SerializedArgument,
 };
 export type FrameEvalOnSelectorResult = {
-  value?: SerializedValue,
+  value: SerializedValue,
 };
 export type FrameEvalOnSelectorAllParams = {
   selector: string,
@@ -872,7 +873,7 @@ export type FrameEvalOnSelectorAllParams = {
   arg: SerializedArgument,
 };
 export type FrameEvalOnSelectorAllResult = {
-  value?: SerializedValue,
+  value: SerializedValue,
 };
 export type FrameAddScriptTagParams = {
   url?: string,
@@ -941,7 +942,7 @@ export type FrameEvaluateExpressionParams = {
   arg: SerializedArgument,
 };
 export type FrameEvaluateExpressionResult = {
-  value?: SerializedValue,
+  value: SerializedValue,
 };
 export type FrameEvaluateExpressionHandleParams = {
   expression: string,
@@ -1119,7 +1120,7 @@ export type WorkerEvaluateExpressionParams = {
   arg: SerializedArgument,
 };
 export type WorkerEvaluateExpressionResult = {
-  value?: SerializedValue,
+  value: SerializedValue,
 };
 export type WorkerEvaluateExpressionHandleParams = {
   expression: string,
@@ -1154,7 +1155,7 @@ export type JSHandleEvaluateExpressionParams = {
   arg: SerializedArgument,
 };
 export type JSHandleEvaluateExpressionResult = {
-  value?: SerializedValue,
+  value: SerializedValue,
 };
 export type JSHandleEvaluateExpressionHandleParams = {
   expression: string,
@@ -1179,7 +1180,7 @@ export type JSHandleGetPropertyResult = {
 };
 export type JSHandleJsonValueParams = {};
 export type JSHandleJsonValueResult = {
-  value?: SerializedValue,
+  value: SerializedValue,
 };
 
 // ----------- ElementHandle -----------
@@ -1219,7 +1220,7 @@ export type ElementHandleEvalOnSelectorParams = {
   arg: SerializedArgument,
 };
 export type ElementHandleEvalOnSelectorResult = {
-  value?: SerializedValue,
+  value: SerializedValue,
 };
 export type ElementHandleEvalOnSelectorAllParams = {
   selector: string,
@@ -1228,7 +1229,7 @@ export type ElementHandleEvalOnSelectorAllParams = {
   arg: SerializedArgument,
 };
 export type ElementHandleEvalOnSelectorAllResult = {
-  value?: SerializedValue,
+  value: SerializedValue,
 };
 export type ElementHandleBoundingBoxParams = {};
 export type ElementHandleBoundingBoxResult = {
@@ -1642,7 +1643,7 @@ export type ElectronApplicationEvaluateExpressionParams = {
   arg: SerializedArgument,
 };
 export type ElectronApplicationEvaluateExpressionResult = {
-  value?: SerializedValue,
+  value: SerializedValue,
 };
 export type ElectronApplicationEvaluateExpressionHandleParams = {
   expression: string,
