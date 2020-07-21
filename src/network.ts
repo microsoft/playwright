@@ -18,7 +18,7 @@ import * as frames from './frames';
 import * as types from './types';
 import { assert, helper } from './helper';
 import { URLSearchParams } from 'url';
-import { normalizeFulfillParameters } from './rpc/serializers';
+import { normalizeFulfillParameters, normalizeContinueOverrides } from './rpc/serializers';
 
 export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): types.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));
@@ -221,9 +221,9 @@ export class Route {
     await this._delegate.fulfill(await normalizeFulfillParameters(response));
   }
 
-  async continue(overrides: { method?: string; headers?: types.Headers; postData?: string } = {}) {
+  async continue(overrides: types.ContinueOverrides = {}) {
     assert(!this._handled, 'Route is already handled!');
-    await this._delegate.continue(overrides);
+    await this._delegate.continue(normalizeContinueOverrides(overrides));
   }
 }
 
@@ -256,7 +256,7 @@ export class Response {
   }
 
   _requestFinished(error?: Error) {
-    this._finishedPromiseCallback.call(null, error);
+    this._finishedPromiseCallback.call(null, error || null);
   }
 
   url(): string {
@@ -316,7 +316,7 @@ export class Response {
 export interface RouteDelegate {
   abort(errorCode: string): Promise<void>;
   fulfill(response: types.NormalizedFulfillResponse): Promise<void>;
-  continue(overrides: { method?: string; headers?: types.Headers; postData?: string; }): Promise<void>;
+  continue(overrides: types.NormalizedContinueOverrides): Promise<void>;
 }
 
 // List taken from https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml with extra 306 and 418 codes.

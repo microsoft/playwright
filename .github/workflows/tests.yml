@@ -37,25 +37,26 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run coverage 2>./testrun.log"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "*,-pw:wrapped*"
+        DEBUG_FILE: "testrun.log"
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: ${{ matrix.browser }}-linux-jest-report
+        path: jest-report.json  
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
         name: ${{ matrix.browser }}-linux-output
         path: test/output-${{ matrix.browser }}
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
         name: ${{ matrix.browser }}-linux-testrun.log
         path: testrun.log
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: ${{ matrix.browser }}-linux-coredumps
-        path: coredumps
 
   test_mac:
     name: "macOS"
@@ -72,20 +73,26 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
-    - run: npm run test 2>./${{ matrix.browser }}-mac-testrun.log
+    - run: npm run jest -- --testTimeout=30000
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "*,-pw:wrapped*"
+        DEBUG_FILE: "testrun.log"
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: ${{ matrix.browser }}-mac-jest-report
+        path: jest-report.json  
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
         name: ${{ matrix.browser }}-mac-output
         path: test/output-${{ matrix.browser }}
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
         name: ${{ matrix.browser }}-mac-testrun.log
-        path: ${{ matrix.browser }}-mac-testrun.log
+        path: testrun.log
 
   test_win:
     name: "Windows"
@@ -102,21 +109,27 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
-    - run: npm run test 2>./${{ matrix.browser }}-win-testrun.log
+    - run: npm run jest -- --testTimeout=30000
       shell: bash
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "*,-pw:wrapped*"
+        DEBUG_FILE: "testrun.log"
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: ${{ matrix.browser }}-win-jest-report
+        path: jest-report.json
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
         name: ${{ matrix.browser }}-win-output
         path: test/output-${{ matrix.browser }}
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
         name: ${{ matrix.browser }}-win-testrun.log
-        path: ${{ matrix.browser }}-win-testrun.log
+        path: testrun.log
 
   test-package-installations:
     runs-on: ubuntu-latest
@@ -138,38 +151,6 @@ jobs:
 
   headful_linux:
     name: "Headful Linux"
-    runs-on: ubuntu-18.04
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
-      with:
-        node-version: 10
-    - uses: microsoft/playwright-github-action@v1
-    - run: npm ci
-    - run: npm run build
-    - run: mkdir -p coredumps
-    # Set core dump file name pattern
-    - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
-    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
-    # Wrap `npm run` in a subshell to redirect STDERR to file.
-    # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run test -- --line-break=100 2>./headful-linux-testrun.log"
-      env:
-        DEBUG: "*"
-        HEADLESS: "false"
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: headful-linux-testrun.log
-        path: headful-linux-testrun.log
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: headful-linux-coredumps
-        path: coredumps
-
-  rpc_linux:
-    name: "RPC Linux"
     strategy:
       fail-fast: false
       matrix:
@@ -189,26 +170,63 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run test 2>./testrun.log"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
+      if: ${{ always() }}
+      env:
+        BROWSER: ${{ matrix.browser }}
+        HEADLESS: "false"
+        DEBUG_FILE: "testrun.log"
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: headful-${{ matrix.browser }}-linux-jest-report
+        path: jest-report.json
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: headful-${{ matrix.browser }}-linux-testrun.log
+        path: testrun.log
+
+  rpc_linux:
+    name: "RPC Linux"
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+        transport: [wire, object]
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10
+    - uses: microsoft/playwright-github-action@v1
+    - run: npm ci
+    - run: npm run build
+    - run: mkdir -p coredumps
+    # Set core dump file name pattern
+    - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
+    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
+    # Wrap `npm run` in a subshell to redirect STDERR to file.
+    # Enable core dumps in the subshell.
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "*,-pw:wrapped*"
-        PWCHANNEL: "1"
-    # Ensure output folder exists just in case it was not created by the test run.
-    - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-${{ matrix.browser }}'), {recursive:true})"
-      if: failure()
+        DEBUG_FILE: "testrun.log"
+        PWCHANNEL: ${{ matrix.transport }}
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: rpc-${{ matrix.transport }}-${{ matrix.browser }}-linux-jest-report
+        path: jest-report.json
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: rpc-${{ matrix.browser }}-linux-output
+        name: rpc-${{ matrix.transport }}-${{ matrix.browser }}-linux-output
         path: test/output-${{ matrix.browser }}
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
-        name: rpc-${{ matrix.browser }}-linux-testrun.log
+        name: rpc-${{ matrix.transport }}-${{ matrix.browser }}-linux-testrun.log
         path: testrun.log
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: rpc-${{ matrix.browser }}-linux-coredumps
-        path: coredumps

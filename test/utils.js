@@ -94,7 +94,7 @@ const utils = module.exports = {
     expect(await page.evaluate('window.innerHeight')).toBe(height);
   },
 
-  registerEngine: async (name, script, options) => {
+  registerEngine: async (playwright, name, script, options) => {
     try {
       await playwright.selectors.register(name, script, options);
     } catch (e) {
@@ -202,7 +202,7 @@ const utils = module.exports = {
       GOLDEN_DIR,
       OUTPUT_DIR,
       ASSETS_DIR,
-      USES_HOOKS: !!process.env.PWCHANNEL,
+      USES_HOOKS: process.env.PWCHANNEL === 'wire',
       CHANNEL: !!process.env.PWCHANNEL,
       HEADLESS: !!valueFromEnv('HEADLESS', true),
     };

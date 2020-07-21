@@ -15,10 +15,11 @@
  */
 
 import { Request, Response, Route } from '../../network';
-import * as types from '../../types';
-import { RequestChannel, ResponseChannel, RouteChannel, ResponseInitializer, RequestInitializer, RouteInitializer, Binary } from '../channels';
+import { RequestChannel, ResponseChannel, RouteChannel, ResponseInitializer, RequestInitializer, RouteInitializer, Binary, SerializedError } from '../channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
+import { headersObjectToArray, headersArrayToObject, serializeError } from '../serializers';
+import * as types from '../../types';
 
 export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> implements RequestChannel {
 
@@ -27,25 +28,26 @@ export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> i
     return result || new RequestDispatcher(scope, request);
   }
 
-  static fromNullable(scope: DispatcherScope, request: Request | null): RequestDispatcher | null {
-    return request ? RequestDispatcher.from(scope, request) : null;
+  static fromNullable(scope: DispatcherScope, request: Request | null): RequestDispatcher | undefined {
+    return request ? RequestDispatcher.from(scope, request) : undefined;
   }
 
   private constructor(scope: DispatcherScope, request: Request) {
+    const postData = request.postData();
     super(scope, request, 'request', {
       frame: FrameDispatcher.from(scope, request.frame()),
       url: request.url(),
       resourceType: request.resourceType(),
       method: request.method(),
-      postData: request.postData(),
-      headers: request.headers(),
+      postData: postData === null ? undefined : postData,
+      headers: headersObjectToArray(request.headers()),
       isNavigationRequest: request.isNavigationRequest(),
       redirectedFrom: RequestDispatcher.fromNullable(scope, request.redirectedFrom()),
     });
   }
 
-  async response(): Promise<ResponseChannel | null> {
-    return lookupNullableDispatcher<ResponseDispatcher>(await this._object.response());
+  async response(): Promise<{ response?: ResponseChannel }> {
+    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._object.response()) };
   }
 }
 
@@ -58,16 +60,17 @@ export class ResponseDispatcher extends Dispatcher<Response, ResponseInitializer
       url: response.url(),
       status: response.status(),
       statusText: response.statusText(),
-      headers: response.headers(),
+      headers: headersObjectToArray(response.headers()),
     });
   }
 
-  async finished(): Promise<Error | null> {
-    return await this._object.finished();
+  async finished(): Promise<{ error?: SerializedError }> {
+    const error = await this._object.finished();
+    return { error: error ? serializeError(error) : undefined };
   }
 
-  async body(): Promise<Binary> {
-    return (await this._object.body()).toString('base64');
+  async body(): Promise<{ binary: Binary }> {
+    return { binary: (await this._object.body()).toString('base64') };
   }
 }
 
@@ -80,14 +83,18 @@ export class RouteDispatcher extends Dispatcher<Route, RouteInitializer> impleme
     });
   }
 
-  async continue(params: { method?: string, headers?: types.Headers, postData?: string }): Promise<void> {
-    await this._object.continue(params);
+  async continue(params: types.NormalizedContinueOverrides): Promise<void> {
+    await this._object.continue({
+      method: params.method,
+      headers: params.headers ? headersArrayToObject(params.headers) : undefined,
+      postData: params.postData,
+    });
   }
 
-  async fulfill(params: { status?: number, headers?: types.Headers, contentType?: string, body: string, isBase64: boolean }): Promise<void> {
+  async fulfill(params: types.NormalizedFulfillResponse): Promise<void> {
     await this._object.fulfill({
       status: params.status,
-      headers: params.headers,
+      headers: params.headers ? headersArrayToObject(params.headers) : undefined,
       body: params.isBase64 ? Buffer.from(params.body, 'base64') : params.body,
     });
   }

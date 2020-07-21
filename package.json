@@ -8,22 +8,11 @@
   "engines": {
     "node": ">=10.15.0"
   },
-  "bin": {
-    "playwright": "lib/cli/index.js"
-  },
   "scripts": {
-    "ctest": "cross-env BROWSER=chromium node --unhandled-rejections=strict test/test.js",
-    "ftest": "cross-env BROWSER=firefox node --unhandled-rejections=strict test/test.js",
-    "wtest": "cross-env BROWSER=webkit node --unhandled-rejections=strict test/test.js",
-    "test": "cross-env node --unhandled-rejections=strict test/test.js",
-    "cunit": "cross-env BROWSER=chromium node --unhandled-rejections=strict test/test.js",
-    "funit": "cross-env BROWSER=firefox node --unhandled-rejections=strict test/test.js",
-    "wunit": "cross-env BROWSER=webkit node --unhandled-rejections=strict test/test.js",
-    "unit": "cross-env node --unhandled-rejections=strict test/test.js",
-    "ccoverage": "cross-env COVERAGE=true BROWSER=chromium node --unhandled-rejections=strict test/test.js",
-    "fcoverage": "cross-env COVERAGE=true BROWSER=firefox node --unhandled-rejections=strict test/test.js",
-    "wcoverage": "cross-env COVERAGE=true BROWSER=webkit node --unhandled-rejections=strict test/test.js",
-    "coverage": "cross-env COVERAGE=true node --unhandled-rejections=strict test/test.js",
+    "ctest": "cross-env BROWSER=chromium npm run jest",
+    "ftest": "cross-env BROWSER=firefox npm run jest",
+    "wtest": "cross-env BROWSER=webkit npm run jest",
+    "test": "npm run ctest && npm run ftest && npm run wtest",
     "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext js,ts ./src || eslint --ext js,ts ./src",
     "tsc": "tsc -p .",
     "tsc-installer": "tsc -p ./src/install/tsconfig.json",
@@ -46,7 +35,6 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "commander": "^5.1.0",
     "debug": "^4.1.1",
     "extract-zip": "^2.0.0",
     "https-proxy-agent": "^5.0.0",
@@ -62,7 +50,6 @@
     "@babel/core": "^7.10.3",
     "@babel/preset-env": "^7.10.3",
     "@babel/preset-typescript": "^7.10.1",
-    "@playwright/jest-wrapper": "0.0.8",
     "@types/debug": "0.0.31",
     "@types/extract-zip": "^1.6.2",
     "@types/mime": "^2.0.1",
@@ -83,6 +70,8 @@
     "esprima": "^4.0.0",
     "formidable": "^1.2.1",
     "jest": "^26.1.0",
+    "jest-circus": "^26.1.0",
+    "jest-image-snapshot": "^4.0.2",
     "ncp": "^2.0.0",
     "node-stream-zip": "^1.8.2",
     "pirates": "^4.0.1",

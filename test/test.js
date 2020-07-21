@@ -87,6 +87,7 @@ function collect(browserNames) {
   for (const e of config.globalEnvironments || [])
     testRunner.collector().useEnvironment(e);
 
+  // TODO(rpc): do not use global playwright and browserType, rely solely on environments.
   global.playwright = playwright;
 
   for (const browserName of browserNames) {
@@ -126,9 +127,7 @@ function collect(browserNames) {
         const skip = spec.browsers && !spec.browsers.includes(browserName);
         (skip ? xdescribe : describe)(spec.title || '', () => {
           for (const e of spec.environments || ['page']) {
-            if (e === 'browser') {
-              testRunner.collector().useEnvironment(browserEnvironment);
-            } else if (e === 'page') {
+            if (e === 'page') {
               testRunner.collector().useEnvironment(browserEnvironment);
               testRunner.collector().useEnvironment(pageEnvironment);
             } else {

@@ -6255,7 +6255,7 @@ index 666b594e54696f32265ae20083a14c8b17f215bd..d9c4c56ed35b4e9ee8c0ed3377f8c377
      String themeName;
  #endif
 diff --git a/Source/WebKit/Shared/WebPreferences.yaml b/Source/WebKit/Shared/WebPreferences.yaml
-index e04cadca2dc5a8c419b72fa19ee73fe73a10b601..b1517762e012092d95764f322ced92f23e2d0c7d 100644
+index e04cadca2dc5a8c419b72fa19ee73fe73a10b601..75e6dd01362a8eee75400052636c306b371e7d37 100644
 --- a/Source/WebKit/Shared/WebPreferences.yaml
 +++ b/Source/WebKit/Shared/WebPreferences.yaml
 @@ -317,7 +317,7 @@ MediaControlsScaleWithPageZoom:
@@ -6267,6 +6267,15 @@ index e04cadca2dc5a8c419b72fa19ee73fe73a10b601..b1517762e012092d95764f322ced92f2
    webcoreBinding: none
  
  ShowsToolTipOverTruncatedText:
+@@ -1466,7 +1466,7 @@ WebGPUEnabled:
+ 
+ MaskWebGLStringsEnabled:
+   type: bool
+-  defaultValue: true
++  defaultValue: false
+   humanReadableName: "Mask WebGL Strings"
+   humanReadableDescription: "Mask WebGL Vendor, Renderer, Shader Language Strings"
+   category: experimental
 diff --git a/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp b/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp
 index c76a9e1f7dae7a31c4048d8f00d849a18ebaff23..1cfd9c7acb69dea69783c42b3f427929509782a4 100644
 --- a/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp
@@ -9803,10 +9812,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..cea80a8f37fe56b3dc6eb3b36744c70c43a74282
+index 0000000000000000000000000000000000000000..d9218841c5ca436d291e5c0918906be084146cb8
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,819 @@
+@@ -0,0 +1,823 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -10007,7 +10016,9 @@ index 0000000000000000000000000000000000000000..cea80a8f37fe56b3dc6eb3b36744c70c
 +
 +Vector<WebPageProxy*> BrowserContext::pages() const {
 +    Vector<WebPageProxy*> pages;
-+    for (auto& process : processPool->processes()) {
++    for (auto* process : WebProcessProxy::allProcessesForInspector()) {
++        if (process->processPoolIfExists() != processPool)
++            continue;
 +        for (auto* page : process->pages())
 +            pages.append(page);
 +    }
@@ -10242,11 +10253,13 @@ index 0000000000000000000000000000000000000000..cea80a8f37fe56b3dc6eb3b36744c70c
 +void InspectorPlaywrightAgent::close(Ref<CloseCallback>&& callback)
 +{
 +    Vector<WebPageProxy*> pages;
-+    for (auto& pool : WebProcessPool::allProcessPools()) {
-+        for (auto& process : pool->processes()) {
-+            for (auto* page : process->pages())
-+                pages.append(page);
-+        }
++    // If Web Process crashed it will be disconnected from its pool until
++    // the page reloads. So we cannot discover such processes and the pages
++    // by traversing all process pools and their processes. Instead we look at
++    // all existing Web Processes wether in a pool or not.
++    for (auto* process : WebProcessProxy::allProcessesForInspector()) {
++        for (auto* page : process->pages())
++            pages.append(page);
 +    }
 +    for (auto* page : pages)
 +        page->closePage();
@@ -12285,6 +12298,34 @@ index 7a10eab7a8637b7c35471fe71098f4bc83298171..b3ba8f5734d9ec539e8ecf5756ee4e1b
  #endif
  
      bool m_memoryCacheDisabled { false };
+diff --git a/Source/WebKit/UIProcess/WebProcessProxy.cpp b/Source/WebKit/UIProcess/WebProcessProxy.cpp
+index ab1e837ddb4042cb9c2c969d6a2a918ab2cc0817..f04d862c4f703c4bc4c3b892878b4d4daf378559 100644
+--- a/Source/WebKit/UIProcess/WebProcessProxy.cpp
++++ b/Source/WebKit/UIProcess/WebProcessProxy.cpp
+@@ -115,6 +115,11 @@ static HashMap<ProcessIdentifier, WebProcessProxy*>& allProcesses()
+     return map;
+ }
+ 
++Vector<WebProcessProxy*> WebProcessProxy::allProcessesForInspector()
++{
++    return copyToVector(allProcesses().values());
++}
++
+ WebProcessProxy* WebProcessProxy::processForIdentifier(ProcessIdentifier identifier)
+ {
+     return allProcesses().get(identifier);
+diff --git a/Source/WebKit/UIProcess/WebProcessProxy.h b/Source/WebKit/UIProcess/WebProcessProxy.h
+index b1fb0ffb2ebed809af665955d16b5546b6f05fef..87e24456952e58846c6bbc3fe76466b7222b2e5d 100644
+--- a/Source/WebKit/UIProcess/WebProcessProxy.h
++++ b/Source/WebKit/UIProcess/WebProcessProxy.h
+@@ -131,6 +131,7 @@ public:
+     ~WebProcessProxy();
+ 
+     static void forWebPagesWithOrigin(PAL::SessionID, const WebCore::SecurityOriginData&, const Function<void(WebPageProxy&)>&);
++    static Vector<WebProcessProxy*> allProcessesForInspector();
+ 
+     WebConnection* webConnection() const { return m_webConnection.get(); }
+ 
 diff --git a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
 index ce9bd7f8b84119d90a838b5afee04b8bf79e2dd2..add34235c20d4b20f001baa4a977496b2e4eb661 100644
 --- a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp

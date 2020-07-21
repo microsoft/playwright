@@ -49,6 +49,12 @@ type LaunchResult = {
   kill: () => Promise<void>,
 };
 
+const gracefullyCloseSet = new Set<() => Promise<void>>();
+
+export async function gracefullyCloseAll() {
+  await Promise.all(Array.from(gracefullyCloseSet).map(gracefullyClose => gracefullyClose().catch(e => {})));
+}
+
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
   const cleanup = () => helper.removeFolders(options.tempDirectories);
 
@@ -97,6 +103,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     progress.logger.info(`<process did exit: exitCode=${exitCode}, signal=${signal}>`);
     processClosed = true;
     helper.removeEventListeners(listeners);
+    gracefullyCloseSet.delete(gracefullyClose);
     options.onExit(exitCode, signal);
     fulfillClose();
     // Cleanup as process exits.
@@ -113,9 +120,11 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     listeners.push(helper.addEventListener(process, 'SIGTERM', gracefullyClose));
   if (options.handleSIGHUP)
     listeners.push(helper.addEventListener(process, 'SIGHUP', gracefullyClose));
+  gracefullyCloseSet.add(gracefullyClose);
 
   let gracefullyClosing = false;
   async function gracefullyClose(): Promise<void> {
+    gracefullyCloseSet.delete(gracefullyClose);
     // We keep listeners until we are done, to handle 'exit' and 'SIGINT' while
     // asynchronously closing to prevent zombie processes. This might introduce
     // reentrancy to this function, for example user sends SIGINT second time.

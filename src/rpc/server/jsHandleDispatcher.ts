@@ -15,9 +15,9 @@
  */
 
 import * as js from '../../javascript';
-import { JSHandleChannel, JSHandleInitializer } from '../channels';
+import { JSHandleChannel, JSHandleInitializer, SerializedArgument } from '../channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import { parseEvaluationResultValue, serializeAsCallArgument } from '../../common/utilityScriptSerializers';
+import { parseEvaluationResultValue, serializeAsCallArgument, SerializedValue } from '../../common/utilityScriptSerializers';
 import { createHandle } from './elementHandlerDispatcher';
 
 export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitializer> implements JSHandleChannel {
@@ -26,33 +26,33 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitiali
     super(scope, jsHandle, jsHandle.asElement() ? 'elementHandle' : 'jsHandle', {
       preview: jsHandle.toString(),
     });
-    jsHandle._setPreviewCallback(preview => this._dispatchEvent('previewUpdated', preview));
+    jsHandle._setPreviewCallback(preview => this._dispatchEvent('previewUpdated', { preview }));
   }
 
-  async evaluateExpression(params: { expression: string, isFunction: boolean, arg: any }): Promise<any> {
-    return this._object._evaluateExpression(params.expression, params.isFunction, true /* returnByValue */, parseArgument(params.arg));
+  async evaluateExpression(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }> {
+    return { value: serializeResult(await this._object._evaluateExpression(params.expression, params.isFunction, true /* returnByValue */, parseArgument(params.arg))) };
   }
 
-  async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: any}): Promise<JSHandleChannel> {
+  async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: SerializedArgument}): Promise<{ handle: JSHandleChannel }> {
     const jsHandle = await this._object._evaluateExpression(params.expression, params.isFunction, false /* returnByValue */, parseArgument(params.arg));
-    return createHandle(this._scope, jsHandle);
+    return { handle: createHandle(this._scope, jsHandle) };
   }
 
-  async getProperty(params: { name: string }): Promise<JSHandleChannel> {
+  async getProperty(params: { name: string }): Promise<{ handle: JSHandleChannel }> {
     const jsHandle = await this._object.getProperty(params.name);
-    return createHandle(this._scope, jsHandle);
+    return { handle: createHandle(this._scope, jsHandle) };
   }
 
-  async getPropertyList(): Promise<{ name: string, value: JSHandleChannel }[]> {
+  async getPropertyList(): Promise<{ properties: { name: string, value: JSHandleChannel }[] }> {
     const map = await this._object.getProperties();
-    const result = [];
+    const properties = [];
     for (const [name, value] of map)
-      result.push({ name, value: new JSHandleDispatcher(this._scope, value) });
-    return result;
+      properties.push({ name, value: new JSHandleDispatcher(this._scope, value) });
+    return { properties };
   }
 
-  async jsonValue(): Promise<any> {
-    return serializeResult(await this._object.jsonValue());
+  async jsonValue(): Promise<{ value: SerializedValue }> {
+    return { value: serializeResult(await this._object.jsonValue()) };
   }
 
   async dispose() {
@@ -60,26 +60,12 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitiali
   }
 }
 
-export function parseArgument(arg: { value: any, guids: JSHandleDispatcher[] }): any {
-  return parseEvaluationResultValue(arg.value, convertDispatchersToObjects(arg.guids));
+// Generic channel parser converts guids to JSHandleDispatchers,
+// and this function takes care of coverting them into underlying JSHandles.
+export function parseArgument(arg: SerializedArgument): any {
+  return parseEvaluationResultValue(arg.value as any, arg.handles.map(arg => (arg as JSHandleDispatcher)._object));
 }
 
-export function serializeResult(arg: any): any {
+export function serializeResult(arg: any): SerializedValue {
   return serializeAsCallArgument(arg, value => ({ fallThrough: value }));
-}
-
-function convertDispatchersToObjects(arg: any): any {
-  if (arg === null)
-    return null;
-  if (Array.isArray(arg))
-    return arg.map(item => convertDispatchersToObjects(item));
-  if (arg instanceof JSHandleDispatcher)
-    return arg._object;
-  if (typeof arg === 'object') {
-    const result: any = {};
-    for (const key of Object.keys(arg))
-      result[key] = convertDispatchersToObjects(arg[key]);
-    return result;
-  }
-  return arg;
 }

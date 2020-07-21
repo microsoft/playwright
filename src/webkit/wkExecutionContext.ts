@@ -147,8 +147,8 @@ const contextDestroyedResult = {
 
 function potentiallyUnserializableValue(remoteObject: Protocol.Runtime.RemoteObject): any {
   const value = remoteObject.value;
-  const unserializableValue = remoteObject.type === 'number' && value === null ? remoteObject.description : undefined;
-  return unserializableValue ? js.parseUnserializableValue(unserializableValue) : value;
+  const isUnserializable = remoteObject.type === 'number' && ['NaN', '-Infinity', 'Infinity', '-0'].includes(remoteObject.description!);
+  return isUnserializable ? js.parseUnserializableValue(remoteObject.description!) : value;
 }
 
 function rewriteError(error: Error): Error {

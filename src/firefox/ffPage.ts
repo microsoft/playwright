@@ -195,9 +195,11 @@ export class FFPage implements PageDelegate {
         params.defaultValue));
   }
 
-  _onBindingCalled(event: Protocol.Page.bindingCalledPayload) {
+  async _onBindingCalled(event: Protocol.Page.bindingCalledPayload) {
     const context = this._contextIdToContext.get(event.executionContextId)!;
-    this._page._onBindingCalled(event.payload, context);
+    const pageOrError = await this.pageOrError();
+    if (!(pageOrError instanceof Error))
+      this._page._onBindingCalled(event.payload, context);
   }
 
   async _onFileChooserOpened(payload: Protocol.Page.fileChooserOpenedPayload) {

@@ -31,8 +31,8 @@ export function existingDispatcher<DispatcherType>(object: any): DispatcherType 
   return object[dispatcherSymbol];
 }
 
-export function lookupNullableDispatcher<DispatcherType>(object: any | null): DispatcherType | null {
-  return object ? lookupDispatcher(object) : null;
+export function lookupNullableDispatcher<DispatcherType>(object: any | null): DispatcherType | undefined {
+  return object ? lookupDispatcher(object) : undefined;
 }
 
 export class Dispatcher<Type, Initializer> extends EventEmitter implements Channel {
@@ -113,10 +113,10 @@ class Root extends Dispatcher<{}, {}> {
 export class DispatcherConnection {
   readonly _dispatchers = new Map<string, Dispatcher<any, any>>();
   private _rootDispatcher: Root;
-  onmessage = (message: string) => {};
+  onmessage = (message: object) => {};
 
   async sendMessageToClient(guid: string, method: string, params: any): Promise<any> {
-    this.onmessage(JSON.stringify({ guid, method, params: this._replaceDispatchersWithGuids(params) }));
+    this.onmessage({ guid, method, params: this._replaceDispatchersWithGuids(params) });
   }
 
   constructor() {
@@ -127,23 +127,22 @@ export class DispatcherConnection {
     return this._rootDispatcher;
   }
 
-  async dispatch(message: string) {
-    const parsedMessage = JSON.parse(message);
-    const { id, guid, method, params } = parsedMessage;
+  async dispatch(message: object) {
+    const { id, guid, method, params } = message as any;
     const dispatcher = this._dispatchers.get(guid);
     if (!dispatcher) {
-      this.onmessage(JSON.stringify({ id, error: serializeError(new Error('Target browser or context has been closed')) }));
+      this.onmessage({ id, error: serializeError(new Error('Target browser or context has been closed')) });
       return;
     }
     if (method === 'debugScopeState') {
-      this.onmessage(JSON.stringify({ id, result: this._rootDispatcher._debugScopeState() }));
+      this.onmessage({ id, result: this._rootDispatcher._debugScopeState() });
       return;
     }
     try {
       const result = await (dispatcher as any)[method](this._replaceGuidsWithDispatchers(params));
-      this.onmessage(JSON.stringify({ id, result: this._replaceDispatchersWithGuids(result) }));
+      this.onmessage({ id, result: this._replaceDispatchersWithGuids(result) });
     } catch (e) {
-      this.onmessage(JSON.stringify({ id, error: serializeError(e) }));
+      this.onmessage({ id, error: serializeError(e) });
     }
   }
 

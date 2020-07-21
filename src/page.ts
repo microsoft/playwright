@@ -293,6 +293,8 @@ export class Page extends EventEmitter {
   }
 
   async _onBindingCalled(payload: string, context: dom.FrameExecutionContext) {
+    if (this._disconnected || this._closedState === 'closed')
+      return;
     await PageBinding.dispatch(this, payload, context);
   }
 
@@ -684,36 +686,34 @@ export class PageBinding {
 
   static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {
     const {name, seq, args} = JSON.parse(payload);
-    let expression = null;
     try {
       let binding = page._pageBindings.get(name);
       if (!binding)
         binding = page._browserContext._pageBindings.get(name);
       const result = await binding!.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
-      expression = helper.evaluationString(deliverResult, name, seq, result);
+      context.evaluateInternal(deliverResult, { name, seq, result }).catch(logError(page._logger));
     } catch (error) {
-      if (error instanceof Error)
-        expression = helper.evaluationString(deliverError, name, seq, error.message, error.stack);
+      if (helper.isError(error))
+        context.evaluateInternal(deliverError, { name, seq, message: error.message, stack: error.stack }).catch(logError(page._logger));
       else
-        expression = helper.evaluationString(deliverErrorValue, name, seq, error);
-    }
-    context.evaluateInternal(expression).catch(logError(page._logger));
-
-    function deliverResult(name: string, seq: number, result: any) {
-      (window as any)[name]['callbacks'].get(seq).resolve(result);
-      (window as any)[name]['callbacks'].delete(seq);
+        context.evaluateInternal(deliverErrorValue, { name, seq, error }).catch(logError(page._logger));
     }
 
-    function deliverError(name: string, seq: number, message: string, stack: string) {
-      const error = new Error(message);
-      error.stack = stack;
-      (window as any)[name]['callbacks'].get(seq).reject(error);
-      (window as any)[name]['callbacks'].delete(seq);
+    function deliverResult(arg: { name: string, seq: number, result: any }) {
+      (window as any)[arg.name]['callbacks'].get(arg.seq).resolve(arg.result);
+      (window as any)[arg.name]['callbacks'].delete(arg.seq);
     }
 
-    function deliverErrorValue(name: string, seq: number, value: any) {
-      (window as any)[name]['callbacks'].get(seq).reject(value);
-      (window as any)[name]['callbacks'].delete(seq);
+    function deliverError(arg: { name: string, seq: number, message: string, stack: string | undefined }) {
+      const error = new Error(arg.message);
+      error.stack = arg.stack;
+      (window as any)[arg.name]['callbacks'].get(arg.seq).reject(error);
+      (window as any)[arg.name]['callbacks'].delete(arg.seq);
+    }
+
+    function deliverErrorValue(arg: { name: string, seq: number, error: any }) {
+      (window as any)[arg.name]['callbacks'].get(arg.seq).reject(arg.error);
+      (window as any)[arg.name]['callbacks'].delete(arg.seq);
     }
   }
 }

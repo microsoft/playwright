@@ -15,12 +15,13 @@
  */
 
 import * as types from '../../types';
-import { BrowserTypeChannel, BrowserTypeInitializer } from '../channels';
+import { BrowserTypeChannel, BrowserTypeInitializer, BrowserTypeLaunchParams, BrowserTypeLaunchServerParams, BrowserTypeLaunchPersistentContextParams } from '../channels';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { BrowserServer } from './browserServer';
 import { LoggerSink } from '../../loggerSink';
+import { headersObjectToArray, envObjectToArray } from '../serializers';
 
 export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {
 
@@ -29,7 +30,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
   }
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserTypeInitializer) {
-    super(parent, type, guid, initializer);
+    super(parent, type, guid, initializer, true);
   }
 
   executablePath(): string {
@@ -43,29 +44,59 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
   async launch(options: types.LaunchOptions & { logger?: LoggerSink } = {}): Promise<Browser> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
-    const browser = Browser.from(await this._channel.launch(options));
-    browser._logger = logger;
-    return browser;
+    return this._wrapApiCall('browserType.launch', async () => {
+      const launchOptions: BrowserTypeLaunchParams = {
+        ...options,
+        ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
+        ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
+        env: options.env ? envObjectToArray(options.env) : undefined,
+      };
+      const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
+      browser._logger = logger;
+      return browser;
+    }, logger);
   }
 
   async launchServer(options: types.LaunchServerOptions & { logger?: LoggerSink } = {}): Promise<BrowserServer> {
+    const logger = options.logger;
     options = { ...options, logger: undefined };
-    return BrowserServer.from(await this._channel.launchServer(options));
+    return this._wrapApiCall('browserType.launchServer', async () => {
+      const launchServerOptions: BrowserTypeLaunchServerParams = {
+        ...options,
+        ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
+        ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
+        env: options.env ? envObjectToArray(options.env) : undefined,
+      };
+      return BrowserServer.from((await this._channel.launchServer(launchServerOptions)).server);
+    }, logger);
   }
 
   async launchPersistentContext(userDataDir: string, options: types.LaunchOptions & types.BrowserContextOptions & { logger?: LoggerSink } = {}): Promise<BrowserContext> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
-    const context = BrowserContext.from(await this._channel.launchPersistentContext({ userDataDir, ...options }));
-    context._logger = logger;
-    return context;
+    return this._wrapApiCall('browserType.launchPersistentContext', async () => {
+      const persistentOptions: BrowserTypeLaunchPersistentContextParams = {
+        ...options,
+        ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
+        ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
+        env: options.env ? envObjectToArray(options.env) : undefined,
+        extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
+        userDataDir,
+      };
+      const result = await this._channel.launchPersistentContext(persistentOptions);
+      const context = BrowserContext.from(result.context);
+      context._logger = logger;
+      return context;
+    }, logger);
   }
 
   async connect(options: types.ConnectOptions & { logger?: LoggerSink }): Promise<Browser> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
-    const browser = Browser.from(await this._channel.connect(options));
-    browser._logger = logger;
-    return browser;
+    return this._wrapApiCall('browserType.connect', async () => {
+      const browser = Browser.from((await this._channel.connect(options)).browser);
+      browser._logger = logger;
+      return browser;
+    }, logger);
   }
 }

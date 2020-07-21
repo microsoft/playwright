@@ -5,10 +5,14 @@
 #include "nsScreencastService.h"
 
 #include "ScreencastEncoder.h"
+#include "HeadlessWidget.h"
+#include "HeadlessWindowCapturer.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/PresShell.h"
 #include "mozilla/StaticPtr.h"
 #include "nsIDocShell.h"
+#include "nsIObserverService.h"
+#include "nsISupportsPrimitives.h"
 #include "nsThreadManager.h"
 #include "nsView.h"
 #include "nsViewManager.h"
@@ -20,6 +24,8 @@
 #include "mozilla/widget/PlatformWidgetTypes.h"
 #include "video_engine/desktop_capture_impl.h"
 
+using namespace mozilla::widget;
+
 namespace mozilla {
 
 NS_IMPL_ISUPPORTS(nsScreencastService, nsIScreencastService)
@@ -28,13 +34,38 @@ namespace {
 
 StaticRefPtr<nsScreencastService> gScreencastService;
 
+rtc::scoped_refptr<webrtc::VideoCaptureModule> CreateWindowCapturer(nsIWidget* widget, int sessionId) {
+  if (gfxPlatform::IsHeadless()) {
+    HeadlessWidget* headlessWidget = static_cast<HeadlessWidget*>(widget);
+    return HeadlessWindowCapturer::Create(headlessWidget);
+  }
+  uintptr_t rawWindowId = reinterpret_cast<uintptr_t>(widget->GetNativeData(NS_NATIVE_WINDOW_WEBRTC_DEVICE_ID));
+  if (!rawWindowId) {
+    fprintf(stderr, "Failed to get native window id\n");
+    return nullptr;
+  }
+  nsCString windowId;
+  windowId.AppendPrintf("%" PRIuPTR, rawWindowId);
+  return webrtc::DesktopCaptureImpl::Create(sessionId, windowId.get(), webrtc::CaptureDeviceType::Window);
+}
+
+void NotifyScreencastStopped(int32_t sessionId) {
+  nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
+  if (!observerService) {
+    fprintf(stderr, "NotifyScreencastStopped error: no observer service\n");
+    return;
+  }
+
+  nsString id;
+  id.AppendPrintf("%" PRIi32, sessionId);
+  observerService->NotifyObservers(nullptr, "juggler-screencast-stopped", id.get());
+}
 }
 
 class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::VideoFrame> {
  public:
-  Session(int sessionId, const nsCString& windowId, RefPtr<ScreencastEncoder>&& encoder)
-      : mCaptureModule(webrtc::DesktopCaptureImpl::Create(
-            sessionId, windowId.get(), webrtc::CaptureDeviceType::Window))
+  Session(rtc::scoped_refptr<webrtc::VideoCaptureModule>&& capturer, RefPtr<ScreencastEncoder>&& encoder)
+      : mCaptureModule(std::move(capturer))
       , mEncoder(std::move(encoder)) {
   }
 
@@ -55,13 +86,13 @@ class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::Vide
     return true;
   }
 
-  void Stop() {
+  void Stop(std::function<void()>&& callback) {
     mCaptureModule->DeRegisterCaptureDataCallback(this);
     int error = mCaptureModule->StopCapture();
     if (error) {
       fprintf(stderr, "StopCapture error %d\n", error);
-      return;
     }
+    mEncoder->finish(std::move(callback));
   }
 
   // These callbacks end up running on the VideoCapture thread.
@@ -106,18 +137,11 @@ nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const 
     return NS_ERROR_UNEXPECTED;
   nsIWidget* widget = view->GetWidget();
 
-#ifdef MOZ_WIDGET_GTK
-  mozilla::widget::CompositorWidgetInitData initData;
-  widget->GetCompositorWidgetInitData(&initData);
-  const mozilla::widget::GtkCompositorWidgetInitData& gtkInitData = initData.get_GtkCompositorWidgetInitData();
-  nsCString windowId;
-# ifdef MOZ_X11
-  windowId.AppendPrintf("%lu", gtkInitData.XWindow());
-# else
-  // TODO: support in wayland
-  return NS_ERROR_NOT_IMPLEMENTED;
-# endif
   *sessionId = ++mLastSessionId;
+  rtc::scoped_refptr<webrtc::VideoCaptureModule> capturer = CreateWindowCapturer(widget, *sessionId);
+  if (!capturer)
+    return NS_ERROR_FAILURE;
+
   nsCString error;
   Maybe<double> maybeScale;
   if (scale)
@@ -128,23 +152,24 @@ nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const 
     return NS_ERROR_FAILURE;
   }
 
-  auto session = std::make_unique<Session>(*sessionId, windowId, std::move(encoder));
+  auto session = std::make_unique<Session>(std::move(capturer), std::move(encoder));
   if (!session->Start())
     return NS_ERROR_FAILURE;
 
   mIdToSession.emplace(*sessionId, std::move(session));
   return NS_OK;
-#else
-  // TODO: support Windows and Mac.
-  return NS_ERROR_NOT_IMPLEMENTED;
-#endif
 }
 
 nsresult nsScreencastService::StopVideoRecording(int32_t sessionId) {
   auto it = mIdToSession.find(sessionId);
   if (it == mIdToSession.end())
     return NS_ERROR_INVALID_ARG;
-  it->second->Stop();
+  it->second->Stop([sessionId] {
+    NS_DispatchToMainThread(NS_NewRunnableFunction(
+        "NotifyScreencastStopped", [sessionId]() -> void {
+          NotifyScreencastStopped(sessionId);
+        }));
+  });
   mIdToSession.erase(it);
   return NS_OK;
 }

@@ -40,6 +40,20 @@ export const hostPlatform = ((): BrowserPlatform => {
   return platform as BrowserPlatform;
 })();
 
+export function linuxLddDirectories(browserPath: string, browser: BrowserDescriptor): string[] {
+  if (browser.name === 'chromium')
+    return [path.join(browserPath, 'chrome-linux')];
+  if (browser.name === 'firefox')
+    return [path.join(browserPath, 'firefox')];
+  if (browser.name === 'webkit') {
+    return [
+      path.join(browserPath, 'minibrowser-gtk'),
+      path.join(browserPath, 'minibrowser-wpe'),
+    ];
+  }
+  return [];
+}
+
 export function executablePath(browserPath: string, browser: BrowserDescriptor): string | undefined {
   let tokens: string[] | undefined;
   if (browser.name === 'chromium') {
@@ -102,6 +116,10 @@ export function browsersPath(packagePath: string): string {
 
 export function browserDirectory(browsersPath: string, browser: BrowserDescriptor): string {
   return path.join(browsersPath, `${browser.name}-${browser.revision}`);
+}
+
+export function markerFilePath(browsersPath: string, browser: BrowserDescriptor): string {
+  return path.join(browserDirectory(browsersPath, browser), 'INSTALLATION_COMPLETE');
 }
 
 export function isBrowserDirectory(browserPath: string): boolean {

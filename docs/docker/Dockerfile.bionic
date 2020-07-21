@@ -1,12 +1,3 @@
-################################################
-# Compile with:
-#     sudo docker build -t microsoft/playwright:bionic -f Dockerfile.bionic .
-#
-# Run with:
-#     sudo docker run -d -p --rm --name playwright microsoft/playwright:bionic
-#
-#################################################
-
 FROM ubuntu:bionic
 
 # 1. Install node12
@@ -30,7 +21,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxslt1.1 \
     libevent-2.1-6 \
     libgles2 \
-    libvpx5
+    libvpx5 \
+    libxcomposite1 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libepoxy0 \
+    libgtk-3-0 \
+    libharfbuzz-icu0
 
 # 3. Install gstreamer and plugins to support video playback in WebKit.
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -43,7 +40,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libnss3 \
     libxss1 \
     libasound2 \
-    fonts-noto-color-emoji
+    fonts-noto-color-emoji \
+    libxtst6
 
 # 5. Install Firefox dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -65,3 +63,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # 9. Run everything after as non-privileged user.
 USER pwuser
+
+# === BAKE BROWSERS INTO IMAGE ===
+
+# 1. Add tip-of-tree Playwright package to install its browsers.
+#    The package should be built beforehand from tip-of-tree Playwright.
+COPY --chown=pwuser ./playwright.tar.gz /home/pwuser/playwright.tar.gz
+
+# 2. Install playwright and then delete the installation.
+#    Browsers will remain downloaded in `/home/pwuser/.cache/ms-playwright`.
+RUN mkdir /home/pwuser/tmp && cd /home/pwuser/tmp && npm init -y && \
+    npm i ../playwright.tar.gz && \
+    cd ../ && rm -rf tmp && rm /home/pwuser/playwright.tar.gz
+

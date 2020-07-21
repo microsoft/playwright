@@ -33,8 +33,7 @@ export type RegisteredListener = {
 
 export type Listener = (...args: any[]) => void;
 
-let isInDebugMode = !!getFromENV('PWDEBUG');
-let isInRecordMode = false;
+const isInDebugMode = !!getFromENV('PWDEBUG');
 
 const deprecatedHits = new Set();
 export function deprecate(methodName: string, message: string) {
@@ -131,6 +130,10 @@ class Helper {
 
   static isRegExp(obj: any): obj is RegExp {
     return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
+  }
+
+  static isError(obj: any): obj is Error {
+    return obj instanceof Error || (obj && obj.__proto__ && obj.__proto__.name === 'Error');
   }
 
   static isObject(obj: any): obj is NonNullable<object> {
@@ -319,18 +322,6 @@ class Helper {
 
   static isDebugMode(): boolean {
     return isInDebugMode;
-  }
-
-  static setDebugMode(enabled: boolean) {
-    isInDebugMode = enabled;
-  }
-
-  static isRecordMode(): boolean {
-    return isInRecordMode;
-  }
-
-  static setRecordMode(enabled: boolean) {
-    isInRecordMode = enabled;
   }
 }
 

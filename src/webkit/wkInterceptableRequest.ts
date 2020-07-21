@@ -21,6 +21,7 @@ import * as network from '../network';
 import * as types from '../types';
 import { Protocol } from './protocol';
 import { WKSession } from './wkConnection';
+import { headersArrayToObject } from '../rpc/serializers';
 
 const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
   'aborted': 'Cancellation',
@@ -72,7 +73,8 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
     let mimeType = response.isBase64 ? 'application/octet-stream' : 'text/plain';
-    const contentType = response.headers['content-type'];
+    const headers = headersArrayToObject(response.headers);
+    const contentType = headers['content-type'];
     if (contentType)
       mimeType = contentType.split(';')[0].trim();
     await this._session.sendMayFail('Network.interceptRequestWithResponse', {
@@ -80,20 +82,20 @@ export class WKInterceptableRequest implements network.RouteDelegate {
       status: response.status,
       statusText: network.STATUS_TEXTS[String(response.status)],
       mimeType,
-      headers: response.headers,
+      headers,
       base64Encoded: response.isBase64,
       content: response.body
     });
   }
 
-  async continue(overrides: { method?: string; headers?: types.Headers; postData?: string }) {
+  async continue(overrides: types.NormalizedContinueOverrides) {
     await this._interceptedPromise;
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
     await this._session.sendMayFail('Network.interceptWithRequest', {
       requestId: this._requestId,
       method: overrides.method,
-      headers: overrides.headers,
+      headers: overrides.headers ? headersArrayToObject(overrides.headers) : undefined,
       postData: overrides.postData ? Buffer.from(overrides.postData).toString('base64') : undefined
     });
   }

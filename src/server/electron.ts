@@ -34,15 +34,14 @@ import { EventEmitter } from 'events';
 import { helper } from '../helper';
 import { LoggerSink } from '../loggerSink';
 
-type ElectronLaunchOptions = {
+export type ElectronLaunchOptionsBase = {
   args?: string[],
   cwd?: string,
-  env?: {[key: string]: string|number|boolean},
+  env?: types.Env,
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
   timeout?: number,
-  logger?: LoggerSink,
 };
 
 export const ElectronEvents = {
@@ -52,7 +51,7 @@ export const ElectronEvents = {
   }
 };
 
-interface ElectronPage extends Page {
+export interface ElectronPage extends Page {
   browserWindow: js.JSHandle<BrowserWindow>;
   _browserWindowId: number;
 }
@@ -63,7 +62,7 @@ export class ElectronApplication extends EventEmitter {
   private _nodeConnection: CRConnection;
   private _nodeSession: CRSession;
   private _nodeExecutionContext: js.ExecutionContext | undefined;
-  private _nodeElectronHandle: js.JSHandle<any> | undefined;
+  _nodeElectronHandle: js.JSHandle<any> | undefined;
   private _windows = new Set<ElectronPage>();
   private _lastWindowId = 0;
   readonly _timeoutSettings = new TimeoutSettings();
@@ -165,7 +164,7 @@ export class ElectronApplication extends EventEmitter {
 }
 
 export class Electron  {
-  async launch(executablePath: string, options: ElectronLaunchOptions = {}): Promise<ElectronApplication> {
+  async launch(executablePath: string, options: ElectronLaunchOptionsBase & { logger?: LoggerSink } = {}): Promise<ElectronApplication> {
     const {
       args = [],
       env = process.env,

@@ -137,6 +137,8 @@ class PageHandler {
   dispose() {
     this._contentPage.dispose();
     helper.removeListeners(this._eventListeners);
+    if (this._videoSessionId !== -1)
+      this.stopVideoRecording().catch(e => dump(`stopVideoRecording failed:\n${e}\n`));
   }
 
   async setViewportSize({viewportSize}) {
@@ -175,6 +177,10 @@ class PageHandler {
 
   async setEmulatedMedia(options) {
     return await this._contentPage.send('setEmulatedMedia', options);
+  }
+
+  async bringToFront(options) {
+    this._pageTarget._window.focus();
   }
 
   async setCacheDisabled(options) {
@@ -296,16 +302,27 @@ class PageHandler {
     const docShell = this._pageTarget._gBrowser.ownerGlobal.docShell;
     // Exclude address bar and navigation control from the video.
     const rect = this._pageTarget.linkedBrowser().getBoundingClientRect();
-    this._videoSessionId = screencast.startVideoRecording(docShell, file, width, height, scale || 0, rect.top);
+    const devicePixelRatio = this._pageTarget._window.devicePixelRatio;
+    this._videoSessionId = screencast.startVideoRecording(docShell, file, width, height, scale || 0, devicePixelRatio * rect.top);
   }
 
-  stopVideoRecording() {
+  async stopVideoRecording() {
     if (this._videoSessionId === -1)
       throw new Error('No video recording in progress');
     const videoSessionId = this._videoSessionId;
     this._videoSessionId = -1;
     const screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
+    const result = new Promise(resolve =>
+      Services.obs.addObserver(function onStopped(subject, topic, data) {
+        if (videoSessionId != data)
+          return;
+
+        Services.obs.removeObserver(onStopped, 'juggler-screencast-stopped');
+        resolve();
+      }, 'juggler-screencast-stopped')
+    );
     screencast.stopVideoRecording(videoSessionId);
+    return result;
   }
 }
 

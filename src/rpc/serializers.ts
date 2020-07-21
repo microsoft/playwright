@@ -20,25 +20,26 @@ import * as path from 'path';
 import * as util from 'util';
 import { TimeoutError } from '../errors';
 import * as types from '../types';
-import { helper } from '../helper';
+import { helper, assert } from '../helper';
+import { SerializedError } from './channels';
+import { serializeAsCallArgument, parseEvaluationResultValue } from '../common/utilityScriptSerializers';
 
-
-export function serializeError(e: any): types.Error {
-  if (e instanceof Error)
-    return { message: e.message, stack: e.stack, name: e.name };
-  return { value: e };
+export function serializeError(e: any): SerializedError {
+  if (helper.isError(e))
+    return { error: { message: e.message, stack: e.stack, name: e.name } };
+  return { value: serializeAsCallArgument(e, value => ({ fallThrough: value })) };
 }
 
-export function parseError(error: types.Error): any {
-  if (error.message === undefined)
-    return error.value;
-  if (error.name === 'TimeoutError') {
-    const e = new TimeoutError(error.message);
-    e.stack = error.stack;
+export function parseError(error: SerializedError): Error {
+  if (!error.error)
+    return parseEvaluationResultValue(error.value as any, []);
+  if (error.error.name === 'TimeoutError') {
+    const e = new TimeoutError(error.error.message);
+    e.stack = error.error.stack || '';
     return e;
   }
-  const e = new Error(error.message);
-  e.stack = error.stack;
+  const e = new Error(error.error.message);
+  e.stack = error.error.stack || '';
   return e;
 }
 
@@ -82,7 +83,7 @@ export async function normalizeFulfillParameters(params: types.FulfillResponse &
     isBase64 = true;
     length = params.body.length;
   }
-  const headers: { [s: string]: string; } = {};
+  const headers: types.Headers = {};
   for (const header of Object.keys(params.headers || {}))
     headers[header.toLowerCase()] = String(params.headers![header]);
   if (params.contentType)
@@ -94,8 +95,51 @@ export async function normalizeFulfillParameters(params: types.FulfillResponse &
 
   return {
     status: params.status || 200,
-    headers,
+    headers: headersObjectToArray(headers),
     body,
     isBase64
   };
+}
+
+export function normalizeContinueOverrides(overrides: types.ContinueOverrides): types.NormalizedContinueOverrides {
+  return {
+    method: overrides.method,
+    headers: overrides.headers ? headersObjectToArray(overrides.headers) : undefined,
+    postData: overrides.postData,
+  };
+}
+
+export function headersObjectToArray(headers: types.Headers): types.HeadersArray {
+  const result: types.HeadersArray = [];
+  for (const name in headers) {
+    if (!Object.is(headers[name], undefined)) {
+      const value = headers[name];
+      assert(helper.isString(value), `Expected value of header "${name}" to be String, but "${typeof value}" is found.`);
+      result.push({ name, value });
+    }
+  }
+  return result;
+}
+
+export function headersArrayToObject(headers: types.HeadersArray): types.Headers {
+  const result: types.Headers = {};
+  for (const { name, value } of headers)
+    result[name] = value;
+  return result;
+}
+
+export function envObjectToArray(env: types.Env): types.EnvArray {
+  const result: types.EnvArray = [];
+  for (const name in env) {
+    if (!Object.is(env[name], undefined))
+      result.push({ name, value: String(env[name]) });
+  }
+  return result;
+}
+
+export function envArrayToObject(env: types.EnvArray): types.Env {
+  const result: types.Env = {};
+  for (const { name, value } of env)
+    result[name] = value;
+  return result;
 }

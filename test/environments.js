@@ -19,10 +19,13 @@ const utils = require('./utils');
 const fs = require('fs');
 const path = require('path');
 const rm = require('rimraf').sync;
+const childProcess = require('child_process');
 const {TestServer} = require('../utils/testserver/');
 const { DispatcherConnection } = require('../lib/rpc/server/dispatcher');
 const { Connection } = require('../lib/rpc/client/connection');
+const { Transport } = require('../lib/rpc/transport');
 const { PlaywrightDispatcher } = require('../lib/rpc/server/playwrightDispatcher');
+const { setUseApiName } = require('../lib/progress');
 
 class ServerEnvironment {
   async beforeAll(state) {
@@ -123,7 +126,8 @@ class TraceTestEnvironment {
     this._session = null;
   }
 
-  async beforeEach() {
+  async beforeEach(state, testRun) {
+    const t = testRun.test();
     const inspector = require('inspector');
     const fs = require('fs');
     const util = require('util');
@@ -156,31 +160,56 @@ class TraceTestEnvironment {
 class PlaywrightEnvironment {
   constructor(playwright) {
     this._playwright = playwright;
+    this.spawnedProcess = undefined;
+    this.onExit = undefined;
   }
 
   name() { return 'Playwright'; };
 
   async beforeAll(state) {
-    // Channel substitute
-    this.overriddenPlaywright = this._playwright;
     if (process.env.PWCHANNEL) {
-      const dispatcherConnection = new DispatcherConnection();
+      setUseApiName(false);
       const connection = new Connection();
-      dispatcherConnection.onmessage = async message => {
-        setImmediate(() => connection.dispatch(message));
-      };
-      connection.onmessage = async message => {
-        const result = await dispatcherConnection.dispatch(message);
-        await new Promise(f => setImmediate(f));
-        return result;
-      };
-      new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), this._playwright);
-      this.overriddenPlaywright = await connection.waitForObjectWithKnownName('playwright');
+      if (process.env.PWCHANNEL === 'wire') {
+        this.spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'rpc', 'server'), [], {
+          stdio: 'pipe',
+          detached: true,
+        });
+        this.spawnedProcess.unref();
+        this.onExit = (exitCode, signal) => {
+          throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
+        };
+        this.spawnedProcess.once('exit', this.onExit);
+        const transport = new Transport(this.spawnedProcess.stdin, this.spawnedProcess.stdout);
+        connection.onmessage = message => transport.send(JSON.stringify(message));
+        transport.onmessage = message => connection.dispatch(JSON.parse(message));
+      } else {
+        const dispatcherConnection = new DispatcherConnection();
+        dispatcherConnection.onmessage = async message => {
+          setImmediate(() => connection.dispatch(message));
+        };
+        connection.onmessage = async message => {
+          const result = await dispatcherConnection.dispatch(message);
+          await new Promise(f => setImmediate(f));
+          return result;
+        };
+        new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), this._playwright);
+        state.toImpl = x => dispatcherConnection._dispatchers.get(x._guid)._object;
+      }
+      state.playwright = await connection.waitForObjectWithKnownName('playwright');
+    } else {
+      state.toImpl = x => x;
+      state.playwright = this._playwright;
     }
-    state.playwright = this.overriddenPlaywright;
   }
 
   async afterAll(state) {
+    if (this.spawnedProcess) {
+      this.spawnedProcess.removeListener('exit', this.onExit);
+      this.spawnedProcess.stdin.destroy();
+      this.spawnedProcess.stdout.destroy();
+      this.spawnedProcess.stderr.destroy();
+    }
     delete state.playwright;
   }
 }
