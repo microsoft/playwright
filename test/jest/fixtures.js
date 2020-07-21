@@ -26,6 +26,8 @@ const { PlaywrightDispatcher } = require('../../lib/rpc/server/playwrightDispatc
 const { setUseApiName } = require('../../lib/progress');
 
 const browserName = process.env.BROWSER || 'chromium';
+const activeBrowsers = new Set();
+global.__activeBrowsers__ = activeBrowsers;
 
 module.exports = function registerFixtures(global) {
   global.registerWorkerFixture('parallelIndex', async ({}, test) => {
@@ -137,6 +139,7 @@ module.exports = function registerFixtures(global) {
 
   global.registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
     const browser = await browserType.launch(defaultBrowserOptions);
+    activeBrowsers.add(browser);
     try {
       await test(browser);
       if (browser.contexts().length !== 0) {
@@ -144,6 +147,7 @@ module.exports = function registerFixtures(global) {
         await Promise.all(browser.contexts().map(context => context.close()));
       }
     } finally {
+      activeBrowsers.delete(browser);
       await browser.close();
     }
   });
