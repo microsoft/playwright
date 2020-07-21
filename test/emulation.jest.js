@@ -248,7 +248,7 @@ describe('Page.emulateMedia type', function() {
   it('should throw in case of bad type argument', async({page, server}) => {
     let error = null;
     await page.emulateMedia({ media: 'bad' }).catch(e => error = e);
-    expect(error.message).toContain('Unsupported media: bad');
+    expect(error.message).toContain('media: expected one of (screen|print)');
   });
 });
 
@@ -276,7 +276,7 @@ describe('Page.emulateMedia colorScheme', function() {
   it('should throw in case of bad argument', async({page, server}) => {
     let error = null;
     await page.emulateMedia({ colorScheme: 'bad' }).catch(e => error = e);
-    expect(error.message).toContain('Unsupported color scheme: bad');
+    expect(error.message).toContain('colorScheme: expected one of (dark|light|no-preference)');
   });
   it('should work during navigation', async({page, server}) => {
     await page.emulateMedia({ colorScheme: 'light' });

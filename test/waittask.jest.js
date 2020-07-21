@@ -466,7 +466,7 @@ describe('Frame.waitForSelector', function() {
   it('should throw for unknown state option', async({page, server}) => {
     await page.setContent('<section>test</section>');
     const error = await page.waitForSelector('section', { state: 'foo' }).catch(e => e);
-    expect(error.message).toContain('Unsupported state option "foo"');
+    expect(error.message).toContain('state: expected one of (attached|detached|visible|hidden)');
   });
   it('should throw for visibility option', async({page, server}) => {
     await page.setContent('<section>test</section>');
@@ -476,12 +476,12 @@ describe('Frame.waitForSelector', function() {
   it('should throw for true state option', async({page, server}) => {
     await page.setContent('<section>test</section>');
     const error = await page.waitForSelector('section', { state: true }).catch(e => e);
-    expect(error.message).toContain('Unsupported state option "true"');
+    expect(error.message).toContain('state: expected one of (attached|detached|visible|hidden)');
   });
   it('should throw for false state option', async({page, server}) => {
     await page.setContent('<section>test</section>');
     const error = await page.waitForSelector('section', { state: false }).catch(e => e);
-    expect(error.message).toContain('Unsupported state option "false"');
+    expect(error.message).toContain('state: expected one of (attached|detached|visible|hidden)');
   });
   it('should support >> selector syntax', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);

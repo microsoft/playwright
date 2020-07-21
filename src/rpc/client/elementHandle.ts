@@ -217,8 +217,8 @@ export function convertSelectOptionValues(values: string | ElementHandle | types
     values = [ values as any ];
   if (!values.length)
     return {};
-  if ((values as any[]).includes(null))
-    assert(false, 'Value items must not be null');
+  for (let i = 0; i < values.length; i++)
+    assert(values[i] !== null, `options[${i}]: expected object, got null`);
 
   if (values[0] instanceof ElementHandle)
     return { elements: (values as ElementHandle[]).map((v: ElementHandle) => v._elementChannel) };

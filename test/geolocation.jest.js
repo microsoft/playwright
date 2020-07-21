@@ -37,7 +37,7 @@ describe('Overrides.setGeolocation', function() {
     } catch (e) {
       error = e;
     }
-    expect(error.message).toContain('Invalid longitude "200"');
+    expect(error.message).toContain('geolocation.longitude: precondition -180 <= LONGITUDE <= 180 failed.');
   });
   it('should isolate contexts', async({page, server, context, browser}) => {
     await context.grantPermissions(['geolocation']);
@@ -76,7 +76,7 @@ describe('Overrides.setGeolocation', function() {
     } catch (e) {
       error = e;
     }
-    expect(error.message).toContain('Invalid latitude "undefined"');
+    expect(error.message).toContain('geolocation.latitude: expected number, got undefined');
   });
   it('should not modify passed default options object', async({browser}) => {
     const geolocation = { longitude: 10, latitude: 10 };
@@ -94,7 +94,7 @@ describe('Overrides.setGeolocation', function() {
     } catch (e) {
       error = e;
     }
-    expect(error.message).toContain('Invalid longitude "undefined"');
+    expect(error.message).toContain('geolocation.longitude: expected number, got undefined');
   });
   it('should use context options', async({browser, server}) => {
     const options = { geolocation: { longitude: 10, latitude: 10 }, permissions: ['geolocation'] };

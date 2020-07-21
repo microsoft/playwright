@@ -179,7 +179,7 @@ describe('Page.goto', function() {
   it('should throw if networkidle2 is passed as an option', async({page, server}) => {
     let error = null;
     await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle2'}).catch(err => error = err);
-    expect(error.message).toContain('Unsupported waitUntil option');
+    expect(error.message).toContain(`waitUntil: expected one of (load|domcontentloaded|networkidle)`);
   });
   it('should fail when main resources failed to load', async({page, server}) => {
     let error = null;
@@ -775,6 +775,11 @@ describe('Page.waitForLoadState', () => {
   it('should resolve immediately if loaded', async({page, server}) => {
     await page.goto(server.PREFIX + '/one-style.html');
     await page.waitForLoadState();
+  });
+  it('should throw for bad state', async({page, server}) => {
+    await page.goto(server.PREFIX + '/one-style.html');
+    const error = await page.waitForLoadState('bad').catch(e => e);
+    expect(error.message).toContain(`state: expected one of (load|domcontentloaded|networkidle)`);
   });
   it('should resolve immediately if load state matches', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);

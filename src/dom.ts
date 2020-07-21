@@ -419,17 +419,19 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       vals = [ values ] as (string[] | ElementHandle[] | types.SelectOption[]);
     else
       vals = values;
-    const selectOptions = (vals as any).map((value: any) => typeof value === 'object' ? value : { value });
-    for (const option of selectOptions) {
-      assert(option !== null, 'Value items must not be null');
+    const selectOptions = (vals as any).map((value: any) => helper.isString(value) ? { value } : value);
+    for (let i = 0; i < selectOptions.length; i++) {
+      const option = selectOptions[i];
+      assert(option !== null, `options[${i}]: expected object, got null`);
+      assert(typeof option === 'object', `options[${i}]: expected object, got ${typeof option}`);
       if (option instanceof ElementHandle)
         continue;
       if (option.value !== undefined)
-        assert(helper.isString(option.value), 'Values must be strings. Found value "' + option.value + '" of type "' + (typeof option.value) + '"');
+        assert(helper.isString(option.value), `options[${i}].value: expected string, got ${typeof option.value}`);
       if (option.label !== undefined)
-        assert(helper.isString(option.label), 'Labels must be strings. Found label "' + option.label + '" of type "' + (typeof option.label) + '"');
+        assert(helper.isString(option.label), `options[${i}].label: expected string, got ${typeof option.label}`);
       if (option.index !== undefined)
-        assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
+        assert(helper.isNumber(option.index), `options[${i}].index: expected number, got ${typeof option.index}`);
     }
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
@@ -446,7 +448,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     progress.logger.info(`elementHandle.fill("${value}")`);
-    assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
+    assert(helper.isString(value), `value: expected string, got ${typeof value}`);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.logger.info('  waiting for element to be visible, enabled and editable');
       const poll = await this._evaluateHandleInUtility(([injected, node, value]) => {

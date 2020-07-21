@@ -1003,7 +1003,7 @@ describe('Page.selectOption', function() {
     await page.evaluate(() => makeMultiple());
     let error = null
     await page.selectOption('select', ['blue', null, 'black','magenta']).catch(e => error = e);
-    expect(error.message).toContain('Value items must not be null');
+    expect(error.message).toContain('options[1]: expected object, got null');
   });
   it('should unselect with null',async({page, server}) => {
     await page.goto(server.PREFIX + '/input/select.html');
@@ -1036,7 +1036,7 @@ describe('Page.selectOption', function() {
     } catch (e) {
       error = e;
     }
-    expect(error.message).toContain('Values must be strings');
+    expect(error.message).toContain('options[0]: expected object, got number');
 
     error = null;
     try {
@@ -1044,7 +1044,7 @@ describe('Page.selectOption', function() {
     } catch (e) {
       error = e;
     }
-    expect(error.message).toContain('Values must be strings');
+    expect(error.message).toContain('options[0].value: expected string, got number');
 
     error = null;
     try {
@@ -1052,7 +1052,7 @@ describe('Page.selectOption', function() {
     } catch (e) {
       error = e;
     }
-    expect(error.message).toContain('Labels must be strings');
+    expect(error.message).toContain('options[0].label: expected string, got number');
 
     error = null;
     try {
@@ -1060,7 +1060,7 @@ describe('Page.selectOption', function() {
     } catch (e) {
       error = e;
     }
-    expect(error.message).toContain('Indices must be numbers');
+    expect(error.message).toContain('options[0].index: expected number, got string');
   });
   // @see https://github.com/GoogleChrome/puppeteer/issues/3327
   it('should work when re-defining top-level Event class', async({page, server}) => {
@@ -1176,7 +1176,7 @@ describe('Page.fill', function() {
     let error = null;
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.fill('textarea', 123).catch(e => error = e);
-    expect(error.message).toContain('Value must be string.');
+    expect(error.message).toContain('value: expected string, got number');
   });
   it('should retry on disabled element', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
