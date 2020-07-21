@@ -65,7 +65,7 @@ export class CRPage implements PageDelegate {
   constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, hasUIWindow: boolean) {
     this._targetId = targetId;
     this._opener = opener;
-    this.rawKeyboard = new RawKeyboardImpl(client);
+    this.rawKeyboard = new RawKeyboardImpl(client, browserContext._browser._isMac);
     this.rawMouse = new RawMouseImpl(client);
     this._pdf = new CRPDF(client);
     this._coverage = new CRCoverage(client);
