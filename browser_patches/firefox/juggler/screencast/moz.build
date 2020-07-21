@@ -32,6 +32,17 @@ LOCAL_INCLUDES += [
     '/widget/headless',
 ]
 
+LOCAL_INCLUDES += [
+    '/third_party/aom/third_party/libwebm',
+]
+
+SOURCES += [
+    '/third_party/aom/third_party/libwebm/mkvmuxer/mkvmuxer.cc',
+    '/third_party/aom/third_party/libwebm/mkvmuxer/mkvmuxerutil.cc',
+    '/third_party/aom/third_party/libwebm/mkvmuxer/mkvwriter.cc',
+    'WebMFileWriter.cpp',
+]
+
 include('/media/webrtc/webrtc.mozbuild')
 include('/ipc/chromium/chromium-config.mozbuild')
 
