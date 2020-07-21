@@ -63,20 +63,17 @@ function apiForBrowser(browserName) {
     {
       name: 'Firefox',
       events: require('../../lib/events').Events,
-      missingCoverage: ['cDPSession.send', 'cDPSession.detach'],
     },
     {
       name: 'WebKit',
       events: require('../../lib/events').Events,
-      missingCoverage: ['browserContext.clearPermissions', 'cDPSession.send', 'cDPSession.detach'],
     },
     {
       name: 'Chromium',
       events: {
         ...require('../../lib/events').Events,
         ...require('../../lib/chromium/events').Events,
-      },
-      missingCoverage: [],
+      }
     },
   ];
   const browserConfig = BROWSER_CONFIGS.find(config => config.name.toLowerCase() === browserName);

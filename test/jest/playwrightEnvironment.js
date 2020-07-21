@@ -63,7 +63,8 @@ class PlaywrightEnvironment extends NodeEnvironment {
   async teardown() {
     await this.fixturePool.teardownScope('worker');
     await super.teardown();
-    // The setup might have failed for some reason.
+    // If the setup throws an error, we don't want to override it
+    // with a useless error about this.coverage not existing.
     if (!this.coverage)
       return;
     this.uninstallCoverage();
