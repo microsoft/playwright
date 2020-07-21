@@ -17,6 +17,7 @@
 import { CDPSessionChannel, CDPSessionInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
 import { Protocol } from '../../chromium/protocol';
+import { parseResult, serializeArgument } from './jsHandle';
 
 export class CDPSession extends ChannelOwner<CDPSessionChannel, CDPSessionInitializer> {
   static from(cdpSession: CDPSessionChannel): CDPSession {
@@ -32,7 +33,10 @@ export class CDPSession extends ChannelOwner<CDPSessionChannel, CDPSessionInitia
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: CDPSessionInitializer) {
     super(parent, type, guid, initializer, true);
 
-    this._channel.on('event', ({ method, params }) => this.emit(method, params));
+    this._channel.on('event', ({ method, params }) => {
+      const cdpParams = params ? parseResult(params) : undefined;
+      this.emit(method, cdpParams);
+    });
     this._channel.on('disconnected', () => this._dispose());
 
     this.on = super.on;
@@ -47,8 +51,9 @@ export class CDPSession extends ChannelOwner<CDPSessionChannel, CDPSessionInitia
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
     return this._wrapApiCall('cdpSession.send', async () => {
-      const result = await this._channel.send({ method, params });
-      return result.result as Protocol.CommandReturnValues[T];
+      const protocolParams = params ? serializeArgument(params).value : undefined;
+      const result = await this._channel.send({ method, params: protocolParams });
+      return parseResult(result.result) as Protocol.CommandReturnValues[T];
     });
   }
 
