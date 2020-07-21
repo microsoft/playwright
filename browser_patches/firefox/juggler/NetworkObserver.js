@@ -708,15 +708,16 @@ function readRequestPostData(httpChannel) {
   }
 
   // Read data from the stream.
-  let text = undefined;
+  let result = undefined;
   try {
-    text = NetUtil.readInputStreamToString(iStream, iStream.available());
-    const converter = Cc['@mozilla.org/intl/scriptableunicodeconverter']
-        .createInstance(Ci.nsIScriptableUnicodeConverter);
-    converter.charset = 'UTF-8';
-    text = converter.ConvertToUnicode(text);
+    const buffer = NetUtil.readInputStream(iStream, iStream.available());
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++)
+        binary += String.fromCharCode(bytes[i]);
+    result = btoa(binary);
   } catch (err) {
-    text = undefined;
+    result = '';
   }
 
   // Seek locks the file, so seek to the beginning only if necko hasn't
@@ -724,7 +725,7 @@ function readRequestPostData(httpChannel) {
   // not till 459384 is fixed).
   if (isSeekableStream && prevOffset == 0)
     iStream.seek(Ci.nsISeekableStream.NS_SEEK_SET, 0);
-  return text;
+  return result;
 }
 
 function requestHeaders(httpChannel) {
