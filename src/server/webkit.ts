@@ -46,6 +46,10 @@ export class WebKit extends BrowserTypeBase {
     return browserArguments;
   }
 
+  _rewriteStartupError(error: Error): Error {
+    return error;
+  }
+
   _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
     transport.send({method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId});
   }
