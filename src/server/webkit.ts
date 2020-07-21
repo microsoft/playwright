@@ -42,7 +42,7 @@ export class WebKit extends BrowserTypeBase {
     return { ...env, CURL_COOKIE_JAR_PATH: path.join(userDataDir, 'cookiejar.db') };
   }
 
-  async _amendArguments(browserArguments: string[]): Promise<string[]> {
+  _amendArguments(browserArguments: string[]): string[] {
     return browserArguments;
   }
 

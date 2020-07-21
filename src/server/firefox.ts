@@ -47,7 +47,7 @@ export class Firefox extends BrowserTypeBase {
     } : env;
   }
 
-  async _amendArguments(browserArguments: string[]): Promise<string[]> {
+  _amendArguments(browserArguments: string[]): string[] {
     return browserArguments;
   }
 
