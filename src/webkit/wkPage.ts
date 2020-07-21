@@ -853,7 +853,7 @@ export class WKPage implements PageDelegate {
 
   private _handleRequestRedirect(request: WKInterceptableRequest, responsePayload: Protocol.Network.Response) {
     const response = request.createResponse(responsePayload);
-    response._requestFinished(new Error('Response body is unavailable for redirect responses'));
+    response._requestFinished('Response body is unavailable for redirect responses');
     this._requestIdToRequest.delete(request._requestId);
     this._page._frameManager.requestReceivedResponse(response);
     this._page._frameManager.requestFinished(request.request);

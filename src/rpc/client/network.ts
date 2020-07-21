@@ -19,7 +19,7 @@ import * as types from '../../types';
 import { RequestChannel, ResponseChannel, RouteChannel, RequestInitializer, ResponseInitializer, RouteInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
-import { normalizeFulfillParameters, headersArrayToObject, normalizeContinueOverrides, parseError } from '../serializers';
+import { normalizeFulfillParameters, headersArrayToObject, normalizeContinueOverrides } from '../serializers';
 
 export type NetworkCookie = {
   name: string,
@@ -206,7 +206,7 @@ export class Response extends ChannelOwner<ResponseChannel, ResponseInitializer>
   async finished(): Promise<Error | null> {
     const result = await this._channel.finished();
     if (result.error)
-      return parseError(result.error);
+      return new Error(result.error);
     return null;
   }
 

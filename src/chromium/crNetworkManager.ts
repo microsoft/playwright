@@ -243,7 +243,7 @@ export class CRNetworkManager {
 
   _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response) {
     const response = this._createResponse(request, responsePayload);
-    response._requestFinished(new Error('Response body is unavailable for redirect responses'));
+    response._requestFinished('Response body is unavailable for redirect responses');
     this._requestIdToRequest.delete(request._requestId);
     if (request._interceptionId)
       this._attemptedAuthentications.delete(request._interceptionId);

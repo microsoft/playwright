@@ -90,7 +90,7 @@ export class FFNetworkManager {
     // Keep redirected requests in the map for future reference as redirectedFrom.
     const isRedirected = response.status() >= 300 && response.status() <= 399;
     if (isRedirected) {
-      response._requestFinished(new Error('Response body is unavailable for redirect responses'));
+      response._requestFinished('Response body is unavailable for redirect responses');
     } else {
       this._requests.delete(request._id);
       response._requestFinished();

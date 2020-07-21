@@ -1340,7 +1340,7 @@ interface Response
 
   command finished
     returns
-      error?: SerializedError
+      error?: string
 
 interface ConsoleMessage
   initializer

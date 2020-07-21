@@ -15,10 +15,10 @@
  */
 
 import { Request, Response, Route } from '../../network';
-import { RequestChannel, ResponseChannel, RouteChannel, ResponseInitializer, RequestInitializer, RouteInitializer, Binary, SerializedError } from '../channels';
+import { RequestChannel, ResponseChannel, RouteChannel, ResponseInitializer, RequestInitializer, RouteInitializer, Binary } from '../channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
-import { headersObjectToArray, headersArrayToObject, serializeError } from '../serializers';
+import { headersObjectToArray, headersArrayToObject } from '../serializers';
 import * as types from '../../types';
 
 export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> implements RequestChannel {
@@ -64,9 +64,8 @@ export class ResponseDispatcher extends Dispatcher<Response, ResponseInitializer
     });
   }
 
-  async finished(): Promise<{ error?: SerializedError }> {
-    const error = await this._object.finished();
-    return { error: error ? serializeError(error) : undefined };
+  async finished(): Promise<{ error?: string }> {
+    return await this._object._finishedPromise;
   }
 
   async body(): Promise<{ binary: Binary }> {
