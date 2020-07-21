@@ -196,7 +196,7 @@ class PlaywrightEnvironment {
         new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), this._playwright);
         state.toImpl = x => dispatcherConnection._dispatchers.get(x._guid)._object;
       }
-      state.playwright = await connection.waitForObjectWithKnownName('playwright');
+      state.playwright = await connection.waitForObjectWithKnownName('Playwright');
     } else {
       state.toImpl = x => x;
       state.playwright = this._playwright;

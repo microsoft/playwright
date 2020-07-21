@@ -27,7 +27,7 @@ import { Transport } from './transport';
   connection.onmessage = message => transport.send(JSON.stringify(message));
   transport.onmessage = message => connection.dispatch(JSON.parse(message));
 
-  const playwright = await connection.waitForObjectWithKnownName('playwright');
+  const playwright = await connection.waitForObjectWithKnownName('Playwright');
   const browser = await playwright.chromium.launch({ headless: false });
   const page = await browser.newPage();
   await page.goto('https://example.com');

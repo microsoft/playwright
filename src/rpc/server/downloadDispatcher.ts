@@ -21,7 +21,7 @@ import { StreamDispatcher } from './streamDispatcher';
 
 export class DownloadDispatcher extends Dispatcher<Download, DownloadInitializer> implements DownloadChannel {
   constructor(scope: DispatcherScope, download: Download) {
-    super(scope, download, 'download', {
+    super(scope, download, 'Download', {
       url: download.url(),
       suggestedFilename: download.suggestedFilename(),
     });

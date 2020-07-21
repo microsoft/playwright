@@ -27,10 +27,10 @@ import { headersArrayToObject, envArrayToObject } from '../serializers';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeInitializer> implements BrowserTypeChannel {
   constructor(scope: DispatcherScope, browserType: BrowserTypeBase) {
-    super(scope, browserType, 'browserType', {
+    super(scope, browserType, 'BrowserType', {
       executablePath: browserType.executablePath(),
       name: browserType.name()
-    }, true, browserType.name());
+    }, true);
   }
 
   async launch(params: BrowserTypeLaunchParams): Promise<{ browser: BrowserChannel }> {

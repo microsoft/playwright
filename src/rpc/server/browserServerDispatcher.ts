@@ -21,7 +21,7 @@ import { Events } from '../../events';
 
 export class BrowserServerDispatcher extends Dispatcher<BrowserServer, BrowserServerInitializer> implements BrowserServerChannel {
   constructor(scope: DispatcherScope, browserServer: BrowserServer) {
-    super(scope, browserServer, 'browserServer', {
+    super(scope, browserServer, 'BrowserServer', {
       wsEndpoint: browserServer.wsEndpoint(),
       pid: browserServer.process().pid
     });
