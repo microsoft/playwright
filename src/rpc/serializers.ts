@@ -21,7 +21,7 @@ import * as util from 'util';
 import { TimeoutError } from '../errors';
 import * as types from '../types';
 import { helper, assert } from '../helper';
-import { SerializedError } from './channels';
+import { SerializedError, AXNode } from './channels';
 import { serializeAsCallArgument, parseEvaluationResultValue } from '../common/utilityScriptSerializers';
 
 export function serializeError(e: any): SerializedError {
@@ -141,5 +141,31 @@ export function envArrayToObject(env: types.EnvArray): types.Env {
   const result: types.Env = {};
   for (const { name, value } of env)
     result[name] = value;
+  return result;
+}
+
+export function axNodeToProtocol(axNode: types.SerializedAXNode): AXNode {
+  const result: AXNode = {
+    ...axNode,
+    valueNumber: typeof axNode.value === 'number' ? axNode.value : undefined,
+    valueString: typeof axNode.value === 'string' ? axNode.value : undefined,
+    checked: axNode.checked === true ? 'checked' : axNode.checked === false ? 'unchecked' : axNode.checked,
+    pressed: axNode.pressed === true ? 'pressed' : axNode.pressed === false ? 'released' : axNode.pressed,
+    children: axNode.children ? axNode.children.map(axNodeToProtocol) : undefined,
+  };
+  delete (result as any).value;
+  return result;
+}
+
+export function axNodeFromProtocol(axNode: AXNode): types.SerializedAXNode {
+  const result: types.SerializedAXNode = {
+    ...axNode,
+    value: axNode.valueNumber !== undefined ? axNode.valueNumber : axNode.valueString,
+    checked: axNode.checked === 'checked' ? true : axNode.checked === 'unchecked' ? false : axNode.checked,
+    pressed: axNode.pressed === 'pressed' ? true : axNode.pressed === 'released' ? false : axNode.pressed,
+    children: axNode.children ? axNode.children.map(axNodeFromProtocol) : undefined,
+  };
+  delete (result as any).valueNumber;
+  delete (result as any).valueString;
   return result;
 }

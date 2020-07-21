@@ -20,9 +20,9 @@ import { Frame } from '../../frames';
 import { Request } from '../../network';
 import { Page, Worker } from '../../page';
 import * as types from '../../types';
-import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary, SerializedArgument, PagePdfParams, SerializedError } from '../channels';
+import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary, SerializedArgument, PagePdfParams, SerializedError, PageAccessibilitySnapshotResult } from '../channels';
 import { Dispatcher, DispatcherScope, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
-import { parseError, serializeError, headersArrayToObject } from '../serializers';
+import { parseError, serializeError, headersArrayToObject, axNodeToProtocol } from '../serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
 import { DownloadDispatcher } from './downloadDispatcher';
@@ -180,12 +180,12 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     await this._page.mouse.click(params.x, params.y, params);
   }
 
-  async accessibilitySnapshot(params: { interestingOnly?: boolean, root?: ElementHandleChannel }): Promise<{ rootAXNode?: types.SerializedAXNode }> {
+  async accessibilitySnapshot(params: { interestingOnly?: boolean, root?: ElementHandleChannel }): Promise<PageAccessibilitySnapshotResult> {
     const rootAXNode = await this._page.accessibility.snapshot({
       interestingOnly: params.interestingOnly,
       root: params.root ? (params.root as ElementHandleDispatcher)._elementHandle : undefined
     });
-    return { rootAXNode: rootAXNode || undefined };
+    return { rootAXNode: rootAXNode ? axNodeToProtocol(rootAXNode) : undefined };
   }
 
   async pdf(params: PagePdfParams): Promise<{ pdf: Binary }> {

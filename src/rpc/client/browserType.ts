@@ -77,6 +77,8 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     return this._wrapApiCall('browserType.launchPersistentContext', async () => {
       const persistentOptions: BrowserTypeLaunchPersistentContextParams = {
         ...options,
+        viewport: options.viewport === null ? undefined : options.viewport,
+        noDefaultViewport: options.viewport === null,
         ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
         ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
         env: options.env ? envObjectToArray(options.env) : undefined,

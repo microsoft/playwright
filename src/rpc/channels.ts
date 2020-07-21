@@ -45,16 +45,11 @@ export type SerializedArgument = {
   handles: Channel[],
 };
 
-export type AXNodeValue = string | number;
-
-export type AXNodeChecked = boolean | 'mixed';
-
-export type AXNodePressed = boolean | 'mixed';
-
 export type AXNode = {
   role: string,
   name: string,
-  value?: AXNodeValue,
+  valueString?: string,
+  valueNumber?: number,
   description?: string,
   keyshortcuts?: string,
   roledescription?: string,
@@ -68,8 +63,8 @@ export type AXNode = {
   readonly?: boolean,
   required?: boolean,
   selected?: boolean,
-  checked?: AXNodeChecked,
-  pressed?: AXNodePressed,
+  checked?: 'checked' | 'unchecked' | 'mixed',
+  pressed?: 'pressed' | 'released' | 'mixed',
   level?: number,
   valuemin?: number,
   valuemax?: number,
@@ -79,15 +74,6 @@ export type AXNode = {
   orientation?: string,
   children?: AXNode[],
 };
-
-export type WaitForFunctionPolling = number | 'raf';
-
-export type Viewport = {
-  width: number,
-  height: number,
-};
-
-export type ViewportOrNull = null | Viewport;
 
 export type SerializedError = {
   error?: {
@@ -241,7 +227,11 @@ export type BrowserTypeLaunchPersistentContextParams = {
   },
   downloadsPath?: string,
   slowMo?: number,
-  viewport?: ViewportOrNull,
+  noDefaultViewport?: boolean,
+  viewport?: {
+    width: number,
+    height: number,
+  },
   ignoreHTTPSErrors?: boolean,
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
@@ -303,7 +293,11 @@ export type BrowserCloseEvent = {};
 export type BrowserCloseParams = {};
 export type BrowserCloseResult = void;
 export type BrowserNewContextParams = {
-  viewport?: ViewportOrNull,
+  noDefaultViewport?: boolean,
+  viewport?: {
+    width: number,
+    height: number,
+  },
   ignoreHTTPSErrors?: boolean,
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
@@ -1094,7 +1088,7 @@ export type FrameWaitForFunctionParams = {
   isFunction: boolean,
   arg: SerializedArgument,
   timeout?: number,
-  polling?: WaitForFunctionPolling,
+  pollingInterval?: number,
 };
 export type FrameWaitForFunctionResult = {
   handle: JSHandleChannel,
