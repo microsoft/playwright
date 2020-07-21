@@ -19,7 +19,7 @@ const {installCoverageHooks} = require('./coverage');
 
 const browserName = process.env.BROWSER || 'chromium';
 
-const api = new Set(installCoverageHooks(browserName).keys());
+const api = new Set(installCoverageHooks(browserName).coverage.keys());
 
 // coverage exceptions
 

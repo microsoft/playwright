@@ -55,7 +55,9 @@ class PlaywrightEnvironment extends NodeEnvironment {
 
   async setup() {
     await super.setup();
-    this.coverage = installCoverageHooks(browserName);
+    const {coverage, uninstall} = installCoverageHooks(browserName);
+    this.coverage = coverage;
+    this.uninstallCoverage = uninstall;
   }
 
   async teardown() {
@@ -64,12 +66,15 @@ class PlaywrightEnvironment extends NodeEnvironment {
     // The setup might have failed for some reason.
     if (!this.coverage)
       return;
+    this.uninstallCoverage();
     const testRoot = path.join(__dirname, '..');
     const relativeTestPath = path.relative(testRoot, this.testPath);
     const coveragePath = path.join(this.global.testOptions.OUTPUT_DIR, 'coverage', relativeTestPath + '.json');
     const coverageJSON = [...this.coverage.keys()].filter(key => this.coverage.get(key));
     await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
     await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
+    delete this.coverage;
+    delete this.uninstallCoverage;
   }
 
   runScript(script) {

@@ -22,6 +22,7 @@
  * @param {!Object} classType
  */
 function traceAPICoverage(apiCoverage, events, className, classType) {
+  const uninstalls = [];
   className = className.substring(0, 1).toLowerCase() + className.substring(1);
   for (const methodName of Reflect.ownKeys(classType.prototype)) {
     const method = Reflect.get(classType.prototype, methodName);
@@ -34,6 +35,7 @@ function traceAPICoverage(apiCoverage, events, className, classType) {
     };
     Object.defineProperty(override, 'name', { writable: false, value: methodName });
     Reflect.set(classType.prototype, methodName, override);
+    uninstalls.push(() => Reflect.set(classType.prototype, methodName, method));
   }
 
   if (events[classType.name]) {
@@ -47,7 +49,10 @@ function traceAPICoverage(apiCoverage, events, className, classType) {
         apiCoverage.set(`${className}.emit(${JSON.stringify(event)})`, true);
       return method.call(this, event, ...args);
     });
+    uninstalls.push(() => Reflect.set(classType.prototype, 'emit', method));
   }
+
+  return () => uninstalls.forEach(u => u());
 }
 
 /**
@@ -99,11 +104,13 @@ function apiForBrowser(browserName) {
  * @param {string} browserName 
  */
 function installCoverageHooks(browserName) {
+  const uninstalls = [];
   const {api, events} = apiForBrowser(browserName);
   const coverage = new Map();
   for (const [name, value] of Object.entries(api))
-    traceAPICoverage(coverage, events, name, value);
-  return coverage;
+    uninstalls.push(traceAPICoverage(coverage, events, name, value));
+  const uninstall = () => uninstalls.map(u => u());
+  return {coverage, uninstall};
 }
 
 module.exports = {
