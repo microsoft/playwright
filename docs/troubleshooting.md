@@ -5,8 +5,6 @@
   * [Chrome headless doesn't launch on Windows](#chrome-headless-doesnt-launch-on-windows)
   * [Chrome headless doesn't launch on Linux/WSL](#chrome-headless-doesnt-launch-on-linuxwsl)
   * [Setting Up Chrome Linux Sandbox](#setting-up-chrome-linux-sandbox)
-    - [[recommended] Enable user namespace cloning](#recommended-enable-user-namespace-cloning)
-    - [[alternative] Setup setuid sandbox](#alternative-setup-setuid-sandbox)
 - [Firefox](#firefox)
   * [Firefox headless doesn't launch on Linux/WSL](#firefox-headless-doesnt-launch-on-linuxwsl)
 - [WebKit](#webkit)
@@ -162,7 +160,7 @@ sudo sysctl -w kernel.unprivileged_userns_clone=1
 ```
 
 In case of Docker, containers need to be run with a custom [security profile](https://docs.docker.com/engine/security/seccomp/) that enables
-user namespace cloning. You can download this profile here: [`seccomp_profile.json`](./docker/seccomp_profile.json)
+user namespace cloning. You can download this profile here: [`seccomp_profile.json`](docker/seccomp_profile.json)
 
 With the downloaded profile, docker container could be run like this:
 
