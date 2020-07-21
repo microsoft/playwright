@@ -108,8 +108,8 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
 
   async emulateMedia(params: PageEmulateMediaParams): Promise<void> {
     await this._page.emulateMedia({
-      media: params.media === 'reset' ? null : params.media,
-      colorScheme: params.colorScheme === 'reset' ? null : params.colorScheme,
+      media: params.media === 'null' ? null : params.media,
+      colorScheme: params.colorScheme === 'null' ? null : params.colorScheme,
     });
   }
 

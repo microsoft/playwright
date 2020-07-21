@@ -123,7 +123,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     });
   }
 
-  async selectText(options: types.TimeoutOptions): Promise<void> {
+  async selectText(options: types.TimeoutOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.selectText', async () => {
       await this._elementChannel.selectText(options);
     });

@@ -23,6 +23,7 @@ import { BrowserServer } from './browserServer';
 import { LoggerSink } from '../../loggerSink';
 import { headersObjectToArray, envObjectToArray } from '../serializers';
 import { serializeArgument } from './jsHandle';
+import { assert } from '../../helper';
 
 type FirefoxPrefsOptions = { firefoxUserPrefs?: { [key: string]: string | number | boolean } };
 
@@ -48,6 +49,8 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.launch', async () => {
+      assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
+      assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
       const launchOptions: BrowserTypeLaunchParams = {
         ...options,
         ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
