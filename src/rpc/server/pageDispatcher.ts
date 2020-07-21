@@ -195,6 +195,10 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     return { pdf: buffer.toString('base64') };
   }
 
+  async bringToFront(): Promise<void> {
+    await this._page.bringToFront();
+  }
+
   async crStartJSCoverage(params: types.JSCoverageOptions): Promise<void> {
     const coverage = this._page.coverage as CRCoverage;
     await coverage.startJSCoverage(params);

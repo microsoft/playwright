@@ -286,6 +286,10 @@ export class FFPage implements PageDelegate {
     });
   }
 
+  async bringToFront(): Promise<void> {
+    await this._session.send('Page.bringToFront', {});
+  }
+
   async updateEmulateMedia(): Promise<void> {
     const colorScheme = this._page._state.colorScheme || this._browserContext._options.colorScheme || 'light';
     await this._session.send('Page.setEmulatedMedia', {

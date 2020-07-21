@@ -702,6 +702,7 @@ page.removeListener('request', logRequest);
 - [page.addInitScript(script[, arg])](#pageaddinitscriptscript-arg)
 - [page.addScriptTag(options)](#pageaddscripttagoptions)
 - [page.addStyleTag(options)](#pageaddstyletagoptions)
+- [page.bringToFront()](#pagebringtofront)
 - [page.check(selector, [options])](#pagecheckselector-options)
 - [page.click(selector[, options])](#pageclickselector-options)
 - [page.close([options])](#pagecloseoptions)
@@ -1006,6 +1007,14 @@ Shortcut for [page.mainFrame().addScriptTag(options)](#frameaddscripttagoptions)
 Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<style type="text/css">` tag with the content.
 
 Shortcut for [page.mainFrame().addStyleTag(options)](#frameaddstyletagoptions).
+
+
+#### page.bringToFront()
+
+- returns: <[Promise]>
+
+Brings page to front (activates tab).
+
 
 #### page.check(selector, [options])
 - `selector` <[string]> A selector to search for checkbox or radio button to check. If there are multiple elements satisfying the selector, the first will be checked. See [working with selectors](#working-with-selectors) for more details.
