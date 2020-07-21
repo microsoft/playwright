@@ -295,6 +295,7 @@ export type LaunchOptionsBase = {
   devtools?: boolean,
   proxy?: ProxySettings,
   downloadsPath?: string,
+  chromiumSandbox?: boolean,
 };
 
 export type LaunchOptions = LaunchOptionsBase & { slowMo?: number };

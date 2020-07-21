@@ -194,10 +194,7 @@ playwright.chromium.launch().then(async browser => {
 // Example with launch options
 (async () => {
   const browser = await playwright.chromium.launch({
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-    ],
+    chromiumSandbox: false,
     handleSIGINT: true,
     handleSIGHUP: true,
     handleSIGTERM: true,
