@@ -47,6 +47,10 @@ export class Firefox extends BrowserTypeBase {
     } : env;
   }
 
+  async _amendArguments(browserArguments: string[]): Promise<string[]> {
+    return browserArguments;
+  }
+
   _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
     const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
     transport.send(message);

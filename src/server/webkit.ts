@@ -42,6 +42,10 @@ export class WebKit extends BrowserTypeBase {
     return { ...env, CURL_COOKIE_JAR_PATH: path.join(userDataDir, 'cookiejar.db') };
   }
 
+  async _amendArguments(browserArguments: string[]): Promise<string[]> {
+    return browserArguments;
+  }
+
   _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
     transport.send({method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId});
   }
