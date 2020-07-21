@@ -527,10 +527,14 @@ interface Page
       media?: enum
         screen
         print
+        # Reset emulated value to the system default.
+        reset
       colorScheme?: enum
         dark
         light
         no-preference
+        # Reset emulated value to the system default.
+        reset
 
   command exposeBinding
     parameters

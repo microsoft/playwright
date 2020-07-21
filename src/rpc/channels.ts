@@ -618,8 +618,8 @@ export type PageCloseParams = {
 };
 export type PageCloseResult = void;
 export type PageEmulateMediaParams = {
-  media?: 'screen' | 'print',
-  colorScheme?: 'dark' | 'light' | 'no-preference',
+  media?: 'screen' | 'print' | 'reset',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'reset',
 };
 export type PageEmulateMediaResult = void;
 export type PageExposeBindingParams = {
