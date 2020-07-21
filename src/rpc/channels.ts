@@ -1571,21 +1571,15 @@ export interface CDPSessionChannel extends Channel {
 }
 export type CDPSessionEventEvent = {
   method: string,
-  params?: {
-
-  },
+  params?: SerializedValue,
 };
 export type CDPSessionDisconnectedEvent = {};
 export type CDPSessionSendParams = {
   method: string,
-  params?: {
-
-  },
+  params?: SerializedValue,
 };
 export type CDPSessionSendResult = {
-  result: {
-
-  },
+  result: SerializedValue,
 };
 export type CDPSessionDetachParams = {};
 export type CDPSessionDetachResult = void;

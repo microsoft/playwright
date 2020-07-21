@@ -1407,16 +1407,16 @@ interface CDPSession
   event event
     parameters
       method: string
-      params?: object
+      params?: SerializedValue
 
   event disconnected
 
   command send
     parameters
       method: string
-      params?: object
+      params?: SerializedValue
     returns
-      result: object
+      result: SerializedValue
 
   command detach
 
