@@ -1684,7 +1684,7 @@ Route:
             properties:
               name: string
               value: string
-        postData: string?
+        postData: binary?
 
     fulfill:
       parameters:

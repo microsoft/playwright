@@ -359,7 +359,7 @@ class InterceptableRequest implements network.RouteDelegate {
       requestId: this._interceptionId!,
       headers: overrides.headers,
       method: overrides.method,
-      postData: overrides.postData
+      postData: overrides.postData ? overrides.postData.toString('base64') : undefined
     });
   }
 

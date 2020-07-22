@@ -107,7 +107,7 @@ export function normalizeContinueOverrides(overrides: types.ContinueOverrides): 
   return {
     method: overrides.method,
     headers: overrides.headers ? headersObjectToArray(overrides.headers) : undefined,
-    postData: overrides.postData,
+    postData: helper.isString(overrides.postData) ? Buffer.from(overrides.postData, 'utf8') : overrides.postData,
   };
 }
 

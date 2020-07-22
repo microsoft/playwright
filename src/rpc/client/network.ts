@@ -168,7 +168,12 @@ export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
   }
 
   async continue(overrides: types.ContinueOverrides = {}) {
-    await this._channel.continue(normalizeContinueOverrides(overrides));
+    const normalized = normalizeContinueOverrides(overrides);
+    await this._channel.continue({
+      method: normalized.method,
+      headers: normalized.headers,
+      postData: normalized.postData ? normalized.postData.toString('base64') : undefined
+    });
   }
 }
 

@@ -194,8 +194,8 @@ class TestServer {
         throw error;
     });
     request.postBody = new Promise(resolve => {
-      let body = '';
-      request.on('data', chunk => body += chunk);
+      let body = Buffer.from([]);
+      request.on('data', chunk => body = Buffer.concat([body, chunk]));
       request.on('end', () => resolve(body));
     });
     const pathName = url.parse(request.url).path;
