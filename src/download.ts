@@ -72,6 +72,15 @@ export class Download {
     return fileName;
   }
 
+  async saveAs(path: string) {
+    const internalPath = await this.path();
+    if (internalPath === null)
+      throw new Error('Download not found on disk. Check download.failure() for details.');
+    if (this._deleted)
+      throw new Error('Download already deleted. Save before deleting.');
+    await util.promisify(fs.copyFile)(internalPath, path);
+  }
+
   async failure(): Promise<string | null> {
     if (!this._acceptDownloads)
       return 'Pass { acceptDownloads: true } when you are creating your browser context.';

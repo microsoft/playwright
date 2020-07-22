@@ -16,7 +16,22 @@
 
 const fs = require('fs');
 const path = require('path');
+const util = require('util');
+const os = require('os');
+const removeFolder = require('rimraf');
+const mkdtempAsync = util.promisify(fs.mkdtemp);
+const removeFolderAsync = util.promisify(removeFolder);
+
 const {FFOX, CHROMIUM, WEBKIT, HEADLESS} = testOptions;
+
+registerFixture('persistentDirectory', async ({}, test) => {
+  const persistentDirectory = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
+  try {
+    await test(persistentDirectory);
+  } finally {
+    await removeFolderAsync(persistentDirectory);
+  }
+});
 
 describe('Download', function() {
   beforeEach(async ({server}) => {
@@ -55,6 +70,76 @@ describe('Download', function() {
     const path = await download.path();
     expect(fs.existsSync(path)).toBeTruthy();
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
+    await page.close();
+  });
+  it('should save to user-specified path', async({persistentDirectory, browser, server}) => {
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const userPath = path.join(persistentDirectory, "download.txt");
+    await download.saveAs(userPath);
+    expect(fs.existsSync(userPath)).toBeTruthy();
+    expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
+    await page.close();
+  });
+  it('should save to user-specified path without updating original path', async({persistentDirectory, browser, server}) => {
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const userPath = path.join(persistentDirectory, "download.txt");
+    await download.saveAs(userPath);
+    expect(fs.existsSync(userPath)).toBeTruthy();
+    expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
+
+    const originalPath = await download.path();
+    expect(fs.existsSync(originalPath)).toBeTruthy();
+    expect(fs.readFileSync(originalPath).toString()).toBe('Hello world');
+    await page.close();
+  });
+  it('should error when saving to non-existent user-specified path', async({persistentDirectory, browser, server}) => {
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const nonExistentUserPath = path.join(persistentDirectory, "does-not-exist","download.txt");
+    const { code, syscall, message } = await download.saveAs(nonExistentUserPath).catch(e => e);
+    expect(code).toBe('ENOENT');
+    expect(syscall).toBe('copyfile');
+    expect(message).toContain('no such file or directory');
+    expect(message).toContain('does-not-exist');
+    await page.close();
+  });
+  it('should error when saving with downloads disabled', async({persistentDirectory, browser, server}) => {
+    const page = await browser.newPage({ acceptDownloads: false });
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const userPath = path.join(persistentDirectory, "download.txt");
+    const { message } = await download.saveAs(userPath).catch(e => e);
+    expect(message).toContain('Pass { acceptDownloads: true } when you are creating your browser context');
+    await page.close();
+  });
+  it('should error when saving after deletion', async({persistentDirectory, browser, server}) => {
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const userPath = path.join(persistentDirectory, "download.txt");
+    await download.delete();
+    const { message } = await download.saveAs(userPath).catch(e => e);
+    expect(message).toContain('Download already deleted. Save before deleting.');
     await page.close();
   });
   it('should report non-navigation downloads', async({browser, server}) => {
