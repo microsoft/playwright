@@ -357,9 +357,12 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     });
   }
 
-  async emulateMedia(options: { media?: types.MediaType, colorScheme?: types.ColorScheme }) {
+  async emulateMedia(options: { media?: types.MediaType | null, colorScheme?: types.ColorScheme | null }) {
     return this._wrapApiCall('page.emulateMedia', async () => {
-      await this._channel.emulateMedia(options);
+      await this._channel.emulateMedia({
+        media: options.media === null ? 'reset' : options.media,
+        colorScheme: options.colorScheme === null ? 'reset' : options.colorScheme,
+      });
     });
   }
 

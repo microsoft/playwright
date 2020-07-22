@@ -241,7 +241,7 @@ describe('Page.emulateMedia type', function() {
     await page.emulateMedia({});
     expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(false);
     expect(await page.evaluate(() => matchMedia('print').matches)).toBe(true);
-    await page.emulateMedia({ media: '' });
+    await page.emulateMedia({ media: null });
     expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
     expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
   });

@@ -20,7 +20,7 @@ import { Frame } from '../../frames';
 import { Request } from '../../network';
 import { Page, Worker } from '../../page';
 import * as types from '../../types';
-import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary, SerializedArgument, PagePdfParams, SerializedError, PageAccessibilitySnapshotResult, SerializedValue } from '../channels';
+import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary, SerializedArgument, PagePdfParams, SerializedError, PageAccessibilitySnapshotResult, SerializedValue, PageEmulateMediaParams } from '../channels';
 import { Dispatcher, DispatcherScope, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { parseError, serializeError, headersArrayToObject, axNodeToProtocol } from '../serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
@@ -106,8 +106,11 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.goForward(params)) };
   }
 
-  async emulateMedia(params: { media?: 'screen' | 'print', colorScheme?: 'dark' | 'light' | 'no-preference' }): Promise<void> {
-    await this._page.emulateMedia(params);
+  async emulateMedia(params: PageEmulateMediaParams): Promise<void> {
+    await this._page.emulateMedia({
+      media: params.media === 'reset' ? null : params.media,
+      colorScheme: params.colorScheme === 'reset' ? null : params.colorScheme,
+    });
   }
 
   async setViewportSize(params: { viewportSize: types.Size }): Promise<void> {

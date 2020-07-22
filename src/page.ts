@@ -385,9 +385,11 @@ export class Page extends EventEmitter {
     return waitPromise;
   }
 
-  async emulateMedia(options: { media?: types.MediaType, colorScheme?: types.ColorScheme }) {
-    assert(!options.media || types.mediaTypes.has(options.media), 'media: expected one of (screen|print)');
-    assert(!options.colorScheme || types.colorSchemes.has(options.colorScheme), 'colorScheme: expected one of (dark|light|no-preference)');
+  async emulateMedia(options: { media?: types.MediaType | null, colorScheme?: types.ColorScheme | null }) {
+    if (options.media !== undefined)
+      assert(options.media === null || types.mediaTypes.has(options.media), 'media: expected one of (screen|print)');
+    if (options.colorScheme !== undefined)
+      assert(options.colorScheme === null || types.colorSchemes.has(options.colorScheme), 'colorScheme: expected one of (dark|light|no-preference)');
     if (options.media !== undefined)
       this._state.mediaType = options.media;
     if (options.colorScheme !== undefined)
