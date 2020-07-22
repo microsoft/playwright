@@ -22,6 +22,9 @@ import { ChannelOwner } from './channelOwner';
 import { BrowserServer } from './browserServer';
 import { LoggerSink } from '../../loggerSink';
 import { headersObjectToArray, envObjectToArray } from '../serializers';
+import { serializeArgument } from './jsHandle';
+
+type FirefoxPrefsOptions = { firefoxUserPrefs?: { [key: string]: string | number | boolean } };
 
 export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {
 
@@ -41,7 +44,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     return this._initializer.name;
   }
 
-  async launch(options: types.LaunchOptions & { logger?: LoggerSink } = {}): Promise<Browser> {
+  async launch(options: types.LaunchOptions & FirefoxPrefsOptions & { logger?: LoggerSink } = {}): Promise<Browser> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.launch', async () => {
@@ -50,6 +53,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
         ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
         ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
         env: options.env ? envObjectToArray(options.env) : undefined,
+        firefoxUserPrefs: options.firefoxUserPrefs ? serializeArgument(options.firefoxUserPrefs).value : undefined,
       };
       const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
       browser._logger = logger;
@@ -57,7 +61,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     }, logger);
   }
 
-  async launchServer(options: types.LaunchServerOptions & { logger?: LoggerSink } = {}): Promise<BrowserServer> {
+  async launchServer(options: types.LaunchServerOptions & FirefoxPrefsOptions & { logger?: LoggerSink } = {}): Promise<BrowserServer> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.launchServer', async () => {
@@ -66,6 +70,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
         ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
         ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
         env: options.env ? envObjectToArray(options.env) : undefined,
+        firefoxUserPrefs: options.firefoxUserPrefs ? serializeArgument(options.firefoxUserPrefs).value : undefined,
       };
       return BrowserServer.from((await this._channel.launchServer(launchServerOptions)).server);
     }, logger);

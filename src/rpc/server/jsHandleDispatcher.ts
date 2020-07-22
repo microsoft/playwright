@@ -65,6 +65,9 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitiali
 export function parseArgument(arg: SerializedArgument): any {
   return parseSerializedValue(arg.value, arg.handles.map(a => (a as JSHandleDispatcher)._object));
 }
+export function parseValue(v: SerializedValue): any {
+  return parseSerializedValue(v, []);
+}
 
 export function serializeResult(arg: any): SerializedValue {
   return serializeValue(arg, value => ({ fallThrough: value }), new Set());
