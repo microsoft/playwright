@@ -28,7 +28,7 @@ export class Download {
   private _finishedCallback: () => void;
   private _finishedPromise: Promise<void>;
   private _saveAsRequests: { fulfill: () => void; reject: (error?: any) => void; path: string }[] = [];
-  private _loaded: boolean = false;
+  private _finished: boolean = false;
   private _page: Page;
   private _acceptDownloads: boolean;
   private _failure: string | null = null;
@@ -75,7 +75,14 @@ export class Download {
   }
 
   async saveAs(path: string) {
-    if (this._loaded) {
+    if (!this._acceptDownloads)
+      throw new Error('Pass { acceptDownloads: true } when you are creating your browser context.');
+    if (this._deleted)
+      throw new Error('Download already deleted. Save before deleting.');
+    if (this._failure)
+      throw new Error('Download not found on disk. Check download.failure() for details.');
+
+    if (this._finished) {
       await this._saveAs(path);
       return;
     }
@@ -83,15 +90,9 @@ export class Download {
     return new Promise((fulfill, reject) => this._saveAsRequests.push({fulfill, reject, path}));
   }
 
-  async _saveAs(dlPath: string) {
-    if (!this._acceptDownloads)
-      throw new Error('Pass { acceptDownloads: true } when you are creating your browser context.');
+  async _saveAs(downloadPath: string) {
     const fileName = path.join(this._downloadsPath, this._uuid);
-    if (this._failure)
-      throw new Error('Download not found on disk. Check download.failure() for details.');
-    if (this._deleted)
-      throw new Error('Download already deleted. Save before deleting.');
-    await util.promisify(fs.copyFile)(fileName, dlPath);
+    await util.promisify(fs.copyFile)(fileName, downloadPath);
   }
 
   async failure(): Promise<string | null> {
@@ -118,13 +119,12 @@ export class Download {
   }
 
   async _reportFinished(error?: string) {
+    this._finished = true;
+    this._failure = error || null;
+
     if (error) {
-      for (const { reject } of this._saveAsRequests) {
-        if (!this._acceptDownloads)
-          reject(new Error('Pass { acceptDownloads: true } when you are creating your browser context.'));
-        else
-          reject(error);
-      }
+      for (const { reject } of this._saveAsRequests)
+        reject(error);
     } else {
       for (const { fulfill, reject, path } of this._saveAsRequests) {
         try {
@@ -136,8 +136,6 @@ export class Download {
       }
     }
 
-    this._loaded = true;
-    this._failure = error || null;
     this._finishedCallback();
   }
 }
