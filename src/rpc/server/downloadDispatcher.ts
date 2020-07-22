@@ -32,6 +32,10 @@ export class DownloadDispatcher extends Dispatcher<Download, DownloadInitializer
     return { value: path || undefined };
   }
 
+  async saveAs(params: { path: string }): Promise<void> {
+    await this._object.saveAs(params.path);
+  }
+
   async stream(): Promise<{ stream?: StreamChannel }> {
     const stream = await this._object.createReadStream();
     if (!stream)
