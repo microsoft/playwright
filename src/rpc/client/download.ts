@@ -42,7 +42,7 @@ export class Download extends ChannelOwner<DownloadChannel, DownloadInitializer>
 
   async saveAs(path: string): Promise<void> {
     return this._wrapApiCall('download.saveAs', async () => {
-      this._channel.saveAs({ path });
+      await this._channel.saveAs({ path });
     });
   }
 
