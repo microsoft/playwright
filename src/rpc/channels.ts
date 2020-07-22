@@ -1400,7 +1400,7 @@ export type RequestInitializer = {
   url: string,
   resourceType: string,
   method: string,
-  postData?: string,
+  postData?: Binary,
   headers: {
     name: string,
     value: string,

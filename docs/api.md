@@ -3486,6 +3486,7 @@ If request gets a 'redirect' response, the request is successfully finished with
 - [request.isNavigationRequest()](#requestisnavigationrequest)
 - [request.method()](#requestmethod)
 - [request.postData()](#requestpostdata)
+- [request.postDataBuffer()](#requestpostdatabuffer)
 - [request.postDataJSON()](#requestpostdatajson)
 - [request.redirectedFrom()](#requestredirectedfrom)
 - [request.redirectedTo()](#requestredirectedto)
@@ -3525,6 +3526,9 @@ Whether this request is driving frame's navigation.
 
 #### request.postData()
 - returns: <?[string]> Request's post body, if any.
+
+#### request.postDataBuffer()
+- returns: <?[Buffer]> Request's post body in a binary form, if any.
 
 #### request.postDataJSON()
 - returns: <?[Object]> Parsed request's body for `form-urlencoded` and JSON as a fallback if any.

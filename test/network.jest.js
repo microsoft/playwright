@@ -133,13 +133,39 @@ describe('Request.postData', function() {
     expect(request).toBeTruthy();
     expect(request.postData()).toBe('{"foo":"bar"}');
   });
+  it('should work with binary', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    server.setRoute('/post', (req, res) => res.end());
+    let request = null;
+    page.on('request', r => request = r);
+    await page.evaluate(async () => {
+      await fetch('./post', { method: 'POST', body: new Uint8Array(Array.from(Array(256).keys())) })
+    });
+    expect(request).toBeTruthy();
+    const buffer = request.postDataBuffer();
+    expect(buffer.length).toBe(256);
+    for (let i = 0; i < 256; ++i)
+      expect(buffer[i]).toBe(i);
+  });
+  it('should work with binary and interception', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    server.setRoute('/post', (req, res) => res.end());
+    let request = null;
+    await page.route('/post', route => route.continue());
+    page.on('request', r => request = r);
+    await page.evaluate(async () => {
+      await fetch('./post', { method: 'POST', body: new Uint8Array(Array.from(Array(256).keys())) })
+    });
+    expect(request).toBeTruthy();
+    const buffer = request.postDataBuffer();
+    expect(buffer.length).toBe(256);
+    for (let i = 0; i < 256; ++i)
+      expect(buffer[i]).toBe(i);
+  });
   it('should be |undefined| when there is no post data', async({page, server}) => {
     const response = await page.goto(server.EMPTY_PAGE);
     expect(response.request().postData()).toBe(null);
   });
-});
-
-describe('Request.postDataJSON', function () {
   it('should parse the JSON payload', async ({ page, server }) => {
     await page.goto(server.EMPTY_PAGE);
     server.setRoute('/post', (req, res) => res.end());
@@ -149,7 +175,6 @@ describe('Request.postDataJSON', function () {
     expect(request).toBeTruthy();
     expect(request.postDataJSON()).toEqual({ "foo": "bar" });
   });
-
   it('should parse the data if content-type is application/x-www-form-urlencoded', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     server.setRoute('/post', (req, res) => res.end());
@@ -160,7 +185,6 @@ describe('Request.postDataJSON', function () {
     expect(request).toBeTruthy();
     expect(request.postDataJSON()).toEqual({'foo':'bar','baz':'123'});
   })
-
   it('should be |undefined| when there is no post data', async ({ page, server }) => {
     const response = await page.goto(server.EMPTY_PAGE);
     expect(response.request().postDataJSON()).toBe(null);
