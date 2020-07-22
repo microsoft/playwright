@@ -1372,14 +1372,50 @@ index 10c6ffd4d6c7e237c171dfd3a47baaafbacf537d..13f490ca506dd7d16f45048d6e7576c9
      String canonical;
  
      Vector<UChar, 32> buffer;
+diff --git a/Source/ThirdParty/libwebrtc/CMakeLists.txt b/Source/ThirdParty/libwebrtc/CMakeLists.txt
+index 70ccc9bd0e1d8d57cbfdc5fea72fe9aae5203864..90027ec135a7f42068f501138d5cf15f609abb17 100644
+--- a/Source/ThirdParty/libwebrtc/CMakeLists.txt
++++ b/Source/ThirdParty/libwebrtc/CMakeLists.txt
+@@ -292,6 +292,11 @@ set(webrtc_SOURCES
+     Source/third_party/jsoncpp/source/src/lib_json/json_reader.cpp
+     Source/third_party/jsoncpp/source/src/lib_json/json_value.cpp
+     Source/third_party/jsoncpp/source/src/lib_json/json_writer.cpp
++# Playwright begin
++    Source/third_party/libwebm/mkvmuxer/mkvmuxer.cc
++    Source/third_party/libwebm/mkvmuxer/mkvmuxerutil.cc
++    Source/third_party/libwebm/mkvmuxer/mkvwriter.cc
++# Playwright end
+     Source/third_party/libyuv/source/compare.cc
+     Source/third_party/libyuv/source/compare_common.cc
+     Source/third_party/libyuv/source/compare_gcc.cc
+@@ -1467,6 +1472,9 @@ target_include_directories(webrtc PRIVATE
+     Source/third_party/libsrtp/config
+     Source/third_party/libsrtp/crypto/include
+     Source/third_party/libsrtp/include
++# Playwright begin
++    Source/third_party/libwebm
++# Playwright end
+     Source/third_party/libyuv/include
+     Source/third_party/opus/src/celt
+     Source/third_party/opus/src/include
 diff --git a/Source/ThirdParty/libwebrtc/Configurations/libwebrtc.mac.exp b/Source/ThirdParty/libwebrtc/Configurations/libwebrtc.mac.exp
-index 8d85b5b8b3754addefde7c24f2f20a4658366acd..a2372861fa8ab663f8f130478eb4964879442fda 100644
+index 8d85b5b8b3754addefde7c24f2f20a4658366acd..1ffc2020d2b7d3296a8bd495594062a9beb62d48 100644
 --- a/Source/ThirdParty/libwebrtc/Configurations/libwebrtc.mac.exp
 +++ b/Source/ThirdParty/libwebrtc/Configurations/libwebrtc.mac.exp
-@@ -315,3 +315,12 @@ __ZN4webm10WebmParserC2Ev
+@@ -315,3 +315,23 @@ __ZN4webm10WebmParserC2Ev
  __ZN4webm10WebmParserD1Ev
  __ZN4webm10WebmParserD2Ev
  __ZN4webm4swapERNS_10WebmParserES1_
++__ZN8mkvmuxer11SegmentInfo15set_writing_appEPKc
++__ZN8mkvmuxer11SegmentInfo4InitEv
++__ZN8mkvmuxer7Segment10OutputCuesEb
++__ZN8mkvmuxer7Segment13AddVideoTrackEiii
++__ZN8mkvmuxer7Segment4InitEPNS_10IMkvWriterE
++__ZN8mkvmuxer7Segment8AddFrameEPKhyyyb
++__ZN8mkvmuxer7Segment8FinalizeEv
++__ZN8mkvmuxer7SegmentC1Ev
++__ZN8mkvmuxer7SegmentD1Ev
++__ZN8mkvmuxer9MkvWriterC1EP7__sFILE
 +_ARGBToI420
 +_vpx_codec_enc_config_default
 +_vpx_codec_enc_init_ver
@@ -1388,20 +1424,103 @@ index 8d85b5b8b3754addefde7c24f2f20a4658366acd..a2372861fa8ab663f8f130478eb49648
 +_vpx_codec_error
 +_vpx_codec_get_cx_data
 +_vpx_codec_iface_name
++_vpx_codec_version_str
 +_vpx_codec_vp8_cx
+diff --git a/Source/ThirdParty/libwebrtc/Configurations/libwebrtc.xcconfig b/Source/ThirdParty/libwebrtc/Configurations/libwebrtc.xcconfig
+index c5d73fc6a0759fc65ae9cf56531d271a27e42bee..e58a216891bc8bec31f5bf80c25989619e6c4e04 100644
+--- a/Source/ThirdParty/libwebrtc/Configurations/libwebrtc.xcconfig
++++ b/Source/ThirdParty/libwebrtc/Configurations/libwebrtc.xcconfig
+@@ -18,7 +18,7 @@ DYLIB_INSTALL_NAME_BASE_WK_RELOCATABLE_FRAMEWORKS_ = $(DYLIB_INSTALL_NAME_BASE);
+ DYLIB_INSTALL_NAME_BASE_WK_RELOCATABLE_FRAMEWORKS_YES = @loader_path/../../../;
+ 
+ GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+-HEADER_SEARCH_PATHS = Source Source/third_party/jsoncpp/source/include Source/third_party/libsrtp/crypto/include Source/third_party/libsrtp/include Source/third_party/boringssl/src/include Source/third_party/libyuv/include Source/third_party/usrsctp Source/third_party/usrsctp/usrsctplib Source/third_party/usrsctp/usrsctplib/usrsctplib Source/webrtc/sdk/objc/Framework/Headers Source/webrtc/common_audio/signal_processing/include Source/webrtc/modules/audio_coding/codecs/isac/main/include Source/third_party/opus/src/celt Source/third_party/opus/src/include Source/third_party/opus/src/src Source/webrtc/modules/audio_device/mac Source/third_party/usrsctp/usrsctplib/usrsctplib/netinet Source/webrtc/modules/audio_device/ios Source/webrtc Source/webrtc/sdk/objc Source/webrtc/sdk/objc/base Source/webrtc/sdk/objc/Framework/Classes Source/third_party/libsrtp/config Source/webrtc/sdk/objc/Framework/Classes/Common Source/webrtc/sdk/objc/Framework/Classes/Video Source/webrtc/sdk/objc/Framework/Classes/PeerConnection Source/third_party/abseil-cpp Source/third_party/libvpx/source/libvpx Source/third_party/libwebm/webm_parser/include;
++HEADER_SEARCH_PATHS = Source Source/third_party/jsoncpp/source/include Source/third_party/libsrtp/crypto/include Source/third_party/libsrtp/include Source/third_party/boringssl/src/include Source/third_party/libyuv/include Source/third_party/usrsctp Source/third_party/usrsctp/usrsctplib Source/third_party/usrsctp/usrsctplib/usrsctplib Source/webrtc/sdk/objc/Framework/Headers Source/webrtc/common_audio/signal_processing/include Source/webrtc/modules/audio_coding/codecs/isac/main/include Source/third_party/opus/src/celt Source/third_party/opus/src/include Source/third_party/opus/src/src Source/webrtc/modules/audio_device/mac Source/third_party/usrsctp/usrsctplib/usrsctplib/netinet Source/webrtc/modules/audio_device/ios Source/webrtc Source/webrtc/sdk/objc Source/webrtc/sdk/objc/base Source/webrtc/sdk/objc/Framework/Classes Source/third_party/libsrtp/config Source/webrtc/sdk/objc/Framework/Classes/Common Source/webrtc/sdk/objc/Framework/Classes/Video Source/webrtc/sdk/objc/Framework/Classes/PeerConnection Source/third_party/abseil-cpp Source/third_party/libvpx/source/libvpx Source/third_party/libwebm/webm_parser/include Source/third_party/libvpx/source/libvpx/third_party/libwebm;
+ 
+ PUBLIC_HEADERS_FOLDER_PATH = /usr/local/include/libwebrtc;
+ USE_HEADERMAP = NO;
 diff --git a/Source/ThirdParty/libwebrtc/libwebrtc.xcodeproj/project.pbxproj b/Source/ThirdParty/libwebrtc/libwebrtc.xcodeproj/project.pbxproj
-index 4da73a1bfb4103a1f7aa414349fe0afaebc0c8aa..dde5484143004cb2efc876721d97463d97d122d3 100644
+index 4da73a1bfb4103a1f7aa414349fe0afaebc0c8aa..837cfc9ec73a9775f2537d65b7548c8cf41fd19e 100644
 --- a/Source/ThirdParty/libwebrtc/libwebrtc.xcodeproj/project.pbxproj
 +++ b/Source/ThirdParty/libwebrtc/libwebrtc.xcodeproj/project.pbxproj
-@@ -17490,7 +17490,7 @@
+@@ -3886,6 +3886,9 @@
+ 		CDEBB4CA24C01A0D00ADBD44 /* libwebm.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CDEBB11924C0187400ADBD44 /* libwebm.a */; };
+ 		CDEBB4D324C0C8CA00ADBD44 /* bit_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CDEBB45124C0191A00ADBD44 /* bit_utils.cc */; };
+ 		CDEBB4D424C0CB1000ADBD44 /* callback.cc in Sources */ = {isa = PBXBuildFile; fileRef = CDEBB48E24C0191A00ADBD44 /* callback.cc */; };
++		F3B7819924C7CC5200FCB122 /* mkvmuxerutil.cc in Sources */ = {isa = PBXBuildFile; fileRef = F3B7819624C7CC5100FCB122 /* mkvmuxerutil.cc */; };
++		F3B7819A24C7CC5200FCB122 /* mkvmuxer.cc in Sources */ = {isa = PBXBuildFile; fileRef = F3B7819724C7CC5200FCB122 /* mkvmuxer.cc */; };
++		F3B7819B24C7CC5200FCB122 /* mkvwriter.cc in Sources */ = {isa = PBXBuildFile; fileRef = F3B7819824C7CC5200FCB122 /* mkvwriter.cc */; };
+ /* End PBXBuildFile section */
+ 
+ /* Begin PBXBuildRule section */
+@@ -8366,6 +8369,9 @@
+ 		CDEBB49B24C0191A00ADBD44 /* content_enc_aes_settings_parser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = content_enc_aes_settings_parser.h; sourceTree = "<group>"; };
+ 		CDEBB49C24C0191A00ADBD44 /* video_parser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = video_parser.h; sourceTree = "<group>"; };
+ 		CDEBB49D24C0191A00ADBD44 /* master_parser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = master_parser.h; sourceTree = "<group>"; };
++		F3B7819624C7CC5100FCB122 /* mkvmuxerutil.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mkvmuxerutil.cc; path = mkvmuxer/mkvmuxerutil.cc; sourceTree = "<group>"; };
++		F3B7819724C7CC5200FCB122 /* mkvmuxer.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mkvmuxer.cc; path = mkvmuxer/mkvmuxer.cc; sourceTree = "<group>"; };
++		F3B7819824C7CC5200FCB122 /* mkvwriter.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mkvwriter.cc; path = mkvmuxer/mkvwriter.cc; sourceTree = "<group>"; };
+ 		FB39D0D11200F0E300088E69 /* libwebrtc.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libwebrtc.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+ /* End PBXFileReference section */
+ 
+@@ -15247,6 +15253,7 @@
+ 		CDEBB11F24C0191800ADBD44 /* libwebm */ = {
+ 			isa = PBXGroup;
+ 			children = (
++				F3B7819524C7CC1300FCB122 /* mkvmuxer */,
+ 				CDEBB19224C0191800ADBD44 /* webm_parser */,
+ 			);
+ 			path = libwebm;
+@@ -15372,6 +15379,16 @@
+ 			path = src;
+ 			sourceTree = "<group>";
+ 		};
++		F3B7819524C7CC1300FCB122 /* mkvmuxer */ = {
++			isa = PBXGroup;
++			children = (
++				F3B7819724C7CC5200FCB122 /* mkvmuxer.cc */,
++				F3B7819624C7CC5100FCB122 /* mkvmuxerutil.cc */,
++				F3B7819824C7CC5200FCB122 /* mkvwriter.cc */,
++			);
++			name = mkvmuxer;
++			sourceTree = "<group>";
++		};
+ 		FB39D06E1200ED9200088E69 = {
+ 			isa = PBXGroup;
+ 			children = (
+@@ -17490,7 +17507,7 @@
  			);
  			runOnlyForDeploymentPostprocessing = 0;
  			shellPath = /bin/sh;
 -			shellScript = "PRIVATE_HEADERS_FOLDER_PATH=usr/local/include\n\nif [[ \"${DEPLOYMENT_LOCATION}\" == \"NO\" ]]; then\n    PRIVATE_HEADERS_PATH=\"${TARGET_BUILD_DIR%/}/${PRIVATE_HEADERS_FOLDER_PATH}\"\nelse\n    PRIVATE_HEADERS_PATH=\"${DSTROOT}${INSTALL_PATH_PREFIX%/}/${PRIVATE_HEADERS_FOLDER_PATH}\"\nfi;\n\nmkdir -p \"${PRIVATE_HEADERS_PATH}\"\n\nrsync -av --no-owner --no-group --prune-empty-dirs --exclude \".svn\" --exclude \"usr\" --include \"*/\" --include \"*.h\" --exclude \"*\" \"${SRCROOT}/Source/webrtc\" \"${PRIVATE_HEADERS_PATH}\"\n\nrsync -av --no-owner --no-group --prune-empty-dirs --exclude \".svn\" --exclude \"usr\" --include \"*/\" --include \"*.h\" --exclude \"*\" \"${SRCROOT}/Source/third_party/abseil-cpp/absl\" \"${PRIVATE_HEADERS_PATH}\"\n";
-+			shellScript = "PRIVATE_HEADERS_FOLDER_PATH=usr/local/include\n\nif [[ \"${DEPLOYMENT_LOCATION}\" == \"NO\" ]]; then\n    PRIVATE_HEADERS_PATH=\"${TARGET_BUILD_DIR%/}/${PRIVATE_HEADERS_FOLDER_PATH}\"\nelse\n    PRIVATE_HEADERS_PATH=\"${DSTROOT}${INSTALL_PATH_PREFIX%/}/${PRIVATE_HEADERS_FOLDER_PATH}\"\nfi;\n\nmkdir -p \"${PRIVATE_HEADERS_PATH}\"\n\nrsync -av --no-owner --no-group --prune-empty-dirs --exclude \".svn\" --exclude \"usr\" --include \"*/\" --include \"*.h\" --exclude \"*\" \"${SRCROOT}/Source/webrtc\" \"${PRIVATE_HEADERS_PATH}\"\n\nrsync -av --no-owner --no-group --prune-empty-dirs --exclude \".svn\" --exclude \"usr\" --include \"*/\" --include \"*.h\" --exclude \"*\" \"${SRCROOT}/Source/third_party/abseil-cpp/absl\" \"${PRIVATE_HEADERS_PATH}\"\n\nrsync -av --no-owner --no-group --prune-empty-dirs --exclude \".svn\" --exclude \"usr\" --include \"*/\" --include \"*.h\" --exclude \"*\" \"${SRCROOT}/Source/third_party/libyuv/include/\" \"${PRIVATE_HEADERS_PATH}\"\n\nrsync -av --no-owner --no-group --prune-empty-dirs --exclude \".svn\" --exclude \"usr\" --exclude \"src\" --exclude \"internal\" --include \"*/\" --include \"*.h\" --exclude \"*\" \"${SRCROOT}/Source/third_party/libvpx/source/libvpx/vpx\" \"${PRIVATE_HEADERS_PATH}\"\n";
++			shellScript = "PRIVATE_HEADERS_FOLDER_PATH=usr/local/include\n\nif [[ \"${DEPLOYMENT_LOCATION}\" == \"NO\" ]]; then\n    PRIVATE_HEADERS_PATH=\"${TARGET_BUILD_DIR%/}/${PRIVATE_HEADERS_FOLDER_PATH}\"\nelse\n    PRIVATE_HEADERS_PATH=\"${DSTROOT}${INSTALL_PATH_PREFIX%/}/${PRIVATE_HEADERS_FOLDER_PATH}\"\nfi;\n\nmkdir -p \"${PRIVATE_HEADERS_PATH}\"\n\nrsync -av --no-owner --no-group --prune-empty-dirs --exclude \".svn\" --exclude \"usr\" --include \"*/\" --include \"*.h\" --exclude \"*\" \"${SRCROOT}/Source/webrtc\" \"${PRIVATE_HEADERS_PATH}\"\n\nrsync -av --no-owner --no-group --prune-empty-dirs --exclude \".svn\" --exclude \"usr\" --include \"*/\" --include \"*.h\" --exclude \"*\" \"${SRCROOT}/Source/third_party/abseil-cpp/absl\" \"${PRIVATE_HEADERS_PATH}\"\n\nrsync -av --no-owner --no-group --prune-empty-dirs --exclude \".svn\" --exclude \"usr\" --include \"*/\" --include \"*.h\" --exclude \"*\" \"${SRCROOT}/Source/third_party/libyuv/include/\" \"${PRIVATE_HEADERS_PATH}\"\n\nrsync -av --no-owner --no-group --prune-empty-dirs --exclude \".svn\" --exclude \"usr\" --exclude \"src\" --exclude \"internal\" --include \"*/\" --include \"*.h\" --exclude \"*\" \"${SRCROOT}/Source/third_party/libvpx/source/libvpx/vpx\" \"${PRIVATE_HEADERS_PATH}\"\n\nrsync -av --no-owner --no-group --prune-empty-dirs --exclude \".svn\" --exclude \"usr\" --include \"*/\" --include \"*.h\" --exclude \"*\" \"${SRCROOT}/Source/third_party/libwebm/\" \"${PRIVATE_HEADERS_PATH}\"\n";
  		};
  		5CD286461E6E154E0094FDC8 /* Check for Weak VTables and Externals */ = {
  			isa = PBXShellScriptBuildPhase;
+@@ -18638,6 +18655,7 @@
+ 				419C82F51FE20EB50040C30F /* audio_encoder_opus.cc in Sources */,
+ 				419C82F31FE20EB50040C30F /* audio_encoder_opus_config.cc in Sources */,
+ 				4140B8201E4E3383007409E6 /* audio_encoder_pcm.cc in Sources */,
++				F3B7819A24C7CC5200FCB122 /* mkvmuxer.cc in Sources */,
+ 				5CDD8FFE1E43CE3A00621E92 /* audio_encoder_pcm16b.cc in Sources */,
+ 				5CD285461E6A61D20094FDC8 /* audio_format.cc in Sources */,
+ 				41DDB26F212679D200296D47 /* audio_format_to_string.cc in Sources */,
+@@ -18760,6 +18778,7 @@
+ 				4131C1C0234B8A4A0028A615 /* connection.cc in Sources */,
+ 				4131C1D2234B8A4B0028A615 /* connection_info.cc in Sources */,
+ 				5CDD8A931E43C00F00621E92 /* constant_pcm_packet_source.cc in Sources */,
++				F3B7819B24C7CC5200FCB122 /* mkvwriter.cc in Sources */,
+ 				5CDD8B891E43C2B500621E92 /* constants.c in Sources */,
+ 				4131C291234B8CC40028A615 /* constants.cc in Sources */,
+ 				41FCBB3921B1F8FC00A5DF27 /* control_handler.cc in Sources */,
+@@ -19324,6 +19343,7 @@
+ 				4131C53B234C8B190028A615 /* rtc_event_rtp_packet_outgoing.cc in Sources */,
+ 				4131C552234C8B190028A615 /* rtc_event_video_receive_stream_config.cc in Sources */,
+ 				4131C554234C8B190028A615 /* rtc_event_video_send_stream_config.cc in Sources */,
++				F3B7819924C7CC5200FCB122 /* mkvmuxerutil.cc in Sources */,
+ 				4131C3CF234B98420028A615 /* rtc_stats.cc in Sources */,
+ 				4131BF2D234B88200028A615 /* rtc_stats_collector.cc in Sources */,
+ 				4131C3CE234B98420028A615 /* rtc_stats_report.cc in Sources */,
 diff --git a/Source/WTF/wtf/DateMath.cpp b/Source/WTF/wtf/DateMath.cpp
 index af92f674770349cc8e7be9a53b1cee6e7840e781..f0a960db046292a3505d339a333f03098f3d8418 100644
 --- a/Source/WTF/wtf/DateMath.cpp
@@ -5805,7 +5924,7 @@ index 90613335efc8af45fbc88feaa3138e7626103346..be36214e279457f16333eee3ca687b3a
  }
  
 diff --git a/Source/WebKit/PlatformGTK.cmake b/Source/WebKit/PlatformGTK.cmake
-index 6cb3df1a60adee7365fa449fb07342eababa61f2..2b98bcc7847554a38fd1a565d6b7bd803284716e 100644
+index 6cb3df1a60adee7365fa449fb07342eababa61f2..c0ebb9519700adc9e80d9b7df96146d6fa91ca3d 100644
 --- a/Source/WebKit/PlatformGTK.cmake
 +++ b/Source/WebKit/PlatformGTK.cmake
 @@ -448,6 +448,9 @@ list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES
@@ -5818,7 +5937,7 @@ index 6cb3df1a60adee7365fa449fb07342eababa61f2..2b98bcc7847554a38fd1a565d6b7bd80
  )
  
  if (USE_WPE_RENDERER)
-@@ -501,6 +504,9 @@ if (USE_LIBWEBRTC)
+@@ -501,9 +504,18 @@ if (USE_LIBWEBRTC)
      list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES
          "${THIRDPARTY_DIR}/libwebrtc/Source/"
          "${THIRDPARTY_DIR}/libwebrtc/Source/webrtc"
@@ -5828,8 +5947,17 @@ index 6cb3df1a60adee7365fa449fb07342eababa61f2..2b98bcc7847554a38fd1a565d6b7bd80
      )
  endif ()
  
++# Playwright begin
++list(APPEND WebKit_PRIVATE_INCLUDE_DIRECTORIES
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libwebm"
++)
++# Playwright end
++
+ # To generate WebKitEnumTypes.h we want to use all installed headers, except WebKitEnumTypes.h itself.
+ set(WebKit2GTK_ENUM_GENERATION_HEADERS ${WebKit2GTK_INSTALLED_HEADERS})
+ list(REMOVE_ITEM WebKit2GTK_ENUM_GENERATION_HEADERS ${DERIVED_SOURCES_WEBKIT2GTK_API_DIR}/WebKitEnumTypes.h)
 diff --git a/Source/WebKit/PlatformWPE.cmake b/Source/WebKit/PlatformWPE.cmake
-index 3b153f122f13040707eea8b0bda91f15185bc1e4..2d24930d725787b9b27c105c78636c6de24b91f4 100644
+index 3b153f122f13040707eea8b0bda91f15185bc1e4..ef28c896aa694ebe38ce39a1fefb8f588c559ef5 100644
 --- a/Source/WebKit/PlatformWPE.cmake
 +++ b/Source/WebKit/PlatformWPE.cmake
 @@ -257,6 +257,7 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
@@ -5840,7 +5968,7 @@ index 3b153f122f13040707eea8b0bda91f15185bc1e4..2d24930d725787b9b27c105c78636c6d
      "${WEBKIT_DIR}/UIProcess/gstreamer"
      "${WEBKIT_DIR}/UIProcess/linux"
      "${WEBKIT_DIR}/UIProcess/soup"
-@@ -287,8 +288,52 @@ list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES
+@@ -287,8 +288,17 @@ list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES
      ${GSTREAMER_VIDEO_INCLUDE_DIRS}
      ${LIBSECCOMP_INCLUDE_DIRS}
      ${LIBSOUP_INCLUDE_DIRS}
@@ -5850,43 +5978,8 @@ index 3b153f122f13040707eea8b0bda91f15185bc1e4..2d24930d725787b9b27c105c78636c6d
  )
  
 +# Playwright begin
-+list(APPEND WebKit_SOURCES
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_common.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_gcc.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_argb.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_from.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_from_argb.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_jpeg.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_to_argb.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_to_i420.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/cpu_id.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/mjpeg_decoder.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/mjpeg_validate.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/planar_functions.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_neon.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_neon64.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_any.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_argb.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_common.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_gcc.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_neon.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_neon64.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_any.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_common.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_gcc.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_neon.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_neon64.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_any.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_argb.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_common.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_gcc.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_neon.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_neon64.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/video_common.cc"
++list(APPEND WebKit_PRIVATE_INCLUDE_DIRECTORIES
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libwebm"
 +)
 +# Playwright end
 +
@@ -5894,7 +5987,7 @@ index 3b153f122f13040707eea8b0bda91f15185bc1e4..2d24930d725787b9b27c105c78636c6d
      Cairo::Cairo
      Freetype::Freetype
 diff --git a/Source/WebKit/PlatformWin.cmake b/Source/WebKit/PlatformWin.cmake
-index 3b94f4dba2c3b9659a1269bfe030d5d010b5b1bd..dfc890a525c54869118e9828f585e0142bc3acae 100644
+index 3b94f4dba2c3b9659a1269bfe030d5d010b5b1bd..74df6c2885dcce0e2a1224c193f1d1d4d89baaab 100644
 --- a/Source/WebKit/PlatformWin.cmake
 +++ b/Source/WebKit/PlatformWin.cmake
 @@ -59,8 +59,12 @@ list(APPEND WebKit_SOURCES
@@ -5910,7 +6003,7 @@ index 3b94f4dba2c3b9659a1269bfe030d5d010b5b1bd..dfc890a525c54869118e9828f585e014
      UIProcess/win/WebPageProxyWin.cpp
      UIProcess/win/WebPopupMenuProxyWin.cpp
      UIProcess/win/WebProcessPoolWin.cpp
-@@ -117,6 +121,56 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
+@@ -117,6 +121,63 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
      "${WEBKIT_DIR}/win"
  )
  
@@ -5920,7 +6013,14 @@ index 3b94f4dba2c3b9659a1269bfe030d5d010b5b1bd..dfc890a525c54869118e9828f585e014
 +    "${LIBVPX_CUSTOM_INCLUDE_DIR}"
 +)
 +
++list(APPEND WebKit_PRIVATE_INCLUDE_DIRECTORIES
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libwebm"
++)
++
 +list(APPEND WebKit_SOURCES
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libwebm/mkvmuxer/mkvmuxer.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libwebm/mkvmuxer/mkvmuxerutil.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libwebm/mkvmuxer/mkvwriter.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_common.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_gcc.cc"
@@ -5967,7 +6067,7 @@ index 3b94f4dba2c3b9659a1269bfe030d5d010b5b1bd..dfc890a525c54869118e9828f585e014
  set(WebKitCommonIncludeDirectories ${WebKit_INCLUDE_DIRECTORIES})
  set(WebKitCommonSystemIncludeDirectories ${WebKit_SYSTEM_INCLUDE_DIRECTORIES})
  
-@@ -169,6 +223,7 @@ if (${WTF_PLATFORM_WIN_CAIRO})
+@@ -169,6 +230,7 @@ if (${WTF_PLATFORM_WIN_CAIRO})
          OpenSSL::SSL
          mfuuid.lib
          strmiids.lib
@@ -6353,7 +6453,7 @@ index 88d53d236cd6d62735f03678a04ca9c198dddacb..b8f8efc57ab00dc5725660c5a8ad56a3
      return WebTouchEvent();
  }
 diff --git a/Source/WebKit/Sources.txt b/Source/WebKit/Sources.txt
-index 5d620b1ad03924b3ffd81d95105d4bf14341d9d4..143bc2905c68665c74991f5add9bb19903c8f87b 100644
+index 5d620b1ad03924b3ffd81d95105d4bf14341d9d4..58f1828a3fb13aa9aafca6cc83369d8386b311b6 100644
 --- a/Source/WebKit/Sources.txt
 +++ b/Source/WebKit/Sources.txt
 @@ -274,16 +274,20 @@ Shared/WebsiteData/WebsiteData.cpp
@@ -6386,12 +6486,13 @@ index 5d620b1ad03924b3ffd81d95105d4bf14341d9d4..143bc2905c68665c74991f5add9bb199
  UIProcess/WebPageProxy.cpp
  UIProcess/WebPasteboardProxy.cpp
  UIProcess/WebPreferences.cpp
-@@ -439,6 +445,8 @@ UIProcess/Inspector/WebPageDebuggable.cpp
+@@ -439,6 +445,9 @@ UIProcess/Inspector/WebPageDebuggable.cpp
  UIProcess/Inspector/WebPageInspectorController.cpp
  
  UIProcess/Inspector/Agents/InspectorBrowserAgent.cpp
 +UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 +UIProcess/Inspector/Agents/ScreencastEncoder.cpp
++UIProcess/Inspector/Agents/WebMFileWriter.cpp
  
  UIProcess/Media/AudioSessionRoutingArbitratorProxy.cpp
  UIProcess/Media/MediaUsageManager.cpp
@@ -8481,10 +8582,10 @@ index 0000000000000000000000000000000000000000..003ad364d76071ce30d11cce7d1b61a6
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..5b28d1ba9fe79d35af2e15f97aeb8df31a898a11
+index 0000000000000000000000000000000000000000..d92957ee6d2b7ebf14eeb5c7206ea78b36927749
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,442 @@
+@@ -0,0 +1,381 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -8515,6 +8616,7 @@ index 0000000000000000000000000000000000000000..5b28d1ba9fe79d35af2e15f97aeb8df3
 +#include "config.h"
 +#include "ScreencastEncoder.h"
 +
++#include "WebMFileWriter.h"
 +#include <libyuv.h>
 +#include <vpx/vp8.h>
 +#include <vpx/vp8cx.h>
@@ -8590,60 +8692,6 @@ index 0000000000000000000000000000000000000000..5b28d1ba9fe79d35af2e15f97aeb8df3
 +  out_image_buffer = std::move(image_buffer);
 +}
 +
-+void mem_put_le16(void *vmem, int val) {
-+  unsigned char *mem = (unsigned char *)vmem;
-+
-+  mem[0] = (unsigned char)((val >> 0) & 0xff);
-+  mem[1] = (unsigned char)((val >> 8) & 0xff);
-+}
-+
-+void mem_put_le32(void *vmem, int val) {
-+  unsigned char *mem = (unsigned char *)vmem;
-+
-+  mem[0] = (unsigned char)((val >>  0) & 0xff);
-+  mem[1] = (unsigned char)((val >>  8) & 0xff);
-+  mem[2] = (unsigned char)((val >> 16) & 0xff);
-+  mem[3] = (unsigned char)((val >> 24) & 0xff);
-+}
-+
-+void ivf_write_file_header_with_video_info(FILE *outfile, uint32_t fourcc,
-+                                           int frame_cnt, int frame_width,
-+                                           int frame_height,
-+                                           vpx_rational_t timebase) {
-+  char header[32];
-+
-+  header[0] = 'D';
-+  header[1] = 'K';
-+  header[2] = 'I';
-+  header[3] = 'F';
-+  mem_put_le16(header + 4, 0);              // version
-+  mem_put_le16(header + 6, 32);             // header size
-+  mem_put_le32(header + 8, fourcc);         // fourcc
-+  mem_put_le16(header + 12, frame_width);   // width
-+  mem_put_le16(header + 14, frame_height);  // height
-+  mem_put_le32(header + 16, timebase.den);  // rate
-+  mem_put_le32(header + 20, timebase.num);  // scale
-+  mem_put_le32(header + 24, frame_cnt);     // length
-+  mem_put_le32(header + 28, 0);             // unused
-+
-+  fwrite(header, 1, 32, outfile);
-+}
-+
-+void ivf_write_file_header(FILE *outfile, const struct vpx_codec_enc_cfg *cfg,
-+                           uint32_t fourcc, int frame_cnt) {
-+  ivf_write_file_header_with_video_info(outfile, fourcc, frame_cnt, cfg->g_w,
-+                                        cfg->g_h, cfg->g_timebase);
-+}
-+
-+void ivf_write_frame_header(FILE *outfile, int64_t pts, size_t frame_size) {
-+  char header[12];
-+
-+  mem_put_le32(header, (int)frame_size);
-+  mem_put_le32(header + 4, (int)(pts & 0xFFFFFFFF));
-+  mem_put_le32(header + 8, (int)(pts >> 32));
-+  fwrite(header, 1, 12, outfile);
-+}
-+
 +} // namespace
 +
 +class ScreencastEncoder::VPXFrame {
@@ -8704,15 +8752,13 @@ index 0000000000000000000000000000000000000000..5b28d1ba9fe79d35af2e15f97aeb8df3
 +
 +class ScreencastEncoder::VPXCodec {
 +public:
-+    VPXCodec(uint32_t fourcc, vpx_codec_ctx_t codec, vpx_codec_enc_cfg_t cfg, FILE* file)
++    VPXCodec(vpx_codec_ctx_t codec, vpx_codec_enc_cfg_t cfg, FILE* file)
 +        : m_encoderQueue(WorkQueue::create("Screencast encoder"))
-+        , m_fourcc(fourcc)
 +        , m_codec(codec)
 +        , m_cfg(cfg)
 +        , m_file(file)
++        , m_writer(new WebMFileWriter(file, &m_cfg))
 +    {
-+        ivf_write_file_header(m_file, &m_cfg, m_fourcc, 0);
-+
 +        createImage(cfg.g_w, cfg.g_h, m_image, m_imageBuffer);
 +    }
 +
@@ -8752,10 +8798,9 @@ index 0000000000000000000000000000000000000000..5b28d1ba9fe79d35af2e15f97aeb8df3
 +            gotPkts = true;
 +
 +            if (pkt->kind == VPX_CODEC_CX_FRAME_PKT) {
-+                ivf_write_frame_header(m_file, m_pts, pkt->data.frame.sz);
-+                if (fwrite(pkt->data.frame.buf, 1, pkt->data.frame.sz, m_file) != pkt->data.frame.sz) {
++                if (!m_writer->writeFrame(pkt)) {
 +                    fprintf(stderr, "Failed to write compressed frame\n");
-+                    return 0;
++                    return false;
 +                }
 +                bool keyframe = (pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0;
 +                ++m_frameCount;
@@ -8773,18 +8818,16 @@ index 0000000000000000000000000000000000000000..5b28d1ba9fe79d35af2e15f97aeb8df3
 +        while (encodeFrame(nullptr, 1))
 +            ++m_frameCount;
 +
-+        rewind(m_file);
-+        // Update total frame count.
-+        ivf_write_file_header(m_file, &m_cfg, m_fourcc, m_frameCount);
++        m_writer->finish();
 +        fclose(m_file);
 +        fprintf(stderr, "ScreencastEncoder::finish %d frames\n", m_frameCount);
 +    }
 +
 +    Ref<WorkQueue> m_encoderQueue;
-+    uint32_t m_fourcc { 0 };
 +    vpx_codec_ctx_t m_codec;
 +    vpx_codec_enc_cfg_t m_cfg;
 +    FILE* m_file { nullptr };
++    std::unique_ptr<WebMFileWriter> m_writer;
 +    int m_frameCount { 0 };
 +    int64_t m_pts { 0 };
 +    std::unique_ptr<uint8_t[]> m_imageBuffer;
@@ -8803,13 +8846,10 @@ index 0000000000000000000000000000000000000000..5b28d1ba9fe79d35af2e15f97aeb8df3
 +{
 +}
 +
-+static constexpr uint32_t vp8fourcc = 0x30385056;
-+static constexpr uint32_t vp9fourcc = 0x30395056;
-+static constexpr int fps = 30;
++static constexpr int fps = 24;
 +
 +RefPtr<ScreencastEncoder> ScreencastEncoder::create(String& errorString, const String& filePath, IntSize size, Optional<double> scale)
 +{
-+    const uint32_t fourcc = vp8fourcc;
 +    vpx_codec_iface_t* codec_interface = vpx_codec_vp8_cx();
 +    if (!codec_interface) {
 +        errorString = "Codec not found.";
@@ -8847,7 +8887,7 @@ index 0000000000000000000000000000000000000000..5b28d1ba9fe79d35af2e15f97aeb8df3
 +        return nullptr;
 +    }
 +
-+    std::unique_ptr<VPXCodec> vpxCodec(new VPXCodec(fourcc, codec, cfg, file));
++    std::unique_ptr<VPXCodec> vpxCodec(new VPXCodec(codec, cfg, file));
 +    fprintf(stderr, "ScreencastEncoder initialized with: %s\n", vpx_codec_iface_name(codec_interface));
 +    return adoptRef(new ScreencastEncoder(WTFMove(vpxCodec), size, scale));
 +}
@@ -9005,6 +9045,140 @@ index 0000000000000000000000000000000000000000..df283ee565b1691c49e68b79f40a72ae
 +    MonotonicTime m_lastFrameTimestamp;
 +    class VPXFrame;
 +    std::unique_ptr<VPXFrame> m_lastFrame;
++};
++
++} // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/Inspector/Agents/WebMFileWriter.cpp b/Source/WebKit/UIProcess/Inspector/Agents/WebMFileWriter.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..9b269b356e206f0252245a1497adb0d05128c9b4
+--- /dev/null
++++ b/Source/WebKit/UIProcess/Inspector/Agents/WebMFileWriter.cpp
+@@ -0,0 +1,69 @@
++/*
++ * Copyright (c) 2014 The WebM project authors. All Rights Reserved.
++ * Copyright (C) 2020 Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "config.h"
++#include "WebMFileWriter.h"
++
++#include <string>
++#include "mkvmuxer/mkvmuxerutil.h"
++
++namespace WebKit {
++
++WebMFileWriter::WebMFileWriter(FILE* file, vpx_codec_enc_cfg_t* cfg)
++    : m_cfg(cfg)
++    , m_writer(new mkvmuxer::MkvWriter(file))
++    , m_segment(new mkvmuxer::Segment()) {
++  m_segment->Init(m_writer.get());
++  m_segment->set_mode(mkvmuxer::Segment::kFile);
++  m_segment->OutputCues(true);
++
++  mkvmuxer::SegmentInfo* info = m_segment->GetSegmentInfo();
++  std::string version = "Playwright " + std::string(vpx_codec_version_str());
++  info->set_writing_app(version.c_str());
++
++  // Add vp8 track.
++  m_videoTrackId = m_segment->AddVideoTrack(
++      static_cast<int>(m_cfg->g_w), static_cast<int>(m_cfg->g_h), 0);
++  if (!m_videoTrackId) {
++    fprintf(stderr, "Failed to add video track\n");
++  }
++}
++
++WebMFileWriter::~WebMFileWriter() {}
++
++bool WebMFileWriter::writeFrame(const vpx_codec_cx_pkt_t* pkt) {
++  int64_t pts_ns = pkt->data.frame.pts * 1000000000ll * m_cfg->g_timebase.num /
++                   m_cfg->g_timebase.den;
++  return m_segment->AddFrame(static_cast<uint8_t*>(pkt->data.frame.buf),
++                             pkt->data.frame.sz, m_videoTrackId, pts_ns,
++                             pkt->data.frame.flags & VPX_FRAME_IS_KEY);
++}
++
++void WebMFileWriter::finish() {
++  m_segment->Finalize();
++}
++
++} // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/Inspector/Agents/WebMFileWriter.h b/Source/WebKit/UIProcess/Inspector/Agents/WebMFileWriter.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..e2ce910f3fd7f587add552275b7e7176cf8b2723
+--- /dev/null
++++ b/Source/WebKit/UIProcess/Inspector/Agents/WebMFileWriter.h
+@@ -0,0 +1,53 @@
++/*
++ * Copyright (C) 2020 Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#pragma once
++
++#include <memory>
++#include <stdio.h>
++#include <stdlib.h>
++#include "vpx/vpx_encoder.h"
++
++#include "mkvmuxer/mkvmuxer.h"
++#include "mkvmuxer/mkvwriter.h"
++
++namespace WebKit {
++
++class WebMFileWriter {
++public:
++    WebMFileWriter(FILE*, vpx_codec_enc_cfg_t* cfg);
++    ~WebMFileWriter();
++
++    bool writeFrame(const vpx_codec_cx_pkt_t* pkt);
++    void finish();
++
++private:
++    vpx_codec_enc_cfg_t* m_cfg = nullptr;
++    std::unique_ptr<mkvmuxer::MkvWriter> m_writer;
++    std::unique_ptr<mkvmuxer::Segment> m_segment;
++    uint64_t m_videoTrackId = 0;
 +};
 +
 +} // namespace WebKit
@@ -13997,7 +14171,7 @@ index 0000000000000000000000000000000000000000..c3d7cacea987ba2b094d5022c670705e
 + 
 +} // namespace WebKit
 diff --git a/Source/WebKit/WebKit.xcodeproj/project.pbxproj b/Source/WebKit/WebKit.xcodeproj/project.pbxproj
-index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e3a634658 100644
+index ebede3020fd12caa29b4396273e2c4311b3eea61..58f98f961bc3475f2dc577820dbcef31a97dca89 100644
 --- a/Source/WebKit/WebKit.xcodeproj/project.pbxproj
 +++ b/Source/WebKit/WebKit.xcodeproj/project.pbxproj
 @@ -1785,6 +1785,18 @@
@@ -14049,12 +14223,14 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  		DF462E0E23F22F5300EFF35F /* WKHTTPCookieStorePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKHTTPCookieStorePrivate.h; sourceTree = "<group>"; };
  		DF462E1123F338AD00EFF35F /* WKContentWorldPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKContentWorldPrivate.h; sourceTree = "<group>"; };
  		DF58C6311371AC5800F9A37C /* NativeWebWheelEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NativeWebWheelEvent.h; sourceTree = "<group>"; };
-@@ -5371,6 +5399,12 @@
+@@ -5371,6 +5399,14 @@
  		ECA680D71E690DF800731D20 /* WebProcessCocoa.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WebProcessCocoa.h; sourceTree = "<group>"; };
  		ECBFC1DB1E6A4D66000300C7 /* ExtraPublicSymbolsForTAPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ExtraPublicSymbolsForTAPI.h; sourceTree = "<group>"; };
  		F036978715F4BF0500C3A80E /* WebColorPicker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WebColorPicker.cpp; sourceTree = "<group>"; };
 +		F303B847249A8D3A0031DE5C /* ScreencastEncoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ScreencastEncoder.cpp; sourceTree = "<group>"; };
 +		F303B848249A8D3A0031DE5C /* ScreencastEncoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ScreencastEncoder.h; sourceTree = "<group>"; };
++		F31E2DA424C76E4B004B2775 /* WebMFileWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WebMFileWriter.cpp; sourceTree = "<group>"; };
++		F31E2DA524C76E4C004B2775 /* WebMFileWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebMFileWriter.h; sourceTree = "<group>"; };
 +		F33C7AC6249AD79C0018BE41 /* libwebrtc.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; path = libwebrtc.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 +		F3867F0324607D2B008F0F31 /* InspectorScreencastAgent.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InspectorScreencastAgent.cpp; sourceTree = "<group>"; };
 +		F3867F0424607D2B008F0F31 /* InspectorScreencastAgent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorScreencastAgent.h; sourceTree = "<group>"; };
@@ -14062,7 +14238,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  		F409BA171E6E64B3009DA28E /* WKDragDestinationAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKDragDestinationAction.h; sourceTree = "<group>"; };
  		F40D1B68220BDC0F00B49A01 /* WebAutocorrectionContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WebAutocorrectionContext.h; path = ios/WebAutocorrectionContext.h; sourceTree = "<group>"; };
  		F41056612130699A0092281D /* APIAttachmentCocoa.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = APIAttachmentCocoa.mm; sourceTree = "<group>"; };
-@@ -5461,6 +5495,7 @@
+@@ -5461,6 +5497,7 @@
  				3766F9EF189A1244003CF19B /* QuartzCore.framework in Frameworks */,
  				37694525184FC6B600CDE21F /* Security.framework in Frameworks */,
  				37BEC4DD1948FC6A008B4286 /* WebCore.framework in Frameworks */,
@@ -14070,7 +14246,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  			);
  			runOnlyForDeploymentPostprocessing = 0;
  		};
-@@ -7200,6 +7235,7 @@
+@@ -7200,6 +7237,7 @@
  		37C4C08318149C2A003688B9 /* Cocoa */ = {
  			isa = PBXGroup;
  			children = (
@@ -14078,7 +14254,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				1A43E826188F38E2009E4D30 /* Deprecated */,
  				37A5E01218BBF937000A081E /* _WKActivatedElementInfo.h */,
  				37A5E01118BBF937000A081E /* _WKActivatedElementInfo.mm */,
-@@ -8104,6 +8140,7 @@
+@@ -8104,6 +8142,7 @@
  		5750F3292032D4E300389347 /* Frameworks */ = {
  			isa = PBXGroup;
  			children = (
@@ -14086,7 +14262,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				5750F32A2032D4E500389347 /* LocalAuthentication.framework */,
  				570DAAB0230273D200E8FC04 /* NearField.framework */,
  			);
-@@ -8505,6 +8542,10 @@
+@@ -8505,6 +8544,12 @@
  			children = (
  				9197940423DBC4BB00257892 /* InspectorBrowserAgent.cpp */,
  				9197940323DBC4BB00257892 /* InspectorBrowserAgent.h */,
@@ -14094,10 +14270,12 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
 +				F3867F0424607D2B008F0F31 /* InspectorScreencastAgent.h */,
 +				F303B847249A8D3A0031DE5C /* ScreencastEncoder.cpp */,
 +				F303B848249A8D3A0031DE5C /* ScreencastEncoder.h */,
++				F31E2DA424C76E4B004B2775 /* WebMFileWriter.cpp */,
++				F31E2DA524C76E4C004B2775 /* WebMFileWriter.h */,
  			);
  			path = Agents;
  			sourceTree = "<group>";
-@@ -8513,6 +8554,7 @@
+@@ -8513,6 +8558,7 @@
  			isa = PBXGroup;
  			children = (
  				A5D3504D1D78F0D2005124A9 /* RemoteWebInspectorProxyMac.mm */,
@@ -14105,7 +14283,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				1CA8B935127C774E00576C2B /* WebInspectorProxyMac.mm */,
  				994BADF11F7D77EA00B571E7 /* WKInspectorViewController.h */,
  				994BADF21F7D77EB00B571E7 /* WKInspectorViewController.mm */,
-@@ -8938,6 +8980,12 @@
+@@ -8938,6 +8984,12 @@
  		BC032DC310F438260058C15A /* UIProcess */ = {
  			isa = PBXGroup;
  			children = (
@@ -14118,7 +14296,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				BC032DC410F4387C0058C15A /* API */,
  				512F588D12A8836F00629530 /* Authentication */,
  				9955A6E81C79809000EB6A93 /* Automation */,
-@@ -9218,6 +9266,7 @@
+@@ -9218,6 +9270,7 @@
  		BC0C376610F807660076D7CB /* C */ = {
  			isa = PBXGroup;
  			children = (
@@ -14126,7 +14304,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				5123CF18133D25E60056F800 /* cg */,
  				6EE849C41368D9040038D481 /* mac */,
  				BCB63477116BF10600603215 /* WebKit2_C.h */,
-@@ -9819,6 +9868,11 @@
+@@ -9819,6 +9872,11 @@
  		BCCF085C113F3B7500C650C5 /* mac */ = {
  			isa = PBXGroup;
  			children = (
@@ -14138,7 +14316,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				B878B613133428DC006888E9 /* CorrectionPanel.h */,
  				B878B614133428DC006888E9 /* CorrectionPanel.mm */,
  				C1817362205844A900DFDA65 /* DisplayLink.cpp */,
-@@ -10608,6 +10662,7 @@
+@@ -10608,6 +10666,7 @@
  				991F492F23A812C60054642B /* _WKInspectorDebuggableInfo.h in Headers */,
  				99036AE223A949CF0000B06A /* _WKInspectorDebuggableInfoInternal.h in Headers */,
  				9197940C23DBC50300257892 /* _WKInspectorDelegate.h in Headers */,
@@ -14146,7 +14324,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				5CAFDE472130846A00B1F7E1 /* _WKInspectorInternal.h in Headers */,
  				9979CA58237F49F10039EC05 /* _WKInspectorPrivate.h in Headers */,
  				A5C0F0AB2000658200536536 /* _WKInspectorWindow.h in Headers */,
-@@ -10847,6 +10902,7 @@
+@@ -10847,6 +10906,7 @@
  				1A14F8E21D74C834006CBEC6 /* FrameInfoData.h in Headers */,
  				1AE00D611831792100087DD7 /* FrameLoadState.h in Headers */,
  				5C121E842410208D00486F9B /* FrameTreeNodeData.h in Headers */,
@@ -14154,7 +14332,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				2D4AF0892044C3C4006C8817 /* FrontBoardServicesSPI.h in Headers */,
  				CD78E1151DB7D7ED0014A2DE /* FullscreenClient.h in Headers */,
  				CD19D2EA2046406F0017074A /* FullscreenTouchSecheuristic.h in Headers */,
-@@ -10859,6 +10915,7 @@
+@@ -10859,6 +10919,7 @@
  				BC06F43A12DBCCFB002D78DE /* GeolocationPermissionRequestProxy.h in Headers */,
  				2DA944A41884E4F000ED86DB /* GestureTypes.h in Headers */,
  				2DA049B8180CCD0A00AAFA9E /* GraphicsLayerCARemote.h in Headers */,
@@ -14162,7 +14340,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				C0CE72AD1247E78D00BC0EC4 /* HandleMessage.h in Headers */,
  				1AC75A1B1B3368270056745B /* HangDetectionDisabler.h in Headers */,
  				57AC8F50217FEED90055438C /* HidConnection.h in Headers */,
-@@ -10988,8 +11045,10 @@
+@@ -10988,8 +11049,10 @@
  				413075AC1DE85F370039EC69 /* NetworkRTCMonitor.h in Headers */,
  				41DC45961E3D6E2200B11F51 /* NetworkRTCProvider.h in Headers */,
  				5C20CBA01BB1ECD800895BB1 /* NetworkSession.h in Headers */,
@@ -14173,7 +14351,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				570DAAC22303730300E8FC04 /* NfcConnection.h in Headers */,
  				570DAAAE23026F5C00E8FC04 /* NfcService.h in Headers */,
  				31A2EC5614899C0900810D71 /* NotificationPermissionRequest.h in Headers */,
-@@ -11074,6 +11133,7 @@
+@@ -11074,6 +11137,7 @@
  				CD2865EE2255562000606AC7 /* ProcessTaskStateObserver.h in Headers */,
  				463FD4821EB94EC000A2982C /* ProcessTerminationReason.h in Headers */,
  				86E67A251910B9D100004AB7 /* ProcessThrottler.h in Headers */,
@@ -14181,7 +14359,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				83048AE61ACA45DC0082C832 /* ProcessThrottlerClient.h in Headers */,
  				A1E688701F6E2BAB007006A6 /* QuarantineSPI.h in Headers */,
  				1A0C227E2451130A00ED614D /* QuickLookThumbnailingSoftLink.h in Headers */,
-@@ -11370,6 +11430,7 @@
+@@ -11370,6 +11434,7 @@
  				A543E30D215C8A9000279CD9 /* WebPageInspectorTargetController.h in Headers */,
  				A543E307215AD13700279CD9 /* WebPageInspectorTargetFrontendChannel.h in Headers */,
  				C0CE72A11247E71D00BC0EC4 /* WebPageMessages.h in Headers */,
@@ -14189,7 +14367,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				2D5C9D0619C81D8F00B3C5C1 /* WebPageOverlay.h in Headers */,
  				46C392292316EC4D008EED9B /* WebPageProxyIdentifier.h in Headers */,
  				BCBD3915125BB1A800D2C29F /* WebPageProxyMessages.h in Headers */,
-@@ -11501,6 +11562,7 @@
+@@ -11501,6 +11566,7 @@
  				BCD25F1711D6BDE100169B0E /* WKBundleFrame.h in Headers */,
  				BCF049E611FE20F600F86A58 /* WKBundleFramePrivate.h in Headers */,
  				BC49862F124D18C100D834E1 /* WKBundleHitTestResult.h in Headers */,
@@ -14197,7 +14375,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				BC204EF211C83EC8008F3375 /* WKBundleInitialize.h in Headers */,
  				65B86F1E12F11DE300B7DD8A /* WKBundleInspector.h in Headers */,
  				1A8B66B41BC45B010082DF77 /* WKBundleMac.h in Headers */,
-@@ -11553,6 +11615,7 @@
+@@ -11553,6 +11619,7 @@
  				5C795D71229F3757003FF1C4 /* WKContextMenuElementInfoPrivate.h in Headers */,
  				51A555F6128C6C47009ABCEC /* WKContextMenuItem.h in Headers */,
  				51A55601128C6D92009ABCEC /* WKContextMenuItemTypes.h in Headers */,
@@ -14205,7 +14383,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				A1EA02381DABFF7E0096021F /* WKContextMenuListener.h in Headers */,
  				BCC938E11180DE440085E5FE /* WKContextPrivate.h in Headers */,
  				9FB5F395169E6A80002C25BF /* WKContextPrivateMac.h in Headers */,
-@@ -11703,6 +11766,7 @@
+@@ -11703,6 +11770,7 @@
  				1AB8A1F818400BB800E9AE69 /* WKPageContextMenuClient.h in Headers */,
  				8372DB251A674C8F00C697C5 /* WKPageDiagnosticLoggingClient.h in Headers */,
  				1AB8A1F418400B8F00E9AE69 /* WKPageFindClient.h in Headers */,
@@ -14213,7 +14391,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				1AB8A1F618400B9D00E9AE69 /* WKPageFindMatchesClient.h in Headers */,
  				1AB8A1F018400B0000E9AE69 /* WKPageFormClient.h in Headers */,
  				BC7B633712A45ABA00D174A4 /* WKPageGroup.h in Headers */,
-@@ -12764,6 +12828,7 @@
+@@ -12764,6 +12832,7 @@
  				CDA93DB122F8BCF400490A69 /* FullscreenTouchSecheuristicParameters.cpp in Sources */,
  				2749F6442146561B008380BF /* InjectedBundleNodeHandle.cpp in Sources */,
  				2749F6452146561E008380BF /* InjectedBundleRangeHandle.cpp in Sources */,
@@ -14221,7 +14399,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				2D913441212CF9F000128AFD /* JSNPMethod.cpp in Sources */,
  				2D913442212CF9F000128AFD /* JSNPObject.cpp in Sources */,
  				C14D37FE24ACE086007FF014 /* LaunchServicesDatabaseManager.mm in Sources */,
-@@ -12777,6 +12842,7 @@
+@@ -12777,6 +12846,7 @@
  				2D92A781212B6A7100F493FD /* MessageReceiverMap.cpp in Sources */,
  				2D92A782212B6A7100F493FD /* MessageSender.cpp in Sources */,
  				2D92A77A212B6A6100F493FD /* Module.cpp in Sources */,
@@ -14229,7 +14407,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				57B826452304F14000B72EB0 /* NearFieldSoftLink.mm in Sources */,
  				2D913443212CF9F000128AFD /* NetscapeBrowserFuncs.cpp in Sources */,
  				2D913444212CF9F000128AFD /* NetscapePlugin.cpp in Sources */,
-@@ -12800,6 +12866,7 @@
+@@ -12800,6 +12870,7 @@
  				1A2D8439127F65D5001EB962 /* NPObjectMessageReceiverMessageReceiver.cpp in Sources */,
  				2D92A792212B6AD400F493FD /* NPObjectProxy.cpp in Sources */,
  				2D92A793212B6AD400F493FD /* NPRemoteObjectMap.cpp in Sources */,
@@ -14237,7 +14415,7 @@ index ebede3020fd12caa29b4396273e2c4311b3eea61..a8989a4f91c881aec544d8395a055e4e
  				2D913447212CF9F000128AFD /* NPRuntimeObjectMap.cpp in Sources */,
  				2D913448212CF9F000128AFD /* NPRuntimeUtilities.cpp in Sources */,
  				2D92A794212B6AD400F493FD /* NPVariantData.cpp in Sources */,
-@@ -13083,6 +13150,7 @@
+@@ -13083,6 +13154,7 @@
  				2D92A78C212B6AB100F493FD /* WebMouseEvent.cpp in Sources */,
  				31BA924D148831260062EDB5 /* WebNotificationManagerMessageReceiver.cpp in Sources */,
  				2DF6FE52212E110900469030 /* WebPage.cpp in Sources */,
