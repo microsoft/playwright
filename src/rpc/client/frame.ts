@@ -29,7 +29,6 @@ import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Waiter } from './waiter';
 import { Events } from '../../events';
-import { TimeoutError } from '../../errors';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
@@ -94,20 +93,21 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
     });
   }
 
-  private _setupNavigationWaiter(): Waiter {
+  private _setupNavigationWaiter(options: types.TimeoutOptions): Waiter {
     const waiter = new Waiter();
     waiter.rejectOnEvent(this._page!, Events.Page.Close, new Error('Navigation failed because page was closed!'));
     waiter.rejectOnEvent(this._page!, Events.Page.Crash, new Error('Navigation failed because page crashed!'));
     waiter.rejectOnEvent<Frame>(this._page!, Events.Page.FrameDetached, new Error('Navigating frame was detached!'), frame => frame === this);
+    const timeout = this._page!._timeoutSettings.navigationTimeout(options);
+    waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded.`);
+
     return waiter;
   }
 
   async waitForNavigation(options: types.WaitForNavigationOptions = {}): Promise<network.Response | null> {
     return this._wrapApiCall(this._apiName('waitForNavigation'), async () => {
       const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-      const timeout = this._page!._timeoutSettings.navigationTimeout(options);
-      const waiter = this._setupNavigationWaiter();
-      waiter.rejectOnTimeout(timeout, new TimeoutError(`Timeout ${timeout}ms exceeded.`));
+      const waiter = this._setupNavigationWaiter(options);
 
       const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
       waiter.log(`waiting for navigation${toUrl} until "${waitUntil}"`);
@@ -144,9 +144,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
     if (this._loadStates.has(state))
       return;
     return this._wrapApiCall(this._apiName('waitForLoadState'), async () => {
-      const timeout = this._page!._timeoutSettings.navigationTimeout(options);
-      const waiter = this._setupNavigationWaiter();
-      waiter.rejectOnTimeout(timeout, new TimeoutError(`Timeout ${timeout}ms exceeded.`));
+      const waiter = this._setupNavigationWaiter(options);
       await waiter.waitForEvent<types.LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
         waiter.log(`  "${s}" event fired`);
         return s === state;
