@@ -64,13 +64,13 @@ export class Chromium extends BrowserTypeBase {
     return CRBrowser.connect(transport, options, devtools);
   }
 
-  _rewriteStartupError(error: Error): Error {
+  _rewriteStartupError(error: Error, prefix: string): Error {
     // These error messages are taken from Chromium source code as of July, 2020:
     // https://github.com/chromium/chromium/blob/70565f67e79f79e17663ad1337dc6e63ee207ce9/content/browser/zygote_host/zygote_host_impl_linux.cc
     if (!error.message.includes('crbug.com/357670') && !error.message.includes('No usable sandbox!') && !error.message.includes('crbug.com/638180'))
       return error;
     return rewriteErrorMessage(error, [
-      `Chromium sandboxing failed!`,
+      `${prefix}: Chromium sandboxing failed!`,
       `================================`,
       `To workaround sandboxing issues, do either of the following:`,
       `  - (preferred): Configure environment to support sandboxing: https://github.com/microsoft/playwright/blob/master/docs/troubleshooting.md`,
