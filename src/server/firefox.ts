@@ -39,6 +39,10 @@ export class Firefox extends BrowserTypeBase {
     return FFBrowser.connect(transport, options);
   }
 
+  _rewriteStartupError(error: Error, prefix: string): Error {
+    return error;
+  }
+
   _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
     return os.platform() === 'linux' ? {
       ...env,

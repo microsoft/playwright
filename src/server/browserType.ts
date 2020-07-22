@@ -90,7 +90,8 @@ export abstract class BrowserTypeBase implements BrowserType {
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     options = validateLaunchOptions(options);
     const loggers = new Loggers(options.logger);
-    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, loggers, undefined), loggers.browser, TimeoutSettings.timeout(options), `browserType.launch`);
+    const label = 'browserType.launch';
+    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, loggers, undefined), loggers.browser, TimeoutSettings.timeout(options), label).catch(e => { throw this._rewriteStartupError(e, label); });
     return browser;
   }
 
@@ -99,7 +100,8 @@ export abstract class BrowserTypeBase implements BrowserType {
     options = validateLaunchOptions(options);
     const persistent = validateBrowserContextOptions(options);
     const loggers = new Loggers(options.logger);
-    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, loggers, persistent, userDataDir), loggers.browser, TimeoutSettings.timeout(options), 'browserType.launchPersistentContext');
+    const label = 'browserType.launchPersistentContext';
+    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, loggers, persistent, userDataDir), loggers.browser, TimeoutSettings.timeout(options), label).catch(e => { throw this._rewriteStartupError(e, label); });
     return browser._defaultContext!;
   }
 
@@ -240,6 +242,7 @@ export abstract class BrowserTypeBase implements BrowserType {
   abstract _startWebSocketServer(transport: ConnectionTransport, logger: Logger, port: number): WebSocketServer;
   abstract _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;
   abstract _amendArguments(browserArguments: string[]): string[];
+  abstract _rewriteStartupError(error: Error, prefix: string): Error;
   abstract _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void;
 }
 
