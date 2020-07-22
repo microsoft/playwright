@@ -34,7 +34,7 @@ export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> i
 
   private constructor(scope: DispatcherScope, request: Request) {
     const postData = request.postData();
-    super(scope, request, 'request', {
+    super(scope, request, 'Request', {
       frame: FrameDispatcher.from(scope, request.frame()),
       url: request.url(),
       resourceType: request.resourceType(),
@@ -54,7 +54,7 @@ export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> i
 export class ResponseDispatcher extends Dispatcher<Response, ResponseInitializer> implements ResponseChannel {
 
   constructor(scope: DispatcherScope, response: Response) {
-    super(scope, response, 'response', {
+    super(scope, response, 'Response', {
       // TODO: responses in popups can point to non-reported requests.
       request: RequestDispatcher.from(scope, response.request()),
       url: response.url(),
@@ -76,7 +76,7 @@ export class ResponseDispatcher extends Dispatcher<Response, ResponseInitializer
 export class RouteDispatcher extends Dispatcher<Route, RouteInitializer> implements RouteChannel {
 
   constructor(scope: DispatcherScope, route: Route) {
-    super(scope, route, 'route', {
+    super(scope, route, 'Route', {
       // Context route can point to a non-reported request.
       request: RequestDispatcher.from(scope, route.request())
     });

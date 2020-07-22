@@ -21,7 +21,7 @@ import { serializeResult, parseArgument } from './jsHandleDispatcher';
 
 export class CDPSessionDispatcher extends Dispatcher<CRSession, CDPSessionInitializer> implements CDPSessionChannel {
   constructor(scope: DispatcherScope, crSession: CRSession) {
-    super(scope, crSession, 'cdpSession', {}, true);
+    super(scope, crSession, 'CDPSession', {}, true);
     crSession._eventListener = (method, cdpParams) => {
       const params = cdpParams ? serializeResult(cdpParams) : undefined;
       this._dispatchEvent('event', { method, params });

@@ -20,7 +20,7 @@ import { Dispatcher, DispatcherScope } from './dispatcher';
 
 export class DialogDispatcher extends Dispatcher<Dialog, DialogInitializer> implements DialogChannel {
   constructor(scope: DispatcherScope, dialog: Dialog) {
-    super(scope, dialog, 'dialog', {
+    super(scope, dialog, 'Dialog', {
       type: dialog.type(),
       message: dialog.message(),
       defaultValue: dialog.defaultValue(),

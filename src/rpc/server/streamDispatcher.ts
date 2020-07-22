@@ -20,7 +20,7 @@ import * as stream from 'stream';
 
 export class StreamDispatcher extends Dispatcher<stream.Readable, StreamInitializer> implements StreamChannel {
   constructor(scope: DispatcherScope, stream: stream.Readable) {
-    super(scope, stream, 'stream', {});
+    super(scope, stream, 'Stream', {});
   }
 
   async read(params: { size?: number }): Promise<{ binary: Binary }> {

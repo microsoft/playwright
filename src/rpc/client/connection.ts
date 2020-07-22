@@ -134,25 +134,16 @@ export class Connection {
     let result: ChannelOwner<any, any>;
     initializer = this._replaceGuidsWithChannels(initializer);
     switch (type) {
-      case 'bindingCall':
+      case 'BindingCall':
         result = new BindingCall(parent, type, guid, initializer);
         break;
-      case 'browser':
+      case 'Browser':
         if ((parent as BrowserType).name() === 'chromium')
           result = new ChromiumBrowser(parent, type, guid, initializer);
         else
           result = new Browser(parent, type, guid, initializer);
         break;
-      case 'browserServer':
-        result = new BrowserServer(parent, type, guid, initializer);
-        break;
-      case 'browserType':
-        result = new BrowserType(parent, type, guid, initializer);
-        break;
-      case 'cdpSession':
-        result = new CDPSession(parent, type, guid, initializer);
-        break;
-      case 'context':
+      case 'BrowserContext':
         let browserName = '';
         if (parent instanceof Electron) {
           // Launching electron produces Electron parent for BrowserContext.
@@ -169,52 +160,61 @@ export class Connection {
         else
           result = new BrowserContext(parent, type, guid, initializer, browserName);
         break;
-      case 'consoleMessage':
+      case 'BrowserServer':
+        result = new BrowserServer(parent, type, guid, initializer);
+        break;
+      case 'BrowserType':
+        result = new BrowserType(parent, type, guid, initializer);
+        break;
+      case 'CDPSession':
+        result = new CDPSession(parent, type, guid, initializer);
+        break;
+      case 'ConsoleMessage':
         result = new ConsoleMessage(parent, type, guid, initializer);
         break;
-      case 'dialog':
+      case 'Dialog':
         result = new Dialog(parent, type, guid, initializer);
         break;
-      case 'download':
+      case 'Download':
         result = new Download(parent, type, guid, initializer);
         break;
-      case 'electron':
+      case 'Electron':
         result = new Electron(parent, type, guid, initializer);
         break;
-      case 'electronApplication':
+      case 'ElectronApplication':
         result = new ElectronApplication(parent, type, guid, initializer);
         break;
-      case 'elementHandle':
+      case 'ElementHandle':
         result = new ElementHandle(parent, type, guid, initializer);
         break;
-      case 'frame':
+      case 'Frame':
         result = new Frame(parent, type, guid, initializer);
         break;
-      case 'jsHandle':
+      case 'JSHandle':
         result = new JSHandle(parent, type, guid, initializer);
         break;
-      case 'page':
+      case 'Page':
         result = new Page(parent, type, guid, initializer);
         break;
-      case 'playwright':
+      case 'Playwright':
         result = new Playwright(parent, type, guid, initializer);
         break;
-      case 'request':
+      case 'Request':
         result = new Request(parent, type, guid, initializer);
         break;
-      case 'stream':
+      case 'Stream':
         result = new Stream(parent, type, guid, initializer);
         break;
-      case 'response':
+      case 'Response':
         result = new Response(parent, type, guid, initializer);
         break;
-      case 'route':
+      case 'Route':
         result = new Route(parent, type, guid, initializer);
         break;
-      case 'selectors':
+      case 'Selectors':
         result = new Selectors(parent, type, guid, initializer);
         break;
-      case 'worker':
+      case 'Worker':
         result = new Worker(parent, type, guid, initializer);
         break;
       default:

@@ -22,7 +22,7 @@ import * as dom from '../../dom';
 
 export class SelectorsDispatcher extends Dispatcher<Selectors, SelectorsInitializer> implements SelectorsChannel {
   constructor(scope: DispatcherScope, selectors: Selectors) {
-    super(scope, selectors, 'selectors', {});
+    super(scope, selectors, 'Selectors', {});
   }
 
   async register(params: { name: string, source: string, contentScript?: boolean }): Promise<void> {

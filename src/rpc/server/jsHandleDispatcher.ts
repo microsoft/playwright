@@ -23,7 +23,7 @@ import { parseSerializedValue, serializeValue } from '../serializers';
 export class JSHandleDispatcher extends Dispatcher<js.JSHandle, JSHandleInitializer> implements JSHandleChannel {
 
   constructor(scope: DispatcherScope, jsHandle: js.JSHandle) {
-    super(scope, jsHandle, jsHandle.asElement() ? 'elementHandle' : 'jsHandle', {
+    super(scope, jsHandle, jsHandle.asElement() ? 'ElementHandle' : 'JSHandle', {
       preview: jsHandle.toString(),
     });
     jsHandle._setPreviewCallback(preview => this._dispatchEvent('previewUpdated', { preview }));

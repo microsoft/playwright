@@ -39,7 +39,7 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
   constructor(scope: DispatcherScope, page: Page) {
     // TODO: theoretically, there could be more than one frame already.
     // If we split pageCreated and pageReady, there should be no main frame during pageCreated.
-    super(scope, page, 'page', {
+    super(scope, page, 'Page', {
       mainFrame: FrameDispatcher.from(scope, page.mainFrame()),
       viewportSize: page.viewportSize() || undefined,
       isClosed: page.isClosed()
@@ -233,7 +233,7 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
 
 export class WorkerDispatcher extends Dispatcher<Worker, WorkerInitializer> implements WorkerChannel {
   constructor(scope: DispatcherScope, worker: Worker) {
-    super(scope, worker, 'worker', {
+    super(scope, worker, 'Worker', {
       url: worker.url()
     });
     worker.on(Events.Worker.Close, () => this._dispatchEvent('close'));
@@ -254,7 +254,7 @@ export class BindingCallDispatcher extends Dispatcher<{}, BindingCallInitializer
   private _promise: Promise<any>;
 
   constructor(scope: DispatcherScope, name: string, source: { context: BrowserContext, page: Page, frame: Frame }, args: any[]) {
-    super(scope, {}, 'bindingCall', {
+    super(scope, {}, 'BindingCall', {
       frame: lookupDispatcher<FrameDispatcher>(source.frame),
       name,
       args: args.map(serializeResult),

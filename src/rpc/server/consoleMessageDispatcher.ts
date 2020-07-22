@@ -21,7 +21,7 @@ import { createHandle } from './elementHandlerDispatcher';
 
 export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, ConsoleMessageInitializer> implements ConsoleMessageChannel {
   constructor(scope: DispatcherScope, message: ConsoleMessage) {
-    super(scope, message, 'consoleMessage', {
+    super(scope, message, 'ConsoleMessage', {
       type: message.type(),
       text: message.text(),
       args: message.args().map(a => createHandle(scope, a)),

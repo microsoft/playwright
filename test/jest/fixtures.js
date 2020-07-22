@@ -114,7 +114,7 @@ module.exports = function registerFixtures(global) {
         toImpl = x => dispatcherConnection._dispatchers.get(x._guid)._object;
       }
 
-      const playwrightObject = await connection.waitForObjectWithKnownName('playwright');
+      const playwrightObject = await connection.waitForObjectWithKnownName('Playwright');
       playwrightObject.toImpl = toImpl;
       await test(playwrightObject);
       if (spawnedProcess) {

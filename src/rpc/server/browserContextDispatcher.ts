@@ -30,7 +30,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
   private _context: BrowserContextBase;
 
   constructor(scope: DispatcherScope, context: BrowserContextBase) {
-    super(scope, context, 'context', {}, true);
+    super(scope, context, 'BrowserContext', {}, true);
     this._context = context;
 
     for (const page of context.pages())

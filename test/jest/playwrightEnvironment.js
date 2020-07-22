@@ -98,7 +98,7 @@ class PlaywrightEnvironment extends NodeEnvironment {
 
       const describeSkip = this.global.describe.skip;
       this.global.describe.skip = (...args) => {
-        if (args.length = 1)
+        if (args.length === 1)
           return args[0] ? describeSkip : this.global.describe;
         return describeSkip(...args);
       };
@@ -107,7 +107,7 @@ class PlaywrightEnvironment extends NodeEnvironment {
       const itSkip = this.global.it.skip;
       itSkip.slow = () => itSkip;
       this.global.it.skip = (...args) => {
-        if (args.length = 1)
+        if (args.length === 1)
           return args[0] ? itSkip : this.global.it;
         return itSkip(...args);
       };
@@ -115,8 +115,8 @@ class PlaywrightEnvironment extends NodeEnvironment {
       this.global.it.slow = () => {
         return (name, fn) => {
           return this.global.it(name, fn, 90000);
-        }
-      }
+        };
+      };
 
       const testOptions = this.global.testOptions;
       function toBeGolden(received, goldenName) {

@@ -31,7 +31,7 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
   }
 
   private constructor(scope: DispatcherScope, frame: Frame) {
-    super(scope, frame, 'frame', {
+    super(scope, frame, 'Frame', {
       url: frame.url(),
       name: frame.name(),
       parentFrame: lookupNullableDispatcher<FrameDispatcher>(frame.parentFrame()),

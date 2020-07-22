@@ -26,7 +26,7 @@ import { envArrayToObject } from '../serializers';
 
 export class ElectronDispatcher extends Dispatcher<Electron, ElectronInitializer> implements ElectronChannel {
   constructor(scope: DispatcherScope, electron: Electron) {
-    super(scope, electron, 'electron', {}, true);
+    super(scope, electron, 'Electron', {}, true);
   }
 
   async launch(params: ElectronLaunchParams): Promise<{ electronApplication: ElectronApplicationChannel }> {
@@ -41,7 +41,7 @@ export class ElectronDispatcher extends Dispatcher<Electron, ElectronInitializer
 
 export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplication, ElectronApplicationInitializer> implements ElectronApplicationChannel {
   constructor(scope: DispatcherScope, electronApplication: ElectronApplication) {
-    super(scope, electronApplication, 'electronApplication', {
+    super(scope, electronApplication, 'ElectronApplication', {
       context: new BrowserContextDispatcher(scope, electronApplication.context() as BrowserContextBase),
     });
 

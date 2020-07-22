@@ -27,13 +27,13 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, PlaywrightIniti
     const electron = (playwright as any).electron as (Electron | undefined);
     const deviceDescriptors = Object.entries(playwright.devices)
         .map(([name, descriptor]) => ({ name, descriptor }));
-    super(scope, playwright, 'playwright', {
+    super(scope, playwright, 'Playwright', {
       chromium: new BrowserTypeDispatcher(scope, playwright.chromium!),
       firefox: new BrowserTypeDispatcher(scope, playwright.firefox!),
       webkit: new BrowserTypeDispatcher(scope, playwright.webkit!),
       electron: electron ? new ElectronDispatcher(scope, electron) : undefined,
       deviceDescriptors,
       selectors: new SelectorsDispatcher(scope, playwright.selectors),
-    }, false, 'playwright');
+    }, false, 'Playwright');
   }
 }
