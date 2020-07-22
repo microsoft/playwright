@@ -144,9 +144,9 @@ describe('Download', function() {
       page.click('a')
     ]);
     const nonExistentUserPath = path.join(persistentDirectory, "does-not-exist","download.txt");
-    const { code, syscall, message } = await download.saveAs(nonExistentUserPath).catch(e => e);
-    expect(code).toBe('ENOENT');
-    expect(syscall).toBe('copyfile');
+    const { message } = await download.saveAs(nonExistentUserPath).catch(e => e);
+    expect(message).toContain('ENOENT');
+    expect(message).toContain('copyfile');
     expect(message).toContain('no such file or directory');
     expect(message).toContain('does-not-exist');
     await page.close();
