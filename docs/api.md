@@ -3182,6 +3182,7 @@ const path = await download.path();
 - [download.delete()](#downloaddelete)
 - [download.failure()](#downloadfailure)
 - [download.path()](#downloadpath)
+- [download.saveAs(path)](#downloadsaveaspath)
 - [download.suggestedFilename()](#downloadsuggestedfilename)
 - [download.url()](#downloadurl)
 <!-- GEN:stop -->
@@ -3205,6 +3206,12 @@ Returns download error if any.
 - returns: <[Promise]<null|[string]>>
 
 Returns path to the downloaded file in case of successful download.
+
+#### download.saveAs(path)
+- `path` <[string]> Path where the download should be saved. The directory structure MUST exist as `saveAs` will not create it.
+- returns: <[Promise]>
+
+Saves the download to a user-specified path.
 
 #### download.suggestedFilename()
 - returns: <[string]>

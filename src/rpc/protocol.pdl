@@ -1390,6 +1390,10 @@ interface Download
     returns
       value?: string
 
+  command saveAs
+    parameters
+      path: string
+
   command failure
     returns
       error?: string
@@ -1474,4 +1478,3 @@ interface ElectronApplication
       handle: JSHandle
 
   command close
-

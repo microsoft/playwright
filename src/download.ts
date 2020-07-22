@@ -27,6 +27,8 @@ export class Download {
   private _uuid: string;
   private _finishedCallback: () => void;
   private _finishedPromise: Promise<void>;
+  private _saveAsRequests: { fulfill: () => void; reject: (error?: any) => void; path: string }[] = [];
+  private _loaded: boolean = false;
   private _page: Page;
   private _acceptDownloads: boolean;
   private _failure: string | null = null;
@@ -72,6 +74,26 @@ export class Download {
     return fileName;
   }
 
+  async saveAs(path: string) {
+    if (this._loaded) {
+      await this._saveAs(path);
+      return;
+    }
+
+    return new Promise((fulfill, reject) => this._saveAsRequests.push({fulfill, reject, path}));
+  }
+
+  async _saveAs(dlPath: string) {
+    if (!this._acceptDownloads)
+      throw new Error('Pass { acceptDownloads: true } when you are creating your browser context.');
+    const fileName = path.join(this._downloadsPath, this._uuid);
+    if (this._failure)
+      throw new Error('Download not found on disk. Check download.failure() for details.');
+    if (this._deleted)
+      throw new Error('Download already deleted. Save before deleting.');
+    await util.promisify(fs.copyFile)(fileName, dlPath);
+  }
+
   async failure(): Promise<string | null> {
     if (!this._acceptDownloads)
       return 'Pass { acceptDownloads: true } when you are creating your browser context.';
@@ -95,7 +117,26 @@ export class Download {
       await util.promisify(fs.unlink)(fileName).catch(e => {});
   }
 
-  _reportFinished(error?: string) {
+  async _reportFinished(error?: string) {
+    if (error) {
+      for (const { reject } of this._saveAsRequests) {
+        if (!this._acceptDownloads)
+          reject(new Error('Pass { acceptDownloads: true } when you are creating your browser context.'));
+        else
+          reject(error);
+      }
+    } else {
+      for (const { fulfill, reject, path } of this._saveAsRequests) {
+        try {
+          await this._saveAs(path);
+          fulfill();
+        } catch (err) {
+          reject(err);
+        }
+      }
+    }
+
+    this._loaded = true;
     this._failure = error || null;
     this._finishedCallback();
   }
