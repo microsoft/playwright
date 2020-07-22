@@ -78,14 +78,14 @@ export class Request {
   private _url: string;
   private _resourceType: string;
   private _method: string;
-  private _postData: string | null;
+  private _postData: Buffer | null;
   private _headers: types.Headers;
   private _frame: frames.Frame;
   private _waitForResponsePromise: Promise<Response | null>;
   private _waitForResponsePromiseCallback: (value: Response | null) => void = () => {};
 
   constructor(routeDelegate: RouteDelegate | null, frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
-    url: string, resourceType: string, method: string, postData: string | null, headers: types.Headers) {
+    url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.Headers) {
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     assert(!(routeDelegate && redirectedFrom), 'Should not be able to intercept redirects');
     this._routeDelegate = routeDelegate;
@@ -121,11 +121,16 @@ export class Request {
   }
 
   postData(): string | null {
+    return this._postData ? this._postData.toString('utf8') : null;
+  }
+
+  postDataBuffer(): Buffer | null {
     return this._postData;
   }
 
   postDataJSON(): Object | null {
-    if (!this._postData)
+    const postData = this.postData();
+    if (!postData)
       return null;
 
     const contentType = this.headers()['content-type'];
@@ -134,13 +139,13 @@ export class Request {
 
     if (contentType === 'application/x-www-form-urlencoded') {
       const entries: Record<string, string> = {};
-      const parsed = new URLSearchParams(this._postData);
+      const parsed = new URLSearchParams(postData);
       for (const [k, v] of parsed.entries())
         entries[k] = v;
       return entries;
     }
 
-    return JSON.parse(this._postData);
+    return JSON.parse(postData);
   }
 
   headers(): {[key: string]: string} {

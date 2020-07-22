@@ -342,10 +342,14 @@ class InterceptableRequest implements network.RouteDelegate {
       headers,
       method,
       url,
-      postData = null,
+      postDataEntries = null,
     } = requestPausedEvent ? requestPausedEvent.request : requestWillBeSentEvent.request;
     const type = (requestWillBeSentEvent.type || '').toLowerCase();
-    this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId, url, type, method, postData, headersObject(headers));
+    let postDataBuffer = null;
+    if (postDataEntries && postDataEntries.length && postDataEntries[0].bytes)
+      postDataBuffer = Buffer.from(postDataEntries[0].bytes, 'base64');
+
+    this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId, url, type, method, postDataBuffer, headersObject(headers));
   }
 
   async continue(overrides: types.NormalizedContinueOverrides) {

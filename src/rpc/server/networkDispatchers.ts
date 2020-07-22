@@ -33,13 +33,13 @@ export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> i
   }
 
   private constructor(scope: DispatcherScope, request: Request) {
-    const postData = request.postData();
+    const postData = request.postDataBuffer();
     super(scope, request, 'Request', {
       frame: FrameDispatcher.from(scope, request.frame()),
       url: request.url(),
       resourceType: request.resourceType(),
       method: request.method(),
-      postData: postData === null ? undefined : postData,
+      postData: postData === null ? undefined : postData.toString('base64'),
       headers: headersObjectToArray(request.headers()),
       isNavigationRequest: request.isNavigationRequest(),
       redirectedFrom: RequestDispatcher.fromNullable(scope, request.redirectedFrom()),

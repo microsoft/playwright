@@ -1291,7 +1291,7 @@ interface Request
     url: string
     resourceType: string
     method: string
-    postData?: string
+    postData?: binary
     headers: object[]
       name: string
       value: string

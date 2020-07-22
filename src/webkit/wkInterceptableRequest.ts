@@ -53,8 +53,11 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     this._requestId = event.requestId;
     this._allowInterception = allowInterception;
     const resourceType = event.type ? event.type.toLowerCase() : (redirectedFrom ? redirectedFrom.resourceType() : 'other');
+    let postDataBuffer = null;
+    if (event.request.postData)
+      postDataBuffer = Buffer.from(event.request.postData, 'binary');
     this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId, event.request.url,
-        resourceType, event.request.method, event.request.postData || null, headersObject(event.request.headers));
+        resourceType, event.request.method, postDataBuffer, headersObject(event.request.headers));
     this._interceptedPromise = new Promise(f => this._interceptedCallback = f);
   }
 
