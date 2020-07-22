@@ -168,7 +168,9 @@ export class FrameManager {
   }
 
   frameCommittedNewDocumentNavigation(frameId: string, url: string, name: string, documentId: string, initial: boolean) {
-    const frame = this._frames.get(frameId)!;
+    const frame = this._frames.get(frameId);
+    if (!frame)
+      return;
     this.removeChildFramesRecursively(frame);
     frame._url = url;
     frame._name = name;
