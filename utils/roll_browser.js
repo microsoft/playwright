@@ -19,6 +19,7 @@
 const path = require('path');
 const fs = require('fs');
 const protocolGenerator = require('./protocol-types-generator');
+const {execSync} = require('child_process');
 
 const SCRIPT_NAME = path.basename(__filename);
 const ROOT_PATH = path.resolve(path.join(__dirname, '..'));
@@ -57,20 +58,33 @@ Example:
     process.exit(1);
   }
   const revision = args[1];
+  console.log(`Rolling ${browserName} to ${revision}`);
 
   // 2. Update browsers.json.
+  console.log('\nUpdating browsers.json...');
   const browsersJSON = require(path.join(ROOT_PATH, 'browsers.json'));
   browsersJSON.browsers.find(b => b.name === browserName).revision = String(revision);
   fs.writeFileSync(path.join(ROOT_PATH, 'browsers.json'), JSON.stringify(browsersJSON, null, 2) + '\n');
 
   // 3. Download new browser.
+  console.log('\nDownloading new browser...');
   const { installBrowsersWithProgressBar } = require('../lib/install/installer');
   await installBrowsersWithProgressBar(ROOT_PATH);
 
   // 4. Generate types.
+  console.log('\nGenerating protocol types...');
   const browser = { name: browserName, revision };
   const browserPaths = require('../lib/install/browserPaths');
   const browserDir = browserPaths.browserDirectory(browserPaths.browsersPath(ROOT_PATH), browser);
   const executablePath = browserPaths.executablePath(browserDir, browser);
   await protocolGenerator.generateProtocol(browserName, executablePath).catch(console.warn);
+
+  // 5. Update docs.
+  console.log('\nUpdating documentation...');
+  try {
+    process.stdout.write(execSync('npm run --silent doc -- --only-browser-versions'));
+  } catch (e) {
+  }
+
+  console.log(`\nRolled ${browserName} to ${revision}`);
 })();
