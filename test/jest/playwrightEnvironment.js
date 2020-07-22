@@ -132,34 +132,15 @@ class PlaywrightEnvironment extends NodeEnvironment {
     if (event.name === 'test_start') {
       const fn = event.test.fn;
       event.test.fn = async () => {
-        return await this.fixturePool.resolveParametersAndRun(fn);
+        try {
+          return await this.fixturePool.resolveParametersAndRun(fn);
+        } finally {
+          await this.fixturePool.teardownScope('test');
+        }
       };
     }
 
-    if (event.name === 'test_fn_success')
-      await this.fixturePool.teardownScope('test');
-
     if (event.name === 'test_fn_failure') {
-      let index = 0;
-      for (const browser of global.__activeBrowsers__ || []) {
-        for (const context of /** @type {import('../../').Browser} */ (browser).contexts()) {
-          const pages = context.pages();
-          const names = [];
-          let current = event.test;
-          while (current && current.name !== 'ROOT_DESCRIBE_BLOCK') {
-            names.push(current.name)
-            current = current.parent;
-          }
-          const fullName = names.reverse().join(' ')
-          await Promise.all(pages.map(async (page) => {
-            const filename = fullName.replace(/\s/g, '-') + '-' + index++ + '.png';
-            await page.screenshot({
-              path: path.join(this.global.testOptions.OUTPUT_DIR, filename)
-            });
-          }));
-        }
-      }
-      await this.fixturePool.teardownScope('test');
       await this.fixturePool.teardownScope('worker');
     }
   }
