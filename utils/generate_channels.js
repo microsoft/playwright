@@ -17,145 +17,76 @@
 
 const fs = require('fs');
 const path = require('path');
+const yaml = require('yaml');
 
 const channels = new Set();
 
-function tokenize(source) {
-  const lines = source.split('\n').filter(line => {
-    const trimmed = line.trim();
-    return !!trimmed && trimmed[0] != '#';
-  });
-
-  const stack = [{ indent: -1, list: [], words: '' }];
-  for (const line of lines) {
-    const indent = line.length - line.trimLeft().length;
-    const o = { indent, list: [], words: line.split(' ').filter(word => !!word) };
-
-    let current = stack[stack.length - 1];
-    while (indent <= current.indent) {
-      stack.pop();
-      current = stack[stack.length - 1];
-    }
-
-    current.list.push(o);
-    stack.push(o);
-  }
-  return stack[0].list;
-}
-
 function raise(item) {
-  throw new Error(item.words.join(' '));
+  throw new Error('Invalid item: ' + JSON.stringify(item, null, 2));
 }
 
 function titleCase(name) {
   return name[0].toUpperCase() + name.substring(1);
 }
 
-function inlineType(item, indent) {
-  let type = item.words[1];
-  const array = type.endsWith('[]');
-  if (array)
-    type = type.substring(0, type.length - 2);
-  let inner = '';
-  if (type === 'enum') {
-    const literals = item.list.map(literal => {
-      if (literal.words.length > 1 || literal.list.length)
-        raise(literal);
-      return literal.words[0];
-    });
-    inner = literals.map(literal => `'${literal}'`).join(' | ');
-    if (array)
-      inner = `(${inner})`;
-  } else if (['string', 'boolean', 'number', 'undefined'].includes(type)) {
-    inner = type;
-  } else if (type === 'object') {
-    inner = `{\n${properties(item, indent + '  ')}\n${indent}}`;
-  } else if (type === 'binary') {
-    inner = 'Binary';
-  } else if (channels.has(type)) {
-    inner = type + 'Channel';
-  } else {
-    inner = type;
-  }
-  return inner + (array ? '[]' : '');
-}
-
-function inlineTypeScheme(item, indent) {
-  let type = item.words[1];
-  const array = type.endsWith('[]');
-  if (array)
-    type = type.substring(0, type.length - 2);
-  let inner = '';
-  if (type === 'enum') {
-    const literals = item.list.map(literal => {
-      if (literal.words.length > 1 || literal.list.length)
-        raise(literal);
-      return literal.words[0];
-    });
-    inner = `tEnum([${literals.map(literal => `'${literal}'`).join(', ')}])`;
-  } else if (['string', 'boolean', 'number', 'undefined'].includes(type)) {
-    inner = `t${titleCase(type)}`;
-  } else if (type === 'object') {
-    inner = `tObject({\n${propertiesScheme(item, indent + '  ')}\n${indent}})`;
-  } else if (type === 'binary') {
-    inner = 'tBinary';
-  } else if (channels.has(type)) {
-    inner = `tChannel('${type}')`;
-  } else if (type === 'Channel') {
-    inner = `tChannel('*')`;
-  } else {
-    inner = `tType('${type}')`;
-  }
-  return array ? `tArray(${inner})` : inner;
-}
-
-function properties(item, indent) {
-  const result = [];
-  for (const prop of item.list) {
-    if (prop.words.length !== 2)
-      raise(prop);
-    let name = prop.words[0];
-    if (!name.endsWith(':'))
-      raise(item);
-    name = name.substring(0, name.length - 1);
-    const optional = name.endsWith('?');
+function inlineType(type, indent, wrapEnums = false) {
+  if (typeof type === 'string') {
+    const optional = type.endsWith('?');
     if (optional)
-      name = name.substring(0, name.length - 1);
-    result.push(`${indent}${name}${optional ? '?' : ''}: ${inlineType(prop, indent)},`);
+      type = type.substring(0, type.length - 1);
+    if (type === 'binary')
+      return { ts: 'Binary', scheme: 'tBinary', optional };
+    if (['string', 'boolean', 'number', 'undefined'].includes(type))
+      return { ts: type, scheme: `t${titleCase(type)}`, optional };
+    if (channels.has(type))
+      return { ts: `${type}Channel`, scheme: `tChannel('${type}')` , optional };
+    if (type === 'Channel')
+      return { ts: `Channel`, scheme: `tChannel('*')`, optional };
+    return { ts: type, scheme: `tType('${type}')`, optional };
   }
-  return result.join('\n');
-}
-
-function propertiesScheme(item, indent) {
-  const result = [];
-  for (const prop of item.list) {
-    if (prop.words.length !== 2)
-      raise(prop);
-    let name = prop.words[0];
-    if (!name.endsWith(':'))
-      raise(item);
-    name = name.substring(0, name.length - 1);
-    const optional = name.endsWith('?');
-    if (optional)
-      name = name.substring(0, name.length - 1);
-    let type = inlineTypeScheme(prop, indent);
-    if (optional)
-      type = `tOptional(${type})`;
-    result.push(`${indent}${name}: ${type},`);
+  if (type.type.startsWith('array')) {
+    const optional = type.type.endsWith('?');
+    const inner = inlineType(type.items, indent, true);
+    return { ts: `${inner.ts}[]`, scheme: `tArray(${inner.scheme})`, optional };
   }
-  return result.join('\n');
+  if (type.type.startsWith('enum')) {
+    const optional = type.type.endsWith('?');
+    const ts = type.literals.map(literal => `'${literal}'`).join(' | ');
+    return {
+      ts: wrapEnums ? `(${ts})` : ts,
+      scheme: `tEnum([${type.literals.map(literal => `'${literal}'`).join(', ')}])`,
+      optional
+    };
+  }
+  if (type.type.startsWith('object')) {
+    const optional = type.type.endsWith('?');
+    const inner = properties(type.properties, indent + '  ');
+    return {
+      ts: `{\n${inner.ts}\n${indent}}`,
+      scheme: `tObject({\n${inner.scheme}\n${indent}})`,
+      optional
+    };
+  }
+  raise(type);
 }
 
-function objectType(name, item, indent) {
-  if (!item.list.length)
-    return `export type ${name} = {};`;
-  return `export type ${name} = {\n${properties(item, indent)}\n};`
+function properties(props, indent) {
+  const ts = [];
+  const scheme = [];
+  for (const [name, value] of Object.entries(props)) {
+    const inner = inlineType(value, indent);
+    ts.push(`${indent}${name}${inner.optional ? '?' : ''}: ${inner.ts},`);
+    const wrapped = inner.optional ? `tOptional(${inner.scheme})` : inner.scheme;
+    scheme.push(`${indent}${name}: ${wrapped},`);
+  }
+  return { ts: ts.join('\n'), scheme: scheme.join('\n') };
 }
 
-function objectTypeScheme(item, indent) {
-  if (!item.list.length)
-    return `tObject({})`;
-  return `tObject({\n${propertiesScheme(item, indent)}\n})`
+function objectType(props, indent) {
+  if (!Object.entries(props).length)
+    return { ts: `{}`, scheme: `tObject({})` };
+  const inner = properties(props, indent + '  ');
+  return { ts: `{\n${inner.ts}\n${indent}}`, scheme: `tObject({\n${inner.scheme}\n${indent}})` };
 }
 
 const channels_ts = [
@@ -185,108 +116,6 @@ export interface Channel extends EventEmitter {
 }
 `];
 
-const pdl = fs.readFileSync(path.join(__dirname, '..', 'src', 'rpc', 'protocol.pdl'), 'utf-8');
-const list = tokenize(pdl);
-const scheme = new Map();
-const inherits = new Map();
-
-function addScheme(name, s) {
-  if (scheme.has(name))
-    throw new Error('Duplicate scheme name ' + name);
-  scheme.set(name, s);
-}
-
-for (const item of list) {
-  if (item.words[0] === 'interface') {
-    channels.add(item.words[1]);
-    if (item.words[2] === 'extends')
-      inherits.set(item.words[1], item.words[3]);
-  }
-}
-
-for (const item of list) {
-  if (item.words[0] === 'type') {
-    if (item.words.length !== 2)
-      raise(item);
-    channels_ts.push(`export type ${item.words[1]} = {`);
-    channels_ts.push(properties(item, '  '));
-    channels_ts.push(`};`);
-    addScheme(item.words[1], objectTypeScheme(item, '  '));
-  } else if (item.words[0] === 'interface') {
-    const channelName = item.words[1];
-    channels_ts.push(`// ----------- ${channelName} -----------`);
-    const init = item.list.find(i => i.words[0] === 'initializer');
-    if (init && init.words.length > 1)
-      raise(init);
-    channels_ts.push(objectType(channelName + 'Initializer', init || { list: [] }, '  '));
-    addScheme(channelName + 'Initializer', objectTypeScheme(init || { list: [] }, '  '));
-
-    let extendsName = 'Channel';
-    if (item.words.length === 4 && item.words[2] === 'extends')
-      extendsName = item.words[3] + 'Channel';
-    else if (item.words.length !== 2)
-      raise(item);
-    channels_ts.push(`export interface ${channelName}Channel extends ${extendsName} {`);
-
-    const types = new Map();
-    for (const method of item.list) {
-      if (method === init)
-        continue;
-      if (method.words[0] === 'command') {
-        if (method.words.length !== 2)
-          raise(method);
-        const methodName = method.words[1];
-
-        const parameters = method.list.find(i => i.words[0] === 'parameters');
-        const paramsName = `${channelName}${titleCase(methodName)}Params`;
-        types.set(paramsName, parameters || { list: [] });
-        addScheme(paramsName, parameters ? objectTypeScheme(parameters, '  ') : `tOptional(tObject({}))`);
-
-        const returns = method.list.find(i => i.words[0] === 'returns');
-        const resultName = `${channelName}${titleCase(methodName)}Result`;
-        types.set(resultName, returns);
-        addScheme(resultName, returns ? objectTypeScheme(returns, '  ') : `tUndefined`);
-
-        channels_ts.push(`  ${methodName}(params${parameters ? '' : '?'}: ${paramsName}): Promise<${resultName}>;`);
-        for (const key of inherits.keys()) {
-          if (inherits.get(key) === channelName) {
-            addScheme(`${key}${titleCase(methodName)}Params`, `tType('${paramsName}')`);
-            addScheme(`${key}${titleCase(methodName)}Result`, `tType('${resultName}')`);
-          }
-        }
-      } else if (method.words[0] === 'event') {
-        if (method.words.length !== 2)
-          raise(method);
-        const eventName = method.words[1];
-
-        const parameters = method.list.find(i => i.words[0] === 'parameters');
-        const paramsName = `${channelName}${titleCase(eventName)}Event`;
-        types.set(paramsName, parameters || { list: [] });
-        addScheme(paramsName, objectTypeScheme(parameters || { list: [] }, '  '));
-
-        channels_ts.push(`  on(event: '${eventName}', callback: (params: ${paramsName}) => void): this;`);
-        for (const key of inherits.keys()) {
-          if (inherits.get(key) === channelName)
-            addScheme(`${key}${titleCase(eventName)}Event`, `tType('${paramsName}')`);
-        }
-      } else {
-        raise(method);
-      }
-    }
-    channels_ts.push(`}`);
-    for (const [name, item] of types) {
-      if (!item)
-        channels_ts.push(`export type ${name} = void;`);
-      else
-        channels_ts.push(objectType(name, item, '  '));
-    }
-  } else {
-    raise(item);
-  }
-  channels_ts.push(``);
-}
-
-
 const client_validator_ts = [
 `/**
  * Copyright (c) Microsoft Corporation.
@@ -309,9 +138,83 @@ const client_validator_ts = [
 import { scheme, tOptional, tObject, tBoolean, tNumber, tString, tType, tEnum, tArray, tChannel, tUndefined, tBinary } from './validatorPrimitives';
 export { validateParams } from './validatorPrimitives';
 `];
-for (const [name, value] of scheme)
-  client_validator_ts.push(`scheme.${name} = ${value};`);
-client_validator_ts.push(``);
 
+const yml = fs.readFileSync(path.join(__dirname, '..', 'src', 'rpc', 'protocol.yml'), 'utf-8');
+const protocol = yaml.parse(yml);
+
+function addScheme(name, s) {
+  client_validator_ts.push(`scheme.${name} = ${s};`);
+}
+
+const inherits = new Map();
+for (const [name, value] of Object.entries(protocol)) {
+  if (value.type === 'interface') {
+    channels.add(name);
+    if (value.extends)
+      inherits.set(name, value.extends);
+  }
+}
+
+for (const [name, item] of Object.entries(protocol)) {
+  if (item.type === 'interface') {
+    const channelName = name;
+    channels_ts.push(`// ----------- ${channelName} -----------`);
+    const init = objectType(item.initializer || {}, '');
+    const initializerName = channelName + 'Initializer';
+    channels_ts.push(`export type ${initializerName} = ${init.ts};`);
+    addScheme(initializerName, init.scheme);
+
+    channels_ts.push(`export interface ${channelName}Channel extends ${(item.extends || '') + 'Channel'} {`);
+    const ts_types = new Map();
+
+    for (let [eventName, event] of Object.entries(item.events || {})) {
+      if (event === null)
+        event = {};
+      const parameters = objectType(event.parameters || {}, '');
+      const paramsName = `${channelName}${titleCase(eventName)}Event`;
+      ts_types.set(paramsName, parameters.ts);
+      addScheme(paramsName, parameters.scheme);
+
+      channels_ts.push(`  on(event: '${eventName}', callback: (params: ${paramsName}) => void): this;`);
+      for (const key of inherits.keys()) {
+        if (inherits.get(key) === channelName)
+          addScheme(`${key}${titleCase(eventName)}Event`, `tType('${paramsName}')`);
+      }
+    }
+
+    for (let [methodName, method] of Object.entries(item.commands || {})) {
+      if (method === null)
+        method = {};
+      const parameters = objectType(method.parameters || {}, '');
+      const paramsName = `${channelName}${titleCase(methodName)}Params`;
+      ts_types.set(paramsName, parameters.ts);
+      addScheme(paramsName, method.parameters ? parameters.scheme : `tOptional(tObject({}))`);
+
+      const resultName = `${channelName}${titleCase(methodName)}Result`;
+      const returns = objectType(method.returns || {}, '');
+      ts_types.set(resultName, method.returns ? returns.ts : 'void');
+      addScheme(resultName, method.returns ? returns.scheme : `tUndefined`);
+
+      channels_ts.push(`  ${methodName}(params${method.parameters ? '' : '?'}: ${paramsName}): Promise<${resultName}>;`);
+      for (const key of inherits.keys()) {
+        if (inherits.get(key) === channelName) {
+          addScheme(`${key}${titleCase(methodName)}Params`, `tType('${paramsName}')`);
+          addScheme(`${key}${titleCase(methodName)}Result`, `tType('${resultName}')`);
+        }
+      }
+    }
+
+    channels_ts.push(`}`);
+    for (const [typeName, typeValue] of ts_types)
+      channels_ts.push(`export type ${typeName} = ${typeValue};`);
+  } else if (item.type === 'object') {
+    const inner = objectType(item.properties, '');
+    channels_ts.push(`export type ${name} = ${inner.ts};`);
+    addScheme(name, inner.scheme);
+  }
+  channels_ts.push(``);
+}
+
+client_validator_ts.push(``);
 fs.writeFileSync(path.join(__dirname, '..', 'src', 'rpc', 'channels.ts'), channels_ts.join('\n'), 'utf-8');
 fs.writeFileSync(path.join(__dirname, '..', 'src', 'rpc', 'client', 'validator.ts'), client_validator_ts.join('\n'), 'utf-8');

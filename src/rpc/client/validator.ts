@@ -314,6 +314,12 @@ scheme.BrowserContextRouteEvent = tObject({
   route: tChannel('Route'),
   request: tChannel('Request'),
 });
+scheme.BrowserContextCrBackgroundPageEvent = tObject({
+  page: tChannel('Page'),
+});
+scheme.BrowserContextCrServiceWorkerEvent = tObject({
+  worker: tChannel('Worker'),
+});
 scheme.BrowserContextAddCookiesParams = tObject({
   cookies: tArray(tObject({
     name: tString,
@@ -404,12 +410,6 @@ scheme.BrowserContextSetOfflineParams = tObject({
   offline: tBoolean,
 });
 scheme.BrowserContextSetOfflineResult = tUndefined;
-scheme.BrowserContextCrBackgroundPageEvent = tObject({
-  page: tChannel('Page'),
-});
-scheme.BrowserContextCrServiceWorkerEvent = tObject({
-  worker: tChannel('Worker'),
-});
 scheme.BrowserContextCrNewCDPSessionParams = tObject({
   page: tChannel('Page'),
 });
