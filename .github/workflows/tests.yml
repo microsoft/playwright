@@ -37,7 +37,7 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000 && npm run coverage"
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "pw:*,-pw:wrapped*"

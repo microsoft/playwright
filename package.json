@@ -28,7 +28,8 @@
     "generate-types": "node utils/generate_types/",
     "typecheck-tests": "tsc -p ./test/",
     "roll-browser": "node utils/roll_browser.js",
-    "jest": "jest"
+    "jest": "jest",
+    "coverage": "node test/jest/checkCoverage.js"
   },
   "author": {
     "name": "Microsoft Corporation"

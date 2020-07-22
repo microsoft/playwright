@@ -76,7 +76,6 @@ module.exports = {
     },
     {
       files: [
-        './apicoverage.spec.js',
       ],
       environments: [],
     },

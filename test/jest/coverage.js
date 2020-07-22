@@ -22,6 +22,7 @@
  * @param {!Object} classType
  */
 function traceAPICoverage(apiCoverage, events, className, classType) {
+  const uninstalls = [];
   className = className.substring(0, 1).toLowerCase() + className.substring(1);
   for (const methodName of Reflect.ownKeys(classType.prototype)) {
     const method = Reflect.get(classType.prototype, methodName);
@@ -34,6 +35,7 @@ function traceAPICoverage(apiCoverage, events, className, classType) {
     };
     Object.defineProperty(override, 'name', { writable: false, value: methodName });
     Reflect.set(classType.prototype, methodName, override);
+    uninstalls.push(() => Reflect.set(classType.prototype, methodName, method));
   }
 
   if (events[classType.name]) {
@@ -47,62 +49,67 @@ function traceAPICoverage(apiCoverage, events, className, classType) {
         apiCoverage.set(`${className}.emit(${JSON.stringify(event)})`, true);
       return method.call(this, event, ...args);
     });
+    uninstalls.push(() => Reflect.set(classType.prototype, 'emit', method));
   }
+
+  return () => uninstalls.forEach(u => u());
 }
 
-describe.skip(!process.env.COVERAGE)('**API COVERAGE**', () => {
+/**
+ * @param {string} browserName 
+ */
+function apiForBrowser(browserName) {
   const BROWSER_CONFIGS = [
     {
       name: 'Firefox',
-      events: require('../lib/events').Events,
-      missingCoverage: ['cDPSession.send', 'cDPSession.detach'],
+      events: require('../../lib/events').Events,
     },
     {
       name: 'WebKit',
-      events: require('../lib/events').Events,
-      missingCoverage: ['browserContext.clearPermissions', 'cDPSession.send', 'cDPSession.detach'],
+      events: require('../../lib/events').Events,
     },
     {
       name: 'Chromium',
       events: {
-        ...require('../lib/events').Events,
-        ...require('../lib/chromium/events').Events,
-      },
-      missingCoverage: [],
+        ...require('../../lib/events').Events,
+        ...require('../../lib/chromium/events').Events,
+      }
     },
   ];
-  const browserConfig = BROWSER_CONFIGS.find(config => config.name.toLowerCase() === browserType.name());
+  const browserConfig = BROWSER_CONFIGS.find(config => config.name.toLowerCase() === browserName);
   const events = browserConfig.events;
   // TODO: we should rethink our api.ts approach to ensure coverage and async stacks.
   const api = {
-    ...require('../lib/api'),
-    Browser: require('../lib/browser').BrowserBase,
-    BrowserContext: require('../lib/browserContext').BrowserContextBase,
+    ...require('../../lib/api'),
+    Browser: require('../../lib/browser').BrowserBase,
+    BrowserContext: require('../../lib/browserContext').BrowserContextBase,
   };
 
-  const coverage = new Map();
-  Object.keys(api).forEach(apiName => {
-    if (BROWSER_CONFIGS.some(config => apiName.startsWith(config.name)) && !apiName.startsWith(browserConfig.name))
-      return;
-    traceAPICoverage(coverage, events, apiName, api[apiName]);
+  const filteredKeys = Object.keys(api).filter(apiName => {
+    return !BROWSER_CONFIGS.some(config => apiName.startsWith(config.name)) || apiName.startsWith(browserConfig.name);
   });
+  const filteredAPI = {};
+  for (const key of filteredKeys)
+    filteredAPI[key] = api[key];
+  return {
+    api: filteredAPI,
+    events
+  }
+}
 
-  it('should call all API methods', () => {
-    const ignoredMethods = new Set(browserConfig.missingCoverage);
-    const missingMethods = [];
-    const extraIgnoredMethods = [];
-    for (const method of coverage.keys()) {
-      // Sometimes we already have a background page while launching, before adding a listener.
-      if (method === 'chromiumBrowserContext.emit("backgroundpage")')
-        continue;
-      if (!coverage.get(method) && !ignoredMethods.has(method))
-        missingMethods.push(method);
-      else if (coverage.get(method) && ignoredMethods.has(method))
-        extraIgnoredMethods.push(method);
-    }
-    if (extraIgnoredMethods.length)
-      throw new Error('Certain API Methods are called and should not be ignored: ' + extraIgnoredMethods.join(', '));
-    if (missingMethods.length)
-      throw new Error('Certain API Methods are not called: ' + missingMethods.join(', '));
-  });
-});
+/**
+ * @param {string} browserName 
+ */
+function installCoverageHooks(browserName) {
+  const uninstalls = [];
+  const {api, events} = apiForBrowser(browserName);
+  const coverage = new Map();
+  for (const [name, value] of Object.entries(api))
+    uninstalls.push(traceAPICoverage(coverage, events, name, value));
+  const uninstall = () => uninstalls.map(u => u());
+  return {coverage, uninstall};
+}
+
+module.exports = {
+  installCoverageHooks
+};
