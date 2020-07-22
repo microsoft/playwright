@@ -1530,7 +1530,7 @@ export type DownloadInitializer = {
 };
 export interface DownloadChannel extends Channel {
   path(params?: DownloadPathParams): Promise<DownloadPathResult>;
-  saveAs(params?: DownloadSaveAsParams): Promise<DownloadSaveAsResult>;
+  saveAs(params: DownloadSaveAsParams): Promise<DownloadSaveAsResult>;
   failure(params?: DownloadFailureParams): Promise<DownloadFailureResult>;
   stream(params?: DownloadStreamParams): Promise<DownloadStreamResult>;
   delete(params?: DownloadDeleteParams): Promise<DownloadDeleteResult>;
@@ -1539,7 +1539,9 @@ export type DownloadPathParams = {};
 export type DownloadPathResult = {
   value?: string,
 };
-export type DownloadSaveAsParams = {};
+export type DownloadSaveAsParams = {
+  path: string,
+};
 export type DownloadSaveAsResult = void;
 export type DownloadFailureParams = {};
 export type DownloadFailureResult = {

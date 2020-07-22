@@ -1387,7 +1387,7 @@ interface Download
       value?: string
 
   command saveAs
-    parameters:
+    parameters
       path: string
 
   command failure
@@ -1474,4 +1474,3 @@ interface ElectronApplication
       handle: JSHandle
 
   command close
-
