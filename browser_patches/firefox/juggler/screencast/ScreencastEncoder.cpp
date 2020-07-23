@@ -201,10 +201,7 @@ public:
         m_encoderQueue->Dispatch(NS_NewRunnableFunction("VPXCodec::encodeFrameAsync", [this, frame = std::move(frame)] {
             memset(m_imageBuffer.get(), 128, m_imageBufferSize);
             frame->convertToVpxImage(m_image.get());
-            // TODO: figure out why passing duration to the codec results in much
-            // worse visual quality and makes video stutter.
-            for (int i = 0; i < frame->duration(); i++)
-                encodeFrame(m_image.get(), 1);
+            encodeFrame(m_image.get(), frame->duration());
         }));
     }
 
