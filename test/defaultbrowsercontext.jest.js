@@ -19,10 +19,8 @@ const fs = require('fs');
 const path = require('path');
 const utils = require('./utils');
 const os = require('os');
-const {promisify} = require('util');
 
-const mkdtempAsync = promisify(fs.mkdtemp);
-const {makeUserDataDir, removeUserDataDir} = utils;
+const {mkdtempAsync, makeUserDataDir, removeUserDataDir} = utils;
 const {FFOX, MAC, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = testOptions;
 
 registerFixture('userDataDir', async ({}, test) => {
