@@ -15,7 +15,16 @@
  */
 
 const requireName = process.argv[2];
-const browsers = process.argv.slice(3);
+let success = {
+  'playwright': ['chromium', 'firefox', 'webkit'],
+  'playwright-chromium': ['chromium'],
+  'playwright-firefox': ['firefox'],
+  'playwright-webkit': ['webkit'],
+}[requireName];
+if (process.argv[3] === 'none')
+  success = [];
+if (process.argv[3] === 'all')
+  success = ['chromium', 'firefox', 'webkit'];
 
 const playwright = require(requireName);
 
@@ -24,12 +33,28 @@ const errors = require(requireName + '/lib/errors');
 const installer = require(requireName + '/lib/install/installer');
 
 (async () => {
-  for (const browserType of browsers) {
-    const browser = await playwright[browserType].launch();
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    await page.evaluate(() => navigator.userAgent);
-    await browser.close();
+  for (const browserType of success) {
+    try {
+      const browser = await playwright[browserType].launch();
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.evaluate(() => navigator.userAgent);
+      await browser.close();
+    } catch (e) {
+      console.error(`Should be able to launch ${browserType} from ${requireName}`);
+      console.error(err);
+      process.exit(1);
+    }
+  }
+  const fail = ['chromium', 'webkit', 'firefox'].filter(x => !success.includes(x));
+  for (const browserType of fail) {
+    try {
+      await playwright[browserType].launch();
+      console.error(`Should not be able to launch ${browserType} from ${requireName}`);
+      process.exit(1);
+    } catch (e) {
+      // All good.
+    }
   }
   console.log(`require SUCCESS`);
 })().catch(err => {

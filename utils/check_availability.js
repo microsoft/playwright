@@ -100,7 +100,7 @@ async function checkRangeAvailability(fromRevision, toRevision, stopWhenAllAvail
  * @return {boolean}
  */
 async function checkAndDrawRevisionAvailability(table, name, revision) {
-  const promises = fetcherOptions.map(platform => browserFetcher.canDownload(name, revision, platform));
+  const promises = fetcherOptions.map(platform => browserFetcher.canDownload({ name, revision, download: true }, platform));
   const availability = await Promise.all(promises);
   const allAvailable = availability.every(e => !!e);
   const values = [name + ' ' + (allAvailable ? colors.green + revision + colors.reset : revision)];

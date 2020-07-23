@@ -122,7 +122,8 @@ function revisionURL(browser: BrowserDescriptor, platform = browserPaths.hostPla
   return util.format(urlTemplate, serverHost, browser.revision);
 }
 
-export async function downloadBrowserWithProgressBar(browserPath: string, browser: BrowserDescriptor): Promise<boolean> {
+export async function downloadBrowserWithProgressBar(browsersPath: string, browser: BrowserDescriptor): Promise<boolean> {
+  const browserPath = browserPaths.browserDirectory(browsersPath, browser);
   const progressBarName = `${browser.name} v${browser.revision}`;
   if (await existsAsync(browserPath)) {
     // Already downloaded.
@@ -168,8 +169,8 @@ function toMegabytes(bytes: number) {
   return `${Math.round(mb * 10) / 10} Mb`;
 }
 
-export async function canDownload(browserName: BrowserName, browserRevision: string, platform: BrowserPlatform): Promise<boolean> {
-  const url = revisionURL({ name: browserName, revision: browserRevision }, platform);
+export async function canDownload(browser: BrowserDescriptor, platform: BrowserPlatform): Promise<boolean> {
+  const url = revisionURL(browser, platform);
   let resolve: (result: boolean) => void = () => {};
   const promise = new Promise<boolean>(x => resolve = x);
   const request = httpRequest(url, 'HEAD', response => {

@@ -24,7 +24,8 @@ export type BrowserName = 'chromium'|'webkit'|'firefox';
 export type BrowserPlatform = 'win32'|'win64'|'mac10.13'|'mac10.14'|'mac10.15'|'ubuntu18.04'|'ubuntu20.04';
 export type BrowserDescriptor = {
   name: BrowserName,
-  revision: string
+  revision: string,
+  download: boolean,
 };
 
 export const hostPlatform = ((): BrowserPlatform => {

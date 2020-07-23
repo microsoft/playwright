@@ -28,6 +28,7 @@ NODE_VERSION="$(node --version)"
 
 function copy_test_scripts {
   cp "${SCRIPTS_PATH}/sanity.js" .
+  cp "${SCRIPTS_PATH}/esm.mjs" .
   cp "${SCRIPTS_PATH}/esm-playwright.mjs" .
   cp "${SCRIPTS_PATH}/esm-playwright-chromium.mjs" .
   cp "${SCRIPTS_PATH}/esm-playwright-firefox.mjs" .
@@ -43,6 +44,7 @@ function run_tests {
   test_playwright_webkit_should_work
   test_playwright_firefox_should_work
   test_playwright_global_installation
+  test_playwright_global_installation_cross_package
 }
 
 function test_typescript_types {
@@ -77,13 +79,31 @@ function test_playwright_global_installation {
     exit 1
   fi
   copy_test_scripts
-  if node sanity.js playwright chromium 2>/dev/null; then
-    echo "Should not be able to launch chromium without PLAYWRIGHT_BROWSERS_PATH variable!"
-    exit 1
-  fi
-  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" node sanity.js playwright chromium
+  node sanity.js playwright none
+  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" node sanity.js playwright
 }
 
+function test_playwright_global_installation_cross_package {
+  initialize_test "${FUNCNAME[0]}"
+
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_FIREFOX_TGZ}
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_WEBKIT_TGZ}
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_CHROMIUM_TGZ}
+
+  local BROWSERS="$(pwd -P)/browsers"
+  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_TGZ}
+  if [[ ! -d "${BROWSERS}" ]]; then
+    echo "Directory for shared browsers was not created!"
+    exit 1
+  fi
+
+  copy_test_scripts
+
+  # Every package should be able to launch.
+  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" node sanity.js playwright-chromium all
+  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" node sanity.js playwright-firefox all
+  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" node sanity.js playwright-webkit all
+}
 
 # @see https://github.com/microsoft/playwright/issues/1651
 function test_playwright_global_installation_subsequent_installs {
@@ -119,9 +139,21 @@ function test_skip_browser_download {
 function test_playwright_should_work {
   initialize_test "${FUNCNAME[0]}"
 
-  npm install ${PLAYWRIGHT_TGZ}
+  OUTPUT=$(npm install ${PLAYWRIGHT_TGZ})
+  if [[ "${OUTPUT}" != *"chromium"* ]]; then
+    echo "ERROR: should download chromium"
+    exit 1
+  fi
+  if [[ "${OUTPUT}" != *"firefox"* ]]; then
+    echo "ERROR: should download firefox"
+    exit 1
+  fi
+  if [[ "${OUTPUT}" != *"webkit"* ]]; then
+    echo "ERROR: should download webkit"
+    exit 1
+  fi
   copy_test_scripts
-  node sanity.js playwright chromium firefox webkit
+  node sanity.js playwright
   if [[ "${NODE_VERSION}" == *"v14."* ]]; then
     node esm-playwright.mjs
   fi
@@ -130,9 +162,21 @@ function test_playwright_should_work {
 function test_playwright_chromium_should_work {
   initialize_test "${FUNCNAME[0]}"
 
-  npm install ${PLAYWRIGHT_CHROMIUM_TGZ}
+  OUTPUT=$(npm install ${PLAYWRIGHT_CHROMIUM_TGZ})
+  if [[ "${OUTPUT}" != *"chromium"* ]]; then
+    echo "ERROR: should download chromium"
+    exit 1
+  fi
+  if [[ "${OUTPUT}" == *"firefox"* ]]; then
+    echo "ERROR: should not download firefox"
+    exit 1
+  fi
+  if [[ "${OUTPUT}" == *"webkit"* ]]; then
+    echo "ERROR: should not download webkit"
+    exit 1
+  fi
   copy_test_scripts
-  node sanity.js playwright-chromium chromium
+  node sanity.js playwright-chromium
   if [[ "${NODE_VERSION}" == *"v14."* ]]; then
     node esm-playwright-chromium.mjs
   fi
@@ -141,9 +185,21 @@ function test_playwright_chromium_should_work {
 function test_playwright_webkit_should_work {
   initialize_test "${FUNCNAME[0]}"
 
-  npm install ${PLAYWRIGHT_WEBKIT_TGZ}
+  OUTPUT=$(npm install ${PLAYWRIGHT_WEBKIT_TGZ})
+  if [[ "${OUTPUT}" == *"chromium"* ]]; then
+    echo "ERROR: should not download chromium"
+    exit 1
+  fi
+  if [[ "${OUTPUT}" == *"firefox"* ]]; then
+    echo "ERROR: should not download firefox"
+    exit 1
+  fi
+  if [[ "${OUTPUT}" != *"webkit"* ]]; then
+    echo "ERROR: should download webkit"
+    exit 1
+  fi
   copy_test_scripts
-  node sanity.js playwright-webkit webkit
+  node sanity.js playwright-webkit
   if [[ "${NODE_VERSION}" == *"v14."* ]]; then
     node esm-playwright-webkit.mjs
   fi
@@ -152,9 +208,21 @@ function test_playwright_webkit_should_work {
 function test_playwright_firefox_should_work {
   initialize_test "${FUNCNAME[0]}"
 
-  npm install ${PLAYWRIGHT_FIREFOX_TGZ}
+  OUTPUT=$(npm install ${PLAYWRIGHT_FIREFOX_TGZ})
+  if [[ "${OUTPUT}" == *"chromium"* ]]; then
+    echo "ERROR: should not download chromium"
+    exit 1
+  fi
+  if [[ "${OUTPUT}" != *"firefox"* ]]; then
+    echo "ERROR: should download firefox"
+    exit 1
+  fi
+  if [[ "${OUTPUT}" == *"webkit"* ]]; then
+    echo "ERROR: should not download webkit"
+    exit 1
+  fi
   copy_test_scripts
-  node sanity.js playwright-firefox firefox
+  node sanity.js playwright-firefox
   if [[ "${NODE_VERSION}" == *"v14."* ]]; then
     node esm-playwright-firefox.mjs
   fi
