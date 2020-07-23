@@ -15123,10 +15123,20 @@ index 4785d5a01d86462d8a897f90ce233df650af0cf4..a804a5df69b817e901a7d7408d43de41
      WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_NETSCAPE_PLUGIN_API PRIVATE OFF)
  else ()
 diff --git a/Source/cmake/OptionsWinCairo.cmake b/Source/cmake/OptionsWinCairo.cmake
-index 8a9c9e8d5bc6c283bf766efdf8cdc5e6aff546fb..fa6950a71a57b449c6d40a55578b012bacfbe7c1 100644
+index 8a9c9e8d5bc6c283bf766efdf8cdc5e6aff546fb..29fb661996f2e280fc80cfa4940567896819e53c 100644
 --- a/Source/cmake/OptionsWinCairo.cmake
 +++ b/Source/cmake/OptionsWinCairo.cmake
-@@ -36,6 +36,29 @@ if (WebP_FOUND)
+@@ -27,15 +27,36 @@ if (OpenJPEG_FOUND)
+ endif ()
+ 
+ find_package(WOFF2 1.0.2 COMPONENTS dec)
+-if (WOFF2_FOUND)
+-    SET_AND_EXPOSE_TO_BUILD(USE_WOFF2 ON)
+-endif ()
++SET_AND_EXPOSE_TO_BUILD(USE_WOFF2 ON)
+ 
+ find_package(WebP COMPONENTS demux)
+ if (WebP_FOUND)
      SET_AND_EXPOSE_TO_BUILD(USE_WEBP ON)
  endif ()
  
