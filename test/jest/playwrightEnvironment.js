@@ -120,11 +120,31 @@ class PlaywrightEnvironment extends NodeEnvironment {
 
       const testOptions = this.global.testOptions;
       function toBeGolden(received, goldenName) {
-        return GoldenUtils.compare(received, {
+        const {snapshotState} = this;
+        const updateSnapshot = snapshotState._updateSnapshot;
+        const expectedPath = path.join(testOptions.GOLDEN_DIR, goldenName);
+        const fileExists = fs.existsSync(expectedPath);
+        if (updateSnapshot === 'all' || (updateSnapshot === 'new' && !fileExists)) {
+          fs.writeFileSync(expectedPath, received);
+          if (fileExists)
+            snapshotState.updated++;
+          else
+            snapshotState.added++;
+          return {
+            pass: true
+          }
+        };
+
+        const {pass, message} =  GoldenUtils.compare(received, {
           goldenPath: testOptions.GOLDEN_DIR,
           outputPath: testOptions.OUTPUT_DIR,
           goldenName
         });
+        if (pass)
+          snapshotState.matched++;
+        else
+          snapshotState.unmatched++;
+        return {pass, message};
       };
       this.global.expect.extend({ toBeGolden });
     }
