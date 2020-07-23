@@ -242,7 +242,10 @@ scheme.BrowserServerInitializer = tObject({
   wsEndpoint: tString,
   pid: tNumber,
 });
-scheme.BrowserServerCloseEvent = tObject({});
+scheme.BrowserServerCloseEvent = tObject({
+  exitCode: tOptional(tNumber),
+  signal: tOptional(tString),
+});
 scheme.BrowserServerCloseParams = tOptional(tObject({}));
 scheme.BrowserServerCloseResult = tUndefined;
 scheme.BrowserServerKillParams = tOptional(tObject({}));

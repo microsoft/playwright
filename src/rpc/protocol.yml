@@ -354,7 +354,9 @@ BrowserServer:
   events:
 
     close:
-
+      parameters:
+        exitCode: number?
+        signal: string?
 
 
 Browser:

@@ -327,8 +327,8 @@ describe('launchPersistentContext()', function() {
     const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
     expect(error.message).toContain('can not specify page');
   });
-  it('should have passed URL when launching with ignoreDefaultArgs: true', async ({browserType, defaultBrowserOptions, server, userDataDir}) => {
-    const args = require('..')[browserType.name()]._defaultArgs(defaultBrowserOptions, 'persistent', userDataDir, 0).filter(a => a !== 'about:blank');
+  it.skip(USES_HOOKS)('should have passed URL when launching with ignoreDefaultArgs: true', async ({browserType, defaultBrowserOptions, server, userDataDir, toImpl}) => {
+    const args = toImpl(browserType)._defaultArgs(defaultBrowserOptions, 'persistent', userDataDir, 0).filter(a => a !== 'about:blank');
     const options = {
       ...defaultBrowserOptions,
       args: [...args, server.EMPTY_PAGE],
