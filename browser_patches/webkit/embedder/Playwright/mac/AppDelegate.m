@@ -368,6 +368,11 @@ const NSActivityOptions ActivityOptions =
     }
 }
 
+- (void)_webView:(WKWebView *)webView getWindowFrameWithCompletionHandler:(void (^)(CGRect))completionHandler
+{
+    completionHandler([webView.window frame]);
+}
+
 - (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(void))completionHandler
 {
     WebViewDialog* dialog = [[WebViewDialog alloc] autorelease];
