@@ -14,20 +14,25 @@
  * limitations under the License.
  */
 
-const requireName = process.argv[2];
-const browsers = process.argv.slice(3);
+import { chromium, firefox, webkit, selectors, devices, errors } from 'playwright';
+import playwright from 'playwright';
 
-const playwright = require(requireName);
+if (playwright.chromium !== chromium)
+  process.exit(1);
+if (playwright.firefox !== firefox)
+  process.exit(1);
+if (playwright.webkit !== webkit)
+  process.exit(1);
 
 (async () => {
-  for (const browserType of browsers) {
-    const browser = await playwright[browserType].launch();
+  for (const browserType of [chromium, firefox, webkit]) {
+    const browser = await browserType.launch();
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.evaluate(() => navigator.userAgent);
     await browser.close();
   }
-  console.log(`require SUCCESS`);
+  console.log(`esm SUCCESS`);
 })().catch(err => {
   console.error(err);
   process.exit(1);

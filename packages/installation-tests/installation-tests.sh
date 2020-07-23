@@ -22,8 +22,17 @@ PLAYWRIGHT_CHROMIUM_TGZ="$(node ${PACKAGE_BUILDER} playwright-chromium ./playwri
 PLAYWRIGHT_WEBKIT_TGZ="$(node ${PACKAGE_BUILDER} playwright-webkit ./playwright-webkit.tgz)"
 PLAYWRIGHT_FIREFOX_TGZ="$(node ${PACKAGE_BUILDER} playwright-firefox ./playwright-firefox.tgz)"
 
-SANITY_JS="$(pwd -P)/../sanity.js"
+SCRIPTS_PATH="$(pwd -P)/.."
 TEST_ROOT="$(pwd -P)"
+NODE_VERSION="$(node --version)"
+
+function copy_test_scripts {
+  cp "${SCRIPTS_PATH}/sanity.js" .
+  cp "${SCRIPTS_PATH}/esm-playwright.mjs" .
+  cp "${SCRIPTS_PATH}/esm-playwright-chromium.mjs" .
+  cp "${SCRIPTS_PATH}/esm-playwright-firefox.mjs" .
+  cp "${SCRIPTS_PATH}/esm-playwright-webkit.mjs" .
+}
 
 function run_tests {
   test_typescript_types
@@ -67,7 +76,7 @@ function test_playwright_global_installation {
     echo "Directory for shared browsers was not created!"
     exit 1
   fi
-  cp ${SANITY_JS} .
+  copy_test_scripts
   if node sanity.js playwright chromium 2>/dev/null; then
     echo "Should not be able to launch chromium without PLAYWRIGHT_BROWSERS_PATH variable!"
     exit 1
@@ -111,28 +120,44 @@ function test_playwright_should_work {
   initialize_test "${FUNCNAME[0]}"
 
   npm install ${PLAYWRIGHT_TGZ}
-  cp ${SANITY_JS} . && node sanity.js playwright chromium firefox webkit
+  copy_test_scripts
+  node sanity.js playwright chromium firefox webkit
+  if [[ "${NODE_VERSION}" == *"v14."* ]]; then
+    node esm-playwright.mjs
+  fi
 }
 
 function test_playwright_chromium_should_work {
   initialize_test "${FUNCNAME[0]}"
 
   npm install ${PLAYWRIGHT_CHROMIUM_TGZ}
-  cp ${SANITY_JS} . && node sanity.js playwright-chromium chromium
+  copy_test_scripts
+  node sanity.js playwright-chromium chromium
+  if [[ "${NODE_VERSION}" == *"v14."* ]]; then
+    node esm-playwright-chromium.mjs
+  fi
 }
 
 function test_playwright_webkit_should_work {
   initialize_test "${FUNCNAME[0]}"
 
   npm install ${PLAYWRIGHT_WEBKIT_TGZ}
-  cp ${SANITY_JS} . && node sanity.js playwright-webkit webkit
+  copy_test_scripts
+  node sanity.js playwright-webkit webkit
+  if [[ "${NODE_VERSION}" == *"v14."* ]]; then
+    node esm-playwright-webkit.mjs
+  fi
 }
 
 function test_playwright_firefox_should_work {
   initialize_test "${FUNCNAME[0]}"
 
   npm install ${PLAYWRIGHT_FIREFOX_TGZ}
-  cp ${SANITY_JS} . && node sanity.js playwright-firefox firefox
+  copy_test_scripts
+  node sanity.js playwright-firefox firefox
+  if [[ "${NODE_VERSION}" == *"v14."* ]]; then
+    node esm-playwright-firefox.mjs
+  fi
 }
 
 function initialize_test {

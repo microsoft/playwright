@@ -83,7 +83,7 @@ if (args.some(arg => arg === '--help')) {
 
 // 2. Setup cleanup if needed
 if (!args.some(arg => arg === '--no-cleanup')) {
-  process.on('exit', () => { 
+  process.on('exit', () => {
     cleanupPaths.forEach(cleanupPath => rmSync(cleanupPath, {}));
   });
   process.on('SIGINT', () => process.exit(2));
@@ -123,6 +123,10 @@ if (!package) {
     engines: pwInternalJSON.engines,
     homepage: pwInternalJSON.homepage,
     main: 'index.js',
+    exports: {
+      import: './index.mjs',
+      require: './index.js',
+    },
     scripts: {
       install: 'node install.js',
     },

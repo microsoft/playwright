@@ -14,21 +14,12 @@
  * limitations under the License.
  */
 
-const requireName = process.argv[2];
-const browsers = process.argv.slice(3);
+import playwright from './index.js';
 
-const playwright = require(requireName);
-
-(async () => {
-  for (const browserType of browsers) {
-    const browser = await playwright[browserType].launch();
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    await page.evaluate(() => navigator.userAgent);
-    await browser.close();
-  }
-  console.log(`require SUCCESS`);
-})().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+export const chromium = playwright.chromium;
+export const firefox = playwright.firefox;
+export const webkit = playwright.webkit;
+export const selectors = playwright.selectors;
+export const devices = playwright.devices;
+export const errors = playwright.errors;
+export default playwright;
