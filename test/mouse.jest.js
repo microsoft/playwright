@@ -53,6 +53,31 @@ describe('Mouse', function() {
     expect(event.isTrusted).toBe(true);
     expect(event.button).toBe(0);
   });
+  it('should dblclick the div', async({page, server}) => {
+    await page.setContent(`<div style='width: 100px; height: 100px;'>Click me</div>`);
+    await page.evaluate(() => {
+      window.dblclickPromise = new Promise(resolve => {
+        document.querySelector('div').addEventListener('dblclick', event => {
+          resolve({
+            type: event.type,
+            detail: event.detail,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            isTrusted: event.isTrusted,
+            button: event.button,
+          });
+        });
+      });
+    });
+    await page.mouse.dblclick(50, 60);
+    const event = await page.evaluate(() => window.dblclickPromise);
+    expect(event.type).toBe('dblclick');
+    expect(event.detail).toBe(2);
+    expect(event.clientX).toBe(50);
+    expect(event.clientY).toBe(60);
+    expect(event.isTrusted).toBe(true);
+    expect(event.button).toBe(0);
+  });
   it('should select the text with mouse', async({page, server}) => {
     await page.goto(server.PREFIX + '/input/textarea.html');
     await page.focus('textarea');
