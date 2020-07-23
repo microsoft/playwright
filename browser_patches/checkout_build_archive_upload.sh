@@ -75,6 +75,25 @@ elif [[ "$BUILD_FLAVOR" == "webkit-gtk-wpe-ubuntu-18.04" ]]; then
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="18.04"
   BUILD_BLOB_NAME="minibrowser-gtk-wpe-ubuntu-18.04.zip"
+elif [[ "$BUILD_FLAVOR" == "webkit-gtk-ubuntu-20.04" ]]; then
+  BROWSER_NAME="webkit"
+  EXTRA_BUILD_ARGS="--gtk"
+  EXTRA_ARCHIVE_ARGS="--gtk"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="20.04"
+  BUILD_BLOB_NAME="minibrowser-gtk-ubuntu-20.04.zip"
+elif [[ "$BUILD_FLAVOR" == "webkit-wpe-ubuntu-20.04" ]]; then
+  BROWSER_NAME="webkit"
+  EXTRA_BUILD_ARGS="--wpe"
+  EXTRA_ARCHIVE_ARGS="--wpe"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="20.04"
+  BUILD_BLOB_NAME="minibrowser-wpe-ubuntu-20.04.zip"
+elif [[ "$BUILD_FLAVOR" == "webkit-gtk-wpe-ubuntu-20.04" ]]; then
+  BROWSER_NAME="webkit"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="20.04"
+  BUILD_BLOB_NAME="minibrowser-gtk-wpe-ubuntu-20.04.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-win64" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="MINGW"
