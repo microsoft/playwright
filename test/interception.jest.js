@@ -534,6 +534,17 @@ describe('Request.continue', function() {
     ]);
     expect(await serverRequest.postBody).toBe('doggo');
   });
+  it.fail(FFOX)('should amend longer post data', async({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.route('**/*', route => {
+      route.continue({ postData: 'doggo-is-longer-than-birdy' });
+    });
+    const [serverRequest] = await Promise.all([
+      server.waitForRequest('/sleep.zzz'),
+      page.evaluate(() => fetch('/sleep.zzz', { method: 'POST', body: 'birdy' }))
+    ]);
+    expect(await serverRequest.postBody).toBe('doggo-is-longer-than-birdy');
+  });
 });
 
 describe('Request.fulfill', function() {
