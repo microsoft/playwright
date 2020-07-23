@@ -51,6 +51,12 @@ class PlaywrightEnvironment extends NodeEnvironment {
       this.fixturePool.registerFixture(name, 'worker', fn);
     };
     registerFixtures(this.global);
+
+    process.on('SIGINT', async () => {
+      await this.fixturePool.teardownScope('test');
+      await this.fixturePool.teardownScope('worker');
+      process.exit(130);
+    });
   }
 
   async setup() {
