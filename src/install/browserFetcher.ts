@@ -55,7 +55,7 @@ const ENV_DOWNLOAD_HOSTS: { [key: string]: string } = {
   webkit: 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST',
 };
 
-function getDownloadUrl(browserName: BrowserName, platform: BrowserPlatform): string | undefined {
+function getDownloadUrl(browserName: BrowserName, revision: number, platform: BrowserPlatform): string | undefined {
   if (browserName === 'chromium') {
     return new Map<BrowserPlatform, string>([
       ['linux', '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip'],
@@ -68,31 +68,51 @@ function getDownloadUrl(browserName: BrowserName, platform: BrowserPlatform): st
   }
 
   if (browserName === 'firefox') {
-    return new Map<BrowserPlatform, string>([
-      ['linux', '%s/builds/firefox/%s/firefox-linux.zip'],
-      ['mac10.13', '%s/builds/firefox/%s/firefox-mac.zip'],
-      ['mac10.14', '%s/builds/firefox/%s/firefox-mac.zip'],
-      ['mac10.15', '%s/builds/firefox/%s/firefox-mac.zip'],
-      ['win32', '%s/builds/firefox/%s/firefox-win32.zip'],
-      ['win64', '%s/builds/firefox/%s/firefox-win64.zip'],
-    ]).get(platform);
+    const FIREFOX_RENAME_LINUX_TO_UBUNTU_REVISION = 1139;
+    return revision < FIREFOX_RENAME_LINUX_TO_UBUNTU_REVISION ?
+      new Map<BrowserPlatform, string>([
+        ['linux', '%s/builds/firefox/%s/firefox-linux.zip'],
+        ['mac10.13', '%s/builds/firefox/%s/firefox-mac.zip'],
+        ['mac10.14', '%s/builds/firefox/%s/firefox-mac.zip'],
+        ['mac10.15', '%s/builds/firefox/%s/firefox-mac.zip'],
+        ['win32', '%s/builds/firefox/%s/firefox-win32.zip'],
+        ['win64', '%s/builds/firefox/%s/firefox-win64.zip'],
+      ]).get(platform) :
+      new Map<BrowserPlatform, string>([
+        ['linux', '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip'],
+        ['mac10.13', '%s/builds/firefox/%s/firefox-mac.zip'],
+        ['mac10.14', '%s/builds/firefox/%s/firefox-mac.zip'],
+        ['mac10.15', '%s/builds/firefox/%s/firefox-mac.zip'],
+        ['win32', '%s/builds/firefox/%s/firefox-win32.zip'],
+        ['win64', '%s/builds/firefox/%s/firefox-win64.zip'],
+      ]).get(platform);
   }
 
   if (browserName === 'webkit') {
-    return new Map<BrowserPlatform, string | undefined>([
-      ['linux', '%s/builds/webkit/%s/minibrowser-gtk-wpe.zip'],
-      ['mac10.13', undefined],
-      ['mac10.14', '%s/builds/webkit/%s/minibrowser-mac-10.14.zip'],
-      ['mac10.15', '%s/builds/webkit/%s/minibrowser-mac-10.15.zip'],
-      ['win32', '%s/builds/webkit/%s/minibrowser-win64.zip'],
-      ['win64', '%s/builds/webkit/%s/minibrowser-win64.zip'],
-    ]).get(platform);
+    const WEBKIT_RENAME_LINUX_TO_UBUNTU_REVISION = 1315;
+    return revision < WEBKIT_RENAME_LINUX_TO_UBUNTU_REVISION ?
+      new Map<BrowserPlatform, string | undefined>([
+        ['linux', '%s/builds/webkit/%s/minibrowser-gtk-wpe.zip'],
+        ['mac10.13', undefined],
+        ['mac10.14', '%s/builds/webkit/%s/minibrowser-mac-10.14.zip'],
+        ['mac10.15', '%s/builds/webkit/%s/minibrowser-mac-10.15.zip'],
+        ['win32', '%s/builds/webkit/%s/minibrowser-win64.zip'],
+        ['win64', '%s/builds/webkit/%s/minibrowser-win64.zip'],
+      ]).get(platform) :
+      new Map<BrowserPlatform, string | undefined>([
+        ['linux', '%s/builds/webkit/%s/minibrowser-gtk-wpe-ubuntu-18.04.zip'],
+        ['mac10.13', undefined],
+        ['mac10.14', '%s/builds/webkit/%s/minibrowser-mac-10.14.zip'],
+        ['mac10.15', '%s/builds/webkit/%s/minibrowser-mac-10.15.zip'],
+        ['win32', '%s/builds/webkit/%s/minibrowser-win64.zip'],
+        ['win64', '%s/builds/webkit/%s/minibrowser-win64.zip'],
+      ]).get(platform);
   }
 }
 
 function revisionURL(browser: BrowserDescriptor, platform = browserPaths.hostPlatform): string {
   const serverHost = getFromENV(ENV_DOWNLOAD_HOSTS[browser.name]) || getFromENV(ENV_DOWNLOAD_HOSTS.default) || DEFAULT_DOWNLOAD_HOSTS[browser.name];
-  const urlTemplate = getDownloadUrl(browser.name, platform);
+  const urlTemplate = getDownloadUrl(browser.name, parseInt(browser.revision, 10), platform);
   assert(urlTemplate, `ERROR: Playwright does not support ${browser.name} on ${platform}`);
   return util.format(urlTemplate, serverHost, browser.revision);
 }

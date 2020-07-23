@@ -25,6 +25,9 @@ CURRENT_HOST_OS="$(uname)"
 CURRENT_HOST_OS_VERSION=""
 if [[ "$CURRENT_HOST_OS" == "Darwin" ]]; then
   CURRENT_HOST_OS_VERSION=$(sw_vers -productVersion | grep -o '^\d\+.\d\+')
+elif [[ "$CURRENT_HOST_OS" == "Linux" ]]; then
+  CURRENT_HOST_OS="$(bash -c 'source /etc/os-release && echo $NAME')"
+  CURRENT_HOST_OS_VERSION="$(bash -c 'source /etc/os-release && echo $VERSION_ID')"
 fi
 
 BROWSER_NAME=""
@@ -34,10 +37,11 @@ BUILD_FLAVOR="$1"
 BUILD_BLOB_NAME=""
 EXPECTED_HOST_OS=""
 EXPECTED_HOST_OS_VERSION=""
-if [[ "$BUILD_FLAVOR" == "firefox-linux" ]]; then
+if [[ "$BUILD_FLAVOR" == "firefox-ubuntu-18.04" ]]; then
   BROWSER_NAME="firefox"
-  EXPECTED_HOST_OS="Linux"
-  BUILD_BLOB_NAME="firefox-linux.zip"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="18.04"
+  BUILD_BLOB_NAME="firefox-ubuntu-18.04.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-mac" ]]; then
   BROWSER_NAME="firefox"
   EXPECTED_HOST_OS="Darwin"
@@ -52,22 +56,25 @@ elif [[ "$BUILD_FLAVOR" == "firefox-win64" ]]; then
   EXTRA_BUILD_ARGS="--win64"
   EXPECTED_HOST_OS="MINGW"
   BUILD_BLOB_NAME="firefox-win64.zip"
-elif [[ "$BUILD_FLAVOR" == "webkit-gtk" ]]; then
+elif [[ "$BUILD_FLAVOR" == "webkit-gtk-ubuntu-18.04" ]]; then
   BROWSER_NAME="webkit"
   EXTRA_BUILD_ARGS="--gtk"
   EXTRA_ARCHIVE_ARGS="--gtk"
-  EXPECTED_HOST_OS="Linux"
-  BUILD_BLOB_NAME="minibrowser-gtk.zip"
-elif [[ "$BUILD_FLAVOR" == "webkit-wpe" ]]; then
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="18.04"
+  BUILD_BLOB_NAME="minibrowser-gtk-ubuntu-18.04.zip"
+elif [[ "$BUILD_FLAVOR" == "webkit-wpe-ubuntu-18.04" ]]; then
   BROWSER_NAME="webkit"
   EXTRA_BUILD_ARGS="--wpe"
   EXTRA_ARCHIVE_ARGS="--wpe"
-  EXPECTED_HOST_OS="Linux"
-  BUILD_BLOB_NAME="minibrowser-wpe.zip"
-elif [[ "$BUILD_FLAVOR" == "webkit-gtk-wpe" ]]; then
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="18.04"
+  BUILD_BLOB_NAME="minibrowser-wpe-ubuntu-18.04.zip"
+elif [[ "$BUILD_FLAVOR" == "webkit-gtk-wpe-ubuntu-18.04" ]]; then
   BROWSER_NAME="webkit"
-  EXPECTED_HOST_OS="Linux"
-  BUILD_BLOB_NAME="minibrowser-gtk-wpe.zip"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="18.04"
+  BUILD_BLOB_NAME="minibrowser-gtk-wpe-ubuntu-18.04.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-win64" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="MINGW"
@@ -136,7 +143,7 @@ fi
 
 function generate_and_upload_browser_build {
   # webkit-gtk-wpe is a special build doesn't need to be built.
-  if [[ "$BUILD_FLAVOR" == "webkit-gtk-wpe" ]]; then
+  if [[ "$BUILD_FLAVOR" == webkit-gtk-wpe-* ]]; then
     echo "-- combining binaries together"
     if ! ./webkit/download_gtk_and_wpe_and_zip_together.sh $ZIP_PATH; then
       return 10

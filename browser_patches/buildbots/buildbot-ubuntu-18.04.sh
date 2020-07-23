@@ -7,6 +7,14 @@ if [[ $(uname) != "Linux" ]]; then
   exit 1
 fi
 
+CURRENT_HOST_OS="$(bash -c 'source /etc/os-release && echo $NAME')"
+CURRENT_HOST_OS_VERSION="$(bash -c 'source /etc/os-release && echo $VERSION_ID')"
+
+if [[ "$CURRENT_HOST_OS" != "Ubuntu" || "$CURRENT_HOST_OS_VERSION" != "18.04" ]]; then
+  echo "ERROR: this script is designed to be run on Ubuntu 18.04. Can't run on $CURRENT_HOST_OS $CURRENT_HOST_OS_VERSION"
+  exit 1
+fi
+
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
   echo "usage: $(basename $0)"
   echo
@@ -55,9 +63,9 @@ if [[ -n $(git status -s) ]]; then
 fi
 
 git pull origin master
-../checkout_build_archive_upload.sh firefox-linux >/tmp/$(basename $0)--firefox-linux.log || true
+../checkout_build_archive_upload.sh firefox-ubuntu-18.04 >/tmp/$(basename $0)--firefox.log || true
 
 git pull origin master
-../checkout_build_archive_upload.sh webkit-gtk >/tmp/$(basename $0)--webkit-gtk.log || true
-../checkout_build_archive_upload.sh webkit-wpe >/tmp/$(basename $0)--webkit-wpe.log || true
-../checkout_build_archive_upload.sh webkit-gtk-wpe >/tmp/$(basename $0)--webkit-gtk-wpe.log || true
+../checkout_build_archive_upload.sh webkit-gtk-ubuntu-18.04 >/tmp/$(basename $0)--webkit-gtk.log || true
+../checkout_build_archive_upload.sh webkit-wpe-ubuntu-18.04 >/tmp/$(basename $0)--webkit-wpe.log || true
+../checkout_build_archive_upload.sh webkit-gtk-wpe-ubuntu-18.04 >/tmp/$(basename $0)--webkit-gtk-wpe.log || true
