@@ -24,7 +24,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
   ./Tools/Scripts/build-webkit --release --touch-events --orientation-events
 elif [[ "$(uname)" == "Linux" ]]; then
   cd "checkout"
-  if [[ $# == 0 ]]; then
+  if [[ $# == 0 || (-z "$1") ]]; then
     echo
     echo BUILDING: GTK and WPE
     echo
