@@ -66,6 +66,4 @@ git pull origin master
 ../checkout_build_archive_upload.sh firefox-ubuntu-18.04 >/tmp/$(basename $0)--firefox.log || true
 
 git pull origin master
-../checkout_build_archive_upload.sh webkit-gtk-ubuntu-18.04 >/tmp/$(basename $0)--webkit-gtk.log || true
-../checkout_build_archive_upload.sh webkit-wpe-ubuntu-18.04 >/tmp/$(basename $0)--webkit-wpe.log || true
-../checkout_build_archive_upload.sh webkit-gtk-wpe-ubuntu-18.04 >/tmp/$(basename $0)--webkit-gtk-wpe.log || true
+../checkout_build_archive_upload.sh webkit-ubuntu-18.04 >/tmp/$(basename $0)--webkit.log || true

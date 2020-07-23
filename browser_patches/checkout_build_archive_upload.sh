@@ -32,7 +32,6 @@ fi
 
 BROWSER_NAME=""
 EXTRA_BUILD_ARGS=""
-EXTRA_ARCHIVE_ARGS=""
 BUILD_FLAVOR="$1"
 BUILD_BLOB_NAME=""
 EXPECTED_HOST_OS=""
@@ -56,40 +55,12 @@ elif [[ "$BUILD_FLAVOR" == "firefox-win64" ]]; then
   EXTRA_BUILD_ARGS="--win64"
   EXPECTED_HOST_OS="MINGW"
   BUILD_BLOB_NAME="firefox-win64.zip"
-elif [[ "$BUILD_FLAVOR" == "webkit-gtk-ubuntu-18.04" ]]; then
-  BROWSER_NAME="webkit"
-  EXTRA_BUILD_ARGS="--gtk"
-  EXTRA_ARCHIVE_ARGS="--gtk"
-  EXPECTED_HOST_OS="Ubuntu"
-  EXPECTED_HOST_OS_VERSION="18.04"
-  BUILD_BLOB_NAME="minibrowser-gtk-ubuntu-18.04.zip"
-elif [[ "$BUILD_FLAVOR" == "webkit-wpe-ubuntu-18.04" ]]; then
-  BROWSER_NAME="webkit"
-  EXTRA_BUILD_ARGS="--wpe"
-  EXTRA_ARCHIVE_ARGS="--wpe"
-  EXPECTED_HOST_OS="Ubuntu"
-  EXPECTED_HOST_OS_VERSION="18.04"
-  BUILD_BLOB_NAME="minibrowser-wpe-ubuntu-18.04.zip"
-elif [[ "$BUILD_FLAVOR" == "webkit-gtk-wpe-ubuntu-18.04" ]]; then
+elif [[ "$BUILD_FLAVOR" == "webkit-ubuntu-18.04" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="18.04"
   BUILD_BLOB_NAME="minibrowser-gtk-wpe-ubuntu-18.04.zip"
-elif [[ "$BUILD_FLAVOR" == "webkit-gtk-ubuntu-20.04" ]]; then
-  BROWSER_NAME="webkit"
-  EXTRA_BUILD_ARGS="--gtk"
-  EXTRA_ARCHIVE_ARGS="--gtk"
-  EXPECTED_HOST_OS="Ubuntu"
-  EXPECTED_HOST_OS_VERSION="20.04"
-  BUILD_BLOB_NAME="minibrowser-gtk-ubuntu-20.04.zip"
-elif [[ "$BUILD_FLAVOR" == "webkit-wpe-ubuntu-20.04" ]]; then
-  BROWSER_NAME="webkit"
-  EXTRA_BUILD_ARGS="--wpe"
-  EXTRA_ARCHIVE_ARGS="--wpe"
-  EXPECTED_HOST_OS="Ubuntu"
-  EXPECTED_HOST_OS_VERSION="20.04"
-  BUILD_BLOB_NAME="minibrowser-wpe-ubuntu-20.04.zip"
-elif [[ "$BUILD_FLAVOR" == "webkit-gtk-wpe-ubuntu-20.04" ]]; then
+elif [[ "$BUILD_FLAVOR" == "webkit-ubuntu-20.04" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="20.04"
@@ -161,20 +132,6 @@ else
 fi
 
 function generate_and_upload_browser_build {
-  # webkit-gtk-wpe is a special build doesn't need to be built.
-  if [[ "$BUILD_FLAVOR" == webkit-gtk-wpe-* ]]; then
-    echo "-- combining binaries together"
-    if ! ./webkit/download_gtk_and_wpe_and_zip_together.sh $ZIP_PATH; then
-      return 10
-    fi
-    echo "-- uploading"
-    if ! ./upload.sh $BUILD_BLOB_PATH $ZIP_PATH; then
-      return 11
-    fi
-    return 0
-  fi
-
-  # Other browser flavors follow typical build flow.
   echo "-- preparing checkout"
   if ! ./prepare_checkout.sh $BROWSER_NAME; then
     return 20
@@ -191,7 +148,7 @@ function generate_and_upload_browser_build {
   fi
 
   echo "-- archiving to $ZIP_PATH"
-  if ! ./$BROWSER_NAME/archive.sh $ZIP_PATH "$EXTRA_ARCHIVE_ARGS"; then
+  if ! ./$BROWSER_NAME/archive.sh $ZIP_PATH; then
     return 23
   fi
 
