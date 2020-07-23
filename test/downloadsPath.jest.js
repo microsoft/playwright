@@ -16,14 +16,8 @@
 
 const path = require('path');
 const fs = require('fs');
-const util = require('util');
-const utils = require('./utils');
 const os = require('os');
-const removeFolder = require('rimraf');
-const mkdtempAsync = util.promisify(fs.mkdtemp);
-const removeFolderAsync = util.promisify(removeFolder);
-
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = testOptions;
+const {mkdtempAsync, removeFolderAsync} = require('./utils');
 
 registerFixture('downloadsPath', async ({}, test) => {
   const downloadsPath = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));

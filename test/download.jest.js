@@ -18,9 +18,7 @@ const fs = require('fs');
 const path = require('path');
 const util = require('util');
 const os = require('os');
-const removeFolder = require('rimraf');
-const mkdtempAsync = util.promisify(fs.mkdtemp);
-const removeFolderAsync = util.promisify(removeFolder);
+const {mkdtempAsync, removeFolderAsync} = require('./utils');
 
 const {FFOX, CHROMIUM, WEBKIT, HEADLESS} = testOptions;
 

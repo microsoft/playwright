@@ -24,12 +24,13 @@ const removeFolder = require('rimraf');
 const {FlakinessDashboard} = require('../utils/flakiness-dashboard');
 const PROJECT_ROOT = fs.existsSync(path.join(__dirname, '..', 'package.json')) ? path.join(__dirname, '..') : path.join(__dirname, '..', '..');
 
-const mkdtempAsync = util.promisify(require('fs').mkdtemp);
-const removeFolderAsync = util.promisify(removeFolder);
-
 let platform = os.platform();
 
 const utils = module.exports = {
+  mkdtempAsync: util.promisify(fs.mkdtemp),
+
+  removeFolderAsync: util.promisify(removeFolder),
+
   /**
    * @return {string}
    */
@@ -180,11 +181,11 @@ const utils = module.exports = {
   },
 
   makeUserDataDir: async function() {
-    return await mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_profile-'));
+    return await utils.mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_profile-'));
   },
 
   removeUserDataDir: async function(dir) {
-    await removeFolderAsync(dir).catch(e => {});
+    await utils.removeFolderAsync(dir).catch(e => {});
   },
 
   testOptions(browserType) {
