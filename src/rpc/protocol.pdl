@@ -530,13 +530,13 @@ interface Page
         screen
         print
         # Reset emulated value to the system default.
-        reset
+        null
       colorScheme?: enum
         dark
         light
         no-preference
         # Reset emulated value to the system default.
-        reset
+        null
 
   command exposeBinding
     parameters

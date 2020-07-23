@@ -29,7 +29,7 @@ import { Dialog } from './dialog';
 import { Download } from './download';
 import { ElementHandle } from './elementHandle';
 import { Worker } from './worker';
-import { Frame, FunctionWithSource, GotoOptions } from './frame';
+import { Frame, FunctionWithSource, GotoOptions, verifyLoadState } from './frame';
 import { Keyboard, Mouse } from './input';
 import { Func1, FuncOn, SmartHandle, serializeArgument, parseResult } from './jsHandle';
 import { Request, Response, Route, RouteHandler } from './network';
@@ -300,7 +300,8 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
 
   async reload(options: types.NavigateOptions = {}): Promise<Response | null> {
     return this._wrapApiCall('page.reload', async () => {
-      return Response.fromNullable((await this._channel.reload(options)).response);
+      const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
+      return Response.fromNullable((await this._channel.reload({ ...options, waitUntil })).response);
     });
   }
 
@@ -346,21 +347,23 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
 
   async goBack(options: types.NavigateOptions = {}): Promise<Response | null> {
     return this._wrapApiCall('page.goBack', async () => {
-      return Response.fromNullable((await this._channel.goBack(options)).response);
+      const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
+      return Response.fromNullable((await this._channel.goBack({ ...options, waitUntil })).response);
     });
   }
 
   async goForward(options: types.NavigateOptions = {}): Promise<Response | null> {
     return this._wrapApiCall('page.goForward', async () => {
-      return Response.fromNullable((await this._channel.goForward(options)).response);
+      const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
+      return Response.fromNullable((await this._channel.goForward({ ...options, waitUntil })).response);
     });
   }
 
   async emulateMedia(options: { media?: types.MediaType | null, colorScheme?: types.ColorScheme | null }) {
     return this._wrapApiCall('page.emulateMedia', async () => {
       await this._channel.emulateMedia({
-        media: options.media === null ? 'reset' : options.media,
-        colorScheme: options.colorScheme === null ? 'reset' : options.colorScheme,
+        media: options.media === null ? 'null' : options.media,
+        colorScheme: options.colorScheme === null ? 'null' : options.colorScheme,
       });
     });
   }

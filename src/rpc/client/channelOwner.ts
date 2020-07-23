@@ -66,7 +66,7 @@ export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}
           return obj.addListener;
         if (prop === 'removeEventListener')
           return obj.removeListener;
-        return (params: any) => this._connection.sendMessageToServer({ guid, method: String(prop), params });
+        return (params: any) => this._connection.sendMessageToServer(this._type, guid, String(prop), params);
       },
     });
     (this._channel as any)._object = this;

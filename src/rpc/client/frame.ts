@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assertMaxArguments, helper } from '../../helper';
+import { assertMaxArguments, helper, assert } from '../../helper';
 import * as types from '../../types';
 import { FrameChannel, FrameInitializer, FrameNavigatedEvent } from '../channels';
 import { BrowserContext } from './browserContext';
@@ -89,7 +89,8 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
 
   async goto(url: string, options: GotoOptions = {}): Promise<network.Response | null> {
     return this._wrapApiCall(this._apiName('goto'), async () => {
-      return network.Response.fromNullable((await this._channel.goto({ url, ...options })).response);
+      const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
+      return network.Response.fromNullable((await this._channel.goto({ url, ...options, waitUntil })).response);
     });
   }
 
@@ -188,6 +189,10 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
 
   async waitForSelector(selector: string, options: types.WaitForElementOptions = {}): Promise<ElementHandle<Element> | null> {
     return this._wrapApiCall(this._apiName('waitForSelector'), async () => {
+      if ((options as any).visibility)
+        throw new Error('options.visibility is not supported, did you mean options.state?');
+      if ((options as any).waitFor && (options as any).waitFor !== 'visible')
+        throw new Error('options.waitFor is not supported, did you mean options.state?');
       const result = await this._channel.waitForSelector({ selector, ...options });
       return ElementHandle.fromNullable(result.element) as ElementHandle<Element> | null;
     });
@@ -234,7 +239,8 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
 
   async setContent(html: string, options: types.NavigateOptions = {}): Promise<void> {
     return this._wrapApiCall(this._apiName('setContent'), async () => {
-      await this._channel.setContent({ html, ...options });
+      const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
+      await this._channel.setContent({ html, ...options, waitUntil });
     });
   }
 
@@ -272,9 +278,11 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
     return this._wrapApiCall(this._apiName('addStyleTag'), async () => {
       const copy = { ...options };
-      if (copy.path)
+      if (copy.path) {
         copy.content = (await fsReadFileAsync(copy.path)).toString();
-      return ElementHandle.from((await this._channel.addStyleTag({ ...options })).element);
+        copy.content += '/*# sourceURL=' + copy.path.replace(/\n/g, '') + '*/';
+      }
+      return ElementHandle.from((await this._channel.addStyleTag({ ...copy })).element);
     });
   }
 
@@ -378,6 +386,8 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   async waitForFunction<R>(pageFunction: Func1<void, R>, arg?: any, options?: types.WaitForFunctionOptions): Promise<SmartHandle<R>>;
   async waitForFunction<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg, options: types.WaitForFunctionOptions = {}): Promise<SmartHandle<R>> {
     return this._wrapApiCall(this._apiName('waitForFunction'), async () => {
+      if (typeof options.polling === 'string')
+        assert(options.polling === 'raf', 'Unknown polling option: ' + options.polling);
       const result = await this._channel.waitForFunction({
         ...options,
         pollingInterval: options.polling === 'raf' ? undefined : options.polling,
@@ -396,7 +406,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   }
 }
 
-function verifyLoadState(name: string, waitUntil: types.LifecycleEvent): types.LifecycleEvent {
+export function verifyLoadState(name: string, waitUntil: types.LifecycleEvent): types.LifecycleEvent {
   if (waitUntil as unknown === 'networkidle0')
     waitUntil = 'networkidle';
   if (!types.kLifecycleEvents.has(waitUntil))

@@ -38,6 +38,7 @@ import { ChromiumBrowser } from './chromiumBrowser';
 import { ChromiumBrowserContext } from './chromiumBrowserContext';
 import { Selectors } from './selectors';
 import { Stream } from './stream';
+import { validateParams } from './validator';
 
 class Root extends ChannelOwner<Channel, {}> {
   constructor(connection: Connection) {
@@ -63,9 +64,10 @@ export class Connection {
     return new Promise(f => this._waitingForObject.set(guid, f));
   }
 
-  async sendMessageToServer(message: { guid: string, method: string, params: any }): Promise<any> {
+  async sendMessageToServer(type: string, guid: string, method: string, params: any): Promise<any> {
     const id = ++this._lastId;
-    const converted = { id, ...message, params: this._replaceChannelsWithGuids(message.params) };
+    const validated = method === 'debugScopeState' ? params : validateParams(type, method, params);
+    const converted = { id, guid, method, params: validated };
     debug('pw:channel:command')(converted);
     this.onmessage(converted);
     return new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject }));
@@ -95,22 +97,6 @@ export class Connection {
     }
     const object = this._objects.get(guid)!;
     object._channel.emit(method, this._replaceGuidsWithChannels(params));
-  }
-
-  private _replaceChannelsWithGuids(payload: any): any {
-    if (!payload)
-      return payload;
-    if (Array.isArray(payload))
-      return payload.map(p => this._replaceChannelsWithGuids(p));
-    if (payload._object instanceof ChannelOwner)
-      return { guid: payload._object._guid };
-    if (typeof payload === 'object') {
-      const result: any = {};
-      for (const key of Object.keys(payload))
-        result[key] = this._replaceChannelsWithGuids(payload[key]);
-      return result;
-    }
-    return payload;
   }
 
   private _replaceGuidsWithChannels(payload: any): any {

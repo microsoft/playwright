@@ -24,6 +24,8 @@ const { Connection } = require('../../lib/rpc/client/connection');
 const { Transport } = require('../../lib/rpc/transport');
 const { PlaywrightDispatcher } = require('../../lib/rpc/server/playwrightDispatcher');
 const { setUseApiName } = require('../../lib/progress');
+const { setUnderTest } = require('../../lib/helper');
+setUnderTest();
 
 const browserName = process.env.BROWSER || 'chromium';
 
