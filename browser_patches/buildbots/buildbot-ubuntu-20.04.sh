@@ -49,18 +49,18 @@ mkdir -p $LOCKDIR
 trap "rm -rf ${LOCKDIR}; cd $(pwd -P); exit" INT TERM EXIT
 cd "$(dirname "$0")"
 
-IS_FIRST_RUN_FILE="/tmp/pw-buildbot-first-run.txt";
-if ! [[ -f $IS_FIRST_RUN_FILE ]]; then
-  source ./send_telegram_message.sh
-  send_telegram_message '**Linux Buildbot Is Active**'
-fi
-touch "$IS_FIRST_RUN_FILE"
-
 # Check if git repo is dirty.
 if [[ -n $(git status -s) ]]; then
   echo "ERROR: dirty GIT state - commit everything and re-run the script."
   exit 1
 fi
+
+IS_FIRST_RUN_FILE="/tmp/pw-buildbot-first-run.txt";
+if ! [[ -f $IS_FIRST_RUN_FILE ]]; then
+  source ./send_telegram_message.sh
+  send_telegram_message '**Ubuntu 20.04 Buildbot Is Active**'
+fi
+touch "$IS_FIRST_RUN_FILE"
 
 git pull origin master
 ../checkout_build_archive_upload.sh webkit-gtk-ubuntu-20.04 >/tmp/$(basename $0)--webkit-gtk.log || true
