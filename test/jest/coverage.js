@@ -21,42 +21,43 @@
  * @param {string} className
  * @param {!Object} classType
  */
-function traceAPICoverage(apiCoverage, events, className, classType) {
+function traceAPICoverage(apiCoverage, api, events) {
   const uninstalls = [];
-  className = className.substring(0, 1).toLowerCase() + className.substring(1);
-  for (const methodName of Reflect.ownKeys(classType.prototype)) {
-    const method = Reflect.get(classType.prototype, methodName);
-    if (methodName === 'constructor' || typeof methodName !== 'string' || methodName.startsWith('_') || typeof method !== 'function')
-      continue;
-    apiCoverage.set(`${className}.${methodName}`, false);
-    const override = function(...args) {
-      apiCoverage.set(`${className}.${methodName}`, true);
-      return method.call(this, ...args);
-    };
-    Object.defineProperty(override, 'name', { writable: false, value: methodName });
-    Reflect.set(classType.prototype, methodName, override);
-    uninstalls.push(() => Reflect.set(classType.prototype, methodName, method));
-  }
-
-  if (events[classType.name]) {
-    for (const event of Object.values(events[classType.name])) {
-      if (typeof event !== 'symbol')
-        apiCoverage.set(`${className}.emit(${JSON.stringify(event)})`, false);
+  for (const [name, classType] of Object.entries(api)) {
+    const className = name.substring(0, 1).toLowerCase() + name.substring(1);
+    for (const methodName of Reflect.ownKeys(classType.prototype)) {
+      const method = Reflect.get(classType.prototype, methodName);
+      if (methodName === 'constructor' || typeof methodName !== 'string' || methodName.startsWith('_') || typeof method !== 'function')
+        continue;
+      apiCoverage.set(`${className}.${methodName}`, false);
+      const override = function(...args) {
+        apiCoverage.set(`${className}.${methodName}`, true);
+        return method.call(this, ...args);
+      };
+      Object.defineProperty(override, 'name', { writable: false, value: methodName });
+      Reflect.set(classType.prototype, methodName, override);
+      uninstalls.push(() => Reflect.set(classType.prototype, methodName, method));
     }
-    const method = Reflect.get(classType.prototype, 'emit');
-    Reflect.set(classType.prototype, 'emit', function(event, ...args) {
-      if (typeof event !== 'symbol' && this.listenerCount(event))
-        apiCoverage.set(`${className}.emit(${JSON.stringify(event)})`, true);
-      return method.call(this, event, ...args);
-    });
-    uninstalls.push(() => Reflect.set(classType.prototype, 'emit', method));
+    if (events[name]) {
+      const emitClassType = (name === 'BrowserContext' ? api['ChromiumBrowserContext'] : undefined) || classType;
+      for (const event of Object.values(events[name])) {
+        if (typeof event !== 'symbol')
+          apiCoverage.set(`${className}.emit(${JSON.stringify(event)})`, false);
+      }
+      const method = Reflect.get(emitClassType.prototype, 'emit');
+      Reflect.set(emitClassType.prototype, 'emit', function(event, ...args) {
+        if (typeof event !== 'symbol' && this.listenerCount(event))
+          apiCoverage.set(`${className}.emit(${JSON.stringify(event)})`, true);
+        return method.call(this, event, ...args);
+      });
+      uninstalls.push(() => Reflect.set(emitClassType.prototype, 'emit', method));
+    }
   }
-
   return () => uninstalls.forEach(u => u());
 }
 
 /**
- * @param {string} browserName 
+ * @param {string} browserName
  */
 function apiForBrowser(browserName) {
   const BROWSER_CONFIGS = [
@@ -72,7 +73,7 @@ function apiForBrowser(browserName) {
       name: 'Chromium',
       events: {
         ...require('../../lib/events').Events,
-        ...require('../../lib/chromium/events').Events,
+        ChromiumBrowserContext: require('../../lib/chromium/events').Events.CRBrowserContext,
       }
     },
   ];
@@ -98,15 +99,12 @@ function apiForBrowser(browserName) {
 }
 
 /**
- * @param {string} browserName 
+ * @param {string} browserName
  */
 function installCoverageHooks(browserName) {
-  const uninstalls = [];
   const {api, events} = apiForBrowser(browserName);
   const coverage = new Map();
-  for (const [name, value] of Object.entries(api))
-    uninstalls.push(traceAPICoverage(coverage, events, name, value));
-  const uninstall = () => uninstalls.map(u => u());
+  const uninstall = traceAPICoverage(coverage, api, events);
   return {coverage, uninstall};
 }
 
