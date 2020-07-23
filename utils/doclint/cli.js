@@ -36,9 +36,9 @@ run();
 async function run() {
   const startTime = Date.now();
   const onlyBrowserVersions = process.argv.includes('--only-browser-versions');
-  const channel = process.argv.includes('--channel');
-  if (channel)
-    console.warn(`${YELLOW_COLOR}NOTE: checking documentation against //src/rpc/client${RESET_COLOR}`);
+  const noChannel = process.argv.includes('--no-channel');
+  if (noChannel)
+    console.warn(`${YELLOW_COLOR}NOTE: checking documentation against //src${RESET_COLOR}`);
 
   /** @type {!Array<!Message>} */
   const messages = [];
@@ -70,11 +70,11 @@ async function run() {
       const page = await browser.newPage();
       const checkPublicAPI = require('./check_public_api');
       let jsSources;
-      if (channel) {
-        jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src', 'rpc', 'client'), '', []);
-      } else {
+      if (noChannel) {
         const rpcDir = path.join(PROJECT_DIR, 'src', 'rpc');
         jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src'), '', [rpcDir]);
+      } else {
+        jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src', 'rpc', 'client'), '', []);
       }
       messages.push(...await checkPublicAPI(page, [api], jsSources));
       await browser.close();

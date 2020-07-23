@@ -16,17 +16,15 @@
 
 const path = require('path');
 const childProcess = require('child_process');
-const playwrightImpl = require('../../index');
 
 const { TestServer } = require('../../utils/testserver');
 const { Connection } = require('../../lib/rpc/client/connection');
 const { Transport } = require('../../lib/rpc/transport');
-const { setupInProcess } = require('../../lib/rpc/inprocess');
 const { setUnderTest } = require('../../lib/helper');
 const { valueFromEnv } = require('./utils');
 const { registerFixture, registerWorkerFixture } = require('./fixturePool');
 
-setUnderTest();
+setUnderTest();  // Note: we must call setUnderTest before requiring Playwright.
 
 const browserName = process.env.BROWSER || 'chromium';
 
@@ -102,13 +100,8 @@ module.exports = function registerFixtures(global) {
       spawnedProcess.stdin.destroy();
       spawnedProcess.stdout.destroy();
       spawnedProcess.stderr.destroy();
-    } else if (process.env.PWCHANNEL) {
-      const playwright = setupInProcess(playwrightImpl);
-      await test(playwright);
     } else {
-      const playwright = playwrightImpl;
-      playwright._toImpl = x => x;
-      await test(playwright);
+      await test(require('../../index'));
     }
   });
 
