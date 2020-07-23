@@ -8,6 +8,18 @@ module.exports = /** @type {import('@jest/types').Config.InitialOptions} */ ({
   testTimeout: 10000,
   globalSetup: './jest/setup.js',
   globalTeardown: './jest/teardown.js',
+  transform: {
+    '^.+\\.ts$': ['babel-jest', {
+      presets: [
+        ['@babel/preset-env', {
+          targets: {
+            node: 'current'
+          }
+        }],
+        ['@babel/preset-typescript']
+      ],
+    }],
+  },
   reporters: [
     'default',
     './jest/reporter'
