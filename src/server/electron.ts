@@ -71,7 +71,10 @@ export class ElectronApplication extends EventEmitter {
     super();
     this._apiLogger = logger.api;
     this._browserContext = browser._defaultContext as CRBrowserContext;
-    this._browserContext.on(Events.BrowserContext.Close, () => this.emit(ElectronEvents.ElectronApplication.Close));
+    this._browserContext.on(Events.BrowserContext.Close, () => {
+      // Emit application closed after context closed.
+      Promise.resolve().then(() => this.emit(ElectronEvents.ElectronApplication.Close));
+    });
     this._browserContext.on(Events.BrowserContext.Page, event => this._onPage(event));
     this._nodeConnection = nodeConnection;
     this._nodeSession = nodeConnection.rootSession;
@@ -125,8 +128,10 @@ export class ElectronApplication extends EventEmitter {
   }
 
   async close() {
+    const closed = this.waitForEvent(ElectronEvents.ElectronApplication.Close);
     await this.evaluate(({ app }) => app.quit());
     this._nodeConnection.close();
+    await closed;
   }
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
@@ -188,10 +193,7 @@ export class Electron  {
         cwd: options.cwd,
         tempDirectories: [],
         attemptToGracefullyClose: () => app!.close(),
-        onExit: (exitCode, signal) => {
-          if (app)
-            app.emit(ElectronEvents.ElectronApplication.Close, exitCode, signal);
-        },
+        onExit: (exitCode, signal) => {},
       });
 
       const nodeMatch = await waitForLine(progress, launchedProcess, launchedProcess.stderr, /^Debugger listening on (ws:\/\/.*)$/);
