@@ -41,6 +41,20 @@ registerFixture('window', async ({application}, test) => {
 });
 
 describe.skip(!CHROMIUM)('Electron', function() {
+  it('should fire close event', async ({ playwright }) => {
+    const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
+    const application = await playwright.electron.launch(electronPath, {
+      args: [path.join(__dirname, 'testApp.js')],
+    });
+    const events = [];
+    application.on('close', () => events.push('application'));
+    application.context().on('close', () => events.push('context'));
+    await application.close();
+    expect(events.join('|')).toBe('context|application');
+    // Give it some time to fire more events - there should not be any.
+    await new Promise(f => setTimeout(f, 1000));
+    expect(events.join('|')).toBe('context|application');
+  });
   it('should script application', async ({ application }) => {
     const appPath = await application.evaluate(async ({ app }) => app.getAppPath());
     expect(appPath).toContain('electron');
