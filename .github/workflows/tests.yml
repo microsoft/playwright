@@ -46,7 +46,7 @@ jobs:
       if: ${{ always() }}
       with:
         name: ${{ matrix.browser }}-linux-jest-report
-        path: jest-report.json  
+        path: jest-report.json
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -82,7 +82,7 @@ jobs:
       if: ${{ always() }}
       with:
         name: ${{ matrix.browser }}-mac-jest-report
-        path: jest-report.json  
+        path: jest-report.json
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -134,6 +134,7 @@ jobs:
   test-package-installations:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         node_version:
         - "^10.17.0" # pre 10.17, --unhandled-rejections=strict was not an option (https://github.com/nodejs/node/pull/26599) which we need in our tests

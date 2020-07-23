@@ -14,6 +14,7 @@ lib/injected/
 !index.d.ts
 
 !index.js
+!index.mjs
 !install.js
 !README.md
 !LICENSE
