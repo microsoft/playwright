@@ -63,6 +63,4 @@ fi
 touch "$IS_FIRST_RUN_FILE"
 
 git pull origin master
-../checkout_build_archive_upload.sh webkit-gtk-ubuntu-20.04 >/tmp/$(basename $0)--webkit-gtk.log || true
-../checkout_build_archive_upload.sh webkit-wpe-ubuntu-20.04 >/tmp/$(basename $0)--webkit-wpe.log || true
-../checkout_build_archive_upload.sh webkit-gtk-wpe-ubuntu-20.04 >/tmp/$(basename $0)--webkit-gtk-wpe.log || true
+../checkout_build_archive_upload.sh webkit-ubuntu-20.04 >/tmp/$(basename $0)--webkit.log || true

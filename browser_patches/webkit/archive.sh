@@ -3,7 +3,7 @@ set -e
 set +x
 
 if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
-  echo "usage: $(basename $0) [output-absolute-path] [--wpe|--gtk]"
+  echo "usage: $(basename $0) [output-absolute-path]"
   echo
   echo "Generate distributable .zip archive from ./checkout folder that was previously built."
   echo
@@ -11,7 +11,6 @@ if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
 fi
 
 ZIP_PATH=$1
-LINUX_FLAVOR=$2
 if [[ $ZIP_PATH != /* ]]; then
   echo "ERROR: path $ZIP_PATH is not absolute"
   exit 1
@@ -45,80 +44,101 @@ main() {
   fi
 }
 
+copyLibrariesForWPE() {
+  # Expect target directory to be passed in as first argument.
+  local tmpdir=$1
+
+  # copy runner
+  cp -t $tmpdir $SCRIPTS_DIR/pw_run.sh
+
+  # copy all relevant binaries
+  cp -t $tmpdir ./WebKitBuild/WPE/Release/bin/MiniBrowser ./WebKitBuild/WPE/Release/bin/WPE*Process
+  # copy all relevant shared objects
+  # - exclude gstreamer plugins
+  LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/MiniBrowser \
+      | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' \
+      | grep -v '/libgst.*so' \
+      | xargs cp -t $tmpdir
+  LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/WPENetworkProcess \
+      | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' \
+      | grep -v '/libgst.*so' \
+      | xargs cp -t $tmpdir
+  LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/WPEWebProcess \
+      | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' \
+      | grep -v '/libgst.*so' \
+      | xargs cp -t $tmpdir
+  # Copy some wayland libraries required for Web Process
+  if ls WebKitBuild/WPE/DependenciesWPE/Root/lib/libva\-* 2>&1 >/dev/null; then
+    cp -d -t $tmpdir WebKitBuild/WPE/DependenciesWPE/Root/lib/libva\-*
+  fi
+  # Injected bundle is loaded dynamicly via dlopen => not bt listed by ldd.
+  cp -t $tmpdir WebKitBuild/WPE/Release/lib/libWPEInjectedBundle.so
+  if test -d $PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib/gio/modules/; then
+    mkdir -p $tmpdir/gio/modules
+    cp -t $tmpdir/gio/modules $PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib/gio/modules/*
+  fi
+
+  cd $tmpdir
+  ln -s libWPEBackend-fdo-1.0.so.1 libWPEBackend-fdo-1.0.so
+  cd -
+
+  # Strip copied binaries.
+  cd $tmpdir
+  strip --strip-unneeded * || true
+  cd -
+}
+
+copyLibrariesForGTK() {
+  # Expect target directory to be passed in as first argument.
+  local tmpdir=$1
+
+  # copy runner
+  cp -t $tmpdir $SCRIPTS_DIR/pw_run.sh
+
+  # copy all relevant binaries
+  cp -t $tmpdir ./WebKitBuild/GTK/Release/bin/MiniBrowser ./WebKitBuild/GTK/Release/bin/WebKit*Process
+  # copy all relevant shared objects
+  # - exclude gstreamer plugins
+  # - exclude libdrm
+  LD_LIBRARY_PATH="$PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib" ldd WebKitBuild/GTK/Release/bin/MiniBrowser \
+      | grep -o '[^ ]*WebKitBuild/GTK/[^ ]*' \
+      | grep -v '/libgst.*so' \
+      | grep -v '/libdrm.so' \
+      | xargs cp -t $tmpdir
+
+  # Injected bundle is loaded dynamicly via dlopen => not bt listed by ldd.
+  cp -t $tmpdir WebKitBuild/GTK/Release/lib/libwebkit2gtkinjectedbundle.so
+  if test -d $PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib/gio/modules; then
+    mkdir -p $tmpdir/gio/modules
+    cp -t $tmpdir/gio/modules $PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib/gio/modules/*
+  fi
+
+  # we failed to nicely build libgdk_pixbuf - expect it in the env
+  rm -f $tmpdir/libgdk_pixbuf*
+
+  # tar resulting directory and cleanup TMP.
+  cd $tmpdir
+  strip --strip-unneeded * || true
+  cd -
+}
+
 createZipForLinux() {
   # create a TMP directory to copy all necessary files
   local tmpdir=$(mktemp -d -t webkit-deploy-XXXXXXXXXX)
   mkdir -p $tmpdir
+  mkdir -p $tmpdir/minibrowser-gtk
+  mkdir -p $tmpdir/minibrowser-wpe
 
   # copy runner
   cp -t $tmpdir $SCRIPTS_DIR/pw_run.sh
   # copy protocol
   node $SCRIPTS_DIR/concat_protocol.js > $tmpdir/protocol.json
 
-  if [[ "$LINUX_FLAVOR" == "--wpe" ]]; then
-    # copy all relevant binaries
-    cp -t $tmpdir ./WebKitBuild/WPE/Release/bin/MiniBrowser ./WebKitBuild/WPE/Release/bin/WPE*Process
-    # copy all relevant shared objects
-    # - exclude gstreamer plugins
-    LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/MiniBrowser \
-        | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' \
-        | grep -v '/libgst.*so' \
-        | xargs cp -t $tmpdir
-    LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/WPENetworkProcess \
-        | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' \
-        | grep -v '/libgst.*so' \
-        | xargs cp -t $tmpdir
-    LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/WPEWebProcess \
-        | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' \
-        | grep -v '/libgst.*so' \
-        | xargs cp -t $tmpdir
-    # Copy libvpx.so.5 as Ubuntu 20.04 comes with libvpx.so.6
-    ldd WebKitBuild/WPE/Release/bin/MiniBrowser | grep -o '[^ ]*\/libvpx.so.5[^ ]*' | xargs cp -t $tmpdir
-    # Copy some wayland libraries required for Web Process t
-    if ls WebKitBuild/WPE/DependenciesWPE/Root/lib/libva\-* 2>&1 >/dev/null; then
-      cp -d -t $tmpdir WebKitBuild/WPE/DependenciesWPE/Root/lib/libva\-*
-    fi
-    # Injected bundle is loaded dynamicly via dlopen => not bt listed by ldd.
-    cp -t $tmpdir WebKitBuild/WPE/Release/lib/libWPEInjectedBundle.so
-    if test -d $PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib/gio/modules/; then
-      mkdir -p $tmpdir/gio/modules
-      cp -t $tmpdir/gio/modules $PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib/gio/modules/*
-    fi
-
-    cd $tmpdir
-    ln -s libWPEBackend-fdo-1.0.so.1 libWPEBackend-fdo-1.0.so
-    cd -
-  elif [[ "$LINUX_FLAVOR" == "--gtk" ]]; then
-    # copy all relevant binaries
-    cp -t $tmpdir ./WebKitBuild/GTK/Release/bin/MiniBrowser ./WebKitBuild/GTK/Release/bin/WebKit*Process
-    # copy all relevant shared objects
-    # - exclude gstreamer plugins
-    # - exclude libdrm
-    LD_LIBRARY_PATH="$PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib" ldd WebKitBuild/GTK/Release/bin/MiniBrowser \
-        | grep -o '[^ ]*WebKitBuild/GTK/[^ ]*' \
-        | grep -v '/libgst.*so' \
-        | grep -v '/libdrm.so' \
-        | xargs cp -t $tmpdir
-
-    # Injected bundle is loaded dynamicly via dlopen => not bt listed by ldd.
-    cp -t $tmpdir WebKitBuild/GTK/Release/lib/libwebkit2gtkinjectedbundle.so
-    # Copy libvpx.so.5 as Ubuntu 20.04 comes with libvpx.so.6
-    ldd WebKitBuild/GTK/Release/bin/MiniBrowser | grep -o '[^ ]*\/libvpx.so.5[^ ]*' | xargs cp -t $tmpdir
-    if test -d $PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib/gio/modules; then
-      mkdir -p $tmpdir/gio/modules
-      cp -t $tmpdir/gio/modules $PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib/gio/modules/*
-    fi
-
-    # we failed to nicely build libgdk_pixbuf - expect it in the env
-    rm -f $tmpdir/libgdk_pixbuf*
-  else
-    echo "ERROR: must specify --gtk or --wpe"
-    exit 1
-  fi
+  copyLibrariesForWPE $tmpdir/minibrowser-wpe
+  copyLibrariesForGTK $tmpdir/minibrowser-gtk
 
   # tar resulting directory and cleanup TMP.
   cd $tmpdir
-  strip --strip-unneeded * || true
   zip --symlinks -r $ZIP_PATH ./
   cd -
   rm -rf $tmpdir
