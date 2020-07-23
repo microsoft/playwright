@@ -421,6 +421,11 @@ static BOOL areEssentiallyEqual(double a, double b)
     [self.window close];
 }
 
+- (void)_webView:(WKWebView *)webView getWindowFrameWithCompletionHandler:(void (^)(CGRect))completionHandler
+{
+    completionHandler([self.window frame]);
+}
+
 #define DefaultMinimumZoomFactor (.5)
 #define DefaultMaximumZoomFactor (3.0)
 #define DefaultZoomFactorRatio (1.2)
