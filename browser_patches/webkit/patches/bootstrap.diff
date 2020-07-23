@@ -9743,10 +9743,10 @@ index f9c26832d3e91e8d747c5c1e0f0d76c34f4c3096..0cdf93cfe090b9be742a9c670b3372d2
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm b/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..aa06bdfb5170428ace1143ae52b413ac6b987040
+index 0000000000000000000000000000000000000000..51b0d77bbb2addd48a0ffd1cfb65368d37caefd9
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm
-@@ -0,0 +1,51 @@
+@@ -0,0 +1,54 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -9794,7 +9794,10 @@ index 0000000000000000000000000000000000000000..aa06bdfb5170428ace1143ae52b413ac
 +    }
 +    size_t imageWidth = CGImageGetWidth(image);
 +    size_t imageHeight = CGImageGetHeight(image);
-+    CGContextDrawImage(context.get(), CGRectMake(0, 0, imageWidth, imageHeight), image);
++    // TODO: exclude controls from original screenshot
++    constexpr int browserControlsHeight = 55;
++    CGFloat pageHeight = static_cast<CGFloat>(imageHeight) - browserControlsHeight;
++    CGContextDrawImage(context.get(), CGRectMake(0, height - pageHeight, imageWidth, imageHeight), image);
 +}
 +
 +} // namespace WebKit
