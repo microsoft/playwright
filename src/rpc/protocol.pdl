@@ -151,6 +151,7 @@ interface BrowserType
         username?: string
         password?: string
       downloadsPath?: string
+      firefoxUserPrefs?: SerializedValue
       slowMo?: number
     returns
       browser: Browser
@@ -176,6 +177,7 @@ interface BrowserType
         username?: string
         password?: string
       downloadsPath?: string
+      firefoxUserPrefs?: SerializedValue
       port?: number
     returns
       server: BrowserServer

@@ -170,6 +170,7 @@ export type BrowserTypeLaunchParams = {
     password?: string,
   },
   downloadsPath?: string,
+  firefoxUserPrefs?: SerializedValue,
   slowMo?: number,
 };
 export type BrowserTypeLaunchResult = {
@@ -197,6 +198,7 @@ export type BrowserTypeLaunchServerParams = {
     password?: string,
   },
   downloadsPath?: string,
+  firefoxUserPrefs?: SerializedValue,
   port?: number,
 };
 export type BrowserTypeLaunchServerResult = {

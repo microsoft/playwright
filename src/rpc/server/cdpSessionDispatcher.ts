@@ -17,7 +17,7 @@
 import { CRSession, CRSessionEvents } from '../../chromium/crConnection';
 import { CDPSessionChannel, CDPSessionInitializer, SerializedValue } from '../channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import { serializeResult, parseArgument } from './jsHandleDispatcher';
+import { serializeResult, parseValue } from './jsHandleDispatcher';
 
 export class CDPSessionDispatcher extends Dispatcher<CRSession, CDPSessionInitializer> implements CDPSessionChannel {
   constructor(scope: DispatcherScope, crSession: CRSession) {
@@ -33,7 +33,7 @@ export class CDPSessionDispatcher extends Dispatcher<CRSession, CDPSessionInitia
   }
 
   async send(params: { method: string, params?: SerializedValue }): Promise<{ result: SerializedValue }> {
-    const cdpParams = params.params ? parseArgument({ value: params.params, handles: [] }) : undefined;
+    const cdpParams = params.params ? parseValue(params.params) : undefined;
     return { result: serializeResult(await this._object.send(params.method as any, cdpParams)) };
   }
 
