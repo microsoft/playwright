@@ -8325,10 +8325,10 @@ index b0722e7da81e56530deb570b82ed7cfece970362..1d1463231269363939e4c746a6dada5e
  }
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..3f091aa8ea5e44980f2ea62e26ab860697c6a066
+index 0000000000000000000000000000000000000000..de9e93e295e3af981965f9fd85f7f89e9da8d390
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,166 @@
+@@ -0,0 +1,163 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8363,6 +8363,7 @@ index 0000000000000000000000000000000000000000..3f091aa8ea5e44980f2ea62e26ab8606
 +#include <JavaScriptCore/InspectorFrontendDispatchers.h>
 +#include <JavaScriptCore/InspectorFrontendRouter.h>
 +#include <WebCore/NotImplemented.h>
++#include <wtf/RunLoop.h>
 +
 +#if USE(CAIRO)
 +#include "DrawingAreaProxy.h"
@@ -8474,15 +8475,11 @@ index 0000000000000000000000000000000000000000..3f091aa8ea5e44980f2ea62e26ab8606
 +    if (!m_encoder)
 +        return;
 +
-+    m_page.callAfterNextPresentationUpdate([agent = makeWeakPtr(this)](CallbackBase::Error error) mutable {
++    RunLoop::main().dispatchAfter(Seconds(1.0 / 24), [agent = makeWeakPtr(this)]() mutable {
 +        if (!agent)
 +            return;
 +
-+        if (error == CallbackBase::Error::None) {
-+            agent->encodeFrame();
-+        } else {
-+            fprintf(stderr, "callAfterNextPresentationUpdate failed error= %d\n", error);
-+        }
++        agent->encodeFrame();
 +        agent->scheduleFrameEncoding();
 +    });
 +}
@@ -8582,10 +8579,10 @@ index 0000000000000000000000000000000000000000..003ad364d76071ce30d11cce7d1b61a6
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..d92957ee6d2b7ebf14eeb5c7206ea78b36927749
+index 0000000000000000000000000000000000000000..9bef1bb85b02342ca8fd8129b80d7f540189dfbe
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,381 @@
+@@ -0,0 +1,378 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -8766,10 +8763,7 @@ index 0000000000000000000000000000000000000000..d92957ee6d2b7ebf14eeb5c7206ea78b
 +    {
 +        m_encoderQueue->dispatch([this, frame = WTFMove(frame)] {
 +            frame->convertToVpxImage(m_image.get());
-+            // TODO: figure out why passing duration to the codec results in much
-+            // worse visual quality and makes video stutter.
-+            for (int i = 0; i < frame->duration(); i++)
-+                encodeFrame(m_image.get(), 1);
++            encodeFrame(m_image.get(), frame->duration());
 +        });
 +    }
 +
