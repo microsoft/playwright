@@ -352,6 +352,8 @@ export interface BrowserContextChannel extends Channel {
   on(event: 'close', callback: (params: BrowserContextCloseEvent) => void): this;
   on(event: 'page', callback: (params: BrowserContextPageEvent) => void): this;
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
+  on(event: 'crBackgroundPage', callback: (params: BrowserContextCrBackgroundPageEvent) => void): this;
+  on(event: 'crServiceWorker', callback: (params: BrowserContextCrServiceWorkerEvent) => void): this;
   addCookies(params: BrowserContextAddCookiesParams): Promise<BrowserContextAddCookiesResult>;
   addInitScript(params: BrowserContextAddInitScriptParams): Promise<BrowserContextAddInitScriptResult>;
   clearCookies(params?: BrowserContextClearCookiesParams): Promise<BrowserContextClearCookiesResult>;
@@ -368,8 +370,6 @@ export interface BrowserContextChannel extends Channel {
   setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams): Promise<BrowserContextSetHTTPCredentialsResult>;
   setNetworkInterceptionEnabled(params: BrowserContextSetNetworkInterceptionEnabledParams): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
   setOffline(params: BrowserContextSetOfflineParams): Promise<BrowserContextSetOfflineResult>;
-  on(event: 'crBackgroundPage', callback: (params: BrowserContextCrBackgroundPageEvent) => void): this;
-  on(event: 'crServiceWorker', callback: (params: BrowserContextCrServiceWorkerEvent) => void): this;
   crNewCDPSession(params: BrowserContextCrNewCDPSessionParams): Promise<BrowserContextCrNewCDPSessionResult>;
 }
 export type BrowserContextBindingCallEvent = {
@@ -382,6 +382,12 @@ export type BrowserContextPageEvent = {
 export type BrowserContextRouteEvent = {
   route: RouteChannel,
   request: RequestChannel,
+};
+export type BrowserContextCrBackgroundPageEvent = {
+  page: PageChannel,
+};
+export type BrowserContextCrServiceWorkerEvent = {
+  worker: WorkerChannel,
 };
 export type BrowserContextAddCookiesParams = {
   cookies: {
@@ -473,12 +479,6 @@ export type BrowserContextSetOfflineParams = {
   offline: boolean,
 };
 export type BrowserContextSetOfflineResult = void;
-export type BrowserContextCrBackgroundPageEvent = {
-  page: PageChannel,
-};
-export type BrowserContextCrServiceWorkerEvent = {
-  worker: WorkerChannel,
-};
 export type BrowserContextCrNewCDPSessionParams = {
   page: PageChannel,
 };
