@@ -23,6 +23,7 @@ const platform = os.platform();
 const GoldenUtils = require('../../utils/testrunner/GoldenUtils');
 const {installCoverageHooks} = require('./coverage');
 const browserName = process.env.BROWSER || 'chromium';
+const playwright = require('../../');
 
 class PlaywrightEnvironment extends NodeEnvironment {
   constructor(config, context) {
@@ -42,6 +43,7 @@ class PlaywrightEnvironment extends NodeEnvironment {
     testOptions.GOLDEN_DIR = path.join(__dirname, '..', 'golden-' + browserName);
     testOptions.OUTPUT_DIR = path.join(__dirname, '..', 'output-' + browserName);
     this.global.testOptions = testOptions;
+    this.global.browserName = browserName;
     this.testPath = context.testPath;
 
     this.global.registerFixture = (name, fn) => {
@@ -127,17 +129,24 @@ class PlaywrightEnvironment extends NodeEnvironment {
         });
       };
       this.global.expect.extend({ toBeGolden });
+      this.global.browser = await playwright[this.global.browserName].launch();
     }
 
+    if (event.name === 'teardown')
+      await this.global.browser.close()
+
     if (event.name === 'test_start') {
+      await this._beforeTest();
       const fn = event.test.fn;
       event.test.fn = async () => {
         return await this.fixturePool.resolveParametersAndRun(fn);
       };
     }
 
-    if (event.name === 'test_fn_success')
+    if (event.name === 'test_fn_success') {
       await this.fixturePool.teardownScope('test');
+      await this._afterTest();
+    }
 
     if (event.name === 'test_fn_failure') {
       let index = 0;
@@ -161,7 +170,17 @@ class PlaywrightEnvironment extends NodeEnvironment {
       }
       await this.fixturePool.teardownScope('test');
       await this.fixturePool.teardownScope('worker');
+      await this._afterTest();
     }
+  }
+
+  async _beforeTest() {
+    this.global.context = await this.global.browser.newContext();
+    this.global.page = await this.global.context.newPage();
+  }
+
+  async _afterTest() {
+    await this.global.context.close();
   }
 }
 

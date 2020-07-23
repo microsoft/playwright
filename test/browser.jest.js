@@ -15,9 +15,19 @@
  */
 
 const {FFOX, CHROMIUM, WEBKIT} = testOptions;
+const playwright = require('../');
+
+let browser;
+beforeEach(async () => {
+  browser = await playwright[global.browserName].launch();
+});
+
+afterEach(async () => {
+  await browser.close();
+})
 
 describe('Browser.newPage', function() {
-  it('should create new page', async function({browser}) {
+  it('should create new page', async function() {
     const page1 = await browser.newPage();
     expect(browser.contexts().length).toBe(1);
 
@@ -30,7 +40,7 @@ describe('Browser.newPage', function() {
     await page2.close();
     expect(browser.contexts().length).toBe(0);
   });
-  it('should throw upon second create new page', async function({browser}) {
+  it('should throw upon second create new page', async function() {
     const page = await browser.newPage();
     let error;
     await page.context().newPage().catch(e => error = e);
