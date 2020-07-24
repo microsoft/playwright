@@ -51,7 +51,7 @@ export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer>
 }
 
 export class ElectronApplication extends ChannelOwner<ElectronApplicationChannel, ElectronApplicationInitializer> {
-  private _context: BrowserContext;
+  private _context?: BrowserContext;
   private _windows = new Set<Page>();
   private _timeoutSettings = new TimeoutSettings();
 
@@ -60,8 +60,8 @@ export class ElectronApplication extends ChannelOwner<ElectronApplicationChannel
   }
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: ElectronApplicationInitializer) {
-    super(parent, type, guid, initializer);
-    this._context = BrowserContext.from(initializer.context);
+    super(parent, type, guid, initializer, true);
+    this._channel.on('context', ({ context }) => this._context = BrowserContext.from(context));
     this._channel.on('window', ({ page, browserWindow }) => {
       const window = Page.from(page);
       (window as any).browserWindow = JSHandle.from(browserWindow);
@@ -71,6 +71,7 @@ export class ElectronApplication extends ChannelOwner<ElectronApplicationChannel
     });
     this._channel.on('close', () => {
       this.emit(ElectronEvents.ElectronApplication.Close);
+      this._dispose();
     });
   }
 
@@ -90,7 +91,7 @@ export class ElectronApplication extends ChannelOwner<ElectronApplicationChannel
   }
 
   context(): BrowserContext {
-    return this._context;
+    return this._context!;
   }
 
   async close() {

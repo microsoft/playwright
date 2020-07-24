@@ -131,8 +131,8 @@ export class Connection {
         break;
       case 'BrowserContext':
         let browserName = '';
-        if (parent instanceof Electron) {
-          // Launching electron produces Electron parent for BrowserContext.
+        if (parent instanceof ElectronApplication) {
+          // Launching electron produces ElectronApplication parent for BrowserContext.
           browserName = 'electron';
         } else if (parent instanceof Browser) {
           // Launching a browser produces Browser parent for BrowserContext.

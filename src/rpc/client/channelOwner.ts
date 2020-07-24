@@ -15,10 +15,10 @@
  */
 
 import { EventEmitter } from 'events';
-import { Channel } from '../channels';
-import { Connection } from './connection';
+import type { Channel } from '../channels';
+import type { Connection } from './connection';
 import { assert } from '../../helper';
-import { LoggerSink } from '../../loggerSink';
+import type { LoggerSink } from '../../loggerSink';
 import { DebugLoggerSink } from '../../logger';
 
 export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}> extends EventEmitter {
@@ -37,11 +37,11 @@ export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}
 
   constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: Initializer, isScope?: boolean) {
     super();
-    this._connection = parent instanceof Connection ? parent : parent._connection;
+    this._connection = parent instanceof ChannelOwner ? parent._connection : parent;
     this._type = type;
     this._guid = guid;
     this._isScope = !!isScope;
-    this._parent = parent instanceof Connection ? undefined : parent;
+    this._parent = parent instanceof ChannelOwner ? parent : undefined;
 
     this._connection._objects.set(guid, this);
     if (this._parent) {

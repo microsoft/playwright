@@ -41,11 +41,12 @@ export class ElectronDispatcher extends Dispatcher<Electron, ElectronInitializer
 
 export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplication, ElectronApplicationInitializer> implements ElectronApplicationChannel {
   constructor(scope: DispatcherScope, electronApplication: ElectronApplication) {
-    super(scope, electronApplication, 'ElectronApplication', {
-      context: new BrowserContextDispatcher(scope, electronApplication.context() as BrowserContextBase),
+    super(scope, electronApplication, 'ElectronApplication', {}, true);
+    this._dispatchEvent('context', { context: new BrowserContextDispatcher(this._scope, electronApplication.context() as BrowserContextBase) });
+    electronApplication.on(ElectronEvents.ElectronApplication.Close, () => {
+      this._dispatchEvent('close');
+      this._dispose();
     });
-
-    electronApplication.on(ElectronEvents.ElectronApplication.Close, () => this._dispatchEvent('close'));
     electronApplication.on(ElectronEvents.ElectronApplication.Window, (page: ElectronPage) => {
       this._dispatchEvent('window', {
         page: lookupDispatcher<PageDispatcher>(page),
