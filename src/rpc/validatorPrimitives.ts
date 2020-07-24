@@ -14,19 +14,10 @@
  * limitations under the License.
  */
 
-import { ChannelOwner } from './channelOwner';
-import { isUnderTest } from '../../helper';
+import { isUnderTest } from '../helper';
 
-class ValidationError extends Error {}
-
-export function validateParams(type: string, method: string, params: any): any {
-  const name = type + method[0].toUpperCase() + method.substring(1) + 'Params';
-  if (!scheme[name])
-    throw new ValidationError(`Uknown scheme for ${type}.${method}`);
-  return scheme[name](params, '');
-}
-
-type Validator = (arg: any, path: string) => any;
+export class ValidationError extends Error {}
+export type Validator = (arg: any, path: string) => any;
 
 export const tNumber: Validator = (arg: any, path: string) => {
   if (arg instanceof Number)
@@ -50,7 +41,6 @@ export const tString: Validator = (arg: any, path: string) => {
   throw new ValidationError(`${path}: expected string, got ${typeof arg}`);
 };
 export const tBinary: Validator = (arg: any, path: string) => {
-  // TODO: convert from Buffer here.
   if (arg instanceof String)
     return arg.valueOf();
   if (typeof arg === 'string')
@@ -104,20 +94,3 @@ export const tEnum = (e: string[]): Validator => {
     return arg;
   };
 };
-export const tChannel = (name: string): Validator => {
-  return (arg: any, path: string) => {
-    if (arg._object instanceof ChannelOwner && (name === '*' || arg._object._type === name))
-      return { guid: arg._object._guid };
-    throw new ValidationError(`${path}: expected ${name}`);
-  };
-};
-export const tType = (name: string): Validator => {
-  return (arg: any, path: string) => {
-    const v = scheme[name];
-    if (!v)
-      throw new ValidationError(`${path}: unknown type "${name}"`);
-    return v(arg, path);
-  };
-};
-
-export const scheme: { [key: string]: Validator } = {};
