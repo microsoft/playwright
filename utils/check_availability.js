@@ -20,7 +20,13 @@ const browserFetcher = require('../lib/install/browserFetcher.js');
 const https = require('https');
 const SUPPORTER_PLATFORMS = ['linux', 'mac', 'win32', 'win64'];
 
-const fetcherOptions = SUPPORTER_PLATFORMS.map(platform => platform === 'mac' ? 'mac10.15' : platform);
+const fetcherOptions = SUPPORTER_PLATFORMS.map(platform => {
+  if (platform === 'mac')
+    return 'mac10.15';
+  if (platform === 'linux')
+    return 'ubuntu18.04';
+  return platform;
+});
 
 const colors = {
   reset: '\x1b[0m',
