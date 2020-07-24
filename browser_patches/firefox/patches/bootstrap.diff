@@ -139,7 +139,7 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 2424029f2783fe2af012f033c75c497b3c493bd6..56b0aa8f51798666f80cdfce5ace18260185c6ee 100644
+index 2424029f2783fe2af012f033c75c497b3c493bd6..3960ade9382cf43fe542ed52668f70ffcf3ba974 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -15,6 +15,12 @@
@@ -187,7 +187,7 @@ index 2424029f2783fe2af012f033c75c497b3c493bd6..56b0aa8f51798666f80cdfce5ace1826
  #include "nsNetCID.h"
  #include "nsNetUtil.h"
  #include "nsObjectLoadingContent.h"
-@@ -379,6 +389,11 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
+@@ -379,6 +389,10 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
        mAllowWindowControl(true),
        mUseErrorPages(true),
        mCSSErrorReportingEnabled(false),
@@ -195,11 +195,10 @@ index 2424029f2783fe2af012f033c75c497b3c493bd6..56b0aa8f51798666f80cdfce5ace1826
 +      mOverrideHasFocus(false),
 +      mBypassCSPEnabled(false),
 +      mOnlineOverride(nsIDocShell::ONLINE_OVERRIDE_NONE),
-+      mColorSchemeOverride(COLOR_SCHEME_OVERRIDE_NONE),
        mAllowAuth(mItemType == typeContent),
        mAllowKeywordFixup(false),
        mIsOffScreenBrowser(false),
-@@ -1249,6 +1264,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
+@@ -1249,6 +1263,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
      isSubFrame = mLSHE->GetIsSubFrame();
    }
  
@@ -207,7 +206,7 @@ index 2424029f2783fe2af012f033c75c497b3c493bd6..56b0aa8f51798666f80cdfce5ace1826
    if (!isSubFrame && !isRoot) {
      /*
       * We don't want to send OnLocationChange notifications when
-@@ -3079,6 +3095,184 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
+@@ -3079,6 +3094,172 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
    return NS_OK;
  }
  
@@ -375,24 +374,12 @@ index 2424029f2783fe2af012f033c75c497b3c493bd6..56b0aa8f51798666f80cdfce5ace1826
 +  return NS_OK;
 +}
 +
-+NS_IMETHODIMP
-+nsDocShell::GetColorSchemeOverride(ColorSchemeOverride* aColorSchemeOverride) {
-+  *aColorSchemeOverride = GetRootDocShell()->mColorSchemeOverride;
-+  return NS_OK;
-+}
-+
-+NS_IMETHODIMP
-+nsDocShell::SetColorSchemeOverride(ColorSchemeOverride aColorSchemeOverride) {
-+  mColorSchemeOverride = aColorSchemeOverride;
-+  return NS_OK;
-+}
-+
 +// =============== Juggler End =======================
 +
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
-@@ -8195,6 +8389,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState,
+@@ -8195,6 +8376,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState,
                       true,  // aForceNoOpener
                       getter_AddRefs(newBC));
        MOZ_ASSERT(!newBC);
@@ -405,7 +392,7 @@ index 2424029f2783fe2af012f033c75c497b3c493bd6..56b0aa8f51798666f80cdfce5ace1826
        return rv;
      }
  
-@@ -11698,6 +11898,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -11698,6 +11885,9 @@ class OnLinkClickEvent : public Runnable {
                                  mNoOpenerImplied, nullptr, nullptr,
                                  mIsUserTriggered, mTriggeringPrincipal, mCsp);
      }
@@ -415,7 +402,7 @@ index 2424029f2783fe2af012f033c75c497b3c493bd6..56b0aa8f51798666f80cdfce5ace1826
      return NS_OK;
    }
  
-@@ -11787,6 +11990,8 @@ nsresult nsDocShell::OnLinkClick(
+@@ -11787,6 +11977,8 @@ nsresult nsDocShell::OnLinkClick(
        this, aContent, aURI, target, aFileName, aPostDataStream,
        aHeadersDataStream, noOpenerImplied, aIsUserTriggered, aIsTrusted,
        aTriggeringPrincipal, aCsp);
@@ -425,7 +412,7 @@ index 2424029f2783fe2af012f033c75c497b3c493bd6..56b0aa8f51798666f80cdfce5ace1826
  }
  
 diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
-index dcffed8e55371a4f0aeae408de3a94e4e3a9ab95..5f6b2243ac054f414573736fc23b75509b2a8f5b 100644
+index dcffed8e55371a4f0aeae408de3a94e4e3a9ab95..d680dc0c0bd7ccc20ab37760e9b5e5d8450498a1 100644
 --- a/docshell/base/nsDocShell.h
 +++ b/docshell/base/nsDocShell.h
 @@ -13,6 +13,7 @@
@@ -469,7 +456,7 @@ index dcffed8e55371a4f0aeae408de3a94e4e3a9ab95..5f6b2243ac054f414573736fc23b7550
    // Handles retrieval of subframe session history for nsDocShell::LoadURI. If a
    // load is requested in a subframe of the current DocShell, the subframe
    // loadType may need to reflect the loadType of the parent document, or in
-@@ -1262,6 +1275,14 @@ class nsDocShell final : public nsDocLoader,
+@@ -1262,6 +1275,13 @@ class nsDocShell final : public nsDocLoader,
    bool mAllowWindowControl : 1;
    bool mUseErrorPages : 1;
    bool mCSSErrorReportingEnabled : 1;
@@ -479,13 +466,12 @@ index dcffed8e55371a4f0aeae408de3a94e4e3a9ab95..5f6b2243ac054f414573736fc23b7550
 +  nsString mLanguageOverride;
 +  RefPtr<nsGeolocationService> mGeolocationServiceOverride;
 +  OnlineOverride mOnlineOverride;
-+  ColorSchemeOverride mColorSchemeOverride;
 +
    bool mAllowAuth : 1;
    bool mAllowKeywordFixup : 1;
    bool mIsOffScreenBrowser : 1;
 diff --git a/docshell/base/nsIDocShell.idl b/docshell/base/nsIDocShell.idl
-index 01dc4734eb191adf6572b9b628b4682eda017e19..0929fa0c324d5bc6e09a9d71ac4d8f4fbacca946 100644
+index 01dc4734eb191adf6572b9b628b4682eda017e19..85e83db8cb45356b86e83f0edf9ff680cb9abc4e 100644
 --- a/docshell/base/nsIDocShell.idl
 +++ b/docshell/base/nsIDocShell.idl
 @@ -44,6 +44,7 @@ interface nsIURI;
@@ -496,7 +482,7 @@ index 01dc4734eb191adf6572b9b628b4682eda017e19..0929fa0c324d5bc6e09a9d71ac4d8f4f
  interface nsIDocShellLoadInfo;
  interface nsIEditor;
  interface nsIEditingSession;
-@@ -1010,6 +1011,33 @@ interface nsIDocShell : nsIDocShellTreeItem
+@@ -1010,6 +1011,25 @@ interface nsIDocShell : nsIDocShellTreeItem
     */
    void synchronizeLayoutHistoryState();
  
@@ -517,21 +503,13 @@ index 01dc4734eb191adf6572b9b628b4682eda017e19..0929fa0c324d5bc6e09a9d71ac4d8f4f
 +  };
 +  [infallible] attribute nsIDocShell_OnlineOverride onlineOverride;
 +
-+  cenum ColorSchemeOverride : 8 {
-+    COLOR_SCHEME_OVERRIDE_LIGHT,
-+    COLOR_SCHEME_OVERRIDE_DARK,
-+    COLOR_SCHEME_OVERRIDE_NO_PREFERENCE,
-+    COLOR_SCHEME_OVERRIDE_NONE, /* This clears the override. */
-+  };
-+  [infallible] attribute nsIDocShell_ColorSchemeOverride colorSchemeOverride;
-+
 +  void setGeolocationOverride(in nsIDOMGeoPosition position);
 +
    /**
     * This attempts to save any applicable layout history state (like
     * scroll position) in the nsISHEntry. This is normally done
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index 3ea8d9829cbfb59e7095a21ff53993cb7716e9f2..b882a58f17a701cbced7b38f959a40e9e964b96a 100644
+index 3ea8d9829cbfb59e7095a21ff53993cb7716e9f2..61e83179c27c715a1dcf9d70a76f1710fd884a00 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
 @@ -3216,6 +3216,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
@@ -567,26 +545,6 @@ index 3ea8d9829cbfb59e7095a21ff53993cb7716e9f2..b882a58f17a701cbced7b38f959a40e9
    // Is there a focused DOMWindow?
    nsCOMPtr<mozIDOMWindowProxy> focusedWindow;
    fm->GetFocusedWindow(getter_AddRefs(focusedWindow));
-@@ -16322,6 +16334,19 @@ void Document::RemoveToplevelLoadingDocument(Document* aDoc) {
- 
- StylePrefersColorScheme Document::PrefersColorScheme(
-     IgnoreRFP aIgnoreRFP) const {
-+  auto* docShell = static_cast<nsDocShell*>(GetDocShell());
-+  nsIDocShell::ColorSchemeOverride colorScheme;
-+  if (docShell->GetColorSchemeOverride(&colorScheme) == NS_OK &&
-+      colorScheme != nsIDocShell::COLOR_SCHEME_OVERRIDE_NONE) {
-+    switch (colorScheme) {
-+      case nsIDocShell::COLOR_SCHEME_OVERRIDE_LIGHT:
-+        return StylePrefersColorScheme::Light;
-+      case nsIDocShell::COLOR_SCHEME_OVERRIDE_DARK:
-+        return StylePrefersColorScheme::Dark;
-+      case nsIDocShell::COLOR_SCHEME_OVERRIDE_NO_PREFERENCE:
-+        return StylePrefersColorScheme::NoPreference;
-+    };
-+  }
-   if (aIgnoreRFP == IgnoreRFP::No &&
-       nsContentUtils::ShouldResistFingerprinting(this)) {
-     return StylePrefersColorScheme::Light;
 diff --git a/dom/base/Navigator.cpp b/dom/base/Navigator.cpp
 index aa3fa6719f05a1aeb45f03f85a7e169d42f96bb8..4f3131229fe053a2b125327839fc64178fc15b62 100644
 --- a/dom/base/Navigator.cpp
