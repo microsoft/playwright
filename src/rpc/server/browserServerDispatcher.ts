@@ -24,8 +24,14 @@ export class BrowserServerDispatcher extends Dispatcher<BrowserServer, BrowserSe
     super(scope, browserServer, 'BrowserServer', {
       wsEndpoint: browserServer.wsEndpoint(),
       pid: browserServer.process().pid
+    }, true);
+    browserServer.on(Events.BrowserServer.Close, (exitCode, signal) => {
+      this._dispatchEvent('close', {
+        exitCode: exitCode === null ? undefined : exitCode,
+        signal: signal === null ? undefined : signal,
+      });
+      this._dispose();
     });
-    browserServer.on(Events.BrowserServer.Close, () => this._dispatchEvent('close'));
   }
 
   async close(): Promise<void> {

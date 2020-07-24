@@ -274,7 +274,10 @@ export interface BrowserServerChannel extends Channel {
   close(params?: BrowserServerCloseParams): Promise<BrowserServerCloseResult>;
   kill(params?: BrowserServerKillParams): Promise<BrowserServerKillResult>;
 }
-export type BrowserServerCloseEvent = {};
+export type BrowserServerCloseEvent = {
+  exitCode?: number,
+  signal?: string,
+};
 export type BrowserServerCloseParams = {};
 export type BrowserServerCloseResult = void;
 export type BrowserServerKillParams = {};

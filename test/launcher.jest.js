@@ -274,10 +274,12 @@ describe('browserType.launchServer', function() {
   });
   it('should fire close event', async ({browserType, defaultBrowserOptions}) => {
     const browserServer = await browserType.launchServer(defaultBrowserOptions);
-    await Promise.all([
-      new Promise(f => browserServer.on('close', f)),
+    const [result] = await Promise.all([
+      new Promise(f => browserServer.on('close', (exitCode, signal) => f({ exitCode, signal }))),
       browserServer.close(),
     ]);
+    expect(result.exitCode).toBe(0);
+    expect(result.signal).toBe(null);
   });
 });
 
