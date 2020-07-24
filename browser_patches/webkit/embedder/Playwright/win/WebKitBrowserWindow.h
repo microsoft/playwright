@@ -70,6 +70,7 @@ private:
     static void runJavaScriptPrompt(WKPageRef page, WKStringRef message, WKStringRef defaultValue, WKFrameRef frame, WKSecurityOriginRef securityOrigin, WKPageRunJavaScriptPromptResultListenerRef listener, const void *clientInfo);
     static void runBeforeUnloadConfirmPanel(WKPageRef page, WKStringRef message, WKFrameRef frame, WKPageRunBeforeUnloadConfirmPanelResultListenerRef listener, const void *clientInfo);
     static void handleJavaScriptDialog(WKPageRef page, bool accept, WKStringRef value, const void *clientInfo);
+    static WKRect getWindowFrame(WKPageRef page, const void *clientInfo);
     static void didNotHandleKeyEvent(WKPageRef, WKNativeEventPtr, const void*);
     static void decidePolicyForResponse(WKPageRef, WKFrameRef, WKURLResponseRef, WKURLRequestRef, WKFramePolicyListenerRef, WKTypeRef, const void*);
 
