@@ -49,7 +49,10 @@ describe('Capabilities', function() {
     await page.goto(server.EMPTY_PAGE);
     expect(await page.evaluate(() => window.testStatus)).toBe('SUCCESS');
   });
-  it('should play video', async({page}) => {
+  it.fail(WEBKIT && WIN)('should play video', async({page}) => {
+    // TODO: the test passes on Windows locally but fails on GitHub Action bot,
+    // apparently due to a Media Pack issue in the Windows Server.
+    //
     // Our test server doesn't support range requests required to play on Mac,
     // so we load the page using a file url.
     const url = WIN
