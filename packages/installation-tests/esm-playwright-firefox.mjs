@@ -16,8 +16,14 @@
 
 import { firefox, selectors, devices, errors } from 'playwright-firefox';
 import playwright from 'playwright-firefox';
+import errorsFile from 'playwright-firefox/lib/errors.js';
 
 if (playwright.firefox !== firefox)
+  process.exit(1);
+
+if (playwright.errors !== errors)
+  process.exit(1);
+if (errors.TimeoutError !== errorsFile.TimeoutError)
   process.exit(1);
 
 (async () => {

@@ -16,8 +16,14 @@
 
 import { webkit, selectors, devices, errors } from 'playwright-webkit';
 import playwright from 'playwright-webkit';
+import errorsFile from 'playwright-webkit/lib/errors.js';
 
 if (playwright.webkit !== webkit)
+  process.exit(1);
+
+if (playwright.errors !== errors)
+  process.exit(1);
+if (errors.TimeoutError !== errorsFile.TimeoutError)
   process.exit(1);
 
 (async () => {

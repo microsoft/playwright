@@ -19,6 +19,10 @@ const browsers = process.argv.slice(3);
 
 const playwright = require(requireName);
 
+// Requiring internals should work.
+const errors = require(requireName + '/lib/errors');
+const installer = require(requireName + '/lib/install/installer');
+
 (async () => {
   for (const browserType of browsers) {
     const browser = await playwright[browserType].launch();

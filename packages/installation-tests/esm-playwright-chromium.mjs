@@ -16,8 +16,14 @@
 
 import { chromium, selectors, devices, errors } from 'playwright-chromium';
 import playwright from 'playwright-chromium';
+import errorsFile from 'playwright-chromium/lib/errors.js';
 
 if (playwright.chromium !== chromium)
+  process.exit(1);
+
+if (playwright.errors !== errors)
+  process.exit(1);
+if (errors.TimeoutError !== errorsFile.TimeoutError)
   process.exit(1);
 
 (async () => {

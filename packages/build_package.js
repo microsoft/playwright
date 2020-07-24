@@ -124,8 +124,15 @@ if (!package) {
     homepage: pwInternalJSON.homepage,
     main: 'index.js',
     exports: {
-      import: './index.mjs',
-      require: './index.js',
+      // Root import: we have a wrapper ES Module to support the following syntax.
+      // const { chromium } = require('playwright');
+      // import { chromium } from 'playwright';
+      '.': {
+        import: './index.mjs',
+        require: './index.js',
+      },
+      // Anything else can be required/imported by providing a relative path.
+      './': './',
     },
     scripts: {
       install: 'node install.js',
