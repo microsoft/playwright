@@ -23,7 +23,7 @@ HOST="https://playwright2.blob.core.windows.net/builds"
 
 FFOX_REVISION=$(head -1 ../firefox/BUILD_NUMBER)
 FFOX_ARCHIVES=(
-  "$HOST/firefox/%s/firefox-mac.zip"
+  "$HOST/firefox/%s/firefox-mac-10.14.zip"
   "$HOST/firefox/%s/firefox-ubuntu-18.04.zip"
   "$HOST/firefox/%s/firefox-win32.zip"
   "$HOST/firefox/%s/firefox-win64.zip"
@@ -37,11 +37,11 @@ FFOX_ALIASES=(
 
 WK_REVISION=$(head -1 ../webkit/BUILD_NUMBER)
 WK_ARCHIVES=(
-  "$HOST/webkit/%s/minibrowser-gtk-wpe-ubuntu-18.04.zip"
-  "$HOST/webkit/%s/minibrowser-gtk-wpe-ubuntu-20.04.zip"
-  "$HOST/webkit/%s/minibrowser-mac-10.14.zip"
-  "$HOST/webkit/%s/minibrowser-mac-10.15.zip"
-  "$HOST/webkit/%s/minibrowser-win64.zip"
+  "$HOST/webkit/%s/webkit-ubuntu-18.04.zip"
+  "$HOST/webkit/%s/webkit-ubuntu-20.04.zip"
+  "$HOST/webkit/%s/webkit-mac-10.14.zip"
+  "$HOST/webkit/%s/webkit-mac-10.15.zip"
+  "$HOST/webkit/%s/webkit-win64.zip"
 )
 WK_ALIASES=(
   "WK-UBUNTU-18.04"

@@ -41,11 +41,11 @@ if [[ "$BUILD_FLAVOR" == "firefox-ubuntu-18.04" ]]; then
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="18.04"
   BUILD_BLOB_NAME="firefox-ubuntu-18.04.zip"
-elif [[ "$BUILD_FLAVOR" == "firefox-mac" ]]; then
+elif [[ "$BUILD_FLAVOR" == "firefox-mac-10.14" ]]; then
   BROWSER_NAME="firefox"
   EXPECTED_HOST_OS="Darwin"
   EXPECTED_HOST_OS_VERSION="10.14"
-  BUILD_BLOB_NAME="firefox-mac.zip"
+  BUILD_BLOB_NAME="firefox-mac-10.14.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-win32" ]]; then
   BROWSER_NAME="firefox"
   EXPECTED_HOST_OS="MINGW"
@@ -59,26 +59,26 @@ elif [[ "$BUILD_FLAVOR" == "webkit-ubuntu-18.04" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="18.04"
-  BUILD_BLOB_NAME="minibrowser-gtk-wpe-ubuntu-18.04.zip"
+  BUILD_BLOB_NAME="webkit-ubuntu-18.04.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-ubuntu-20.04" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="20.04"
-  BUILD_BLOB_NAME="minibrowser-gtk-wpe-ubuntu-20.04.zip"
+  BUILD_BLOB_NAME="webkit-ubuntu-20.04.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-win64" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="MINGW"
-  BUILD_BLOB_NAME="minibrowser-win64.zip"
+  BUILD_BLOB_NAME="webkit-win64.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-mac-10.14" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="Darwin"
   EXPECTED_HOST_OS_VERSION="10.14"
-  BUILD_BLOB_NAME="minibrowser-mac-10.14.zip"
+  BUILD_BLOB_NAME="webkit-mac-10.14.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-mac-10.15" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="Darwin"
   EXPECTED_HOST_OS_VERSION="10.15"
-  BUILD_BLOB_NAME="minibrowser-mac-10.15.zip"
+  BUILD_BLOB_NAME="webkit-mac-10.15.zip"
 else
   echo ERROR: unknown build flavor - "$BUILD_FLAVOR"
   exit 1
