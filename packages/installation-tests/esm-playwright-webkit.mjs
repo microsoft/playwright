@@ -14,28 +14,9 @@
  * limitations under the License.
  */
 
-import { webkit, selectors, devices, errors } from 'playwright-webkit';
+import { chromium, firefox, webkit, selectors, devices, errors } from 'playwright-webkit';
 import playwright from 'playwright-webkit';
 import errorsFile from 'playwright-webkit/lib/errors.js';
 
-if (playwright.webkit !== webkit)
-  process.exit(1);
-
-if (playwright.errors !== errors)
-  process.exit(1);
-if (errors.TimeoutError !== errorsFile.TimeoutError)
-  process.exit(1);
-
-(async () => {
-  for (const browserType of [webkit]) {
-    const browser = await browserType.launch();
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    await page.evaluate(() => navigator.userAgent);
-    await browser.close();
-  }
-  console.log(`esm SUCCESS`);
-})().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+import testESM from './esm.mjs';
+testESM({ chromium, firefox, webkit, selectors, devices, errors, playwright, errorsFile }, [webkit]);

@@ -64,8 +64,6 @@ const PACKAGES = {
   },
 };
 
-const cleanupPaths = [];
-
 // 1. Parse CLI arguments
 const args = process.argv.slice(2);
 if (args.some(arg => arg === '--help')) {
@@ -81,10 +79,19 @@ if (args.some(arg => arg === '--help')) {
   process.exit(1);
 }
 
+const packageName = args[0];
+const outputPath = path.resolve(args[1]);
+const packagePath = path.join(__dirname, 'output', packageName);
+const package = PACKAGES[packageName];
+if (!package) {
+  console.log(`ERROR: unknown package ${packageName}`);
+  process.exit(1);
+}
+
 // 2. Setup cleanup if needed
 if (!args.some(arg => arg === '--no-cleanup')) {
   process.on('exit', () => {
-    cleanupPaths.forEach(cleanupPath => rmSync(cleanupPath, {}));
+    rmSync(packagePath, {});
   });
   process.on('SIGINT', () => process.exit(2));
   process.on('SIGHUP', () => process.exit(3));
@@ -99,19 +106,17 @@ if (!args.some(arg => arg === '--no-cleanup')) {
   });
 }
 
-const packageName = args[0];
-const outputPath = path.resolve(args[1]);
-const packagePath = path.join(__dirname, packageName);
-const package = PACKAGES[packageName];
-if (!package) {
-  console.log(`ERROR: unknown package ${packageName}`);
-  process.exit(1);
-}
-
 (async () => {
   // 3. Copy package files.
+  rmSync(packagePath, {});
+  fs.mkdirSync(packagePath, { recursive: true });
+  await copyToPackage(path.join(__dirname, 'common') + path.sep, packagePath + path.sep);
+  if (fs.existsSync(path.join(__dirname, packageName))) {
+    // Copy package-specific files, these can overwrite common ones.
+    await copyToPackage(path.join(__dirname, packageName) + path.sep, packagePath + path.sep);
+  }
   for (const file of package.files)
-    await copyToPackage(file);
+    await copyToPackage(path.join(ROOT_PATH, file), path.join(packagePath, file));
 
   // 4. Generate package.json
   const pwInternalJSON = require(path.join(ROOT_PATH, 'package.json'));
@@ -144,7 +149,8 @@ if (!package) {
 
   // 5. Generate browsers.json
   const browsersJSON = require(path.join(ROOT_PATH, 'browsers.json'));
-  browsersJSON.browsers = browsersJSON.browsers.filter(browser => package.browsers.includes(browser.name));
+  for (const browser of browsersJSON.browsers)
+    browser.download = package.browsers.includes(browser.name);
   await writeToPackage('browsers.json', JSON.stringify(browsersJSON, null, 2));
 
   // 6. Run npm pack
@@ -163,15 +169,11 @@ if (!package) {
 
 async function writeToPackage(fileName, content) {
   const toPath = path.join(packagePath, fileName);
-  cleanupPaths.push(toPath);
   console.error(`- generating: //${path.relative(ROOT_PATH, toPath)}`);
   await writeFileAsync(toPath, content);
 }
 
-async function copyToPackage(fileOrDirectoryName) {
-  const fromPath = path.join(ROOT_PATH, fileOrDirectoryName);
-  const toPath = path.join(packagePath, fileOrDirectoryName);
-  cleanupPaths.push(toPath);
+async function copyToPackage(fromPath, toPath) {
   console.error(`- copying: //${path.relative(ROOT_PATH, fromPath)} -> //${path.relative(ROOT_PATH, toPath)}`);
   await cpAsync(fromPath, toPath);
 }

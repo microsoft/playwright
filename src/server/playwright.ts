@@ -34,24 +34,21 @@ export class Playwright {
   readonly selectors = selectors;
   readonly devices: types.Devices;
   readonly errors: { TimeoutError: typeof TimeoutError };
-  readonly chromium: (Chromium|undefined);
-  readonly firefox: (Firefox|undefined);
-  readonly webkit: (WebKit|undefined);
+  readonly chromium: Chromium;
+  readonly firefox: Firefox;
+  readonly webkit: WebKit;
 
   constructor(packagePath: string, browsers: browserPaths.BrowserDescriptor[]) {
     this.devices = DeviceDescriptors;
     this.errors = { TimeoutError };
 
     const chromium = browsers.find(browser => browser.name === 'chromium');
-    if (chromium)
-      this.chromium = new Chromium(packagePath, chromium);
+    this.chromium = new Chromium(packagePath, chromium!);
 
     const firefox = browsers.find(browser => browser.name === 'firefox');
-    if (firefox)
-      this.firefox = new Firefox(packagePath, firefox);
+    this.firefox = new Firefox(packagePath, firefox!);
 
     const webkit = browsers.find(browser => browser.name === 'webkit');
-    if (webkit)
-      this.webkit = new WebKit(packagePath, webkit);
+    this.webkit = new WebKit(packagePath, webkit!);
   }
 }

@@ -28,9 +28,9 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, PlaywrightIniti
     const deviceDescriptors = Object.entries(playwright.devices)
         .map(([name, descriptor]) => ({ name, descriptor }));
     super(scope, playwright, 'Playwright', {
-      chromium: new BrowserTypeDispatcher(scope, playwright.chromium!),
-      firefox: new BrowserTypeDispatcher(scope, playwright.firefox!),
-      webkit: new BrowserTypeDispatcher(scope, playwright.webkit!),
+      chromium: new BrowserTypeDispatcher(scope, playwright.chromium),
+      firefox: new BrowserTypeDispatcher(scope, playwright.firefox),
+      webkit: new BrowserTypeDispatcher(scope, playwright.webkit),
       electron: electron ? new ElectronDispatcher(scope, electron) : undefined,
       deviceDescriptors,
       selectors: new SelectorsDispatcher(scope, playwright.selectors),

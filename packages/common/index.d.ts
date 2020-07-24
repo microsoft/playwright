@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
-const { installBrowsersWithProgressBar } = require('./lib/install/installer');
+import * as types from './types/types';
 
-installBrowsersWithProgressBar(__dirname);
+export * from './types/types';
+export const chromium: types.BrowserType<types.ChromiumBrowser>;
+export const firefox: types.BrowserType<types.FirefoxBrowser>;
+export const webkit: types.BrowserType<types.WebKitBrowser>;

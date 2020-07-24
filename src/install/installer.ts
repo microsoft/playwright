@@ -52,8 +52,8 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
     let linkTarget = '';
     try {
       linkTarget = (await fsReadFileAsync(linkPath)).toString();
-      const browsers = JSON.parse((await fsReadFileAsync(path.join(linkTarget, 'browsers.json'))).toString())['browsers'];
-      for (const browser of browsers) {
+      const browsersToDownload = await readBrowsersToDownload(linkTarget);
+      for (const browser of browsersToDownload) {
         const usedBrowserPath = browserPaths.browserDirectory(browsersPath, browser);
         const browserRevision = parseInt(browser.revision, 10);
         // Old browser installations don't have marker file.
@@ -82,12 +82,18 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
   }
 
   // 3. Install missing browsers for this package.
-  const myBrowsers = JSON.parse((await fsReadFileAsync(path.join(packagePath, 'browsers.json'))).toString())['browsers'] as browserPaths.BrowserDescriptor[];
-  for (const browser of myBrowsers) {
-    const browserPath = browserPaths.browserDirectory(browsersPath, browser);
-    await browserFetcher.downloadBrowserWithProgressBar(browserPath, browser);
+  const myBrowsersToDownload = await readBrowsersToDownload(packagePath);
+  for (const browser of myBrowsersToDownload) {
+    await browserFetcher.downloadBrowserWithProgressBar(browsersPath, browser);
     await fsWriteFileAsync(browserPaths.markerFilePath(browsersPath, browser), '');
   }
+}
+
+async function readBrowsersToDownload(packagePath: string) {
+  const browsers = JSON.parse((await fsReadFileAsync(path.join(packagePath, 'browsers.json'))).toString())['browsers'] as browserPaths.BrowserDescriptor[];
+  // Older versions do not have "download" field. We assume they need all browsers
+  // from the list. So we want to skip all browsers that are explicitly marked as "download: false".
+  return browsers.filter(browser => browser.download !== false);
 }
 
 function sha1(data: string): string {
