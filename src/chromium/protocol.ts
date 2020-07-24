@@ -11856,7 +11856,7 @@ If absent, a standard phrase matching responseCode is used.
       /**
        * If set, overrides the post data in the request.
        */
-      postData?: string;
+      postData?: binary;
       /**
        * If set, overrides the request headers.
        */

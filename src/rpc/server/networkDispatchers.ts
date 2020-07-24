@@ -82,11 +82,11 @@ export class RouteDispatcher extends Dispatcher<Route, RouteInitializer> impleme
     });
   }
 
-  async continue(params: types.NormalizedContinueOverrides): Promise<void> {
+  async continue(params: { method?: string, headers?: types.HeadersArray, postData?: string }): Promise<void> {
     await this._object.continue({
       method: params.method,
       headers: params.headers ? headersArrayToObject(params.headers) : undefined,
-      postData: params.postData,
+      postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
     });
   }
 

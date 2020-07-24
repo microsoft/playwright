@@ -227,13 +227,13 @@ export type NormalizedFulfillResponse = {
 export type ContinueOverrides = {
   method?: string,
   headers?: Headers,
-  postData?: string,
+  postData?: string | Buffer,
 };
 
 export type NormalizedContinueOverrides = {
   method?: string,
   headers?: HeadersArray,
-  postData?: string,
+  postData?: Buffer,
 };
 
 export type NetworkCookie = {

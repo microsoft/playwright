@@ -3729,7 +3729,7 @@ Aborts the route's request.
 #### route.continue([overrides])
 - `overrides` <[Object]> Optional request overrides, which can be one of the following:
   - `method` <[string]> If set changes the request method (e.g. GET or POST)
-  - `postData` <[string]> If set changes the post data of request
+  - `postData` <[string]|[Buffer]> If set changes the post data of request
   - `headers` <[Object]<[string], [string]>> If set changes the request HTTP headers. Header values will be converted to a string.
 - returns: <[Promise]>
 
