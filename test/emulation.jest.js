@@ -323,6 +323,38 @@ describe('Page.emulateMedia colorScheme', function() {
     expect(await frame.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
     await page.close();
   });
+  it.fail(FFOX)('should change the actual colors in css', async({page}) => {
+    await page.setContent(`
+      <style>
+        @media (prefers-color-scheme: dark) {
+          div {
+            background: black;
+            color: white;
+          }
+        }
+        @media (prefers-color-scheme: light) {
+          div {
+            background: white;
+            color: black;
+          }
+        }
+
+      </style>
+      <div>Hello</div>
+    `);
+    function getBackgroundColor() {
+      return page.$eval('div', div => window.getComputedStyle(div).backgroundColor);
+    }
+
+    await page.emulateMedia({ colorScheme: "light" });
+    expect(await getBackgroundColor()).toBe('rgb(255, 255, 255)');
+
+    await page.emulateMedia({ colorScheme: "dark" });
+    expect(await getBackgroundColor()).toBe('rgb(0, 0, 0)');
+
+    await page.emulateMedia({ colorScheme: "light" });
+    expect(await getBackgroundColor()).toBe('rgb(255, 255, 255)');
+  })
 });
 
 describe('BrowserContext({timezoneId})', function() {
