@@ -18,6 +18,7 @@ import { EventEmitter } from 'events';
 import { helper, debugAssert, assert } from '../../helper';
 import { Channel } from '../channels';
 import { serializeError } from '../serializers';
+import { createScheme, Validator, ValidationError } from '../validator';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 
@@ -114,6 +115,7 @@ export class DispatcherConnection {
   readonly _dispatchers = new Map<string, Dispatcher<any, any>>();
   private _rootDispatcher: Root;
   onmessage = (message: object) => {};
+  private _validateParams: (type: string, method: string, params: any) => any;
 
   async sendMessageToClient(guid: string, method: string, params: any): Promise<any> {
     this.onmessage({ guid, method, params: this._replaceDispatchersWithGuids(params) });
@@ -121,6 +123,28 @@ export class DispatcherConnection {
 
   constructor() {
     this._rootDispatcher = new Root(this);
+
+    const tChannel = (name: string): Validator => {
+      return (arg: any, path: string) => {
+        if (arg && typeof arg === 'object' && typeof arg.guid === 'string') {
+          const guid = arg.guid;
+          const dispatcher = this._dispatchers.get(guid);
+          if (!dispatcher)
+            throw new ValidationError(`${path}: no object with guid ${guid}`);
+          if (name !== '*' && dispatcher._type !== name)
+            throw new ValidationError(`${path}: object with guid ${guid} has type ${dispatcher._type}, expected ${name}`);
+          return dispatcher;
+        }
+        throw new ValidationError(`${path}: expected ${name}`);
+      };
+    };
+    const scheme = createScheme(tChannel);
+    this._validateParams = (type: string, method: string, params: any): any => {
+      const name = type + method[0].toUpperCase() + method.substring(1) + 'Params';
+      if (!scheme[name])
+        throw new ValidationError(`Uknown scheme for ${type}.${method}`);
+      return scheme[name](params, '');
+    };
   }
 
   rootDispatcher(): Dispatcher<any, any> {
@@ -139,7 +163,8 @@ export class DispatcherConnection {
       return;
     }
     try {
-      const result = await (dispatcher as any)[method](this._replaceGuidsWithDispatchers(params));
+      const validated = this._validateParams(dispatcher._type, method, params);
+      const result = await (dispatcher as any)[method](validated);
       this.onmessage({ id, result: this._replaceDispatchersWithGuids(result) });
     } catch (e) {
       this.onmessage({ id, error: serializeError(e) });
@@ -157,22 +182,6 @@ export class DispatcherConnection {
       const result: any = {};
       for (const key of Object.keys(payload))
         result[key] = this._replaceDispatchersWithGuids(payload[key]);
-      return result;
-    }
-    return payload;
-  }
-
-  private _replaceGuidsWithDispatchers(payload: any): any {
-    if (!payload)
-      return payload;
-    if (Array.isArray(payload))
-      return payload.map(p => this._replaceGuidsWithDispatchers(p));
-    if (payload.guid && this._dispatchers.has(payload.guid))
-      return this._dispatchers.get(payload.guid);
-    if (typeof payload === 'object') {
-      const result: any = {};
-      for (const key of Object.keys(payload))
-        result[key] = this._replaceGuidsWithDispatchers(payload[key]);
       return result;
     }
     return payload;

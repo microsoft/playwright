@@ -1440,7 +1440,7 @@ export type RouteContinueParams = {
     name: string,
     value: string,
   }[],
-  postData?: string,
+  postData?: Binary,
 };
 export type RouteContinueResult = void;
 export type RouteFulfillParams = {

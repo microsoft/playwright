@@ -38,7 +38,7 @@ import { ChromiumBrowser } from './chromiumBrowser';
 import { ChromiumBrowserContext } from './chromiumBrowserContext';
 import { Selectors } from './selectors';
 import { Stream } from './stream';
-import { validateParams } from './validator';
+import { createScheme, Validator, ValidationError } from '../validator';
 
 class Root extends ChannelOwner<Channel, {}> {
   constructor(connection: Connection) {
@@ -213,4 +213,21 @@ export class Connection {
     }
     return result;
   }
+}
+
+const tChannel = (name: string): Validator => {
+  return (arg: any, path: string) => {
+    if (arg._object instanceof ChannelOwner && (name === '*' || arg._object._type === name))
+      return { guid: arg._object._guid };
+    throw new ValidationError(`${path}: expected ${name}`);
+  };
+};
+
+const scheme = createScheme(tChannel);
+
+function validateParams(type: string, method: string, params: any): any {
+  const name = type + method[0].toUpperCase() + method.substring(1) + 'Params';
+  if (!scheme[name])
+    throw new ValidationError(`Uknown scheme for ${type}.${method}`);
+  return scheme[name](params, '');
 }
