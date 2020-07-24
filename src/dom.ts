@@ -519,9 +519,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, 0, 'elementHandle.focus');
   }
 
-  async _focus(progress: Progress): Promise<'error:notconnected' | 'done'> {
+  async _focus(progress: Progress, resetSelectionIfNotFocused?: boolean): Promise<'error:notconnected' | 'done'> {
     progress.throwIfAborted();  // Avoid action that has side-effects.
-    const result = await this._evaluateInUtility(([injected, node]) => injected.focusNode(node), {});
+    const result = await this._evaluateInUtility(([injected, node, resetSelectionIfNotFocused]) => injected.focusNode(node, resetSelectionIfNotFocused), resetSelectionIfNotFocused);
     return throwFatalDOMError(result);
   }
 
@@ -535,7 +535,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async _type(progress: Progress, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     progress.logger.info(`elementHandle.type("${text}")`);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
-      const result = await this._focus(progress);
+      const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
       if (result !== 'done')
         return result;
       progress.throwIfAborted();  // Avoid action that has side-effects.
@@ -554,7 +554,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async _press(progress: Progress, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     progress.logger.info(`elementHandle.press("${key}")`);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
-      const result = await this._focus(progress);
+      const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
       if (result !== 'done')
         return result;
       progress.throwIfAborted();  // Avoid action that has side-effects.

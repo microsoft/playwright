@@ -610,3 +610,79 @@ describe('ElementHandle.focus', function() {
     expect(await button.evaluate(button => document.activeElement === button)).toBe(true);
   });
 });
+
+describe('ElementHandle.type', function() {
+  it('should work', async ({page}) => {
+    await page.setContent(`<input type='text' />`);
+    await page.type('input', 'hello');
+    expect(await page.$eval('input', input => input.value)).toBe('hello');
+  });
+  it('should not select existing value', async ({page}) => {
+    await page.setContent(`<input type='text' value='hello' />`);
+    await page.type('input', 'world');
+    expect(await page.$eval('input', input => input.value)).toBe('worldhello');
+  });
+  it('should reset selection when not focused', async ({page}) => {
+    await page.setContent(`<input type='text' value='hello' /><div tabIndex=2>text</div>`);
+    await page.$eval('input', input => {
+      input.selectionStart = 2;
+      input.selectionEnd = 4;
+      document.querySelector('div').focus();
+    });
+    await page.type('input', 'world');
+    expect(await page.$eval('input', input => input.value)).toBe('worldhello');
+  });
+  it('should not modify selection when focused', async ({page}) => {
+    await page.setContent(`<input type='text' value='hello' />`);
+    await page.$eval('input', input => {
+      input.focus();
+      input.selectionStart = 2;
+      input.selectionEnd = 4;
+    });
+    await page.type('input', 'world');
+    expect(await page.$eval('input', input => input.value)).toBe('heworldo');
+  });
+  it('should work with number input', async ({page}) => {
+    await page.setContent(`<input type='number' value=2 />`);
+    await page.type('input', '13');
+    expect(await page.$eval('input', input => input.value)).toBe('132');
+  });
+});
+
+describe('ElementHandle.press', function() {
+  it('should work', async ({page}) => {
+    await page.setContent(`<input type='text' />`);
+    await page.press('input', 'h');
+    expect(await page.$eval('input', input => input.value)).toBe('h');
+  });
+  it('should not select existing value', async ({page}) => {
+    await page.setContent(`<input type='text' value='hello' />`);
+    await page.press('input', 'w');
+    expect(await page.$eval('input', input => input.value)).toBe('whello');
+  });
+  it('should reset selection when not focused', async ({page}) => {
+    await page.setContent(`<input type='text' value='hello' /><div tabIndex=2>text</div>`);
+    await page.$eval('input', input => {
+      input.selectionStart = 2;
+      input.selectionEnd = 4;
+      document.querySelector('div').focus();
+    });
+    await page.press('input', 'w');
+    expect(await page.$eval('input', input => input.value)).toBe('whello');
+  });
+  it('should not modify selection when focused', async ({page}) => {
+    await page.setContent(`<input type='text' value='hello' />`);
+    await page.$eval('input', input => {
+      input.focus();
+      input.selectionStart = 2;
+      input.selectionEnd = 4;
+    });
+    await page.press('input', 'w');
+    expect(await page.$eval('input', input => input.value)).toBe('hewo');
+  });
+  it('should work with number input', async ({page}) => {
+    await page.setContent(`<input type='number' value=2 />`);
+    await page.press('input', '1');
+    expect(await page.$eval('input', input => input.value)).toBe('12');
+  });
+});

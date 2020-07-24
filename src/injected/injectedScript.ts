@@ -357,12 +357,22 @@ export default class InjectedScript {
     });
   }
 
-  focusNode(node: Node): FatalDOMError | 'error:notconnected' | 'done' {
+  focusNode(node: Node, resetSelectionIfNotFocused?: boolean): FatalDOMError | 'error:notconnected' | 'done' {
     if (!node.isConnected)
       return 'error:notconnected';
     if (node.nodeType !== Node.ELEMENT_NODE)
       return 'error:notelement';
+    const wasFocused = (node.getRootNode() as (Document | ShadowRoot)).activeElement === node && node.ownerDocument && node.ownerDocument.hasFocus();
     (node as HTMLElement | SVGElement).focus();
+
+    if (resetSelectionIfNotFocused && !wasFocused && node.nodeName.toLowerCase() === 'input') {
+      try {
+        const input = node as HTMLInputElement;
+        input.setSelectionRange(0, 0);
+      } catch (e) {
+        // Some inputs do not allow selection.
+      }
+    }
     return 'done';
   }
 
