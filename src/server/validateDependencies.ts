@@ -26,7 +26,14 @@ const checkExecutable = (filePath: string) => accessAsync(filePath, fs.constants
 const statAsync = util.promisify(fs.stat.bind(fs));
 const readdirAsync = util.promisify(fs.readdir.bind(fs));
 
-export async function validateDependencies(browserPath: string, browser: BrowserDescriptor) {
+export async function validateHostRequirements(browserPath: string, browser: BrowserDescriptor) {
+  const ubuntuVersion = await getUbuntuVersion();
+  if (browser.name === 'firefox' && ubuntuVersion === '16.04')
+    throw new Error(`Cannot launch firefox on Ubuntu 16.04! Minimum required Ubuntu version for Firefox browser is 18.04`);
+  await validateDependencies(browserPath, browser);
+}
+
+async function validateDependencies(browserPath: string, browser: BrowserDescriptor) {
   // We currently only support Linux.
   if (os.platform() !== 'linux')
     return;
