@@ -69,8 +69,8 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
   }
 
   if (browserName === 'firefox') {
-    const FIREFOX_RENAME_LINUX_TO_UBUNTU_REVISION = 1139;
-    return revision < FIREFOX_RENAME_LINUX_TO_UBUNTU_REVISION ?
+    const FIREFOX_NORMALIZE_CDN_NAMES_REVISION = 1140;
+    return revision < FIREFOX_NORMALIZE_CDN_NAMES_REVISION ?
       new Map<BrowserPlatform, string>([
         ['ubuntu18.04', '%s/builds/firefox/%s/firefox-linux.zip'],
         ['ubuntu20.04', '%s/builds/firefox/%s/firefox-linux.zip'],
@@ -83,17 +83,17 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
       new Map<BrowserPlatform, string>([
         ['ubuntu18.04', '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip'],
         ['ubuntu20.04', '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip'],
-        ['mac10.13', '%s/builds/firefox/%s/firefox-mac.zip'],
-        ['mac10.14', '%s/builds/firefox/%s/firefox-mac.zip'],
-        ['mac10.15', '%s/builds/firefox/%s/firefox-mac.zip'],
+        ['mac10.13', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
+        ['mac10.14', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
+        ['mac10.15', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
         ['win32', '%s/builds/firefox/%s/firefox-win32.zip'],
         ['win64', '%s/builds/firefox/%s/firefox-win64.zip'],
       ]).get(platform);
   }
 
   if (browserName === 'webkit') {
-    const WEBKIT_RENAME_LINUX_TO_UBUNTU_REVISION = 1315;
-    return revision < WEBKIT_RENAME_LINUX_TO_UBUNTU_REVISION ?
+    const WEBKIT_NORMALIZE_CDN_NAMES_REVISION = 1317;
+    return revision < WEBKIT_NORMALIZE_CDN_NAMES_REVISION ?
       new Map<BrowserPlatform, string | undefined>([
         ['ubuntu18.04', '%s/builds/webkit/%s/minibrowser-gtk-wpe.zip'],
         ['ubuntu20.04', '%s/builds/webkit/%s/minibrowser-gtk-wpe.zip'],
@@ -104,13 +104,13 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
         ['win64', '%s/builds/webkit/%s/minibrowser-win64.zip'],
       ]).get(platform) :
       new Map<BrowserPlatform, string | undefined>([
-        ['ubuntu18.04', '%s/builds/webkit/%s/minibrowser-gtk-wpe-ubuntu-18.04.zip'],
-        ['ubuntu20.04', '%s/builds/webkit/%s/minibrowser-gtk-wpe-ubuntu-20.04.zip'],
+        ['ubuntu18.04', '%s/builds/webkit/%s/webkit-ubuntu-18.04.zip'],
+        ['ubuntu20.04', '%s/builds/webkit/%s/webkit-ubuntu-20.04.zip'],
         ['mac10.13', undefined],
-        ['mac10.14', '%s/builds/webkit/%s/minibrowser-mac-10.14.zip'],
-        ['mac10.15', '%s/builds/webkit/%s/minibrowser-mac-10.15.zip'],
-        ['win32', '%s/builds/webkit/%s/minibrowser-win64.zip'],
-        ['win64', '%s/builds/webkit/%s/minibrowser-win64.zip'],
+        ['mac10.14', '%s/builds/webkit/%s/webkit-mac-10.14.zip'],
+        ['mac10.15', '%s/builds/webkit/%s/webkit-mac-10.15.zip'],
+        ['win32', '%s/builds/webkit/%s/webkit-win64.zip'],
+        ['win64', '%s/builds/webkit/%s/webkit-win64.zip'],
       ]).get(platform);
   }
 }
