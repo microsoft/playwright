@@ -58,7 +58,8 @@ const ENV_DOWNLOAD_HOSTS: { [key: string]: string } = {
 function getDownloadUrl(browserName: BrowserName, revision: number, platform: BrowserPlatform): string | undefined {
   if (browserName === 'chromium') {
     return new Map<BrowserPlatform, string>([
-      ['linux', '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip'],
+      ['ubuntu18.04', '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip'],
+      ['ubuntu20.04', '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip'],
       ['mac10.13', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
       ['mac10.14', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
       ['mac10.15', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
@@ -71,7 +72,8 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
     const FIREFOX_RENAME_LINUX_TO_UBUNTU_REVISION = 1139;
     return revision < FIREFOX_RENAME_LINUX_TO_UBUNTU_REVISION ?
       new Map<BrowserPlatform, string>([
-        ['linux', '%s/builds/firefox/%s/firefox-linux.zip'],
+        ['ubuntu18.04', '%s/builds/firefox/%s/firefox-linux.zip'],
+        ['ubuntu20.04', '%s/builds/firefox/%s/firefox-linux.zip'],
         ['mac10.13', '%s/builds/firefox/%s/firefox-mac.zip'],
         ['mac10.14', '%s/builds/firefox/%s/firefox-mac.zip'],
         ['mac10.15', '%s/builds/firefox/%s/firefox-mac.zip'],
@@ -79,7 +81,8 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
         ['win64', '%s/builds/firefox/%s/firefox-win64.zip'],
       ]).get(platform) :
       new Map<BrowserPlatform, string>([
-        ['linux', '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip'],
+        ['ubuntu18.04', '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip'],
+        ['ubuntu20.04', '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip'],
         ['mac10.13', '%s/builds/firefox/%s/firefox-mac.zip'],
         ['mac10.14', '%s/builds/firefox/%s/firefox-mac.zip'],
         ['mac10.15', '%s/builds/firefox/%s/firefox-mac.zip'],
@@ -92,7 +95,8 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
     const WEBKIT_RENAME_LINUX_TO_UBUNTU_REVISION = 1315;
     return revision < WEBKIT_RENAME_LINUX_TO_UBUNTU_REVISION ?
       new Map<BrowserPlatform, string | undefined>([
-        ['linux', '%s/builds/webkit/%s/minibrowser-gtk-wpe.zip'],
+        ['ubuntu18.04', '%s/builds/webkit/%s/minibrowser-gtk-wpe.zip'],
+        ['ubuntu20.04', '%s/builds/webkit/%s/minibrowser-gtk-wpe.zip'],
         ['mac10.13', undefined],
         ['mac10.14', '%s/builds/webkit/%s/minibrowser-mac-10.14.zip'],
         ['mac10.15', '%s/builds/webkit/%s/minibrowser-mac-10.15.zip'],
@@ -100,7 +104,8 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
         ['win64', '%s/builds/webkit/%s/minibrowser-win64.zip'],
       ]).get(platform) :
       new Map<BrowserPlatform, string | undefined>([
-        ['linux', '%s/builds/webkit/%s/minibrowser-gtk-wpe-ubuntu-18.04.zip'],
+        ['ubuntu18.04', '%s/builds/webkit/%s/minibrowser-gtk-wpe-ubuntu-18.04.zip'],
+        ['ubuntu20.04', '%s/builds/webkit/%s/minibrowser-gtk-wpe-ubuntu-20.04.zip'],
         ['mac10.13', undefined],
         ['mac10.14', '%s/builds/webkit/%s/minibrowser-mac-10.14.zip'],
         ['mac10.15', '%s/builds/webkit/%s/minibrowser-mac-10.15.zip'],

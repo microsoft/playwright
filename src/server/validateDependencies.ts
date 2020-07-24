@@ -17,14 +17,14 @@ import * as fs from 'fs';
 import * as util from 'util';
 import * as path from 'path';
 import * as os from 'os';
-import {spawn} from 'child_process';
-import {linuxLddDirectories, BrowserDescriptor} from '../install/browserPaths.js';
+import { spawn } from 'child_process';
+import { getUbuntuVersion } from '../helper';
+import { linuxLddDirectories, BrowserDescriptor } from '../install/browserPaths.js';
 
 const accessAsync = util.promisify(fs.access.bind(fs));
 const checkExecutable = (filePath: string) => accessAsync(filePath, fs.constants.X_OK).then(() => true).catch(e => false);
 const statAsync = util.promisify(fs.stat.bind(fs));
 const readdirAsync = util.promisify(fs.readdir.bind(fs));
-const readFileAsync = util.promisify(fs.readFile.bind(fs));
 
 export async function validateDependencies(browserPath: string, browser: BrowserDescriptor) {
   // We currently only support Linux.
@@ -120,26 +120,6 @@ function lddAsync(filePath: string): Promise<{stdout: string, stderr: string, co
     ldd.stderr.on('data', data => stderr += data);
     ldd.on('close', code => resolve({stdout, stderr, code}));
   });
-}
-
-async function getUbuntuVersion(): Promise<string> {
-  const osRelease = await readFileAsync('/etc/os-release', 'utf8').catch(e => '');
-  if (!osRelease)
-    return '';
-  const fields = new Map();
-  for (const line of osRelease.split('\n')) {
-    const tokens = line.split('=');
-    const name = tokens.shift();
-    let value = tokens.join('=').trim();
-    if (value.startsWith('"') && value.endsWith('"'))
-      value = value.substring(1, value.length - 1);
-    if (!name)
-      continue;
-    fields.set(name.toLowerCase(), value);
-  }
-  if (!fields.get('name') || fields.get('name').toLowerCase() !== 'ubuntu')
-    return '';
-  return fields.get('version_id') || '';
 }
 
 // This list is generated with https://gist.github.com/aslushnikov/2766200430228c3700537292fccad064
