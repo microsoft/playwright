@@ -1617,10 +1617,9 @@ export type ElectronLaunchResult = {
 };
 
 // ----------- ElectronApplication -----------
-export type ElectronApplicationInitializer = {
-  context: BrowserContextChannel,
-};
+export type ElectronApplicationInitializer = {};
 export interface ElectronApplicationChannel extends Channel {
+  on(event: 'context', callback: (params: ElectronApplicationContextEvent) => void): this;
   on(event: 'close', callback: (params: ElectronApplicationCloseEvent) => void): this;
   on(event: 'window', callback: (params: ElectronApplicationWindowEvent) => void): this;
   newBrowserWindow(params: ElectronApplicationNewBrowserWindowParams): Promise<ElectronApplicationNewBrowserWindowResult>;
@@ -1628,6 +1627,9 @@ export interface ElectronApplicationChannel extends Channel {
   evaluateExpressionHandle(params: ElectronApplicationEvaluateExpressionHandleParams): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
   close(params?: ElectronApplicationCloseParams): Promise<ElectronApplicationCloseResult>;
 }
+export type ElectronApplicationContextEvent = {
+  context: BrowserContextChannel,
+};
 export type ElectronApplicationCloseEvent = {};
 export type ElectronApplicationWindowEvent = {
   page: PageChannel,

@@ -1887,9 +1887,6 @@ Electron:
 ElectronApplication:
   type: interface
 
-  initializer:
-    context: BrowserContext
-
   commands:
 
     newBrowserWindow:
@@ -1917,6 +1914,11 @@ ElectronApplication:
     close:
 
   events:
+
+    # This event happens once immediately after creation.
+    context:
+      parameters:
+        context: BrowserContext
 
     close:
 
