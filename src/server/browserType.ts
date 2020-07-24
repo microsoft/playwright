@@ -33,7 +33,7 @@ import * as types from '../types';
 import { TimeoutSettings } from '../timeoutSettings';
 import { WebSocketServer } from './webSocketServer';
 import { LoggerSink } from '../loggerSink';
-import { validateDependencies } from './validateDependencies';
+import { validateHostRequirements } from './validateDependencies';
 
 type FirefoxPrefsOptions = { firefoxUserPrefs?: { [key: string]: string | number | boolean } };
 type LaunchOptions = types.LaunchOptions & { logger?: LoggerSink };
@@ -193,7 +193,7 @@ export abstract class BrowserTypeBase implements BrowserType {
 
     if (!executablePath) {
       // We can only validate dependencies for bundled browsers.
-      await validateDependencies(this._browserPath, this._browserDescriptor);
+      await validateHostRequirements(this._browserPath, this._browserDescriptor);
     }
 
     // Note: it is important to define these variables before launchProcess, so that we don't get
