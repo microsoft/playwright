@@ -104,7 +104,9 @@ jobs:
     steps:
     - name: Install Media Pack
       shell: powershell
-      run: Install-WindowsFeature Server-Media-Foundation
+      run: |
+        Install-WindowsFeature Desktop-Experience
+        Install-WindowsFeature Server-Media-Foundation
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
       with:
