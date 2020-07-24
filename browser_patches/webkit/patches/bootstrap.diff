@@ -14951,6 +14951,21 @@ index 43524986d4e585fe0247b44a4e596e589509c895..9b1a2d1cd3ede6d41290f08e7244b081
  }
  
  void WebProcess::initializeConnection(IPC::Connection* connection)
+diff --git a/Source/WebKit/WebProcess/win/WebProcessMainWin.cpp b/Source/WebKit/WebProcess/win/WebProcessMainWin.cpp
+index 89bc159df35910abe133c68d71057cdfe1995cbb..aba8e9110a3ec4c59e9888b148e1e908d477cbe4 100644
+--- a/Source/WebKit/WebProcess/win/WebProcessMainWin.cpp
++++ b/Source/WebKit/WebProcess/win/WebProcessMainWin.cpp
+@@ -42,7 +42,9 @@ public:
+     bool platformInitialize() override
+     {
+         if (SetProcessDpiAwarenessContextPtr())
+-            SetProcessDpiAwarenessContextPtr()(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
++            // Playwright begin
++            SetProcessDpiAwarenessContextPtr()(DPI_AWARENESS_CONTEXT_UNAWARE);
++            // Playwright end
+         else
+             SetProcessDPIAware();
+         return true;
 diff --git a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm b/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
 index 111cf8bdc29dc61e28f822e957b93882a42799a5..9161de60dc307536a0204d2dec280c2b966c56f0 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
