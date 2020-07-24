@@ -46,10 +46,15 @@ export async function validateDependencies(browserPath: string, browser: Browser
   const missingPackages = new Set();
 
   const ubuntuVersion = await getUbuntuVersion();
-  if (ubuntuVersion === '18.04') {
+  let libraryToPackageNameMapping = null;
+  if (ubuntuVersion === '18.04')
+    libraryToPackageNameMapping = LIBRARY_TO_PACKAGE_NAME_UBUNTU_18_04;
+  else if (ubuntuVersion === '20.04')
+    libraryToPackageNameMapping = LIBRARY_TO_PACKAGE_NAME_UBUNTU_20_04;
+  if (libraryToPackageNameMapping) {
     // Translate missing dependencies to package names to install with apt.
     for (const missingDep of missingDeps) {
-      const packageName = LIBRARY_TO_PACKAGE_NAME_UBUNTU_18_04[missingDep];
+      const packageName = libraryToPackageNameMapping[missingDep];
       if (packageName) {
         missingPackages.add(packageName);
         missingDeps.delete(missingDep);
@@ -207,3 +212,86 @@ const LIBRARY_TO_PACKAGE_NAME_UBUNTU_18_04: { [s: string]: string} = {
   'libxslt.so.1': 'libxslt1.1',
 };
 
+const LIBRARY_TO_PACKAGE_NAME_UBUNTU_20_04: { [s: string]: string} = {
+  'libglib-2.0.so.0': 'libglib2.0-0',
+  'libX11.so.6': 'libx11-6',
+  'libxcb.so.1': 'libxcb1',
+  'libGL.so.1': 'libgl1',
+  'libEGL.so.1': 'libegl1',
+  'libnotify.so.4': 'libnotify4',
+  'libgdk_pixbuf-2.0.so.0': 'libgdk-pixbuf2.0-0',
+  'libgio-2.0.so.0': 'libglib2.0-0',
+  'libgobject-2.0.so.0': 'libglib2.0-0',
+  'libvpx.so.6': 'libvpx6',
+  'libopus.so.0': 'libopus0',
+  'libxml2.so.2': 'libxml2',
+  'libicui18n.so.66': 'libicu66',
+  'libicuuc.so.66': 'libicu66',
+  'libxslt.so.1': 'libxslt1.1',
+  'libwoff2dec.so.1.0.2': 'libwoff1',
+  'libcairo.so.2': 'libcairo2',
+  'libfontconfig.so.1': 'libfontconfig1',
+  'libfreetype.so.6': 'libfreetype6',
+  'libharfbuzz.so.0': 'libharfbuzz0b',
+  'libharfbuzz-icu.so.0': 'libharfbuzz-icu0',
+  'libgstapp-1.0.so.0': 'libgstreamer-plugins-base1.0-0',
+  'libgstbase-1.0.so.0': 'libgstreamer1.0-0',
+  'libgstreamer-1.0.so.0': 'libgstreamer1.0-0',
+  'libgstpbutils-1.0.so.0': 'libgstreamer-plugins-base1.0-0',
+  'libgstaudio-1.0.so.0': 'libgstreamer-plugins-base1.0-0',
+  'libgsttag-1.0.so.0': 'libgstreamer-plugins-base1.0-0',
+  'libgstvideo-1.0.so.0': 'libgstreamer-plugins-base1.0-0',
+  'libgstgl-1.0.so.0': 'libgstreamer-gl1.0-0',
+  'libgstcodecparsers-1.0.so.0': 'libgstreamer-plugins-bad1.0-0',
+  'libgstfft-1.0.so.0': 'libgstreamer-plugins-base1.0-0',
+  'libjpeg.so.8': 'libjpeg-turbo8',
+  'libpng16.so.16': 'libpng16-16',
+  'libopenjp2.so.7': 'libopenjp2-7',
+  'libwebpdemux.so.2': 'libwebpdemux2',
+  'libwebp.so.6': 'libwebp6',
+  'libsoup-2.4.so.1': 'libsoup2.4-1',
+  'libenchant.so.1': 'libenchant1c2a',
+  'libgmodule-2.0.so.0': 'libglib2.0-0',
+  'libsecret-1.so.0': 'libsecret-1-0',
+  'libhyphen.so.0': 'libhyphen0',
+  'libXcomposite.so.1': 'libxcomposite1',
+  'libXdamage.so.1': 'libxdamage1',
+  'libwayland-server.so.0': 'libwayland-server0',
+  'libwayland-egl.so.1': 'libwayland-egl1',
+  'libwayland-client.so.0': 'libwayland-client0',
+  'libgtk-3.so.0': 'libgtk-3-0',
+  'libgdk-3.so.0': 'libgtk-3-0',
+  'libpango-1.0.so.0': 'libpango-1.0-0',
+  'libatk-1.0.so.0': 'libatk1.0-0',
+  'libxkbcommon.so.0': 'libxkbcommon0',
+  'libepoxy.so.0': 'libepoxy0',
+  'libatk-bridge-2.0.so.0': 'libatk-bridge2.0-0',
+  'libX11-xcb.so.1': 'libx11-xcb1',
+  'libXcursor.so.1': 'libxcursor1',
+  'libXext.so.6': 'libxext6',
+  'libXfixes.so.3': 'libxfixes3',
+  'libXi.so.6': 'libxi6',
+  'libXrender.so.1': 'libxrender1',
+  'libdbus-glib-1.so.2': 'libdbus-glib-1-2',
+  'libdbus-1.so.3': 'libdbus-1-3',
+  'libpangocairo-1.0.so.0': 'libpangocairo-1.0-0',
+  'libcairo-gobject.so.2': 'libcairo-gobject2',
+  'libxcb-shm.so.0': 'libxcb-shm0',
+  'libpangoft2-1.0.so.0': 'libpangoft2-1.0-0',
+  'libXt.so.6': 'libxt6',
+  'libgthread-2.0.so.0': 'libglib2.0-0',
+  'libgtk-x11-2.0.so.0': 'libgtk2.0-0',
+  'libgdk-x11-2.0.so.0': 'libgtk2.0-0',
+  'libnss3.so': 'libnss3',
+  'libnssutil3.so': 'libnss3',
+  'libsmime3.so': 'libnss3',
+  'libnspr4.so': 'libnspr4',
+  'libxcb-dri3.so.0': 'libxcb-dri3-0',
+  'libXtst.so.6': 'libxtst6',
+  'libcups.so.2': 'libcups2',
+  'libdrm.so.2': 'libdrm2',
+  'libXrandr.so.2': 'libxrandr2',
+  'libgbm.so.1': 'libgbm1',
+  'libasound.so.2': 'libasound2',
+  'libatspi.so.0': 'libatspi2.0-0',
+};
