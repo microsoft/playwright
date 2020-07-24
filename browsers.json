@@ -7,11 +7,11 @@
     },
     {
       "name": "firefox",
-      "revision": "1138"
+      "revision": "1140"
     },
     {
       "name": "webkit",
-      "revision": "1313"
+      "revision": "1317"
     }
   ]
 }
