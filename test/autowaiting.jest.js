@@ -107,12 +107,11 @@ describe('Auto waiting', () => {
     const messages = [];
     server.setRoute('/empty.html?cancel', async (req, res) => { res.end('done'); });
     server.setRoute('/empty.html?override', async (req, res) => { messages.push('routeoverride'); res.end('done'); });
-    await Promise.all([
-      page.evaluate(`
+    await page.evaluate(`
         window.location.href = "${server.EMPTY_PAGE}?cancel";
         window.location.href = "${server.EMPTY_PAGE}?override";
-      `).then(() => messages.push('evaluate')),
-    ]);
+      `);
+    messages.push('evaluate');
     expect(messages.join('|')).toBe('routeoverride|evaluate');
   });
   it('should await navigation when evaluating reload', async({page, server}) => {
