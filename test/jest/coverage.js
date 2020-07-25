@@ -73,7 +73,7 @@ function apiForBrowser(browserName) {
       name: 'Chromium',
       events: {
         ...require('../../lib/events').Events,
-        ChromiumBrowserContext: require('../../lib/chromium/events').Events.CRBrowserContext,
+        ...require('../../lib/chromium/events').Events,
       }
     },
   ];

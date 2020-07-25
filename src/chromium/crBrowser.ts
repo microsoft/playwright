@@ -145,7 +145,7 @@ export class CRBrowser extends BrowserBase {
       const backgroundPage = new CRPage(session, targetInfo.targetId, context, null, false);
       this._backgroundPages.set(targetInfo.targetId, backgroundPage);
       backgroundPage.pageOrError().then(() => {
-        context!.emit(Events.CRBrowserContext.BackgroundPage, backgroundPage._page);
+        context!.emit(Events.ChromiumBrowserContext.BackgroundPage, backgroundPage._page);
       });
       return;
     }
@@ -172,7 +172,7 @@ export class CRBrowser extends BrowserBase {
     if (targetInfo.type === 'service_worker') {
       const serviceWorker = new CRServiceWorker(context, session, targetInfo.url);
       this._serviceWorkers.set(targetInfo.targetId, serviceWorker);
-      context.emit(Events.CRBrowserContext.ServiceWorker, serviceWorker);
+      context.emit(Events.ChromiumBrowserContext.ServiceWorker, serviceWorker);
       return;
     }
 
