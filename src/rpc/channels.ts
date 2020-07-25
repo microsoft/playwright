@@ -284,7 +284,9 @@ export type BrowserServerKillParams = {};
 export type BrowserServerKillResult = void;
 
 // ----------- Browser -----------
-export type BrowserInitializer = {};
+export type BrowserInitializer = {
+  version: string,
+};
 export interface BrowserChannel extends Channel {
   on(event: 'close', callback: (params: BrowserCloseEvent) => void): this;
   close(params?: BrowserCloseParams): Promise<BrowserCloseResult>;

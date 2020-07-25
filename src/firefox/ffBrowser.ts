@@ -33,12 +33,14 @@ export class FFBrowser extends BrowserBase {
   readonly _ffPages: Map<string, FFPage>;
   readonly _contexts: Map<string, FFBrowserContext>;
   private _eventListeners: RegisteredListener[];
+  private _version = '';
 
   static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
     const connection = new FFConnection(SlowMoTransport.wrap(transport, options.slowMo), options.loggers);
     const browser = new FFBrowser(connection, options);
     const promises: Promise<any>[] = [
       connection.send('Browser.enable', { attachToDefaultContext: !!options.persistent }),
+      browser._initVersion(),
     ];
     if (options.persistent) {
       browser._defaultContext = new FFBrowserContext(browser, null, options.persistent);
@@ -62,6 +64,11 @@ export class FFBrowser extends BrowserBase {
     ];
   }
 
+  async _initVersion() {
+    const result = await this._connection.send('Browser.getInfo');
+    this._version = result.version.substring(result.version.indexOf('/') + 1);
+  }
+
   isConnected(): boolean {
     return !this._connection._closed;
   }
@@ -79,6 +86,10 @@ export class FFBrowser extends BrowserBase {
 
   contexts(): BrowserContext[] {
     return Array.from(this._contexts.values());
+  }
+
+  version(): string {
+    return this._version;
   }
 
   _onDetachedFromTarget(payload: Protocol.Browser.detachedFromTargetPayload) {

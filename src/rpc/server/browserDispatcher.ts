@@ -27,7 +27,7 @@ import { headersArrayToObject } from '../serializers';
 
 export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> implements BrowserChannel {
   constructor(scope: DispatcherScope, browser: BrowserBase) {
-    super(scope, browser, 'Browser', {}, true);
+    super(scope, browser, 'Browser', { version: browser.version() }, true);
     browser.on(Events.Browser.Disconnected, () => {
       this._dispatchEvent('close');
       this._dispose();

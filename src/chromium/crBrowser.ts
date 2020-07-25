@@ -41,6 +41,7 @@ export class CRBrowser extends BrowserBase {
   _serviceWorkers = new Map<string, CRServiceWorker>();
   _devtools?: CRDevTools;
   _isMac = false;
+  private _version = '';
 
   private _tracingRecording = false;
   private _tracingPath: string | null = '';
@@ -53,6 +54,7 @@ export class CRBrowser extends BrowserBase {
     const session = connection.rootSession;
     const version = await session.send('Browser.getVersion');
     browser._isMac = version.userAgent.includes('Macintosh');
+    browser._version = version.product.substring(version.product.indexOf('/') + 1);
     if (!options.persistent) {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
       return browser;
@@ -108,6 +110,10 @@ export class CRBrowser extends BrowserBase {
 
   contexts(): BrowserContext[] {
     return Array.from(this._contexts.values());
+  }
+
+  version(): string {
+    return this._version;
   }
 
   _onAttachedToTarget({targetInfo, sessionId, waitingForDebugger}: Protocol.Target.attachedToTargetPayload) {

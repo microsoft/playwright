@@ -155,6 +155,7 @@ See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext([options])](#browsernewcontextoptions)
 - [browser.newPage([options])](#browsernewpageoptions)
+- [browser.version()](#browserversion)
 <!-- GEN:stop -->
 
 #### event: 'disconnected'
@@ -265,6 +266,12 @@ Creates a new browser context. It won't share cookies/cache with other browser c
 Creates a new page in a new browser context. Closing this page will close the context as well.
 
 This is a convenience API that should only be used for the single-page scenarios and short snippets. Production code and testing frameworks should explicitly create [browser.newContext](#browsernewcontextoptions) followed by the [browserContext.newPage](#browsercontextnewpage) to control their exact life times.
+
+#### browser.version()
+
+- returns: <[string]>
+
+Returns the browser version.
 
 ### class: BrowserContext
 
@@ -4180,6 +4187,7 @@ await browser.stopTracing();
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext([options])](#browsernewcontextoptions)
 - [browser.newPage([options])](#browsernewpageoptions)
+- [browser.version()](#browserversion)
 <!-- GEN:stop -->
 
 #### chromiumBrowser.newBrowserCDPSession()
@@ -4387,6 +4395,7 @@ Firefox browser instance does not expose Firefox-specific features.
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext([options])](#browsernewcontextoptions)
 - [browser.newPage([options])](#browsernewpageoptions)
+- [browser.version()](#browserversion)
 <!-- GEN:stop -->
 
 ### class: WebKitBrowser
@@ -4402,6 +4411,7 @@ WebKit browser instance does not expose WebKit-specific features.
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext([options])](#browsernewcontextoptions)
 - [browser.newPage([options])](#browsernewpageoptions)
+- [browser.version()](#browserversion)
 <!-- GEN:stop -->
 
 ### Environment Variables

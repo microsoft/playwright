@@ -362,6 +362,9 @@ BrowserServer:
 Browser:
   type: interface
 
+  initializer:
+    version: string
+
   commands:
 
     close:

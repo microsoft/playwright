@@ -72,6 +72,10 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
     return [...this._contexts];
   }
 
+  version(): string {
+    return this._initializer.version;
+  }
+
   async newPage(options: types.BrowserContextOptions & { logger?: LoggerSink } = {}): Promise<Page> {
     const context = await this.newContext(options);
     const page = await context.newPage();

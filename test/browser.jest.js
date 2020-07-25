@@ -38,3 +38,13 @@ describe('Browser.newPage', function() {
     expect(error.message).toContain('Please use browser.newContext()');
   });
 });
+
+describe('Browser.version', function() {
+  it('should work', async function({browser}) {
+    const version = browser.version();
+    if (CHROMIUM)
+      expect(version.match(/^\d+\.\d+\.\d+\.\d+$/)).toBeTruthy();
+    else
+      expect(version.match(/^\d+\.\d+$/)).toBeTruthy();
+  });
+});
