@@ -969,10 +969,10 @@ index 3b8fa18bd7e8d95d7e8f95b442afc63e550ce63a..a72174146a85d0db01b11fda3a120712
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Playwright.json b/Source/JavaScriptCore/inspector/protocol/Playwright.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..dd4c318ec4b9b49ce937266ba899e54f8e6fa932
+index 0000000000000000000000000000000000000000..490410db9585aac82533bb51009a022430dc6211
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Playwright.json
-@@ -0,0 +1,244 @@
+@@ -0,0 +1,250 @@
 +{
 +    "domain": "Playwright",
 +    "availability": ["web"],
@@ -1043,6 +1043,12 @@ index 0000000000000000000000000000000000000000..dd4c318ec4b9b49ce937266ba899e54f
 +        },
 +        {
 +            "name": "disable"
++        },
++        {
++          "name": "getVersion",
++          "returns": [
++            { "name": "version", "type": "string" }
++          ]
 +        },
 +        {
 +            "name": "close",
@@ -9965,10 +9971,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..d9218841c5ca436d291e5c0918906be084146cb8
+index 0000000000000000000000000000000000000000..84a61a96194673c8ab3889ecdf52222d0dd1e3b7
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,823 @@
+@@ -0,0 +1,829 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -10298,6 +10304,7 @@ index 0000000000000000000000000000000000000000..d9218841c5ca436d291e5c0918906be0
 +        return;
 +
 +    ASSERT(m_frontendChannel);
++    page.setCustomUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15"_s);
 +
 +    String browserContextID = toBrowserContextIDProtocolString(page.sessionID());
 +    String pageProxyID = toPageProxyIDProtocolString(page);
@@ -10401,6 +10408,11 @@ index 0000000000000000000000000000000000000000..d9218841c5ca436d291e5c0918906be0
 +    for (auto& it : m_browserContexts)
 +        it.value.dataStore->setDownloadInstrumentation(nullptr);
 +    m_browserContextDeletions.clear();
++}
++
++void InspectorPlaywrightAgent::getVersion(ErrorString&, String* version)
++{
++    *version = "14.0"_s;
 +}
 +
 +void InspectorPlaywrightAgent::close(Ref<CloseCallback>&& callback)
@@ -10794,10 +10806,10 @@ index 0000000000000000000000000000000000000000..d9218841c5ca436d291e5c0918906be0
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..7b1b0c063c792ce7dddf338242d1914539cae76d
+index 0000000000000000000000000000000000000000..036e032145f41f08fea0d9a9a09ee22c8e149d6c
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
-@@ -0,0 +1,119 @@
+@@ -0,0 +1,120 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -10879,6 +10891,7 @@ index 0000000000000000000000000000000000000000..7b1b0c063c792ce7dddf338242d19145
 +    // PlaywrightDispatcherHandler
 +    void enable(Inspector::ErrorString&) override;
 +    void disable(Inspector::ErrorString&) override;
++    void getVersion(Inspector::ErrorString&, String* version) override;
 +    void close(Ref<CloseCallback>&&) override;
 +    void createContext(Inspector::ErrorString&, const String* proxyServer, const String* proxyBypassList, String* browserContextID) override;
 +    void deleteContext(const String& browserContextID, Ref<DeleteContextCallback>&& callback) override;
@@ -14951,21 +14964,6 @@ index 43524986d4e585fe0247b44a4e596e589509c895..9b1a2d1cd3ede6d41290f08e7244b081
  }
  
  void WebProcess::initializeConnection(IPC::Connection* connection)
-diff --git a/Source/WebKit/WebProcess/win/WebProcessMainWin.cpp b/Source/WebKit/WebProcess/win/WebProcessMainWin.cpp
-index 89bc159df35910abe133c68d71057cdfe1995cbb..aba8e9110a3ec4c59e9888b148e1e908d477cbe4 100644
---- a/Source/WebKit/WebProcess/win/WebProcessMainWin.cpp
-+++ b/Source/WebKit/WebProcess/win/WebProcessMainWin.cpp
-@@ -42,7 +42,9 @@ public:
-     bool platformInitialize() override
-     {
-         if (SetProcessDpiAwarenessContextPtr())
--            SetProcessDpiAwarenessContextPtr()(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-+            // Playwright begin
-+            SetProcessDpiAwarenessContextPtr()(DPI_AWARENESS_CONTEXT_UNAWARE);
-+            // Playwright end
-         else
-             SetProcessDPIAware();
-         return true;
 diff --git a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm b/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
 index 111cf8bdc29dc61e28f822e957b93882a42799a5..9161de60dc307536a0204d2dec280c2b966c56f0 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
