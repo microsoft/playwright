@@ -39,6 +39,8 @@ import { ChromiumBrowserContext } from './chromiumBrowserContext';
 import { Selectors } from './selectors';
 import { Stream } from './stream';
 import { createScheme, Validator, ValidationError } from '../validator';
+import { WebKitBrowser } from './webkitBrowser';
+import { FirefoxBrowser } from './firefoxBrowser';
 
 class Root extends ChannelOwner<Channel, {}> {
   constructor(connection: Connection) {
@@ -126,6 +128,10 @@ export class Connection {
       case 'Browser':
         if ((parent as BrowserType).name() === 'chromium')
           result = new ChromiumBrowser(parent, type, guid, initializer);
+        else if ((parent as BrowserType).name() === 'webkit')
+          result = new WebKitBrowser(parent, type, guid, initializer);
+        else if ((parent as BrowserType).name() === 'firefox')
+          result = new FirefoxBrowser(parent, type, guid, initializer);
         else
           result = new Browser(parent, type, guid, initializer);
         break;
