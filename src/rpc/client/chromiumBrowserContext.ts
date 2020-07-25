@@ -32,13 +32,13 @@ export class ChromiumBrowserContext extends BrowserContext {
     this._channel.on('crBackgroundPage', ({ page }) => {
       const backgroundPage = Page.from(page);
       this._backgroundPages.add(backgroundPage);
-      this.emit(ChromiumEvents.CRBrowserContext.BackgroundPage, backgroundPage);
+      this.emit(ChromiumEvents.ChromiumBrowserContext.BackgroundPage, backgroundPage);
     });
     this._channel.on('crServiceWorker', ({worker}) => {
       const serviceWorker = Worker.from(worker);
       serviceWorker._context = this;
       this._serviceWorkers.add(serviceWorker);
-      this.emit(ChromiumEvents.CRBrowserContext.ServiceWorker, serviceWorker);
+      this.emit(ChromiumEvents.ChromiumBrowserContext.ServiceWorker, serviceWorker);
     });
   }
 

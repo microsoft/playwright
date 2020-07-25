@@ -16,7 +16,7 @@
  */
 
 export const Events = {
-  CRBrowserContext: {
+  ChromiumBrowserContext: {
     BackgroundPage: 'backgroundpage',
     ServiceWorker: 'serviceworker',
   }
