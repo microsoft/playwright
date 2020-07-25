@@ -172,7 +172,6 @@ describe('Auto waiting', () => {
   });
   it('should work with goto following click', async({page, server}) => {
     server.setRoute('/login.html', async (req, res) => {
-      messages.push('route');
       res.setHeader('Content-Type', 'text/html');
       res.end(`You are logged in`);
     });
@@ -210,7 +209,7 @@ describe('Auto waiting should not hang when', () => {
         setTimeout(() => window.stop(), 100);
       }, server.EMPTY_PAGE);
   });
-  it('calling window.stop sync', async({page, server, httpsServer}) => {
+  it('calling window.stop', async({page, server, httpsServer}) => {
     await page.evaluate((url) => {
         window.location.href = url;
         window.stop();
