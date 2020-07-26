@@ -208,7 +208,7 @@ describe('Auto waiting should not hang when', () => {
         setTimeout(() => window.stop(), 100);
       }, server.EMPTY_PAGE);
   });
-  it('calling window.stop', async({page, server, httpsServer}) => {
+  it('calling window.stop sync', async({page, server, httpsServer}) => {
     await page.evaluate((url) => {
         window.location.href = url;
         window.stop();
