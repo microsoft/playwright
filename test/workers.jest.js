@@ -58,13 +58,13 @@ describe('Workers', function() {
   });
   it('should evaluate', async function({page}) {
     const workerCreatedPromise = page.waitForEvent('worker');
-    page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'}))));
+    await page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'}))));
     const worker = await workerCreatedPromise;
     expect(await worker.evaluate('1+1')).toBe(2);
   });
   it('should report errors', async function({page}) {
     const errorPromise = new Promise(x => page.on('pageerror', x));
-    page.evaluate(() => new Worker(URL.createObjectURL(new Blob([`
+    await page.evaluate(() => new Worker(URL.createObjectURL(new Blob([`
       setTimeout(() => {
         // Do a console.log just to check that we do not confuse it with an error.
         console.log('hey');
@@ -77,7 +77,7 @@ describe('Workers', function() {
   it('should clear upon navigation', async function({server, page}) {
     await page.goto(server.EMPTY_PAGE);
     const workerCreatedPromise = page.waitForEvent('worker');
-    page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'}))));
+    await page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'}))));
     const worker = await workerCreatedPromise;
     expect(page.workers().length).toBe(1);
     let destroyed = false;
@@ -89,7 +89,7 @@ describe('Workers', function() {
   it('should clear upon cross-process navigation', async function({server, page}) {
     await page.goto(server.EMPTY_PAGE);
     const workerCreatedPromise = page.waitForEvent('worker');
-    page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'}))));
+    await page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'}))));
     const worker = await workerCreatedPromise;
     expect(page.workers().length).toBe(1);
     let destroyed = false;
