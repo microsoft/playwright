@@ -16,7 +16,7 @@
  */
 
 const utils = require('./utils');
-const {FFOX, HEADLESS} = testOptions;
+const {CHROMIUM, FFOX, MAC, HEADLESS} = testOptions;
 
 describe('BrowserContext({viewport})', function() {
   it('should get the proper default viewport size', async({page, server}) => {
@@ -26,6 +26,21 @@ describe('BrowserContext({viewport})', function() {
     await utils.verifyViewport(page, 1280, 720);
     await page.setViewportSize({width: 123, height: 456});
     await utils.verifyViewport(page, 123, 456);
+  });
+  // TODO: enable in Chromium after http://crrev.com/c/2321409 is landed and rolled.
+  it.fail(CHROMIUM && HEADLESS && MAC)('should return correct outerWidth and outerHeight', async({page}) => {
+    const size = await page.evaluate(() => {
+      return {
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+        outerWidth: window.outerWidth,
+        outerHeight: window.outerHeight,
+      };
+    });
+    expect(size.innerWidth).toBe(1280);
+    expect(size.innerHeight).toBe(720);
+    expect(size.outerWidth >= size.innerWidth).toBeTruthy();
+    expect(size.outerHeight >= size.innerHeight).toBeTruthy();
   });
   it('should emulate device width', async({page, server}) => {
     expect(page.viewportSize()).toEqual({width: 1280, height: 720});
