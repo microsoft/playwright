@@ -307,6 +307,61 @@ describe('Page.click', function() {
     await frame.click('button');
     expect(await frame.evaluate(() => window.result)).toBe('Clicked');
   });
+  it('should click the visible link in a iframe (srcdoc) in fixed position div', async({page, server}) => {
+    const clickNotification = new Promise(fulfill => {
+      page.on('dialog', dialog => {
+        fulfill(dialog.message());
+        dialog.accept();
+      });
+    });
+    await page.goto(server.EMPTY_PAGE);
+    await page.setViewportSize({width:1920, height:1080});
+    await page.setContent(`
+    <div style="position:fixed;top:300px;left:300px;width:400px;height:400px;">
+        <iframe srcdoc='
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Page with Link</title>
+            <style>
+              body {
+                background-color: red;
+              }
+            </style>
+          </head>
+          <body>
+            <a id="link-target" href="javascript:window.alert(47)">click me</a>
+          </body>
+        </html>
+        '  width="100%" height="100%" > </iframe>
+    </div>
+    `)
+    const frame = page.frames()[1];
+    const link = await frame.$("#link-target");
+    await link.click();
+    const msg = await clickNotification;
+    expect(msg).toBe("47");
+  })
+  it.fail(CHROMIUM && !HEADLESS)('should click the visible link in an iframe (cross-origin) in fixed position div', async({page, server}) => {
+    const clickNotification = new Promise(fulfill => {
+      page.on('dialog', dialog => {
+        fulfill(dialog.message());
+        dialog.accept();
+      });
+    });
+    await page.goto(server.EMPTY_PAGE);
+    await page.setViewportSize({width:1920, height:1080});
+    await page.setContent(`
+    <div style="position:fixed;top:300px;left:300px;width:400px;height:400px;">
+        <iframe src="${server.CROSS_PROCESS_PREFIX + '/frames/link.html'}"  width="100%" height="100%" > </iframe>
+    </div>
+    `)
+    const frame = page.frames()[1];
+    const link = await frame.$("#link-target");
+    await link.click();
+    const msg = await clickNotification;
+    expect(msg).toBe("47");
+  })
   it('should click the button with deviceScaleFactor set', async({browser, server}) => {
     const context = await browser.newContext({ viewport: { width: 400, height: 400 }, deviceScaleFactor: 5 });
     const page = await context.newPage();
