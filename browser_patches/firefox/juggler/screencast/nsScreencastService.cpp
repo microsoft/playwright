@@ -46,7 +46,8 @@ rtc::scoped_refptr<webrtc::VideoCaptureModule> CreateWindowCapturer(nsIWidget* w
   }
   nsCString windowId;
   windowId.AppendPrintf("%" PRIuPTR, rawWindowId);
-  return webrtc::DesktopCaptureImpl::Create(sessionId, windowId.get(), webrtc::CaptureDeviceType::Window);
+  bool captureCursor = false;
+  return webrtc::DesktopCaptureImpl::Create(sessionId, windowId.get(), webrtc::CaptureDeviceType::Window, captureCursor);
 }
 
 void NotifyScreencastStopped(int32_t sessionId) {
