@@ -362,7 +362,7 @@ describe('Page.click', function() {
     const msg = await clickNotification;
     expect(msg).toBe("47");
   })
-  it.fail(CHROMIUM || WEBKIT)('should click and navigate to a x-frame-options:DENY link in fixed position div', async({page, server}) => {
+  it.fail(CHROMIUM && !HEADLESS)('should click and navigate to a x-frame-options:DENY link in fixed position div', async({page, server}) => {
     server.setRoute('/login-with-x-frame-options-deny.html', async (req, res) => {
       res.setHeader('Content-Type', 'text/html');
       res.setHeader('X-Frame-Options', 'DENY');
@@ -394,19 +394,31 @@ describe('Page.click', function() {
     })
 
     await page.goto(server.PREFIX + '/wrapper.html')
-    const loggedIn = new Promise(fulfull => {
+    const navigated = new Promise(fulfull => {
       page.on('framenavigated', (frame) => {
         if (frame.url().endsWith('/login-with-x-frame-options-deny.html')) {
           fulfull(frame.url());
         }
-      })
+      });
     });
+
+    const consoleMessaged = new Promise(fulfill => {
+      page.on('console', msg => {
+        fulfill(msg.text());
+      });
+    });
+
     const frame = page.frames()[1];
     const button = await frame.$('#pt-login');
     await button.click();
-    expect(await loggedIn).toBeTruthy();
+
+    if (FFOX) {
+      expect(await navigated).toBeTruthy();
+    } else if (WEBKIT || CHROMIUM) {
+      expect((await consoleMessaged).match(/^Refused to display.*login-with-x-frame-options-deny\.html' in a frame because it set 'X-Frame-Options' to 'DENY'\./i)).toBeTruthy();
+    }
   })
-  it.fail(CHROMIUM || WEBKIT)('should click and navigate to a x-frame-options:DENY link', async({page, server}) => {
+  it.fail(CHROMIUM && !HEADLESS)('should click and navigate to a x-frame-options:DENY link', async({page, server}) => {
     server.setRoute('/login-with-x-frame-options-deny.html', async (req, res) => {
       res.setHeader('Content-Type', 'text/html');
       res.setHeader('X-Frame-Options', 'DENY');
@@ -438,17 +450,29 @@ describe('Page.click', function() {
     })
 
     await page.goto(server.PREFIX + '/wrapper.html')
-    const loggedIn = new Promise(fulfull => {
+    const navigated = new Promise(fulfull => {
       page.on('framenavigated', (frame) => {
         if (frame.url().endsWith('/login-with-x-frame-options-deny.html')) {
           fulfull(frame.url());
         }
-      })
+      });
     });
+
+    const consoleMessaged = new Promise(fulfill => {
+      page.on('console', msg => {
+        fulfill(msg.text());
+      });
+    });
+
     const frame = page.frames()[1];
     const button = await frame.$('#pt-login');
     await button.click();
-    expect(await loggedIn).toBeTruthy();
+
+    if (FFOX) {
+      expect(await navigated).toBeTruthy();
+    } else if (WEBKIT || CHROMIUM) {
+      expect((await consoleMessaged).match(/^Refused to display.*login-with-x-frame-options-deny\.html' in a frame because it set 'X-Frame-Options' to 'DENY'\./i)).toBeTruthy();
+    }
   })
   it('should click the button with deviceScaleFactor set', async({browser, server}) => {
     const context = await browser.newContext({ viewport: { width: 400, height: 400 }, deviceScaleFactor: 5 });
