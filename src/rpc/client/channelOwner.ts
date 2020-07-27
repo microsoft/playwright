@@ -23,7 +23,7 @@ import { DebugLoggerSink } from '../../logger';
 
 export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}> extends EventEmitter {
   private _connection: Connection;
-  private _isScope: boolean;
+  _isScope = false;
   // Parent is always "isScope".
   private _parent: ChannelOwner | undefined;
   // Only "isScope" channel owners have registered objects inside.
@@ -35,16 +35,16 @@ export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}
   readonly _initializer: Initializer;
   _logger: LoggerSink | undefined;
 
-  constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: Initializer, isScope?: boolean) {
+  constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: Initializer) {
     super();
     this._connection = parent instanceof ChannelOwner ? parent._connection : parent;
     this._type = type;
     this._guid = guid;
-    this._isScope = !!isScope;
     this._parent = parent instanceof ChannelOwner ? parent : undefined;
 
     this._connection._objects.set(guid, this);
     if (this._parent) {
+      assert(this._parent._isScope);
       this._parent._objects.set(guid, this);
       this._logger = this._parent._logger;
     }

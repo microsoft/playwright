@@ -41,10 +41,11 @@ import { Stream } from './stream';
 import { createScheme, Validator, ValidationError } from '../validator';
 import { WebKitBrowser } from './webkitBrowser';
 import { FirefoxBrowser } from './firefoxBrowser';
+import { assert } from '../../helper';
 
 class Root extends ChannelOwner<Channel, {}> {
   constructor(connection: Connection) {
-    super(connection, '', '', {}, true);
+    super(connection, '', '', {});
   }
 }
 
@@ -58,6 +59,7 @@ export class Connection {
 
   constructor() {
     this._rootObject = new Root(this);
+    this._rootObject._isScope = true;
   }
 
   async waitForObjectWithKnownName(guid: string): Promise<any> {
@@ -94,7 +96,11 @@ export class Connection {
 
     debug('pw:channel:event')(message);
     if (method === '__create__') {
-      this._createRemoteObject(guid, params.type, params.guid, params.initializer);
+      this._createRemoteObject(guid, params.type, params.guid, params.initializer, params.scope);
+      return;
+    }
+    if (method === '__dispose__') {
+      this._objects.get(guid)!._dispose();
       return;
     }
     const object = this._objects.get(guid)!;
@@ -117,8 +123,9 @@ export class Connection {
     return payload;
   }
 
-  private _createRemoteObject(parentGuid: string, type: string, guid: string, initializer: any): any {
+  private _createRemoteObject(parentGuid: string, type: string, guid: string, initializer: any, isScope: boolean): any {
     const parent = this._objects.get(parentGuid)!;
+    assert(parent._isScope);
     let result: ChannelOwner<any, any>;
     initializer = this._replaceGuidsWithChannels(initializer);
     switch (type) {
@@ -212,6 +219,8 @@ export class Connection {
       default:
         throw new Error('Missing type ' + type);
     }
+    if (isScope)
+      result._isScope = true;
     const callback = this._waitingForObject.get(guid);
     if (callback) {
       callback(result);

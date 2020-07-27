@@ -33,7 +33,7 @@ export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer>
   }
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: ElectronInitializer) {
-    super(parent, type, guid, initializer, true);
+    super(parent, type, guid, initializer);
   }
 
   async launch(executablePath: string, options: ElectronLaunchOptionsBase & { logger?: LoggerSink } = {}): Promise<ElectronApplication> {
@@ -60,7 +60,7 @@ export class ElectronApplication extends ChannelOwner<ElectronApplicationChannel
   }
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: ElectronApplicationInitializer) {
-    super(parent, type, guid, initializer, true);
+    super(parent, type, guid, initializer);
     this._channel.on('context', ({ context }) => this._context = BrowserContext.from(context));
     this._channel.on('window', ({ page, browserWindow }) => {
       const window = Page.from(page);
@@ -69,10 +69,7 @@ export class ElectronApplication extends ChannelOwner<ElectronApplicationChannel
       this.emit(ElectronEvents.ElectronApplication.Window, window);
       window.once(Events.Page.Close, () => this._windows.delete(window));
     });
-    this._channel.on('close', () => {
-      this.emit(ElectronEvents.ElectronApplication.Close);
-      this._dispose();
-    });
+    this._channel.on('close', () => this.emit(ElectronEvents.ElectronApplication.Close));
   }
 
   windows(): Page[] {

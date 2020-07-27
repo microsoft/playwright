@@ -26,10 +26,7 @@ export class CDPSessionDispatcher extends Dispatcher<CRSession, CDPSessionInitia
       const params = cdpParams ? serializeResult(cdpParams) : undefined;
       this._dispatchEvent('event', { method, params });
     };
-    crSession.on(CRSessionEvents.Disconnected, () => {
-      this._dispatchEvent('disconnected');
-      this._dispose();
-    });
+    crSession.on(CRSessionEvents.Disconnected, () => this._dispose());
   }
 
   async send(params: { method: string, params?: SerializedValue }): Promise<{ result: SerializedValue }> {

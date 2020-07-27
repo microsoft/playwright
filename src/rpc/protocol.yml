@@ -1852,8 +1852,6 @@ CDPSession:
         method: string
         params: SerializedValue?
 
-    disconnected:
-
 
 
 Electron:

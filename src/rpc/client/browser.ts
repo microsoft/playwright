@@ -40,13 +40,12 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   }
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserInitializer) {
-    super(parent, type, guid, initializer, true);
+    super(parent, type, guid, initializer);
     this._browserType = parent as BrowserType;
     this._channel.on('close', () => {
       this._isConnected = false;
       this.emit(Events.Browser.Disconnected);
       this._isClosedOrClosing = true;
-      this._dispose();
     });
     this._closedPromise = new Promise(f => this.once(Events.Browser.Disconnected, f));
   }
