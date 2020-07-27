@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX} = testOptions;
+const path = require('path');
+
+const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX, ASSETS_DIR} = testOptions;
 
 describe('Capabilities', function() {
   it.fail(WEBKIT && WIN)('Web Assembly should work', async function({page, server}) {
@@ -47,8 +49,16 @@ describe('Capabilities', function() {
     await page.goto(server.EMPTY_PAGE);
     expect(await page.evaluate(() => window.testStatus)).toBe('SUCCESS');
   });
-  it.fail(WEBKIT && !LINUX)('should play video', async({page, server}) => {
-    await page.goto(server.PREFIX + '/video.html');
+  it.fail(WEBKIT && WIN)('should play video', async({page}) => {
+    // TODO: the test passes on Windows locally but fails on GitHub Action bot,
+    // apparently due to a Media Pack issue in the Windows Server.
+    //
+    // Our test server doesn't support range requests required to play on Mac,
+    // so we load the page using a file url.
+    const url = WIN
+        ? 'file:///' + path.join(ASSETS_DIR, 'video.html').replace(/\\/g, '/')
+        : 'file://' + path.join(ASSETS_DIR, 'video.html');
+    await page.goto(url);
     await page.$eval('video', v => v.play());
     await page.$eval('video', v => v.pause());
   });
