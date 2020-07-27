@@ -2,6 +2,9 @@
 set -e
 set +x
 
+RUST_VERSION="1.42.0"
+CBINDGEN_VERSION="0.14.1"
+
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 cd "checkout"
@@ -41,6 +44,12 @@ echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 if [[ $1 == "--juggler" ]]; then
   ./mach build faster
 else
+  # We manage Rust version ourselves.
+  echo "-- Using rust v${RUST_VERSION}"
+  rustup default "${RUST_VERSION}"
+
+  echo "-- Using cbindgen v${CBINDGEN_VERSION}"
+  cargo install cbindgen --version "${CBINDGEN_VERSION}"
   ./mach build
 fi
 
