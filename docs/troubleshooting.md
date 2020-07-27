@@ -10,7 +10,7 @@
 - [WebKit](#webkit)
   * [WebKit headless doesn't launch on Linux/WSL](#webkit-headless-doesnt-launch-on-linuxwsl)
 - [Code transpilation issues](#code-transpilation-issues)
-- [Node.js requirements](#node-requirements)
+- [Node.js requirements](#nodejs-requirements)
   * [ReferenceError: URL is not defined](#referenceerror-url-is-not-defined)
 <!-- GEN:stop -->
 
