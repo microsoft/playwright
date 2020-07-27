@@ -44,6 +44,7 @@ export interface Browser extends EventEmitter {
   newPage(options?: BrowserContextOptions): Promise<Page>;
   isConnected(): boolean;
   close(): Promise<void>;
+  version(): string;
 }
 
 export abstract class BrowserBase extends EventEmitter implements Browser {
@@ -61,6 +62,7 @@ export abstract class BrowserBase extends EventEmitter implements Browser {
   abstract contexts(): BrowserContext[];
   abstract isConnected(): boolean;
   abstract _disconnect(): void;
+  abstract version(): string;
 
   async newPage(options?: BrowserContextOptions): Promise<Page> {
     const context = await this.newContext(options);

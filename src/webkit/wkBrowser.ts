@@ -28,6 +28,7 @@ import { kPageProxyMessageReceived, PageProxyMessageReceivedPayload, WKConnectio
 import { WKPage } from './wkPage';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15';
+const BROWSER_VERSION = '14.0';
 
 export class WKBrowser extends BrowserBase {
   private readonly _connection: WKConnection;
@@ -83,6 +84,10 @@ export class WKBrowser extends BrowserBase {
 
   contexts(): BrowserContext[] {
     return Array.from(this._contexts.values());
+  }
+
+  version(): string {
+    return BROWSER_VERSION;
   }
 
   _onDownloadCreated(payload: Protocol.Playwright.downloadCreatedPayload) {
