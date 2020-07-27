@@ -121,7 +121,7 @@ function lddAsync(filePath: string): Promise<{stdout: string, stderr: string, co
     cwd: dirname,
     env: {
       ...process.env,
-      LD_LIBRARY_PATH: dirname,
+      LD_LIBRARY_PATH: process.env.LD_LIBRARY_PATH ? `${process.env.LD_LIBRARY_PATH}:${dirname}` : dirname,
     },
   });
 
