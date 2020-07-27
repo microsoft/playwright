@@ -44,7 +44,7 @@ import { FirefoxBrowser } from './firefoxBrowser';
 
 class Root extends ChannelOwner<Channel, {}> {
   constructor(connection: Connection) {
-    super(connection, '', '', {}, true);
+    super(connection, '', '', {});
   }
 }
 
@@ -95,6 +95,10 @@ export class Connection {
     debug('pw:channel:event')(message);
     if (method === '__create__') {
       this._createRemoteObject(guid, params.type, params.guid, params.initializer);
+      return;
+    }
+    if (method === '__dispose__') {
+      this._objects.get(guid)!._dispose();
       return;
     }
     const object = this._objects.get(guid)!;

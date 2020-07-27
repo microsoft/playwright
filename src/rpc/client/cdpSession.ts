@@ -31,13 +31,12 @@ export class CDPSession extends ChannelOwner<CDPSessionChannel, CDPSessionInitia
   once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: CDPSessionInitializer) {
-    super(parent, type, guid, initializer, true);
+    super(parent, type, guid, initializer);
 
     this._channel.on('event', ({ method, params }) => {
       const cdpParams = params ? parseResult(params) : undefined;
       this.emit(method, cdpParams);
     });
-    this._channel.on('disconnected', () => this._dispose());
 
     this.on = super.on;
     this.addListener = super.addListener;

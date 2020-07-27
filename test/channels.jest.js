@@ -31,8 +31,8 @@ describe.skip(!CHANNEL)('Channels', function() {
         ] },
         { _guid: 'BrowserType', objects: [] },
         { _guid: 'BrowserType', objects: [] },
-        { _guid: 'Playwright' },
-        { _guid: 'Selectors' },
+        { _guid: 'Playwright', objects: [] },
+        { _guid: 'Selectors', objects: [] },
         { _guid: 'Electron', objects: [] },
       ]
     };
@@ -49,15 +49,15 @@ describe.skip(!CHANNEL)('Channels', function() {
         { _guid: 'BrowserType', objects: [
           { _guid: 'Browser', objects: [
             { _guid: 'BrowserContext', objects: [
-              { _guid: 'Frame' },
-              { _guid: 'Page' },
-              { _guid: 'Request' },
-              { _guid: 'Response' },
+              { _guid: 'Frame', objects: [] },
+              { _guid: 'Page', objects: [] },
+              { _guid: 'Request', objects: [] },
+              { _guid: 'Response', objects: [] },
             ]},
           ] },
         ] },
-        { _guid: 'Playwright' },
-        { _guid: 'Selectors' },
+        { _guid: 'Playwright', objects: [] },
+        { _guid: 'Selectors', objects: [] },
         { _guid: 'Electron', objects: [] },
       ]
     });
@@ -75,8 +75,8 @@ describe.skip(!CHANNEL)('Channels', function() {
         ] },
         { _guid: 'BrowserType', objects: [] },
         { _guid: 'BrowserType', objects: [] },
-        { _guid: 'Playwright' },
-        { _guid: 'Selectors' },
+        { _guid: 'Playwright', objects: [] },
+        { _guid: 'Selectors', objects: [] },
         { _guid: 'Electron', objects: [] },
       ]
     };
@@ -93,8 +93,8 @@ describe.skip(!CHANNEL)('Channels', function() {
         ] },
         { _guid: 'BrowserType', objects: [] },
         { _guid: 'BrowserType', objects: [] },
-        { _guid: 'Playwright' },
-        { _guid: 'Selectors' },
+        { _guid: 'Playwright', objects: [] },
+        { _guid: 'Selectors', objects: [] },
         { _guid: 'Electron', objects: [] },
       ]
     });
@@ -112,8 +112,8 @@ describe.skip(!CHANNEL)('Channels', function() {
         ] },
         { _guid: 'BrowserType', objects: [] },
         { _guid: 'BrowserType', objects: [] },
-        { _guid: 'Playwright' },
-        { _guid: 'Selectors' },
+        { _guid: 'Playwright', objects: [] },
+        { _guid: 'Selectors', objects: [] },
         { _guid: 'Electron', objects: [] },
       ]
     };
@@ -132,8 +132,8 @@ describe.skip(!CHANNEL)('Channels', function() {
         ] },
         { _guid: 'BrowserType', objects: [] },
         { _guid: 'BrowserType', objects: [] },
-        { _guid: 'Playwright' },
-        { _guid: 'Selectors' },
+        { _guid: 'Playwright', objects: [] },
+        { _guid: 'Selectors', objects: [] },
         { _guid: 'Electron', objects: [] },
       ]
     });
@@ -154,12 +154,6 @@ async function expectScopeState(object, golden) {
 function compareObjects(a, b) {
   if (a._guid !== b._guid)
     return a._guid.localeCompare(b._guid);
-  if (a.objects && !b.objects)
-    return -1;
-  if (!a.objects && b.objects)
-    return 1;
-  if (!a.objects && !b.objects)
-    return 0;
   return a.objects.length - b.objects.length;
 }
 

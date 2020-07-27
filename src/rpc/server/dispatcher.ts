@@ -43,6 +43,7 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements Chann
   private _parent: Dispatcher<any, any> | undefined;
   // Only "isScope" channel owners have registered dispatchers inside.
   private _dispatchers = new Map<string, Dispatcher<any, any>>();
+  private _disposed = false;
 
   readonly _guid: string;
   readonly _type: string;
@@ -70,7 +71,7 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements Chann
 
     (object as any)[dispatcherSymbol] = this;
     if (this._parent)
-      this._connection.sendMessageToClient(this._parent._guid, '__create__', { type, initializer, guid });
+      this._connection.sendMessageToClient(this._parent._guid, '__create__', { type, initializer, guid }, !!isScope);
   }
 
   _dispatchEvent(method: string, params: Dispatcher<any, any> | any = {}) {
@@ -78,7 +79,7 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements Chann
   }
 
   _dispose() {
-    assert(this._isScope);
+    assert(!this._disposed);
 
     // Clean up from parent and connection.
     if (this._parent)
@@ -86,19 +87,18 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements Chann
     this._connection._dispatchers.delete(this._guid);
 
     // Dispose all children.
-    for (const [guid, dispatcher] of [...this._dispatchers]) {
-      if (dispatcher._isScope)
-        dispatcher._dispose();
-      else
-        this._connection._dispatchers.delete(guid);
-    }
+    for (const dispatcher of [...this._dispatchers.values()])
+      dispatcher._dispose();
     this._dispatchers.clear();
+
+    if (this._isScope)
+      this._connection.sendMessageToClient(this._guid, '__dispose__', {});
   }
 
   _debugScopeState(): any {
     return {
       _guid: this._guid,
-      objects: this._isScope ? Array.from(this._dispatchers.values()).map(o => o._debugScopeState()) : undefined,
+      objects: Array.from(this._dispatchers.values()).map(o => o._debugScopeState()),
     };
   }
 }
@@ -117,8 +117,9 @@ export class DispatcherConnection {
   onmessage = (message: object) => {};
   private _validateParams: (type: string, method: string, params: any) => any;
 
-  async sendMessageToClient(guid: string, method: string, params: any): Promise<any> {
-    this.onmessage({ guid, method, params: this._replaceDispatchersWithGuids(params) });
+  async sendMessageToClient(guid: string, method: string, params: any, disallowDispatchers?: boolean): Promise<any> {
+    const allowDispatchers = !disallowDispatchers;
+    this.onmessage({ guid, method, params: this._replaceDispatchersWithGuids(params, allowDispatchers) });
   }
 
   constructor() {
@@ -165,23 +166,26 @@ export class DispatcherConnection {
     try {
       const validated = this._validateParams(dispatcher._type, method, params);
       const result = await (dispatcher as any)[method](validated);
-      this.onmessage({ id, result: this._replaceDispatchersWithGuids(result) });
+      this.onmessage({ id, result: this._replaceDispatchersWithGuids(result, true) });
     } catch (e) {
       this.onmessage({ id, error: serializeError(e) });
     }
   }
 
-  private _replaceDispatchersWithGuids(payload: any): any {
+  private _replaceDispatchersWithGuids(payload: any, allowDispatchers: boolean): any {
     if (!payload)
       return payload;
-    if (payload instanceof Dispatcher)
+    if (payload instanceof Dispatcher) {
+      if (!allowDispatchers)
+        throw new Error(`Channels are not allowed in the scope's initialzier`);
       return { guid: payload._guid };
+    }
     if (Array.isArray(payload))
-      return payload.map(p => this._replaceDispatchersWithGuids(p));
+      return payload.map(p => this._replaceDispatchersWithGuids(p, allowDispatchers));
     if (typeof payload === 'object') {
       const result: any = {};
       for (const key of Object.keys(payload))
-        result[key] = this._replaceDispatchersWithGuids(payload[key]);
+        result[key] = this._replaceDispatchersWithGuids(payload[key], allowDispatchers);
       return result;
     }
     return payload;

@@ -1575,7 +1575,6 @@ export type StreamReadResult = {
 export type CDPSessionInitializer = {};
 export interface CDPSessionChannel extends Channel {
   on(event: 'event', callback: (params: CDPSessionEventEvent) => void): this;
-  on(event: 'disconnected', callback: (params: CDPSessionDisconnectedEvent) => void): this;
   send(params: CDPSessionSendParams): Promise<CDPSessionSendResult>;
   detach(params?: CDPSessionDetachParams): Promise<CDPSessionDetachResult>;
 }
@@ -1583,7 +1582,6 @@ export type CDPSessionEventEvent = {
   method: string,
   params?: SerializedValue,
 };
-export type CDPSessionDisconnectedEvent = {};
 export type CDPSessionSendParams = {
   method: string,
   params?: SerializedValue,

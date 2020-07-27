@@ -48,7 +48,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   }
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserContextInitializer, browserName: string) {
-    super(parent, type, guid, initializer, true);
+    super(parent, type, guid, initializer);
     if (parent instanceof Browser)
       this._browser = parent;
     this._browserName = browserName;
@@ -219,7 +219,6 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     if (this._browser)
       this._browser._contexts.delete(this);
     this.emit(Events.BrowserContext.Close);
-    this._dispose();
   }
 
   async close(): Promise<void> {
