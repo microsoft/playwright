@@ -362,6 +362,94 @@ describe('Page.click', function() {
     const msg = await clickNotification;
     expect(msg).toBe("47");
   })
+  it.only(FFOX)('should click and navigate to a x-frame-options:DENY link in fixed position div', async({page, server}) => {
+    server.setRoute('/login-with-x-frame-options-deny.html', async (req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('X-Frame-Options', 'DENY');
+      res.end();
+    });
+
+    server.setRoute('/wikipedia.html', async(req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.end(`
+      <!DOCTYPE html>
+      <html>
+        <body>
+          <a id="pt-login" href="/login-with-x-frame-options-deny.html">login</a>
+        </body></html>
+      `)
+    })
+
+    server.setRoute('/wrapper.html', async(req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.end(`
+      <!DOCTYPE html>
+      <html>
+      <body>
+          <div style="position:fixed;top:300px;left:300px;width:400px;height:400px;">
+              <iframe src="${server.CROSS_PROCESS_PREFIX + '/wikipedia.html'}"  width="100%" height="100%" > </iframe>
+          </div>
+      </body></html>
+      `)
+    })
+
+    await page.goto(server.PREFIX + '/wrapper.html')
+    const loggedIn = new Promise(fulfull => {
+      page.on('framenavigated', (frame) => {
+        if (frame.url().endsWith('/login-with-x-frame-options-deny.html')) {
+          fulfull(frame.url());
+        }
+      })
+    });
+    const frame = page.frames()[1];
+    const button = await frame.$('#pt-login');
+    await button.click();
+    expect(await loggedIn).toBeTruthy();
+  })
+  it.only(FFOX)('should click and navigate to a x-frame-options:DENY link', async({page, server}) => {
+    server.setRoute('/login-with-x-frame-options-deny.html', async (req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('X-Frame-Options', 'DENY');
+      res.end();
+    });
+
+    server.setRoute('/wikipedia.html', async(req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.end(`
+      <!DOCTYPE html>
+      <html>
+        <body>
+          <a id="pt-login" href="/login-with-x-frame-options-deny.html">login</a>
+        </body></html>
+      `)
+    })
+
+    server.setRoute('/wrapper.html', async(req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.end(`
+      <!DOCTYPE html>
+      <html>
+      <body>
+          <div>
+              <iframe src="${server.CROSS_PROCESS_PREFIX + '/wikipedia.html'}"  width="100%" height="100%" > </iframe>
+          </div>
+      </body></html>
+      `)
+    })
+
+    await page.goto(server.PREFIX + '/wrapper.html')
+    const loggedIn = new Promise(fulfull => {
+      page.on('framenavigated', (frame) => {
+        if (frame.url().endsWith('/login-with-x-frame-options-deny.html')) {
+          fulfull(frame.url());
+        }
+      })
+    });
+    const frame = page.frames()[1];
+    const button = await frame.$('#pt-login');
+    await button.click();
+    expect(await loggedIn).toBeTruthy();
+  })
   it('should click the button with deviceScaleFactor set', async({browser, server}) => {
     const context = await browser.newContext({ viewport: { width: 400, height: 400 }, deviceScaleFactor: 5 });
     const page = await context.newPage();
