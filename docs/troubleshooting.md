@@ -10,7 +10,7 @@
 - [WebKit](#webkit)
   * [WebKit headless doesn't launch on Linux/WSL](#webkit-headless-doesnt-launch-on-linuxwsl)
 - [Code transpilation issues](#code-transpilation-issues)
-- [Node requirements](#node-requirements)
+- [Node.js requirements](#nodejs-requirements)
   * [ReferenceError: URL is not defined](#referenceerror-url-is-not-defined)
 <!-- GEN:stop -->
 
@@ -195,11 +195,11 @@ await page.evaluate(`(async() => {
 })()`);
 ```
 
-## Node requirements
+## Node.js requirements
 
 ### ReferenceError: URL is not defined
 
-Playwright requires Node 10 or higher. Node 8 is not supported, and will cause you to receive this error.
+Playwright requires Node.js 10 or higher. Node.js 8 is not supported, and will cause you to receive this error.
 
 # Please file an issue
 
