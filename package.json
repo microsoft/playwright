@@ -29,7 +29,8 @@
     "typecheck-tests": "tsc -p ./test/",
     "roll-browser": "node utils/roll_browser.js",
     "jest": "jest",
-    "coverage": "node test/jest/checkCoverage.js"
+    "coverage": "node test/jest/checkCoverage.js",
+    "check-deps": "node utils/check_deps.js"
   },
   "author": {
     "name": "Microsoft Corporation"
