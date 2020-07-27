@@ -205,6 +205,7 @@ const LIBRARY_TO_PACKAGE_NAME_UBUNTU_18_04: { [s: string]: string} = {
   'libsecret-1.so.0': 'libsecret-1-0',
   'libsmime3.so': 'libnss3',
   'libssl3.so': 'libnss3',
+  'libvpx.so.5': 'libvpx5',
   'libwayland-client.so.0': 'libwayland-client0',
   'libwayland-egl.so.1': 'libwayland-egl1',
   'libwayland-server.so.0': 'libwayland-server0',
