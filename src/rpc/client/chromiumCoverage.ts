@@ -17,7 +17,7 @@
 import * as types from '../../types';
 import { PageChannel } from '../channels';
 
-export class Coverage {
+export class ChromiumCoverage {
   private _channel: PageChannel;
 
   constructor(channel: PageChannel) {

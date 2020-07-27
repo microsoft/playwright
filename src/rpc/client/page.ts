@@ -35,7 +35,7 @@ import { Func1, FuncOn, SmartHandle, serializeArgument, parseResult } from './js
 import { Request, Response, Route, RouteHandler } from './network';
 import { FileChooser } from './fileChooser';
 import { Buffer } from 'buffer';
-import { Coverage } from './coverage';
+import { ChromiumCoverage } from './chromiumCoverage';
 import { Waiter } from './waiter';
 
 import * as fs from 'fs';
@@ -57,7 +57,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   readonly accessibility: Accessibility;
   readonly keyboard: Keyboard;
   readonly mouse: Mouse;
-  coverage: Coverage | null = null;
+  coverage: ChromiumCoverage | null = null;
   pdf?: (options?: types.PDFOptions) => Promise<Buffer>;
 
   readonly _bindings = new Map<string, FunctionWithSource>();
@@ -109,7 +109,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     this._channel.on('worker', ({ worker }) => this._onWorker(Worker.from(worker)));
 
     if (this._browserContext._browserName === 'chromium') {
-      this.coverage = new Coverage(this._channel);
+      this.coverage = new ChromiumCoverage(this._channel);
       this.pdf = options => this._pdf(options);
     }
   }
