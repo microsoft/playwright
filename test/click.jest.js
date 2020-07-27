@@ -362,7 +362,7 @@ describe('Page.click', function() {
     const msg = await clickNotification;
     expect(msg).toBe("47");
   })
-  it.only(FFOX)('should click and navigate to a x-frame-options:DENY link in fixed position div', async({page, server}) => {
+  it.fail(CHROMIUM || WEBKIT)('should click and navigate to a x-frame-options:DENY link in fixed position div', async({page, server}) => {
     server.setRoute('/login-with-x-frame-options-deny.html', async (req, res) => {
       res.setHeader('Content-Type', 'text/html');
       res.setHeader('X-Frame-Options', 'DENY');
@@ -406,7 +406,7 @@ describe('Page.click', function() {
     await button.click();
     expect(await loggedIn).toBeTruthy();
   })
-  it.only(FFOX)('should click and navigate to a x-frame-options:DENY link', async({page, server}) => {
+  it.fail(CHROMIUM || WEBKIT)('should click and navigate to a x-frame-options:DENY link', async({page, server}) => {
     server.setRoute('/login-with-x-frame-options-deny.html', async (req, res) => {
       res.setHeader('Content-Type', 'text/html');
       res.setHeader('X-Frame-Options', 'DENY');
