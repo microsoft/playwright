@@ -17,16 +17,12 @@
 import { EventEmitter } from 'events';
 import type { Channel } from '../channels';
 import type { Connection } from './connection';
-import { assert } from '../../helper';
 import type { LoggerSink } from '../../loggerSink';
 import { DebugLoggerSink } from '../../logger';
 
 export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}> extends EventEmitter {
   private _connection: Connection;
-  _isScope = false;
-  // Parent is always "isScope".
   private _parent: ChannelOwner | undefined;
-  // Only "isScope" channel owners have registered objects inside.
   private _objects = new Map<string, ChannelOwner>();
 
   readonly _type: string;
@@ -44,7 +40,6 @@ export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}
 
     this._connection._objects.set(guid, this);
     if (this._parent) {
-      assert(this._parent._isScope);
       this._parent._objects.set(guid, this);
       this._logger = this._parent._logger;
     }
@@ -74,27 +69,21 @@ export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}
   }
 
   _dispose() {
-    assert(this._isScope);
-
     // Clean up from parent and connection.
     if (this._parent)
       this._parent._objects.delete(this._guid);
     this._connection._objects.delete(this._guid);
 
     // Dispose all children.
-    for (const [guid, object] of [...this._objects]) {
-      if (object._isScope)
-        object._dispose();
-      else
-        this._connection._objects.delete(guid);
-    }
+    for (const object of [...this._objects.values()])
+      object._dispose();
     this._objects.clear();
   }
 
   _debugScopeState(): any {
     return {
       _guid: this._guid,
-      objects: this._isScope ? Array.from(this._objects.values()).map(o => o._debugScopeState()) : undefined,
+      objects: Array.from(this._objects.values()).map(o => o._debugScopeState()),
     };
   }
 
