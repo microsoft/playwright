@@ -69,7 +69,7 @@ let documentation;
 ${overrides}
 
 ${classes.map(classDesc => classToString(classDesc)).join('\n')}
-${objectDefinitionsToString()}
+${objectDefinitionsToString(overrides)}
 ${generateDevicesTypes()}
 `;
   for (const [key, value] of Object.entries(exported))
@@ -80,14 +80,20 @@ ${generateDevicesTypes()}
   process.exit(1);
 });
 
-function objectDefinitionsToString() {
+/**
+ * @param {string} overriddes 
+ */
+function objectDefinitionsToString(overriddes) {
   let definition;
   const parts = [];
+  const internalWords = new Set(overriddes.split(/[^\w$]/g));
   while ((definition = objectDefinitions.pop())) {
     const {name, properties} = definition;
-    parts.push(`${exported[name] ? 'export ' : ''}interface ${name} {`);
-    parts.push(properties.map(member => `${memberJSDOC(member, '  ')}${nameForProperty(member)}${argsFromMember(member, name)}: ${typeToString(member.type, name, member.name)};`).join('\n\n'));
-    parts.push('}\n');
+    const shouldExport = !!exported[name];
+    const usedInternally = internalWords.has(name);
+    if (!usedInternally && !shouldExport)
+      continue;
+    parts.push(`${shouldExport ? 'export ' : ''}interface ${name} ${stringifyObjectType(properties, name, '')}\n`)
   }
   return parts.join('\n');
 }
@@ -141,7 +147,7 @@ function createEventDescriptions(classDesc) {
     return [];
   const descriptions = [];
   for (const [eventName, value] of classDesc.events) {
-    const type = typeToString(value && value.type, classDesc.name, eventName, 'payload');
+    const type = stringifyComplexType(value && value.type, '', classDesc.name, eventName, 'payload');
     const argName = argNameForType(type);
     const params = argName ? `${argName} : ${type}` : '';
     descriptions.push({
@@ -183,8 +189,8 @@ function classBody(classDesc) {
       return parts.join('\n');
     }
     const jsdoc = memberJSDOC(member, '  ');
-    const args = argsFromMember(member, classDesc.name);
-    const type = typeToString(member.type, classDesc.name, member.name);
+    const args = argsFromMember(member, '  ', classDesc.name);
+    const type = stringifyComplexType(member.type, '  ', classDesc.name, member.name);
     // do this late, because we still want object definitions for overridden types
     if (!hasOwnMethod(classDesc, member.name))
       return '';
@@ -229,19 +235,33 @@ function writeComment(comment, indent = '') {
 /**
  * @param {Documentation.Type} type
  */
-function typeToString(type, ...namespace) {
+function stringifyComplexType(type, indent, ...namespace) {
   if (!type)
     return 'void';
   // Accessibility.snapshot has a recursive data structure, so special case it here.
   if (namespace[0] === 'AccessibilitySnapshot' && namespace[1] === 'children')
     return 'Array<AccessibilitySnapshot>';
-  let typeString = stringifyType(parseType(type.name));
+  let typeString = stringifySimpleType(parseType(type.name));
   if (type.properties.length && typeString.indexOf('Object') !== -1) {
     const name = namespace.map(n => n[0].toUpperCase() + n.substring(1)).join('');
-    typeString = typeString.replace('Object', name);
+    const shouldExport = exported[name];
     objectDefinitions.push({name, properties: type.properties});
+    if (shouldExport) {
+      typeString = typeString.replace('Object', name);
+    } else {
+      const objType = stringifyObjectType(type.properties, name, indent);
+      typeString = typeString.replace('Object', objType);
+    }
   }
   return typeString;
+}
+
+function stringifyObjectType(properties, name, indent = '') {
+  const parts = [];
+  parts.push(`{`);
+  parts.push(properties.map(member => `${memberJSDOC(member, indent + '  ')}${nameForProperty(member)}${argsFromMember(member, indent + '  ', name)}: ${stringifyComplexType(member.type, indent + '  ',  name, member.name)};`).join('\n\n'));
+  parts.push(indent + '}');
+  return parts.join('\n');
 }
 
 /**
@@ -308,15 +328,15 @@ function parseType(type) {
 /**
  * @return {string}
  */
-function stringifyType(parsedType) {
+function stringifySimpleType(parsedType) {
   if (!parsedType)
     return 'void';
   if (parsedType.name === 'Object' && parsedType.template) {
-    const keyType = stringifyType({
+    const keyType = stringifySimpleType({
       ...parsedType.template,
       next: null
     });
-    const valueType = stringifyType(parsedType.template.next);
+    const valueType = stringifySimpleType(parsedType.template.next);
     return `{ [key: ${keyType}]: ${valueType}; }`;
   }
   let out = parsedType.name;
@@ -327,20 +347,20 @@ function stringifyType(parsedType) {
       const arg = args;
       args = args.next;
       arg.next = null;
-      stringArgs.push(stringifyType(arg));
+      stringArgs.push(stringifySimpleType(arg));
     }
-    out = `((${stringArgs.map((type, index) => `arg${index} : ${type}`).join(', ')}) => ${stringifyType(parsedType.retType)})`;
+    out = `((${stringArgs.map((type, index) => `arg${index} : ${type}`).join(', ')}) => ${stringifySimpleType(parsedType.retType)})`;
   } else if (parsedType.name === 'function') {
     out = 'Function';
   }
   if (parsedType.nullable)
     out = 'null|' + out;
   if (parsedType.template)
-    out += '<' + stringifyType(parsedType.template) + '>';
+    out += '<' + stringifySimpleType(parsedType.template) + '>';
   if (parsedType.pipe)
-    out += '|' + stringifyType(parsedType.pipe);
+    out += '|' + stringifySimpleType(parsedType.pipe);
   if (parsedType.next)
-    out += ', ' + stringifyType(parsedType.next);
+    out += ', ' + stringifySimpleType(parsedType.next);
   return out.trim();
 }
 
@@ -359,10 +379,10 @@ function matchingBracket(str, open, close) {
 /**
  * @param {Documentation.Member} member
  */
-function argsFromMember(member, ...namespace) {
+function argsFromMember(member, indent, ...namespace) {
   if (member.kind === 'property')
     return '';
-  return '(' + member.argsArray.map(arg => `${nameForProperty(arg)}: ${typeToString(arg.type, ...namespace, member.name, arg.name)}`).join(', ') + ')';
+  return '(' + member.argsArray.map(arg => `${nameForProperty(arg)}: ${stringifyComplexType(arg.type, indent, ...namespace, member.name, arg.name)}`).join(', ') + ')';
 }
 /**
  * @param {Documentation.Member} member

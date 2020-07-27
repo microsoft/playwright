@@ -44,7 +44,6 @@ type PageFunctionOn<On, Arg2, R> = string | ((on: On, arg2: Unboxed<Arg2>) => R 
 type SmartHandle<T> = T extends Node ? ElementHandle<T> : JSHandle<T>;
 type ElementHandleForTag<K extends keyof HTMLElementTagNameMap> = ElementHandle<HTMLElementTagNameMap[K]>;
 type HTMLOrSVGElement = SVGElement | HTMLElement;
-type HTMLOrSVGElementHandle = ElementHandle<HTMLOrSVGElement>;
 
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   state: 'visible'|'attached';
@@ -61,10 +60,10 @@ export interface Page {
   evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<SmartHandle<R>>;
 
   $<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K> | null>;
-  $(selector: string): Promise<HTMLOrSVGElementHandle | null>;
+  $(selector: string): Promise<ElementHandle<HTMLOrSVGElement> | null>;
 
   $$<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K>[]>;
-  $$(selector: string): Promise<HTMLOrSVGElementHandle[]>;
+  $$(selector: string): Promise<ElementHandle<HTMLOrSVGElement>[]>;
 
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
   $eval<R, Arg, E extends HTMLOrSVGElement = HTMLOrSVGElement>(selector: string, pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg): Promise<R>;
@@ -80,9 +79,9 @@ export interface Page {
   waitForFunction<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
 
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
-  waitForSelector(selector: string, options?: PageWaitForSelectorOptionsNotHidden): Promise<HTMLOrSVGElementHandle>;
+  waitForSelector(selector: string, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandle<HTMLOrSVGElement>>;
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: PageWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
-  waitForSelector(selector: string, options: PageWaitForSelectorOptions): Promise<null|HTMLOrSVGElementHandle>;
+  waitForSelector(selector: string, options: PageWaitForSelectorOptions): Promise<null|ElementHandle<HTMLOrSVGElement>>;
 }
 
 export interface Frame {
@@ -93,10 +92,10 @@ export interface Frame {
   evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<SmartHandle<R>>;
 
   $<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K> | null>;
-  $(selector: string): Promise<HTMLOrSVGElementHandle | null>;
+  $(selector: string): Promise<ElementHandle<HTMLOrSVGElement> | null>;
 
   $$<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K>[]>;
-  $$(selector: string): Promise<HTMLOrSVGElementHandle[]>;
+  $$(selector: string): Promise<ElementHandle<HTMLOrSVGElement>[]>;
 
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
   $eval<R, Arg, E extends HTMLOrSVGElement = HTMLOrSVGElement>(selector: string, pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg): Promise<R>;
@@ -112,9 +111,9 @@ export interface Frame {
   waitForFunction<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
 
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
-  waitForSelector(selector: string, options?: PageWaitForSelectorOptionsNotHidden): Promise<HTMLOrSVGElementHandle>;
+  waitForSelector(selector: string, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandle<HTMLOrSVGElement>>;
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: PageWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
-  waitForSelector(selector: string, options: PageWaitForSelectorOptions): Promise<null|HTMLOrSVGElementHandle>;
+  waitForSelector(selector: string, options: PageWaitForSelectorOptions): Promise<null|ElementHandle<HTMLOrSVGElement>>;
 }
 
 export interface Worker {
@@ -138,10 +137,10 @@ export interface JSHandle<T = any> {
 
 export interface ElementHandle<T=Node> extends JSHandle<T> {
   $<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K> | null>;
-  $(selector: string): Promise<HTMLOrSVGElementHandle | null>;
+  $(selector: string): Promise<ElementHandle<HTMLOrSVGElement> | null>;
 
   $$<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K>[]>;
-  $$(selector: string): Promise<HTMLOrSVGElementHandle[]>;
+  $$(selector: string): Promise<ElementHandle<HTMLOrSVGElement>[]>;
 
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
   $eval<R, Arg, E extends HTMLOrSVGElement = HTMLOrSVGElement>(selector: string, pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg): Promise<R>;
@@ -154,9 +153,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   $$eval<R, E extends HTMLOrSVGElement = HTMLOrSVGElement>(selector: string, pageFunction: PageFunctionOn<E[], void, R>, arg?: any): Promise<R>;
 
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: ElementHandleWaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
-  waitForSelector(selector: string, options?: ElementHandleWaitForSelectorOptionsNotHidden): Promise<HTMLOrSVGElementHandle>;
+  waitForSelector(selector: string, options?: ElementHandleWaitForSelectorOptionsNotHidden): Promise<ElementHandle<HTMLOrSVGElement>>;
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: ElementHandleWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
-  waitForSelector(selector: string, options: ElementHandleWaitForSelectorOptions): Promise<null|HTMLOrSVGElementHandle>;
+  waitForSelector(selector: string, options: ElementHandleWaitForSelectorOptions): Promise<null|ElementHandle<HTMLOrSVGElement>>;
 }
 
 export interface BrowserType<Browser> {
@@ -165,7 +164,7 @@ export interface BrowserType<Browser> {
 
 export interface ChromiumBrowser extends Browser {
   contexts(): Array<ChromiumBrowserContext>;
-  newContext(options?: BrowserNewContextOptions): Promise<ChromiumBrowserContext>;
+  newContext(options?: BrowserContextOptions): Promise<ChromiumBrowserContext>;
 }
 
 export interface CDPSession {
@@ -181,7 +180,7 @@ export interface CDPSession {
 }
 
 type DeviceDescriptor = {
-  viewport: BrowserNewContextOptionsViewport;
+  viewport: ViewportSize;
   userAgent: string;
   deviceScaleFactor: number;
   isMobile: boolean;
