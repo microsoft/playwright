@@ -293,6 +293,43 @@ describe.skip(!CHROMIUM)('OOPIF', function() {
     ]);
     await browser.close();
   });
+  it('ElementHandle.boundingBox() should work', async function({sppBrowser, sppPage, server}) {
+    const browser = sppBrowser;
+    const page = sppPage;
+    await page.goto(server.PREFIX + '/dynamic-oopif.html');
+    await page.$eval('iframe', iframe => {
+      iframe.style.width = '500px';
+      iframe.style.height = '500px';
+      iframe.style.marginLeft = '42px';
+      iframe.style.marginTop = '17px';
+    });
+
+    expect(await countOOPIFs(browser)).toBe(1);
+    const handle1 = await page.frames()[1].$('.box:nth-of-type(13)');
+    expect(await handle1.boundingBox()).toEqual({ x: 100 + 42, y: 50 + 17, width: 50, height: 50 });
+
+    await page.evaluate(() => goLocal());
+    expect(await countOOPIFs(browser)).toBe(0);
+    const handle2 = await page.frames()[1].$('.box:nth-of-type(13)');
+    expect(await handle2.boundingBox()).toEqual({ x: 100 + 42, y: 50 + 17, width: 50, height: 50 });
+  });
+  it('should click', async function({sppBrowser, sppPage, server}) {
+    const browser = sppBrowser;
+    const page = sppPage;
+    await page.goto(server.PREFIX + '/dynamic-oopif.html');
+    await page.$eval('iframe', iframe => {
+      iframe.style.width = '500px';
+      iframe.style.height = '500px';
+      iframe.style.marginLeft = '102px';
+      iframe.style.marginTop = '117px';
+    });
+
+    expect(await countOOPIFs(browser)).toBe(1);
+    const handle1 = await page.frames()[1].$('.box:nth-of-type(13)');
+    await handle1.evaluate(div => div.addEventListener('click', () => window._clicked = true, false));
+    await handle1.click();
+    expect(await handle1.evaluate(() => window._clicked)).toBe(true);
+  });
 });
 
 async function countOOPIFs(browser) {
