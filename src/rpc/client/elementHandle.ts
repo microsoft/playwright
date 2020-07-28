@@ -20,7 +20,7 @@ import { Frame } from './frame';
 import { FuncOn, JSHandle, serializeArgument, parseResult } from './jsHandle';
 import { ChannelOwner } from './channelOwner';
 import { helper, assert } from '../../helper';
-import { normalizeFilePayloads } from '../serializers';
+import { normalizeFilePayloads } from '../../converters';
 
 export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   readonly _elementChannel: ElementHandleChannel;

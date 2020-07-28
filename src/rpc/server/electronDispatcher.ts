@@ -22,7 +22,7 @@ import { BrowserContextBase } from '../../browserContext';
 import { PageDispatcher } from './pageDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { createHandle } from './elementHandlerDispatcher';
-import { envArrayToObject } from '../serializers';
+import { envArrayToObject } from '../../converters';
 
 export class ElectronDispatcher extends Dispatcher<Electron, ElectronInitializer> implements ElectronChannel {
   constructor(scope: DispatcherScope, electron: Electron) {

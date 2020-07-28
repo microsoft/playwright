@@ -26,7 +26,7 @@ import * as types from './types';
 import { Progress } from './progress';
 import DebugScript from './debug/injected/debugScript';
 import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
-import { normalizeFilePayloads } from './rpc/serializers';
+import { normalizeFilePayloads } from './converters';
 
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;

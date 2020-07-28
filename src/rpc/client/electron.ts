@@ -25,7 +25,7 @@ import { TimeoutSettings } from '../../timeoutSettings';
 import { Waiter } from './waiter';
 import { Events } from '../../events';
 import { LoggerSink } from '../../loggerSink';
-import { envObjectToArray } from '../serializers';
+import { envObjectToArray } from '../../converters';
 
 export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer> {
   static from(electron: ElectronChannel): Electron {

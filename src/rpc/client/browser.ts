@@ -22,7 +22,7 @@ import { ChannelOwner } from './channelOwner';
 import { Events } from '../../events';
 import { LoggerSink } from '../../loggerSink';
 import { BrowserType } from './browserType';
-import { headersObjectToArray } from '../serializers';
+import { headersObjectToArray } from '../../converters';
 
 export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   readonly _contexts = new Set<BrowserContext>();

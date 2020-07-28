@@ -18,7 +18,7 @@
     "tsc-installer": "tsc -p ./src/install/tsconfig.json",
     "doc": "node utils/doclint/cli.js",
     "test-infra": "node utils/doclint/check_public_api/test/test.js && node utils/doclint/preprocessor/test.js && node utils/testrunner/test/test.js",
-    "lint": "npm run eslint && npm run tsc && npm run doc && npm run test-types && npm run test-infra",
+    "lint": "npm run eslint && npm run tsc && npm run doc && npm run check-deps && npm run test-types && npm run test-infra",
     "debug-test": "node --inspect-brk test/test.js",
     "clean": "rimraf lib && rimraf types",
     "prepare": "node install-from-github.js",
