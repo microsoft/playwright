@@ -215,29 +215,35 @@ class NetworkRequest {
     // interception and service workers.
     // An internal redirect has the same channelId, inherits notificationCallbacks and
     // listener, and should be used instead of an old channel.
-
     this._networkObserver._channelToRequest.delete(this.httpChannel);
     this.httpChannel = newChannel;
     this._networkObserver._channelToRequest.set(this.httpChannel, this);
+  }
 
-    if (this._expectingResumedRequest) {
-      const { method, headers, postData } = this._expectingResumedRequest;
-      this._expectingResumedRequest = undefined;
+  // Instrumentation called by NetworkObserver.
+  _onInternalRedirectReady() {
+    // Resumed request is first internally redirected to a new request,
+    // and then the new request is ready to be updated.
+    if (!this._expectingResumedRequest)
+      return;
+    const { method, headers, postData } = this._expectingResumedRequest;
+    this._expectingResumedRequest = undefined;
 
-      if (headers) {
-        // Apply new request headers from interception resume.
-        for (const header of requestHeaders(newChannel))
-          newChannel.setRequestHeader(header.name, '', false /* merge */);
-        for (const header of headers)
-          newChannel.setRequestHeader(header.name, header.value, false /* merge */);
-      }
-      if (method)
-        newChannel.requestMethod = method;
-      if (postData && newChannel instanceof Ci.nsIUploadChannel) {
-        const synthesized = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
-        synthesized.data = atob(postData);
-        newChannel.setUploadStream(synthesized, 'application/octet-stream', -1);
-      }
+    if (headers) {
+      for (const header of requestHeaders(this.httpChannel))
+        this.httpChannel.setRequestHeader(header.name, '', false /* merge */);
+      for (const header of headers)
+        this.httpChannel.setRequestHeader(header.name, header.value, false /* merge */);
+    }
+    if (method)
+      this.httpChannel.requestMethod = method;
+    if (postData && this.httpChannel instanceof Ci.nsIUploadChannel2) {
+      const synthesized = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
+      const body = atob(postData);
+      synthesized.setData(body, body.length);
+      // Clear content-length, so that upload stream resets it.
+      this.httpChannel.setRequestHeader('content-length', '', false /* merge */);
+      this.httpChannel.explicitSetUploadStream(synthesized, 'application/octet-stream', -1, this.httpChannel.requestMethod, false);
     }
   }
 
@@ -646,11 +652,11 @@ class NetworkObserver {
       this._expectedRedirect.delete(channelId);
       new NetworkRequest(this, httpChannel, redirectedFrom);
     } else {
-      if (this._channelToRequest.has(httpChannel)) {
-        // This happens for resumed requests.
-        return;
-      }
-      new NetworkRequest(this, httpChannel);
+      const redirectedRequest = this._channelToRequest.get(httpChannel);
+      if (redirectedRequest)
+        redirectedRequest._onInternalRedirectReady();
+      else
+        new NetworkRequest(this, httpChannel);
     }
   }
 
