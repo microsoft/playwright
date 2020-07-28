@@ -19,6 +19,8 @@ lib/injected/
 !README.md
 !LICENSE
 !NOTICE
+!api.md
+!protocol.yml
 
 # browser descriptor
 !browsers.json
