@@ -31,7 +31,12 @@ const fsUnlinkAsync = util.promisify(fs.unlink.bind(fs));
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const removeFolderAsync = util.promisify(removeFolder);
 
-export async function installBrowsersWithProgressBar(packagePath: string) {
+type InstallOptions = {
+  skipCollection?: boolean,
+  onlyBrowsers?: string[]
+};
+
+export async function installBrowsersWithProgressBar(packagePath: string, options: InstallOptions = {}) {
   const browsersPath = browserPaths.browsersPath(packagePath);
   const linksDir = path.join(browsersPath, '.links');
 
@@ -41,10 +46,10 @@ export async function installBrowsersWithProgressBar(packagePath: string) {
   }
   await fsMkdirAsync(linksDir,  { recursive: true });
   await fsWriteFileAsync(path.join(linksDir, sha1(packagePath)), packagePath);
-  await validateCache(packagePath, browsersPath, linksDir);
+  await validateCache(packagePath, browsersPath, linksDir, options);
 }
 
-async function validateCache(packagePath: string, browsersPath: string, linksDir: string) {
+async function validateCache(packagePath: string, browsersPath: string, linksDir: string, options: InstallOptions) {
   // 1. Collect used downloads and package descriptors.
   const usedBrowserPaths: Set<string> = new Set();
   for (const fileName of await fsReaddirAsync(linksDir)) {
@@ -71,19 +76,22 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
   }
 
   // 2. Delete all unused browsers.
-  let downloadedBrowsers = (await fsReaddirAsync(browsersPath)).map(file => path.join(browsersPath, file));
-  downloadedBrowsers = downloadedBrowsers.filter(file => browserPaths.isBrowserDirectory(file));
-  const directories = new Set<string>(downloadedBrowsers);
-  for (const browserPath of usedBrowserPaths)
-    directories.delete(browserPath);
-  for (const directory of directories) {
-    logPolitely('Removing unused browser at ' + directory);
-    await removeFolderAsync(directory).catch(e => {});
+  if (!options.skipCollection) {
+    let downloadedBrowsers = (await fsReaddirAsync(browsersPath)).map(file => path.join(browsersPath, file));
+    downloadedBrowsers = downloadedBrowsers.filter(file => browserPaths.isBrowserDirectory(file));
+    const directories = new Set<string>(downloadedBrowsers);
+    for (const browserPath of usedBrowserPaths)
+      directories.delete(browserPath);
+    for (const directory of directories) {
+      logPolitely('Removing unused browser at ' + directory);
+      await removeFolderAsync(directory).catch(e => {});
+    }
   }
 
   // 3. Install missing browsers for this package.
   const myBrowsersToDownload = await readBrowsersToDownload(packagePath);
-  for (const browser of myBrowsersToDownload) {
+  const myFilteredBrowsers = myBrowsersToDownload.filter(b => !options.onlyBrowsers || options.onlyBrowsers.includes(b.name));
+  for (const browser of myFilteredBrowsers) {
     await browserFetcher.downloadBrowserWithProgressBar(browsersPath, browser);
     await fsWriteFileAsync(browserPaths.markerFilePath(browsersPath, browser), '');
   }
