@@ -342,7 +342,7 @@ describe('Page.click', function() {
     const msg = await clickNotification;
     expect(msg).toBe("47");
   })
-  it.fail(CHROMIUM && !HEADLESS)('should click the visible link in an iframe (cross-origin)', async({page, server}) => {
+  it('should click the visible link in an iframe (cross-origin)', async({page, server}) => {
     const clickNotification = new Promise(fulfill => {
       page.on('dialog', dialog => {
         fulfill(dialog.message());
@@ -362,7 +362,7 @@ describe('Page.click', function() {
     const msg = await clickNotification;
     expect(msg).toBe("47");
   })
-  it.fail(CHROMIUM && !HEADLESS)('should click the visible link in an iframe (cross-origin) in fixed position div', async({page, server}) => {
+  it('should click the visible link in an iframe (cross-origin) in fixed position div', async({page, server}) => {
     const clickNotification = new Promise(fulfill => {
       page.on('dialog', dialog => {
         fulfill(dialog.message());
@@ -382,7 +382,7 @@ describe('Page.click', function() {
     const msg = await clickNotification;
     expect(msg).toBe("47");
   })
-  it.fail(CHROMIUM && !HEADLESS)('should click and navigate to a x-frame-options:DENY link in fixed position div', async({page, server}) => {
+  it('should click and navigate to a x-frame-options:DENY link in fixed position div', async({page, server}) => {
     server.setRoute('/login-with-x-frame-options-deny.html', async (req, res) => {
       res.setHeader('Content-Type', 'text/html');
       res.setHeader('X-Frame-Options', 'DENY');
@@ -438,7 +438,7 @@ describe('Page.click', function() {
       expect((await consoleMessaged).match(/^Refused to display.*login-with-x-frame-options-deny\.html' in a frame because it set 'X-Frame-Options' to 'DENY'\./i)).toBeTruthy();
     }
   })
-  it.fail(CHROMIUM && !HEADLESS)('should click and navigate to a x-frame-options:DENY link', async({page, server}) => {
+  it('should click and navigate to a x-frame-options:DENY link', async({page, server}) => {
     server.setRoute('/login-with-x-frame-options-deny.html', async (req, res) => {
       res.setHeader('Content-Type', 'text/html');
       res.setHeader('X-Frame-Options', 'DENY');
