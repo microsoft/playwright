@@ -142,29 +142,13 @@ class FrameTree {
   }
 
   setColorScheme(colorScheme) {
-    if (this._emulatedColorScheme === colorScheme) {
-      return;
-    }
-
-    let internalColorScheme;
-    switch (colorScheme) {
-      case "light":
-        internalColorScheme = Ci.nsIContentViewer.PREFERS_COLOR_SCHEME_LIGHT;
-        break;
-      case "dark":
-        internalColorScheme = Ci.nsIContentViewer.PREFERS_COLOR_SCHEME_DARK;
-        break;
-      case "no-preference":
-        internalColorScheme =
-          Ci.nsIContentViewer.PREFERS_COLOR_SCHEME_NO_PREFERENCE;
-        break;
-      default:
-        internalColorScheme = Ci.nsIContentViewer.PREFERS_COLOR_SCHEME_NONE;
-    }
-
-    this._emulatedColorScheme = colorScheme;
     const docShell = this._mainFrame._docShell;
-    docShell.contentViewer.emulatePrefersColorScheme(internalColorScheme);
+    switch (colorScheme) {
+      case 'light': docShell.colorSchemeOverride = Ci.nsIDocShell.COLOR_SCHEME_OVERRIDE_LIGHT; break;
+      case 'dark': docShell.colorSchemeOverride = Ci.nsIDocShell.COLOR_SCHEME_OVERRIDE_DARK; break;
+      case 'no-preference': docShell.colorSchemeOverride = Ci.nsIDocShell.COLOR_SCHEME_OVERRIDE_NO_PREFERENCE; break;
+      default: docShell.colorSchemeOverride = Ci.nsIDocShell.COLOR_SCHEME_OVERRIDE_NONE; break;
+    }
   }
 
   frameForDocShell(docShell) {
