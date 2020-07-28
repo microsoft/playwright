@@ -24,7 +24,7 @@ import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../../chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Events as ChromiumEvents } from '../../chromium/events';
-import { headersArrayToObject } from '../serializers';
+import { headersArrayToObject } from '../../converters';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, BrowserContextInitializer> implements BrowserContextChannel {
   private _context: BrowserContextBase;

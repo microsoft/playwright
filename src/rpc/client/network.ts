@@ -19,7 +19,7 @@ import * as types from '../../types';
 import { RequestChannel, ResponseChannel, RouteChannel, RequestInitializer, ResponseInitializer, RouteInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
-import { normalizeFulfillParameters, headersArrayToObject, normalizeContinueOverrides } from '../serializers';
+import { normalizeFulfillParameters, headersArrayToObject, normalizeContinueOverrides } from '../../converters';
 
 export type NetworkCookie = {
   name: string,

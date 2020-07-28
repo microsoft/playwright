@@ -21,7 +21,7 @@ import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { BrowserServer } from './browserServer';
 import { LoggerSink } from '../../loggerSink';
-import { headersObjectToArray, envObjectToArray } from '../serializers';
+import { headersObjectToArray, envObjectToArray } from '../../converters';
 import { serializeArgument } from './jsHandle';
 import { assert } from '../../helper';
 

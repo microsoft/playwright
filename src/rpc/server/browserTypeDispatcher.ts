@@ -23,7 +23,7 @@ import { Dispatcher, DispatcherScope } from './dispatcher';
 import { BrowserContextBase } from '../../browserContext';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { BrowserServerDispatcher } from './browserServerDispatcher';
-import { headersArrayToObject, envArrayToObject } from '../serializers';
+import { headersArrayToObject, envArrayToObject } from '../../converters';
 import { parseValue } from './jsHandleDispatcher';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeInitializer> implements BrowserTypeChannel {

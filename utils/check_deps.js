@@ -53,8 +53,12 @@ async function checkDeps() {
     const rpc = path.join('src', 'rpc');
     if (!from.includes(rpc) && to.includes(rpc))
       return false;
-    if (from.includes(rpc) && !to.includes(rpc))
+    const rpcClient = path.join('src', 'rpc', 'client');
+    const rpcServer = path.join('src', 'rpc', 'server');
+    if (from.includes(rpcClient) && to.includes(rpcServer))
       return false;
+    // if (from.includes(rpcClient) && !to.includes(rpc))
+    //   return false;
     return true;
   }
 }

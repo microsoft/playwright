@@ -21,7 +21,7 @@ import * as network from '../network';
 import * as types from '../types';
 import { Protocol } from './protocol';
 import { WKSession } from './wkConnection';
-import { headersArrayToObject } from '../rpc/serializers';
+import { headersArrayToObject } from '../converters';
 
 const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
   'aborted': 'Cancellation',

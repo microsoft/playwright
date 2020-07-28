@@ -26,7 +26,7 @@ import { Browser } from './browser';
 import { Events } from '../../events';
 import { TimeoutSettings } from '../../timeoutSettings';
 import { Waiter } from './waiter';
-import { headersObjectToArray } from '../serializers';
+import { headersObjectToArray } from '../../converters';
 
 export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserContextInitializer> {
   _pages = new Set<Page>();

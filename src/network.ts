@@ -18,7 +18,7 @@ import * as frames from './frames';
 import * as types from './types';
 import { assert, helper } from './helper';
 import { URLSearchParams } from 'url';
-import { normalizeFulfillParameters, normalizeContinueOverrides } from './rpc/serializers';
+import { normalizeFulfillParameters, normalizeContinueOverrides } from './converters';
 
 export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): types.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));
