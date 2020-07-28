@@ -35,7 +35,7 @@ class Wrapper {
       logger: undefined,
     };
     const options = {
-      playwrightFile: path.join(playwrightPath, 'index'),
+      playwrightPath,
       browserTypeName: browserType.name(),
       launchOptions,
       ...extraOptions,
