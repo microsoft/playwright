@@ -342,6 +342,26 @@ describe('Page.click', function() {
     const msg = await clickNotification;
     expect(msg).toBe("47");
   })
+  it.fail(CHROMIUM && !HEADLESS)('should click the visible link in an iframe (cross-origin)', async({page, server}) => {
+    const clickNotification = new Promise(fulfill => {
+      page.on('dialog', dialog => {
+        fulfill(dialog.message());
+        dialog.accept();
+      });
+    });
+    await page.goto(server.EMPTY_PAGE);
+    await page.setViewportSize({width:1920, height:1080});
+    await page.setContent(`
+    <div>
+        <iframe src="${server.CROSS_PROCESS_PREFIX + '/frames/link.html'}"  width="100%" height="100%" > </iframe>
+    </div>
+    `)
+    const frame = page.frames()[1];
+    const link = await frame.$("#link-target");
+    await link.click();
+    const msg = await clickNotification;
+    expect(msg).toBe("47");
+  })
   it.fail(CHROMIUM && !HEADLESS)('should click the visible link in an iframe (cross-origin) in fixed position div', async({page, server}) => {
     const clickNotification = new Promise(fulfill => {
       page.on('dialog', dialog => {
