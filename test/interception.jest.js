@@ -442,7 +442,7 @@ describe('Page.route', function() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         mode: 'cors',
-        body: JSON.stringify({ 'number': 1 }) 
+        body: JSON.stringify({ 'number': 1 })
       });
       return response.json();
     });
@@ -466,11 +466,11 @@ describe('Page.route', function() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           mode: 'cors',
-          body: JSON.stringify({ 'number': 1 }) 
+          body: JSON.stringify({ 'number': 1 })
         });
         return response.json();
       });
-      expect(resp).toEqual(['POST', 'electric', 'gas']);        
+      expect(resp).toEqual(['POST', 'electric', 'gas']);
     }
     // Then DELETE
     {
@@ -479,11 +479,11 @@ describe('Page.route', function() {
           method: 'DELETE',
           headers: {},
           mode: 'cors',
-          body: '' 
+          body: ''
         });
         return response.json();
       });
-      expect(resp).toEqual(['DELETE', 'electric', 'gas']);        
+      expect(resp).toEqual(['DELETE', 'electric', 'gas']);
     }
   });
 });
@@ -534,7 +534,7 @@ describe('Request.continue', function() {
     ]);
     expect((await serverRequest.postBody).toString('utf8')).toBe('doggo');
   });
-  it.fail(FFOX)('should amend utf8 post data', async({page, server}) => {
+  it('should amend utf8 post data', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/*', route => {
       route.continue({ postData: 'пушкин' });
@@ -543,9 +543,10 @@ describe('Request.continue', function() {
       server.waitForRequest('/sleep.zzz'),
       page.evaluate(() => fetch('/sleep.zzz', { method: 'POST', body: 'birdy' }))
     ]);
+    expect(serverRequest.method).toBe('POST');
     expect((await serverRequest.postBody).toString('utf8')).toBe('пушкин');
   });
-  it.fail(FFOX)('should amend longer post data', async({page, server}) => {
+  it('should amend longer post data', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/*', route => {
       route.continue({ postData: 'doggo-is-longer-than-birdy' });
@@ -554,9 +555,10 @@ describe('Request.continue', function() {
       server.waitForRequest('/sleep.zzz'),
       page.evaluate(() => fetch('/sleep.zzz', { method: 'POST', body: 'birdy' }))
     ]);
+    expect(serverRequest.method).toBe('POST');
     expect((await serverRequest.postBody).toString('utf8')).toBe('doggo-is-longer-than-birdy');
   });
-  it.fail(FFOX)('should amend binary post data', async({page, server}) => {
+  it('should amend binary post data', async({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     const arr = Array.from(Array(256).keys());
     await page.route('**/*', route => {
@@ -566,6 +568,7 @@ describe('Request.continue', function() {
       server.waitForRequest('/sleep.zzz'),
       page.evaluate(() => fetch('/sleep.zzz', { method: 'POST', body: 'birdy' }))
     ]);
+    expect(serverRequest.method).toBe('POST');
     const buffer = await serverRequest.postBody;
     expect(buffer.length).toBe(arr.length);
     for (let i = 0; i < arr.length; ++i)
