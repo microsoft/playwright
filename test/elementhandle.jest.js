@@ -361,6 +361,21 @@ describe('ElementHandle.scrollIntoViewIfNeeded', function() {
     await page.setContent('<span style="display:none"><div>Hello</div></span>');
     await testWaiting(page, div => div.parentElement.style.display = 'block');
   });
+  it('should wait for element to stop moving', async({page, server}) => {
+    await page.setContent(`
+    <style>
+      @keyframes move {
+        from { margin-left: 0; }
+        to { margin-left: 200px; }
+      }
+      div.animated {
+        animation: 2s linear 0s infinite alternate move;
+      }
+    </style>
+    <div class=animated>moving</div>
+    `);
+    await testWaiting(page, div => div.classList.remove('animated'));
+  });
 
   it('should timeout waiting for visible', async({page, server}) => {
     await page.setContent('<div style="display:none">Hello</div>');

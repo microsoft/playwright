@@ -49,4 +49,14 @@ body {
 ::-webkit-scrollbar {
     display: none;
 }
+
+@keyframes move {
+    from { left: -500px; background-color: cyan; }
+    to { left: 0; background-color: rgb(255, 210, 204); }
+}
+.box.animation {
+    position: relative;
+    animation: 2s linear 0s move forwards;
+}
+
 </style>
