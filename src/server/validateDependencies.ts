@@ -33,6 +33,12 @@ export async function validateHostRequirements(browserPath: string, browser: Bro
   await validateDependencies(browserPath, browser);
 }
 
+const DL_OPEN_LIBRARIES = {
+  chromium: [],
+  webkit: ['libGLESv2.so.2'],
+  firefox: [],
+};
+
 async function validateDependencies(browserPath: string, browser: BrowserDescriptor) {
   // We currently only support Linux.
   if (os.platform() !== 'linux')
@@ -47,6 +53,8 @@ async function validateDependencies(browserPath: string, browser: BrowserDescrip
     for (const dep of deps)
       missingDeps.add(dep);
   }
+  for (const dep of (await missingDLOPENLibraries(browser)))
+    missingDeps.add(dep);
   if (!missingDeps.size)
     return;
   // Check Ubuntu version.
@@ -110,27 +118,40 @@ async function executablesOrSharedLibraries(directoryPath: string): Promise<stri
 }
 
 async function missingFileDependencies(filePath: string): Promise<Array<string>> {
-  const {stdout} = await lddAsync(filePath);
-  const missingDeps = stdout.split('\n').map(line => line.trim()).filter(line => line.endsWith('not found') && line.includes('=>')).map(line => line.split('=>')[0].trim());
-  return missingDeps;
-}
-
-function lddAsync(filePath: string): Promise<{stdout: string, stderr: string, code: number}> {
   const dirname = path.dirname(filePath);
-  const ldd = spawn('ldd', [filePath], {
+  const {stdout, code} = await spawnAsync('ldd', [filePath], {
     cwd: dirname,
     env: {
       ...process.env,
       LD_LIBRARY_PATH: process.env.LD_LIBRARY_PATH ? `${process.env.LD_LIBRARY_PATH}:${dirname}` : dirname,
     },
   });
+  if (code !== 0)
+    return [];
+  const missingDeps = stdout.split('\n').map(line => line.trim()).filter(line => line.endsWith('not found') && line.includes('=>')).map(line => line.split('=>')[0].trim());
+  return missingDeps;
+}
+
+async function missingDLOPENLibraries(browser: BrowserDescriptor): Promise<string[]> {
+  const libraries = DL_OPEN_LIBRARIES[browser.name];
+  if (!libraries.length)
+    return [];
+  const {stdout, code} = await spawnAsync('ldconfig', ['-p'], {});
+  if (code !== 0)
+    return [];
+  const isLibraryAvailable = (library: string) => stdout.toLowerCase().includes(library.toLowerCase());
+  return libraries.filter(library => !isLibraryAvailable(library));
+}
+
+function spawnAsync(cmd: string, args: string[], options: any): Promise<{stdout: string, stderr: string, code: number}> {
+  const process = spawn(cmd, args, options);
 
   return new Promise(resolve => {
     let stdout = '';
     let stderr = '';
-    ldd.stdout.on('data', data => stdout += data);
-    ldd.stderr.on('data', data => stderr += data);
-    ldd.on('close', code => resolve({stdout, stderr, code}));
+    process.stdout.on('data', data => stdout += data);
+    process.stderr.on('data', data => stderr += data);
+    process.on('close', code => resolve({stdout, stderr, code}));
   });
 }
 
