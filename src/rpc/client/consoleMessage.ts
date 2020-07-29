@@ -15,10 +15,12 @@
  */
 
 import * as util from 'util';
-import { ConsoleMessageLocation } from '../../types';
 import { JSHandle } from './jsHandle';
 import { ConsoleMessageChannel, ConsoleMessageInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
+
+let __dummyInitializer: ConsoleMessageInitializer;
+type ConsoleMessageLocation = typeof __dummyInitializer.location;
 
 export class ConsoleMessage extends ChannelOwner<ConsoleMessageChannel, ConsoleMessageInitializer> {
   static from(message: ConsoleMessageChannel): ConsoleMessage {

@@ -17,20 +17,20 @@
 
 import * as frames from './frame';
 import { Page, BindingCall } from './page';
-import * as types from '../../types';
 import * as network from './network';
 import { BrowserContextChannel, BrowserContextInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
 import { helper } from '../../helper';
 import { Browser } from './browser';
-import { Events } from '../../events';
+import { Events } from './events';
 import { TimeoutSettings } from '../../timeoutSettings';
 import { Waiter } from './waiter';
 import { headersObjectToArray } from '../../converters';
+import { URLMatch, Headers, WaitForEventOptions } from './types';
 
 export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserContextInitializer> {
   _pages = new Set<Page>();
-  private _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
+  private _routes: { url: URLMatch, handler: network.RouteHandler }[] = [];
   readonly _browser: Browser | undefined;
   readonly _browserName: string;
   readonly _bindings = new Map<string, frames.FunctionWithSource>();
@@ -138,13 +138,13 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     });
   }
 
-  async setGeolocation(geolocation: types.Geolocation | null): Promise<void> {
+  async setGeolocation(geolocation: { longitude: number, latitude: number, accuracy?: number } | null): Promise<void> {
     return this._wrapApiCall('browserContext.setGeolocation', async () => {
       await this._channel.setGeolocation({ geolocation: geolocation || undefined });
     });
   }
 
-  async setExtraHTTPHeaders(headers: types.Headers): Promise<void> {
+  async setExtraHTTPHeaders(headers: Headers): Promise<void> {
     return this._wrapApiCall('browserContext.setExtraHTTPHeaders', async () => {
       await this._channel.setExtraHTTPHeaders({ headers: headersObjectToArray(headers) });
     });
@@ -156,7 +156,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     });
   }
 
-  async setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
+  async setHTTPCredentials(httpCredentials: { username: string, password: string } | null): Promise<void> {
     return this._wrapApiCall('browserContext.setHTTPCredentials', async () => {
       await this._channel.setHTTPCredentials({ httpCredentials: httpCredentials || undefined });
     });
@@ -186,7 +186,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     await this.exposeBinding(name, (source, ...args) => playwrightFunction(...args));
   }
 
-  async route(url: types.URLMatch, handler: network.RouteHandler): Promise<void> {
+  async route(url: URLMatch, handler: network.RouteHandler): Promise<void> {
     return this._wrapApiCall('browserContext.route', async () => {
       this._routes.push({ url, handler });
       if (this._routes.length === 1)
@@ -194,7 +194,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     });
   }
 
-  async unroute(url: types.URLMatch, handler?: network.RouteHandler): Promise<void> {
+  async unroute(url: URLMatch, handler?: network.RouteHandler): Promise<void> {
     return this._wrapApiCall('browserContext.unroute', async () => {
       this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
       if (this._routes.length === 0)
@@ -202,7 +202,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     });
   }
 
-  async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
+  async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
     const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function'  ? {} : optionsOrPredicate);
     const predicate = typeof optionsOrPredicate === 'function'  ? optionsOrPredicate : optionsOrPredicate.predicate;
     const waiter = new Waiter();

@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import * as types from '../../types';
-import { PageChannel } from '../channels';
+import { PageChannel, PageKeyboardTypeOptions, PageKeyboardPressOptions, PageMouseDownOptions, PageMouseUpOptions, PageMouseClickOptions } from '../channels';
 
 export class Keyboard {
   private _channel: PageChannel;
@@ -37,11 +36,11 @@ export class Keyboard {
     await this._channel.keyboardInsertText({ text });
   }
 
-  async type(text: string, options: { delay?: number } = {}) {
+  async type(text: string, options: PageKeyboardTypeOptions = {}) {
     await this._channel.keyboardType({ text, ...options });
   }
 
-  async press(key: string, options: { delay?: number } = {}) {
+  async press(key: string, options: PageKeyboardPressOptions = {}) {
     await this._channel.keyboardPress({ key, ...options });
   }
 }
@@ -57,19 +56,19 @@ export class Mouse {
     await this._channel.mouseMove({ x, y, ...options });
   }
 
-  async down(options: { button?: types.MouseButton, clickCount?: number } = {}) {
+  async down(options: PageMouseDownOptions = {}) {
     await this._channel.mouseDown({ ...options });
   }
 
-  async up(options: { button?: types.MouseButton, clickCount?: number } = {}) {
+  async up(options: PageMouseUpOptions = {}) {
     await this._channel.mouseUp(options);
   }
 
-  async click(x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number } = {}) {
+  async click(x: number, y: number, options: PageMouseClickOptions = {}) {
     await this._channel.mouseClick({ x, y, ...options });
   }
 
-  async dblclick(x: number, y: number, options: { delay?: number, button?: types.MouseButton } = {}) {
+  async dblclick(x: number, y: number, options: Omit<PageMouseClickOptions, 'clickCount'> = {}) {
     await this.click(x, y, { ...options, clickCount: 2 });
   }
 }

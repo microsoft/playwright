@@ -17,7 +17,7 @@
 import { EventEmitter } from 'events';
 import type { Channel } from '../channels';
 import type { Connection } from './connection';
-import type { LoggerSink } from '../../loggerSink';
+import type { LoggerSink } from './types';
 import { DebugLoggerSink } from '../../logger';
 
 export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}> extends EventEmitter {

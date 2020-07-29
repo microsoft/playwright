@@ -15,11 +15,11 @@
  */
 
 import { URLSearchParams } from 'url';
-import * as types from '../../types';
 import { RequestChannel, ResponseChannel, RouteChannel, RequestInitializer, ResponseInitializer, RouteInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
 import { normalizeFulfillParameters, headersArrayToObject, normalizeContinueOverrides } from '../../converters';
+import { Headers } from './types';
 
 export type NetworkCookie = {
   name: string,
@@ -44,11 +44,24 @@ export type SetNetworkCookieParam = {
   sameSite?: 'Strict' | 'Lax' | 'None'
 };
 
+type FulfillResponse = {
+  status?: number,
+  headers?: Headers,
+  contentType?: string,
+  body?: string | Buffer,
+};
+
+type ContinueOverrides = {
+  method?: string,
+  headers?: Headers,
+  postData?: string | Buffer,
+};
+
 export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
   private _redirectedFrom: Request | null = null;
   private _redirectedTo: Request | null = null;
   _failureText: string | null = null;
-  private _headers: types.Headers;
+  private _headers: Headers;
   private _postData: Buffer | null;
 
   static from(request: RequestChannel): Request {
@@ -108,7 +121,7 @@ export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
     return JSON.parse(postData);
   }
 
-  headers(): types.Headers {
+  headers(): Headers {
     return { ...this._headers };
   }
 
@@ -162,12 +175,12 @@ export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
     await this._channel.abort({ errorCode });
   }
 
-  async fulfill(response: types.FulfillResponse & { path?: string }) {
+  async fulfill(response: FulfillResponse & { path?: string }) {
     const normalized = await normalizeFulfillParameters(response);
     await this._channel.fulfill(normalized);
   }
 
-  async continue(overrides: types.ContinueOverrides = {}) {
+  async continue(overrides: ContinueOverrides = {}) {
     const normalized = normalizeContinueOverrides(overrides);
     await this._channel.continue({
       method: normalized.method,
@@ -180,7 +193,7 @@ export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
 export type RouteHandler = (route: Route, request: Request) => void;
 
 export class Response extends ChannelOwner<ResponseChannel, ResponseInitializer> {
-  private _headers: types.Headers;
+  private _headers: Headers;
 
   static from(response: ResponseChannel): Response {
     return (response as any)._object;
@@ -211,7 +224,7 @@ export class Response extends ChannelOwner<ResponseChannel, ResponseInitializer>
     return this._initializer.statusText;
   }
 
-  headers(): types.Headers {
+  headers(): Headers {
     return { ...this._headers };
   }
 

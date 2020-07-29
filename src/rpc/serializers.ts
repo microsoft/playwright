@@ -15,9 +15,8 @@
  */
 
 import { TimeoutError } from '../errors';
-import * as types from '../types';
 import { helper } from '../helper';
-import { SerializedError, AXNode, SerializedValue } from './channels';
+import { SerializedError, SerializedValue } from './channels';
 
 export function serializeError(e: any): SerializedError {
   if (helper.isError(e))
@@ -39,32 +38,6 @@ export function parseError(error: SerializedError): Error {
   const e = new Error(error.error.message);
   e.stack = error.error.stack || '';
   return e;
-}
-
-export function axNodeToProtocol(axNode: types.SerializedAXNode): AXNode {
-  const result: AXNode = {
-    ...axNode,
-    valueNumber: typeof axNode.value === 'number' ? axNode.value : undefined,
-    valueString: typeof axNode.value === 'string' ? axNode.value : undefined,
-    checked: axNode.checked === true ? 'checked' : axNode.checked === false ? 'unchecked' : axNode.checked,
-    pressed: axNode.pressed === true ? 'pressed' : axNode.pressed === false ? 'released' : axNode.pressed,
-    children: axNode.children ? axNode.children.map(axNodeToProtocol) : undefined,
-  };
-  delete (result as any).value;
-  return result;
-}
-
-export function axNodeFromProtocol(axNode: AXNode): types.SerializedAXNode {
-  const result: types.SerializedAXNode = {
-    ...axNode,
-    value: axNode.valueNumber !== undefined ? axNode.valueNumber : axNode.valueString,
-    checked: axNode.checked === 'checked' ? true : axNode.checked === 'unchecked' ? false : axNode.checked,
-    pressed: axNode.pressed === 'pressed' ? true : axNode.pressed === 'released' ? false : axNode.pressed,
-    children: axNode.children ? axNode.children.map(axNodeFromProtocol) : undefined,
-  };
-  delete (result as any).valueNumber;
-  delete (result as any).valueString;
-  return result;
 }
 
 export function parseSerializedValue(value: SerializedValue, handles: any[] | undefined): any {

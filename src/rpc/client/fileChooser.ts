@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import * as types from '../../types';
 import { ElementHandle } from './elementHandle';
 import { Page } from './page';
+import { FilePayload } from './types';
+import { ElementHandleSetInputFilesOptions } from '../channels';
 
 export class FileChooser {
   private _page: Page;
@@ -41,7 +42,7 @@ export class FileChooser {
     return this._page;
   }
 
-  async setFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options?: types.NavigatingActionWaitOptions) {
+  async setFiles(files: string | FilePayload | string[] | FilePayload[], options?: ElementHandleSetInputFilesOptions) {
     return this._elementHandle.setInputFiles(files, options);
   }
 }

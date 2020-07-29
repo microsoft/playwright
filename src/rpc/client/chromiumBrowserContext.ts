@@ -19,7 +19,7 @@ import { Page } from './page';
 import { BrowserContextInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
 import { CDPSession } from './cdpSession';
-import { Events as ChromiumEvents } from '../../chromium/events';
+import { Events } from './events';
 import { Worker } from './worker';
 import { BrowserContext } from './browserContext';
 
@@ -32,13 +32,13 @@ export class ChromiumBrowserContext extends BrowserContext {
     this._channel.on('crBackgroundPage', ({ page }) => {
       const backgroundPage = Page.from(page);
       this._backgroundPages.add(backgroundPage);
-      this.emit(ChromiumEvents.ChromiumBrowserContext.BackgroundPage, backgroundPage);
+      this.emit(Events.ChromiumBrowserContext.BackgroundPage, backgroundPage);
     });
     this._channel.on('crServiceWorker', ({worker}) => {
       const serviceWorker = Worker.from(worker);
       serviceWorker._context = this;
       this._serviceWorkers.add(serviceWorker);
-      this.emit(ChromiumEvents.ChromiumBrowserContext.ServiceWorker, serviceWorker);
+      this.emit(Events.ChromiumBrowserContext.ServiceWorker, serviceWorker);
     });
   }
 

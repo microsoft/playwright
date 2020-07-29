@@ -15,18 +15,27 @@
  */
 
 import { PlaywrightChannel, PlaywrightInitializer } from '../channels';
-import * as types from '../../types';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { Selectors } from './selectors';
 import { Electron } from './electron';
 import { TimeoutError } from '../../errors';
+import { Size } from './types';
+
+type DeviceDescriptor = {
+  userAgent: string,
+  viewport: Size,
+  deviceScaleFactor: number,
+  isMobile: boolean,
+  hasTouch: boolean
+};
+type Devices = { [name: string]: DeviceDescriptor };
 
 export class Playwright extends ChannelOwner<PlaywrightChannel, PlaywrightInitializer> {
   readonly chromium: BrowserType;
   readonly firefox: BrowserType;
   readonly webkit: BrowserType;
-  readonly devices: types.Devices;
+  readonly devices: Devices;
   readonly selectors: Selectors;
   readonly errors: { TimeoutError: typeof TimeoutError };
 

@@ -120,10 +120,16 @@ export type SelectorsRegisterParams = {
   source: string,
   contentScript?: boolean,
 };
+export type SelectorsRegisterOptions = {
+  contentScript?: boolean,
+};
 export type SelectorsRegisterResult = void;
 export type SelectorsCreateSelectorParams = {
   name: string,
   handle: ElementHandleChannel,
+};
+export type SelectorsCreateSelectorOptions = {
+
 };
 export type SelectorsCreateSelectorResult = {
   value?: string,
@@ -142,6 +148,10 @@ export interface BrowserTypeChannel extends Channel {
 }
 export type BrowserTypeConnectParams = {
   wsEndpoint: string,
+  slowMo?: number,
+  timeout?: number,
+};
+export type BrowserTypeConnectOptions = {
   slowMo?: number,
   timeout?: number,
 };
@@ -173,10 +183,60 @@ export type BrowserTypeLaunchParams = {
   firefoxUserPrefs?: SerializedValue,
   slowMo?: number,
 };
+export type BrowserTypeLaunchOptions = {
+  executablePath?: string,
+  args?: string[],
+  ignoreAllDefaultArgs?: boolean,
+  ignoreDefaultArgs?: string[],
+  handleSIGINT?: boolean,
+  handleSIGTERM?: boolean,
+  handleSIGHUP?: boolean,
+  timeout?: number,
+  env?: {
+    name: string,
+    value: string,
+  }[],
+  headless?: boolean,
+  devtools?: boolean,
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
+  downloadsPath?: string,
+  firefoxUserPrefs?: SerializedValue,
+  slowMo?: number,
+};
 export type BrowserTypeLaunchResult = {
   browser: BrowserChannel,
 };
 export type BrowserTypeLaunchServerParams = {
+  executablePath?: string,
+  args?: string[],
+  ignoreAllDefaultArgs?: boolean,
+  ignoreDefaultArgs?: string[],
+  handleSIGINT?: boolean,
+  handleSIGTERM?: boolean,
+  handleSIGHUP?: boolean,
+  timeout?: number,
+  env?: {
+    name: string,
+    value: string,
+  }[],
+  headless?: boolean,
+  devtools?: boolean,
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
+  downloadsPath?: string,
+  firefoxUserPrefs?: SerializedValue,
+  port?: number,
+};
+export type BrowserTypeLaunchServerOptions = {
   executablePath?: string,
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
@@ -260,6 +320,61 @@ export type BrowserTypeLaunchPersistentContextParams = {
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
 };
+export type BrowserTypeLaunchPersistentContextOptions = {
+  executablePath?: string,
+  args?: string[],
+  ignoreAllDefaultArgs?: boolean,
+  ignoreDefaultArgs?: string[],
+  handleSIGINT?: boolean,
+  handleSIGTERM?: boolean,
+  handleSIGHUP?: boolean,
+  timeout?: number,
+  env?: {
+    name: string,
+    value: string,
+  }[],
+  headless?: boolean,
+  devtools?: boolean,
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
+  downloadsPath?: string,
+  slowMo?: number,
+  noDefaultViewport?: boolean,
+  viewport?: {
+    width: number,
+    height: number,
+  },
+  ignoreHTTPSErrors?: boolean,
+  javaScriptEnabled?: boolean,
+  bypassCSP?: boolean,
+  userAgent?: string,
+  locale?: string,
+  timezoneId?: string,
+  geolocation?: {
+    longitude: number,
+    latitude: number,
+    accuracy?: number,
+  },
+  permissions?: string[],
+  extraHTTPHeaders?: {
+    name: string,
+    value: string,
+  }[],
+  offline?: boolean,
+  httpCredentials?: {
+    username: string,
+    password: string,
+  },
+  deviceScaleFactor?: number,
+  isMobile?: boolean,
+  hasTouch?: boolean,
+  colorScheme?: 'dark' | 'light' | 'no-preference',
+  acceptDownloads?: boolean,
+};
 export type BrowserTypeLaunchPersistentContextResult = {
   context: BrowserContextChannel,
 };
@@ -279,8 +394,10 @@ export type BrowserServerCloseEvent = {
   signal?: string,
 };
 export type BrowserServerCloseParams = {};
+export type BrowserServerCloseOptions = {};
 export type BrowserServerCloseResult = void;
 export type BrowserServerKillParams = {};
+export type BrowserServerKillOptions = {};
 export type BrowserServerKillResult = void;
 
 // ----------- Browser -----------
@@ -297,8 +414,42 @@ export interface BrowserChannel extends Channel {
 }
 export type BrowserCloseEvent = {};
 export type BrowserCloseParams = {};
+export type BrowserCloseOptions = {};
 export type BrowserCloseResult = void;
 export type BrowserNewContextParams = {
+  noDefaultViewport?: boolean,
+  viewport?: {
+    width: number,
+    height: number,
+  },
+  ignoreHTTPSErrors?: boolean,
+  javaScriptEnabled?: boolean,
+  bypassCSP?: boolean,
+  userAgent?: string,
+  locale?: string,
+  timezoneId?: string,
+  geolocation?: {
+    longitude: number,
+    latitude: number,
+    accuracy?: number,
+  },
+  permissions?: string[],
+  extraHTTPHeaders?: {
+    name: string,
+    value: string,
+  }[],
+  offline?: boolean,
+  httpCredentials?: {
+    username: string,
+    password: string,
+  },
+  deviceScaleFactor?: number,
+  isMobile?: boolean,
+  hasTouch?: boolean,
+  colorScheme?: 'dark' | 'light' | 'no-preference',
+  acceptDownloads?: boolean,
+};
+export type BrowserNewContextOptions = {
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,
@@ -335,6 +486,7 @@ export type BrowserNewContextResult = {
   context: BrowserContextChannel,
 };
 export type BrowserCrNewBrowserCDPSessionParams = {};
+export type BrowserCrNewBrowserCDPSessionOptions = {};
 export type BrowserCrNewBrowserCDPSessionResult = {
   session: CDPSessionChannel,
 };
@@ -344,8 +496,15 @@ export type BrowserCrStartTracingParams = {
   screenshots?: boolean,
   categories?: string[],
 };
+export type BrowserCrStartTracingOptions = {
+  page?: PageChannel,
+  path?: string,
+  screenshots?: boolean,
+  categories?: string[],
+};
 export type BrowserCrStartTracingResult = void;
 export type BrowserCrStopTracingParams = {};
+export type BrowserCrStopTracingOptions = {};
 export type BrowserCrStopTracingResult = {
   binary: Binary,
 };
@@ -407,19 +566,31 @@ export type BrowserContextAddCookiesParams = {
     sameSite?: 'Strict' | 'Lax' | 'None',
   }[],
 };
+export type BrowserContextAddCookiesOptions = {
+
+};
 export type BrowserContextAddCookiesResult = void;
 export type BrowserContextAddInitScriptParams = {
   source: string,
 };
+export type BrowserContextAddInitScriptOptions = {
+
+};
 export type BrowserContextAddInitScriptResult = void;
 export type BrowserContextClearCookiesParams = {};
+export type BrowserContextClearCookiesOptions = {};
 export type BrowserContextClearCookiesResult = void;
 export type BrowserContextClearPermissionsParams = {};
+export type BrowserContextClearPermissionsOptions = {};
 export type BrowserContextClearPermissionsResult = void;
 export type BrowserContextCloseParams = {};
+export type BrowserContextCloseOptions = {};
 export type BrowserContextCloseResult = void;
 export type BrowserContextCookiesParams = {
   urls: string[],
+};
+export type BrowserContextCookiesOptions = {
+
 };
 export type BrowserContextCookiesResult = {
   cookies: {
@@ -436,22 +607,35 @@ export type BrowserContextCookiesResult = {
 export type BrowserContextExposeBindingParams = {
   name: string,
 };
+export type BrowserContextExposeBindingOptions = {
+
+};
 export type BrowserContextExposeBindingResult = void;
 export type BrowserContextGrantPermissionsParams = {
   permissions: string[],
   origin?: string,
 };
+export type BrowserContextGrantPermissionsOptions = {
+  origin?: string,
+};
 export type BrowserContextGrantPermissionsResult = void;
 export type BrowserContextNewPageParams = {};
+export type BrowserContextNewPageOptions = {};
 export type BrowserContextNewPageResult = {
   page: PageChannel,
 };
 export type BrowserContextSetDefaultNavigationTimeoutNoReplyParams = {
   timeout: number,
 };
+export type BrowserContextSetDefaultNavigationTimeoutNoReplyOptions = {
+
+};
 export type BrowserContextSetDefaultNavigationTimeoutNoReplyResult = void;
 export type BrowserContextSetDefaultTimeoutNoReplyParams = {
   timeout: number,
+};
+export type BrowserContextSetDefaultTimeoutNoReplyOptions = {
+
 };
 export type BrowserContextSetDefaultTimeoutNoReplyResult = void;
 export type BrowserContextSetExtraHTTPHeadersParams = {
@@ -460,8 +644,18 @@ export type BrowserContextSetExtraHTTPHeadersParams = {
     value: string,
   }[],
 };
+export type BrowserContextSetExtraHTTPHeadersOptions = {
+
+};
 export type BrowserContextSetExtraHTTPHeadersResult = void;
 export type BrowserContextSetGeolocationParams = {
+  geolocation?: {
+    longitude: number,
+    latitude: number,
+    accuracy?: number,
+  },
+};
+export type BrowserContextSetGeolocationOptions = {
   geolocation?: {
     longitude: number,
     latitude: number,
@@ -475,17 +669,32 @@ export type BrowserContextSetHTTPCredentialsParams = {
     password: string,
   },
 };
+export type BrowserContextSetHTTPCredentialsOptions = {
+  httpCredentials?: {
+    username: string,
+    password: string,
+  },
+};
 export type BrowserContextSetHTTPCredentialsResult = void;
 export type BrowserContextSetNetworkInterceptionEnabledParams = {
   enabled: boolean,
+};
+export type BrowserContextSetNetworkInterceptionEnabledOptions = {
+
 };
 export type BrowserContextSetNetworkInterceptionEnabledResult = void;
 export type BrowserContextSetOfflineParams = {
   offline: boolean,
 };
+export type BrowserContextSetOfflineOptions = {
+
+};
 export type BrowserContextSetOfflineResult = void;
 export type BrowserContextCrNewCDPSessionParams = {
   page: PageChannel,
+};
+export type BrowserContextCrNewCDPSessionOptions = {
+
 };
 export type BrowserContextCrNewCDPSessionResult = {
   session: CDPSessionChannel,
@@ -607,20 +816,35 @@ export type PageWorkerEvent = {
 export type PageSetDefaultNavigationTimeoutNoReplyParams = {
   timeout: number,
 };
+export type PageSetDefaultNavigationTimeoutNoReplyOptions = {
+
+};
 export type PageSetDefaultNavigationTimeoutNoReplyResult = void;
 export type PageSetDefaultTimeoutNoReplyParams = {
   timeout: number,
+};
+export type PageSetDefaultTimeoutNoReplyOptions = {
+
 };
 export type PageSetDefaultTimeoutNoReplyResult = void;
 export type PageSetFileChooserInterceptedNoReplyParams = {
   intercepted: boolean,
 };
+export type PageSetFileChooserInterceptedNoReplyOptions = {
+
+};
 export type PageSetFileChooserInterceptedNoReplyResult = void;
 export type PageAddInitScriptParams = {
   source: string,
 };
+export type PageAddInitScriptOptions = {
+
+};
 export type PageAddInitScriptResult = void;
 export type PageCloseParams = {
+  runBeforeUnload?: boolean,
+};
+export type PageCloseOptions = {
   runBeforeUnload?: boolean,
 };
 export type PageCloseResult = void;
@@ -628,12 +852,23 @@ export type PageEmulateMediaParams = {
   media?: 'screen' | 'print' | 'null',
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'null',
 };
+export type PageEmulateMediaOptions = {
+  media?: 'screen' | 'print' | 'null',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'null',
+};
 export type PageEmulateMediaResult = void;
 export type PageExposeBindingParams = {
   name: string,
 };
+export type PageExposeBindingOptions = {
+
+};
 export type PageExposeBindingResult = void;
 export type PageGoBackParams = {
+  timeout?: number,
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
+};
+export type PageGoBackOptions = {
   timeout?: number,
   waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
 };
@@ -644,10 +879,15 @@ export type PageGoForwardParams = {
   timeout?: number,
   waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
 };
+export type PageGoForwardOptions = {
+  timeout?: number,
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
+};
 export type PageGoForwardResult = {
   response?: ResponseChannel,
 };
 export type PageOpenerParams = {};
+export type PageOpenerOptions = {};
 export type PageOpenerResult = {
   page?: PageChannel,
 };
@@ -655,10 +895,28 @@ export type PageReloadParams = {
   timeout?: number,
   waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
 };
+export type PageReloadOptions = {
+  timeout?: number,
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
+};
 export type PageReloadResult = {
   response?: ResponseChannel,
 };
 export type PageScreenshotParams = {
+  timeout?: number,
+  type?: 'png' | 'jpeg',
+  path?: string,
+  quality?: number,
+  omitBackground?: boolean,
+  fullPage?: boolean,
+  clip?: {
+    width: number,
+    height: number,
+    x: number,
+    y: number,
+  },
+};
+export type PageScreenshotOptions = {
   timeout?: number,
   type?: 'png' | 'jpeg',
   path?: string,
@@ -681,9 +939,15 @@ export type PageSetExtraHTTPHeadersParams = {
     value: string,
   }[],
 };
+export type PageSetExtraHTTPHeadersOptions = {
+
+};
 export type PageSetExtraHTTPHeadersResult = void;
 export type PageSetNetworkInterceptionEnabledParams = {
   enabled: boolean,
+};
+export type PageSetNetworkInterceptionEnabledOptions = {
+
 };
 export type PageSetNetworkInterceptionEnabledResult = void;
 export type PageSetViewportSizeParams = {
@@ -692,26 +956,44 @@ export type PageSetViewportSizeParams = {
     height: number,
   },
 };
+export type PageSetViewportSizeOptions = {
+
+};
 export type PageSetViewportSizeResult = void;
 export type PageKeyboardDownParams = {
   key: string,
+};
+export type PageKeyboardDownOptions = {
+
 };
 export type PageKeyboardDownResult = void;
 export type PageKeyboardUpParams = {
   key: string,
 };
+export type PageKeyboardUpOptions = {
+
+};
 export type PageKeyboardUpResult = void;
 export type PageKeyboardInsertTextParams = {
   text: string,
+};
+export type PageKeyboardInsertTextOptions = {
+
 };
 export type PageKeyboardInsertTextResult = void;
 export type PageKeyboardTypeParams = {
   text: string,
   delay?: number,
 };
+export type PageKeyboardTypeOptions = {
+  delay?: number,
+};
 export type PageKeyboardTypeResult = void;
 export type PageKeyboardPressParams = {
   key: string,
+  delay?: number,
+};
+export type PageKeyboardPressOptions = {
   delay?: number,
 };
 export type PageKeyboardPressResult = void;
@@ -720,13 +1002,24 @@ export type PageMouseMoveParams = {
   y: number,
   steps?: number,
 };
+export type PageMouseMoveOptions = {
+  steps?: number,
+};
 export type PageMouseMoveResult = void;
 export type PageMouseDownParams = {
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
 };
+export type PageMouseDownOptions = {
+  button?: 'left' | 'right' | 'middle',
+  clickCount?: number,
+};
 export type PageMouseDownResult = void;
 export type PageMouseUpParams = {
+  button?: 'left' | 'right' | 'middle',
+  clickCount?: number,
+};
+export type PageMouseUpOptions = {
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
 };
@@ -738,8 +1031,17 @@ export type PageMouseClickParams = {
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
 };
+export type PageMouseClickOptions = {
+  delay?: number,
+  button?: 'left' | 'right' | 'middle',
+  clickCount?: number,
+};
 export type PageMouseClickResult = void;
 export type PageAccessibilitySnapshotParams = {
+  interestingOnly?: boolean,
+  root?: ElementHandleChannel,
+};
+export type PageAccessibilitySnapshotOptions = {
   interestingOnly?: boolean,
   root?: ElementHandleChannel,
 };
@@ -765,6 +1067,25 @@ export type PagePdfParams = {
     right?: string,
   },
 };
+export type PagePdfOptions = {
+  scale?: number,
+  displayHeaderFooter?: boolean,
+  headerTemplate?: string,
+  footerTemplate?: string,
+  printBackground?: boolean,
+  landscape?: boolean,
+  pageRanges?: string,
+  format?: string,
+  width?: string,
+  height?: string,
+  preferCSSPageSize?: boolean,
+  margin?: {
+    top?: string,
+    bottom?: string,
+    left?: string,
+    right?: string,
+  },
+};
 export type PagePdfResult = {
   pdf: Binary,
 };
@@ -772,8 +1093,13 @@ export type PageCrStartJSCoverageParams = {
   resetOnNavigation?: boolean,
   reportAnonymousScripts?: boolean,
 };
+export type PageCrStartJSCoverageOptions = {
+  resetOnNavigation?: boolean,
+  reportAnonymousScripts?: boolean,
+};
 export type PageCrStartJSCoverageResult = void;
 export type PageCrStopJSCoverageParams = {};
+export type PageCrStopJSCoverageOptions = {};
 export type PageCrStopJSCoverageResult = {
   entries: {
     url: string,
@@ -793,8 +1119,12 @@ export type PageCrStopJSCoverageResult = {
 export type PageCrStartCSSCoverageParams = {
   resetOnNavigation?: boolean,
 };
+export type PageCrStartCSSCoverageOptions = {
+  resetOnNavigation?: boolean,
+};
 export type PageCrStartCSSCoverageResult = void;
 export type PageCrStopCSSCoverageParams = {};
+export type PageCrStopCSSCoverageOptions = {};
 export type PageCrStopCSSCoverageResult = {
   entries: {
     url: string,
@@ -806,6 +1136,7 @@ export type PageCrStopCSSCoverageResult = {
   }[],
 };
 export type PageBringToFrontParams = {};
+export type PageBringToFrontOptions = {};
 export type PageBringToFrontResult = void;
 
 // ----------- Frame -----------
@@ -868,6 +1199,9 @@ export type FrameEvalOnSelectorParams = {
   isFunction: boolean,
   arg: SerializedArgument,
 };
+export type FrameEvalOnSelectorOptions = {
+
+};
 export type FrameEvalOnSelectorResult = {
   value: SerializedValue,
 };
@@ -877,10 +1211,18 @@ export type FrameEvalOnSelectorAllParams = {
   isFunction: boolean,
   arg: SerializedArgument,
 };
+export type FrameEvalOnSelectorAllOptions = {
+
+};
 export type FrameEvalOnSelectorAllResult = {
   value: SerializedValue,
 };
 export type FrameAddScriptTagParams = {
+  url?: string,
+  content?: string,
+  type?: string,
+};
+export type FrameAddScriptTagOptions = {
   url?: string,
   content?: string,
   type?: string,
@@ -892,11 +1234,20 @@ export type FrameAddStyleTagParams = {
   url?: string,
   content?: string,
 };
+export type FrameAddStyleTagOptions = {
+  url?: string,
+  content?: string,
+};
 export type FrameAddStyleTagResult = {
   element: ElementHandleChannel,
 };
 export type FrameCheckParams = {
   selector: string,
+  force?: boolean,
+  noWaitAfter?: boolean,
+  timeout?: number,
+};
+export type FrameCheckOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   timeout?: number,
@@ -916,13 +1267,39 @@ export type FrameClickParams = {
   clickCount?: number,
   timeout?: number,
 };
+export type FrameClickOptions = {
+  force?: boolean,
+  noWaitAfter?: boolean,
+  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  position?: {
+    x: number,
+    y: number,
+  },
+  delay?: number,
+  button?: 'left' | 'right' | 'middle',
+  clickCount?: number,
+  timeout?: number,
+};
 export type FrameClickResult = void;
 export type FrameContentParams = {};
+export type FrameContentOptions = {};
 export type FrameContentResult = {
   value: string,
 };
 export type FrameDblclickParams = {
   selector: string,
+  force?: boolean,
+  noWaitAfter?: boolean,
+  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  position?: {
+    x: number,
+    y: number,
+  },
+  delay?: number,
+  button?: 'left' | 'right' | 'middle',
+  timeout?: number,
+};
+export type FrameDblclickOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
@@ -941,11 +1318,17 @@ export type FrameDispatchEventParams = {
   eventInit: SerializedArgument,
   timeout?: number,
 };
+export type FrameDispatchEventOptions = {
+  timeout?: number,
+};
 export type FrameDispatchEventResult = void;
 export type FrameEvaluateExpressionParams = {
   expression: string,
   isFunction: boolean,
   arg: SerializedArgument,
+};
+export type FrameEvaluateExpressionOptions = {
+
 };
 export type FrameEvaluateExpressionResult = {
   value: SerializedValue,
@@ -954,6 +1337,9 @@ export type FrameEvaluateExpressionHandleParams = {
   expression: string,
   isFunction: boolean,
   arg: SerializedArgument,
+};
+export type FrameEvaluateExpressionHandleOptions = {
+
 };
 export type FrameEvaluateExpressionHandleResult = {
   handle: JSHandleChannel,
@@ -964,13 +1350,21 @@ export type FrameFillParams = {
   timeout?: number,
   noWaitAfter?: boolean,
 };
+export type FrameFillOptions = {
+  timeout?: number,
+  noWaitAfter?: boolean,
+};
 export type FrameFillResult = void;
 export type FrameFocusParams = {
   selector: string,
   timeout?: number,
 };
+export type FrameFocusOptions = {
+  timeout?: number,
+};
 export type FrameFocusResult = void;
 export type FrameFrameElementParams = {};
+export type FrameFrameElementOptions = {};
 export type FrameFrameElementResult = {
   element: ElementHandleChannel,
 };
@@ -979,11 +1373,19 @@ export type FrameGetAttributeParams = {
   name: string,
   timeout?: number,
 };
+export type FrameGetAttributeOptions = {
+  timeout?: number,
+};
 export type FrameGetAttributeResult = {
   value?: string,
 };
 export type FrameGotoParams = {
   url: string,
+  timeout?: number,
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
+  referer?: string,
+};
+export type FrameGotoOptions = {
   timeout?: number,
   waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
   referer?: string,
@@ -1001,9 +1403,21 @@ export type FrameHoverParams = {
   },
   timeout?: number,
 };
+export type FrameHoverOptions = {
+  force?: boolean,
+  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  position?: {
+    x: number,
+    y: number,
+  },
+  timeout?: number,
+};
 export type FrameHoverResult = void;
 export type FrameInnerHTMLParams = {
   selector: string,
+  timeout?: number,
+};
+export type FrameInnerHTMLOptions = {
   timeout?: number,
 };
 export type FrameInnerHTMLResult = {
@@ -1011,6 +1425,9 @@ export type FrameInnerHTMLResult = {
 };
 export type FrameInnerTextParams = {
   selector: string,
+  timeout?: number,
+};
+export type FrameInnerTextOptions = {
   timeout?: number,
 };
 export type FrameInnerTextResult = {
@@ -1023,9 +1440,17 @@ export type FramePressParams = {
   noWaitAfter?: boolean,
   timeout?: number,
 };
+export type FramePressOptions = {
+  delay?: number,
+  noWaitAfter?: boolean,
+  timeout?: number,
+};
 export type FramePressResult = void;
 export type FrameQuerySelectorParams = {
   selector: string,
+};
+export type FrameQuerySelectorOptions = {
+
 };
 export type FrameQuerySelectorResult = {
   element?: ElementHandleChannel,
@@ -1033,11 +1458,24 @@ export type FrameQuerySelectorResult = {
 export type FrameQuerySelectorAllParams = {
   selector: string,
 };
+export type FrameQuerySelectorAllOptions = {
+
+};
 export type FrameQuerySelectorAllResult = {
   elements: ElementHandleChannel[],
 };
 export type FrameSelectOptionParams = {
   selector: string,
+  elements?: ElementHandleChannel[],
+  options?: {
+    value?: string,
+    label?: string,
+    index?: number,
+  }[],
+  timeout?: number,
+  noWaitAfter?: boolean,
+};
+export type FrameSelectOptionOptions = {
   elements?: ElementHandleChannel[],
   options?: {
     value?: string,
@@ -1055,6 +1493,10 @@ export type FrameSetContentParams = {
   timeout?: number,
   waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
 };
+export type FrameSetContentOptions = {
+  timeout?: number,
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
+};
 export type FrameSetContentResult = void;
 export type FrameSetInputFilesParams = {
   selector: string,
@@ -1066,15 +1508,23 @@ export type FrameSetInputFilesParams = {
   timeout?: number,
   noWaitAfter?: boolean,
 };
+export type FrameSetInputFilesOptions = {
+  timeout?: number,
+  noWaitAfter?: boolean,
+};
 export type FrameSetInputFilesResult = void;
 export type FrameTextContentParams = {
   selector: string,
+  timeout?: number,
+};
+export type FrameTextContentOptions = {
   timeout?: number,
 };
 export type FrameTextContentResult = {
   value?: string,
 };
 export type FrameTitleParams = {};
+export type FrameTitleOptions = {};
 export type FrameTitleResult = {
   value: string,
 };
@@ -1085,9 +1535,19 @@ export type FrameTypeParams = {
   noWaitAfter?: boolean,
   timeout?: number,
 };
+export type FrameTypeOptions = {
+  delay?: number,
+  noWaitAfter?: boolean,
+  timeout?: number,
+};
 export type FrameTypeResult = void;
 export type FrameUncheckParams = {
   selector: string,
+  force?: boolean,
+  noWaitAfter?: boolean,
+  timeout?: number,
+};
+export type FrameUncheckOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   timeout?: number,
@@ -1100,11 +1560,19 @@ export type FrameWaitForFunctionParams = {
   timeout?: number,
   pollingInterval?: number,
 };
+export type FrameWaitForFunctionOptions = {
+  timeout?: number,
+  pollingInterval?: number,
+};
 export type FrameWaitForFunctionResult = {
   handle: JSHandleChannel,
 };
 export type FrameWaitForSelectorParams = {
   selector: string,
+  timeout?: number,
+  state?: 'attached' | 'detached' | 'visible' | 'hidden',
+};
+export type FrameWaitForSelectorOptions = {
   timeout?: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
 };
@@ -1125,6 +1593,9 @@ export type WorkerEvaluateExpressionParams = {
   isFunction: boolean,
   arg: SerializedArgument,
 };
+export type WorkerEvaluateExpressionOptions = {
+
+};
 export type WorkerEvaluateExpressionResult = {
   value: SerializedValue,
 };
@@ -1132,6 +1603,9 @@ export type WorkerEvaluateExpressionHandleParams = {
   expression: string,
   isFunction: boolean,
   arg: SerializedArgument,
+};
+export type WorkerEvaluateExpressionHandleOptions = {
+
 };
 export type WorkerEvaluateExpressionHandleResult = {
   handle: JSHandleChannel,
@@ -1154,11 +1628,15 @@ export type JSHandlePreviewUpdatedEvent = {
   preview: string,
 };
 export type JSHandleDisposeParams = {};
+export type JSHandleDisposeOptions = {};
 export type JSHandleDisposeResult = void;
 export type JSHandleEvaluateExpressionParams = {
   expression: string,
   isFunction: boolean,
   arg: SerializedArgument,
+};
+export type JSHandleEvaluateExpressionOptions = {
+
 };
 export type JSHandleEvaluateExpressionResult = {
   value: SerializedValue,
@@ -1168,10 +1646,14 @@ export type JSHandleEvaluateExpressionHandleParams = {
   isFunction: boolean,
   arg: SerializedArgument,
 };
+export type JSHandleEvaluateExpressionHandleOptions = {
+
+};
 export type JSHandleEvaluateExpressionHandleResult = {
   handle: JSHandleChannel,
 };
 export type JSHandleGetPropertyListParams = {};
+export type JSHandleGetPropertyListOptions = {};
 export type JSHandleGetPropertyListResult = {
   properties: {
     name: string,
@@ -1181,10 +1663,14 @@ export type JSHandleGetPropertyListResult = {
 export type JSHandleGetPropertyParams = {
   name: string,
 };
+export type JSHandleGetPropertyOptions = {
+
+};
 export type JSHandleGetPropertyResult = {
   handle: JSHandleChannel,
 };
 export type JSHandleJsonValueParams = {};
+export type JSHandleJsonValueOptions = {};
 export type JSHandleJsonValueResult = {
   value: SerializedValue,
 };
@@ -1225,6 +1711,9 @@ export type ElementHandleEvalOnSelectorParams = {
   isFunction: boolean,
   arg: SerializedArgument,
 };
+export type ElementHandleEvalOnSelectorOptions = {
+
+};
 export type ElementHandleEvalOnSelectorResult = {
   value: SerializedValue,
 };
@@ -1234,10 +1723,14 @@ export type ElementHandleEvalOnSelectorAllParams = {
   isFunction: boolean,
   arg: SerializedArgument,
 };
+export type ElementHandleEvalOnSelectorAllOptions = {
+
+};
 export type ElementHandleEvalOnSelectorAllResult = {
   value: SerializedValue,
 };
 export type ElementHandleBoundingBoxParams = {};
+export type ElementHandleBoundingBoxOptions = {};
 export type ElementHandleBoundingBoxResult = {
   value?: {
     width: number,
@@ -1247,6 +1740,11 @@ export type ElementHandleBoundingBoxResult = {
   },
 };
 export type ElementHandleCheckParams = {
+  force?: boolean,
+  noWaitAfter?: boolean,
+  timeout?: number,
+};
+export type ElementHandleCheckOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   timeout?: number,
@@ -1265,12 +1763,38 @@ export type ElementHandleClickParams = {
   clickCount?: number,
   timeout?: number,
 };
+export type ElementHandleClickOptions = {
+  force?: boolean,
+  noWaitAfter?: boolean,
+  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  position?: {
+    x: number,
+    y: number,
+  },
+  delay?: number,
+  button?: 'left' | 'right' | 'middle',
+  clickCount?: number,
+  timeout?: number,
+};
 export type ElementHandleClickResult = void;
 export type ElementHandleContentFrameParams = {};
+export type ElementHandleContentFrameOptions = {};
 export type ElementHandleContentFrameResult = {
   frame?: FrameChannel,
 };
 export type ElementHandleDblclickParams = {
+  force?: boolean,
+  noWaitAfter?: boolean,
+  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  position?: {
+    x: number,
+    y: number,
+  },
+  delay?: number,
+  button?: 'left' | 'right' | 'middle',
+  timeout?: number,
+};
+export type ElementHandleDblclickOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
@@ -1287,17 +1811,28 @@ export type ElementHandleDispatchEventParams = {
   type: string,
   eventInit: SerializedArgument,
 };
+export type ElementHandleDispatchEventOptions = {
+
+};
 export type ElementHandleDispatchEventResult = void;
 export type ElementHandleFillParams = {
   value: string,
   timeout?: number,
   noWaitAfter?: boolean,
 };
+export type ElementHandleFillOptions = {
+  timeout?: number,
+  noWaitAfter?: boolean,
+};
 export type ElementHandleFillResult = void;
 export type ElementHandleFocusParams = {};
+export type ElementHandleFocusOptions = {};
 export type ElementHandleFocusResult = void;
 export type ElementHandleGetAttributeParams = {
   name: string,
+};
+export type ElementHandleGetAttributeOptions = {
+
 };
 export type ElementHandleGetAttributeResult = {
   value?: string,
@@ -1311,16 +1846,28 @@ export type ElementHandleHoverParams = {
   },
   timeout?: number,
 };
+export type ElementHandleHoverOptions = {
+  force?: boolean,
+  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  position?: {
+    x: number,
+    y: number,
+  },
+  timeout?: number,
+};
 export type ElementHandleHoverResult = void;
 export type ElementHandleInnerHTMLParams = {};
+export type ElementHandleInnerHTMLOptions = {};
 export type ElementHandleInnerHTMLResult = {
   value: string,
 };
 export type ElementHandleInnerTextParams = {};
+export type ElementHandleInnerTextOptions = {};
 export type ElementHandleInnerTextResult = {
   value: string,
 };
 export type ElementHandleOwnerFrameParams = {};
+export type ElementHandleOwnerFrameOptions = {};
 export type ElementHandleOwnerFrameResult = {
   frame?: FrameChannel,
 };
@@ -1330,9 +1877,17 @@ export type ElementHandlePressParams = {
   timeout?: number,
   noWaitAfter?: boolean,
 };
+export type ElementHandlePressOptions = {
+  delay?: number,
+  timeout?: number,
+  noWaitAfter?: boolean,
+};
 export type ElementHandlePressResult = void;
 export type ElementHandleQuerySelectorParams = {
   selector: string,
+};
+export type ElementHandleQuerySelectorOptions = {
+
 };
 export type ElementHandleQuerySelectorResult = {
   element?: ElementHandleChannel,
@@ -1340,10 +1895,20 @@ export type ElementHandleQuerySelectorResult = {
 export type ElementHandleQuerySelectorAllParams = {
   selector: string,
 };
+export type ElementHandleQuerySelectorAllOptions = {
+
+};
 export type ElementHandleQuerySelectorAllResult = {
   elements: ElementHandleChannel[],
 };
 export type ElementHandleScreenshotParams = {
+  timeout?: number,
+  type?: 'png' | 'jpeg',
+  path?: string,
+  quality?: number,
+  omitBackground?: boolean,
+};
+export type ElementHandleScreenshotOptions = {
   timeout?: number,
   type?: 'png' | 'jpeg',
   path?: string,
@@ -1356,8 +1921,21 @@ export type ElementHandleScreenshotResult = {
 export type ElementHandleScrollIntoViewIfNeededParams = {
   timeout?: number,
 };
+export type ElementHandleScrollIntoViewIfNeededOptions = {
+  timeout?: number,
+};
 export type ElementHandleScrollIntoViewIfNeededResult = void;
 export type ElementHandleSelectOptionParams = {
+  elements?: ElementHandleChannel[],
+  options?: {
+    value?: string,
+    label?: string,
+    index?: number,
+  }[],
+  timeout?: number,
+  noWaitAfter?: boolean,
+};
+export type ElementHandleSelectOptionOptions = {
   elements?: ElementHandleChannel[],
   options?: {
     value?: string,
@@ -1373,6 +1951,9 @@ export type ElementHandleSelectOptionResult = {
 export type ElementHandleSelectTextParams = {
   timeout?: number,
 };
+export type ElementHandleSelectTextOptions = {
+  timeout?: number,
+};
 export type ElementHandleSelectTextResult = void;
 export type ElementHandleSetInputFilesParams = {
   files: {
@@ -1383,8 +1964,13 @@ export type ElementHandleSetInputFilesParams = {
   timeout?: number,
   noWaitAfter?: boolean,
 };
+export type ElementHandleSetInputFilesOptions = {
+  timeout?: number,
+  noWaitAfter?: boolean,
+};
 export type ElementHandleSetInputFilesResult = void;
 export type ElementHandleTextContentParams = {};
+export type ElementHandleTextContentOptions = {};
 export type ElementHandleTextContentResult = {
   value?: string,
 };
@@ -1394,8 +1980,18 @@ export type ElementHandleTypeParams = {
   noWaitAfter?: boolean,
   timeout?: number,
 };
+export type ElementHandleTypeOptions = {
+  delay?: number,
+  noWaitAfter?: boolean,
+  timeout?: number,
+};
 export type ElementHandleTypeResult = void;
 export type ElementHandleUncheckParams = {
+  force?: boolean,
+  noWaitAfter?: boolean,
+  timeout?: number,
+};
+export type ElementHandleUncheckOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   timeout?: number,
@@ -1420,6 +2016,7 @@ export interface RequestChannel extends Channel {
   response(params?: RequestResponseParams): Promise<RequestResponseResult>;
 }
 export type RequestResponseParams = {};
+export type RequestResponseOptions = {};
 export type RequestResponseResult = {
   response?: ResponseChannel,
 };
@@ -1436,8 +2033,19 @@ export interface RouteChannel extends Channel {
 export type RouteAbortParams = {
   errorCode: string,
 };
+export type RouteAbortOptions = {
+
+};
 export type RouteAbortResult = void;
 export type RouteContinueParams = {
+  method?: string,
+  headers?: {
+    name: string,
+    value: string,
+  }[],
+  postData?: Binary,
+};
+export type RouteContinueOptions = {
   method?: string,
   headers?: {
     name: string,
@@ -1454,6 +2062,9 @@ export type RouteFulfillParams = {
   }[],
   body: string,
   isBase64: boolean,
+};
+export type RouteFulfillOptions = {
+
 };
 export type RouteFulfillResult = void;
 
@@ -1473,10 +2084,12 @@ export interface ResponseChannel extends Channel {
   finished(params?: ResponseFinishedParams): Promise<ResponseFinishedResult>;
 }
 export type ResponseBodyParams = {};
+export type ResponseBodyOptions = {};
 export type ResponseBodyResult = {
   binary: Binary,
 };
 export type ResponseFinishedParams = {};
+export type ResponseFinishedOptions = {};
 export type ResponseFinishedResult = {
   error?: string,
 };
@@ -1508,9 +2121,15 @@ export interface BindingCallChannel extends Channel {
 export type BindingCallRejectParams = {
   error: SerializedError,
 };
+export type BindingCallRejectOptions = {
+
+};
 export type BindingCallRejectResult = void;
 export type BindingCallResolveParams = {
   result: SerializedArgument,
+};
+export type BindingCallResolveOptions = {
+
 };
 export type BindingCallResolveResult = void;
 
@@ -1527,8 +2146,12 @@ export interface DialogChannel extends Channel {
 export type DialogAcceptParams = {
   promptText?: string,
 };
+export type DialogAcceptOptions = {
+  promptText?: string,
+};
 export type DialogAcceptResult = void;
 export type DialogDismissParams = {};
+export type DialogDismissOptions = {};
 export type DialogDismissResult = void;
 
 // ----------- Download -----------
@@ -1544,22 +2167,29 @@ export interface DownloadChannel extends Channel {
   delete(params?: DownloadDeleteParams): Promise<DownloadDeleteResult>;
 }
 export type DownloadPathParams = {};
+export type DownloadPathOptions = {};
 export type DownloadPathResult = {
   value?: string,
 };
 export type DownloadSaveAsParams = {
   path: string,
 };
+export type DownloadSaveAsOptions = {
+
+};
 export type DownloadSaveAsResult = void;
 export type DownloadFailureParams = {};
+export type DownloadFailureOptions = {};
 export type DownloadFailureResult = {
   error?: string,
 };
 export type DownloadStreamParams = {};
+export type DownloadStreamOptions = {};
 export type DownloadStreamResult = {
   stream?: StreamChannel,
 };
 export type DownloadDeleteParams = {};
+export type DownloadDeleteOptions = {};
 export type DownloadDeleteResult = void;
 
 // ----------- Stream -----------
@@ -1568,6 +2198,9 @@ export interface StreamChannel extends Channel {
   read(params: StreamReadParams): Promise<StreamReadResult>;
 }
 export type StreamReadParams = {
+  size?: number,
+};
+export type StreamReadOptions = {
   size?: number,
 };
 export type StreamReadResult = {
@@ -1589,10 +2222,14 @@ export type CDPSessionSendParams = {
   method: string,
   params?: SerializedValue,
 };
+export type CDPSessionSendOptions = {
+  params?: SerializedValue,
+};
 export type CDPSessionSendResult = {
   result: SerializedValue,
 };
 export type CDPSessionDetachParams = {};
+export type CDPSessionDetachOptions = {};
 export type CDPSessionDetachResult = void;
 
 // ----------- Electron -----------
@@ -1602,6 +2239,18 @@ export interface ElectronChannel extends Channel {
 }
 export type ElectronLaunchParams = {
   executablePath: string,
+  args?: string[],
+  cwd?: string,
+  env?: {
+    name: string,
+    value: string,
+  }[],
+  handleSIGINT?: boolean,
+  handleSIGTERM?: boolean,
+  handleSIGHUP?: boolean,
+  timeout?: number,
+};
+export type ElectronLaunchOptions = {
   args?: string[],
   cwd?: string,
   env?: {
@@ -1639,6 +2288,9 @@ export type ElectronApplicationWindowEvent = {
 export type ElectronApplicationNewBrowserWindowParams = {
   arg: SerializedArgument,
 };
+export type ElectronApplicationNewBrowserWindowOptions = {
+
+};
 export type ElectronApplicationNewBrowserWindowResult = {
   page: PageChannel,
 };
@@ -1646,6 +2298,9 @@ export type ElectronApplicationEvaluateExpressionParams = {
   expression: string,
   isFunction: boolean,
   arg: SerializedArgument,
+};
+export type ElectronApplicationEvaluateExpressionOptions = {
+
 };
 export type ElectronApplicationEvaluateExpressionResult = {
   value: SerializedValue,
@@ -1655,8 +2310,12 @@ export type ElectronApplicationEvaluateExpressionHandleParams = {
   isFunction: boolean,
   arg: SerializedArgument,
 };
+export type ElectronApplicationEvaluateExpressionHandleOptions = {
+
+};
 export type ElectronApplicationEvaluateExpressionHandleResult = {
   handle: JSHandleChannel,
 };
 export type ElectronApplicationCloseParams = {};
+export type ElectronApplicationCloseOptions = {};
 export type ElectronApplicationCloseResult = void;

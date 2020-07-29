@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-import * as types from '../../types';
 import { BrowserTypeChannel, BrowserTypeInitializer, BrowserTypeLaunchParams, BrowserTypeLaunchServerParams, BrowserTypeLaunchPersistentContextParams } from '../channels';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { BrowserServer } from './browserServer';
-import { LoggerSink } from '../../loggerSink';
 import { headersObjectToArray, envObjectToArray } from '../../converters';
 import { serializeArgument } from './jsHandle';
 import { assert } from '../../helper';
-
-type FirefoxPrefsOptions = { firefoxUserPrefs?: { [key: string]: string | number | boolean } };
+import { LaunchOptions, LaunchServerOptions, BrowserContextOptions, ConnectOptions } from './types';
 
 export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {
 
@@ -45,7 +42,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     return this._initializer.name;
   }
 
-  async launch(options: types.LaunchOptions & FirefoxPrefsOptions & { logger?: LoggerSink } = {}): Promise<Browser> {
+  async launch(options: LaunchOptions = {}): Promise<Browser> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.launch', async () => {
@@ -64,7 +61,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     }, logger);
   }
 
-  async launchServer(options: types.LaunchServerOptions & FirefoxPrefsOptions & { logger?: LoggerSink } = {}): Promise<BrowserServer> {
+  async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.launchServer', async () => {
@@ -79,7 +76,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     }, logger);
   }
 
-  async launchPersistentContext(userDataDir: string, options: types.LaunchOptions & types.BrowserContextOptions & { logger?: LoggerSink } = {}): Promise<BrowserContext> {
+  async launchPersistentContext(userDataDir: string, options: LaunchOptions & BrowserContextOptions = {}): Promise<BrowserContext> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.launchPersistentContext', async () => {
@@ -100,7 +97,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     }, logger);
   }
 
-  async connect(options: types.ConnectOptions & { logger?: LoggerSink }): Promise<Browser> {
+  async connect(options: ConnectOptions): Promise<Browser> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.connect', async () => {
