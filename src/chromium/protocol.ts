@@ -7816,7 +7816,9 @@ detailed cookie information in the `cookies` field.
      */
     export type getCookiesParameters = {
       /**
-       * The list of URLs for which applicable cookies will be fetched
+       * The list of URLs for which applicable cookies will be fetched.
+If not specified, it's assumed to be set to the list containing
+the URLs of the page and all of its subframes.
        */
       urls?: string[];
     }
@@ -12758,6 +12760,10 @@ variables as its properties.
        * The language of the script.
        */
       scriptLanguage?: Debugger.ScriptLanguage;
+      /**
+       * The name the embedder supplied for this script.
+       */
+      embedderName?: string;
     }
     /**
      * Fired when virtual machine parses script. This event is also fired for all known and uncollected
@@ -12836,6 +12842,10 @@ scripts upon enabling debugger.
        * If the scriptLanguage is WebASsembly, the source of debug symbols for the module.
        */
       debugSymbols?: Debugger.DebugSymbols;
+      /**
+       * The name the embedder supplied for this script.
+       */
+      embedderName?: string;
     }
     
     /**
