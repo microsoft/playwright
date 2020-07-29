@@ -29,7 +29,7 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1.4.2
+    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
     - run: mkdir -p coredumps
@@ -71,7 +71,7 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1.4.2
+    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
     - run: npm run jest -- --testTimeout=30000
@@ -110,7 +110,7 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1.4.2
+    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
     - run: npm run jest -- --testTimeout=30000
@@ -149,7 +149,7 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node_version }}
-    - uses: microsoft/playwright-github-action@v1.4.2
+    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
     - run: bash packages/installation-tests/installation-tests.sh
@@ -166,7 +166,7 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1.4.2
+    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
     - run: mkdir -p coredumps
@@ -205,7 +205,7 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1.4.2
+    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
     - run: mkdir -p coredumps
