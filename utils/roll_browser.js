@@ -86,5 +86,14 @@ Example:
   } catch (e) {
   }
 
+  // 6. Update types.
+  if (browserName === 'chromium') {
+    console.log('\nUpdating public protocol types...');
+    try {
+      process.stdout.write(execSync('npm run --silent generate-types'));
+    } catch (e) {
+    }
+  }
+
   console.log(`\nRolled ${browserName} to ${revision}`);
 })();
