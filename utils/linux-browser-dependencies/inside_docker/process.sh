@@ -16,4 +16,8 @@ mkdir /root/tmp && cd /root/tmp && npm init -y && npm i /root/hostfolder/playwri
 
 cp /root/hostfolder/inside_docker/list_dependencies.js /root/tmp/list_dependencies.js
 
-node list_dependencies.js | tee /root/hostfolder/RUN_RESULT
+FILENAME="RUN_RESULT"
+if [[ -n $1 ]]; then
+  FILENAME=$1
+fi
+node list_dependencies.js | tee "/root/hostfolder/$FILENAME"

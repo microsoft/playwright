@@ -3,12 +3,12 @@ set -e
 set +x
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) <image-name>"
+  echo "usage: $(basename $0) <image-name> [<optional output filename>]"
   echo
-  echo "List mapping between browser dependencies to package names and save results in RUN_RESULT file."
+  echo "List mapping between browser dependencies to package names and save results in RUN_RESULT file or a custom file name."
   echo "Example:"
   echo ""
-  echo "  $(basename $0) ubuntu:bionic"
+  echo "  $(basename $0) ubuntu:bionic ubuntu-bionic-run-log"
   echo ""
   echo "NOTE: this requires Playwright dependencies to be installed with 'npm install'"
   echo "      and Playwright itself being built with 'npm run build'"
@@ -31,5 +31,5 @@ cd "$(dirname "$0")"
 # We rely on `./playwright.tar.gz` to download browsers into the docker image.
 node ../../packages/build_package.js playwright ./playwright.tar.gz
 
-docker run -v $PWD:/root/hostfolder --rm -it "$1" /root/hostfolder/inside_docker/process.sh
+docker run -v $PWD:/root/hostfolder --rm -it "$1" /root/hostfolder/inside_docker/process.sh "$2"
 
