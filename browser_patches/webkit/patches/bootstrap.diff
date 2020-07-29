@@ -15721,6 +15721,24 @@ index f83bf7dd57dc481fe365dfe03bf7bd2b6a745fd6..aa646dcf816838da9482405dee380ce4
 +
 +
  } // namespace WTR
+diff --git a/Tools/win/DLLLauncher/DLLLauncherMain.cpp b/Tools/win/DLLLauncher/DLLLauncherMain.cpp
+index 39238ac08dbcab92fb1d053928938a96f154c9b1..64bc9f1458254322dca9005b5e2d2b19bb901386 100644
+--- a/Tools/win/DLLLauncher/DLLLauncherMain.cpp
++++ b/Tools/win/DLLLauncher/DLLLauncherMain.cpp
+@@ -96,11 +96,9 @@ static bool prependPath(const wstring& directoryToPrepend)
+ static int fatalError(const wstring& programName, const wstring& message)
+ {
+     wstring caption = programName + L" can't open.";
+-#if USE_CONSOLE_ENTRY_POINT
++// Playwright begin
+     fwprintf(stderr, L"%s\n%s\n", caption.c_str(), message.c_str());
+-#else
+-    ::MessageBoxW(0, message.c_str(), caption.c_str(), MB_ICONERROR);
+-#endif
++// Playwright end
+     return 1;
+ }
+ 
 diff --git a/Tools/wpe/backends/HeadlessViewBackend.cpp b/Tools/wpe/backends/HeadlessViewBackend.cpp
 index c09b6f39f894943f11b7a453428fab7d6f6e68fb..bc21acb648562ee0380811599b08f7d26c3e706a 100644
 --- a/Tools/wpe/backends/HeadlessViewBackend.cpp
