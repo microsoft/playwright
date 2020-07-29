@@ -3686,7 +3686,7 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
 
   const browser = await firefox.launch();
   const page = await browser.newPage();
-  await page.goto('https://example.com');
+  await page.setContent(`<div><button>Click me</button></div>`);
 
   // Use the selector prefixed with its name.
   const button = await page.$('tag=button');

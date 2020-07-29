@@ -63,7 +63,7 @@ playwright.chromium.launch().then(async browser => {
   page.on('console', message => {
     console.log(message.text());
   });
-  page.evaluate(() => console.log(5, 'hello', { foo: 'bar' }));
+  await page.evaluate(() => console.log(5, 'hello', { foo: 'bar' }));
 
   {
     const result = await page.evaluate(() => {
