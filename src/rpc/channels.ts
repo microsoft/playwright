@@ -924,6 +924,7 @@ export type FrameContentResult = {
 export type FrameDblclickParams = {
   selector: string,
   force?: boolean,
+  noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: {
     x: number,

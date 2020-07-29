@@ -498,6 +498,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.FrameDblclickParams = tObject({
     selector: tString,
     force: tOptional(tBoolean),
+    noWaitAfter: tOptional(tBoolean),
     modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
     position: tOptional(tObject({
       x: tNumber,

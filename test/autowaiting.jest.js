@@ -154,6 +154,11 @@ describe('Auto waiting', () => {
     await page.setContent(`<a href="${server.EMPTY_PAGE}">empty.html</a>`);
     await page.click('a', { noWaitAfter: true });
   });
+  it('should work with dblclick noWaitAfter: true', async({page, server}) => {
+    server.setRoute('/empty.html', async () => {});
+    await page.setContent(`<a href="${server.EMPTY_PAGE}">empty.html</a>`);
+    await page.dblclick('a', { noWaitAfter: true });
+  });
   it('should work with waitForLoadState(load)', async({page, server}) => {
     const messages = [];
     server.setRoute('/empty.html', async (req, res) => {
