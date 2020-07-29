@@ -27,8 +27,7 @@ describe('BrowserContext({viewport})', function() {
     await page.setViewportSize({width: 123, height: 456});
     await utils.verifyViewport(page, 123, 456);
   });
-  // TODO: enable in Chromium after http://crrev.com/c/2321409 is landed and rolled.
-  it.fail(CHROMIUM && HEADLESS && MAC)('should return correct outerWidth and outerHeight', async({page}) => {
+  it('should return correct outerWidth and outerHeight', async({page}) => {
     const size = await page.evaluate(() => {
       return {
         innerWidth: window.innerWidth,
