@@ -17,18 +17,19 @@ env:
 
 jobs:
   test_linux:
-    name: "Linux"
+    name: ${{ matrix.os }} (${{ matrix.browser }})
     strategy:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
-    runs-on: ubuntu-18.04
+        os: [ubuntu-18.04, ubuntu-20.04]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
+    - uses: microsoft/playwright-github-action@v1.4.2
     - run: npm ci
     - run: npm run build
     - run: mkdir -p coredumps
@@ -45,17 +46,17 @@ jobs:
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
-        name: ${{ matrix.browser }}-linux-jest-report
+        name: ${{ matrix.browser }}-${{ matrix.os }}-jest-report
         path: jest-report.json
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: ${{ matrix.browser }}-linux-output
+        name: ${{ matrix.browser }}-${{ matrix.os }}-output
         path: test/output-${{ matrix.browser }}
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
-        name: ${{ matrix.browser }}-linux-testrun.log
+        name: ${{ matrix.browser }}-${{ matrix.os }}-testrun.log
         path: testrun.log
 
   test_mac:
@@ -70,7 +71,7 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
+    - uses: microsoft/playwright-github-action@v1.4.2
     - run: npm ci
     - run: npm run build
     - run: npm run jest -- --testTimeout=30000
@@ -109,7 +110,7 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
+    - uses: microsoft/playwright-github-action@v1.4.2
     - run: npm ci
     - run: npm run build
     - run: npm run jest -- --testTimeout=30000
@@ -148,7 +149,7 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node_version }}
-    - uses: microsoft/playwright-github-action@v1
+    - uses: microsoft/playwright-github-action@v1.4.2
     - run: npm ci
     - run: npm run build
     - run: bash packages/installation-tests/installation-tests.sh
@@ -165,7 +166,7 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
+    - uses: microsoft/playwright-github-action@v1.4.2
     - run: npm ci
     - run: npm run build
     - run: mkdir -p coredumps
@@ -204,7 +205,7 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
+    - uses: microsoft/playwright-github-action@v1.4.2
     - run: npm ci
     - run: npm run build
     - run: mkdir -p coredumps
