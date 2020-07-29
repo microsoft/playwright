@@ -265,4 +265,20 @@ describe('Frame Management', function() {
     expect(frame2.isDetached()).toBe(false);
     expect(frame1).not.toBe(frame2);
   });
+  it.fail(FFOX)('should refuse to display x-frame-options:deny iframe', async({page, server}) => {
+    server.setRoute('/x-frame-options-deny.html', async (req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('X-Frame-Options', 'DENY');
+      res.end(`<!DOCTYPE html><html><head><title>login</title></head><body style="background-color: red;"><p>dangerous login page</p></body></html>`);
+    });
+    await page.goto(server.EMPTY_PAGE);
+    const refusalText = new Promise(f => {
+      page.on('console', msg => {
+        if (msg.text().match(/Refused to display/i))
+          f(msg.text());
+      });
+    });
+    await page.setContent(`<iframe src="${server.CROSS_PROCESS_PREFIX}/x-frame-options-deny.html"></iframe>`);
+    expect(await refusalText).toMatch(/Refused to display 'http.*\/x-frame-options-deny\.html' in a frame because it set 'X-Frame-Options' to 'deny'./i)
+  });
 });
