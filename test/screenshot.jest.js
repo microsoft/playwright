@@ -537,4 +537,19 @@ describe.skip(ffheadful)('ElementHandle.screenshot', function() {
     await utils.verifyViewport(page, 350, 360);
     await context.close();
   });
+  it('should wait for element to stop moving', async({page, server}) => {
+    await page.setViewportSize({ width: 500, height: 500 });
+    await page.goto(server.PREFIX + '/grid.html');
+    const elementHandle = await page.$('.box:nth-of-type(3)');
+    await elementHandle.evaluate(e => e.classList.add('animation'));
+    const screenshot = await elementHandle.screenshot();
+    expect(screenshot).toBeGolden('screenshot-element-bounding-box.png');
+  });
+  it('should take screenshot of disabled button', async({page}) => {
+    await page.setViewportSize({ width: 500, height: 500 });
+    await page.setContent(`<button disabled>Click me</button>`);
+    const button = await page.$('button');
+    const screenshot = await button.screenshot();
+    expect(screenshot).toBeInstanceOf(Buffer);
+  });
 });

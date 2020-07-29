@@ -422,7 +422,7 @@ export default class InjectedScript {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  waitForDisplayedAtStablePositionAndEnabled(node: Node, rafCount: number): types.InjectedScriptPoll<'error:notconnected' | 'done'> {
+  waitForDisplayedAtStablePosition(node: Node, rafCount: number, waitForEnabled: boolean): types.InjectedScriptPoll<'error:notconnected' | 'done'> {
     let lastRect: types.Rect | undefined;
     let counter = 0;
     let samePositionCounter = 0;
@@ -464,7 +464,7 @@ export default class InjectedScript {
       const isVisible = !!style && style.visibility !== 'hidden';
 
       const elementOrButton = element.closest('button, [role=button]') || element;
-      const isDisabled = ['BUTTON', 'INPUT', 'SELECT'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
+      const isDisabled = waitForEnabled && ['BUTTON', 'INPUT', 'SELECT'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
 
       if (isDisplayed && isStable && isVisible && !isDisabled)
         return 'done';

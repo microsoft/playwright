@@ -209,7 +209,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _waitAndScrollIntoViewIfNeeded(progress: Progress): Promise<void> {
     while (progress.isRunning()) {
-      assertDone(throwRetargetableDOMError(await this._waitForVisible(progress)));
+      assertDone(throwRetargetableDOMError(await this._waitForDisplayedAtStablePosition(progress, false /* waitForEnabled */)));
 
       progress.throwIfAborted();  // Avoid action that has side-effects.
       const result = throwRetargetableDOMError(await this._scrollRectIntoViewIfNeeded());
@@ -321,7 +321,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if ((options as any).__testHookBeforeStable)
       await (options as any).__testHookBeforeStable();
     if (!force) {
-      const result = await this._waitForDisplayedAtStablePositionAndEnabled(progress);
+      const result = await this._waitForDisplayedAtStablePosition(progress, true /* waitForEnabled */);
       if (result !== 'done')
         return result;
     }
@@ -636,15 +636,21 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  async _waitForDisplayedAtStablePositionAndEnabled(progress: Progress): Promise<'error:notconnected' | 'done'> {
-    progress.logger.info('  waiting for element to be visible, enabled and not moving');
+  async _waitForDisplayedAtStablePosition(progress: Progress, waitForEnabled: boolean): Promise<'error:notconnected' | 'done'> {
+    if (waitForEnabled)
+      progress.logger.info(`  waiting for element to be visible, enabled and not moving`);
+    else
+      progress.logger.info(`  waiting for element to be visible and not moving`);
     const rafCount =  this._page._delegate.rafCountForStablePosition();
-    const poll = this._evaluateHandleInUtility(([injected, node, rafCount]) => {
-      return injected.waitForDisplayedAtStablePositionAndEnabled(node, rafCount);
-    }, rafCount);
+    const poll = this._evaluateHandleInUtility(([injected, node, { rafCount, waitForEnabled }]) => {
+      return injected.waitForDisplayedAtStablePosition(node, rafCount, waitForEnabled);
+    }, { rafCount, waitForEnabled });
     const pollHandler = new InjectedScriptPollHandler(progress, await poll);
     const result = await pollHandler.finish();
-    progress.logger.info('  element is visible, enabled and does not move');
+    if (waitForEnabled)
+      progress.logger.info('  element is visible, enabled and does not move');
+    else
+      progress.logger.info('  element is visible and does not move');
     return result;
   }
 
