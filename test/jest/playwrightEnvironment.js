@@ -19,6 +19,7 @@ const registerFixtures = require('./fixtures');
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
+const debug = require('debug');
 const platform = os.platform();
 const GoldenUtils = require('../../utils/testrunner/GoldenUtils');
 const {installCoverageHooks} = require('./coverage');
@@ -158,10 +159,12 @@ class PlaywrightEnvironment extends NodeEnvironment {
     if (event.name === 'test_start') {
       const fn = event.test.fn;
       event.test.fn = async () => {
+        debug('pw:test')(`start "${testOrSuiteName(event.test)}"`);
         try {
-          return await this.fixturePool.resolveParametersAndRun(fn);
+          await this.fixturePool.resolveParametersAndRun(fn);
         } finally {
           await this.fixturePool.teardownScope('test');
+          debug('pw:test')(`finish "${testOrSuiteName(event.test)}"`);
         }
       };
     }
@@ -196,6 +199,7 @@ class Fixture {
     let setupFenceReject;
     const setupFence = new Promise((f, r) => { setupFenceFulfill = f; setupFenceReject = r; });
     const teardownFence = new Promise(f => this._teardownFenceCallback = f);
+    debug('pw:test:hook')(`setup "${this.name}"`);
     this._tearDownComplete = this.fn(params, async value => {
       this.value = value;
       setupFenceFulfill();
@@ -215,8 +219,10 @@ class Fixture {
         continue;
       await fixture.teardown();
     }
-    if (this._setup)
+    if (this._setup) {
+      debug('pw:test:hook')(`teardown "${this.name}"`);
       this._teardownFenceCallback();
+    }
     await this._tearDownComplete;
     this.pool.instances.delete(this.name);
   }
@@ -280,4 +286,13 @@ function valueFromEnv(name, defaultValue) {
   if (!(name in process.env))
     return defaultValue;
   return JSON.parse(process.env[name]);
+}
+
+function testOrSuiteName(o) {
+  if (o.name === 'ROOT_DESCRIBE_BLOCK')
+    return '';
+  let name = o.parent ? testOrSuiteName(o.parent) : '';
+  if (name && o.name)
+    name += ' ';
+  return name + o.name;
 }

@@ -303,12 +303,16 @@ describe.skip(!CHROMIUM)('OOPIF', function() {
       iframe.style.marginLeft = '42px';
       iframe.style.marginTop = '17px';
     });
+    await page.frames()[1].goto(page.frames()[1].url());
 
     expect(await countOOPIFs(browser)).toBe(1);
     const handle1 = await page.frames()[1].$('.box:nth-of-type(13)');
     expect(await handle1.boundingBox()).toEqual({ x: 100 + 42, y: 50 + 17, width: 50, height: 50 });
 
-    await page.evaluate(() => goLocal());
+    await Promise.all([
+      page.frames()[1].waitForNavigation(),
+      page.evaluate(() => goLocal()),
+    ]);
     expect(await countOOPIFs(browser)).toBe(0);
     const handle2 = await page.frames()[1].$('.box:nth-of-type(13)');
     expect(await handle2.boundingBox()).toEqual({ x: 100 + 42, y: 50 + 17, width: 50, height: 50 });
@@ -323,6 +327,7 @@ describe.skip(!CHROMIUM)('OOPIF', function() {
       iframe.style.marginLeft = '102px';
       iframe.style.marginTop = '117px';
     });
+    await page.frames()[1].goto(page.frames()[1].url());
 
     expect(await countOOPIFs(browser)).toBe(1);
     const handle1 = await page.frames()[1].$('.box:nth-of-type(13)');
