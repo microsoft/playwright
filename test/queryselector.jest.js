@@ -263,6 +263,13 @@ describe('Page.$', function() {
     const element = await page.$('(//section)[1]');
     expect(element).toBeTruthy();
   });
+  it('should auto-detect xpath selector starting with ..', async({page, server}) => {
+    await page.setContent('<div><section>test</section><span></span></div>');
+    const span = await page.$('"test" >> ../span');
+    expect(await span.evaluate(e => e.nodeName)).toBe('SPAN');
+    const div = await page.$('"test" >> ..');
+    expect(await div.evaluate(e => e.nodeName)).toBe('DIV');
+  });
   it('should auto-detect text selector', async({page, server}) => {
     await page.setContent('<section>test</section>');
     const element = await page.$('"test"');
