@@ -803,13 +803,13 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     postData: tOptional(tBinary),
   });
   scheme.RouteFulfillParams = tObject({
-    status: tNumber,
-    headers: tArray(tObject({
+    status: tOptional(tNumber),
+    headers: tOptional(tArray(tObject({
       name: tString,
       value: tString,
-    })),
-    body: tString,
-    isBase64: tBoolean,
+    }))),
+    body: tOptional(tString),
+    isBase64: tOptional(tBoolean),
   });
   scheme.ResponseBodyParams = tOptional(tObject({}));
   scheme.ResponseFinishedParams = tOptional(tObject({}));

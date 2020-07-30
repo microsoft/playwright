@@ -1694,16 +1694,17 @@ Route:
 
     fulfill:
       parameters:
-        status: number
+        # default is 200
+        status: number?
         headers:
-          type: array
+          type: array?
           items:
             type: object
             properties:
               name: string
               value: string
-        body: string
-        isBase64: boolean
+        body: string?
+        isBase64: boolean?
 
 
 

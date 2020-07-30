@@ -2055,13 +2055,13 @@ export type RouteContinueOptions = {
 };
 export type RouteContinueResult = void;
 export type RouteFulfillParams = {
-  status: number,
-  headers: {
+  status?: number,
+  headers?: {
     name: string,
     value: string,
   }[],
-  body: string,
-  isBase64: boolean,
+  body?: string,
+  isBase64?: boolean,
 };
 export type RouteFulfillOptions = {
 
