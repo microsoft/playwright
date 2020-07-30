@@ -2031,7 +2031,7 @@ export interface RouteChannel extends Channel {
   fulfill(params: RouteFulfillParams): Promise<RouteFulfillResult>;
 }
 export type RouteAbortParams = {
-  errorCode: string,
+  errorCode?: string,
 };
 export type RouteAbortOptions = {
 

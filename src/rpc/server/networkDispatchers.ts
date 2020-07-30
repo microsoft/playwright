@@ -98,7 +98,7 @@ export class RouteDispatcher extends Dispatcher<Route, RouteInitializer> impleme
     });
   }
 
-  async abort(params: { errorCode: string }): Promise<void> {
-    await this._object.abort(params.errorCode);
+  async abort(params: { errorCode?: string }): Promise<void> {
+    await this._object.abort(params.errorCode || 'failed');
   }
 }

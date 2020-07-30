@@ -171,7 +171,7 @@ export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
     return Request.from(this._initializer.request);
   }
 
-  async abort(errorCode: string = 'failed') {
+  async abort(errorCode?: string) {
     await this._channel.abort({ errorCode });
   }
 

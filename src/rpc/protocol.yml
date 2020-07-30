@@ -1678,7 +1678,7 @@ Route:
 
     abort:
       parameters:
-        errorCode: string
+        errorCode: string?
 
     continue:
       parameters:
