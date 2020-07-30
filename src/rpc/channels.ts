@@ -2034,7 +2034,7 @@ export type RouteAbortParams = {
   errorCode?: string,
 };
 export type RouteAbortOptions = {
-
+  errorCode?: string,
 };
 export type RouteAbortResult = void;
 export type RouteContinueParams = {
@@ -2064,7 +2064,13 @@ export type RouteFulfillParams = {
   isBase64?: boolean,
 };
 export type RouteFulfillOptions = {
-
+  status?: number,
+  headers?: {
+    name: string,
+    value: string,
+  }[],
+  body?: string,
+  isBase64?: boolean,
 };
 export type RouteFulfillResult = void;
 

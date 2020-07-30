@@ -229,5 +229,18 @@ validator_ts.push(`
 }
 `);
 
-fs.writeFileSync(path.join(__dirname, '..', 'src', 'rpc', 'channels.ts'), channels_ts.join('\n'), 'utf-8');
-fs.writeFileSync(path.join(__dirname, '..', 'src', 'rpc', 'validator.ts'), validator_ts.join('\n'), 'utf-8');
+let hasChanges = false;
+
+function writeFile(filePath, content) {
+  const existing = fs.readFileSync(filePath, 'utf8');
+  if (existing === content)
+    return;
+  hasChanges = true;
+  const root = path.join(__dirname, '..');
+  console.log(`Writing //${path.relative(root, filePath)}`);
+  fs.writeFileSync(filePath, content, 'utf8');
+}
+
+writeFile(path.join(__dirname, '..', 'src', 'rpc', 'channels.ts'), channels_ts.join('\n'));
+writeFile(path.join(__dirname, '..', 'src', 'rpc', 'validator.ts'), validator_ts.join('\n'));
+process.exit(hasChanges ? 1 : 0);
