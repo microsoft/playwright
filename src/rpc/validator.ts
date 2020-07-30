@@ -208,7 +208,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     deviceScaleFactor: tOptional(tNumber),
     isMobile: tOptional(tBoolean),
     hasTouch: tOptional(tBoolean),
-    colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
+    colorScheme: tOptional(tEnum(['light', 'dark', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
   });
   scheme.BrowserServerCloseParams = tOptional(tObject({}));

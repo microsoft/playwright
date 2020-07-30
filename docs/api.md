@@ -217,7 +217,7 @@ Indicates that the browser is connected.
   - `httpCredentials` <[Object]> Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
     - `username` <[string]>
     - `password` <[string]>
-  - `colorScheme` <"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
+  - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
   - `logger` <[Logger]> Logger sink for Playwright logging.
 - returns: <[Promise]<[BrowserContext]>>
 
@@ -259,7 +259,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
   - `httpCredentials` <[Object]> Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
     - `username` <[string]>
     - `password` <[string]>
-  - `colorScheme` <"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
+  - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
   - `logger` <[Logger]> Logger sink for Playwright logging.
 - returns: <[Promise]<[Page]>>
 
@@ -1145,8 +1145,8 @@ await page.dispatchEvent('#source', 'dragstart', { dataTransfer });
 
 #### page.emulateMedia(options)
 - `options` <[Object]>
-  - `media` <?"screen"|"print"> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation. Omitting `media` or passing `undefined` does not change the emulated value.
-  - `colorScheme` <?"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing `null` disables color scheme emulation. Omitting `colorScheme` or passing `undefined` does not change the emulated value.
+  - `media` <null|"screen"|"print"> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation. Omitting `media` or passing `undefined` does not change the emulated value.
+  - `colorScheme` <null|"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing `null` disables color scheme emulation. Omitting `colorScheme` or passing `undefined` does not change the emulated value.
 - returns: <[Promise]>
 
 ```js
@@ -4074,7 +4074,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   - `httpCredentials` <[Object]> Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
     - `username` <[string]>
     - `password` <[string]>
-  - `colorScheme` <"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
+  - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
 - returns: <[Promise]<[BrowserContext]>> Promise that resolves to the persistent browser context instance.
 
 Launches browser that uses persistent storage located at `userDataDir` and returns the only context. Closing this context will automatically close the browser.
