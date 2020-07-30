@@ -43,9 +43,10 @@ export function parseSelector(selector: string): ParsedSelector {
     } else if (part.length > 1 && part[0] === "'" && part[part.length - 1] === "'") {
       name = 'text';
       body = part;
-    } else if (/^\(*\/\//.test(part)) {
+    } else if (/^\(*\/\//.test(part) || part.startsWith('..')) {
       // If selector starts with '//' or '//' prefixed with multiple opening
       // parenthesis, consider xpath. @see https://github.com/microsoft/playwright/issues/817
+      // If selector starts with '..', consider xpath as well.
       name = 'xpath';
       body = part;
     } else {

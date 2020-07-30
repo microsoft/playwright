@@ -4452,7 +4452,7 @@ Selector describes an element in the page. It can be used to obtain `ElementHand
 Selector has the following format: `engine=body [>> engine=body]*`. Here `engine` is one of the supported [selector engines](selectors.md) (e.g. `css` or `xpath`), and `body` is a selector body in the format of the particular engine. When multiple `engine=body` clauses are present (separated by `>>`), next one is queried relative to the previous one's result.
 
 For convenience, selectors in the wrong format are heuristically converted to the right format:
-- selector starting with `//` is assumed to be `xpath=selector`;
+- selector starting with `//` or `..` is assumed to be `xpath=selector`;
 - selector starting and ending with a quote (either `"` or `'`) is assumed to be `text=selector`;
 - otherwise selector is assumed to be `css=selector`.
 
@@ -4477,6 +4477,9 @@ const handle = await page.$('//html/body/div');
 
 // converted to 'text="foo"'
 const handle = await page.$('"foo"');
+
+// queries '../span' xpath selector starting with the result of 'div' css selector
+const handle = await page.$('div >> ../span');
 
 // queries 'span' css selector inside the div handle
 const handle = await divHandle.$('css=span');
