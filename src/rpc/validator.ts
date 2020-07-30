@@ -792,7 +792,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.RequestResponseParams = tOptional(tObject({}));
   scheme.RouteAbortParams = tObject({
-    errorCode: tString,
+    errorCode: tOptional(tString),
   });
   scheme.RouteContinueParams = tObject({
     method: tOptional(tString),
