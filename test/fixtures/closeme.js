@@ -1,5 +1,5 @@
 (async() => {
-  const { playwrightPath, browserTypeName, launchOptions, stallOnClose } = JSON.parse(process.argv[2]);
+  const { playwrightPath, browserTypeName, launchOptions, stallOnClose, launchTwo } = JSON.parse(process.argv[2]);
   if (stallOnClose) {
     launchOptions.__testHookGracefullyClose = () => {
       console.log(`(stalled=>true)`);
@@ -21,4 +21,14 @@
   });
   console.log(`(pid=>${browserServer.process().pid})`);
   console.log(`(wsEndpoint=>${browserServer.wsEndpoint()})`);
+
+  if (launchTwo) {
+    const browserServer2 = await playwright[browserTypeName].launchServer(launchOptions);
+    browserServer2.on('close', (exitCode, signal) => {
+      console.log(`(exitCode2=>${exitCode})`);
+      console.log(`(signal2=>${signal})`);
+    });
+    console.log(`(pid2=>${browserServer2.process().pid})`);
+    console.log(`(wsEndpoint2=>${browserServer2.wsEndpoint()})`);
+  }
 })();

@@ -22,9 +22,19 @@ import { BrowserServer } from './browserServer';
 import { headersObjectToArray, envObjectToArray } from '../../converters';
 import { serializeArgument } from './jsHandle';
 import { assert } from '../../helper';
-import { LaunchOptions, LaunchServerOptions, BrowserContextOptions, ConnectOptions } from './types';
+import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions } from './types';
+import { Events } from './events';
+
+export interface Closeable {
+  close(): Promise<void>;
+}
+export interface SignalHandler {
+  registerCloseable(closeable: Closeable, options: { handleSIGINT?: boolean, handleSIGHUP?: boolean, handleSIGTERM?: boolean }): void;
+  unregisterCloseable(closeable: Closeable): void;
+}
 
 export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {
+  _signalHandler?: SignalHandler;
 
   static from(browserType: BrowserTypeChannel): BrowserType {
     return (browserType as any)._object;
@@ -57,6 +67,10 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
       };
       const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
       browser._logger = logger;
+      if (this._signalHandler) {
+        this._signalHandler.registerCloseable(browser, options);
+        browser.addListener(Events.Browser.Disconnected, () => this._signalHandler!.unregisterCloseable(browser));
+      }
       return browser;
     }, logger);
   }
@@ -72,11 +86,16 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
         env: options.env ? envObjectToArray(options.env) : undefined,
         firefoxUserPrefs: options.firefoxUserPrefs ? serializeArgument(options.firefoxUserPrefs).value : undefined,
       };
-      return BrowserServer.from((await this._channel.launchServer(launchServerOptions)).server);
+      const server = BrowserServer.from((await this._channel.launchServer(launchServerOptions)).server);
+      if (this._signalHandler) {
+        this._signalHandler.registerCloseable(server, options);
+        server.addListener(Events.BrowserServer.Close, () => this._signalHandler!.unregisterCloseable(server));
+      }
+      return server;
     }, logger);
   }
 
-  async launchPersistentContext(userDataDir: string, options: LaunchOptions & BrowserContextOptions = {}): Promise<BrowserContext> {
+  async launchPersistentContext(userDataDir: string, options: LaunchPersistentContextOptions = {}): Promise<BrowserContext> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.launchPersistentContext', async () => {
@@ -93,6 +112,10 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
       const result = await this._channel.launchPersistentContext(persistentOptions);
       const context = BrowserContext.from(result.context);
       context._logger = logger;
+      if (this._signalHandler) {
+        this._signalHandler.registerCloseable(context, options);
+        context.addListener(Events.BrowserContext.Close, () => this._signalHandler!.unregisterCloseable(context));
+      }
       return context;
     }, logger);
   }

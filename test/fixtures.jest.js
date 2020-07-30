@@ -17,7 +17,7 @@
 
 const path = require('path');
 const {spawn, execSync} = require('child_process');
-const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX, HEADLESS} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX, HEADLESS, CHANNEL} = testOptions;
 
 const playwrightPath = path.join(__dirname, '..');
 
@@ -25,6 +25,7 @@ class Wrapper {
   constructor(browserType, defaultBrowserOptions, extraOptions) {
     this._output = new Map();
     this._outputCallback = new Map();
+    this._launchTwo = extraOptions && extraOptions.launchTwo;
 
     this._browserType = browserType;
     const launchOptions = {...defaultBrowserOptions,
@@ -74,12 +75,20 @@ class Wrapper {
   }
 
   async connect() {
-    const wsEndpoint = await this.out('wsEndpoint');
-    const browser = await this._browserType.connect({ wsEndpoint });
+    const promises = [];
+    promises.push((await this._connect('wsEndpoint')).promise);
+    if (this._launchTwo)
+      promises.push((await this._connect('wsEndpoint2')).promise);
     this._exitAndDisconnectPromise = Promise.all([
       this._exitPromise,
-      new Promise(resolve => browser.once('disconnected', resolve)),
+      ...promises,
     ]).then(([exitCode]) => exitCode);
+  }
+
+  async _connect(key) {
+    const wsEndpoint = await this.out(key);
+    const browser = await this._browserType.connect({ wsEndpoint });
+    return { promise: new Promise(resolve => browser.once('disconnected', resolve)) };
   }
 
   child() {
@@ -99,6 +108,12 @@ registerFixture('wrapper', async ({browserType, defaultBrowserOptions}, test) =>
 
 registerFixture('stallingWrapper', async ({browserType, defaultBrowserOptions}, test) => {
   const wrapper = new Wrapper(browserType, defaultBrowserOptions, { stallOnClose: true });
+  await wrapper.connect();
+  await test(wrapper);
+});
+
+registerFixture('doubleWrapper', async ({browserType, defaultBrowserOptions}, test) => {
+  const wrapper = new Wrapper(browserType, defaultBrowserOptions, { launchTwo: true });
   await wrapper.connect();
   await test(wrapper);
 });
@@ -138,10 +153,28 @@ describe('Fixtures', function() {
       expect(await wrapper.out('signal')).toBe('null');
       expect(await wrapper.childExitCode()).toBe(130);
     });
+    it.fail(!CHANNEL).slow()('should close two browsers on SIGINT', async ({doubleWrapper}) => {
+      const wrapper = doubleWrapper;
+      process.kill(wrapper.child().pid, 'SIGINT');
+      expect(await wrapper.out('exitCode')).toBe('0');
+      expect(await wrapper.out('signal')).toBe('null');
+      expect(await wrapper.out('exitCode2')).toBe('0');
+      expect(await wrapper.out('signal2')).toBe('null');
+      expect(await wrapper.childExitCode()).toBe(130);
+    });
     it.slow()('should close the browser on SIGTERM', async ({wrapper}) => {
       process.kill(wrapper.child().pid, 'SIGTERM');
       expect(await wrapper.out('exitCode')).toBe('0');
       expect(await wrapper.out('signal')).toBe('null');
+      expect(await wrapper.childExitCode()).toBe(0);
+    });
+    it.fail(!CHANNEL).slow()('should close two browsers on SIGTERM', async ({doubleWrapper}) => {
+      const wrapper = doubleWrapper;
+      process.kill(wrapper.child().pid, 'SIGTERM');
+      expect(await wrapper.out('exitCode')).toBe('0');
+      expect(await wrapper.out('signal')).toBe('null');
+      expect(await wrapper.out('exitCode2')).toBe('0');
+      expect(await wrapper.out('signal2')).toBe('null');
       expect(await wrapper.childExitCode()).toBe(0);
     });
     it.slow()('should close the browser on SIGHUP', async ({wrapper}) => {

@@ -194,9 +194,6 @@ BrowserType:
         ignoreDefaultArgs:
           type: array?
           items: string
-        handleSIGINT: boolean?
-        handleSIGTERM: boolean?
-        handleSIGHUP: boolean?
         timeout: number?
         env:
           type: array?
@@ -230,9 +227,6 @@ BrowserType:
         ignoreDefaultArgs:
           type: array?
           items: string
-        handleSIGINT: boolean?
-        handleSIGTERM: boolean?
-        handleSIGHUP: boolean?
         timeout: number?
         env:
           type: array?
@@ -267,9 +261,6 @@ BrowserType:
         ignoreDefaultArgs:
           type: array?
           items: string
-        handleSIGINT: boolean?
-        handleSIGTERM: boolean?
-        handleSIGHUP: boolean?
         timeout: number?
         env:
           type: array?
@@ -1878,9 +1869,6 @@ Electron:
             properties:
               name: string
               value: string
-        handleSIGINT: boolean?
-        handleSIGTERM: boolean?
-        handleSIGHUP: boolean?
         timeout: number?
       returns:
         electronApplication: ElectronApplication

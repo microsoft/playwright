@@ -33,6 +33,9 @@ export class ElectronDispatcher extends Dispatcher<Electron, ElectronInitializer
     const options = {
       ...params,
       env: params.env ? envArrayToObject(params.env) : undefined,
+      handleSIGINT: false,
+      handleSIGTERM: false,
+      handleSIGHUP: false,
     };
     const electronApplication = await this._object.launch(params.executablePath, options);
     return { electronApplication: new ElectronApplicationDispatcher(this._scope, electronApplication) };

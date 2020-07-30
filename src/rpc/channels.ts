@@ -163,9 +163,6 @@ export type BrowserTypeLaunchParams = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
   timeout?: number,
   env?: {
     name: string,
@@ -188,9 +185,6 @@ export type BrowserTypeLaunchOptions = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
   timeout?: number,
   env?: {
     name: string,
@@ -216,9 +210,6 @@ export type BrowserTypeLaunchServerParams = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
   timeout?: number,
   env?: {
     name: string,
@@ -241,9 +232,6 @@ export type BrowserTypeLaunchServerOptions = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
   timeout?: number,
   env?: {
     name: string,
@@ -270,9 +258,6 @@ export type BrowserTypeLaunchPersistentContextParams = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
   timeout?: number,
   env?: {
     name: string,
@@ -325,9 +310,6 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
   timeout?: number,
   env?: {
     name: string,
@@ -2251,9 +2233,6 @@ export type ElectronLaunchParams = {
     name: string,
     value: string,
   }[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
   timeout?: number,
 };
 export type ElectronLaunchOptions = {
@@ -2263,9 +2242,6 @@ export type ElectronLaunchOptions = {
     name: string,
     value: string,
   }[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
   timeout?: number,
 };
 export type ElectronLaunchResult = {

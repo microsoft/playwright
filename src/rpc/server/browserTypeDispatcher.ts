@@ -40,6 +40,9 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
       ignoreDefaultArgs: params.ignoreAllDefaultArgs ? true : params.ignoreDefaultArgs,
       env: params.env ? envArrayToObject(params.env) : undefined,
       firefoxUserPrefs: params.firefoxUserPrefs ? parseValue(params.firefoxUserPrefs) : undefined,
+      handleSIGINT: false,
+      handleSIGTERM: false,
+      handleSIGHUP: false,
     };
     const browser = await this._object.launch(options);
     return { browser: new BrowserDispatcher(this._scope, browser as BrowserBase) };
@@ -52,6 +55,9 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
       ignoreDefaultArgs: params.ignoreAllDefaultArgs ? true : params.ignoreDefaultArgs,
       env: params.env ? envArrayToObject(params.env) : undefined,
       extraHTTPHeaders: params.extraHTTPHeaders ? headersArrayToObject(params.extraHTTPHeaders) : undefined,
+      handleSIGINT: false,
+      handleSIGTERM: false,
+      handleSIGHUP: false,
     };
     const browserContext = await this._object.launchPersistentContext(params.userDataDir, options);
     return { context: new BrowserContextDispatcher(this._scope, browserContext as BrowserContextBase) };
@@ -63,6 +69,9 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
       ignoreDefaultArgs: params.ignoreAllDefaultArgs ? true : params.ignoreDefaultArgs,
       firefoxUserPrefs: params.firefoxUserPrefs ? parseValue(params.firefoxUserPrefs) : undefined,
       env: params.env ? envArrayToObject(params.env) : undefined,
+      handleSIGINT: false,
+      handleSIGTERM: false,
+      handleSIGHUP: false,
     };
     return { server: new BrowserServerDispatcher(this._scope, await this._object.launchServer(options)) };
   }

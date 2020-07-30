@@ -24,8 +24,19 @@ import { Waiter } from './waiter';
 import { Events } from './events';
 import { envObjectToArray } from '../../converters';
 import { WaitForEventOptions, Env, LoggerSink } from './types';
+import { SignalHandler } from './browserType';
+
+type ElectronOptions = Omit<ElectronLaunchOptions, 'env'> & {
+  env?: Env,
+  logger?: LoggerSink,
+  handleSIGINT?: boolean,
+  handleSIGHUP?: boolean,
+  handleSIGTERM?: boolean,
+};
 
 export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer> {
+  _signalHandler?: SignalHandler;
+
   static from(electron: ElectronChannel): Electron {
     return (electron as any)._object;
   }
@@ -34,7 +45,7 @@ export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer>
     super(parent, type, guid, initializer);
   }
 
-  async launch(executablePath: string, options: ElectronLaunchOptions & { env?: Env, logger?: LoggerSink } = {}): Promise<ElectronApplication> {
+  async launch(executablePath: string, options: ElectronOptions = {}): Promise<ElectronApplication> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('electron.launch', async () => {
@@ -43,7 +54,12 @@ export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer>
         env: options.env ? envObjectToArray(options.env) : undefined,
         executablePath,
       };
-      return ElectronApplication.from((await this._channel.launch(params)).electronApplication);
+      const application = ElectronApplication.from((await this._channel.launch(params)).electronApplication);
+      if (this._signalHandler) {
+        this._signalHandler.registerCloseable(application, options);
+        application.addListener(Events.ElectronApplication.Close, () => this._signalHandler!.unregisterCloseable(application));
+      }
+      return application;
     }, logger);
   }
 }

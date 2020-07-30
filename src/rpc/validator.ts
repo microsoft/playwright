@@ -110,9 +110,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     args: tOptional(tArray(tString)),
     ignoreAllDefaultArgs: tOptional(tBoolean),
     ignoreDefaultArgs: tOptional(tArray(tString)),
-    handleSIGINT: tOptional(tBoolean),
-    handleSIGTERM: tOptional(tBoolean),
-    handleSIGHUP: tOptional(tBoolean),
     timeout: tOptional(tNumber),
     env: tOptional(tArray(tObject({
       name: tString,
@@ -135,9 +132,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     args: tOptional(tArray(tString)),
     ignoreAllDefaultArgs: tOptional(tBoolean),
     ignoreDefaultArgs: tOptional(tArray(tString)),
-    handleSIGINT: tOptional(tBoolean),
-    handleSIGTERM: tOptional(tBoolean),
-    handleSIGHUP: tOptional(tBoolean),
     timeout: tOptional(tNumber),
     env: tOptional(tArray(tObject({
       name: tString,
@@ -161,9 +155,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     args: tOptional(tArray(tString)),
     ignoreAllDefaultArgs: tOptional(tBoolean),
     ignoreDefaultArgs: tOptional(tArray(tString)),
-    handleSIGINT: tOptional(tBoolean),
-    handleSIGTERM: tOptional(tBoolean),
-    handleSIGHUP: tOptional(tBoolean),
     timeout: tOptional(tNumber),
     env: tOptional(tArray(tObject({
       name: tString,
@@ -846,9 +837,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       name: tString,
       value: tString,
     }))),
-    handleSIGINT: tOptional(tBoolean),
-    handleSIGTERM: tOptional(tBoolean),
-    handleSIGHUP: tOptional(tBoolean),
     timeout: tOptional(tNumber),
   });
   scheme.ElectronApplicationNewBrowserWindowParams = tObject({

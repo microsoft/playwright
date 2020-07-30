@@ -39,6 +39,6 @@ export class BrowserServerDispatcher extends Dispatcher<BrowserServer, BrowserSe
   }
 
   async kill(): Promise<void> {
-    await this._object.close();
+    await this._object.kill();
   }
 }
