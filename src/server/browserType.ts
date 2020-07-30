@@ -55,6 +55,7 @@ export interface BrowserType {
 
 const mkdirAsync = util.promisify(fs.mkdir);
 const mkdtempAsync = util.promisify(fs.mkdtemp);
+const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 const DOWNLOADS_FOLDER = path.join(os.tmpdir(), 'playwright_downloads-');
 
 type WebSocketNotPipe = { webSocketRegex: RegExp, stream: 'stdout' | 'stderr' };
@@ -190,6 +191,13 @@ export abstract class BrowserTypeBase implements BrowserType {
     const executable = executablePath || this.executablePath();
     if (!executable)
       throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
+    if (!(await existsAsync(executable))) {
+      const errorMessageLines = [`Failed to launch ${this._name} because executable doesn't exist at ${executable}`];
+      // If we tried using stock downloaded browser, suggest re-installing playwright.
+      if (!executablePath)
+        errorMessageLines.push(`Try re-installing playwright with "npm install playwright"`);
+      throw new Error(errorMessageLines.join('\n'));
+    }
 
     if (!executablePath) {
       // We can only validate dependencies for bundled browsers.
