@@ -19,7 +19,7 @@ import * as childProcess from 'child_process';
 import * as readline from 'readline';
 import * as removeFolder from 'rimraf';
 import * as stream from 'stream';
-import { helper } from '../helper';
+import { helper, isUnderTest } from '../helper';
 import { Progress } from '../progress';
 
 export type Env = {[key: string]: string | number | boolean | undefined};
@@ -113,7 +113,13 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   const listeners = [ helper.addEventListener(process, 'exit', killProcess) ];
   if (options.handleSIGINT) {
     listeners.push(helper.addEventListener(process, 'SIGINT', () => {
-      gracefullyClose().then(() => process.exit(130));
+      gracefullyClose().then(() => {
+        // Give tests a chance to dispatch any async calls.
+        if (isUnderTest())
+          setTimeout(() => process.exit(130), 0);
+        else
+          process.exit(130);
+      });
     }));
   }
   if (options.handleSIGTERM)

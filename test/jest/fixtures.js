@@ -16,14 +16,12 @@
 
 const path = require('path');
 const childProcess = require('child_process');
+const playwrightImpl = require('../../index');
 
-const playwright = require('../../index');
 const { TestServer } = require('../../utils/testserver/');
-const { DispatcherConnection } = require('../../lib/rpc/server/dispatcher');
 const { Connection } = require('../../lib/rpc/client/connection');
 const { Transport } = require('../../lib/rpc/transport');
-const { PlaywrightDispatcher } = require('../../lib/rpc/server/playwrightDispatcher');
-const { setUseApiName } = require('../../lib/progress');
+const { setupInProcess } = require('../../lib/rpc/inprocess');
 const { setUnderTest } = require('../../lib/helper');
 setUnderTest();
 
@@ -80,57 +78,38 @@ module.exports = function registerFixtures(global) {
   });
 
   global.registerWorkerFixture('playwright', async({}, test) => {
-    Error.stackTraceLimit = 15;
-    if (process.env.PWCHANNEL) {
-      setUseApiName(false);
+    if (process.env.PWCHANNEL === 'wire') {
       const connection = new Connection();
-      let toImpl;
-      let spawnedProcess;
-      let onExit;
-      if (process.env.PWCHANNEL === 'wire') {
-        spawnedProcess = childProcess.fork(path.join(__dirname, '..', '..', 'lib', 'rpc', 'server'), [], {
-          stdio: 'pipe',
-          detached: true,
-        });
-        spawnedProcess.unref();
-        onExit = (exitCode, signal) => {
-          throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
-        };
-        spawnedProcess.on('exit', onExit);
-        const transport = new Transport(spawnedProcess.stdin, spawnedProcess.stdout);
-        connection.onmessage = message => transport.send(JSON.stringify(message));
-        transport.onmessage = message => connection.dispatch(JSON.parse(message));
-      } else {
-        const dispatcherConnection = new DispatcherConnection();
-        dispatcherConnection.onmessage = async message => {
-          setImmediate(() => connection.dispatch(message));
-        };
-        connection.onmessage = async message => {
-          const result = await dispatcherConnection.dispatch(message);
-          await new Promise(f => setImmediate(f));
-          return result;
-        };
-        new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
-        toImpl = x => dispatcherConnection._dispatchers.get(x._guid)._object;
-      }
-
+      const spawnedProcess = childProcess.fork(path.join(__dirname, '..', '..', 'lib', 'rpc', 'server'), [], {
+        stdio: 'pipe',
+        detached: true,
+      });
+      spawnedProcess.unref();
+      const onExit = (exitCode, signal) => {
+        throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
+      };
+      spawnedProcess.on('exit', onExit);
+      const transport = new Transport(spawnedProcess.stdin, spawnedProcess.stdout);
+      connection.onmessage = message => transport.send(JSON.stringify(message));
+      transport.onmessage = message => connection.dispatch(JSON.parse(message));
       const playwrightObject = await connection.waitForObjectWithKnownName('Playwright');
-      playwrightObject.toImpl = toImpl;
       await test(playwrightObject);
-      if (spawnedProcess) {
-        spawnedProcess.removeListener('exit', onExit);
-        spawnedProcess.stdin.destroy();
-        spawnedProcess.stdout.destroy();
-        spawnedProcess.stderr.destroy();
-      }
+      spawnedProcess.removeListener('exit', onExit);
+      spawnedProcess.stdin.destroy();
+      spawnedProcess.stdout.destroy();
+      spawnedProcess.stderr.destroy();
+    } else if (process.env.PWCHANNEL) {
+      const playwright = setupInProcess(playwrightImpl);
+      await test(playwright);
     } else {
-      playwright.toImpl = x => x;
+      const playwright = playwrightImpl;
+      playwright._toImpl = x => x;
       await test(playwright);
     }
   });
 
   global.registerFixture('toImpl', async ({playwright}, test) => {
-    await test(playwright.toImpl);
+    await test(playwright._toImpl);
   });
 
   global.registerWorkerFixture('browserType', async ({playwright}, test) => {
