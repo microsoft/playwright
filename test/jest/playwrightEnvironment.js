@@ -151,7 +151,7 @@ class PlaywrightEnvironment extends NodeEnvironment {
           snapshotState.matched++;
         else
           snapshotState.unmatched++;
-        return {pass, message};
+        return {pass, message: () => message};
       };
       this.global.expect.extend({ toBeGolden });
     }
