@@ -44,12 +44,18 @@ echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 if [[ $1 == "--juggler" ]]; then
   ./mach build faster
 else
-  # We manage Rust version ourselves.
-  echo "-- Using rust v${RUST_VERSION}"
-  rustup default "${RUST_VERSION}"
+  # TODO: rust is not in the PATH on Windows
+  if command -v rust >/dev/null; then
+    # We manage Rust version ourselves.
+    echo "-- Using rust v${RUST_VERSION}"
+    rustup default "${RUST_VERSION}"
+  fi
 
-  echo "-- Using cbindgen v${CBINDGEN_VERSION}"
-  cargo install cbindgen --version "${CBINDGEN_VERSION}"
+  # TODO: cargo is not in the PATH on Windows
+  if command -v cargo >/dev/null; then
+    echo "-- Using cbindgen v${CBINDGEN_VERSION}"
+    cargo install cbindgen --version "${CBINDGEN_VERSION}"
+  fi
   ./mach build
 fi
 
