@@ -66,9 +66,8 @@ export function windowsExeAndDllDirectories(browserPath: string, browser: Browse
     return [path.join(browserPath, 'chrome-win')];
   if (browser.name === 'firefox')
     return [path.join(browserPath, 'firefox')];
-  if (browser.name === 'webkit') {
+  if (browser.name === 'webkit')
     return [browserPath];
-  }
   return [];
 }
 
