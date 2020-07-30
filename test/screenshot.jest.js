@@ -541,7 +541,10 @@ describe.skip(ffheadful)('ElementHandle.screenshot', function() {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/grid.html');
     const elementHandle = await page.$('.box:nth-of-type(3)');
-    await elementHandle.evaluate(e => e.classList.add('animation'));
+    await elementHandle.evaluate(e => {
+      e.classList.add('animation');
+      return new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f)));
+    });
     const screenshot = await elementHandle.screenshot();
     expect(screenshot).toBeGolden('screenshot-element-bounding-box.png');
   });
