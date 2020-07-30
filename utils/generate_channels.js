@@ -70,11 +70,13 @@ function inlineType(type, indent, wrapEnums = false) {
   raise(type);
 }
 
-function properties(props, indent) {
+function properties(props, indent, onlyOptional) {
   const ts = [];
   const scheme = [];
   for (const [name, value] of Object.entries(props)) {
     const inner = inlineType(value, indent);
+    if (onlyOptional && !inner.optional)
+      continue;
     ts.push(`${indent}${name}${inner.optional ? '?' : ''}: ${inner.ts},`);
     const wrapped = inner.optional ? `tOptional(${inner.scheme})` : inner.scheme;
     scheme.push(`${indent}${name}: ${wrapped},`);
@@ -82,10 +84,10 @@ function properties(props, indent) {
   return { ts: ts.join('\n'), scheme: scheme.join('\n') };
 }
 
-function objectType(props, indent) {
+function objectType(props, indent, onlyOptional = false) {
   if (!Object.entries(props).length)
     return { ts: `{}`, scheme: `tObject({})` };
-  const inner = properties(props, indent + '  ');
+  const inner = properties(props, indent + '  ', onlyOptional);
   return { ts: `{\n${inner.ts}\n${indent}}`, scheme: `tObject({\n${inner.scheme}\n${indent}})` };
 }
 
@@ -195,7 +197,9 @@ for (const [name, item] of Object.entries(protocol)) {
         method = {};
       const parameters = objectType(method.parameters || {}, '');
       const paramsName = `${channelName}${titleCase(methodName)}Params`;
+      const optionsName = `${channelName}${titleCase(methodName)}Options`;
       ts_types.set(paramsName, parameters.ts);
+      ts_types.set(optionsName, objectType(method.parameters || {}, '', true).ts);
       addScheme(paramsName, method.parameters ? parameters.scheme : `tOptional(tObject({}))`);
       for (const key of inherits.keys()) {
         if (inherits.get(key) === channelName)

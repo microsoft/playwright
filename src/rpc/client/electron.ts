@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-import * as types from '../../types';
-import { ElectronChannel, ElectronInitializer, ElectronApplicationChannel, ElectronApplicationInitializer, ElectronLaunchParams } from '../channels';
+import { ElectronChannel, ElectronInitializer, ElectronApplicationChannel, ElectronApplicationInitializer, ElectronLaunchParams, ElectronLaunchOptions } from '../channels';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { Page } from './page';
 import { serializeArgument, FuncOn, parseResult, SmartHandle, JSHandle } from './jsHandle';
-import { ElectronEvents, ElectronLaunchOptionsBase } from '../../server/electron';
 import { TimeoutSettings } from '../../timeoutSettings';
 import { Waiter } from './waiter';
-import { Events } from '../../events';
-import { LoggerSink } from '../../loggerSink';
+import { Events } from './events';
 import { envObjectToArray } from '../../converters';
+import { WaitForEventOptions, Env, LoggerSink } from './types';
 
 export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer> {
   static from(electron: ElectronChannel): Electron {
@@ -36,7 +34,7 @@ export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer>
     super(parent, type, guid, initializer);
   }
 
-  async launch(executablePath: string, options: ElectronLaunchOptionsBase & { logger?: LoggerSink } = {}): Promise<ElectronApplication> {
+  async launch(executablePath: string, options: ElectronLaunchOptions & { env?: Env, logger?: LoggerSink } = {}): Promise<ElectronApplication> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('electron.launch', async () => {
@@ -66,10 +64,10 @@ export class ElectronApplication extends ChannelOwner<ElectronApplicationChannel
       const window = Page.from(page);
       (window as any).browserWindow = JSHandle.from(browserWindow);
       this._windows.add(window);
-      this.emit(ElectronEvents.ElectronApplication.Window, window);
+      this.emit(Events.ElectronApplication.Window, window);
       window.once(Events.Page.Close, () => this._windows.delete(window));
     });
-    this._channel.on('close', () => this.emit(ElectronEvents.ElectronApplication.Close));
+    this._channel.on('close', () => this.emit(Events.ElectronApplication.Close));
   }
 
   windows(): Page[] {
@@ -95,13 +93,13 @@ export class ElectronApplication extends ChannelOwner<ElectronApplicationChannel
     await this._channel.close();
   }
 
-  async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
+  async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
     const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
     const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
     const waiter = new Waiter();
     waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);
-    if (event !== ElectronEvents.ElectronApplication.Close)
-      waiter.rejectOnEvent(this, ElectronEvents.ElectronApplication.Close, new Error('Electron application closed'));
+    if (event !== Events.ElectronApplication.Close)
+      waiter.rejectOnEvent(this, Events.ElectronApplication.Close, new Error('Electron application closed'));
     const result = await waiter.waitForEvent(this, event, predicate as any);
     waiter.dispose();
     return result;

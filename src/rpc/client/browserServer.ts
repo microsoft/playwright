@@ -17,7 +17,7 @@
 import { ChildProcess } from 'child_process';
 import { BrowserServerChannel, BrowserServerInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
-import { Events } from '../../events';
+import { Events } from './events';
 
 export class BrowserServer extends ChannelOwner<BrowserServerChannel, BrowserServerInitializer> {
   static from(server: BrowserServerChannel): BrowserServer {

@@ -15,10 +15,28 @@
  * limitations under the License.
  */
 
-import { PageChannel } from '../channels';
+import { PageChannel, AXNode } from '../channels';
 import { ElementHandle } from './elementHandle';
-import * as types from '../../types';
-import { axNodeFromProtocol } from '../serializers';
+
+type SerializedAXNode = Omit<AXNode, 'valueString' | 'valueNumber' | 'children' | 'checked' | 'pressed'> & {
+  value?: string|number,
+  checked?: boolean | 'mixed',
+  pressed?: boolean | 'mixed',
+  children?: SerializedAXNode[]
+};
+
+function axNodeFromProtocol(axNode: AXNode): SerializedAXNode {
+  const result: SerializedAXNode = {
+    ...axNode,
+    value: axNode.valueNumber !== undefined ? axNode.valueNumber : axNode.valueString,
+    checked: axNode.checked === 'checked' ? true : axNode.checked === 'unchecked' ? false : axNode.checked,
+    pressed: axNode.pressed === 'pressed' ? true : axNode.pressed === 'released' ? false : axNode.pressed,
+    children: axNode.children ? axNode.children.map(axNodeFromProtocol) : undefined,
+  };
+  delete (result as any).valueNumber;
+  delete (result as any).valueString;
+  return result;
+}
 
 export class Accessibility {
   private _channel: PageChannel;
@@ -27,7 +45,7 @@ export class Accessibility {
     this._channel = channel;
   }
 
-  async snapshot(options: { interestingOnly?: boolean; root?: ElementHandle } = {}): Promise<types.SerializedAXNode | null> {
+  async snapshot(options: { interestingOnly?: boolean; root?: ElementHandle } = {}): Promise<SerializedAXNode | null> {
     const root = options.root ? options.root._elementChannel : undefined;
     const result = await this._channel.accessibilitySnapshot({ interestingOnly: options.interestingOnly, root });
     return result.rootAXNode ? axNodeFromProtocol(result.rootAXNode) : null;

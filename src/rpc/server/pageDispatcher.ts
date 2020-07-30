@@ -20,9 +20,9 @@ import { Frame } from '../../frames';
 import { Request } from '../../network';
 import { Page, Worker } from '../../page';
 import * as types from '../../types';
-import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary, SerializedArgument, PagePdfParams, SerializedError, PageAccessibilitySnapshotResult, SerializedValue, PageEmulateMediaParams } from '../channels';
+import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary, SerializedArgument, PagePdfParams, SerializedError, PageAccessibilitySnapshotResult, SerializedValue, PageEmulateMediaParams, AXNode } from '../channels';
 import { Dispatcher, DispatcherScope, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
-import { parseError, serializeError, axNodeToProtocol } from '../serializers';
+import { parseError, serializeError } from '../serializers';
 import { headersArrayToObject } from '../../converters';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
@@ -277,4 +277,17 @@ export class BindingCallDispatcher extends Dispatcher<{}, BindingCallInitializer
   async reject(params: { error: SerializedError }) {
     this._reject!(parseError(params.error));
   }
+}
+
+function axNodeToProtocol(axNode: types.SerializedAXNode): AXNode {
+  const result: AXNode = {
+    ...axNode,
+    valueNumber: typeof axNode.value === 'number' ? axNode.value : undefined,
+    valueString: typeof axNode.value === 'string' ? axNode.value : undefined,
+    checked: axNode.checked === true ? 'checked' : axNode.checked === false ? 'unchecked' : axNode.checked,
+    pressed: axNode.pressed === true ? 'pressed' : axNode.pressed === false ? 'released' : axNode.pressed,
+    children: axNode.children ? axNode.children.map(axNodeToProtocol) : undefined,
+  };
+  delete (result as any).value;
+  return result;
 }

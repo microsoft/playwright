@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Events } from '../../events';
+import { Events } from './events';
 import { assertMaxArguments } from '../../helper';
 import { WorkerChannel, WorkerInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';

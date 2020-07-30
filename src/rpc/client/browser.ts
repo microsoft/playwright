@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-import * as types from '../../types';
 import { BrowserChannel, BrowserInitializer, BrowserNewContextParams } from '../channels';
 import { BrowserContext } from './browserContext';
 import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
-import { Events } from '../../events';
-import { LoggerSink } from '../../loggerSink';
+import { Events } from './events';
 import { BrowserType } from './browserType';
 import { headersObjectToArray } from '../../converters';
+import { BrowserContextOptions } from './types';
 
 export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   readonly _contexts = new Set<BrowserContext>();
@@ -50,7 +49,7 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
     this._closedPromise = new Promise(f => this.once(Events.Browser.Disconnected, f));
   }
 
-  async newContext(options: types.BrowserContextOptions & { logger?: LoggerSink } = {}): Promise<BrowserContext> {
+  async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browser.newContext', async () => {
@@ -75,7 +74,7 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
     return this._initializer.version;
   }
 
-  async newPage(options: types.BrowserContextOptions & { logger?: LoggerSink } = {}): Promise<Page> {
+  async newPage(options: BrowserContextOptions = {}): Promise<Page> {
     const context = await this.newContext(options);
     const page = await context.newPage();
     page._ownedContext = context;
