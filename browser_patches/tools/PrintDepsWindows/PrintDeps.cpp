@@ -75,7 +75,7 @@ const DepsMap getDependencies(const HMODULE hMod)
 
 int printDependencies(const char* library)
 {
-    HMODULE hMod = LoadLibraryEx(library, NULL, LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+    HMODULE hMod = LoadLibraryEx(library, NULL, DONT_RESOLVE_DLL_REFERENCES);
     if (hMod == NULL)
     {
         std::cerr << "Failed to load " << library << "  Error: " << getLastErrorString() << std::endl;
