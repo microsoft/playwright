@@ -61,6 +61,17 @@ export function linuxLddDirectories(browserPath: string, browser: BrowserDescrip
   return [];
 }
 
+export function windowsExeAndDllDirectories(browserPath: string, browser: BrowserDescriptor): string[] {
+  if (browser.name === 'chromium')
+    return [path.join(browserPath, 'chrome-win')];
+  if (browser.name === 'firefox')
+    return [path.join(browserPath, 'firefox')];
+  if (browser.name === 'webkit') {
+    return [browserPath];
+  }
+  return [];
+}
+
 export function executablePath(browserPath: string, browser: BrowserDescriptor): string | undefined {
   let tokens: string[] | undefined;
   if (browser.name === 'chromium') {
