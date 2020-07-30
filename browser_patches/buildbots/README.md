@@ -1,14 +1,20 @@
 # Setting Up Build Bots
 
-We currently have 4 build bots that produce the following builds
-- **[buildbot-linux]** Ubuntu 18.04 machine
-    - builds: `webkit-gtk`, `webkit-wpe`, `firefox-linux`
-- **[buildbot-mac-10.14]** Mac 10.14 machine
-    - builds: `webKit-mac-10.14`, `firefox-mac`
-- **[buildbot-mac-10.15]** machine
-    - builds: `webkit-mac-10.15`
-- **[buildbot-windows]** Windows 10 machine
-    - builds: `firefox-win32`, `firefox-win64`, `webkit-win64`
+We currently have 5 build bots that produce 9 browser builds:
+- **`buildbot-ubuntu-18.04`**
+    - `firefox-ubuntu-18.04.zip`
+    - `webkit-ubuntu-18.04.zip`
+- **`buildbot-ubuntu-20.04`**
+    - `webkit-ubuntu-20.04.zip`
+- **`buildbot-mac-10.14`**
+    - `firefox-mac-10.14.zip`
+    - `webkit-mac-10.14.zip`
+- **`buildbot-mac-10.15`**
+    - `webkit-mac-10.15.zip`
+- **`buildbot-windows`**
+    - `firefox-win32.zip`
+    - `firefox-win64.zip`
+    - `webkit-win64.zip`
 
 This document describes setting up bots infrastructure to produce
 browser builds.
@@ -234,14 +240,9 @@ $ sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-9
 $ sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-9 100
 ```
 
-> **NOTE**: Firefox build config can be checked official Firefox builds, navigating to `about:buildconfig` URL. 
+> **NOTE**: Firefox build config can be checked official Firefox builds, navigating to `about:buildconfig` URL.
 
-## Setting Bot Environment
+To document precisely my steps to bring up bots:
+- [July 22, 2020: Setting up Ubuntu 18.04 buildbot on Azure](https://gist.github.com/aslushnikov/a4a3823b894888546e741899e69a1d8e)
+- [July 22, 2020: Setting up Ubuntu 20.04 buildbot on Azure](https://gist.github.com/aslushnikov/a0bd658b575022e198443f856b5185e7)
 
-WebKit on Linux requires a new version of BubbleWrap. Download from https://launchpad.net/ubuntu/+source/bubblewrap/0.3.1-1ubuntu1 and install manually.
-
-> TODO: instructions to set up linux bot
-
-## Running Build Loop
-
-> TODO: instructions to set up cron jobs
