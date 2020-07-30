@@ -43,7 +43,7 @@ async function validateDependencies(browserPath: string, browser: BrowserDescrip
   // We currently only support Linux.
   if (os.platform() === 'linux')
     return await validateDependenciesLinux(browserPath, browser);
-  if (os.platform() === 'win32')
+  if (os.platform() === 'win32' && os.arch() === 'x64')
     return await validateDependenciesWindows(browserPath, browser);
 }
 
