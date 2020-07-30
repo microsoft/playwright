@@ -9,10 +9,12 @@
 
   const path = require('path');
   const { setUnderTest } = require(path.join(playwrightPath, 'lib', 'helper'));
+  const { setupInProcess } = require(path.join(playwrightPath, 'lib', 'rpc', 'inprocess'));
   setUnderTest();
-  const playwrightFile = path.join(playwrightPath, 'index');
+  const playwrightImpl = require(path.join(playwrightPath, 'index'));
+  const playwright = process.env.PWCHANNEL ? setupInProcess(playwrightImpl) : playwrightImpl;
 
-  const browserServer = await require(playwrightFile)[browserTypeName].launchServer(launchOptions);
+  const browserServer = await playwright[browserTypeName].launchServer(launchOptions);
   browserServer.on('close', (exitCode, signal) => {
     console.log(`(exitCode=>${exitCode})`);
     console.log(`(signal=>${signal})`);

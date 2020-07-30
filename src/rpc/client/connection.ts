@@ -66,6 +66,10 @@ export class Connection {
     return new Promise(f => this._waitingForObject.set(guid, f));
   }
 
+  getObjectWithKnownName(guid: string): any {
+    return this._objects.get(guid)!;
+  }
+
   async sendMessageToServer(type: string, guid: string, method: string, params: any): Promise<any> {
     const id = ++this._lastId;
     const validated = method === 'debugScopeState' ? params : validateParams(type, method, params);
