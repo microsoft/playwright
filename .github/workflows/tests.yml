@@ -30,6 +30,7 @@ jobs:
       with:
         node-version: 10
     - uses: microsoft/playwright-github-action@v1.4.2
+    - run: sudo apt-get install -y libkate1
     - run: npm ci
     - run: npm run build
     - run: mkdir -p coredumps
