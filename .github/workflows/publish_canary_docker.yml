@@ -29,6 +29,6 @@ jobs:
         repository: public/playwright
         path: docs/docker/
         dockerfile: docs/docker/Dockerfile.bionic
-        tags: dev
+        tags: next
         tag_with_sha: true
 
