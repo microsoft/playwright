@@ -42,28 +42,25 @@ std::string getLastErrorString()
 const DepsMap getDependencies(const HMODULE hMod)
 {
     // See https://docs.microsoft.com/en-us/archive/msdn-magazine/2002/february/inside-windows-win32-portable-executable-file-format-in-detail
-    // and https://docs.microsoft.com/en-us/archive/msdn-magazine/2002/march/inside-windows-an-in-depth-look-into-the-win32-portable-executable-file-format-part-2
     // for PE format description.
-    // Using ImageDirectoryEntryToDataEx would add dependency on dbghelp.dll so we traverse header structures manually.
-    IMAGE_DOS_HEADER* pDosHeader = (IMAGE_DOS_HEADER*)hMod;
-    IMAGE_NT_HEADERS* pNtHeaders = (IMAGE_NT_HEADERS*)((BYTE*)hMod + pDosHeader->e_lfanew);
-    IMAGE_OPTIONAL_HEADER* pOptHeader = &pNtHeaders->OptionalHeader;
-    IMAGE_IMPORT_DESCRIPTOR* pImportDesc = (IMAGE_IMPORT_DESCRIPTOR*)((BYTE*)hMod + pOptHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress);
-
+    ULONG size;
+    PIMAGE_IMPORT_DESCRIPTOR pImportDesc =  (PIMAGE_IMPORT_DESCRIPTOR)ImageDirectoryEntryToData(hMod, true, IMAGE_DIRECTORY_ENTRY_IMPORT, &size);
     DepsMap deps;
+    // According to https://docs.microsoft.com/en-us/archive/msdn-magazine/2002/march/inside-windows-an-in-depth-look-into-the-win32-portable-executable-file-format-part-2
+    // "The end of the IMAGE_IMPORT_DESCRIPTOR array is indicated by an entry with fields all set to 0."
     while (pImportDesc->Name)
     {
-        char* dllName = (char*)((BYTE*)hMod + pImportDesc->Name);
-        std::string dllPath = "Not found";
+        LPCSTR dllName = (LPCSTR)((BYTE*)hMod + pImportDesc->Name);
+        std::string dllPath = "not found";
         HMODULE hModDep = LoadLibraryEx(dllName, NULL, DONT_RESOLVE_DLL_REFERENCES);
         if (hModDep != NULL)
         {
-            TCHAR strDLLPath[_MAX_PATH];
-            DWORD result = GetModuleFileName(hModDep, strDLLPath, _MAX_PATH);
+            TCHAR pathBuffer[_MAX_PATH];
+            DWORD result = GetModuleFileName(hModDep, pathBuffer, _MAX_PATH);
             if (result == 0) {
                 std::cerr << "Failed to get library file name: " << dllName << "  Error: " << getLastErrorString() << std::endl;
             }
-            dllPath = std::string(strDLLPath);
+            dllPath = std::string(pathBuffer);
             FreeLibrary(hModDep);
         }
         deps[std::string(dllName)] = dllPath;
@@ -82,12 +79,11 @@ int printDependencies(const char* library)
         return -1;
     }
     const DepsMap& deps = getDependencies(hMod);
-    FreeLibrary(hMod);
     for (const auto iter : deps)
     {
         std::cout << "    " << iter.first << " => " << iter.second << std::endl;
     }
-
+    FreeLibrary(hMod);
     return 0;
 }
 
