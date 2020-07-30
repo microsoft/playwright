@@ -62,41 +62,41 @@ async function validateDependenciesWindows(browserPath: string, browser: Browser
   if (!missingDeps.size)
     return;
 
-  let knownIssues = [];
+  let isCrtMissing = false;
+  let isMediaFoundationMissing = false;
   for (const dep of missingDeps) {
-    if (dep.startsWith('api-ms-win-crt-')) {
-      knownIssues.push([
-        `Some of the Universal C Runtime files cannot be found on the system. You can fix`,
-        `that by installing Microsoft Visual C++ Redistributable for Visual Studio from:`,
-        `https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads`,
-        ``,
-      ].join('\n'));
-      break;
-    }
+    if (dep.startsWith('api-ms-win-crt'))
+      isCrtMissing = true;
+    else if (dep === "mf.dll" || dep === "mfplat.dll" ||  dep === "msmpeg2vdec.dll") 
+      isMediaFoundationMissing = true;
   }
 
-  for (const dep of missingDeps) {
-    if (dep === "mf.dll" || dep === "mfplat.dll" ||  dep === "msmpeg2vdec.dll") {
-      knownIssues.push([
-        `Some of the Media Foundation files cannot be found on the system. If you are`,
-        `on Windows Server try fixing this by running the following command in PowerShell`,
-        `as Administrator:`,
-        ``,
-        `    Install-WindowsFeature Server-Media-Foundation`,
-        ``,
-        ``,
-      ].join('\n'));
-      break;
-    }
+  let details = [];
+
+  if (isCrtMissing) {
+    details.push(
+      `Some of the Universal C Runtime files cannot be found on the system. You can fix`,
+      `that by installing Microsoft Visual C++ Redistributable for Visual Studio from:`,
+      `https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads`,
+      ``);
   }
 
-  const missingDependenciesList = [
+  if (isMediaFoundationMissing) {
+    details.push(
+      `Some of the Media Foundation files cannot be found on the system. If you are`,
+      `on Windows Server try fixing this by running the following command in PowerShell`,
+      `as Administrator:`,
+      ``,
+      `    Install-WindowsFeature Server-Media-Foundation`,
+      ``);
+  }
+
+  details.push(
     `Full list of missing libraries:`,
     `    ${[...missingDeps].join('\n    ')}`,
-    ``,
-  ].join('\n');
+    ``);
 
-  throw new Error(`Host system is missing dependencies!\n\n${knownIssues.join('\n')}${missingDependenciesList}`);
+  throw new Error(`Host system is missing dependencies!\n\n${details.join('\n')}`);
 }
 
 async function validateDependenciesLinux(browserPath: string, browser: BrowserDescriptor) {
