@@ -128,6 +128,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
     downloadsPath: tOptional(tString),
     firefoxUserPrefs: tOptional(tType('SerializedValue')),
+    chromiumSandbox: tOptional(tBoolean),
     slowMo: tOptional(tNumber),
   });
   scheme.BrowserTypeLaunchServerParams = tObject({
@@ -153,6 +154,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
     downloadsPath: tOptional(tString),
     firefoxUserPrefs: tOptional(tType('SerializedValue')),
+    chromiumSandbox: tOptional(tBoolean),
     port: tOptional(tNumber),
   });
   scheme.BrowserTypeLaunchPersistentContextParams = tObject({
@@ -178,6 +180,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       password: tOptional(tString),
     })),
     downloadsPath: tOptional(tString),
+    chromiumSandbox: tOptional(tBoolean),
     slowMo: tOptional(tNumber),
     noDefaultViewport: tOptional(tBoolean),
     viewport: tOptional(tObject({

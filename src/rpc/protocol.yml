@@ -216,6 +216,7 @@ BrowserType:
             password: string?
         downloadsPath: string?
         firefoxUserPrefs: SerializedValue?
+        chromiumSandbox: boolean?
         slowMo: number?
       returns:
         browser: Browser
@@ -252,6 +253,7 @@ BrowserType:
             password: string?
         downloadsPath: string?
         firefoxUserPrefs: SerializedValue?
+        chromiumSandbox: boolean?
         port: number?
       returns:
         server: BrowserServer
@@ -288,6 +290,7 @@ BrowserType:
             username: string?
             password: string?
         downloadsPath: string?
+        chromiumSandbox: boolean?
         slowMo: number?
         noDefaultViewport: boolean?
         viewport:
