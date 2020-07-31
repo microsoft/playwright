@@ -181,6 +181,7 @@ export type BrowserTypeLaunchParams = {
   },
   downloadsPath?: string,
   firefoxUserPrefs?: SerializedValue,
+  chromiumSandbox?: boolean,
   slowMo?: number,
 };
 export type BrowserTypeLaunchOptions = {
@@ -206,6 +207,7 @@ export type BrowserTypeLaunchOptions = {
   },
   downloadsPath?: string,
   firefoxUserPrefs?: SerializedValue,
+  chromiumSandbox?: boolean,
   slowMo?: number,
 };
 export type BrowserTypeLaunchResult = {
@@ -234,6 +236,7 @@ export type BrowserTypeLaunchServerParams = {
   },
   downloadsPath?: string,
   firefoxUserPrefs?: SerializedValue,
+  chromiumSandbox?: boolean,
   port?: number,
 };
 export type BrowserTypeLaunchServerOptions = {
@@ -259,6 +262,7 @@ export type BrowserTypeLaunchServerOptions = {
   },
   downloadsPath?: string,
   firefoxUserPrefs?: SerializedValue,
+  chromiumSandbox?: boolean,
   port?: number,
 };
 export type BrowserTypeLaunchServerResult = {
@@ -287,6 +291,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
     password?: string,
   },
   downloadsPath?: string,
+  chromiumSandbox?: boolean,
   slowMo?: number,
   noDefaultViewport?: boolean,
   viewport?: {
@@ -342,6 +347,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     password?: string,
   },
   downloadsPath?: string,
+  chromiumSandbox?: boolean,
   slowMo?: number,
   noDefaultViewport?: boolean,
   viewport?: {
