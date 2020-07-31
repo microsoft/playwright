@@ -113,7 +113,8 @@ describe('Async stacks', () => {
   });
 });
 
-describe.fail(FFOX && WIN || USES_HOOKS)('Page.Events.Crash', function() {
+const CRASH_FAIL = (FFOX && WIN) || USES_HOOKS;
+describe('Page.Events.Crash', function() {
   // Firefox Win: it just doesn't crash sometimes.
 
   function crash(pageImpl) {
@@ -125,12 +126,12 @@ describe.fail(FFOX && WIN || USES_HOOKS)('Page.Events.Crash', function() {
       pageImpl._delegate._session.send('Page.crash', {}).catch(e => {});
   }
 
-  it('should emit crash event when page crashes', async({page, toImpl}) => {
+  it.fail(CRASH_FAIL)('should emit crash event when page crashes', async({page, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
     crash(toImpl(page));
     await new Promise(f => page.on('crash', f));
   });
-  it('should throw on any action after page crashes', async({page, toImpl}) => {
+  it.fail(CRASH_FAIL)('should throw on any action after page crashes', async({page, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
     crash(toImpl(page));
     await page.waitForEvent('crash');
@@ -138,14 +139,14 @@ describe.fail(FFOX && WIN || USES_HOOKS)('Page.Events.Crash', function() {
     expect(err).toBeTruthy();
     expect(err.message).toContain('crash');
   });
-  it('should cancel waitForEvent when page crashes', async({page, toImpl}) => {
+  it.fail(CRASH_FAIL)('should cancel waitForEvent when page crashes', async({page, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
     const promise = page.waitForEvent('response').catch(e => e);
     crash(toImpl(page));
     const error = await promise;
     expect(error.message).toContain('Page crashed');
   });
-  it('should cancel navigation when page crashes', async({page, toImpl, server}) => {
+  it.fail(CRASH_FAIL)('should cancel navigation when page crashes', async({page, toImpl, server}) => {
     await page.setContent(`<div>This page should crash</div>`);
     server.setRoute('/one-style.css', () => {});
     const promise = page.goto(server.PREFIX + '/one-style.html').catch(e => e);
@@ -154,7 +155,7 @@ describe.fail(FFOX && WIN || USES_HOOKS)('Page.Events.Crash', function() {
     const error = await promise;
     expect(error.message).toContain('Navigation failed because page crashed');
   });
-  it('should be able to close context when page crashes', async({page, toImpl}) => {
+  it.fail(CRASH_FAIL)('should be able to close context when page crashes', async({page, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
     crash(toImpl(page));
     await page.waitForEvent('crash');
