@@ -11,6 +11,7 @@ jobs:
   publish-npm-release:
     name: "publish to NPM"
     runs-on: ubuntu-18.04
+    if: github.repository == 'microsoft/playwright'
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
@@ -27,6 +28,7 @@ jobs:
   publish-docker-release:
     name: "publish to DockerHub"
     runs-on: ubuntu-18.04
+    if: github.repository == 'microsoft/playwright'
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
