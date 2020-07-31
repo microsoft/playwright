@@ -251,6 +251,10 @@ await page.setInputFiles('input#upload', {
 
 You can select input files for upload using the `page.setInputFiles` method. It expects first argument to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input) with the type `"file"`. Multiple files can be passed in the array. If some of the file paths are relative, they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). Empty array clears the selected files.
 
+#### Example
+
+[This script](examples/upload.js) uploads a file to an `input` element that accepts file uploads.
+
 #### API reference
 
 - [page.setInputFiles(selector, files[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetinputfilesselector-value-options)
