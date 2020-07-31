@@ -317,7 +317,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
+  colorScheme?: 'light' | 'dark' | 'no-preference',
   acceptDownloads?: boolean,
 };
 export type BrowserTypeLaunchPersistentContextOptions = {
@@ -372,7 +372,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
+  colorScheme?: 'light' | 'dark' | 'no-preference',
   acceptDownloads?: boolean,
 };
 export type BrowserTypeLaunchPersistentContextResult = {

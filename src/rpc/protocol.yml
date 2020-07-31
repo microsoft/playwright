@@ -329,8 +329,8 @@ BrowserType:
         colorScheme:
           type: enum?
           literals:
-          - dark
           - light
+          - dark
           - no-preference
         acceptDownloads: boolean?
       returns:
