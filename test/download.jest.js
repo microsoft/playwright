@@ -134,19 +134,17 @@ describe('Download', function() {
     expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
     await page.close();
   });
-  it('should error when saving to non-existent user-specified path', async({persistentDirectory, browser, server}) => {
+  it('should create subdirectories when saving to non-existent user-specified path', async({persistentDirectory, browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
-    const nonExistentUserPath = path.join(persistentDirectory, "does-not-exist","download.txt");
-    const { message } = await download.saveAs(nonExistentUserPath).catch(e => e);
-    expect(message).toContain('ENOENT');
-    expect(message).toContain('copyfile');
-    expect(message).toContain('no such file or directory');
-    expect(message).toContain('does-not-exist');
+    const nestedPath = path.join(persistentDirectory, "these", "are", "directories", "download.txt");
+    await download.saveAs(nestedPath)
+    expect(fs.existsSync(nestedPath)).toBeTruthy();
+    expect(fs.readFileSync(nestedPath).toString()).toBe('Hello world');
     await page.close();
   });
   it('should error when saving with downloads disabled', async({persistentDirectory, browser, server}) => {

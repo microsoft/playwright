@@ -3215,7 +3215,7 @@ Returns download error if any.
 Returns path to the downloaded file in case of successful download.
 
 #### download.saveAs(path)
-- `path` <[string]> Path where the download should be saved. The directory structure MUST exist as `saveAs` will not create it.
+- `path` <[string]> Path where the download should be saved.
 - returns: <[Promise]>
 
 Saves the download to a user-specified path.
