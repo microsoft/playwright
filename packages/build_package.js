@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const rmSync = require('rimraf').sync;
 const ncp = require('ncp');
@@ -27,7 +28,7 @@ const cpAsync = util.promisify(ncp);
 const SCRIPT_NAME = path.basename(__filename);
 const ROOT_PATH = path.join(__dirname, '..');
 
-const PLAYWRIGHT_CORE_FILES = ['lib', 'types', 'NOTICE', 'LICENSE', '.npmignore'];
+const PLAYWRIGHT_CORE_FILES = ['bin', 'lib', 'types', 'NOTICE', 'LICENSE', '.npmignore'];
 
 const PACKAGES = {
   'playwright': {
@@ -157,7 +158,8 @@ if (!args.some(arg => arg === '--no-cleanup')) {
   await writeToPackage('browsers.json', JSON.stringify(browsersJSON, null, 2));
 
   // 6. Run npm pack
-  const {stdout, stderr, status} = spawnSync('npm', ['pack'], {cwd: packagePath, encoding: 'utf8'});
+  const shell = os.platform() === 'win32';
+  const {stdout, stderr, status} = spawnSync('npm', ['pack'], {cwd: packagePath, encoding: 'utf8', shell});
   if (status !== 0) {
     console.log(`ERROR: "npm pack" failed`);
     console.log(stderr);

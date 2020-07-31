@@ -19,7 +19,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { spawn } from 'child_process';
 import { getUbuntuVersion } from '../helper';
-import { linuxLddDirectories, BrowserDescriptor } from '../install/browserPaths.js';
+import { linuxLddDirectories, windowsExeAndDllDirectories, BrowserDescriptor } from '../install/browserPaths.js';
 
 const accessAsync = util.promisify(fs.access.bind(fs));
 const checkExecutable = (filePath: string) => accessAsync(filePath, fs.constants.X_OK).then(() => true).catch(e => false);
@@ -41,8 +41,65 @@ const DL_OPEN_LIBRARIES = {
 
 async function validateDependencies(browserPath: string, browser: BrowserDescriptor) {
   // We currently only support Linux.
-  if (os.platform() !== 'linux')
+  if (os.platform() === 'linux')
+    return await validateDependenciesLinux(browserPath, browser);
+  if (os.platform() === 'win32' && os.arch() === 'x64')
+    return await validateDependenciesWindows(browserPath, browser);
+}
+
+async function validateDependenciesWindows(browserPath: string, browser: BrowserDescriptor) {
+  const directoryPaths = windowsExeAndDllDirectories(browserPath, browser);
+  const lddPaths: string[] = [];
+  for (const directoryPath of directoryPaths)
+    lddPaths.push(...(await executablesOrSharedLibraries(directoryPath)));
+  const allMissingDeps = await Promise.all(lddPaths.map(lddPath => missingFileDependenciesWindows(lddPath)));
+  const missingDeps: Set<string> = new Set();
+  for (const deps of allMissingDeps) {
+    for (const dep of deps)
+      missingDeps.add(dep);
+  }
+
+  if (!missingDeps.size)
     return;
+
+  let isCrtMissing = false;
+  let isMediaFoundationMissing = false;
+  for (const dep of missingDeps) {
+    if (dep.startsWith('api-ms-win-crt'))
+      isCrtMissing = true;
+    else if (dep === 'mf.dll' || dep === 'mfplat.dll' ||  dep === 'msmpeg2vdec.dll')
+      isMediaFoundationMissing = true;
+  }
+
+  const details = [];
+
+  if (isCrtMissing) {
+    details.push(
+        `Some of the Universal C Runtime files cannot be found on the system. You can fix`,
+        `that by installing Microsoft Visual C++ Redistributable for Visual Studio from:`,
+        `https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads`,
+        ``);
+  }
+
+  if (isMediaFoundationMissing) {
+    details.push(
+        `Some of the Media Foundation files cannot be found on the system. If you are`,
+        `on Windows Server try fixing this by running the following command in PowerShell`,
+        `as Administrator:`,
+        ``,
+        `    Install-WindowsFeature Server-Media-Foundation`,
+        ``);
+  }
+
+  details.push(
+      `Full list of missing libraries:`,
+      `    ${[...missingDeps].join('\n    ')}`,
+      ``);
+
+  throw new Error(`Host system is missing dependencies!\n\n${details.join('\n')}`);
+}
+
+async function validateDependenciesLinux(browserPath: string, browser: BrowserDescriptor) {
   const directoryPaths = linuxLddDirectories(browserPath, browser);
   const lddPaths: string[] = [];
   for (const directoryPath of directoryPaths)
@@ -100,6 +157,17 @@ async function validateDependencies(browserPath: string, browser: BrowserDescrip
   throw new Error('Host system is missing dependencies!\n\n' + missingPackagesMessage + missingDependenciesMessage);
 }
 
+function isSharedLib(basename: string) {
+  switch (os.platform()) {
+    case 'linux':
+      return basename.endsWith('.so') || basename.includes('.so.');
+    case 'win32':
+      return basename.endsWith('.dll');
+    default:
+      return false;
+  }
+}
+
 async function executablesOrSharedLibraries(directoryPath: string): Promise<string[]> {
   const allPaths = (await readdirAsync(directoryPath)).map(file => path.resolve(directoryPath, file));
   const allStats = await Promise.all(allPaths.map(aPath => statAsync(aPath)));
@@ -107,7 +175,7 @@ async function executablesOrSharedLibraries(directoryPath: string): Promise<stri
 
   const executablersOrLibraries = (await Promise.all(filePaths.map(async filePath => {
     const basename = path.basename(filePath).toLowerCase();
-    if (basename.endsWith('.so') || basename.includes('.so.'))
+    if (isSharedLib(basename))
       return filePath;
     if (await checkExecutable(filePath))
       return filePath;
@@ -115,6 +183,21 @@ async function executablesOrSharedLibraries(directoryPath: string): Promise<stri
   }))).filter(Boolean);
 
   return executablersOrLibraries as string[];
+}
+
+async function missingFileDependenciesWindows(filePath: string): Promise<Array<string>> {
+  const dirname = path.dirname(filePath);
+  const {stdout, code} = await spawnAsync(path.join(__dirname, '../../bin/PrintDeps.exe'), [filePath], {
+    cwd: dirname,
+    env: {
+      ...process.env,
+      LD_LIBRARY_PATH: process.env.LD_LIBRARY_PATH ? `${process.env.LD_LIBRARY_PATH}:${dirname}` : dirname,
+    },
+  });
+  if (code !== 0)
+    return [];
+  const missingDeps = stdout.split('\n').map(line => line.trim()).filter(line => line.endsWith('not found') && line.includes('=>')).map(line => line.split('=>')[0].trim());
+  return missingDeps;
 }
 
 async function missingFileDependencies(filePath: string): Promise<Array<string>> {
