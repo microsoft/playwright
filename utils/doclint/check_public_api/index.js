@@ -18,14 +18,9 @@ const jsBuilder = require('./JSBuilder');
 const mdBuilder = require('./MDBuilder');
 const Documentation = require('./Documentation');
 const Message = require('../Message');
-const path = require('path');
 
 const EXCLUDE_PROPERTIES = new Set([
-  'Browser.create',
-  'Headers.fromPayload',
-  'Page.create',
   'JSHandle.toString',
-  'TimeoutError.name',
 ]);
 
 /**

@@ -49,9 +49,13 @@ export type BrowserContextOptions = Omit<BrowserNewContextOptions, 'viewport' | 
 type LaunchOverrides = {
   ignoreDefaultArgs?: boolean | string[],
   env?: Env,
-  firefoxUserPrefs?: { [key: string]: string | number | boolean },
   logger?: LoggerSink,
 };
-export type LaunchOptions = Omit<BrowserTypeLaunchOptions, 'ignoreAllDefaultArgs' | 'ignoreDefaultArgs' | 'env' | 'firefoxUserPrefs'> & LaunchOverrides;
-export type LaunchServerOptions = Omit<BrowserTypeLaunchServerOptions, 'ignoreAllDefaultArgs' | 'ignoreDefaultArgs' | 'env' | 'firefoxUserPrefs'> & LaunchOverrides;
+type FirefoxUserPrefs = {
+  firefoxUserPrefs?: { [key: string]: string | number | boolean },
+};
+type LaunchOptionsBase = Omit<BrowserTypeLaunchOptions, 'ignoreAllDefaultArgs' | 'ignoreDefaultArgs' | 'env' | 'firefoxUserPrefs'> & LaunchOverrides;
+export type LaunchOptions = LaunchOptionsBase & FirefoxUserPrefs;
+export type LaunchServerOptions = Omit<BrowserTypeLaunchServerOptions, 'ignoreAllDefaultArgs' | 'ignoreDefaultArgs' | 'env' | 'firefoxUserPrefs'> & LaunchOverrides & FirefoxUserPrefs;
+export type LaunchPersistentContextOptions = LaunchOptionsBase & BrowserContextOptions;
 export type ConnectOptions = BrowserTypeConnectParams & { logger?: LoggerSink };

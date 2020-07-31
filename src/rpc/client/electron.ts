@@ -25,6 +25,11 @@ import { Events } from './events';
 import { envObjectToArray } from '../../converters';
 import { WaitForEventOptions, Env, LoggerSink } from './types';
 
+type ElectronOptions = Omit<ElectronLaunchOptions, 'env'> & {
+  env?: Env,
+  logger?: LoggerSink,
+};
+
 export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer> {
   static from(electron: ElectronChannel): Electron {
     return (electron as any)._object;
@@ -34,7 +39,7 @@ export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer>
     super(parent, type, guid, initializer);
   }
 
-  async launch(executablePath: string, options: ElectronLaunchOptions & { env?: Env, logger?: LoggerSink } = {}): Promise<ElectronApplication> {
+  async launch(executablePath: string, options: ElectronOptions = {}): Promise<ElectronApplication> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('electron.launch', async () => {

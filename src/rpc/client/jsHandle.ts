@@ -62,8 +62,8 @@ export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel, JSHandleIni
     return JSHandle.from(result.handle) as SmartHandle<R>;
   }
 
-  async getProperty(name: string): Promise<JSHandle> {
-    const result = await this._channel.getProperty({ name });
+  async getProperty(propertyName: string): Promise<JSHandle> {
+    const result = await this._channel.getProperty({ name: propertyName });
     return JSHandle.from(result.handle);
   }
 

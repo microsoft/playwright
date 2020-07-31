@@ -99,7 +99,7 @@ function checkSources(sources) {
           parent = parent.parent;
         className = path.basename(parent.fileName,  '.js');
       }
-      if (className && !excludeClasses.has(className)) {
+      if (className && !excludeClasses.has(className) && !fileName.endsWith('/protocol.ts')) {
         excludeClasses.add(className);
         const renamed = expandPrefix(className);
         classes.push(serializeClass(renamed, symbol, node));
@@ -194,7 +194,7 @@ function checkSources(sources) {
     } else if (isRegularObject(type)) {
       let properties = undefined;
       if (!circular.includes(typeName))
-        properties = type.getProperties().map(property => serializeSymbol(property, nextCircular));
+        properties = getTypeProperties(type).map(property => serializeSymbol(property, nextCircular));
       return new Documentation.Type('Object', properties);
     }
     if (type.isUnion() && (typeName.includes('|') || type.types.every(type => type.isStringLiteral() || type.intrinsicName === 'number'))) {
@@ -283,6 +283,26 @@ function checkSources(sources) {
    */
   function serializeProperty(name, type) {
     return Documentation.Member.createProperty(name, serializeType(type));
+  }
+
+  /**
+   * @param {!ts.Type} type
+   */
+  function getTypeProperties(type) {
+    if (type.aliasSymbol && type.aliasSymbol.escapedName === 'Pick') {
+      const props = getTypeProperties(type.aliasTypeArguments[0]);
+      const pickNames = type.aliasTypeArguments[1].types.map(t => t.value);
+      return props.filter(p => pickNames.includes(p.getName()));
+    }
+    if (!type.isIntersection())
+      return type.getProperties();
+    let props = [];
+    for (const innerType of type.types) {
+      let innerProps = getTypeProperties(innerType);
+      props = props.filter(p => !innerProps.find(e => e.getName() === p.getName()));
+      props.push(...innerProps);
+    }
+    return props;
   }
 }
 
