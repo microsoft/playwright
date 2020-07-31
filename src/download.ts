@@ -92,6 +92,8 @@ export class Download {
 
   async _saveAs(downloadPath: string) {
     const fileName = path.join(this._downloadsPath, this._uuid);
+    // This will harmlessly throw on windows if the dirname is the root directory.
+    await util.promisify(fs.mkdir)(path.dirname(downloadPath), {recursive: true}).catch(() => {});
     await util.promisify(fs.copyFile)(fileName, downloadPath);
   }
 
