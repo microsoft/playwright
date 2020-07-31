@@ -17,7 +17,7 @@ jobs:
       with:
         node-version: 10
         registry-url: 'https://registry.npmjs.org'
-    - uses: microsoft/playwright-github-action@v1.4.2
+    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
     - run: utils/publish_all_packages.sh --release
