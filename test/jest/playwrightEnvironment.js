@@ -20,10 +20,11 @@ const os = require('os');
 const path = require('path');
 const fs = require('fs');
 const debug = require('debug');
-const platform = os.platform();
+const platform = process.env.REPORT_ONLY_PLATFORM || os.platform();
 const GoldenUtils = require('../../utils/testrunner/GoldenUtils');
 const {installCoverageHooks} = require('./coverage');
 const browserName = process.env.BROWSER || 'chromium';
+const reportOnly = !!process.env.REPORT_ONLY_PLATFORM;
 
 class PlaywrightEnvironment extends NodeEnvironment {
   constructor(config, context) {
@@ -109,21 +110,32 @@ class PlaywrightEnvironment extends NodeEnvironment {
           return args[0] ? describeSkip : this.global.describe;
         return describeSkip(...args);
       };
-      this.global.describe.fail = this.global.describe.skip;
+
+      function addSlow(f) {
+        f.slow = () => {
+          return (...args) => f(...args, 90000);
+        };
+        return f;
+      }
 
       const itSkip = this.global.it.skip;
-      itSkip.slow = () => itSkip;
+      addSlow(itSkip);
+      addSlow(this.global.it);
       this.global.it.skip = (...args) => {
         if (args.length === 1)
           return args[0] ? itSkip : this.global.it;
         return itSkip(...args);
       };
-      this.global.it.fail = this.global.it.skip;
-      this.global.it.slow = () => {
-        return (name, fn) => {
-          return this.global.it(name, fn, 90000);
+      if (reportOnly) {
+        this.global.it.fail = condition => {
+          return addSlow((...inner) => {
+            inner[1].__fail = !!condition;
+            return this.global.it(...inner);
+          });
         };
-      };
+      } else {
+        this.global.it.fail = this.global.it.skip;
+      }
 
       const testOptions = this.global.testOptions;
       function toBeGolden(received, goldenName) {
@@ -159,6 +171,11 @@ class PlaywrightEnvironment extends NodeEnvironment {
     if (event.name === 'test_start') {
       const fn = event.test.fn;
       event.test.fn = async () => {
+        if (reportOnly) {
+          if (fn.__fail)
+            throw new Error('fail');
+          return;
+        }
         debug('pw:test')(`start "${testOrSuiteName(event.test)}"`);
         try {
           await this.fixturePool.resolveParametersAndRun(fn);

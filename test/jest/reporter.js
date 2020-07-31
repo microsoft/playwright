@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-const fs = require("fs")
+const fs = require('fs');
+const os = require('os');
 
 module.exports = function Reporter() {
   this.onRunComplete = (test, runResults) => {
+    runResults.platform = process.env.REPORT_ONLY_PLATFORM || os.platform();
+    runResults.browserName = process.env.BROWSER || 'chromium';
     fs.writeFileSync('jest-report.json', JSON.stringify(runResults, undefined, 2));
-  }
+  };
 }
