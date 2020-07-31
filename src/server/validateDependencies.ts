@@ -65,9 +65,9 @@ async function validateDependenciesWindows(browserPath: string, browser: Browser
   let isCrtMissing = false;
   let isMediaFoundationMissing = false;
   for (const dep of missingDeps) {
-    if (dep.startsWith('api-ms-win-crt'))
+    if (dep.startsWith('api-ms-win-crt') || dep === 'vcruntime140.dll' || dep === 'msvcp140.dll')
       isCrtMissing = true;
-    else if (dep === 'mf.dll' || dep === 'mfplat.dll' ||  dep === 'msmpeg2vdec.dll')
+    else if (dep === 'mf.dll' || dep === 'mfplat.dll' ||  dep === 'msmpeg2vdec.dll' || dep === 'evr.dll' || dep === 'avrt.dll')
       isMediaFoundationMissing = true;
   }
 
@@ -211,7 +211,7 @@ async function missingFileDependencies(filePath: string): Promise<Array<string>>
   });
   if (code !== 0)
     return [];
-  const missingDeps = stdout.split('\n').map(line => line.trim()).filter(line => line.endsWith('not found') && line.includes('=>')).map(line => line.split('=>')[0].trim());
+  const missingDeps = stdout.split('\n').map(line => line.trim()).filter(line => line.endsWith('not found') && line.includes('=>')).map(line => line.split('=>')[0].trim().toLowerCase());
   return missingDeps;
 }
 
