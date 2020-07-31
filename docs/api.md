@@ -1031,7 +1031,8 @@ Brings page to front (activates tab).
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully checked. The Promise will be rejected if there is no element matching `selector`.
 
-This method fetches an element with `selector`, if element is not already checked, it scrolls it into view if needed, and then uses [page.click](#pageclickselector-options) to click in the center of the element.
+This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks. Then, if the element is not already checked, this method scrolls the element into view and uses [elementHandle.click](#elementhandleclickoptions) to click in the center of the element.
+
 If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
 
 Shortcut for [page.mainFrame().check(selector[, options])](#framecheckselector-options).
@@ -1051,7 +1052,8 @@ Shortcut for [page.mainFrame().check(selector[, options])](#framecheckselector-o
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully clicked. The Promise will be rejected if there is no element matching `selector`.
 
-This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to click in the center of the element.
+This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to click in the center of the element.
+
 If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
 
 
@@ -1100,7 +1102,8 @@ Browser-specific Coverage implementation, only available for Chromium atm. See [
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully double clicked. The Promise will be rejected if there is no element matching `selector`.
 
-This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to double click in the center of the element.
+This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to double click in the center of the element.
+
 If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
 
 Bear in mind that if the first click of the `dblclick()` triggers a navigation event, there will be an exception.
@@ -1452,7 +1455,8 @@ Shortcut for [page.mainFrame().goto(url[, options])](#framegotourl-options)
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully hovered. Promise gets rejected if there's no element matching `selector`.
 
-This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to hover over the center of the element.
+This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to hover over the center of the element.
+
 If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
 
 Shortcut for [page.mainFrame().hover(selector[, options])](#framehoverselector-options).
@@ -1802,7 +1806,8 @@ Shortcut for [page.mainFrame().type(selector, text[, options])](#frametypeselect
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully unchecked. The Promise will be rejected if there is no element matching `selector`.
 
-This method fetches an element with `selector`, if element is not already unchecked, it scrolls it into view if needed, and then uses [page.click](#pageclickselector-options) to click in the center of the element.
+This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks. Then, if the element is not already unchecked, this method scrolls the element into view and uses [elementHandle.click](#elementhandleclickoptions) to click in the center of the element.
+
 If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
 
 Shortcut for [page.mainFrame().uncheck(selector[, options])](#frameuncheckselector-options).
@@ -2148,7 +2153,8 @@ Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<s
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully checked. The Promise will be rejected if there is no element matching `selector`.
 
-This method fetches an element with `selector`, if element is not already checked, it scrolls it into view if needed, and then uses [frame.click](#frameclickselector-options) to click in the center of the element.
+This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks. Then, if the element is not already checked, this method scrolls the element into view and uses [elementHandle.click](#elementhandleclickoptions) to click in the center of the element.
+
 If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
 
 #### frame.childFrames()
@@ -2169,7 +2175,8 @@ If there's no element matching `selector`, the method waits until a matching ele
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully clicked. The Promise will be rejected if there is no element matching `selector`.
 
-This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to click in the center of the element.
+This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to click in the center of the element.
+
 If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
 
 #### frame.content()
@@ -2191,7 +2198,8 @@ Gets the full HTML contents of the frame, including the doctype.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully double clicked. The Promise will be rejected if there is no element matching `selector`.
 
-This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to double click in the center of the element.
+This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to double click in the center of the element.
+
 If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the actionability checks, the action is retried.
 
 Bear in mind that if the first click of the `dblclick()` triggers a navigation event, there will be an exception.
@@ -2369,7 +2377,8 @@ Returns element attribute value.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully hovered. Promise gets rejected if there's no element matching `selector`.
 
-This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to hover over the center of the element.
+This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to hover over the center of the element.
+
 If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
 
 #### frame.innerHTML(selector[, options])
@@ -2514,7 +2523,8 @@ await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a 
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully unchecked. The Promise will be rejected if there is no element matching `selector`.
 
-This method fetches an element with `selector`, if element is not already unchecked, it scrolls it into view if needed, and then uses [frame.click](#frameclickselector-options) to click in the center of the element.
+This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks. Then, if the element is not already unchecked, this method scrolls the element into view and uses [elementHandle.click](#elementhandleclickoptions) to click in the center of the element.
+
 If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
 
 #### frame.url()
@@ -2756,7 +2766,7 @@ This method returns the bounding box of the element (relative to the main frame)
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element is successfully checked. Promise gets rejected if the operation fails.
 
-If element is not already checked, it scrolls it into view if needed, and then uses [elementHandle.click](#elementhandleclickoptions) to click in the center of the element.
+This method waits for [actionability](./actionability.md) checks. Then, if the element is not already checked, this method scrolls the element into view and uses [elementHandle.click](#elementhandleclickoptions) to click in the center of the element.
 
 #### elementHandle.click([options])
 - `options` <[Object]>
@@ -2772,7 +2782,8 @@ If element is not already checked, it scrolls it into view if needed, and then u
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element is successfully clicked. Promise gets rejected if the element is detached from DOM.
 
-This method scrolls element into view if needed, and then uses [page.mouse](#pagemouse) to click in the center of the element.
+This method waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to click in the center of the element.
+
 If the element is detached from DOM, the method throws an error.
 
 #### elementHandle.contentFrame()
@@ -2791,7 +2802,8 @@ If the element is detached from DOM, the method throws an error.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element is successfully double clicked. Promise gets rejected if the element is detached from DOM.
 
-This method scrolls element into view if needed, and then uses [page.mouse](#pagemouse) to click in the center of the element.
+This method waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to double click in the center of the element.
+
 If the element is detached from DOM, the method throws an error.
 
 Bear in mind that if the first click of the `dblclick()` triggers a navigation event, there will be an exception.
@@ -2860,7 +2872,8 @@ Returns element attribute value.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element is successfully hovered.
 
-This method scrolls element into view if needed, and then uses [page.mouse](#pagemouse) to hover over the center of the element.
+This method waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to hover over the center of the element.
+
 If the element is detached from DOM, the method throws an error.
 
 #### elementHandle.innerHTML()
@@ -2999,7 +3012,7 @@ await elementHandle.press('Enter');
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element is successfully unchecked. Promise gets rejected if the operation fails.
 
-If element is not already unchecked, it scrolls it into view if needed, and then uses [elementHandle.click](#elementhandleclickoptions) to click in the center of the element.
+This method waits for [actionability](./actionability.md) checks. Then, if the element is not already unchecked, this method scrolls the element into view and uses [elementHandle.click](#elementhandleclickoptions) to click in the center of the element.
 
 ### class: JSHandle
 
