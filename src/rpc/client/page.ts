@@ -278,13 +278,13 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     await this.exposeBinding(name, (options, ...args: any) => playwrightFunction(...args));
   }
 
-  async exposeBinding(name: string, binding: FunctionWithSource) {
+  async exposeBinding(name: string, playwrightBinding: FunctionWithSource) {
     return this._wrapApiCall('page.exposeBinding', async () => {
       if (this._bindings.has(name))
         throw new Error(`Function "${name}" has been already registered`);
       if (this._browserContext._bindings.has(name))
         throw new Error(`Function "${name}" has been already registered in the browser context`);
-      this._bindings.set(name, binding);
+      this._bindings.set(name, playwrightBinding);
       await this._channel.exposeBinding({ name });
     });
   }

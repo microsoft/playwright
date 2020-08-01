@@ -169,7 +169,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     });
   }
 
-  async exposeBinding(name: string, binding: frames.FunctionWithSource): Promise<void> {
+  async exposeBinding(name: string, playwrightBinding: frames.FunctionWithSource): Promise<void> {
     return this._wrapApiCall('browserContext.exposeBinding', async () => {
       for (const page of this.pages()) {
         if (page._bindings.has(name))
@@ -177,7 +177,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
       }
       if (this._bindings.has(name))
         throw new Error(`Function "${name}" has been already registered`);
-      this._bindings.set(name, binding);
+      this._bindings.set(name, playwrightBinding);
       await this._channel.exposeBinding({ name });
     });
   }

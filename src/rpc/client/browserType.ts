@@ -22,7 +22,7 @@ import { BrowserServer } from './browserServer';
 import { headersObjectToArray, envObjectToArray } from '../../converters';
 import { serializeArgument } from './jsHandle';
 import { assert } from '../../helper';
-import { LaunchOptions, LaunchServerOptions, BrowserContextOptions, ConnectOptions } from './types';
+import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions } from './types';
 
 export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {
 
@@ -76,7 +76,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     }, logger);
   }
 
-  async launchPersistentContext(userDataDir: string, options: LaunchOptions & BrowserContextOptions = {}): Promise<BrowserContext> {
+  async launchPersistentContext(userDataDir: string, options: LaunchPersistentContextOptions = {}): Promise<BrowserContext> {
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.launchPersistentContext', async () => {

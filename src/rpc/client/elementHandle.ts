@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ElementHandleChannel, JSHandleInitializer, ElementHandleScrollIntoViewIfNeededOptions, ElementHandleHoverOptions, ElementHandleClickOptions, ElementHandleDblclickOptions, ElementHandleSelectOptionOptions, ElementHandleFillOptions, ElementHandleSetInputFilesOptions, ElementHandlePressOptions, ElementHandleCheckOptions, ElementHandleUncheckOptions, ElementHandleScreenshotOptions, ElementHandleTypeOptions } from '../channels';
+import { ElementHandleChannel, JSHandleInitializer, ElementHandleScrollIntoViewIfNeededOptions, ElementHandleHoverOptions, ElementHandleClickOptions, ElementHandleDblclickOptions, ElementHandleFillOptions, ElementHandleSetInputFilesOptions, ElementHandlePressOptions, ElementHandleCheckOptions, ElementHandleUncheckOptions, ElementHandleScreenshotOptions, ElementHandleTypeOptions, ElementHandleSelectTextOptions } from '../channels';
 import { Frame } from './frame';
 import { FuncOn, JSHandle, serializeArgument, parseResult } from './jsHandle';
 import { ChannelOwner } from './channelOwner';
@@ -123,7 +123,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     });
   }
 
-  async selectText(options: ElementHandleSelectOptionOptions = {}): Promise<void> {
+  async selectText(options: ElementHandleSelectTextOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.selectText', async () => {
       await this._elementChannel.selectText(options);
     });
