@@ -7,6 +7,7 @@
 #include <cstring>
 #if defined(_WIN32)
 #include <io.h>
+#include <windows.h>
 #else
 #include <stdio.h>
 #include <unistd.h>
