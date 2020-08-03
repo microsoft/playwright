@@ -53,11 +53,14 @@ it.fail(WEBKIT && WIN)('should play video', async({page}) => {
   // TODO: the test passes on Windows locally but fails on GitHub Action bot,
   // apparently due to a Media Pack issue in the Windows Server.
   //
+  // Safari only plays mp4 so we test WebKit with an .mp4 clip.
+  const fileName = WEBKIT ? 'video_mp4.html' : 'video.html';
+  const absolutePath = path.join(ASSETS_DIR, fileName);
   // Our test server doesn't support range requests required to play on Mac,
   // so we load the page using a file url.
   const url = WIN
-      ? 'file:///' + path.join(ASSETS_DIR, 'video.html').replace(/\\/g, '/')
-      : 'file://' + path.join(ASSETS_DIR, 'video.html');
+      ? 'file:///' + absolutePath.replace(/\\/g, '/')
+      : 'file://' + absolutePath;
   await page.goto(url);
   await page.$eval('video', v => v.play());
   await page.$eval('video', v => v.pause());
