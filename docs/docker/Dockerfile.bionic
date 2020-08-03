@@ -33,7 +33,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgstreamer-gl1.0-0 \
     libgstreamer-plugins-bad1.0-0 \
-    gstreamer1.0-plugins-good
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-libav
 
 # 4. Install Chromium dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
