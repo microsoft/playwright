@@ -3,7 +3,7 @@ module.exports = /** @type {import('@jest/types').Config.InitialOptions} */ ({
   maxWorkers: Math.ceil(require('os').cpus().length / 2),
   rootDir: './test',
   testEnvironment: './jest',
-  testMatch:  ['**/?(*.)jest.[jt]s'],
+  testMatch:  ['**/?(*.)(jest|spec).[jt]s'],
   testRunner: 'jest-circus/runner',
   testTimeout: 10000,
   globalSetup: './jest/setup.js',

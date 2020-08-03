@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`CSSCoverage should work with complicated usecases 1`] = `
+exports[`should work with complicated usecases 1`] = `
 "[
   {
     \\"url\\": \\"http://localhost:<PORT>/csscoverage/involved.html\\",
