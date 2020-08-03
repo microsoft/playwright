@@ -19,17 +19,13 @@ const path = require('path');
 const {FFOX, CHROMIUM, WEBKIT, OUTPUT_DIR, HEADLESS} = testOptions;
 
 // Printing to pdf is currently only supported in headless chromium.
-describe.skip(!(HEADLESS && CHROMIUM))('Page.pdf', function() {
-  it('should be able to save file', async({page, server}) => {
-    const outputFile = path.join(OUTPUT_DIR, 'output.pdf');
-    await page.pdf({path: outputFile});
-    expect(fs.readFileSync(outputFile).byteLength).toBeGreaterThan(0);
-    fs.unlinkSync(outputFile);
-  });
+it.skip(!(HEADLESS && CHROMIUM))('should be able to save file', async({page, server}) => {
+  const outputFile = path.join(OUTPUT_DIR, 'output.pdf');
+  await page.pdf({path: outputFile});
+  expect(fs.readFileSync(outputFile).byteLength).toBeGreaterThan(0);
+  fs.unlinkSync(outputFile);
 });
 
-describe.skip(CHROMIUM)('Page.pdf missing', function() {
-  it('should be able to save file', async({page, server}) => {
-    expect(page.pdf).toBe(undefined);
-  });
+it.skip(CHROMIUM)('should be able to save file', async({page, server}) => {
+  expect(page.pdf).toBe(undefined);
 });
