@@ -48,9 +48,6 @@ copyLibrariesForWPE() {
   # Expect target directory to be passed in as first argument.
   local tmpdir=$1
 
-  # copy runner
-  cp -t $tmpdir $SCRIPTS_DIR/pw_run.sh
-
   # copy all relevant binaries
   cp -t $tmpdir ./WebKitBuild/WPE/Release/bin/MiniBrowser ./WebKitBuild/WPE/Release/bin/WPE*Process
   # copy all relevant shared objects
@@ -91,9 +88,6 @@ copyLibrariesForWPE() {
 copyLibrariesForGTK() {
   # Expect target directory to be passed in as first argument.
   local tmpdir=$1
-
-  # copy runner
-  cp -t $tmpdir $SCRIPTS_DIR/pw_run.sh
 
   # copy all relevant binaries
   cp -t $tmpdir ./WebKitBuild/GTK/Release/bin/MiniBrowser ./WebKitBuild/GTK/Release/bin/WebKit*Process
