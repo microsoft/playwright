@@ -5,7 +5,7 @@
 #include "nsRemoteDebuggingPipe.h"
 
 #include <cstring>
-#if defined(OS_WIN)
+#if defined(_WIN32)
 #include <io.h>
 #else
 #include <stdio.h>
@@ -29,7 +29,7 @@ const int writeFD = 4;
 
 const size_t kWritePacketSize = 1 << 16;
 
-#if defined(OS_WIN)
+#if defined(_WIN32)
 HANDLE readHandle;
 HANDLE writeHandle;
 #endif
@@ -38,7 +38,7 @@ size_t ReadBytes(void* buffer, size_t size, bool exact_size)
 {
     size_t bytesRead = 0;
     while (bytesRead < size) {
-#if defined(OS_WIN)
+#if defined(_WIN32)
         DWORD sizeRead = 0;
         bool hadError = !ReadFile(readHandle, static_cast<char*>(buffer) + bytesRead,
             size - bytesRead, &sizeRead, nullptr);
@@ -66,7 +66,7 @@ void WriteBytes(const char* bytes, size_t size)
         size_t length = size - totalWritten;
         if (length > kWritePacketSize)
             length = kWritePacketSize;
-#if defined(OS_WIN)
+#if defined(_WIN32)
         DWORD bytesWritten = 0;
         bool hadError = !WriteFile(writeHandle, bytes + totalWritten, static_cast<DWORD>(length), &bytesWritten, nullptr);
 #else
@@ -105,7 +105,7 @@ nsresult nsRemoteDebuggingPipe::Init(nsIRemoteDebuggingPipeClient* aClient) {
   MOZ_ALWAYS_SUCCEEDS(NS_NewNamedThread("Pipe Reader", getter_AddRefs(mReaderThread)));
   MOZ_ALWAYS_SUCCEEDS(NS_NewNamedThread("Pipe Writer", getter_AddRefs(mWriterThread)));
 
-#if defined(OS_WIN)
+#if defined(_WIN32)
   readHandle = reinterpret_cast<HANDLE>(_get_osfhandle(readFD));
   writeHandle = reinterpret_cast<HANDLE>(_get_osfhandle(writeFD));
 #endif
@@ -124,7 +124,7 @@ nsresult nsRemoteDebuggingPipe::Stop() {
   m_terminated = true;
   mClient = nullptr;
   // Cancel pending synchronous read.
-#if defined(OS_WIN)
+#if defined(_WIN32)
   CancelIoEx(readHandle, nullptr);
   CloseHandle(readHandle);
 #else
