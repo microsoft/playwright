@@ -33,6 +33,7 @@
 - [class: CDPSession](#class-cdpsession)
 - [class: FirefoxBrowser](#class-firefoxbrowser)
 - [class: WebKitBrowser](#class-webkitbrowser)
+- [EvaluationArgument](#evaluationargument)
 - [Environment Variables](#environment-variables)
 - [Working with selectors](#working-with-selectors)
 - [Working with Chrome Extensions](#working-with-chrome-extensions)
@@ -932,7 +933,7 @@ Shortcut for [page.mainFrame().$$(selector)](#frameselector-1).
 #### page.$eval(selector, pageFunction[, arg])
 - `selector` <[string]> A selector to query page for. See [working with selectors](#working-with-selectors) for more details.
 - `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
 
 The method finds an element matching the specified selector within the page and passes it as a first argument to `pageFunction`. If no elements match the selector, the method throws an error.
@@ -951,7 +952,7 @@ Shortcut for [page.mainFrame().$eval(selector, pageFunction)](#frameevalselector
 #### page.$$eval(selector, pageFunction[, arg])
 - `selector` <[string]> A selector to query page for. See [working with selectors](#working-with-selectors) for more details.
 - `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
 
 The method finds all elements matching the specified selector within the page and passes an array of matched elements as a first argument to `pageFunction`.
@@ -1183,7 +1184,7 @@ await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').ma
 
 #### page.evaluate(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
 
 If the function passed to the `page.evaluate` returns a [Promise], then `page.evaluate` would wait for the promise to resolve and return its value.
@@ -1216,7 +1217,7 @@ Shortcut for [page.mainFrame().evaluate(pageFunction[, arg])](#frameevaluatepage
 
 #### page.evaluateHandle(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle)
 
 The only difference between `page.evaluate` and `page.evaluateHandle` is that `page.evaluateHandle` returns in-page object (JSHandle).
@@ -1841,7 +1842,7 @@ is fired.
 
 #### page.waitForFunction(pageFunction[, arg, options])
 - `pageFunction` <[function]|[string]> Function to be evaluated in browser context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - `options` <[Object]> Optional waiting parameters
   - `polling` <[number]|"raf"> If `polling` is `'raf'`, then `pageFunction` is constantly executed in `requestAnimationFrame` callback. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. Defaults to `raf`.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
@@ -2097,7 +2098,7 @@ The method finds all elements matching the specified selector within the frame. 
 #### frame.$eval(selector, pageFunction[, arg])
 - `selector` <[string]> A selector to query frame for. See [working with selectors](#working-with-selectors) for more details.
 - `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
 
 The method finds an element matching the specified selector within the frame and passes it as a first argument to `pageFunction`. See [Working with selectors](#working-with-selectors) for more details. If no elements match the selector, the method throws an error.
@@ -2114,7 +2115,7 @@ const html = await frame.$eval('.main-container', (e, suffix) => e.outerHTML + s
 #### frame.$$eval(selector, pageFunction[, arg])
 - `selector` <[string]> A selector to query frame for. See [working with selectors](#working-with-selectors) for more details.
 - `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
 
 The method finds all elements matching the specified selector within the frame and passes an array of matched elements as a first argument to `pageFunction`. See [Working with selectors](#working-with-selectors) for more details.
@@ -2241,7 +2242,7 @@ await frame.dispatchEvent('#source', 'dragstart', { dataTransfer });
 
 #### frame.evaluate(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in browser context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
 
 If the function passed to the `frame.evaluate` returns a [Promise], then `frame.evaluate` would wait for the promise to resolve and return its value.
@@ -2270,7 +2271,7 @@ await bodyHandle.dispose();
 
 #### frame.evaluateHandle(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle)
 
 The only difference between `frame.evaluate` and `frame.evaluateHandle` is that `frame.evaluateHandle` returns in-page object (JSHandle).
@@ -2534,7 +2535,7 @@ Returns frame's url.
 
 #### frame.waitForFunction(pageFunction[, arg, options])
 - `pageFunction` <[function]|[string]> Function to be evaluated in browser context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - `options` <[Object]> Optional waiting parameters
   - `polling` <[number]|"raf"> If `polling` is `'raf'`, then `pageFunction` is constantly executed in `requestAnimationFrame` callback. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. Defaults to `raf`.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
@@ -2714,7 +2715,7 @@ The method finds all elements matching the specified selector in the `ElementHan
 #### elementHandle.$eval(selector, pageFunction[, arg])
 - `selector` <[string]> A selector to query element for. See [working with selectors](#working-with-selectors) for more details.
 - `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
 
 The method finds an element matching the specified selector in the `ElementHandle`s subtree and passes it as a first argument to `pageFunction`. See [Working with selectors](#working-with-selectors) for more details. If no elements match the selector, the method throws an error.
@@ -2731,7 +2732,7 @@ expect(await tweetHandle.$eval('.retweets', node => node.innerText)).toBe('10');
 #### elementHandle.$$eval(selector, pageFunction[, arg])
 - `selector` <[string]> A selector to query element for. See [working with selectors](#working-with-selectors) for more details.
 - `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
 
 The method finds all elements matching the specified selector in the `ElementHandle`'s subtree and passes an array of matched elements as a first argument to `pageFunction`. See [Working with selectors](#working-with-selectors) for more details.
@@ -3049,7 +3050,7 @@ The `jsHandle.dispose` method stops referencing the element handle.
 
 #### jsHandle.evaluate(pageFunction[, arg])
 - `pageFunction` <[function]\([Object]\)> Function to be evaluated in browser context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
 
 This method passes this handle as the first argument to `pageFunction`.
@@ -3064,7 +3065,7 @@ expect(await tweetHandle.evaluate((node, suffix) => node.innerText, ' retweets')
 
 #### jsHandle.evaluateHandle(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle)
 
 This method passes this handle as the first argument to `pageFunction`.
@@ -3912,7 +3913,7 @@ Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs
 
 #### worker.evaluate(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the worker context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
 
 If the function passed to the `worker.evaluate` returns a [Promise], then `worker.evaluate` would wait for the promise to resolve and return its value.
@@ -3921,7 +3922,7 @@ If the function passed to the `worker.evaluate` returns a non-[Serializable] val
 
 #### worker.evaluateHandle(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
-- `arg` <[Serializable]|[JSHandle]> Optional argument to pass to `pageFunction`
+- `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle)
 
 The only difference between `worker.evaluate` and `worker.evaluateHandle` is that `worker.evaluateHandle` returns in-page object (JSHandle).
@@ -4427,6 +4428,55 @@ WebKit browser instance does not expose WebKit-specific features.
 - [browser.version()](#browserversion)
 <!-- GEN:stop -->
 
+### EvaluationArgument
+
+Playwright evaluation methods like [page.evaluate(pageFunction[, arg])](#pageevaluatepagefunction-arg) take a single optional argument. This argument can be a mix of [Serializable] values and [JSHandle] or [ElementHandle] instances. Handles are automatically converted to the value they represent.
+
+See examples for various scenarios:
+
+```js
+// A primitive value.
+await page.evaluate(num => num, 42);
+
+// An array.
+await page.evaluate(array => array.length, [1, 2, 3]);
+
+// An object.
+await page.evaluate(object => object.foo, { foo: 'bar' });
+
+// A single handle.
+const button = await page.$('button');
+await page.evaluate(button => button.textContent, button);
+
+// Alternative notation using elementHandle.evaluate.
+await button.evaluate((button, from) => button.textContent.substring(from), 5);
+
+// Object with multiple handles.
+const button1 = await page.$('.button1');
+const button2 = await page.$('.button2');
+await page.evaluate(
+    o => o.button1.textContent + o.button2.textContent,
+    { button1, button2 });
+
+// Obejct destructuring works. Note that property names must match
+// between the destructured object and the argument.
+// Also note the required parenthesis.
+await page.evaluate(
+    ({ button1, button2 }) => button1.textContent + button2.textContent,
+    { button1, button2 });
+
+// Array works as well. Arbitrary names can be used for destructuring.
+// Note the required parenthesis.
+await page.evaluate(
+    ([b1, b2]) => b1.textContent + b2.textContent,
+    [button1, button2]);
+
+// Any non-cyclic mix of serializables and handles works.
+await page.evaluate(
+    x => x.button1.textContent + x.list[0].textContent + String(x.foo),
+    { button1, list: [button2], foo: null });
+```
+
 ### Environment Variables
 
 > **NOTE** [playwright-core](https://www.npmjs.com/package/playwright-core) **does not** respect environment variables.
@@ -4547,6 +4597,7 @@ const { chromium } = require('playwright');
 [ElementHandle]: #class-elementhandle "ElementHandle"
 [Element]: https://developer.mozilla.org/en-US/docs/Web/API/element "Element"
 [Error]: https://nodejs.org/api/errors.html#errors_class_error "Error"
+[EvaluationArgument]: #evaluationargument "Evaluation Argument"
 [File]: #class-file "https://developer.mozilla.org/en-US/docs/Web/API/File"
 [FileChooser]: #class-filechooser "FileChooser"
 [FirefoxBrowser]: #class-firefoxbrowser "FirefoxBrowser"

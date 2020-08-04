@@ -285,6 +285,7 @@ const result = await page.evaluate(() => {
 
 - [`page.evaluate(pageFunction[, arg])`](api.md#pageevaluatepagefunction-arg)
 - [`frame.evaluate(pageFunction[, arg])`](api.md#frameevaluatepagefunction-arg)
+- Evaluation argument [examples](api.md#evaluationargument)
 
 <br/>
 
