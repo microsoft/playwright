@@ -20,9 +20,9 @@ import * as path from 'path';
 import * as util from 'util';
 import { BrowserContext, normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
 import * as browserPaths from '../utils/browserPaths';
-import { ConnectionTransport, WebSocketTransport } from './transport';
+import { ConnectionTransport } from './transport';
 import { BrowserOptions, Browser, BrowserProcess } from './browser';
-import { launchProcess, Env, waitForLine, envArrayToObject } from './processLauncher';
+import { launchProcess, Env, envArrayToObject } from './processLauncher';
 import { PipeTransport } from './pipeTransport';
 import { Progress, ProgressController } from './progress';
 import * as types from './types';
@@ -35,22 +35,18 @@ const mkdtempAsync = util.promisify(fs.mkdtemp);
 const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 const DOWNLOADS_FOLDER = path.join(os.tmpdir(), 'playwright_downloads-');
 
-type WebSocketNotPipe = { webSocketRegex: RegExp, stream: 'stdout' | 'stderr' };
-
 export abstract class BrowserType {
   private _name: string;
   private _executablePath: string;
-  private _webSocketNotPipe: WebSocketNotPipe | null;
   private _browserDescriptor: browserPaths.BrowserDescriptor;
   readonly _browserPath: string;
 
-  constructor(packagePath: string, browser: browserPaths.BrowserDescriptor, webSocketOrPipe: WebSocketNotPipe | null) {
+  constructor(packagePath: string, browser: browserPaths.BrowserDescriptor) {
     this._name = browser.name;
     const browsersPath = browserPaths.browsersPath(packagePath);
     this._browserDescriptor = browser;
     this._browserPath = browserPaths.browserDirectory(browsersPath, browser);
     this._executablePath = browserPaths.executablePath(this._browserPath, browser) || '';
-    this._webSocketNotPipe = webSocketOrPipe;
   }
 
   executablePath(): string {
@@ -175,7 +171,7 @@ export abstract class BrowserType {
       handleSIGTERM,
       handleSIGHUP,
       progress,
-      pipe: !this._webSocketNotPipe,
+      stdio: 'pipe',
       tempDirectories,
       attemptToGracefullyClose: async () => {
         if ((options as any).__testHookGracefullyClose)
@@ -198,14 +194,8 @@ export abstract class BrowserType {
     };
     progress.cleanupWhenAborted(() => browserProcess && closeOrKill(browserProcess, progress.timeUntilDeadline()));
 
-    if (this._webSocketNotPipe) {
-      const match = await waitForLine(progress, launchedProcess, this._webSocketNotPipe.stream === 'stdout' ? launchedProcess.stdout : launchedProcess.stderr, this._webSocketNotPipe.webSocketRegex);
-      const innerEndpoint = match[1];
-      transport = await WebSocketTransport.connect(progress, innerEndpoint);
-    } else {
-      const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
-      transport = new PipeTransport(stdio[3], stdio[4]);
-    }
+    const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
+    transport = new PipeTransport(stdio[3], stdio[4]);
     return { browserProcess, downloadsPath, transport };
   }
 

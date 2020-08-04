@@ -18,7 +18,6 @@
 import * as childProcess from 'child_process';
 import * as readline from 'readline';
 import * as removeFolder from 'rimraf';
-import * as stream from 'stream';
 import { helper } from './helper';
 import { Progress } from './progress';
 import * as types from './types';
@@ -34,8 +33,7 @@ export type LaunchProcessOptions = {
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
-  pipe?: boolean,
-  pipeStdin?: boolean,
+  stdio: 'pipe' | 'stdin',
   tempDirectories: string[],
 
   cwd?: string,
@@ -68,9 +66,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   const cleanup = () => helper.removeFolders(options.tempDirectories);
 
   const progress = options.progress;
-  const stdio: ('ignore' | 'pipe')[] = options.pipe ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe'];
-  if (options.pipeStdin)
-    stdio[0] = 'pipe';
+  const stdio: ('ignore' | 'pipe')[] = options.stdio === 'pipe' ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['pipe', 'pipe', 'pipe'];
   progress.log(`<launching> ${options.executablePath} ${options.args.join(' ')}`);
   const spawnedProcess = childProcess.spawn(
       options.executablePath,
@@ -191,34 +187,6 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   }
 
   return { launchedProcess: spawnedProcess, gracefullyClose, kill: killAndWait };
-}
-
-export function waitForLine(progress: Progress, process: childProcess.ChildProcess, inputStream: stream.Readable, regex: RegExp): Promise<RegExpMatchArray> {
-  return new Promise((resolve, reject) => {
-    const rl = readline.createInterface({ input: inputStream });
-    const failError = new Error('Process failed to launch!');
-    const listeners = [
-      helper.addEventListener(rl, 'line', onLine),
-      helper.addEventListener(rl, 'close', reject.bind(null, failError)),
-      helper.addEventListener(process, 'exit', reject.bind(null, failError)),
-      // It is Ok to remove error handler because we did not create process and there is another listener.
-      helper.addEventListener(process, 'error', reject.bind(null, failError))
-    ];
-
-    progress.cleanupWhenAborted(cleanup);
-
-    function onLine(line: string) {
-      const match = line.match(regex);
-      if (!match)
-        return;
-      cleanup();
-      resolve(match);
-    }
-
-    function cleanup() {
-      helper.removeEventListeners(listeners);
-    }
-  });
 }
 
 export function envArrayToObject(env: types.EnvArray): Env {

@@ -22,14 +22,9 @@ import { kBrowserCloseMessageId } from './wkConnection';
 import { BrowserType } from '../browserType';
 import { ConnectionTransport } from '../transport';
 import { BrowserOptions } from '../browser';
-import { BrowserDescriptor } from '../../utils/browserPaths';
 import * as types from '../types';
 
 export class WebKit extends BrowserType {
-  constructor(packagePath: string, browser: BrowserDescriptor) {
-    super(packagePath, browser, null /* use pipe not websocket */);
-  }
-
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
     return WKBrowser.connect(transport, options);
   }
