@@ -128,12 +128,14 @@ nsresult nsRemoteDebuggingPipe::Stop() {
 #if defined(_WIN32)
   CancelIoEx(readHandle, nullptr);
   CloseHandle(readHandle);
+  CloseHandle(writeHandle);
 #else
   shutdown(readFD, SHUT_RDWR);
+  shutdown(writeFD, SHUT_RDWR);
 #endif
   mReaderThread->Shutdown();
   mReaderThread = nullptr;
-  mWriterThread->AsyncShutdown();
+  mWriterThread->Shutdown();
   mWriterThread = nullptr;
   return NS_OK;
 }

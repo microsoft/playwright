@@ -94,7 +94,11 @@ CommandLineHandler.prototype = {
       const browserHandler = new BrowserHandler(dispatcher.rootSession(), dispatcher, targetRegistry, () => {
         if (silent)
           Services.startup.exitLastWindowClosingSurvivalArea();
-        pipe.stop();
+        // Send response to the Browser.close, and then stop in the next microtask.
+        Promise.resolve().then(() => {
+          connection.onclose();
+          pipe.stop();
+        });
       });
       dispatcher.rootSession().registerHandler('Browser', browserHandler);
       loadFrameScript();
