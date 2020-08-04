@@ -98,7 +98,7 @@ it('should trigger correct Log', async({page, server}) => {
   expect(message.type()).toEqual('error');
 });
 
-it.only('should have location for console API calls', async({page, server}) => {
+it('should have location for console API calls', async({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [message] = await Promise.all([
     page.waitForEvent('console', m => m.text() === 'yellow' ),
