@@ -27,6 +27,7 @@ it('should work', async({browser}) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
   await context.close();
 });
+
 it('should work with window features', async({browser, server}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -39,6 +40,7 @@ it('should work with window features', async({browser, server}) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
   await context.close();
 });
+
 it('should emit for immediately closed popups', async({browser}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -52,6 +54,7 @@ it('should emit for immediately closed popups', async({browser}) => {
   expect(popup).toBeTruthy();
   await context.close();
 });
+
 it('should emit for immediately closed popups 2', async({browser, server}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -66,6 +69,7 @@ it('should emit for immediately closed popups 2', async({browser, server}) => {
   expect(popup).toBeTruthy();
   await context.close();
 });
+
 it('should be able to capture alert', async({browser}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -80,6 +84,7 @@ it('should be able to capture alert', async({browser}) => {
   await evaluatePromise;
   await context.close();
 });
+
 it('should work with empty url', async({browser}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -91,6 +96,7 @@ it('should work with empty url', async({browser}) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
   await context.close();
 });
+
 it('should work with noopener and no url', async({browser}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -104,6 +110,7 @@ it('should work with noopener and no url', async({browser}) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
   await context.close();
 });
+
 it('should work with noopener and about:blank', async({browser}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -115,6 +122,7 @@ it('should work with noopener and about:blank', async({browser}) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
   await context.close();
 });
+
 it('should work with noopener and url', async({browser, server}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -127,6 +135,7 @@ it('should work with noopener and url', async({browser, server}) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
   await context.close();
 });
+
 it('should work with clicking target=_blank', async({browser, server}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -140,6 +149,7 @@ it('should work with clicking target=_blank', async({browser, server}) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
   await context.close();
 });
+
 it('should work with fake-clicking target=_blank and rel=noopener', async({browser, server}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -153,6 +163,7 @@ it('should work with fake-clicking target=_blank and rel=noopener', async({brows
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
   await context.close();
 });
+
 it('should work with clicking target=_blank and rel=noopener', async({browser, server}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -166,6 +177,7 @@ it('should work with clicking target=_blank and rel=noopener', async({browser, s
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
   await context.close();
 });
+
 it('should not treat navigations as new popups', async({browser, server}) => {
   const context = await browser.newContext();
   const page = await context.newPage();

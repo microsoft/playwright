@@ -23,22 +23,27 @@ it('should work', async ({ page, server }) => {
   const result = await page.evaluate(() => 7 * 3);
   expect(result).toBe(21);
 });
+
 it('should transfer NaN', async ({ page, server }) => {
   const result = await page.evaluate(a => a, NaN);
   expect(Object.is(result, NaN)).toBe(true);
 });
+
 it('should transfer -0', async ({ page, server }) => {
   const result = await page.evaluate(a => a, -0);
   expect(Object.is(result, -0)).toBe(true);
 });
+
 it('should transfer Infinity', async ({ page, server }) => {
   const result = await page.evaluate(a => a, Infinity);
   expect(Object.is(result, Infinity)).toBe(true);
 });
+
 it('should transfer -Infinity', async ({ page, server }) => {
   const result = await page.evaluate(a => a, -Infinity);
   expect(Object.is(result, -Infinity)).toBe(true);
 });
+
 it('should roundtrip unserializable values', async ({ page }) => {
   const value = {
     infinity: Infinity,
@@ -49,6 +54,7 @@ it('should roundtrip unserializable values', async ({ page }) => {
   const result = await page.evaluate(value => value, value);
   expect(result).toEqual(value);
 });
+
 it('should roundtrip promise to value', async ({ page }) => {
   {
     const result = await page.evaluate(value => Promise.resolve(value), null);
@@ -67,6 +73,7 @@ it('should roundtrip promise to value', async ({ page }) => {
     expect(result === undefined).toBeTruthy();
   }
 });
+
 it('should roundtrip promise to unserializable values', async ({ page }) => {
   const value = {
     infinity: Infinity,
@@ -77,26 +84,32 @@ it('should roundtrip promise to unserializable values', async ({ page }) => {
   const result = await page.evaluate(value => Promise.resolve(value), value);
   expect(result).toEqual(value);
 });
+
 it('should transfer arrays', async ({ page, server }) => {
   const result = await page.evaluate(a => a, [1, 2, 3]);
   expect(result).toEqual([1, 2, 3]);
 });
+
 it('should transfer arrays as arrays, not objects', async ({ page, server }) => {
   const result = await page.evaluate(a => Array.isArray(a), [1, 2, 3]);
   expect(result).toBe(true);
 });
+
 it('should transfer maps as empty objects', async ({ page, server }) => {
   const result = await page.evaluate(a => a.x.constructor.name + ' ' + JSON.stringify(a.x), { x: new Map([[1, 2]]) });
   expect(result).toBe('Object {}');
 });
+
 it('should modify global environment', async ({ page }) => {
   await page.evaluate(() => window.globalVar = 123);
   expect(await page.evaluate('globalVar')).toBe(123);
 });
+
 it('should evaluate in the page context', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/global-var.html');
   expect(await page.evaluate('globalVar')).toBe(123);
 });
+
 it('should return undefined for objects with symbols', async ({ page, server }) => {
   expect(await page.evaluate(() => [Symbol('foo4')])).toEqual([undefined]);
   expect(await page.evaluate(() => {
@@ -108,6 +121,7 @@ it('should return undefined for objects with symbols', async ({ page, server }) 
     return { foo: [{ a: Symbol('foo4') }] };
   })).toEqual({ foo: [{ a: undefined }] });
 });
+
 it('should work with function shorthands', async ({ page, server }) => {
   const a = {
     sum([a, b]) { return a + b; },
@@ -116,10 +130,12 @@ it('should work with function shorthands', async ({ page, server }) => {
   expect(await page.evaluate(a.sum, [1, 2])).toBe(3);
   expect(await page.evaluate(a.mult, [2, 4])).toBe(8);
 });
+
 it('should work with unicode chars', async ({ page, server }) => {
   const result = await page.evaluate(a => a['中文字符'], { '中文字符': 42 });
   expect(result).toBe(42);
 });
+
 it('should throw when evaluation triggers reload', async ({ page, server }) => {
   let error = null;
   await page.evaluate(() => {
@@ -128,10 +144,12 @@ it('should throw when evaluation triggers reload', async ({ page, server }) => {
   }).catch(e => error = e);
   expect(error.message).toContain('navigation');
 });
+
 it('should await promise', async ({ page, server }) => {
   const result = await page.evaluate(() => Promise.resolve(8 * 7));
   expect(result).toBe(56);
 });
+
 it('should work right after framenavigated', async ({ page, server }) => {
   let frameEvaluation = null;
   page.on('framenavigated', async frame => {
@@ -140,6 +158,7 @@ it('should work right after framenavigated', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   expect(await frameEvaluation).toBe(42);
 });
+
 it('should work right after a cross-origin navigation', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   let frameEvaluation = null;
@@ -149,6 +168,7 @@ it('should work right after a cross-origin navigation', async ({ page, server })
   await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
   expect(await frameEvaluation).toBe(42);
 });
+
 it('should work from-inside an exposed function', async ({ page, server }) => {
   // Setup inpage callback, which calls Page.evaluate
   await page.exposeFunction('callController', async function (a, b) {
@@ -159,46 +179,55 @@ it('should work from-inside an exposed function', async ({ page, server }) => {
   });
   expect(result).toBe(27);
 });
+
 it('should reject promise with exception', async ({ page, server }) => {
   let error = null;
   await page.evaluate(() => not_existing_object.property).catch(e => error = e);
   expect(error).toBeTruthy();
   expect(error.message).toContain('not_existing_object');
 });
+
 it('should support thrown strings as error messages', async ({ page, server }) => {
   let error = null;
   await page.evaluate(() => { throw 'qwerty'; }).catch(e => error = e);
   expect(error).toBeTruthy();
   expect(error.message).toContain('qwerty');
 });
+
 it('should support thrown numbers as error messages', async ({ page, server }) => {
   let error = null;
   await page.evaluate(() => { throw 100500; }).catch(e => error = e);
   expect(error).toBeTruthy();
   expect(error.message).toContain('100500');
 });
+
 it('should return complex objects', async ({ page, server }) => {
   const object = { foo: 'bar!' };
   const result = await page.evaluate(a => a, object);
   expect(result).not.toBe(object);
   expect(result).toEqual(object);
 });
+
 it('should return NaN', async ({ page, server }) => {
   const result = await page.evaluate(() => NaN);
   expect(Object.is(result, NaN)).toBe(true);
 });
+
 it('should return -0', async ({ page, server }) => {
   const result = await page.evaluate(() => -0);
   expect(Object.is(result, -0)).toBe(true);
 });
+
 it('should return Infinity', async ({ page, server }) => {
   const result = await page.evaluate(() => Infinity);
   expect(Object.is(result, Infinity)).toBe(true);
 });
+
 it('should return -Infinity', async ({ page, server }) => {
   const result = await page.evaluate(() => -Infinity);
   expect(Object.is(result, -Infinity)).toBe(true);
 });
+
 it('should work with overwritten Promise', async ({ page, server }) => {
   await page.evaluate(() => {
     const originalPromise = window.Promise;
@@ -243,6 +272,7 @@ it('should work with overwritten Promise', async ({ page, server }) => {
   // Now, the new promise should be awaitable.
   expect(await page.evaluate(() => Promise.resolve(42))).toBe(42);
 });
+
 it('should throw when passed more than one parameter', async ({ page, server }) => {
   const expectThrow = async f => {
     let error;
@@ -261,29 +291,37 @@ it('should throw when passed more than one parameter', async ({ page, server }) 
   await expectThrow(() => frame.$$eval('sel', (a, b) => false, 1, 2));
   await expectThrow(() => frame.evaluate((a, b) => false, 1, 2));
 });
+
 it('should accept "undefined" as one of multiple parameters', async ({ page, server }) => {
   const result = await page.evaluate(({ a, b }) => Object.is(a, undefined) && Object.is(b, 'foo'), { a: undefined, b: 'foo' });
   expect(result).toBe(true);
 });
+
 it('should properly serialize undefined arguments', async ({ page }) => {
   expect(await page.evaluate(x => ({ a: x }), undefined)).toEqual({});
 });
+
 it('should properly serialize undefined fields', async ({ page }) => {
   expect(await page.evaluate(() => ({ a: undefined }))).toEqual({});
 });
+
 it('should return undefined properties', async ({ page }) => {
   const value = await page.evaluate(() => ({ a: undefined }));
   expect('a' in value).toBe(true);
 });
+
 it('should properly serialize null arguments', async ({ page }) => {
   expect(await page.evaluate(x => x, null)).toEqual(null);
 });
+
 it('should properly serialize null fields', async ({ page }) => {
   expect(await page.evaluate(() => ({ a: null }))).toEqual({ a: null });
 });
+
 it('should return undefined for non-serializable objects', async ({ page, server }) => {
   expect(await page.evaluate(() => window)).toBe(undefined);
 });
+
 it('should fail for circular object', async ({ page, server }) => {
   const result = await page.evaluate(() => {
     const a = {};
@@ -293,6 +331,7 @@ it('should fail for circular object', async ({ page, server }) => {
   });
   expect(result).toBe(undefined);
 });
+
 it('should be able to throw a tricky error', async ({ page, server }) => {
   const windowHandle = await page.evaluateHandle(() => window);
   const errorText = await windowHandle.jsonValue().catch(e => e.message);
@@ -301,24 +340,29 @@ it('should be able to throw a tricky error', async ({ page, server }) => {
   }, errorText).catch(e => e);
   expect(error.message).toContain(errorText);
 });
+
 it('should accept a string', async ({ page, server }) => {
   const result = await page.evaluate('1 + 2');
   expect(result).toBe(3);
 });
+
 it('should accept a string with semi colons', async ({ page, server }) => {
   const result = await page.evaluate('1 + 5;');
   expect(result).toBe(6);
 });
+
 it('should accept a string with comments', async ({ page, server }) => {
   const result = await page.evaluate('2 + 5;\n// do some math!');
   expect(result).toBe(7);
 });
+
 it('should accept element handle as an argument', async ({ page, server }) => {
   await page.setContent('<section>42</section>');
   const element = await page.$('section');
   const text = await page.evaluate(e => e.textContent, element);
   expect(text).toBe('42');
 });
+
 it('should throw if underlying element was disposed', async ({ page, server }) => {
   await page.setContent('<section>39</section>');
   const element = await page.$('section');
@@ -328,6 +372,7 @@ it('should throw if underlying element was disposed', async ({ page, server }) =
   await page.evaluate(e => e.textContent, element).catch(e => error = e);
   expect(error.message).toContain('JSHandle is disposed');
 });
+
 it('should simulate a user gesture', async ({ page, server }) => {
   const result = await page.evaluate(() => {
     document.body.appendChild(document.createTextNode('test'));
@@ -336,6 +381,7 @@ it('should simulate a user gesture', async ({ page, server }) => {
   });
   expect(result).toBe(true);
 });
+
 it('should throw a nice error after a navigation', async ({ page, server }) => {
   const errorPromise = page.evaluate(() => new Promise(f => window.__resolve = f)).catch(e => e);
   await Promise.all([
@@ -348,6 +394,7 @@ it('should throw a nice error after a navigation', async ({ page, server }) => {
   const error = await errorPromise;
   expect(error.message).toContain('navigation');
 });
+
 it('should not throw an error when evaluation does a navigation', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/one-style.html');
   const result = await page.evaluate(() => {
@@ -356,6 +403,7 @@ it('should not throw an error when evaluation does a navigation', async ({ page,
   });
   expect(result).toEqual([42]);
 });
+
 it.fail(WEBKIT)('should not throw an error when evaluation does a synchronous navigation and returns an object', async ({ page, server }) => {
   // It is imporant to be on about:blank for sync reload.
   const result = await page.evaluate(() => {
@@ -364,6 +412,7 @@ it.fail(WEBKIT)('should not throw an error when evaluation does a synchronous na
   });
   expect(result).toEqual({ a: 42 });
 });
+
 it('should not throw an error when evaluation does a synchronous navigation and returns undefined', async ({ page, server }) => {
   // It is imporant to be on about:blank for sync reload.
   const result = await page.evaluate(() => {
@@ -372,11 +421,13 @@ it('should not throw an error when evaluation does a synchronous navigation and 
   });
   expect(result).toBe(undefined);
 });
+
 it.fail(USES_HOOKS)('should transfer 100Mb of data from page to node.js', async ({ page }) => {
   // This does not use hooks, but is slow in wire channel.
   const a = await page.evaluate(() => Array(100 * 1024 * 1024 + 1).join('a'));
   expect(a.length).toBe(100 * 1024 * 1024);
 });
+
 it('should throw error with detailed information on exception inside promise ', async ({ page, server }) => {
   let error = null;
   await page.evaluate(() => new Promise(() => {
@@ -384,11 +435,13 @@ it('should throw error with detailed information on exception inside promise ', 
   })).catch(e => error = e);
   expect(error.message).toContain('Error in promise');
 });
+
 it('should work even when JSON is set to null', async ({ page }) => {
   await page.evaluate(() => { window.JSON.stringify = null; window.JSON = null; });
   const result = await page.evaluate(() => ({ abc: 123 }));
   expect(result).toEqual({ abc: 123 });
 });
+
 it.fail(FFOX)('should await promise from popup', async ({ page, server }) => {
   // Something is wrong about the way Firefox waits for the chained promise
   await page.goto(server.EMPTY_PAGE);
@@ -398,17 +451,20 @@ it.fail(FFOX)('should await promise from popup', async ({ page, server }) => {
   });
   expect(result).toBe(42);
 });
+
 it('should work with new Function() and CSP', async ({ page, server }) => {
   server.setCSP('/empty.html', 'script-src ' + server.PREFIX);
   await page.goto(server.PREFIX + '/empty.html');
   expect(await page.evaluate(() => new Function('return true')())).toBe(true);
 });
+
 it('should work with non-strict expressions', async ({ page, server }) => {
   expect(await page.evaluate(() => {
     y = 3.14;
     return y;
   })).toBe(3.14);
 });
+
 it('should respect use strict expression', async ({ page, server }) => {
   const error = await page.evaluate(() => {
     "use strict";
@@ -417,18 +473,22 @@ it('should respect use strict expression', async ({ page, server }) => {
   }).catch(e => e);
   expect(error.message).toContain('variableY');
 });
+
 it('should not leak utility script', async ({ page, server }) => {
   expect(await page.evaluate(() => this === window)).toBe(true);
 });
+
 it('should not leak handles', async ({ page, server }) => {
   const error = await page.evaluate(() => handles.length).catch(e => e);
   expect(error.message).toContain(' handles');
 });
+
 it('should work with CSP', async ({ page, server }) => {
   server.setCSP('/empty.html', `script-src 'self'`);
   await page.goto(server.EMPTY_PAGE);
   expect(await page.evaluate(() => 2 + 2)).toBe(4);
 });
+
 it('should evaluate exception', async ({ page, server }) => {
   const error = await page.evaluate(() => {
     return (function functionOnStack() {
@@ -438,32 +498,39 @@ it('should evaluate exception', async ({ page, server }) => {
   expect(error).toContain('Error: error message');
   expect(error).toContain('functionOnStack');
 });
+
 it('should evaluate exception', async ({ page, server }) => {
   const error = await page.evaluate(`new Error('error message')`);
   expect(error).toContain('Error: error message');
 });
+
 it('should evaluate date', async ({ page }) => {
   const result = await page.evaluate(() => ({ date: new Date('2020-05-27T01:31:38.506Z') }));
   expect(result).toEqual({ date: new Date('2020-05-27T01:31:38.506Z') });
 });
+
 it('should roundtrip date', async ({ page }) => {
   const date = new Date('2020-05-27T01:31:38.506Z');
   const result = await page.evaluate(date => date, date);
   expect(result.toUTCString()).toEqual(date.toUTCString());
 });
+
 it('should roundtrip regex', async ({ page }) => {
   const regex = /hello/im;
   const result = await page.evaluate(regex => regex, regex);
   expect(result.toString()).toEqual(regex.toString());
 });
+
 it('should jsonValue() date', async ({ page }) => {
   const resultHandle = await page.evaluateHandle(() => ({ date: new Date('2020-05-27T01:31:38.506Z') }));
   expect(await resultHandle.jsonValue()).toEqual({ date: new Date('2020-05-27T01:31:38.506Z') });
 });
+
 it('should not use toJSON when evaluating', async ({ page, server }) => {
   const result = await page.evaluate(() => ({ toJSON: () => 'string', data: 'data' }));
   expect(result).toEqual({ data: 'data', toJSON: {} });
 });
+
 it('should not use toJSON in jsonValue', async ({ page, server }) => {
   const resultHandle = await page.evaluateHandle(() => ({ toJSON: () => 'string', data: 'data' }));
   expect(await resultHandle.jsonValue()).toEqual({ data: 'data', toJSON: {} });
