@@ -23,6 +23,7 @@ const removeFolder = require('rimraf');
 
 const {FlakinessDashboard} = require('../utils/flakiness-dashboard');
 const PROJECT_ROOT = fs.existsSync(path.join(__dirname, '..', 'package.json')) ? path.join(__dirname, '..') : path.join(__dirname, '..', '..');
+const browserName = process.env.BROWSER || 'chromium';
 
 let platform = os.platform();
 
@@ -245,6 +246,21 @@ const utils = module.exports = {
       },
     };
     return logger;
+  },
+
+  expectSSLError(errorMessage) {
+    if (browserName === 'chromium') {
+      expect(errorMessage).toContain('net::ERR_CERT_AUTHORITY_INVALID');
+    } else if (browserName === 'webkit') {
+      if (platform === 'darwin')
+        expect(errorMessage).toContain('The certificate for this server is invalid');
+      else if (platform === 'win32')
+        expect(errorMessage).toContain('SSL peer certificate or SSH remote key was not OK');
+      else
+        expect(errorMessage).toContain('Unacceptable TLS certificate');
+    } else {
+      expect(errorMessage).toContain('SSL_ERROR_UNKNOWN');
+    }
   },
 };
 
