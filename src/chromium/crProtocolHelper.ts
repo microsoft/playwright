@@ -19,6 +19,7 @@ import { CRSession } from './crConnection';
 import { Protocol } from './protocol';
 import * as fs from 'fs';
 import * as util from 'util';
+import * as types from '../types';
 
 export function getExceptionMessage(exceptionDetails: Protocol.Runtime.ExceptionDetails): string {
   if (exceptionDetails.exception)
@@ -58,12 +59,12 @@ export async function readProtocolStream(client: CRSession, handle: string, path
   return Buffer.concat(bufs);
 }
 
-export function toConsoleMessageLocation(stackTrace: Protocol.Runtime.StackTrace | undefined) {
+export function toConsoleMessageLocation(stackTrace: Protocol.Runtime.StackTrace | undefined): types.ConsoleMessageLocation {
   return stackTrace && stackTrace.callFrames.length ? {
     url: stackTrace.callFrames[0].url,
     lineNumber: stackTrace.callFrames[0].lineNumber,
     columnNumber: stackTrace.callFrames[0].columnNumber,
-  } : {};
+  } : { url: '', lineNumber: 0, columnNumber: 0 };
 }
 
 export function exceptionToError(exceptionDetails: Protocol.Runtime.ExceptionDetails): Error {

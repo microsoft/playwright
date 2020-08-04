@@ -1751,9 +1751,9 @@ ConsoleMessage:
     location:
       type: object
       properties:
-        url: string?
-        lineNumber: number?
-        columnNumber: number?
+        url: string
+        lineNumber: number
+        columnNumber: number
 
 
 

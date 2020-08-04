@@ -343,9 +343,9 @@ export type SerializedAXNode = {
 };
 
 export type ConsoleMessageLocation = {
-  url?: string,
-  lineNumber?: number,
-  columnNumber?: number,
+  url: string,
+  lineNumber: number,
+  columnNumber: number,
 };
 
 export type Error = {

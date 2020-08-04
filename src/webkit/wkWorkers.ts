@@ -19,6 +19,7 @@ import { Page, Worker } from '../page';
 import { Protocol } from './protocol';
 import { WKSession } from './wkConnection';
 import { WKExecutionContext } from './wkExecutionContext';
+import * as types from '../types';
 
 export class WKWorkers {
   private _sessionListeners: RegisteredListener[] = [];
@@ -93,6 +94,11 @@ export class WKWorkers {
     const handles = (parameters || []).map(p => {
       return worker._existingExecutionContext!.createHandle(p);
     });
-    this._page._addConsoleMessage(derivedType, handles, { url, lineNumber: (lineNumber || 1) - 1, columnNumber: (columnNumber || 1) - 1 }, handles.length ? undefined : text);
+    const location: types.ConsoleMessageLocation = {
+      url: url || '',
+      lineNumber: (lineNumber || 1) - 1,
+      columnNumber: (columnNumber || 1) - 1
+    };
+    this._page._addConsoleMessage(derivedType, handles, location, handles.length ? undefined : text);
   }
 }

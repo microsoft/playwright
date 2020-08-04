@@ -497,7 +497,7 @@ export class WKPage implements PageDelegate {
       handles,
       count: 0,
       location: {
-        url,
+        url: url || '',
         lineNumber: (lineNumber || 1) - 1,
         columnNumber: (columnNumber || 1) - 1,
       }
