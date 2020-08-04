@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
 const path = require('path');
 const url = require('url');
 const {FFOX, CHROMIUM, WEBKIT, ASSETS_DIR, MAC, WIN} = testOptions;
@@ -56,9 +55,7 @@ it('page.goBack should work with HistoryAPI', async({page, server}) => {
 
 it.fail(WEBKIT && MAC)('page.goBack should work for file urls', async ({page, server}) => {
   // WebKit embedder fails to go back/forward to the file url.
-  const url1 = WIN
-      ? 'file:///' + path.join(ASSETS_DIR, 'empty.html').replace(/\\/g, '/')
-      : 'file://' + path.join(ASSETS_DIR, 'empty.html');
+  const url1 = url.pathToFileURL(path.join(ASSETS_DIR, 'empty.html')).href;
   const url2 = server.EMPTY_PAGE;
   await page.goto(url1);
   await page.setContent(`<a href='${url2}'>url2</a>`);
