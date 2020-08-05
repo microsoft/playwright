@@ -1944,7 +1944,7 @@ index 7d7ef5a5f9e6c092e643eb5c3feef239e90c0bb2..7c975244f26b3c2ec20d8174e5d84fc9
    return new AndroidCompositorWidget(aOptions,
                                       static_cast<nsBaseWidget*>(aWidget));
 diff --git a/widget/headless/HeadlessCompositorWidget.cpp b/widget/headless/HeadlessCompositorWidget.cpp
-index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..b59419561951730ed8ddfbaeacf1502f5e4ccdd5 100644
+index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..45456bd34713a32695c0fe6a84588f31e40c137d 100644
 --- a/widget/headless/HeadlessCompositorWidget.cpp
 +++ b/widget/headless/HeadlessCompositorWidget.cpp
 @@ -3,6 +3,7 @@
@@ -1955,24 +1955,23 @@ index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..b59419561951730ed8ddfbaeacf1502f
  #include "mozilla/widget/PlatformWidgetTypes.h"
  #include "HeadlessCompositorWidget.h"
  #include "VsyncDispatcher.h"
-@@ -17,6 +18,33 @@ HeadlessCompositorWidget::HeadlessCompositorWidget(
+@@ -17,6 +18,32 @@ HeadlessCompositorWidget::HeadlessCompositorWidget(
    mClientSize = aInitData.InitialClientSize();
  }
  
 +void HeadlessCompositorWidget::SetSnapshotListener(HeadlessWidget::SnapshotListener&& listener) {
 +  MOZ_ASSERT(NS_IsMainThread());
 +
-+  layers::CompositorThread()->Dispatch(NewRunnableMethod<HeadlessWidget::SnapshotListener&&, LayoutDeviceIntSize>(
++  layers::CompositorThread()->Dispatch(NewRunnableMethod<HeadlessWidget::SnapshotListener&&>(
 +      "HeadlessCompositorWidget::SetSnapshotListener", this,
 +      &HeadlessCompositorWidget::SetSnapshotListenerOnCompositorThread,
-+      std::move(listener), mClientSize));
++      std::move(listener)));
 +}
 +
 +void HeadlessCompositorWidget::SetSnapshotListenerOnCompositorThread(
-+    HeadlessWidget::SnapshotListener&& listener, const LayoutDeviceIntSize& aClientSize) {
++    HeadlessWidget::SnapshotListener&& listener) {
 +  MOZ_ASSERT(NS_IsInCompositorThread());
 +  mSnapshotListener = std::move(listener);
-+  UpdateDrawTarget(aClientSize);
 +  PeriodicSnapshot();
 +}
 +
@@ -1989,7 +1988,7 @@ index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..b59419561951730ed8ddfbaeacf1502f
  void HeadlessCompositorWidget::ObserveVsync(VsyncObserver* aObserver) {
    if (RefPtr<CompositorVsyncDispatcher> cvd =
            mWidget->GetCompositorVsyncDispatcher()) {
-@@ -29,6 +57,60 @@ nsIWidget* HeadlessCompositorWidget::RealWidget() { return mWidget; }
+@@ -29,6 +56,58 @@ nsIWidget* HeadlessCompositorWidget::RealWidget() { return mWidget; }
  void HeadlessCompositorWidget::NotifyClientSizeChanged(
      const LayoutDeviceIntSize& aClientSize) {
    mClientSize = aClientSize;
@@ -2001,11 +2000,6 @@ index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..b59419561951730ed8ddfbaeacf1502f
 +
 +void HeadlessCompositorWidget::UpdateDrawTarget(const LayoutDeviceIntSize& aClientSize) {
 +  MOZ_ASSERT(NS_IsInCompositorThread());
-+  if (!mSnapshotListener) {
-+    mDrawTarget = nullptr;
-+    return;
-+  }
-+
 +  if (aClientSize.IsEmpty()) {
 +    mDrawTarget = nullptr;
 +    return;
@@ -2024,10 +2018,17 @@ index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..b59419561951730ed8ddfbaeacf1502f
 +}
 +
 +void HeadlessCompositorWidget::PeriodicSnapshot() {
-+  if (!mDrawTarget)
++  if (!mSnapshotListener)
 +    return;
 +
-+  if (!mSnapshotListener)
++  TakeSnapshot();
++  NS_DelayedDispatchToCurrentThread(NewRunnableMethod(
++      "HeadlessCompositorWidget::PeriodicSnapshot", this,
++      &HeadlessCompositorWidget::PeriodicSnapshot), 40);
++}
++
++void HeadlessCompositorWidget::TakeSnapshot() {
++  if (!mDrawTarget)
 +    return;
 +
 +  RefPtr<gfx::SourceSurface> snapshot = mDrawTarget->Snapshot();
@@ -2043,15 +2044,11 @@ index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..b59419561951730ed8ddfbaeacf1502f
 +  }
 +
 +  mSnapshotListener(std::move(dataSurface));
-+
-+  NS_DelayedDispatchToCurrentThread(NewRunnableMethod(
-+      "HeadlessCompositorWidget::PeriodicSnapshot", this,
-+      &HeadlessCompositorWidget::PeriodicSnapshot), 40);
  }
  
  LayoutDeviceIntSize HeadlessCompositorWidget::GetClientSize() {
 diff --git a/widget/headless/HeadlessCompositorWidget.h b/widget/headless/HeadlessCompositorWidget.h
-index 7f91de9e67d7ffa02de3eef1d760e5cfd05e7ad6..37b0320f3bde99ef7635c71452a3a4b75695bcc5 100644
+index 7f91de9e67d7ffa02de3eef1d760e5cfd05e7ad6..b0e3572413f80e5bd125f777c3247b10b8521a73 100644
 --- a/widget/headless/HeadlessCompositorWidget.h
 +++ b/widget/headless/HeadlessCompositorWidget.h
 @@ -23,9 +23,13 @@ class HeadlessCompositorWidget final : public CompositorWidget,
@@ -2073,10 +2070,10 @@ index 7f91de9e67d7ffa02de3eef1d760e5cfd05e7ad6..37b0320f3bde99ef7635c71452a3a4b7
  
   private:
 +  void SetSnapshotListenerOnCompositorThread(
-+      HeadlessWidget::SnapshotListener&& listener,
-+      const LayoutDeviceIntSize& aClientSize);
++      HeadlessWidget::SnapshotListener&& listener);
 +  void UpdateDrawTarget(const LayoutDeviceIntSize& aClientSize);
 +  void PeriodicSnapshot();
++  void TakeSnapshot();
 +
    HeadlessWidget* mWidget;
  
