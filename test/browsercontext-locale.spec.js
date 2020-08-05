@@ -138,3 +138,28 @@ it('should be isolated between contexts', async({browser, server}) => {
     context2.close()
   ]);
 });
+
+it.fail(FFOX)('should not change default locale in another context', async({browser, server}) => {
+  async function getContextLocale(context) {
+    const page = await context.newPage();
+    return await page.evaluate(() => (new Intl.NumberFormat()).resolvedOptions().locale);
+  }
+
+  let defaultLocale;
+  {
+    const context = await browser.newContext();
+    defaultLocale = await getContextLocale(context);
+    await context.close();
+  }
+  const localeOverride = defaultLocale === 'ru-RU' ? 'de-DE' : 'ru-RU';
+  {
+    const context = await browser.newContext({ locale: localeOverride});
+    expect(await getContextLocale(context)).toBe(localeOverride);
+    await context.close();
+  }
+  {
+    const context = await browser.newContext();
+    expect(await getContextLocale(context)).toBe(defaultLocale);
+    await context.close();
+  }
+});
