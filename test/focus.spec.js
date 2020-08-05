@@ -22,6 +22,7 @@ it('should work', async function({page, server}) {
   await page.focus('#d1');
   expect(await page.evaluate(() => document.activeElement.id)).toBe('d1');
 });
+
 it('should emit focus event', async function({page, server}) {
   await page.setContent(`<div id=d1 tabIndex=0></div>`);
   let focused = false;
@@ -30,6 +31,7 @@ it('should emit focus event', async function({page, server}) {
   await page.focus('#d1');
   expect(focused).toBe(true);
 });
+
 it('should emit blur event', async function({page, server}) {
   await page.setContent(`<div id=d1 tabIndex=0>DIV1</div><div id=d2 tabIndex=0>DIV2</div>`);
   await page.focus('#d1');
@@ -43,6 +45,7 @@ it('should emit blur event', async function({page, server}) {
   expect(focused).toBe(true);
   expect(blurred).toBe(true);
 });
+
 it('should traverse focus', async function({page}) {
   await page.setContent(`<input id="i1"><input id="i2">`);
   let focused = false;
@@ -58,6 +61,7 @@ it('should traverse focus', async function({page}) {
   expect(await page.$eval('#i1', e => e.value)).toBe('First');
   expect(await page.$eval('#i2', e => e.value)).toBe('Last');
 });
+
 it('should traverse focus in all directions', async function({page}) {
   await page.setContent(`<input value="1"><input value="2"><input value="3">`);
   await page.keyboard.press('Tab');

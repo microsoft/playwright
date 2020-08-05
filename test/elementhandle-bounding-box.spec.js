@@ -25,6 +25,7 @@ it.fail(FFOX && !HEADLESS)('should work', async ({ page, server }) => {
   const box = await elementHandle.boundingBox();
   expect(box).toEqual({ x: 100, y: 50, width: 50, height: 50 });
 });
+
 it('should handle nested frames', async ({ page, server }) => {
   await page.setViewportSize({ width: 500, height: 500 });
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
@@ -33,11 +34,13 @@ it('should handle nested frames', async ({ page, server }) => {
   const box = await elementHandle.boundingBox();
   expect(box).toEqual({ x: 24, y: 224, width: 268, height: 18 });
 });
+
 it('should return null for invisible elements', async ({ page, server }) => {
   await page.setContent('<div style="display:none">hi</div>');
   const element = await page.$('div');
   expect(await element.boundingBox()).toBe(null);
 });
+
 it('should force a layout', async ({ page, server }) => {
   await page.setViewportSize({ width: 500, height: 500 });
   await page.setContent('<div style="width: 100px; height: 100px">hello</div>');
@@ -46,6 +49,7 @@ it('should force a layout', async ({ page, server }) => {
   const box = await elementHandle.boundingBox();
   expect(box).toEqual({ x: 8, y: 8, width: 100, height: 200 });
 });
+
 it('should work with SVG nodes', async ({ page, server }) => {
   await page.setContent(`
       <svg xmlns="http://www.w3.org/2000/svg" width="500" height="500">
@@ -60,6 +64,7 @@ it('should work with SVG nodes', async ({ page, server }) => {
   }, element);
   expect(pwBoundingBox).toEqual(webBoundingBox);
 });
+
 it.skip(FFOX)('should work with page scale', async ({ browser, server }) => {
   const context = await browser.newContext({ viewport: { width: 400, height: 400, isMobile: true } });
   const page = await context.newPage();
@@ -80,6 +85,7 @@ it.skip(FFOX)('should work with page scale', async ({ browser, server }) => {
   expect(Math.round(box.height * 100)).toBe(20 * 100);
   await context.close();
 });
+
 it('should work when inline box child is outside of viewport', async ({ page, server }) => {
   await page.setContent(`
       <style>

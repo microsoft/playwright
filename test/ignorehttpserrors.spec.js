@@ -26,6 +26,7 @@ it('should work', async({browser, httpsServer}) => {
   expect(response.ok()).toBe(true);
   await context.close();
 });
+
 it('should isolate contexts', async({browser, httpsServer}) => {
   {
     let error = null;
@@ -45,6 +46,7 @@ it('should isolate contexts', async({browser, httpsServer}) => {
     await context.close();
   }
 });
+
 it('should work with mixed content', async({browser, server, httpsServer}) => {
   httpsServer.setRoute('/mixedcontent.html', (req, res) => {
     res.end(`<iframe src=${server.EMPTY_PAGE}></iframe>`);
@@ -59,6 +61,7 @@ it('should work with mixed content', async({browser, server, httpsServer}) => {
   expect(await page.frames()[1].evaluate('2 + 3')).toBe(5);
   await context.close();
 });
+
 it('should work with WebSocket', async({browser, httpsServer}) => {
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
@@ -73,6 +76,7 @@ it('should work with WebSocket', async({browser, httpsServer}) => {
   expect(value).toBe('incoming');
   await context.close();
 });
+
 it('should fail with WebSocket if not ignored', async({browser, httpsServer}) => {
   const context = await browser.newContext();
   const page = await context.newPage();

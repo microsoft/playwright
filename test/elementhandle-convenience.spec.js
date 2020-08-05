@@ -30,6 +30,7 @@ it('should have a nice preview', async ({ page, server }) => {
   expect(String(text)).toBe('JSHandle@#text=Text,↵more text');
   expect(String(check)).toBe('JSHandle@<input checked id="check" foo="bar"" type="checkbox"/>');
 });
+
 it('getAttribute should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const handle = await page.$('#outer');
@@ -38,18 +39,21 @@ it('getAttribute should work', async ({ page, server }) => {
   expect(await page.getAttribute('#outer', 'name')).toBe('value');
   expect(await page.getAttribute('#outer', 'foo')).toBe(null);
 });
+
 it('innerHTML should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const handle = await page.$('#outer');
   expect(await handle.innerHTML()).toBe('<div id="inner">Text,\nmore text</div>');
   expect(await page.innerHTML('#outer')).toBe('<div id="inner">Text,\nmore text</div>');
 });
+
 it('innerText should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const handle = await page.$('#inner');
   expect(await handle.innerText()).toBe('Text, more text');
   expect(await page.innerText('#inner')).toBe('Text, more text');
 });
+
 it('innerText should throw', async ({ page, server }) => {
   await page.setContent(`<svg>text</svg>`);
   const error1 = await page.innerText('svg').catch(e => e);
@@ -58,12 +62,14 @@ it('innerText should throw', async ({ page, server }) => {
   const error2 = await handle.innerText().catch(e => e);
   expect(error2.message).toContain('Not an HTMLElement');
 });
+
 it('textContent should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const handle = await page.$('#inner');
   expect(await handle.textContent()).toBe('Text,\nmore text');
   expect(await page.textContent('#inner')).toBe('Text,\nmore text');
 });
+
 it('textContent should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
     create(root, target) { },
@@ -86,6 +92,7 @@ it('textContent should be atomic', async ({ playwright, page }) => {
   expect(tc).toBe('Hello');
   expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('modified');
 });
+
 it('innerText should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
     create(root, target) { },
@@ -108,6 +115,7 @@ it('innerText should be atomic', async ({ playwright, page }) => {
   expect(tc).toBe('Hello');
   expect(await page.evaluate(() => document.querySelector('div').innerText)).toBe('modified');
 });
+
 it('innerHTML should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
     create(root, target) { },
@@ -130,6 +138,7 @@ it('innerHTML should be atomic', async ({ playwright, page }) => {
   expect(tc).toBe('Hello<span>world</span>');
   expect(await page.evaluate(() => document.querySelector('div').innerHTML)).toBe('modified');
 });
+
 it('getAttribute should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
     create(root, target) { },

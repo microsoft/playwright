@@ -26,6 +26,7 @@ it('should have default url when launching browser', async ({browserType, defaul
   await browserContext.close();
   await removeUserDataDir(userDataDir);
 });
+
 it.fail(WIN && CHROMIUM).slow()('headless should be able to read cookies written by headful', async({browserType, defaultBrowserOptions, server}) => {
   // see https://github.com/microsoft/playwright/issues/717
   const userDataDir = await makeUserDataDir();
@@ -45,6 +46,7 @@ it.fail(WIN && CHROMIUM).slow()('headless should be able to read cookies written
   await removeUserDataDir(userDataDir);
   expect(cookie).toBe('foo=true');
 });
+
 it.slow()('should close browser with beforeunload page', async({browserType, defaultBrowserOptions, server}) => {
   const userDataDir = await makeUserDataDir();
   const browserContext = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, headless: false});
@@ -56,6 +58,7 @@ it.slow()('should close browser with beforeunload page', async({browserType, def
   await browserContext.close();
   await removeUserDataDir(userDataDir);
 });
+
 it('should not crash when creating second context', async ({browserType, defaultBrowserOptions, server}) => {
   const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
   {
@@ -70,6 +73,7 @@ it('should not crash when creating second context', async ({browserType, default
   }
   await browser.close();
 });
+
 it('should click background tab', async({browserType, defaultBrowserOptions, server}) => {
   const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
   const page = await browser.newPage();
@@ -78,6 +82,7 @@ it('should click background tab', async({browserType, defaultBrowserOptions, ser
   await page.click('button');
   await browser.close();
 });
+
 it('should close browser after context menu was triggered', async({browserType, defaultBrowserOptions, server}) => {
   const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
   const page = await browser.newPage();
@@ -85,6 +90,7 @@ it('should close browser after context menu was triggered', async({browserType, 
   await page.click('body', {button: 'right'});
   await browser.close();
 });
+
 it('should(not) block third party cookies', async({browserType, defaultBrowserOptions, server}) => {
   const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
   const page = await browser.newPage();
@@ -124,6 +130,7 @@ it('should(not) block third party cookies', async({browserType, defaultBrowserOp
   }
   await browser.close();
 });
+
 it.fail(WEBKIT)('should not override viewport size when passed null', async function({browserType, defaultBrowserOptions, server}) {
   // Our WebKit embedder does not respect window features.
   const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
@@ -142,6 +149,7 @@ it.fail(WEBKIT)('should not override viewport size when passed null', async func
   await context.close();
   await browser.close();
 });
+
 it('Page.bringToFront should work', async ({browserType, defaultBrowserOptions}) => {
   const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
   const page1 = await browser.newPage();
