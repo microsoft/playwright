@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, WIN} = testOptions;
+export {};
 
 it('should clear cookies', async({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);

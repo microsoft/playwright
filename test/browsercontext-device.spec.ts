@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
-const {CHROMIUM, FFOX, MAC, HEADLESS} = testOptions;
+export {};
+const {FFOX} = testOptions;
 
 it.skip(FFOX)('should work', async({playwright, browser, server}) => {
   const iPhone = playwright.devices['iPhone 6'];
@@ -36,7 +36,7 @@ it.skip(FFOX)('should support clicking', async({playwright, browser, server}) =>
   const button = await page.$('button');
   await page.evaluate(button => button.style.marginTop = '200px', button);
   await button.click();
-  expect(await page.evaluate(() => result)).toBe('Clicked');
+  expect(await page.evaluate('result')).toBe('Clicked');
   await context.close();
 });
 

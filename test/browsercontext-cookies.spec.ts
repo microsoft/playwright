@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, WIN} = testOptions;
+export {};
+const {WEBKIT, WIN} = testOptions;
 
 it('should return no cookies in pristine browser context', async({context, page, server}) => {
   expect(await context.cookies()).toEqual([]);
