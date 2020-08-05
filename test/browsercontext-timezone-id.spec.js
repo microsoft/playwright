@@ -70,3 +70,28 @@ it('should work for multiple pages sharing same process', async({browser, server
   ]);
   await context.close();
 });
+
+it.fail(FFOX)('should not change default timezone in another context', async({browser, server}) => {
+  async function getContextTimezone(context) {
+    const page = await context.newPage();
+    return await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
+  }
+
+  let defaultTimezone;
+  {
+    const context = await browser.newContext();
+    defaultTimezone = await getContextTimezone(context);
+    await context.close();
+  }
+  const timezoneOverride = defaultTimezone === 'Europe/Moscow' ? 'America/Los_Angeles' : 'Europe/Moscow';
+  {
+    const context = await browser.newContext({ timezoneId: timezoneOverride});
+    expect(await getContextTimezone(context)).toBe(timezoneOverride);
+    await context.close();
+  }
+  {
+    const context = await browser.newContext();
+    expect(await getContextTimezone(context)).toBe(defaultTimezone);
+    await context.close();
+  }
+});
