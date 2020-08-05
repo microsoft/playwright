@@ -242,6 +242,6 @@ const scheme = createScheme(tChannel);
 function validateParams(type: string, method: string, params: any): any {
   const name = type + method[0].toUpperCase() + method.substring(1) + 'Params';
   if (!scheme[name])
-    throw new ValidationError(`Uknown scheme for ${type}.${method}`);
+    throw new ValidationError(`Unknown scheme for ${type}.${method}`);
   return scheme[name](params, '');
 }
