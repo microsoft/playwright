@@ -34,6 +34,7 @@ it('should work', async ({ page, server }) => {
     await page.evaluate(() => window.scrollTo(0, 0));
   }
 });
+
 it('should throw for detached element', async ({ page, server }) => {
   await page.setContent('<div>Hello</div>');
   const div = await page.$('div');
@@ -56,22 +57,27 @@ it('should wait for display:none to become visible', async ({ page, server }) =>
   await page.setContent('<div style="display:none">Hello</div>');
   await testWaiting(page, div => div.style.display = 'block');
 });
+
 it('should wait for display:contents to become visible', async ({ page, server }) => {
   await page.setContent('<div style="display:contents">Hello</div>');
   await testWaiting(page, div => div.style.display = 'block');
 });
+
 it('should wait for visibility:hidden to become visible', async ({ page, server }) => {
   await page.setContent('<div style="visibility:hidden">Hello</div>');
   await testWaiting(page, div => div.style.visibility = 'visible');
 });
+
 it('should wait for zero-sized element to become visible', async ({ page, server }) => {
   await page.setContent('<div style="height:0">Hello</div>');
   await testWaiting(page, div => div.style.height = '100px');
 });
+
 it('should wait for nested display:none to become visible', async ({ page, server }) => {
   await page.setContent('<span style="display:none"><div>Hello</div></span>');
   await testWaiting(page, div => div.parentElement.style.display = 'block');
 });
+
 it('should wait for element to stop moving', async ({ page, server }) => {
   await page.setContent(`
     <style>

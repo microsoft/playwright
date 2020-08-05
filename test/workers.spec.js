@@ -29,6 +29,7 @@ it('Page.workers', async function({page, server}) {
   await page.goto(server.EMPTY_PAGE);
   expect(page.workers().length).toBe(0);
 });
+
 it('should emit created and destroyed events', async function({page}) {
   const workerCreatedPromise = page.waitForEvent('worker');
   const workerObj = await page.evaluateHandle(() => new Worker(URL.createObjectURL(new Blob(['1'], {type: 'application/javascript'}))));
@@ -40,6 +41,7 @@ it('should emit created and destroyed events', async function({page}) {
   const error = await workerThisObj.getProperty('self').catch(error => error);
   expect(error.message).toContain('Most likely the worker has been closed.');
 });
+
 it('should report console logs', async function({page}) {
   const [message] = await Promise.all([
     page.waitForEvent('console'),
@@ -47,6 +49,7 @@ it('should report console logs', async function({page}) {
   ]);
   expect(message.text()).toBe('1');
 });
+
 it('should have JSHandles for console logs', async function({page}) {
   const logPromise = new Promise(x => page.on('console', x));
   await page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1,2,3,this)'], {type: 'application/javascript'}))));
@@ -55,12 +58,14 @@ it('should have JSHandles for console logs', async function({page}) {
   expect(log.args().length).toBe(4);
   expect(await (await log.args()[3].getProperty('origin')).jsonValue()).toBe('null');
 });
+
 it('should evaluate', async function({page}) {
   const workerCreatedPromise = page.waitForEvent('worker');
   await page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'}))));
   const worker = await workerCreatedPromise;
   expect(await worker.evaluate('1+1')).toBe(2);
 });
+
 it('should report errors', async function({page}) {
   const errorPromise = new Promise(x => page.on('pageerror', x));
   await page.evaluate(() => new Worker(URL.createObjectURL(new Blob([`
@@ -73,6 +78,7 @@ it('should report errors', async function({page}) {
   const errorLog = await errorPromise;
   expect(errorLog.message).toContain('this is my error');
 });
+
 it('should clear upon navigation', async function({server, page}) {
   await page.goto(server.EMPTY_PAGE);
   const workerCreatedPromise = page.waitForEvent('worker');
@@ -85,6 +91,7 @@ it('should clear upon navigation', async function({server, page}) {
   expect(destroyed).toBe(true);
   expect(page.workers().length).toBe(0);
 });
+
 it('should clear upon cross-process navigation', async function({server, page}) {
   await page.goto(server.EMPTY_PAGE);
   const workerCreatedPromise = page.waitForEvent('worker');
@@ -97,6 +104,7 @@ it('should clear upon cross-process navigation', async function({server, page}) 
   expect(destroyed).toBe(true);
   expect(page.workers().length).toBe(0);
 });
+
 it('should report network activity', async function({page, server}) {
   const [worker] = await Promise.all([
     page.waitForEvent('worker'),
@@ -112,6 +120,7 @@ it('should report network activity', async function({page, server}) {
   expect(response.request()).toBe(request);
   expect(response.ok()).toBe(true);
 });
+
 it('should report network activity on worker creation', async function({page, server}) {
   // Chromium needs waitForDebugger enabled for this one.
   await page.goto(server.EMPTY_PAGE);
@@ -127,6 +136,7 @@ it('should report network activity on worker creation', async function({page, se
   expect(response.request()).toBe(request);
   expect(response.ok()).toBe(true);
 });
+
 it('should format number using context locale', async({browser, server}) => {
   const context = await browser.newContext({ locale: 'ru-RU' });
   const page = await context.newPage();

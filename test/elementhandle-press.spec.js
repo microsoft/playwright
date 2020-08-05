@@ -23,11 +23,13 @@ it('should work', async ({ page }) => {
   await page.press('input', 'h');
   expect(await page.$eval('input', input => input.value)).toBe('h');
 });
+
 it('should not select existing value', async ({ page }) => {
   await page.setContent(`<input type='text' value='hello' />`);
   await page.press('input', 'w');
   expect(await page.$eval('input', input => input.value)).toBe('whello');
 });
+
 it('should reset selection when not focused', async ({ page }) => {
   await page.setContent(`<input type='text' value='hello' /><div tabIndex=2>text</div>`);
   await page.$eval('input', input => {
@@ -38,6 +40,7 @@ it('should reset selection when not focused', async ({ page }) => {
   await page.press('input', 'w');
   expect(await page.$eval('input', input => input.value)).toBe('whello');
 });
+
 it('should not modify selection when focused', async ({ page }) => {
   await page.setContent(`<input type='text' value='hello' />`);
   await page.$eval('input', input => {
@@ -48,6 +51,7 @@ it('should not modify selection when focused', async ({ page }) => {
   await page.press('input', 'w');
   expect(await page.$eval('input', input => input.value)).toBe('hewo');
 });
+
 it('should work with number input', async ({ page }) => {
   await page.setContent(`<input type='number' value=2 />`);
   await page.press('input', '1');

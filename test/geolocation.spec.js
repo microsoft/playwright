@@ -29,6 +29,7 @@ it('should work', async({page, server, context}) => {
     longitude: 10
   });
 });
+
 it('should throw when invalid longitude', async({context}) => {
   let error = null;
   try {
@@ -38,6 +39,7 @@ it('should throw when invalid longitude', async({context}) => {
   }
   expect(error.message).toContain('geolocation.longitude: precondition -180 <= LONGITUDE <= 180 failed.');
 });
+
 it('should isolate contexts', async({page, server, context, browser}) => {
   await context.grantPermissions(['geolocation']);
   await context.setGeolocation({longitude: 10, latitude: 10});
@@ -68,6 +70,7 @@ it('should isolate contexts', async({page, server, context, browser}) => {
 
   await context2.close();
 });
+
 it('should throw with missing latitude', async({context}) => {
   let error = null;
   try {
@@ -77,6 +80,7 @@ it('should throw with missing latitude', async({context}) => {
   }
   expect(error.message).toContain('geolocation.latitude: expected number, got undefined');
 });
+
 it('should not modify passed default options object', async({browser}) => {
   const geolocation = { longitude: 10, latitude: 10 };
   const options = { geolocation };
@@ -85,6 +89,7 @@ it('should not modify passed default options object', async({browser}) => {
   expect(options.geolocation).toBe(geolocation);
   await context.close();
 });
+
 it('should throw with missing longitude in default options', async({browser}) => {
   let error = null;
   try {
@@ -95,6 +100,7 @@ it('should throw with missing longitude in default options', async({browser}) =>
   }
   expect(error.message).toContain('geolocation.longitude: expected number, got undefined');
 });
+
 it('should use context options', async({browser, server}) => {
   const options = { geolocation: { longitude: 10, latitude: 10 }, permissions: ['geolocation'] };
   const context = await browser.newContext(options);
@@ -110,6 +116,7 @@ it('should use context options', async({browser, server}) => {
   });
   await context.close();
 });
+
 it('watchPosition should be notified', async({page, server, context}) => {
   await context.grantPermissions(['geolocation']);
   await page.goto(server.EMPTY_PAGE);
@@ -135,6 +142,7 @@ it('watchPosition should be notified', async({page, server, context}) => {
   expect(allMessages).toContain('lat=20 lng=30');
   expect(allMessages).toContain('lat=40 lng=50');
 });
+
 it('should use context options for popup', async({page, context, server}) => {
   await context.grantPermissions(['geolocation']);
   await context.setGeolocation({ longitude: 10, latitude: 10 });

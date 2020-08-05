@@ -30,6 +30,7 @@ it('should select textarea', async ({ page, server }) => {
     expect(await page.evaluate(() => window.getSelection().toString())).toBe('some value');
   }
 });
+
 it('should select input', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const input = await page.$('input');
@@ -42,12 +43,14 @@ it('should select input', async ({ page, server }) => {
     expect(await page.evaluate(() => window.getSelection().toString())).toBe('some value');
   }
 });
+
 it('should select plain div', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const div = await page.$('div.plain');
   await div.selectText();
   expect(await page.evaluate(() => window.getSelection().toString())).toBe('Plain div');
 });
+
 it('should timeout waiting for invisible element', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = await page.$('textarea');
@@ -55,6 +58,7 @@ it('should timeout waiting for invisible element', async ({ page, server }) => {
   const error = await textarea.selectText({ timeout: 3000 }).catch(e => e);
   expect(error.message).toContain('element is not visible');
 });
+
 it('should wait for visible', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = await page.$('textarea');

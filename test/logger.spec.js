@@ -31,6 +31,7 @@ it('should log', async({browserType, defaultBrowserOptions}) => {
   expect(log.filter(item => item.message.includes('browserType.launch started')).length > 0).toBeTruthy();
   expect(log.filter(item => item.message.includes('browserType.launch succeeded')).length > 0).toBeTruthy();
 });
+
 it('should log context-level', async({browserType, defaultBrowserOptions}) => {
   const log = [];
   const browser = await browserType.launch(defaultBrowserOptions);

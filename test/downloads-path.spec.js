@@ -99,6 +99,7 @@ it('should delete downloads when context closes', async({downloadsBrowser, downl
   expect(fs.existsSync(path)).toBeFalsy();
 
 });
+
 it('should report downloads in downloadsPath folder', async({downloadsBrowser, downloadsPath, server}) => {
   const page = await downloadsBrowser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
