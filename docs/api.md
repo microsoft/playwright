@@ -3120,9 +3120,9 @@ function, it **will not be called**.
 
 #### consoleMessage.location()
 - returns: <[Object]>
-  - `url` <[string]> URL of the resource if available.
-  - `lineNumber` <[number]> 0-based line number in the resource if available.
-  - `columnNumber` <[number]> 0-based column number in the resource if available.
+  - `url` <[string]> Optional URL of the resource if available.
+  - `lineNumber` <[number]> Optional 0-based line number in the resource if available.
+  - `columnNumber` <[number]> Optional 0-based column number in the resource if available.
 
 #### consoleMessage.text()
 - returns: <[string]>
@@ -3621,7 +3621,7 @@ ResourceType will be one of the following: `document`, `stylesheet`, `image`, `m
 - returns: <[Frame]> A [Frame] that initiated this response.
 
 #### response.headers()
-- returns: <[Object]> An object with HTTP headers associated with the response. All header names are lower-case.
+- returns: <[Object]<[string], [string]>> An object with HTTP headers associated with the response. All header names are lower-case.
 
 #### response.json()
 - returns: <[Promise]<[Object]>> Promise which resolves to a JSON representation of response body.
@@ -4080,7 +4080,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   - `geolocation` <[Object]>
     - `latitude` <[number]> Latitude between -90 and 90.
     - `longitude` <[number]> Longitude between -180 and 180.
-    - `accuracy` <[number]> Non-negative accuracy value. Defaults to `0`.
+    - `accuracy` <[number]> Optional non-negative accuracy value. Defaults to `0`.
   - `locale` <[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
   - `permissions` <[Array]<[string]>> A list of permissions to grant to all pages in this context. See [browserContext.grantPermissions](#browsercontextgrantpermissionspermissions-options) for more details.
   - `extraHTTPHeaders` <[Object]<[string], [string]>> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
