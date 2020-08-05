@@ -15,6 +15,7 @@
  */
 
 const path = require('path');
+const url = require('url');
 
 const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX, ASSETS_DIR} = testOptions;
 
@@ -58,10 +59,7 @@ it.fail(WEBKIT && WIN)('should play video', async({page}) => {
   const absolutePath = path.join(ASSETS_DIR, fileName);
   // Our test server doesn't support range requests required to play on Mac,
   // so we load the page using a file url.
-  const url = WIN
-      ? 'file:///' + absolutePath.replace(/\\/g, '/')
-      : 'file://' + absolutePath;
-  await page.goto(url);
+  await page.goto(url.pathToFileURL(absolutePath).href);
   await page.$eval('video', v => v.play());
   await page.$eval('video', v => v.pause());
 });

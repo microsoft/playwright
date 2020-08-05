@@ -15,11 +15,6 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
-const path = require('path');
-const url = require('url');
-const {FFOX, CHROMIUM, WEBKIT, ASSETS_DIR, MAC, WIN} = testOptions;
-
 it('should work with _blank target', async({page, server}) => {
   server.setRoute('/empty.html', (req, res) => {
     res.end(`<a href="${server.EMPTY_PAGE}" target="_blank">Click me</a>`);
