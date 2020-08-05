@@ -46,6 +46,24 @@ export class FFBrowser extends BrowserBase {
       browser._defaultContext = new FFBrowserContext(browser, null, options.persistent);
       promises.push((browser._defaultContext as FFBrowserContext)._initialize());
     }
+    if (options.proxy) {
+      const proxyServer = new URL(options.proxy.server);
+      let aType: 'http'|'https'|'socks'|'socks4' = 'http';
+      if (proxyServer.protocol === 'socks5:')
+        aType = 'socks';
+      else if (proxyServer.protocol === 'socks4:')
+        aType = 'socks4';
+      else if (proxyServer.protocol === 'https:')
+        aType = 'https';
+      promises.push(browser._connection.send('Browser.setBrowserProxy', {
+        type: aType,
+        bypass: options.proxy.bypass ? options.proxy.bypass.split(',').map(domain => domain.trim()) : [],
+        host: proxyServer.hostname,
+        port: parseInt(proxyServer.port, 10),
+        username: options.proxy.username,
+        password: options.proxy.password,
+      }));
+    }
     await Promise.all(promises);
     return browser;
   }
@@ -159,7 +177,6 @@ export class FFBrowserContext extends BrowserContextBase {
     super(browser, options, !browserContextId);
     this._browser = browser;
     this._browserContextId = browserContextId;
-    this._authenticateProxyViaHeader();
   }
 
   async _initialize() {

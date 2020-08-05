@@ -60,28 +60,37 @@ it.fail(CHROMIUM && !HEADLESS)('should exclude patterns', async ({browserType, d
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
+  // FYI: using long and weird domain names to avoid ATT DNS hijacking
+  // that resolves everything to some weird search results page.
+  //
+  // @see https://gist.github.com/CollinChaffin/24f6c9652efb3d6d5ef2f5502720ef00
   const browser = await browserType.launch({
     ...defaultBrowserOptions,
-    proxy: { server: `localhost:${server.PORT}`, bypass: 'non-existent1.com, .non-existent2.com, .zone' }
+    proxy: { server: `localhost:${server.PORT}`, bypass: '1.non.existent.domain.for.the.test, 2.non.existent.domain.for.the.test, .another.test' }
   });
 
   const page = await browser.newPage();
-  await page.goto('http://non-existent.com/target.html');
+  await page.goto('http://0.non.existent.domain.for.the.test/target.html');
   expect(await page.title()).toBe('Served by the proxy');
 
   {
-    const error = await page.goto('http://non-existent1.com/target.html').catch(e => e);
+    const error = await page.goto('http://1.non.existent.domain.for.the.test/target.html').catch(e => e);
     expect(error.message).toBeTruthy();
   }
 
   {
-    const error = await page.goto('http://sub.non-existent2.com/target.html').catch(e => e);
+    const error = await page.goto('http://2.non.existent.domain.for.the.test/target.html').catch(e => e);
     expect(error.message).toBeTruthy();
   }
 
   {
-    const error = await page.goto('http://foo.zone/target.html').catch(e => e);
+    const error = await page.goto('http://foo.is.the.another.test/target.html').catch(e => e);
     expect(error.message).toBeTruthy();
+  }
+
+  {
+    await page.goto('http://3.non.existent.domain.for.the.test/target.html');
+    expect(await page.title()).toBe('Served by the proxy');
   }
 
   if (CHROMIUM) {

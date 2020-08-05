@@ -100,14 +100,25 @@ export module Protocol {
       }[];
     };
     export type setExtraHTTPHeadersReturnValue = void;
-    export type setProxyParameters = {
+    export type setBrowserProxyParameters = {
+      type: ("http"|"https"|"socks"|"socks4");
+      bypass: string[];
+      host: string;
+      port: number;
+      username?: string;
+      password?: string;
+    };
+    export type setBrowserProxyReturnValue = void;
+    export type setContextProxyParameters = {
       browserContextId?: string;
       type: ("http"|"https"|"socks"|"socks4");
       bypass: string[];
       host: string;
       port: number;
+      username?: string;
+      password?: string;
     };
-    export type setProxyReturnValue = void;
+    export type setContextProxyReturnValue = void;
     export type setHTTPCredentialsParameters = {
       browserContextId?: string;
       credentials: {
@@ -940,7 +951,8 @@ export module Protocol {
     "Browser.close": Browser.closeParameters;
     "Browser.getInfo": Browser.getInfoParameters;
     "Browser.setExtraHTTPHeaders": Browser.setExtraHTTPHeadersParameters;
-    "Browser.setProxy": Browser.setProxyParameters;
+    "Browser.setBrowserProxy": Browser.setBrowserProxyParameters;
+    "Browser.setContextProxy": Browser.setContextProxyParameters;
     "Browser.setHTTPCredentials": Browser.setHTTPCredentialsParameters;
     "Browser.setRequestInterception": Browser.setRequestInterceptionParameters;
     "Browser.setGeolocationOverride": Browser.setGeolocationOverrideParameters;
@@ -1011,7 +1023,8 @@ export module Protocol {
     "Browser.close": Browser.closeReturnValue;
     "Browser.getInfo": Browser.getInfoReturnValue;
     "Browser.setExtraHTTPHeaders": Browser.setExtraHTTPHeadersReturnValue;
-    "Browser.setProxy": Browser.setProxyReturnValue;
+    "Browser.setBrowserProxy": Browser.setBrowserProxyReturnValue;
+    "Browser.setContextProxy": Browser.setContextProxyReturnValue;
     "Browser.setHTTPCredentials": Browser.setHTTPCredentialsReturnValue;
     "Browser.setRequestInterception": Browser.setRequestInterceptionReturnValue;
     "Browser.setGeolocationOverride": Browser.setGeolocationOverrideReturnValue;
