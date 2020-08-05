@@ -23,5 +23,6 @@ module.exports = /** @type {import('@jest/types').Config.InitialOptions} */ ({
   reporters: [
     'default',
     './jest/reporter'
-  ]
+  ],
+  slowTestThreshold: 30
 });
