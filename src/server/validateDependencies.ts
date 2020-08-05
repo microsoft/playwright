@@ -187,7 +187,8 @@ async function executablesOrSharedLibraries(directoryPath: string): Promise<stri
 
 async function missingFileDependenciesWindows(filePath: string): Promise<Array<string>> {
   const dirname = path.dirname(filePath);
-  const {stdout, code} = await spawnAsync(path.join(__dirname, '../../bin/PrintDeps.exe'), [filePath], {
+  const printDepsWindowsExecutable = process.env.PW_PRINT_DEPS_WINDOWS_EXECUTABLE || path.join(__dirname, '../../bin/PrintDeps.exe');
+  const {stdout, code} = await spawnAsync(printDepsWindowsExecutable, [filePath], {
     cwd: dirname,
     env: {
       ...process.env,
