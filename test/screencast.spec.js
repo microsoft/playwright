@@ -20,7 +20,7 @@ const path = require('path');
 const url = require('url');
 const {mkdtempAsync, removeFolderAsync} = require('./utils');
 
-const {FFOX, CHROMIUM, WEBKIT, MAC, HEADLESS} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, MAC, LINUX, WIN, HEADLESS} = testOptions;
 
 registerFixture('persistentDirectory', async ({}, test) => {
   const persistentDirectory = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
@@ -32,7 +32,7 @@ registerFixture('persistentDirectory', async ({}, test) => {
 });
 
 registerFixture('firefox', async ({playwright}, test) => {
-  if (WEBKIT && MAC) {
+  if (WEBKIT && !LINUX) {
     const firefox = await playwright.firefox.launch();
     try {
       await test(firefox);
@@ -44,28 +44,25 @@ registerFixture('firefox', async ({playwright}, test) => {
   }
 });
 
-it.fail(CHROMIUM)('should capture static page', async({page, persistentDirectory, firefox}) => {
+it.fail(CHROMIUM || (WEBKIT && WIN && HEADLESS))('should capture static page', async({page, persistentDirectory, firefox}) => {
   const videoFile = path.join(persistentDirectory, 'v.webm');
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
   await page._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
-  // TODO: force repaint in firefox headless when video recording starts
-  // and avoid following resize.
   // TODO: in WebKit figure out why video size is not reported correctly for
   // static pictures.
-  if (HEADLESS)
+  if (HEADLESS && WEBKIT)
     await page.setViewportSize({width: 1270, height: 950});
   await new Promise(r => setTimeout(r, 300));
   await page._delegate.stopVideoRecording();
   expect(fs.existsSync(videoFile)).toBe(true);
 
-  if (WEBKIT && MAC) {
-    // WebKit on Mac cannot replay webm/vp8 video, so we launch Firefox.
+  if (WEBKIT && !LINUX) {
+    // WebKit on Mac & Windows cannot replay webm/vp8 video, so we launch Firefox.
     const context = await firefox.newContext();
     page = await context.newPage();
   }
 
   await page.goto(url.pathToFileURL(videoFile).href);
-
   await page.$eval('video', v => {
     return new Promise(fulfil => {
       // In case video playback autostarts.
@@ -88,25 +85,32 @@ it.fail(CHROMIUM)('should capture static page', async({page, persistentDirectory
   const videoHeight = await page.$eval('video', v => v.videoHeight);
   expect(videoHeight).toBe(480);
 
-  const pixels = await page.$eval('video', video => {
+  const pixels = await page.$eval('video', (video, x) => {
     let canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const context = canvas.getContext('2d');
     context.drawImage(video, 0, 0);
-    const imgd = context.getImageData(0, 0, 10, 10);
+    const imgd = context.getImageData(x, 0, 10, 10);
     return Array.from(imgd.data);
-  });
+    // TODO: we capture window frame in FF headful on Windows.
+  }, FFOX && WIN && !HEADLESS ? 10 : 0);
   const expectAlmostRed = (i) => {
     const r = pixels[i];
     const g = pixels[i + 1];
     const b = pixels[i + 2];
     const alpha = pixels[i + 3];
-    expect(r).toBeGreaterThan(245);
-    expect(g).toBeLessThan(10);
-    expect(b).toBeLessThan(20);
+    expect(r).toBeGreaterThan(240);
+    expect(g).toBeLessThan(50);
+    expect(b).toBeLessThan(50);
     expect(alpha).toBe(255);
   }
-  for (var i = 0, n = pixels.length; i < n; i += 4)
-    expectAlmostRed(i);
+  try {
+    for (var i = 0, n = pixels.length; i < n; i += 4)
+      expectAlmostRed(i);
+  } catch(e) {
+    // Log pixel values on failure.
+    console.log(pixels);
+    throw e;
+  }
 });
