@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+const colors = require('colors/safe');
 const fs = require('fs');
 const os = require('os');
+
+const failures = [];
 
 module.exports = function Reporter() {
   this.onRunComplete = (test, runResults) => {
@@ -23,4 +26,19 @@ module.exports = function Reporter() {
     runResults.browserName = process.env.BROWSER || 'chromium';
     fs.writeFileSync('jest-report.json', JSON.stringify(runResults, undefined, 2));
   };
+  this.onTestCaseResult = (test, testCaseResult) => {
+    if (testCaseResult.status === 'failed')
+      failures.push([test, testCaseResult]);
+  }
 }
+
+process.on('SIGINT', async () => {
+  for (let i = 0; i < failures.length; ++i) {
+    const [test, testCaseResult] = failures[i];
+    const path = test.path.replace(/.*test/, 'test');
+    const name = colors.yellow(path) + ' — ' + colors.bold(colors.yellow(testCaseResult.fullName));
+    process.stderr.write(`\n${i + 1}) ${colors.red('[FAIL]')} ${name}\n\n`);
+    process.stderr.write(testCaseResult.failureMessages + '\n');
+  }
+  process.exit(130);
+});
