@@ -678,8 +678,14 @@ class FrameSession {
     const {level, text, args, source, url, lineNumber} = event.entry;
     if (args)
       args.map(arg => releaseObject(this._client, arg.objectId!));
-    if (source !== 'worker')
-      this._page.emit(Events.Page.Console, new ConsoleMessage(level, text, [], {url, lineNumber}));
+    if (source !== 'worker') {
+      const location: types.ConsoleMessageLocation = {
+        url: url || '',
+        lineNumber: lineNumber || 0,
+        columnNumber: 0,
+      };
+      this._page.emit(Events.Page.Console, new ConsoleMessage(level, text, [], location));
+    }
   }
 
   async _onFileChooserOpened(event: Protocol.Page.fileChooserOpenedPayload) {

@@ -28,7 +28,7 @@ export class ConsoleMessage {
     this._type = type;
     this._text = text;
     this._args = args;
-    this._location = location || {};
+    this._location = location || { url: '', lineNumber: 0, columnNumber: 0 };
   }
 
   type(): string {

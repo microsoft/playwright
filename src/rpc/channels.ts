@@ -2112,9 +2112,9 @@ export type ConsoleMessageInitializer = {
   text: string,
   args: JSHandleChannel[],
   location: {
-    url?: string,
-    lineNumber?: number,
-    columnNumber?: number,
+    url: string,
+    lineNumber: number,
+    columnNumber: number,
   },
 };
 export interface ConsoleMessageChannel extends Channel {

@@ -1149,8 +1149,8 @@ await page.dispatchEvent('#source', 'dragstart', { dataTransfer });
 
 #### page.emulateMedia(options)
 - `options` <[Object]>
-  - `media` <null|"screen"|"print"> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation. Omitting `media` or passing `undefined` does not change the emulated value.
-  - `colorScheme` <null|"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing `null` disables color scheme emulation. Omitting `colorScheme` or passing `undefined` does not change the emulated value.
+  - `media` <[null]|"screen"|"print"> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation. Omitting `media` or passing `undefined` does not change the emulated value.
+  - `colorScheme` <[null]|"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing `null` disables color scheme emulation. Omitting `colorScheme` or passing `undefined` does not change the emulated value.
 - returns: <[Promise]>
 
 ```js
@@ -1391,7 +1391,7 @@ Returns frame matching the specified criteria. Either `name` or `url` must be sp
 - `name` <[string]> Attribute name to get the value for.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<null|[string]>>
+- returns: <[Promise]<[null]|[string]>>
 
 Returns element attribute value.
 
@@ -1663,7 +1663,7 @@ Page routes take precedence over browser context routes (set up with [browserCon
 
 #### page.selectOption(selector, values[, options])
 - `selector` <[string]> A selector to query page for. See [working with selectors](#working-with-selectors) for more details.
-- `values` <null|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
+- `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
   - `label` <[string]> Matches by `option.label`.
   - `index` <[number]> Matches by the index.
@@ -1767,7 +1767,7 @@ await page.goto('https://example.com');
 - `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be picked. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<null|[string]>>
+- returns: <[Promise]<[null]|[string]>>
 
 Resolves to the `element.textContent`.
 
@@ -2338,7 +2338,7 @@ console.log(frame === contentFrame);  // -> true
 - `name` <[string]> Attribute name to get the value for.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<null|[string]>>
+- returns: <[Promise]<[null]|[string]>>
 
 Returns element attribute value.
 
@@ -2438,7 +2438,7 @@ Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported a
 
 #### frame.selectOption(selector, values[, options])
 - `selector` <[string]> A selector to query frame for. See [working with selectors](#working-with-selectors) for more details.
-- `values` <null|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
+- `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
   - `label` <[string]> Matches by `option.label`.
   - `index` <[number]> Matches by the index.
@@ -2490,7 +2490,7 @@ Sets the value of the file input to these file paths or files. If some of the `f
 - `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be picked. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<null|[string]>>
+- returns: <[Promise]<[null]|[string]>>
 
 Resolves to the `element.textContent`.
 
@@ -2859,7 +2859,7 @@ Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus
 
 #### elementHandle.getAttribute(name)
 - `name` <[string]> Attribute name to get the value for.
-- returns: <[Promise]<null|[string]>>
+- returns: <[Promise]<[null]|[string]>>
 
 Returns element attribute value.
 
@@ -2929,7 +2929,7 @@ This method waits for [actionability](./actionability.md) checks, then tries to 
 Throws when ```elementHandle``` does not point to an element [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
 
 #### elementHandle.selectOption(values[, options])
-- `values` <null|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
+- `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
   - `label` <[string]> Matches by `option.label`.
   - `index` <[number]> Matches by the index.
@@ -2977,7 +2977,7 @@ This method expects `elementHandle` to point to an [input element](https://devel
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). For empty array, clears the selected files.
 
 #### elementHandle.textContent()
-- returns: <[Promise]<null|[string]>> Resolves to the `node.textContent`.
+- returns: <[Promise]<[null]|[string]>> Resolves to the `node.textContent`.
 
 #### elementHandle.toString()
 - returns: <[string]>
@@ -3120,9 +3120,9 @@ function, it **will not be called**.
 
 #### consoleMessage.location()
 - returns: <[Object]>
-  - `url` <[string]> Optional URL of the resource if available.
-  - `lineNumber` <[number]> Optional 0-based line number in the resource if available.
-  - `columnNumber` <[number]> Optional 0-based column number in the resource if available.
+  - `url` <[string]> URL of the resource if available, otherwise empty string.
+  - `lineNumber` <[number]> 0-based line number in the resource.
+  - `columnNumber` <[number]> 0-based column number in the resource.
 
 #### consoleMessage.text()
 - returns: <[string]>
@@ -3209,7 +3209,7 @@ const path = await download.path();
 <!-- GEN:stop -->
 
 #### download.createReadStream()
-- returns: <[Promise]<null|[Readable]>>
+- returns: <[Promise]<[null]|[Readable]>>
 
 Returns readable stream for current download or `null` if download failed.
 
@@ -3219,12 +3219,12 @@ Returns readable stream for current download or `null` if download failed.
 Deletes the downloaded file.
 
 #### download.failure()
-- returns: <[Promise]<null|[string]>>
+- returns: <[Promise]<[null]|[string]>>
 
 Returns download error if any.
 
 #### download.path()
-- returns: <[Promise]<null|[string]>>
+- returns: <[Promise]<[null]|[string]>>
 
 Returns path to the downloaded file in case of successful download.
 
@@ -4628,6 +4628,7 @@ const { chromium } = require('playwright');
 [boolean]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Boolean_type "Boolean"
 [function]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function "Function"
 [iterator]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols "Iterator"
+[null]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null
 [number]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Number_type "Number"
 [origin]: https://developer.mozilla.org/en-US/docs/Glossary/Origin "Origin"
 [selector]: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors "selector"
