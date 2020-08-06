@@ -2008,6 +2008,18 @@ index 76c96939c72e6ef805c270371af09829a70d6ebc..b45534d1cd0c46c91d62f1e3c75da422
  
      m_endTime = when;
  
+diff --git a/Source/WebCore/PlatformWPE.cmake b/Source/WebCore/PlatformWPE.cmake
+index e75ecef140ab5ceef1d0d6dbc066e35c92d3f592..203e9bf05eff56659bf366d1cc296ed7f54aa6d5 100644
+--- a/Source/WebCore/PlatformWPE.cmake
++++ b/Source/WebCore/PlatformWPE.cmake
+@@ -37,6 +37,7 @@ list(APPEND WebCore_PRIVATE_INCLUDE_DIRECTORIES
+ list(APPEND WebCore_PRIVATE_FRAMEWORK_HEADERS
+     platform/graphics/wayland/PlatformDisplayWayland.h
+     platform/graphics/wayland/WlUniquePtr.h
++    platform/wpe/SelectionData.h
+ )
+ 
+ list(APPEND WebCore_USER_AGENT_STYLE_SHEETS
 diff --git a/Source/WebCore/SourcesCocoa.txt b/Source/WebCore/SourcesCocoa.txt
 index 32aa59bd6371c43f16c2ca55dfa0d51dd1c29ded..c1df13a1463ed1df75daccc33013cdf94b048c55 100644
 --- a/Source/WebCore/SourcesCocoa.txt
@@ -2022,6 +2034,32 @@ index 32aa59bd6371c43f16c2ca55dfa0d51dd1c29ded..c1df13a1463ed1df75daccc33013cdf9
 +JSTouchEvent.cpp
 +JSTouchList.cpp
 +// Playwright end
+diff --git a/Source/WebCore/SourcesWPE.txt b/Source/WebCore/SourcesWPE.txt
+index c1229ef7711b859b51c035585c2f7db68bd3ba2d..b68e95573f72eff493bf1fd83c48ad18689a7084 100644
+--- a/Source/WebCore/SourcesWPE.txt
++++ b/Source/WebCore/SourcesWPE.txt
+@@ -44,6 +44,8 @@ editing/libwpe/EditorLibWPE.cpp
+ 
+ loader/soup/ResourceLoaderSoup.cpp
+ 
++page/wpe/DragControllerWPE.cpp
++
+ page/linux/ResourceUsageOverlayLinux.cpp
+ page/linux/ResourceUsageThreadLinux.cpp
+ 
+@@ -91,8 +93,12 @@ platform/text/LocaleICU.cpp
+ 
+ platform/unix/LoggingUnix.cpp
+ 
++platform/wpe/DragDataWPE.cpp
++platform/wpe/DragImageWPE.cpp
+ platform/wpe/PlatformScreenWPE.cpp
+ 
+ platform/xdg/MIMETypeRegistryXdg.cpp
+ 
+ rendering/RenderThemeAdwaita.cpp
++
++platform/wpe/SelectionData.cpp
 diff --git a/Source/WebCore/WebCore.order b/Source/WebCore/WebCore.order
 index d643d5bbfbed5b4e3bb1358e36096dcaf66d5d8a..5a0a8ffa1ab74ccf0858e69e35127d49c21c326d 100644
 --- a/Source/WebCore/WebCore.order
@@ -2238,6 +2276,33 @@ index 76399ab574d94d73c5abc08f8df7901979e58273..8df80e34cda19470e305d5696bf108bd
          document->updateLastHandledUserGestureTimestamp(currentToken()->startTime());
          if (processInteractionStyle == ProcessInteractionStyle::Immediate)
              ResourceLoadObserver::shared().logUserInteractionWithReducedTimeResolution(document->topDocument());
+diff --git a/Source/WebCore/editing/libwpe/EditorLibWPE.cpp b/Source/WebCore/editing/libwpe/EditorLibWPE.cpp
+index 9dd41d6366512fd385937a7608bd3fc9b5b90f60..d6bb529fb891a65c8f6dcc6cff1e718c7a40b8dd 100644
+--- a/Source/WebCore/editing/libwpe/EditorLibWPE.cpp
++++ b/Source/WebCore/editing/libwpe/EditorLibWPE.cpp
+@@ -33,6 +33,7 @@
+ #include "NotImplemented.h"
+ #include "Pasteboard.h"
+ #include "Settings.h"
++#include "WebContentReader.h"
+ #include "markup.h"
+ 
+ namespace WebCore {
+@@ -91,6 +92,14 @@ void Editor::pasteWithPasteboard(Pasteboard* pasteboard, OptionSet<PasteOption>
+         pasteAsFragment(*fragment, canSmartReplaceWithPasteboard(*pasteboard), chosePlainText, options.contains(PasteOption::IgnoreMailBlockquote) ? MailBlockquoteHandling::IgnoreBlockquote : MailBlockquoteHandling::RespectBlockquote);
+ }
+ 
++RefPtr<DocumentFragment> Editor::webContentFromPasteboard(Pasteboard& pasteboard, const SimpleRange& context, bool allowPlainText, bool& chosePlainText)
++{
++    WebContentReader reader(*m_document.frame(), context, allowPlainText);
++    pasteboard.read(reader);
++    chosePlainText = reader.madeFragmentFromPlainText;
++    return WTFMove(reader.fragment);
++}
++
+ } // namespace WebCore
+ 
+ #endif // USE(LIBWPE)
 diff --git a/Source/WebCore/html/FileInputType.cpp b/Source/WebCore/html/FileInputType.cpp
 index 86f3d3266baf1ef04219338be00496f2bd759889..ef255ae024e2c4611c2ce77e74baa05e68d5b99c 100644
 --- a/Source/WebCore/html/FileInputType.cpp
@@ -4894,6 +4959,91 @@ index 37d5c443785f3df52bddb775cb9c1e66e0dd97b6..f2329ad61fd4f4ad006ca89ba2bdc729
      bool isAllowed = true;
      for (auto& policy : m_policies) {
          if (const ContentSecurityPolicyDirective* violatedDirective = (policy.get()->*predicate)(std::forward<Args>(args)...)) {
+diff --git a/Source/WebCore/page/wpe/DragControllerWPE.cpp b/Source/WebCore/page/wpe/DragControllerWPE.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..7b5ccb363ab4b2a10deada4df8b357e9bac8698a
+--- /dev/null
++++ b/Source/WebCore/page/wpe/DragControllerWPE.cpp
+@@ -0,0 +1,79 @@
++/*
++ * Copyright (C) 2007-20 Apple Inc.  All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
++ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
++ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "config.h"
++#include "DragController.h"
++
++#include "DataTransfer.h"
++#include "Document.h"
++#include "DragData.h"
++#include "Editor.h"
++#include "Element.h"
++#include "Frame.h"
++#include "Pasteboard.h"
++#include "markup.h"
++
++namespace WebCore {
++
++// FIXME: These values are straight out of DragControllerMac, so probably have
++// little correlation with Gdk standards...
++const int DragController::MaxOriginalImageArea = 1500 * 1500;
++const int DragController::DragIconRightInset = 7;
++const int DragController::DragIconBottomInset = 3;
++
++const float DragController::DragImageAlpha = 0.75f;
++
++bool DragController::isCopyKeyDown(const DragData& dragData)
++{
++    return dragData.flags() & DragApplicationIsCopyKeyDown;
++}
++
++Optional<DragOperation> DragController::dragOperation(const DragData& dragData)
++{
++    // FIXME: This logic is incomplete
++    if (dragData.containsURL())
++        return DragOperation::Copy;
++
++    return WTF::nullopt;
++}
++
++const IntSize& DragController::maxDragImageSize()
++{
++    static const IntSize maxDragImageSize(200, 200);
++    return maxDragImageSize;
++}
++
++void DragController::cleanupAfterSystemDrag()
++{
++}
++
++void DragController::declareAndWriteDragImage(DataTransfer& dataTransfer, Element& element, const URL& url, const String& label)
++{
++    Frame* frame = element.document().frame();
++    ASSERT(frame);
++    frame->editor().writeImageToPasteboard(dataTransfer.pasteboard(), element, url, label);
++}
++
++}
 diff --git a/Source/WebCore/platform/Cairo.cmake b/Source/WebCore/platform/Cairo.cmake
 index fc6c5f3cd046269566822c08a482cc3bd6a883c0..083c03903a3111ee2cb6f9882dd2efe146d7dc35 100644
 --- a/Source/WebCore/platform/Cairo.cmake
@@ -4906,6 +5056,124 @@ index fc6c5f3cd046269566822c08a482cc3bd6a883c0..083c03903a3111ee2cb6f9882dd2efe1
      platform/graphics/cairo/PlatformContextCairo.h
      platform/graphics/cairo/RefPtrCairo.h
  )
+diff --git a/Source/WebCore/platform/DragData.h b/Source/WebCore/platform/DragData.h
+index 4e53e633374861fd3171285b5c5e91f681023e0b..e665b5d218808b8cf69f45e48bc1bb7ba659a9d3 100644
+--- a/Source/WebCore/platform/DragData.h
++++ b/Source/WebCore/platform/DragData.h
+@@ -47,7 +47,7 @@ typedef void* DragDataRef;
+ 
+ #elif PLATFORM(WIN)
+ typedef struct IDataObject* DragDataRef;
+-#elif PLATFORM(GTK)
++#elif PLATFORM(GTK) || PLATFORM(WPE)
+ namespace WebCore {
+ class SelectionData;
+ }
+@@ -112,7 +112,7 @@ public:
+     bool containsPromise() const;
+ #endif
+ 
+-#if PLATFORM(GTK)
++#if PLATFORM(GTK) || PLATFORM(WPE)
+ 
+     DragData& operator =(const DragData& data)
+     {
+diff --git a/Source/WebCore/platform/DragImage.cpp b/Source/WebCore/platform/DragImage.cpp
+index a824791c20f4928bb45473ea05d33d0afc3825e2..c11b7d454b42b549be36f7122290fc9ed905734a 100644
+--- a/Source/WebCore/platform/DragImage.cpp
++++ b/Source/WebCore/platform/DragImage.cpp
+@@ -272,7 +272,7 @@ DragImage::~DragImage()
+         deleteDragImage(m_dragImageRef);
+ }
+ 
+-#if !PLATFORM(COCOA) && !PLATFORM(GTK) && !PLATFORM(WIN)
++#if !PLATFORM(COCOA) && !PLATFORM(GTK) && !PLATFORM(WIN) && !PLATFORM(WPE)
+ 
+ IntSize dragImageSize(DragImageRef)
+ {
+diff --git a/Source/WebCore/platform/Pasteboard.h b/Source/WebCore/platform/Pasteboard.h
+index aadc46698df79564362a03f5dfe89b0eb7811ce9..27a2b8b48739ffc65a12b4fb0ce108ae0056ca3d 100644
+--- a/Source/WebCore/platform/Pasteboard.h
++++ b/Source/WebCore/platform/Pasteboard.h
+@@ -43,7 +43,7 @@ OBJC_CLASS NSString;
+ OBJC_CLASS NSArray;
+ #endif
+ 
+-#if PLATFORM(GTK)
++#if PLATFORM(GTK) || PLATFORM(WPE)
+ #include "SelectionData.h"
+ #endif
+ 
+@@ -90,16 +90,12 @@ struct PasteboardWebContent {
+     Vector<String> clientTypes;
+     Vector<RefPtr<SharedBuffer>> clientData;
+ #endif
+-#if PLATFORM(GTK)
++#if PLATFORM(GTK) || PLATFORM(WPE)
+     String contentOrigin;
+     bool canSmartCopyOrDelete;
+     String text;
+     String markup;
+ #endif
+-#if USE(LIBWPE)
+-    String text;
+-    String markup;
+-#endif
+ };
+ 
+ struct PasteboardURL {
+@@ -108,7 +104,7 @@ struct PasteboardURL {
+ #if PLATFORM(MAC)
+     String userVisibleForm;
+ #endif
+-#if PLATFORM(GTK)
++#if PLATFORM(GTK) || PLATFORM(WPE)
+     String markup;
+ #endif
+ };
+@@ -181,12 +177,17 @@ public:
+ 
+ #if PLATFORM(GTK)
+     explicit Pasteboard(const String& name);
+-    explicit Pasteboard(SelectionData&);
+ #if ENABLE(DRAG_SUPPORT)
++    explicit Pasteboard(SelectionData&);
+     explicit Pasteboard(SelectionData&&);
+ #endif
+ #endif
+ 
++#if PLATFORM(WPE) && ENABLE(DRAG_SUPPORT)
++    explicit Pasteboard(SelectionData& selectionData);
++    explicit Pasteboard(SelectionData&& selectionData);
++#endif
++
+ #if PLATFORM(WIN)
+     explicit Pasteboard(IDataObject*);
+     explicit Pasteboard(WCDataObject*);
+@@ -252,6 +253,12 @@ public:
+     static std::unique_ptr<Pasteboard> createForGlobalSelection();
+ #endif
+ 
++#if PLATFORM(WPE)
++    const SelectionData& selectionData() const {
++        return *m_selectionData;
++    }
++#endif
++
+ #if PLATFORM(IOS_FAMILY)
+     explicit Pasteboard(int64_t changeCount);
+     explicit Pasteboard(const String& pasteboardName);
+@@ -333,6 +340,10 @@ private:
+     String m_name;
+ #endif
+ 
++#if PLATFORM(WPE)
++    Optional<SelectionData> m_selectionData;
++#endif
++
+ #if PLATFORM(COCOA)
+     String m_pasteboardName;
+     int64_t m_changeCount;
 diff --git a/Source/WebCore/platform/PlatformKeyboardEvent.h b/Source/WebCore/platform/PlatformKeyboardEvent.h
 index f423a4a1d5399326fc48fe4d4a8a8fb9d4df861e..b4b60162d8b0d34113df052b04a1695d481d266e 100644
 --- a/Source/WebCore/platform/PlatformKeyboardEvent.h
@@ -5383,6 +5651,125 @@ index 0516e70973e0078de6ad0216375d34dd9ef51a8d..ffd9a02deb5518e0c8c77b156815c11e
  String PlatformKeyboardEvent::singleCharacterString(unsigned val)
  {
      switch (val) {
+diff --git a/Source/WebCore/platform/libwpe/PasteboardLibWPE.cpp b/Source/WebCore/platform/libwpe/PasteboardLibWPE.cpp
+index 78b48a3a892e46b8c150ab277050b0258ef69068..0aeb9a4d203988d7ee08f41ec0d16df3f585aa87 100644
+--- a/Source/WebCore/platform/libwpe/PasteboardLibWPE.cpp
++++ b/Source/WebCore/platform/libwpe/PasteboardLibWPE.cpp
+@@ -32,7 +32,9 @@
+ #include "PasteboardStrategy.h"
+ #include "PlatformStrategies.h"
+ #include <wtf/Optional.h>
+-
++#if ENABLE(DRAG_SUPPORT)
++#include "DragData.h"
++#endif
+ namespace WebCore {
+ 
+ std::unique_ptr<Pasteboard> Pasteboard::createForCopyAndPaste()
+@@ -73,6 +75,9 @@ String Pasteboard::readOrigin()
+ 
+ String Pasteboard::readString(const String& type)
+ {
++    if (m_selectionData)
++        return m_selectionData->text();
++
+     return platformStrategies()->pasteboardStrategy()->readStringFromPasteboard(0, type, name());
+ }
+ 
+@@ -84,7 +89,10 @@ String Pasteboard::readStringInCustomData(const String&)
+ 
+ void Pasteboard::writeString(const String& type, const String& text)
+ {
+-    platformStrategies()->pasteboardStrategy()->writeToPasteboard(type, text);
++    if (m_selectionData)
++        m_selectionData->setText(text);
++    else
++        platformStrategies()->pasteboardStrategy()->writeToPasteboard(type, text);
+ }
+ 
+ void Pasteboard::clear()
+@@ -111,7 +119,12 @@ void Pasteboard::read(PasteboardFileReader&, Optional<size_t>)
+ 
+ void Pasteboard::write(const PasteboardURL& url)
+ {
+-    platformStrategies()->pasteboardStrategy()->writeToPasteboard("text/plain;charset=utf-8", url.url.string());
++    if (m_selectionData) {
++        m_selectionData->clearAll();
++        m_selectionData->setURL(url.url, url.title);
++    } else {
++        platformStrategies()->pasteboardStrategy()->writeToPasteboard("text/plain;charset=utf-8", url.url.string());
++    }
+ }
+ 
+ void Pasteboard::writeTrustworthyWebURLsPboardType(const PasteboardURL&)
+@@ -119,13 +132,28 @@ void Pasteboard::writeTrustworthyWebURLsPboardType(const PasteboardURL&)
+     notImplemented();
+ }
+ 
+-void Pasteboard::write(const PasteboardImage&)
++void Pasteboard::write(const PasteboardImage& pasteboardImage)
+ {
++    if (m_selectionData) {
++        m_selectionData->clearAll();
++        if (!pasteboardImage.url.url.isEmpty()) {
++            m_selectionData->setURL(pasteboardImage.url.url, pasteboardImage.url.title);
++            m_selectionData->setMarkup(pasteboardImage.url.markup);
++        }
++        m_selectionData->setImage(pasteboardImage.image.get());
++    }
+ }
+ 
+ void Pasteboard::write(const PasteboardWebContent& content)
+ {
+-    platformStrategies()->pasteboardStrategy()->writeToPasteboard(content);
++    if (m_selectionData) {
++        m_selectionData->clearAll();
++        m_selectionData->setText(content.text);
++        m_selectionData->setMarkup(content.markup);
++        m_selectionData->setCanSmartReplace(content.canSmartCopyOrDelete);
++    } else {
++        platformStrategies()->pasteboardStrategy()->writeToPasteboard(content);
++    }
+ }
+ 
+ Pasteboard::FileContentState Pasteboard::fileContentState()
+@@ -156,6 +184,36 @@ void Pasteboard::write(const Color&)
+ {
+ }
+ 
++#if ENABLE(DRAG_SUPPORT)
++
++Pasteboard::Pasteboard(SelectionData&& selectionData)
++    : m_selectionData(WTFMove(selectionData))
++{
++}
++Pasteboard::Pasteboard(SelectionData& selectionData)
++    : m_selectionData(selectionData)
++{
++}
++
++std::unique_ptr<Pasteboard> Pasteboard::createForDragAndDrop()
++{
++    auto pasteboard = makeUnique<Pasteboard>(SelectionData());
++    return WTFMove(pasteboard);
++}
++
++std::unique_ptr<Pasteboard> Pasteboard::createForDragAndDrop(const DragData& dragData)
++{
++    if (!dragData.platformData())
++        return makeUnique<Pasteboard>(SelectionData());
++    SelectionData data = *dragData.platformData();
++    auto pasteboard = makeUnique<Pasteboard>(data);
++    return WTFMove(pasteboard);
++}
++void Pasteboard::setDragImage(DragImage, const IntPoint&)
++{
++}
++#endif
++
+ } // namespace WebCore
+ 
+ #endif // USE(LIBWPE)
 diff --git a/Source/WebCore/platform/libwpe/PlatformKeyboardEventLibWPE.cpp b/Source/WebCore/platform/libwpe/PlatformKeyboardEventLibWPE.cpp
 index a34dc220bbb9a92b40dfb463e8724e81ac745b2c..8ecedd5dae88469366a619b96960598c1232a32d 100644
 --- a/Source/WebCore/platform/libwpe/PlatformKeyboardEventLibWPE.cpp
@@ -5891,6 +6278,400 @@ index 44737686187a06a92c408ea60b63a48ac8481334..c754a763688b52e7ddd47493296ef9b0
  }
  
  bool PlatformKeyboardEvent::currentCapsLockState()
+diff --git a/Source/WebCore/platform/wpe/DragDataWPE.cpp b/Source/WebCore/platform/wpe/DragDataWPE.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..07fb260a5203167fdf94a552949394bb73ca8c61
+--- /dev/null
++++ b/Source/WebCore/platform/wpe/DragDataWPE.cpp
+@@ -0,0 +1,87 @@
++/*
++ *  This library is free software; you can redistribute it and/or
++ *  modify it under the terms of the GNU Lesser General Public
++ *  License as published by the Free Software Foundation; either
++ *  version 2 of the License, or (at your option) any later version.
++ *
++ *  This library is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ *  Lesser General Public License for more details.
++ *
++ *  You should have received a copy of the GNU Lesser General Public
++ *  License along with this library; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++ */
++
++#include "config.h"
++#include "DragData.h"
++#include "SelectionData.h"
++
++namespace WebCore {
++
++bool DragData::canSmartReplace() const
++{
++    return false;
++}
++
++bool DragData::containsColor() const
++{
++    return false;
++}
++
++bool DragData::containsFiles() const
++{
++    return m_platformDragData->hasFilenames();
++}
++
++unsigned DragData::numberOfFiles() const
++{
++    return m_platformDragData->filenames().size();
++}
++
++Vector<String> DragData::asFilenames() const
++{
++    return m_platformDragData->filenames();
++}
++
++bool DragData::containsPlainText() const
++{
++    return m_platformDragData->hasText();
++}
++
++String DragData::asPlainText() const
++{
++    return m_platformDragData->text();
++}
++
++Color DragData::asColor() const
++{
++    return Color();
++}
++
++bool DragData::containsCompatibleContent(DraggingPurpose) const
++{
++    return containsPlainText() || containsURL() || containsColor() || containsFiles();
++}
++
++bool DragData::containsURL(FilenameConversionPolicy filenamePolicy) const
++{
++    return !asURL(filenamePolicy).isEmpty();
++}
++
++String DragData::asURL(FilenameConversionPolicy filenamePolicy, String* title) const
++{
++    if (!m_platformDragData->hasURL())
++        return String();
++    if (filenamePolicy != ConvertFilenames) {
++        if (m_platformDragData->url().isLocalFile())
++            return { };
++    }
++
++    if (title)
++        *title = m_platformDragData->urlLabel();
++    return m_platformDragData->url().string();
++}
++
++}
+diff --git a/Source/WebCore/platform/wpe/DragImageWPE.cpp b/Source/WebCore/platform/wpe/DragImageWPE.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..a73488553e0e93e34535e64c8892b76d47ad7ab2
+--- /dev/null
++++ b/Source/WebCore/platform/wpe/DragImageWPE.cpp
+@@ -0,0 +1,67 @@
++/*
++ *  Copyright (C) 2010,2017 Igalia S.L.
++ *
++ *  This library is free software; you can redistribute it and/or
++ *  modify it under the terms of the GNU Lesser General Public
++ *  License as published by the Free Software Foundation; either
++ *  version 2 of the License, or (at your option) any later version.
++ *
++ *  This library is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ *  Lesser General Public License for more details.
++ *
++ *  You should have received a copy of the GNU Lesser General Public
++ *  License along with this library; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++ */
++
++#include "DragImage.h"
++#include "NotImplemented.h"
++
++#include "Image.h"
++
++namespace WebCore {
++
++IntSize dragImageSize(DragImageRef)
++{
++    notImplemented();
++    return { 0, 0 };
++}
++
++void deleteDragImage(DragImageRef)
++{
++    notImplemented();
++}
++
++DragImageRef scaleDragImage(DragImageRef, FloatSize)
++{
++    notImplemented();
++    return nullptr;
++}
++
++DragImageRef dissolveDragImageToFraction(DragImageRef image, float)
++{
++    notImplemented();
++    return image;
++}
++
++DragImageRef createDragImageFromImage(Image* image, ImageOrientation)
++{
++    return image->nativeImageForCurrentFrame();
++}
++
++
++DragImageRef createDragImageIconForCachedImageFilename(const String&)
++{
++    notImplemented();
++    return nullptr;
++}
++
++DragImageRef createDragImageForLink(Element&, URL&, const String&, TextIndicatorData&, FontRenderingMode, float)
++{
++    notImplemented();
++    return nullptr;
++}
++
++}
+diff --git a/Source/WebCore/platform/wpe/SelectionData.cpp b/Source/WebCore/platform/wpe/SelectionData.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..9f181fdfe507ad5b7a47b5c58295cf4f2725e7d8
+--- /dev/null
++++ b/Source/WebCore/platform/wpe/SelectionData.cpp
+@@ -0,0 +1,134 @@
++/*
++ * Copyright (C) 2009, Martin Robinson
++ *
++ *  This library is free software; you can redistribute it and/or
++ *  modify it under the terms of the GNU Lesser General Public
++ *  License as published by the Free Software Foundation; either
++ *  version 2 of the License, or (at your option) any later version.
++ *
++ *  This library is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ *  Lesser General Public License for more details.
++ *
++ *  You should have received a copy of the GNU Lesser General Public
++ *  License along with this library; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++ */
++
++#include "config.h"
++#include "SelectionData.h"
++
++#include <wtf/glib/GUniquePtr.h>
++#include <wtf/text/CString.h>
++#include <wtf/text/StringBuilder.h>
++
++namespace WebCore {
++
++static void replaceNonBreakingSpaceWithSpace(String& str)
++{
++    static const UChar NonBreakingSpaceCharacter = 0xA0;
++    static const UChar SpaceCharacter = ' ';
++    str.replace(NonBreakingSpaceCharacter, SpaceCharacter);
++}
++
++void SelectionData::setText(const String& newText)
++{
++    m_text = newText;
++    replaceNonBreakingSpaceWithSpace(m_text);
++}
++
++void SelectionData::setURIList(const String& uriListString)
++{
++    m_uriList = uriListString;
++
++    // This code is originally from: platform/chromium/ChromiumDataObject.cpp.
++    // FIXME: We should make this code cross-platform eventually.
++
++    // Line separator is \r\n per RFC 2483 - however, for compatibility
++    // reasons we also allow just \n here.
++
++    // Process the input and copy the first valid URL into the url member.
++    // In case no URLs can be found, subsequent calls to getData("URL")
++    // will get an empty string. This is in line with the HTML5 spec (see
++    // "The DragEvent and DataTransfer interfaces"). Also extract all filenames
++    // from the URI list.
++    bool setURL = hasURL();
++    for (auto& line : uriListString.split('\n')) {
++        line = line.stripWhiteSpace();
++        if (line.isEmpty())
++            continue;
++        if (line[0] == '#')
++            continue;
++
++        URL url = URL(URL(), line);
++        if (url.isValid()) {
++            if (!setURL) {
++                m_url = url;
++                setURL = true;
++            }
++
++            GUniqueOutPtr<GError> error;
++            GUniquePtr<gchar> filename(g_filename_from_uri(line.utf8().data(), 0, &error.outPtr()));
++            if (!error && filename)
++                m_filenames.append(String::fromUTF8(filename.get()));
++        }
++    }
++}
++
++void SelectionData::setURL(const URL& url, const String& label)
++{
++    m_url = url;
++    if (m_uriList.isEmpty())
++        m_uriList = url.string();
++
++    if (!hasText())
++        setText(url.string());
++
++    if (hasMarkup())
++        return;
++
++    String actualLabel(label);
++    if (actualLabel.isEmpty())
++        actualLabel = url.string();
++
++    StringBuilder markup;
++    markup.append("<a href=\"");
++    markup.append(url.string());
++    markup.append("\">");
++    GUniquePtr<gchar> escaped(g_markup_escape_text(actualLabel.utf8().data(), -1));
++    markup.append(String::fromUTF8(escaped.get()));
++    markup.append("</a>");
++    setMarkup(markup.toString());
++}
++
++const String& SelectionData::urlLabel() const
++{
++    if (hasText())
++        return text();
++
++    if (hasURL())
++        return url().string();
++
++    return emptyString();
++}
++
++void SelectionData::clearAllExceptFilenames()
++{
++    clearText();
++    clearMarkup();
++    clearURIList();
++    clearURL();
++    clearImage();
++    clearCustomData();
++
++    m_canSmartReplace = false;
++}
++
++void SelectionData::clearAll()
++{
++    clearAllExceptFilenames();
++    m_filenames.clear();
++}
++
++} // namespace WebCore
+diff --git a/Source/WebCore/platform/wpe/SelectionData.h b/Source/WebCore/platform/wpe/SelectionData.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..cf2b51f6f02837a1106f4d999f2f130e2580986a
+--- /dev/null
++++ b/Source/WebCore/platform/wpe/SelectionData.h
+@@ -0,0 +1,82 @@
++/*
++ * Copyright (C) 2009, Martin Robinson
++ *
++ *  This library is free software; you can redistribute it and/or
++ *  modify it under the terms of the GNU Lesser General Public
++ *  License as published by the Free Software Foundation; either
++ *  version 2 of the License, or (at your option) any later version.
++ *
++ *  This library is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ *  Lesser General Public License for more details.
++ *
++ *  You should have received a copy of the GNU Lesser General Public
++ *  License along with this library; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++ */
++
++#pragma once
++
++#include "Image.h"
++#include "SharedBuffer.h"
++#include <wtf/HashMap.h>
++#include <wtf/URL.h>
++#include <wtf/text/StringHash.h>
++
++namespace WebCore {
++
++class SelectionData {
++    WTF_MAKE_FAST_ALLOCATED;
++public:
++    void setText(const String&);
++    const String& text() const { return m_text; }
++    bool hasText() const { return !m_text.isEmpty(); }
++    void clearText() { m_text = emptyString(); }
++
++    void setMarkup(const String& newMarkup) { m_markup = newMarkup; }
++    const String& markup() const { return m_markup; }
++    bool hasMarkup() const { return !m_markup.isEmpty(); }
++    void clearMarkup() { m_markup = emptyString(); }
++
++    void setURL(const URL&, const String&);
++    const URL& url() const { return m_url; }
++    const String& urlLabel() const;
++    bool hasURL() const { return !m_url.isEmpty() && m_url.isValid(); }
++    void clearURL() { m_url = URL(); }
++
++    void setURIList(const String&);
++    const String& uriList() const { return m_uriList; }
++    const Vector<String>& filenames() const { return m_filenames; }
++    bool hasURIList() const { return !m_uriList.isEmpty(); }
++    bool hasFilenames() const { return !m_filenames.isEmpty(); }
++    void clearURIList() { m_uriList = emptyString(); }
++
++    void setImage(Image* newImage) { m_image = newImage; }
++    Image* image() const { return m_image.get(); }
++    bool hasImage() const { return m_image; }
++    void clearImage() { m_image = nullptr; }
++
++    void setCanSmartReplace(bool canSmartReplace) { m_canSmartReplace = canSmartReplace; }
++    bool canSmartReplace() const { return m_canSmartReplace; }
++
++    void setCustomData(Ref<SharedBuffer>&& buffer) { m_customData = WTFMove(buffer); }
++    SharedBuffer* customData() const { return m_customData.get(); }
++    bool hasCustomData() const { return !!m_customData; }
++    void clearCustomData() { m_customData = nullptr; }
++
++    void clearAll();
++    void clearAllExceptFilenames();
++
++private:
++    String m_text;
++    String m_markup;
++    URL m_url;
++    String m_uriList;
++    Vector<String> m_filenames;
++    RefPtr<Image> m_image;
++    bool m_canSmartReplace { false };
++    RefPtr<SharedBuffer> m_customData;
++};
++
++} // namespace WebCore
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.cpp b/Source/WebKit/NetworkProcess/NetworkProcess.cpp
 index 790857d576b1544f32c3005c8e379ae983d33bae..fec574a3675c2d758459031dd9665de95ddfb0e3 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.cpp
@@ -6455,10 +7236,21 @@ index d6f9902b963bd9a0036a6008d719c3e5b15402c4..8a23efeab7125f86d3b990bb09921ecd
      NSEvent* nativeEvent() const { return m_nativeEvent.get(); }
  #elif PLATFORM(GTK)
 diff --git a/Source/WebKit/Shared/WebCoreArgumentCoders.cpp b/Source/WebKit/Shared/WebCoreArgumentCoders.cpp
-index 40df0d1ef7523891d55eccc331ef7e1784a1fad4..51e3ac927886518e2e8b0c87d9514b39a09401ef 100644
+index 40df0d1ef7523891d55eccc331ef7e1784a1fad4..05010d23bb6f6598609542985c5bc4301bd90b7d 100644
 --- a/Source/WebKit/Shared/WebCoreArgumentCoders.cpp
 +++ b/Source/WebKit/Shared/WebCoreArgumentCoders.cpp
-@@ -1495,6 +1495,9 @@ void ArgumentCoder<WindowFeatures>::encode(Encoder& encoder, const WindowFeature
+@@ -118,6 +118,10 @@
+ #include <WebCore/MediaConstraints.h>
+ #endif
+ 
++#if PLATFORM(WPE)
++#include "ArgumentCodersWPE.h"
++#endif
++
+ // FIXME: Seems like we could use std::tuple to cut down the code below a lot!
+ 
+ namespace IPC {
+@@ -1495,6 +1499,9 @@ void ArgumentCoder<WindowFeatures>::encode(Encoder& encoder, const WindowFeature
      encoder << windowFeatures.resizable;
      encoder << windowFeatures.fullscreen;
      encoder << windowFeatures.dialog;
@@ -6468,7 +7260,7 @@ index 40df0d1ef7523891d55eccc331ef7e1784a1fad4..51e3ac927886518e2e8b0c87d9514b39
  }
  
  bool ArgumentCoder<WindowFeatures>::decode(Decoder& decoder, WindowFeatures& windowFeatures)
-@@ -1523,6 +1526,12 @@ bool ArgumentCoder<WindowFeatures>::decode(Decoder& decoder, WindowFeatures& win
+@@ -1523,6 +1530,12 @@ bool ArgumentCoder<WindowFeatures>::decode(Decoder& decoder, WindowFeatures& win
          return false;
      if (!decoder.decode(windowFeatures.dialog))
          return false;
@@ -6481,6 +7273,50 @@ index 40df0d1ef7523891d55eccc331ef7e1784a1fad4..51e3ac927886518e2e8b0c87d9514b39
      return true;
  }
  
+@@ -1536,6 +1549,9 @@ void ArgumentCoder<DragData>::encode(Encoder& encoder, const DragData& dragData)
+ #if PLATFORM(COCOA)
+     encoder << dragData.pasteboardName();
+     encoder << dragData.fileNames();
++#endif
++#if PLATFORM(WPE)
++    encoder << *dragData.platformData();
+ #endif
+     encoder << dragData.dragDestinationActionMask();
+ }
+@@ -1558,10 +1574,18 @@ bool ArgumentCoder<DragData>::decode(Decoder& decoder, DragData& dragData)
+     if (!decoder.decode(applicationFlags))
+         return false;
+ 
+-    String pasteboardName;
+-    Vector<String> fileNames;
++#if PLATFORM(WPE)
++    SelectionData* selectionData = new SelectionData();
++    if (!decoder.decode(*selectionData))
++        return false;
++    SelectionData* firstArg = selectionData;
++#else
++    String firstArg;
++#endif
++
+ #if PLATFORM(COCOA)
+-    if (!decoder.decode(pasteboardName))
++    Vector<String> fileNames;
++    if (!decoder.decode(firstArg))
+         return false;
+ 
+     if (!decoder.decode(fileNames))
+@@ -1572,8 +1596,10 @@ bool ArgumentCoder<DragData>::decode(Decoder& decoder, DragData& dragData)
+     if (!decoder.decode(dragDestinationActionMask))
+         return false;
+ 
+-    dragData = DragData(pasteboardName, clientPosition, globalPosition, draggingSourceOperationMask, applicationFlags, dragDestinationActionMask);
++    dragData = DragData(firstArg, clientPosition, globalPosition, draggingSourceOperationMask, applicationFlags, dragDestinationActionMask);
++#if PLATFORM(COCOA)
+     dragData.setFileNames(fileNames);
++#endif
+ 
+     return true;
+ }
 diff --git a/Source/WebKit/Shared/WebEvent.h b/Source/WebKit/Shared/WebEvent.h
 index e31d92534bf1808f12c3005fd7594f8006c89996..29776fdc78fe27e8e182f8ce1afef428cd46a1d7 100644
 --- a/Source/WebKit/Shared/WebEvent.h
@@ -6742,6 +7578,234 @@ index 45a56eb3b0fda13c3b78d57594a0092e4e1866f6..5e29e15813be6abe82790e6a98d3947e
  
 -#endif // ENABLE(TOUCH_EVENTS)
 +#endif // ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
+diff --git a/Source/WebKit/Shared/libwpe/ArgumentCodersWPE.cpp b/Source/WebKit/Shared/libwpe/ArgumentCodersWPE.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..d0972522bc0ff6dc44649d0a3d04cc26442650c7
+--- /dev/null
++++ b/Source/WebKit/Shared/libwpe/ArgumentCodersWPE.cpp
+@@ -0,0 +1,175 @@
++/*
++ * Copyright (C) 2011 Igalia S.L.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
++ * THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "config.h"
++#include "ArgumentCodersWPE.h"
++
++#include "DataReference.h"
++#include "ShareableBitmap.h"
++#include "WebCoreArgumentCoders.h"
++#include <WebCore/GraphicsContext.h>
++#include <WebCore/Image.h>
++#include <WebCore/SelectionData.h>
++
++namespace IPC {
++using namespace WebCore;
++using namespace WebKit;
++
++static void encodeImage(Encoder& encoder, Image& image)
++{
++    RefPtr<ShareableBitmap> bitmap = ShareableBitmap::createShareable(IntSize(image.size()), { });
++    bitmap->createGraphicsContext()->drawImage(image, IntPoint());
++
++    ShareableBitmap::Handle handle;
++    bitmap->createHandle(handle);
++
++    encoder << handle;
++}
++
++static WARN_UNUSED_RETURN bool decodeImage(Decoder& decoder, RefPtr<Image>& image)
++{
++    ShareableBitmap::Handle handle;
++    if (!decoder.decode(handle))
++        return false;
++
++    RefPtr<ShareableBitmap> bitmap = ShareableBitmap::create(handle);
++    if (!bitmap)
++        return false;
++    image = bitmap->createImage();
++    if (!image)
++        return false;
++    return true;
++}
++
++void ArgumentCoder<SelectionData>::encode(Encoder& encoder, const SelectionData& selection)
++{
++    bool hasText = selection.hasText();
++    encoder << hasText;
++    if (hasText) {
++        fprintf(stderr, "ArgumentCoder hasText\n");
++        encoder << selection.text();
++    }
++    bool hasMarkup = selection.hasMarkup();
++    encoder << hasMarkup;
++    if (hasMarkup)
++        encoder << selection.markup();
++
++    bool hasURL = selection.hasURL();
++    encoder << hasURL;
++    if (hasURL)
++        encoder << selection.url().string();
++
++    bool hasURIList = selection.hasURIList();
++    encoder << hasURIList;
++    if (hasURIList)
++        encoder << selection.uriList();
++
++    bool hasImage = selection.hasImage();
++    encoder << hasImage;
++    if (hasImage)
++        encodeImage(encoder, *selection.image());
++
++    bool hasCustomData = selection.hasCustomData();
++    encoder << hasCustomData;
++    if (hasCustomData)
++        encoder << RefPtr<SharedBuffer>(selection.customData());
++
++    bool canSmartReplace = selection.canSmartReplace();
++    encoder << canSmartReplace;
++}
++
++Optional<SelectionData> ArgumentCoder<SelectionData>::decode(Decoder& decoder)
++{
++    SelectionData selection;
++
++    bool hasText;
++    if (!decoder.decode(hasText))
++        return WTF::nullopt;
++    if (hasText) {
++        String text;
++        if (!decoder.decode(text))
++            return WTF::nullopt;
++        selection.setText(text);
++    }
++
++    bool hasMarkup;
++    if (!decoder.decode(hasMarkup))
++        return WTF::nullopt;
++    if (hasMarkup) {
++        String markup;
++        if (!decoder.decode(markup))
++            return WTF::nullopt;
++        selection.setMarkup(markup);
++    }
++
++    bool hasURL;
++    if (!decoder.decode(hasURL))
++        return WTF::nullopt;
++    if (hasURL) {
++        String url;
++        if (!decoder.decode(url))
++            return WTF::nullopt;
++        selection.setURL(URL(URL(), url), String());
++    }
++
++    bool hasURIList;
++    if (!decoder.decode(hasURIList))
++        return WTF::nullopt;
++    if (hasURIList) {
++        String uriList;
++        if (!decoder.decode(uriList))
++            return WTF::nullopt;
++        selection.setURIList(uriList);
++    }
++
++    bool hasImage;
++    if (!decoder.decode(hasImage))
++        return WTF::nullopt;
++    if (hasImage) {
++        RefPtr<Image> image;
++        if (!decodeImage(decoder, image))
++            return WTF::nullopt;
++        selection.setImage(image.get());
++    }
++
++    bool hasCustomData;
++    if (!decoder.decode(hasCustomData))
++        return WTF::nullopt;
++    if (hasCustomData) {
++        RefPtr<SharedBuffer> buffer;
++        if (!decoder.decode(buffer))
++            return WTF::nullopt;
++        selection.setCustomData(Ref<SharedBuffer>(*buffer));
++    }
++
++    bool canSmartReplace;
++    if (!decoder.decode(canSmartReplace))
++        return WTF::nullopt;
++    selection.setCanSmartReplace(canSmartReplace);
++
++    return selection;
++}
++
++}
+diff --git a/Source/WebKit/Shared/libwpe/ArgumentCodersWPE.h b/Source/WebKit/Shared/libwpe/ArgumentCodersWPE.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..c5099cd4b6be31769e6344677625b0a1f7ee42a5
+--- /dev/null
++++ b/Source/WebKit/Shared/libwpe/ArgumentCodersWPE.h
+@@ -0,0 +1,41 @@
++/*
++ * Copyright (C) 2011 Igalia S.L.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
++ * THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#pragma once
++
++#include "ArgumentCoders.h"
++
++namespace WebCore {
++class SelectionData;
++}
++
++namespace IPC {
++
++template<> struct ArgumentCoder<WebCore::SelectionData> {
++    static void encode(Encoder&, const WebCore::SelectionData&);
++    static Optional<WebCore::SelectionData> decode(Decoder&);
++};
++
++} // namespace IPC
 diff --git a/Source/WebKit/Shared/win/WebEventFactory.cpp b/Source/WebKit/Shared/win/WebEventFactory.cpp
 index 88d53d236cd6d62735f03678a04ca9c198dddacb..b8f8efc57ab00dc5725660c5a8ad56a3e6384de5 100644
 --- a/Source/WebKit/Shared/win/WebEventFactory.cpp
@@ -6857,10 +7921,18 @@ index b20795af208b6d52f1803fd8ad3c7490d1cd5b35..5bfab60691bd5e61acd18ee8069412e3
  UIProcess/gtk/WebPasteboardProxyGtk.cpp
  UIProcess/gtk/WebPopupMenuProxyGtk.cpp
 diff --git a/Source/WebKit/SourcesWPE.txt b/Source/WebKit/SourcesWPE.txt
-index a940b3da051ee8e7c764bf13f9793e9cb23ae081..280d20bce124092727d62593f100f20a8cebb775 100644
+index a940b3da051ee8e7c764bf13f9793e9cb23ae081..c4e6b947ab549ac17dfee8415bfcca812c62c0f9 100644
 --- a/Source/WebKit/SourcesWPE.txt
 +++ b/Source/WebKit/SourcesWPE.txt
-@@ -124,6 +124,7 @@ UIProcess/API/glib/WebKitAuthenticationRequest.cpp @no-unify
+@@ -92,6 +92,7 @@ Shared/glib/ProcessExecutablePathGLib.cpp
+ Shared/glib/UserMessage.cpp
+ Shared/glib/WebContextMenuItemGlib.cpp
+ 
++Shared/libwpe/ArgumentCodersWPE.cpp
+ Shared/libwpe/NativeWebKeyboardEventLibWPE.cpp
+ Shared/libwpe/NativeWebMouseEventLibWPE.cpp
+ Shared/libwpe/NativeWebTouchEventLibWPE.cpp
+@@ -124,6 +125,7 @@ UIProcess/API/glib/WebKitAuthenticationRequest.cpp @no-unify
  UIProcess/API/glib/WebKitAutomationSession.cpp @no-unify
  UIProcess/API/glib/WebKitBackForwardList.cpp @no-unify
  UIProcess/API/glib/WebKitBackForwardListItem.cpp @no-unify
@@ -6868,7 +7940,7 @@ index a940b3da051ee8e7c764bf13f9793e9cb23ae081..280d20bce124092727d62593f100f20a
  UIProcess/API/glib/WebKitContextMenuClient.cpp @no-unify
  UIProcess/API/glib/WebKitCookieManager.cpp @no-unify
  UIProcess/API/glib/WebKitCredential.cpp @no-unify
-@@ -201,7 +202,7 @@ UIProcess/Automation/wpe/WebAutomationSessionWPE.cpp
+@@ -201,7 +203,7 @@ UIProcess/Automation/wpe/WebAutomationSessionWPE.cpp
  UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
  
  UIProcess/geoclue/GeoclueGeolocationProvider.cpp
@@ -6877,7 +7949,7 @@ index a940b3da051ee8e7c764bf13f9793e9cb23ae081..280d20bce124092727d62593f100f20a
  UIProcess/glib/WebProcessPoolGLib.cpp
  UIProcess/glib/WebProcessProxyGLib.cpp
  UIProcess/glib/WebsiteDataStoreGLib.cpp @no-unify
-@@ -226,6 +227,10 @@ UIProcess/linux/MemoryPressureMonitor.cpp
+@@ -226,6 +228,10 @@ UIProcess/linux/MemoryPressureMonitor.cpp
  UIProcess/soup/WebCookieManagerProxySoup.cpp
  UIProcess/soup/WebProcessPoolSoup.cpp
  
@@ -6888,6 +7960,15 @@ index a940b3da051ee8e7c764bf13f9793e9cb23ae081..280d20bce124092727d62593f100f20a
  UIProcess/wpe/WebPageProxyWPE.cpp
  
  WebProcess/GPU/media/gstreamer/VideoLayerRemoteGStreamer.cpp
+@@ -256,6 +262,8 @@ WebProcess/WebCoreSupport/glib/WebEditorClientGLib.cpp
+ 
+ WebProcess/WebCoreSupport/soup/WebFrameNetworkingContext.cpp
+ 
++WebProcess/WebCoreSupport/wpe/WebDragClientWPE.cpp
++
+ WebProcess/WebCoreSupport/wpe/WebEditorClientWPE.cpp
+ 
+ WebProcess/WebPage/AcceleratedSurface.cpp
 diff --git a/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp b/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp
 index 7227587e55153e3d8a13386dedd07de9a5d498be..c870126fc1ccd4cebe6b7a51074f489c83592c28 100644
 --- a/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp
@@ -11912,10 +12993,10 @@ index 0000000000000000000000000000000000000000..5ae0ce152f06b8316dbfbbbb2efd1990
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..5d19607e019489b33318be50ccdc94c2fcfae914
+index 0000000000000000000000000000000000000000..365649dd2254fdd4c75b1dc95d0d9cef00d90bc9
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
-@@ -0,0 +1,282 @@
+@@ -0,0 +1,293 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -11949,6 +13030,7 @@ index 0000000000000000000000000000000000000000..5d19607e019489b33318be50ccdc94c2
 +#include "WebPageProxy.h"
 +#include <wtf/MathExtras.h>
 +#include <wtf/HexNumber.h>
++#include <WebCore/DragData.h>
 +
 +namespace WebKit {
 +
@@ -12193,7 +13275,17 @@ index 0000000000000000000000000000000000000000..5d19607e019489b33318be50ccdc94c2
 +        eventClickCount,
 +        eventModifiers,
 +        timestamp);
++#if PLATFORM(WPE)
++    // We intercept any drags generated by this mouse event
++    // to prevent them from creating actual drags in the host
++    // operating system.
++    // So far this is only implemented for WPE.
++    m_page.setInterceptDrags(true);
++#endif
 +    m_page.handleMouseEvent(event);
++#if PLATFORM(WPE)
++    m_page.setInterceptDrags(false);
++#endif
 +#endif
 +}
 +
@@ -12289,9 +13381,18 @@ index 0000000000000000000000000000000000000000..20311d530090b0229010957a96fc60f4
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
-index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe99d0cc8a 100644
+index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..dc2560ccd31021fa3e33ec78c0df72ca78fa2dea 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
 +++ b/Source/WebKit/UIProcess/WebPageProxy.cpp
+@@ -230,7 +230,7 @@
+ #include "ViewSnapshotStore.h"
+ #endif
+ 
+-#if PLATFORM(GTK)
++#if PLATFORM(GTK) || PLATFORM(WPE)
+ #include <WebCore/SelectionData.h>
+ #endif
+ 
 @@ -958,6 +958,7 @@ void WebPageProxy::finishAttachingToWebProcess(ProcessLaunchReason reason)
      m_pageLoadState.didSwapWebProcesses();
      if (reason != ProcessLaunchReason::InitialProcess)
@@ -12380,7 +13481,53 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
      if (flagsToUpdate & ActivityState::IsFocused && pageClient().isViewFocused())
          m_activityState.add(ActivityState::IsFocused);
      if (flagsToUpdate & ActivityState::WindowIsActive && pageClient().isViewWindowActive())
-@@ -2840,7 +2900,7 @@ static TrackingType mergeTrackingTypes(TrackingType a, TrackingType b)
+@@ -2434,11 +2494,17 @@ void WebPageProxy::didPerformDragControllerAction(Optional<WebCore::DragOperatio
+     pageClient().didPerformDragControllerAction();
+ }
+ 
+-#if PLATFORM(GTK)
++#if PLATFORM(GTK) || PLATFORM(WPE)
+ void WebPageProxy::startDrag(SelectionData&& selectionData, OptionSet<WebCore::DragOperation> dragOperationMask, const ShareableBitmap::Handle& dragImageHandle)
+ {
+-    RefPtr<ShareableBitmap> dragImage = !dragImageHandle.isNull() ? ShareableBitmap::create(dragImageHandle) : nullptr;
+-    pageClient().startDrag(WTFMove(selectionData), dragOperationMask, WTFMove(dragImage));
++    if (m_interceptDrags) {
++        m_dragSelectionData = WTFMove(selectionData);
++    } else {
++#if PLATFORM(GTK)
++        RefPtr<ShareableBitmap> dragImage = !dragImageHandle.isNull() ? ShareableBitmap::create(dragImageHandle) : nullptr;
++        pageClient().startDrag(WTFMove(selectionData), dragOperationMask, WTFMove(dragImage));
++#endif
++    }
+ 
+     didStartDrag();
+ }
+@@ -2570,8 +2636,22 @@ void WebPageProxy::processNextQueuedMouseEvent()
+         m_process->startResponsivenessTimer();
+     }
+ 
+-    LOG(MouseHandling, "UIProcess: sent mouse event %s (queue size %zu)", webMouseEventTypeString(eventType), m_mouseEventQueue.size());
+-    send(Messages::WebPage::MouseEvent(event));
++    if (!m_dragSelectionData) {
++        LOG(MouseHandling, "UIProcess: sent mouse event %s (queue size %zu)", webMouseEventTypeString(eventType), m_mouseEventQueue.size());
++        send(Messages::WebPage::MouseEvent(event));
++    } else {
++        DragData dragData(&*m_dragSelectionData, event.position(), event.globalPosition(), m_currentDragOperation);
++        dragEntered(dragData);
++        dragUpdated(dragData);
++        if (eventType == WebEvent::MouseUp) {
++            SandboxExtension::Handle sandboxExtensionHandle;
++            SandboxExtension::HandleArray sandboxExtensionsForUpload;
++
++            performDragOperation(dragData, "", WTFMove(sandboxExtensionHandle), WTFMove(sandboxExtensionsForUpload));
++            m_dragSelectionData = WTF::nullopt;
++        }
++        didReceiveEvent(eventType, true);
++    }
+ }
+ 
+ void WebPageProxy::doAfterProcessingAllPendingMouseEvents(WTF::Function<void ()>&& action)
+@@ -2840,7 +2920,7 @@ static TrackingType mergeTrackingTypes(TrackingType a, TrackingType b)
  
  void WebPageProxy::updateTouchEventTracking(const WebTouchEvent& touchStartEvent)
  {
@@ -12389,7 +13536,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
      const EventNames& names = eventNames();
      for (auto& touchPoint : touchStartEvent.touchPoints()) {
          IntPoint location = touchPoint.location();
-@@ -2873,7 +2933,7 @@ void WebPageProxy::updateTouchEventTracking(const WebTouchEvent& touchStartEvent
+@@ -2873,7 +2953,7 @@ void WebPageProxy::updateTouchEventTracking(const WebTouchEvent& touchStartEvent
      m_touchAndPointerEventTracking.touchStartTracking = TrackingType::Synchronous;
      m_touchAndPointerEventTracking.touchMoveTracking = TrackingType::Synchronous;
      m_touchAndPointerEventTracking.touchEndTracking = TrackingType::Synchronous;
@@ -12398,7 +13545,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
  }
  
  TrackingType WebPageProxy::touchEventTrackingType(const WebTouchEvent& touchStartEvent) const
-@@ -3311,6 +3371,7 @@ void WebPageProxy::receivedNavigationPolicyDecision(PolicyAction policyAction, A
+@@ -3311,6 +3391,7 @@ void WebPageProxy::receivedNavigationPolicyDecision(PolicyAction policyAction, A
  
  void WebPageProxy::receivedPolicyDecision(PolicyAction action, API::Navigation* navigation, RefPtr<API::WebsitePolicies>&& websitePolicies, Ref<PolicyDecisionSender>&& sender, Optional<SandboxExtension::Handle> sandboxExtensionHandle, WillContinueLoadInNewProcess willContinueLoadInNewProcess)
  {
@@ -12406,7 +13553,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
      if (!hasRunningProcess()) {
          sender->send(PolicyDecision { sender->identifier(), isNavigatingToAppBoundDomain(), PolicyAction::Ignore, 0, DownloadID(), WTF::nullopt });
          return;
-@@ -4013,6 +4074,11 @@ void WebPageProxy::pageScaleFactorDidChange(double scaleFactor)
+@@ -4013,6 +4094,11 @@ void WebPageProxy::pageScaleFactorDidChange(double scaleFactor)
      m_pageScaleFactor = scaleFactor;
  }
  
@@ -12418,7 +13565,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
  void WebPageProxy::pluginScaleFactorDidChange(double pluginScaleFactor)
  {
      m_pluginScaleFactor = pluginScaleFactor;
-@@ -4418,6 +4484,7 @@ void WebPageProxy::didDestroyNavigation(uint64_t navigationID)
+@@ -4418,6 +4504,7 @@ void WebPageProxy::didDestroyNavigation(uint64_t navigationID)
  
      // FIXME: Message check the navigationID.
      m_navigationState->didDestroyNavigation(navigationID);
@@ -12426,7 +13573,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
  }
  
  void WebPageProxy::didStartProvisionalLoadForFrame(FrameIdentifier frameID, FrameInfoData&& frameInfo, ResourceRequest&& request, uint64_t navigationID, URL&& url, URL&& unreachableURL, const UserData& userData)
-@@ -4640,6 +4707,8 @@ void WebPageProxy::didFailProvisionalLoadForFrameShared(Ref<WebProcessProxy>&& p
+@@ -4640,6 +4727,8 @@ void WebPageProxy::didFailProvisionalLoadForFrameShared(Ref<WebProcessProxy>&& p
  
      m_failingProvisionalLoadURL = { };
  
@@ -12435,7 +13582,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
      // If the provisional page's load fails then we destroy the provisional page.
      if (m_provisionalPage && m_provisionalPage->mainFrame() == frame && willContinueLoading == WillContinueLoading::No)
          m_provisionalPage = nullptr;
-@@ -5081,7 +5150,14 @@ void WebPageProxy::decidePolicyForNavigationActionAsync(FrameIdentifier frameID,
+@@ -5081,7 +5170,14 @@ void WebPageProxy::decidePolicyForNavigationActionAsync(FrameIdentifier frameID,
      NavigationActionData&& navigationActionData, FrameInfoData&& originatingFrameInfo, Optional<WebPageProxyIdentifier> originatingPageID, const WebCore::ResourceRequest& originalRequest, WebCore::ResourceRequest&& request,
      IPC::FormDataReference&& requestBody, WebCore::ResourceResponse&& redirectResponse, const UserData& userData, uint64_t listenerID)
  {
@@ -12451,7 +13598,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
  }
  
  void WebPageProxy::decidePolicyForNavigationActionAsyncShared(Ref<WebProcessProxy>&& process, PageIdentifier webPageID, FrameIdentifier frameID, FrameInfoData&& frameInfo,
-@@ -5595,6 +5671,7 @@ void WebPageProxy::createNewPage(FrameInfoData&& originatingFrameInfoData, WebPa
+@@ -5595,6 +5691,7 @@ void WebPageProxy::createNewPage(FrameInfoData&& originatingFrameInfoData, WebPa
      auto* originatingPage = m_process->webPage(originatingPageID);
      auto originatingFrameInfo = API::FrameInfo::create(WTFMove(originatingFrameInfoData), originatingPage);
      auto mainFrameURL = m_mainFrame ? m_mainFrame->url() : URL();
@@ -12459,7 +13606,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
      auto completionHandler = [this, protectedThis = makeRef(*this), mainFrameURL, request, reply = WTFMove(reply)] (RefPtr<WebPageProxy> newPage) mutable {
          if (!newPage) {
              reply(WTF::nullopt, WTF::nullopt);
-@@ -5624,6 +5701,7 @@ void WebPageProxy::createNewPage(FrameInfoData&& originatingFrameInfoData, WebPa
+@@ -5624,6 +5721,7 @@ void WebPageProxy::createNewPage(FrameInfoData&& originatingFrameInfoData, WebPa
  void WebPageProxy::showPage()
  {
      m_uiClient->showPage(this);
@@ -12467,7 +13614,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
  }
  
  void WebPageProxy::exitFullscreenImmediately()
-@@ -5659,6 +5737,10 @@ void WebPageProxy::closePage()
+@@ -5659,6 +5757,10 @@ void WebPageProxy::closePage()
      if (isClosed())
          return;
  
@@ -12478,7 +13625,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
      RELEASE_LOG_IF_ALLOWED(Process, "closePage:");
      pageClient().clearAllEditCommands();
      m_uiClient->close(this);
-@@ -5678,6 +5760,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, FrameInfoData&& f
+@@ -5678,6 +5780,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, FrameInfoData&& f
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -12487,7 +13634,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
      m_uiClient->runJavaScriptAlert(*this, message, frame, WTFMove(frameInfo), WTFMove(reply));
  }
  
-@@ -5695,6 +5779,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, FrameInfoData&&
+@@ -5695,6 +5799,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, FrameInfoData&&
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -12496,7 +13643,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
  
      m_uiClient->runJavaScriptConfirm(*this, message, frame, WTFMove(frameInfo), WTFMove(reply));
  }
-@@ -5713,6 +5799,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, FrameInfoData&&
+@@ -5713,6 +5819,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, FrameInfoData&&
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -12505,7 +13652,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
  
      m_uiClient->runJavaScriptPrompt(*this, message, defaultValue, frame, WTFMove(frameInfo), WTFMove(reply));
  }
-@@ -5868,6 +5956,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, FrameInf
+@@ -5868,6 +5976,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, FrameInf
              return;
          }
      }
@@ -12514,7 +13661,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
  
      // Since runBeforeUnloadConfirmPanel() can spin a nested run loop we need to turn off the responsiveness timer and the tryClose timer.
      m_process->stopResponsivenessTimer();
-@@ -6957,6 +7047,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6957,6 +7067,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->mouseEventsFlushedForPage(*this);
              didFinishProcessingAllPendingMouseEvents();
@@ -12522,7 +13669,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
          }
  
          break;
-@@ -6983,7 +7074,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6983,7 +7094,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
      case WebEvent::RawKeyDown:
      case WebEvent::Char: {
          LOG(KeyHandling, "WebPageProxy::didReceiveEvent: %s (queue empty %d)", webKeyboardEventTypeString(type), m_keyEventQueue.isEmpty());
@@ -12530,7 +13677,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
          MESSAGE_CHECK(m_process, !m_keyEventQueue.isEmpty());
          NativeWebKeyboardEvent event = m_keyEventQueue.takeFirst();
  
-@@ -7003,7 +7093,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -7003,7 +7113,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          // The call to doneWithKeyEvent may close this WebPage.
          // Protect against this being destroyed.
          Ref<WebPageProxy> protect(*this);
@@ -12538,7 +13685,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
          pageClient().doneWithKeyEvent(event, handled);
          if (!handled)
              m_uiClient->didNotHandleKeyEvent(this, event);
-@@ -7012,6 +7101,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -7012,6 +7121,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          if (!canProcessMoreKeyEvents) {
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->keyboardEventsFlushedForPage(*this);
@@ -12546,7 +13693,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
          }
          break;
      }
-@@ -7443,8 +7533,10 @@ static bool shouldReloadAfterProcessTermination(ProcessTerminationReason reason)
+@@ -7443,8 +7553,10 @@ static bool shouldReloadAfterProcessTermination(ProcessTerminationReason reason)
  void WebPageProxy::dispatchProcessDidTerminate(ProcessTerminationReason reason)
  {
      RELEASE_LOG_ERROR_IF_ALLOWED(Loading, "dispatchProcessDidTerminate: reason = %d", reason);
@@ -12558,7 +13705,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
      if (m_loaderClient)
          handledByClient = reason != ProcessTerminationReason::RequestedByClient && m_loaderClient->processDidCrash(*this);
      else
-@@ -7716,6 +7808,7 @@ void WebPageProxy::resetStateAfterProcessExited(ProcessTerminationReason termina
+@@ -7716,6 +7828,7 @@ void WebPageProxy::resetStateAfterProcessExited(ProcessTerminationReason termina
  
  WebPageCreationParameters WebPageProxy::creationParameters(WebProcessProxy& process, DrawingAreaProxy& drawingArea, RefPtr<API::WebsitePolicies>&& websitePolicies)
  {
@@ -12566,7 +13713,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
      WebPageCreationParameters parameters;
  
      parameters.processDisplayName = configuration().processDisplayName();
-@@ -7869,6 +7962,8 @@ WebPageCreationParameters WebPageProxy::creationParameters(WebProcessProxy& proc
+@@ -7869,6 +7982,8 @@ WebPageCreationParameters WebPageProxy::creationParameters(WebProcessProxy& proc
      parameters.limitsNavigationsToAppBoundDomains = m_limitsNavigationsToAppBoundDomains;
      parameters.shouldRelaxThirdPartyCookieBlocking = m_configuration->shouldRelaxThirdPartyCookieBlocking();
  
@@ -12575,7 +13722,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
  #if PLATFORM(GTK)
      parameters.themeName = pageClient().themeName();
  #endif
-@@ -7940,6 +8035,14 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, Even
+@@ -7940,6 +8055,14 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, Even
  
  void WebPageProxy::didReceiveAuthenticationChallengeProxy(Ref<AuthenticationChallengeProxy>&& authenticationChallenge, NegotiatedLegacyTLS negotiatedLegacyTLS)
  {
@@ -12590,7 +13737,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
      if (negotiatedLegacyTLS == NegotiatedLegacyTLS::Yes) {
          m_navigationClient->shouldAllowLegacyTLS(*this, authenticationChallenge.get(), [this, protectedThis = makeRef(*this), authenticationChallenge] (bool shouldAllowLegacyTLS) {
              if (shouldAllowLegacyTLS)
-@@ -8025,7 +8128,8 @@ void WebPageProxy::requestGeolocationPermissionForFrame(GeolocationIdentifier ge
+@@ -8025,7 +8148,8 @@ void WebPageProxy::requestGeolocationPermissionForFrame(GeolocationIdentifier ge
      MESSAGE_CHECK(m_process, frame);
  
      // FIXME: Geolocation should probably be using toString() as its string representation instead of databaseIdentifier().
@@ -12600,7 +13747,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
      auto request = m_geolocationPermissionRequestManager.createRequest(geolocationID);
      Function<void(bool)> completionHandler = [request = WTFMove(request)](bool allowed) {
          if (allowed)
-@@ -8034,6 +8138,14 @@ void WebPageProxy::requestGeolocationPermissionForFrame(GeolocationIdentifier ge
+@@ -8034,6 +8158,14 @@ void WebPageProxy::requestGeolocationPermissionForFrame(GeolocationIdentifier ge
              request->deny();
      };
  
@@ -12616,7 +13763,7 @@ index 0ed7fc66150a924d0caa4b0d98d8e6cc6208ca38..fba5cd0a8e91557dbc8d551cbfe980fe
      // and make it one UIClient call that calls the completionHandler with false
      // if there is no delegate instead of returning the completionHandler
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.h b/Source/WebKit/UIProcess/WebPageProxy.h
-index 6ac0756106394431cdb30bcd53c542e514961904..01e7ead9420a6bb42f29837154b3bbdcb13b30d1 100644
+index 6ac0756106394431cdb30bcd53c542e514961904..60f8e0bd03410585fcd585c9bc05a47022159827 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.h
 +++ b/Source/WebKit/UIProcess/WebPageProxy.h
 @@ -37,6 +37,7 @@
@@ -12627,7 +13774,30 @@ index 6ac0756106394431cdb30bcd53c542e514961904..01e7ead9420a6bb42f29837154b3bbdc
  #include "LayerTreeContext.h"
  #include "MessageSender.h"
  #include "NotificationPermissionRequestManagerProxy.h"
-@@ -508,6 +509,8 @@ public:
+@@ -154,6 +155,14 @@ OBJC_CLASS _WKRemoteObjectRegistry;
+ #include "ArgumentCodersGtk.h"
+ #endif
+ 
++#if PLATFORM(WPE)
++#include "ArgumentCodersWPE.h"
++#endif
++
++#if PLATFORM(GTK) || PLATFORM(WPE)
++#include <WebCore/SelectionData.h>
++#endif
++
+ #if ENABLE(WIRELESS_PLAYBACK_TARGET) && !PLATFORM(IOS_FAMILY)
+ #include <WebCore/MediaPlaybackTargetPicker.h>
+ #include <WebCore/WebMediaSessionManagerClient.h>
+@@ -225,7 +234,6 @@ class GraphicsLayer;
+ class IntSize;
+ class ProtectionSpace;
+ class RunLoopObserver;
+-class SelectionData;
+ class SharedBuffer;
+ class TextIndicator;
+ class ValidationBubble;
+@@ -508,6 +516,8 @@ public:
      void setControlledByAutomation(bool);
  
      WebPageInspectorController& inspectorController() { return *m_inspectorController; }
@@ -12636,7 +13806,7 @@ index 6ac0756106394431cdb30bcd53c542e514961904..01e7ead9420a6bb42f29837154b3bbdc
  
  #if PLATFORM(IOS_FAMILY)
      void showInspectorIndication();
-@@ -582,6 +585,11 @@ public:
+@@ -582,6 +592,11 @@ public:
  
      void setPageLoadStateObserver(std::unique_ptr<PageLoadState::Observer>&&);
  
@@ -12648,7 +13818,7 @@ index 6ac0756106394431cdb30bcd53c542e514961904..01e7ead9420a6bb42f29837154b3bbdc
      void initializeWebPage();
      void setDrawingArea(std::unique_ptr<DrawingAreaProxy>&&);
  
-@@ -607,6 +615,7 @@ public:
+@@ -607,6 +622,7 @@ public:
      void closePage();
  
      void addPlatformLoadParameters(WebProcessProxy&, LoadParameters&);
@@ -12656,7 +13826,7 @@ index 6ac0756106394431cdb30bcd53c542e514961904..01e7ead9420a6bb42f29837154b3bbdc
      RefPtr<API::Navigation> loadRequest(WebCore::ResourceRequest&&, WebCore::ShouldOpenExternalURLsPolicy = WebCore::ShouldOpenExternalURLsPolicy::ShouldAllowExternalSchemes, API::Object* userData = nullptr);
      RefPtr<API::Navigation> loadFile(const String& fileURL, const String& resourceDirectoryURL, API::Object* userData = nullptr);
      RefPtr<API::Navigation> loadData(const IPC::DataReference&, const String& MIMEType, const String& encoding, const String& baseURL, API::Object* userData = nullptr, WebCore::ShouldOpenExternalURLsPolicy = WebCore::ShouldOpenExternalURLsPolicy::ShouldNotAllow);
-@@ -1096,6 +1105,7 @@ public:
+@@ -1096,6 +1112,7 @@ public:
  #endif
  
      void pageScaleFactorDidChange(double);
@@ -12664,7 +13834,18 @@ index 6ac0756106394431cdb30bcd53c542e514961904..01e7ead9420a6bb42f29837154b3bbdc
      void pluginScaleFactorDidChange(double);
      void pluginZoomFactorDidChange(double);
  
-@@ -1416,6 +1426,8 @@ public:
+@@ -1175,8 +1192,9 @@ public:
+     void setPromisedDataForImage(const String& pasteboardName, const SharedMemory::Handle& imageHandle, uint64_t imageSize, const String& filename, const String& extension,
+                          const String& title, const String& url, const String& visibleURL, const SharedMemory::Handle& archiveHandle, uint64_t archiveSize);
+ #endif
+-#if PLATFORM(GTK)
++#if PLATFORM(GTK) || PLATFORM(WPE)
+     void startDrag(WebCore::SelectionData&&, OptionSet<WebCore::DragOperation>, const ShareableBitmap::Handle& dragImage);
++    void setInterceptDrags(bool shouldIntercept) { m_interceptDrags = true; };
+ #endif
+ #endif
+ 
+@@ -1416,6 +1434,8 @@ public:
  
  #if PLATFORM(COCOA) || PLATFORM(GTK)
      RefPtr<ViewSnapshot> takeViewSnapshot(Optional<WebCore::IntRect>&&);
@@ -12673,7 +13854,7 @@ index 6ac0756106394431cdb30bcd53c542e514961904..01e7ead9420a6bb42f29837154b3bbdc
  #endif
  
  #if ENABLE(WEB_CRYPTO)
-@@ -2404,6 +2416,7 @@ private:
+@@ -2404,6 +2424,7 @@ private:
      String m_overrideContentSecurityPolicy;
  
      RefPtr<WebInspectorProxy> m_inspector;
@@ -12681,7 +13862,18 @@ index 6ac0756106394431cdb30bcd53c542e514961904..01e7ead9420a6bb42f29837154b3bbdc
  
  #if ENABLE(FULLSCREEN_API)
      std::unique_ptr<WebFullScreenManagerProxy> m_fullScreenManager;
-@@ -2835,6 +2848,9 @@ private:
+@@ -2634,6 +2655,10 @@ private:
+     unsigned m_currentDragNumberOfFilesToBeAccepted { 0 };
+     WebCore::IntRect m_currentDragCaretRect;
+     WebCore::IntRect m_currentDragCaretEditableElementRect;
++#if PLATFORM(GTK) || PLATFORM(WPE)
++    bool m_interceptDrags { false };
++    Optional<WebCore::SelectionData> m_dragSelectionData;
++#endif
+ #endif
+ 
+     PageLoadState m_pageLoadState;
+@@ -2835,6 +2860,9 @@ private:
          RefPtr<API::Object> messageBody;
      };
      Vector<InjectedBundleMessage> m_pendingInjectedBundleMessages;
@@ -12692,7 +13884,7 @@ index 6ac0756106394431cdb30bcd53c542e514961904..01e7ead9420a6bb42f29837154b3bbdc
  #if PLATFORM(IOS_FAMILY) && ENABLE(DEVICE_ORIENTATION)
      std::unique_ptr<WebDeviceOrientationUpdateProviderProxy> m_webDeviceOrientationUpdateProviderProxy;
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.messages.in b/Source/WebKit/UIProcess/WebPageProxy.messages.in
-index 6d8d8d0aa36dbb36086bf3e41dd0b1153a7183ef..fd6079bfd416c2fd5eb03a393d6e32d6cc201cdb 100644
+index 6d8d8d0aa36dbb36086bf3e41dd0b1153a7183ef..f7a53359db074917aaeb85af7c36482463627856 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.messages.in
 +++ b/Source/WebKit/UIProcess/WebPageProxy.messages.in
 @@ -29,6 +29,7 @@ messages -> WebPageProxy {
@@ -12710,6 +13902,15 @@ index 6d8d8d0aa36dbb36086bf3e41dd0b1153a7183ef..fd6079bfd416c2fd5eb03a393d6e32d6
 +    ViewScaleFactorDidChange(double scaleFactor)
      PluginScaleFactorDidChange(double zoomFactor)
      PluginZoomFactorDidChange(double zoomFactor)
+ 
+@@ -315,7 +317,7 @@ messages -> WebPageProxy {
+     StartDrag(struct WebCore::DragItem dragItem, WebKit::ShareableBitmap::Handle dragImage)
+     SetPromisedDataForImage(String pasteboardName, WebKit::SharedMemory::Handle imageHandle, uint64_t imageSize, String filename, String extension, String title, String url, String visibleURL, WebKit::SharedMemory::Handle archiveHandle, uint64_t archiveSize)
+ #endif
+-#if PLATFORM(GTK) && ENABLE(DRAG_SUPPORT)
++#if (PLATFORM(GTK) || PLATFORM(WPE)) && ENABLE(DRAG_SUPPORT)
+     StartDrag(WebCore::SelectionData selectionData, OptionSet<WebCore::DragOperation> dragOperationMask, WebKit::ShareableBitmap::Handle dragImage)
+ #endif
  
 diff --git a/Source/WebKit/UIProcess/WebProcessPool.cpp b/Source/WebKit/UIProcess/WebProcessPool.cpp
 index 633dbf2a104919559264997b783187ca521f4d8c..39b1d86e3bd61b6104f34289f8d4e004000a0b46 100644
@@ -14820,6 +16021,33 @@ index efc003bd0159100082de3cef1f609fa52251ca5a..64aed14d23395587206a23e138e233fe
  void WebChromeClient::runOpenPanel(Frame& frame, FileChooser& fileChooser)
  {
      if (m_page.activeOpenPanelResultListener())
+diff --git a/Source/WebKit/WebProcess/WebCoreSupport/WebDragClient.cpp b/Source/WebKit/WebProcess/WebCoreSupport/WebDragClient.cpp
+index 2eb0886f13ed035a53b8eaa60605de4dfe53fbe3..1c22f9d0451b0d09e1955cb5581174a8f650046b 100644
+--- a/Source/WebKit/WebProcess/WebCoreSupport/WebDragClient.cpp
++++ b/Source/WebKit/WebProcess/WebCoreSupport/WebDragClient.cpp
+@@ -29,6 +29,13 @@
+ #if ENABLE(DRAG_SUPPORT)
+ 
+ #include "WebPage.h"
++#include <WebCore/DataTransfer.h>
++#include <WebCore/Pasteboard.h>
++#include "ShareableBitmap.h"
++
++#if PLATFORM(WPE)
++#include "ArgumentCodersWPE.h"
++#endif
+ 
+ namespace WebKit {
+ using namespace WebCore;
+@@ -50,7 +57,7 @@ OptionSet<DragSourceAction> WebDragClient::dragSourceActionMaskForPoint(const In
+     return m_page->allowedDragSourceActions();
+ }
+ 
+-#if !PLATFORM(COCOA) && !PLATFORM(GTK)
++#if !PLATFORM(COCOA) && !PLATFORM(GTK) && !PLATFORM(WPE)
+ void WebDragClient::startDrag(DragItem, DataTransfer&, Frame&)
+ {
+ }
 diff --git a/Source/WebKit/WebProcess/WebCoreSupport/WebFrameLoaderClient.cpp b/Source/WebKit/WebProcess/WebCoreSupport/WebFrameLoaderClient.cpp
 index b56571babb8ebd8997a81fe9e3a6cb51e531907a..d0f2cdaeb999c1086adaeff91138c2ce41171ada 100644
 --- a/Source/WebKit/WebProcess/WebCoreSupport/WebFrameLoaderClient.cpp
@@ -14838,6 +16066,69 @@ index b56571babb8ebd8997a81fe9e3a6cb51e531907a..d0f2cdaeb999c1086adaeff91138c2ce
  }
  
  void WebFrameLoaderClient::didRestoreFromBackForwardCache()
+diff --git a/Source/WebKit/WebProcess/WebCoreSupport/wpe/WebDragClientWPE.cpp b/Source/WebKit/WebProcess/WebCoreSupport/wpe/WebDragClientWPE.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..9b413bb8150a1633d29b6e2606127c9c1d02442b
+--- /dev/null
++++ b/Source/WebKit/WebProcess/WebCoreSupport/wpe/WebDragClientWPE.cpp
+@@ -0,0 +1,57 @@
++/*
++ * Copyright (C) 2011 Igalia S.L.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
++ * THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "config.h"
++#include "WebDragClient.h"
++
++#if ENABLE(DRAG_SUPPORT)
++
++#include "ArgumentCodersWPE.h"
++#include "ShareableBitmap.h"
++#include "WebPage.h"
++#include "WebPageProxyMessages.h"
++#include <WebCore/DataTransfer.h>
++#include <WebCore/DragData.h>
++#include <WebCore/Pasteboard.h>
++#include <WebCore/SelectionData.h>
++
++namespace WebKit {
++using namespace WebCore;
++
++void WebDragClient::didConcludeEditDrag()
++{
++}
++
++void WebDragClient::startDrag(DragItem, DataTransfer& dataTransfer, Frame&)
++{
++    m_page->willStartDrag();
++
++    ShareableBitmap::Handle handle;
++    m_page->send(Messages::WebPageProxy::StartDrag(dataTransfer.pasteboard().selectionData(), dataTransfer.sourceOperationMask(), handle));
++}
++
++}; // namespace WebKit.
++
++#endif // ENABLE(DRAG_SUPPORT)
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 index 5abd86a534ba5f66d88094d407f3f4facf8a5521..e166b477538720974ca2fc4eeda81230228aff36 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
@@ -15176,10 +16467,21 @@ index 2742f13ecf36d60ccfd67a3fd215475b0064f832..5d93a817b5d4f9707bdd523de7647861
  
      return documentLoader;
 diff --git a/Source/WebKit/WebProcess/WebPage/WebPage.h b/Source/WebKit/WebProcess/WebPage/WebPage.h
-index 617e6af2fd36cdb893c02c122033e28715ba6490..a69afce95964de58bf9b0abdcbed0110a6c5d839 100644
+index 617e6af2fd36cdb893c02c122033e28715ba6490..77fb4259870d9bfb8e2804764d4656e08d976170 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebPage.h
 +++ b/Source/WebKit/WebProcess/WebPage/WebPage.h
-@@ -1168,6 +1168,7 @@ public:
+@@ -105,6 +105,10 @@ typedef struct _AtkObject AtkObject;
+ #include "WebPrintOperationGtk.h"
+ #endif
+ 
++#if PLATFORM(WPE)
++#include "ArgumentCodersWPE.h"
++#endif
++
+ #if PLATFORM(GTK) || PLATFORM(WPE)
+ #include "InputMethodState.h"
+ #endif
+@@ -1168,6 +1172,7 @@ public:
      void connectInspector(const String& targetId, Inspector::FrontendChannel::ConnectionType);
      void disconnectInspector(const String& targetId);
      void sendMessageToTargetBackend(const String& targetId, const String& message);
@@ -15187,7 +16489,7 @@ index 617e6af2fd36cdb893c02c122033e28715ba6490..a69afce95964de58bf9b0abdcbed0110
  
      void insertNewlineInQuotedContent();
  
-@@ -1442,6 +1443,7 @@ private:
+@@ -1442,6 +1447,7 @@ private:
      // Actions
      void tryClose(CompletionHandler<void(bool)>&&);
      void platformDidReceiveLoadParameters(const LoadParameters&);
@@ -15195,7 +16497,7 @@ index 617e6af2fd36cdb893c02c122033e28715ba6490..a69afce95964de58bf9b0abdcbed0110
      void loadRequest(LoadParameters&&);
      NO_RETURN void loadRequestWaitingForProcessLaunch(LoadParameters&&, URL&&, WebPageProxyIdentifier, bool);
      void loadData(LoadParameters&&);
-@@ -1594,9 +1596,7 @@ private:
+@@ -1594,9 +1600,7 @@ private:
      void countStringMatches(const String&, OptionSet<FindOptions>, uint32_t maxMatchCount);
      void replaceMatches(const Vector<uint32_t>& matchIndices, const String& replacementText, bool selectionOnly, CallbackID);
  
@@ -15205,7 +16507,7 @@ index 617e6af2fd36cdb893c02c122033e28715ba6490..a69afce95964de58bf9b0abdcbed0110
  
      void didChangeSelectedIndexForActivePopupMenu(int32_t newIndex);
      void setTextForActivePopupMenu(int32_t index);
-@@ -2063,6 +2063,7 @@ private:
+@@ -2063,6 +2067,7 @@ private:
      UserActivity m_userActivity;
  
      uint64_t m_pendingNavigationID { 0 };
@@ -15402,7 +16704,7 @@ index 26cf56ee4619d88160e004d75d49359eb3add840..06d94a5dcbfda5b4a25deafaf1044f0b
  
  # Finalize the value for all options. Do not attempt to use an option before
 diff --git a/Source/cmake/OptionsWPE.cmake b/Source/cmake/OptionsWPE.cmake
-index b4d3e3a2d30049c21a4416c51cf1e747e85af9b4..adfefe730a5700d9767fa37042b2e68c4a3faf56 100644
+index b4d3e3a2d30049c21a4416c51cf1e747e85af9b4..8f8b6d3f0a4779399257b46ac5179c0ad5178cb4 100644
 --- a/Source/cmake/OptionsWPE.cmake
 +++ b/Source/cmake/OptionsWPE.cmake
 @@ -3,6 +3,7 @@ include(VersioningUtils)
@@ -15413,7 +16715,7 @@ index b4d3e3a2d30049c21a4416c51cf1e747e85af9b4..adfefe730a5700d9767fa37042b2e68c
  
  CALCULATE_LIBRARY_VERSIONS_FROM_LIBTOOL_TRIPLE(WEBKIT 14 0 11)
  
-@@ -80,13 +81,21 @@ WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_WEBGL2 PRIVATE OFF)
+@@ -80,13 +81,22 @@ WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_WEBGL2 PRIVATE OFF)
  WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_WEB_RTC PRIVATE ${ENABLE_EXPERIMENTAL_FEATURES})
  WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_WEBXR PRIVATE ${ENABLE_EXPERIMENTAL_FEATURES})
  
@@ -15424,6 +16726,7 @@ index b4d3e3a2d30049c21a4416c51cf1e747e85af9b4..adfefe730a5700d9767fa37042b2e68c
 +WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_DARK_MODE_CSS PRIVATE ON)
 +WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_DOWNLOAD_ATTRIBUTE PRIVATE ON)
 +WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_LEGACY_CSS_VENDOR_PREFIXES PRIVATE ON)
++WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_DRAG_SUPPORT PUBLIC ON)
 +
  # Public options specific to the WPE port. Do not add any options here unless
  # there is a strong reason we should support changing the value of the option,
