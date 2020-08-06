@@ -20,6 +20,7 @@ const os = require('os');
 const path = require('path');
 const fs = require('fs');
 const debug = require('debug');
+const util = require('util');
 const platform = process.env.REPORT_ONLY_PLATFORM || os.platform();
 const GoldenUtils = require('../../utils/testrunner/GoldenUtils');
 const {installCoverageHooks} = require('./coverage');
@@ -170,6 +171,7 @@ class PlaywrightEnvironment extends NodeEnvironment {
 
     if (event.name === 'test_start') {
       const fn = event.test.fn;
+      this._lastTest = event.test;
       event.test.fn = async () => {
         if (reportOnly) {
           if (fn.__fail)
@@ -179,12 +181,18 @@ class PlaywrightEnvironment extends NodeEnvironment {
         debug('pw:test')(`start "${testOrSuiteName(event.test)}"`);
         try {
           await this.fixturePool.resolveParametersAndRun(fn);
+        } catch(e) {
+          debug('pw:test')(`error "${testOrSuiteName(event.test)}"`, util.inspect(e));
+          throw e;
         } finally {
           await this.fixturePool.teardownScope('test');
           debug('pw:test')(`finish "${testOrSuiteName(event.test)}"`);
         }
       };
     }
+
+    if (event.name === 'error')
+      debug('pw:test')(`error "${testOrSuiteName(this._lastTest)}"`, util.inspect(event.error));
 
     if (event.name === 'test_fn_failure') {
       await this.fixturePool.teardownScope('worker');
