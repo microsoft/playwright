@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export {};
+import utils from './utils';
 const {FFOX, CHROMIUM} = testOptions;
 
 it('should work', async({context, page, server}) => {

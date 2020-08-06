@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
+import utils from './utils';
 const {CHROMIUM, FFOX, MAC, HEADLESS} = testOptions;
 
 it('should affect accept-language header', async({browser, server}) => {
@@ -25,7 +25,7 @@ it('should affect accept-language header', async({browser, server}) => {
     server.waitForRequest('/empty.html'),
     page.goto(server.EMPTY_PAGE),
   ]);
-  expect(request.headers['accept-language'].substr(0, 5)).toBe('fr-CH');
+  expect((request.headers['accept-language'] as string).substr(0, 5)).toBe('fr-CH');
   await context.close();
 });
 
@@ -79,10 +79,10 @@ it('should format number in popups', async({browser, server}) => {
 
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(url => window._popup = window.open(url), server.PREFIX + '/formatted-number.html'),
+    page.evaluate(url => window.open(url), server.PREFIX + '/formatted-number.html'),
   ]);
   await popup.waitForLoadState('domcontentloaded');
-  const result = await popup.evaluate(() => window.result);
+  const result = await popup.evaluate('window.result');
   expect(result).toBe('1 000 000,5');
   await context.close();
 });
@@ -93,10 +93,10 @@ it('should affect navigator.language in popups', async({browser, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(url => window._popup = window.open(url), server.PREFIX + '/formatted-number.html'),
+    page.evaluate(url => window.open(url), server.PREFIX + '/formatted-number.html'),
   ]);
   await popup.waitForLoadState('domcontentloaded');
-  const result = await popup.evaluate(() => window.initialNavigatorLanguage);
+  const result = await popup.evaluate('window.initialNavigatorLanguage');
   expect(result).toBe('fr-CH');
   await context.close();
 });

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export {};
+import utils from './utils';
 const {FFOX} = testOptions;
 
 it.skip(FFOX)('should work', async({playwright, browser, server}) => {

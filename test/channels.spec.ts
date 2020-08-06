@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
+import utils from './utils';
+import { ChromiumBrowser } from '../types/types';
 const { FFOX, CHROMIUM, WEBKIT, WIN, CHANNEL } = testOptions;
 
 it.skip(!CHANNEL)('should work', async({browser}) => {
-  expect(!!browser._connection).toBeTruthy();
+  expect(!!browser['_connection']).toBeTruthy();
 });
 
 it.skip(!CHANNEL)('should scope context handles', async({browserType, browser, server}) => {
@@ -81,7 +83,7 @@ it.skip(!CHANNEL || !CHROMIUM)('should scope CDPSession handles', async({browser
   };
   await expectScopeState(browserType, GOLDEN_PRECONDITION);
 
-  const session = await browser.newBrowserCDPSession();
+  const session = await (browser as ChromiumBrowser).newBrowserCDPSession();
   await expectScopeState(browserType, {
     _guid: '',
     objects: [

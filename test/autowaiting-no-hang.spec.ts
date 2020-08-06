@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export {};
+import utils from './utils';
 
 it('clicking on links which do not commit navigation', async({page, server, httpsServer}) => {
   await page.goto(server.EMPTY_PAGE);

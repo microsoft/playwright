@@ -15,9 +15,7 @@
  * limitations under the License.
  */
 
-const path = require('path');
-const fs = require('fs');
-const utils = require('./utils');
+import utils from './utils';
 const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
 
 it.slow()('should be able to reconnect to a browser', async({browserType, defaultBrowserOptions, server}) => {
@@ -36,15 +34,15 @@ it.slow()('should be able to reconnect to a browser', async({browserType, defaul
     await page.goto(server.EMPTY_PAGE);
     await browser.close();
   }
-  await browserServer._checkLeaks();
+  await (browserServer as any)._checkLeaks();
   await browserServer.close();
 });
 
 it.fail(USES_HOOKS || (CHROMIUM && WIN)).slow()('should handle exceptions during connect', async({browserType, defaultBrowserOptions, server}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const __testHookBeforeCreateBrowser = () => { throw new Error('Dummy') };
-  const error = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint(), __testHookBeforeCreateBrowser }).catch(e => e);
-  await browserServer._checkLeaks();
+  const error = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint(), __testHookBeforeCreateBrowser } as any).catch(e => e);
+  await (browserServer as any)._checkLeaks();
   await browserServer.close();
   expect(error.message).toContain('Dummy');
 });
@@ -55,7 +53,7 @@ it('should set the browser connected state', async ({browserType, defaultBrowser
   expect(remote.isConnected()).toBe(true);
   await remote.close();
   expect(remote.isConnected()).toBe(false);
-  await browserServer._checkLeaks();
+  await (browserServer as any)._checkLeaks();
   await browserServer.close();
 });
 
@@ -68,6 +66,6 @@ it('should throw when used after isConnected returns false', async({browserType,
     new Promise(f => remote.once('disconnected', f)),
   ]);
   expect(remote.isConnected()).toBe(false);
-  const error = await page.evaluate('1 + 1').catch(e => e);
+  const error = await page.evaluate('1 + 1').catch(e => e) as Error;
   expect(error.message).toContain('has been closed');
 });

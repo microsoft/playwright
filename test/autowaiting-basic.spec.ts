@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export {};
+import utils from './utils';
 
 const {USES_HOOKS} = testOptions;
 
