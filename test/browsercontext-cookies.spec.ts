@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export {};
+import utils from './utils';
 const {WEBKIT, WIN} = testOptions;
 
 it('should return no cookies in pristine browser context', async({context, page, server}) => {

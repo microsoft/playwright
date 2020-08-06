@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export {};
+import utils from './utils';
 const {CHROMIUM, HEADLESS} = testOptions;
 
 it.fail(CHROMIUM && !HEADLESS)('should fail without credentials', async({browser, server}) => {

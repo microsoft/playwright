@@ -18,43 +18,43 @@
 it('should check the box', async({page}) => {
   await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
   await page.check('input');
-  expect(await page.evaluate(() => checkbox.checked)).toBe(true);
+  expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
 });
 
 it('should not check the checked box', async({page}) => {
   await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
   await page.check('input');
-  expect(await page.evaluate(() => checkbox.checked)).toBe(true);
+  expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
 });
 
 it('should uncheck the box', async({page}) => {
   await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
   await page.uncheck('input');
-  expect(await page.evaluate(() => checkbox.checked)).toBe(false);
+  expect(await page.evaluate(() => window['checkbox'].checked)).toBe(false);
 });
 
 it('should not uncheck the unchecked box', async({page}) => {
   await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
   await page.uncheck('input');
-  expect(await page.evaluate(() => checkbox.checked)).toBe(false);
+  expect(await page.evaluate(() => window['checkbox'].checked)).toBe(false);
 });
 
 it('should check the box by label', async({page}) => {
   await page.setContent(`<label for='checkbox'><input id='checkbox' type='checkbox'></input></label>`);
   await page.check('label');
-  expect(await page.evaluate(() => checkbox.checked)).toBe(true);
+  expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
 });
 
 it('should check the box outside label', async({page}) => {
   await page.setContent(`<label for='checkbox'>Text</label><div><input id='checkbox' type='checkbox'></input></div>`);
   await page.check('label');
-  expect(await page.evaluate(() => checkbox.checked)).toBe(true);
+  expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
 });
 
 it('should check the box inside label w/o id', async({page}) => {
   await page.setContent(`<label>Text<span><input id='checkbox' type='checkbox'></input></span></label>`);
   await page.check('label');
-  expect(await page.evaluate(() => checkbox.checked)).toBe(true);
+  expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
 });
 
 it('should check radio', async({page}) => {
@@ -63,7 +63,7 @@ it('should check radio', async({page}) => {
     <input id='two' type='radio'>two</input>
     <input type='radio'>three</input>`);
   await page.check('#two');
-  expect(await page.evaluate(() => two.checked)).toBe(true);
+  expect(await page.evaluate(() => window['two'].checked)).toBe(true);
 });
 
 it('should check the box by aria role', async({page}) => {
@@ -72,5 +72,5 @@ it('should check the box by aria role', async({page}) => {
       checkbox.addEventListener('click', () => checkbox.setAttribute('aria-checked', 'true'));
     </script>`);
   await page.check('div');
-  expect(await page.evaluate(() => checkbox.getAttribute('aria-checked'))).toBe('true');
+  expect(await page.evaluate(() => window['checkbox'].getAttribute('aria-checked'))).toBe('true');
 });

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
+import utils from './utils';
 const {FFOX, CHROMIUM, WEBKIT, MAC, CHANNEL, HEADLESS} = testOptions;
 const {devices} = require('..');
 

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-const path = require('path');
-const url = require('url');
+import path from 'path';
+import url from 'url';
 
 const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX, ASSETS_DIR} = testOptions;
 
 it.fail(WEBKIT && WIN)('Web Assembly should work', async function({page, server}) {
   await page.goto(server.PREFIX + '/wasm/table2.html');
-  expect(await page.evaluate(() => loadTable())).toBe('42, 83');
+  expect(await page.evaluate('loadTable()')).toBe('42, 83');
 });
 
 it('WebSocket should work', async({page, server}) => {
@@ -47,7 +47,7 @@ it('should respect CSP', async({page, server}) => {
   });
 
   await page.goto(server.EMPTY_PAGE);
-  expect(await page.evaluate(() => window.testStatus)).toBe('SUCCESS');
+  expect(await page.evaluate(() => window['testStatus'])).toBe('SUCCESS');
 });
 
 it.fail(WEBKIT && WIN)('should play video', async({page}) => {

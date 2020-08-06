@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-const path = require('path');
-const fs = require('fs');
-const utils = require('./utils');
+import path from 'path';
+import fs from 'fs';
+import utils from './utils';
 const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
 
 it('should reject all promises when browser is closed', async({browserType, defaultBrowserOptions}) => {
@@ -83,7 +83,7 @@ it.skip(USES_HOOKS)('should report launch log', async({browserType, defaultBrows
 });
 
 it.slow()('should accept objects as options', async({browserType, defaultBrowserOptions}) => {
-  const browser = await browserType.launch({ ...defaultBrowserOptions, process });
+  const browser = await browserType.launch({ ...defaultBrowserOptions, process } as any);
   await browser.close();
 });
 

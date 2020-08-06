@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-const path = require('path');
-const fs = require('fs');
-const utils = require('./utils');
+import path from 'path';
+import fs from 'fs';
+import utils from './utils';
 const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
 
 it('browserType.executablePath should work', async({browserType}) => {

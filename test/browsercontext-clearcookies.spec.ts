@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export {};
+import utils from './utils';
 
 it('should clear cookies', async({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);

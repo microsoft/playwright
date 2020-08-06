@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
+import utils from './utils';
 const {CHROMIUM, FFOX, MAC, HEADLESS} = testOptions;
 
 it.skip(FFOX)('should support mobile emulation', async({playwright, browser, server}) => {
@@ -66,7 +66,7 @@ it.skip(FFOX)('should detect touch when applying viewport with touches', async({
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.addScriptTag({url: server.PREFIX + '/modernizr.js'});
-  expect(await page.evaluate(() => Modernizr.touchevents)).toBe(true);
+  expect(await page.evaluate(() => window['Modernizr'].touchevents)).toBe(true);
   await context.close();
 });
 
@@ -99,8 +99,8 @@ it.skip(FFOX)('should fire orientationchange event', async({browser, server}) =>
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/mobile.html');
   await page.evaluate(() => {
-    window.counter = 0;
-    window.addEventListener('orientationchange', () => console.log(++window.counter));
+    let counter = 0;
+    window.addEventListener('orientationchange', () => console.log(++counter));
   });
 
   const event1 = page.waitForEvent('console');

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export {};
+import utils from './utils';
 const {CHROMIUM} = testOptions;
 
 it('should create new page', async function({browser}) {

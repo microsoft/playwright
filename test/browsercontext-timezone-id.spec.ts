@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
+import utils from './utils';
 const {CHROMIUM, FFOX, MAC, HEADLESS} = testOptions;
 
 it('should work', async ({ browser }) => {

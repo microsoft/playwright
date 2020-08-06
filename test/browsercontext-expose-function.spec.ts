@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export {};
+import utils from './utils';
 const {FFOX, CHROMIUM, WEBKIT, MAC, CHANNEL, HEADLESS} = testOptions;
 const {devices} = require('..');
 
