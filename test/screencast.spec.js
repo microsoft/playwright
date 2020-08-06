@@ -20,7 +20,7 @@ const path = require('path');
 const url = require('url');
 const {mkdtempAsync, removeFolderAsync} = require('./utils');
 
-const {FFOX, CHROMIUM, HEADLESS} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, MAC, HEADLESS} = testOptions;
 
 registerFixture('persistentDirectory', async ({}, test) => {
   const persistentDirectory = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
@@ -31,7 +31,18 @@ registerFixture('persistentDirectory', async ({}, test) => {
   }
 });
 
-it.fail(CHROMIUM)('should capture static page', async({page, persistentDirectory}) => {
+if (WEBKIT && MAC) {
+  registerFixture('firefox', async ({playwright}, test) => {
+    const firefox = await playwright.firefox.launch();
+    try {
+      await test(firefox);
+    } finally {
+      await firefox.close();
+    }
+  });
+}
+
+it.fail(CHROMIUM)('should capture static page', async({page, persistentDirectory, firefox}) => {
   const videoFile = path.join(persistentDirectory, 'v.webm');
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
   await page._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
@@ -44,6 +55,13 @@ it.fail(CHROMIUM)('should capture static page', async({page, persistentDirectory
   await new Promise(r => setTimeout(r, 300));
   await page._delegate.stopVideoRecording();
   expect(fs.existsSync(videoFile)).toBe(true);
+
+  if (WEBKIT && MAC) {
+    // WebKit on Mac cannot replay webm/vp8 video, so we launch Firefox.
+    const context = await firefox.newContext();
+    page = await context.newPage();
+  }
+
   await page.goto(url.pathToFileURL(videoFile).href);
 
   await page.$eval('video', v => {
