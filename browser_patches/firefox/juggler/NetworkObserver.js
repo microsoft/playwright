@@ -449,7 +449,7 @@ class NetworkRequest {
   }
 
   _fallThroughInterceptController() {
-    if (!this._previousCallbacks || !(this._previousCallbacks instanceof Ci.nsIInterfaceRequestor))
+    if (!this._previousCallbacks || !(this._previousCallbacks instanceof Ci.nsINetworkInterceptController))
       return undefined;
     return this._previousCallbacks.getInterface(Ci.nsINetworkInterceptController);
   }

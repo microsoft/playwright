@@ -350,7 +350,7 @@ class PageTarget {
     this._channelIds = new Set();
 
     const navigationListener = {
-      QueryInterface: ChromeUtils.generateQI([ Ci.nsIWebProgressListener]),
+      QueryInterface: ChromeUtils.generateQI([Ci.nsIWebProgressListener, Ci.nsISupportsWeakReference]),
       onLocationChange: (aWebProgress, aRequest, aLocation) => this._onNavigated(aLocation),
     };
     this._eventListeners = [
@@ -628,6 +628,7 @@ class BrowserContext {
         cookie.expires === undefined ? Date.now() + HUNDRED_YEARS : cookie.expires,
         { userContextId: this.userContextId || undefined } /* originAttributes */,
         protocolToSameSite[cookie.sameSite],
+        Ci.nsICookie.SCHEME_UNSET
       );
     }
   }
