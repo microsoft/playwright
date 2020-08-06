@@ -714,11 +714,17 @@ playwright.chromium.launch().then(async browser => {
   {
     playwright.devices['my device'] = {
       userAgent: 'foo',
-      viewport: {height: 123, width: 456}
+      viewport: {height: 123, width: 456},
+      deviceScaleFactor: 1,
+      hasTouch: false,
+      isMobile: true,
     };
     const iPhone = playwright.devices['iPhone 11'];
     const assertion: AssertType<string, typeof iPhone.userAgent> = true;
-    const numberAssertion: AssertType<number, typeof iPhone.viewport.width> = true;
+    const widthAssertion: AssertType<number, typeof iPhone.viewport.width> = true;
+    const deviceScaleFactorAssertion: AssertType<number, typeof iPhone.deviceScaleFactor> = true;
+    const hasTouchAssertion: AssertType<boolean, typeof iPhone.hasTouch> = true;
+    const isMobileAssertion: AssertType<boolean, typeof iPhone.isMobile> = true;
   }
   {
     const agents = playwright.devices.map(x => x.userAgent);
