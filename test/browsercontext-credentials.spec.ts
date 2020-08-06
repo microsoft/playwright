@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, MAC, CHANNEL, HEADLESS} = testOptions;
-const {devices} = require('..');
+export {};
+const {CHROMIUM, HEADLESS} = testOptions;
 
 it.fail(CHROMIUM && !HEADLESS)('should fail without credentials', async({browser, server}) => {
   server.setAuth('/empty.html', 'user', 'pass');

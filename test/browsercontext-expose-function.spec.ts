@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
+export {};
 const {FFOX, CHROMIUM, WEBKIT, MAC, CHANNEL, HEADLESS} = testOptions;
 const {devices} = require('..');
 
@@ -27,9 +27,7 @@ it('expose binding should work', async({browser}) => {
     return a + b;
   });
   const page = await context.newPage();
-  const result = await page.evaluate(async function() {
-    return add(5, 6);
-  });
+  const result = await page.evaluate('add(5, 6)');
   expect(bindingSource.context).toBe(context);
   expect(bindingSource.page).toBe(page);
   expect(bindingSource.frame).toBe(page.mainFrame());
@@ -47,9 +45,7 @@ it('should work', async({browser, server}) => {
     const handle = await frame.evaluateHandle(([a, b]) => a + b, [a, b]);
     return handle;
   });
-  const result = await page.evaluate(async function() {
-    return { mul: await mul(9, 4), add: await add(9, 4), sub: await sub(9, 4), addHandle: await addHandle(5, 6) };
-  });
+  const result = await page.evaluate('(async () => ({ mul: await mul(9, 4), add: await add(9, 4), sub: await sub(9, 4), addHandle: await addHandle(5, 6) }))()');
   expect(result).toEqual({ mul: 36, add: 13, sub: 5, addHandle: 11 });
   await context.close();
 });
@@ -75,9 +71,9 @@ it('should be callable from-inside addInitScript', async({browser, server}) => {
   await context.exposeFunction('woof', function(arg) {
     args.push(arg);
   });
-  await context.addInitScript(() => woof('context'));
+  await context.addInitScript('woof("context")');
   const page = await context.newPage();
-  await page.addInitScript(() => woof('page'));
+  await page.addInitScript('woof("page")');
   args = [];
   await page.reload();
   expect(args).toEqual(['context', 'page']);

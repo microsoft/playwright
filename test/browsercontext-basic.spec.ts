@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, MAC, CHANNEL, HEADLESS} = testOptions;
-const {devices} = require('..');
+import utils from './utils';
+
+const {WEBKIT} = testOptions;
 
 it('should create new context', async function({browser}) {
   expect(browser.contexts().length).toBe(0);

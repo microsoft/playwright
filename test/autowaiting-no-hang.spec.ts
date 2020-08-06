@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = testOptions;
+export {};
 
 it('clicking on links which do not commit navigation', async({page, server, httpsServer}) => {
   await page.goto(server.EMPTY_PAGE);
@@ -23,7 +23,7 @@ it('clicking on links which do not commit navigation', async({page, server, http
   await page.click('a');
 });
 
-it('calling window.stop async', async({page, server, httpsServer}) => {
+it('calling window.stop async', async({page, server}) => {
   server.setRoute('/empty.html', async (req, res) => {});
   await page.evaluate((url) => {
       window.location.href = url;
@@ -31,7 +31,7 @@ it('calling window.stop async', async({page, server, httpsServer}) => {
     }, server.EMPTY_PAGE);
 });
 
-it('calling window.stop sync', async({page, server, httpsServer}) => {
+it('calling window.stop sync', async({page, server}) => {
   await page.evaluate((url) => {
       window.location.href = url;
       window.stop();
@@ -62,6 +62,6 @@ it('opening a popup', async function({page, server}) {
   await page.goto(server.EMPTY_PAGE);
   await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(() => window._popup = window.open(window.location.href)),
+    page.evaluate(() => window.open(window.location.href) && 1),
   ]);
 });

@@ -47,20 +47,9 @@ type TestRunner<STATE> = {
 interface TestSetup<STATE> {
     testRunner: TestRunner<STATE>;
     product: 'Chromium'|'Firefox'|'WebKit';
-    FFOX: boolean;
-    WEBKIT: boolean;
-    CHROMIUM: boolean;
-    MAC: boolean;
-    LINUX: boolean;
-    WIN: boolean;
-    playwright: typeof import('../index');
-    browserType: import('../index').BrowserType<import('../index').Browser>;
     selectors: import('../index').Selectors;
     expect<T>(value: T): Expect<T>;
-    defaultBrowserOptions: import('../index').LaunchOptions;
     playwrightPath;
-    headless: boolean;
-    ASSETS_DIR: string;
 }
 
 type TestState = {
@@ -70,8 +59,11 @@ type TestState = {
 };
 
 type BrowserState = TestState & {
+    playwright: typeof import('../index');
+    browserType: import('../index').BrowserType<import('../index').Browser>;
     browser: import('../index').Browser;
     browserServer: import('../index').BrowserServer;
+    defaultBrowserOptions: import('../index').LaunchOptions;
 };
 
 type PageState = BrowserState & {
@@ -81,10 +73,6 @@ type PageState = BrowserState & {
 type ChromiumPageState = PageState & {
     browser: import('../index').ChromiumBrowser;
 };
-type TestSuite = (setup: TestSetup<TestState>) => void;
-type BrowserTestSuite = (setup: TestSetup<BrowserState>) => void;
-type PageTestSuite = (setup: TestSetup<PageState>) => void;
-type ChromiumTestSuite = (setup: TestSetup<ChromiumPageState>) => void;
 
 
 interface TestServer {
@@ -103,7 +91,6 @@ interface TestServer {
     PREFIX: string;
     CROSS_PROCESS_PREFIX: string;
     EMPTY_PAGE: string;
-
 }
 
 declare const describe: DescribeFunction;
@@ -118,6 +105,18 @@ declare const xit: ItFunction<PageState>;
 declare const browserType: import('../index').BrowserType<import('../index').Browser>;
 
 // global variables in assets
+declare const testOptions: {
+    FFOX: boolean;
+    WEBKIT: boolean;
+    CHROMIUM: boolean;
+    MAC: boolean;
+    LINUX: boolean;
+    WIN: boolean;
+    HEADLESS: boolean;
+    OUTPUT_DIR: string;
+    USES_HOOKS: boolean;
+    CHANNEL: boolean;
+};
 
 // keyboard.html
 declare function getResult(): string;

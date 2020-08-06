@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT, WIN} = testOptions;
+export {};
+const {FFOX, CHROMIUM} = testOptions;
 
 it('should work', async({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);
@@ -119,7 +120,7 @@ it('should isolate persistent cookies', async({context, server, browser}) => {
 });
 
 it('should isolate send cookie header', async({server, context, browser}) => {
-  let cookie = [];
+  let cookie = '';
   server.setRoute('/empty.html', (req, res) => {
     cookie = req.headers.cookie || '';
     res.end();

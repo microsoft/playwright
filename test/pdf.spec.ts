@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs'
+import path from 'path'
+
 const {FFOX, CHROMIUM, WEBKIT, OUTPUT_DIR, HEADLESS} = testOptions;
 
 // Printing to pdf is currently only supported in headless chromium.
-it.skip(!(HEADLESS && CHROMIUM))('should be able to save file', async({page, server}) => {
+it.skip(!(HEADLESS && CHROMIUM))('should be able to save file', async({page}) => {
   const outputFile = path.join(OUTPUT_DIR, 'output.pdf');
   await page.pdf({path: outputFile});
   expect(fs.readFileSync(outputFile).byteLength).toBeGreaterThan(0);
   fs.unlinkSync(outputFile);
 });
 
-it.skip(CHROMIUM)('should be able to save file', async({page, server}) => {
+it.skip(CHROMIUM)('should be able to save file', async({page}) => {
   expect(page.pdf).toBe(undefined);
 });

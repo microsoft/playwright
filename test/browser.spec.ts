@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-const {FFOX, CHROMIUM, WEBKIT} = testOptions;
+export {};
+const {CHROMIUM} = testOptions;
 
 it('should create new page', async function({browser}) {
   const page1 = await browser.newPage();
