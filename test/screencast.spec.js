@@ -31,16 +31,18 @@ registerFixture('persistentDirectory', async ({}, test) => {
   }
 });
 
-if (WEBKIT && MAC) {
-  registerFixture('firefox', async ({playwright}, test) => {
+registerFixture('firefox', async ({playwright}, test) => {
+  if (WEBKIT && MAC) {
     const firefox = await playwright.firefox.launch();
     try {
       await test(firefox);
     } finally {
       await firefox.close();
     }
-  });
-}
+  } else {
+    await test(null);
+  }
+});
 
 it.fail(CHROMIUM)('should capture static page', async({page, persistentDirectory, firefox}) => {
   const videoFile = path.join(persistentDirectory, 'v.webm');
