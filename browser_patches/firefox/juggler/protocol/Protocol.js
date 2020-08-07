@@ -258,13 +258,25 @@ const Browser = {
         headers: t.Array(networkTypes.HTTPHeader),
       },
     },
-    'setProxy': {
+    'setBrowserProxy': {
+      params: {
+        type: t.Enum(['http', 'https', 'socks', 'socks4']),
+        bypass: t.Array(t.String),
+        host: t.String,
+        port: t.Number,
+        username: t.Optional(t.String),
+        password: t.Optional(t.String),
+      },
+    },
+    'setContextProxy': {
       params: {
         browserContextId: t.Optional(t.String),
         type: t.Enum(['http', 'https', 'socks', 'socks4']),
         bypass: t.Array(t.String),
         host: t.String,
         port: t.Number,
+        username: t.Optional(t.String),
+        password: t.Optional(t.String),
       },
     },
     'setHTTPCredentials': {
