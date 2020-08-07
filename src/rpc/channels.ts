@@ -911,7 +911,6 @@ export type PageReloadResult = {
 export type PageScreenshotParams = {
   timeout?: number,
   type?: 'png' | 'jpeg',
-  path?: string,
   quality?: number,
   omitBackground?: boolean,
   fullPage?: boolean,
@@ -925,7 +924,6 @@ export type PageScreenshotParams = {
 export type PageScreenshotOptions = {
   timeout?: number,
   type?: 'png' | 'jpeg',
-  path?: string,
   quality?: number,
   omitBackground?: boolean,
   fullPage?: boolean,
