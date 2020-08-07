@@ -193,8 +193,9 @@ export class CRNetworkManager {
         if (requestPausedEvent.request.method === 'OPTIONS' && this._page._isRouted(requestPausedEvent.request.url)) {
           const requestHeaders = requestPausedEvent.request.headers;
           const responseHeaders: Protocol.Fetch.HeaderEntry[] = [
-            { name: 'Access-Control-Allow-Origin', value: requestHeaders['Access-Control-Allow-Methods'] || '*' },
-            { name: 'Access-Control-Allow-Methods', value: requestHeaders['Access-Control-Request-Method'] || 'GET, POST, OPTIONS, DELETE' }
+            { name: 'Access-Control-Allow-Origin', value: requestHeaders['Origin'] || '*' },
+            { name: 'Access-Control-Allow-Methods', value: requestHeaders['Access-Control-Request-Method'] || 'GET, POST, OPTIONS, DELETE' },
+            { name: 'Access-Control-Allow-Credentials', value: 'true' }
           ];
           if (requestHeaders['Access-Control-Request-Headers'])
             responseHeaders.push({ name: 'Access-Control-Allow-Headers', value: requestHeaders['Access-Control-Request-Headers'] });
