@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-const NodeEnvironment = require('jest-environment-node');
 const registerFixtures = require('./fixtures');
+const { FixturePool, registerFixture } = require('./fixturePool');
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
@@ -26,52 +26,62 @@ const GoldenUtils = require('../../utils/testrunner/GoldenUtils');
 const {installCoverageHooks} = require('./coverage');
 const browserName = process.env.BROWSER || 'chromium';
 const reportOnly = !!process.env.REPORT_ONLY_PLATFORM;
+const { ModuleMocker } = require('jest-mock');
 
-class PlaywrightEnvironment extends NodeEnvironment {
+const testOptions = {};
+testOptions.MAC = platform === 'darwin';
+testOptions.LINUX = platform === 'linux';
+testOptions.WIN = platform === 'win32';
+testOptions.CHROMIUM = browserName === 'chromium';
+testOptions.FFOX = browserName === 'firefox';
+testOptions.WEBKIT = browserName === 'webkit';
+testOptions.USES_HOOKS = process.env.PWCHANNEL === 'wire';
+testOptions.CHANNEL = !!process.env.PWCHANNEL;
+testOptions.HEADLESS = !!valueFromEnv('HEADLESS', true);
+testOptions.ASSETS_DIR = path.join(__dirname, '..', 'assets');
+testOptions.GOLDEN_DIR = path.join(__dirname, '..', 'golden-' + browserName);
+testOptions.OUTPUT_DIR = path.join(__dirname, '..', 'output-' + browserName);
+global.testOptions = testOptions;
+
+global.registerFixture = (name, fn) => {
+  registerFixture(name, 'test', fn);
+};
+
+global.registerWorkerFixture = (name, fn) => {
+  registerFixture(name, 'worker', fn);
+};
+
+registerFixtures(global);
+
+let currentFixturePool = null;
+
+process.on('SIGINT', async () => {
+  if (currentFixturePool) {
+    await currentFixturePool.teardownScope('test');
+    await currentFixturePool.teardownScope('worker');  
+  }
+  process.exit(130);
+});
+
+class PlaywrightEnvironment {
   constructor(config, context) {
-    super(config, context);
+    this.moduleMocker = new ModuleMocker(global);
     this.fixturePool = new FixturePool();
-    const testOptions = {};
-    testOptions.MAC = platform === 'darwin';
-    testOptions.LINUX = platform === 'linux';
-    testOptions.WIN = platform === 'win32';
-    testOptions.CHROMIUM = browserName === 'chromium';
-    testOptions.FFOX = browserName === 'firefox';
-    testOptions.WEBKIT = browserName === 'webkit';
-    testOptions.USES_HOOKS = process.env.PWCHANNEL === 'wire';
-    testOptions.CHANNEL = !!process.env.PWCHANNEL;
-    testOptions.HEADLESS = !!valueFromEnv('HEADLESS', true);
-    testOptions.ASSETS_DIR = path.join(__dirname, '..', 'assets');
-    testOptions.GOLDEN_DIR = path.join(__dirname, '..', 'golden-' + browserName);
-    testOptions.OUTPUT_DIR = path.join(__dirname, '..', 'output-' + browserName);
+    this.global = global;
     this.global.testOptions = testOptions;
     this.testPath = context.testPath;
-
-    this.global.registerFixture = (name, fn) => {
-      this.fixturePool.registerFixture(name, 'test', fn);
-    };
-    this.global.registerWorkerFixture = (name, fn) => {
-      this.fixturePool.registerFixture(name, 'worker', fn);
-    };
-    registerFixtures(this.global);
-
-    process.on('SIGINT', async () => {
-      await this.fixturePool.teardownScope('test');
-      await this.fixturePool.teardownScope('worker');
-      process.exit(130);
-    });
   }
 
   async setup() {
-    await super.setup();
     const {coverage, uninstall} = installCoverageHooks(browserName);
     this.coverage = coverage;
     this.uninstallCoverage = uninstall;
+    currentFixturePool = this.fixturePool;
   }
 
   async teardown() {
+    currentFixturePool = null;
     await this.fixturePool.teardownScope('worker');
-    await super.teardown();
     // If the setup throws an error, we don't want to override it
     // with a useless error about this.coverage not existing.
     if (!this.coverage)
@@ -88,7 +98,7 @@ class PlaywrightEnvironment extends NodeEnvironment {
   }
 
   runScript(script) {
-    return super.runScript(script);
+    return script.runInThisContext();
   }
 
   patchToEnableFixtures(object, name) {
@@ -200,113 +210,6 @@ class PlaywrightEnvironment extends NodeEnvironment {
   }
 }
 
-class Fixture {
-  constructor(pool, name, scope, fn) {
-    this.pool = pool;
-    this.name = name;
-    this.scope = scope;
-    this.fn = fn;
-    this.deps = fixtureParameterNames(this.fn);
-    this.usages = new Set();
-    this.value = null;
-  }
-
-  async setup() {
-    for (const name of this.deps) {
-      await this.pool.setupFixture(name);
-      this.pool.instances.get(name).usages.add(this.name);
-    }
-
-    const params = {};
-    for (const n of this.deps)
-      params[n] = this.pool.instances.get(n).value;
-    let setupFenceFulfill;
-    let setupFenceReject;
-    const setupFence = new Promise((f, r) => { setupFenceFulfill = f; setupFenceReject = r; });
-    const teardownFence = new Promise(f => this._teardownFenceCallback = f);
-    debug('pw:test:hook')(`setup "${this.name}"`);
-    this._tearDownComplete = this.fn(params, async value => {
-      this.value = value;
-      setupFenceFulfill();
-      await teardownFence;
-    }).catch(e => setupFenceReject(e));
-    await setupFence;
-    this._setup = true;
-  }
-
-  async teardown() {
-    if (this._teardown)
-      return;
-    this._teardown = true;
-    for (const name of this.usages) {
-      const fixture = this.pool.instances.get(name);
-      if (!fixture)
-        continue;
-      await fixture.teardown();
-    }
-    if (this._setup) {
-      debug('pw:test:hook')(`teardown "${this.name}"`);
-      this._teardownFenceCallback();
-    }
-    await this._tearDownComplete;
-    this.pool.instances.delete(this.name);
-  }
-}
-
-class FixturePool {
-  constructor() {
-    this.registrations = new Map();
-    this.instances = new Map();
-  }
-
-  registerFixture(name, scope, fn) {
-    this.registrations.set(name, { scope, fn });
-  }
-
-  async setupFixture(name) {
-    let fixture = this.instances.get(name);
-    if (fixture)
-      return fixture;
-
-    if (!this.registrations.has(name))
-      throw new Error('Unknown fixture: ' + name);
-    const { scope, fn } = this.registrations.get(name);
-    fixture = new Fixture(this, name, scope, fn);
-    this.instances.set(name, fixture);
-    await fixture.setup();
-    return fixture;
-  }
-
-  async teardownScope(scope) {
-    for (const [name, fixture] of this.instances) {
-      if (fixture.scope === scope)
-        await fixture.teardown();
-    }
-  }
-
-  async resolveParametersAndRun(fn) {
-    const names = fixtureParameterNames(fn);
-    for (const name of names)
-      await this.setupFixture(name);
-    const params = {};
-    for (const n of names)
-      params[n] = this.instances.get(n).value;
-    return fn(params);
-  }
-}
-
-exports.getPlaywrightEnv = () => PlaywrightEnvironment;
-exports.default = exports.getPlaywrightEnv();
-
-function fixtureParameterNames(fn) {
-  const text = fn.toString();
-  const match = text.match(/async(?:\s+function)?\s*\(\s*{\s*([^}]*)\s*}/);
-  if (!match || !match[1].trim())
-    return [];
-  let signature = match[1];
-  return signature.split(',').map(t => t.trim());
-}
-
 function valueFromEnv(name, defaultValue) {
   if (!(name in process.env))
     return defaultValue;
@@ -321,3 +224,6 @@ function testOrSuiteName(o) {
     name += ' ';
   return name + o.name;
 }
+
+exports.getPlaywrightEnv = () => PlaywrightEnvironment;
+exports.default = exports.getPlaywrightEnv();
