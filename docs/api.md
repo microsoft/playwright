@@ -1869,7 +1869,7 @@ const selector = '.foo';
 await page.waitForFunction(selector => !!document.querySelector(selector), selector);
 ```
 
-Shortcut for [page.mainFrame().waitForFunction(pageFunction, arg, options]])](#framewaitforfunctionpagefunction-arg-options).
+Shortcut for [page.mainFrame().waitForFunction(pageFunction[, arg, options])](#framewaitforfunctionpagefunction-arg-options).
 
 #### page.waitForLoadState([state[, options]])
 - `state` <"load"|"domcontentloaded"|"networkidle"> Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method resolves immediately.
