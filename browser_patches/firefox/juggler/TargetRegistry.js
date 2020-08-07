@@ -252,12 +252,6 @@ class TargetRegistry {
     const browserContext = originAttributes ? this.browserContextForUserContextId(originAttributes.userContextId) : null;
     // Prefer context proxy and fallback to browser-level proxy.
     const proxyInfo = (browserContext && browserContext._proxy) || this._browserProxy;
-    dump(`
-
-      bypass: ${JSON.stringify(proxyInfo.bypass)}
-      host: ${channel.URI.host}
-
-    `);
     if (!proxyInfo || proxyInfo.bypass.some(domainSuffix => channel.URI.host.endsWith(domainSuffix)))
       return null;
     return proxyInfo;

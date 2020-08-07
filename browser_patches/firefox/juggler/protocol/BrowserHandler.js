@@ -157,7 +157,7 @@ class BrowserHandler {
 
   async setContextProxy({browserContextId, type, host, port, bypass, username, password}) {
     const browserContext = this._targetRegistry.browserContextForId(browserContextId);
-    browserContext.setProxy({ type, host, port, bypass });
+    browserContext.setProxy({ type, host, port, bypass, username, password });
   }
 
   setRequestInterception({browserContextId, enabled}) {
